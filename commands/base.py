@@ -85,6 +85,13 @@ class command_vi(HoneyPotCommand):
     def call(self, args):
         self.honeypot.writeln('E558: Terminal entry not found in terminfo')
 
+class command_uname(HoneyPotCommand):
+    def call(self, args):
+        if args.strip() == '-a':
+            self.honeypot.writeln('Linux sales 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686 GNU/Linux')
+        else:
+            self.honeypot.writeln('Linux')
+
 class command_mount(HoneyPotCommand):
     def call(self, args):
         if len(args.strip()):
