@@ -14,6 +14,7 @@ cmdl = {
     '/usr/bin/vi':      base.command_vi,
     '/usr/bin/vim':     base.command_vi,
     '/bin/mount':       base.command_mount,
+    '/bin/pwd':         base.command_pwd,
     '/bin/ls':          ls.command_ls,
     '/usr/bin/wget':    wget.command_wget,
     '/bin/tar':         tar.command_tar,

@@ -100,6 +100,9 @@ class command_mount(HoneyPotCommand):
                 ]:
             self.honeypot.writeln(i)
 
+class command_pwd(HoneyPotCommand):
+    def call(self, args):
+        self.honeypot.writeln(self.honeypot.cwd)
 
 class command_nop(HoneyPotCommand):
     def call(self, args):

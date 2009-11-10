@@ -3,9 +3,12 @@
 from twisted.cred import portal, checkers
 from twisted.conch.ssh import factory, keys
 from twisted.internet import reactor
+from twisted.python import log
 from core import Kippo
 
 if __name__ == "__main__":
+    log.startLogging(file('./log/kippo.log', 'w'))
+
     sshFactory = factory.SSHFactory()
     sshFactory.portal = portal.Portal(Kippo.HoneyPotRealm())
 
