@@ -7,7 +7,7 @@ from twisted.python import log
 from core import Kippo
 
 if __name__ == "__main__":
-    log.startLogging(file('./log/kippo.log', 'w'))
+    log.startLogging(file('./log/kippo.log', 'a'))
 
     sshFactory = factory.SSHFactory()
     sshFactory.portal = portal.Portal(Kippo.HoneyPotRealm())
