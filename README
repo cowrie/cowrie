@@ -1,0 +1,15 @@
+Kippo
+
+http://www.rpg.fi/kippo/
+
+Copyright (C) 2009 Upi Tamminen
+
+Kippo is a low interaction SSH honeypot intended to become a bit more higher
+interaction honeypot than an average low interactive honeypot.
+
+-------------------------------------------------------------------------------
+Kippo was inspired by Kojoney, http://kojoney.sourceforge.net/
+-------------------------------------------------------------------------------
+Thanks for testing, ideas:
+ - Viacheslav Slavinsky
+-------------------------------------------------------------------------------
