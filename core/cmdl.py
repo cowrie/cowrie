@@ -16,6 +16,7 @@ cmdl = {
     '/bin/mount':       base.command_mount,
     '/bin/pwd':         base.command_pwd,
     '/bin/uname':       base.command_uname,
+    '/usr/bin/passwd':  base.command_passwd,
     'set':              base.command_nop,
     'unset':            base.command_nop,
     'history':          base.command_nop,

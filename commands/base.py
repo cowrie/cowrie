@@ -116,6 +116,16 @@ class command_pwd(HoneyPotCommand):
     def call(self, args):
         self.honeypot.writeln(self.honeypot.cwd)
 
+class command_passwd(HoneyPotCommand):
+    def call(self, args):
+        # Until we learn how to be interactive
+        for i in [
+                'Changing password for root.',
+                'passwd: Authentication information cannot be recovered',
+                'passwd: password unchanged',
+                ]:
+            self.honeypot.writeln(i)
+
 class command_nop(HoneyPotCommand):
     def call(self, args):
         pass
