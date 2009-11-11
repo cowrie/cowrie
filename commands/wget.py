@@ -1,11 +1,18 @@
 from core.Kippo import HoneyPotCommand
 from core.fstypes import *
-import stat, time, urlparse, random
+from twisted.web import client
+import stat, time, urlparse, random, re
 
 class command_wget(HoneyPotCommand):
 
     def call(self, args):
-        if not len(args):
+        url = None
+        for arg in args.split():
+            if arg.startswith('-'):
+                continue
+            url = arg.strip()
+
+        if not url:
             self.honeypot.writeln('wget: missing URL')
             self.honeypot.writeln('Usage: wget [OPTION]... [URL]...')
             self.honeypot.terminal.nextLine()
@@ -13,9 +20,13 @@ class command_wget(HoneyPotCommand):
             return
 
         # ('http', 'www.google.fi', '/test.txt', '', '', '')
-        url = urlparse.urlparse(args)
+        urldata = urlparse.urlparse(url)
         size = 10000 + int(random.random() * 40000)
         speed = 50 + int(random.random() * 300)
+
+        outfile = urldata[2].split('/')[-1]
+        if not len(outfile.strip()):
+            outfile = 'index.html'
 
         output = """
 --%(stamp)s--  %(url)s
@@ -30,14 +41,31 @@ Saving to: `%(file)s'
 
 """ % {
             'stamp':    time.strftime('%Y-%m-%d %T'),
-            'url':      args,
-            'file':     url[2].split('/')[-1],
-            'host':     url[1],
+            'url':      url,
+            'file':     outfile,
+            'host':     urldata[1],
             'size':     size,
             'speed':    speed,
             }
         self.honeypot.writeln(output)
         cwd = self.honeypot.fs.get_path(self.honeypot.cwd)
-        cwd.append((
-            url[2].split('/')[-1],
-            T_FILE, 0, 0, size, 33188, time.time(), [], None))
+        cwd.append((outfile, T_FILE, 0, 0, size, 33188, time.time(), [], None))
+
+        # now just dl the file in background...
+        d = client.getPage(url)
+        d.addCallback(self.saveurl, url)
+        d.addErrback(self.error, url)
+
+    def saveurl(self, data, url):
+        print 'Saving URL %s' % url
+        fn = '%s_%s' % \
+            (time.strftime('%Y%m%d%H%M%S'),
+            re.sub('[^A-Za-z0-9]', '_', url))
+        f = file('./dl/%s' % fn, 'w')
+        f.write(data)
+        f.close()
+
+    def error(self, error, url):
+        if hasattr(error, 'getErrorMessage'): # exceptions
+            error = error.getErrorMessage()
+        print 'Error downloading %s: %s' % (url, repr(error))
