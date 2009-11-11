@@ -7,7 +7,7 @@ class command_tar(HoneyPotCommand):
     def call(self, args):
         if len(args.split()) < 2:
             self.honeypot.writeln('tar: You must specify one of the `-Acdtrux\' options')
-            self.honeypot.wirteln('Try `tar --help\' or `tar --usage\' for more information.')
+            self.honeypot.writeln('Try `tar --help\' or `tar --usage\' for more information.')
             return
 
         filename = args.split()[1]
