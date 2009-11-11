@@ -30,7 +30,7 @@ class command_cd(HoneyPotCommand):
         try:
             newpath = self.honeypot.fs.resolve_path(args, self.honeypot.cwd)
             newdir = self.honeypot.fs.get_path(newpath)
-        except:
+        except IndexError:
             newdir = None
 
         if newdir is None:
@@ -43,7 +43,12 @@ class command_rm(HoneyPotCommand):
     def call(self, args):
         for f in args.split(' '):
             path = self.honeypot.fs.resolve_path(f, self.honeypot.cwd)
-            dir = self.honeypot.fs.get_path('/'.join(path.split('/')[:-1]))
+            try:
+                dir = self.honeypot.fs.get_path('/'.join(path.split('/')[:-1]))
+            except IndexError:
+                self.honeypot.writeln(
+                    'rm: cannot remove `%s\': No such file or directory' % f)
+                continue
             basename = path.split('/')[-1]
             contents = [x for x in dir]
             for i in dir[:]:
