@@ -1,6 +1,6 @@
 from twisted.cred import portal, checkers, credentials
 from twisted.conch import error, avatar, recvline, interfaces as conchinterfaces
-from twisted.conch.ssh import factory, userauth, connection, keys, session, common
+from twisted.conch.ssh import factory, userauth, connection, keys, session, common, transport
 from twisted.conch.insults import insults
 from twisted.application import service, internet
 from twisted.protocols.policies import TrafficLoggingFactory
@@ -12,8 +12,6 @@ import sys, os, random, pickle, time, stat, copy
 
 from core import ttylog
 from core.fstypes import *
-
-moi = 1
 
 class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
@@ -98,10 +96,6 @@ class HoneyPotCommand(object):
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
-        print dir(self.transport.session)
-        #print self.transport.session.getHost()
-        #print self.transport.session.getPeer()
-        print self.transport.session.id
         self.ttylog_file = './log/tty/%s-%s.log' % \
             (time.strftime('%Y%m%d-%H%M%S'), int(random.random() * 10000))
         print 'Opening TTY log: %s' % self.ttylog_file
@@ -135,6 +129,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         protocol.makeConnection(session.wrapProtocol(serverProtocol))
 
     def getPty(self, terminal, windowSize, attrs):
+        self.windowSize = windowSize
         return None
 
     def execCommand(self, protocol, cmd):
@@ -142,6 +137,9 @@ class HoneyPotAvatar(avatar.ConchUser):
 
     def closed(self):
         pass
+
+    def windowChanged(self, windowSize):
+        self.windowSize = windowSize
 
 class HoneyPotEnvironment(object):
     def __init__(self):
@@ -215,6 +213,29 @@ class HoneyPotRealm:
                 HoneyPotAvatar(avatarId, self.env), lambda: None
         else:
             raise Exception, "No supported interfaces found."
+
+# As implemented by Kojoney
+class HoneyPotSSHFactory(factory.SSHFactory):
+    #publicKeys = {'ssh-rsa': keys.getPublicKeyString(data=publicKey)}
+    #privateKeys = {'ssh-rsa': keys.getPrivateKeyObject(data=privateKey)}
+    services = {
+        'ssh-userauth': userauth.SSHUserAuthServer,
+        'ssh-connection': connection.SSHConnection,
+        }
+
+    def buildProtocol(self, addr):
+        t = transport.SSHServerTransport()
+        #
+        # Fix for BUG 1463701 "NMap recognizes Kojoney as a Honeypot"
+        #
+        t.ourVersionString = 'SSH-2.0-OpenSSH_5.1p1 Debian-5'
+        t.supportedPublicKeys = self.privateKeys.keys()
+        if not self.primes:
+            ske = t.supportedKeyExchanges[:]
+            ske.remove('diffie-hellman-group-exchange-sha1')
+            t.supportedKeyExchanges = ske
+        t.factory = self
+        return t
 
 def getRSAKeys():
     if not (os.path.exists('public.key') and os.path.exists('private.key')):

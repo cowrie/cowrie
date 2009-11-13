@@ -9,7 +9,7 @@ from core import Kippo
 if __name__ == "__main__":
     log.startLogging(file('./log/kippo.log', 'a'))
 
-    sshFactory = factory.SSHFactory()
+    sshFactory = Kippo.HoneyPotSSHFactory()
     sshFactory.portal = portal.Portal(Kippo.HoneyPotRealm())
 
     users = {'root': 'root'}
