@@ -60,6 +60,19 @@ class command_rm(HoneyPotCommand):
                     else:
                         dir.remove(i)
 
+class command_mkdir(HoneyPotCommand):
+    def call(self, args):
+        for f in args.split(' '):
+            path = self.honeypot.fs.resolve_path(f, self.honeypot.cwd)
+            try:
+                dir = self.honeypot.fs.get_path('/'.join(path.split('/')[:-1]))
+            except IndexError:
+                self.honeypot.writeln(
+                    'mkdir: cannot create directory `%s\': ' % f + \
+                    'No such file or directory')
+                return
+            dir.append([f, T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
+
 class command_uptime(HoneyPotCommand):
     def call(self, args):
         self.honeypot.writeln(
@@ -96,6 +109,10 @@ class command_uname(HoneyPotCommand):
             self.honeypot.writeln('Linux sales 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686 GNU/Linux')
         else:
             self.honeypot.writeln('Linux')
+
+class command_id(HoneyPotCommand):
+    def call(self, args):
+        self.honeypot.writeln('uid=0(root) gid=0(root) groups=0(root)')
 
 class command_mount(HoneyPotCommand):
     def call(self, args):
