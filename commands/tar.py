@@ -30,6 +30,10 @@ class command_tar(HoneyPotCommand):
                 'XxX Anal Thunder 5 XxX.AVI',
                 ):
             size = 1000000 + int(random.random() * 4000000)
+
+            if f in [x[A_NAME] for x in cwd]:
+                cwd.remove([x for x in cwd if x[A_NAME] == f][0])
+
             cwd.append((
                 f, T_FILE, 0, 0, size, 33188, time.time(), [], None))
             self.honeypot.writeln('./%s' % f)
