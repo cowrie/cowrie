@@ -49,6 +49,8 @@ Saving to: `%(file)s'
             }
         self.honeypot.writeln(output)
         cwd = self.honeypot.fs.get_path(self.honeypot.cwd)
+        if outfile in [x[A_NAME] for x in cwd]:
+            cwd.remove([x for x in cwd if x[A_NAME] == outfile][0])
         cwd.append((outfile, T_FILE, 0, 0, size, 33188, time.time(), [], None))
 
         # now just dl the file in background...

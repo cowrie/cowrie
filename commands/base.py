@@ -71,6 +71,10 @@ class command_mkdir(HoneyPotCommand):
                     'mkdir: cannot create directory `%s\': ' % f + \
                     'No such file or directory')
                 return
+            if f in [x[A_NAME] for x in dir]:
+                self.honeypot.writeln(
+                    'mkdir: cannot create directory `test\': File exists')
+                return
             dir.append([f, T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
 
 class command_uptime(HoneyPotCommand):
