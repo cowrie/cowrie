@@ -97,6 +97,7 @@ class command_echo(HoneyPotCommand):
 
 class command_quit(HoneyPotCommand):
     def call(self, args):
+        self.honeypot.terminal.reset()
         self.honeypot.writeln('Connection to server closed.')
         self.honeypot.prompt = 'localhost:%(path)s# '
 
