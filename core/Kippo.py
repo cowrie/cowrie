@@ -12,6 +12,7 @@ import sys, os, random, pickle, time, stat, copy
 
 from core import ttylog
 from core.fstypes import *
+import config
 
 class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
@@ -19,7 +20,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.env = env
         self.cwd = '/root'
         self.fs = HoneyPotFilesystem(deepcopy(self.env.fs))
-        self.prompt = 'sales:%(path)s# '
+        self.prompt = '%s:%%(path)s# ' % config.fake_hostname
         self.next_callback = None
         self.password_input = False
 
