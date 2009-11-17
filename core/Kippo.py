@@ -31,7 +31,7 @@ class HoneyPotCommand(object):
         self.honeypot.cmdstack[-1].resume()
 
     def lineReceived(self, line):
-        print 'Unhandled input: %s' % line
+        print 'INPUT: %s' % line
 
     def resume(self):
         pass
@@ -42,6 +42,7 @@ class HoneyPotShell(object):
         self.showPrompt()
 
     def lineReceived(self, line):
+        print 'CMD: %s' % line
         cmdAndArgs = line.split(' ', 1)
         if len(cmdAndArgs) > 1:
             cmd, args = cmdAndArgs
