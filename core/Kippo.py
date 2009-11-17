@@ -20,6 +20,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.cwd = '/root'
         self.fs = HoneyPotFilesystem(deepcopy(self.env.fs))
         self.prompt = 'sales:%(path)s# '
+        self.next_callback = None
+        self.password_input = False
 
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
@@ -37,9 +39,6 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             'path':     path,
             }
         self.terminal.write(self.prompt % attrs)
-
-    def getCommandFunc(self, cmd):
-        return getattr(self, 'do_' + cmd, None)
 
     def getCommand(self, cmd, args):
         path = None
@@ -64,28 +63,53 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def lineReceived(self, line):
         line = line.strip()
         if line:
-            print 'CMD: %s' % line
-            cmdAndArgs = line.split(' ', 1)
-            cmd = cmdAndArgs[0]
-            args = ''
-            if len(cmdAndArgs) > 1:
-                args = cmdAndArgs[1]
-            obj = self.getCommand(cmd, args)
-            if obj:
+            # Hack to allow password prompts, etc
+            if self.next_callback:
+                print 'INPUT: %s' % line
+                cmd = self.next_callback
+                self.next_callback = None
+                obj = cmd(self)
                 try:
-                    obj.call(args)
+                    obj.call(line)
                     del obj
                 except Exception, e:
                     print e
                     self.writeln("Segmentation fault")
             else:
-                self.writeln('bash: %s: command not found' % cmd)
-        self.showPrompt()
+                print 'CMD: %s' % line
+                cmdAndArgs = line.split(' ', 1)
+                cmd = cmdAndArgs[0]
+                args = ''
+                if len(cmdAndArgs) > 1:
+                    args = cmdAndArgs[1]
+                obj = self.getCommand(cmd, args)
+                if obj:
+                    try:
+                        obj.call(args)
+                        del obj
+                    except Exception, e:
+                        print e
+                        self.writeln("Segmentation fault")
+                else:
+                    self.writeln('bash: %s: command not found' % cmd)
+
+        if not self.next_callback:
+            self.showPrompt()
 
     def keystrokeReceived(self, keyID, modifier):
         ttylog.ttylog_write(self.terminal.ttylog_file, len(keyID),
             ttylog.DIR_READ, time.time(), keyID)
         recvline.HistoricRecvLine.keystrokeReceived(self, keyID, modifier)
+
+    # Easier way to implement password input?
+    def characterReceived(self, ch, moreCharactersComing):
+        if self.mode == 'insert':
+            self.lineBuffer.insert(self.lineBufferIndex, ch)
+        else:
+            self.lineBuffer[self.lineBufferIndex:self.lineBufferIndex+1] = [ch]
+        self.lineBufferIndex += 1
+        if not self.password_input: 
+            self.terminal.write(ch)
 
     def writeln(self, data):
         self.terminal.write(data)
