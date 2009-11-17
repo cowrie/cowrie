@@ -5,6 +5,7 @@ from twisted.conch.ssh import factory, keys
 from twisted.internet import reactor
 from twisted.python import log
 from core import Kippo
+import config
 
 if __name__ == "__main__":
     log.startLogging(file('./log/kippo.log', 'a'))
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     sshFactory.privateKeys = {
         'ssh-rsa': keys.Key.fromString(data=privKeyString)}
 
-    reactor.listenTCP(2222, sshFactory)
+    reactor.listenTCP(config.ssh_port, sshFactory)
     reactor.run()
 
 # vim: set sw=4 et:
