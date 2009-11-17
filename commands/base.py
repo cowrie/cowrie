@@ -141,13 +141,13 @@ class command_pwd(HoneyPotCommand):
 class command_passwd(HoneyPotCommand):
     def call(self, args):
         self.honeypot.terminal.write('Enter new UNIX password: ')
-        self.honeypot.next_callback = callback_passwd1
+        self.callback = callback_passwd1
         self.honeypot.password_input = True
 
 class callback_passwd1(HoneyPotCommand):
     def call(self, args):
         self.honeypot.terminal.write('Retype new UNIX password: ')
-        self.honeypot.next_callback = callback_passwd2
+        self.callback = callback_passwd2
 
 class callback_passwd2(HoneyPotCommand):
     def call(self, args):

@@ -67,10 +67,16 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             if self.next_callback:
                 print 'INPUT: %s' % line
                 cmd = self.next_callback
-                self.next_callback = None
+                args = None
+                if type(()) == type(cmd):
+                    cmd, args = cmd
                 obj = cmd(self)
                 try:
-                    obj.call(line)
+                    if args:
+                        obj.call(line, args)
+                    else:
+                        obj.call(line)
+                    self.next_callback = obj.callback
                     del obj
                 except Exception, e:
                     print e
@@ -86,6 +92,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
                 if obj:
                     try:
                         obj.call(args)
+                        self.next_callback = obj.callback
                         del obj
                     except Exception, e:
                         print e
@@ -118,6 +125,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 class HoneyPotCommand(object):
     def __init__(self, honeypot):
         self.honeypot = honeypot
+        self.callback = None
 
     def call(self, *args):
         self.honeypot.writeln('Hello World!')

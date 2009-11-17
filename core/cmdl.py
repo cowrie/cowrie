@@ -1,4 +1,4 @@
-from commands import base, ls, wget, tar
+from commands import base, ls, wget, tar, ssh
 
 cmdl = {
     '/bin/echo':        base.command_echo,
@@ -21,6 +21,7 @@ cmdl = {
     '/usr/bin/vim':     base.command_vi,
     '/usr/bin/id':      base.command_id,
     '/usr/bin/passwd':  base.command_passwd,
+    '/usr/bin/ssh':     ssh.command_ssh,
     'set':              base.command_nop,
     'unset':            base.command_nop,
     'history':          base.command_nop,
