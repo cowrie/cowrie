@@ -19,6 +19,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.env = env
         self.cwd = '/root'
         self.fs = HoneyPotFilesystem(deepcopy(self.env.fs))
+        self.prompt = 'sales:%(path)s# '
 
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
@@ -32,7 +33,10 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         path = self.cwd
         if path == '/root':
             path = '~'
-        self.terminal.write('sales:%s# ' % path)
+        attrs = {
+            'path':     path,
+            }
+        self.terminal.write(self.prompt % attrs)
 
     def getCommandFunc(self, cmd):
         return getattr(self, 'do_' + cmd, None)

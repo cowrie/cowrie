@@ -6,6 +6,7 @@ cmdl = {
     '/bin/cat':         base.command_cat,
     '/usr/bin/whoami':  base.command_whoami,
     'quit':             base.command_quit,
+    'exit':             base.command_quit,
     '/usr/bin/clear':   base.command_clear,
     '/bin/rm':          base.command_rm,
     '/usr/bin/uptime':  base.command_uptime,
