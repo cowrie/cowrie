@@ -99,7 +99,7 @@ class command_quit(HoneyPotCommand):
     def call(self, args):
         self.honeypot.terminal.reset()
         self.honeypot.writeln('Connection to server closed.')
-        self.honeypot.prompt = 'localhost:%(path)s# '
+        self.honeypot.hostname = 'localhost'
 
 class command_clear(HoneyPotCommand):
     def call(self, args):
@@ -140,23 +140,25 @@ class command_pwd(HoneyPotCommand):
         self.honeypot.writeln(self.honeypot.cwd)
 
 class command_passwd(HoneyPotCommand):
-    def call(self, args):
+    def start(self):
         self.honeypot.terminal.write('Enter new UNIX password: ')
-        self.callback = callback_passwd1
         self.honeypot.password_input = True
+        self.callbacks = [self.ask_again, self.finish]
 
-class callback_passwd1(HoneyPotCommand):
-    def call(self, args):
+    def ask_again(self):
         self.honeypot.terminal.write('Retype new UNIX password: ')
-        self.callback = callback_passwd2
 
-class callback_passwd2(HoneyPotCommand):
-    def call(self, args):
+    def finish(self):
         self.honeypot.password_input = False
         self.honeypot.writeln('Sorry, passwords do not match')
         self.honeypot.writeln(
             'passwd: Authentication information cannot be recovered')
         self.honeypot.writeln('passwd: password unchanged')
+        self.exit()
+
+    def lineReceived(self, line):
+        print 'passwd input:', line
+        self.callbacks.pop(0)()
 
 class command_nop(HoneyPotCommand):
     def call(self, args):

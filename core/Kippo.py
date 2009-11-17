@@ -14,39 +14,83 @@ from core import ttylog
 from core.fstypes import *
 import config
 
+class HoneyPotCommand(object):
+    def __init__(self, honeypot, args):
+        self.honeypot = honeypot
+        self.args = args
+
+    def start(self):
+        self.call(self.args)
+        self.exit()
+
+    def call(self, *args):
+        self.honeypot.writeln('Hello World! [%s]' % repr(args))
+
+    def exit(self):
+        self.honeypot.cmdstack.pop()
+        self.honeypot.cmdstack[-1].resume()
+
+    def lineReceived(self, line):
+        print 'Unhandled input: %s' % line
+
+    def resume(self):
+        pass
+
+class HoneyPotShell(object):
+    def __init__(self, honeypot):
+        self.honeypot = honeypot
+        self.showPrompt()
+
+    def lineReceived(self, line):
+        cmdAndArgs = line.split(' ', 1)
+        if len(cmdAndArgs) > 1:
+            cmd, args = cmdAndArgs
+        else:
+            cmd, args = cmdAndArgs[0], ''
+        cmdclass = self.honeypot.getCommand(cmd)
+        if cmdclass:
+            obj = cmdclass(self.honeypot, args)
+            self.honeypot.cmdstack.append(obj)
+            obj.start()
+        else:
+            self.honeypot.writeln('bash: %s: command not found' % cmd)
+            self.showPrompt()
+
+    def resume(self):
+        self.showPrompt()
+
+    def showPrompt(self):
+        prompt = '%s:%%(path)s# ' % self.honeypot.hostname
+        path = self.honeypot.cwd
+        if path == '/root':
+            path = '~'
+        attrs = {'path': path}
+        self.honeypot.terminal.write(prompt % attrs)
+
 class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
         self.user = user
         self.env = env
         self.cwd = '/root'
+        self.hostname = config.fake_hostname
         self.fs = HoneyPotFilesystem(deepcopy(self.env.fs))
-        self.prompt = '%s:%%(path)s# ' % config.fake_hostname
-        self.next_callback = None
         self.password_input = False
+        self.cmdstack = []
 
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
-        self.showPrompt()
+        self.cmdstack = [HoneyPotShell(self)]
 
     # Overriding to prevent terminal.reset()
     def initializeScreen(self):
         self.setInsertMode()
 
-    def showPrompt(self):
-        path = self.cwd
-        if path == '/root':
-            path = '~'
-        attrs = {
-            'path':     path,
-            }
-        self.terminal.write(self.prompt % attrs)
-
-    def getCommand(self, cmd, args):
+    def getCommand(self, cmd):
+        if not len(cmd.strip()):
+            return None
         path = None
-
         if cmd in self.env.commands:
-            return self.env.commands[cmd](self)
-
+            return self.env.commands[cmd]
         if cmd[0] in ('.', '/'):
             path = self.fs.resolve_path(cmd, self.cwd)
             if not self.fs.exists(path):
@@ -58,55 +102,17 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
                     path = i
                     break
         if path in self.env.commands:
-            return self.env.commands[path](self)
+            return self.env.commands[path]
         return None
 
     def lineReceived(self, line):
-        line = line.strip()
-        if line:
-            # Hack to allow password prompts, etc
-            if self.next_callback:
-                print 'INPUT: %s' % line
-                cmd = self.next_callback
-                args = None
-                if type(()) == type(cmd):
-                    cmd, args = cmd
-                obj = cmd(self)
-                try:
-                    if args:
-                        obj.call(line, args)
-                    else:
-                        obj.call(line)
-                    self.next_callback = obj.callback
-                    del obj
-                except Exception, e:
-                    print e
-                    self.writeln("Segmentation fault")
-            else:
-                print 'CMD: %s' % line
-                cmdAndArgs = line.split(' ', 1)
-                cmd = cmdAndArgs[0]
-                args = ''
-                if len(cmdAndArgs) > 1:
-                    args = cmdAndArgs[1]
-                obj = self.getCommand(cmd, args)
-                if obj:
-                    try:
-                        obj.call(args)
-                        self.next_callback = obj.callback
-                        del obj
-                    except Exception, e:
-                        print e
-                        self.writeln("Segmentation fault")
-                else:
-                    self.writeln('bash: %s: command not found' % cmd)
-
-        if not self.next_callback:
-            self.showPrompt()
+        if len(self.cmdstack):
+            self.cmdstack[-1].lineReceived(line)
 
     def keystrokeReceived(self, keyID, modifier):
-        ttylog.ttylog_write(self.terminal.ttylog_file, len(keyID),
-            ttylog.DIR_READ, time.time(), keyID)
+        if type(keyID) == type(''):
+            ttylog.ttylog_write(self.terminal.ttylog_file, len(keyID),
+                ttylog.DIR_READ, time.time(), keyID)
         recvline.HistoricRecvLine.keystrokeReceived(self, keyID, modifier)
 
     # Easier way to implement password input?
@@ -122,14 +128,6 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def writeln(self, data):
         self.terminal.write(data)
         self.terminal.nextLine()
-
-class HoneyPotCommand(object):
-    def __init__(self, honeypot):
-        self.honeypot = honeypot
-        self.callback = None
-
-    def call(self, *args):
-        self.honeypot.writeln('Hello World!')
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
