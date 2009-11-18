@@ -44,6 +44,7 @@ class command_wget(HoneyPotCommand):
             self.writeln('Usage: wget [OPTION]... [URL]...')
             self.nextLine()
             self.writeln('Try `wget --help\' for more options.')
+            self.exit()
             return
 
         urldata = urlparse.urlparse(url)
