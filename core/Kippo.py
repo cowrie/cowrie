@@ -18,6 +18,8 @@ class HoneyPotCommand(object):
     def __init__(self, honeypot, args):
         self.honeypot = honeypot
         self.args = args
+        self.writeln = self.honeypot.writeln
+        self.write = self.honeypot.terminal.write
 
     def start(self):
         self.call(self.args)
