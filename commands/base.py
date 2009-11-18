@@ -72,8 +72,25 @@ class command_mkdir(HoneyPotCommand):
             if f in [x[A_NAME] for x in dir]:
                 self.writeln(
                     'mkdir: cannot create directory `test\': File exists')
-                return
+                continue
             dir.append([f, T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
+
+class command_rmdir(HoneyPotCommand):
+    def call(self, args):
+        for f in args.split(' '):
+            path = self.fs.resolve_path(f, self.honeypot.cwd)
+            try:
+                dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
+            except IndexError:
+                dir = None
+            if not dir or f not in [x[A_NAME] for x in dir]:
+                self.writeln(
+                    'rmdir: failed to remove `%s\': ' % f + \
+                    'No such file or directory')
+                continue
+            for i in dir[:]:
+                if i[A_NAME] == f:
+                    dir.remove(i)
 
 class command_uptime(HoneyPotCommand):
     def call(self, args):
