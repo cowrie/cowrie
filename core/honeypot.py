@@ -52,7 +52,7 @@ class HoneyPotShell(object):
 
     def lineReceived(self, line):
         print 'CMD: %s' % line
-        cmdAndArgs = line.split(' ', 1)
+        cmdAndArgs = line.strip().split(' ', 1)
         if len(cmdAndArgs) > 1:
             cmd, args = cmdAndArgs
         else:
