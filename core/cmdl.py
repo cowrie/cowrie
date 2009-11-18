@@ -15,6 +15,7 @@ cmdl = {
     '/bin/ps':          base.command_ps,
     '/bin/hostname':    base.command_hostname,
     '/bin/mkdir':       base.command_mkdir,
+    '/bin/rmdir':       base.command_rmdir,
     '/usr/bin/uptime':  base.command_uptime,
     '/usr/bin/w':       base.command_w,
     '/usr/bin/who':     base.command_w,
