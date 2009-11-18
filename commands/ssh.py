@@ -1,4 +1,4 @@
-from core.Kippo import HoneyPotCommand
+from core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 import time
 
@@ -53,3 +53,5 @@ class command_ssh(HoneyPotCommand):
     def lineReceived(self, line):
         if len(self.callbacks):
             self.callbacks.pop(0)(line)
+
+# vim: set sw=4 et:

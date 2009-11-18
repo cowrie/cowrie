@@ -1,18 +1,19 @@
-from commands import base, ls, wget, tar, ssh
+from commands import base, ls, wget, tar, ssh, ping
 
 cmdl = {
     '/bin/echo':        base.command_echo,
     'cd':               base.command_cd,
     '/bin/cat':         base.command_cat,
     '/usr/bin/whoami':  base.command_whoami,
-    'quit':             base.command_quit,
-    'exit':             base.command_quit,
+    'exit':             base.command_exit,
     '/usr/bin/clear':   base.command_clear,
     '/bin/rm':          base.command_rm,
     '/bin/chmod':       base.command_nop,
     '/bin/mount':       base.command_mount,
     '/bin/pwd':         base.command_pwd,
     '/bin/uname':       base.command_uname,
+    '/bin/ps':          base.command_ps,
+    '/bin/hostname':    base.command_hostname,
     '/bin/mkdir':       base.command_mkdir,
     '/usr/bin/uptime':  base.command_uptime,
     '/usr/bin/w':       base.command_w,
@@ -22,11 +23,16 @@ cmdl = {
     '/usr/bin/id':      base.command_id,
     '/usr/bin/passwd':  base.command_passwd,
     '/usr/bin/ssh':     ssh.command_ssh,
+    '/bin/ping':        ping.command_ping,
     'set':              base.command_nop,
     'unset':            base.command_nop,
     'history':          base.command_nop,
     'export':           base.command_nop,
+    '/bin/bash':        base.command_nop,
+    '/bin/sh':          base.command_nop,
     '/bin/ls':          ls.command_ls,
     '/usr/bin/wget':    wget.command_wget,
     '/bin/tar':         tar.command_tar,
     }
+
+# vim: set sw=4 et:

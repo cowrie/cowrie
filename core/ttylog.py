@@ -23,3 +23,5 @@ def ttylog_close(logfile, stamp):
     sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
     f.write(struct.pack('iLiiLL', 2, 0, 0, 0, sec, usec))
     f.close()
+
+# vim: set sw=4 et:

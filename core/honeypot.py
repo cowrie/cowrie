@@ -20,6 +20,8 @@ class HoneyPotCommand(object):
         self.args = args
         self.writeln = self.honeypot.writeln
         self.write = self.honeypot.terminal.write
+        self.nextLine = self.honeypot.terminal.nextLine
+        self.fs = self.honeypot.fs
 
     def start(self):
         self.call(self.args)
@@ -31,6 +33,11 @@ class HoneyPotCommand(object):
     def exit(self):
         self.honeypot.cmdstack.pop()
         self.honeypot.cmdstack[-1].resume()
+
+    def ctrl_c(self):
+        print 'Received CTRL-C, exiting..'
+        self.writeln('^C')
+        self.exit()
 
     def lineReceived(self, line):
         print 'INPUT: %s' % line
@@ -56,7 +63,8 @@ class HoneyPotShell(object):
             self.honeypot.cmdstack.append(obj)
             obj.start()
         else:
-            self.honeypot.writeln('bash: %s: command not found' % cmd)
+            if len(line.strip()):
+                self.honeypot.writeln('bash: %s: command not found' % cmd)
             self.showPrompt()
 
     def resume(self):
@@ -69,6 +77,10 @@ class HoneyPotShell(object):
             path = '~'
         attrs = {'path': path}
         self.honeypot.terminal.write(prompt % attrs)
+
+    def ctrl_c(self):
+        self.honeypot.terminal.nextLine()
+        self.showPrompt()
 
 class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
@@ -116,6 +128,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         if type(keyID) == type(''):
             ttylog.ttylog_write(self.terminal.ttylog_file, len(keyID),
                 ttylog.DIR_READ, time.time(), keyID)
+        if keyID == '\x03':
+            self.cmdstack[-1].ctrl_c()
         recvline.HistoricRecvLine.keystrokeReceived(self, keyID, modifier)
 
     # Easier way to implement password input?
@@ -134,8 +148,9 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
-        self.ttylog_file = './log/tty/%s-%s.log' % \
-            (time.strftime('%Y%m%d-%H%M%S'), int(random.random() * 10000))
+        self.ttylog_file = '%s/tty/%s-%s.log' % \
+            (config.log_path, time.strftime('%Y%m%d-%H%M%S'),
+            int(random.random() * 10000))
         print 'Opening TTY log: %s' % self.ttylog_file
         ttylog.ttylog_open(self.ttylog_file, time.time())
         self.ttylog_open = True
@@ -238,6 +253,16 @@ class HoneyPotFilesystem(object):
                 if x[A_NAME] == piece][0]
         return True
 
+    def mkfile(self, path, uid, gid, size, mode, ctime = None):
+        if ctime is None:
+            ctime = time.time()
+        dir = self.get_path(os.path.dirname(path))
+        outfile = os.path.basename(path)
+        if outfile in [x[A_NAME] for x in dir]:
+            dir.remove([x for x in dir if x[A_NAME] == outfile][0])
+        dir.append((outfile, T_FILE, uid, gid, size, mode, ctime, [], None))
+        return True
+
 class HoneyPotRealm:
     implements(portal.IRealm)
 
@@ -292,3 +317,5 @@ def getRSAKeys():
         publicKeyString = file('public.key').read()
         privateKeyString = file('private.key').read()
     return publicKeyString, privateKeyString
+
+# vim: set sw=4 et:

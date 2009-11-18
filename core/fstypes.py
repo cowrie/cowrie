@@ -15,3 +15,4 @@ T_LINK, \
     T_SOCK, \
     T_FIFO = range(0, 7)
 
+# vim: set sw=4 et:

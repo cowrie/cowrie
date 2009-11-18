@@ -1,5 +1,5 @@
 import os, time
-from core.Kippo import HoneyPotCommand
+from core.honeypot import HoneyPotCommand
 from core.fstypes import *
 
 class command_whoami(HoneyPotCommand):
@@ -8,9 +8,9 @@ class command_whoami(HoneyPotCommand):
 
 class command_cat(HoneyPotCommand):
     def call(self, args):
-        path = self.honeypot.fs.resolve_path(args, self.honeypot.cwd)
+        path = self.fs.resolve_path(args, self.honeypot.cwd)
 
-        if not path or not self.honeypot.fs.exists(path):
+        if not path or not self.fs.exists(path):
             self.writeln('bash: cat: %s: No such file or directory' % args)
             return
 
@@ -27,8 +27,8 @@ class command_cd(HoneyPotCommand):
             args = '/root'
 
         try:
-            newpath = self.honeypot.fs.resolve_path(args, self.honeypot.cwd)
-            newdir = self.honeypot.fs.get_path(newpath)
+            newpath = self.fs.resolve_path(args, self.honeypot.cwd)
+            newdir = self.fs.get_path(newpath)
         except IndexError:
             newdir = None
 
@@ -40,9 +40,9 @@ class command_cd(HoneyPotCommand):
 class command_rm(HoneyPotCommand):
     def call(self, args):
         for f in args.split(' '):
-            path = self.honeypot.fs.resolve_path(f, self.honeypot.cwd)
+            path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
-                dir = self.honeypot.fs.get_path('/'.join(path.split('/')[:-1]))
+                dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
             except IndexError:
                 self.writeln(
                     'rm: cannot remove `%s\': No such file or directory' % f)
@@ -61,9 +61,9 @@ class command_rm(HoneyPotCommand):
 class command_mkdir(HoneyPotCommand):
     def call(self, args):
         for f in args.split(' '):
-            path = self.honeypot.fs.resolve_path(f, self.honeypot.cwd)
+            path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
-                dir = self.honeypot.fs.get_path('/'.join(path.split('/')[:-1]))
+                dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
             except IndexError:
                 self.writeln(
                     'mkdir: cannot create directory `%s\': ' % f + \
@@ -93,7 +93,7 @@ class command_echo(HoneyPotCommand):
     def call(self, args):
         self.writeln(args)
 
-class command_quit(HoneyPotCommand):
+class command_exit(HoneyPotCommand):
     def call(self, args):
         self.honeypot.terminal.reset()
         self.writeln('Connection to server closed.')
@@ -107,12 +107,65 @@ class command_vi(HoneyPotCommand):
     def call(self, args):
         self.writeln('E558: Terminal entry not found in terminfo')
 
+class command_hostname(HoneyPotCommand):
+    def call(self, args):
+        self.writeln(self.honeypot.hostname)
+
 class command_uname(HoneyPotCommand):
     def call(self, args):
         if args.strip() == '-a':
-            self.writeln('Linux sales 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686 GNU/Linux')
+            self.writeln(
+                'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686 GNU/Linux' % \
+                self.honeypot.hostname)
         else:
             self.writeln('Linux')
+
+class command_ps(HoneyPotCommand):
+    def call(self, args):
+        if args.strip().count('a'):
+            output = (
+                'USER       PID %%CPU %%MEM    VSZ   RSS TTY      STAT START   TIME COMMAND',
+                'root         1  0.0  0.1   2100   688 ?        Ss   Nov06   0:07 init [2]  ',
+                'root         2  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kthreadd]',
+                'root         3  0.0  0.0      0     0 ?        S<   Nov06   0:00 [migration/0]',
+                'root         4  0.0  0.0      0     0 ?        S<   Nov06   0:00 [ksoftirqd/0]',
+                'root         5  0.0  0.0      0     0 ?        S<   Nov06   0:00 [watchdog/0]',
+                'root         6  0.0  0.0      0     0 ?        S<   Nov06   0:17 [events/0]',
+                'root         7  0.0  0.0      0     0 ?        S<   Nov06   0:00 [khelper]',
+                'root        39  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kblockd/0]',
+                'root        41  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kacpid]',
+                'root        42  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kacpi_notify]',
+                'root       170  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kseriod]',
+                'root       207  0.0  0.0      0     0 ?        S    Nov06   0:01 [pdflush]',
+                'root       208  0.0  0.0      0     0 ?        S    Nov06   0:00 [pdflush]',
+                'root       209  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kswapd0]',
+                'root       210  0.0  0.0      0     0 ?        S<   Nov06   0:00 [aio/0]',
+                'root       748  0.0  0.0      0     0 ?        S<   Nov06   0:00 [ata/0]',
+                'root       749  0.0  0.0      0     0 ?        S<   Nov06   0:00 [ata_aux]',
+                'root       929  0.0  0.0      0     0 ?        S<   Nov06   0:00 [scsi_eh_0]',
+                'root      1014  0.0  0.0      0     0 ?        D<   Nov06   0:03 [kjournald]',
+                'root      1087  0.0  0.1   2288   772 ?        S<s  Nov06   0:00 udevd --daemon',
+                'root      1553  0.0  0.0      0     0 ?        S<   Nov06   0:00 [kpsmoused]',
+                'root      2054  0.0  0.2  28428  1508 ?        Sl   Nov06   0:01 /usr/sbin/rsyslogd -c3',
+                'root      2103  0.0  0.2   2628  1196 tty1     Ss   Nov06   0:00 /bin/login --     ',
+                'root      2105  0.0  0.0   1764   504 tty2     Ss+  Nov06   0:00 /sbin/getty 38400 tty2',
+                'root      2107  0.0  0.0   1764   504 tty3     Ss+  Nov06   0:00 /sbin/getty 38400 tty3',
+                'root      2109  0.0  0.0   1764   504 tty4     Ss+  Nov06   0:00 /sbin/getty 38400 tty4',
+                'root      2110  0.0  0.0   1764   504 tty5     Ss+  Nov06   0:00 /sbin/getty 38400 tty5',
+                'root      2112  0.0  0.0   1764   508 tty6     Ss+  Nov06   0:00 /sbin/getty 38400 tty6',
+                'root      2133  0.0  0.1   2180   620 ?        S<s  Nov06   0:00 dhclient3 -pf /var/run/dhclient.eth0.pid -lf /var/lib/dhcp3/dhclien',
+                'root      4969  0.0  0.1   5416  1024 ?        Ss   Nov08   0:00 /usr/sbin/sshd',
+                'root      5673  0.0  0.2   2924  1540 pts/0    Ss   04:30   0:00 -bash',
+                'root      5679  0.0  0.1   2432   928 pts/0    R+   04:32   0:00 ps %s' % args,
+                )
+        else:
+            output = (
+                '  PID TTY          TIME CMD',
+                ' 5673 pts/0    00:00:00 bash',
+                ' 5677 pts/0    00:00:00 ps %s' % args,
+                )
+        for l in output:
+            self.writeln(l)
 
 class command_id(HoneyPotCommand):
     def call(self, args):
@@ -155,9 +208,11 @@ class command_passwd(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line):
-        print 'passwd input:', line
+        print 'INPUT (passwd):', line
         self.callbacks.pop(0)()
 
 class command_nop(HoneyPotCommand):
     def call(self, args):
         pass
+
+# vim: set sw=4 et:

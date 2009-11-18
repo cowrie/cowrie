@@ -1,4 +1,4 @@
-from core.Kippo import HoneyPotCommand
+from core.honeypot import HoneyPotCommand
 from core.fstypes import *
 import stat, time
 
@@ -70,3 +70,5 @@ class command_ls(HoneyPotCommand):
                 file[A_NAME])
 
             self.honeypot.writeln(l)
+
+# vim: set sw=4 et:

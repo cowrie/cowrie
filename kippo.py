@@ -4,20 +4,20 @@ from twisted.cred import portal, checkers
 from twisted.conch.ssh import factory, keys
 from twisted.internet import reactor
 from twisted.python import log
-from core import Kippo
+from core import honeypot
 import config
 
 if __name__ == "__main__":
-    log.startLogging(file('./log/kippo.log', 'a'))
+    log.startLogging(file('%s/kippo.log' % config.log_path, 'a'))
 
-    sshFactory = Kippo.HoneyPotSSHFactory()
-    sshFactory.portal = portal.Portal(Kippo.HoneyPotRealm())
+    sshFactory = honeypot.HoneyPotSSHFactory()
+    sshFactory.portal = portal.Portal(honeypot.HoneyPotRealm())
 
     users = {'root': 'root'}
     sshFactory.portal.registerChecker(
         checkers.InMemoryUsernamePasswordDatabaseDontUse(**users))
 
-    pubKeyString, privKeyString = Kippo.getRSAKeys()
+    pubKeyString, privKeyString = honeypot.getRSAKeys()
     sshFactory.publicKeys = {
         'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
     sshFactory.privateKeys = {

@@ -1,7 +1,8 @@
-from core.Kippo import HoneyPotCommand
+from core.honeypot import HoneyPotCommand
 from core.fstypes import *
 from twisted.web import client
 import stat, time, urlparse, random, re
+import config
 
 class command_wget(HoneyPotCommand):
 
@@ -13,19 +14,18 @@ class command_wget(HoneyPotCommand):
             url = arg.strip()
 
         if not url:
-            self.honeypot.writeln('wget: missing URL')
-            self.honeypot.writeln('Usage: wget [OPTION]... [URL]...')
-            self.honeypot.terminal.nextLine()
-            self.honeypot.writeln('Try `wget --help\' for more options.')
+            self.writeln('wget: missing URL')
+            self.writeln('Usage: wget [OPTION]... [URL]...')
+            self.nextLine()
+            self.writeln('Try `wget --help\' for more options.')
             return
 
-        # ('http', 'www.google.fi', '/test.txt', '', '', '')
         urldata = urlparse.urlparse(url)
         size = 10000 + int(random.random() * 40000)
         speed = 50 + int(random.random() * 300)
 
-        outfile = urldata[2].split('/')[-1]
-        if not len(outfile.strip()):
+        outfile = urldata.path.split('/')[-1]
+        if not len(outfile.strip()) or not urldata.path.count('/'):
             outfile = 'index.html'
 
         output = """
@@ -43,31 +43,33 @@ Saving to: `%(file)s'
             'stamp':    time.strftime('%Y-%m-%d %T'),
             'url':      url,
             'file':     outfile,
-            'host':     urldata[1],
+            'host':     urldata.path.split('/')[0],
             'size':     size,
             'speed':    speed,
             }
-        self.honeypot.writeln(output)
-        cwd = self.honeypot.fs.get_path(self.honeypot.cwd)
-        if outfile in [x[A_NAME] for x in cwd]:
-            cwd.remove([x for x in cwd if x[A_NAME] == outfile][0])
-        cwd.append((outfile, T_FILE, 0, 0, size, 33188, time.time(), [], None))
+        self.writeln(output)
+        self.fs.mkfile(
+            '%s/%s' % (self.honeypot.cwd, outfile), 0, 0, size, 33188)
 
         # now just dl the file in background...
-        d = client.getPage(url)
-        d.addCallback(self.saveurl, url)
-        d.addErrback(self.error, url)
-
-    def saveurl(self, data, url):
-        print 'Saving URL %s' % url
+        protocol = 'http'
+        if len(urldata[0]):
+            protocol = urldata.scheme
+        url = '%s://%s%s' % (protocol, urldata.netloc, urldata.path)
         fn = '%s_%s' % \
             (time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', url))
-        f = file('./dl/%s' % fn, 'w')
-        f.write(data)
-        f.close()
+        d = client.downloadPage(url, file('%s/%s' % \
+            (config.download_path, fn), 'w'))
+        d.addCallback(self.saveurl, fn)
+        d.addErrback(self.error, url)
+
+    def saveurl(self, data, fn):
+        print 'File download finished (%s)' % fn
 
     def error(self, error, url):
         if hasattr(error, 'getErrorMessage'): # exceptions
             error = error.getErrorMessage()
         print 'Error downloading %s: %s' % (url, repr(error))
+
+# vim: set sw=4 et:
