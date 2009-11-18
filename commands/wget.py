@@ -38,6 +38,10 @@ class command_wget(HoneyPotCommand):
             if arg.startswith('-'):
                 continue
             url = arg.strip()
+            break
+
+        if not url.startswith('http://'):
+            url = 'http://%s' % url
 
         if not url:
             self.writeln('wget: missing URL')
