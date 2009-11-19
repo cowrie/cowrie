@@ -5,6 +5,8 @@ from twisted.internet import reactor
 import stat, time, urlparse, random, re
 import config
 
+commands = {}
+
 def tdiff(seconds):
     t = seconds
     days = int(t / (24 * 60 * 60))
@@ -40,9 +42,6 @@ class command_wget(HoneyPotCommand):
             url = arg.strip()
             break
 
-        if not url.startswith('http://'):
-            url = 'http://%s' % url
-
         if not url:
             self.writeln('wget: missing URL')
             self.writeln('Usage: wget [OPTION]... [URL]...')
@@ -51,13 +50,15 @@ class command_wget(HoneyPotCommand):
             self.exit()
             return
 
+        if url and not url.startswith('http://'):
+            url = 'http://%s' % url
+
         urldata = urlparse.urlparse(url)
 
         outfile = urldata.path.split('/')[-1]
         if not len(outfile.strip()) or not urldata.path.count('/'):
             outfile = 'index.html'
 
-        # now just dl the file in background...
         fn = '%s_%s' % \
             (time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', url))
@@ -75,29 +76,29 @@ class command_wget(HoneyPotCommand):
 
         self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %T'), url))
         self.writeln('Connecting to %s:%d... connected.' % (host, port))
-        self.write('HTTP request sent, awaiting response...')
+        self.write('HTTP request sent, awaiting response... ')
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
-        reactor.connectTCP(host, port, factory)
+        self.connection = reactor.connectTCP(host, port, factory)
         return factory.deferred
 
-    # Dunno how to stop the transfer so let's just make it impossible
     def ctrl_c(self):
         self.writeln('^C')
+        self.connection.transport.loseConnection()
 
     def saveurl(self, data, fn):
-        print 'File download finished (%s)' % fn
         self.exit()
 
     def error(self, error, url):
         if hasattr(error, 'getErrorMessage'): # exceptions
             error = error.getErrorMessage()
-        print 'wget error', error
-        self.writeln('404 Not Found')
-        self.writeln('%s ERROR 404: Not Found.' % \
-            time.strftime('%Y-%m-%d %T'))
+        self.writeln(error)
+        # Real wget also adds this:
+        #self.writeln('%s ERROR 404: Not Found.' % \
+        #    time.strftime('%Y-%m-%d %T'))
         self.exit()
+commands['/usr/bin/wget'] = command_wget
 
 # from http://code.activestate.com/recipes/525493/
 class HTTPProgressDownloader(client.HTTPDownloader):    
@@ -108,6 +109,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.fakeoutfile = fakeoutfile
         self.lastupdate = 0
         self.started = time.time()
+        self.proglen = 0
     
     def noPage(self, reason): # called for non-200 responses
         if self.status == '304':
@@ -128,10 +130,14 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.contenttype = 'text/whatever'
             self.currentlength = 0.0
 
-            self.wget.writeln('Length: %d (%s) [%s]' % \
-                (self.totallength,
-                sizeof_fmt(self.totallength),
-                self.contenttype))
+            if self.totallength > 0:
+                self.wget.writeln('Length: %d (%s) [%s]' % \
+                    (self.totallength,
+                    sizeof_fmt(self.totallength),
+                    self.contenttype))
+            else:
+                self.wget.writeln('Length: unspecified [%s]' % \
+                    (self.contenttype))
             self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
             self.wget.honeypot.terminal.nextLine()
 
@@ -150,19 +156,20 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 percent = 0
             self.speed = self.currentlength / (time.time() - self.started)
             eta = (self.totallength - self.currentlength) / self.speed
-            # FIXME: output looks bugged (insertmode thing)
-            self.wget.write(
-                '\r%s [%s] %s %dK/s  eta %s' % \
+            s = '\r%s [%s] %s %dK/s  eta %s' % \
                 (spercent.rjust(3),
                 ('%s>' % (int(39.0 / 100.0 * percent) * '=')).ljust(39),
                 splitthousands(str(int(self.currentlength))).ljust(12),
                 self.speed / 1000,
-                tdiff(eta)))
+                tdiff(eta))
+            self.wget.write(s.ljust(self.proglen))
+            self.proglen = len(s)
             self.lastupdate = time.time()
-
         return client.HTTPDownloader.pagePart(self, data)
 
     def pageEnd(self):
+        if self.totallength != 0 and self.currentlength != self.totallength:
+            return client.HTTPDownloader.pageEnd(self)
         self.wget.write('\r100%%[%s] %s %dK/s' % \
             ('%s>' % (38 * '='),
             splitthousands(str(int(self.totallength))).ljust(12),

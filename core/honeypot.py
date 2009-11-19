@@ -61,6 +61,7 @@ class HoneyPotShell(object):
         if cmdclass:
             obj = cmdclass(self.honeypot, args)
             self.honeypot.cmdstack.append(obj)
+            self.honeypot.setTypeoverMode()
             obj.start()
         else:
             if len(line.strip()):
@@ -68,6 +69,7 @@ class HoneyPotShell(object):
             self.showPrompt()
 
     def resume(self):
+        self.honeypot.setInsertMode()
         self.showPrompt()
 
     def showPrompt(self):
@@ -95,6 +97,11 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
         self.cmdstack = [HoneyPotShell(self)]
+
+    def connectionLost(self, reason):
+        recvline.HistoricRecvLine.connectionLost(self, reason)
+        # not sure why i need to do this:
+        del self.fs
 
     # Overriding to prevent terminal.reset()
     def initializeScreen(self):
@@ -166,6 +173,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.ttylog_open:
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
+        insults.ServerProtocol.connectionLost(self, reason)
 
 class HoneyPotAvatar(avatar.ConchUser):
     implements(conchinterfaces.ISession)
@@ -196,13 +204,13 @@ class HoneyPotAvatar(avatar.ConchUser):
 
 class HoneyPotEnvironment(object):
     def __init__(self):
-        from core.cmdl import cmdl
-        self.commands = cmdl
-
-        print 'Loading filesystem...',
-        sys.stdout.flush()
+        self.commands = {}
+        import commands
+        for c in commands.__all__:
+            module = __import__('commands.%s' % c,
+                globals(), locals(), ['commands'])
+            self.commands.update(module.commands)
         self.fs = pickle.load(file('fs.pickle'))
-        print 'done'
 
 class HoneyPotFilesystem(object):
     def __init__(self, fs):

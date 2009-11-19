@@ -1,10 +1,14 @@
 import os, time
 from core.honeypot import HoneyPotCommand
 from core.fstypes import *
+import config
+
+commands = {}
 
 class command_whoami(HoneyPotCommand):
     def call(self, args):
         self.writeln(self.honeypot.user.username)
+commands['/usr/bin/whoami'] = command_whoami
 
 class command_cat(HoneyPotCommand):
     def call(self, args):
@@ -14,12 +18,13 @@ class command_cat(HoneyPotCommand):
             self.writeln('bash: cat: %s: No such file or directory' % args)
             return
 
-        fakefile = './honeyfs/%s' % path
+        fakefile = '%s/%s' % (config.contents_path, path)
         if os.path.exists(fakefile) and \
                 not os.path.islink(fakefile) and os.path.isfile(fakefile):
             f = file(fakefile, 'r')
             self.write(f.read())
             f.close()
+commands['/bin/cat'] = command_cat
 
 class command_cd(HoneyPotCommand):
     def call(self, args):
@@ -36,6 +41,7 @@ class command_cd(HoneyPotCommand):
             self.writeln('bash: cd: %s: No such file or directory' % args)
             return
         self.honeypot.cwd = newpath
+commands['cd'] = command_cd
 
 class command_rm(HoneyPotCommand):
     def call(self, args):
@@ -57,6 +63,7 @@ class command_rm(HoneyPotCommand):
                             i[A_NAME])
                     else:
                         dir.remove(i)
+commands['/bin/rm'] = command_rm
 
 class command_mkdir(HoneyPotCommand):
     def call(self, args):
@@ -74,6 +81,7 @@ class command_mkdir(HoneyPotCommand):
                     'mkdir: cannot create directory `test\': File exists')
                 continue
             dir.append([f, T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
+commands['/bin/mkdir'] = command_mkdir
 
 class command_rmdir(HoneyPotCommand):
     def call(self, args):
@@ -91,13 +99,14 @@ class command_rmdir(HoneyPotCommand):
             for i in dir[:]:
                 if i[A_NAME] == f:
                     dir.remove(i)
+commands['/bin/rmdir'] = command_rmdir
 
 class command_uptime(HoneyPotCommand):
     def call(self, args):
         self.writeln(
             ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%T'))
-        #self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
+commands['/usr/bin/uptime'] = command_uptime
 
 class command_w(HoneyPotCommand):
     def call(self, args):
@@ -105,28 +114,36 @@ class command_w(HoneyPotCommand):
             ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%T'))
         self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
+commands['/usr/bin/w'] = command_w
+commands['/usr/bin/who'] = command_w
 
 class command_echo(HoneyPotCommand):
     def call(self, args):
         self.writeln(args)
+commands['/bin/echo'] = command_echo
 
 class command_exit(HoneyPotCommand):
     def call(self, args):
+        #self.honeypot.terminal.loseConnection()
         self.honeypot.terminal.reset()
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
+commands['exit'] = command_exit
 
 class command_clear(HoneyPotCommand):
     def call(self, args):
         self.honeypot.terminal.reset()
+commands['/usr/bin/clear'] = command_clear
 
 class command_vi(HoneyPotCommand):
     def call(self, args):
         self.writeln('E558: Terminal entry not found in terminfo')
+commands['/usr/bin/vi'] = command_vi
 
 class command_hostname(HoneyPotCommand):
     def call(self, args):
         self.writeln(self.honeypot.hostname)
+commands['/bin/hostname'] = command_hostname
 
 class command_uname(HoneyPotCommand):
     def call(self, args):
@@ -136,6 +153,7 @@ class command_uname(HoneyPotCommand):
                 self.honeypot.hostname)
         else:
             self.writeln('Linux')
+commands['/bin/uname'] = command_uname
 
 class command_ps(HoneyPotCommand):
     def call(self, args):
@@ -183,10 +201,12 @@ class command_ps(HoneyPotCommand):
                 )
         for l in output:
             self.writeln(l)
+commands['/bin/ps'] = command_ps
 
 class command_id(HoneyPotCommand):
     def call(self, args):
         self.writeln('uid=0(root) gid=0(root) groups=0(root)')
+commands['/usr/bin/id'] = command_id
 
 class command_mount(HoneyPotCommand):
     def call(self, args):
@@ -202,10 +222,12 @@ class command_mount(HoneyPotCommand):
                 'devpts on /dev/pts type devpts (rw,noexec,nosuid,gid=5,mode=620)',
                 ]:
             self.writeln(i)
+commands['/usr/mount'] = command_mount
 
 class command_pwd(HoneyPotCommand):
     def call(self, args):
         self.writeln(self.honeypot.cwd)
+commands['/bin/pwd'] = command_pwd
 
 class command_passwd(HoneyPotCommand):
     def start(self):
@@ -227,9 +249,17 @@ class command_passwd(HoneyPotCommand):
     def lineReceived(self, line):
         print 'INPUT (passwd):', line
         self.callbacks.pop(0)()
+commands['/usr/bin/passwd'] = command_passwd
 
 class command_nop(HoneyPotCommand):
     def call(self, args):
         pass
+commands['/bin/chmod'] = command_nop
+commands['set'] = command_nop
+commands['unset'] = command_nop
+commands['history'] = command_nop
+commands['export'] = command_nop
+commands['/bin/bash'] = command_nop
+commands['/bin/sh'] = command_nop
 
 # vim: set sw=4 et:

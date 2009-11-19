@@ -1,6 +1,8 @@
 from core.honeypot import HoneyPotCommand
 import time, random
 
+commands = {}
+
 class command_tar(HoneyPotCommand):
 
     def call(self, args):
@@ -30,5 +32,6 @@ class command_tar(HoneyPotCommand):
             size = 1000000 + int(random.random() * 4000000)
             self.fs.mkfile('%s/%s' % (self.honeypot.cwd, f), 0, 0, size, 33188)
             self.writeln('./%s' % f)
+commands['/bin/tar'] = command_tar
 
 # vim: set sw=4 et:

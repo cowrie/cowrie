@@ -2,6 +2,8 @@ from core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 import time, re, random, md5
 
+commands = {}
+
 class command_ping(HoneyPotCommand):
     def start(self):
         if not len(self.args.strip()):
@@ -44,3 +46,4 @@ class command_ping(HoneyPotCommand):
             (self.count, self.count))
         self.writeln('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms')
         self.exit()
+commands['/bin/ping'] = command_ping

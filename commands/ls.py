@@ -2,6 +2,8 @@ from core.honeypot import HoneyPotCommand
 from core.fstypes import *
 import stat, time
 
+commands = {}
+
 class command_ls(HoneyPotCommand):
 
     def uid2name(self, uid):
@@ -70,5 +72,6 @@ class command_ls(HoneyPotCommand):
                 file[A_NAME])
 
             self.honeypot.writeln(l)
+commands['/bin/ls'] = command_ls
 
 # vim: set sw=4 et:

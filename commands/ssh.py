@@ -2,6 +2,8 @@ from core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 import time
 
+commands = {}
+
 class command_ssh(HoneyPotCommand):
     def start(self):
         if not len(self.args.strip()):
@@ -53,5 +55,6 @@ class command_ssh(HoneyPotCommand):
     def lineReceived(self, line):
         if len(self.callbacks):
             self.callbacks.pop(0)(line)
+commands['/usr/bin/ssh'] = command_ssh
 
 # vim: set sw=4 et:
