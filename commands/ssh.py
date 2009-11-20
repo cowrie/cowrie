@@ -1,3 +1,6 @@
+# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 from core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 import time
@@ -6,7 +9,7 @@ commands = {}
 
 class command_ssh(HoneyPotCommand):
     def start(self):
-        if not len(self.args.strip()):
+        if not self.args:
             for l in (
                     'usage: ssh [-1246AaCfgKkMNnqsTtVvXxY] [-b bind_address] [-c cipher_spec]',
                     '           [-D [bind_address:]port] [-e escape_char] [-F configfile]',
@@ -18,14 +21,14 @@ class command_ssh(HoneyPotCommand):
                 self.writeln(l)
             self.exit()
             return
-        self.host = self.args.strip()
+        self.host = self.args[0].strip()
         self.writeln('The authenticity of host \'187.42.2.9 (187.42.2.9)\' can\'t be established.')
         self.writeln('RSA key fingerprint is 9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.')
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 
-    def yesno(self, args):
-        host = args.strip()
+    def yesno(self, line):
+        host = line.strip()
         self.writeln(
             'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.' % \
             host)
@@ -35,7 +38,7 @@ class command_ssh(HoneyPotCommand):
     def wait(self, line):
         reactor.callLater(2, self.finish, line)
 
-    def finish(self, args):
+    def finish(self, line):
         self.pause = False
         user, rest, host = 'root', self.host, 'localhost'
         if self.host.count('@'):

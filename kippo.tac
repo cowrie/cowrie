@@ -1,3 +1,6 @@
+# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 from twisted.application import internet, service
 from twisted.cred import portal, checkers
 from twisted.conch.ssh import factory, keys

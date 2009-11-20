@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2003  Upi Tamminen <desaster@dragonlight.fi>
+# Copyright (C) 2003-2009 Upi Tamminen <desaster@dragonlight.fi>
 #
 # Last update: Mon Sep 15 20:01:15 EEST 2003
 # * Sessions can now be extracted to a file
@@ -20,14 +20,12 @@ def termwidth():
     return struct.unpack("hhhh",
         fcntl.ioctl(0, termios.TIOCGWINSZ ,"\000" * 8))[1]
 
-
 def maxcolumnlen(list, column):
     maxlen = 0
     for row in list:
         if len(row[column]) > maxlen:
             maxlen = len(row[column])
     return maxlen
-
 
 def playlog(fd, pos, settings):
 
@@ -73,7 +71,6 @@ def playlog(fd, pos, settings):
         elif str(tty) == str(currtty) and op == OP_CLOSE:
             break
 
-
 def writelog(fd, outfile, pos):
 
     ssize = struct.calcsize('iLiiLL')
@@ -105,7 +102,6 @@ def writelog(fd, outfile, pos):
         if op == OP_CLOSE or op == -1:
             print 'Total %d bytes written' % written
             break
-
 
 def showsessions(fd):
 
@@ -257,6 +253,5 @@ if __name__ == '__main__':
             playlog(logfd, args[1], settings)
     else:
         showsessions(logfd)
-
 
 # vim: set sw=4:

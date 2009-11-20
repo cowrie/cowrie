@@ -1,3 +1,6 @@
+# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 from core.honeypot import HoneyPotCommand
 from core.fstypes import *
 from twisted.web import client
@@ -36,7 +39,7 @@ def splitthousands( s, sep=','):
 class command_wget(HoneyPotCommand):
     def start(self):
         url = None
-        for arg in self.args.split():
+        for arg in self.args:
             if arg.startswith('-'):
                 continue
             url = arg.strip()
@@ -59,13 +62,14 @@ class command_wget(HoneyPotCommand):
         if not len(outfile.strip()) or not urldata.path.count('/'):
             outfile = 'index.html'
 
-        fn = '%s_%s' % \
-            (time.strftime('%Y%m%d%H%M%S'),
+        self.safeoutfile = '%s/%s_%s' % \
+            (config.download_path,
+            time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', url))
-        self.deferred = self.download(url, outfile, file('%s/%s' % \
-            (config.download_path, fn), 'w'))
+        self.deferred = self.download(url, outfile,
+            file(self.safeoutfile, 'w'))
         if self.deferred:
-            self.deferred.addCallback(self.saveurl, fn)
+            self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error, url)
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
@@ -87,7 +91,7 @@ class command_wget(HoneyPotCommand):
         self.writeln('^C')
         self.connection.transport.loseConnection()
 
-    def saveurl(self, data, fn):
+    def success(self, data):
         self.exit()
 
     def error(self, error, url):
@@ -147,7 +151,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         if self.status == '200':
             self.currentlength += len(data)
             if (time.time() - self.lastupdate) < 0.5:
-                return
+                return client.HTTPDownloader.pagePart(self, data)
             if self.totallength:
                 percent = (self.currentlength/self.totallength)*100
                 spercent = "%i%%" % percent
@@ -181,9 +185,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             (time.strftime('%Y-%m-%d %T'),
             self.speed / 1000,
             self.fakeoutfile, self.currentlength, self.totallength))
-        self.wget.fs.mkfile('%s/%s' % \
-            (self.wget.honeypot.cwd, self.fakeoutfile), 0, 0,
-            self.totallength, 33188)
+        outfile = '%s/%s' % (self.wget.honeypot.cwd, self.fakeoutfile)
+        self.wget.fs.mkfile(outfile, 0, 0, self.totallength, 33188)
+        self.wget.fs.update_realfile(
+            self.wget.fs.getfile(outfile),
+            self.wget.safeoutfile)
         return client.HTTPDownloader.pageEnd(self)
 
 # vim: set sw=4 et:

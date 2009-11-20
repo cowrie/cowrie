@@ -1,51 +1,59 @@
+# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 import os, time
 from core.honeypot import HoneyPotCommand
 from core.fstypes import *
+from twisted.internet import reactor
 import config
 
 commands = {}
 
 class command_whoami(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln(self.honeypot.user.username)
 commands['/usr/bin/whoami'] = command_whoami
 
 class command_cat(HoneyPotCommand):
-    def call(self, args):
-        path = self.fs.resolve_path(args, self.honeypot.cwd)
+    def call(self):
+        for arg in self.args:
+            path = self.fs.resolve_path(arg, self.honeypot.cwd)
+            if not path or not self.fs.exists(path):
+                self.writeln('bash: cat: %s: No such file or directory' % arg)
+                return
+            f = self.fs.getfile(path)
 
-        if not path or not self.fs.exists(path):
-            self.writeln('bash: cat: %s: No such file or directory' % args)
-            return
-
-        fakefile = '%s/%s' % (config.contents_path, path)
-        if os.path.exists(fakefile) and \
-                not os.path.islink(fakefile) and os.path.isfile(fakefile):
-            f = file(fakefile, 'r')
-            self.write(f.read())
-            f.close()
+            realfile = self.fs.realfile(f,
+                '%s/%s' % (config.contents_path, path))
+            if realfile:
+                f = file(realfile, 'r')
+                self.write(f.read())
+                f.close()
 commands['/bin/cat'] = command_cat
 
 class command_cd(HoneyPotCommand):
-    def call(self, args):
-        if not args:
-            args = '/root'
-
+    def call(self):
+        if not self.args:
+            path = '/root'
+        else:
+            path = self.args[0]
         try:
-            newpath = self.fs.resolve_path(args, self.honeypot.cwd)
+            newpath = self.fs.resolve_path(path, self.honeypot.cwd)
             newdir = self.fs.get_path(newpath)
         except IndexError:
             newdir = None
-
         if newdir is None:
-            self.writeln('bash: cd: %s: No such file or directory' % args)
+            self.writeln('bash: cd: %s: No such file or directory' % path)
+            return
+        if not self.fs.is_dir(newpath):
+            self.writeln('-bash: cd: %s: Not a directory' % path)
             return
         self.honeypot.cwd = newpath
 commands['cd'] = command_cd
 
 class command_rm(HoneyPotCommand):
-    def call(self, args):
-        for f in args.split(' '):
+    def call(self):
+        for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
                 dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
@@ -66,26 +74,25 @@ class command_rm(HoneyPotCommand):
 commands['/bin/rm'] = command_rm
 
 class command_mkdir(HoneyPotCommand):
-    def call(self, args):
-        for f in args.split(' '):
+    def call(self):
+        for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
-            try:
-                dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
-            except IndexError:
+            if self.fs.exists(path):
+                self.writeln(
+                    'mkdir: cannot create directory `%s\': File exists' % f)
+                return
+            ok = self.fs.mkdir(path, 0, 0, 4096, 16877)
+            if not ok:
                 self.writeln(
                     'mkdir: cannot create directory `%s\': ' % f + \
                     'No such file or directory')
                 return
-            if f in [x[A_NAME] for x in dir]:
-                self.writeln(
-                    'mkdir: cannot create directory `test\': File exists')
-                continue
-            dir.append([f, T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
 commands['/bin/mkdir'] = command_mkdir
 
 class command_rmdir(HoneyPotCommand):
-    def call(self, args):
-        for f in args.split(' '):
+    def call(self):
+        del self.honeypot.commands['/bin/cat']
+        for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
                 dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
@@ -102,14 +109,14 @@ class command_rmdir(HoneyPotCommand):
 commands['/bin/rmdir'] = command_rmdir
 
 class command_uptime(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln(
             ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%T'))
 commands['/usr/bin/uptime'] = command_uptime
 
 class command_w(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln(
             ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%T'))
@@ -118,12 +125,12 @@ commands['/usr/bin/w'] = command_w
 commands['/usr/bin/who'] = command_w
 
 class command_echo(HoneyPotCommand):
-    def call(self, args):
-        self.writeln(args)
+    def call(self):
+        self.writeln(' '.join(self.args))
 commands['/bin/echo'] = command_echo
 
 class command_exit(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         #self.honeypot.terminal.loseConnection()
         self.honeypot.terminal.reset()
         self.writeln('Connection to server closed.')
@@ -131,23 +138,23 @@ class command_exit(HoneyPotCommand):
 commands['exit'] = command_exit
 
 class command_clear(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.honeypot.terminal.reset()
 commands['/usr/bin/clear'] = command_clear
 
 class command_vi(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln('E558: Terminal entry not found in terminfo')
 commands['/usr/bin/vi'] = command_vi
 
 class command_hostname(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln(self.honeypot.hostname)
 commands['/bin/hostname'] = command_hostname
 
 class command_uname(HoneyPotCommand):
-    def call(self, args):
-        if args.strip() == '-a':
+    def call(self):
+        if len(self.args) and self.args[0].strip() == '-a':
             self.writeln(
                 'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686 GNU/Linux' % \
                 self.honeypot.hostname)
@@ -156,8 +163,8 @@ class command_uname(HoneyPotCommand):
 commands['/bin/uname'] = command_uname
 
 class command_ps(HoneyPotCommand):
-    def call(self, args):
-        if args.strip().count('a'):
+    def call(self):
+        if len(self.args) and self.args[0].strip().count('a'):
             output = (
                 'USER       PID %%CPU %%MEM    VSZ   RSS TTY      STAT START   TIME COMMAND',
                 'root         1  0.0  0.1   2100   688 ?        Ss   Nov06   0:07 init [2]  ',
@@ -191,26 +198,26 @@ class command_ps(HoneyPotCommand):
                 'root      2133  0.0  0.1   2180   620 ?        S<s  Nov06   0:00 dhclient3 -pf /var/run/dhclient.eth0.pid -lf /var/lib/dhcp3/dhclien',
                 'root      4969  0.0  0.1   5416  1024 ?        Ss   Nov08   0:00 /usr/sbin/sshd',
                 'root      5673  0.0  0.2   2924  1540 pts/0    Ss   04:30   0:00 -bash',
-                'root      5679  0.0  0.1   2432   928 pts/0    R+   04:32   0:00 ps %s' % args,
+                'root      5679  0.0  0.1   2432   928 pts/0    R+   04:32   0:00 ps %s' % ' '.join(self.args),
                 )
         else:
             output = (
                 '  PID TTY          TIME CMD',
                 ' 5673 pts/0    00:00:00 bash',
-                ' 5677 pts/0    00:00:00 ps %s' % args,
+                ' 5677 pts/0    00:00:00 ps %s' % ' '.join(self.args),
                 )
         for l in output:
             self.writeln(l)
 commands['/bin/ps'] = command_ps
 
 class command_id(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln('uid=0(root) gid=0(root) groups=0(root)')
 commands['/usr/bin/id'] = command_id
 
 class command_mount(HoneyPotCommand):
-    def call(self, args):
-        if len(args.strip()):
+    def call(self):
+        if self.args and len(self.args[0].strip()):
             return
         for i in [
                 '/dev/sda1 on / type ext3 (rw,errors=remount-ro)',
@@ -225,7 +232,7 @@ class command_mount(HoneyPotCommand):
 commands['/usr/mount'] = command_mount
 
 class command_pwd(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         self.writeln(self.honeypot.cwd)
 commands['/bin/pwd'] = command_pwd
 
@@ -251,8 +258,25 @@ class command_passwd(HoneyPotCommand):
         self.callbacks.pop(0)()
 commands['/usr/bin/passwd'] = command_passwd
 
+class command_reboot(HoneyPotCommand):
+    def start(self):
+        self.nextLine()
+        self.writeln(
+            'Broadcast message from root@%s (pts/0) (%s):' % \
+            (self.honeypot.hostname, time.ctime()))
+        self.nextLine()
+        self.writeln('The system is going down for reboot NOW!')
+        reactor.callLater(3, self.finish)
+
+    def finish(self):
+        self.writeln('Connection to server closed.')
+        self.honeypot.hostname = 'localhost'
+        self.exit()
+
+commands['/sbin/reboot'] = command_reboot
+
 class command_nop(HoneyPotCommand):
-    def call(self, args):
+    def call(self):
         pass
 commands['/bin/chmod'] = command_nop
 commands['set'] = command_nop
@@ -261,5 +285,6 @@ commands['history'] = command_nop
 commands['export'] = command_nop
 commands['/bin/bash'] = command_nop
 commands['/bin/sh'] = command_nop
+commands['/bin/kill'] = command_nop
 
 # vim: set sw=4 et:

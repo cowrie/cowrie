@@ -1,3 +1,6 @@
+# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 from twisted.cred import portal, checkers, credentials
 from twisted.conch import error, avatar, recvline, interfaces as conchinterfaces
 from twisted.conch.ssh import factory, userauth, connection, keys, session, common, transport
@@ -7,15 +10,15 @@ from twisted.protocols.policies import TrafficLoggingFactory
 from twisted.internet import reactor, protocol
 from twisted.python import log
 from zope.interface import implements
-from copy import deepcopy
-import sys, os, random, pickle, time, stat, copy
+from copy import deepcopy, copy
+import sys, os, random, pickle, time, stat, shlex
 
 from core import ttylog
 from core.fstypes import *
-import config
+import commands, config
 
 class HoneyPotCommand(object):
-    def __init__(self, honeypot, args):
+    def __init__(self, honeypot, *args):
         self.honeypot = honeypot
         self.args = args
         self.writeln = self.honeypot.writeln
@@ -24,11 +27,11 @@ class HoneyPotCommand(object):
         self.fs = self.honeypot.fs
 
     def start(self):
-        self.call(self.args)
+        self.call()
         self.exit()
 
-    def call(self, *args):
-        self.honeypot.writeln('Hello World! [%s]' % repr(args))
+    def call(self):
+        self.honeypot.writeln('Hello World! [%s]' % repr(self.args))
 
     def exit(self):
         self.honeypot.cmdstack.pop()
@@ -52,14 +55,22 @@ class HoneyPotShell(object):
 
     def lineReceived(self, line):
         print 'CMD: %s' % line
-        cmdAndArgs = line.strip().split(' ', 1)
+        if not len(line.strip()):
+            self.showPrompt()
+            return
+        try:
+            cmdAndArgs = shlex.split(line.strip())
+        except:
+            self.honeypot.writeln(
+                '-bash: syntax error: unexpected end of file')
+            self.showPrompt()
+            return
+        cmd, args = cmdAndArgs[0], []
         if len(cmdAndArgs) > 1:
-            cmd, args = cmdAndArgs
-        else:
-            cmd, args = cmdAndArgs[0], ''
+            args = cmdAndArgs[1:]
         cmdclass = self.honeypot.getCommand(cmd)
         if cmdclass:
-            obj = cmdclass(self.honeypot, args)
+            obj = cmdclass(self.honeypot, *args)
             self.honeypot.cmdstack.append(obj)
             self.honeypot.setTypeoverMode()
             obj.start()
@@ -91,6 +102,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.cwd = '/root'
         self.hostname = config.fake_hostname
         self.fs = HoneyPotFilesystem(deepcopy(self.env.fs))
+        # commands is also a copy so we can add stuff on the fly
+        self.commands = copy(self.env.commands)
         self.password_input = False
         self.cmdstack = []
 
@@ -102,6 +115,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         recvline.HistoricRecvLine.connectionLost(self, reason)
         # not sure why i need to do this:
         del self.fs
+        del self.commands
 
     # Overriding to prevent terminal.reset()
     def initializeScreen(self):
@@ -111,8 +125,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         if not len(cmd.strip()):
             return None
         path = None
-        if cmd in self.env.commands:
-            return self.env.commands[cmd]
+        if cmd in self.commands:
+            return self.commands[cmd]
         if cmd[0] in ('.', '/'):
             path = self.fs.resolve_path(cmd, self.cwd)
             if not self.fs.exists(path):
@@ -123,8 +137,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
                 if self.fs.exists(i):
                     path = i
                     break
-        if path in self.env.commands:
-            return self.env.commands[path]
+        if path in self.commands:
+            return self.commands[path]
         return None
 
     def lineReceived(self, line):
@@ -249,6 +263,24 @@ class HoneyPotFilesystem(object):
         return self.get_path(path)
 
     def exists(self, path):
+        f = self.getfile(path)
+        if f is not False:
+            return True
+
+    def update_realfile(self, f, realfile):
+        if not f[A_REALFILE] and os.path.exists(realfile) and \
+                not os.path.islink(realfile) and os.path.isfile(realfile) and \
+                f[A_SIZE] < 25000000:
+            print 'Updating realfile to %s' % realfile
+            f[A_REALFILE] = realfile
+
+    def realfile(self, f, path):
+        self.update_realfile(f, path)
+        if f[A_REALFILE]:
+            return f[A_REALFILE]
+        return None
+
+    def getfile(self, path):
         pieces = path.strip('/').split('/')
         p = self.fs
         while 1:
@@ -259,7 +291,7 @@ class HoneyPotFilesystem(object):
                 return False
             p = [x for x in p[A_CONTENTS] \
                 if x[A_NAME] == piece][0]
-        return True
+        return p
 
     def mkfile(self, path, uid, gid, size, mode, ctime = None):
         if ctime is None:
@@ -268,8 +300,33 @@ class HoneyPotFilesystem(object):
         outfile = os.path.basename(path)
         if outfile in [x[A_NAME] for x in dir]:
             dir.remove([x for x in dir if x[A_NAME] == outfile][0])
-        dir.append((outfile, T_FILE, uid, gid, size, mode, ctime, [], None))
+        dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [],
+            None, None])
         return True
+
+    def mkdir(self, path, uid, gid, size, mode, ctime = None):
+        if ctime is None:
+            ctime = time.time()
+        if not len(path.strip('/')):
+            return False
+        try:
+            dir = self.get_path(os.path.dirname(path.strip('/')))
+        except IndexError:
+            return False
+        dir.append([os.path.basename(path), T_DIR, uid, gid, size, mode,
+            ctime, [], None, None])
+        return True
+
+    def is_dir(self, path):
+        if path == '/':
+            return True
+        dir = self.get_path(os.path.dirname(path))
+        l = [x for x in dir
+            if x[A_NAME] == os.path.basename(path) and
+            x[A_TYPE] == T_DIR]
+        if l:
+            return True
+        return False
 
 class HoneyPotRealm:
     implements(portal.IRealm)

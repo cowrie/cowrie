@@ -1,3 +1,6 @@
+# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 A_NAME, \
     A_TYPE, \
     A_UID, \
@@ -6,7 +9,8 @@ A_NAME, \
     A_MODE, \
     A_CTIME, \
     A_CONTENTS, \
-    A_TARGET = range(0, 9)
+    A_TARGET, \
+    A_REALFILE = range(0, 10)
 T_LINK, \
     T_DIR, \
     T_FILE, \
