@@ -93,6 +93,10 @@ class command_rmdir(HoneyPotCommand):
     def call(self):
         for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
+            if len(self.fs.get_path(path)):
+                self.writeln(
+                    'rmdir: failed to remove `%s\': Directory not empty' % f)
+                continue
             try:
                 dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
             except IndexError:
