@@ -91,7 +91,6 @@ commands['/bin/mkdir'] = command_mkdir
 
 class command_rmdir(HoneyPotCommand):
     def call(self):
-        del self.honeypot.commands['/bin/cat']
         for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
