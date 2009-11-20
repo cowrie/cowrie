@@ -13,6 +13,7 @@ class command_orly(HoneyPotCommand):
         self.orly()
 
     def orly(self):
+        self.writeln('  ___ ')
         self.writeln(' {o,o}')
         self.writeln(' |)__)')
         self.writeln(' -"-"-')
