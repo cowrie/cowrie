@@ -26,7 +26,7 @@ class command_cat(HoneyPotCommand):
             realfile = self.fs.realfile(f,
                 '%s/%s' % (config.contents_path, path))
             if realfile:
-                f = file(realfile, 'r')
+                f = file(realfile, 'rb')
                 self.write(f.read())
                 f.close()
 commands['/bin/cat'] = command_cat
@@ -115,14 +115,14 @@ class command_uptime(HoneyPotCommand):
     def call(self):
         self.writeln(
             ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
-            time.strftime('%T'))
+            time.strftime('%H:%M:%S'))
 commands['/usr/bin/uptime'] = command_uptime
 
 class command_w(HoneyPotCommand):
     def call(self):
         self.writeln(
             ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
-            time.strftime('%T'))
+            time.strftime('%H:%M:%S'))
         self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
 commands['/usr/bin/w'] = command_w
 commands['/usr/bin/who'] = command_w

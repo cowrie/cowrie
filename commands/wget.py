@@ -67,7 +67,7 @@ class command_wget(HoneyPotCommand):
             time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', url))
         self.deferred = self.download(url, outfile,
-            file(self.safeoutfile, 'w'))
+            file(self.safeoutfile, 'wb'))
         if self.deferred:
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error, url)
@@ -78,7 +78,7 @@ class command_wget(HoneyPotCommand):
             self.writeln('Sorry, SSL not supported in this release')
             return None
 
-        self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %T'), url))
+        self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
         self.writeln('Connecting to %s:%d... connected.' % (host, port))
         self.write('HTTP request sent, awaiting response... ')
 
@@ -182,7 +182,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.wget.honeypot.terminal.nextLine()
         self.wget.writeln(
             '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
-            (time.strftime('%Y-%m-%d %T'),
+            (time.strftime('%Y-%m-%d %H:%M:%S'),
             self.speed / 1000,
             self.fakeoutfile, self.currentlength, self.totallength))
         outfile = '%s/%s' % (self.wget.honeypot.cwd, self.fakeoutfile)
