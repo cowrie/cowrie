@@ -1,6 +1,9 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import os, sys
+sys.path.insert(0, os.path.abspath(os.getcwd()))
+
 from twisted.application import internet, service
 from twisted.cred import portal
 from twisted.conch.ssh import factory, keys
