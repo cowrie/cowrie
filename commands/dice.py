@@ -30,3 +30,16 @@ class command_orly(HoneyPotCommand):
             return
         self.orly()
 clist.append(command_orly)
+
+class command_wargames(HoneyPotCommand):
+    def start(self):
+        self.write('Shall we play a game? ')
+
+    def lineReceived(self, data):
+        self.writeln('A strange game. ' + \
+            'The only winning move is not to play.  ' + \
+            'How about a nice game of chess?')
+        self.exit()
+clist.append(command_wargames)
+
+# vim: set sw=4 et:
