@@ -3,7 +3,7 @@
 
 import os, time
 from core.honeypot import HoneyPotCommand
-from core.fstypes import *
+from core.fs import *
 from twisted.internet import reactor
 import config
 

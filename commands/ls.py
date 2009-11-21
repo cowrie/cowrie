@@ -2,7 +2,7 @@
 # See the COPYRIGHT file for more information
 
 from core.honeypot import HoneyPotCommand
-from core.fstypes import *
+from core.fs import *
 import stat, time
 
 commands = {}

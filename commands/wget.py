@@ -2,7 +2,7 @@
 # See the COPYRIGHT file for more information
 
 from core.honeypot import HoneyPotCommand
-from core.fstypes import *
+from core.fs import *
 from twisted.web import client
 from twisted.internet import reactor
 import stat, time, urlparse, random, re
