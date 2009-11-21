@@ -1,14 +1,14 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from twisted.cred import portal, checkers, credentials
-from twisted.conch import error, avatar, recvline, interfaces as conchinterfaces
+from twisted.cred import portal, checkers, credentials, error
+from twisted.conch import avatar, recvline, interfaces as conchinterfaces
 from twisted.conch.ssh import factory, userauth, connection, keys, session, common, transport
 from twisted.conch.insults import insults
 from twisted.application import service, internet
 from twisted.protocols.policies import TrafficLoggingFactory
-from twisted.internet import reactor, protocol
-from twisted.python import log
+from twisted.internet import reactor, protocol, defer
+from twisted.python import failure, log
 from zope.interface import implements
 from copy import deepcopy, copy
 import sys, os, random, pickle, time, stat, shlex
@@ -352,10 +352,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         }
 
     def buildProtocol(self, addr):
+        # FIXME: try to mimic something real 100%
         t = transport.SSHServerTransport()
-        #
-        # Fix for BUG 1463701 "NMap recognizes Kojoney as a Honeypot"
-        #
         t.ourVersionString = 'SSH-2.0-OpenSSH_5.1p1 Debian-5'
         t.supportedPublicKeys = self.privateKeys.keys()
         if not self.primes:
@@ -364,6 +362,24 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             t.supportedKeyExchanges = ske
         t.factory = self
         return t
+
+class HoneypotPasswordChecker:
+    implements(checkers.ICredentialsChecker)
+
+    credentialInterfaces = (credentials.IUsernamePassword,)
+
+    def __init__(self, users):
+        self.users = users
+
+    def requestAvatarId(self, credentials):
+        if (credentials.username, credentials.password) in self.users:
+            print 'login attempt [%s/%s] succeeded' % \
+                (credentials.username, credentials.password)
+            return defer.succeed(credentials.username)
+        else:
+            print 'login attempt [%s/%s] failed' % \
+                (credentials.username, credentials.password)
+            return defer.fail(error.UnauthorizedLogin())
 
 def getRSAKeys():
     if not (os.path.exists('public.key') and os.path.exists('private.key')):
