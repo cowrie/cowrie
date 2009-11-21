@@ -14,7 +14,7 @@ pubKeyString, privKeyString = honeypot.getRSAKeys()
 # Move this somewhere if we decide to use more passwords
 users = (
     ('root', 'root'),
-    ('root', '1234'),
+    ('root', '123456'),
     )
 factory.portal.registerChecker(honeypot.HoneypotPasswordChecker(users))
 factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
