@@ -9,7 +9,7 @@ if sys.platform == 'win32':
     # and this is when running as a service
     #os.chdir(os.path.dirname(inspect.getfile(inspect.currentframe())))
 
-from twisted.internet import reactor, defer, default
+from twisted.internet import reactor, defer
 from twisted.application import internet, service
 from twisted.cred import portal
 from twisted.conch.ssh import factory, keys
