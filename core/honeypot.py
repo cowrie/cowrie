@@ -219,14 +219,15 @@ class HoneyPotAvatar(avatar.ConchUser):
 
 class HoneyPotEnvironment(object):
     def __init__(self):
+        self.cfg = config()
         self.commands = {}
         import commands
         for c in commands.__all__:
             module = __import__('commands.%s' % c,
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
-        self.fs = pickle.load(file('fs.pickle'))
-        self.cfg = config()
+        self.fs = pickle.load(file(
+            self.cfg.get('honeypot', 'filesystem_file')))
 
 class HoneyPotRealm:
     implements(portal.IRealm)
