@@ -13,8 +13,8 @@ from twisted.internet import reactor, defer
 from twisted.application import internet, service
 from twisted.cred import portal
 from twisted.conch.ssh import factory, keys
-from core import honeypot
-from core.config import config
+from kippo.core import honeypot
+from kippo.core.config import config
 
 factory = honeypot.HoneyPotSSHFactory()
 factory.portal = portal.Portal(honeypot.HoneyPotRealm())
