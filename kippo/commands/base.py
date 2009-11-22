@@ -5,7 +5,7 @@ import os, time
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from twisted.internet import reactor
-import config
+from kippo.core.config import config
 
 commands = {}
 
@@ -24,7 +24,7 @@ class command_cat(HoneyPotCommand):
             f = self.fs.getfile(path)
 
             realfile = self.fs.realfile(f,
-                '%s/%s' % (config.contents_path, path))
+                '%s/%s' % (config().contents_path, path))
             if realfile:
                 f = file(realfile, 'rb')
                 self.write(f.read())
