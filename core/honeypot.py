@@ -14,7 +14,8 @@ from copy import deepcopy, copy
 import sys, os, random, pickle, time, stat, shlex
 
 from core import ttylog, fs
-import commands, config
+from core.config import config
+import commands
 
 class HoneyPotCommand(object):
     def __init__(self, honeypot, *args):
@@ -99,7 +100,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.user = user
         self.env = env
         self.cwd = '/root'
-        self.hostname = config.fake_hostname
+        self.hostname = self.env.cfg.get('honeypot', 'hostname')
         self.fs = fs.HoneyPotFilesystem(deepcopy(self.env.fs))
         # commands is also a copy so we can add stuff on the fly
         self.commands = copy(self.env.commands)
@@ -169,7 +170,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
         self.ttylog_file = '%s/tty/%s-%s.log' % \
-            (config.log_path, time.strftime('%Y%m%d-%H%M%S'),
+            (config().get('honeypot', 'log_path'),
+            time.strftime('%Y%m%d-%H%M%S'),
             int(random.random() * 10000))
         print 'Opening TTY log: %s' % self.ttylog_file
         ttylog.ttylog_open(self.ttylog_file, time.time())
@@ -224,6 +226,7 @@ class HoneyPotEnvironment(object):
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
         self.fs = pickle.load(file('fs.pickle'))
+        self.cfg = config()
 
 class HoneyPotRealm:
     implements(portal.IRealm)

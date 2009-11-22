@@ -14,7 +14,7 @@ from twisted.application import internet, service
 from twisted.cred import portal
 from twisted.conch.ssh import factory, keys
 from core import honeypot
-import config
+from core.config import config
 
 factory = honeypot.HoneyPotSSHFactory()
 factory.portal = portal.Portal(honeypot.HoneyPotRealm())
@@ -30,7 +30,8 @@ factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
 factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=privKeyString)}
 
 application = service.Application('honeypot')
-service = internet.TCPServer(config.ssh_port, factory)
+service = internet.TCPServer(
+    int(config().get('honeypot', 'ssh_port')), factory)
 service.setServiceParent(application)
 
 # vim: set ft=python sw=4 et:
