@@ -3,5 +3,5 @@ ssh_port = 2222
 hostname = sales
 log_path = log
 download_path = dl
-contents_dir = honeyfs
+contents_path = honeyfs
 filesystem_file = fs.pickle

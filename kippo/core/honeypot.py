@@ -296,8 +296,9 @@ def getRSAKeys():
         file('private.key', 'w+b').write(privateKeyString)
         print "done."
     else:
-        publicKeyString = file('public.key').read()
-        privateKeyString = file('private.key').read()
+        cfg = config()
+        publicKeyString = file(cfg.get('honeypot', 'public_key')).read()
+        privateKeyString = file(cfg.get('honeypot', 'private_key')).read()
     return publicKeyString, privateKeyString
 
 # vim: set sw=4 et:

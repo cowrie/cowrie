@@ -24,7 +24,7 @@ class command_cat(HoneyPotCommand):
             f = self.fs.getfile(path)
 
             realfile = self.fs.realfile(f,
-                '%s/%s' % (config().contents_path, path))
+                '%s/%s' % (config().get('honeypot', 'contents_path'), path))
             if realfile:
                 f = file(realfile, 'rb')
                 self.write(f.read())
@@ -138,6 +138,7 @@ class command_exit(HoneyPotCommand):
         self.honeypot.terminal.reset()
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
+        self.honeypot.cwd = '/root'
 commands['exit'] = command_exit
 
 class command_clear(HoneyPotCommand):
