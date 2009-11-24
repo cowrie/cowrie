@@ -60,7 +60,7 @@ class HoneyPotFilesystem(object):
             elif p[0] == '.':
                 foo(p[1:], cwd)
             elif p[0] == '..':
-                foo(p[1:], cwd[1:])
+                foo(p[1:], cwd[:-1])
             else:
                 names = [x[A_NAME] for x in self.get_path('/'.join(cwd))]
                 matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
