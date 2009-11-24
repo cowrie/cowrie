@@ -53,6 +53,10 @@ commands['cd'] = command_cd
 
 class command_rm(HoneyPotCommand):
     def call(self):
+        recursive = False
+        for f in self.args:
+            if f.startswith('-') and 'r' in f:
+                recursive = True
         for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
@@ -65,7 +69,7 @@ class command_rm(HoneyPotCommand):
             contents = [x for x in dir]
             for i in dir[:]:
                 if i[A_NAME] == basename:
-                    if i[A_TYPE] == T_DIR:
+                    if i[A_TYPE] == T_DIR and not recursive:
                         self.writeln(
                             'rm: cannot remove `%s\': Is a directory' % \
                             i[A_NAME])
