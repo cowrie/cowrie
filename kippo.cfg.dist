@@ -5,3 +5,5 @@ log_path = log
 download_path = dl
 contents_path = honeyfs
 filesystem_file = fs.pickle
+public_key = public.key
+private_key = private.key
