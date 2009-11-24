@@ -44,7 +44,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_normal(self, path):
         try:
-            files = self.honeypot.fs.list_files(path)
+            files = self.honeypot.fs.get_path(path)
         except:
             self.honeypot.writeln(
                 'ls: cannot access %s: No such file or directory' % path)
@@ -71,7 +71,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_l(self, path):
         try:
-            files = self.honeypot.fs.list_files(path)[:]
+            files = self.honeypot.fs.get_path(path)[:]
         except:
             self.honeypot.writeln(
                 'ls: cannot access %s: No such file or directory' % path)

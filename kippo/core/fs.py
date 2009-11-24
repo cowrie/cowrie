@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import os, time
+import os, time, fnmatch
 
 A_NAME, \
     A_TYPE, \
@@ -46,6 +46,29 @@ class HoneyPotFilesystem(object):
 
         return '/%s' % '/'.join(cwd)
 
+    def resolve_path_wc(self, path, cwd):
+        pieces = path.rstrip('/').split('/')
+        if len(pieces[0]):
+            cwd = [x for x in cwd.split('/') if len(x) and x is not None]
+            path = path[1:]
+        else:
+            cwd, pieces = [], pieces[1:]
+        found = []
+        def foo(p, cwd):
+            if not len(p):
+                found.append('/%s' % '/'.join(cwd))
+            elif p[0] == '.':
+                foo(p[1:], cwd)
+            elif p[0] == '..':
+                foo(p[1:], cwd[1:])
+            else:
+                names = [x[A_NAME] for x in self.get_path('/'.join(cwd))]
+                matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
+                for match in matches:
+                    foo(p[1:], cwd + [match])
+        foo(pieces, cwd)
+        return found
+
     def get_path(self, path):
         p = self.fs
         for i in path.split('/'):
@@ -53,9 +76,6 @@ class HoneyPotFilesystem(object):
                 continue
             p = [x for x in p[A_CONTENTS] if x[A_NAME] == i][0]
         return p[A_CONTENTS]
-
-    def list_files(self, path):
-        return self.get_path(path)
 
     def exists(self, path):
         f = self.getfile(path)

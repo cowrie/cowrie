@@ -82,9 +82,16 @@ class HoneyPotShell(object):
         cmd, args = cmdAndArgs[0], []
         if len(cmdAndArgs) > 1:
             args = cmdAndArgs[1:]
+        rargs = []
+        for arg in args:
+            matches = self.honeypot.fs.resolve_path_wc(arg, self.honeypot.cwd)
+            if matches:
+                rargs.extend(matches)
+            else:
+                rargs.append(arg)
         cmdclass = self.honeypot.getCommand(cmd)
         if cmdclass:
-            obj = cmdclass(self.honeypot, *args)
+            obj = cmdclass(self.honeypot, *rargs)
             self.honeypot.cmdstack.append(obj)
             self.honeypot.setTypeoverMode()
             obj.start()
