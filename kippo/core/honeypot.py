@@ -52,17 +52,31 @@ class HoneyPotShell(object):
     def __init__(self, honeypot):
         self.honeypot = honeypot
         self.showPrompt()
+        self.cmdpending = []
 
     def lineReceived(self, line):
         print 'CMD: %s' % line
-        if not len(line.strip()):
+        for i in [x.strip() for x in line.strip().split(';')]:
+            if not len(i):
+                continue
+            self.cmdpending.append(i)
+        if len(self.cmdpending):
+            self.runCommand()
+        else:
+            self.showPrompt()
+
+    def runCommand(self):
+        if not len(self.cmdpending):
             self.showPrompt()
             return
+        i = self.cmdpending.pop(0)
         try:
-            cmdAndArgs = shlex.split(line.strip())
+            cmdAndArgs = shlex.split(i)
         except:
             self.honeypot.writeln(
                 '-bash: syntax error: unexpected end of file')
+            # could run runCommand here, but i'll just clear the list instead
+            self.cmdpending = []
             self.showPrompt()
             return
         cmd, args = cmdAndArgs[0], []
@@ -75,13 +89,13 @@ class HoneyPotShell(object):
             self.honeypot.setTypeoverMode()
             obj.start()
         else:
-            if len(line.strip()):
+            if len(i):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
             self.showPrompt()
 
     def resume(self):
         self.honeypot.setInsertMode()
-        self.showPrompt()
+        self.runCommand()
 
     def showPrompt(self):
         prompt = '%s:%%(path)s# ' % self.honeypot.hostname
