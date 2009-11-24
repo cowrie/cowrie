@@ -57,6 +57,7 @@ class command_ssh(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line):
+        print 'INPUT (ssh):', line
         if len(self.callbacks):
             self.callbacks.pop(0)(line)
 commands['/usr/bin/ssh'] = command_ssh
