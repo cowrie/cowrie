@@ -113,6 +113,8 @@ class HoneyPotShell(object):
         self.honeypot.terminal.write(prompt % attrs)
 
     def ctrl_c(self):
+        self.honeypot.lineBuffer = []
+        self.honeypot.lineBufferIndex = 0
         self.honeypot.terminal.nextLine()
         self.showPrompt()
 
@@ -187,6 +189,13 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def writeln(self, data):
         self.terminal.write(data)
         self.terminal.nextLine()
+
+    def handle_RETURN(self):
+        if len(self.cmdstack) == 1:
+            if self.lineBuffer:
+                self.historyLines.append(''.join(self.lineBuffer))
+            self.historyPosition = len(self.historyLines)
+        return recvline.RecvLine.handle_RETURN(self)
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
