@@ -98,7 +98,10 @@ class HoneyPotShell(object):
         else:
             if len(i):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
-            self.showPrompt()
+                if len(self.cmdpending):
+                    self.runCommand()
+                else:
+                    self.showPrompt()
 
     def resume(self):
         self.honeypot.setInsertMode()
@@ -133,6 +136,11 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
         self.cmdstack = [HoneyPotShell(self)]
+
+        # You are in a maze of twisty little passages, all alike
+        p = self.terminal.transport.session.conn.transport.transport.getPeer()
+        self.clientIP = p[1]
+        self.logintime = time.time()
 
     def connectionLost(self, reason):
         recvline.HistoricRecvLine.connectionLost(self, reason)

@@ -117,17 +117,18 @@ commands['/bin/rmdir'] = command_rmdir
 
 class command_uptime(HoneyPotCommand):
     def call(self):
-        self.writeln(
-            ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
+        self.writeln(' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%H:%M:%S'))
 commands['/usr/bin/uptime'] = command_uptime
 
 class command_w(HoneyPotCommand):
     def call(self):
-        self.writeln(
-            ' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
+        self.writeln(' %s up 14 days,  3:53,  1 user,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%H:%M:%S'))
         self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
+        self.writeln('root     pts/0    %s %s    0.00s  0.00s  0.00s w' % \
+            (self.honeypot.clientIP[:17].ljust(17),
+            time.strftime('%H:%M', time.localtime(self.honeypot.logintime))))
 commands['/usr/bin/w'] = command_w
 commands['/usr/bin/who'] = command_w
 
