@@ -330,8 +330,8 @@ def getRSAKeys():
         publicKeyString = keys.makePublicKeyString(rsaKey)
         privateKeyString = keys.makePrivateKeyString(rsaKey)
         # save keys for next time
-        file('public.key', 'w+b').write(publicKeyString)
-        file('private.key', 'w+b').write(privateKeyString)
+        file(cfg.get('honeypot', 'public_key'), 'w+b').write(publicKeyString)
+        file(cfg.get('honeypot', 'private_key'), 'w+b').write(privateKeyString)
         print "done."
     else:
         cfg = config()
