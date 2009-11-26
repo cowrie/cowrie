@@ -321,6 +321,7 @@ class HoneypotPasswordChecker:
             return defer.fail(error.UnauthorizedLogin())
 
 def getRSAKeys():
+    cfg = config()
     if not (os.path.exists('public.key') and os.path.exists('private.key')):
         # generate a RSA keypair
         print "Generating RSA keypair..."
@@ -334,7 +335,6 @@ def getRSAKeys():
         file(cfg.get('honeypot', 'private_key'), 'w+b').write(privateKeyString)
         print "done."
     else:
-        cfg = config()
         publicKeyString = file(cfg.get('honeypot', 'public_key')).read()
         privateKeyString = file(cfg.get('honeypot', 'private_key')).read()
     return publicKeyString, privateKeyString
