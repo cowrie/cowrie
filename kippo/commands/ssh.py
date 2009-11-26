@@ -43,10 +43,9 @@ class command_ssh(HoneyPotCommand):
         self.callbacks = [self.yesno, self.wait]
 
     def yesno(self, line):
-        host = line.strip()
         self.writeln(
             'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.' % \
-            host)
+            self.host)
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.honeypot.password_input = True
 
