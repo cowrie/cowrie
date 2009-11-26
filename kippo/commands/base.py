@@ -281,8 +281,19 @@ class command_reboot(HoneyPotCommand):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.exit()
-
 commands['/sbin/reboot'] = command_reboot
+
+class command_history(HoneyPotCommand):
+    def call(self):
+        if len(self.args) and self.args[0] == '-c':
+            self.honeypot.historyLines = []
+            self.honeypot.historyPosition = 0
+            return
+        count = 1
+        for l in self.honeypot.historyLines:
+            self.writeln(' %s  %s' % (str(count).rjust(4), l))
+            count += 1
+commands['history'] = command_history
 
 class command_nop(HoneyPotCommand):
     def call(self):
@@ -290,7 +301,6 @@ class command_nop(HoneyPotCommand):
 commands['/bin/chmod'] = command_nop
 commands['set'] = command_nop
 commands['unset'] = command_nop
-commands['history'] = command_nop
 commands['export'] = command_nop
 commands['/bin/bash'] = command_nop
 commands['/bin/sh'] = command_nop
