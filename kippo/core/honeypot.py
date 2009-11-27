@@ -323,8 +323,8 @@ class HoneypotPasswordChecker:
 def getRSAKeys():
     cfg = config()
     public_key = cfg.get('honeypot', 'public_key')
-    prviate_key = cfg.get('honeypot', 'private_key')
-    if not (os.path.exists('public.key') and os.path.exists('private.key')):
+    private_key = cfg.get('honeypot', 'private_key')
+    if not (os.path.exists(public_key) and os.path.exists(private_key)):
         # generate a RSA keypair
         print "Generating RSA keypair..."
         from Crypto.PublicKey import RSA
@@ -338,7 +338,7 @@ def getRSAKeys():
         print "done."
     else:
         publicKeyString = file(private_key).read()
-        privateKeyString = file(private_key)).read()
+        privateKeyString = file(private_key).read()
     return publicKeyString, privateKeyString
 
 # vim: set sw=4 et:
