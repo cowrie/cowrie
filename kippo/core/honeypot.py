@@ -252,6 +252,9 @@ class HoneyPotAvatar(avatar.ConchUser):
     def closed(self):
         pass
 
+    def eofReceived(self):
+        pass
+
     def windowChanged(self, windowSize):
         self.windowSize = windowSize
 
