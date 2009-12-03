@@ -280,6 +280,7 @@ class command_reboot(HoneyPotCommand):
     def finish(self):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
+        self.honeypot.cwd = '/root'
         self.exit()
 commands['/sbin/reboot'] = command_reboot
 
