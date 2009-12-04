@@ -9,7 +9,13 @@ commands = {}
 
 class command_ping(HoneyPotCommand):
     def start(self):
-        if not len(self.args):
+        self.host = None
+        for arg in self.args:
+            if not arg.startswith('-'):
+                self.host = arg.strip()
+                break
+
+        if not self.host:
             for l in (
                     'Usage: ping [-LRUbdfnqrvVaA] [-c count] [-i interval] [-w deadline]',
                     '            [-p pattern] [-s packetsize] [-t ttl] [-I interface or address]',
@@ -20,7 +26,6 @@ class command_ping(HoneyPotCommand):
             self.exit()
             return
 
-        self.host = self.args[0]
         if re.match('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$',
                 self.host):
             self.ip = self.host
