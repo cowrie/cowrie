@@ -139,7 +139,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
         # You are in a maze of twisty little passages, all alike
         p = self.terminal.transport.session.conn.transport.transport.getPeer()
-        self.clientIP = p[1]
+        self.clientIP = p.host
         self.logintime = time.time()
 
     def connectionLost(self, reason):
