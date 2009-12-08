@@ -340,7 +340,7 @@ def getRSAKeys():
         file(private_key, 'w+b').write(privateKeyString)
         print "done."
     else:
-        publicKeyString = file(private_key).read()
+        publicKeyString = file(public_key).read()
         privateKeyString = file(private_key).read()
     return publicKeyString, privateKeyString
 
