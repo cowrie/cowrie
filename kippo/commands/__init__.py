@@ -8,5 +8,6 @@ __all__ = [
     'ssh',
     'tar',
     'wget',
+    'apt',
     'dice',
     ]
