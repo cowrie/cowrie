@@ -42,4 +42,14 @@ class command_wargames(HoneyPotCommand):
         self.exit()
 clist.append(command_wargames)
 
+class command_libgnome(HoneyPotCommand):
+    def call(self):
+        self.writeln('error while loading shared libraries: libgnome.so.32: cannot open shared object file: No such file or directory')
+clist.append(command_libgnome)
+
+class command_xconnect(HoneyPotCommand):
+    def call(self):
+        self.writeln('unable to open display ":0"')
+clist.append(command_xconnect)
+
 # vim: set sw=4 et:
