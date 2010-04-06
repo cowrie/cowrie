@@ -3,13 +3,19 @@
 
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
-import time, re, md5
+import time, re, md5, getopt
 
 commands = {}
 
 class command_ssh(HoneyPotCommand):
     def start(self):
-        if not self.args:
+        try:
+            optlist, args = getopt.getopt(self.args,
+                '-1246AaCfgKkMNnqsTtVvXxYb:c:D:e:F:i:L:l:m:O:o:p:R:S:w:')
+        except getopt.GetoptError, err:
+            self.writeln('Unrecognized option')
+            self.exit()
+        if not len(args):
             for l in (
                     'usage: ssh [-1246AaCfgKkMNnqsTtVvXxY] [-b bind_address] [-c cipher_spec]',
                     '           [-D [bind_address:]port] [-e escape_char] [-F configfile]',
@@ -21,11 +27,12 @@ class command_ssh(HoneyPotCommand):
                 self.writeln(l)
             self.exit()
             return
-        arg = self.args[0].strip()
-        if arg.count('@'):
-            user, host = arg.split('@', 1)
-        else:
-            user, host = 'root', arg
+        user, host = 'root', args[0]
+        for opt in optlist:
+            if opt[0] == '-l':
+                user = opt[1]
+        if args[0].count('@'):
+            user, host = args[0].split('@', 1)
 
         if re.match('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', host):
             self.ip = host
