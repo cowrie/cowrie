@@ -152,6 +152,15 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def initializeScreen(self):
         self.setInsertMode()
 
+    def txtcmd(self, txt):
+        class command_txtcmd(HoneyPotCommand):
+            def call(self):
+                print 'Reading txtcmd from "%s"' % txt
+                f = file(txt, 'r')
+                self.write(f.read())
+                f.close()
+        return command_txtcmd
+
     def getCommand(self, cmd):
         if not len(cmd.strip()):
             return None
@@ -168,6 +177,9 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
                 if self.fs.exists(i):
                     path = i
                     break
+        txt = os.path.abspath('txtcmds/%s' % (path,))
+        if os.path.exists(txt):
+            return self.txtcmd(txt)
         if path in self.commands:
             return self.commands[path]
         return None
