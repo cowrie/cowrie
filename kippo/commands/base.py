@@ -151,11 +151,6 @@ class command_clear(HoneyPotCommand):
         self.honeypot.terminal.reset()
 commands['/usr/bin/clear'] = command_clear
 
-class command_vi(HoneyPotCommand):
-    def call(self):
-        self.writeln('E558: Terminal entry not found in terminfo')
-commands['/usr/bin/vi'] = command_vi
-
 class command_hostname(HoneyPotCommand):
     def call(self):
         self.writeln(self.honeypot.hostname)
@@ -223,22 +218,6 @@ class command_id(HoneyPotCommand):
     def call(self):
         self.writeln('uid=0(root) gid=0(root) groups=0(root)')
 commands['/usr/bin/id'] = command_id
-
-class command_mount(HoneyPotCommand):
-    def call(self):
-        if self.args and len(self.args[0].strip()):
-            return
-        for i in [
-                '/dev/sda1 on / type ext3 (rw,errors=remount-ro)',
-                'tmpfs on /lib/init/rw type tmpfs (rw,nosuid,mode=0755)',
-                'proc on /proc type proc (rw,noexec,nosuid,nodev)',
-                'sysfs on /sys type sysfs (rw,noexec,nosuid,nodev)',
-                'udev on /dev type tmpfs (rw,mode=0755)',
-                'tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)',
-                'devpts on /dev/pts type devpts (rw,noexec,nosuid,gid=5,mode=620)',
-                ]:
-            self.writeln(i)
-commands['/usr/mount'] = command_mount
 
 class command_pwd(HoneyPotCommand):
     def call(self):
