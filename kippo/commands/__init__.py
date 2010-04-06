@@ -10,4 +10,5 @@ __all__ = [
     'wget',
     'apt',
     'dice',
+    'adduser',
     ]
