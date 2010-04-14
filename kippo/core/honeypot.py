@@ -11,7 +11,7 @@ from twisted.internet import reactor, protocol, defer
 from twisted.python import failure, log
 from zope.interface import implements
 from copy import deepcopy, copy
-import sys, os, random, pickle, time, stat, shlex
+import sys, os, random, pickle, time, stat, shlex, anydbm
 
 from kippo.core import ttylog, fs
 from kippo.core.config import config
@@ -96,6 +96,7 @@ class HoneyPotShell(object):
             self.honeypot.setTypeoverMode()
             obj.start()
         else:
+            print 'Command not found: %s' % (cmd,)
             if len(i):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
                 if len(self.cmdpending):
@@ -177,7 +178,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
                 if self.fs.exists(i):
                     path = i
                     break
-        txt = os.path.abspath('txtcmds/%s' % (path,))
+        txt = os.path.abspath('%s/%s' % \
+            (self.env.cfg.get('honeypot', 'txtcmds_path'), path))
         if os.path.exists(txt):
             return self.txtcmd(txt)
         if path in self.commands:
@@ -326,7 +328,16 @@ class HoneypotPasswordChecker:
         self.users = users
 
     def requestAvatarId(self, credentials):
+        data_path = config().get('honeypot', 'data_path')
+        passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
+        success = False
         if (credentials.username, credentials.password) in self.users:
+            success = True
+        elif credentials.username == 'root' and \
+                credentials.password in passdb:
+            success = True
+        passdb.close()
+        if success:
             print 'login attempt [%s/%s] succeeded' % \
                 (credentials.username, credentials.password)
             return defer.succeed(credentials.username)

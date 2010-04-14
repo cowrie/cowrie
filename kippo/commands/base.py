@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import os, time
+import os, time, anydbm
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from twisted.internet import reactor
@@ -23,8 +23,8 @@ class command_cat(HoneyPotCommand):
                 return
             f = self.fs.getfile(path)
 
-            realfile = self.fs.realfile(f,
-                '%s/%s' % (config().get('honeypot', 'contents_path'), path))
+            realfile = self.fs.realfile(f, '%s/%s' % \
+                (self.honeypot.env.cfg.get('honeypot', 'contents_path'), path))
             if realfile:
                 f = file(realfile, 'rb')
                 self.write(f.read())
@@ -235,14 +235,19 @@ class command_passwd(HoneyPotCommand):
 
     def finish(self):
         self.honeypot.password_input = False
-        self.writeln('Sorry, passwords do not match')
-        self.writeln(
-            'passwd: Authentication information cannot be recovered')
-        self.writeln('passwd: password unchanged')
+
+        data_path = self.honeypot.env.cfg.get('honeypot', 'data_path')
+        passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
+        if len(self.password) and self.password not in passdb:
+            passdb[self.password] = None
+        passdb.close()
+
+        self.writeln('passwd: password updated successfully')
         self.exit()
 
     def lineReceived(self, line):
         print 'INPUT (passwd):', line
+        self.password = line.strip()
         self.callbacks.pop(0)()
 commands['/usr/bin/passwd'] = command_passwd
 
