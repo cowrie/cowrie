@@ -29,9 +29,8 @@ factory = honeypot.HoneyPotSSHFactory()
 factory.portal = portal.Portal(honeypot.HoneyPotRealm())
 
 pubKeyString, privKeyString = honeypot.getRSAKeys()
-# Move this somewhere if we decide to use more passwords
+# This is only the initial password, the rest will be in data/pass.db
 users = (
-    ('root', 'root'),
     ('root', '123456'),
     )
 factory.portal.registerChecker(honeypot.HoneypotPasswordChecker(users))
