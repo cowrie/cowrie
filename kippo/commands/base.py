@@ -280,6 +280,20 @@ class command_history(HoneyPotCommand):
             count += 1
 commands['history'] = command_history
 
+class command_touch(HoneyPotCommand):
+    def call(self):
+        if not len(self.args):
+            self.writeln('touch: missing file operand')
+            self.writeln('Try `touch --help\' for more information.')
+            return
+        for f in self.args:
+            path = self.fs.resolve_path(f, self.honeypot.cwd)
+            if self.fs.exists(path):
+                # FIXME: modify the timestamp here
+                continue
+            self.fs.mkfile(path, 0, 0, 0, 33188)
+commands['/bin/touch'] = command_touch
+
 class command_nop(HoneyPotCommand):
     def call(self):
         pass
