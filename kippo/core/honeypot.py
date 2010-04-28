@@ -53,6 +53,9 @@ class HoneyPotShell(object):
         self.honeypot = honeypot
         self.showPrompt()
         self.cmdpending = []
+        self.envvars = {
+            'PATH':     '/bin:/usr/bin:/sbin:/usr/sbin',
+            }
 
     def lineReceived(self, line):
         print 'CMD: %s' % line
@@ -79,9 +82,18 @@ class HoneyPotShell(object):
             self.cmdpending = []
             self.showPrompt()
             return
-        cmd, args = cmdAndArgs[0], []
-        if len(cmdAndArgs) > 1:
-            args = cmdAndArgs[1:]
+
+        # probably no reason to be this comprehensive for just PATH...
+        envvars = copy(self.envvars)
+        while len(cmdAndArgs):
+            cmd = cmdAndArgs.pop(0)
+            if cmd.count('='):
+                key, value = cmd.split('=', 1)
+                envvars[key] = value
+                continue
+            break
+        args = cmdAndArgs
+
         rargs = []
         for arg in args:
             matches = self.honeypot.fs.resolve_path_wc(arg, self.honeypot.cwd)
@@ -89,7 +101,7 @@ class HoneyPotShell(object):
                 rargs.extend(matches)
             else:
                 rargs.append(arg)
-        cmdclass = self.honeypot.getCommand(cmd)
+        cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
             obj = cmdclass(self.honeypot, *rargs)
             self.honeypot.cmdstack.append(obj)
@@ -162,7 +174,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
                 f.close()
         return command_txtcmd
 
-    def getCommand(self, cmd):
+    def getCommand(self, cmd, paths):
         if not len(cmd.strip()):
             return None
         path = None
@@ -173,8 +185,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             if not self.fs.exists(path):
                 return None
         else:
-            for i in ['%s/%s' % (x, cmd) for x in \
-                    '/bin', '/usr/bin', '/sbin', '/usr/sbin']:
+            for i in ['%s/%s' % (self.fs.resolve_path(x, self.cwd), cmd) \
+                    for x in paths]:
                 if self.fs.exists(i):
                     path = i
                     break
