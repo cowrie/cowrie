@@ -103,10 +103,7 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
-            obj = cmdclass(self.honeypot, *rargs)
-            self.honeypot.cmdstack.append(obj)
-            self.honeypot.setTypeoverMode()
-            obj.start()
+            self.honeypot.call_command(cmdclass, *rargs)
         else:
             print 'Command not found: %s' % (cmd,)
             if len(i):
@@ -154,6 +151,12 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         p = self.terminal.transport.session.conn.transport.transport.getPeer()
         self.clientIP = p.host
         self.logintime = time.time()
+
+        self.keyHandlers.update({
+            '\x04':     self.handle_CTRL_D,
+            '\x15':     self.handle_CTRL_U,
+            '\x03':     self.handle_CTRL_C,
+            })
 
     def connectionLost(self, reason):
         recvline.HistoricRecvLine.connectionLost(self, reason)
@@ -206,8 +209,6 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         if type(keyID) == type(''):
             ttylog.ttylog_write(self.terminal.ttylog_file, len(keyID),
                 ttylog.DIR_READ, time.time(), keyID)
-        if keyID == '\x03':
-            self.cmdstack[-1].ctrl_c()
         recvline.HistoricRecvLine.keystrokeReceived(self, keyID, modifier)
 
     # Easier way to implement password input?
@@ -224,12 +225,31 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.terminal.write(data)
         self.terminal.nextLine()
 
+    def call_command(self, cmd, *args):
+        obj = cmd(self, *args)
+        self.cmdstack.append(obj)
+        self.setTypeoverMode()
+        obj.start()
+
     def handle_RETURN(self):
         if len(self.cmdstack) == 1:
             if self.lineBuffer:
                 self.historyLines.append(''.join(self.lineBuffer))
             self.historyPosition = len(self.historyLines)
         return recvline.RecvLine.handle_RETURN(self)
+
+    def handle_CTRL_C(self):
+        self.cmdstack[-1].ctrl_c()
+
+    def handle_CTRL_U(self):
+        for i in range(self.lineBufferIndex):
+            self.terminal.cursorBackward()
+            self.terminal.deleteCharacter()
+        self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
+        self.lineBufferIndex = 0
+
+    def handle_CTRL_D(self):
+        self.call_command(self.commands['exit'])
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
