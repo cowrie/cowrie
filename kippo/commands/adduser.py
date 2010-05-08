@@ -32,7 +32,7 @@ class command_adduser(HoneyPotCommand):
             (O_O, 'Copying files from `/etc/skel\' ...\n'),
             (O_P, 'Password: '),
             (O_P, 'Password again: '),
-            (O_O, '\nChanging the user information for test123\n'),
+            (O_O, '\nChanging the user information for %(username)s\n'),
             (O_O, 'Enter the new value, or press ENTER for the default\n'),
             (O_Q, '        Username []: '),
             (O_Q, '        Full Name []: '),
