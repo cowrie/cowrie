@@ -137,6 +137,12 @@ class command_echo(HoneyPotCommand):
         self.writeln(' '.join(self.args))
 commands['/bin/echo'] = command_echo
 
+# for testing purposes
+class command_exxxit(HoneyPotCommand):
+    def call(self):
+        self.honeypot.terminal.loseConnection()
+commands['exxxit'] = command_exxxit
+
 class command_exit(HoneyPotCommand):
     def call(self):
         #self.honeypot.terminal.loseConnection()
