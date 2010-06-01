@@ -386,10 +386,11 @@ def getRSAKeys():
         # generate a RSA keypair
         print "Generating RSA keypair..."
         from Crypto.PublicKey import RSA
+        from twisted.python import randbytes
         KEY_LENGTH = 1024
-        rsaKey = RSA.generate(KEY_LENGTH, common.entropy.get_bytes)
-        publicKeyString = keys.makePublicKeyString(rsaKey)
-        privateKeyString = keys.makePrivateKeyString(rsaKey)
+        rsaKey = RSA.generate(KEY_LENGTH, randbytes.secureRandom)
+        publicKeyString = keys.Key(rsaKey).public().toString('openssh')
+        privateKeyString = keys.Key(rsaKey).toString('openssh')
         # save keys for next time
         file(public_key, 'w+b').write(publicKeyString)
         file(private_key, 'w+b').write(privateKeyString)
