@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import os, time, anydbm
+import os, time, anydbm, datetime
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from twisted.internet import reactor
@@ -299,6 +299,12 @@ class command_touch(HoneyPotCommand):
                 continue
             self.fs.mkfile(path, 0, 0, 0, 33188)
 commands['/bin/touch'] = command_touch
+
+class command_date(HoneyPotCommand):
+    def call(self):
+        time = datetime.datetime.utcnow();
+        self.writeln(time.strftime("%a %b %d %H:%M:%S UTC %Y"))
+commands['/bin/date'] = command_date
 
 class command_nop(HoneyPotCommand):
     def call(self):
