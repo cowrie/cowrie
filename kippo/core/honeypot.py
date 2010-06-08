@@ -72,9 +72,9 @@ class HoneyPotShell(object):
         if not len(self.cmdpending):
             self.showPrompt()
             return
-        i = self.cmdpending.pop(0)
+        line = self.cmdpending.pop(0)
         try:
-            cmdAndArgs = shlex.split(i)
+            cmdAndArgs = shlex.split(line)
         except:
             self.honeypot.writeln(
                 '-bash: syntax error: unexpected end of file')
@@ -103,11 +103,11 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
-            print 'Command found: %s' % (cmd,)
+            print 'Command found: %s' % (line,)
             self.honeypot.call_command(cmdclass, *rargs)
         else:
-            print 'Command not found: %s' % (cmd,)
-            if len(i):
+            print 'Command not found: %s' % (line,)
+            if len(line):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
                 if len(self.cmdpending):
                     self.runCommand()
