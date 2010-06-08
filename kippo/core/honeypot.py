@@ -103,6 +103,7 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
+            print 'Command found: %s' % (cmd,)
             self.honeypot.call_command(cmdclass, *rargs)
         else:
             print 'Command not found: %s' % (cmd,)
@@ -149,6 +150,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
         # You are in a maze of twisty little passages, all alike
         p = self.terminal.transport.session.conn.transport.transport.getPeer()
+
         self.clientIP = p.host
         self.logintime = time.time()
 
@@ -339,6 +341,15 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         'ssh-connection': connection.SSHConnection,
         }
 
+    def __init__(self):
+        cfg = config()
+        if cfg.has_option('database', 'engine'):
+            engine = cfg.get('database', 'engine')
+            self.dblogger = __import__(
+                'kippo.dblog.%s' % (engine,),
+                globals(), locals(), ['dblog']).DBLogger(cfg)
+            log.startLoggingWithObserver(self.dblogger.emit, setStdout=False)
+
     def buildProtocol(self, addr):
         # FIXME: try to mimic something real 100%
         t = transport.SSHServerTransport()
@@ -356,14 +367,16 @@ class HoneypotPasswordChecker:
 
     credentialInterfaces = (credentials.IUsernamePassword,)
 
-    def __init__(self, users):
-        self.users = users
+    def __init__(self, factory):
+        self.factory = factory
 
     def requestAvatarId(self, credentials):
-        data_path = config().get('honeypot', 'data_path')
+        cfg = config()
+        data_path = cfg.get('honeypot', 'data_path')
         passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
         success = False
-        if (credentials.username, credentials.password) in self.users:
+        if credentials.username == 'root' and \
+                credentials.password == cfg.get('honeypot', 'password'):
             success = True
         elif credentials.username == 'root' and \
                 credentials.password in passdb:

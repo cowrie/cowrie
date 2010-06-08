@@ -9,3 +9,11 @@ txtcmds_path = txtcmds
 filesystem_file = fs.pickle
 public_key = public.key
 private_key = private.key
+password = 123456
+
+;[database]
+;engine = mysql
+;host = localhost
+;database = kippo
+;username = kippo
+;password = secret
