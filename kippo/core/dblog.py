@@ -45,7 +45,10 @@ class DBLogger(object):
     def emit(self, ev):
         if ev['system'] == '-':
             return
-        uniqstr = self.re_unique.match(ev['system']).groups()[0]
+        match = self.re_unique.match(ev['system'])
+        if not match:
+            return
+        uniqstr = match.groups()[0]
         if uniqstr not in self.sessions.keys():
             ip = uniqstr.split(',')[2]
             session = self.createSession(ip)
