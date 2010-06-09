@@ -10,6 +10,7 @@ filesystem_file = fs.pickle
 public_key = public.key
 private_key = private.key
 password = 123456
+;sensor_name=myhostname
 
 ;[database]
 ;engine = mysql

@@ -26,12 +26,13 @@ class DBLogger(object):
             )]
         self.start(cfg)
 
+        if cfg.has_option('honeypot', 'sensor_name'):
+            self.sensor = cfg.get('honeypot', 'sensor_name')
+        else:
+            self.sensor = socket.gethostbyaddr(socket.gethostname())[2][0]
+
     def start():
         pass
-
-    def sensorName(self):
-        # TODO: configurable sensor name
-        return socket.gethostbyaddr(socket.gethostname())[2][0]
 
     def nowUnix(self):
         """return the current UTC time as an UNIX timestamp"""

@@ -13,7 +13,7 @@ class DBLogger(dblog.DBLogger):
     def createSession(self, ip):
         sql = 'INSERT INTO `session` (`starttime`, `sensor`, `ip`)' + \
             ' VALUES (FROM_UNIXTIME(%s), %s, %s)'
-        params = (self.nowUnix(), self.sensorName(), ip)
+        params = (self.nowUnix(), self.sensor, ip)
         cursor = self.db.cursor()
         cursor.execute(sql, params)
         return int(cursor.lastrowid)
