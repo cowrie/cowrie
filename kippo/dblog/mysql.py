@@ -7,7 +7,8 @@ class DBLogger(dblog.DBLogger):
             host = cfg.get('database', 'host'),
             db = cfg.get('database', 'database'),
             user = cfg.get('database', 'username'),
-            passwd = cfg.get('database', 'password'))
+            passwd = cfg.get('database', 'password'),
+            reconnect = True)
 
     def createSession(self, ip):
         sql = 'INSERT INTO `session` (`starttime`, `sensor`, `ip`)' + \
