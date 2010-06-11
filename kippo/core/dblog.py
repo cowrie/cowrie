@@ -43,7 +43,7 @@ class DBLogger(object):
         return matches.groups()[0]
 
     def emit(self, ev):
-        if ev['system'] == '-':
+        if ev['system'] == '-' or not len(ev['message']):
             return
         match = self.re_unique.match(ev['system'])
         if not match:
@@ -68,6 +68,14 @@ class DBLogger(object):
             del self.ttylogs[session]
         for i in [x for x in self.sessions if self.sessions[x] == session]:
             del self.sessions[i]
+
+    def ttylog(self, session):
+        ttylog = None
+        if session in self.ttylogs:
+            f = file(self.ttylogs[session])
+            ttylog = f.read(10485760)
+            f.close()
+        return ttylog
 
     # We have to return an unique ID
     def createSession(self, ip):

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `session` (
   `endtime` datetime default NULL,
   `sensor` varchar(50) NOT NULL,
   `ip` varchar(15) NOT NULL default '',
-  `ttylog` blob,
+  `ttylog` mediumblob,
   PRIMARY KEY  (`id`),
   KEY `starttime` (`starttime`,`sensor`)
 ) ;

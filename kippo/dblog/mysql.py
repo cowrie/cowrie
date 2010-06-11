@@ -19,14 +19,9 @@ class DBLogger(dblog.DBLogger):
         return int(cursor.lastrowid)
 
     def handleConnectionLost(self, session, args):
-        ttylog = None
-        if session in self.ttylogs:
-            f = file(self.ttylogs[session])
-            ttylog = f.read()
-            f.close()
         sql = 'UPDATE `session` SET `endtime` = FROM_UNIXTIME(%s)' + \
             ', `ttylog` = %s WHERE `id` = %s'
-        params = (self.nowUnix(), ttylog, session)
+        params = (self.nowUnix(), self.ttylog(session), session)
         cursor = self.db.cursor()
         cursor.execute(sql, params)
 
