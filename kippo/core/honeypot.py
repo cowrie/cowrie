@@ -332,6 +332,15 @@ class HoneyPotRealm:
         else:
             raise Exception, "No supported interfaces found."
 
+class HoneyPotTransport(transport.SSHServerTransport):
+
+    def connectionMade(self):
+        print 'New connection: %s:%s (%s:%s) [session: %d]' % \
+            (self.transport.getPeer().host, self.transport.getPeer().port,
+            self.transport.getHost().host, self.transport.getHost().port,
+            self.transport.sessionno)
+        transport.SSHServerTransport.connectionMade(self)
+
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
     #publicKeys = {'ssh-rsa': keys.getPublicKeyString(data=publicKey)}
@@ -352,7 +361,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def buildProtocol(self, addr):
         # FIXME: try to mimic something real 100%
-        t = transport.SSHServerTransport()
+        t = HoneyPotTransport()
+
         t.ourVersionString = 'SSH-2.0-OpenSSH_5.1p1 Debian-5'
         t.supportedPublicKeys = self.privateKeys.keys()
         if not self.primes:

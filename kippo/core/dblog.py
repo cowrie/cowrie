@@ -5,9 +5,13 @@ import re, time, datetime, socket
 
 class DBLogger(object):
     def __init__(self, cfg):
+        self.cfg = cfg
         self.sessions = {}
         self.ttylogs = {}
-        self.re_unique = re.compile('.*(SSHServerTransport,[0-9]+,[0-9.]+)$')
+        self.re_connected = re.compile(
+            '^New connection: ([0-9.]+):([0-9]+) \(([0-9.]+):([0-9]+)\) ' + \
+            '\[session: ([0-9]+)\]$')
+        self.re_sessionlog = re.compile('.*HoneyPotTransport,([0-9]+),[0-9.]+$')
         self.re_map = [(re.compile(x[0]), x[1]) for x in (
             ('^connection lost$',
                 self._connectionLost),
@@ -24,45 +28,42 @@ class DBLogger(object):
             ('^INPUT \((?P<realm>[a-zA-Z0-9]+)\): (?P<input>.*)$',
                 self.handleInput),
             )]
-
-        if cfg.has_option('honeypot', 'sensor_name'):
-            self.sensor = cfg.get('honeypot', 'sensor_name')
-        else:
-            self.sensor = socket.gethostbyaddr(socket.gethostname())[2][0]
-
         self.start(cfg)
 
     def start():
         pass
 
+    def getSensor(self):
+        if self.cfg.has_option('honeypot', 'sensor_name'):
+            return self.cfg.get('honeypot', 'sensor_name')
+        return None
+
     def nowUnix(self):
         """return the current UTC time as an UNIX timestamp"""
         return int(time.mktime(datetime.datetime.utcnow().utctimetuple()))
 
-    def uniqstr(self, system):
-        matches = self.re_unique.match(system)
-        return matches.groups()[0]
-
     def emit(self, ev):
-        if ev['system'] == '-' or not len(ev['message']):
+        if not len(ev['message']):
             return
-        match = self.re_unique.match(ev['system'])
+        match = self.re_connected.match(ev['message'][0])
+        if match:
+            sessionid = int(match.groups()[4])
+            self.sessions[sessionid] = \
+                self.createSession(
+                    match.groups()[0], int(match.groups()[1]),
+                    match.groups()[2], int(match.groups()[3]))
+            return
+        match = self.re_sessionlog.match(ev['system'])
         if not match:
             return
-        uniqstr = match.groups()[0]
-        if uniqstr not in self.sessions.keys():
-            ip = uniqstr.split(',')[2]
-            session = self.createSession(ip)
-            self.sessions[uniqstr] = session
-        else:
-            session = self.sessions[uniqstr]
-        if session is None:
+        sessionid = int(match.groups()[0])
+        if sessionid not in self.sessions.keys():
             return
         message = ev['message'][0]
         for regex, func in self.re_map:
             match = regex.match(message)
             if match:
-                func(session, match.groupdict())
+                func(self.sessions[sessionid], match.groupdict())
                 break
 
     def _connectionLost(self, session, args):
@@ -81,7 +82,7 @@ class DBLogger(object):
         return ttylog
 
     # We have to return an unique ID
-    def createSession(self, ip):
+    def createSession(self, peerIP, peerPort, hostIP, hostPort):
         return 0
 
     # args has: logfile
