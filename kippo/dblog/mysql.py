@@ -40,9 +40,11 @@ class DBLogger(dblog.DBLogger):
         return cursor.lastrowid
 
     def handleConnectionLost(self, session, args):
-        self.query(
-            'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
-            (session, self.ttylog(session)))
+        ttylog = self.ttylog(session)
+        if ttylog:
+            self.query(
+                'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
+                (session, self.ttylog(session)))
         self.query('UPDATE `sessions` SET `endtime` = FROM_UNIXTIME(%s)' + \
             ' WHERE `id` = %s',
             (self.nowUnix(), session))
