@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import re, time, datetime, socket
+import re, time, socket
 
 class DBLogger(object):
     def __init__(self, cfg):
@@ -40,7 +40,7 @@ class DBLogger(object):
 
     def nowUnix(self):
         """return the current UTC time as an UNIX timestamp"""
-        return int(time.mktime(datetime.datetime.utcnow().utctimetuple()))
+        return int(time.mktime(time.gmtime()[:-1] + (-1,)))
 
     def emit(self, ev):
         if not len(ev['message']):
