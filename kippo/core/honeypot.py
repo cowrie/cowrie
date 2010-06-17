@@ -316,7 +316,7 @@ class HoneyPotEnvironment(object):
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
         self.fs = pickle.load(file(
-            self.cfg.get('honeypot', 'filesystem_file')))
+            self.cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
 class HoneyPotRealm:
     implements(portal.IRealm)
