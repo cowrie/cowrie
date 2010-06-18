@@ -294,6 +294,11 @@ class command_touch(HoneyPotCommand):
             return
         for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
+            if not self.fs.exists(os.path.dirname(path)):
+                self.writeln(
+                    'touch: cannot touch `%s`: no such file or directory' % \
+                    (path))
+                return
             if self.fs.exists(path):
                 # FIXME: modify the timestamp here
                 continue
