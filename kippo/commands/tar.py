@@ -57,6 +57,9 @@ class command_tar(HoneyPotCommand):
             if f.isdir():
                 self.fs.mkdir(dest, 0, 0, 4096, f.mode, f.mtime)
             elif f.isfile():
+                if not self.fs.exists(os.path.dirname(dest)):
+                    self.fs.mkdir(os.path.dirname(dest),
+                        0, 0, 4096, f.mode, f.mtime)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
                 self.honeypot.commands[dest] = random.choice(dice.clist)
             else:
