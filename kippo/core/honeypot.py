@@ -13,7 +13,7 @@ from zope.interface import implements
 from copy import deepcopy, copy
 import sys, os, random, pickle, time, stat, shlex, anydbm
 
-from kippo.core import ttylog, fs
+from kippo.core import ttylog, fs, utils
 from kippo.core.config import config
 import commands
 
@@ -160,8 +160,19 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             '\x03':     self.handle_CTRL_C,
             })
 
+    def lastlogExit(self):
+        starttime = time.strftime('%a %b %d %H:%M',
+            time.localtime(self.logintime))
+        endtime = time.strftime('%H:%M',
+            time.localtime(time.time()))
+        duration = utils.durationHuman(time.time() - self.logintime)
+        utils.addToLastlog('root\tpts/0\t%s\t%s - %s (%s)' % \
+            (self.clientIP, starttime, endtime, duration))
+
     def connectionLost(self, reason):
         recvline.HistoricRecvLine.connectionLost(self, reason)
+        self.lastlogExit()
+
         # not sure why i need to do this:
         del self.fs
         del self.commands

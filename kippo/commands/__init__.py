@@ -11,4 +11,5 @@ __all__ = [
     'apt',
     'dice',
     'adduser',
+    'last',
     ]
