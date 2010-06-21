@@ -151,6 +151,7 @@ class command_exit(HoneyPotCommand):
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
 commands['exit'] = command_exit
+commands['logout'] = command_exit
 
 class command_clear(HoneyPotCommand):
     def call(self):
