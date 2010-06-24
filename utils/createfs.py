@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     tree = ['/', T_DIR, 0, 0, 0, 0, 0, [], '']
     # change to / to recurse a whole server:
-    recurse('.', tree[A_CONTENTS], tree[A_CONTENTS])
+    recurse('/', tree[A_CONTENTS], tree[A_CONTENTS])
 
     sys.stderr.write('Doing stuff\n')
 
