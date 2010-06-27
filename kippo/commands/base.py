@@ -246,7 +246,7 @@ class command_passwd(HoneyPotCommand):
         data_path = self.honeypot.env.cfg.get('honeypot', 'data_path')
         passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
         if len(self.password) and self.password not in passdb:
-            passdb[self.password] = None
+            passdb[self.password] = ''
         passdb.close()
 
         self.writeln('passwd: password updated successfully')

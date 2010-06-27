@@ -33,9 +33,16 @@ factory.portal.registerChecker(honeypot.HoneypotPasswordChecker(factory))
 factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
 factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=privKeyString)}
 
+cfg = config()
+if cfg.has_option('honeypot', 'ssh_addr'):
+    ssh_addr = cfg.get('honeypot', 'ssh_addr')
+else:
+    ssh_addr = '0.0.0.0'
+
 application = service.Application('honeypot')
 service = internet.TCPServer(
-    int(config().get('honeypot', 'ssh_port')), factory)
+    int(cfg.get('honeypot', 'ssh_port')), factory,
+    interface=ssh_addr)
 service.setServiceParent(application)
 
 # vim: set ft=python sw=4 et:

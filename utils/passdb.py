@@ -10,7 +10,7 @@ if __name__ == '__main__':
         sys.exit(1)
     db = anydbm.open(sys.argv[1], 'c')
     if sys.argv[2] == 'list':
-        for password in db:
+        for password in db.keys():
             print password
     elif sys.argv[2] == 'add':
         db[sys.argv[3]] = None

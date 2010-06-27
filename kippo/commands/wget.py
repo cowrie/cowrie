@@ -83,7 +83,11 @@ class command_wget(HoneyPotCommand):
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
-        self.connection = reactor.connectTCP(host, port, factory)
+        out_addr = None
+        if self.honeypot.env.cfg.has_option('honeypot', 'out_addr'):
+            out_addr = (self.honeypot.env.cfg.get('honeypot', 'out_addr'), 0)
+        self.connection = reactor.connectTCP(
+            host, port, factory, bindAddress=out_addr)
         return factory.deferred
 
     def ctrl_c(self):
@@ -106,7 +110,8 @@ commands['/usr/bin/wget'] = command_wget
 # from http://code.activestate.com/recipes/525493/
 class HTTPProgressDownloader(client.HTTPDownloader):    
     def __init__(self, wget, fakeoutfile, url, outfile, headers=None):
-        client.HTTPDownloader.__init__(self, url, outfile, headers=headers)
+        client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
+            agent='Wget/1.11.4')
         self.status = None
         self.wget = wget
         self.fakeoutfile = fakeoutfile
