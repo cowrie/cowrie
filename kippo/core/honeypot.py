@@ -146,6 +146,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
+        self.terminal.write('\x1b[21t', noLog = True) # terminal title
         self.cmdstack = [HoneyPotShell(self)]
 
         # You are in a maze of twisty little passages, all alike
@@ -273,10 +274,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
         print 'Opening TTY log: %s' % self.ttylog_file
         ttylog.ttylog_open(self.ttylog_file, time.time())
         self.ttylog_open = True
+        self.terminal_title = None
         insults.ServerProtocol.connectionMade(self)
 
-    def write(self, bytes):
-        if self.ttylog_open:
+    def write(self, bytes, noLog = False):
+        if self.ttylog_open and not noLog:
             ttylog.ttylog_write(self.ttylog_file, len(bytes),
                 ttylog.DIR_WRITE, time.time(), bytes)
         insults.ServerProtocol.write(self, bytes)
@@ -286,6 +288,56 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
         insults.ServerProtocol.connectionLost(self, reason)
+
+    # extended from the standard to read \x1b]lXXXX\x1b\\
+    def dataReceived(self, data):
+        for ch in data:
+            if self.state == 'data':
+                if ch == '\x1b':
+                    self.state = 'escaped'
+                else:
+                    self.terminalProtocol.keystrokeReceived(ch, None)
+            elif self.state == 'escaped':
+                if ch == '[':
+                    self.state = 'bracket-escaped'
+                    self.escBuf = []
+                elif ch == 'O':
+                    self.state = 'low-function-escaped'
+                elif ch == ']':
+                    self.state = 'reverse-bracket-escaped'
+                else:
+                    self.state = 'data'
+                    self._handleShortControlSequence(ch)
+            elif self.state == 'bracket-escaped':
+                if ch == 'O':
+                    self.state = 'low-function-escaped'
+                elif ch.isalpha() or ch == '~':
+                    self._handleControlSequence(''.join(self.escBuf) + ch)
+                    del self.escBuf
+                    self.state = 'data'
+                else:
+                    self.escBuf.append(ch)
+            elif self.state == 'low-function-escaped':
+                self._handleLowFunctionControlSequence(ch)
+                self.state = 'data'
+            elif self.state == 'reverse-bracket-escaped':
+                if ch == 'l':
+                    self.titleBuf = []
+                    self.state = 'title-escaped'
+                    self.title_escaped = False
+            elif self.state == 'title-escaped':
+                if ch == '\x1b':
+                    self.title_escaped = True
+                elif self.title_escaped and ch == '\\':
+                    self.terminal_title = ''.join(self.titleBuf)
+                    print 'Terminal title: %s' % (self.terminal_title,)
+                    self.state = 'data'
+                    del self.titleBuf
+                else:
+                    self.titleBuf.append(ch)
+            else:
+                raise ValueError("Illegal state")
+        # insults.ServerProtocol.dataReceived(self, data)
 
 class HoneyPotAvatar(avatar.ConchUser):
     implements(conchinterfaces.ISession)
@@ -302,6 +354,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         protocol.makeConnection(session.wrapProtocol(serverProtocol))
 
     def getPty(self, terminal, windowSize, attrs):
+        print 'Terminal size: %s %s' % windowSize[0:2]
         self.windowSize = windowSize
         return None
 

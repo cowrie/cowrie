@@ -27,6 +27,10 @@ class DBLogger(object):
                 self.handleUnknownCommand),
             ('^INPUT \((?P<realm>[a-zA-Z0-9]+)\): (?P<input>.*)$',
                 self.handleInput),
+            ('^Terminal size: (?P<height>[0-9]+) (?P<width>[0-9]+)$',
+                self.handleTerminalSize),
+            ('^Terminal title: (?P<title>.*)$',
+                self.handleTerminalTitle),
             )]
         self.start(cfg)
 
@@ -111,6 +115,14 @@ class DBLogger(object):
 
     # args has: realm, input
     def handleInput(self, session, args):
+        pass
+
+    # args has: width, height
+    def handleTerminalSize(self, session, args):
+        pass
+
+    # args has: title
+    def handleTerminalTitle(self, session, args):
         pass
 
 # vim: set sw=4 et:

@@ -79,4 +79,14 @@ class DBLogger(dblog.DBLogger):
             ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
             (session, self.nowUnix(), args['realm'], args['input']))
 
+    def handleTerminalSize(self, session, args):
+        self.query('UPDATE `sessions` SET `termsize` = %s' + \
+            ' WHERE `id` = %s',
+            ('%sx%s' % (args['width'], args['height']), session))
+
+    def handleTerminalTitle(self, session, args):
+        self.query('UPDATE `sessions` SET `termtitle` = %s' + \
+            ' WHERE `id` = %s',
+            (args['title'], session))
+
 # vim: set sw=4 et:
