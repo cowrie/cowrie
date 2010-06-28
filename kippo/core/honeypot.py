@@ -439,31 +439,45 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 class HoneypotPasswordChecker:
     implements(checkers.ICredentialsChecker)
 
-    credentialInterfaces = (credentials.IUsernamePassword,)
-
-    def __init__(self, factory):
-        self.factory = factory
+    credentialInterfaces = (credentials.IUsernamePassword,
+        credentials.IPluggableAuthenticationModules)
 
     def requestAvatarId(self, credentials):
+        if hasattr(credentials, 'password'):
+            if self.checkUserPass(credentials.username, credentials.password):
+                return defer.succeed(credentials.username)
+            else:
+                return defer.fail(error.UnauthorizedLogin())
+        elif hasattr(credentials, 'pamConversion'):
+            return self.checkPamUser(credentials.username,
+                credentials.pamConversion)
+        return defer.fail(error.UnhandledCredentials())
+
+    def checkPamUser(self, username, pamConversion):
+        r = pamConversion((('Password:', 1),))
+        return r.addCallback(self.cbCheckPamUser, username)
+
+    def cbCheckPamUser(self, responses, username):
+        for response, zero in responses:
+            if self.checkUserPass(username, response):
+                return defer.succeed(username)
+        return defer.fail(error.UnauthorizedLogin())
+
+    def checkUserPass(self, username, password):
         cfg = config()
         data_path = cfg.get('honeypot', 'data_path')
         passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
         success = False
-        if credentials.username == 'root' and \
-                credentials.password == cfg.get('honeypot', 'password'):
+        if username == 'root' and password == cfg.get('honeypot', 'password'):
             success = True
-        elif credentials.username == 'root' and \
-                credentials.password in passdb:
+        elif username == 'root' and password in passdb:
             success = True
         passdb.close()
         if success:
-            print 'login attempt [%s/%s] succeeded' % \
-                (credentials.username, credentials.password)
-            return defer.succeed(credentials.username)
+            print 'login attempt [%s/%s] succeeded' % (username, password)
         else:
-            print 'login attempt [%s/%s] failed' % \
-                (credentials.username, credentials.password)
-            return defer.fail(error.UnauthorizedLogin())
+            print 'login attempt [%s/%s] failed' % (username, password)
+        return success
 
 def getRSAKeys():
     cfg = config()

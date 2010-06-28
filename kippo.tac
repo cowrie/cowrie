@@ -29,7 +29,7 @@ factory = honeypot.HoneyPotSSHFactory()
 factory.portal = portal.Portal(honeypot.HoneyPotRealm())
 
 pubKeyString, privKeyString = honeypot.getRSAKeys()
-factory.portal.registerChecker(honeypot.HoneypotPasswordChecker(factory))
+factory.portal.registerChecker(honeypot.HoneypotPasswordChecker())
 factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
 factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=privKeyString)}
 
