@@ -375,7 +375,9 @@ class HoneyPotEnvironment(object):
         self.cfg = config()
         self.commands = {}
         import kippo.commands
-        for c in kippo.commands.__all__:
+        modules = [x[:-3] for x in os.listdir('kippo/commands') if \
+            x.endswith('.py') and x[0] not in '._']
+        for c in modules:
             module = __import__('kippo.commands.%s' % c,
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
