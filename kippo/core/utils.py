@@ -5,10 +5,9 @@ import time, anydbm
 from kippo.core.config import config
 
 def addToLastlog(message):
-    db = anydbm.open('%s/lastlog.db' % \
-        config().get('honeypot', 'data_path'), 'c')
-    db[str(len(db)+1)] = message
-    db.close()
+    f = file('%s/lastlog.txt' % config().get('honeypot', 'data_path'), 'a')
+    f.write('%s\n' % (message,))
+    f.close()
 
 def durationHuman(seconds):
     seconds = long(round(seconds))
@@ -37,5 +36,21 @@ def durationHuman(seconds):
             duration.append('%s' % sseconds)
 
     return ''.join(duration)
+
+# From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
+def tail(the_file, lines_2find=20):
+    the_file.seek(0, 2)                         #go to end of file
+    bytes_in_file = the_file.tell()
+    lines_found, total_bytes_scanned = 0, 0
+    while lines_2find+1 > lines_found and bytes_in_file > total_bytes_scanned:
+        byte_block = min(1024, bytes_in_file-total_bytes_scanned)
+        the_file.seek(-(byte_block+total_bytes_scanned), 2)
+        total_bytes_scanned += byte_block
+        lines_found += the_file.read(1024).count('\n')
+    the_file.seek(-total_bytes_scanned, 2)
+    line_list = list(the_file.readlines())
+    return line_list[-lines_2find:]
+    #we read at least 21 line breaks from the bottom, block by block for speed
+    #21 to ensure we don't get a half line
 
 # vim: set sw=4 et:
