@@ -5,7 +5,7 @@ from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from twisted.web import client
 from twisted.internet import reactor
-import stat, time, urlparse, random, re
+import stat, time, urlparse, random, re, exceptions
 
 commands = {}
 
@@ -52,7 +52,7 @@ class command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        if url and not url.startswith('http://'):
+        if '://' not in url:
             url = 'http://%s' % url
 
         urldata = urlparse.urlparse(url)
@@ -72,9 +72,17 @@ class command_wget(HoneyPotCommand):
             self.deferred.addErrback(self.error, url)
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
-        scheme, host, port, path = client._parse(url)
-        if scheme == 'https':
-            self.writeln('Sorry, SSL not supported in this release')
+        try:
+            scheme, host, port, path = client._parse(url)
+            if scheme == 'https':
+                self.writeln('Sorry, SSL not supported in this release')
+                self.exit()
+                return None
+            elif scheme != 'http':
+                raise exceptions.NotImplementedError
+        except:
+            self.writeln('%s: Unsupported scheme.' % (url,))
+            self.exit()
             return None
 
         self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
