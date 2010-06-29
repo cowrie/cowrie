@@ -14,7 +14,7 @@ class command_last(HoneyPotCommand):
         db = anydbm.open('%s/lastlog.db' % \
             config().get('honeypot', 'data_path'), 'c')
         count = 0
-        for k in sorted(db.keys(), reverse=True):
+        for k in sorted(db.keys(), key=int, reverse=True):
             self.writeln(db[k])
             count += 1
             if count >= 25:
