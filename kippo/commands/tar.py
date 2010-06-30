@@ -9,6 +9,13 @@ import time, random, tarfile, os
 commands = {}
 
 class command_tar(HoneyPotCommand):
+    def mkfullpath(self, path, f):
+        l, d = path.split('/'), []
+        while len(l):
+            d.append(l.pop(0))
+            if not self.fs.exists('/'.join(d)):
+                self.fs.mkdir('/'.join(d), 0, 0, 4096, f.mode, f.mtime)
+
     def call(self):
         if len(self.args) < 2:
             self.writeln('tar: You must specify one of the `-Acdtrux\' options')
@@ -57,9 +64,7 @@ class command_tar(HoneyPotCommand):
             if f.isdir():
                 self.fs.mkdir(dest, 0, 0, 4096, f.mode, f.mtime)
             elif f.isfile():
-                if not self.fs.exists(os.path.dirname(dest)):
-                    self.fs.mkdir(os.path.dirname(dest),
-                        0, 0, 4096, f.mode, f.mtime)
+                self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
                 self.honeypot.commands[dest] = random.choice(dice.clist)
             else:
