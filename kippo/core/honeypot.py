@@ -411,8 +411,6 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
-    #publicKeys = {'ssh-rsa': keys.getPublicKeyString(data=publicKey)}
-    #privateKeys = {'ssh-rsa': keys.getPrivateKeyObject(data=privateKey)}
     services = {
         'ssh-userauth': userauth.SSHUserAuthServer,
         'ssh-connection': connection.SSHConnection,
