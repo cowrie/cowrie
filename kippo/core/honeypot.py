@@ -405,6 +405,10 @@ class HoneyPotTransport(transport.SSHServerTransport):
             self.transport.sessionno)
         transport.SSHServerTransport.connectionMade(self)
 
+    def ssh_KEXINIT(self, packet):
+        print 'Remote SSH version: %s' % (self.otherVersionString,)
+        return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
+
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
     #publicKeys = {'ssh-rsa': keys.getPublicKeyString(data=publicKey)}
