@@ -39,6 +39,16 @@ class DBLogger(dblog.DBLogger):
             'INSERT INTO `sensors` (`ip`) VALUES (%s)', (ip,))
         return cursor.lastrowid
 
+    def getVersionID(self, version):
+        cursor = self.query(
+            'SELECT `id` FROM `clients` WHERE `version` = %s', (version,))
+        if cursor.rowcount:
+            return cursor.fetchone()[0]
+        
+        cursor = self.query(
+            'INSERT INTO `clients` (`version`) VALUES (%s)', (version,))
+        return cursor.lastrowid
+
     def handleConnectionLost(self, session, args):
         ttylog = self.ttylog(session)
         if ttylog:
@@ -88,5 +98,10 @@ class DBLogger(dblog.DBLogger):
         self.query('UPDATE `sessions` SET `termtitle` = %s' + \
             ' WHERE `id` = %s',
             (args['title'], session))
+
+    def handleClientVersion(self, session, args):
+        cursor = self.query(
+            'UPDATE `sessions` SET `client` = %s WHERE `id` = %s',
+            (self.getVersionID(args['version']), session))
 
 # vim: set sw=4 et:

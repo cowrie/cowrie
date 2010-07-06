@@ -31,6 +31,8 @@ class DBLogger(object):
                 self.handleTerminalSize),
             ('^Terminal title: (?P<title>.*)$',
                 self.handleTerminalTitle),
+            ('^Remote SSH version: (?P<version>.*)$',
+                self.handleClientVersion),
             )]
         self.start(cfg)
 
@@ -123,6 +125,10 @@ class DBLogger(object):
 
     # args has: title
     def handleTerminalTitle(self, session, args):
+        pass
+
+    # args has: version
+    def handleClientVersion(self, session, args):
         pass
 
 # vim: set sw=4 et:
