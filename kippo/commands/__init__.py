@@ -12,4 +12,5 @@ __all__ = [
     'dice',
     'adduser',
     'last',
+    'fs',
     ]
