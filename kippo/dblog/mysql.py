@@ -32,7 +32,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
 
 class DBLogger(dblog.DBLogger):
     def start(self, cfg):
-        self.db = ReconnectingConnectionPool('MySQLdb',
+        self.db = adbapi.ConnectionPool('MySQLdb',
             host = cfg.get('database', 'host'),
             db = cfg.get('database', 'database'),
             user = cfg.get('database', 'username'),
