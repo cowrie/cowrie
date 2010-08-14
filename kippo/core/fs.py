@@ -96,6 +96,8 @@ class HoneyPotFilesystem(object):
         return None
 
     def getfile(self, path):
+        if path == '/':
+            return self.fs
         pieces = path.strip('/').split('/')
         p = self.fs
         while 1:
