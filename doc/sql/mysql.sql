@@ -1,6 +1,6 @@
 CREATE TABLE `auth` (
   `id` int(11) NOT NULL auto_increment,
-  `session` int(11) NOT NULL,
+  `session` char(32) NOT NULL,
   `success` tinyint(1) NOT NULL,
   `username` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE `clients` (
 
 CREATE TABLE `input` (
   `id` int(11) NOT NULL auto_increment,
-  `session` int(11) NOT NULL,
+  `session` char(32) NOT NULL,
   `timestamp` datetime NOT NULL,
   `realm` varchar(50) default NULL,
   `success` tinyint(1) default NULL,
@@ -32,7 +32,7 @@ CREATE TABLE `sensors` (
 ) ;
 
 CREATE TABLE `sessions` (
-  `id` int(11) NOT NULL auto_increment,
+  `id` char(32) NOT NULL,
   `starttime` datetime NOT NULL,
   `endtime` datetime default NULL,
   `sensor` int(4) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE `sessions` (
 
 CREATE TABLE `ttylog` (
   `id` int(11) NOT NULL auto_increment,
-  `session` int(11) NOT NULL,
+  `session` char(32) NOT NULL,
   `ttylog` mediumblob NOT NULL,
   PRIMARY KEY  (`id`)
 ) ;
