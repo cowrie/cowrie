@@ -29,7 +29,7 @@ def maxcolumnlen(list, column):
 
 def playlog(fd, pos, settings):
 
-    ssize = struct.calcsize('iLiiLL')
+    ssize = struct.calcsize('<iLiiLL')
     currtty, prevtime, prefdir = 0, 0, 0
 
     fd.seek(int(pos))
@@ -37,7 +37,7 @@ def playlog(fd, pos, settings):
     while 1:
         try:
             (op, tty, length, dir, sec, usec) = \
-                struct.unpack('iLiiLL', fd.read(ssize))
+                struct.unpack('<iLiiLL', fd.read(ssize))
             data = fd.read(length)
         except struct.error:
 	    if settings['tail']:
@@ -73,7 +73,7 @@ def playlog(fd, pos, settings):
 
 def writelog(fd, outfile, pos):
 
-    ssize = struct.calcsize('iLiiLL')
+    ssize = struct.calcsize('<iLiiLL')
     currtty, prevtime, prefdir = 0, 0, 0
 
     try:
@@ -89,7 +89,7 @@ def writelog(fd, outfile, pos):
         try:
             structdata = fd.read(ssize)
             op, tty, length, dir, sec, usec = \
-                struct.unpack('iLiiLL', structdata)
+                struct.unpack('<iLiiLL', structdata)
             data = fd.read(length)
         except struct.error:
             op = -1
@@ -105,7 +105,7 @@ def writelog(fd, outfile, pos):
 
 def showsessions(fd):
 
-    ssize = struct.calcsize('iLiiLL')
+    ssize = struct.calcsize('<iLiiLL')
     ttys, chunches, currpos = {}, [], 0
 
     # no point in reading more...
@@ -115,7 +115,7 @@ def showsessions(fd):
         try:
             structdata = fd.read(ssize)
             op, tty, length, dir, sec, usec = \
-                struct.unpack('iLiiLL', structdata)
+                struct.unpack('<iLiiLL', structdata)
             data = fd.read(length)
         except struct.error:
             op = -1
