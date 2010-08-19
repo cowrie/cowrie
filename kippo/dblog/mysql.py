@@ -118,11 +118,6 @@ class DBLogger(dblog.DBLogger):
             ' WHERE `id` = %s',
             ('%sx%s' % (args['width'], args['height']), session))
 
-    def handleTerminalTitle(self, session, args):
-        self.simpleQuery('UPDATE `sessions` SET `termtitle` = %s' + \
-            ' WHERE `id` = %s',
-            (args['title'], session))
-
     @defer.inlineCallbacks
     def handleClientVersion(self, session, args):
         r = yield self.db.runQuery(

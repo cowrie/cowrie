@@ -38,7 +38,6 @@ CREATE TABLE `sessions` (
   `sensor` int(4) NOT NULL,
   `ip` varchar(15) NOT NULL default '',
   `termsize` varchar(7) default NULL,
-  `termtitle` varchar(255) default NULL,
   `client` int(4) default NULL,
   PRIMARY KEY  (`id`),
   KEY `starttime` (`starttime`,`sensor`)

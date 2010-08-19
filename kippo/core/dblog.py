@@ -29,8 +29,6 @@ class DBLogger(object):
                 self.handleInput),
             ('^Terminal size: (?P<height>[0-9]+) (?P<width>[0-9]+)$',
                 self.handleTerminalSize),
-            ('^Terminal title: (?P<title>.*)$',
-                self.handleTerminalTitle),
             ('^Remote SSH version: (?P<version>.*)$',
                 self.handleClientVersion),
             )]
@@ -121,10 +119,6 @@ class DBLogger(object):
 
     # args has: width, height
     def handleTerminalSize(self, session, args):
-        pass
-
-    # args has: title
-    def handleTerminalTitle(self, session, args):
         pass
 
     # args has: version
