@@ -40,9 +40,10 @@ else:
     ssh_addr = '0.0.0.0'
 
 application = service.Application('honeypot')
-service = internet.TCPServer(
-    int(cfg.get('honeypot', 'ssh_port')), factory,
-    interface=ssh_addr)
-service.setServiceParent(application)
+for i in ssh_addr.split():
+    service = internet.TCPServer(
+        int(cfg.get('honeypot', 'ssh_port')), factory,
+        interface=i)
+    service.setServiceParent(application)
 
 # vim: set ft=python sw=4 et:
