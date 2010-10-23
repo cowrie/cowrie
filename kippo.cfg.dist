@@ -14,8 +14,7 @@ password = 123456
 ;out_addr = 0.0.0.0
 ;sensor_name=myhostname
 
-;[database]
-;engine = mysql
+;[database_mysql]
 ;host = localhost
 ;database = kippo
 ;username = kippo

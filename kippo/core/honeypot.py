@@ -366,12 +366,13 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def __init__(self):
         cfg = config()
-        if cfg.has_option('database', 'engine'):
-            engine = cfg.get('database', 'engine')
-            self.dblogger = __import__(
+        for engine in [x[9:] for x in cfg.sections() \
+                if x.startswith('database_')]:
+            print 'Loading dblog engine: %s' % (engine,)
+            dblogger = __import__(
                 'kippo.dblog.%s' % (engine,),
                 globals(), locals(), ['dblog']).DBLogger(cfg)
-            log.startLoggingWithObserver(self.dblogger.emit, setStdout=False)
+            log.startLoggingWithObserver(dblogger.emit, setStdout=False)
 
     def buildProtocol(self, addr):
         # FIXME: try to mimic something real 100%
