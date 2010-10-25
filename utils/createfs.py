@@ -17,10 +17,13 @@ def recurse(root, tree, count = 0):
                 ):
             continue
 
-        if os.path.islink(path):
-	    s = os.lstat(path)
-        else:
-            s = os.stat(path)
+        try:
+            if os.path.islink(path):
+                s = os.lstat(path)
+            else:
+                s = os.stat(path)
+        except OSError:
+            continue
 
         entry = [name, T_FILE, s.st_uid, s.st_gid, s.st_size, s.st_mode, \
             int(s.st_ctime), [], None, None]
