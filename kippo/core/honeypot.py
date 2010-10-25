@@ -69,6 +69,12 @@ class HoneyPotShell(object):
             self.showPrompt()
 
     def runCommand(self):
+        def runOrPrompt():
+            if len(self.cmdpending):
+                self.runCommand()
+            else:
+                self.showPrompt()
+
         if not len(self.cmdpending):
             self.showPrompt()
             return
@@ -85,14 +91,20 @@ class HoneyPotShell(object):
 
         # probably no reason to be this comprehensive for just PATH...
         envvars = copy(self.envvars)
+        cmd = None
         while len(cmdAndArgs):
-            cmd = cmdAndArgs.pop(0)
-            if cmd.count('='):
-                key, value = cmd.split('=', 1)
+            piece = cmdAndArgs.pop(0)
+            if piece.count('='):
+                key, value = piece.split('=', 1)
                 envvars[key] = value
                 continue
+            cmd = piece
             break
         args = cmdAndArgs
+
+        if not cmd:
+            runOrPrompt()
+            return
 
         rargs = []
         for arg in args:
@@ -109,10 +121,7 @@ class HoneyPotShell(object):
             print 'Command not found: %s' % (line,)
             if len(line):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
-                if len(self.cmdpending):
-                    self.runCommand()
-                else:
-                    self.showPrompt()
+                runOrPrompt()
 
     def resume(self):
         self.honeypot.setInsertMode()
