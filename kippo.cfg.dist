@@ -13,9 +13,11 @@ private_key = private.key
 password = 123456
 ;out_addr = 0.0.0.0
 ;sensor_name=myhostname
+;fake_addr = 192.168.66.254
 
 ;[database_mysql]
 ;host = localhost
 ;database = kippo
 ;username = kippo
 ;password = secret
+

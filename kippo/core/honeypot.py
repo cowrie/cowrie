@@ -160,7 +160,16 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         # You are in a maze of twisty little passages, all alike
         p = self.terminal.transport.session.conn.transport.transport.getPeer()
 
-        self.clientIP = p.host
+        # real source IP of client
+        self.realClientIP = p.host
+
+        # source IP of client in user visible reports (can be fake or real)
+        cfg = config()
+        if cfg.has_option('honeypot', 'fake_addr'):
+            self.clientIP = cfg.get('honeypot', 'fake_addr')
+        else:
+            self.clientIP = self.realClientIP
+
         self.logintime = time.time()
 
         self.keyHandlers.update({
