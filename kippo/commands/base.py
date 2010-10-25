@@ -151,6 +151,57 @@ class command_passwd(HoneyPotCommand):
         self.callbacks.pop(0)()
 commands['/usr/bin/passwd'] = command_passwd
 
+class command_shutdown(HoneyPotCommand):
+    def start(self):
+        if len(self.args) and self.args[0].strip().count('--help'):
+            output = (
+                "Usage:     shutdown [-akrhHPfnc] [-t secs] time [warning message]",
+                "-a:      use /etc/shutdown.allow ",
+                "-k:      don't really shutdown, only warn. " ,
+                "-r:      reboot after shutdown. " ,
+                "-h:      halt after shutdown. " ,  
+                "-P:      halt action is to turn off power. " ,
+                "-H:      halt action is to just halt. " ,
+                "-f:      do a 'fast' reboot (skip fsck). " ,
+                "-F:      Force fsck on reboot. " ,
+                "-n:      do not go through \"init\" but go down real fast. " ,
+                "-c:      cancel a running shutdown. " ,
+                "-t secs: delay between warning and kill signal. " ,
+                "** the \"time\" argument is mandatory! (try \"now\") **",
+                )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        elif len(self.args) > 1 and self.args[0].strip().count('-h') \
+                and self.args[1].strip().count('now'):
+            self.nextLine()
+            self.writeln(  
+                'Broadcast message from root@%s (pts/0) (%s):' % \
+                (self.honeypot.hostname, time.ctime()))
+            self.nextLine()
+            self.writeln('The system is going down for maintenance NOW!')
+            reactor.callLater(3, self.finish)
+        elif len(self.args) > 1 and self.args[0].strip().count('-r') \
+                and self.args[1].strip().count('now'):
+            self.nextLine()
+            self.writeln(  
+                'Broadcast message from root@%s (pts/0) (%s):' % \
+                (self.honeypot.hostname, time.ctime()))
+            self.nextLine()
+            self.writeln('The system is going down for reboot NOW!')
+            reactor.callLater(3, self.finish)
+        else:
+            self.writeln("Try `shutdown --help' for more information.")
+            self.exit()
+            return
+            
+    def finish(self):
+        self.writeln('Connection to server closed.')
+        self.honeypot.hostname = 'localhost'
+        self.honeypot.cwd = '/root'
+        self.exit()
+commands['/sbin/shutdown'] = command_shutdown
+
 class command_reboot(HoneyPotCommand):
     def start(self):
         self.nextLine()
