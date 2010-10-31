@@ -1,23 +1,119 @@
+#
+# Kippo configuration file (kippo.cfg)
+#
+
 [honeypot]
-;ssh_addr = 0.0.0.0
+
+# IP addresses to listen for incoming SSH connections.
+#
+# (default: 0.0.0.0) = any address
+#ssh_addr = 0.0.0.0
+
+# Port to listen for incoming SSH connections.
+#
+# (default: 2222)
 ssh_port = 2222
+
+# Hostname for the honeypot. Displayed by the shell prompt of the virtual
+# environment.
+#
+# (default: sales)
 hostname = sales
+
+# Directory where to save log files in.
+#
+# (default: log)
 log_path = log
+
+# Directory where to save downloaded (malware) files in.
+#
+# (default: dl)
 download_path = dl
+
+# Directory where virtual file contents are kept in.
+#
+# This is only used by commands like 'cat' to display the contents of files.
+# Adding files here is not enough for them to appear in the honeypot - the
+# actual virtual filesystem is kept in filesystem_file (see below)
+#
+# (default: honeyfs)
 contents_path = honeyfs
-data_path = data
-txtcmds_path = txtcmds
+
+# File in the python pickle format containing the virtual filesystem. 
+#
+# This includes the filenames, paths, permissions for the whole filesystem,
+# but not the file contents. This is created by the createfs.py utility from
+# a real template linux installation.
+#
+# (default: fs.pickle)
 filesystem_file = fs.pickle
+
+# Directory for miscellaneous data files, such as the password database.
+#
+# (default: data_path)
+data_path = data
+
+# Directory for creating simple commands that only output text.
+#
+# The command must be placed under this directory with the proper path, such
+# as:
+#   txtcmds/usr/bin/vi
+# The contents of the file will be the output of the command when run inside
+# the honeypot.
+#
+# In addition to this, the file must exist in the virtual
+# filesystem {filesystem_file}
+#
+# (default: txtcmds)
+txtcmds_path = txtcmds
+
+# Public and private SSH key files. If these don't exist, they are created
+# automatically.
+#
+# (defaults: public.key and private.key)
 public_key = public.key
 private_key = private.key
+
+# Initial root password. Future passwords will be stored in
+# {data_path}/pass.db
+#
+# (default: 123456)
 password = 123456
-;out_addr = 0.0.0.0
-;sensor_name=myhostname
-;fake_addr = 192.168.66.254
 
-;[database_mysql]
-;host = localhost
-;database = kippo
-;username = kippo
-;password = secret
+# IP address to bind to when opening outgoing connections. Used exclusively by
+# the wget command.
+#
+# (default: not specified)
+#out_addr = 0.0.0.0
 
+# Sensor name use to identify this honeypot instance. Used by the database
+# logging modules such as mysql.
+#
+# If not specified, the logging modules will instead use the IP address of the
+# connection as the sensor name.
+#
+# (default: not specified)
+#sensor_name=myhostname
+
+# Fake address displayed as the address of the incoming connection.
+# This doesn't affect logging, and is only used by honeypot commands such as
+# 'w' and 'last'
+#
+# If not specified, the actual IP address is displayed instead (default
+# behaviour).
+#
+# (default: not specified)
+#fake_addr = 192.168.66.254
+
+# MySQL logging module
+#
+# Database structure for this module is supplied in doc/sql/mysql.sql
+#
+# To enable this module, remove the comments below, including the
+# [database_mysql] line.
+
+#[database_mysql]
+#host = localhost
+#database = kippo
+#username = kippo
+#password = secret
