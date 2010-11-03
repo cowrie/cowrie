@@ -3,7 +3,7 @@
 
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
-import time, re, random, md5
+import time, re, random, hashlib
 
 commands = {}
 
@@ -30,7 +30,7 @@ class command_ping(HoneyPotCommand):
                 self.host):
             self.ip = self.host
         else:
-            s = md5.md5(self.host).hexdigest()
+            s = hashlib.md5(self.host).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in
                 (s[0:2], s[2:4], s[4:6], s[6:8])])
 

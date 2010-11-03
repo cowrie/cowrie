@@ -3,7 +3,7 @@
 
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
-import time, re, md5, getopt
+import time, re, hashlib, getopt
 
 commands = {}
 
@@ -37,7 +37,7 @@ class command_ssh(HoneyPotCommand):
         if re.match('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', host):
             self.ip = host
         else:
-            s = md5.md5(host).hexdigest()
+            s = hashlib.md5(host).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in
                 (s[0:2], s[2:4], s[4:6], s[6:8])])
         self.host = host
