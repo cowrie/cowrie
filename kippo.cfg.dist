@@ -117,3 +117,24 @@ password = 123456
 #database = kippo
 #username = kippo
 #password = secret
+
+# XMPP Logging
+#
+# Log to an xmpp server.
+# For a detailed explanation on how this works, see: <add url here>
+#
+# To enable this module, remove the comments below, including the
+# [database_xmpp] line.
+
+#[database_xmpp]
+#server = sensors.carnivore.it
+#user = anonymous@sensors.carnivore.it
+#password = anonymous
+#muc = dionaea.sensors.carnivore.it
+#signal_createsession = kippo-events
+#signal_connectionlost = kippo-events
+#signal_loginfailed = kippo-events
+#signal_loginsucceeded = kippo-events
+#signal_command = kippo-events
+#signal_clientversion = kippo-events
+#debug=true
