@@ -17,6 +17,8 @@ from kippo.core import ttylog, fs, utils
 from kippo.core.config import config
 import commands
 
+import ConfigParser
+
 class HoneyPotCommand(object):
     def __init__(self, honeypot, *args):
         self.honeypot = honeypot
@@ -384,12 +386,19 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def __init__(self):
         cfg = config()
-        for engine in [x[9:] for x in cfg.sections() \
-                if x.startswith('database_')]:
+        for x in cfg.sections():
+            if not x.startswith('database_'):
+                continue
+            engine = x.split('_')[1]
+            dbengine = 'database_' + engine
+            lcfg = ConfigParser.ConfigParser()
+            lcfg.add_section(dbengine)
+            for i in cfg.options(x):
+                lcfg.set(dbengine, i, cfg.get(x,i))
             print 'Loading dblog engine: %s' % (engine,)
             dblogger = __import__(
                 'kippo.dblog.%s' % (engine,),
-                globals(), locals(), ['dblog']).DBLogger(cfg)
+                globals(), locals(), ['dblog']).DBLogger(lcfg)
             log.startLoggingWithObserver(dblogger.emit, setStdout=False)
 
     def buildProtocol(self, addr):
