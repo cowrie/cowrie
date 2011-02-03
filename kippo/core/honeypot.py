@@ -166,6 +166,9 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         # real source IP of client
         self.realClientIP = p.host
 
+        self.clientVersion = \
+            self.terminal.transport.session.conn.transport.otherVersionString
+
         # source IP of client in user visible reports (can be fake or real)
         cfg = config()
         if cfg.has_option('honeypot', 'fake_addr'):
