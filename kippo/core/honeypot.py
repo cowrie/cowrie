@@ -157,6 +157,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
+        self.displayMOTD()
         self.cmdstack = [HoneyPotShell(self)]
 
         # You are in a maze of twisty little passages, all alike
@@ -179,6 +180,12 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             '\x15':     self.handle_CTRL_U,
             '\x03':     self.handle_CTRL_C,
             })
+
+    def displayMOTD(self):
+        try:
+            self.writeln(self.fs.file_contents('/etc/motd'))
+        except:
+            pass
 
     def lastlogExit(self):
         starttime = time.strftime('%a %b %d %H:%M',
