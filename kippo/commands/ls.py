@@ -101,19 +101,25 @@ class command_ls(HoneyPotCommand):
             if file[A_MODE] & stat.S_IWOTH: perms[8] = 'w'
             if file[A_MODE] & stat.S_IXOTH: perms[9] = 'x'
 
+            linktarget = ''
+
             if file[A_TYPE] == T_DIR:
                 perms[0] = 'd'
+            elif file[A_TYPE] == T_LINK:
+                perms[0] = 'l'
+                linktarget = ' -> %s' % (file[A_TARGET],)
 
             perms = ''.join(perms)
             ctime = time.localtime(file[A_CTIME])
 
-            l = '%s 1 %s %s %s %s %s' % \
+            l = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
                 self.uid2name(file[A_UID]),
                 self.gid2name(file[A_GID]),
                 str(file[A_SIZE]).rjust(len(str(largest))),
                 time.strftime('%Y-%m-%d %H:%M', ctime),
-                file[A_NAME])
+                file[A_NAME],
+                linktarget)
 
             self.honeypot.writeln(l)
 commands['/bin/ls'] = command_ls

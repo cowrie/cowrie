@@ -12,18 +12,28 @@ commands = {}
 class command_cat(HoneyPotCommand):
     def call(self):
         for arg in self.args:
-            path = self.fs.resolve_path(arg, self.honeypot.cwd)
-            if not path or not self.fs.exists(path):
-                self.writeln('bash: cat: %s: No such file or directory' % arg)
-                return
-            f = self.fs.getfile(path)
+            self.cat(arg)
 
-            realfile = self.fs.realfile(f, '%s/%s' % \
-                (self.honeypot.env.cfg.get('honeypot', 'contents_path'), path))
-            if realfile:
-                f = file(realfile, 'rb')
-                self.write(f.read())
-                f.close()
+    def cat(self, target, count = 0):
+        if count > 10:
+            self.writeln('cat: %s: Too many levels of symbolic links' % target)
+            return
+        path = self.fs.resolve_path(target, self.honeypot.cwd)
+        if not path or not self.fs.exists(path):
+            self.writeln('bash: cat: %s: No such file or directory' % target)
+            return
+        f = self.fs.getfile(path)
+        if f[A_TYPE] == T_LINK:
+            self.cat(f[A_TARGET], count + 1)
+            return
+
+        realfile = self.fs.realfile(f, '%s/%s' % \
+            (self.honeypot.env.cfg.get('honeypot', 'contents_path'), path))
+        if realfile:
+            f = file(realfile, 'rb')
+            self.write(f.read())
+            f.close()
+
 commands['/bin/cat'] = command_cat
 
 class command_cd(HoneyPotCommand):
