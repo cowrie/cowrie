@@ -14,6 +14,7 @@ from copy import deepcopy, copy
 import sys, os, random, pickle, time, stat, shlex, anydbm
 
 from kippo.core import ttylog, fs, utils
+from kippo.core.userdb import UserDB
 from kippo.core.config import config
 import commands
 
@@ -133,10 +134,19 @@ class HoneyPotShell(object):
         self.runCommand()
 
     def showPrompt(self):
-        prompt = '%s:%%(path)s# ' % self.honeypot.hostname
+        if not self.honeypot.user.uid:
+            prompt = '%s:%%(path)s# ' % self.honeypot.hostname
+        else:
+            prompt = '%s:%%(path)s$ ' % self.honeypot.hostname
+
         path = self.honeypot.cwd
-        if path == '/root':
+        homelen = len(self.honeypot.user.home)
+        if path == self.honeypot.user.home:
             path = '~'
+        elif len(path) > (homelen+1) and \
+                path[:(homelen+1)] == self.honeypot.user.home + '/':
+            path = '~' + path[homelen:]
+
         attrs = {'path': path}
         self.honeypot.terminal.write(prompt % attrs)
 
@@ -223,7 +233,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
         self.user = user
         self.env = env
-        self.cwd = '/root'
+        self.cwd = user.home
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
         self.fs = fs.HoneyPotFilesystem(deepcopy(self.env.fs))
         # commands is also a copy so we can add stuff on the fly
@@ -406,6 +416,14 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.env = env
         self.channelLookup.update({'session':session.SSHSession})
 
+        userdb = UserDB()
+        self.uid = self.gid = userdb.getUID(self.username)
+
+        if not self.uid:
+            self.home = '/root'
+        else:
+            self.home = '/home/' + username
+
     def openShell(self, protocol):
         serverProtocol = LoggingServerProtocol(HoneyPotProtocol, self, self.env)
         serverProtocol.makeConnection(protocol)
@@ -476,6 +494,24 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def __init__(self):
         cfg = config()
+
+        # convert old pass.db root passwords
+        passdb_file = '%s/pass.db' % (cfg.get('honeypot', 'data_path'),)
+        if os.path.exists(passdb_file):
+            userdb = UserDB()
+            print 'pass.db deprecated - copying passwords over to userdb.txt'
+            if os.path.exists('%s.bak' % (passdb_file,)):
+                print 'ERROR: %s.bak already exists, skipping conversion!' % \
+                    (passdb_file,)
+            else:
+                passdb = anydbm.open(passdb_file, 'c')
+                for p in passdb:
+                    userdb.adduser('root', 0, p)
+                passdb.close()
+                os.rename(passdb_file, '%s.bak' % (passdb_file,))
+                print 'pass.db backed up to %s.bak' % (passdb_file,)
+
+        # load db loggers
         for x in cfg.sections():
             if not x.startswith('database_'):
                 continue
@@ -532,20 +568,12 @@ class HoneypotPasswordChecker:
         return defer.fail(error.UnauthorizedLogin())
 
     def checkUserPass(self, username, password):
-        cfg = config()
-        data_path = cfg.get('honeypot', 'data_path')
-        passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
-        success = False
-        if username == 'root' and password == cfg.get('honeypot', 'password'):
-            success = True
-        elif username == 'root' and password in passdb:
-            success = True
-        passdb.close()
-        if success:
+        if UserDB().checklogin(username, password):
             print 'login attempt [%s/%s] succeeded' % (username, password)
+            return True
         else:
             print 'login attempt [%s/%s] failed' % (username, password)
-        return success
+            return False
 
 def getRSAKeys():
     cfg = config()

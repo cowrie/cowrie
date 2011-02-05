@@ -74,11 +74,9 @@ txtcmds_path = txtcmds
 public_key = public.key
 private_key = private.key
 
-# Initial root password. Future passwords will be stored in
-# {data_path}/pass.db
-#
-# (default: 123456)
-password = 123456
+# Initial root password. NO LONGER USED!
+# Instead, see {data_path}/userdb.txt
+#password = 123456
 
 # IP address to bind to when opening outgoing connections. Used exclusively by
 # the wget command.

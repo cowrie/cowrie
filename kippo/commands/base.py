@@ -5,6 +5,7 @@ import os, time, anydbm, datetime
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 from kippo.core.config import config
+from kippo.core.userdb import UserDB
 
 commands = {}
 
@@ -24,8 +25,9 @@ class command_w(HoneyPotCommand):
         self.writeln(' %s up 14 days,  3:53,  1 user,  load average: 0.08, 0.02, 0.01' % \
             time.strftime('%H:%M:%S'))
         self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
-        self.writeln('root     pts/0    %s %s    0.00s  0.00s  0.00s w' % \
-            (self.honeypot.clientIP[:17].ljust(17),
+        self.writeln('%-8s pts/0    %s %s    0.00s  0.00s  0.00s w' % \
+            (self.honeypot.user.username,
+            self.honeypot.clientIP[:17].ljust(17),
             time.strftime('%H:%M', time.localtime(self.honeypot.logintime))))
 commands['/usr/bin/w'] = command_w
 commands['/usr/bin/who'] = command_w
@@ -125,7 +127,9 @@ commands['/bin/ps'] = command_ps
 
 class command_id(HoneyPotCommand):
     def call(self):
-        self.writeln('uid=0(root) gid=0(root) groups=0(root)')
+        u = self.honeypot.user
+        self.writeln('uid=%d(%s) gid=%d(%s) groups=%d(%s)' % \
+            (u.uid, u.username, u.gid, u.username, u.gid, u.username))
 commands['/usr/bin/id'] = command_id
 
 class command_passwd(HoneyPotCommand):
@@ -133,18 +137,23 @@ class command_passwd(HoneyPotCommand):
         self.write('Enter new UNIX password: ')
         self.honeypot.password_input = True
         self.callbacks = [self.ask_again, self.finish]
+        self.passwd = None
 
-    def ask_again(self):
+    def ask_again(self, line):
+        self.passwd = line
         self.write('Retype new UNIX password: ')
 
-    def finish(self):
+    def finish(self, line):
         self.honeypot.password_input = False
 
-        data_path = self.honeypot.env.cfg.get('honeypot', 'data_path')
-        passdb = anydbm.open('%s/pass.db' % (data_path,), 'c')
-        if len(self.password) and self.password not in passdb:
-            passdb[self.password] = ''
-        passdb.close()
+        if line != self.passwd:
+            self.writeln('Sorry, passwords do not match')
+            self.exit()
+            return
+
+        userdb = UserDB()
+        userdb.adduser(self.honeypot.user.username,
+            self.honeypot.user.uid, self.passwd)
 
         self.writeln('passwd: password updated successfully')
         self.exit()
@@ -152,7 +161,7 @@ class command_passwd(HoneyPotCommand):
     def lineReceived(self, line):
         print 'INPUT (passwd):', line
         self.password = line.strip()
-        self.callbacks.pop(0)()
+        self.callbacks.pop(0)(line)
 commands['/usr/bin/passwd'] = command_passwd
 
 class command_shutdown(HoneyPotCommand):
