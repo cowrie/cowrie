@@ -50,6 +50,9 @@ class HoneyPotCommand(object):
     def resume(self):
         pass
 
+    def handle_TAB(self):
+        pass
+
 class HoneyPotShell(object):
     def __init__(self, honeypot):
         self.honeypot = honeypot
@@ -143,6 +146,79 @@ class HoneyPotShell(object):
         self.honeypot.terminal.nextLine()
         self.showPrompt()
 
+    # Tab completion
+    def handle_TAB(self):
+        if not len(self.honeypot.lineBuffer):
+            return
+        l = ''.join(self.honeypot.lineBuffer)
+        if l[-1] == ' ':
+            clue = ''
+        else:
+            clue = ''.join(self.honeypot.lineBuffer).split()[-1]
+        try:
+            basedir = os.path.dirname(clue)
+        except:
+            pass
+        if len(basedir) and basedir[-1] != '/':
+            basedir += '/'
+
+        files = []
+        tmppath = basedir
+        if not len(basedir):
+            tmppath = self.honeypot.cwd
+        try:
+            r = self.honeypot.fs.resolve_path(tmppath, self.honeypot.cwd)
+        except:
+            return
+        for x in self.honeypot.fs.get_path(r):
+            if clue == '':
+                files.append(x)
+                continue
+            if not x[fs.A_NAME].startswith(os.path.basename(clue)):
+                continue
+            files.append(x)
+
+        if len(files) == 0:
+            return
+
+        # Clear early so we can call showPrompt if needed
+        for i in range(self.honeypot.lineBufferIndex):
+            self.honeypot.terminal.cursorBackward()
+            self.honeypot.terminal.deleteCharacter()
+
+        newbuf = ''
+        if len(files) == 1:
+            newbuf = ' '.join(l.split()[:-1] + \
+                ['%s%s' % (basedir, files[0][fs.A_NAME])])
+            if files[0][fs.A_TYPE] == fs.T_DIR:
+                newbuf += '/'
+            else:
+                newbuf += ' '
+        else:
+            if len(os.path.basename(clue)):
+                prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
+            else:
+                prefix = ''
+            first = l.split(' ')[:-1]
+            newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
+            if newbuf == ''.join(self.honeypot.lineBuffer):
+                self.honeypot.terminal.nextLine()
+                maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
+                perline = int(self.honeypot.user.windowSize[1] / (maxlen + 1))
+                count = 0
+                for file in files:
+                    if count == perline:
+                        count = 0
+                        self.honeypot.terminal.nextLine()
+                    self.honeypot.terminal.write(file[fs.A_NAME].ljust(maxlen))
+                    count += 1
+                self.honeypot.terminal.nextLine()
+                self.showPrompt()
+
+        self.honeypot.lineBuffer = list(newbuf)
+        self.honeypot.lineBufferIndex = len(self.honeypot.lineBuffer)
+        self.honeypot.terminal.write(newbuf)
+
 class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
         self.user = user
@@ -182,6 +258,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             '\x04':     self.handle_CTRL_D,
             '\x15':     self.handle_CTRL_U,
             '\x03':     self.handle_CTRL_C,
+            '\x09':     self.handle_TAB,
             })
 
     def displayMOTD(self):
@@ -293,6 +370,9 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
     def handle_CTRL_D(self):
         self.call_command(self.commands['exit'])
+
+    def handle_TAB(self):
+        self.cmdstack[-1].handle_TAB()
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
