@@ -49,18 +49,16 @@ class command_ls(HoneyPotCommand):
             self.honeypot.writeln(
                 'ls: cannot access %s: No such file or directory' % path)
             return
-        if not len(files):
-            return
         l = [x[A_NAME] for x in files \
             if self.show_hidden or not x[A_NAME].startswith('.')]
+        if self.show_hidden:
+            l.insert(0, '..')
+            l.insert(0, '.')
         if not l:
             return
         count = 0
         maxlen = max([len(x) for x in l])
         perline = int(self.honeypot.user.windowSize[1] / (maxlen + 1))
-        if self.show_hidden:
-            l.insert(0, '..')
-            l.insert(0, '.')
         for f in l:
             if count == perline:
                 count = 0
