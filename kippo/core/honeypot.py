@@ -122,8 +122,10 @@ class HoneyPotShell(object):
         cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
             print 'Command found: %s' % (line,)
+            self.honeypot.logDispatch('Command found: %s' % (line,))
             self.honeypot.call_command(cmdclass, *rargs)
         else:
+            self.honeypot.logDispatch('Command not found: %s' % (line,))
             print 'Command not found: %s' % (line,)
             if len(line):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
@@ -241,19 +243,25 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.password_input = False
         self.cmdstack = []
 
+    def logDispatch(self, msg):
+        transport = self.terminal.transport.session.conn.transport
+        msg = ':dispatch: ' + msg
+        transport.factory.logDispatch(transport.transport.sessionno, msg)
+
     def connectionMade(self):
         recvline.HistoricRecvLine.connectionMade(self)
         self.displayMOTD()
         self.cmdstack = [HoneyPotShell(self)]
 
+        transport = self.terminal.transport.session.conn.transport
+
         # You are in a maze of twisty little passages, all alike
-        p = self.terminal.transport.session.conn.transport.transport.getPeer()
+        p = transport.transport.getPeer()
 
         # real source IP of client
         self.realClientIP = p.host
 
-        self.clientVersion = \
-            self.terminal.transport.session.conn.transport.otherVersionString
+        self.clientVersion = transport.otherVersionString
 
         # source IP of client in user visible reports (can be fake or real)
         cfg = config()
@@ -492,6 +500,11 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         'ssh-connection': connection.SSHConnection,
         }
 
+    # Special delivery to the loggers to avoid scope problems
+    def logDispatch(self, sessionid, msg):
+        for dblog in self.dbloggers:
+            dblog.logDispatch(sessionid, msg)
+
     def __init__(self):
         cfg = config()
 
@@ -512,6 +525,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
                 print 'pass.db backed up to %s.bak' % (passdb_file,)
 
         # load db loggers
+        self.dbloggers = []
         for x in cfg.sections():
             if not x.startswith('database_'):
                 continue
@@ -526,6 +540,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
                 'kippo.dblog.%s' % (engine,),
                 globals(), locals(), ['dblog']).DBLogger(lcfg)
             log.startLoggingWithObserver(dblogger.emit, setStdout=False)
+            self.dbloggers.append(dblogger)
 
     def buildProtocol(self, addr):
         # FIXME: try to mimic something real 100%

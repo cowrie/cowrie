@@ -12,6 +12,10 @@ class DBLogger(object):
             '^New connection: ([0-9.]+):([0-9]+) \(([0-9.]+):([0-9]+)\) ' + \
             '\[session: ([0-9]+)\]$')
         self.re_sessionlog = re.compile('.*HoneyPotTransport,([0-9]+),[0-9.]+$')
+
+        # :dispatch: means the message has been delivered directly via
+        # logDispatch, instead of relying on the twisted logging, which breaks
+        # on scope changes.
         self.re_map = [(re.compile(x[0]), x[1]) for x in (
             ('^connection lost$',
                 self._connectionLost),
@@ -21,9 +25,9 @@ class DBLogger(object):
                 self.handleLoginSucceeded),
             ('^Opening TTY log: (?P<logfile>.*)$',
                 self.handleTTYLogOpened),
-            ('^Command found: (?P<input>.*)$',
+            ('^:dispatch: Command found: (?P<input>.*)$',
                 self.handleCommand),
-            ('^Command not found: (?P<input>.*)$',
+            ('^:dispatch: Command not found: (?P<input>.*)$',
                 self.handleUnknownCommand),
             ('^INPUT \((?P<realm>[a-zA-Z0-9]+)\): (?P<input>.*)$',
                 self.handleInput),
@@ -33,6 +37,15 @@ class DBLogger(object):
                 self.handleClientVersion),
             )]
         self.start(cfg)
+
+    def logDispatch(self, sessionid, msg):
+        if sessionid not in self.sessions.keys():
+            return
+        for regex, func in self.re_map:
+            match = regex.match(msg)
+            if match:
+                func(self.sessions[sessionid], match.groupdict())
+                break
 
     def start():
         pass
