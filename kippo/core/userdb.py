@@ -30,7 +30,7 @@ class UserDB:
             if not line:
                 continue
 
-            (login, uid_str, passwd) = string.split(line, ':')
+            (login, uid_str, passwd) = line.split(':', 2)
 
             uid = 0
             try:
