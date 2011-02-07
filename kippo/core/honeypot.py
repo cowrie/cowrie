@@ -534,7 +534,10 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             lcfg = ConfigParser.ConfigParser()
             lcfg.add_section(dbengine)
             for i in cfg.options(x):
-                lcfg.set(dbengine, i, cfg.get(x,i))
+                lcfg.set(dbengine, i, cfg.get(x, i))
+            lcfg.add_section('honeypot')
+            for i in cfg.options('honeypot'):
+                lcfg.set('honeypot', i, cfg.get('honeypot', i))
             print 'Loading dblog engine: %s' % (engine,)
             dblogger = __import__(
                 'kippo.dblog.%s' % (engine,),
