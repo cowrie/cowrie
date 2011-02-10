@@ -103,6 +103,11 @@ private_key = private.key
 # (default: not specified)
 #fake_addr = 192.168.66.254
 
+# Banner file to be displayed before the first login attempt.
+#
+# (default: not specified)
+#banner_file =
+
 # MySQL logging module
 #
 # Database structure for this module is supplied in doc/sql/mysql.sql

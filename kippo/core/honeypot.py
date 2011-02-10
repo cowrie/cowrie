@@ -493,10 +493,34 @@ class HoneyPotTransport(transport.SSHServerTransport):
         print 'Remote SSH version: %s' % (self.otherVersionString,)
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
+from twisted.conch.ssh.common import NS, getNS
+class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
+    def serviceStarted(self):
+        userauth.SSHUserAuthServer.serviceStarted(self)
+        self.bannerSent = False
+
+    def sendBanner(self):
+        if self.bannerSent:
+            return
+        cfg = config()
+        if not cfg.has_option('honeypot', 'banner_file'):
+            return
+        data = file(cfg.get('honeypot', 'banner_file')).read()
+        if not data or not len(data.strip()):
+            return
+        data = '\r\n'.join(data.splitlines() + [''])
+        self.transport.sendPacket(
+            userauth.MSG_USERAUTH_BANNER, NS(data) + NS('en'))
+        self.bannerSent = True
+
+    def ssh_USERAUTH_REQUEST(self, packet):
+        self.sendBanner()
+        return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
+
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
     services = {
-        'ssh-userauth': userauth.SSHUserAuthServer,
+        'ssh-userauth': HoneyPotSSHUserAuthServer,
         'ssh-connection': connection.SSHConnection,
         }
 
