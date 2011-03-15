@@ -250,6 +250,19 @@ class command_date(HoneyPotCommand):
         self.writeln(time.strftime("%a %b %d %H:%M:%S UTC %Y"))
 commands['/bin/date'] = command_date
 
+class command_yes(HoneyPotCommand):
+    def start(self):
+        self.y()
+
+    def y(self):
+        self.writeln('y')
+        self.scheduled = reactor.callLater(0.01, self.y)
+
+    def ctrl_c(self):
+        self.scheduled.cancel()
+        self.exit()
+commands['/usr/bin/yes'] = command_yes
+
 class command_nop(HoneyPotCommand):
     def call(self):
         pass
