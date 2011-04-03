@@ -3,10 +3,19 @@
 
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
-from kippo.commands import dice
+from kippo.commands import dice, malware
 import time, random, tarfile, os
 
 commands = {}
+
+def pick_handler(cmd, size):
+    if size in malware.slist:
+        handler = malware.slist[size]
+    elif cmd in malware.clist:
+        handler = malware.clist[cmd]
+    else:
+        handler = random.choice(dice.clist)
+    return handler
 
 class command_tar(HoneyPotCommand):
     def mkfullpath(self, path, f):
@@ -66,7 +75,8 @@ class command_tar(HoneyPotCommand):
             elif f.isfile():
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
-                self.honeypot.commands[dest] = random.choice(dice.clist)
+                self.honeypot.commands[dest] = \
+                    pick_handler(os.path.basename(dest), f.size)
             else:
                 print 'tar: skipping [%s]' % f.name
 commands['/bin/tar'] = command_tar
