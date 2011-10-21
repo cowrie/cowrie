@@ -6,12 +6,14 @@
 import os, sys, time, struct, string, getopt
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
-DIR_READ, DIR_WRITE = 1, 2
+TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
 
 def playlog(fd, settings):
 
     ssize = struct.calcsize('<iLiiLL')
     currtty, prevtime, prefdir = 0, 0, 0
+
+    color = None
 
     while 1:
         try:
@@ -34,8 +36,12 @@ def playlog(fd, settings):
                 prefdir = dir
                 # use the other direction
                 if settings['input_only']:
-                    prefdir = DIR_READ
-                    if dir == DIR_READ: prefdir = DIR_WRITE
+                    prefdir = TYPE_INPUT
+                    if dir == TYPE_INPUT: prefdir = TYPE_OUTPUT
+            if dir == TYPE_INTERACT:
+                color = '\033[36m'
+            elif dir == TYPE_INPUT:
+                color = '\033[33m'
             if dir == prefdir or settings['both_dirs']:
                 curtime = float(sec) + float(usec) / 1000000
                 if prevtime != 0:
@@ -45,7 +51,12 @@ def playlog(fd, settings):
                     if settings['maxdelay'] > 0:
                         time.sleep(sleeptime)
                 prevtime = curtime
+                if settings['colorify'] and color:
+                    sys.stdout.write(color)
                 sys.stdout.write(data)
+                if settings['colorify'] and color:
+                    sys.stdout.write('\033[0m')
+                    color = None
                 sys.stdout.flush()
         elif str(tty) == str(currtty) and op == OP_CLOSE:
             break
@@ -62,6 +73,7 @@ def help(brief = 0):
             '                 to the end. (default is 3.0)'
         print '  -i             show the input stream instead of output'
         print '  -b             show both input and output streams'
+        print '  -c             colorify the output stream based on what streams are being received'
         print '  -h             display this help\n'
 
     sys.exit(1)
@@ -73,10 +85,11 @@ if __name__ == '__main__':
         'maxdelay':     3.0,
         'input_only':   0,
         'both_dirs':    0,
+        'colorify':     0,
         }
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'fhibm:w:', ['help'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'fhibcm:w:', ['help'])
     except getopt.GetoptError, error:
         print 'Error: %s\n' % error
         help()
@@ -87,6 +100,7 @@ if __name__ == '__main__':
         elif o == '-i': settings['input_only'] = 1
         elif o == '-b': settings['both_dirs'] = 1
         elif o in ['-h', '--help']: help()
+        elif o == '-c': settings['colorify'] = 1
 
     if len(args) < 1:
         help()

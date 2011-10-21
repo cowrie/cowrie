@@ -6,7 +6,7 @@
 import struct, sys
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
-DIR_READ, DIR_WRITE = 1, 2
+TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
 
 def ttylog_write(logfile, len, direction, stamp, data = None):
     f = file(logfile, 'ab')

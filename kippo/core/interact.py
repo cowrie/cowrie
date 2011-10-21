@@ -1,5 +1,7 @@
 from twisted.internet import protocol
-from twisted.conch import telnet
+from twisted.conch import telnet, recvline
+from kippo.core import ttylog
+import time
 
 class Interact(telnet.Telnet):
 
@@ -61,7 +63,12 @@ class Interact(telnet.Telnet):
                         '\r\n** Interactive session closed.\r\n')
                     return
             if not self.readonly:
-                self.interacting.keystrokeReceived(bytes, None)
+                if type(bytes) == type(''):
+                    ttylog.ttylog_write(
+                        self.interacting.terminal.ttylog_file,
+                        len(bytes), ttylog.TYPE_INTERACT, time.time(), bytes)
+                recvline.HistoricRecvLine.keystrokeReceived(
+                    self.interacting, bytes, None)
 
     def sessionWrite(self, data):
         buf, prev = '', ''
