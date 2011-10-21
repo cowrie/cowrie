@@ -46,4 +46,13 @@ for i in ssh_addr.split():
         interface=i)
     service.setServiceParent(application)
 
+if cfg.has_option('honeypot', 'interact_enabled') and \
+        cfg.get('honeypot', 'interact_enabled').lower() in \
+        ('yes', 'true', 'on'):
+    iport = int(cfg.get('honeypot', 'interact_port'))
+    from kippo.core import interact
+    from twisted.internet import protocol
+    service = internet.TCPServer(iport, interact.makeInteractFactory(factory))
+    service.setServiceParent(application)
+
 # vim: set ft=python sw=4 et:

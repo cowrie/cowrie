@@ -108,6 +108,16 @@ private_key = private.key
 # (default: not specified)
 #banner_file =
 
+# Session management interface.
+#
+# This is a telnet based service that can be used to interact with active
+# sessions. Disabled by default.
+#
+# (default: false)
+interact_enable = false
+# (default: 5123)
+interact_port = 5123
+
 # MySQL logging module
 #
 # Database structure for this module is supplied in doc/sql/mysql.sql

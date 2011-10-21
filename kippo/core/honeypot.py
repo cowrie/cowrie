@@ -254,6 +254,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.cmdstack = [HoneyPotShell(self)]
 
         transport = self.terminal.transport.session.conn.transport
+        transport.factory.sessions.append(self) # this is for the interactors
 
         # You are in a maze of twisty little passages, all alike
         p = transport.transport.getPeer()
@@ -296,6 +297,8 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
 
     def connectionLost(self, reason):
         recvline.HistoricRecvLine.connectionLost(self, reason)
+        transport = self.terminal.transport.session.conn.transport
+        transport.factory.sessions.remove(self)
         self.lastlogExit()
 
         # not sure why i need to do this:
@@ -392,6 +395,12 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def handle_TAB(self):
         self.cmdstack[-1].handle_TAB()
 
+    def addInteractor(self, interactor):
+        self.terminal.interactors.append(interactor)
+
+    def delInteractor(self, interactor):
+        self.terminal.interactors.remove(interactor)
+
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
         self.ttylog_file = '%s/tty/%s-%s.log' % \
@@ -401,15 +410,20 @@ class LoggingServerProtocol(insults.ServerProtocol):
         print 'Opening TTY log: %s' % self.ttylog_file
         ttylog.ttylog_open(self.ttylog_file, time.time())
         self.ttylog_open = True
+        self.interactors = []
         insults.ServerProtocol.connectionMade(self)
 
     def write(self, bytes, noLog = False):
+        for i in self.interactors:
+            i.sessionWrite(bytes)
         if self.ttylog_open and not noLog:
             ttylog.ttylog_write(self.ttylog_file, len(bytes),
                 ttylog.DIR_WRITE, time.time(), bytes)
         insults.ServerProtocol.write(self, bytes)
 
     def connectionLost(self, reason):
+        for i in self.interactors:
+            i.sessionClosed()
         if self.ttylog_open:
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
@@ -531,6 +545,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def __init__(self):
         cfg = config()
+
+        # protocol instances are kept here for use by the interact feature
+        self.sessions = []
 
         # convert old pass.db root passwords
         passdb_file = '%s/pass.db' % (cfg.get('honeypot', 'data_path'),)
