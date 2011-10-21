@@ -114,7 +114,7 @@ private_key = private.key
 # sessions. Disabled by default.
 #
 # (default: false)
-interact_enable = false
+interact_enabled = false
 # (default: 5123)
 interact_port = 5123
 
