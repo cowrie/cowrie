@@ -514,7 +514,8 @@ class HoneyPotTransport(transport.SSHServerTransport):
     def connectionLost(self, reason):
         for i in self.interactors:
             i.sessionClosed()
-        del self.factory.sessions[self.transport.sessionno]
+        if self.transport.sessionno in self.factory.sessions:
+            del self.factory.sessions[self.transport.sessionno]
         self.lastlogExit()
         if self.ttylog_open:
             ttylog.ttylog_close(self.ttylog_file, time.time())
