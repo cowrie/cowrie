@@ -65,7 +65,7 @@ class Interact(telnet.Telnet):
             if not self.readonly:
                 if type(bytes) == type(''):
                     ttylog.ttylog_write(
-                        self.interacting.terminal.ttylog_file,
+                        self.interacting.ttylog_file,
                         len(bytes), ttylog.TYPE_INTERACT, time.time(), bytes)
                 recvline.HistoricRecvLine.keystrokeReceived(
                     self.interacting, bytes, None)
@@ -97,15 +97,13 @@ class Interact(telnet.Telnet):
             self.transport.write('** Invalid session ID.\r\n')
             return
         for s in self.honeypotFactory.sessions:
-            transport = s.terminal.transport.session.conn.transport
-            if sessionno == transport.transport.sessionno:
+            if sessionno == s:
                 self.view(s)
                 return
         self.transport.write('** No such session found.\r\n')
 
-    def view(self, session):
-        transport = session.terminal.transport.session.conn.transport
-        sessionno = transport.transport.sessionno
+    def view(self, sessionno):
+        session = self.honeypotFactory.sessions[sessionno]
         self.transport.write(
             '** Attaching to #%d, hit ESC to return\r\n' % sessionno)
         session.addInteractor(self)
@@ -114,12 +112,11 @@ class Interact(telnet.Telnet):
     def cmd_list(self, args):
         self.transport.write('ID   clientIP        clientVersion\r\n')
         for s in self.honeypotFactory.sessions:
-            transport = s.terminal.transport.session.conn.transport
-            sessionno = transport.transport.sessionno
+            session = self.honeypotFactory.sessions[s]
             self.transport.write('%s %s %s\r\n' % \
-                (str(sessionno).ljust(4),
-                s.realClientIP.ljust(15),
-                s.clientVersion))
+                (str(s).ljust(4),
+                session.realClientIP.ljust(15),
+                session.clientVersion))
 
     def cmd_help(self, args = ''):
         self.transport.write('List of commands:\r\n')
@@ -140,11 +137,10 @@ class Interact(telnet.Telnet):
             self.transport.write('** Invalid session ID.\r\n')
             return
         for s in self.honeypotFactory.sessions:
-            transport = s.terminal.transport.session.conn.transport
-            if sessionno == transport.transport.sessionno:
+            if sessionno == s:
                 self.transport.write(
                     '** Disconnecting session #%d\r\n' % sessionno)
-                transport.loseConnection()
+                self.honeypotFactory.sessions[s].terminal.loseConnection()
                 return
         self.transport.write('** No such session found.\r\n')
 

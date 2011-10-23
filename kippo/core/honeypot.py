@@ -254,15 +254,12 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.cmdstack = [HoneyPotShell(self)]
 
         transport = self.terminal.transport.session.conn.transport
-        transport.factory.sessions.append(self) # this is for the interactors
+        transport.factory.sessions[transport.transport.sessionno] = self
 
-        # You are in a maze of twisty little passages, all alike
-        p = transport.transport.getPeer()
-
-        # real source IP of client
-        self.realClientIP = p.host
-
+        self.realClientIP = transport.transport.getPeer().host
         self.clientVersion = transport.otherVersionString
+        self.logintime = transport.logintime
+        self.ttylog_file = transport.ttylog_file
 
         # source IP of client in user visible reports (can be fake or real)
         cfg = config()
@@ -270,8 +267,6 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             self.clientIP = cfg.get('honeypot', 'fake_addr')
         else:
             self.clientIP = self.realClientIP
-
-        self.logintime = time.time()
 
         self.keyHandlers.update({
             '\x04':     self.handle_CTRL_D,
@@ -286,24 +281,15 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         except:
             pass
 
-    def lastlogExit(self):
-        starttime = time.strftime('%a %b %d %H:%M',
-            time.localtime(self.logintime))
-        endtime = time.strftime('%H:%M',
-            time.localtime(time.time()))
-        duration = utils.durationHuman(time.time() - self.logintime)
-        utils.addToLastlog('root\tpts/0\t%s\t%s - %s (%s)' % \
-            (self.clientIP, starttime, endtime, duration))
-
+    # this doesn't seem to be called upon disconnect, so please use 
+    # HoneyPotTransport.connectionLost instead
     def connectionLost(self, reason):
         recvline.HistoricRecvLine.connectionLost(self, reason)
-        transport = self.terminal.transport.session.conn.transport
-        transport.factory.sessions.remove(self)
-        self.lastlogExit()
 
         # not sure why i need to do this:
-        del self.fs
-        del self.commands
+        # scratch that, these don't seem to be necessary anymore:
+        #del self.fs
+        #del self.commands
 
     # Overriding to prevent terminal.reset()
     def initializeScreen(self):
@@ -347,8 +333,9 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             self.cmdstack[-1].lineReceived(line)
 
     def keystrokeReceived(self, keyID, modifier):
+        transport = self.terminal.transport.session.conn.transport
         if type(keyID) == type(''):
-            ttylog.ttylog_write(self.terminal.ttylog_file, len(keyID),
+            ttylog.ttylog_write(transport.ttylog_file, len(keyID),
                 ttylog.TYPE_INPUT, time.time(), keyID)
         recvline.HistoricRecvLine.keystrokeReceived(self, keyID, modifier)
 
@@ -396,37 +383,40 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         self.cmdstack[-1].handle_TAB()
 
     def addInteractor(self, interactor):
-        self.terminal.interactors.append(interactor)
+        transport = self.terminal.transport.session.conn.transport
+        transport.interactors.append(interactor)
 
     def delInteractor(self, interactor):
-        self.terminal.interactors.remove(interactor)
+        transport = self.terminal.transport.session.conn.transport
+        transport.interactors.remove(interactor)
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
-        self.ttylog_file = '%s/tty/%s-%s.log' % \
+        transport = self.transport.session.conn.transport
+
+        transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'),
             int(random.random() * 10000))
-        print 'Opening TTY log: %s' % self.ttylog_file
-        ttylog.ttylog_open(self.ttylog_file, time.time())
-        self.ttylog_open = True
-        self.interactors = []
+        print 'Opening TTY log: %s' % transport.ttylog_file
+        ttylog.ttylog_open(transport.ttylog_file, time.time())
+
+        transport.ttylog_open = True
+
         insults.ServerProtocol.connectionMade(self)
 
     def write(self, bytes, noLog = False):
-        for i in self.interactors:
+        transport = self.transport.session.conn.transport
+        for i in transport.interactors:
             i.sessionWrite(bytes)
-        if self.ttylog_open and not noLog:
-            ttylog.ttylog_write(self.ttylog_file, len(bytes),
+        if transport.ttylog_open and not noLog:
+            ttylog.ttylog_write(transport.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
         insults.ServerProtocol.write(self, bytes)
 
+    # this doesn't seem to be called upon disconnect, so please use 
+    # HoneyPotTransport.connectionLost instead
     def connectionLost(self, reason):
-        for i in self.interactors:
-            i.sessionClosed()
-        if self.ttylog_open:
-            ttylog.ttylog_close(self.ttylog_file, time.time())
-            self.ttylog_open = False
         insults.ServerProtocol.connectionLost(self, reason)
 
 class HoneyPotAvatar(avatar.ConchUser):
@@ -501,11 +491,35 @@ class HoneyPotTransport(transport.SSHServerTransport):
             (self.transport.getPeer().host, self.transport.getPeer().port,
             self.transport.getHost().host, self.transport.getHost().port,
             self.transport.sessionno)
+        self.interactors = []
+        self.logintime = time.time()
+        self.ttylog_open = False
         transport.SSHServerTransport.connectionMade(self)
 
     def ssh_KEXINIT(self, packet):
         print 'Remote SSH version: %s' % (self.otherVersionString,)
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
+
+    def lastlogExit(self):
+        starttime = time.strftime('%a %b %d %H:%M',
+            time.localtime(self.logintime))
+        endtime = time.strftime('%H:%M',
+            time.localtime(time.time()))
+        duration = utils.durationHuman(time.time() - self.logintime)
+        clientIP = self.transport.getPeer().host
+        utils.addToLastlog('root\tpts/0\t%s\t%s - %s (%s)' % \
+            (clientIP, starttime, endtime, duration))
+
+    # this seems to be the only reliable place of catching lost connection
+    def connectionLost(self, reason):
+        for i in self.interactors:
+            i.sessionClosed()
+        del self.factory.sessions[self.transport.sessionno]
+        self.lastlogExit()
+        if self.ttylog_open:
+            ttylog.ttylog_close(self.ttylog_file, time.time())
+            self.ttylog_open = False
+        transport.SSHServerTransport.connectionLost(self, reason)
 
 from twisted.conch.ssh.common import NS, getNS
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -546,8 +560,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
     def __init__(self):
         cfg = config()
 
-        # protocol instances are kept here for use by the interact feature
-        self.sessions = []
+        # protocol^Wwhatever instances are kept here for the interact feature
+        self.sessions = {}
 
         # convert old pass.db root passwords
         passdb_file = '%s/pass.db' % (cfg.get('honeypot', 'data_path'),)
