@@ -534,7 +534,12 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         cfg = config()
         if not cfg.has_option('honeypot', 'banner_file'):
             return
-        data = file(cfg.get('honeypot', 'banner_file')).read()
+        try:
+            data = file(cfg.get('honeypot', 'banner_file')).read()
+        except IOError:
+            print 'Banner file %s does not exist!' % \
+                cfg.get('honeypot', 'banner_file')
+            return
         if not data or not len(data.strip()):
             return
         data = '\r\n'.join(data.splitlines() + [''])
