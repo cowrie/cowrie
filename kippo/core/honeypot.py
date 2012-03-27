@@ -419,6 +419,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
     def connectionLost(self, reason):
         insults.ServerProtocol.connectionLost(self, reason)
 
+class HoneyPotSSHSession(session.SSHSession):
+
+    def request_env(self, data):
+        print 'request_env: %s' % (repr(data))
+
 class HoneyPotAvatar(avatar.ConchUser):
     implements(conchinterfaces.ISession)
 
@@ -426,7 +431,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         avatar.ConchUser.__init__(self)
         self.username = username
         self.env = env
-        self.channelLookup.update({'session':session.SSHSession})
+        self.channelLookup.update({'session': HoneyPotSSHSession})
 
         userdb = UserDB()
         self.uid = self.gid = userdb.getUID(self.username)
