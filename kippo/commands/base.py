@@ -6,6 +6,7 @@ from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 from kippo.core.config import config
 from kippo.core.userdb import UserDB
+from kippo.core import utils
 
 commands = {}
 
@@ -16,14 +17,17 @@ commands['/usr/bin/whoami'] = command_whoami
 
 class command_uptime(HoneyPotCommand):
     def call(self):
-        self.writeln(' %s up 14 days,  3:53,  0 users,  load average: 0.08, 0.02, 0.01' % \
-            time.strftime('%H:%M:%S'))
+        if len(self.args):
+            secs = int(self.args[0])
+            self.honeypot.uptime(time.time() - secs)
+        self.writeln(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00' % \
+            (time.strftime('%H:%M:%S'), utils.uptime(self.honeypot.uptime())))
 commands['/usr/bin/uptime'] = command_uptime
 
 class command_w(HoneyPotCommand):
     def call(self):
-        self.writeln(' %s up 14 days,  3:53,  1 user,  load average: 0.08, 0.02, 0.01' % \
-            time.strftime('%H:%M:%S'))
+        self.writeln(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00' % \
+            (time.strftime('%H:%M:%S'), utils.uptime(self.honeypot.uptime())))
         self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
         self.writeln('%-8s pts/0    %s %s    0.00s  0.00s  0.00s w' % \
             (self.honeypot.user.username,
@@ -116,7 +120,7 @@ class command_ps(HoneyPotCommand):
             ('root      ', '2110', '  0.0', '  0.0', '   1764', '   504', ' tty5     ', 'Ss+  ', 'Nov06', '   0:00 ', '/sbin/getty 38400 tty5',),
             ('root      ', '2112', '  0.0', '  0.0', '   1764', '   508', ' tty6     ', 'Ss+  ', 'Nov06', '   0:00 ', '/sbin/getty 38400 tty6',),
             ('root      ', '2133', '  0.0', '  0.1', '   2180', '   620', ' ?        ', 'S<s  ', 'Nov06', '   0:00 ', 'dhclient3 -pf /var/run/dhclient.eth0.pid -lf /var/lib/dhcp3/dhclien',),
-            ('root      ', '4969', '  0.0', '  0.1', '   5416', '  1024', ' ?        ', 'Ss   ', 'Nov08', '   0:00 ', '/usr/sbin/sshd',),
+            ('root      ', '4969', '  0.0', '  0.1', '   5416', '  1024', ' ?        ', 'Ss   ', 'Nov08', '   0:00 ', '/usr/sbin/sshd: %s@pts/0' % user,),
             ('%s'.ljust(8) % user, '5673', '  0.0', '  0.2', '   2924', '  1540', ' pts/0    ', 'Ss   ', '04:30', '   0:00 ', '-bash',),
             ('%s'.ljust(8) % user, '5679', '  0.0', '  0.1', '   2432', '   928', ' pts/0    ', 'R+   ', '04:32', '   0:00 ', 'ps %s' % ' '.join(self.args),)
             )
@@ -243,6 +247,7 @@ class command_reboot(HoneyPotCommand):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
+        self.honeypot.uptime(time.time())
         self.exit()
 commands['/sbin/reboot'] = command_reboot
 

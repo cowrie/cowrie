@@ -390,6 +390,13 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         transport = self.terminal.transport.session.conn.transport
         transport.interactors.remove(interactor)
 
+    def uptime(self, reset = None):
+        transport = self.terminal.transport.session.conn.transport
+        r = time.time() - transport.factory.starttime
+        if reset:
+            transport.factory.starttime = reset
+        return r
+
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
         transport = self.transport.session.conn.transport
@@ -420,7 +427,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         insults.ServerProtocol.connectionLost(self, reason)
 
 class HoneyPotSSHSession(session.SSHSession):
-
     def request_env(self, data):
         print 'request_env: %s' % (repr(data))
 
@@ -573,6 +579,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
         # protocol^Wwhatever instances are kept here for the interact feature
         self.sessions = {}
+
+        # for use by the uptime command
+        self.starttime = time.time()
 
         # convert old pass.db root passwords
         passdb_file = '%s/pass.db' % (cfg.get('honeypot', 'data_path'),)
