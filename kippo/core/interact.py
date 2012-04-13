@@ -63,8 +63,9 @@ class Interact(telnet.Telnet):
                     ttylog.ttylog_write(
                         self.interacting.ttylog_file,
                         len(bytes), ttylog.TYPE_INTERACT, time.time(), bytes)
-                recvline.HistoricRecvLine.keystrokeReceived(
-                    self.interacting, bytes, None)
+                for c in bytes:
+                    recvline.HistoricRecvLine.keystrokeReceived(
+                        self.interacting, c, None)
 
     def sessionWrite(self, data):
         buf, prev = '', ''
