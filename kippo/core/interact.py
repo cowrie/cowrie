@@ -6,7 +6,6 @@ import time
 class Interact(telnet.Telnet):
 
     def connectionMade(self):
-        print 'Connected'
         self.interacting = None
         self.cmdbuf = ''
         self.honeypotFactory = self.factory.honeypotFactory
@@ -20,22 +19,20 @@ class Interact(telnet.Telnet):
         self.cmd_help()
 
     def connectionLost(self, reason):
-        print 'Connection lost'
         if self.interacting != None:
             self.interacting.delInteractor(self)
 
     def enableRemote(self, option):
-        print 'enableRemote', repr(option)
         return option == telnet.LINEMODE
   
     def disableRemote(self, option):
-        print 'disableRemote', repr(option)
+        pass
   
     def applicationDataReceived(self, bytes):
         # in command mode, we want to echo characters and buffer the input
         if not self.interacting:
             self.transport.write(bytes)
-            if bytes == '\r':
+            if bytes in ('\r', '\n'):
                 self.transport.write('\n')
                 pieces = self.cmdbuf.split(' ', 1)
                 self.cmdbuf = ''
@@ -45,7 +42,6 @@ class Interact(telnet.Telnet):
                 try:
                     func = getattr(self, 'cmd_' + cmd)
                 except AttributeError:
-                    print 'Unknown command: %s' % (cmd,)
                     self.transport.write('** Unknown command.\r\n')
                     return
                 func(args)
