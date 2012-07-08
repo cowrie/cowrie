@@ -496,6 +496,8 @@ class HoneyPotRealm:
             raise Exception, "No supported interfaces found."
 
 class HoneyPotTransport(transport.SSHServerTransport):
+    
+    hadVersion = False
 
     def connectionMade(self):
         print 'New connection: %s:%s (%s:%s) [session: %d]' % \
@@ -506,6 +508,18 @@ class HoneyPotTransport(transport.SSHServerTransport):
         self.logintime = time.time()
         self.ttylog_open = False
         transport.SSHServerTransport.connectionMade(self)
+
+    def sendKexInit(self):
+        # Don't send key exchange prematurely
+        if not self.gotVersion:
+            return
+        transport.SSHServerTransport.sendKexInit(self)
+
+    def dataReceived(self, data):
+        transport.SSHServerTransport.dataReceived(self, data)
+        if not self.hadVersion and self.gotVersion:
+            self.sendKexInit()
+            self.hadVersion = True
 
     def ssh_KEXINIT(self, packet):
         print 'Remote SSH version: %s' % (self.otherVersionString,)
