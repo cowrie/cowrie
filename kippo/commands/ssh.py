@@ -67,6 +67,8 @@ class command_ssh(HoneyPotCommand):
             host = rest[0]
         self.honeypot.hostname = host
         self.honeypot.cwd = '/root'
+        if not self.fs.exists(self.honeypot.cwd):
+            self.honeypot.cwd = '/'
         self.honeypot.password_input = False
         self.writeln(
             'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686' % \

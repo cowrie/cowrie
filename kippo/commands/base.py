@@ -61,6 +61,8 @@ class command_exit(HoneyPotCommand):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
+        if not self.fs.exists(self.honeypot.cwd):
+            self.honeypot.cwd = '/'
 commands['exit'] = command_exit
 commands['logout'] = command_exit
 
@@ -233,6 +235,8 @@ class command_shutdown(HoneyPotCommand):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
+        if not self.fs.exists(self.honeypot.cwd):
+            self.honeypot.cwd = '/'
         self.exit()
 commands['/sbin/shutdown'] = command_shutdown
 
@@ -250,6 +254,8 @@ class command_reboot(HoneyPotCommand):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
+        if not self.fs.exists(self.honeypot.cwd):
+            self.honeypot.cwd = '/'
         self.honeypot.uptime(time.time())
         self.exit()
 commands['/sbin/reboot'] = command_reboot
