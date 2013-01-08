@@ -235,9 +235,12 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
     def __init__(self, user, env):
         self.user = user
         self.env = env
-        self.cwd = user.home
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
         self.fs = fs.HoneyPotFilesystem(deepcopy(self.env.fs))
+        if self.fs.exists(user.home):
+            self.cwd = user.home
+        else:
+            self.cwd = '/'
         # commands is also a copy so we can add stuff on the fly
         self.commands = copy(self.env.commands)
         self.password_input = False
