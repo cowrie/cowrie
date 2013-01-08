@@ -29,6 +29,8 @@ class DBLogger(object):
                 self.handleCommand),
             ('^:dispatch: Command not found: (?P<input>.*)$',
                 self.handleUnknownCommand),
+            ('^:dispatch: Downloading URL \((?P<url>.*)\) to (?P<outfile>.*)$',
+                self.handleFileDownload),
             ('^INPUT \((?P<realm>[a-zA-Z0-9]+)\): (?P<input>.*)$',
                 self.handleInput),
             ('^Terminal size: (?P<height>[0-9]+) (?P<width>[0-9]+)$',
@@ -136,6 +138,10 @@ class DBLogger(object):
 
     # args has: version
     def handleClientVersion(self, session, args):
+        pass
+
+    # args has: url, outfile
+    def handleFileDownload(self, session, args):
         pass
 
 # vim: set sw=4 et:

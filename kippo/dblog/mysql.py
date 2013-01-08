@@ -135,4 +135,10 @@ class DBLogger(dblog.DBLogger):
             'UPDATE `sessions` SET `client` = %s WHERE `id` = %s',
             (id, session))
 
+    def handleFileDownload(self, session, args):
+        self.simpleQuery('INSERT INTO `downloads`' + \
+            ' (`session`, `timestamp`, `url`, `outfile`)' + \
+            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+            (session, self.nowUnix(), args['url'], args['outfile']))
+
 # vim: set sw=4 et:

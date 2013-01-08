@@ -65,6 +65,8 @@ class command_wget(HoneyPotCommand):
             (self.honeypot.env.cfg.get('honeypot', 'download_path'),
             time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', url))
+        self.honeypot.logDispatch(
+            'Downloading URL (%s) to %s' % (url, self.safeoutfile))
         self.deferred = self.download(url, outfile,
             file(self.safeoutfile, 'wb'))
         if self.deferred:
