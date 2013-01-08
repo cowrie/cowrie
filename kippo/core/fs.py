@@ -32,6 +32,9 @@ class HoneyPotFilesystem(object):
     def __init__(self, fs):
         self.fs = fs
 
+        # keep count of new files, so we can have an artificial limit
+        self.newcount = 0 
+
     def resolve_path(self, path, cwd):
         pieces = path.rstrip('/').split('/')
 
@@ -134,6 +137,8 @@ class HoneyPotFilesystem(object):
             return file(realfile, 'rb').read()
 
     def mkfile(self, path, uid, gid, size, mode, ctime = None):
+        if self.newcount > 10000:
+            return False
         if ctime is None:
             ctime = time.time()
         dir = self.get_path(os.path.dirname(path))
@@ -142,9 +147,12 @@ class HoneyPotFilesystem(object):
             dir.remove([x for x in dir if x[A_NAME] == outfile][0])
         dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [],
             None, None])
+        self.newcount += 1
         return True
 
     def mkdir(self, path, uid, gid, size, mode, ctime = None):
+        if self.newcount > 10000:
+            return False
         if ctime is None:
             ctime = time.time()
         if not len(path.strip('/')):
@@ -155,6 +163,7 @@ class HoneyPotFilesystem(object):
             return False
         dir.append([os.path.basename(path), T_DIR, uid, gid, size, mode,
             ctime, [], None, None])
+        self.newcount += 1
         return True
 
     def is_dir(self, path):
