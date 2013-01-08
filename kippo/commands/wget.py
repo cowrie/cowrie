@@ -6,6 +6,7 @@ from kippo.core.fs import *
 from twisted.web import client
 from twisted.internet import reactor
 import stat, time, urlparse, random, re, exceptions
+import os.path
 
 commands = {}
 
@@ -61,14 +62,17 @@ class command_wget(HoneyPotCommand):
         if not len(outfile.strip()) or not urldata.path.count('/'):
             outfile = 'index.html'
 
+        self.url = url
+        self.limit_size = 0
+        cfg = self.honeypot.env.cfg
+        if cfg.has_option('honeypot', 'download_limit_size'):
+            self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
+
         self.safeoutfile = '%s/%s_%s' % \
-            (self.honeypot.env.cfg.get('honeypot', 'download_path'),
+            (cfg.get('honeypot', 'download_path'),
             time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', url))
-        self.honeypot.logDispatch(
-            'Downloading URL (%s) to %s' % (url, self.safeoutfile))
-        self.deferred = self.download(url, outfile,
-            file(self.safeoutfile, 'wb'))
+        self.deferred = self.download(url, outfile, self.safeoutfile)
         if self.deferred:
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error, url)
@@ -128,6 +132,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.lastupdate = 0
         self.started = time.time()
         self.proglen = 0
+        self.nomore = False
     
     def noPage(self, reason): # called for non-200 responses
         if self.status == '304':
@@ -156,6 +161,16 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             else:
                 self.wget.writeln('Length: unspecified [%s]' % \
                     (self.contenttype))
+            if self.wget.limit_size > 0 and \
+                    self.totallength > self.wget.limit_size:
+                print 'Not saving URL (%s) due to file size limit' % \
+                    (self.wget.url,)
+                self.fileName = os.path.devnull
+                self.nomore = True
+            else:
+                msg = 'Saving URL (%s) to %s' % (self.wget.url, self.fileName)
+                self.wget.honeypot.logDispatch(msg)
+                print msg
             self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
             self.wget.honeypot.terminal.nextLine()
 
@@ -164,6 +179,16 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def pagePart(self, data):
         if self.status == '200':
             self.currentlength += len(data)
+
+            # if downloading files of unspecified size, this could happen:
+            if not self.nomore and self.wget.limit_size > 0 and \
+                    self.currentlength > self.wget.limit_size:
+                print 'File limit reached, not saving any more data!'
+                self.nomore = True
+                self.file.close()
+                self.fileName = os.path.devnull
+                self.file = self.openFile(data)
+
             if (time.time() - self.lastupdate) < 0.5:
                 return client.HTTPDownloader.pagePart(self, data)
             if self.totallength:

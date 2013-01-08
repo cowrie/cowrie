@@ -30,6 +30,13 @@ log_path = log
 # (default: dl)
 download_path = dl
 
+# Maximum file size for downloaded files. A value of 0 means no limit.
+# If the file size is known to be too big from the start, the file will not be
+# stored on disk at all.
+#
+# (default: 0)
+#download_limit_size = 100000
+
 # Directory where virtual file contents are kept in.
 #
 # This is only used by commands like 'cat' to display the contents of files.
