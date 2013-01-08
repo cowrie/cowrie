@@ -33,6 +33,8 @@ factory.portal.registerChecker(honeypot.HoneypotPasswordChecker())
 factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
 factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=privKeyString)}
 
+wrapper = honeypot.HoneypotLimitConnections(factory)
+
 cfg = config()
 if cfg.has_option('honeypot', 'ssh_addr'):
     ssh_addr = cfg.get('honeypot', 'ssh_addr')
@@ -42,7 +44,7 @@ else:
 application = service.Application('honeypot')
 for i in ssh_addr.split():
     service = internet.TCPServer(
-        int(cfg.get('honeypot', 'ssh_port')), factory,
+        int(cfg.get('honeypot', 'ssh_port')), wrapper,
         interface=i)
     service.setServiceParent(application)
 

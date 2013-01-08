@@ -20,6 +20,11 @@ ssh_port = 2222
 # (default: sales)
 hostname = sales
 
+# Maximum number of concurrent connections to the honeypot
+#
+# (default: 50)
+#connection_limit = 50
+
 # Directory where to save log files in.
 #
 # (default: log)
