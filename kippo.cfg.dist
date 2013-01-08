@@ -130,6 +130,7 @@ interact_port = 5123
 #database = kippo
 #username = kippo
 #password = secret
+#port = 3306
 
 # XMPP Logging
 #

@@ -32,11 +32,16 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
 
 class DBLogger(dblog.DBLogger):
     def start(self, cfg):
+        if cfg.has_option('database_mysql', 'port'):
+            port = int(cfg.get('database_mysql', 'port'))
+        else:
+            port = 3306
         self.db = ReconnectingConnectionPool('MySQLdb',
             host = cfg.get('database_mysql', 'host'),
             db = cfg.get('database_mysql', 'database'),
             user = cfg.get('database_mysql', 'username'),
             passwd = cfg.get('database_mysql', 'password'),
+            port = port,
             cp_min = 1,
             cp_max = 1)
 
