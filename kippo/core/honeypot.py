@@ -8,7 +8,6 @@ from twisted.conch.insults import insults
 from twisted.application import service, internet
 from twisted.internet import reactor, protocol, defer
 from twisted.python import failure, log
-from twisted.protocols.policies import WrappingFactory
 from zope.interface import implements
 from copy import deepcopy, copy
 import sys, os, random, pickle, time, stat, shlex, anydbm
@@ -651,29 +650,6 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
         t.factory = self
         return t
-
-class HoneypotLimitConnections(WrappingFactory):
-
-    connectionCount = 0
-    connectionLimit = 50
-
-    def startFactory(self):
-        cfg = config()
-        if cfg.has_option('honeypot', 'connection_limit'):
-            self.connectionLimit = int(cfg.get(
-                'honeypot', 'connection_limit'))
-
-    def buildProtocol(self, addr):
-        if self.connectionLimit is None or \
-                self.connectionCount < self.connectionLimit:
-            self.connectionCount += 1
-            return WrappingFactory.buildProtocol(self, addr)
-        else:
-            print 'Connection limit reached (%s:%s)' % (addr.host, addr.port)
-            return None
-
-    def unregisterProtocol(self, p):
-        self.connectionCount -= 1
 
 class HoneypotPasswordChecker:
     implements(checkers.ICredentialsChecker)
