@@ -1,6 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import twisted
 from twisted.cred import portal, checkers, credentials, error
 from twisted.conch import avatar, recvline, interfaces as conchinterfaces
 from twisted.conch.ssh import factory, userauth, connection, keys, session, common, transport
@@ -519,7 +520,9 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
     def dataReceived(self, data):
         transport.SSHServerTransport.dataReceived(self, data)
-        if not self.hadVersion and self.gotVersion:
+        # later versions seem to call sendKexInit again on their own
+        if twisted.version.major <= 11 and \
+                not self.hadVersion and self.gotVersion:
             self.sendKexInit()
             self.hadVersion = True
 
