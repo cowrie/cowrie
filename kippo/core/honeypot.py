@@ -521,7 +521,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
     def dataReceived(self, data):
         transport.SSHServerTransport.dataReceived(self, data)
         # later versions seem to call sendKexInit again on their own
-        if twisted.version.major <= 11 and \
+        if twisted.version.major < 11 and \
                 not self.hadVersion and self.gotVersion:
             self.sendKexInit()
             self.hadVersion = True
