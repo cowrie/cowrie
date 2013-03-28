@@ -11,8 +11,8 @@ class DBLogger(object):
         self.re_connected = re.compile(
             '^New connection: ([0-9.]+):([0-9]+) \(([0-9.]+):([0-9]+)\) ' + \
             '\[session: ([0-9]+)\]$')
-        self.re_sessionlog = re.compile(
-            '.* on [a-zA-Z0-9]+,([0-9]+),[0-9.]+$')
+        self.re_sessionlog =
+            re.compile('.*HoneyPotTransport,([0-9]+),[0-9.]+$')
 
         # :dispatch: means the message has been delivered directly via
         # logDispatch, instead of relying on the twisted logging, which breaks
