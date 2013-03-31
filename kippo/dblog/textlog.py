@@ -34,7 +34,7 @@ class DBLogger(dblog.DBLogger):
 
     def handleLoginSucceeded(self, session, args):
         self.write(session, 'Login succeeded [%s/%s]' % \
-            args['username'], args['password'])
+            (args['username'], args['password']))
 
     def handleCommand(self, session, args):
         self.write(session, 'Command [%s]' % (args['input'],))
