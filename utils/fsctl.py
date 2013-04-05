@@ -178,9 +178,9 @@ class fseditCmd(cmd.Cmd):
         print self.pwd
  
     def do_mkdir(self, args):
-        "Add a new directory in the target directory.
+        """Add a new directory in the target directory.
         Handles relative or absolute file paths. \n
-        Usage: mkdir <destination>"
+        Usage: mkdir <destination>"""
  
         arg_list=args.split()
         if len(arg_list) != 1:
@@ -189,9 +189,9 @@ class fseditCmd(cmd.Cmd):
             self.mkfile(arg_list, T_DIR)
  
     def do_touch(self, args):
-        "Add a new file in the target directory.
+        """Add a new file in the target directory.
         Handles relative or absolute file paths. \n
-        Usage: touch <destination> [<size in bytes>]"
+        Usage: touch <destination> [<size in bytes>]"""
        
         arg_list=args.split()
        
