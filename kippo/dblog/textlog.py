@@ -50,7 +50,7 @@ class DBLogger(dblog.DBLogger):
             (args['width'], args['height']))
 
     def handleClientVersion(self, session, args):
-        self.write(session, 'Client version: [%s]' % (arg['version'],))
+        self.write(session, 'Client version: [%s]' % (args['version'],))
 
     def handleFileDownload(self, session, args):
         self.write(session, 'File download: [%s] -> %s' % \
