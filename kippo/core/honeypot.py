@@ -640,10 +640,16 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             self.dbloggers.append(dblogger)
 
     def buildProtocol(self, addr):
+        cfg = config()
+
         # FIXME: try to mimic something real 100%
         t = HoneyPotTransport()
 
-        t.ourVersionString = 'SSH-2.0-OpenSSH_5.1p1 Debian-5'
+        if cfg.has_option('honeypot', 'ssh_version_string'):
+            t.ourVersionString = cfg.get('honeypot','ssh_version_string')
+        else:
+            t.ourVersionString = "SSH-2.0-OpenSSH_5.1p1 Debian-5"
+
         t.supportedPublicKeys = self.privateKeys.keys()
 
         if not self.primes:
