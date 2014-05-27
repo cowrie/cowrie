@@ -18,7 +18,7 @@ Some interesting logs from a live Kippo installation below (viewable within a we
 Some interesting features:
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can 'cat' files such as /etc/passwd. Only minimal file contents are included 
-* Session logs stored in an [http://user-mode-linux.sourceforge.net/ UML compatible]  format for easy replay with original timings 
+* Session logs stored in an (UML Compatible)[http://user-mode-linux.sourceforge.net/]  format for easy replay with original timings 
 * Just like Kojoney, Kippo saves files downloaded with wget for later inspection
 * Trickery; ssh pretends to connect somewhere, exit doesn't really exit, etc 
 
@@ -58,7 +58,7 @@ Files of interest:
 
 ## Is it secure?
 
-Maybe. See [FAQ]
+Maybe. See [[FAQ]]
 
 ## I have some questions!
 
