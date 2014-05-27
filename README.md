@@ -58,7 +58,7 @@ Files of interest:
 
 ## Is it secure?
 
-Maybe. See (FAQ)[https://github.com/desaster/kippo/wiki/FAQ)
+Maybe. See [FAQ](https://github.com/desaster/kippo/wiki/FAQ)
 
 ## I have some questions!
 
