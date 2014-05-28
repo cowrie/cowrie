@@ -15,7 +15,7 @@ def durationHuman(seconds):
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     years, days = divmod(days, 365.242199)
- 
+
     sdays = str(days)
     syears = str(years)
     sseconds = str(seconds).rjust(2, '0')
@@ -52,23 +52,23 @@ def tail(the_file, lines_2find=20):
     return line_list[-lines_2find:]
     #we read at least 21 line breaks from the bottom, block by block for speed
     #21 to ensure we don't get a half line
- 
+
 # Gives a human-readable uptime string
 # Thanks to http://thesmithfam.org/blog/2005/11/19/python-uptime-script/
 # (modified to look like the real uptime command)
 def uptime(total_seconds):
      total_seconds = float(total_seconds)
- 
+
      # Helper vars:
      MINUTE  = 60
      HOUR    = MINUTE * 60
      DAY     = HOUR * 24
- 
+
      # Get the days, hours, etc:
      days    = int(total_seconds / DAY)
      hours   = int((total_seconds % DAY) / HOUR)
      minutes = int((total_seconds % HOUR) / MINUTE)
- 
+
      # 14 days,  3:53
      # 11 min
 

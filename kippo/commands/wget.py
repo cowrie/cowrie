@@ -32,8 +32,8 @@ def sizeof_fmt(num):
         num /= 1024.0
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
-def splitthousands( s, sep=','):  
-    if len(s) <= 3: return s  
+def splitthousands( s, sep=','):
+    if len(s) <= 3: return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
 class command_wget(HoneyPotCommand):
@@ -122,7 +122,7 @@ class command_wget(HoneyPotCommand):
 commands['/usr/bin/wget'] = command_wget
 
 # from http://code.activestate.com/recipes/525493/
-class HTTPProgressDownloader(client.HTTPDownloader):    
+class HTTPProgressDownloader(client.HTTPDownloader):
     def __init__(self, wget, fakeoutfile, url, outfile, headers=None):
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
             agent='Wget/1.11.4')
@@ -133,7 +133,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.started = time.time()
         self.proglen = 0
         self.nomore = False
-    
+
     def noPage(self, reason): # called for non-200 responses
         if self.status == '304':
             client.HTTPDownloader.page(self, '')

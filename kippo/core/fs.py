@@ -33,7 +33,7 @@ class HoneyPotFilesystem(object):
         self.fs = fs
 
         # keep count of new files, so we can have an artificial limit
-        self.newcount = 0 
+        self.newcount = 0
 
     def resolve_path(self, path, cwd):
         pieces = path.rstrip('/').split('/')
