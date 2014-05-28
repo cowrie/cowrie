@@ -195,7 +195,7 @@ class command_shutdown(HoneyPotCommand):
                 "-a:      use /etc/shutdown.allow ",
                 "-k:      don't really shutdown, only warn. " ,
                 "-r:      reboot after shutdown. " ,
-                "-h:      halt after shutdown. " ,  
+                "-h:      halt after shutdown. " ,
                 "-P:      halt action is to turn off power. " ,
                 "-H:      halt action is to just halt. " ,
                 "-f:      do a 'fast' reboot (skip fsck). " ,
@@ -211,7 +211,7 @@ class command_shutdown(HoneyPotCommand):
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
             self.nextLine()
-            self.writeln(  
+            self.writeln(
                 'Broadcast message from root@%s (pts/0) (%s):' % \
                 (self.honeypot.hostname, time.ctime()))
             self.nextLine()
@@ -220,7 +220,7 @@ class command_shutdown(HoneyPotCommand):
         elif len(self.args) > 1 and self.args[0].strip().count('-r') \
                 and self.args[1].strip().count('now'):
             self.nextLine()
-            self.writeln(  
+            self.writeln(
                 'Broadcast message from root@%s (pts/0) (%s):' % \
                 (self.honeypot.hostname, time.ctime()))
             self.nextLine()
@@ -230,7 +230,7 @@ class command_shutdown(HoneyPotCommand):
             self.writeln("Try `shutdown --help' for more information.")
             self.exit()
             return
-            
+
     def finish(self):
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'

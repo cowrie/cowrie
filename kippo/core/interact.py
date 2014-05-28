@@ -24,10 +24,10 @@ class Interact(telnet.Telnet):
 
     def enableRemote(self, option):
         return option == telnet.LINEMODE
-  
+
     def disableRemote(self, option):
         pass
-  
+
     def applicationDataReceived(self, bytes):
         # in command mode, we want to echo characters and buffer the input
         if not self.interacting:

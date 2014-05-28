@@ -285,7 +285,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         except:
             pass
 
-    # this doesn't seem to be called upon disconnect, so please use 
+    # this doesn't seem to be called upon disconnect, so please use
     # HoneyPotTransport.connectionLost instead
     def connectionLost(self, reason):
         recvline.HistoricRecvLine.connectionLost(self, reason)
@@ -350,7 +350,7 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         else:
             self.lineBuffer[self.lineBufferIndex:self.lineBufferIndex+1] = [ch]
         self.lineBufferIndex += 1
-        if not self.password_input: 
+        if not self.password_input:
             self.terminal.write(ch)
 
     def writeln(self, data):
@@ -425,7 +425,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
         insults.ServerProtocol.write(self, bytes)
 
-    # this doesn't seem to be called upon disconnect, so please use 
+    # this doesn't seem to be called upon disconnect, so please use
     # HoneyPotTransport.connectionLost instead
     def connectionLost(self, reason):
         insults.ServerProtocol.connectionLost(self, reason)

@@ -27,7 +27,7 @@ def playlog(fd, settings):
                 settings['maxdelay'] = 0
                 continue
             break
-        
+
         if currtty == 0: currtty = tty
 
         if str(tty) == str(currtty) and op == OP_WRITE:
