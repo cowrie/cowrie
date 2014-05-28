@@ -17,12 +17,14 @@ class command_faked_package_class_factory(object):
         return command_faked_installation
 
 '''apt-get fake
-suppports only the 'install PACKAGE' command.
-Places a 'Segfault' at /usr/bin/PACKAGE'''
+suppports only the 'install PACKAGE' command & 'moo'.
+Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
 class command_aptget(HoneyPotCommand):
     def start(self):
         if len(self.args) > 0 and self.args[0] == 'install':
             self.do_install()
+        elif len(self.args) > 0 and self.args[0] == 'moo':
+            self.do_moo()
         else:
             self.do_locked()
 
@@ -87,6 +89,16 @@ class command_aptget(HoneyPotCommand):
             self.honeypot.commands['/usr/bin/%s' % p] = \
                 command_faked_package_class_factory.getCommand(p)
             yield self.sleep(2)
+        self.exit()
+
+    def do_moo(self):
+        self.writeln('         (__)')
+        self.writeln('         (oo)')
+        self.writeln('   /------\/')
+        self.writeln('  / |    ||')
+        self.writeln(' *  /\---/\ ')
+        self.writeln('    ~~   ~~')
+        self.writeln('...."Have you mooed today?"...')
         self.exit()
 
     def do_locked(self):
