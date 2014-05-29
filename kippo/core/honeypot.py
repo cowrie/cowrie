@@ -137,10 +137,16 @@ class HoneyPotShell(object):
         self.runCommand()
 
     def showPrompt(self):
+        # Example: nas3:~#
+        #prompt = '%s:%%(path)s' % self.honeypot.hostname
+        # Example: root@nas3:~#     (More of a "Debianu" feel)
+        prompt = '%s@%s:%%(path)s' % (self.honeypot.user.username, self.honeypot.hostname,)
+        # Example: [root@nas3 ~]#   (More of a "CentOS" feel)
+        #prompt = '[%s@%s %%(path)s]' % (self.honeypot.user.username, self.honeypot.hostname,)
         if not self.honeypot.user.uid:
-            prompt = '%s:%%(path)s# ' % self.honeypot.hostname
+            prompt += '# '    # "Root" user
         else:
-            prompt = '%s:%%(path)s$ ' % self.honeypot.hostname
+            prompt += '$ '    # "Non-Root" user
 
         path = self.honeypot.cwd
         homelen = len(self.honeypot.user.home)
@@ -149,6 +155,11 @@ class HoneyPotShell(object):
         elif len(path) > (homelen+1) and \
                 path[:(homelen+1)] == self.honeypot.user.home + '/':
             path = '~' + path[homelen:]
+        # Uncomment the three lines below for a 'better' CenOS look.
+        # Rather than '[root@nas3 /var/log]#' is shows '[root@nas3 log]#'.
+        #path = path.rsplit('/', 1)[-1]
+        #if not path:
+        #    path = '/'
 
         attrs = {'path': path}
         self.honeypot.terminal.write(prompt % attrs)
