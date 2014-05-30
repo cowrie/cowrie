@@ -295,6 +295,7 @@ class command_nop(HoneyPotCommand):
     def call(self):
         pass
 commands['/bin/chmod'] = command_nop
+commands['umask'] = command_nop
 commands['set'] = command_nop
 commands['unset'] = command_nop
 commands['export'] = command_nop
