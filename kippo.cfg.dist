@@ -30,12 +30,12 @@ log_path = log
 # (default: dl)
 download_path = dl
 
-# Maximum file size for downloaded files. A value of 0 means no limit.
-# If the file size is known to be too big from the start, the file will not be
-# stored on disk at all.
+# Maximum file size (in bytes) for downloaded files to be stored in 'download_path'.
+# A value of 0 means no limit. If the file size is known to be too big from the start,
+# the file will not be stored on disk at all.
 #
 # (default: 0)
-#download_limit_size = 100000
+#download_limit_size = 10485760
 
 # Directory where virtual file contents are kept in.
 #
@@ -80,10 +80,6 @@ txtcmds_path = txtcmds
 # (defaults: public.key and private.key)
 public_key = public.key
 private_key = private.key
-
-# Initial root password. NO LONGER USED!
-# Instead, see {data_path}/userdb.txt
-#password = 123456
 
 # IP address to bind to when opening outgoing connections. Used exclusively by
 # the wget command.
