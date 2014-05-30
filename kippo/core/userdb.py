@@ -59,7 +59,7 @@ class UserDB:
         '''note that it allows multiple passwords for a single username'''
 
         for (login, uid, passwd) in self.userdb:
-            if login == thelogin and passwd == thepasswd:
+            if login == thelogin and (passwd == thepasswd or passwd == '*'):
                 return True
         return False
 
