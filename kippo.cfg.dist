@@ -76,10 +76,10 @@ txtcmds_path = txtcmds
 
 # Public and private SSH key files. If these don't exist, they are created
 # automatically.
-#
-# (defaults: public.key and private.key)
-public_key = public.key
-private_key = private.key
+rsa_public_key = data/ssh_host_rsa_key.pub
+rsa_private_key = data/ssh_host_rsa_key
+dsa_public_key = data/ssh_host_dsa_key.pub
+dsa_private_key = data/ssh_host_dsa_key
 
 # Initial root password. NO LONGER USED!
 # Instead, see {data_path}/userdb.txt
