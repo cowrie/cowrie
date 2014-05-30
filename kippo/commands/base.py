@@ -298,6 +298,7 @@ commands['/bin/chmod'] = command_nop
 commands['set'] = command_nop
 commands['unset'] = command_nop
 commands['export'] = command_nop
+commands['alias'] = command_nop
 commands['/bin/bash'] = command_nop
 commands['/bin/sh'] = command_nop
 commands['/bin/kill'] = command_nop
