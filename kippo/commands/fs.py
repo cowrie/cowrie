@@ -34,6 +34,9 @@ class command_cd(HoneyPotCommand):
             newdir = self.fs.get_path(newpath)
         except IndexError:
             newdir = None
+        if path == "-":
+            self.writeln('bash: cd: OLDPWD not set')
+            return
         if newdir is None:
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
