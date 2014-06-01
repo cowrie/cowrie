@@ -81,6 +81,12 @@ txtcmds_path = txtcmds
 public_key = public.key
 private_key = private.key
 
+# Enables passing commands using ssh execCommand
+# e.g. ssh root@localhost <command>
+#
+# (default: false)
+exec_enabled = true
+
 # Initial root password. NO LONGER USED!
 # Instead, see {data_path}/userdb.txt
 #password = 123456
