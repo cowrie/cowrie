@@ -25,7 +25,7 @@ commands['/bin/cat'] = command_cat
 
 class command_cd(HoneyPotCommand):
     def call(self):
-        if not self.args:
+        if not self.args or self.args[0] == "~":
             path = self.honeypot.user.home
         else:
             path = self.args[0]
