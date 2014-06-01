@@ -1,0 +1,7 @@
+Filesystem                                              Size  Used Avail Use% Mounted on
+rootfs                                                  4.7G  731M  3.8G  17% /
+udev                                                     10M     0   10M   0% /dev
+tmpfs                                                    25M  192K   25M   1% /run
+/dev/disk/by-uuid/65626fdc-e4c5-4539-8745-edc212b9b0af  4.7G  731M  3.8G  17% /
+tmpfs                                                   5.0M     0  5.0M   0% /run/lock
+tmpfs                                                   101M     0  101M   0% /run/shm
