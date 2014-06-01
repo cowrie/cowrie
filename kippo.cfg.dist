@@ -17,8 +17,8 @@ ssh_port = 2222
 # Hostname for the honeypot. Displayed by the shell prompt of the virtual
 # environment.
 #
-# (default: nas3)
-hostname = nas3
+# (default: svr03)
+hostname = svr03
 
 # Directory where to save log files in.
 #
