@@ -90,7 +90,7 @@ class HoneyPotShell(object):
             cmdAndArgs = shlex.split(line)
         except:
             self.honeypot.writeln(
-                '-bash: syntax error: unexpected end of file')
+                'bash: syntax error: unexpected end of file')
             # could run runCommand here, but i'll just clear the list instead
             self.cmdpending = []
             self.showPrompt()

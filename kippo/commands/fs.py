@@ -41,7 +41,7 @@ class command_cd(HoneyPotCommand):
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
         if not self.fs.is_dir(newpath):
-            self.writeln('-bash: cd: %s: Not a directory' % path)
+            self.writeln('bash: cd: %s: Not a directory' % path)
             return
         self.honeypot.cwd = newpath
 commands['cd'] = command_cd
