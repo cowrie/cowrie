@@ -317,5 +317,8 @@ commands['/bin/bash'] = command_nop
 commands['/bin/sh'] = command_nop
 commands['/bin/kill'] = command_nop
 commands['/bin/su'] = command_nop
+commands['/bin/chown'] = command_nop
+commands['/bin/chgrp'] = command_nop
+commands['/usr/bin/chattr'] = command_nop
 
 # vim: set sw=4 et:
