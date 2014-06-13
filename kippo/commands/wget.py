@@ -79,8 +79,12 @@ class command_wget(HoneyPotCommand):
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
         try:
-            scheme, host, port, path = client._parse(url)
-            if scheme == 'https':
+            parsed = urlparse.urlparse(url)
+            scheme = parsed.scheme
+            host = parsed.hostname
+            port = parsed.port or (443 if scheme == 'https' else 80)
+            path = parsed.path or '/'
+            if scheme == 'https' or port != 80:
                 self.writeln('Sorry, SSL not supported in this release')
                 self.exit()
                 return None
