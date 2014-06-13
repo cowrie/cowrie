@@ -293,16 +293,16 @@ commands['/usr/bin/yes'] = command_yes
 
 class command_chmod(HoneyPotCommand):
     def call(self):
-        if len(self.args) and len(self.args) >= 2:
-            for arg in self.args[1:]:
-                path = self.fs.resolve_path(arg, self.honeypot.cwd)
-                if self.fs.exists(path):
-                    continue
-                else:
-                    self.writeln('chmod: cannot access %s: No such file or directory' % (arg,))
-        else:
+        if len(self.args) < 2:
             self.writeln('chmod: missing operand')
             self.writeln('Try chmod --help for more information.')
+            return
+        for arg in self.args[1:]:
+            path = self.fs.resolve_path(arg, self.honeypot.cwd)
+            if not self.fs.exists(path):
+                self.writeln(
+                    'chmod: cannot access %s: No such file or directory' % \
+                    (arg,))
 commands['/bin/chmod'] = command_chmod
 
 class command_nop(HoneyPotCommand):
