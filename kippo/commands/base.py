@@ -169,7 +169,7 @@ class command_passwd(HoneyPotCommand):
     def finish(self, line):
         self.honeypot.password_input = False
 
-        if line != self.passwd:
+        if line != self.passwd or self.passwd == '*':
             self.writeln('Sorry, passwords do not match')
             self.exit()
             return
