@@ -78,7 +78,7 @@ commands['/bin/hostname'] = command_hostname
 
 class command_uname(HoneyPotCommand):
     def call(self):
-        if len(self.args) and (self.args[0].strip() == '-a' or self.args[0].strip() == '--all'):
+        if len(self.args) and self.args[0].strip() in ('-a', '--all'):
             self.writeln(
                 'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686 GNU/Linux' % \
                 self.honeypot.hostname)
