@@ -25,7 +25,7 @@ commands['/bin/cat'] = command_cat
 
 class command_cd(HoneyPotCommand):
     def call(self):
-        if not self.args:
+        if not self.args or self.args[0] == "~":
             path = self.honeypot.user.home
         else:
             path = self.args[0]
@@ -34,11 +34,14 @@ class command_cd(HoneyPotCommand):
             newdir = self.fs.get_path(newpath)
         except IndexError:
             newdir = None
+        if path == "-":
+            self.writeln('bash: cd: OLDPWD not set')
+            return
         if newdir is None:
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
         if not self.fs.is_dir(newpath):
-            self.writeln('-bash: cd: %s: Not a directory' % path)
+            self.writeln('bash: cd: %s: Not a directory' % path)
             return
         self.honeypot.cwd = newpath
 commands['cd'] = command_cd
