@@ -371,6 +371,69 @@ class command_perl(HoneyPotCommand):
         print 'INPUT (perl):', line
 commands['/usr/bin/perl'] = command_perl
 
+class command_php(HoneyPotCommand):
+    def start(self):
+        if not len(self.args):
+            pass
+        elif self.args[0] == '-v':
+            output = (
+                'PHP 5.3.5 (cli)',
+                'Copyright (c) 1997-2010 The PHP Group'
+            )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        elif self.args[0] == '-h':
+            output = (
+                'Usage: php [options] [-f] <file> [--] [args...]',
+                '       php [options] -r <code> [--] [args...]',
+                '       php [options] [-B <begin_code>] -R <code> [-E <end_code>] [--] [args...]',
+                '       php [options] [-B <begin_code>] -F <file> [-E <end_code>] [--] [args...]',
+                '       php [options] -- [args...]',
+                '       php [options] -a',
+                '',
+                '  -a               Run interactively',
+                '  -c <path>|<file> Look for php.ini file in this directory',
+                '  -n               No php.ini file will be used',
+                "  -d foo[=bar]     Define INI entry foo with value 'bar'",
+                '  -e               Generate extended information for debugger/profiler',
+                '  -f <file>        Parse and execute <file>.',
+                '  -h               This help',
+                '  -i               PHP information',
+                '  -l               Syntax check only (lint)',
+                '  -m               Show compiled in modules',
+                '  -r <code>        Run PHP <code> without using script tags <?..?>',
+                '  -B <begin_code>  Run PHP <begin_code> before processing input lines',
+                '  -R <code>        Run PHP <code> for every input line',
+                '  -F <file>        Parse and execute <file> for every input line',
+                '  -E <end_code>    Run PHP <end_code> after processing all input lines',
+                '  -H               Hide any passed arguments from external tools.',
+                '  -s               Output HTML syntax highlighted source.',
+                '  -v               Version number',
+                '  -w               Output source with stripped comments and whitespace.',
+                '  -z <file>        Load Zend extension <file>.',
+                '',
+                '  args...          Arguments passed to script. Use -- args when first argument',
+                '                   starts with - or script is read from stdin',
+                '',
+                '  --ini            Show configuration file names',
+                '',
+                '  --rf <name>      Show information about function <name>.',
+                '  --rc <name>      Show information about class <name>.',
+                '  --re <name>      Show information about extension <name>.',
+                '  --ri <name>      Show configuration for extension <name>.',
+                ''
+            )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        else:
+            self.exit()
+
+    def lineReceived(self, line):
+        print 'INPUT (php):', line
+commands['/usr/bin/php'] = command_php
+
 class command_nop(HoneyPotCommand):
     def call(self):
         pass
