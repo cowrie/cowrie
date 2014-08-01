@@ -305,6 +305,135 @@ class command_chmod(HoneyPotCommand):
                     (arg,))
 commands['/bin/chmod'] = command_chmod
 
+class command_perl(HoneyPotCommand):
+    def start(self):
+        if not len(self.args):
+            pass
+        elif self.args[0] == '-v':
+            output = (
+                '',
+                'This is perl 5, version 14, subversion 2 (v5.14.2) built for x86_64-linux-thread-multi',
+                '',
+                'Copyright 1987-2014, Larry Wall',
+                '',
+                'Perl may be copied only under the terms of either the Artistic License or the',
+                'GNU General Public License, which may be found in the Perl 5 source kit.',
+                '',
+                'Complete documentation for Perl, including FAQ lists, should be found on',
+                'this system using "man perl" or "perldoc perl".  If you have access to the',
+                'Internet, point your browser at http://www.perl.org/, the Perl Home Page.',
+                ''
+            )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        elif self.args[0] == '-h':
+            output = (
+                '',
+                'Usage: perl [switches] [--] [programfile] [arguments]',
+                '  -0[octal]         specify record separator (\0, if no argument)',
+                '  -a                autosplit mode with -n or -p (splits $_ into @F)',
+                '  -C[number/list]   enables the listed Unicode features',
+                '  -c                check syntax only (runs BEGIN and CHECK blocks)',
+                '  -d[:debugger]     run program under debugger',
+                '  -D[number/list]   set debugging flags (argument is a bit mask or alphabets)',
+                "  -e program        one line of program (several -e's allowed, omit programfile)",
+                '  -E program        like -e, but enables all optional features',
+                "  -f                don't do $sitelib/sitecustomize.pl at startup",
+                "  -F/pattern/       split() pattern for -a switch (//'s are optional)",
+                '  -i[extension]     edit <> files in place (makes backup if extension supplied)',
+                "  -Idirectory       specify @INC/#include directory (several -I's allowed)",
+                '  -l[octal]         enable line ending processing, specifies line terminator',
+                '  -[mM][-]module    execute "use/no module..." before executing program',
+                '  -n                assume "while (<>) { ... }" loop around program',
+                '  -p                assume loop like -n but print line also, like sed',
+                '  -s                enable rudimentary parsing for switches after programfile',
+                '  -S                look for programfile using PATH environment variable',
+                '  -t                enable tainting warnings',
+                '  -T                enable tainting checks',
+                '  -u                dump core after parsing program',
+                '  -U                allow unsafe operations',
+                '  -v                print version, subversion (includes VERY IMPORTANT perl info)',
+                '  -V[:variable]     print configuration summary (or a single Config.pm variable)',
+                '  -w                enable many useful warnings (RECOMMENDED)',
+                '  -W                enable all warnings',
+                '  -x[directory]     strip off text before #!perl line and perhaps cd to directory',
+                '  -X                disable all warnings',
+                ''
+            )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        else:
+            self.exit()
+
+    def lineReceived(self, line):
+        print 'INPUT (perl):', line
+commands['/usr/bin/perl'] = command_perl
+
+class command_php(HoneyPotCommand):
+    def start(self):
+        if not len(self.args):
+            pass
+        elif self.args[0] == '-v':
+            output = (
+                'PHP 5.3.5 (cli)',
+                'Copyright (c) 1997-2010 The PHP Group'
+            )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        elif self.args[0] == '-h':
+            output = (
+                'Usage: php [options] [-f] <file> [--] [args...]',
+                '       php [options] -r <code> [--] [args...]',
+                '       php [options] [-B <begin_code>] -R <code> [-E <end_code>] [--] [args...]',
+                '       php [options] [-B <begin_code>] -F <file> [-E <end_code>] [--] [args...]',
+                '       php [options] -- [args...]',
+                '       php [options] -a',
+                '',
+                '  -a               Run interactively',
+                '  -c <path>|<file> Look for php.ini file in this directory',
+                '  -n               No php.ini file will be used',
+                "  -d foo[=bar]     Define INI entry foo with value 'bar'",
+                '  -e               Generate extended information for debugger/profiler',
+                '  -f <file>        Parse and execute <file>.',
+                '  -h               This help',
+                '  -i               PHP information',
+                '  -l               Syntax check only (lint)',
+                '  -m               Show compiled in modules',
+                '  -r <code>        Run PHP <code> without using script tags <?..?>',
+                '  -B <begin_code>  Run PHP <begin_code> before processing input lines',
+                '  -R <code>        Run PHP <code> for every input line',
+                '  -F <file>        Parse and execute <file> for every input line',
+                '  -E <end_code>    Run PHP <end_code> after processing all input lines',
+                '  -H               Hide any passed arguments from external tools.',
+                '  -s               Output HTML syntax highlighted source.',
+                '  -v               Version number',
+                '  -w               Output source with stripped comments and whitespace.',
+                '  -z <file>        Load Zend extension <file>.',
+                '',
+                '  args...          Arguments passed to script. Use -- args when first argument',
+                '                   starts with - or script is read from stdin',
+                '',
+                '  --ini            Show configuration file names',
+                '',
+                '  --rf <name>      Show information about function <name>.',
+                '  --rc <name>      Show information about class <name>.',
+                '  --re <name>      Show information about extension <name>.',
+                '  --ri <name>      Show configuration for extension <name>.',
+                ''
+            )
+            for l in output:
+                self.writeln(l)
+            self.exit()
+        else:
+            self.exit()
+
+    def lineReceived(self, line):
+        print 'INPUT (php):', line
+commands['/usr/bin/php'] = command_php
+
 class command_nop(HoneyPotCommand):
     def call(self):
         pass
