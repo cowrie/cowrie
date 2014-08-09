@@ -730,7 +730,7 @@ def getRSAKeys():
     public_key = cfg.get('honeypot', 'rsa_public_key')
     private_key = cfg.get('honeypot', 'rsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
-        print "[i] Generating new RSA keypair..."
+        print "Generating new RSA keypair..."
         from Crypto.PublicKey import RSA
         from twisted.python import randbytes
         KEY_LENGTH = 2048
@@ -739,7 +739,7 @@ def getRSAKeys():
         privateKeyString = twisted.conch.ssh.keys.Key(rsaKey).toString('openssh')
         file(public_key, 'w+b').write(publicKeyString)
         file(private_key, 'w+b').write(privateKeyString)
-        print "[i] Done."
+        print "Done."
     else:
         publicKeyString = file(public_key).read()
         privateKeyString = file(private_key).read()
@@ -750,7 +750,7 @@ def getDSAKeys():
     public_key = cfg.get('honeypot', 'dsa_public_key')
     private_key = cfg.get('honeypot', 'dsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
-        print "[i] Generating new DSA keypair..."
+        print "Generating new DSA keypair..."
         from Crypto.PublicKey import DSA
         from twisted.python import randbytes
         KEY_LENGTH = 1024
@@ -759,7 +759,7 @@ def getDSAKeys():
         privateKeyString = twisted.conch.ssh.keys.Key(dsaKey).toString('openssh')
         file(public_key, 'w+b').write(publicKeyString)
         file(private_key, 'w+b').write(privateKeyString)
-        print "[i] Done."
+        print "Done."
     else:
         publicKeyString = file(public_key).read()
         privateKeyString = file(private_key).read()
