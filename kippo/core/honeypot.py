@@ -735,14 +735,18 @@ def getRSAKeys():
         from twisted.python import randbytes
         KEY_LENGTH = 2048
         rsaKey = RSA.generate(KEY_LENGTH, randbytes.secureRandom)
-        publicKeyString = twisted.conch.ssh.keys.Key(rsaKey).public().toString('openssh')
-        privateKeyString = twisted.conch.ssh.keys.Key(rsaKey).toString('openssh')
-        file(public_key, 'w+b').write(publicKeyString)
-        file(private_key, 'w+b').write(privateKeyString)
+        publicKeyString = keys.Key(rsaKey).public().toString('openssh')
+        privateKeyString = keys.Key(rsaKey).toString('openssh')
+        with file(public_key, 'w+b') as f:
+            f.write(publicKeyString)
+        with file(private_key, 'w+b') as f:
+            f.write(privateKeyString)
         print "Done."
     else:
-        publicKeyString = file(public_key).read()
-        privateKeyString = file(private_key).read()
+        with file(public_key) as f:
+            publicKeyString = f.read()
+        with file(private_key) as f:
+            privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
 def getDSAKeys():
@@ -755,14 +759,18 @@ def getDSAKeys():
         from twisted.python import randbytes
         KEY_LENGTH = 1024
         dsaKey = DSA.generate(KEY_LENGTH, randbytes.secureRandom)
-        publicKeyString = twisted.conch.ssh.keys.Key(dsaKey).public().toString('openssh')
-        privateKeyString = twisted.conch.ssh.keys.Key(dsaKey).toString('openssh')
-        file(public_key, 'w+b').write(publicKeyString)
-        file(private_key, 'w+b').write(privateKeyString)
+        publicKeyString = keys.Key(dsaKey).public().toString('openssh')
+        privateKeyString = keys.Key(dsaKey).toString('openssh')
+        with file(public_key, 'w+b') as f:
+            f.write(publicKeyString)
+        with file(private_key, 'w+b') as f:
+            f.write(privateKeyString)
         print "Done."
     else:
-        publicKeyString = file(public_key).read()
-        privateKeyString = file(private_key).read()
+        with file(public_key) as f:
+            publicKeyString = f.read()
+        with file(private_key) as f:
+            privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
 # vim: set sw=4 et:
