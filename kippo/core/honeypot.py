@@ -289,8 +289,12 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         if self.execcmd != None:
             print 'Running exec cmd "%s"' % self.execcmd
             self.cmdstack[0].lineReceived(self.execcmd)
-            self.terminal.transport.session.conn.sendRequest(self.terminal.transport.session, 'exit-status', struct.pack('>L', 0))
-            self.terminal.transport.session.conn.sendClose(self.terminal.transport.session)
+            self.terminal.transport.session.conn.sendRequest(
+                self.terminal.transport.session,
+                'exit-status',
+                struct.pack('>L', 0))
+            self.terminal.transport.session.conn.sendClose(
+                self.terminal.transport.session)
             return
 
         self.keyHandlers.update({
@@ -493,7 +497,8 @@ class HoneyPotAvatar(avatar.ConchUser):
                 raise os.OSError
 
         print 'exec command: "%s"' % cmd
-        serverProtocol = LoggingServerProtocol(HoneyPotProtocol, self, self.env, cmd)
+        serverProtocol = LoggingServerProtocol(
+            HoneyPotProtocol, self, self.env, cmd)
         serverProtocol.makeConnection(protocol)
         protocol.makeConnection(session.wrapProtocol(serverProtocol))
 
