@@ -564,6 +564,24 @@ class HoneyPotTransport(transport.SSHServerTransport):
             self.ttylog_open = False
         transport.SSHServerTransport.connectionLost(self, reason)
 
+    def sendDisconnect(self, reason, desc):
+        """
+        Workaround for the "bad packet length" error message.
+
+        @param reason: the reason for the disconnect.  Should be one of the
+                       DISCONNECT_* values.
+        @type reason: C{int}
+        @param desc: a descrption of the reason for the disconnection.
+        @type desc: C{str}
+        """
+        if not 'bad packet length' in desc:
+            # With python >= 3 we can use super?
+            transport.SSHServerTransport.sendDisconnect(self, reason, desc)
+        else:
+            self.transport.write('Protocol mismatch.\n')
+            log.msg('Disconnecting with error, code %s\nreason: %s' % (reason, desc))
+            self.transport.loseConnection()
+
 from twisted.conch.ssh.common import NS, getNS
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
