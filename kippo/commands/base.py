@@ -5,7 +5,7 @@ import os, time, anydbm, datetime
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
 from kippo.core.config import config
-from kippo.core.userdb import UserDB
+from kippo.core.auth import UserDB
 from kippo.core import utils
 
 commands = {}

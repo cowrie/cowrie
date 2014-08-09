@@ -1,4 +1,4 @@
-# Copyright (c) 2010 Upi Tamminen <desaster@gmail.com>
+# Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
 import time, anydbm

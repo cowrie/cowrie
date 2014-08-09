@@ -1,15 +1,18 @@
-#
-# userdb.py for kippo
-# by  Walter de Jong <walter@sara.nl>
-#
-# adopted and further modified by Upi Tamminen <desaster@gmail.com>
-#
+# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
 
-from kippo.core.config import config
-import os
 import string
 
-class UserDB:
+import twisted
+from twisted.cred import checkers, credentials, error
+from twisted.internet import defer
+from zope.interface import implements
+
+from kippo.core.config import config
+
+# by Walter de Jong <walter@sara.nl>
+class UserDB(object):
+
     def __init__(self):
         self.userdb = []
         self.load()
@@ -95,5 +98,40 @@ class UserDB:
             return
         self.userdb.append((login, uid, passwd))
         self.save()
+
+class HoneypotPasswordChecker:
+    implements(checkers.ICredentialsChecker)
+
+    credentialInterfaces = (credentials.IUsernamePassword,
+        credentials.IPluggableAuthenticationModules)
+
+    def requestAvatarId(self, credentials):
+        if hasattr(credentials, 'password'):
+            if self.checkUserPass(credentials.username, credentials.password):
+                return defer.succeed(credentials.username)
+            else:
+                return defer.fail(error.UnauthorizedLogin())
+        elif hasattr(credentials, 'pamConversion'):
+            return self.checkPamUser(credentials.username,
+                credentials.pamConversion)
+        return defer.fail(error.UnhandledCredentials())
+
+    def checkPamUser(self, username, pamConversion):
+        r = pamConversion((('Password:', 1),))
+        return r.addCallback(self.cbCheckPamUser, username)
+
+    def cbCheckPamUser(self, responses, username):
+        for response, zero in responses:
+            if self.checkUserPass(username, response):
+                return defer.succeed(username)
+        return defer.fail(error.UnauthorizedLogin())
+
+    def checkUserPass(self, username, password):
+        if UserDB().checklogin(username, password):
+            print 'login attempt [%s/%s] succeeded' % (username, password)
+            return True
+        else:
+            print 'login attempt [%s/%s] failed' % (username, password)
+            return False
 
 # vim: set sw=4 et:

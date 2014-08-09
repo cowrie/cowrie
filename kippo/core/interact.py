@@ -1,3 +1,6 @@
+# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
+
 from twisted.internet import protocol
 from twisted.conch import telnet, recvline
 from kippo.core import ttylog
