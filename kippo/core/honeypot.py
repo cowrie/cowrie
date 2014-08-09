@@ -11,7 +11,7 @@ from twisted.internet import reactor, protocol, defer
 from twisted.python import failure, log
 from zope.interface import implements
 from copy import deepcopy, copy
-import sys, os, random, pickle, time, stat, shlex, anydbm
+import sys, os, random, pickle, time, stat, shlex, anydbm, struct
 
 from kippo.core import ttylog, fs, utils
 from kippo.core.userdb import UserDB
@@ -137,7 +137,9 @@ class HoneyPotShell(object):
         self.runCommand()
 
     def showPrompt(self):
-        # Example: svr03:~#
+        if (self.honeypot.execcmd != None):
+            return
+        # Example: srv03:~#
         #prompt = '%s:%%(path)s' % self.honeypot.hostname
         # Example: root@svr03:~#     (More of a "Debianu" feel)
         prompt = '%s@%s:%%(path)s' % (self.honeypot.user.username, self.honeypot.hostname,)
@@ -244,9 +246,10 @@ class HoneyPotShell(object):
         self.honeypot.terminal.write(newbuf)
 
 class HoneyPotProtocol(recvline.HistoricRecvLine):
-    def __init__(self, user, env):
+    def __init__(self, user, env, execcmd = None):
         self.user = user
         self.env = env
+        self.execcmd = execcmd
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
         self.fs = fs.HoneyPotFilesystem(deepcopy(self.env.fs))
         if self.fs.exists(user.home):
@@ -282,6 +285,13 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
             self.clientIP = cfg.get('honeypot', 'fake_addr')
         else:
             self.clientIP = self.realClientIP
+
+        if self.execcmd != None:
+            print 'Running exec cmd "%s"' % self.execcmd
+            self.cmdstack[0].lineReceived(self.execcmd)
+            self.terminal.transport.session.conn.sendRequest(self.terminal.transport.session, 'exit-status', struct.pack('>L', 0))
+            self.terminal.transport.session.conn.sendClose(self.terminal.transport.session)
+            return
 
         self.keyHandlers.update({
             '\x04':     self.handle_CTRL_D,
@@ -344,6 +354,9 @@ class HoneyPotProtocol(recvline.HistoricRecvLine):
         return None
 
     def lineReceived(self, line):
+        # Don't execute additional commands after execcmd
+        if self.execcmd != None:
+            return
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
 
@@ -473,7 +486,16 @@ class HoneyPotAvatar(avatar.ConchUser):
         return None
 
     def execCommand(self, protocol, cmd):
-        raise NotImplementedError
+        cfg = config()
+        if cfg.has_option('honeypot', 'exec_enabled'):
+            if ( cfg.get('honeypot', 'exec_enabled') != "true" ):
+                print 'exec disabled. Not executing command: "%s"' % cmd
+                raise os.OSError
+
+        print 'exec command: "%s"' % cmd
+        serverProtocol = LoggingServerProtocol(HoneyPotProtocol, self, self.env, cmd)
+        serverProtocol.makeConnection(protocol)
+        protocol.makeConnection(session.wrapProtocol(serverProtocol))
 
     def closed(self):
         pass
