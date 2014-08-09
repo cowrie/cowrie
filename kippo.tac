@@ -28,10 +28,13 @@ from kippo.core.config import config
 factory = honeypot.HoneyPotSSHFactory()
 factory.portal = portal.Portal(honeypot.HoneyPotRealm())
 
-pubKeyString, privKeyString = honeypot.getRSAKeys()
+rsa_pubKeyString, rsa_privKeyString = honeypot.getRSAKeys()
+dsa_pubKeyString, dsa_privKeyString = honeypot.getDSAKeys()
 factory.portal.registerChecker(honeypot.HoneypotPasswordChecker())
-factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=pubKeyString)}
-factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=privKeyString)}
+factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_pubKeyString),
+                      'ssh-dss': keys.Key.fromString(data=dsa_pubKeyString)}
+factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_privKeyString),
+                       'ssh-dss': keys.Key.fromString(data=dsa_privKeyString)}
 
 cfg = config()
 if cfg.has_option('honeypot', 'ssh_addr'):
