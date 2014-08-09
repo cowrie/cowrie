@@ -58,7 +58,13 @@ class command_ls(HoneyPotCommand):
             return
         count = 0
         maxlen = max([len(x) for x in l])
-        perline = int(self.honeypot.user.windowSize[1] / (maxlen + 1))
+
+        try:
+            wincols = self.honeypot.user.windowSize[1]
+        except AttributeError:
+            wincols = 80
+
+        perline = int(wincols / (maxlen + 1))
         for f in l:
             if count == perline:
                 count = 0
