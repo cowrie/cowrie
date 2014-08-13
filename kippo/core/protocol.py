@@ -15,6 +15,7 @@ from copy import deepcopy, copy
 from kippo.core import ttylog, fs
 from kippo.core.config import config
 from kippo.core import exceptions
+import kippo.core.honeypot
 from kippo import core
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
@@ -70,7 +71,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         #del self.commands
 
     def txtcmd(self, txt):
-        class command_txtcmd(HoneyPotCommand):
+        class command_txtcmd(core.honeypot.HoneyPotCommand):
             def call(self):
                 print 'Reading txtcmd from "%s"' % txt
                 f = file(txt, 'r')

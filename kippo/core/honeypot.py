@@ -3,6 +3,7 @@
 
 import twisted
 from copy import deepcopy, copy
+import os
 import shlex
 
 from kippo.core import fs
