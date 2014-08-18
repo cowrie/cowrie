@@ -180,34 +180,35 @@ class HoneyPotFilesystem(object):
     # additions for SFTP support, try to keep functions here similar to os.*
 
     def open(self, filename, openFlags, mode):
-        print "fs.open %s" % filename
+        #print "fs.open %s" % filename
 
         if (openFlags & os.O_APPEND == os.O_APPEND):
-            print "fs.open append"
+            #print "fs.open append"
 
         if (openFlags & os.O_CREAT == os.O_CREAT):
-            print "fs.open creat"
+            #print "fs.open creat"
 
         if (openFlags & os.O_TRUNC == os.O_TRUNC):
-            print "fs.open trunc"
+            #print "fs.open trunc"
 
         if (openFlags & os.O_EXCL == os.O_EXCL):
-            print "fs.open excl"
+            #print "fs.open excl"
 
         if openFlags & os.O_RDWR == os.O_RDWR:
-            print "fs.open rdwr"
+            #print "fs.open rdwr"
             raise notImplementedError
 
         elif openFlags & os.O_WRONLY == os.O_WRONLY:
             # ensure we do not save with executable bit set
             realmode = mode & ~(stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
-            print "fs.open wronly %s " % os.O_WRONLY
+            #print "fs.open wronly %s " % os.O_WRONLY
+            # TODO: safeoutfile could contains source IP address
             safeoutfile = '%s/%s_%s' % \
                        (config().get('honeypot', 'download_path'),
                     time.strftime('%Y%m%d%H%M%S'),
                     re.sub('[^A-Za-z0-9]', '_', filename))
-            print "fs.open file for writing, saving to %s" % safeoutfile
+            #print "fs.open file for writing, saving to %s" % safeoutfile
 
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(safeoutfile, openFlags, realmode)
@@ -216,7 +217,7 @@ class HoneyPotFilesystem(object):
             return fd
 
         elif openFlags & os.O_RDONLY == os.O_RDONLY:
-            print "fs.open rdonly"
+            #print "fs.open rdonly"
             return None
 
         return None
@@ -271,7 +272,7 @@ class HoneyPotFilesystem(object):
         raise notImplementedError
 
     def rename(self, oldpath, newpath):
-        print "rename %s to %s" % (oldpath, newpath)
+        #print "rename %s to %s" % (oldpath, newpath)
         old = self.getfile(oldpath)
         if old == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
