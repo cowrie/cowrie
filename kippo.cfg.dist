@@ -87,6 +87,9 @@ dsa_private_key = data/ssh_host_dsa_key
 # (default: false)
 exec_enabled = true
 
+# sftp_enabled enables the sftp subsystem
+sftp_enabled = true
+
 # IP address to bind to when opening outgoing connections. Used exclusively by
 # the wget command.
 #
