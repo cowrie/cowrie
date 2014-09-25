@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import os, time, fnmatch
+import os, time, fnmatch, re, stat, errno
 from kippo.core.config import config
 
 A_NAME, \
@@ -176,5 +176,196 @@ class HoneyPotFilesystem(object):
         if l:
             return True
         return False
+
+    # additions for SFTP support, try to keep functions here similar to os.*
+
+    def open(self, filename, openFlags, mode):
+        #print "fs.open %s" % filename
+
+        #if (openFlags & os.O_APPEND == os.O_APPEND):
+        #    print "fs.open append"
+
+        #if (openFlags & os.O_CREAT == os.O_CREAT):
+        #    print "fs.open creat"
+
+        #if (openFlags & os.O_TRUNC == os.O_TRUNC):
+        #    print "fs.open trunc"
+
+        #if (openFlags & os.O_EXCL == os.O_EXCL):
+        #    print "fs.open excl"
+
+        if openFlags & os.O_RDWR == os.O_RDWR:
+            raise notImplementedError
+
+        elif openFlags & os.O_WRONLY == os.O_WRONLY:
+            # ensure we do not save with executable bit set
+            realmode = mode & ~(stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+
+            #print "fs.open wronly"
+            # TODO: safeoutfile could contains source IP address
+            safeoutfile = '%s/%s_%s' % \
+                       (config().get('honeypot', 'download_path'),
+                    time.strftime('%Y%m%d%H%M%S'),
+                    re.sub('[^A-Za-z0-9]', '_', filename))
+            #print "fs.open file for writing, saving to %s" % safeoutfile
+
+            self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
+            fd = os.open(safeoutfile, openFlags, realmode)
+            self.update_realfile(self.getfile(filename), safeoutfile)
+
+            return fd
+
+        elif openFlags & os.O_RDONLY == os.O_RDONLY:
+            return None
+
+        return None
+
+    # FIXME mkdir() name conflicts with existing mkdir
+    def mkdir2(self, path):
+        dir = self.getfile(path)
+        if dir != False:
+            raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
+        return self.mkdir(path, 0, 0, 4096, 16877)
+
+    def rmdir(self, path):
+        raise notImplementedError
+
+    def utime(self, path, atime, mtime):
+        p = self.getfile(path)
+        if p == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+        p[A_CTIME] = mtime
+
+    def chmod(self, path, perm):
+        p = self.getfile(path)
+        if p == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+        p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
+
+    def chown(self, path, uid, gid):
+        p = self.getfile(path)
+        if p == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+        if (uid != -1):
+            p[A_UID] = uid
+        if (gid != -1):
+            p[A_GID] = gid
+
+    def remove(self, path):
+        p = self.getfile(path)
+        if p == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+        self.get_path(os.path.dirname(path)).remove(p)
+        return
+
+    def readlink(self, path):
+        p = self.getfile(path)
+        if p == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+        if not (p[A_MODE] & stat.S_IFLNK):
+            raise OSError
+        return p[A_TARGET]
+
+    def symlink(self, targetPath, linkPath):
+        raise notImplementedError
+
+    def rename(self, oldpath, newpath):
+        #print "rename %s to %s" % (oldpath, newpath)
+        old = self.getfile(oldpath)
+        if old == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+        new = self.getfile(newpath)
+        if new != False:
+            raise OSError(errno.EEXIST, os.strerror(errno.EEXIST))
+
+        self.get_path(os.path.dirname(oldpath)).remove(old)
+        old[A_NAME] = os.path.basename(newpath)
+        self.get_path(os.path.dirname(newpath)).append(old)
+        return
+
+    def read(self, fd, size):
+        # this should not be called, we intercept at readChunk
+        raise notImplementedError
+
+    def write(self, fd, string):
+        return os.write(fd, string)
+
+    def close(self, fd):
+        if (fd == None):
+            return True
+        return os.close(fd)
+
+    def lseek(self, fd, offset, whence):
+        if (fd == None):
+            return True
+        return os.lseek(fd, offset, whence)
+
+    def listdir(self, path):
+        names = [x[A_NAME] for x in self.get_path(path)]
+        return names
+
+    def lstat(self, path):
+
+        # need to treat / as exception
+        if (path == "/"):
+            p = { A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time() }
+        else:
+            p = self.getfile(path)
+
+        if p == False:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+
+        return _statobj(
+               p[A_MODE],
+         0,
+         0,
+         1,
+         p[A_UID],
+         p[A_GID],
+         p[A_SIZE],
+         p[A_CTIME],
+         p[A_CTIME],
+         p[A_CTIME])
+
+    def stat(self, path):
+        if (path == "/"):
+            p = { A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time() }
+        else:
+            p = self.getfile(path)
+
+        if (p == False):
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+
+        #if p[A_MODE] & stat.S_IFLNK == stat.S_IFLNK:
+        if p[A_TYPE] == T_LINK:
+            return self.stat(p[A_TARGET])
+
+        return self.lstat(path)
+
+    def realpath(self, path):
+        return path
+
+    def update_size(self, filename, size):
+        f = self.getfile(filename)
+        if (f == False):
+            return
+        if (f[A_TYPE] != T_FILE):
+            return
+        f[A_SIZE] = size
+
+
+# transform a tuple into a stat object
+class _statobj:
+    def __init__(self, st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid, st_size, st_atime, st_mtime, st_ctime):
+        self.st_mode = st_mode
+        self.st_ino = st_ino
+        self.st_dev = st_dev
+        self.st_nlink = st_nlink
+        self.st_uid = st_uid
+        self.st_gid = st_gid
+        self.st_size = st_size
+        self.st_atime = st_atime
+        self.st_mtime = st_mtime
+        self.st_ctime = st_ctime
 
 # vim: set sw=4 et:
