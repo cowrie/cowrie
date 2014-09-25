@@ -44,7 +44,7 @@ start.sh is a simple shell script that runs Kippo in the background using twistd
 
 `twistd -y kippo.tac -n`
 
-By default Kippo listens for ssh connections on port 2222. You can change this, but do not change it to 22 as it requires root privileges. Use port forwarding instead. (More info: MakingKippoReachable).
+By default Kippo listens for ssh connections on port 2222. You can change this, but do not change it to 22 as it requires root privileges. Use port forwarding instead. (More info: [MakingKippoReachable](https://github.com/desaster/kippo/wiki/Making-Kippo-Reachable)).
 
 Files of interest:
 
