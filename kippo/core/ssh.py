@@ -4,7 +4,7 @@
 import twisted
 from twisted.cred import portal
 from twisted.conch import avatar, interfaces as conchinterfaces
-from twisted.conch.ssh import factory, userauth, connection, keys, session, transport, filetransfer
+from twisted.conch.ssh import factory, userauth, connection, keys, session, transport, filetransfer, forwarding
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
 from twisted.python import log, components
@@ -208,14 +208,17 @@ class HoneyPotSSHSession(session.SSHSession):
     def request_env(self, data):
         print 'request_env: %s' % (repr(data))
 
+
 class HoneyPotAvatar(avatar.ConchUser):
     implements(conchinterfaces.ISession)
+
 
     def __init__(self, username, env):
         avatar.ConchUser.__init__(self)
         self.username = username
         self.env = env
         self.channelLookup.update({'session': HoneyPotSSHSession})
+        self.channelLookup['direct-tcpip'] = KippoOpenConnectForwardingClient
 
         userdb = core.auth.UserDB()
         self.uid = self.gid = userdb.getUID(self.username)
@@ -313,7 +316,6 @@ def getDSAKeys():
         with file(private_key) as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
-
 
 class KippoSFTPFile:
     implements(conchinterfaces.ISFTPFile)
@@ -489,5 +491,10 @@ class KippoSFTPServer:
         raise NotImplementedError
 
 components.registerAdapter( KippoSFTPServer, HoneyPotAvatar, conchinterfaces.ISFTPServer)
+
+def KippoOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
+    remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
+    log.msg( "connection attempt to %s:%i" % remoteHP )
+    return None
 
 # vim: set et sw=4 et:
