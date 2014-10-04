@@ -109,6 +109,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
         t.supportedPublicKeys = self.privateKeys.keys()
 
+        self.primes = primes.parseModuliFile('/etc/ssh/moduli')
         if not self.primes:
             ske = t.supportedKeyExchanges[:]
             ske.remove('diffie-hellman-group-exchange-sha1')
