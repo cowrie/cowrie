@@ -115,6 +115,11 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             ske.remove('diffie-hellman-group-exchange-sha1')
             t.supportedKeyExchanges = ske
 
+        # reorder supported ciphers to resemble current openssh more
+        t.supportedCiphers = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', '3des-cbc', 'blowfish-cbc', 'cast128-cbc', 'aes192-cbc', 'aes256-cbc' ]
+        t.supportedPublicKeys = ['ssh-rsa', 'ssh-dss']
+        t.supportedMACs = [ 'hmac-md5', 'hmac-sha1']
+
         t.factory = self
         return t
 
