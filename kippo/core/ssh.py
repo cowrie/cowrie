@@ -10,7 +10,7 @@ import twisted.conch.ls
 from twisted.python import log, components
 from zope.interface import implements
 
-
+from twisted.conch.openssh_compat import primes
 
 import os
 import copy
