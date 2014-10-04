@@ -139,9 +139,9 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
+        self.terminal.transport.session.conn.transport.stdinlog_open = True
 
         self.cmdstack = [core.honeypot.HoneyPotShell(self, interactive=False)]
-
         print 'Running exec command "%s"' % self.execcmd
         self.cmdstack[0].lineReceived(self.execcmd)
 
@@ -232,11 +232,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         transport.ttylog_open = True
 
-        transport.stdinlog_file = '%s/tty/%s-%s.log' % \
+        transport.stdinlog_file = '%s/%s-%s-stdin.log' % \
             (config().get('honeypot', 'download_path'),
             time.strftime('%Y%m%d-%H%M%S'),
             int(random.random() * 10000))
-        transport.stdinlog_open = True
+        transport.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
 
