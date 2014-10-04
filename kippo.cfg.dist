@@ -146,11 +146,13 @@ ssh_version_string = SSH-2.0-OpenSSH_5.1p1 Debian-5
 # (default: not specified)
 #banner_file =
 
-# Allow the attacker to exit the honeypot on request or try to 'trick' the attacker with another shell.
-# note: depending on the attackers client (e.g. putty), will just quit regardless.
+# exit_jail tries to 'trick' the attacker with another shell. Set to true to create
+# another fake prompt after logout
 #
-# (default: true)
-exit_jail = true
+# putty/sshlib/libssh clients will not get the exit jail
+#
+# (default: false)
+exit_jail = false
 
 # Session management interface.
 #
