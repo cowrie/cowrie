@@ -146,6 +146,12 @@ ssh_version_string = SSH-2.0-OpenSSH_5.1p1 Debian-5
 # (default: not specified)
 #banner_file =
 
+# Allow the attacker to exit the honeypot on request or try to 'trick' the attacker with another shell.
+# note: depending on the attackers client (e.g. putty), will just quit regardless.
+#
+# (default: true)
+exit_jail = true
+
 # Session management interface.
 #
 # This is a telnet based service that can be used to interact with active
