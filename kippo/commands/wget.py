@@ -109,7 +109,7 @@ class command_wget(HoneyPotCommand):
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)
             path = parsed.path or '/'
-            if scheme == 'https' or port != 80:
+            if scheme == 'https':
                 self.writeln('Sorry, SSL not supported in this release')
                 self.exit()
                 return None
