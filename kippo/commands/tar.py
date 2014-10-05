@@ -78,7 +78,8 @@ class command_tar(HoneyPotCommand):
                 self.honeypot.commands[dest] = \
                     pick_handler(os.path.basename(dest), f.size)
             else:
-                print 'tar: skipping [%s]' % f.name
+                log.msg( 'tar: skipping [%s]' % f.name )
+
 commands['/bin/tar'] = command_tar
 
 # vim: set sw=4 et:

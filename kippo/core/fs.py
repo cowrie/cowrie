@@ -96,7 +96,7 @@ class HoneyPotFilesystem(object):
         if not f[A_REALFILE] and os.path.exists(realfile) and \
                 not os.path.islink(realfile) and os.path.isfile(realfile) and \
                 f[A_SIZE] < 25000000:
-            print 'Updating realfile to %s' % realfile
+            log.msg( 'Updating realfile to %s' % realfile )
             f[A_REALFILE] = realfile
 
     def realfile(self, f, path):
@@ -124,7 +124,7 @@ class HoneyPotFilesystem(object):
         if count > 10:
             raise TooManyLevels
         path = self.resolve_path(target, os.path.dirname(target))
-        print '%s resolved into %s' % (target, path)
+        log.msg( '%s resolved into %s' % (target, path) )
         if not path or not self.exists(path):
             raise FileNotFound
         f = self.getfile(path)
@@ -180,19 +180,19 @@ class HoneyPotFilesystem(object):
     # additions for SFTP support, try to keep functions here similar to os.*
 
     def open(self, filename, openFlags, mode):
-        #print "fs.open %s" % filename
+        #log.msg( "fs.open %s" % filename )
 
         #if (openFlags & os.O_APPEND == os.O_APPEND):
-        #    print "fs.open append"
+        #    log.msg( "fs.open append" )
 
         #if (openFlags & os.O_CREAT == os.O_CREAT):
-        #    print "fs.open creat"
+        #    log.msg( "fs.open creat" )
 
         #if (openFlags & os.O_TRUNC == os.O_TRUNC):
-        #    print "fs.open trunc"
+        #    log.msg( "fs.open trunc" )
 
         #if (openFlags & os.O_EXCL == os.O_EXCL):
-        #    print "fs.open excl"
+        #    log.msg( "fs.open excl" )
 
         if openFlags & os.O_RDWR == os.O_RDWR:
             raise notImplementedError
@@ -201,13 +201,13 @@ class HoneyPotFilesystem(object):
             # ensure we do not save with executable bit set
             realmode = mode & ~(stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
-            #print "fs.open wronly"
+            #log.msg( "fs.open wronly" )
             # TODO: safeoutfile could contains source IP address
             safeoutfile = '%s/%s_%s' % \
                        (config().get('honeypot', 'download_path'),
                     time.strftime('%Y%m%d%H%M%S'),
                     re.sub('[^A-Za-z0-9]', '_', filename))
-            #print "fs.open file for writing, saving to %s" % safeoutfile
+            #log.msg( "fs.open file for writing, saving to %s" % safeoutfile )
 
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(safeoutfile, openFlags, realmode)
@@ -270,7 +270,7 @@ class HoneyPotFilesystem(object):
         raise notImplementedError
 
     def rename(self, oldpath, newpath):
-        #print "rename %s to %s" % (oldpath, newpath)
+        #log.msg( "rename %s to %s" % (oldpath, newpath) )
         old = self.getfile(oldpath)
         if old == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))

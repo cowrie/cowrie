@@ -73,7 +73,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def txtcmd(self, txt):
         class command_txtcmd(core.honeypot.HoneyPotCommand):
             def call(self):
-                print 'Reading txtcmd from "%s"' % txt
+                log.msg( 'Reading txtcmd from "%s"' % txt )
                 f = file(txt, 'r')
                 self.write(f.read())
                 f.close()
@@ -142,7 +142,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.terminal.transport.session.conn.transport.stdinlog_open = True
 
         self.cmdstack = [core.honeypot.HoneyPotShell(self, interactive=False)]
-        print 'Running exec command "%s"' % self.execcmd
+        log.msg( 'Running exec command "%s"' % self.execcmd )
         self.cmdstack[0].lineReceived(self.execcmd)
 
 #        self.terminal.transport.session.conn.sendRequest(self.terminal.transport.session, 'exit-status', struct.pack('>L', 0))
@@ -227,7 +227,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'),
             int(random.random() * 10000))
-        print 'Opening TTY log: %s' % transport.ttylog_file
+        log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
         ttylog.ttylog_open(transport.ttylog_file, time.time())
 
         transport.ttylog_open = True

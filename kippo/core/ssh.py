@@ -40,8 +40,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         try:
             data = file(cfg.get('honeypot', 'banner_file')).read()
         except IOError:
-            print 'Banner file %s does not exist!' % \
-                cfg.get('honeypot', 'banner_file')
+            log.msg( 'Banner file %s does not exist!' % \
+                cfg.get('honeypot', 'banner_file') )
             return
         if not data or not len(data.strip()):
             return
@@ -89,7 +89,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             lcfg.add_section('honeypot')
             for i in cfg.options('honeypot'):
                 lcfg.set('honeypot', i, cfg.get('honeypot', i))
-            print 'Loading dblog engine: %s' % (engine,)
+            log.msg( 'Loading dblog engine: %s' % (engine,) )
             dblogger = __import__(
                 'kippo.dblog.%s' % (engine,),
                 globals(), locals(), ['dblog']).DBLogger(lcfg)
@@ -142,10 +142,10 @@ class HoneyPotTransport(transport.SSHServerTransport):
     hadVersion = False
 
     def connectionMade(self):
-        print 'New connection: %s:%s (%s:%s) [session: %d]' % \
+        log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
             (self.transport.getPeer().host, self.transport.getPeer().port,
             self.transport.getHost().host, self.transport.getHost().port,
-            self.transport.sessionno)
+            self.transport.sessionno) )
         self.interactors = []
         self.logintime = time.time()
         self.ttylog_open = False
@@ -166,7 +166,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
             self.hadVersion = True
 
     def ssh_KEXINIT(self, packet):
-        print 'Remote SSH version: %s' % (self.otherVersionString,)
+        log.msg( 'Remote SSH version: %s' % self.otherVersionString,)
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
     def lastlogExit(self):
@@ -212,12 +212,10 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
 class HoneyPotSSHSession(session.SSHSession):
     def request_env(self, data):
-        print 'request_env: %s' % (repr(data))
-
+        log.msg( 'request_env: %s' % (repr(data)) )
 
 class HoneyPotAvatar(avatar.ConchUser):
     implements(conchinterfaces.ISession)
-
 
     def __init__(self, username, env):
         avatar.ConchUser.__init__(self)
@@ -246,7 +244,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         protocol.makeConnection(session.wrapProtocol(serverProtocol))
 
     def getPty(self, terminal, windowSize, attrs):
-        print 'Terminal size: %s %s' % windowSize[0:2]
+        log.msg( 'Terminal size: %s %s' % windowSize[0:2] )
         self.windowSize = windowSize
         return None
 
@@ -255,12 +253,12 @@ class HoneyPotAvatar(avatar.ConchUser):
         if not cfg.has_option('honeypot', 'exec_enabled') or \
                 cfg.get('honeypot', 'exec_enabled').lower() not in \
                     ('yes', 'true', 'on'):
-            print 'Exec disabled. Not executing command: "%s"' % cmd
+            log.msg( 'Exec disabled. Not executing command: "%s"' % cmd )
             raise core.exceptions.NotEnabledException, \
                 'exec_enabled not enabled in configuration file!'
             return
 
-        print 'exec command: "%s"' % cmd
+        log.msg( 'exec command: "%s"' % cmd )
         serverProtocol = kippo.core.protocol.LoggingServerProtocol(
             kippo.core.protocol.HoneyPotExecProtocol, self, self.env, cmd)
         serverProtocol.makeConnection(protocol)
@@ -280,7 +278,7 @@ def getRSAKeys():
     public_key = cfg.get('honeypot', 'rsa_public_key')
     private_key = cfg.get('honeypot', 'rsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
-        print "Generating new RSA keypair..."
+        log.msg( "Generating new RSA keypair..." )
         from Crypto.PublicKey import RSA
         from twisted.python import randbytes
         KEY_LENGTH = 2048
@@ -291,7 +289,6 @@ def getRSAKeys():
             f.write(publicKeyString)
         with file(private_key, 'w+b') as f:
             f.write(privateKeyString)
-        print "Done."
     else:
         with file(public_key) as f:
             publicKeyString = f.read()
@@ -304,7 +301,7 @@ def getDSAKeys():
     public_key = cfg.get('honeypot', 'dsa_public_key')
     private_key = cfg.get('honeypot', 'dsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
-        print "Generating new DSA keypair..."
+        log.msg( "Generating new DSA keypair..." )
         from Crypto.PublicKey import DSA
         from twisted.python import randbytes
         KEY_LENGTH = 1024
@@ -315,7 +312,6 @@ def getDSAKeys():
             f.write(publicKeyString)
         with file(private_key, 'w+b') as f:
             f.write(privateKeyString)
-        print "Done."
     else:
         with file(public_key) as f:
             publicKeyString = f.read()
@@ -438,34 +434,34 @@ class KippoSFTPServer:
         return {}
 
     def openFile(self, filename, flags, attrs):
-        print "SFTP openFile: %s" % filename
+        log.msg( "SFTP openFile: %s" % filename )
         return KippoSFTPFile(self, self._absPath(filename), flags, attrs)
 
     def removeFile(self, filename):
-        print "SFTP removeFile: %s" % filename
+        log.msg( "SFTP removeFile: %s" % filename )
         return self.fs.remove(self._absPath(filename))
 
     def renameFile(self, oldpath, newpath):
-        print "SFTP renameFile: %s %s" % (oldpath, newpath)
+        log.msg( "SFTP renameFile: %s %s" % (oldpath, newpath) )
         return self.fs.rename(self._absPath(oldpath), self._absPath(newpath))
 
     def makeDirectory(self, path, attrs):
-        print "SFTP makeDirectory: %s" % path
+        log.msg( "SFTP makeDirectory: %s" % path )
         path = self._absPath(path)
         self.fs.mkdir2(path)
         self._setAttrs(path, attrs)
         return
 
     def removeDirectory(self, path):
-        print "SFTP removeDirectory: %s" % path
+        log.msg( "SFTP removeDirectory: %s" % path )
         return self.fs.rmdir(self._absPath(path))
 
     def openDirectory(self, path):
-        print "SFTP OpenDirectory: %s" % path
+        log.msg( "SFTP OpenDirectory: %s" % path )
         return KippoSFTPDirectory(self, self._absPath(path))
 
     def getAttrs(self, path, followLinks):
-        print "SFTP getAttrs: %s" % path
+        log.msg( "SFTP getAttrs: %s" % path )
         path = self._absPath(path)
         if followLinks:
             s = self.fs.stat(path)
@@ -474,23 +470,23 @@ class KippoSFTPServer:
         return self._getAttrs(s)
 
     def setAttrs(self, path, attrs):
-        print "SFTP setAttrs: %s" % path
+        log.msg( "SFTP setAttrs: %s" % path )
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
     def readLink(self, path):
-        print "SFTP readLink: %s" % path
+        log.msg( "SFTP readLink: %s" % path )
         path = self._absPath(path)
         return self.fs.readlink(path)
 
     def makeLink(self, linkPath, targetPath):
-        print "SFTP makeLink: %s" % path
+        log.msg( "SFTP makeLink: %s" % path )
         linkPath = self._absPath(linkPath)
         targetPath = self._absPath(targetPath)
         return self.fs.symlink(targetPath, linkPath)
 
     def realPath(self, path):
-        print "SFTP realPath: %s" % path
+        log.msg( "SFTP realPath: %s" % path )
         return self.fs.realpath(self._absPath(path))
 
     def extendedRequest(self, extName, extData):

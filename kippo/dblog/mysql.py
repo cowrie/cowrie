@@ -46,7 +46,7 @@ class DBLogger(dblog.DBLogger):
             cp_max = 1)
 
     def sqlerror(self, error):
-        print 'SQL Error:', error.value
+        log.msg( 'SQL Error:', error.value )
 
     def simpleQuery(self, sql, args):
         """ Just run a deferred sql query, only care about errors """

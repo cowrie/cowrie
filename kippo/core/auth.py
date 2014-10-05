@@ -128,10 +128,10 @@ class HoneypotPasswordChecker:
 
     def checkUserPass(self, username, password):
         if UserDB().checklogin(username, password):
-            print 'login attempt [%s/%s] succeeded' % (username, password)
+            log.msg( 'login attempt [%s/%s] succeeded' % (username, password) )
             return True
         else:
-            print 'login attempt [%s/%s] failed' % (username, password)
+            losg.msg( 'login attempt [%s/%s] failed' % (username, password) )
             return False
 
 # vim: set sw=4 et:

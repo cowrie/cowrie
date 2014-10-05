@@ -192,14 +192,14 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                     (self.contenttype))
             if self.wget.limit_size > 0 and \
                     self.totallength > self.wget.limit_size:
-                print 'Not saving URL (%s) due to file size limit' % \
-                    (self.wget.url,)
+                log.msg( 'Not saving URL (%s) due to file size limit' % \
+                    (self.wget.url,) )
                 self.fileName = os.path.devnull
                 self.nomore = True
             else:
                 msg = 'Saving URL (%s) to %s' % (self.wget.url, self.fileName)
                 self.wget.honeypot.logDispatch(msg)
-                print msg
+                log.msg( msg )
             self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
             self.wget.honeypot.terminal.nextLine()
 
@@ -212,7 +212,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             # if downloading files of unspecified size, this could happen:
             if not self.nomore and self.wget.limit_size > 0 and \
                     self.currentlength > self.wget.limit_size:
-                print 'File limit reached, not saving any more data!'
+                log.msg( 'File limit reached, not saving any more data!' )
                 self.nomore = True
                 self.file.close()
                 self.fileName = os.path.devnull

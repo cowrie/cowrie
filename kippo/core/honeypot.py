@@ -34,12 +34,12 @@ class HoneyPotCommand(object):
         self.honeypot.cmdstack[-1].resume()
 
     def ctrl_c(self):
-        print 'Received CTRL-C, exiting..'
+        log.msg( 'Received CTRL-C, exiting..' )
         self.writeln('^C')
         self.exit()
 
     def lineReceived(self, line):
-        print 'INPUT: %s' % line
+        log.msg( 'INPUT: %s' % line )
 
     def resume(self):
         pass
@@ -58,7 +58,7 @@ class HoneyPotShell(object):
             }
 
     def lineReceived(self, line):
-        print 'CMD: %s' % line
+        log.msg( 'CMD: %s' % line )
         line = line[:500]
         for i in [x.strip() for x in line.strip().split(';')[:10]]:
             if not len(i):
@@ -120,12 +120,12 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
-            print 'Command found: %s' % (line,)
+            log.msg( 'Command found: %s' % (line,) )
             self.honeypot.logDispatch('Command found: %s' % (line,))
             self.honeypot.call_command(cmdclass, *rargs)
         else:
             self.honeypot.logDispatch('Command not found: %s' % (line,))
-            print 'Command not found: %s' % (line,)
+            log.msg( 'Command not found: %s' % (line,) )
             if len(line):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
                 runOrPrompt()

@@ -188,7 +188,7 @@ class command_passwd(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line):
-        print 'INPUT (passwd):', line
+        log.msg( 'INPUT (passwd):', line )
         self.password = line.strip()
         self.callbacks.pop(0)(line)
 commands['/usr/bin/passwd'] = command_passwd
@@ -383,7 +383,8 @@ class command_perl(HoneyPotCommand):
             self.exit()
 
     def lineReceived(self, line):
-        print 'INPUT (perl):', line
+        log.msg( 'INPUT (perl):', line )
+
 commands['/usr/bin/perl'] = command_perl
 
 class command_php(HoneyPotCommand):
@@ -446,7 +447,8 @@ class command_php(HoneyPotCommand):
             self.exit()
 
     def lineReceived(self, line):
-        print 'INPUT (php):', line
+        log.msg( 'INPUT (php):', line )
+
 commands['/usr/bin/php'] = command_php
 
 class command_nop(HoneyPotCommand):
