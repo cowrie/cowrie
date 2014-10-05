@@ -96,7 +96,7 @@ class HoneyPotFilesystem(object):
         if not f[A_REALFILE] and os.path.exists(realfile) and \
                 not os.path.islink(realfile) and os.path.isfile(realfile) and \
                 f[A_SIZE] < 25000000:
-            log.msg( 'Updating realfile to %s' % realfile )
+            #log.msg( 'Updating realfile to %s' % realfile )
             f[A_REALFILE] = realfile
 
     def realfile(self, f, path):
@@ -124,7 +124,7 @@ class HoneyPotFilesystem(object):
         if count > 10:
             raise TooManyLevels
         path = self.resolve_path(target, os.path.dirname(target))
-        log.msg( '%s resolved into %s' % (target, path) )
+        #log.msg( '%s resolved into %s' % (target, path) )
         if not path or not self.exists(path):
             raise FileNotFound
         f = self.getfile(path)

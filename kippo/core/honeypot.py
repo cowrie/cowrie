@@ -6,6 +6,7 @@ from copy import deepcopy, copy
 import os
 import shlex
 
+from twisted.python import log
 from kippo.core import fs
 from kippo.core.config import config
 import kippo.core.exceptions

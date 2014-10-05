@@ -6,6 +6,7 @@ import string
 import twisted
 from twisted.cred import checkers, credentials, error
 from twisted.internet import defer
+from twisted.python import log
 from zope.interface import implements
 
 from kippo.core.config import config
@@ -131,7 +132,7 @@ class HoneypotPasswordChecker:
             log.msg( 'login attempt [%s/%s] succeeded' % (username, password) )
             return True
         else:
-            losg.msg( 'login attempt [%s/%s] failed' % (username, password) )
+            log.msg( 'login attempt [%s/%s] failed' % (username, password) )
             return False
 
 # vim: set sw=4 et:

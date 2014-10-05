@@ -10,6 +10,7 @@ from twisted.conch import recvline
 from twisted.conch.ssh import transport
 from twisted.conch.insults import insults
 from twisted.internet import protocol
+from twisted.python import log
 from copy import deepcopy, copy
 
 from kippo.core import ttylog, fs
