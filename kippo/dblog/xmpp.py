@@ -1,4 +1,5 @@
 from twisted.words.xish import domish
+from twisted.python import log
 from wokkel.xmppim import AvailablePresence
 from wokkel import muc
 import uuid
