@@ -5,6 +5,7 @@ from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from twisted.web import client
 from twisted.internet import reactor
+from twisted.python import log
 
 import stat
 import time
