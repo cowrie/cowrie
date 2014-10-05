@@ -8,7 +8,7 @@ from twisted.conch.ssh import factory, userauth, connection, keys, session, tran
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
 from twisted.python import log, components
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.conch.openssh_compat import primes
 
@@ -123,8 +123,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         t.factory = self
         return t
 
+@implementer(portal.IRealm)
 class HoneyPotRealm:
-    implements(portal.IRealm)
 
     def __init__(self):
         # I don't know if i'm supposed to keep static stuff here
@@ -214,8 +214,8 @@ class HoneyPotSSHSession(session.SSHSession):
     def request_env(self, data):
         log.msg( 'request_env: %s' % (repr(data)) )
 
+@implementer(conchinterfaces.ISession)
 class HoneyPotAvatar(avatar.ConchUser):
-    implements(conchinterfaces.ISession)
 
     def __init__(self, username, env):
         avatar.ConchUser.__init__(self)
@@ -319,8 +319,8 @@ def getDSAKeys():
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
+@implementer(conchinterfaces.ISFTPFile)
 class KippoSFTPFile:
-    implements(conchinterfaces.ISFTPFile)
 
     def __init__(self, server, filename, flags, attrs):
         self.server = server
@@ -400,8 +400,8 @@ class KippoSFTPDirectory:
     def close(self):
         self.files = []
 
+@implementer(conchinterfaces.ISFTPServer)
 class KippoSFTPServer:
-    implements(conchinterfaces.ISFTPServer)
 
     def __init__(self, avatar):
         self.avatar = avatar
