@@ -54,7 +54,7 @@ class DBLogger(dblog.DBLogger):
         d.addErrback(self.sqlerror)
 
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
-        sid = uuid.uuid1().hex
+        sid = uuid.uuid4().hex
         self.createSessionWhenever(sid, peerIP, hostIP)
         return sid
 

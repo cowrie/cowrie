@@ -20,7 +20,7 @@ class DBLogger(dblog.DBLogger):
         self.outfile.flush()
 
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
-        sid = uuid.uuid1().hex
+        sid = uuid.uuid4().hex
         sensorname = self.getSensor() or hostIP
         self.write(sid, 'New connection: %s:%s' % (peerIP, peerPort))
         return sid
