@@ -233,8 +233,11 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
 class HoneyPotSSHSession(session.SSHSession):
     def request_env(self, data):
-        log.msg( 'request_env: %s' % (repr(data)) )
-
+	name, rest = getNS(data)
+	value, rest = getNS(rest)
+	if rest:
+	    raise ValueError("Bad data given in env request")
+	log.msg('request_env: %s=%s' % (name, value) )
 
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
