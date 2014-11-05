@@ -232,12 +232,26 @@ class HoneyPotTransport(transport.SSHServerTransport):
             self.transport.loseConnection()
 
 class HoneyPotSSHSession(session.SSHSession):
+
+    def __init__(self, *args, **kw):
+        session.SSHSession.__init__(self, *args, **kw)
+        self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
+
     def request_env(self, data):
 	name, rest = getNS(data)
 	value, rest = getNS(rest)
 	if rest:
 	    raise ValueError("Bad data given in env request")
 	log.msg('request_env: %s=%s' % (name, value) )
+	return 0
+
+    def request_agent(self, data):
+	log.msg('request_agent: %s' % repr(data) )
+	return 0
+
+    def request_x11_req(self, data):
+	log.msg('request_x11: %s' % repr(data) )
+	return 0
 
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
