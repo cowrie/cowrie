@@ -30,6 +30,7 @@ Software required:
 * Python 2.5+
 * Twisted 8.0+
 * PyCrypto
+* pyasn1
 * Zope Interface
 
 See Wiki for some installation instructions.
