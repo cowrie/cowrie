@@ -4,9 +4,6 @@
 #
 
 from kippo.core import dblog
-from twisted.enterprise import adbapi
-from twisted.internet import defer
-from twisted.python import log
 import time
 import uuid
 
