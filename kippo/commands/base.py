@@ -64,7 +64,6 @@ class command_exit(HoneyPotCommand):
                 self.exit_jail is False:
             self.honeypot.terminal.loseConnection()
             return
-        self.honeypot.terminal.reset()
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
