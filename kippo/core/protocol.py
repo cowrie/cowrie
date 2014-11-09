@@ -167,10 +167,17 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         transport.factory.sessions[transport.transport.sessionno] = self
 
         self.keyHandlers.update({
-            '\x04':     self.handle_CTRL_D,
-            '\x15':     self.handle_CTRL_U,
-            '\x03':     self.handle_CTRL_C,
+            '\x01':     self.handle_HOME,	# CTRL-A
+            '\x02':     self.handle_LEFT,	# CTRL-B
+            '\x03':     self.handle_CTRL_C,	# CTRL-C
+            '\x04':     self.handle_CTRL_D,	# CTRL-D
+            '\x05':     self.handle_END,	# CTRL-E
+            '\x06':     self.handle_RIGHT,	# CTRL-F
             '\x09':     self.handle_TAB,
+            '\x0B':     self.handle_CTRL_K,	# CTRL-K
+            '\x0E':     self.handle_DOWN,	# CTRL-N
+            '\x10':     self.handle_UP,		# CTRL-P
+            '\x15':     self.handle_CTRL_U,	# CTRL-U
             })
 
     # this doesn't seem to be called upon disconnect, so please use
@@ -207,6 +214,16 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def handle_CTRL_C(self):
         self.cmdstack[-1].ctrl_c()
 
+    def handle_CTRL_D(self):
+        self.call_command(self.commands['exit'])
+
+    def handle_TAB(self):
+        self.cmdstack[-1].handle_TAB()
+
+    def handle_CTRL_K(self):
+        self.terminal.eraseToLineEnd()
+        self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
+
     def handle_CTRL_U(self):
         for i in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
@@ -214,11 +231,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
         self.lineBufferIndex = 0
 
-    def handle_CTRL_D(self):
-        self.call_command(self.commands['exit'])
-
-    def handle_TAB(self):
-        self.cmdstack[-1].handle_TAB()
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
