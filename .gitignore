@@ -6,7 +6,7 @@ data/ssh_host_dsa_key.pub
 data/ssh_host_rsa_key
 data/ssh_host_rsa_key.pub
 dl/*
-log/kippo.log*
+log/*
 log/tty/*
 kippo-textlog.log
 private.key
