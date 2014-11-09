@@ -64,7 +64,6 @@ class command_exit(HoneyPotCommand):
                 self.exit_jail is False:
             self.honeypot.terminal.loseConnection()
             return
-        self.honeypot.terminal.reset()
         self.writeln('Connection to server closed.')
         self.honeypot.hostname = 'localhost'
         self.honeypot.cwd = '/root'
@@ -451,6 +450,19 @@ class command_php(HoneyPotCommand):
         log.msg( 'INPUT (php):', line )
 
 commands['/usr/bin/php'] = command_php
+
+class command_chattr(HoneyPotCommand):
+    def call(self):
+        if len(self.args) < 1:
+            self.writeln('Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...')
+            return
+        elif len(self.args) < 2:
+            self.writeln("Must use '-v', =, - or +'")
+            return
+        if not self.fs.exists(self.args[1]):
+            self.writeln('chattr: No such file or directory while trying to stat ' + self.args[1])
+        return
+commands['/usr/bin/chattr'] = command_chattr
 
 class command_nop(HoneyPotCommand):
     def call(self):
