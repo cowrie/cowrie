@@ -2,10 +2,10 @@
 # See the COPYRIGHT file for more information
 
 import twisted
-from copy import deepcopy, copy
 import os
 import shlex
 import re
+import copy.copy
 
 from twisted.python import log
 from kippo.core import fs
@@ -97,7 +97,7 @@ class HoneyPotShell(object):
             return
 
         # probably no reason to be this comprehensive for just PATH...
-        envvars = copy(self.envvars)
+        envvars = copy.copy(self.envvars)
         cmd = None
         while len(cmdAndArgs):
             piece = cmdAndArgs.pop(0)

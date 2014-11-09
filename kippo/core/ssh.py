@@ -5,6 +5,7 @@ import os
 import copy
 import time
 import uuid
+import copy.deepcopy
 
 from zope.interface import implementer
 
@@ -261,17 +262,17 @@ class HoneyPotAvatar(avatar.ConchUser):
         avatar.ConchUser.__init__(self)
         self.username = username
         self.env = env
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs))
+
         self.channelLookup.update({'session': HoneyPotSSHSession})
         self.channelLookup['direct-tcpip'] = KippoOpenConnectForwardingClient
-
-        userdb = core.auth.UserDB()
-        self.uid = self.gid = userdb.getUID(self.username)
 
         # sftp support enabled only when option is explicitly set
         if self.env.cfg.has_option('honeypot', 'sftp_enabled'):
             if ( self.env.cfg.get('honeypot', 'sftp_enabled') == "true" ):
                 self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
 
+        self.uid = self.gid = core.auth.UserDB().getUID(self.username)
         if not self.uid:
             self.home = '/root'
         else:
@@ -445,8 +446,7 @@ class KippoSFTPServer:
 
     def __init__(self, avatar):
         self.avatar = avatar
-        # FIXME we should not copy fs here, but do this at avatar instantiation
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.avatar.env.fs))
+        self.fs = self.avatar.env.fs
 
     def _absPath(self, path):
         home = self.avatar.home

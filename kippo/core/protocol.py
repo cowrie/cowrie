@@ -5,13 +5,13 @@ import os
 import random
 import time
 import struct
+import copy.copy
 
 from twisted.conch import recvline
 from twisted.conch.ssh import transport
 from twisted.conch.insults import insults
 from twisted.internet import protocol
 from twisted.python import log
-from copy import deepcopy, copy
 
 from kippo.core import ttylog, fs
 from kippo.core.config import config
@@ -20,13 +20,13 @@ import kippo.core.honeypot
 from kippo import core
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
-    def __init__(self, user, env):
-        self.user = user
+    def __init__(self, avatar, env):
+        self.user = avatar
         self.env = env
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
-        self.fs = fs.HoneyPotFilesystem(deepcopy(self.env.fs))
-        if self.fs.exists(user.home):
-            self.cwd = user.home
+        self.fs = avatar.fs
+        if self.fs.exists(avatar.home):
+            self.cwd = avatar.home
         else:
             self.cwd = '/'
         # commands is also a copy so we can add stuff on the fly
@@ -134,9 +134,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
-    def __init__(self, user, env, execcmd):
+    def __init__(self, avatar, env, execcmd):
         self.execcmd = execcmd
-        HoneyPotBaseProtocol.__init__(self, user, env)
+        HoneyPotBaseProtocol.__init__(self, avatar, env)
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
@@ -153,9 +153,9 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
 
-    def __init__(self, user, env):
+    def __init__(self, avatar, env):
         recvline.HistoricRecvLine.__init__(self)
-        HoneyPotBaseProtocol.__init__(self, user, env)
+        HoneyPotBaseProtocol.__init__(self, avatar, env)
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
@@ -167,10 +167,17 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         transport.factory.sessions[transport.transport.sessionno] = self
 
         self.keyHandlers.update({
-            '\x04':     self.handle_CTRL_D,
-            '\x15':     self.handle_CTRL_U,
-            '\x03':     self.handle_CTRL_C,
+            '\x01':     self.handle_HOME,	# CTRL-A
+            '\x02':     self.handle_LEFT,	# CTRL-B
+            '\x03':     self.handle_CTRL_C,	# CTRL-C
+            '\x04':     self.handle_CTRL_D,	# CTRL-D
+            '\x05':     self.handle_END,	# CTRL-E
+            '\x06':     self.handle_RIGHT,	# CTRL-F
             '\x09':     self.handle_TAB,
+            '\x0B':     self.handle_CTRL_K,	# CTRL-K
+            '\x0E':     self.handle_DOWN,	# CTRL-N
+            '\x10':     self.handle_UP,		# CTRL-P
+            '\x15':     self.handle_CTRL_U,	# CTRL-U
             })
 
     # this doesn't seem to be called upon disconnect, so please use
@@ -207,6 +214,16 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def handle_CTRL_C(self):
         self.cmdstack[-1].ctrl_c()
 
+    def handle_CTRL_D(self):
+        self.call_command(self.commands['exit'])
+
+    def handle_TAB(self):
+        self.cmdstack[-1].handle_TAB()
+
+    def handle_CTRL_K(self):
+        self.terminal.eraseToLineEnd()
+        self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
+
     def handle_CTRL_U(self):
         for i in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
@@ -214,11 +231,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
         self.lineBufferIndex = 0
 
-    def handle_CTRL_D(self):
-        self.call_command(self.commands['exit'])
-
-    def handle_TAB(self):
-        self.cmdstack[-1].handle_TAB()
 
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
