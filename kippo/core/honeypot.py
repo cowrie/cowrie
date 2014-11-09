@@ -5,7 +5,7 @@ import twisted
 import os
 import shlex
 import re
-import copy.copy
+import copy
 
 from twisted.python import log
 from kippo.core import fs

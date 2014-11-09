@@ -5,7 +5,7 @@ import os
 import random
 import time
 import struct
-import copy.copy
+import copy
 
 from twisted.conch import recvline
 from twisted.conch.ssh import transport
