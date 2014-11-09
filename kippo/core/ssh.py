@@ -5,7 +5,7 @@ import os
 import copy
 import time
 import uuid
-import copy.deepcopy
+import copy
 
 from zope.interface import implementer
 
