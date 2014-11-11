@@ -17,6 +17,7 @@ from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_
 import twisted.conch.ls
 from twisted.python import log, components
 from twisted.conch.openssh_compat import primes
+from twisted.conch.ssh.common import NS, getNS
 
 import ConfigParser
 
@@ -27,8 +28,6 @@ import kippo.core.honeypot
 import kippo.core.ssh
 import kippo.core.protocol
 from kippo import core
-
-from twisted.conch.ssh.common import NS, getNS
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):

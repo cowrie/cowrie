@@ -1,7 +1,13 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import os, time, fnmatch, re, stat, errno
+import os
+import time
+import fnmatch
+import re
+import stat
+import errno
+
 from kippo.core.config import config
 
 A_NAME, \

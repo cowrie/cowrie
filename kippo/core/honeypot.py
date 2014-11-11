@@ -6,14 +6,13 @@ import os
 import shlex
 import re
 import copy
+import pickle
 
 from twisted.python import log
 from kippo.core import fs
 from kippo.core.config import config
 import kippo.core.exceptions
 from kippo import core
-
-import pickle
 
 class HoneyPotCommand(object):
     def __init__(self, protocol, *args):

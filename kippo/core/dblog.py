@@ -1,7 +1,9 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import re, time, socket
+import re
+import time
+import socket
 
 class DBLogger(object):
     def __init__(self, cfg):

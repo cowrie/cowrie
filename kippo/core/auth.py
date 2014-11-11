@@ -3,11 +3,12 @@
 
 import string
 
+from zope.interface import implementer
+
 import twisted
 from twisted.cred import checkers, credentials, error
 from twisted.internet import defer
 from twisted.python import log
-from zope.interface import implementer
 
 from kippo.core.config import config
 
