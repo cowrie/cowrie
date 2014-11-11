@@ -30,7 +30,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         else:
             self.cwd = '/'
         # commands is also a copy so we can add stuff on the fly
-        self.commands = copy(self.env.commands)
+        self.commands = copy.copy(self.env.commands)
         self.password_input = False
         self.cmdstack = []
 

@@ -5,7 +5,6 @@ import os
 import copy
 import time
 import uuid
-import copy
 
 from zope.interface import implementer
 
