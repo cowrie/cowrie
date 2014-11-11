@@ -23,7 +23,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def __init__(self, avatar, env):
         self.user = avatar
         self.env = env
-        self.hostname = self.env.cfg.get('honeypot', 'hostname')
+        self.hostname = avatar.hostname
         self.fs = avatar.fs
         if self.fs.exists(avatar.home):
             self.cwd = avatar.home

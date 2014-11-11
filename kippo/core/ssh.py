@@ -263,6 +263,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.username = username
         self.env = env
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs))
+        self.hostname = self.env.cfg.get('honeypot', 'hostname')
 
         self.channelLookup.update({'session': HoneyPotSSHSession})
         self.channelLookup['direct-tcpip'] = KippoOpenConnectForwardingClient
