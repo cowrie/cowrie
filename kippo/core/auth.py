@@ -106,7 +106,7 @@ class UserDB(object):
 @implementer(checkers.ICredentialsChecker)
 class HoneypotPublicKeyChecker:
     """
-    Checker that logs public key authentication attempts
+    Checker that accepts, logs and denies public key authentication attempts
     """
 
     credentialInterfaces = (credentials.ISSHPrivateKey,)
