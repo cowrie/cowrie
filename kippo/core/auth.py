@@ -8,7 +8,9 @@ from zope.interface import implementer
 import twisted
 from twisted.cred import checkers, credentials, error
 from twisted.internet import defer
-from twisted.python import log
+from twisted.python import log, failure
+from twisted.conch import error
+from twisted.conch.ssh import keys
 
 from kippo.core.config import config
 
@@ -100,6 +102,19 @@ class UserDB(object):
             return
         self.userdb.append((login, uid, passwd))
         self.save()
+
+@implementer(checkers.ICredentialsChecker)
+class HoneypotPublicKeyChecker:
+    """
+    Checker that logs public key authentication attempts
+    """
+
+    credentialInterfaces = (credentials.ISSHPrivateKey,)
+
+    def requestAvatarId(self, credentials):
+        _pubKey = keys.Key.fromString(credentials.blob)
+        log.msg( 'Public Key attempt for user %s with fingerprint %s' % ( credentials.username, _pubKey.fingerprint() ) )
+        return failure.Failure(error.ConchError("Incorrect signature"))
 
 @implementer(checkers.ICredentialsChecker)
 class HoneypotPasswordChecker:
