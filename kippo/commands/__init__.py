@@ -11,6 +11,7 @@ __all__ = [
     'apt',
     'dice',
     'adduser',
+    'sleep',
     'last',
     'fs',
     'malware',
