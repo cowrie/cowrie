@@ -13,6 +13,7 @@ __all__ = [
     'adduser',
     'sleep',
     'last',
+    'uname',
     'fs',
     'malware',
     ]
