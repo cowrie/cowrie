@@ -6,3 +6,5 @@
 * allow wget download over non-80 port
 * simple JSON logging to kippo.json
 * accept log and deny publickey authentication
+* add uname -r command
+* add working sleep command
