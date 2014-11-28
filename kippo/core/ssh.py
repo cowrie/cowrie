@@ -150,7 +150,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
     @ivar ttylog_open: whether log is open
 
-    @ivar uuid: unique UUID of this transport
+    @ivar transportId: UUID of this transport
 
     @ivar _hadVersion: used so we only send key exchange after receive version info
     """
