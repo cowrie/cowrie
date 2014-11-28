@@ -238,17 +238,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
-            time.strftime('%Y%m%d-%H%M%S'),
-            int(random.random() * 10000))
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
         log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
         ttylog.ttylog_open(transport.ttylog_file, time.time())
-
         transport.ttylog_open = True
 
         transport.stdinlog_file = '%s/%s-%s-stdin.log' % \
             (config().get('honeypot', 'download_path'),
-            time.strftime('%Y%m%d-%H%M%S'),
-            int(random.random() * 10000))
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
         transport.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)

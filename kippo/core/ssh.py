@@ -162,7 +162,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
     def connectionMade(self):
         self.logintime = time.time()
-        self.transportId = uuid.uuid4().hex
+        self.transportId = uuid.uuid4().hex[:8]
 
         log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
             (self.transport.getPeer().host, self.transport.getPeer().port,
