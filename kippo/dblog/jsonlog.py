@@ -64,7 +64,7 @@ class DBLogger(dblog.DBLogger):
         self.write( session, logentry )
 
     def handleClientVersion(self, session, args):
-        logentry = { 'message' : 'Client version: [%s]' % (args['version']), 'version' : args['version'] }
+        logentry = { 'message' : 'Client version: [%s]' % (args['version']), 'client' : args['version'] }
         self.write( session, logentry )
 
     def handleFileDownload(self, session, args):
