@@ -3,7 +3,6 @@
 
 import re
 import time
-import socket
 
 class DBLogger(object):
     def __init__(self, cfg):

@@ -2,7 +2,6 @@
 # See the COPYRIGHT file for more information
 
 import os
-import random
 import time
 import struct
 import copy
@@ -15,7 +14,6 @@ from twisted.python import log
 
 from kippo.core import ttylog, fs
 from kippo.core.config import config
-from kippo.core import exceptions
 import kippo.core.honeypot
 from kippo import core
 

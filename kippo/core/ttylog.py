@@ -4,7 +4,6 @@
 # Should be compatible with user mode linux
 
 import struct
-import sys
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
 TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3

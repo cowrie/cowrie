@@ -1,9 +1,6 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import time
-import anydbm
-
 from kippo.core.config import config
 
 def addToLastlog(message):

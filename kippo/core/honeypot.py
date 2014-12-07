@@ -12,7 +12,6 @@ from twisted.python import log
 from kippo.core import fs
 from kippo.core.config import config
 import kippo.core.exceptions
-from kippo import core
 
 class HoneyPotCommand(object):
     def __init__(self, protocol, *args):
