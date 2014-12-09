@@ -6,7 +6,11 @@ import string
 from zope.interface import implementer
 
 import twisted
-from twisted.cred import checkers, credentials, error
+
+from twisted.cred.checkers import ICredentialsChecker
+from twisted.cred.credentials import IUsernamePassword, ISSHPrivateKey, IPluggableAuthenticationModules
+from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
+
 from twisted.internet import defer
 from twisted.python import log, failure
 from twisted.conch import error
@@ -103,40 +107,39 @@ class UserDB(object):
         self.userdb.append((login, uid, passwd))
         self.save()
 
-@implementer(checkers.ICredentialsChecker)
+@implementer(ICredentialsChecker)
 class HoneypotPublicKeyChecker:
     """
     Checker that accepts, logs and denies public key authentication attempts
     """
 
-    credentialInterfaces = (credentials.ISSHPrivateKey,)
+    credentialInterfaces = (ISSHPrivateKey,)
 
     def requestAvatarId(self, credentials):
         _pubKey = keys.Key.fromString(credentials.blob)
         log.msg( 'Public Key attempt for user %s with fingerprint %s' % ( credentials.username, _pubKey.fingerprint() ) )
         return failure.Failure(error.ConchError("Incorrect signature"))
 
-@implementer(checkers.ICredentialsChecker)
+@implementer(ICredentialsChecker)
 class HoneypotPasswordChecker:
     """
     Checker that accepts keyboard-interactive
     """
 
-#    credentialInterfaces = (credentials.IUsernamePassword,
-#        credentials.IPluggableAuthenticationModules)
+#    credentialInterfaces = (IUsernamePassword, IPluggableAuthenticationModules)
 
-    credentialInterfaces = (credentials.IPluggableAuthenticationModules,)
+    credentialInterfaces = (IPluggableAuthenticationModules,)
 
     def requestAvatarId(self, credentials):
         if hasattr(credentials, 'password'):
             if self.checkUserPass(credentials.username, credentials.password):
                 return defer.succeed(credentials.username)
             else:
-                return defer.fail(error.UnauthorizedLogin())
+                return defer.fail(UnauthorizedLogin())
         elif hasattr(credentials, 'pamConversion'):
             return self.checkPamUser(credentials.username,
                 credentials.pamConversion)
-        return defer.fail(error.UnhandledCredentials())
+        return defer.fail(UnhandledCredentials())
 
     def checkPamUser(self, username, pamConversion):
         r = pamConversion((('Password:', 1),))
@@ -146,7 +149,7 @@ class HoneypotPasswordChecker:
         for response, zero in responses:
             if self.checkUserPass(username, response):
                 return defer.succeed(username)
-        return defer.fail(error.UnauthorizedLogin())
+        return defer.fail(UnauthorizedLogin())
 
     def checkUserPass(self, username, password):
         if UserDB().checklogin(username, password):
