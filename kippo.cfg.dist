@@ -4,6 +4,15 @@
 
 [honeypot]
 
+# Sensor name use to identify this kippo instance. Used by the database
+# logging modules such as mysql.
+#
+# If not specified, the logging modules will instead use the IP address of the
+# connection as the sensor name.
+#
+# (default: not specified)
+#sensor_name=myhostname
+
 # IP addresses to listen for incoming SSH connections.
 #
 # (default: 0.0.0.0) = any address
@@ -95,15 +104,6 @@ sftp_enabled = true
 #
 # (default: not specified)
 #out_addr = 0.0.0.0
-
-# Sensor name use to identify this honeypot instance. Used by the database
-# logging modules such as mysql.
-#
-# If not specified, the logging modules will instead use the IP address of the
-# connection as the sensor name.
-#
-# (default: not specified)
-#sensor_name=myhostname
 
 # Fake address displayed as the address of the incoming connection.
 # This doesn't affect logging, and is only used by honeypot commands such as
