@@ -123,12 +123,10 @@ class HoneypotPublicKeyChecker:
 @implementer(ICredentialsChecker)
 class HoneypotPasswordChecker:
     """
-    Checker that accepts keyboard-interactive
+    Checker that accepts "keyboard-interactive" and "password"
     """
 
-#    credentialInterfaces = (IUsernamePassword, IPluggableAuthenticationModules)
-
-    credentialInterfaces = (IPluggableAuthenticationModules,)
+    credentialInterfaces = (IUsernamePassword, IPluggableAuthenticationModules)
 
     def requestAvatarId(self, credentials):
         if hasattr(credentials, 'password'):
