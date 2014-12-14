@@ -8,3 +8,14 @@
 * accept log and deny publickey authentication
 * add uname -r command
 * add working sleep command
+* enabled ssh diffie-hellman-group-exchange-sha1 algorithm
+* add 'bash -c' support (no effect option)
+* enable support for && multiple commands
+* create uuid to uniquely identify each session
+* log and deny direct-tcpip attempts 
+* add "chattr" command
+* support emacs keybindings (c-a, c-b, c-f, c-p, c-n, c-e)
+* add "sync" command
+* accept, log and deny public key authentication
+* add "uname -r" support
+* logstash and kibana config files added, based on JSON log
