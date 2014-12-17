@@ -5,6 +5,7 @@ import os
 import copy
 import time
 import uuid
+import struct
 
 from zope.interface import implementer
 
@@ -99,6 +100,15 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             self.dbloggers.append(dblogger)
 
     def buildProtocol(self, addr):
+        """
+        Create an instance of the server side of the SSH protocol.
+
+        @type addr: L{twisted.internet.interfaces.IAddress} provider
+        @param addr: The address at which the server will listen.
+
+        @rtype: L{twisted.conch.ssh.SSHServerTransport}
+        @return: The built transport.
+        """
 
         _moduli = '/etc/ssh/moduli'
         cfg = config()
@@ -237,20 +247,20 @@ class HoneyPotSSHSession(session.SSHSession):
         self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
     def request_env(self, data):
-	name, rest = getNS(data)
-	value, rest = getNS(rest)
-	if rest:
-	    raise ValueError("Bad data given in env request")
-	log.msg('request_env: %s=%s' % (name, value) )
-	return 0
+        name, rest = getNS(data)
+        value, rest = getNS(rest)
+        if rest:
+            raise ValueError("Bad data given in env request")
+        log.msg('request_env: %s=%s' % (name, value) )
+        return 0
 
     def request_agent(self, data):
-	log.msg('request_agent: %s' % repr(data) )
-	return 0
+        log.msg('request_agent: %s' % repr(data) )
+        return 0
 
     def request_x11_req(self, data):
-	log.msg('request_x11: %s' % repr(data) )
-	return 0
+        log.msg('request_x11: %s' % repr(data) )
+        return 0
 
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
@@ -536,6 +546,18 @@ components.registerAdapter( KippoSFTPServer, HoneyPotAvatar, conchinterfaces.ISF
 def KippoOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
     log.msg( "direct-tcp connection attempt to %s:%i" % remoteHP )
-    return None
+    return KippoConnectForwardingChannel(remoteHP,
+       remoteWindow=remoteWindow,
+       remoteMaxPacket=remoteMaxPacket,
+       avatar=avatar)
+
+class KippoConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
+
+    def channelOpen(self, specificData):
+        log.msg( "Faking channel open %s:%i" % self.hostport )
+
+    def dataReceived(self, data):
+        log.msg( "received data %s" % repr( data ))
+
 
 # vim: set et sw=4 et:
