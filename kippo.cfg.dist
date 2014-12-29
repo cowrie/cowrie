@@ -214,4 +214,4 @@ interact_port = 5123
 # JSON based logging module
 
 #[database_jsonlog]
-#logfile = log/kippolog.json
+logfile = log/kippolog.json
