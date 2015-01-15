@@ -86,12 +86,19 @@ class HoneyPotFilesystem(object):
         return found
 
     def get_path(self, path):
-        p = self.fs
-        for i in path.split('/'):
-            if not i:
+        cwd = self.fs
+        for part in path.split('/'):
+            if not len(part):
                 continue
-            p = [x for x in p[A_CONTENTS] if x[A_NAME] == i][0]
-        return p[A_CONTENTS]
+            ok = False
+            for c in cwd[A_CONTENTS]:
+                if c[A_NAME] == part:
+                    cwd = c
+                    ok = True
+                    break
+            if not ok:
+               return None
+        return cwd[A_CONTENTS]
 
     def exists(self, path):
         f = self.getfile(path)
@@ -176,6 +183,8 @@ class HoneyPotFilesystem(object):
         if path == '/':
             return True
         dir = self.get_path(os.path.dirname(path))
+        if dir is None:
+            return False
         l = [x for x in dir
             if x[A_NAME] == os.path.basename(path) and
             x[A_TYPE] == T_DIR]
