@@ -205,9 +205,9 @@ class DBLogger(dblog.DBLogger):
 	# We have to return an unique ID
 	def createSession(self, peerIP, peerPort, hostIP, hostPort):
 		session = uuid.uuid4().hex
-		self.meta[session] = {'peerIP': peerIP, 'peerPort': peerPort, 
-		'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
-		'credentials':[], 'version': None, 'ttylog': None }
+		self.meta[session] = {'session':session,'peerIP': peerIP, 'peerPort': peerPort,
+        'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
+        'credentials':[], 'commands':[],"unknownCommands":[],'urls':[],'version': None, 'ttylog': None }
 		return session
 
 	def handleConnectionLost(self, session, args):
@@ -226,19 +226,26 @@ class DBLogger(dblog.DBLogger):
 		self.meta[session]['loggedin'] = (u,p)
 
 	def handleCommand(self, session, args):
-		pass
-
+		c = args['input']
+		self.meta[session]['commands'].append(c)
+    
 	def handleUnknownCommand(self, session, args):
-		pass
+		uc = args['input']
+		self.meta[session]['unknownCommands'].append(uc)
 
 	def handleInput(self, session, args):
 		pass
-
+    
 	def handleTerminalSize(self, session, args):
-		pass
+		pass    
 
 	def handleClientVersion(self, session, args):
 		v = args['version']
 		self.meta[session]['version'] = v
+
+	def handleFileDownload(self,session,args):
+		url = args['url']
+		self.meta[session]['urls'].append(url)
+
 
 # vim: set sw=4 et:
