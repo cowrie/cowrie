@@ -196,6 +196,15 @@ class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
             self._hadVersion = True
 
     def ssh_KEXINIT(self, packet):
+        k = getNS(packet[16:], 10)
+        strings, rest = k[:-1], k[-1]
+        (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS, langSC) = [s.split(',') for s in strings]
+        log.msg('KEXINIT: client supported key exchange: %s' % kexAlgs )
+        log.msg('KEXINIT: client supported public keys: %s' % keyAlgs )
+        log.msg('KEXINIT: client supported encryption: %s' % encCS )
+        log.msg('KEXINIT: client supported MAC: %s' % macCS )
+        log.msg('KEXINIT: client supported compression: %s' % compCS )
+        log.msg('KEXINIT: client supported lang: %s' % langCS )
         log.msg( 'Remote SSH version: %s' % self.otherVersionString,)
         return kippo.core.sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
