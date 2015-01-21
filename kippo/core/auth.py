@@ -68,8 +68,12 @@ class UserDB(object):
     def checklogin(self, thelogin, thepasswd):
         '''check entered username/password against database'''
         '''note that it allows multiple passwords for a single username'''
-
+        '''it also knows wildcard '*' for any password'''
+        '''prepend password with ! to explicitly deny it. Denials must come before wildcards'''
         for (login, uid, passwd) in self.userdb:
+            # explicitly fail on !password
+            if login == thelogin and passwd == '!'+thepasswd:
+                return False
             if login == thelogin and passwd in (thepasswd, '*'):
                 return True
         return False
