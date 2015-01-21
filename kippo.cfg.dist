@@ -212,6 +212,12 @@ interact_port = 5123
 #logfile = log/kippo-textlog.log
 
 # JSON based logging module
-
 #[database_jsonlog]
 logfile = log/kippolog.json
+
+#[database_hpfeeds]
+#server = hpfeeds.mysite.org
+#port = 10000
+#identifier = abc123
+#secret = secret
+#debug=false
