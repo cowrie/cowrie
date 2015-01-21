@@ -32,7 +32,7 @@ class command_cd(HoneyPotCommand):
         try:
             newpath = self.fs.resolve_path(path, self.honeypot.cwd)
             newdir = self.fs.get_path(newpath)
-        except IndexError:
+        except:
             newdir = None
         if path == "-":
             self.writeln('bash: cd: OLDPWD not set')

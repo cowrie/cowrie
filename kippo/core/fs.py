@@ -97,7 +97,7 @@ class HoneyPotFilesystem(object):
                     ok = True
                     break
             if not ok:
-               return None
+               raise FileNotFound
         return cwd[A_CONTENTS]
 
     def exists(self, path):
@@ -182,7 +182,10 @@ class HoneyPotFilesystem(object):
     def is_dir(self, path):
         if path == '/':
             return True
-        dir = self.get_path(os.path.dirname(path))
+        try:
+            dir = self.get_path(os.path.dirname(path))
+        except: 
+            dir = None
         if dir is None:
             return False
         l = [x for x in dir
