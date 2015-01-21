@@ -21,7 +21,7 @@ from twisted.conch.ssh.common import NS, getNS
 
 import ConfigParser
 
-from kippo.core import ttylog, utils, fs
+from kippo.core import ttylog, utils, fs, sshserver
 from kippo.core.config import config
 import kippo.core.auth
 import kippo.core.honeypot
@@ -152,7 +152,7 @@ class HoneyPotRealm:
         else:
             raise Exception, "No supported interfaces found."
 
-class HoneyPotTransport(transport.SSHServerTransport):
+class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
     """
     @ivar logintime: time of login
 
@@ -179,16 +179,16 @@ class HoneyPotTransport(transport.SSHServerTransport):
             self.transport.getHost().host, self.transport.getHost().port,
             self.transport.sessionno) )
 
-        transport.SSHServerTransport.connectionMade(self)
+        kippo.core.sshserver.KippoSSHServerTransport.connectionMade(self)
 
     def sendKexInit(self):
         # Don't send key exchange prematurely
         if not self.gotVersion:
             return
-        transport.SSHServerTransport.sendKexInit(self)
+        kippo.core.sshserver.KippoSSHServerTransport.sendKexInit(self)
 
     def dataReceived(self, data):
-        transport.SSHServerTransport.dataReceived(self, data)
+        kippo.core.sshserver.KippoSSHServerTransport.dataReceived(self, data)
         # later versions seem to call sendKexInit again on their own
         if twisted.version.major < 11 and \
                 not self._hadVersion and self.gotVersion:
@@ -197,7 +197,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
     def ssh_KEXINIT(self, packet):
         log.msg( 'Remote SSH version: %s' % self.otherVersionString,)
-        return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
+        return kippo.core.sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
     def lastlogExit(self):
         starttime = time.strftime('%a %b %d %H:%M',
@@ -219,26 +219,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
         if self.ttylog_open:
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
-        transport.SSHServerTransport.connectionLost(self, reason)
-
-    def sendDisconnect(self, reason, desc):
-        """
-        Workaround for the "bad packet length" error message.
-
-        @param reason: the reason for the disconnect.  Should be one of the
-                       DISCONNECT_* values.
-        @type reason: C{int}
-        @param desc: a descrption of the reason for the disconnection.
-        @type desc: C{str}
-        """
-        if not 'bad packet length' in desc:
-            # With python >= 3 we can use super?
-            transport.SSHServerTransport.sendDisconnect(self, reason, desc)
-        else:
-            self.transport.write('Protocol mismatch.\n')
-            log.msg('Disconnecting with error, code %s\nreason: %s' % \
-                (reason, desc))
-            self.transport.loseConnection()
+        kippo.core.sshserver.KippoSSHServerTransport.connectionLost(self, reason)
 
 class HoneyPotSSHSession(session.SSHSession):
 
