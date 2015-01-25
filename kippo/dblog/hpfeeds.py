@@ -206,8 +206,8 @@ class DBLogger(dblog.DBLogger):
 	def createSession(self, peerIP, peerPort, hostIP, hostPort):
 		session = uuid.uuid4().hex
 		self.meta[session] = {'session':session,'peerIP': peerIP, 'peerPort': peerPort,
-        'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
-        'credentials':[], 'commands':[],"unknownCommands":[],'urls':[],'version': None, 'ttylog': None }
+		'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
+		'credentials':[], 'commands':[],"unknownCommands":[],'urls':[],'version': None, 'ttylog': None }
 		return session
 
 	def handleConnectionLost(self, session, args):
