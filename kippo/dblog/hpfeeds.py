@@ -2,6 +2,7 @@
 
 from kippo.core import dblog
 from twisted.python import log
+from datetime import datetime
 
 import os
 import struct
@@ -205,7 +206,8 @@ class DBLogger(dblog.DBLogger):
 	# We have to return an unique ID
 	def createSession(self, peerIP, peerPort, hostIP, hostPort):
 		session = uuid.uuid4().hex
-		self.meta[session] = {'session':session,'peerIP': peerIP, 'peerPort': peerPort,
+		startTime=datetime.now().isoformat()
+		self.meta[session] = {'session':session,'startTime':startTime,'endTime':'','peerIP': peerIP, 'peerPort': peerPort,
 		'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
 		'credentials':[], 'commands':[],"unknownCommands":[],'urls':[],'version': None, 'ttylog': None }
 		return session
@@ -213,6 +215,7 @@ class DBLogger(dblog.DBLogger):
 	def handleConnectionLost(self, session, args):
 		log.msg('publishing metadata to hpfeeds')
 		meta = self.meta[session]
+		self.meta[session]['endTime']=datetime.now().isoformat()
 		ttylog = self.ttylog(session)
 		if ttylog: meta['ttylog'] = ttylog.encode('hex')
 		self.client.publish(KIPPOCHAN, **meta)
