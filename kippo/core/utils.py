@@ -56,28 +56,28 @@ def tail(the_file, lines_2find=20):
 # Thanks to http://thesmithfam.org/blog/2005/11/19/python-uptime-script/
 # (modified to look like the real uptime command)
 def uptime(total_seconds):
-     total_seconds = float(total_seconds)
+    total_seconds = float(total_seconds)
 
-     # Helper vars:
-     MINUTE  = 60
-     HOUR    = MINUTE * 60
-     DAY     = HOUR * 24
+    # Helper vars:
+    MINUTE  = 60
+    HOUR    = MINUTE * 60
+    DAY     = HOUR * 24
 
-     # Get the days, hours, etc:
-     days    = int(total_seconds / DAY)
-     hours   = int((total_seconds % DAY) / HOUR)
-     minutes = int((total_seconds % HOUR) / MINUTE)
+    # Get the days, hours, etc:
+    days    = int(total_seconds / DAY)
+    hours   = int((total_seconds % DAY) / HOUR)
+    minutes = int((total_seconds % HOUR) / MINUTE)
 
-     # 14 days,  3:53
-     # 11 min
+    # 14 days,  3:53
+    # 11 min
 
-     s = ''
-     if days > 0:
-         s += str(days) + " " + (days == 1 and "day" or "days" ) + ", "
-     if len(s) > 0 or hours > 0:
-         s += '%s:%s' % (str(hours).rjust(2), str(minutes).rjust(2, '0'))
-     else:
-         s += '%s min' % (str(minutes))
-     return s
+    s = ''
+    if days > 0:
+        s += str(days) + " " + (days == 1 and "day" or "days" ) + ", "
+    if len(s) > 0 or hours > 0:
+        s += '%s:%s' % (str(hours).rjust(2), str(minutes).rjust(2, '0'))
+    else:
+        s += '%s min' % (str(minutes))
+    return s
 
 # vim: set sw=4 et:
