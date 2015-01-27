@@ -16,4 +16,5 @@ __all__ = [
     'uname',
     'fs',
     'malware',
+    'netstat',
     ]
