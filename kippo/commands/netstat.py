@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
+# Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
 import time
 import re
