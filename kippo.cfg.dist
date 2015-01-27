@@ -115,6 +115,11 @@ sftp_enabled = true
 # (default: not specified)
 #fake_addr = 192.168.66.254
 
+# The IP address on which this machine reachable on from the internet.
+# Useful if you use portforwarding or other mechanisms. If empty, the kippo
+# will determine by itself. Used in 'netstat' output
+#internet_facing_ip = 9.9.9.9
+
 # SSH Version String
 #
 # Use this to disguise your honeypot from a simple SSH version scan

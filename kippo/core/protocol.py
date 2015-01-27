@@ -4,6 +4,7 @@
 import os
 import time
 import struct
+import socket
 import copy
 
 from twisted.conch import recvline
@@ -43,6 +44,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         transport = self.terminal.transport.session.conn.transport
 
         self.realClientIP = transport.transport.getPeer().host
+        self.realClientPort = transport.transport.getPeer().port
         self.clientVersion = transport.otherVersionString
         self.logintime = transport.logintime
         self.ttylog_file = transport.ttylog_file
@@ -53,6 +55,15 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
             self.clientIP = cfg.get('honeypot', 'fake_addr')
         else:
             self.clientIP = self.realClientIP
+
+        if cfg.has_option('honeypot', 'internet_facing_ip'):
+            self.kippoIP = cfg.get('honeypot', 'internet_facing_ip')
+        else:
+            # Hack to get ip
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8",80))
+            self.kippoIP = s.getsockname()[0]
+            s.close()
 
     def displayMOTD(self):
         try:
