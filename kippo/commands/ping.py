@@ -1,13 +1,26 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import time
+import re
+import random
+import hashlib
+import socket
+
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
-import time, re, random, hashlib
 
 commands = {}
 
 class command_ping(HoneyPotCommand):
+
+    def valid_ip(self, address):
+        try:
+            socket.inet_aton(address)
+            return True
+        except:
+            return False
+
     def start(self):
         self.host = None
         for arg in self.args:
@@ -26,9 +39,12 @@ class command_ping(HoneyPotCommand):
             self.exit()
             return
 
-        if re.match('^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$',
-                self.host):
-            self.ip = self.host
+        if re.match('^[0-9.]+$', self.host):
+            if self.valid_ip(self.host):
+                self.ip = self.host
+            else:
+                self.writeln('ping: unknown host %s' % self.host)
+                self.exit()
         else:
             s = hashlib.md5(self.host).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in
