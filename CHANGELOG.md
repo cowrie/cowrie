@@ -22,3 +22,4 @@
 * fix for honeypot detection (pre-auth differences with openssh)
 * added verbose logging of client requested key exchange parameters (for client fingerprinting)
 * fixes for behavior with non-existent files (cd /test, cat /test/nonexistent, etc)
+* fix for ability to ping/ssh non-existent IP address
