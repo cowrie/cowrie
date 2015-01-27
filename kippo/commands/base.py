@@ -463,6 +463,7 @@ commands['set'] = command_nop
 commands['unset'] = command_nop
 commands['export'] = command_nop
 commands['alias'] = command_nop
+commands['jobs'] = command_nop
 commands['/bin/kill'] = command_nop
 commands['/bin/su'] = command_nop
 commands['/bin/chown'] = command_nop
