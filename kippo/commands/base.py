@@ -76,6 +76,7 @@ class command_clear(HoneyPotCommand):
     def call(self):
         self.honeypot.terminal.reset()
 commands['/usr/bin/clear'] = command_clear
+commands['/usr/bin/reset'] = command_clear
 
 class command_hostname(HoneyPotCommand):
     def call(self):
