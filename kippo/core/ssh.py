@@ -252,6 +252,10 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg('request_x11: %s' % repr(data) )
         return 0
 
+    def loseConnection(self):
+        self.conn.sendRequest(self, 'exit-status', "\x00"*4)
+        session.SSHSession.loseConnection(self)
+
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
 class HoneyPotAvatar(avatar.ConchUser):
