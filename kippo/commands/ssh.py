@@ -1,14 +1,27 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import time
+import re
+import hashlib
+import getopt
+import socket
+
 from twisted.python import log
 from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
-import time, re, hashlib, getopt
 
 commands = {}
 
 class command_ssh(HoneyPotCommand):
+
+    def valid_ip(self, address):
+        try:
+            socket.inet_aton(address)
+            return True
+        except:
+            return False
+
     def start(self):
         try:
             optlist, args = getopt.getopt(self.args,
@@ -35,12 +48,17 @@ class command_ssh(HoneyPotCommand):
         if args[0].count('@'):
             user, host = args[0].split('@', 1)
 
-        if re.match('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$', host):
-            self.ip = host
+        if re.match('^[0-9.]+$', host):
+            if self.valid_ip(host):
+                self.ip = host
+            else:
+                self.writeln('ssh: Could not resolve hostname %s: Name or service not known' % host )
+                self.exit()
         else:
             s = hashlib.md5(host).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in
                 (s[0:2], s[2:4], s[4:6], s[6:8])])
+
         self.host = host
         self.user = user
 
