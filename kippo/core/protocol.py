@@ -152,7 +152,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.terminal.transport.session.conn.transport.stdinlog_open = True
 
         self.cmdstack = [core.honeypot.HoneyPotShell(self, interactive=False)]
-        log.msg( 'Running exec command "%s"' % self.execcmd )
         self.cmdstack[0].lineReceived(self.execcmd)
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
