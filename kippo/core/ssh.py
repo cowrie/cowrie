@@ -38,17 +38,15 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         if self.bannerSent:
             return
         cfg = config()
-        if not cfg.has_option('honeypot', 'banner_file'):
-            return
         try:
-            data = file(cfg.get('honeypot', 'banner_file')).read()
+            honeyfs = cfg.get('honeypot', 'contents_path')
+            issuefile = honeyfs + "/etc/issue.net"
+            data = file( issuefile ).read()
         except IOError:
-            log.msg( 'Banner file %s does not exist!' % \
-                cfg.get('honeypot', 'banner_file') )
             return
         if not data or not len(data.strip()):
             return
-        data = '\r\n'.join(data.splitlines() + [''])
+        data = '\r\n'.join(data.splitlines() )
         self.transport.sendPacket(
             userauth.MSG_USERAUTH_BANNER, NS(data) + NS('en'))
         self.bannerSent = True
