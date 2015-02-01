@@ -25,3 +25,5 @@
 * fix for ability to ping/ssh non-existent IP address
 * always send ssh exit-status 0 on exec and shell
 * add 1st version of 'netstat'
+* ls output is now alphabetically sorted
+* banner_file is deprecated. honeyfs/etc/issue.net is default
