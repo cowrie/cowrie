@@ -129,6 +129,6 @@ class command_ls(HoneyPotCommand):
 
             self.honeypot.writeln(l)
 commands['/bin/ls'] = command_ls
-commands['/bin/dir'] = command_dir
+commands['/bin/dir'] = command_ls
 
 # vim: set sw=4 et:
