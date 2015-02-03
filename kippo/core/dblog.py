@@ -75,7 +75,7 @@ class DBLogger(object):
             return
 
         # DEBUG: REMOVE ME
-        # print "emitting: %s" % repr( ev )
+        print "emitting: %s" % repr( ev )
 
         # connection event is special. adds to list
         if ev['eventid'] == 'KIPP0001':
