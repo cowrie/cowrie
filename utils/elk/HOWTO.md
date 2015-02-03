@@ -21,3 +21,13 @@ How to process Kippo output in an ELK stack
     cp logstash-kippo.conf /etc/logstash/conf.d
     service logstash restart
 
+* By default the logstash is creating debug logs in /tmp.
+
+* To test whether logstash is working correctly, check the file in /tmp
+
+    tail /tmp/kippo-logstash.log
+
+* To test whether data is loaded into ElasticSearch, run the following query:
+
+    http://<hostname>:9200/_search?q=kippo&size=5
+
