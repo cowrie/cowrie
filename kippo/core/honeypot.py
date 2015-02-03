@@ -17,6 +17,7 @@ class HoneyPotCommand(object):
     def __init__(self, protocol, *args):
         self.honeypot = protocol
         self.args = args
+        self.env = self.honeypot.cmdstack[0].envvars
         self.writeln = self.honeypot.writeln
         self.write = self.honeypot.terminal.write
         self.nextLine = self.honeypot.terminal.nextLine
