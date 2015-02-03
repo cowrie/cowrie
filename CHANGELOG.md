@@ -27,3 +27,8 @@
 * add 1st version of 'netstat'
 * ls output is now alphabetically sorted
 * banner_file is deprecated. honeyfs/etc/issue.net is default
+* add 'dir' alias for 'ls'
+* add 'help' bash builtin
+* add 'users' aliased to 'whoami'
+* add 'killall' and 'killall5' aliased to nop
+* add 'poweroff' 'halt' and 'reboot' aliases for shutdown

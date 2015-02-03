@@ -15,6 +15,7 @@ class command_whoami(HoneyPotCommand):
     def call(self):
         self.writeln(self.honeypot.user.username)
 commands['/usr/bin/whoami'] = command_whoami
+commands['/usr/bin/users'] = command_whoami
 
 class command_uptime(HoneyPotCommand):
     def call(self):
@@ -286,6 +287,9 @@ class command_shutdown(HoneyPotCommand):
             self.honeypot.cwd = '/'
         self.exit()
 commands['/sbin/shutdown'] = command_shutdown
+commands['/sbin/poweroff'] = command_shutdown
+commands['/sbin/reboot'] = command_shutdown
+commands['/sbin/halt'] = command_shutdown
 
 class command_reboot(HoneyPotCommand):
     def start(self):
@@ -515,6 +519,8 @@ commands['export'] = command_nop
 commands['alias'] = command_nop
 commands['jobs'] = command_nop
 commands['/bin/kill'] = command_nop
+commands['/bin/killall'] = command_nop
+commands['/bin/killall5'] = command_nop
 commands['/bin/su'] = command_nop
 commands['/bin/chown'] = command_nop
 commands['/bin/chgrp'] = command_nop
