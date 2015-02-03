@@ -18,5 +18,6 @@ __all__ = [
     'malware',
     'netstat',
     'which',
-    'gcc'
+    'gcc',
+    'iptables'
     ]
