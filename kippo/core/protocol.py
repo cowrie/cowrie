@@ -74,7 +74,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
     # this doesn't seem to be called upon disconnect, so please use
     # HoneyPotTransport.connectionLost instead
     def connectionLost(self, reason):
-        pass
+        log.msg( eventid='KIPP0011', format='Connection lost')
         # not sure why i need to do this:
         # scratch that, these don't seem to be necessary anymore:
         #del self.fs
@@ -243,6 +243,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
         log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
+        log.msg( eventid='KIPP0004', logfile=transport.ttylog_file,
+            format='Opening TTY Log: %(logfile)s')
+
         ttylog.ttylog_open(transport.ttylog_file, time.time())
         transport.ttylog_open = True
 

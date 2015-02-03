@@ -199,6 +199,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.nomore = True
             else:
                 msg = 'Saving URL (%s) to %s' % (self.wget.url, self.fileName)
+                msg = { 'eventid':'KIPP0007', 'url':self.wget.url, 'outfile':self.fileName,
+                     'format':'Saving URL (%(url)s) to %(outfile)s' }
+                # we're in a completely different class here. need to use logDispatch
                 self.wget.honeypot.logDispatch(msg)
                 log.msg( msg )
             self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
