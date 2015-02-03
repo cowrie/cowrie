@@ -32,3 +32,4 @@
 * add 'users' aliased to 'whoami'
 * add 'killall' and 'killall5' aliased to nop
 * add 'poweroff' 'halt' and 'reboot' aliases for shutdown
+* add 'which' and environment passing to commands
