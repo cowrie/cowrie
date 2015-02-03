@@ -18,6 +18,7 @@ import abc
 # KIPP0011 : Connection Lost
 
 class DBLogger(object):
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -45,9 +46,10 @@ class DBLogger(object):
 
     # use logDispatch when the HoneypotTransport prefix is not available.
     # here you can explicitly set the sessionIds to tie the sessions together
-    def logDispatch(self, sessionid, msg):
+    def logDispatch(self, *msg, **args):
+        print( "dblog disp %s" % repr(msg)  )
         if isinstance( msg, dict ):
-            msg['sessionid'] = sessionid
+            msg['sessionid'] = self.sessions[sessionid]
             return self.emit( msg )
         elif isinstance( msg, str ):
             return self.emit( { 'message':msg, 'sessionid':sessionid } )
@@ -73,9 +75,6 @@ class DBLogger(object):
         # ignore anything without eventid
         if not 'eventid' in ev:
             return
-
-        # DEBUG: REMOVE ME
-        print "emitting: %s" % repr( ev )
 
         # connection event is special. adds to list
         if ev['eventid'] == 'KIPP0001':

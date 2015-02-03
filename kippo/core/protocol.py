@@ -33,10 +33,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.password_input = False
         self.cmdstack = []
 
-    def logDispatch(self, msg):
+    def logDispatch(self, *msg, **args):
         transport = self.terminal.transport.session.conn.transport
-        #msg = ':dispatch: ' + msg
-        transport.factory.logDispatch(transport.transport.sessionno, msg)
+        args['sessionid']=transport.transport.sessionno
+        transport.factory.logDispatch(msg, args)
 
     def connectionMade(self):
         self.displayMOTD()
@@ -242,7 +242,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
-        log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
+        #log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
         log.msg( eventid='KIPP0004', logfile=transport.ttylog_file,
             format='Opening TTY Log: %(logfile)s')
 

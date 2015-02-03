@@ -124,15 +124,15 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
-            log.msg( 'Command found: %s' % (line,) )
+            #log.msg( 'Command found: %s' % (line,) )
             log.msg( eventid='KIPP0005', input=line, format='Command found: %(input)s' )
-            self.honeypot.logDispatch('Command found: %s' % (line,))
+            #self.honeypot.logDispatch('Command found: %s' % (line,))
             self.honeypot.call_command(cmdclass, *rargs)
         else:
-            self.honeypot.logDispatch('Command not found: %s' % (line,))
+            #log.msg( 'Command not found: %s' % (line,) )
             log.msg( eventid='KIPP0006',
                 input=line, format='Command not found: %(input)s' )
-            log.msg( 'Command not found: %s' % (line,) )
+            #self.honeypot.logDispatch('Command not found: %s' % (line,))
             if len(line):
                 self.honeypot.writeln('bash: %s: command not found' % cmd)
                 runOrPrompt()

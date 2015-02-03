@@ -155,13 +155,13 @@ class HoneypotPasswordChecker:
 
     def checkUserPass(self, theusername, thepassword):
         if UserDB().checklogin(theusername, thepassword):
-            log.msg( 'login attempt [%s/%s] succeeded' % (theusername, thepassword) )
+            #log.msg( 'login attempt [%s/%s] succeeded' % (theusername, thepassword) )
             log.msg( eventid='KIPP0002',
                 format='login attempt [%(username)s/%(password)s] succeeded',
                 username=theusername, password=thepassword )
             return True
         else:
-            log.msg( 'login attempt [%s/%s] failed' % (theusername, thepassword) )
+            #log.msg( 'login attempt [%s/%s] failed' % (theusername, thepassword) )
             log.msg( eventid='KIPP0003',
                 format='login attempt [%(username)s/%(password)s] failed',
                 username=theusername, password=thepassword )
