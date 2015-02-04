@@ -1,4 +1,4 @@
-/* From https://github.com/threatstream/kippo/blob/master/kippo/dblog/hpfeeds.py */
+## From https://github.com/threatstream/kippo/blob/master/kippo/dblog/hpfeeds.py
 
 from kippo.core import dblog
 from twisted.python import log
