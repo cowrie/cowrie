@@ -33,3 +33,4 @@
 * add 'poweroff' 'halt' and 'reboot' aliases for shutdown
 * add environment passing to commands
 * added 'which', 'netstat' and 'gcc' from kippo-extra
+* logging framework allows for keyword use
