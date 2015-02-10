@@ -5,6 +5,9 @@ import re
 import time
 import abc
 
+# dblog now operates based on eventids, no longer on regex parsing of the entry.
+# add an eventid using keyword args and it will be picked up by the dblogger
+
 # KIPP0001 : create session
 # KIPP0002 : succesful login
 # KIPP0003 : failed login
@@ -27,7 +30,7 @@ class DBLogger(object):
         self.re_sessionlog = re.compile(
             '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
 
-        # KIPP0001 is special since it kicks off new logging event,
+        # KIPP0001 is special since it kicks off new logging session,
         # and is not handled here
         self.events = {
           'KIPP0002': self.handleLoginSucceeded,
@@ -44,7 +47,7 @@ class DBLogger(object):
 
         self.start(cfg)
 
-    # use logDispatch when the HoneypotTransport prefix is not available.
+    # used when the HoneypotTransport prefix is not available.
     def logDispatch(self, *msg, **kw):
         ev = kw
         ev['message'] = msg
@@ -99,7 +102,7 @@ class DBLogger(object):
                 self.events[ev['eventid']]( self.sessions[sessionno], ev )
                 return
 
-        print "error, can't dblog %s" % repr(ev)
+        print "error, unknown eventid %s" % repr(ev)
 
     def _connectionLost(self, session, args):
         self.handleConnectionLost(session, args)
