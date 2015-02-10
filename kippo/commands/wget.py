@@ -160,6 +160,7 @@ class command_wget(HoneyPotCommand):
         else:
             print "deleting " + self.safeoutfile + " SHA sum: " + shasum
             os.remove(self.safeoutfile)
+        os.symlink( hash_path, self.safeoutfile )
         self.safeoutfile = hash_path
 
         print "Updating realfile to " + hash_path
