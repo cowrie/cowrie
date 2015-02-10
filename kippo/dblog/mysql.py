@@ -146,4 +146,9 @@ class DBLogger(dblog.DBLogger):
             ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
             (session, self.nowUnix(), args['url'], args['outfile']))
 
+    def handleShaSum(self, session, args):
+         self.simpleQuery('UPDATE `downloads` SET `shasum` = %s' + \
+            '  WHERE `outfile` = %s',
+            (args['shasum'], args['outfile']))
+
 # vim: set sw=4 et:

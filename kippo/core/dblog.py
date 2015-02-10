@@ -33,6 +33,10 @@ class DBLogger(object):
                 self.handleUnknownCommand),
             ('^:dispatch: Saving URL \((?P<url>.*)\) to (?P<outfile>.*)$',
                 self.handleFileDownload),
+            ('^:dispatch: SHA sum (?P<shasum>.*) of URL (?P<url>.*) in file (?P<outfile>.*)$',
+                self.handleShaSum),
+            ('^:dispatch: Updated outfile (?P<outfile>.*) to (?P<dl_file>.*) with SHA sum (?P<shasum>.*)$',
+                self.handleUpdatedFile),
             ('^INPUT \((?P<realm>[a-zA-Z0-9]+)\): (?P<input>.*)$',
                 self.handleInput),
             ('^Terminal size: (?P<height>[0-9]+) (?P<width>[0-9]+)$',
@@ -144,6 +148,14 @@ class DBLogger(object):
 
     # args has: url, outfile
     def handleFileDownload(self, session, args):
+        pass
+
+    # args has: shasum, url, outfile
+    def handleShaSum(self, session, args):
+        pass
+
+    # args has: outfile, dl_file, shasum
+    def handleUpdatedFile(self, session, args):
         pass
 
 # vim: set sw=4 et:
