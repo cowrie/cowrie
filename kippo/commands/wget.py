@@ -16,7 +16,6 @@ import exceptions
 import os
 import getopt
 import hashlib
-import shutil
 
 commands = {}
 
@@ -157,7 +156,7 @@ class command_wget(HoneyPotCommand):
 
         if not os.path.exists(hash_path):
             print "moving " + self.safeoutfile + " -> " + hash_path
-            shutil.move(self.safeoutfile, hash_path)
+            os.rename(self.safeoutfile, hash_path)
         else:
             print "deleting " + self.safeoutfile + " SHA sum: " + shasum
             os.remove(self.safeoutfile)
