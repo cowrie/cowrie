@@ -56,6 +56,7 @@ CREATE TABLE `downloads` (
   `timestamp` datetime NOT NULL,
   `url` text NOT NULL,
   `outfile` text NOT NULL,
+  `shasum` varchar(64) default NULL,
   PRIMARY KEY  (`id`),
   KEY `session` (`session`,`timestamp`)
 ) ;
