@@ -71,4 +71,9 @@ class DBLogger(dblog.DBLogger):
         logentry = { 'message' : 'File download: [%s] -> %s' % (args['url'], args['outfile']), 'url' : args['url'] }
         self.write( session, logentry )
 
+    def handleShaSum(self, session, args):
+        logentry = { 'message' : 'File SHA sum: %s [%s] -> %s' % \
+            (args['shasum'], args['url'], args['outfile']), args['shasum'], args['url'] )
+        self.write( session, logentry )
+
 # vim: set sw=4 et:
