@@ -1,1 +1,8 @@
-root:0:123456
+# This file contains user authorizations.
+# To allow all passwords, use '*'
+# To deny specific passwords, user '!password'
+# The file is processed linearly, denials need to happen before allows.
+# Default config allows all root passwords except 'root' and '123456'
+root:0:!root
+root:0:!123456
+root:0:*

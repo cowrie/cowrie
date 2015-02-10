@@ -41,6 +41,9 @@ class UserDB(object):
             if not line:
                 continue
 
+            if line.startswith( '#' ):
+                continue
+
             (login, uid_str, passwd) = line.split(':', 2)
 
             uid = 0
