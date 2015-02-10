@@ -73,7 +73,7 @@ class DBLogger(dblog.DBLogger):
 
     def handleShaSum(self, session, args):
         logentry = { 'message' : 'File SHA sum: %s [%s] -> %s' % \
-            (args['shasum'], args['url'], args['outfile']), args['shasum'], args['url'] )
+            (args['shasum'], args['url'], args['outfile']), 'shasum' : args['shasum'], 'url' : args['url'] }
         self.write( session, logentry )
 
 # vim: set sw=4 et:
