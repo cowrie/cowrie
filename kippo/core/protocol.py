@@ -35,8 +35,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
 
     def logDispatch(self, *msg, **args):
         transport = self.terminal.transport.session.conn.transport
-        args['sessionid']=transport.transport.sessionno
-        transport.factory.logDispatch(msg, args)
+        args['sessionno']=transport.transport.sessionno
+        transport.factory.logDispatch(*msg,**args)
 
     def connectionMade(self):
         self.displayMOTD()

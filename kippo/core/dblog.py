@@ -45,14 +45,10 @@ class DBLogger(object):
         self.start(cfg)
 
     # use logDispatch when the HoneypotTransport prefix is not available.
-    # here you can explicitly set the sessionIds to tie the sessions together
-    def logDispatch(self, *msg, **args):
-        print( "dblog disp %s" % repr(msg)  )
-        if isinstance( msg, dict ):
-            msg['sessionid'] = self.sessions[sessionid]
-            return self.emit( msg )
-        elif isinstance( msg, str ):
-            return self.emit( { 'message':msg, 'sessionid':sessionid } )
+    def logDispatch(self, *msg, **kw):
+        ev = kw
+        ev['message'] = msg
+        self.emit(ev)
 
     def start():
         """Hook that can be used to set up connections in dbloggers"""
@@ -78,27 +74,29 @@ class DBLogger(object):
 
         # connection event is special. adds to list
         if ev['eventid'] == 'KIPP0001':
-            sessionid = ev['sessionno']
-            self.sessions[sessionid] = \
+            sessionno = ev['sessionno']
+            self.sessions[sessionno] = \
                 self.createSession(
                     ev['src_ip'], ev['src_port'], ev['dst_ip'], ev['dst_port'] )
             return
 
-        # extract session id from the twisted log prefix
-        if 'system' in ev:
+        # use explicit sessionno if coming from dispatch
+        if 'sessionno' in ev:
+            sessionno = ev['sessionno']
+            del ev['sessionno']
+        # else extract session id from the twisted log prefix
+        elif 'system' in ev:
             match = self.re_sessionlog.match(ev['system'])
             if not match:
                 return
-            sessionid = int(match.groups()[0])
-        elif 'sessionid' in ev:
-            sessionid = ev['sessionid']
+            sessionno = int(match.groups()[0])
 
-        if sessionid not in self.sessions.keys():
+        if sessionno not in self.sessions.keys():
             return
 
         if 'eventid' in ev:
             if ev['eventid'] in self.events:
-                self.events[ev['eventid']]( self.sessions[sessionid], ev )
+                self.events[ev['eventid']]( self.sessions[sessionno], ev )
                 return
 
         print "error, can't dblog %s" % repr(ev)

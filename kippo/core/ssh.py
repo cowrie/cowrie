@@ -63,9 +63,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         }
 
     # Special delivery to the loggers to avoid scope problems
-    def logDispatch(self, sessionid, msg):
+    def logDispatch(self, *msg, **args):
         for dblog in self.dbloggers:
-            dblog.logDispatch(sessionid, msg)
+            dblog.logDispatch(*msg, **args)
 
     def __init__(self):
         cfg = config()

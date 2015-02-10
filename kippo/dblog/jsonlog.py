@@ -8,8 +8,6 @@ import uuid
 import json
 
 from kippo.core import dblog
-from twisted.enterprise import adbapi
-from twisted.internet import defer
 from twisted.python import log
 
 class DBLogger(dblog.DBLogger):
