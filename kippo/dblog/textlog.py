@@ -50,7 +50,7 @@ class DBLogger(dblog.DBLogger):
         self.write(session, 'Client version: [%s]' % (args['version'],))
 
     def handleFileDownload(self, session, args):
-        self.write(session, 'File download: [%s] -> %s' % \
-            (args['url'], args['outfile']))
+        self.write(session, 'File download: [%s] -> %s with SHA-256 %s' % \
+            (args['url'], args['outfile'], args['shasum']))
 
 # vim: set sw=4 et:

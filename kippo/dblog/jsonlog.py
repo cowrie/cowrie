@@ -66,7 +66,7 @@ class DBLogger(dblog.DBLogger):
         self.write( session, logentry )
 
     def handleFileDownload(self, session, args):
-        logentry = { 'message' : 'File download: [%s] -> %s' % (args['url'], args['outfile']), 'url' : args['url'] }
+        logentry = { 'message' : 'File download: [%s] -> %s' % (args['url'], args['outfile']), 'url' : args['url'], 'shasum' : args['shasum'] }
         self.write( session, logentry )
 
 # vim: set sw=4 et:
