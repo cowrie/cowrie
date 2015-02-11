@@ -7,6 +7,7 @@ import abc
 
 # dblog now operates based on eventids, no longer on regex parsing of the entry.
 # add an eventid using keyword args and it will be picked up by the dblogger
+# the KIPPxxxx naming convention is still subject to change.
 
 # KIPP0001 : create session
 # KIPP0002 : succesful login
