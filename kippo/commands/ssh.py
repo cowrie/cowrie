@@ -26,7 +26,7 @@ class command_ssh(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(self.args,
                 '-1246AaCfgKkMNnqsTtVvXxYb:c:D:e:F:i:L:l:m:O:o:p:R:S:w:')
-        except getopt.GetoptError, err:
+        except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             self.exit()
         if not len(args):
