@@ -66,6 +66,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
     def logDispatch(self, sessionid, msg):
         for dblog in self.dbloggers:
             dblog.logDispatch(sessionid, msg)
+        for output in self.output_plugins:
+            output.logDispatch(sessionid, msg)
 
     def __init__(self):
         cfg = config()
