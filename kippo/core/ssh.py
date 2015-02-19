@@ -490,12 +490,12 @@ class KippoSFTPServer:
 
     def _getAttrs(self, s):
         return {
-            "size" : s.st_size,
-            "uid" : s.st_uid,
-            "gid" : s.st_gid,
-            "permissions" : s.st_mode,
-            "atime" : int(s.st_atime),
-            "mtime" : int(s.st_mtime)
+            "size": s.st_size,
+            "uid": s.st_uid,
+            "gid": s.st_gid,
+            "permissions": s.st_mode,
+            "atime": int(s.st_atime),
+            "mtime": int(s.st_mtime)
         }
 
     def gotVersion(self, otherVersion, extData):
