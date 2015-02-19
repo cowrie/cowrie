@@ -270,6 +270,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             f.close
         insults.ServerProtocol.dataReceived(self, data)
 
+    # override super to remove the terminal reset on logout
+    def loseConnection(self):
+        self.transport.loseConnection()
+
     # FIXME: this method is called 4 times on logout....
     # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
