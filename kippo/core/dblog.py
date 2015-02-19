@@ -55,7 +55,7 @@ class DBLogger(object):
                 func(self.sessions[sessionid], match.groupdict())
                 break
 
-    def start():
+    def start(self, cfg):
         pass
 
     def getSensor(self):
