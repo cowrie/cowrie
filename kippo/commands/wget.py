@@ -49,7 +49,7 @@ class command_wget(HoneyPotCommand):
     def start(self):
         try:
             optlist, args = getopt.getopt(self.args, 'cO:')
-        except getopt.GetoptError, err:
+        except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             self.exit()
             return

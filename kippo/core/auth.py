@@ -16,7 +16,7 @@ from twisted.python import log, failure
 from twisted.conch import error
 from twisted.conch.ssh import keys
 
-from kippo.core.config import config
+from config import config
 
 # by Walter de Jong <walter@sara.nl>
 class UserDB(object):

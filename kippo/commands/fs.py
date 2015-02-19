@@ -56,7 +56,7 @@ class command_rm(HoneyPotCommand):
             path = self.fs.resolve_path(f, self.honeypot.cwd)
             try:
                 dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
-            except IndexError, FileNotFound:
+            except (IndexError, FileNotFound):
                 self.writeln(
                     'rm: cannot remove `%s\': No such file or directory' % f)
                 continue
@@ -81,7 +81,7 @@ class command_cp(HoneyPotCommand):
         try:
             optlist, args = getopt.gnu_getopt(self.args,
                 '-abdfiHlLPpRrsStTuvx')
-        except getopt.GetoptError, err:
+        except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             return
         recursive = False
@@ -149,7 +149,7 @@ class command_mv(HoneyPotCommand):
 
         try:
             optlist, args = getopt.gnu_getopt(self.args, '-bfiStTuv')
-        except getopt.GetoptError, err:
+        except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             self.exit()
 

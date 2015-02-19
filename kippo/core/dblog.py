@@ -54,7 +54,7 @@ class DBLogger(object):
         ev['message'] = msg
         self.emit(ev)
 
-    def start():
+    def start(self, cfg):
         """Hook that can be used to set up connections in dbloggers"""
         pass
 

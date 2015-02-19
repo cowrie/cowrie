@@ -1,3 +1,6 @@
+
+* 2015-02-19 Configuration directives have changed! ssh_addr has become listen_addr and ssh_port has become listen_port. The old keywords are still accepted for backwards compatibility
+
 * default behaviour is changed to disable the exit jail
 * sftp support
 * exec support
