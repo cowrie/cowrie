@@ -28,7 +28,7 @@ commands['/usr/bin/uptime'] = command_uptime
 
 class command_help(HoneyPotCommand):
     def call(self):
-       self.writeln("""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
+        self.writeln("""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
 These shell commands are defined internally.  Type `help' to see this list.
 Type `help name' to find out more about the function `name'.
 Use `info bash' to find out more about the shell in general.
@@ -241,16 +241,16 @@ class command_shutdown(HoneyPotCommand):
             output = (
                 "Usage:     shutdown [-akrhHPfnc] [-t secs] time [warning message]",
                 "-a:      use /etc/shutdown.allow ",
-                "-k:      don't really shutdown, only warn. " ,
-                "-r:      reboot after shutdown. " ,
-                "-h:      halt after shutdown. " ,
-                "-P:      halt action is to turn off power. " ,
-                "-H:      halt action is to just halt. " ,
-                "-f:      do a 'fast' reboot (skip fsck). " ,
-                "-F:      Force fsck on reboot. " ,
-                "-n:      do not go through \"init\" but go down real fast. " ,
-                "-c:      cancel a running shutdown. " ,
-                "-t secs: delay between warning and kill signal. " ,
+                "-k:      don't really shutdown, only warn. ",
+                "-r:      reboot after shutdown. ",
+                "-h:      halt after shutdown. ",
+                "-P:      halt action is to turn off power. ",
+                "-H:      halt action is to just halt. ",
+                "-f:      do a 'fast' reboot (skip fsck). ",
+                "-F:      Force fsck on reboot. ",
+                "-n:      do not go through \"init\" but go down real fast. ",
+                "-c:      cancel a running shutdown. ",
+                "-t secs: delay between warning and kill signal. ",
                 "** the \"time\" argument is mandatory! (try \"now\") **",
                 )
             for l in output:
