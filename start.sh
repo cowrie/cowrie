@@ -24,7 +24,5 @@ then
     . $VENV/bin/activate
 fi
 
-twistd --version
-
 echo "Starting kippo in the background..."
 twistd -y kippo.tac -l log/kippo.log --pidfile kippo.pid

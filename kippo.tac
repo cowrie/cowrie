@@ -3,13 +3,11 @@
 
 import sys, os
 if sys.platform == 'win32':
-    import os, inspect
     # this is when just running on win32
     sys.path.insert(0, os.path.abspath(os.getcwd()))
     # and this is when running as a service
     #os.chdir(os.path.dirname(inspect.getfile(inspect.currentframe())))
 
-from twisted.internet import reactor, defer
 from twisted.application import internet, service
 from twisted.cred import portal
 from twisted.conch.ssh import factory, keys
@@ -23,7 +21,6 @@ if not os.path.exists('kippo.cfg'):
     sys.exit(1)
 
 from kippo.core.config import config
-import kippo.core.auth
 import kippo.core.honeypot
 import kippo.core.ssh
 from kippo import core
@@ -42,16 +39,27 @@ factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_privKeyString),
                        'ssh-dss': keys.Key.fromString(data=dsa_privKeyString)}
 
 cfg = config()
-if cfg.has_option('honeypot', 'ssh_addr'):
-    ssh_addr = cfg.get('honeypot', 'ssh_addr')
+
+if cfg.has_option('honeypot', 'listen_addr'):
+    listen_addr = cfg.get('honeypot', 'listen_addr')
+elif cfg.has_option('honeypot', 'ssh_addr'):
+    # ssh_addr for backwards compatibility
+    listen_addr = cfg.get('honeypot', 'ssh_addr')
 else:
-    ssh_addr = '0.0.0.0'
+    listen_addr = '0.0.0.0'
+
+if cfg.has_option('honeypot', 'listen_port'):
+    listen_port = int(cfg.get('honeypot', 'listen_port'))
+elif cfg.has_option('honeypot', 'ssh_port'):
+    # ssh_port for backwards compatibility
+    listen_port = int(cfg.get('honeypot', 'ssh_port'))
+else:
+    listen_port = 2222
 
 application = service.Application('honeypot')
-for i in ssh_addr.split():
-    service = internet.TCPServer(
-        int(cfg.get('honeypot', 'ssh_port')), factory,
-        interface=i)
+for i in listen_addr.split():
+    service = internet.TCPServer( listen_port,
+            factory, interface=i)
     service.setServiceParent(application)
 
 if cfg.has_option('honeypot', 'interact_enabled') and \
@@ -59,7 +67,6 @@ if cfg.has_option('honeypot', 'interact_enabled') and \
         ('yes', 'true', 'on'):
     iport = int(cfg.get('honeypot', 'interact_port'))
     from kippo.core import interact
-    from twisted.internet import protocol
     service = internet.TCPServer(iport, interact.makeInteractFactory(factory))
     service.setServiceParent(application)
 
