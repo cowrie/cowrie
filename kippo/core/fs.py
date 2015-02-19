@@ -8,7 +8,7 @@ import re
 import stat
 import errno
 
-from kippo.core.config import config
+from config import config
 
 A_NAME, \
     A_TYPE, \
