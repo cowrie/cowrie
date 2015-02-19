@@ -10,9 +10,9 @@ from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.python import log
 
-from kippo.core import ttylog
-from kippo.core.config import config
-from kippo import core
+import honeypot
+import ttylog
+from config import config
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def __init__(self, avatar, env):
@@ -77,7 +77,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         #del self.commands
 
     def txtcmd(self, txt):
-        class command_txtcmd(core.honeypot.HoneyPotCommand):
+        class command_txtcmd(honeypot.HoneyPotCommand):
             def call(self):
                 log.msg( 'Reading txtcmd from "%s"' % txt )
                 f = file(txt, 'r')
@@ -147,7 +147,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         HoneyPotBaseProtocol.connectionMade(self)
         self.terminal.transport.session.conn.transport.stdinlog_open = True
 
-        self.cmdstack = [core.honeypot.HoneyPotShell(self, interactive=False)]
+        self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
@@ -160,7 +160,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
-        self.cmdstack = [core.honeypot.HoneyPotShell(self)]
+        self.cmdstack = [honeypot.HoneyPotShell(self)]
 
         transport = self.terminal.transport.session.conn.transport
         transport.factory.sessions[transport.transport.sessionno] = self

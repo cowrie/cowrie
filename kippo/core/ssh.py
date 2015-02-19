@@ -21,13 +21,17 @@ from twisted.conch.ssh.common import NS, getNS
 
 import ConfigParser
 
-from kippo.core import ttylog, utils, fs, sshserver
-from kippo.core.config import config
-import kippo.core.auth
-import kippo.core.honeypot
-import kippo.core.ssh
-import kippo.core.protocol
-from kippo import core
+import ttylog
+import utils
+import fs
+import sshserver
+import auth
+import honeypot
+import ssh
+import protocol
+import sshserver
+import exceptions
+from config import config
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
@@ -145,7 +149,7 @@ class HoneyPotRealm:
 
     def __init__(self):
         # I don't know if i'm supposed to keep static stuff here
-        self.env = core.honeypot.HoneyPotEnvironment()
+        self.env = honeypot.HoneyPotEnvironment()
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         if conchinterfaces.IConchUser in interfaces:
@@ -154,7 +158,7 @@ class HoneyPotRealm:
         else:
             raise Exception, "No supported interfaces found."
 
-class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
+class HoneyPotTransport(sshserver.KippoSSHServerTransport):
     """
     @ivar logintime: time of login
 
@@ -181,16 +185,16 @@ class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
             self.transport.getHost().host, self.transport.getHost().port,
             self.transport.sessionno) )
 
-        kippo.core.sshserver.KippoSSHServerTransport.connectionMade(self)
+        sshserver.KippoSSHServerTransport.connectionMade(self)
 
     def sendKexInit(self):
         # Don't send key exchange prematurely
         if not self.gotVersion:
             return
-        kippo.core.sshserver.KippoSSHServerTransport.sendKexInit(self)
+        sshserver.KippoSSHServerTransport.sendKexInit(self)
 
     def dataReceived(self, data):
-        kippo.core.sshserver.KippoSSHServerTransport.dataReceived(self, data)
+        sshserver.KippoSSHServerTransport.dataReceived(self, data)
         # later versions seem to call sendKexInit again on their own
         if twisted.version.major < 11 and \
                 not self._hadVersion and self.gotVersion:
@@ -208,7 +212,7 @@ class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
         log.msg('KEXINIT: client supported compression: %s' % compCS )
         log.msg('KEXINIT: client supported lang: %s' % langCS )
         log.msg( 'Remote SSH version: %s' % self.otherVersionString,)
-        return kippo.core.sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
+        return sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
     def lastlogExit(self):
         starttime = time.strftime('%a %b %d %H:%M',
@@ -230,7 +234,7 @@ class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
         if self.ttylog_open:
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
-        kippo.core.sshserver.KippoSSHServerTransport.connectionLost(self, reason)
+        sshserver.KippoSSHServerTransport.connectionLost(self, reason)
 
 class HoneyPotSSHSession(session.SSHSession):
 
@@ -277,38 +281,38 @@ class HoneyPotAvatar(avatar.ConchUser):
             if ( self.env.cfg.get('honeypot', 'sftp_enabled') == "true" ):
                 self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
 
-        self.uid = self.gid = core.auth.UserDB().getUID(self.username)
+        self.uid = self.gid = auth.UserDB().getUID(self.username)
         if not self.uid:
             self.home = '/root'
         else:
             self.home = '/home/' + username
 
-    def openShell(self, protocol):
-        serverProtocol = core.protocol.LoggingServerProtocol(
-            core.protocol.HoneyPotInteractiveProtocol, self, self.env)
-        serverProtocol.makeConnection(protocol)
-        protocol.makeConnection(session.wrapProtocol(serverProtocol))
+    def openShell(self, proto):
+        serverProtocol = protocol.LoggingServerProtocol(
+            protocol.HoneyPotInteractiveProtocol, self, self.env)
+        serverProtocol.makeConnection(proto)
+        proto.makeConnection(session.wrapProtocol(serverProtocol))
 
     def getPty(self, terminal, windowSize, attrs):
         log.msg( 'Terminal size: %s %s' % windowSize[0:2] )
         self.windowSize = windowSize
         return None
 
-    def execCommand(self, protocol, cmd):
+    def execCommand(self, proto, cmd):
         cfg = config()
         if not cfg.has_option('honeypot', 'exec_enabled') or \
                 cfg.get('honeypot', 'exec_enabled').lower() not in \
                     ('yes', 'true', 'on'):
             log.msg( 'Exec disabled. Not executing command: "%s"' % cmd )
-            raise core.exceptions.NotEnabledException, \
+            raise exceptions.NotEnabledException, \
                 'exec_enabled not enabled in configuration file!'
             return
 
         log.msg( 'exec command: "%s"' % cmd )
-        serverProtocol = kippo.core.protocol.LoggingServerProtocol(
-            kippo.core.protocol.HoneyPotExecProtocol, self, self.env, cmd)
-        serverProtocol.makeConnection(protocol)
-        protocol.makeConnection(session.wrapProtocol(serverProtocol))
+        serverProtocol = protocol.LoggingServerProtocol(
+            protocol.HoneyPotExecProtocol, self, self.env, cmd)
+        serverProtocol.makeConnection(proto)
+        proto.makeConnection(session.wrapProtocol(serverProtocol))
 
     def closed(self):
         pass
