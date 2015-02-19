@@ -43,7 +43,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.realClientPort = transport.transport.getPeer().port
         self.clientVersion = transport.otherVersionString
         self.logintime = transport.logintime
-        self.ttylog_file = transport.ttylog_file
 
         # source IP of client in user visible reports (can be fake or real)
         cfg = config()
@@ -67,8 +66,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         except:
             pass
 
-    # this doesn't seem to be called upon disconnect, so please use
-    # HoneyPotTransport.connectionLost instead
+    # this is only called on explicit logout, not on disconnect
     def connectionLost(self, reason):
         log.msg( eventid='KIPP0011', format='Connection lost')
         # not sure why i need to do this:
@@ -230,7 +228,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
         self.lineBufferIndex = 0
 
-
 class LoggingServerProtocol(insults.ServerProtocol):
     def connectionMade(self):
         transport = self.transport.session.conn.transport
@@ -238,7 +235,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
-        #log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
+
+        self.ttylog_file = transport.ttylog_file
         log.msg( eventid='KIPP0004', logfile=transport.ttylog_file,
             format='Opening TTY Log: %(logfile)s')
 
@@ -259,6 +257,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if transport.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
+
         insults.ServerProtocol.write(self, bytes)
 
     def dataReceived(self, data, noLog = False):
@@ -270,11 +269,18 @@ class LoggingServerProtocol(insults.ServerProtocol):
             f = file( transport.stdinlog_file, 'ab' )
             f.write(data)
             f.close
+
         insults.ServerProtocol.dataReceived(self, data)
 
-    # this doesn't seem to be called upon disconnect, so please use
-    # HoneyPotTransport.connectionLost instead
+    # this is only called on explicit logout, not on disconnect
     def connectionLost(self, reason):
+        transport = self.transport.session.conn.transport
+        if transport.ttylog_open:
+            ttylog.ttylog_close( transport.ttylog_file, time.time() )
+            transport.ttylog_open = False
+            log.msg( eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
+                ttylog=transport.ttylog_file)
+
         insults.ServerProtocol.connectionLost(self, reason)
 
 # vim: set sw=4 et:

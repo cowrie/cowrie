@@ -160,25 +160,12 @@ class HoneyPotRealm:
 
 class HoneyPotTransport(sshserver.KippoSSHServerTransport):
     """
-    @ivar logintime: time of login
-
-    @ivar interactors: interactors
-
-    @ivar ttylog_open: whether log is open
-
-    @ivar transportId: UUID of this transport
-
-    @ivar _hadVersion: used so we only send key exchange after receive version info
     """
-
-    _hadVersion = False
-    ttylog_open = False
-    interactors = []
-    transportId = ''
 
     def connectionMade(self):
         self.logintime = time.time()
         self.transportId = uuid.uuid4().hex[:8]
+        self.interactors = []
 
         #log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
         #    (self.transport.getPeer().host, self.transport.getPeer().port,
@@ -231,6 +218,7 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
 
     # this seems to be the only reliable place of catching lost connection
     def connectionLost(self, reason):
+        log.msg( "Connection Lost in SSH Transport" )
         for i in self.interactors:
             i.sessionClosed()
         if self.transport.sessionno in self.factory.sessions:
@@ -267,6 +255,9 @@ class HoneyPotSSHSession(session.SSHSession):
         self.conn.sendRequest(self, 'exit-status', "\x00"*4)
         session.SSHSession.loseConnection(self)
 
+    def channelClosed(self):
+        log.msg( "Called channelClosed in SSHSession")
+
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
 class HoneyPotAvatar(avatar.ConchUser):
@@ -295,6 +286,7 @@ class HoneyPotAvatar(avatar.ConchUser):
     def openShell(self, proto):
         serverProtocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self, self.env)
+        self.protocol = serverProtocol
         serverProtocol.makeConnection(proto)
         proto.makeConnection(session.wrapProtocol(serverProtocol))
 
@@ -319,6 +311,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         log.msg( 'exec command: "%s"' % cmd )
         serverProtocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, self.env, cmd)
+        self.protocol = serverProtocol
         serverProtocol.makeConnection(proto)
         proto.makeConnection(session.wrapProtocol(serverProtocol))
 

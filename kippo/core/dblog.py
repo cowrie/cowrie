@@ -20,6 +20,7 @@ import abc
 # KIPP0009 : SSH Version
 # KIPP0010 : Terminal Size
 # KIPP0011 : Connection Lost
+# KIPP0012 : TTY log closed
 
 class DBLogger(object):
     __metaclass__ = abc.ABCMeta
