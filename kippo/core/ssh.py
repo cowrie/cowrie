@@ -171,14 +171,10 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
     @ivar _hadVersion: used so we only send key exchange after receive version info
     """
 
-    _hadVersion = False
-    ttylog_open = False
-    interactors = []
-    transportId = ''
-
     def connectionMade(self):
         self.logintime = time.time()
         self.transportId = uuid.uuid4().hex[:8]
+        self.interactors = []
 
         log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
             (self.transport.getPeer().host, self.transport.getPeer().port,
