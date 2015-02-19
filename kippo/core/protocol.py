@@ -3,19 +3,15 @@
 
 import os
 import time
-import struct
 import socket
 import copy
 
 from twisted.conch import recvline
-from twisted.conch.ssh import transport
 from twisted.conch.insults import insults
-from twisted.internet import protocol
 from twisted.python import log
 
-from kippo.core import ttylog, fs
+from kippo.core import ttylog
 from kippo.core.config import config
-import kippo.core.honeypot
 from kippo import core
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
@@ -61,7 +57,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         else:
             # Hack to get ip
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8",80))
+            s.connect(("8.8.8.8", 80))
             self.kippoIP = s.getsockname()[0]
             s.close()
 
