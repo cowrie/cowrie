@@ -21,9 +21,9 @@ class DBLogger(object):
         self.re_map = [(re.compile(x[0]), x[1]) for x in (
             ('^connection lost$',
                 self._connectionLost),
-            ('^login attempt \[(?P<username>.*)/(?P<password>.*)\] failed',
+            ('^login attempt \[(?P<username>.*)\]/\[(?P<password>.*)\] failed',
                 self.handleLoginFailed),
-            ('^login attempt \[(?P<username>.*)/(?P<password>.*)\] succeeded',
+            ('^login attempt \[(?P<username>.*)\]/\[(?P<password>.*)\] succeeded',
                 self.handleLoginSucceeded),
             ('^Opening TTY log: (?P<logfile>.*)$',
                 self.handleTTYLogOpened),
