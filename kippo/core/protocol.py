@@ -145,7 +145,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
-        self.terminal.transport.session.conn.transport.stdinlog_open = True
+        self.terminal.stdinlog_open = True
 
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
@@ -243,10 +243,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
         ttylog.ttylog_open(transport.ttylog_file, time.time())
         self.ttylog_open = True
 
-        transport.stdinlog_file = '%s/%s-%s-stdin.log' % \
+        self.stdinlog_file = '%s/%s-%s-stdin.log' % \
             (config().get('honeypot', 'download_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
-        transport.stdinlog_open = False
+        self.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
 
@@ -264,8 +264,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
-        if transport.stdinlog_open and not noLog:
-            f = file( transport.stdinlog_file, 'ab' )
+        if self.stdinlog_open and not noLog:
+            log.msg( "Saving stdin log: %s" % self.stdinlog_file )
+            f = file( self.stdinlog_file, 'ab' )
             f.write(data)
             f.close
         insults.ServerProtocol.dataReceived(self, data)
