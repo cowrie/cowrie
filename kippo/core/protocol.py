@@ -143,7 +143,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
-        self.terminal.transport.session.conn.transport.stdinlog_open = True
+        self.terminal.stdinlog_open = True
 
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
@@ -229,9 +229,11 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.lineBufferIndex = 0
 
 class LoggingServerProtocol(insults.ServerProtocol):
+    """
+    Wrapper for ServerProtocol that implements TTY logging
+    """
     def connectionMade(self):
         transport = self.transport.session.conn.transport
-
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
@@ -241,12 +243,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
             format='Opening TTY Log: %(logfile)s')
 
         ttylog.ttylog_open(transport.ttylog_file, time.time())
-        transport.ttylog_open = True
+        self.ttylog_open = True
 
-        transport.stdinlog_file = '%s/%s-%s-stdin.log' % \
+        self.stdinlog_file = '%s/%s-%s-stdin.log' % \
             (config().get('honeypot', 'download_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
-        transport.stdinlog_open = False
+        self.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
 
@@ -254,7 +256,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transport = self.transport.session.conn.transport
         for i in transport.interactors:
             i.sessionWrite(bytes)
-        if transport.ttylog_open and not noLog:
+        if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
 
@@ -262,25 +264,31 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def dataReceived(self, data, noLog = False):
         transport = self.transport.session.conn.transport
-        if transport.ttylog_open and not noLog:
+        if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
-        if transport.stdinlog_open and not noLog:
-            f = file( transport.stdinlog_file, 'ab' )
+        if self.stdinlog_open and not noLog:
+            log.msg( "Saving stdin log: %s" % self.stdinlog_file )
+            f = file( self.stdinlog_file, 'ab' )
             f.write(data)
             f.close
 
         insults.ServerProtocol.dataReceived(self, data)
 
-    # this is only called on explicit logout, not on disconnect
+    # override super to remove the terminal reset on logout
+    def loseConnection(self):
+        self.transport.loseConnection()
+
+    # FIXME: this method is called 4 times on logout....
+    # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
+        # log.msg( "received call to LSP.connectionLost" )
         transport = self.transport.session.conn.transport
-        if transport.ttylog_open:
-            ttylog.ttylog_close( transport.ttylog_file, time.time() )
-            transport.ttylog_open = False
+        if self.ttylog_open:
             log.msg( eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
                 ttylog=transport.ttylog_file)
-
+            ttylog.ttylog_close(transport.ttylog_file, time.time())
+            self.ttylog_open = False
         insults.ServerProtocol.connectionLost(self, reason)
 
 # vim: set sw=4 et:

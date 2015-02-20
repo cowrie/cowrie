@@ -21,7 +21,6 @@ from twisted.conch.ssh.common import NS, getNS
 
 import ConfigParser
 
-import ttylog
 import utils
 import fs
 import sshserver
@@ -224,9 +223,6 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
         self.lastlogExit()
-        if self.ttylog_open:
-            ttylog.ttylog_close(self.ttylog_file, time.time())
-            self.ttylog_open = False
         sshserver.KippoSSHServerTransport.connectionLost(self, reason)
 
 class HoneyPotSSHSession(session.SSHSession):
@@ -251,6 +247,10 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg('request_x11: %s' % repr(data) )
         return 0
 
+    # this is reliably called on session close/disconnect and calls the avatar
+    def closed(self):
+        session.SSHSession.closed(self)
+
     def loseConnection(self):
         self.conn.sendRequest(self, 'exit-status', "\x00"*4)
         session.SSHSession.loseConnection(self)
@@ -268,6 +268,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.env = env
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs))
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
+        self.protocol = None
 
         self.channelLookup.update({'session': HoneyPotSSHSession})
         self.channelLookup['direct-tcpip'] = KippoOpenConnectForwardingClient
@@ -289,6 +290,8 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.protocol = serverProtocol
         serverProtocol.makeConnection(proto)
         proto.makeConnection(session.wrapProtocol(serverProtocol))
+        #self.protocol = serverProtocol
+        self.protocol = proto
 
     def getPty(self, terminal, windowSize, attrs):
         #log.msg( 'Terminal size: %s %s' % windowSize[0:2] )
@@ -314,9 +317,13 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.protocol = serverProtocol
         serverProtocol.makeConnection(proto)
         proto.makeConnection(session.wrapProtocol(serverProtocol))
+        self.protocol = serverProtocol
 
+    # this is reliably called on both logout and disconnect
+    # we notify the protocol here we lost the connection
     def closed(self):
-        pass
+        if self.protocol:
+            self.protocol.connectionLost("disconnected")
 
     def eofReceived(self):
         pass
