@@ -143,29 +143,34 @@ class command_wget(HoneyPotCommand):
 
     def success(self, data, outfile):
         if not os.path.isfile(self.safeoutfile):
-            print "there's no file " + self.safeoutfile
+            log.msg("there's no file " + self.safeoutfile)
             self.exit()
 
         shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
         hash_path = '%s/%s' % (self.download_path, shasum)
 
-        msg = 'SHA sum %s of URL %s in file %s' % \
-            (shasum, self.url, self.fileName)
-        print msg
-        self.honeypot.logDispatch(msg)
-
+        # if we have content already, delete temp file
         if not os.path.exists(hash_path):
-            print "moving " + self.safeoutfile + " -> " + hash_path
             os.rename(self.safeoutfile, hash_path)
         else:
-            print "deleting " + self.safeoutfile + " SHA sum: " + shasum
             os.remove(self.safeoutfile)
+            log.msg("Not storing duplicate content " + shasum)
+
+        self.honeypot.logDispatch( format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum )
+
+        log.msg( format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum )
+
+        # link friendly name to hash
         os.symlink( shasum, self.safeoutfile )
+
+        # FIXME: is this necessary?
         self.safeoutfile = hash_path
 
-        print "Updating realfile to " + hash_path
+        # update the honeyfs to point to downloaded file
         f = self.fs.getfile(outfile)
-        f[9] = hash_path
+        f[A_REALFILE] = hash_path
         self.exit()
 
     def error(self, error, url):
@@ -224,10 +229,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                     (self.wget.url,) )
                 self.fileName = os.path.devnull
                 self.nomore = True
-            else:
-                msg = 'Saving URL (%s) to %s' % (self.wget.url, self.fileName)
-                self.wget.honeypot.logDispatch(msg)
-                log.msg( msg )
             self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
             self.wget.honeypot.terminal.nextLine()
 

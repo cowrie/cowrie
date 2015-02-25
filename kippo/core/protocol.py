@@ -3,20 +3,16 @@
 
 import os
 import time
-import struct
 import socket
 import copy
 
 from twisted.conch import recvline
-from twisted.conch.ssh import transport
 from twisted.conch.insults import insults
-from twisted.internet import protocol
 from twisted.python import log
 
-from kippo.core import ttylog, fs
-from kippo.core.config import config
-import kippo.core.honeypot
-from kippo import core
+import honeypot
+import ttylog
+from config import config
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def __init__(self, avatar, env):
@@ -33,10 +29,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.password_input = False
         self.cmdstack = []
 
-    def logDispatch(self, msg):
+    def logDispatch(self, *msg, **args):
         transport = self.terminal.transport.session.conn.transport
-        msg = ':dispatch: ' + msg
-        transport.factory.logDispatch(transport.transport.sessionno, msg)
+        args['sessionno']=transport.transport.sessionno
+        transport.factory.logDispatch(*msg,**args)
 
     def connectionMade(self):
         self.displayMOTD()
@@ -47,7 +43,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.realClientPort = transport.transport.getPeer().port
         self.clientVersion = transport.otherVersionString
         self.logintime = transport.logintime
-        self.ttylog_file = transport.ttylog_file
 
         # source IP of client in user visible reports (can be fake or real)
         cfg = config()
@@ -61,7 +56,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         else:
             # Hack to get ip
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8",80))
+            s.connect(("8.8.8.8", 80))
             self.kippoIP = s.getsockname()[0]
             s.close()
 
@@ -71,17 +66,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         except:
             pass
 
-    # this doesn't seem to be called upon disconnect, so please use
-    # HoneyPotTransport.connectionLost instead
+    # this is only called on explicit logout, not on disconnect
     def connectionLost(self, reason):
-        pass
+        log.msg( eventid='KIPP0011', format='Connection lost')
         # not sure why i need to do this:
         # scratch that, these don't seem to be necessary anymore:
         #del self.fs
         #del self.commands
 
     def txtcmd(self, txt):
-        class command_txtcmd(core.honeypot.HoneyPotCommand):
+        class command_txtcmd(honeypot.HoneyPotCommand):
             def call(self):
                 log.msg( 'Reading txtcmd from "%s"' % txt )
                 f = file(txt, 'r')
@@ -149,9 +143,9 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
-        self.terminal.transport.session.conn.transport.stdinlog_open = True
+        self.terminal.stdinlog_open = True
 
-        self.cmdstack = [core.honeypot.HoneyPotShell(self, interactive=False)]
+        self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
@@ -164,7 +158,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
-        self.cmdstack = [core.honeypot.HoneyPotShell(self)]
+        self.cmdstack = [honeypot.HoneyPotShell(self)]
 
         transport = self.terminal.transport.session.conn.transport
         transport.factory.sessions[transport.transport.sessionno] = self
@@ -234,22 +228,27 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
         self.lineBufferIndex = 0
 
-
 class LoggingServerProtocol(insults.ServerProtocol):
+    """
+    Wrapper for ServerProtocol that implements TTY logging
+    """
     def connectionMade(self):
         transport = self.transport.session.conn.transport
-
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
-        log.msg( 'Opening TTY log: %s' % transport.ttylog_file )
-        ttylog.ttylog_open(transport.ttylog_file, time.time())
-        transport.ttylog_open = True
 
-        transport.stdinlog_file = '%s/%s-%s-stdin.log' % \
+        self.ttylog_file = transport.ttylog_file
+        log.msg( eventid='KIPP0004', logfile=transport.ttylog_file,
+            format='Opening TTY Log: %(logfile)s')
+
+        ttylog.ttylog_open(transport.ttylog_file, time.time())
+        self.ttylog_open = True
+
+        self.stdinlog_file = '%s/%s-%s-stdin.log' % \
             (config().get('honeypot', 'download_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
-        transport.stdinlog_open = False
+        self.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
 
@@ -257,25 +256,39 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transport = self.transport.session.conn.transport
         for i in transport.interactors:
             i.sessionWrite(bytes)
-        if transport.ttylog_open and not noLog:
+        if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
+
         insults.ServerProtocol.write(self, bytes)
 
     def dataReceived(self, data, noLog = False):
         transport = self.transport.session.conn.transport
-        if transport.ttylog_open and not noLog:
+        if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
-        if transport.stdinlog_open and not noLog:
-            f = file( transport.stdinlog_file, 'ab' )
+        if self.stdinlog_open and not noLog:
+            log.msg( "Saving stdin log: %s" % self.stdinlog_file )
+            f = file( self.stdinlog_file, 'ab' )
             f.write(data)
             f.close
+
         insults.ServerProtocol.dataReceived(self, data)
 
-    # this doesn't seem to be called upon disconnect, so please use
-    # HoneyPotTransport.connectionLost instead
+    # override super to remove the terminal reset on logout
+    def loseConnection(self):
+        self.transport.loseConnection()
+
+    # FIXME: this method is called 4 times on logout....
+    # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
+        # log.msg( "received call to LSP.connectionLost" )
+        transport = self.transport.session.conn.transport
+        if self.ttylog_open:
+            log.msg( eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
+                ttylog=transport.ttylog_file)
+            ttylog.ttylog_close(transport.ttylog_file, time.time())
+            self.ttylog_open = False
         insults.ServerProtocol.connectionLost(self, reason)
 
 # vim: set sw=4 et:

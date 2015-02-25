@@ -1,3 +1,8 @@
+
+* 2015-02-25 Internals for dblog/ modules changed completely. Now accepts structured logging arguments, and uses eventids instead of regex parsing
+* 2015-02-20 Removed screen clear/reset on logout
+* 2015-02-19 Configuration directives have changed! ssh_addr has become listen_addr and ssh_port has become listen_port. The old keywords are still accepted for backwards compatibility
+
 * default behaviour is changed to disable the exit jail
 * sftp support
 * exec support
@@ -6,7 +11,7 @@
 * allow wget download over non-80 port
 * simple JSON logging to kippo.json
 * accept log and deny publickey authentication
-* add uname -r command
+* add uname -r, -m flags
 * add working sleep command
 * enabled ssh diffie-hellman-group-exchange-sha1 algorithm
 * add 'bash -c' support (no effect option)
@@ -33,3 +38,4 @@
 * add 'poweroff' 'halt' and 'reboot' aliases for shutdown
 * add environment passing to commands
 * added 'which', 'netstat' and 'gcc' from kippo-extra
+* logging framework allows for keyword use

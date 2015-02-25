@@ -16,12 +16,12 @@
 # IP addresses to listen for incoming SSH connections.
 #
 # (default: 0.0.0.0) = any address
-#ssh_addr = 0.0.0.0
+#listen_addr = 0.0.0.0
 
 # Port to listen for incoming SSH connections.
 #
 # (default: 2222)
-ssh_port = 2222
+#listen_port = 2222
 
 # Hostname for the honeypot. Displayed by the shell prompt of the virtual
 # environment.
@@ -216,7 +216,7 @@ interact_port = 5123
 #logfile = log/kippo-textlog.log
 
 # JSON based logging module
-#[database_jsonlog]
+[database_jsonlog]
 logfile = log/kippolog.json
 
 #[database_hpfeeds]

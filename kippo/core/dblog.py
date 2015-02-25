@@ -3,59 +3,60 @@
 
 import re
 import time
+import abc
+
+# dblog now operates based on eventids, no longer on regex parsing of the entry.
+# add an eventid using keyword args and it will be picked up by the dblogger
+# the KIPPxxxx naming convention is still subject to change.
+
+# KIPP0001 : create session
+# KIPP0002 : succesful login
+# KIPP0003 : failed login
+# KIPP0004 : TTY log opened
+# KIPP0005 : handle command
+# KIPP0006 : handle unknown command
+# KIPP0007 : file download
+# KIPP0008 : INPUT
+# KIPP0009 : SSH Version
+# KIPP0010 : Terminal Size
+# KIPP0011 : Connection Lost
+# KIPP0012 : TTY log closed
 
 class DBLogger(object):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, cfg):
         self.cfg = cfg
         self.sessions = {}
         self.ttylogs = {}
-        self.re_connected = re.compile(
-            '^New connection: ([0-9.]+):([0-9]+) \(([0-9.]+):([0-9]+)\) ' + \
-            '\[session: ([0-9]+)\]$')
         self.re_sessionlog = re.compile(
             '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
 
-        # :dispatch: means the message has been delivered directly via
-        # logDispatch, instead of relying on the twisted logging, which breaks
-        # on scope changes.
-        self.re_map = [(re.compile(x[0]), x[1]) for x in (
-            ('^connection lost$',
-                self._connectionLost),
-            ('^login attempt \[(?P<username>.*)/(?P<password>.*)\] failed',
-                self.handleLoginFailed),
-            ('^login attempt \[(?P<username>.*)/(?P<password>.*)\] succeeded',
-                self.handleLoginSucceeded),
-            ('^Opening TTY log: (?P<logfile>.*)$',
-                self.handleTTYLogOpened),
-            ('^:dispatch: Command found: (?P<input>.*)$',
-                self.handleCommand),
-            ('^:dispatch: Command not found: (?P<input>.*)$',
-                self.handleUnknownCommand),
-            ('^:dispatch: Saving URL \((?P<url>.*)\) to (?P<outfile>.*)$',
-                self.handleFileDownload),
-            ('^:dispatch: SHA sum (?P<shasum>.*) of URL (?P<url>.*) in file (?P<outfile>.*)$',
-                self.handleShaSum),
-            ('^:dispatch: Updated outfile (?P<outfile>.*) to (?P<dl_file>.*) with SHA sum (?P<shasum>.*)$',
-                self.handleUpdatedFile),
-            ('^INPUT \((?P<realm>[a-zA-Z0-9]+)\): (?P<input>.*)$',
-                self.handleInput),
-            ('^Terminal size: (?P<height>[0-9]+) (?P<width>[0-9]+)$',
-                self.handleTerminalSize),
-            ('^Remote SSH version: (?P<version>.*)$',
-                self.handleClientVersion),
-            )]
+        # KIPP0001 is special since it kicks off new logging session,
+        # and is not handled here
+        self.events = {
+          'KIPP0002': self.handleLoginSucceeded,
+          'KIPP0003': self.handleLoginFailed,
+          'KIPP0004': self.handleTTYLogOpened,
+          'KIPP0005': self.handleCommand,
+          'KIPP0006': self.handleUnknownCommand,
+          'KIPP0007': self.handleFileDownload,
+          'KIPP0008': self.handleInput,
+          'KIPP0009': self.handleClientVersion,
+          'KIPP0010': self.handleTerminalSize,
+          'KIPP0011': self._connectionLost,
+        }
+
         self.start(cfg)
 
-    def logDispatch(self, sessionid, msg):
-        if sessionid not in self.sessions.keys():
-            return
-        for regex, func in self.re_map:
-            match = regex.match(msg)
-            if match:
-                func(self.sessions[sessionid], match.groupdict())
-                break
+    # used when the HoneypotTransport prefix is not available.
+    def logDispatch(self, *msg, **kw):
+        ev = kw
+        ev['message'] = msg
+        self.emit(ev)
 
-    def start():
+    def start(self, cfg):
+        """Hook that can be used to set up connections in dbloggers"""
         pass
 
     def getSensor(self):
@@ -68,28 +69,42 @@ class DBLogger(object):
         return int(time.mktime(time.gmtime()[:-1] + (-1,)))
 
     def emit(self, ev):
-        if not len(ev['message']):
+        # ignore stdout and stderr
+        if 'printed' in ev:
             return
-        match = self.re_connected.match(ev['message'][0])
-        if match:
-            sessionid = int(match.groups()[4])
-            self.sessions[sessionid] = \
+
+        # ignore anything without eventid
+        if not 'eventid' in ev:
+            return
+
+        # connection event is special. adds to list
+        if ev['eventid'] == 'KIPP0001':
+            sessionno = ev['sessionno']
+            self.sessions[sessionno] = \
                 self.createSession(
-                    match.groups()[0], int(match.groups()[1]),
-                    match.groups()[2], int(match.groups()[3]))
+                    ev['src_ip'], ev['src_port'], ev['dst_ip'], ev['dst_port'] )
             return
-        match = self.re_sessionlog.match(ev['system'])
-        if not match:
+
+        # use explicit sessionno if coming from dispatch
+        if 'sessionno' in ev:
+            sessionno = ev['sessionno']
+            del ev['sessionno']
+        # else extract session id from the twisted log prefix
+        elif 'system' in ev:
+            match = self.re_sessionlog.match(ev['system'])
+            if not match:
+                return
+            sessionno = int(match.groups()[0])
+
+        if sessionno not in self.sessions.keys():
             return
-        sessionid = int(match.groups()[0])
-        if sessionid not in self.sessions.keys():
-            return
-        message = ev['message'][0]
-        for regex, func in self.re_map:
-            match = regex.match(message)
-            if match:
-                func(self.sessions[sessionid], match.groupdict())
-                break
+
+        if 'eventid' in ev:
+            if ev['eventid'] in self.events:
+                self.events[ev['eventid']]( self.sessions[sessionno], ev )
+                return
+
+        print "error, unknown eventid %s" % repr(ev)
 
     def _connectionLost(self, session, args):
         self.handleConnectionLost(session, args)
@@ -106,7 +121,8 @@ class DBLogger(object):
             f.close()
         return ttylog
 
-    # We have to return an unique ID
+    # We have to return a unique ID
+    @abc.abstractmethod
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
         return 0
 
@@ -148,14 +164,6 @@ class DBLogger(object):
 
     # args has: url, outfile
     def handleFileDownload(self, session, args):
-        pass
-
-    # args has: shasum, url, outfile
-    def handleShaSum(self, session, args):
-        pass
-
-    # args has: outfile, dl_file, shasum
-    def handleUpdatedFile(self, session, args):
         pass
 
 # vim: set sw=4 et:

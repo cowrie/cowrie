@@ -21,13 +21,16 @@ from twisted.conch.ssh.common import NS, getNS
 
 import ConfigParser
 
-from kippo.core import ttylog, utils, fs, sshserver
-from kippo.core.config import config
-import kippo.core.auth
-import kippo.core.honeypot
-import kippo.core.ssh
-import kippo.core.protocol
-from kippo import core
+import utils
+import fs
+import sshserver
+import auth
+import honeypot
+import ssh
+import protocol
+import sshserver
+import exceptions
+from config import config
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
@@ -63,11 +66,11 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         }
 
     # Special delivery to the loggers to avoid scope problems
-    def logDispatch(self, sessionid, msg):
+    def logDispatch(self, *msg, **args):
         for dblog in self.dbloggers:
-            dblog.logDispatch(sessionid, msg)
+            dblog.logDispatch(*msg, **args)
         for output in self.output_plugins:
-            output.logDispatch(sessionid, msg)
+            output.logDispatch(*msg, **args)
 
     def __init__(self):
         cfg = config()
@@ -168,7 +171,7 @@ class HoneyPotRealm:
 
     def __init__(self):
         # I don't know if i'm supposed to keep static stuff here
-        self.env = core.honeypot.HoneyPotEnvironment()
+        self.env = honeypot.HoneyPotEnvironment()
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         if conchinterfaces.IConchUser in interfaces:
@@ -177,43 +180,35 @@ class HoneyPotRealm:
         else:
             raise Exception, "No supported interfaces found."
 
-class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
+class HoneyPotTransport(sshserver.KippoSSHServerTransport):
     """
-    @ivar logintime: time of login
-
-    @ivar interactors: interactors
-
-    @ivar ttylog_open: whether log is open
-
-    @ivar transportId: UUID of this transport
-
-    @ivar _hadVersion: used so we only send key exchange after receive version info
     """
-
-    _hadVersion = False
-    ttylog_open = False
-    interactors = []
-    transportId = ''
 
     def connectionMade(self):
         self.logintime = time.time()
         self.transportId = uuid.uuid4().hex[:8]
+        self.interactors = []
 
-        log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
-            (self.transport.getPeer().host, self.transport.getPeer().port,
-            self.transport.getHost().host, self.transport.getHost().port,
-            self.transport.sessionno) )
+        #log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
+        #    (self.transport.getPeer().host, self.transport.getPeer().port,
+        #    self.transport.getHost().host, self.transport.getHost().port,
+        #    self.transport.sessionno) )
+        log.msg( eventid='KIPP0001',
+           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
+           src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
+           dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
+           sessionno=self.transport.sessionno )
 
-        kippo.core.sshserver.KippoSSHServerTransport.connectionMade(self)
+        sshserver.KippoSSHServerTransport.connectionMade(self)
 
     def sendKexInit(self):
         # Don't send key exchange prematurely
         if not self.gotVersion:
             return
-        kippo.core.sshserver.KippoSSHServerTransport.sendKexInit(self)
+        sshserver.KippoSSHServerTransport.sendKexInit(self)
 
     def dataReceived(self, data):
-        kippo.core.sshserver.KippoSSHServerTransport.dataReceived(self, data)
+        sshserver.KippoSSHServerTransport.dataReceived(self, data)
         # later versions seem to call sendKexInit again on their own
         if twisted.version.major < 11 and \
                 not self._hadVersion and self.gotVersion:
@@ -230,8 +225,8 @@ class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
         log.msg('KEXINIT: client supported MAC: %s' % macCS )
         log.msg('KEXINIT: client supported compression: %s' % compCS )
         log.msg('KEXINIT: client supported lang: %s' % langCS )
-        log.msg( 'Remote SSH version: %s' % self.otherVersionString,)
-        return kippo.core.sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
+        log.msg( eventid='KIPP0009', version=self.otherVersionString, format='Remote SSH version: %(version)s' )
+        return sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
     def lastlogExit(self):
         starttime = time.strftime('%a %b %d %H:%M',
@@ -245,15 +240,13 @@ class HoneyPotTransport(kippo.core.sshserver.KippoSSHServerTransport):
 
     # this seems to be the only reliable place of catching lost connection
     def connectionLost(self, reason):
+        log.msg( "Connection Lost in SSH Transport" )
         for i in self.interactors:
             i.sessionClosed()
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
         self.lastlogExit()
-        if self.ttylog_open:
-            ttylog.ttylog_close(self.ttylog_file, time.time())
-            self.ttylog_open = False
-        kippo.core.sshserver.KippoSSHServerTransport.connectionLost(self, reason)
+        sshserver.KippoSSHServerTransport.connectionLost(self, reason)
 
 class HoneyPotSSHSession(session.SSHSession):
 
@@ -277,9 +270,16 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg('request_x11: %s' % repr(data) )
         return 0
 
+    # this is reliably called on session close/disconnect and calls the avatar
+    def closed(self):
+        session.SSHSession.closed(self)
+
     def loseConnection(self):
         self.conn.sendRequest(self, 'exit-status', "\x00"*4)
         session.SSHSession.loseConnection(self)
+
+    def channelClosed(self):
+        log.msg( "Called channelClosed in SSHSession")
 
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
@@ -291,6 +291,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.env = env
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs))
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
+        self.protocol = None
 
         self.channelLookup.update({'session': HoneyPotSSHSession})
         self.channelLookup['direct-tcpip'] = KippoOpenConnectForwardingClient
@@ -300,41 +301,52 @@ class HoneyPotAvatar(avatar.ConchUser):
             if ( self.env.cfg.get('honeypot', 'sftp_enabled') == "true" ):
                 self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
 
-        self.uid = self.gid = core.auth.UserDB().getUID(self.username)
+        self.uid = self.gid = auth.UserDB().getUID(self.username)
         if not self.uid:
             self.home = '/root'
         else:
             self.home = '/home/' + username
 
-    def openShell(self, protocol):
-        serverProtocol = core.protocol.LoggingServerProtocol(
-            core.protocol.HoneyPotInteractiveProtocol, self, self.env)
-        serverProtocol.makeConnection(protocol)
-        protocol.makeConnection(session.wrapProtocol(serverProtocol))
+    def openShell(self, proto):
+        serverProtocol = protocol.LoggingServerProtocol(
+            protocol.HoneyPotInteractiveProtocol, self, self.env)
+        self.protocol = serverProtocol
+        serverProtocol.makeConnection(proto)
+        proto.makeConnection(session.wrapProtocol(serverProtocol))
+        #self.protocol = serverProtocol
+        self.protocol = proto
 
     def getPty(self, terminal, windowSize, attrs):
-        log.msg( 'Terminal size: %s %s' % windowSize[0:2] )
+        #log.msg( 'Terminal size: %s %s' % windowSize[0:2] )
+        log.msg( eventid='KIPP0010', width=windowSize[0], height=windowSize[1],
+            format='Terminal Size: %(width)s %(height)s' )
+
         self.windowSize = windowSize
         return None
 
-    def execCommand(self, protocol, cmd):
+    def execCommand(self, proto, cmd):
         cfg = config()
         if not cfg.has_option('honeypot', 'exec_enabled') or \
                 cfg.get('honeypot', 'exec_enabled').lower() not in \
                     ('yes', 'true', 'on'):
             log.msg( 'Exec disabled. Not executing command: "%s"' % cmd )
-            raise core.exceptions.NotEnabledException, \
+            raise exceptions.NotEnabledException, \
                 'exec_enabled not enabled in configuration file!'
             return
 
         log.msg( 'exec command: "%s"' % cmd )
-        serverProtocol = kippo.core.protocol.LoggingServerProtocol(
-            kippo.core.protocol.HoneyPotExecProtocol, self, self.env, cmd)
-        serverProtocol.makeConnection(protocol)
-        protocol.makeConnection(session.wrapProtocol(serverProtocol))
+        serverProtocol = protocol.LoggingServerProtocol(
+            protocol.HoneyPotExecProtocol, self, self.env, cmd)
+        self.protocol = serverProtocol
+        serverProtocol.makeConnection(proto)
+        proto.makeConnection(session.wrapProtocol(serverProtocol))
+        self.protocol = serverProtocol
 
+    # this is reliably called on both logout and disconnect
+    # we notify the protocol here we lost the connection
     def closed(self):
-        pass
+        if self.protocol:
+            self.protocol.connectionLost("disconnected")
 
     def eofReceived(self):
         pass

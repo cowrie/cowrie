@@ -1,18 +1,43 @@
+# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+# All rights reserved.
 #
-# this module uses the dblog feature to create a JSON logfile
-# ..so not exactly a dblog.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
 #
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The names of the author(s) may not be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
 
 import datetime
 import uuid
 import json
 
-from kippo.core import dblog
-from twisted.enterprise import adbapi
-from twisted.internet import defer
-from twisted.python import log
+from ..core import dblog
 
 class DBLogger(dblog.DBLogger):
+
+    def __init__(self, cfg):
+        self.sensor = ""
+        self.outfile = ""
+        dblog.DBLogger.__init__(self, cfg)
 
     def start(self, cfg):
         self.outfile = file(cfg.get('database_jsonlog', 'logfile'), 'a')
@@ -38,6 +63,9 @@ class DBLogger(dblog.DBLogger):
     def handleConnectionLost(self, session, args):
         logentry = { 'message': 'Connection lost' }
         self.write( session, logentry )
+        #ttylog = self.ttylog(session)
+        #if ttylog:
+        #    self.write( session, { 'message': repr(ttylog) } )
 
     def handleLoginFailed(self, session, args):
         logentry = { 'message' : 'Login failed [%s/%s]' % (args['username'], args['password']), 'username' : args['username'], 'password' : args['password'] }
@@ -68,12 +96,7 @@ class DBLogger(dblog.DBLogger):
         self.write( session, logentry )
 
     def handleFileDownload(self, session, args):
-        logentry = { 'message' : 'File download: [%s] -> %s' % (args['url'], args['outfile']), 'url' : args['url'] }
-        self.write( session, logentry )
-
-    def handleShaSum(self, session, args):
-        logentry = { 'message' : 'File SHA sum: %s [%s] -> %s' % \
-            (args['shasum'], args['url'], args['outfile']), 'shasum' : args['shasum'], 'url' : args['url'] }
+        logentry = { 'message' : 'File download: [%s] -> %s' % (args['url'], args['outfile']), 'url' : args['url'], 'shasum' : args['shasum'] }
         self.write( session, logentry )
 
 # vim: set sw=4 et:

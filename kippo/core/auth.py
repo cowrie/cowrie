@@ -16,7 +16,7 @@ from twisted.python import log, failure
 from twisted.conch import error
 from twisted.conch.ssh import keys
 
-from kippo.core.config import config
+from config import config
 
 # by Walter de Jong <walter@sara.nl>
 class UserDB(object):
@@ -156,12 +156,18 @@ class HoneypotPasswordChecker:
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())
 
-    def checkUserPass(self, username, password):
-        if UserDB().checklogin(username, password):
-            log.msg( 'login attempt [%s/%s] succeeded' % (username, password) )
+    def checkUserPass(self, theusername, thepassword):
+        if UserDB().checklogin(theusername, thepassword):
+            #log.msg( 'login attempt [%s/%s] succeeded' % (theusername, thepassword) )
+            log.msg( eventid='KIPP0002',
+                format='login attempt [%(username)s/%(password)s] succeeded',
+                username=theusername, password=thepassword )
             return True
         else:
-            log.msg( 'login attempt [%s/%s] failed' % (username, password) )
+            #log.msg( 'login attempt [%s/%s] failed' % (theusername, thepassword) )
+            log.msg( eventid='KIPP0003',
+                format='login attempt [%(username)s/%(password)s] failed',
+                username=theusername, password=thepassword )
             return False
 
 # vim: set sw=4 et:

@@ -142,13 +142,8 @@ class DBLogger(dblog.DBLogger):
 
     def handleFileDownload(self, session, args):
         self.simpleQuery('INSERT INTO `downloads`' + \
-            ' (`session`, `timestamp`, `url`, `outfile`)' + \
+            ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
             ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
-            (session, self.nowUnix(), args['url'], args['outfile']))
-
-    def handleShaSum(self, session, args):
-         self.simpleQuery('UPDATE `downloads` SET `shasum` = %s' + \
-            '  WHERE `outfile` = %s',
-            (args['shasum'], args['outfile']))
+            (session, self.nowUnix(), args['url'], args['outfile'], args['shasum']))
 
 # vim: set sw=4 et:
