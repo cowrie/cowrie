@@ -63,9 +63,9 @@ class DBLogger(dblog.DBLogger):
     def handleConnectionLost(self, session, args):
         logentry = { 'message': 'Connection lost' }
         self.write( session, logentry )
-        ttylog = self.ttylog(session)
-        if ttylog:
-            self.write( session, { 'message': repr(ttylog) } )
+        #ttylog = self.ttylog(session)
+        #if ttylog:
+        #    self.write( session, { 'message': repr(ttylog) } )
 
     def handleLoginFailed(self, session, args):
         logentry = { 'message' : 'Login failed [%s/%s]' % (args['username'], args['password']), 'username' : args['username'], 'password' : args['password'] }
