@@ -43,9 +43,9 @@ import uuid
 # KIPP0009 : SSH Version
 # KIPP0010 : Terminal Size
 # KIPP0011 : Connection Lost
+# KIPP0012 : TTY log closed
 
 class Output(object):
-
     """
     This is the abstract base class intended to be inherited by kippo output plugins
     Plugins require the mandatory methods: stop, start and handleLog
@@ -56,7 +56,6 @@ class Output(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.sessions = {}
-        self.ttylogs = {}
         self.re_sessionlog = re.compile(
             '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
         if self.cfg.has_option('honeypot', 'sensor_name'):
@@ -77,12 +76,12 @@ class Output(object):
 
     @abc.abstractmethod
     def start():
-        """Abstract method to initialize output plugins"""
+        """Abstract method to initialize output plugin"""
         pass
 
     @abc.abstractmethod
     def stop():
-        """Abstract method to shut down output plugins"""
+        """Abstract method to shut down output plugin"""
         pass
 
     # this is the main emit() hook that gets called by the the Twisted logging
@@ -109,9 +108,9 @@ class Output(object):
             return
 
         # disconnection is special, add the tty log
-        if ev['eventid'] == 'KIPP0011':
+        if ev['eventid'] == 'KIPP0012':
             # FIXME: file is read for each output plugin
-            #f = file(self.ttylogs[session])
+            #f = file(ev['ttylog'])
             #ev['ttylog'] = f.read(10485760)
             #f.close()
             pass
@@ -131,7 +130,7 @@ class Output(object):
 
     @abc.abstractmethod
     def handleLog( self, session, event ):
-        """Handle a general event within the dblogger"""
+        """Handle a general event within the output plugin"""
         pass
 
 # vim: set sw=4 et:
