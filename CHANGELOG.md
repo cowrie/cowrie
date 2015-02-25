@@ -1,4 +1,5 @@
 
+* 2015-02-25 Internals for dblog/ modules changed completely. Now accepts structured logging arguments, and uses eventids instead of regex parsing
 * 2015-02-20 Removed screen clear/reset on logout
 * 2015-02-19 Configuration directives have changed! ssh_addr has become listen_addr and ssh_port has become listen_port. The old keywords are still accepted for backwards compatibility
 
