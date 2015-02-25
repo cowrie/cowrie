@@ -29,6 +29,7 @@
 import abc
 import datetime
 import re
+import copy
 import socket
 import uuid
 
@@ -67,12 +68,18 @@ class Output(object):
 
     # use logDispatch when the HoneypotTransport prefix is not available.
     # here you can explicitly set the sessionIds to tie the sessions together
-    def logDispatch(self, sessionid, msg):
-        if isinstance( msg, dict ):
-            msg['sessionid'] = sessionid
-            return self.emit( msg )
-        elif isinstance( msg, str ):
-            return self.emit( { 'message':msg, 'sessionid':sessionid } )
+    #def logDispatch(self, sessionid, msg):
+    #    if isinstance( msg, dict ):
+    #        msg['sessionid'] = sessionid
+    #        return self.emit( msg )
+    #    elif isinstance( msg, str ):
+    #        return self.emit( { 'message':msg, 'sessionid':sessionid } )
+
+    # used when the HoneypotTransport prefix is not available.
+    def logDispatch(self, *msg, **kw):
+        ev = kw
+        ev['message'] = msg
+        self.emit(ev)
 
     @abc.abstractmethod
     def start():
@@ -85,47 +92,51 @@ class Output(object):
         pass
 
     # this is the main emit() hook that gets called by the the Twisted logging
-    def emit(self, ev):
+    def emit(self, event):
         # ignore stdout and stderr in output plugins
-        if 'printed' in ev:
+        if 'printed' in event:
             return
 
         # ignore anything without eventid
-        if not 'eventid' in ev:
+        if not 'eventid' in event:
             return
+
+        ev = copy.copy(event)
 
         # add ISO timestamp and sensor data
-        if not ev['time']:
-            ev['time'] = datetime.time.time()
-        ev['timestamp'] = datetime.datetime.fromtimestamp(ev['time']).isoformat() + 'Z'
+        if not 'time' in ev:
+            ev['timestamp'] = datetime.datetime.today().isoformat() + 'Z'
+        else:
+            ev['timestamp'] = datetime.datetime.fromtimestamp(ev['time']).isoformat() + 'Z'
+            del ev['time']
+
         ev['sensor'] = self.sensor
 
-        # connection event is special. adds to list
-        if ev['eventid'] == 'KIPP0001':
-            sessionid = ev['sessionno']
-            self.sessions[sessionid] = uuid.uuid4().hex
-            self.handleLog( self.sessions[sessionid], ev )
-            return
-
         # disconnection is special, add the tty log
-        if ev['eventid'] == 'KIPP0012':
+        #if ev['eventid'] == 'KIPP0012':
             # FIXME: file is read for each output plugin
             #f = file(ev['ttylog'])
             #ev['ttylog'] = f.read(10485760)
             #f.close()
-            pass
+            #pass
 
+        # explicit sessionno (from logDispatch) overrides from 'system'
+        if 'sessionno' in ev:
+            sessionno = ev['sessionno']
+            del ev['sessionno']
         # extract session id from the twisted log prefix
-        # explicit sessionid (from logDispatch) overrides from 'system'
-        if 'sessionid' in ev:
-            sessionid = ev['sessionid']
         elif 'system' in ev:
             match = self.re_sessionlog.match(ev['system'])
             if not match:
                 return
-            sessionid = int(match.groups()[0])
+            sessionno = int(match.groups()[0])
+            del ev['system']
 
-        self.handleLog( self.sessions[sessionid], ev )
+        # connection event is special. adds to session list
+        if ev['eventid'] == 'KIPP0001':
+            self.sessions[sessionno] = uuid.uuid4().hex
+
+        self.handleLog( self.sessions[sessionno], ev )
         # print "error calling handleLog for event  %s" % repr(ev)
 
     @abc.abstractmethod

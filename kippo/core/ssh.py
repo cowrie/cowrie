@@ -189,10 +189,6 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         self.transportId = uuid.uuid4().hex[:8]
         self.interactors = []
 
-        #log.msg( 'New connection: %s:%s (%s:%s) [session: %d]' % \
-        #    (self.transport.getPeer().host, self.transport.getPeer().port,
-        #    self.transport.getHost().host, self.transport.getHost().port,
-        #    self.transport.sessionno) )
         log.msg( eventid='KIPP0001',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
            src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
@@ -225,7 +221,11 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         log.msg('KEXINIT: client supported MAC: %s' % macCS )
         log.msg('KEXINIT: client supported compression: %s' % compCS )
         log.msg('KEXINIT: client supported lang: %s' % langCS )
-        log.msg( eventid='KIPP0009', version=self.otherVersionString, format='Remote SSH version: %(version)s' )
+
+        log.msg( eventid='KIPP0009', version=self.otherVersionString, 
+            kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
+            compCS=compCS, format='Remote SSH version: %(version)s' )
+
         return sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
     def lastlogExit(self):
