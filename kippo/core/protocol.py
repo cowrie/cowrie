@@ -238,8 +238,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
 
         self.ttylog_file = transport.ttylog_file
-        log.msg( eventid='KIPP0004', logfile=transport.ttylog_file,
-            format='Opening TTY Log: %(logfile)s')
+        log.msg( eventid='KIPP0004', ttylog=transport.ttylog_file,
+            format='Opening TTY Log: %(ttylog)s')
 
         ttylog.ttylog_open(transport.ttylog_file, time.time())
         self.ttylog_open = True
