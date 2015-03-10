@@ -74,8 +74,6 @@ class Output(object):
     #        return self.emit( msg )
     #    elif isinstance( msg, str ):
     #        return self.emit( { 'message':msg, 'sessionid':sessionid } )
-
-    # used when the HoneypotTransport prefix is not available.
     def logDispatch(self, *msg, **kw):
         ev = kw
         ev['message'] = msg
@@ -89,6 +87,11 @@ class Output(object):
     @abc.abstractmethod
     def stop():
         """Abstract method to shut down output plugin"""
+        pass
+
+    @abc.abstractmethod
+    def handleLog( self, session, event ):
+        """Handle a general event within the output plugin"""
         pass
 
     # this is the main emit() hook that gets called by the the Twisted logging
@@ -138,10 +141,5 @@ class Output(object):
 
         self.handleLog( self.sessions[sessionno], ev )
         # print "error calling handleLog for event  %s" % repr(ev)
-
-    @abc.abstractmethod
-    def handleLog( self, session, event ):
-        """Handle a general event within the output plugin"""
-        pass
 
 # vim: set sw=4 et:
