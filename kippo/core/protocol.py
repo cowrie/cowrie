@@ -35,8 +35,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         transport.factory.logDispatch(*msg,**args)
 
     def connectionMade(self):
-        self.displayMOTD()
-
         transport = self.terminal.transport.session.conn.transport
 
         self.realClientIP = transport.transport.getPeer().host
@@ -59,12 +57,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
             s.connect(("8.8.8.8", 80))
             self.kippoIP = s.getsockname()[0]
             s.close()
-
-    def displayMOTD(self):
-        try:
-            self.writeln(self.fs.file_contents('/etc/motd'))
-        except:
-            pass
 
     # this is only called on explicit logout, not on disconnect
     def connectionLost(self, reason):
@@ -155,6 +147,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.__init__(self, avatar, env)
 
     def connectionMade(self):
+        self.displayMOTD()
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
@@ -176,6 +169,12 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x10':     self.handle_UP,		# CTRL-P
             '\x15':     self.handle_CTRL_U,	# CTRL-U
             })
+
+    def displayMOTD(self):
+        try:
+            self.writeln(self.fs.file_contents('/etc/motd'))
+        except:
+            pass
 
     # this doesn't seem to be called upon disconnect, so please use
     # HoneyPotTransport.connectionLost instead
@@ -239,8 +238,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
 
         self.ttylog_file = transport.ttylog_file
-        log.msg( eventid='KIPP0004', logfile=transport.ttylog_file,
-            format='Opening TTY Log: %(logfile)s')
+        log.msg( eventid='KIPP0004', ttylog=transport.ttylog_file,
+            format='Opening TTY Log: %(ttylog)s')
 
         ttylog.ttylog_open(transport.ttylog_file, time.time())
         self.ttylog_open = True

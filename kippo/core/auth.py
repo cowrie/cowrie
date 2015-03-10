@@ -124,7 +124,8 @@ class HoneypotPublicKeyChecker:
 
     def requestAvatarId(self, credentials):
         _pubKey = keys.Key.fromString(credentials.blob)
-        log.msg( 'Public Key attempt for user %s with fingerprint %s' % ( credentials.username, _pubKey.fingerprint() ) )
+        log.msg(format='public key attempt for user %(username)s with fingerprint %(fingerprint)%s',
+            username=credentials.username, fingerprint=_pubKey.fingerprint())
         return failure.Failure(error.ConchError("Incorrect signature"))
 
 @implementer(ICredentialsChecker)

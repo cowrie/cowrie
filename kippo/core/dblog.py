@@ -45,6 +45,7 @@ class DBLogger(object):
           'KIPP0009': self.handleClientVersion,
           'KIPP0010': self.handleTerminalSize,
           'KIPP0011': self._connectionLost,
+          'KIPP0012': self.handleTTYLogClosed,
         }
 
         self.start(cfg)
@@ -126,9 +127,13 @@ class DBLogger(object):
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
         return 0
 
-    # args has: logfile
+    # args has: ttylog
     def handleTTYLogOpened(self, session, args):
-        self.ttylogs[session] = args['logfile']
+        self.ttylogs[session] = args['ttylog']
+
+    # args has: ttylog
+    def handleTTYLogClosed(self, session, args):
+        self.ttylogs[session] = args['ttylog']
 
     # args is empty
     def handleConnectionLost(self, session, args):

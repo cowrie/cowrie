@@ -20,7 +20,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
         try:
             return adbapi.ConnectionPool._runInteraction(
                 self, interaction, *args, **kw)
-        except MySQLdb.OperationalError, e:
+        except MySQLdb.OperationalError as e:
             if e[0] not in (2006, 2013):
                 raise
             log.msg("RCP: got error %s, retrying operation" %(e))
