@@ -57,6 +57,7 @@ class Output(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.sessions = {}
+        self.ips = {}
         self.re_sessionlog = re.compile(
             '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
         if self.cfg.has_option('honeypot', 'sensor_name'):
@@ -105,7 +106,10 @@ class Output(object):
             return
 
         ev = copy.copy(event)
-        del ev['isError']
+
+        if 'isError' in ev:
+            del ev['isError']
+        ev['sensor'] = self.sensor
 
         # add ISO timestamp and sensor data
         if not 'time' in ev:
@@ -114,9 +118,7 @@ class Output(object):
             ev['timestamp'] = datetime.datetime.fromtimestamp(ev['time']).isoformat() + 'Z'
             del ev['time']
 
-        ev['sensor'] = self.sensor
-
-        # disconnection is special, add the tty log
+        # on disconnect, add the tty log
         #if ev['eventid'] == 'KIPP0012':
             # FIXME: file is read for each output plugin
             #f = file(ev['ttylog'])
@@ -136,11 +138,20 @@ class Output(object):
             sessionno = int(match.groups()[0])
             del ev['system']
 
+        if sessionno in self.ips:
+            ev['src_ip'] = self.ips[sessionno]
+
         # connection event is special. adds to session list
         if ev['eventid'] == 'KIPP0001':
             self.sessions[sessionno] = uuid.uuid4().hex
+            self.ips[sessionno] = ev['src_ip']
+            del ev['system']
 
         self.handleLog( self.sessions[sessionno], ev )
-        # print "error calling handleLog for event  %s" % repr(ev)
+
+        # disconnect is special, remove cached data
+        if ev['eventid'] == 'KIPP0011':
+            del self.sessions[sessionno]
+            del self.ips[sessionno]
 
 # vim: set sw=4 et:
