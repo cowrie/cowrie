@@ -219,6 +219,11 @@ interact_port = 5123
 [database_jsonlog]
 logfile = log/kippolog.json
 
+# EXPERIMENTAL new output module
+#
+#[output_jsonlog]
+#logfile = log/output.json
+
 #[database_hpfeeds]
 #server = hpfeeds.mysite.org
 #port = 10000
