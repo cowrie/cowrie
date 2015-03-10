@@ -49,7 +49,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         if not data or not len(data.strip()):
             return
-        data = '\r\n'.join(data.splitlines() )
         self.transport.sendPacket(
             userauth.MSG_USERAUTH_BANNER, NS(data) + NS('en'))
         self.bannerSent = True

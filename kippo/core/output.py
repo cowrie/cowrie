@@ -81,17 +81,17 @@ class Output(object):
         self.emit(ev)
 
     @abc.abstractmethod
-    def start():
+    def start(self):
         """Abstract method to initialize output plugin"""
         pass
 
     @abc.abstractmethod
-    def stop():
+    def stop(self):
         """Abstract method to shut down output plugin"""
         pass
 
     @abc.abstractmethod
-    def handleLog( self, session, event ):
+    def handleLog(self, session, event):
         """Handle a general event within the output plugin"""
         pass
 
@@ -147,7 +147,7 @@ class Output(object):
             self.ips[sessionno] = ev['src_ip']
             del ev['system']
 
-        self.handleLog( self.sessions[sessionno], ev )
+        self.handleLog(self.sessions[sessionno], ev)
 
         # disconnect is special, remove cached data
         if ev['eventid'] == 'KIPP0011':
