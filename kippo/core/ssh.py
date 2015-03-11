@@ -227,12 +227,12 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
 
     # this seems to be the only reliable place of catching lost connection
     def connectionLost(self, reason):
-        log.msg( "Connection Lost in SSH Transport" )
         for i in self.interactors:
             i.sessionClosed()
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
         sshserver.KippoSSHServerTransport.connectionLost(self, reason)
+        log.msg( eventid='KIPP0011', format='Connection lost')
 
 class HoneyPotSSHSession(session.SSHSession):
 

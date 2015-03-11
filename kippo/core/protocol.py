@@ -60,8 +60,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
             s.close()
 
     # this is only called on explicit logout, not on disconnect
+    # this indicates the closing of the channel/session, not the closing of the connection
     def connectionLost(self, reason):
-        log.msg( eventid='KIPP0011', format='Connection lost')
+        pass
+        #log.msg( eventid='KIPP0013', format='Session closed')
         # not sure why i need to do this:
         # scratch that, these don't seem to be necessary anymore:
         #del self.fs
