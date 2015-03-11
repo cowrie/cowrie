@@ -12,6 +12,7 @@ from twisted.python import log
 
 import honeypot
 import ttylog
+import utils
 from config import config
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
@@ -40,7 +41,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.realClientIP = transport.transport.getPeer().host
         self.realClientPort = transport.transport.getPeer().port
         self.clientVersion = transport.otherVersionString
-        self.logintime = transport.logintime
+        self.logintime = time.time()
 
         # source IP of client in user visible reports (can be fake or real)
         cfg = config()
@@ -176,9 +177,19 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         except:
             pass
 
+    def lastlogExit(self):
+        starttime = time.strftime('%a %b %d %H:%M',
+            time.localtime(self.logintime))
+        endtime = time.strftime('%H:%M',
+            time.localtime(time.time()))
+        duration = utils.durationHuman(time.time() - self.logintime)
+        utils.addToLastlog('root\tpts/0\t%s\t%s - %s (%s)' % \
+            (self.clientIP, starttime, endtime, duration))
+
     # this doesn't seem to be called upon disconnect, so please use
     # HoneyPotTransport.connectionLost instead
     def connectionLost(self, reason):
+        self.lastlogExit()
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
 

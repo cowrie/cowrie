@@ -21,7 +21,6 @@ from twisted.conch.ssh.common import NS, getNS
 
 import ConfigParser
 
-import utils
 import fs
 import sshserver
 import auth
@@ -184,7 +183,6 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
     """
 
     def connectionMade(self):
-        self.logintime = time.time()
         self.transportId = uuid.uuid4().hex[:8]
         self.interactors = []
 
@@ -227,16 +225,6 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
 
         return sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
-    def lastlogExit(self):
-        starttime = time.strftime('%a %b %d %H:%M',
-            time.localtime(self.logintime))
-        endtime = time.strftime('%H:%M',
-            time.localtime(time.time()))
-        duration = utils.durationHuman(time.time() - self.logintime)
-        clientIP = self.transport.getPeer().host
-        utils.addToLastlog('root\tpts/0\t%s\t%s - %s (%s)' % \
-            (clientIP, starttime, endtime, duration))
-
     # this seems to be the only reliable place of catching lost connection
     def connectionLost(self, reason):
         log.msg( "Connection Lost in SSH Transport" )
@@ -244,7 +232,6 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
             i.sessionClosed()
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
-        self.lastlogExit()
         sshserver.KippoSSHServerTransport.connectionLost(self, reason)
 
 class HoneyPotSSHSession(session.SSHSession):
