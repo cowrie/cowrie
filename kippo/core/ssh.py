@@ -320,7 +320,6 @@ class HoneyPotAvatar(avatar.ConchUser):
                 'exec_enabled not enabled in configuration file!')
             return
 
-        log.msg( 'exec command: "%s"' % cmd )
         serverProtocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, self.env, cmd)
         self.protocol = serverProtocol
