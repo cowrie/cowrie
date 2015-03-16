@@ -128,12 +128,13 @@ class fseditCmd(cmd.Cmd):
 
         longls = False
 
+        if args.startswith('-l'):
+            longls = True
+            args = args[3:]
+
         if not len(args):
             path = self.pwd
         else:
-            if args.startswith('-l'):
-                longls = True
-                args = args[3:]
             path = resolve_reference(self.pwd, args)
 
         if exists(self.fs, path) == False:
