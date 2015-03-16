@@ -123,13 +123,18 @@ class fseditCmd(cmd.Cmd):
         return True
 
     def do_ls(self, args):
-        '''Prints the contents of a directory.
+        '''Prints the contents of a directory, use ls -l to list in long format
         Prints the current directory if no arguments are specified'''
+
+        longls = False
 
         if not len(args):
             path = self.pwd
         else:
-            path = resolve_reference(self.pwd,args)
+            if args.startswith('-l'):
+                longls = True
+                args = args[3:]
+            path = resolve_reference(self.pwd, args)
 
         if exists(self.fs, path) == False:
             print "ls: cannot access %s: No such file or directory" % (path,)
@@ -140,12 +145,67 @@ class fseditCmd(cmd.Cmd):
             return
 
         cwd = getpath(self.fs, path)
+        files = cwd[A_CONTENTS];
+        files.sort()
 
-        for file in cwd[A_CONTENTS]:
+        largest = 0
+        if len(files):
+            largest = max([x[A_SIZE] for x in files])
+
+        for file in files:
+
+            if not longls:
+                if file[A_TYPE] == T_DIR:
+                    print file[A_NAME] + '/'
+                else:
+                    print file[A_NAME]
+                continue
+
+            perms = ['-'] * 10
+
+            if file[A_MODE] & S_IRUSR: perms[1] = 'r'
+            if file[A_MODE] & S_IWUSR: perms[2] = 'w'
+            if file[A_MODE] & S_IXUSR: perms[3] = 'x'
+
+            if file[A_MODE] & S_IRGRP: perms[4] = 'r'
+            if file[A_MODE] & S_IWGRP: perms[5] = 'w'
+            if file[A_MODE] & S_IXGRP: perms[6] = 'x'
+
+            if file[A_MODE] & S_IROTH: perms[7] = 'r'
+            if file[A_MODE] & S_IWOTH: perms[8] = 'w'
+            if file[A_MODE] & S_IXOTH: perms[9] = 'x'
+
+            linktarget = ''
+
             if file[A_TYPE] == T_DIR:
-                print file[A_NAME] + '/'
+                perms[0] = 'd'
+            elif file[A_TYPE] == T_LINK:
+                perms[0] = 'l'
+                linktarget = ' -> %s' % (file[A_TARGET],)
+
+            perms = ''.join(perms)
+            ctime = time.localtime(file[A_CTIME])
+            uid=file[A_UID]
+            gid=file[A_GID]
+
+            if uid == 0:
+                uid = 'root'
             else:
-                print file[A_NAME]
+                uid=str(uid).rjust(4)
+
+            if gid == 0:
+                gid = 'root'
+            else:
+                gid=str(gid).rjust(4)
+
+            print '%s 1 %s %s %s %s %s%s' % \
+                (perms,
+                uid,
+                gid,
+                str(file[A_SIZE]).rjust(len(str(largest))),
+                time.strftime('%Y-%m-%d %H:%M', ctime),
+                file[A_NAME],
+                linktarget)
 
     def update_pwd(self, directory):
         self.pwd = directory
