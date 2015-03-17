@@ -56,6 +56,23 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 
+    # Overridden to pass src_ip to auth.UsernamePasswordIP
+    def auth_password(self, packet):
+        password = getNS(packet[1:])[0]
+        c = auth.UsernamePasswordIP(self.user, password, self.transport.src_ip)
+        return self.portal.login(c, None, conchinterfaces.IConchUser).addErrback(
+                                                        self._ebPassword)
+
+    # Overridden to pass src_ip to auth.PlubbableAuthenticationModulesIP
+    def auth_keyboard_interactive(self, packet):
+        if self._pamDeferred is not None:
+            self.transport.sendDisconnect(
+                    transport.DISCONNECT_PROTOCOL_ERROR,
+                    "only one keyboard interactive attempt at a time")
+            return defer.fail(error.IgnoreAuthentication())
+        c = auth.PluggableAuthenticationModulesIP(self.user, self._pamConv, self.transport.src_ip)
+        return self.portal.login(c, None, conchinterfaces.IConchUser)
+
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
     services = {
@@ -185,6 +202,8 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
     def connectionMade(self):
         self.transportId = uuid.uuid4().hex[:8]
         self.interactors = []
+        # store src_ip to use in HoneyPotSSHUserAuthServer
+        self.src_ip=self.transport.getPeer().host
 
         log.msg( eventid='KIPP0001',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
