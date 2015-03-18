@@ -157,13 +157,13 @@ class AuthRandom(object):
             json.dump(data, fp)
 
     def checklogin(self, thelogin, thepasswd, src_ip):
-        '''Every new source IP will have to try a random number of times between mintry'''
-        '''and maxtry before succeeding to login'''
-        '''All username/password combinations  must be different'''
-        '''The successful login combination is stored with the IP address'''
-        '''Successful username/passwords combo's are also cached for maxcache times'''
-        '''This is to allow access for returns from different IP addresses'''
-        '''Variables are saved in the uservar.json in the data directory'''
+        '''Every new source IP will have to try a random number of times between'''
+        ''''mintry' and 'maxtry' before succeeding to login.'''
+        '''All username/password combinations  must be different.'''
+        '''The successful login combination is stored with the IP address.'''
+        '''Successful username/passwords pairs are also cached for 'maxcache' times.'''
+        '''This is to allow access for returns from different IP addresses.'''
+        '''Variables are saved in 'uservar.json' in the data directory.'''
         auth = False
         userpass = thelogin + ':' + thepasswd
 
