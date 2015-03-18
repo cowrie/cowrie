@@ -59,7 +59,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     # Overridden to pass src_ip to auth.UsernamePasswordIP
     def auth_password(self, packet):
         password = getNS(packet[1:])[0]
-        c = auth.UsernamePasswordIP(self.user, password, self.transport.src_ip)
+        src_ip = self.transport.getPeer().address.host
+        c = auth.UsernamePasswordIP(self.user, password, src_ip)
         return self.portal.login(c, None, conchinterfaces.IConchUser).addErrback(
                                                         self._ebPassword)
 
