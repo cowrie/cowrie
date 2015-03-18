@@ -70,7 +70,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                     transport.DISCONNECT_PROTOCOL_ERROR,
                     "only one keyboard interactive attempt at a time")
             return defer.fail(error.IgnoreAuthentication())
-        src_ip=self.transport.getPeer().address.host
+        src_ip = self.transport.getPeer().address.host
         c = auth.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
         return self.portal.login(c, None, conchinterfaces.IConchUser)
 
