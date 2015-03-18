@@ -4,6 +4,7 @@
 import string
 import json
 from os import path
+from sys import modules
 from random import randint
 
 from zope.interface import implementer
@@ -122,13 +123,23 @@ class AuthRandom(object):
     Users will be authenticated after a random number of attempts.
     """
 
-    def __init__(self, mintry = 2, maxtry = 5, maxcache = 10):
-        self.mintry, self.maxtry, self.maxcache = mintry, maxtry, maxcache
+    def __init__(self, parameters):
+        # Default values
+        self.mintry, self.maxtry, self.maxcache = 2, 5, 10
+        parlist = parameters.split(',')
+
+        if len(parlist) == 3:
+            self.mintry = int(parlist[0])
+            self.maxtry = int(parlist[1])
+            self.maxcache = int(parlist[2])
+        if self.maxtry < self.mintry:
+            self.maxtry = self.mintry + 1
+            log.msg('maxtry < mintry, adjusting maxtry to: %d' % self.maxtry)
         self.uservar = {}
         self.loadvars()
 
     def loadvars(self):
-        # load user vars from json file
+        # Load user vars from json file
         uservar_file = '%s/uservar.json' % (config().get('honeypot', 'data_path'))
         if path.isfile(uservar_file):
             with open(uservar_file, 'rb') as fp:
@@ -138,7 +149,7 @@ class AuthRandom(object):
                     self.uservar = {}
 
     def savevars(self):
-        # save the user vars to json file
+        # Save the user vars to json file
         uservar_file = '%s/uservar.json' % (config().get('honeypot', 'data_path'))
         data = self.uservar
         # Note: this is subject to races between kippo logins
@@ -166,7 +177,7 @@ class AuthRandom(object):
             ipinfo = self.uservar[src_ip]
             ipinfo['try'] = 0
             if userpass in cache:
-                log.msg('First time for %s, found cached: %s' % (src_ip, userpass))
+                log.msg('first time for %s, found cached: %s' % (src_ip, userpass))
                 ipinfo['max'] = 1
                 ipinfo['user'] = thelogin
                 ipinfo['pw'] = thepasswd
@@ -175,7 +186,7 @@ class AuthRandom(object):
                 return auth
             else:
                 ipinfo['max'] = randint(self.mintry, self.maxtry)
-                log.msg('First time for %s, need: %d' % (src_ip, ipinfo['max']))
+                log.msg('first time for %s, need: %d' % (src_ip, ipinfo['max']))
 
         ipinfo = self.uservar[src_ip]
 
@@ -187,16 +198,16 @@ class AuthRandom(object):
         if not 'tried' in ipinfo:
             ipinfo['tried'] = []
 
-        # Don't count repeated username/password combo's
+        # Don't count repeated username/password combinations
         if userpass in ipinfo['tried']:
-            log.msg('Already tried this combo')
+            log.msg('already tried this combination')
             self.savevars()
             return auth
 
         ipinfo['try'] += 1
         attempts = ipinfo['try']
         need = ipinfo['max']
-        log.msg('Login attempt: %d' % attempts)
+        log.msg('login attempt: %d' % attempts)
 
         # Check if enough login attempts are tried
         if attempts < need:
@@ -211,11 +222,11 @@ class AuthRandom(object):
         # Returning after successful login
         elif attempts > need:
             if not 'user' in ipinfo or not 'pw' in ipinfo:
-                log.msg('Return, but username or password not set!!!')
+                log.msg('return, but username or password not set!!!')
                 ipinfo['tried'].append(userpass)
                 ipinfo['try'] = 1
             else:
-                log.msg('Login return, expect: [%s/%s]' % (ipinfo['user'], ipinfo['pw']))
+                log.msg('login return, expect: [%s/%s]' % (ipinfo['user'], ipinfo['pw']))
                 if thelogin == ipinfo['user'] and thepasswd == ipinfo['pw']:
                     auth = True
         self.savevars()
@@ -285,28 +296,35 @@ class HoneypotPasswordChecker:
         return defer.fail(UnauthorizedLogin())
 
     def checkUserPass(self, theusername, thepassword, ip):
-        authname=UserDB
+        #  UserDB is the default auth_class
+        authname = UserDB
+        parameters = None
 
+        # Is the auth_class defined in the config file?
         if config().has_option('honeypot', 'auth_class'):
             authclass = config().get('honeypot', 'auth_class')
-            if authclass == 'AuthRandom':
-                authname = AuthRandom
 
-        if config().has_option('honeypot', 'auth_class_parameters'):
-            parameters = config().get('honeypot', 'auth_class_parameters')
-            mintry, maxtry, maxcache  = parameters.split(',')
-            theauth = authname(int(mintry), int(maxtry), int(maxcache))
+            # Check if authclass exists in this module
+            if hasattr(modules[__name__], authclass):
+                authname = getattr(modules[__name__], authclass)
+
+                # Are there auth_class parameters?
+                if config().has_option('honeypot', 'auth_class_parameters'):
+                    parameters = config().get('honeypot', 'auth_class_parameters')
+            else:
+                log.msg('auth_class: %s not found in %s' % (authclass, __name__))
+
+        if parameters:
+            theauth = authname(parameters)
         else:
             theauth = authname()
 
         if theauth.checklogin(theusername, thepassword, ip):
-            # log.msg( 'login attempt [%s/%s] succeeded' % (theusername, thepassword) )
             log.msg(eventid='KIPP0002',
                 format='login attempt [%(username)s/%(password)s] succeeded',
                 username=theusername, password=thepassword)
             return True
         else:
-            # log.msg( 'login attempt [%s/%s] failed' % (theusername, thepassword) )
             log.msg(eventid='KIPP0003',
                 format='login attempt [%(username)s/%(password)s] failed',
                 username=theusername, password=thepassword)
