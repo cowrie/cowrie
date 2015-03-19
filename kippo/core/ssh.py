@@ -59,19 +59,19 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     # Overridden to pass src_ip to auth.UsernamePasswordIP
     def auth_password(self, packet):
         password = getNS(packet[1:])[0]
-        src_ip = self.transport.getPeer().address.host
+        src_ip = self.transport.transport.getPeer().host
         c = auth.UsernamePasswordIP(self.user, password, src_ip)
         return self.portal.login(c, None, conchinterfaces.IConchUser).addErrback(
                                                         self._ebPassword)
 
-    # Overridden to pass src_ip to auth.PlubbableAuthenticationModulesIP
+    # Overridden to pass src_ip to auth.PluggableAuthenticationModulesIP
     def auth_keyboard_interactive(self, packet):
         if self._pamDeferred is not None:
             self.transport.sendDisconnect(
                     transport.DISCONNECT_PROTOCOL_ERROR,
                     "only one keyboard interactive attempt at a time")
             return defer.fail(error.IgnoreAuthentication())
-        src_ip = self.transport.getPeer().address.host
+        src_ip = self.transport.transport.getPeer().host
         c = auth.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
         return self.portal.login(c, None, conchinterfaces.IConchUser)
 
