@@ -31,7 +31,9 @@ class UserDB(object):
         self.load()
 
     def load(self):
-        '''load the user db'''
+        """
+        load the user db
+        """
 
         userdb_file = '%s/userdb.txt' % (config().get('honeypot', 'data_path'),)
 
@@ -61,7 +63,9 @@ class UserDB(object):
         f.close()
 
     def save(self):
-        '''save the user db'''
+        """
+        save the user db
+        """
 
         userdb_file = '%s/userdb.txt' % (config().get('honeypot', 'data_path'),)
 
@@ -72,10 +76,12 @@ class UserDB(object):
         f.close()
 
     def checklogin(self, thelogin, thepasswd, src_ip = '0.0.0.0'):
-        '''check entered username/password against database'''
-        '''note that it allows multiple passwords for a single username'''
-        '''it also knows wildcard '*' for any password'''
-        '''prepend password with ! to explicitly deny it. Denials must come before wildcards'''
+        """
+        check entered username/password against database
+        note that it allows multiple passwords for a single username
+        it also knows wildcard '*' for any password
+        prepend password with ! to explicitly deny it. Denials must come before wildcards
+        """
         for (login, uid, passwd) in self.userdb:
             # explicitly fail on !password
             if login == thelogin and passwd == '!' + thepasswd:
@@ -103,7 +109,9 @@ class UserDB(object):
         return 1001
 
     def allocUID(self):
-        '''allocate the next UID'''
+        """
+        allocate the next UID
+        """
 
         min_uid = 0
         for (login, uid, passwd) in self.userdb:
@@ -157,13 +165,16 @@ class AuthRandom(object):
             json.dump(data, fp)
 
     def checklogin(self, thelogin, thepasswd, src_ip):
-        '''Every new source IP will have to try a random number of times between'''
-        ''''mintry' and 'maxtry' before succeeding to login.'''
-        '''All username/password combinations  must be different.'''
-        '''The successful login combination is stored with the IP address.'''
-        '''Successful username/passwords pairs are also cached for 'maxcache' times.'''
-        '''This is to allow access for returns from different IP addresses.'''
-        '''Variables are saved in 'uservar.json' in the data directory.'''
+        """
+        Every new source IP will have to try a random number of times between
+        'mintry' and 'maxtry' before succeeding to login.
+        All username/password combinations  must be different.
+        The successful login combination is stored with the IP address.
+        Successful username/passwords pairs are also cached for 'maxcache' times.
+        This is to allow access for returns from different IP addresses.
+        Variables are saved in 'uservar.json' in the data directory.
+        """
+
         auth = False
         userpass = thelogin + ':' + thepasswd
 
