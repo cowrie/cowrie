@@ -28,6 +28,7 @@ class UserDB(object):
 
     def __init__(self):
         self.userdb = []
+        self.userdb_file = '%s/userdb.txt' % (config().get('honeypot', 'data_path'),)
         self.load()
 
     def load(self):
@@ -35,9 +36,7 @@ class UserDB(object):
         load the user db
         """
 
-        userdb_file = '%s/userdb.txt' % (config().get('honeypot', 'data_path'),)
-
-        f = open(userdb_file, 'r')
+        f = open(self.userdb_file, 'r')
         while True:
             line = f.readline()
             if not line:
@@ -67,10 +66,8 @@ class UserDB(object):
         save the user db
         """
 
-        userdb_file = '%s/userdb.txt' % (config().get('honeypot', 'data_path'),)
-
         # Note: this is subject to races between kippo instances, but hey ...
-        f = open(userdb_file, 'w')
+        f = open(self.userdb_file, 'w')
         for (login, uid, passwd) in self.userdb:
             f.write('%s:%d:%s\n' % (login, uid, passwd))
         f.close()
@@ -144,13 +141,13 @@ class AuthRandom(object):
             self.maxtry = self.mintry + 1
             log.msg('maxtry < mintry, adjusting maxtry to: %d' % self.maxtry)
         self.uservar = {}
+        self.uservar_file = '%s/uservar.json' % (config().get('honeypot', 'data_path'))
         self.loadvars()
 
     def loadvars(self):
         # Load user vars from json file
-        uservar_file = '%s/uservar.json' % (config().get('honeypot', 'data_path'))
-        if path.isfile(uservar_file):
-            with open(uservar_file, 'rb') as fp:
+        if path.isfile(self.uservar_file):
+            with open(self.uservar_file, 'rb') as fp:
                 try:
                     self.uservar = json.load(fp)
                 except:
@@ -158,10 +155,9 @@ class AuthRandom(object):
 
     def savevars(self):
         # Save the user vars to json file
-        uservar_file = '%s/uservar.json' % (config().get('honeypot', 'data_path'))
         data = self.uservar
         # Note: this is subject to races between kippo logins
-        with open(uservar_file, 'wb') as fp:
+        with open(self.uservar_file, 'wb') as fp:
             json.dump(data, fp)
 
     def checklogin(self, thelogin, thepasswd, src_ip):
