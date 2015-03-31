@@ -279,6 +279,14 @@ class HoneyPotSSHSession(session.SSHSession):
     def closed(self):
         session.SSHSession.closed(self)
 
+    # utility function to request to send EOF for this session
+    def sendEOF(self):
+        self.conn.sendEOF(self)
+
+    # utility function to request to send close for this session
+    def sendClose(self):
+        self.conn.sendClose(self)
+
     def loseConnection(self):
         self.conn.sendRequest(self, 'exit-status', "\x00"*4)
         session.SSHSession.loseConnection(self)

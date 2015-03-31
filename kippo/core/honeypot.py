@@ -81,15 +81,15 @@ class HoneyPotShell(object):
             elif self.interactive:
                 self.showPrompt()
             else:
-                # transport.lostConnection is a bit overzealous. maybe close session?
-                self.honeypot.terminal.transport.loseConnection()
+                self.honeypot.terminal.transport.session.sendEOF()
+                self.honeypot.terminal.transport.session.sendClose()
 
         if not len(self.cmdpending):
             if self.interactive:
                 self.showPrompt()
             else:
-                # transport.lostConnection is a bit overzealous. maybe close session?
-                self.honeypot.terminal.transport.loseConnection()
+                self.honeypot.terminal.transport.session.sendEOF()
+                self.honeypot.terminal.transport.session.sendClose()
             return
 
         line = self.cmdpending.pop(0)
