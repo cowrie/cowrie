@@ -463,7 +463,7 @@ class KippoSFTPFile:
         self.bytes_written += len(data)
 
     def getAttrs(self):
-        s = self.server.fs.fstat(self.fd)
+        s = self.server.fs.stat(self.filename)
         return self.server._getAttrs(s)
 
     def setAttrs(self, attrs):
