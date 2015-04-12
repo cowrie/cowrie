@@ -233,14 +233,13 @@ interact_port = 5123
 #[database_textlog]
 #logfile = log/kippo-textlog.log
 
-# JSON based logging module
-[database_jsonlog]
-logfile = log/kippolog.json
+# deprecated JSON based logging module
+#[database_jsonlog]
+#logfile = log/kippolog.json
 
-# EXPERIMENTAL new output module
-#
-#[output_jsonlog]
-#logfile = log/output.json
+# new default output module
+[output_jsonlog]
+logfile = log/kippo.json
 
 #[database_hpfeeds]
 #server = hpfeeds.mysite.org

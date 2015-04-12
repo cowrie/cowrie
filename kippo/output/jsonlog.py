@@ -28,16 +28,22 @@
 
 import abc
 import json
+import os
+
+import twisted.python.logfile
 
 import kippo.core.output
 
 class Output(kippo.core.output.Output):
 
     def start(self, cfg):
-        self.outfile = file(cfg.get('output_jsonlog', 'logfile'), 'a')
+        fn = cfg.get('output_jsonlog', 'logfile')
+        dir = os.path.dirname(fn)
+        base = os.path.basename(fn)
+        self.outfile = twisted.python.logfile.DailyLogFile( base, dir )
 
     def stop(self):
-        pass
+        self.outfile.close()
 
     def write(self, logentry):
         json.dump( logentry,  self.outfile )
