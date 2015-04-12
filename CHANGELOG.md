@@ -1,4 +1,8 @@
 
+* 2015-04-12 JSON output is now default via 'output' plugin mechanism. Rotates daily
+* 2015-04-10 Fix for downloading files via SFTP
+* 2015-03-31 Small tweaks on session close, closing session does not close ssh transport
+* 2015-03-18 Merged 'AuthRandom' login class by Honigbij
 * 2015-02-25 Internals for dblog/ modules changed completely. Now accepts structured logging arguments, and uses eventids instead of regex parsing
 * 2015-02-20 Removed screen clear/reset on logout
 * 2015-02-19 Configuration directives have changed! ssh_addr has become listen_addr and ssh_port has become listen_port. The old keywords are still accepted for backwards compatibility
