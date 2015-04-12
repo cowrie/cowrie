@@ -9,6 +9,8 @@ import re
 import stat
 import errno
 
+from twisted.python import log
+
 from config import config
 
 A_NAME, \
@@ -189,7 +191,7 @@ class HoneyPotFilesystem(object):
             return True
         try:
             dir = self.get_path(os.path.dirname(path))
-        except: 
+        except:
             dir = None
         if dir is None:
             return False
@@ -253,10 +255,13 @@ class HoneyPotFilesystem(object):
             return True
         if self.tempfiles[fd] is not None:
             shasum = hashlib.sha256(open(self.tempfiles[fd], 'rb').read()).hexdigest()
-            print 'SHA sum %s of file %s' % (shasum, self.tempfiles[fd])
-            shasumfile = config().get('honeypot', 'download_path') + "/" + shasum 
-            os.rename(self.tempfiles[fd], shasumfile)
-            os.symlink(shasumfile, self.tempfile[fd])
+            log.msg("SHA sum %s" % (shasum))
+            shasumfile = config().get('honeypot', 'download_path') + "/" + shasum
+            if (os.path.exists(shasumfile)):
+                os.remove(self.tempfiles[fd])
+            else:
+                os.rename(self.tempfiles[fd], shasumfile)
+            os.symlink(shasum, self.tempfiles[fd])
             self.update_realfile( self.getfile(self.filenames[fd]), shasumfile )
             del self.tempfiles[fd]
             del self.filenames[fd]
