@@ -39,16 +39,9 @@ class Output(kippo.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, session, logentry):
-        _meta = {
-                     'session' : session,
-                }
-        logentry.update( _meta )
+    def write(self, logentry):
         json.dump( logentry,  self.outfile )
         self.outfile.write( '\n' )
         self.outfile.flush()
-
-    def handleLog( self, session, event ):
-        self.write( session, event )
 
 # vim: set sw=4 et:
