@@ -21,6 +21,7 @@ import abc
 # KIPP0010 : Terminal Size
 # KIPP0011 : Connection Lost
 # KIPP0012 : TTY log closed
+# KIPP0013 : env var requested
 
 class DBLogger(object):
     __metaclass__ = abc.ABCMeta
@@ -105,7 +106,7 @@ class DBLogger(object):
                 self.events[ev['eventid']]( self.sessions[sessionno], ev )
                 return
 
-        print "error, unknown eventid %s" % repr(ev)
+        pass
 
     def _connectionLost(self, session, args):
         self.handleConnectionLost(session, args)

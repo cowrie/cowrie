@@ -45,6 +45,7 @@ import uuid
 # KIPP0010 : Terminal Size
 # KIPP0011 : Connection Lost
 # KIPP0012 : TTY log closed
+# KIPP0013 : env var requested
 
 class Output(object):
     """

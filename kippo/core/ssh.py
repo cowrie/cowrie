@@ -264,7 +264,7 @@ class HoneyPotSSHSession(session.SSHSession):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg('request_env: %s=%s' % (name, value) )
+        log.msg( eventid='KIPP0013', format='request_env: %(name)s=%(value)s', name=name, value=value )
         return 0
 
     def request_agent(self, data):
