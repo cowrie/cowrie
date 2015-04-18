@@ -12,7 +12,7 @@ from zope.interface import implementer
 import twisted
 from twisted.cred import portal
 from twisted.conch import avatar, interfaces as conchinterfaces
-from twisted.conch.ssh import factory, userauth, connection, keys, session, transport, filetransfer, forwarding
+from twisted.conch.ssh import factory, userauth, keys, session, transport, filetransfer, forwarding
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
 from twisted.python import log, components
@@ -24,6 +24,7 @@ import ConfigParser
 import fs
 import sshserver
 import auth
+import connection
 import honeypot
 import ssh
 import protocol
@@ -79,7 +80,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 class HoneyPotSSHFactory(factory.SSHFactory):
     services = {
         'ssh-userauth': HoneyPotSSHUserAuthServer,
-        'ssh-connection': connection.SSHConnection,
+        'ssh-connection': connection.KippoSSHConnection,
         }
 
     # Special delivery to the loggers to avoid scope problems
@@ -266,13 +267,6 @@ class HoneyPotSSHSession(session.SSHSession):
             raise ValueError("Bad data given in env request")
         log.msg( eventid='KIPP0013', format='request_env: %(name)s=%(value)s', name=name, value=value )
         return 0
-
-    def request_shell(self, data):
-        # workaround specifically for Granados SSH library.
-        # It needs the channel request reply as the first packet after request
-        # Send the request success immediatly
-        self.conn.transport.sendPacket(connection.MSG_CHANNEL_SUCCESS, struct.pack('>L', self.conn.localToRemoteChannel[self.id]))
-        return session.SSHSession.request_shell(self, data)
 
     def request_agent(self, data):
         log.msg('request_agent: %s' % repr(data) )
