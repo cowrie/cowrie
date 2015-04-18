@@ -14,6 +14,7 @@ __all__ = [
     'sleep',
     'last',
     'uname',
+    'scp',
     'fs',
     'malware',
     'netstat',
