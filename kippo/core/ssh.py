@@ -267,6 +267,13 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg( eventid='KIPP0013', format='request_env: %(name)s=%(value)s', name=name, value=value )
         return 0
 
+    def request_shell(self, data):
+        # workaround specifically for Granados SSH library.
+        # It needs the channel request reply as the first packet after request
+        # Send the request success immediatly
+        self.conn.transport.sendPacket(connection.MSG_CHANNEL_SUCCESS, struct.pack('>L', self.conn.localToRemoteChannel[self.id]))
+        return session.SSHSession.request_shell(self, data)
+
     def request_agent(self, data):
         log.msg('request_agent: %s' % repr(data) )
         return 0
