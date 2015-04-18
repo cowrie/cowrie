@@ -6,6 +6,7 @@ __all__ = [
     'ls',
     'ping',
     'ssh',
+    'curl',
     'tar',
     'wget',
     'apt',
