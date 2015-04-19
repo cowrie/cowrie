@@ -8,8 +8,9 @@ import getopt
 import socket
 
 from twisted.python import log
-from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
+
+from kippo.core.honeypot import HoneyPotCommand
 
 commands = {}
 

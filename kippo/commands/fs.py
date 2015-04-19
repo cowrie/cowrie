@@ -2,10 +2,13 @@
 # See the COPYRIGHT file for more information
 
 import os, getopt
+import getopt
 from copy import deepcopy, copy
+
+from twisted.internet import reactor
+
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
-from twisted.internet import reactor
 
 commands = {}
 

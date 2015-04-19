@@ -5,7 +5,6 @@ from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from kippo.core.config import config
 from kippo.core import utils
-import stat, time, anydbm
 
 commands = {}
 

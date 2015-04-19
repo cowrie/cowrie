@@ -1,10 +1,15 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import os, time, anydbm, datetime
-from kippo.core.honeypot import HoneyPotCommand
+import os
+import time
+import anydbm
+import datetime
+
 from twisted.internet import reactor
 from twisted.python import log
+
+from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.config import config
 from kippo.core.auth import UserDB
 from kippo.core import utils

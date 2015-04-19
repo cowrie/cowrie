@@ -7,8 +7,9 @@ import random
 import hashlib
 import socket
 
-from kippo.core.honeypot import HoneyPotCommand
 from twisted.internet import reactor
+
+from kippo.core.honeypot import HoneyPotCommand
 
 commands = {}
 

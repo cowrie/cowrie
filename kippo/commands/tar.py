@@ -1,11 +1,16 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import time
+import random
+import tarfile
+import os
+
 from twisted.python import log
+
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
 from kippo.commands import dice, malware
-import time, random, tarfile, os
 
 commands = {}
 

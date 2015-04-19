@@ -1,12 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from kippo.core.honeypot import HoneyPotCommand
-from kippo.core.fs import *
-from twisted.web import client
-from twisted.internet import reactor
-from twisted.python import log
-
 import stat
 import time
 import urlparse
@@ -16,6 +10,13 @@ import exceptions
 import os
 import getopt
 import hashlib
+
+from twisted.web import client
+from twisted.internet import reactor
+from twisted.python import log
+
+from kippo.core.honeypot import HoneyPotCommand
+from kippo.core.fs import *
 
 commands = {}
 

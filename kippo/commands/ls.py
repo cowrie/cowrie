@@ -1,9 +1,11 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import stat
+import time
+
 from kippo.core.honeypot import HoneyPotCommand
 from kippo.core.fs import *
-import stat, time
 
 commands = {}
 
