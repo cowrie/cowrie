@@ -1,12 +1,6 @@
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
-import time
-import re
-import getopt
 import socket
-import random
-
-from twisted.internet import reactor
 
 from kippo.core.honeypot import HoneyPotCommand
 

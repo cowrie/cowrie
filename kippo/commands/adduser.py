@@ -2,10 +2,8 @@
 # See the COPYRIGHT file for more information
 
 import random
-import re
 
-from twisted.internet import reactor, defer
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet import reactor
 
 from kippo.core.honeypot import HoneyPotCommand
 

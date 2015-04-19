@@ -1,10 +1,8 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import stat
 import time
 import urlparse
-import random
 import re
 import exceptions
 import os

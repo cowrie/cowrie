@@ -2,8 +2,6 @@
 
 import optparse
 
-from twisted.internet import reactor
-
 from kippo.core.honeypot import HoneyPotCommand
 
 commands = {}
