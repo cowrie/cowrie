@@ -89,7 +89,15 @@ class command_w(HoneyPotCommand):
             self.honeypot.clientIP[:17].ljust(17),
             time.strftime('%H:%M', time.localtime(self.honeypot.logintime))))
 commands['/usr/bin/w'] = command_w
-commands['/usr/bin/who'] = command_w
+
+class command_who(HoneyPotCommand):
+    def call(self):
+        self.writeln('%-8s pts/0        %s %s (%s)' % \
+            (self.honeypot.user.username,
+            time.strftime('%Y-%m-%d', time.localtime(self.honeypot.logintime)),
+            time.strftime('%H:%M', time.localtime(self.honeypot.logintime)),
+            self.honeypot.clientIP))
+commands['/usr/bin/who'] = command_who
 
 class command_echo(HoneyPotCommand):
     def call(self):
