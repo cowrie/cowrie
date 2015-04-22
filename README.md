@@ -10,7 +10,7 @@ Some interesting features:
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can 'cat' files such as /etc/passwd. Only minimal file contents are included
 * Session logs stored in an [UML Compatible](http://user-mode-linux.sourceforge.net/)  format for easy replay with original timings
-* Just like Kojoney, Kippo saves files downloaded with wget for later inspection
+* Kippo saves files downloaded with wget or uploaded with SFTP for later inspection
 
 ## Requirements
 
@@ -53,4 +53,4 @@ Maybe. See [FAQ](https://github.com/desaster/kippo/wiki/FAQ)
 
 ## I have some questions!
 
-I ~~am~~ _might be_ reachable via e-mail: *desaster* at *gmail* dot *com*, or as *desaster* on the *#honeypots* channel in the *freenode* IRC network.
+Please visit https://github.com/micheloosterhof/kippo/issues
