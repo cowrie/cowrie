@@ -164,7 +164,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         t.supportedPublicKeys = self.privateKeys.keys()
 
         try:
-            self.primes = primes.parseModuliFile(moduli)
+            self.primes = primes.parseModuliFile(_moduli)
         except IOError as err:
             log.err(err)
 
