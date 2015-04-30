@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import twisted
 import os
 import shlex
 import re
@@ -11,7 +10,6 @@ import pickle
 from twisted.python import log
 
 import fs
-import exceptions
 from config import config
 
 class HoneyPotCommand(object):

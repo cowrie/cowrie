@@ -9,11 +9,9 @@ from random import randint
 
 from zope.interface import implementer
 
-import twisted
-
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword, ISSHPrivateKey, \
-    IPluggableAuthenticationModules, ICredentials
+    IPluggableAuthenticationModules
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 
 from twisted.internet import defer

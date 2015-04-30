@@ -5,7 +5,6 @@ import os
 import copy
 import time
 import uuid
-import struct
 
 from zope.interface import implementer
 
@@ -26,7 +25,6 @@ import sshserver
 import auth
 import connection
 import honeypot
-import ssh
 import protocol
 import sshserver
 import exceptions
