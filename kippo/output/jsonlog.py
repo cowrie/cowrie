@@ -35,7 +35,7 @@ import kippo.core.output
 
 class Output(kippo.core.output.Output):
 
-    def __init__(self):
+    def __init__(self, cfg):
         self.outfile = None
 
     def start(self, cfg):
