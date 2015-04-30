@@ -121,23 +121,23 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         # load new output modules
         self.output_plugins = [];
         for x in cfg.sections():
-             if not x.startswith('output_'):
-                 continue
-             engine = x.split('_')[1]
-             output = 'output_' + engine
-             lcfg = ConfigParser.ConfigParser()
-             lcfg.add_section(output)
-             for i in cfg.options(x):
-                 lcfg.set(output, i, cfg.get(x, i))
-             lcfg.add_section('honeypot')
-             for i in cfg.options('honeypot'):
-                 lcfg.set('honeypot', i, cfg.get('honeypot', i))
-             log.msg('Loading output engine: %s' % (engine,))
-             output = __import__(
-             'kippo.output.%s' % (engine,),
-             globals(), locals(), ['output']).Output(lcfg)
-             log.startLoggingWithObserver(output.emit, setStdout=False)
-             self.output_plugins.append(output)
+            if not x.startswith('output_'):
+                continue
+            engine = x.split('_')[1]
+            output = 'output_' + engine
+            lcfg = ConfigParser.ConfigParser()
+            lcfg.add_section(output)
+            for i in cfg.options(x):
+                lcfg.set(output, i, cfg.get(x, i))
+            lcfg.add_section('honeypot')
+            for i in cfg.options('honeypot'):
+                lcfg.set('honeypot', i, cfg.get('honeypot', i))
+            log.msg('Loading output engine: %s' % (engine,))
+            output = __import__(
+                'kippo.output.%s' % (engine,)
+                ,globals(), locals(), ['output']).Output(lcfg)
+            log.startLoggingWithObserver(output.emit, setStdout=False)
+            self.output_plugins.append(output)
 
     def buildProtocol(self, addr):
         """

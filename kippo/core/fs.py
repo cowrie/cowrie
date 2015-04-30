@@ -104,7 +104,7 @@ class HoneyPotFilesystem(object):
                     ok = True
                     break
             if not ok:
-               raise FileNotFound
+                raise FileNotFound
         return cwd[A_CONTENTS]
 
     def exists(self, path):
