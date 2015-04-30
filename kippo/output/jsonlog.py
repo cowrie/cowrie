@@ -36,13 +36,14 @@ import kippo.core.output
 class Output(kippo.core.output.Output):
 
     def __init__(self, cfg):
-        self.outfile = None
-
-    def start(self, cfg):
+        kippo.core.output.Output.__init__(self, cfg)
         fn = cfg.get('output_jsonlog', 'logfile')
-        dir = os.path.dirname(fn)
+        dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
-        self.outfile = twisted.python.logfile.DailyLogFile(base, dir)
+        self.outfile = twisted.python.logfile.DailyLogFile(base, dirs)
+
+    def start(self):
+        pass
 
     def stop(self):
         self.outfile.close()
