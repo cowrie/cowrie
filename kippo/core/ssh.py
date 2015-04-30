@@ -237,7 +237,7 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         log.msg('KEXINIT: client supported compression: %s' % compCS)
         log.msg('KEXINIT: client supported lang: %s' % langCS)
 
-        log.msg(eventid='KIPP0009', version=self.otherVersionString, 
+        log.msg(eventid='KIPP0009', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, format='Remote SSH version: %(version)s')
 
