@@ -120,7 +120,7 @@ class Interact(telnet.Telnet):
                 session.realClientIP.ljust(15),
                 session.clientVersion))
 
-    def cmd_help(self, args = ''):
+    def cmd_help(self, args=''):
         self.transport.write('List of commands:\r\n')
         self.transport.write(' list       - list all active sessions\r\n')
         self.transport.write(
@@ -146,7 +146,7 @@ class Interact(telnet.Telnet):
                 return
         self.transport.write('** No such session found.\r\n')
 
-    def cmd_exit(self, args = ''):
+    def cmd_exit(self, args=''):
         self.transport.loseConnection()
 
 def makeInteractFactory(honeypotFactory):

@@ -44,7 +44,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         try:
             honeyfs = cfg.get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
-            data = file( issuefile ).read()
+            data = file(issuefile).read()
         except IOError:
             return
         if not data or not len(data.strip()):
@@ -113,7 +113,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             lcfg.add_section('honeypot')
             for i in cfg.options('honeypot'):
                 lcfg.set('honeypot', i, cfg.get('honeypot', i))
-            log.msg( 'Loading dblog engine: %s' % (engine,) )
+            log.msg('Loading dblog engine: %s' % (engine,))
             dblogger = __import__(
                 'kippo.dblog.%s' % (engine,),
                 globals(), locals(), ['dblog']).DBLogger(lcfg)
@@ -134,7 +134,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
              lcfg.add_section('honeypot')
              for i in cfg.options('honeypot'):
                  lcfg.set('honeypot', i, cfg.get('honeypot', i))
-             log.msg( 'Loading output engine: %s' % (engine,) )
+             log.msg('Loading output engine: %s' % (engine,))
              output = __import__(
              'kippo.output.%s' % (engine,),
              globals(), locals(), ['output']).Output(lcfg)
@@ -159,27 +159,27 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         t = HoneyPotTransport()
 
         if cfg.has_option('honeypot', 'ssh_version_string'):
-            t.ourVersionString = cfg.get('honeypot','ssh_version_string')
+            t.ourVersionString = cfg.get('honeypot', 'ssh_version_string')
         else:
             t.ourVersionString = "SSH-2.0-OpenSSH_5.1p1 Debian-5"
 
         t.supportedPublicKeys = self.privateKeys.keys()
 
         try:
-            self.primes = primes.parseModuliFile( _moduli )
+            self.primes = primes.parseModuliFile(moduli)
         except IOError as err:
-            log.err( err )
+            log.err(err)
 
         if not self.primes:
-            log.msg( "Disabling diffie-hellman-group-exchange-sha1" )
+            log.msg("Disabling diffie-hellman-group-exchange-sha1")
             ske = t.supportedKeyExchanges[:]
             ske.remove('diffie-hellman-group-exchange-sha1')
             t.supportedKeyExchanges = ske
 
         # reorder supported ciphers to resemble current openssh more
-        t.supportedCiphers = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', '3des-cbc', 'blowfish-cbc', 'cast128-cbc', 'aes192-cbc', 'aes256-cbc' ]
+        t.supportedCiphers = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', '3des-cbc', 'blowfish-cbc', 'cast128-cbc', 'aes192-cbc', 'aes256-cbc']
         t.supportedPublicKeys = ['ssh-rsa', 'ssh-dss']
-        t.supportedMACs = [ 'hmac-md5', 'hmac-sha1']
+        t.supportedMACs = ['hmac-md5', 'hmac-sha1']
 
         t.factory = self
         return t
@@ -206,11 +206,11 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         self.transportId = uuid.uuid4().hex[:8]
         self.interactors = []
 
-        log.msg( eventid='KIPP0001',
+        log.msg(eventid='KIPP0001',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
            src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           sessionno=self.transport.sessionno )
+           sessionno=self.transport.sessionno)
 
         sshserver.KippoSSHServerTransport.connectionMade(self)
 
@@ -232,16 +232,16 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         k = getNS(packet[16:], 10)
         strings, rest = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS, langSC) = [s.split(',') for s in strings]
-        log.msg('KEXINIT: client supported key exchange: %s' % kexAlgs )
-        log.msg('KEXINIT: client supported public keys: %s' % keyAlgs )
-        log.msg('KEXINIT: client supported encryption: %s' % encCS )
-        log.msg('KEXINIT: client supported MAC: %s' % macCS )
-        log.msg('KEXINIT: client supported compression: %s' % compCS )
-        log.msg('KEXINIT: client supported lang: %s' % langCS )
+        log.msg('KEXINIT: client supported key exchange: %s' % kexAlgs)
+        log.msg('KEXINIT: client supported public keys: %s' % keyAlgs)
+        log.msg('KEXINIT: client supported encryption: %s' % encCS)
+        log.msg('KEXINIT: client supported MAC: %s' % macCS)
+        log.msg('KEXINIT: client supported compression: %s' % compCS)
+        log.msg('KEXINIT: client supported lang: %s' % langCS)
 
-        log.msg( eventid='KIPP0009', version=self.otherVersionString, 
+        log.msg(eventid='KIPP0009', version=self.otherVersionString, 
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
-            compCS=compCS, format='Remote SSH version: %(version)s' )
+            compCS=compCS, format='Remote SSH version: %(version)s')
 
         return sshserver.KippoSSHServerTransport.ssh_KEXINIT(self, packet)
 
@@ -252,7 +252,7 @@ class HoneyPotTransport(sshserver.KippoSSHServerTransport):
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
         sshserver.KippoSSHServerTransport.connectionLost(self, reason)
-        log.msg( eventid='KIPP0011', format='Connection lost')
+        log.msg(eventid='KIPP0011', format='Connection lost')
 
 class HoneyPotSSHSession(session.SSHSession):
 
@@ -265,15 +265,15 @@ class HoneyPotSSHSession(session.SSHSession):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg( eventid='KIPP0013', format='request_env: %(name)s=%(value)s', name=name, value=value )
+        log.msg(eventid='KIPP0013', format='request_env: %(name)s=%(value)s', name=name, value=value)
         return 0
 
     def request_agent(self, data):
-        log.msg('request_agent: %s' % repr(data) )
+        log.msg('request_agent: %s' % repr(data))
         return 0
 
     def request_x11_req(self, data):
-        log.msg('request_x11: %s' % repr(data) )
+        log.msg('request_x11: %s' % repr(data))
         return 0
 
     # this is reliably called on session close/disconnect and calls the avatar
@@ -297,7 +297,7 @@ class HoneyPotSSHSession(session.SSHSession):
         session.SSHSession.loseConnection(self)
 
     def channelClosed(self):
-        log.msg( "Called channelClosed in SSHSession")
+        log.msg("Called channelClosed in SSHSession")
 
 # FIXME: recent twisted conch avatar.py uses IConchuser here
 @implementer(conchinterfaces.ISession)
@@ -316,7 +316,7 @@ class HoneyPotAvatar(avatar.ConchUser):
 
         # sftp support enabled only when option is explicitly set
         if self.env.cfg.has_option('honeypot', 'sftp_enabled'):
-            if ( self.env.cfg.get('honeypot', 'sftp_enabled') == "true" ):
+            if (self.env.cfg.get('honeypot', 'sftp_enabled') == "true"):
                 self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
 
         self.uid = self.gid = auth.UserDB().getUID(self.username)
@@ -335,9 +335,9 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.protocol = proto
 
     def getPty(self, terminal, windowSize, attrs):
-        #log.msg( 'Terminal size: %s %s' % windowSize[0:2] )
-        log.msg( eventid='KIPP0010', width=windowSize[0], height=windowSize[1],
-            format='Terminal Size: %(width)s %(height)s' )
+        #log.msg('Terminal size: %s %s' % windowSize[0:2])
+        log.msg(eventid='KIPP0010', width=windowSize[0], height=windowSize[1],
+            format='Terminal Size: %(width)s %(height)s')
 
         self.windowSize = windowSize
         return None
@@ -347,7 +347,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         if not cfg.has_option('honeypot', 'exec_enabled') or \
                 cfg.get('honeypot', 'exec_enabled').lower() not in \
                     ('yes', 'true', 'on'):
-            log.msg( 'Exec disabled. Not executing command: "%s"' % cmd )
+            log.msg('Exec disabled. Not executing command: "%s"' % cmd)
             raise exceptions.NotEnabledException(
                 'exec_enabled not enabled in configuration file!')
             return
@@ -376,7 +376,7 @@ def getRSAKeys():
     public_key = cfg.get('honeypot', 'rsa_public_key')
     private_key = cfg.get('honeypot', 'rsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
-        log.msg( "Generating new RSA keypair..." )
+        log.msg("Generating new RSA keypair...")
         from Crypto.PublicKey import RSA
         from twisted.python import randbytes
         KEY_LENGTH = 2048
@@ -399,7 +399,7 @@ def getDSAKeys():
     public_key = cfg.get('honeypot', 'dsa_public_key')
     private_key = cfg.get('honeypot', 'dsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
-        log.msg( "Generating new DSA keypair..." )
+        log.msg("Generating new DSA keypair...")
         from Crypto.PublicKey import DSA
         from twisted.python import randbytes
         KEY_LENGTH = 1024
@@ -455,7 +455,7 @@ class KippoSFTPFile:
             self.contents = self.server.fs.file_contents(self.filename)
 
     def close(self):
-        if ( self.bytes_written > 0 ):
+        if (self.bytes_written > 0):
             self.server.fs.update_size(self.filename, self.bytes_written)
         return self.server.fs.close(self.fd)
 
@@ -531,34 +531,34 @@ class KippoSFTPServer:
         return {}
 
     def openFile(self, filename, flags, attrs):
-        log.msg( "SFTP openFile: %s" % filename )
+        log.msg("SFTP openFile: %s" % filename)
         return KippoSFTPFile(self, self._absPath(filename), flags, attrs)
 
     def removeFile(self, filename):
-        log.msg( "SFTP removeFile: %s" % filename )
+        log.msg("SFTP removeFile: %s" % filename)
         return self.fs.remove(self._absPath(filename))
 
     def renameFile(self, oldpath, newpath):
-        log.msg( "SFTP renameFile: %s %s" % (oldpath, newpath) )
+        log.msg("SFTP renameFile: %s %s" % (oldpath, newpath))
         return self.fs.rename(self._absPath(oldpath), self._absPath(newpath))
 
     def makeDirectory(self, path, attrs):
-        log.msg( "SFTP makeDirectory: %s" % path )
+        log.msg("SFTP makeDirectory: %s" % path)
         path = self._absPath(path)
         self.fs.mkdir2(path)
         self._setAttrs(path, attrs)
         return
 
     def removeDirectory(self, path):
-        log.msg( "SFTP removeDirectory: %s" % path )
+        log.msg("SFTP removeDirectory: %s" % path)
         return self.fs.rmdir(self._absPath(path))
 
     def openDirectory(self, path):
-        log.msg( "SFTP OpenDirectory: %s" % path )
+        log.msg("SFTP OpenDirectory: %s" % path)
         return KippoSFTPDirectory(self, self._absPath(path))
 
     def getAttrs(self, path, followLinks):
-        log.msg( "SFTP getAttrs: %s" % path )
+        log.msg("SFTP getAttrs: %s" % path)
         path = self._absPath(path)
         if followLinks:
             s = self.fs.stat(path)
@@ -567,33 +567,33 @@ class KippoSFTPServer:
         return self._getAttrs(s)
 
     def setAttrs(self, path, attrs):
-        log.msg( "SFTP setAttrs: %s" % path )
+        log.msg("SFTP setAttrs: %s" % path)
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
     def readLink(self, path):
-        log.msg( "SFTP readLink: %s" % path )
+        log.msg("SFTP readLink: %s" % path)
         path = self._absPath(path)
         return self.fs.readlink(path)
 
     def makeLink(self, linkPath, targetPath):
-        log.msg( "SFTP makeLink: %s" % path )
+        log.msg("SFTP makeLink: %s" % path)
         linkPath = self._absPath(linkPath)
         targetPath = self._absPath(targetPath)
         return self.fs.symlink(targetPath, linkPath)
 
     def realPath(self, path):
-        log.msg( "SFTP realPath: %s" % path )
+        log.msg("SFTP realPath: %s" % path)
         return self.fs.realpath(self._absPath(path))
 
     def extendedRequest(self, extName, extData):
         raise NotImplementedError
 
-components.registerAdapter( KippoSFTPServer, HoneyPotAvatar, conchinterfaces.ISFTPServer)
+components.registerAdapter(KippoSFTPServer, HoneyPotAvatar, conchinterfaces.ISFTPServer)
 
 def KippoOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg( "direct-tcp connection attempt to %s:%i" % remoteHP )
+    log.msg("direct-tcp connection attempt to %s:%i" % remoteHP)
     return KippoConnectForwardingChannel(remoteHP,
        remoteWindow=remoteWindow,
        remoteMaxPacket=remoteMaxPacket,
@@ -602,10 +602,10 @@ def KippoOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar
 class KippoConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
     def channelOpen(self, specificData):
-        log.msg( "Faking channel open %s:%i" % self.hostport )
+        log.msg("Faking channel open %s:%i" % self.hostport)
 
     def dataReceived(self, data):
-        log.msg( "received data %s" % repr( data ))
+        log.msg("received data %s" % repr(data))
 
 
 # vim: set et sw=4 et:

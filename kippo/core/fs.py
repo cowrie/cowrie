@@ -116,7 +116,7 @@ class HoneyPotFilesystem(object):
         if not f[A_REALFILE] and os.path.exists(realfile) and \
                 not os.path.islink(realfile) and os.path.isfile(realfile) and \
                 f[A_SIZE] < 25000000:
-            #log.msg( 'Updating realfile to %s' % realfile )
+            #log.msg('Updating realfile to %s' % realfile)
             f[A_REALFILE] = realfile
 
     def realfile(self, f, path):
@@ -140,11 +140,11 @@ class HoneyPotFilesystem(object):
                 if x[A_NAME] == piece][0]
         return p
 
-    def file_contents(self, target, count = 0):
+    def file_contents(self, target, count=0):
         if count > 10:
             raise TooManyLevels
         path = self.resolve_path(target, os.path.dirname(target))
-        #log.msg( '%s resolved into %s' % (target, path) )
+        #log.msg('%s resolved into %s' % (target, path))
         if not path or not self.exists(path):
             raise FileNotFound
         f = self.getfile(path)
@@ -156,7 +156,7 @@ class HoneyPotFilesystem(object):
         if realfile:
             return file(realfile, 'rb').read()
 
-    def mkfile(self, path, uid, gid, size, mode, ctime = None):
+    def mkfile(self, path, uid, gid, size, mode, ctime=None):
         if self.newcount > 10000:
             return False
         if ctime is None:
@@ -170,7 +170,7 @@ class HoneyPotFilesystem(object):
         self.newcount += 1
         return True
 
-    def mkdir(self, path, uid, gid, size, mode, ctime = None):
+    def mkdir(self, path, uid, gid, size, mode, ctime=None):
         if self.newcount > 10000:
             return False
         if ctime is None:
@@ -205,31 +205,31 @@ class HoneyPotFilesystem(object):
     # additions for SFTP support, try to keep functions here similar to os.*
 
     def open(self, filename, openFlags, mode):
-        #log.msg( "fs.open %s" % filename )
+        #log.msg("fs.open %s" % filename)
 
         #if (openFlags & os.O_APPEND == os.O_APPEND):
-        #    log.msg( "fs.open append" )
+        #    log.msg("fs.open append")
 
         #if (openFlags & os.O_CREAT == os.O_CREAT):
-        #    log.msg( "fs.open creat" )
+        #    log.msg("fs.open creat")
 
         #if (openFlags & os.O_TRUNC == os.O_TRUNC):
-        #    log.msg( "fs.open trunc" )
+        #    log.msg("fs.open trunc")
 
         #if (openFlags & os.O_EXCL == os.O_EXCL):
-        #    log.msg( "fs.open excl" )
+        #    log.msg("fs.open excl")
 
         # treat O_RDWR same as O_WRONLY
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # ensure we do not save with executable bit set
             realmode = mode & ~(stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
-            #log.msg( "fs.open wronly" )
+            #log.msg("fs.open wronly")
             tempfile = '%s/%s_%s' % \
                        (config().get('honeypot', 'download_path'),
                     time.strftime('%Y%m%d%H%M%S'),
                     re.sub('[^A-Za-z0-9]', '_', filename))
-            #log.msg( "fs.open file for writing, saving to %s" % safeoutfile )
+            #log.msg("fs.open file for writing, saving to %s" % safeoutfile)
 
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(tempfile, openFlags, realmode)
@@ -262,7 +262,7 @@ class HoneyPotFilesystem(object):
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
             os.symlink(shasum, self.tempfiles[fd])
-            self.update_realfile( self.getfile(self.filenames[fd]), shasumfile )
+            self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
             del self.tempfiles[fd]
             del self.filenames[fd]
         return os.close(fd)
@@ -322,7 +322,7 @@ class HoneyPotFilesystem(object):
         raise notImplementedError
 
     def rename(self, oldpath, newpath):
-        #log.msg( "rename %s to %s" % (oldpath, newpath) )
+        #log.msg("rename %s to %s" % (oldpath, newpath))
         old = self.getfile(oldpath)
         if old == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -342,7 +342,7 @@ class HoneyPotFilesystem(object):
     def lstat(self, path):
         # need to treat / as exception
         if (path == "/"):
-            p = { A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time() }
+            p = {A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time()}
         else:
             p = self.getfile(path)
 
@@ -363,7 +363,7 @@ class HoneyPotFilesystem(object):
 
     def stat(self, path):
         if (path == "/"):
-            p = { A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time() }
+            p = {A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time()}
         else:
             p = self.getfile(path)
 

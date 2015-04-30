@@ -72,7 +72,7 @@ class UserDB(object):
             f.write('%s:%d:%s\n' % (login, uid, passwd))
         f.close()
 
-    def checklogin(self, thelogin, thepasswd, src_ip = '0.0.0.0'):
+    def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
         """
         check entered username/password against database
         note that it allows multiple passwords for a single username

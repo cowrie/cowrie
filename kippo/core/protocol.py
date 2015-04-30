@@ -32,8 +32,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
 
     def logDispatch(self, *msg, **args):
         transport = self.terminal.transport.session.conn.transport
-        args['sessionno']=transport.transport.sessionno
-        transport.factory.logDispatch(*msg,**args)
+        args['sessionno'] = transport.transport.sessionno
+        transport.factory.logDispatch(*msg, **args)
 
     def connectionMade(self):
         transport = self.terminal.transport.session.conn.transport
@@ -71,7 +71,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def txtcmd(self, txt):
         class command_txtcmd(honeypot.HoneyPotCommand):
             def call(self):
-                log.msg( 'Reading txtcmd from "%s"' % txt )
+                log.msg('Reading txtcmd from "%s"' % txt)
                 f = file(txt, 'r')
                 self.write(f.read())
                 f.close()
@@ -122,7 +122,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         transport = self.terminal.transport.session.conn.transport
         transport.interactors.remove(interactor)
 
-    def uptime(self, reset = None):
+    def uptime(self, reset=None):
         transport = self.terminal.transport.session.conn.transport
         r = time.time() - transport.factory.starttime
         if reset:
@@ -247,10 +247,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transport = self.transport.session.conn.transport
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
             (config().get('honeypot', 'log_path'),
-            time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId)
 
         self.ttylog_file = transport.ttylog_file
-        log.msg( eventid='KIPP0004', ttylog=transport.ttylog_file,
+        log.msg(eventid='KIPP0004', ttylog=transport.ttylog_file,
             format='Opening TTY Log: %(ttylog)s')
 
         ttylog.ttylog_open(transport.ttylog_file, time.time())
@@ -258,12 +258,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.stdinlog_file = '%s/%s-%s-stdin.log' % \
             (config().get('honeypot', 'download_path'),
-            time.strftime('%Y%m%d-%H%M%S'), transport.transportId )
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId)
         self.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
 
-    def write(self, bytes, noLog = False):
+    def write(self, bytes, noLog=False):
         transport = self.transport.session.conn.transport
         for i in transport.interactors:
             i.sessionWrite(bytes)
@@ -273,14 +273,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.write(self, bytes)
 
-    def dataReceived(self, data, noLog = False):
+    def dataReceived(self, data, noLog=False):
         transport = self.transport.session.conn.transport
         if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
         if self.stdinlog_open and not noLog:
-            log.msg( "Saving stdin log: %s" % self.stdinlog_file )
-            f = file( self.stdinlog_file, 'ab' )
+            log.msg("Saving stdin log: %s" % self.stdinlog_file)
+            f = file(self.stdinlog_file, 'ab')
             f.write(data)
             f.close
 
@@ -293,10 +293,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
     # FIXME: this method is called 4 times on logout....
     # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
-        # log.msg( "received call to LSP.connectionLost" )
+        # log.msg("received call to LSP.connectionLost")
         transport = self.transport.session.conn.transport
         if self.ttylog_open:
-            log.msg( eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
+            log.msg(eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
                 ttylog=transport.ttylog_file)
             ttylog.ttylog_close(transport.ttylog_file, time.time())
             self.ttylog_open = False

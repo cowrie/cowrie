@@ -84,7 +84,7 @@ class DBLogger(object):
             sessionno = ev['sessionno']
             self.sessions[sessionno] = \
                 self.createSession(
-                    ev['src_ip'], ev['src_port'], ev['dst_ip'], ev['dst_port'] )
+                    ev['src_ip'], ev['src_port'], ev['dst_ip'], ev['dst_port'])
             return
 
         # use explicit sessionno if coming from dispatch
@@ -103,7 +103,7 @@ class DBLogger(object):
 
         if 'eventid' in ev:
             if ev['eventid'] in self.events:
-                self.events[ev['eventid']]( self.sessions[sessionno], ev )
+                self.events[ev['eventid']](self.sessions[sessionno], ev)
                 return
 
         pass
