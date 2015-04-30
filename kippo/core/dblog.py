@@ -36,17 +36,17 @@ class DBLogger(object):
         # KIPP0001 is special since it kicks off new logging session,
         # and is not handled here
         self.events = {
-          'KIPP0002': self.handleLoginSucceeded,
-          'KIPP0003': self.handleLoginFailed,
-          'KIPP0004': self.handleTTYLogOpened,
-          'KIPP0005': self.handleCommand,
-          'KIPP0006': self.handleUnknownCommand,
-          'KIPP0007': self.handleFileDownload,
-          'KIPP0008': self.handleInput,
-          'KIPP0009': self.handleClientVersion,
-          'KIPP0010': self.handleTerminalSize,
-          'KIPP0011': self._connectionLost,
-          'KIPP0012': self.handleTTYLogClosed,
+            'KIPP0002': self.handleLoginSucceeded,
+            'KIPP0003': self.handleLoginFailed,
+            'KIPP0004': self.handleTTYLogOpened,
+            'KIPP0005': self.handleCommand,
+            'KIPP0006': self.handleUnknownCommand,
+            'KIPP0007': self.handleFileDownload,
+            'KIPP0008': self.handleInput,
+            'KIPP0009': self.handleClientVersion,
+            'KIPP0010': self.handleTerminalSize,
+            'KIPP0011': self._connectionLost,
+            'KIPP0012': self.handleTTYLogClosed,
         }
 
         self.start(cfg)
