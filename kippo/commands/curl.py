@@ -77,15 +77,16 @@ class command_curl(HoneyPotCommand):
                     self.exit()
                     return
 
-        outfile = self.fs.resolve_path(outfile, self.honeypot.cwd)
-        path = os.path.dirname(outfile)
-        if not path or \
-                not self.fs.exists(path) or \
-                not self.fs.is_dir(path):
-            self.writeln('curl: %s: Cannot open: No such file or directory' % \
-                outfile)
-            self.exit()
-            return
+        if outfile:
+            outfile = self.fs.resolve_path(outfile, self.honeypot.cwd)
+            path = os.path.dirname(outfile)
+            if not path or \
+                    not self.fs.exists(path) or \
+                    not self.fs.is_dir(path):
+                self.writeln('curl: %s: Cannot open: No such file or directory' % \
+                    outfile)
+                self.exit()
+                return
 
         self.url = url
         self.limit_size = 0
@@ -122,9 +123,9 @@ class command_curl(HoneyPotCommand):
             self.exit()
             return None
 
-        self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
-        self.writeln('Connecting to %s:%d... connected.' % (host, port))
-        self.write('HTTP request sent, awaiting response... ')
+        #self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
+        #self.writeln('Connecting to %s:%d... connected.' % (host, port))
+        #self.write('HTTP request sent, awaiting response... ')
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
@@ -202,7 +203,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
     def gotHeaders(self, headers):
         if self.status == '200':
-            self.curl.writeln('200 OK')
+            #self.curl.writeln('200 OK')
             if headers.has_key('content-length'):
                 self.totallength = int(headers['content-length'][0])
             else:
@@ -213,22 +214,26 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.contenttype = 'text/whatever'
             self.currentlength = 0.0
 
-            if self.totallength > 0:
-                self.curl.writeln('Length: %d (%s) [%s]' % \
-                    (self.totallength,
-                    sizeof_fmt(self.totallength),
-                    self.contenttype))
-            else:
-                self.curl.writeln('Length: unspecified [%s]' % \
-                    (self.contenttype))
+            #if self.totallength > 0:
+            #    self.curl.writeln('Length: %d (%s) [%s]' % \
+            #        (self.totallength,
+            #        sizeof_fmt(self.totallength),
+            #        self.contenttype))
+            #else:
+            #    self.curl.writeln('Length: unspecified [%s]' % \
+            #        (self.contenttype))
+
             if self.curl.limit_size > 0 and \
                     self.totallength > self.curl.limit_size:
                 log.msg( 'Not saving URL (%s) due to file size limit' % \
                     (self.curl.url,) )
                 self.fileName = os.path.devnull
                 self.nomore = True
-            self.curl.writeln('Saving to: `%s' % self.fakeoutfile)
-            self.curl.honeypot.terminal.nextLine()
+            #self.curl.writeln('Saving to: `%s' % self.fakeoutfile)
+            #self.curl.honeypot.terminal.nextLine()
+
+            self.curl.writeln('  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current')
+            self.curl.writeln('                                 Dload  Upload   Total   Spent    Left  Speed')
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
@@ -269,17 +274,24 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def pageEnd(self):
         if self.totallength != 0 and self.currentlength != self.totallength:
             return client.HTTPDownloader.pageEnd(self)
-        self.curl.write('\r100%%[%s] %s %dK/s' % \
-            ('%s>' % (38 * '='),
-            splitthousands(str(int(self.totallength))).ljust(12),
-            self.speed / 1000))
+        #self.curl.write('\r100%%[%s] %s %dK/s' % \
+        #    ('%s>' % (38 * '='),
+        #    splitthousands(str(int(self.totallength))).ljust(12),
+        #    self.speed / 1000))
+        #self.curl.honeypot.terminal.nextLine()
+        #self.curl.honeypot.terminal.nextLine()
+        #self.curl.writeln(
+        #    '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
+        #    (time.strftime('%Y-%m-%d %H:%M:%S'),
+        #    self.speed / 1000,
+        #    self.fakeoutfile, self.currentlength, self.totallength))
+
+        self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
+            ( self.currentlength, self.currentlength  , 63673, 65181 )
+        )
         self.curl.honeypot.terminal.nextLine()
-        self.curl.honeypot.terminal.nextLine()
-        self.curl.writeln(
-            '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
-            (time.strftime('%Y-%m-%d %H:%M:%S'),
-            self.speed / 1000,
-            self.fakeoutfile, self.currentlength, self.totallength))
+
+
         self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
         self.curl.fs.update_realfile(
             self.curl.fs.getfile(self.fakeoutfile),
