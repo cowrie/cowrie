@@ -73,7 +73,7 @@ class command_curl(HoneyPotCommand):
             if opt[0] == '-O':
                 outfile = urldata.path.split('/')[-1]
                 if not len(outfile.strip()) or not urldata.path.count('/'):
-                    self.writeln( 'curl: Remote file name has no length!' )
+                    self.writeln('curl: Remote file name has no length!')
                     self.exit()
                     return
 
@@ -155,14 +155,14 @@ class command_curl(HoneyPotCommand):
             os.remove(self.safeoutfile)
             log.msg("Not storing duplicate content " + shasum)
 
-        self.honeypot.logDispatch( format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum )
+        self.honeypot.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum)
 
-        log.msg( format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum )
+        log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum)
 
         # link friendly name to hash
-        os.symlink( shasum, self.safeoutfile )
+        os.symlink(shasum, self.safeoutfile)
 
         # FIXME: is this necessary?
         self.safeoutfile = hash_path
@@ -186,7 +186,7 @@ commands['/usr/bin/curl'] = command_curl
 class HTTPProgressDownloader(client.HTTPDownloader):
     def __init__(self, curl, fakeoutfile, url, outfile, headers=None):
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
-            agent='Wget/1.11.4')
+            agent='curl/7.38.0')
         self.status = None
         self.curl = curl
         self.fakeoutfile = fakeoutfile
@@ -225,15 +225,16 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if self.curl.limit_size > 0 and \
                     self.totallength > self.curl.limit_size:
-                log.msg( 'Not saving URL (%s) due to file size limit' % \
-                    (self.curl.url,) )
+                log.msg('Not saving URL (%s) due to file size limit' % \
+                    (self.curl.url,))
                 self.fileName = os.path.devnull
                 self.nomore = True
             #self.curl.writeln('Saving to: `%s' % self.fakeoutfile)
             #self.curl.honeypot.terminal.nextLine()
 
-            self.curl.writeln('  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current')
-            self.curl.writeln('                                 Dload  Upload   Total   Spent    Left  Speed')
+            if self.fakeoutfile:
+                self.curl.writeln('  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current')
+                self.curl.writeln('                                 Dload  Upload   Total   Spent    Left  Speed')
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
@@ -244,7 +245,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             # if downloading files of unspecified size, this could happen:
             if not self.nomore and self.curl.limit_size > 0 and \
                     self.currentlength > self.curl.limit_size:
-                log.msg( 'File limit reached, not saving any more data!' )
+                log.msg('File limit reached, not saving any more data!')
                 self.nomore = True
                 self.file.close()
                 self.fileName = os.path.devnull
@@ -259,15 +260,15 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 spercent = '%dK' % (self.currentlength/1000)
                 percent = 0
             self.speed = self.currentlength / (time.time() - self.started)
-            eta = (self.totallength - self.currentlength) / self.speed
-            s = '\r%s [%s] %s %dK/s  eta %s' % \
-                (spercent.rjust(3),
-                ('%s>' % (int(39.0 / 100.0 * percent) * '=')).ljust(39),
-                splitthousands(str(int(self.currentlength))).ljust(12),
-                self.speed / 1000,
-                tdiff(eta))
-            self.curl.write(s.ljust(self.proglen))
-            self.proglen = len(s)
+            #eta = (self.totallength - self.currentlength) / self.speed
+            #s = '\r%s [%s] %s %dK/s  eta %s' % \
+            #    (spercent.rjust(3),
+            #    ('%s>' % (int(39.0 / 100.0 * percent) * '=')).ljust(39),
+            #    splitthousands(str(int(self.currentlength))).ljust(12),
+            #    self.speed / 1000,
+            #    tdiff(eta))
+            #self.curl.write(s.ljust(self.proglen))
+            #self.proglen = len(s)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
 
@@ -286,16 +287,20 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         #    self.speed / 1000,
         #    self.fakeoutfile, self.currentlength, self.totallength))
 
-        self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
-            ( self.currentlength, self.currentlength  , 63673, 65181 )
-        )
-        self.curl.honeypot.terminal.nextLine()
+        if self.fakeoutfile:
+            self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
+                (self.currentlength, self.currentlength  , 63673, 65181)
+            )
+            self.curl.honeypot.terminal.nextLine()
 
-
-        self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
-        self.curl.fs.update_realfile(
-            self.curl.fs.getfile(self.fakeoutfile),
-            self.curl.safeoutfile)
+            self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
+            self.curl.fs.update_realfile(
+                self.curl.fs.getfile(self.fakeoutfile),
+                self.curl.safeoutfile)
+        else:
+            # stdout
+            # write to stdout here
+            self.curl.writeln("Your file here")
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
