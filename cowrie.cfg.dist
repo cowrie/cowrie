@@ -233,7 +233,8 @@ interact_port = 5123
 #[database_textlog]
 #logfile = log/cowrie-textlog.log
 
-# JSON output module [output_jsonlog]
+# JSON output module
+[output_jsonlog]
 logfile = log/cowrie.json
 
 #[database_hpfeeds]
