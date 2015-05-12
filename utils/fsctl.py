@@ -2,14 +2,14 @@
 
 ###############################################################
 # This program creates a command line interpreter used to edit
-# kippo file system pickle files.
+# cowrie file system pickle files.
 #
 # It is intended to mimic a basic bash shell and supports relative
 # file references.
 #
 # This isn't meant to build a brand new filesystem. Instead it
 # should be used to edit existing filesystems such as the default
-# /opt/kippo/fs.pickle.
+# /opt/cowrie/data/fs.pickle.
 #
 # Donovan Hubbard
 # Douglas Hubbard
@@ -555,18 +555,18 @@ class fseditCmd(cmd.Cmd):
     def help_about(self):
         print "Kippo stores information about its file systems in a " + \
             "series of nested lists. Once the lists are made, they are " + \
-            "stored in a pickle file on the hard drive. Every time kippo " + \
+            "stored in a pickle file on the hard drive. Every time cowrie " + \
             "gets a new client, it reads from the pickle file and loads " + \
             "the fake filesystem into memory. By default this file " + \
-            "is /opt/kippo/fs.pickle. Originally the script " + \
-            "/opt/kippo/createfs.py was used to copy the filesystem " + \
+            "is /opt/cowrie/data/fs.pickle. Originally the script " + \
+            "/opt/cowrie/createfs.py was used to copy the filesystem " + \
             "of the existing computer. However, it quite difficult to " + \
             "edit the pickle file by hand.\n\nThis script strives to be " + \
             "a bash-like interface that allows users to modify " + \
             "existing fs pickle files. It supports many of the " + \
             "common bash commands and even handles relative file " + \
             "paths. Keep in mind that you need to restart the " + \
-            "kippo process in order for the new file system to be " + \
+            "cowrie process in order for the new file system to be " + \
             "reloaded into memory.\n\nDonovan Hubbard, Douglas Hubbard, " + \
             "March 2013\nVersion 1.0"
 

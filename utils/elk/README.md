@@ -1,12 +1,12 @@
-# How to process Kippo output in an ELK stack
+# How to process Cowrie output in an ELK stack
 
 (Note: work in progress, instructions are not verified)
 
 
 ## Prerequisites
 
-* Working Kippo installation
-* Kippo JSON log file (enable database json in kippo.cfg)
+* Working Cowrie installation
+* Cowrie JSON log file (enable database json in cowrie.cfg)
 
 ## Installation
 
@@ -40,7 +40,7 @@ wget http://download.maxmind.com/download/geoip/database/asnum/GeoIPASNum.dat.gz
 * Configure logstash
 
 ```
-cp logstash-kippo.conf /etc/logstash/conf.d
+cp logstash-cowrie.conf /etc/logstash/conf.d
 ```
 
 * Make sure the configuration file is correct. Check the input section (path), filter (geoip databases) and output (elasticsearch hostname)
@@ -54,13 +54,13 @@ service logstash restart
 * To test whether logstash is working correctly, check the file in /tmp
 
 ```
-tail /tmp/kippo-logstash.log
+tail /tmp/cowrie-logstash.log
 ```
 
 * To test whether data is loaded into ElasticSearch, run the following query:
 
 ```
-http://<hostname>:9200/_search?q=kippo&size=5
+http://<hostname>:9200/_search?q=cowrie&size=5
 ```
 
 * If this gives output, your data is correctly loaded into ElasticSearch

@@ -24,5 +24,5 @@ then
     . $VENV/bin/activate
 fi
 
-echo "Starting kippo in the background..."
-twistd -y kippo.tac -l log/kippo.log --pidfile kippo.pid
+echo "Starting cowrie in the background..."
+twistd -y cowrie.tac -l log/cowrie.log --pidfile cowrie.pid

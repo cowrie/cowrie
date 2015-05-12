@@ -1,5 +1,5 @@
-kippo.cfg
-kippo.pid
+cowrie.cfg
+cowrie.pid
 data/lastlog.txt
 data/ssh_host_dsa_key
 data/ssh_host_dsa_key.pub
@@ -8,13 +8,11 @@ data/ssh_host_rsa_key.pub
 dl/*
 log/*
 log/tty/*
-kippo-textlog.log
+cowrie-textlog.log
 private.key
 public.key
-
 __pycache__/
 *.py[cod]
-
 env/
 env1/
 env2/

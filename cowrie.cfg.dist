@@ -1,0 +1,244 @@
+#
+# Cowrie configuration file (cowrie.cfg)
+#
+
+[honeypot]
+
+# Sensor name use to identify this cowrie instance. Used by the database
+# logging modules such as mysql.
+#
+# If not specified, the logging modules will instead use the IP address of the
+# connection as the sensor name.
+#
+# (default: not specified)
+#sensor_name=myhostname
+
+# IP addresses to listen for incoming SSH connections.
+#
+# (default: 0.0.0.0) = any address
+#listen_addr = 0.0.0.0
+
+# Port to listen for incoming SSH connections.
+#
+# (default: 2222)
+#listen_port = 2222
+
+# Hostname for the honeypot. Displayed by the shell prompt of the virtual
+# environment.
+#
+# (default: svr03)
+hostname = svr03
+
+# Directory where to save log files in.
+#
+# (default: log)
+log_path = log
+
+# Directory where to save downloaded (malware) files in.
+#
+# (default: dl)
+download_path = dl
+
+# Maximum file size (in bytes) for downloaded files to be stored in 'download_path'.
+# A value of 0 means no limit. If the file size is known to be too big from the start,
+# the file will not be stored on disk at all.
+#
+# (default: 0)
+#download_limit_size = 10485760
+
+# Directory where virtual file contents are kept in.
+#
+# This is only used by commands like 'cat' to display the contents of files.
+# Adding files here is not enough for them to appear in the honeypot - the
+# actual virtual filesystem is kept in filesystem_file (see below)
+#
+# (default: honeyfs)
+contents_path = honeyfs
+
+# File in the python pickle format containing the virtual filesystem.
+#
+# This includes the filenames, paths, permissions for the whole filesystem,
+# but not the file contents. This is created by the createfs.py utility from
+# a real template linux installation.
+#
+# (default: fs.pickle)
+filesystem_file = fs.pickle
+
+# Directory for miscellaneous data files, such as the password database.
+#
+# (default: data_path)
+data_path = data
+
+# Class that implements the checklogin() method.
+# 
+# Class must be defined in cowrie/core/auth.py
+# Default is the 'UserDB' class which uses the password database.
+#
+# Alternatively the 'AuthRandom' class can be used, which will let
+# a user login after a random number of attempts.
+# It will also cache username/password combinations that allow login.
+#
+auth_class = UserDB
+# When AuthRandom is used also set the 
+#  auth_class_parameters: <min try>, <max try>, <maxcache>
+#  for example: 2, 5, 10 = allows access after randint(2,5) attempts
+#  and cache 10 combinations.
+#
+#auth_class = AuthRandom
+#auth_class_parameters = 2, 5, 10
+
+# Directory for creating simple commands that only output text.
+#
+# The command must be placed under this directory with the proper path, such
+# as:
+#   txtcmds/usr/bin/vi
+# The contents of the file will be the output of the command when run inside
+# the honeypot.
+#
+# In addition to this, the file must exist in the virtual
+# filesystem {filesystem_file}
+#
+# (default: txtcmds)
+txtcmds_path = txtcmds
+
+# Public and private SSH key files. If these don't exist, they are created
+# automatically.
+rsa_public_key = data/ssh_host_rsa_key.pub
+rsa_private_key = data/ssh_host_rsa_key
+dsa_public_key = data/ssh_host_dsa_key.pub
+dsa_private_key = data/ssh_host_dsa_key
+
+# Enables passing commands using ssh execCommand
+# e.g. ssh root@localhost <command>
+#
+# (default: false)
+exec_enabled = true
+
+# sftp_enabled enables the sftp subsystem
+sftp_enabled = true
+
+# IP address to bind to when opening outgoing connections. Used exclusively by
+# the wget command.
+#
+# (default: not specified)
+#out_addr = 0.0.0.0
+
+# Fake address displayed as the address of the incoming connection.
+# This doesn't affect logging, and is only used by honeypot commands such as
+# 'w' and 'last'
+#
+# If not specified, the actual IP address is displayed instead (default
+# behaviour).
+#
+# (default: not specified)
+#fake_addr = 192.168.66.254
+
+# The IP address on which this machine reachable on from the internet.
+# Useful if you use portforwarding or other mechanisms. If empty, the cowrie
+# will determine by itself. Used in 'netstat' output
+#internet_facing_ip = 9.9.9.9
+
+# SSH Version String
+#
+# Use this to disguise your honeypot from a simple SSH version scan
+# frequent Examples: (found experimentally by scanning ISPs)
+# SSH-2.0-OpenSSH_5.1p1 Debian-5
+# SSH-1.99-OpenSSH_4.3
+# SSH-1.99-OpenSSH_4.7
+# SSH-1.99-Sun_SSH_1.1
+# SSH-2.0-OpenSSH_4.2p1 Debian-7ubuntu3.1
+# SSH-2.0-OpenSSH_4.3
+# SSH-2.0-OpenSSH_4.6
+# SSH-2.0-OpenSSH_5.1p1 Debian-5
+# SSH-2.0-OpenSSH_5.1p1 FreeBSD-20080901
+# SSH-2.0-OpenSSH_5.3p1 Debian-3ubuntu5
+# SSH-2.0-OpenSSH_5.3p1 Debian-3ubuntu6
+# SSH-2.0-OpenSSH_5.3p1 Debian-3ubuntu7
+# SSH-2.0-OpenSSH_5.5p1 Debian-6
+# SSH-2.0-OpenSSH_5.5p1 Debian-6+squeeze1
+# SSH-2.0-OpenSSH_5.5p1 Debian-6+squeeze2
+# SSH-2.0-OpenSSH_5.8p2_hpn13v11 FreeBSD-20110503
+# SSH-2.0-OpenSSH_5.9p1 Debian-5ubuntu1
+# SSH-2.0-OpenSSH_5.9
+#
+# (default: "SSH-2.0-OpenSSH_5.1p1 Debian-5")
+ssh_version_string = SSH-2.0-OpenSSH_5.1p1 Debian-5
+
+# Banner file to be displayed before the first login attempt.
+#
+#banner_file = DEPRECATED; always '/etc/issue.net' in honeyfs
+
+# exit_jail tries to 'trick' the attacker with another shell. Set to true to create
+# another fake prompt after logout
+#
+# putty/sshlib/libssh clients will not get the exit jail
+#
+# (default: false)
+exit_jail = false
+
+# Session management interface.
+#
+# This is a telnet based service that can be used to interact with active
+# sessions. Disabled by default.
+#
+# (default: false)
+interact_enabled = false
+# (default: 5123)
+interact_port = 5123
+
+# MySQL logging module
+#
+# Database structure for this module is supplied in doc/sql/mysql.sql
+#
+# To enable this module, remove the comments below, including the
+# [database_mysql] line.
+
+#[database_mysql]
+#host = localhost
+#database = cowrie
+#username = cowrie
+#password = secret
+#port = 3306
+
+# XMPP Logging
+#
+# Log to an xmpp server.
+# For a detailed explanation on how this works, see: <add url here>
+#
+# To enable this module, remove the comments below, including the
+# [database_xmpp] line.
+
+#[database_xmpp]
+#server = sensors.carnivore.it
+#user = anonymous@sensors.carnivore.it
+#password = anonymous
+#muc = dionaea.sensors.carnivore.it
+#signal_createsession = cowrie-events
+#signal_connectionlost = cowrie-events
+#signal_loginfailed = cowrie-events
+#signal_loginsucceeded = cowrie-events
+#signal_command = cowrie-events
+#signal_clientversion = cowrie-events
+#debug=true
+
+# Text based logging module
+#
+# While this is a database logging module, it actually just creates a simple
+# text based log. This may not have much purpose, if you're fine with the
+# default text based logs generated by cowrie in log/
+#
+# To enable this module, remove the comments below, including the
+# [database_textlog] line.
+
+#[database_textlog]
+#logfile = log/cowrie-textlog.log
+
+# JSON output module [output_jsonlog]
+logfile = log/cowrie.json
+
+#[database_hpfeeds]
+#server = hpfeeds.mysite.org
+#port = 10000
+#identifier = abc123
+#secret = secret
+#debug=false
