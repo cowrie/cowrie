@@ -39,4 +39,10 @@ $ ./start.sh
 Starting cowrie in the background...
 ```
 
+Cowry runs by default on port 2222. This can be modified in the configuration file. Running on port 22 is not recommended.
+The following firewall rule will forward incoming traffic on port 22 to port 2222.
+
+```
+$ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222 
+```
 
