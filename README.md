@@ -13,6 +13,14 @@ Some interesting features:
 * Session logs stored in an [UML Compatible](http://user-mode-linux.sourceforge.net/)  format for easy replay with original timings
 * Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
 
+Additional functionality over standard kippo:
+
+* SFTP and SCP support for file upload
+* Support for SSH exec commands
+* Logging of direct-tcp connection attempts (ssh proxying)
+* Logging in JSON format for easy processing in log management solutions
+* Many, many additional commands
+
 ## Requirements
 
 Software required:
