@@ -1,6 +1,7 @@
 # Installation
 
 Installing cowrie in six easy steps.
+
 It's recommended to install under a separate non-root user id:
 
 ```
@@ -34,7 +35,6 @@ $ cd cowrie
 
 $ cp cowrie.cfg.dist cowrie.cfg
 
-$ ./start.sh
 $ ./start.sh
 Starting cowrie in the background...
 ```
