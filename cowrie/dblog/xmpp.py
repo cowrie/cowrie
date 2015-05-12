@@ -72,7 +72,7 @@ class DBLogger(dblog.DBLogger):
         self.run(application, jid, password, muc, channels)
 
     def run(self, application, jidstr, password, muc, channels, anon=True):
-        self.xmppclient = XMPPClient(jid.internJID(jidstr), password)
+        self.xmppclient = XMPPClient(jid.JID(jidstr), password)
         if self.cfg.has_option('database_xmpp', 'debug') and \
                 self.cfg.get('database_xmpp', 'debug') in ('1', 'true', 'yes'):
             self.xmppclient.logTraffic = True # DEBUG HERE
@@ -96,7 +96,7 @@ class DBLogger(dblog.DBLogger):
     def report(self, msgtype, to, xmsg):
         body = domish.Element((None, 'body'))
         body.addContent('\n')
-        msg = domish.Element(('http://code.google.com/p/kippo/', 'kippo'))
+        msg = domish.Element(('http://github.com/micheloosterhof/cowrie', 'cowrie'))
         msg['type'] = msgtype
         msg.addChild(xmsg)
         body.addChild(msg)
