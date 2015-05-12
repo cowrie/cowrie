@@ -62,7 +62,7 @@ contents_path = honeyfs
 # a real template linux installation.
 #
 # (default: fs.pickle)
-filesystem_file = fs.pickle
+filesystem_file = data/fs.pickle
 
 # Directory for miscellaneous data files, such as the password database.
 #
