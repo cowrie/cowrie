@@ -30,10 +30,7 @@ Software required:
 * pyasn1
 * Zope Interface
 
-## Installation
-See [Installation Notes](http://github.com/micheloosterhof/cowrie/INSTALL.md)
-
-Files of interest:
+## Files of interest:
 
 * dl/ - files downloaded with wget are stored here
 * log/cowrie.log - log/debug output
