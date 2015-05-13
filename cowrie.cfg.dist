@@ -26,8 +26,8 @@
 # Hostname for the honeypot. Displayed by the shell prompt of the virtual
 # environment.
 #
-# (default: svr03)
-hostname = svr03
+# (default: svr04)
+hostname = svr04
 
 # Directory where to save log files in.
 #
@@ -117,8 +117,8 @@ exec_enabled = true
 # sftp_enabled enables the sftp subsystem
 sftp_enabled = true
 
-# IP address to bind to when opening outgoing connections. Used exclusively by
-# the wget command.
+# IP address to bind to when opening outgoing connections. Used by
+# the wget and curl commands.
 #
 # (default: not specified)
 #out_addr = 0.0.0.0
@@ -134,8 +134,9 @@ sftp_enabled = true
 #fake_addr = 192.168.66.254
 
 # The IP address on which this machine reachable on from the internet.
-# Useful if you use portforwarding or other mechanisms. If empty, the cowrie
+# Useful if you use portforwarding or other mechanisms. If empty, cowrie
 # will determine by itself. Used in 'netstat' output
+#
 #internet_facing_ip = 9.9.9.9
 
 # SSH Version String
@@ -159,10 +160,11 @@ sftp_enabled = true
 # SSH-2.0-OpenSSH_5.5p1 Debian-6+squeeze2
 # SSH-2.0-OpenSSH_5.8p2_hpn13v11 FreeBSD-20110503
 # SSH-2.0-OpenSSH_5.9p1 Debian-5ubuntu1
+# SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 # SSH-2.0-OpenSSH_5.9
 #
-# (default: "SSH-2.0-OpenSSH_5.1p1 Debian-5")
-ssh_version_string = SSH-2.0-OpenSSH_5.1p1 Debian-5
+# (default: "SSH-2.0-SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
+ssh_version_string = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 # Banner file to be displayed before the first login attempt.
 #
