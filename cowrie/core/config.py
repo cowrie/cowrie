@@ -6,7 +6,7 @@ import ConfigParser
 
 def config():
     cfg = ConfigParser.ConfigParser()
-    for f in ('cowrie.cfg', '/etc/cowrie/cowrie.cfg', '/etc/cowrie.cfg'):
+    for f in ('cowrie.cfg', 'data/cowrie.cfg', '/etc/cowrie/cowrie.cfg', '/etc/cowrie.cfg'):
         if os.path.exists(f):
             cfg.read(f)
             return cfg
