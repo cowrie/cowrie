@@ -1,4 +1,5 @@
 
+* 2015-06-01 Cowrie no longer search for config files in /etc and /etc/cowrie
 * 2015-04-12 JSON output is now default via 'output' plugin mechanism. Rotates daily
 * 2015-04-10 Fix for downloading files via SFTP
 * 2015-03-31 Small tweaks on session close, closing session does not close ssh transport
