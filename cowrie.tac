@@ -16,7 +16,7 @@ if os.name == 'posix' and os.getuid() == 0:
     print 'ERROR: You must not run cowrie as root!'
     sys.exit(1)
 
-if not os.path.exists('cowrie.cfg'):
+if not (os.path.exists('cowrie.cfg') or os.path.exists('data/cowrie.cfg') or os.path.exists('/etc/cowrie.cfg') or os.path.exists('/etc/cowrie/cowrie.cfg')):
     print 'ERROR: cowrie.cfg is missing!'
     sys.exit(1)
 
