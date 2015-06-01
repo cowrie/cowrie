@@ -5,11 +5,9 @@ import os
 import ConfigParser
 
 def config():
-    cfg = ConfigParser.ConfigParser()
-    for f in ('cowrie.cfg', '/etc/cowrie/cowrie.cfg', '/etc/cowrie.cfg'):
-        if os.path.exists(f):
-            cfg.read(f)
-            return cfg
-    return None
+    cfg = ConfigParser.SafeConfigParser()
+    f = 'cowrie.cfg'
+    cfg.readfp(open(f))
+    return cfg
 
 # vim: set sw=4 et:
