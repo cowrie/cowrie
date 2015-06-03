@@ -7,7 +7,6 @@ from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet, service
 from twisted.cred import portal
-from twisted.conch.ssh import keys
 
 from cowrie.core.config import config
 import cowrie.core.ssh
@@ -15,7 +14,7 @@ from cowrie import core
 
 class Options(usage.Options):
     optParameters = [
-        ["port", "p", 2222, "The port number to listen on."],
+        ["port", "p", 0, "The port number to listen on.", int],
         ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
 
@@ -39,32 +38,22 @@ class CowrieServiceMaker(object):
         factory.portal.registerChecker(core.auth.HoneypotPublicKeyChecker())
         factory.portal.registerChecker(core.auth.HoneypotPasswordChecker())
 
-        rsa_pubKeyString, rsa_privKeyString = core.ssh.getRSAKeys()
-        dsa_pubKeyString, dsa_privKeyString = core.ssh.getDSAKeys()
-        factory.publicKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_pubKeyString),
-                              'ssh-dss': keys.Key.fromString(data=dsa_pubKeyString)}
-        factory.privateKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_privKeyString),
-                               'ssh-dss': keys.Key.fromString(data=dsa_privKeyString)}
-
         cfg = config()
 
         if cfg.has_option('honeypot', 'listen_addr'):
             listen_addr = cfg.get('honeypot', 'listen_addr')
-        elif cfg.has_option('honeypot', 'ssh_addr'):
-            # ssh_addr for backwards compatibility
-            listen_addr = cfg.get('honeypot', 'ssh_addr')
         else:
             listen_addr = '0.0.0.0'
                
-        if cfg.has_option('honeypot', 'listen_port'):
+        # preference: 1, option, 2, config, 3, default of 2222
+        if options['port'] != 0:
+            listen_port = int(options["port"])
+        elif cfg.has_option('honeypot', 'listen_port'):
             listen_port = int(cfg.get('honeypot', 'listen_port'))
-        elif cfg.has_option('honeypot', 'ssh_port'):
-            # ssh_port for backwards compatibility
-            listen_port = int(cfg.get('honeypot', 'ssh_port'))
         else:
             listen_port = 2222
 
-        application = service.Application('honeypot')
+        application = service.Application('cowrie')
 
         for i in listen_addr.split():
             svc = internet.TCPServer( listen_port, factory, interface=i)

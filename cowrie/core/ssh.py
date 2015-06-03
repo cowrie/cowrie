@@ -97,6 +97,14 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         # for use by the uptime command
         self.starttime = time.time()
 
+        # load/create keys
+        rsa_pubKeyString, rsa_privKeyString = getRSAKeys()
+        dsa_pubKeyString, dsa_privKeyString = getDSAKeys()
+        self.publicKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_pubKeyString),
+          'ssh-dss': keys.Key.fromString(data=dsa_pubKeyString)}
+        self.privateKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_privKeyString),
+          'ssh-dss': keys.Key.fromString(data=dsa_privKeyString)}
+
         # load db loggers
         self.dbloggers = []
         for x in cfg.sections():
