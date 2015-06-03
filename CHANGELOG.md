@@ -1,4 +1,5 @@
 
+* 2015-06-03 Cowrie now uses twisted plugins and has gained the '-p' commandline option
 * 2015-06-01 Cowrie no longer search for config files in /etc and /etc/cowrie
 * 2015-04-12 JSON output is now default via 'output' plugin mechanism. Rotates daily
 * 2015-04-10 Fix for downloading files via SFTP
