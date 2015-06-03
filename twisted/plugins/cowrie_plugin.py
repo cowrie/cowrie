@@ -1,6 +1,7 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 import os
+import sys
 
 from twisted.python import usage
 from twisted.plugin import IPlugin
@@ -9,34 +10,29 @@ from twisted.application import internet, service
 from twisted.cred import portal
 
 from cowrie.core.config import config
-import cowrie.core.ssh
 from cowrie import core
+import cowrie.core.ssh
 
 class Options(usage.Options):
     optParameters = [
         ["port", "p", 0, "The port number to listen on.", int],
-        ["config", "c", 'cowrie.cfg', "The configuration file to use."]
+#        ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
 
+@implementer(IServiceMaker, IPlugin)
 class CowrieServiceMaker(object):
-    implements(IServiceMaker, IPlugin)
     tapname = "cowrie"
     description = "She sells sea shells by the sea shore."
     options = Options
 
     def makeService(self, options):
         """
-        Construct a TCPServer from a factory defined in myproject.
+        Construct a TCPServer from a factory defined in Cowrie.
         """
 
         if os.name == 'posix' and os.getuid() == 0:
             print 'ERROR: You must not run cowrie as root!'
             sys.exit(1)
-
-        factory = core.ssh.HoneyPotSSHFactory()
-        factory.portal = portal.Portal(core.ssh.HoneyPotRealm())
-        factory.portal.registerChecker(core.auth.HoneypotPublicKeyChecker())
-        factory.portal.registerChecker(core.auth.HoneypotPasswordChecker())
 
         cfg = config()
 
@@ -53,11 +49,16 @@ class CowrieServiceMaker(object):
         else:
             listen_port = 2222
 
-        application = service.Application('cowrie')
+        factory = core.ssh.HoneyPotSSHFactory()
+        factory.portal = portal.Portal(core.ssh.HoneyPotRealm())
+        factory.portal.registerChecker(core.auth.HoneypotPublicKeyChecker())
+        factory.portal.registerChecker(core.auth.HoneypotPasswordChecker())
+
+        top_service = top_service = service.MultiService()
 
         for i in listen_addr.split():
-            svc = internet.TCPServer( listen_port, factory, interface=i)
-            svc.setServiceParent(application)
+            svc = internet.TCPServer(listen_port, factory, interface=i)
+            svc.setServiceParent(top_service)
 
         if cfg.has_option('honeypot', 'interact_enabled') and \
                  cfg.get('honeypot', 'interact_enabled').lower() in \
@@ -65,10 +66,11 @@ class CowrieServiceMaker(object):
             iport = int(cfg.get('honeypot', 'interact_port'))
             from cowrie.core import interact
             svc = internet.TCPServer(iport, interact.makeInteractFactory(factory))
-            svc.setServiceParent(application)
+            svc.setServiceParent(top_service)
 
-        return svc
-        #return internet.TCPServer(int(options["port"]), MyFactory())
+        application = service.Application('cowrie')
+        top_service.setServiceParent(application)
+        return top_service
 
 
 # Now construct an object which *provides* the relevant interfaces
