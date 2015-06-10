@@ -170,14 +170,6 @@ ssh_version_string = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 #
 #banner_file = DEPRECATED; always '/etc/issue.net' in honeyfs
 
-# exit_jail tries to 'trick' the attacker with another shell. Set to true to create
-# another fake prompt after logout
-#
-# putty/sshlib/libssh clients will not get the exit jail
-#
-# (default: false)
-exit_jail = false
-
 # Session management interface.
 #
 # This is a telnet based service that can be used to interact with active

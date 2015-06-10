@@ -8,7 +8,6 @@ from twisted.internet import reactor
 from twisted.python import log
 
 from cowrie.core.honeypot import HoneyPotCommand
-from cowrie.core.config import config
 from cowrie.core.auth import UserDB
 from cowrie.core import utils
 
@@ -115,22 +114,8 @@ commands['exxxit'] = command_exxxit
 
 class command_exit(HoneyPotCommand):
     def call(self):
-        cfg = config()
-        self.exit_jail = False
-        if cfg.has_option('honeypot', 'exit_jail'):
-            if (cfg.get('honeypot', 'exit_jail') == "true"):
-                self.exit_jail = True
-        if 'PuTTY' in self.honeypot.clientVersion or \
-                'libssh' in self.honeypot.clientVersion or \
-                'sshlib' in self.honeypot.clientVersion or \
-                self.exit_jail is False:
-            self.honeypot.terminal.loseConnection()
-            return
-        self.writeln('Connection to server closed.')
-        self.honeypot.hostname = 'localhost'
-        self.honeypot.cwd = '/root'
-        if not self.fs.exists(self.honeypot.cwd):
-            self.honeypot.cwd = '/'
+        self.honeypot.terminal.loseConnection()
+        return
 commands['exit'] = command_exit
 commands['logout'] = command_exit
 
