@@ -137,7 +137,7 @@ class AuthRandom(object):
             self.maxtry = self.mintry + 1
             log.msg('maxtry < mintry, adjusting maxtry to: %d' % self.maxtry)
         self.uservar = {}
-        self.uservar_file = '%s/uservar.json' % cfg.get('honeypot', 'data_path'))
+        self.uservar_file = '%s/uservar.json' % cfg.get('honeypot', 'data_path')
         self.loadvars()
 
     def loadvars(self):

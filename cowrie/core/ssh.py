@@ -312,7 +312,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         avatar.ConchUser.__init__(self)
         self.username = username
         self.env = env
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs))
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs),self.env.cfg)
         self.hostname = self.env.cfg.get('honeypot', 'hostname')
         self.protocol = None
 
