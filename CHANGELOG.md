@@ -1,4 +1,6 @@
 
+* 2015-06-15 Cowrie now has a '-c' startup switch to specify the configuration file
+* 2015-06-15 Removed exec_enabled option. This feature is now always enabled
 * 2015-06-03 Cowrie now uses twisted plugins and has gained the '-p' commandline option
 * 2015-06-01 Cowrie no longer search for config files in /etc and /etc/cowrie
 * 2015-04-12 JSON output is now default via 'output' plugin mechanism. Rotates daily
