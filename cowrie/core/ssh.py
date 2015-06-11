@@ -37,6 +37,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def sendBanner(self):
         if self.bannerSent:
             return
+        self.bannerSent = True
         cfg = self.portal.realm.cfg
         try:
             honeyfs = cfg.get('honeypot', 'contents_path')
@@ -48,7 +49,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.transport.sendPacket(
             userauth.MSG_USERAUTH_BANNER, NS(data) + NS('en'))
-        self.bannerSent = True
 
     def ssh_USERAUTH_REQUEST(self, packet):
         self.sendBanner()
