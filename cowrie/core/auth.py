@@ -19,14 +19,12 @@ from twisted.python import log, failure
 from twisted.conch import error
 from twisted.conch.ssh import keys
 
-from config import config
-
 # by Walter de Jong <walter@sara.nl>
 class UserDB(object):
 
-    def __init__(self):
+    def __init__(self, cfg):
         self.userdb = []
-        self.userdb_file = '%s/userdb.txt' % (config().get('honeypot', 'data_path'),)
+        self.userdb_file = '%s/userdb.txt' % cfg.get('honeypot', 'data_path')
         self.load()
 
     def load(self):
@@ -126,7 +124,7 @@ class AuthRandom(object):
     Users will be authenticated after a random number of attempts.
     """
 
-    def __init__(self, parameters):
+    def __init__(self, cfg, parameters):
         # Default values
         self.mintry, self.maxtry, self.maxcache = 2, 5, 10
         parlist = parameters.split(',')
@@ -139,7 +137,7 @@ class AuthRandom(object):
             self.maxtry = self.mintry + 1
             log.msg('maxtry < mintry, adjusting maxtry to: %d' % self.maxtry)
         self.uservar = {}
-        self.uservar_file = '%s/uservar.json' % (config().get('honeypot', 'data_path'))
+        self.uservar_file = '%s/uservar.json' % cfg.get('honeypot', 'data_path'))
         self.loadvars()
 
     def loadvars(self):
@@ -245,6 +243,9 @@ class HoneypotPublicKeyChecker:
 
     credentialInterfaces = (ISSHPrivateKey,)
 
+    def __init__(self, cfg):
+        pass
+
     def requestAvatarId(self, credentials):
         _pubKey = keys.Key.fromString(credentials.blob)
         log.msg(format='public key attempt for user %(username)s with fingerprint %(fingerprint)s',
@@ -278,6 +279,9 @@ class HoneypotPasswordChecker:
 
     credentialInterfaces = (IUsernamePassword, IPluggableAuthenticationModules)
 
+    def __init__(self, cfg):
+        self.cfg = cfg
+
     def requestAvatarId(self, credentials):
         if hasattr(credentials, 'password'):
             if self.checkUserPass(credentials.username, credentials.password,
@@ -303,19 +307,19 @@ class HoneypotPasswordChecker:
     def checkUserPass(self, theusername, thepassword, ip):
         #  UserDB is the default auth_class
         authname = UserDB
-        parameters = None
+        parameters = self.cfg
 
         # Is the auth_class defined in the config file?
-        if config().has_option('honeypot', 'auth_class'):
-            authclass = config().get('honeypot', 'auth_class')
+        if self.cfg.has_option('honeypot', 'auth_class'):
+            authclass = self.cfg.get('honeypot', 'auth_class')
 
             # Check if authclass exists in this module
             if hasattr(modules[__name__], authclass):
                 authname = getattr(modules[__name__], authclass)
 
                 # Are there auth_class parameters?
-                if config().has_option('honeypot', 'auth_class_parameters'):
-                    parameters = config().get('honeypot', 'auth_class_parameters')
+                if self.cfg.has_option('honeypot', 'auth_class_parameters'):
+                    parameters = self.cfg.get('honeypot', 'auth_class_parameters')
             else:
                 log.msg('auth_class: %s not found in %s' % (authclass, __name__))
 

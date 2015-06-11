@@ -3,14 +3,13 @@
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
-from cowrie.core.config import config
 from cowrie.core import utils
 
 commands = {}
 
 class command_last(HoneyPotCommand):
     def call(self):
-        fn = '%s/lastlog.txt' % (config().get('honeypot', 'data_path'),)
+        fn = '%s/lastlog.txt' % self.honeypot.env.cfg.get('honeypot', 'data_path')
         if not os.path.exists(fn):
             return
         l = list(self.args)

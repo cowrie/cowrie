@@ -11,8 +11,6 @@ import errno
 
 from twisted.python import log
 
-from config import config
-
 A_NAME, \
     A_TYPE, \
     A_UID, \
@@ -38,8 +36,9 @@ class FileNotFound(Exception):
     pass
 
 class HoneyPotFilesystem(object):
-    def __init__(self, fs):
+    def __init__(self, fs, cfg):
         self.fs = fs
+        self.cfg = cfg
 
         # keep track of open file descriptors
         self.tempfiles = {}
@@ -152,7 +151,7 @@ class HoneyPotFilesystem(object):
             return self.file_contents(f[A_TARGET], count + 1)
 
         realfile = self.realfile(f, '%s/%s' % \
-            (config().get('honeypot', 'contents_path'), path))
+            (self.cfg.get('honeypot', 'contents_path'), path))
         if realfile:
             return file(realfile, 'rb').read()
 
@@ -226,7 +225,7 @@ class HoneyPotFilesystem(object):
 
             #log.msg("fs.open wronly")
             tempfile = '%s/%s_%s' % \
-                       (config().get('honeypot', 'download_path'),
+                       (self.cfg.get('honeypot', 'download_path'),
                     time.strftime('%Y%m%d%H%M%S'),
                     re.sub('[^A-Za-z0-9]', '_', filename))
             #log.msg("fs.open file for writing, saving to %s" % safeoutfile)
@@ -256,7 +255,7 @@ class HoneyPotFilesystem(object):
         if self.tempfiles[fd] is not None:
             shasum = hashlib.sha256(open(self.tempfiles[fd], 'rb').read()).hexdigest()
             log.msg("SHA sum %s" % (shasum))
-            shasumfile = config().get('honeypot', 'download_path') + "/" + shasum
+            shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
             if (os.path.exists(shasumfile)):
                 os.remove(self.tempfiles[fd])
             else:

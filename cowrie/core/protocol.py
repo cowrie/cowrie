@@ -13,12 +13,12 @@ from twisted.python import log
 import honeypot
 import ttylog
 import utils
-from config import config
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def __init__(self, avatar, env):
         self.user = avatar
         self.env = env
+        self.cfg = self.env.cfg
         self.hostname = avatar.hostname
         self.fs = avatar.fs
         if self.fs.exists(avatar.home):
@@ -44,14 +44,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.logintime = time.time()
 
         # source IP of client in user visible reports (can be fake or real)
-        cfg = config()
-        if cfg.has_option('honeypot', 'fake_addr'):
-            self.clientIP = cfg.get('honeypot', 'fake_addr')
+        if self.cfg.has_option('honeypot', 'fake_addr'):
+            self.clientIP = self.cfg.get('honeypot', 'fake_addr')
         else:
             self.clientIP = self.realClientIP
 
-        if cfg.has_option('honeypot', 'internet_facing_ip'):
-            self.kippoIP = cfg.get('honeypot', 'internet_facing_ip')
+        if self.cfg.has_option('honeypot', 'internet_facing_ip'):
+            self.kippoIP = self.cfg.get('honeypot', 'internet_facing_ip')
         else:
             # Hack to get ip
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -184,8 +183,10 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         endtime = time.strftime('%H:%M',
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
-        utils.addToLastlog('root\tpts/0\t%s\t%s - %s (%s)' % \
+        f = file('%s/lastlog.txt' % self.env.cfg.get('honeypot', 'data_path'), 'a')
+        f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
             (self.clientIP, starttime, endtime, duration))
+        f.close()
 
     # this doesn't seem to be called upon disconnect, so please use
     # HoneyPotTransport.connectionLost instead
@@ -243,10 +244,16 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
+
+    def __init__(self, prot=None, *a, **kw):
+        insults.ServerProtocol.__init__(self, prot, *a, **kw)
+        self.cfg = a[1].cfg
+
     def connectionMade(self):
         transport = self.transport.session.conn.transport
+
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
-            (config().get('honeypot', 'log_path'),
+            (self.cfg.get('honeypot', 'log_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId)
 
         self.ttylog_file = transport.ttylog_file
@@ -257,7 +264,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylog_open = True
 
         self.stdinlog_file = '%s/%s-%s-stdin.log' % \
-            (config().get('honeypot', 'download_path'),
+            (self.cfg.get('honeypot', 'download_path'),
             time.strftime('%Y%m%d-%H%M%S'), transport.transportId)
         self.stdinlog_open = False
 

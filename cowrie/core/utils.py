@@ -1,13 +1,6 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from config import config
-
-def addToLastlog(message):
-    f = file('%s/lastlog.txt' % config().get('honeypot', 'data_path'), 'a')
-    f.write('%s\n' % (message,))
-    f.close()
-
 def durationHuman(seconds):
     seconds = long(round(seconds))
     minutes, seconds = divmod(seconds, 60)

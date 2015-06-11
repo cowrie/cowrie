@@ -108,12 +108,6 @@ rsa_private_key = data/ssh_host_rsa_key
 dsa_public_key = data/ssh_host_dsa_key.pub
 dsa_private_key = data/ssh_host_dsa_key
 
-# Enables passing commands using ssh execCommand
-# e.g. ssh root@localhost <command>
-#
-# (default: false)
-exec_enabled = true
-
 # sftp_enabled enables the sftp subsystem
 sftp_enabled = true
 

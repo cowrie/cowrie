@@ -10,7 +10,6 @@ import pickle
 from twisted.python import log
 
 import fs
-from config import config
 
 class HoneyPotCommand(object):
     def __init__(self, protocol, *args):
@@ -253,8 +252,8 @@ class HoneyPotShell(object):
         self.honeypot.terminal.write(newbuf)
 
 class HoneyPotEnvironment(object):
-    def __init__(self):
-        self.cfg = config()
+    def __init__(self, cfg):
+        self.cfg = cfg
         self.commands = {}
         import cowrie.commands
         for c in cowrie.commands.__all__:
@@ -262,6 +261,6 @@ class HoneyPotEnvironment(object):
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
         self.fs = pickle.load(file(
-            self.cfg.get('honeypot', 'filesystem_file'), 'rb'))
+            cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
 # vim: set sw=4 et:

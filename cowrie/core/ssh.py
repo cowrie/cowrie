@@ -28,7 +28,6 @@ import honeypot
 import protocol
 import sshserver
 import exceptions
-from config import config
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
@@ -38,7 +37,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def sendBanner(self):
         if self.bannerSent:
             return
-        cfg = config()
+        cfg = self.portal.realm.cfg
         try:
             honeyfs = cfg.get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
@@ -90,6 +89,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def __init__(self, cfg):
 
+        self.cfg = cfg
+
         # protocol^Wwhatever instances are kept here for the interact feature
         self.sessions = {}
 
@@ -97,8 +98,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         self.starttime = time.time()
 
         # load/create keys
-        rsa_pubKeyString, rsa_privKeyString = getRSAKeys()
-        dsa_pubKeyString, dsa_privKeyString = getDSAKeys()
+        rsa_pubKeyString, rsa_privKeyString = getRSAKeys(self.cfg)
+        dsa_pubKeyString, dsa_privKeyString = getDSAKeys(self.cfg)
         self.publicKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_pubKeyString),
           'ssh-dss': keys.Key.fromString(data=dsa_pubKeyString)}
         self.privateKeys = {'ssh-rsa': keys.Key.fromString(data=rsa_privKeyString),
@@ -158,13 +159,12 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         """
 
         _moduli = '/etc/ssh/moduli'
-        cfg = config()
 
         # FIXME: try to mimic something real 100%
         t = HoneyPotTransport()
 
-        if cfg.has_option('honeypot', 'ssh_version_string'):
-            t.ourVersionString = cfg.get('honeypot', 'ssh_version_string')
+        if self.cfg.has_option('honeypot', 'ssh_version_string'):
+            t.ourVersionString = self.cfg.get('honeypot', 'ssh_version_string')
         else:
             t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 
@@ -192,9 +192,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 @implementer(portal.IRealm)
 class HoneyPotRealm:
 
-    def __init__(self):
-        # I don't know if i'm supposed to keep static stuff here
-        self.env = honeypot.HoneyPotEnvironment()
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.env = honeypot.HoneyPotEnvironment(cfg)
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         if conchinterfaces.IConchUser in interfaces:
@@ -324,7 +324,7 @@ class HoneyPotAvatar(avatar.ConchUser):
             if (self.env.cfg.get('honeypot', 'sftp_enabled') == "true"):
                 self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
 
-        self.uid = self.gid = auth.UserDB().getUID(self.username)
+        self.uid = self.gid = auth.UserDB(self.env.cfg).getUID(self.username)
         if not self.uid:
             self.home = '/root'
         else:
@@ -348,15 +348,6 @@ class HoneyPotAvatar(avatar.ConchUser):
         return None
 
     def execCommand(self, proto, cmd):
-        cfg = config()
-        if not cfg.has_option('honeypot', 'exec_enabled') or \
-                cfg.get('honeypot', 'exec_enabled').lower() not in \
-                    ('yes', 'true', 'on'):
-            log.msg('Exec disabled. Not executing command: "%s"' % cmd)
-            raise exceptions.NotEnabledException(
-                'exec_enabled not enabled in configuration file!')
-            return
-
         serverProtocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, self.env, cmd)
         self.protocol = serverProtocol
@@ -376,8 +367,7 @@ class HoneyPotAvatar(avatar.ConchUser):
     def windowChanged(self, windowSize):
         self.windowSize = windowSize
 
-def getRSAKeys():
-    cfg = config()
+def getRSAKeys(cfg):
     public_key = cfg.get('honeypot', 'rsa_public_key')
     private_key = cfg.get('honeypot', 'rsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
@@ -399,8 +389,7 @@ def getRSAKeys():
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
-def getDSAKeys():
-    cfg = config()
+def getDSAKeys(cfg):
     public_key = cfg.get('honeypot', 'dsa_public_key')
     private_key = cfg.get('honeypot', 'dsa_private_key')
     if not (os.path.exists(public_key) and os.path.exists(private_key)):
