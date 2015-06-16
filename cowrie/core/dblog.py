@@ -68,7 +68,7 @@ class DBLogger(object):
 
     def nowUnix(self):
         """return the current UTC time as an UNIX timestamp"""
-        return int(time.mktime(time.gmtime()[:-1] + (-1,)))
+        return int(time.time())
 
     def emit(self, ev):
         # ignore stdout and stderr
