@@ -123,7 +123,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             dblogger = __import__(
                 'cowrie.dblog.%s' % (engine,),
                 globals(), locals(), ['dblog']).DBLogger(lcfg)
-            log.startLoggingWithObserver(dblogger.emit, setStdout=False)
+            log.addObserver(dblogger.emit)
             self.dbloggers.append(dblogger)
 
         # load new output modules
@@ -144,7 +144,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             output = __import__(
                 'cowrie.output.%s' % (engine,)
                 ,globals(), locals(), ['output']).Output(lcfg)
-            log.startLoggingWithObserver(output.emit, setStdout=False)
+            log.addObserver(output.emit)
             self.output_plugins.append(output)
 
     def buildProtocol(self, addr):
