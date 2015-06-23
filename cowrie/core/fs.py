@@ -219,9 +219,14 @@ class HoneyPotFilesystem(object):
         #    log.msg("fs.open excl")
 
         # treat O_RDWR same as O_WRONLY
+
+        print "mode = %s\n" % repr(mode)
+
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # ensure we do not save with executable bit set
             realmode = mode & ~(stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+            realmode = realmode | stat.S_IRUSR
+            print "realmode = %s\n" % repr(mode)
 
             #log.msg("fs.open wronly")
             tempfile = '%s/%s_%s' % \

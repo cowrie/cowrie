@@ -231,16 +231,16 @@ class DBLogger(dblog.DBLogger):
 	def handleCommand(self, session, args):
 		c = args['input']
 		self.meta[session]['commands'].append(c)
-    
+
 	def handleUnknownCommand(self, session, args):
 		uc = args['input']
 		self.meta[session]['unknownCommands'].append(uc)
 
 	def handleInput(self, session, args):
 		pass
-    
+
 	def handleTerminalSize(self, session, args):
-		pass    
+		pass
 
 	def handleClientVersion(self, session, args):
 		v = args['version']

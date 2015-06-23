@@ -1,4 +1,4 @@
-# 
+#
 
 from cowrie.core.honeypot import HoneyPotCommand
 

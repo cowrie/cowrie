@@ -70,7 +70,7 @@ filesystem_file = data/fs.pickle
 data_path = data
 
 # Class that implements the checklogin() method.
-# 
+#
 # Class must be defined in cowrie/core/auth.py
 # Default is the 'UserDB' class which uses the password database.
 #
@@ -79,7 +79,7 @@ data_path = data
 # It will also cache username/password combinations that allow login.
 #
 auth_class = UserDB
-# When AuthRandom is used also set the 
+# When AuthRandom is used also set the
 #  auth_class_parameters: <min try>, <max try>, <maxcache>
 #  for example: 2, 5, 10 = allows access after randint(2,5) attempts
 #  and cache 10 combinations.

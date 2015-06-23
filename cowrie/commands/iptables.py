@@ -228,7 +228,7 @@ Perhaps iptables or your kernel needs to be upgraded.""" % (command_iptables.APP
     def show_help(self):
         """ Show help and exit """
 
-        self.writeln( """%s %s' 
+        self.writeln( """%s %s'
 
 Usage: iptables -[AD] chain rule-specification [options]
        iptables -I chain [rulenum] rule-specification [options]
@@ -388,16 +388,16 @@ Perhaps iptables or your kernel needs to be upgraded."""
     def no_command(self):
         """ Print no command message and exit """
 
-        self.writeln( """%s %s: no command specified' 
-Try `iptables -h\' or \'iptables --help\' for more information.""" 
+        self.writeln( """%s %s: no command specified'
+Try `iptables -h\' or \'iptables --help\' for more information."""
             % (command_iptables.APP_NAME, command_iptables.APP_VERSION) )
         self.exit()
 
     def unknown_option(self, option):
         """ Print unknown option message and exit """
 
-        self.writeln( """%s %s: unknown option \'%s\'' 
-Try `iptables -h\' or \'iptables --help\' for more information.""" 
+        self.writeln( """%s %s: unknown option \'%s\''
+Try `iptables -h\' or \'iptables --help\' for more information."""
             % (command_iptables.APP_NAME, command_iptables.APP_VERSION, option) )
         self.exit()
 
@@ -405,7 +405,7 @@ Try `iptables -h\' or \'iptables --help\' for more information."""
         """ Print bad argument and exit """
 
         self.writeln( """Bad argument \'%s\'' % argument,
-Try `iptables -h\' or \'iptables --help\' for more information.""" 
+Try `iptables -h\' or \'iptables --help\' for more information."""
             % argument )
         self.exit()
 

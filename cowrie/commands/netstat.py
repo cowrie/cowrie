@@ -49,8 +49,8 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
   <Socket>={-t|--tcp} {-u|--udp} {-w|--raw} {-x|--unix} --ax25 --ipx --netrom
   <AF>=Use \'-6|-4\' or \'-A <af>\' or \'--<af>\'; default: inet
   List of possible address families (which support routing):
-    inet (DARPA Internet) inet6 (IPv6) ax25 (AMPR AX.25) 
-    netrom (AMPR NET/ROM) ipx (Novell IPX) ddp (Appletalk DDP) 
+    inet (DARPA Internet) inet6 (IPv6) ax25 (AMPR AX.25)
+    netrom (AMPR NET/ROM) ipx (Novell IPX) ddp (Appletalk DDP)
     x25 (CCITT X.25)""")
         self.exit()
 
@@ -109,39 +109,39 @@ unix  4      [ ]         DGRAM                    7445     /dev/log
 unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
 unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
 unix  2      [ ACC ]     SEQPACKET  LISTENING     7159     /run/udev/control
-unix  3      [ ]         STREAM     CONNECTED     7323     
+unix  3      [ ]         STREAM     CONNECTED     7323
 unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7330     
-unix  2      [ ]         DGRAM                    8966     
+unix  3      [ ]         STREAM     CONNECTED     7330
+unix  2      [ ]         DGRAM                    8966
 unix  3      [ ]         STREAM     CONNECTED     7424     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7140     
+unix  3      [ ]         STREAM     CONNECTED     7140
 unix  3      [ ]         STREAM     CONNECTED     7145     @/com/ubuntu/upstart
-unix  3      [ ]         DGRAM                    7199     
-unix  3      [ ]         STREAM     CONNECTED     7347     
-unix  3      [ ]         STREAM     CONNECTED     8594     
-unix  3      [ ]         STREAM     CONNECTED     7331     
+unix  3      [ ]         DGRAM                    7199
+unix  3      [ ]         STREAM     CONNECTED     7347
+unix  3      [ ]         STREAM     CONNECTED     8594
+unix  3      [ ]         STREAM     CONNECTED     7331
 unix  3      [ ]         STREAM     CONNECTED     7364     @/com/ubuntu/upstart
-unix  3      [ ]         STREAM     CONNECTED     7423     
-unix  3      [ ]         DGRAM                    7198     
-unix  2      [ ]         DGRAM                    9570     
+unix  3      [ ]         STREAM     CONNECTED     7423
+unix  3      [ ]         DGRAM                    7198
+unix  2      [ ]         DGRAM                    9570
 unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart""")
         else:
             self.honeypot.writeln("""unix  4      [ ]         DGRAM                    7445     /dev/log
-unix  3      [ ]         STREAM     CONNECTED     7323     
+unix  3      [ ]         STREAM     CONNECTED     7323
 unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7330     
-unix  2      [ ]         DGRAM                    8966     
+unix  3      [ ]         STREAM     CONNECTED     7330
+unix  2      [ ]         DGRAM                    8966
 unix  3      [ ]         STREAM     CONNECTED     7424     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7140     
+unix  3      [ ]         STREAM     CONNECTED     7140
 unix  3      [ ]         STREAM     CONNECTED     7145     @/com/ubuntu/upstart
-unix  3      [ ]         DGRAM                    7199     
-unix  3      [ ]         STREAM     CONNECTED     7347     
-unix  3      [ ]         STREAM     CONNECTED     8594     
-unix  3      [ ]         STREAM     CONNECTED     7331     
+unix  3      [ ]         DGRAM                    7199
+unix  3      [ ]         STREAM     CONNECTED     7347
+unix  3      [ ]         STREAM     CONNECTED     8594
+unix  3      [ ]         STREAM     CONNECTED     7331
 unix  3      [ ]         STREAM     CONNECTED     7364     @/com/ubuntu/upstart
-unix  3      [ ]         STREAM     CONNECTED     7423     
-unix  3      [ ]         DGRAM                    7198     
-unix  2      [ ]         DGRAM                    9570     
+unix  3      [ ]         STREAM     CONNECTED     7423
+unix  3      [ ]         DGRAM                    7198
+unix  2      [ ]         DGRAM                    9570
 unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart""")
 
     def call(self):

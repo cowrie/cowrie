@@ -40,7 +40,7 @@ class CowrieServiceMaker(object):
             listen_addr = cfg.get('honeypot', 'listen_addr')
         else:
             listen_addr = '0.0.0.0'
-               
+
         # preference: 1, option, 2, config, 3, default of 2222
         if options['port'] != 0:
             listen_port = int(options["port"])
