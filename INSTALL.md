@@ -29,7 +29,6 @@ remote: Total 2965 (delta 1908), reused 2962 (delta 1905), pack-reused 0
 Receiving objects: 100% (2965/2965), 3.41 MiB | 2.57 MiB/s, done.
 Resolving deltas: 100% (1908/1908), done.
 Checking connectivity... done.
-cowrie@oxygen:~$
 
 $ cd cowrie
 
@@ -43,6 +42,6 @@ Cowry runs by default on port 2222. This can be modified in the configuration fi
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
 
 ```
-$ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222 
+$ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 ```
 
