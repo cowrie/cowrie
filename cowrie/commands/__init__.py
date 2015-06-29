@@ -21,5 +21,8 @@ __all__ = [
     'netstat',
     'which',
     'gcc',
-    'iptables'
+    'iptables',
+    'ethtool',
+    'ifconfig',
+    'nohup'
     ]
