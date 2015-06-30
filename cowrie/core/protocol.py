@@ -92,7 +92,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
                 if self.fs.exists(i):
                     path = i
                     break
-        txt = os.path.abspath('%s/%s' % \
+        txt = os.path.normpath('%s/%s' % \
             (self.env.cfg.get('honeypot', 'txtcmds_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
