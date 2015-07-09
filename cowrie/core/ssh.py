@@ -113,7 +113,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
                 continue
             engine = x.split('_')[1]
             dbengine = 'database_' + engine
-            lcfg = ConfigParser.ConfigParser()
+            lcfg = ConfigParser.SafeConfigParser()
             lcfg.add_section(dbengine)
             for i in self.cfg.options(x):
                 lcfg.set(dbengine, i, self.cfg.get(x, i))
@@ -127,14 +127,14 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             log.addObserver(dblogger.emit)
             self.dbloggers.append(dblogger)
 
-        # load new output modules
+        # load output modules
         self.output_plugins = [];
         for x in self.cfg.sections():
             if not x.startswith('output_'):
                 continue
             engine = x.split('_')[1]
             output = 'output_' + engine
-            lcfg = ConfigParser.ConfigParser()
+            lcfg = ConfigParser.SafeConfigParser()
             lcfg.add_section(output)
             for i in self.cfg.options(x):
                 lcfg.set(output, i, self.cfg.get(x, i))
@@ -149,6 +149,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             self.output_plugins.append(output)
 
         factory.SSHFactory.startFactory(self)
+
+    def stopFactory(self):
+        factory.SSHFactory.stopFactory(self)
 
     def buildProtocol(self, addr):
         """
