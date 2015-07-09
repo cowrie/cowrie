@@ -321,7 +321,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.username = username
         self.env = env
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs),self.env.cfg)
-        self.hostname = self.env.cfg.get('honeypot', 'hostname')
+        self.hostname = self.env.hostname
         self.protocol = None
 
         self.channelLookup.update({'session': HoneyPotSSHSession})

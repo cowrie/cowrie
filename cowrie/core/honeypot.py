@@ -26,7 +26,7 @@ class HoneyPotCommand(object):
         self.exit()
 
     def call(self):
-        self.honeypot.writeln('Hello World! [%s]' % repr(self.args))
+        self.honeypot.writeln('Hello World! [%s]' % (repr(self.args),))
 
     def exit(self):
         self.honeypot.cmdstack.pop()
@@ -38,7 +38,7 @@ class HoneyPotCommand(object):
         self.exit()
 
     def lineReceived(self, line):
-        log.msg('INPUT: %s' % line)
+        log.msg('INPUT: %s' % (line,))
 
     def resume(self):
         pass
@@ -57,7 +57,7 @@ class HoneyPotShell(object):
             }
 
     def lineReceived(self, line):
-        log.msg('CMD: %s' % line)
+        log.msg('CMD: %s' % (line,))
         line = line[:500]
         comment = re.compile('^\s*#')
         for i in [x.strip() for x in re.split(';|&&|\n', line.strip())[:10]]:
@@ -134,7 +134,7 @@ class HoneyPotShell(object):
                 input=line, format='Command not found: %(input)s')
             #self.honeypot.logDispatch('Command not found: %s' % (line,))
             if len(line):
-                self.honeypot.writeln('bash: %s: command not found' % cmd)
+                self.honeypot.writeln('bash: %s: command not found' % (cmd,))
                 runOrPrompt()
 
     def resume(self):
@@ -252,15 +252,20 @@ class HoneyPotShell(object):
         self.honeypot.terminal.write(newbuf)
 
 class HoneyPotEnvironment(object):
+    """
+    """
     def __init__(self, cfg):
         self.cfg = cfg
+
         self.commands = {}
+        self.hostname = self.cfg.get('honeypot', 'hostname')
+
         import cowrie.commands
         for c in cowrie.commands.__all__:
-            module = __import__('cowrie.commands.%s' % c,
+            module = __import__('cowrie.commands.%s' % (c,),
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
-        self.fs = pickle.load(file(
-            cfg.get('honeypot', 'filesystem_file'), 'rb'))
+
+        self.fs = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
 # vim: set sw=4 et:
