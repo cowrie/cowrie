@@ -53,10 +53,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
             self.kippoIP = self.cfg.get('honeypot', 'internet_facing_ip')
         else:
             # Hack to get ip
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            self.kippoIP = s.getsockname()[0]
-            s.close()
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                self.kippoIP = s.getsockname()[0]
+                s.close()
+            except:
+                self.kippoIP = '192.168.0.1'
 
     # this is only called on explicit logout, not on disconnect
     # this indicates the closing of the channel/session, not the closing of the connection
