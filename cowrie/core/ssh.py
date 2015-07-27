@@ -88,8 +88,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             output.logDispatch(*msg, **args)
 
     def __init__(self, cfg):
-
         self.cfg = cfg
+
+    def startFactory(self):
 
         # protocol^Wwhatever instances are kept here for the interact feature
         self.sessions = {}
@@ -107,18 +108,18 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
         # load db loggers
         self.dbloggers = []
-        for x in cfg.sections():
+        for x in self.cfg.sections():
             if not x.startswith('database_'):
                 continue
             engine = x.split('_')[1]
             dbengine = 'database_' + engine
-            lcfg = ConfigParser.ConfigParser()
+            lcfg = ConfigParser.SafeConfigParser()
             lcfg.add_section(dbengine)
-            for i in cfg.options(x):
-                lcfg.set(dbengine, i, cfg.get(x, i))
+            for i in self.cfg.options(x):
+                lcfg.set(dbengine, i, self.cfg.get(x, i))
             lcfg.add_section('honeypot')
-            for i in cfg.options('honeypot'):
-                lcfg.set('honeypot', i, cfg.get('honeypot', i))
+            for i in self.cfg.options('honeypot'):
+                lcfg.set('honeypot', i, self.cfg.get('honeypot', i))
             log.msg('Loading dblog engine: %s' % (engine,))
             dblogger = __import__(
                 'cowrie.dblog.%s' % (engine,),
@@ -126,26 +127,31 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             log.addObserver(dblogger.emit)
             self.dbloggers.append(dblogger)
 
-        # load new output modules
+        # load output modules
         self.output_plugins = [];
-        for x in cfg.sections():
+        for x in self.cfg.sections():
             if not x.startswith('output_'):
                 continue
             engine = x.split('_')[1]
             output = 'output_' + engine
-            lcfg = ConfigParser.ConfigParser()
+            lcfg = ConfigParser.SafeConfigParser()
             lcfg.add_section(output)
-            for i in cfg.options(x):
-                lcfg.set(output, i, cfg.get(x, i))
+            for i in self.cfg.options(x):
+                lcfg.set(output, i, self.cfg.get(x, i))
             lcfg.add_section('honeypot')
-            for i in cfg.options('honeypot'):
-                lcfg.set('honeypot', i, cfg.get('honeypot', i))
+            for i in self.cfg.options('honeypot'):
+                lcfg.set('honeypot', i, self.cfg.get('honeypot', i))
             log.msg('Loading output engine: %s' % (engine,))
             output = __import__(
                 'cowrie.output.%s' % (engine,)
                 ,globals(), locals(), ['output']).Output(lcfg)
             log.addObserver(output.emit)
             self.output_plugins.append(output)
+
+        factory.SSHFactory.startFactory(self)
+
+    def stopFactory(self):
+        factory.SSHFactory.stopFactory(self)
 
     def buildProtocol(self, addr):
         """
@@ -315,7 +321,7 @@ class HoneyPotAvatar(avatar.ConchUser):
         self.username = username
         self.env = env
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs),self.env.cfg)
-        self.hostname = self.env.cfg.get('honeypot', 'hostname')
+        self.hostname = self.env.hostname
         self.protocol = None
 
         self.channelLookup.update({'session': HoneyPotSSHSession})
