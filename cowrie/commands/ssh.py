@@ -30,6 +30,11 @@ class command_ssh(HoneyPotCommand):
         except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             self.exit()
+        for opt in optlist:
+            if opt[0] == '-V':
+                self.writeln('OpenSSH_6.7p1 Debian-5, OpenSSL 1.0.1k 8 Jan 2015')
+                self.exit()
+                return
         if not len(args):
             for l in (
                     'usage: ssh [-1246AaCfgKkMNnqsTtVvXxY] [-b bind_address] [-c cipher_spec]',
