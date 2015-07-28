@@ -20,7 +20,7 @@ iptables -A FORWARD -j REJECT --reject-with icmp-host-prohibited
 
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-apt-get update && apt-get upgrade -y && apt-get install -y vim git python-dev openssl python-openssl python-pyasn1 python-twisted iptables-persistent
+apt-get update && apt-get upgrade -y && apt-get install -y git python-dev openssl python-openssl python-pyasn1 python-twisted iptables-persistent
 
 useradd -m -d /home/cowrie -s /bin/bash cowrie
 
