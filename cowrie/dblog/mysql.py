@@ -143,7 +143,7 @@ class DBLogger(dblog.DBLogger):
     def handleFileDownload(self, session, args):
         self.simpleQuery('INSERT INTO `downloads`' + \
             ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
-            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
             (session, self.nowUnix(), args['url'], args['outfile'], args['shasum']))
 
 # vim: set sw=4 et:
