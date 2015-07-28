@@ -31,7 +31,7 @@ cd /home/cowrie
 git clone http://github.com/micheloosterhof/cowrie
 cd /home/cowrie/cowrie
 cp cowrie.cfg.dist cowrie.cfg
-sed -i "s/svr04/$FAKE_HOSTNAME/g" cowrie.cfg
+sed -i "s/= svr04/= $FAKE_HOSTNAME/g" cowrie.cfg
 sed -i "s/= SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2/= $FAKE_VERSION/g" cowrie.cfg
 ./start.sh
 EOF
