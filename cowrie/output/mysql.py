@@ -51,7 +51,7 @@ class Output(cowrie.core.output.Output):
             cp_max = 1)
 
     def __start__(self):
-    	pass
+        pass
 
     def sqlerror(self, error):
         log.msg( 'SQL Error:', error.value )
@@ -64,85 +64,86 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if (entry.id == 'KIPP0001'):
             sid = uuid.uuid4().hex
-	        sensorname = self.getSensor() or hostIP
-	        r = yield self.db.runQuery(
-	            'SELECT `id` FROM `sensors` WHERE `ip` = %s', (sensorname,))
-	        if r:
-	            id = r[0][0]
-	        else:
-	            yield self.db.runQuery(
-	                'INSERT INTO `sensors` (`ip`) VALUES (%s)', (sensorname,))
-	            r = yield self.db.runQuery('SELECT LAST_INSERT_ID()')
-	            id = int(r[0][0])
-	        # now that we have a sensorID, continue creating the session
-	        self.simpleQuery(
-	            'INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`)' + \
-	            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
-	            (sid, self.nowUnix(), id, peerIP))
-    	elif (entry.id == 'KIPP-0002'):
+            sensorname = self.getSensor() or hostIP
+            r = yield self.db.runQuery(
+                'SELECT `id` FROM `sensors` WHERE `ip` = %s', (sensorname,))
+            if r:
+                id = r[0][0]
+            else:
+                yield self.db.runQuery(
+                    'INSERT INTO `sensors` (`ip`) VALUES (%s)', (sensorname,))
+                r = yield self.db.runQuery('SELECT LAST_INSERT_ID()')
+                id = int(r[0][0])
+            # now that we have a sensorID, continue creating the session
+            self.simpleQuery(
+                'INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`)' + \
+                ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+                (sid, self.nowUnix(), id, peerIP))
+        elif (entry.id == 'KIPP-0002'):
              self.simpleQuery('INSERT INTO `auth` (`session`, `success`' + \
-	            ', `username`, `password`, `timestamp`)' + \
-	            ' VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
-	            (session, 1, args['username'], args['password'], self.nowUnix()))
-    	elif (entry.id == 'KIPP-0003'):
-        	self.simpleQuery('INSERT INTO `auth` (`session`, `success`' + \
-	            ', `username`, `password`, `timestamp`)' + \
-       		     ' VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
-	       	     (session, 0, args['username'], args['password'], self.nowUnix()))
-    	elif (entry.id == 'KIPP-0004'):
-    		pass
-    	elif (entry.id == 'KIPP-0005'):
-        	self.simpleQuery('INSERT INTO `input`' + \
-	            ' (`session`, `timestamp`, `success`, `input`)' + \
-       		     ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
-	            (session, self.nowUnix(), 1, args['input']))
-    	elif (entry.id == 'KIPP-0006'):
-	        self.simpleQuery('INSERT INTO `input`' + \
-	            ' (`session`, `timestamp`, `success`, `input`)' + \
-	            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
-	            (session, self.nowUnix(), 0, args['input']))
-    	elif (entry.id == 'KIPP-0009'):
-	        r = yield self.db.runQuery(
-	            'SELECT `id` FROM `clients` WHERE `version` = %s', \
-	            (args['version'],))
-	        if r:
-	            id = int(r[0][0])
-	        else:
-	            yield self.db.runQuery(
-	                'INSERT INTO `clients` (`version`) VALUES (%s)', \
-	                (args['version'],))
-	            r = yield self.db.runQuery('SELECT LAST_INSERT_ID()')
-	            id = int(r[0][0])
-	        self.simpleQuery(
-	            'UPDATE `sessions` SET `client` = %s WHERE `id` = %s',
-	            (id, session))
-	    elif (entry.id == 'KIPP-0008'):
-        	self.simpleQuery('INSERT INTO `input`' + \
-	            ' (`session`, `timestamp`, `realm`, `input`)' + \
-	            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+                ', `username`, `password`, `timestamp`)' + \
+                ' VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
+                (session, 1, args['username'], args['password'], self.nowUnix()))
+        elif (entry.id == 'KIPP-0003'):
+            self.simpleQuery('INSERT INTO `auth` (`session`, `success`' + \
+                ', `username`, `password`, `timestamp`)' + \
+                    ' VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
+                    (session, 0, args['username'], args['password'], self.nowUnix()))
+        elif (entry.id == 'KIPP-0004'):
+            pass
+        elif (entry.id == 'KIPP-0005'):
+            self.simpleQuery('INSERT INTO `input`' + \
+                ' (`session`, `timestamp`, `success`, `input`)' + \
+                    ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+                (session, self.nowUnix(), 1, args['input']))
+        elif (entry.id == 'KIPP-0006'):
+            self.simpleQuery('INSERT INTO `input`' + \
+                ' (`session`, `timestamp`, `success`, `input`)' + \
+                ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+                (session, self.nowUnix(), 0, args['input']))
+        elif (entry.id == 'KIPP-0009'):
+            r = yield self.db.runQuery(
+                'SELECT `id` FROM `clients` WHERE `version` = %s', \
+                (args['version'],))
+            if r:
+                id = int(r[0][0])
+            else:
+                yield self.db.runQuery(
+                    'INSERT INTO `clients` (`version`) VALUES (%s)', \
+                    (args['version'],))
+                r = yield self.db.runQuery('SELECT LAST_INSERT_ID()')
+                id = int(r[0][0])
+            self.simpleQuery(
+                'UPDATE `sessions` SET `client` = %s WHERE `id` = %s',
+                (id, session))
+        elif (entry.id == 'KIPP-0008'):
+            self.simpleQuery('INSERT INTO `input`' + \
+                ' (`session`, `timestamp`, `realm`, `input`)' + \
+                ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
             (session, self.nowUnix(), args['realm'], args['input']))
-    	elif (entry.id == 'KIPP-0007'):
-	        self.simpleQuery('INSERT INTO `downloads`' + \
-	            ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
-	            ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
-	            (session, self.nowUnix(), args['url'], args['outfile'], args['shasum']))
-    	elif (entry.id == 'KIPP-0010'):
-	        self.simpleQuery('UPDATE `sessions` SET `termsize` = %s' + \
-	            ' WHERE `id` = %s',
-	            ('%sx%s' % (args['width'], args['height']), session))
-    	elif (entry.id == 'KIPP-0011'):
-       		 ttylog = self.ttylog(session)
-	        if ttylog:
-	            self.simpleQuery(
-	                'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
-	                (session, self.ttylog(session)))
-	        self.simpleQuery(
-	            'UPDATE `sessions` SET `endtime` = FROM_UNIXTIME(%s)' + \
-	            ' WHERE `id` = %s',
-	            (self.nowUnix(), session))
+        elif (entry.id == 'KIPP-0007'):
+            self.simpleQuery('INSERT INTO `downloads`' + \
+                ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
+                ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s)',
+                (session, self.nowUnix(), args['url'], args['outfile'], args['shasum']))
+        elif (entry.id == 'KIPP-0010'):
+            self.simpleQuery('UPDATE `sessions` SET `termsize` = %s' + \
+                ' WHERE `id` = %s',
+                ('%sx%s' % (args['width'], args['height']), session))
+        elif (entry.id == 'KIPP-0011'):
+            ttylog = self.ttylog(session)
+            if ttylog:
+                self.simpleQuery(
+                    'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
+                    (session, self.ttylog(session)))
+            self.simpleQuery(
+                'UPDATE `sessions` SET `endtime` = FROM_UNIXTIME(%s)' + \
+                ' WHERE `id` = %s',
+                (self.nowUnix(), session))
 
     # This is separate since we can't return with a value
     @defer.inlineCallbacks
     def createSessionWhenever(self, sid, peerIP, hostIP):
+        pass
 
 # vim: set sw=4 et:
