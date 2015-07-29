@@ -108,8 +108,8 @@ class Output(object):
 
         ev = copy.copy(event)
 
-        if 'isError' in ev:
-            del ev['isError']
+        #if 'isError' in ev:
+        #    del ev['isError']
         ev['sensor'] = self.sensor
 
         # add ISO timestamp and sensor data
@@ -137,7 +137,7 @@ class Output(object):
             if not match:
                 return
             sessionno = int(match.groups()[0])
-            del ev['system']
+            #del ev['system']
 
         if sessionno in self.ips:
             ev['src_ip'] = self.ips[sessionno]
