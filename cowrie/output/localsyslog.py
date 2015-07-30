@@ -35,8 +35,9 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
         cowrie.core.output.Output.__init__(self, cfg)
-        self.facility = cfg.get('output_syslog', 'facility')
-        self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie')
+        facility_string = cfg.get('output_localsyslog', 'facility')
+        self.facility = vars(syslog)['LOG_' + facility_string]
+        self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie', facility=self.facility)
 
     def start(self):
         pass
