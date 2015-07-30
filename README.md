@@ -27,7 +27,7 @@ Software required:
 * Twisted 8.0+
 * PyCrypto
 * pyasn1
-* Zope Interface
+* Zope Interface 3.6.0+
 
 ## Files of interest:
 
