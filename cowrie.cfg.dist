@@ -228,6 +228,15 @@ interact_port = 5123
 [output_jsonlog]
 logfile = log/cowrie.json
 
+# Local Syslog output module
+#
+# This sends log messages to the local syslog daemon.
+# Facility can be:
+# KERN, USER, MAIL, DAEMON, AUTH, LPR, NEWS, UUCP, CRON, SYSLOG and LOCAL0 to LOCAL7.
+#
+# [output_localsyslog]
+# facility = USER
+
 #[database_hpfeeds]
 #server = hpfeeds.mysite.org
 #port = 10000
