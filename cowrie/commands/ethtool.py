@@ -21,7 +21,7 @@ class command_ethtool(HoneyPotCommand):
     def do_ethtool_help(self):
         """No real help output."""
         self.honeypot.writeln("""ethtool: bad command line argument(s)
-        For more information run ethtool -h """)
+For more information run ethtool -h """)
 
     def do_ethtool_lo(self):
         self.honeypot.writeln("""Settings for lo:
@@ -29,33 +29,33 @@ class command_ethtool(HoneyPotCommand):
 
     def do_ethtool_eth0(self):
         self.honeypot.writeln("""Settings for eth0:
-        Supported ports: [ TP MII ]
-        Supported link modes:   10baseT/Half 10baseT/Full 
-                                100baseT/Half 100baseT/Full 
-                                1000baseT/Half 1000baseT/Full 
-        Supported pause frame use: No
-        Supports auto-negotiation: Yes
-        Advertised link modes:  10baseT/Half 10baseT/Full 
-                                100baseT/Half 100baseT/Full 
-                                1000baseT/Half 1000baseT/Full 
-        Advertised pause frame use: Symmetric Receive-only
-        Advertised auto-negotiation: Yes
-        Link partner advertised link modes:  10baseT/Half 10baseT/Full 
-                                             100baseT/Half 100baseT/Full 
-                                             1000baseT/Full 
-        Link partner advertised pause frame use: Symmetric Receive-only
-        Link partner advertised auto-negotiation: Yes
-        Speed: 1000Mb/s
-        Duplex: Full
-        Port: MII
-        PHYAD: 0
-        Transceiver: internal
-        Auto-negotiation: on
-        Supports Wake-on: pumbg
-        Wake-on: g
-        Current message level: 0x00000033 (51)
-                               drv probe ifdown ifup
-        Link detected: yes""")
+Supported ports: [ TP MII ]
+Supported link modes:   10baseT/Half 10baseT/Full 
+                        100baseT/Half 100baseT/Full 
+                        1000baseT/Half 1000baseT/Full 
+Supported pause frame use: No
+Supports auto-negotiation: Yes
+Advertised link modes:  10baseT/Half 10baseT/Full 
+                        100baseT/Half 100baseT/Full 
+                        1000baseT/Half 1000baseT/Full 
+Advertised pause frame use: Symmetric Receive-only
+Advertised auto-negotiation: Yes
+Link partner advertised link modes:  10baseT/Half 10baseT/Full 
+                                     100baseT/Half 100baseT/Full 
+                                     1000baseT/Full 
+Link partner advertised pause frame use: Symmetric Receive-only
+Link partner advertised auto-negotiation: Yes
+Speed: 1000Mb/s
+Duplex: Full
+Port: MII
+PHYAD: 0
+Transceiver: internal
+Auto-negotiation: on
+Supports Wake-on: pumbg
+Wake-on: g
+Current message level: 0x00000033 (51)
+                       drv probe ifdown ifup
+Link detected: yes""")
 
     def do_ethtool_eth1(self):
         self.honeypot.writeln("""Settings for eth1:
