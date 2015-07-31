@@ -49,20 +49,23 @@ class CowrieSSHServerTransport(transport.SSHServerTransport):
         """
         self.buf = self.buf + data
         if not self.gotVersion:
-            if self.buf.find('\n', self.buf.find('SSH-')) == -1:
+            if not '\n' in self.buf:
                 return
-            lines = self.buf.split('\n')
-            for p in lines:
-                if p.startswith('SSH-'):
-                    self.gotVersion = True
-                    self.otherVersionString = p.strip()
-                    remoteVersion = p.split('-')[1]
-                    if remoteVersion not in self.supportedVersions:
-                        self._unsupportedVersionReceived(remoteVersion)
-                        return
-                    i = lines.index(p)
-                    self.buf = '\n'.join(lines[i + 1:])
-                    self.sendKexInit()
+            self.otherVersionString = self.buf.strip()
+            if self.buf.startswith('SSH-'):
+                self.gotVersion = True
+                remoteVersion = self.buf.split('-')[1]
+                if remoteVersion not in self.supportedVersions:
+                    self._unsupportedVersionReceived(remoteVersion)
+                    return
+                i = self.buf.index('\n')
+                self.buf = self.buf[i+1:]
+                self.sendKexInit()
+            else:
+                self.transport.write('Protocol mismatch.\n')
+                log.msg('Bad protocol version identification: %s' % (self.otherVersionString))
+                self.transport.loseConnection()
+                return
         packet = self.getPacket()
         while packet:
             messageNum = ord(packet[0])
