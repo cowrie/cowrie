@@ -249,7 +249,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
         if not self.gotVersion:
             if not '\n' in self.buf:
                 return
-            self.otherVersionString = self.buf.strip()
+            self.otherVersionString = self.buf.split('\n')[0].strip()
             if self.buf.startswith('SSH-'):
                 self.gotVersion = True
                 remoteVersion = self.buf.split('-')[1]
