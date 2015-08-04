@@ -7,11 +7,12 @@ methods 'start', 'stop' and 'handleLog'
 
     class Output(cowrie.core.output.Output):
 
-        def start(self, cfg):
+        def __init__(self, cfg):
+
+        def start(self):
 
         def stop(self):
 
         def handleLog( self, event ):
-
 
 
