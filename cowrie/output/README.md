@@ -13,6 +13,6 @@ methods 'start', 'stop' and 'handleLog'
 
         def stop(self):
 
-        def handleLog( self, event ):
+        def write( self, event ):
 
 
