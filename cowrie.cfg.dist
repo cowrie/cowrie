@@ -237,6 +237,19 @@ logfile = log/cowrie.json
 # [output_localsyslog]
 # facility = USER
 
+
+# Splunk SDK output module
+#
+# This sends logs directly to Splunk using the SDK
+#
+# [output_splunk]
+# host = localhost
+# port = 8889
+# username = admin
+# password = password
+# index = cowrie
+
+
 #[database_hpfeeds]
 #server = hpfeeds.mysite.org
 #port = 10000
