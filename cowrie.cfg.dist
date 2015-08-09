@@ -238,9 +238,9 @@ logfile = log/cowrie.json
 # facility = USER
 
 
-# Splunk SDK output module
+# Splunk SDK output module - EARLY RELEASE NOT RECOMMENDED
 #
-# This sends logs directly to Splunk using the SDK
+# This sends logs directly to Splunk using the Python REST SDK
 #
 # [output_splunk]
 # host = localhost
