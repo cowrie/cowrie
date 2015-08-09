@@ -1,3 +1,9 @@
+#
+# Basic Splunk connector. 
+# Not recommended for production use. 
+# JSON log file is still recommended way to go
+#
+
 import os
 import json
 
@@ -9,12 +15,13 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
         """ Initializing the class."""
+        self.index = cfg.get('output_splunk', 'index')
+        self.username = cfg.get('output_splunk', 'username')
+        self.password = cfg.get('output_splunk', 'password')
+        self.host = cfg.get('output_splunk', 'host')
+        self.port = cfg.get('output_splunk', 'port')
         cowrie.core.output.Output.__init__(self, cfg)
-        self.index = self.cfg.get('output_splunk', 'index')
-        self.username = self.cfg.get('output_splunk', 'username')
-        self.password = self.cfg.get('output_splunk', 'password')
-        self.host = self.cfg.get('output_splunk', 'host')
-        self.port = self.cfg.get('output_splunk', 'port')
+
 
     def start(self):
         self.service = client.connect(
@@ -23,7 +30,7 @@ class Output(cowrie.core.output.Output):
             username=self.username,
             password=self.password)
         self.index = self.service.indexes['cowrie']
-        pass
+
 
     def stop(self):
         pass
@@ -34,7 +41,10 @@ class Output(cowrie.core.output.Output):
             if i.startswith('log_'):
                 del logentry[i]
 
-        mysocket = self.index.attach()
-        mysocket.send(json.dumps(logentry))
-        mysocket.close()
+        self.mysocket = self.index.attach(
+            sourcetype='cowrie',
+            host=self.sensor,
+            source='cowrie-splunk-connector')
+        self.mysocket.send(json.dumps(logentry))
+        self.mysocket.close()
 
