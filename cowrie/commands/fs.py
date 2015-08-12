@@ -11,16 +11,24 @@ from cowrie.core.fs import *
 commands = {}
 
 class command_cat(HoneyPotCommand):
-    def call(self):
-        for arg in self.args:
-            path = self.fs.resolve_path(arg, self.honeypot.cwd)
-            if self.fs.is_dir(path):
-                self.writeln('cat: %s: Is a directory' % (arg,))
-                continue
-            try:
-                self.write(self.fs.file_contents(path))
-            except:
-                self.writeln('cat: %s: No such file or directory' % (arg,))
+    def start(self):
+        if not self.args or self.args[0] == '>':
+            pass
+        else:
+            for arg in self.args:
+                path = self.fs.resolve_path(arg, self.honeypot.cwd)
+                if self.fs.is_dir(path):
+                    self.writeln('cat: %s: Is a directory' % (arg,))
+                    continue
+                try:
+                    self.write(self.fs.file_contents(path))
+                except:
+                    self.writeln('cat: %s: No such file or directory' % (arg,))
+                self.exit()
+
+    def lineReceived(self, line):
+        log.msg( eventid='KIPP0008', realm='cat', input=line,
+            format='INPUT (%(realm)s): %(input)s' )
 
 commands['/bin/cat'] = command_cat
 
