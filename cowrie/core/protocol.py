@@ -289,7 +289,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
         if self.stdinlog_open and not noLog:
-            log.msg("Saving stdin log: %s" % self.stdinlog_file)
+            log.msg("Saving %s bytes to stdin log: %s" % ( len(data), self.stdinlog_file))
             f = file(self.stdinlog_file, 'ab')
             f.write(data)
             f.close
