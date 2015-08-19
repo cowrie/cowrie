@@ -11,7 +11,7 @@ from zope.interface import implementer
 
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword, ISSHPrivateKey, \
-    IPluggableAuthenticationModules
+    IPluggableAuthenticationModules, ICredentials
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 
 from twisted.internet import defer
@@ -253,6 +253,22 @@ class HoneypotPublicKeyChecker:
                 fingerprint=_pubKey.fingerprint())
         return failure.Failure(error.ConchError('Incorrect signature'))
 
+class IUsername(ICredentials):
+    """
+    Encapsulate username only
+
+    @type username: C{str}
+    @ivar username: The username associated with these credentials.
+    """
+
+
+@implementer(IUsername)
+class Username:
+
+    def __init__(self, username):
+        self.username = username
+
+
 # This credential interface also provides an IP address
 @implementer(IUsernamePassword)
 class UsernamePasswordIP:
@@ -261,6 +277,21 @@ class UsernamePasswordIP:
         self.username = username
         self.password = password
         self.ip = ip
+
+@implementer(ICredentialsChecker)
+class HoneypotNoneChecker:
+    """
+    Checker that does no authentication check
+    """
+
+    credentialInterfaces = (IUsername,)
+
+    def __init__(self):
+        pass
+
+    def requestAvatarId(self, credentials):
+        return defer.succeed(credentials.username)
+
 
 # This credential interface also provides an IP address
 @implementer(IPluggableAuthenticationModules)

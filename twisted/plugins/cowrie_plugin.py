@@ -54,6 +54,11 @@ class CowrieServiceMaker(object):
         factory.portal.registerChecker(core.auth.HoneypotPublicKeyChecker(cfg))
         factory.portal.registerChecker(core.auth.HoneypotPasswordChecker(cfg))
 
+        if cfg.has_option('honeypot', 'auth_none_enabled') and \
+                 cfg.get('honeypot', 'auth_none_enabled').lower() in \
+                 ('yes', 'true', 'on'):
+            factory.portal.registerChecker(core.auth.HoneypotNoneChecker())
+
         top_service = top_service = service.MultiService()
 
         for i in listen_addr.split():

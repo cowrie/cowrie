@@ -17,6 +17,7 @@ import twisted.conch.ls
 from twisted.python import log, components
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh.common import NS, getNS
+from twisted.internet import defer
 
 import ConfigParser
 
@@ -25,10 +26,11 @@ import auth
 import connection
 import honeypot
 import protocol
-import exceptions
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
+
     def serviceStarted(self):
+        self.interfaceToMethod[auth.IUsername] = 'none'
         userauth.SSHUserAuthServer.serviceStarted(self)
         self.bannerSent = False
 
@@ -52,13 +54,17 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 
+    def auth_none(self, packet):
+        c = auth.Username(self.user)
+        return self.portal.login(c, None, conchinterfaces.IConchUser)
+
     # Overridden to pass src_ip to auth.UsernamePasswordIP
     def auth_password(self, packet):
         password = getNS(packet[1:])[0]
         src_ip = self.transport.transport.getPeer().host
         c = auth.UsernamePasswordIP(self.user, password, src_ip)
-        return self.portal.login(c, None, conchinterfaces.IConchUser).addErrback(
-                                                        self._ebPassword)
+        return self.portal.login(c, None,
+            conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
     # Overridden to pass src_ip to auth.PluggableAuthenticationModulesIP
     def auth_keyboard_interactive(self, packet):
@@ -69,7 +75,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
         c = auth.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
-        return self.portal.login(c, None, conchinterfaces.IConchUser)
+        return self.portal.login(c, None,
+            conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
@@ -126,7 +133,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             self.dbloggers.append(dblogger)
 
         # load output modules
-        self.output_plugins = [];
+        self.output_plugins = []
         for x in self.cfg.sections():
             if not x.startswith('output_'):
                 continue
