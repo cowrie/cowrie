@@ -227,7 +227,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.cmdstack[-1].ctrl_c()
 
     def handle_CTRL_D(self):
-        self.call_command(self.commands['exit'])
+        self.cmdstack[-1].handle_CTRL_D()
 
     def handle_TAB(self):
         self.cmdstack[-1].handle_TAB()

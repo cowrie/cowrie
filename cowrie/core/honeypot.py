@@ -46,6 +46,9 @@ class HoneyPotCommand(object):
     def handle_TAB(self):
         pass
 
+    def handle_CTRL_D(self):
+        pass
+
 class HoneyPotShell(object):
     def __init__(self, protocol, interactive=True):
         self.honeypot = protocol
@@ -163,7 +166,7 @@ class HoneyPotShell(object):
         elif len(path) > (homelen+1) and \
                 path[:(homelen+1)] == self.honeypot.user.home + '/':
             path = '~' + path[homelen:]
-        # Uncomment the three lines below for a 'better' CenOS look.
+        # Uncomment the three lines below for a 'better' CentOS look.
         # Rather than '[root@svr03 /var/log]#' is shows '[root@svr03 log]#'.
         #path = path.rsplit('/', 1)[-1]
         #if not path:
@@ -177,6 +180,10 @@ class HoneyPotShell(object):
         self.honeypot.lineBufferIndex = 0
         self.honeypot.terminal.nextLine()
         self.showPrompt()
+
+    def handle_CTRL_D(self):
+        log.msg('Received CTRL-D, exiting..')
+        self.honeypot.call_command(self.honeypot.commands['exit'])
 
     # Tab completion
     def handle_TAB(self):

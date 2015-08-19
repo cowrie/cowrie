@@ -30,6 +30,9 @@ class command_cat(HoneyPotCommand):
         log.msg( eventid='KIPP0008', realm='cat', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
+    def handle_CTRL_D(self):
+        self.exit()
+
 commands['/bin/cat'] = command_cat
 
 class command_cd(HoneyPotCommand):
