@@ -238,22 +238,27 @@ class command_rmdir(HoneyPotCommand):
     def call(self):
         for f in self.args:
             path = self.fs.resolve_path(f, self.honeypot.cwd)
-            if len(self.fs.get_path(path)):
-                self.writeln(
-                    'rmdir: failed to remove `%s\': Directory not empty' % f)
-                continue
             try:
+                if len(self.fs.get_path(path)):
+                    self.writeln(
+                        'rmdir: failed to remove `%s\': Directory not empty' % f)
+                    continue
                 dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
-            except IndexError:
+            except (IndexError, FileNotFound):
                 dir = None
-            if not dir or f not in [x[A_NAME] for x in dir]:
+            fname = os.path.basename(f)
+            if not dir or fname not in [x[A_NAME] for x in dir]:
                 self.writeln(
                     'rmdir: failed to remove `%s\': ' % f + \
                     'No such file or directory')
                 continue
             for i in dir[:]:
-                if i[A_NAME] == f:
+                if i[A_NAME] == fname:
+                    if i[A_TYPE] != T_DIR:
+                        self.writeln("rmdir: failed to remove '%s': Not a directory" % f)
+                        return
                     dir.remove(i)
+                    break
 commands['/bin/rmdir'] = command_rmdir
 
 class command_pwd(HoneyPotCommand):
