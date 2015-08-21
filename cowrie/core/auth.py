@@ -124,15 +124,19 @@ class AuthRandom(object):
     Users will be authenticated after a random number of attempts.
     """
 
-    def __init__(self, cfg, parameters):
+    def __init__(self, cfg):
         # Default values
         self.mintry, self.maxtry, self.maxcache = 2, 5, 10
-        parlist = parameters.split(',')
 
-        if len(parlist) == 3:
-            self.mintry = int(parlist[0])
-            self.maxtry = int(parlist[1])
-            self.maxcache = int(parlist[2])
+        # Are there auth_class parameters?
+        if cfg.has_option('honeypot', 'auth_class_parameters'):
+            parameters = cfg.get('honeypot', 'auth_class_parameters')
+            parlist = parameters.split(',')
+            if len(parlist) == 3:
+                self.mintry = int(parlist[0])
+                self.maxtry = int(parlist[1])
+                self.maxcache = int(parlist[2])
+
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
             log.msg('maxtry < mintry, adjusting maxtry to: %d' % self.maxtry)
@@ -338,7 +342,6 @@ class HoneypotPasswordChecker:
     def checkUserPass(self, theusername, thepassword, ip):
         #  UserDB is the default auth_class
         authname = UserDB
-        parameters = self.cfg
 
         # Is the auth_class defined in the config file?
         if self.cfg.has_option('honeypot', 'auth_class'):
@@ -347,17 +350,10 @@ class HoneypotPasswordChecker:
             # Check if authclass exists in this module
             if hasattr(modules[__name__], authclass):
                 authname = getattr(modules[__name__], authclass)
-
-                # Are there auth_class parameters?
-                if self.cfg.has_option('honeypot', 'auth_class_parameters'):
-                    parameters = self.cfg.get('honeypot', 'auth_class_parameters')
             else:
                 log.msg('auth_class: %s not found in %s' % (authclass, __name__))
 
-        if parameters:
-            theauth = authname(parameters)
-        else:
-            theauth = authname()
+        theauth = authname(self.cfg)
 
         if theauth.checklogin(theusername, thepassword, ip):
             log.msg(eventid='KIPP0002',
