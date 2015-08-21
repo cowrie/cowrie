@@ -100,7 +100,7 @@ class DBLogger(dblog.DBLogger):
         msg['type'] = msgtype
         msg.addChild(xmsg)
         body.addChild(msg)
-        self.muc.groupChat(to,  None, children=[body])
+        self.muc.groupChat(jid.JID(to), body)
 
     # We have to return an unique ID
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
