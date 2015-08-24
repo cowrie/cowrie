@@ -31,7 +31,6 @@ import datetime
 import re
 import copy
 import socket
-import uuid
 
 # KIPP0001 : create session
 # KIPP0002 : succesful login
@@ -144,9 +143,9 @@ class Output(object):
 
         # connection event is special. adds to session list
         if ev['eventid'] == 'KIPP0001':
-            self.sessions[sessionno] = uuid.uuid4().hex
+            self.sessions[sessionno] = ev['id']
             self.ips[sessionno] = ev['src_ip']
-            del ev['system']
+            del ev['id']
 
         ev['session'] = self.sessions[sessionno]
 
