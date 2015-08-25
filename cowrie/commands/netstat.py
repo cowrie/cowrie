@@ -15,7 +15,6 @@ class command_netstat(HoneyPotCommand):
         self.writeln('+NEW_ADDRT +RTF_IRTT +RTF_REJECT +FW_MASQUERADE +I18N')
         self.writeln('AF: (inet) +UNIX +INET +INET6 +IPX +AX25 +NETROM +X25 +ATALK +ECONET +ROSE')
         self.writeln('HW:  +ETHER +ARC +SLIP +PPP +TUNNEL +TR +AX25 +NETROM +X25 +FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64')
-        self.exit()
 
     def show_help(self):
         self.writeln("""
@@ -52,7 +51,6 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
     inet (DARPA Internet) inet6 (IPv6) ax25 (AMPR AX.25)
     netrom (AMPR NET/ROM) ipx (Novell IPX) ddp (Appletalk DDP)
     x25 (CCITT X.25)""")
-        self.exit()
 
     def do_netstat_route(self):
         self.honeypot.writeln("""Kernel IP routing table
