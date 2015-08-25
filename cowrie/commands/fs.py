@@ -58,7 +58,8 @@ class command_cd(HoneyPotCommand):
             newpath = f[A_TARGET]
             count += 1
             if count > 10:
-                raise self.fs.TooManyLevels
+                self.writeln('bash: cd: %s: Too many levels of symbolic links' % path)
+                return
         if not self.fs.is_dir(newpath):
             self.writeln('bash: cd: %s: Not a directory' % path)
             return
