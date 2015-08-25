@@ -52,6 +52,9 @@ class command_cd(HoneyPotCommand):
         if newdir is None:
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
+        if self.fs.is_link(newpath):
+            f = self.fs.getfile(newpath)
+            newpath = f[A_TARGET]
         if not self.fs.is_dir(newpath):
             self.writeln('bash: cd: %s: Not a directory' % path)
             return
