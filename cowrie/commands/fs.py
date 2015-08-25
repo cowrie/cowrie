@@ -52,6 +52,14 @@ class command_cd(HoneyPotCommand):
         if newdir is None:
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
+        count = 0
+        while self.fs.is_link(newpath):
+            f = self.fs.getfile(newpath)
+            newpath = f[A_TARGET]
+            count += 1
+            if count > 10:
+                self.writeln('bash: cd: %s: Too many levels of symbolic links' % path)
+                return
         if not self.fs.is_dir(newpath):
             self.writeln('bash: cd: %s: Not a directory' % path)
             return

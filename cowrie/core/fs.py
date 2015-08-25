@@ -185,6 +185,13 @@ class HoneyPotFilesystem(object):
         self.newcount += 1
         return True
 
+    def is_link(self, path):
+        try:
+            f = self.getfile(path)
+        except:
+            return False
+        return f[A_TYPE] == T_LINK
+
     def is_dir(self, path):
         if path == '/':
             return True
