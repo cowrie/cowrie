@@ -24,7 +24,7 @@ class command_cat(HoneyPotCommand):
                     self.write(self.fs.file_contents(path))
                 except:
                     self.writeln('cat: %s: No such file or directory' % (arg,))
-                self.exit()
+            self.exit()
 
     def lineReceived(self, line):
         log.msg( eventid='KIPP0008', realm='cat', input=line,
