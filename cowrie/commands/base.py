@@ -350,7 +350,7 @@ class command_yes(HoneyPotCommand):
         self.writeln('y')
         self.scheduled = reactor.callLater(0.01, self.y)
 
-    def ctrl_c(self):
+    def handle_CTRL_C(self):
         self.scheduled.cancel()
         self.exit()
 commands['/usr/bin/yes'] = command_yes

@@ -47,7 +47,7 @@ def splitthousands( s, sep=','):
 class command_wget(HoneyPotCommand):
     def start(self):
         try:
-            optlist, args = getopt.getopt(self.args, 'cO:')
+            optlist, args = getopt.getopt(self.args, 'cqO:')
         except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             self.exit()
@@ -136,7 +136,7 @@ class command_wget(HoneyPotCommand):
             host, port, factory, bindAddress=out_addr)
         return factory.deferred
 
-    def ctrl_c(self):
+    def handle_CTRL_C(self):
         self.writeln('^C')
         self.connection.transport.loseConnection()
 

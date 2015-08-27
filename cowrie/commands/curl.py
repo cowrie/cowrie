@@ -136,7 +136,7 @@ class command_curl(HoneyPotCommand):
             host, port, factory, bindAddress=out_addr)
         return factory.deferred
 
-    def ctrl_c(self):
+    def handle_CTRL_C(self):
         self.writeln('^C')
         self.connection.transport.loseConnection()
 

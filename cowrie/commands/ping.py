@@ -63,7 +63,7 @@ class command_ping(HoneyPotCommand):
         self.count += 1
         self.scheduled = reactor.callLater(1, self.showreply)
 
-    def ctrl_c(self):
+    def handle_CTRL_C(self):
         self.scheduled.cancel()
         self.writeln('--- %s ping statistics ---' % self.host)
         self.writeln('%d packets transmitted, %d received, 0%% packet loss, time 907ms' % \
