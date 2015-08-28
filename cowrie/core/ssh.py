@@ -20,6 +20,7 @@ from twisted.internet import defer
 
 import ConfigParser
 
+import credentials
 import fs
 import auth
 import connection
@@ -29,7 +30,8 @@ import protocol
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
     def serviceStarted(self):
-        self.interfaceToMethod[auth.IUsername] = 'none'
+        self.interfaceToMethod[credentials.IUsername] = 'none'
+        self.interfaceToMethod[credentials.IUsernamePasswordIP] = 'password'
         userauth.SSHUserAuthServer.serviceStarted(self)
         self.bannerSent = False
 
@@ -54,18 +56,18 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 
     def auth_none(self, packet):
-        c = auth.Username(self.user)
+        c = credentials.Username(self.user)
         return self.portal.login(c, None, conchinterfaces.IConchUser)
 
-    # Overridden to pass src_ip to auth.UsernamePasswordIP
+    # Overridden to pass src_ip to credentials.UsernamePasswordIP
     def auth_password(self, packet):
         password = getNS(packet[1:])[0]
         src_ip = self.transport.transport.getPeer().host
-        c = auth.UsernamePasswordIP(self.user, password, src_ip)
+        c = credentials.UsernamePasswordIP(self.user, password, src_ip)
         return self.portal.login(c, None,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
-    # Overridden to pass src_ip to auth.PluggableAuthenticationModulesIP
+    # Overridden to pass src_ip to credentials.PluggableAuthenticationModulesIP
     def auth_keyboard_interactive(self, packet):
         if self._pamDeferred is not None:
             self.transport.sendDisconnect(
@@ -73,7 +75,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                     "only one keyboard interactive attempt at a time")
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
-        c = auth.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
+        c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
         return self.portal.login(c, None,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
