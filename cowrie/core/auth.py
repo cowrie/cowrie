@@ -11,7 +11,7 @@ from zope.interface import implementer
 
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword, ISSHPrivateKey, \
-    IPluggableAuthenticationModules, ICredentials
+    ICredentials
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 
 from twisted.internet import defer
@@ -296,23 +296,13 @@ class HoneypotNoneChecker:
     def requestAvatarId(self, credentials):
         return defer.succeed(credentials.username)
 
-
-# This credential interface also provides an IP address
-@implementer(IPluggableAuthenticationModules)
-class PluggableAuthenticationModulesIP:
-
-    def __init__(self, username, pamConversion, ip):
-        self.username = username
-        self.pamConversion = pamConversion
-        self.ip = ip
-
 @implementer(ICredentialsChecker)
 class HoneypotPasswordChecker:
     """
     Checker that accepts "keyboard-interactive" and "password"
     """
 
-    credentialInterfaces = (IUsernamePassword, IPluggableAuthenticationModules)
+    credentialInterfaces = (IUsernamePassword,)
 
     def __init__(self, cfg):
         self.cfg = cfg
