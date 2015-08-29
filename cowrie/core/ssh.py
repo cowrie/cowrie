@@ -655,5 +655,6 @@ class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
     def dataReceived(self, data):
         log.msg(eventid='KIPP0015', format='direct-tcp forward to %(dst_ip)s:%(dst_port)s with data %(data)s',
             dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
+        self._close("Connection refused")
 
 # vim: set et sw=4 et:
