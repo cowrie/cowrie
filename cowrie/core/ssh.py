@@ -641,19 +641,19 @@ components.registerAdapter(CowrieSFTPServer, HoneyPotAvatar, conchinterfaces.ISF
 
 def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg("direct-tcp connection attempt to %s:%i" % remoteHP)
+    log.msg(eventid='KIPP0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
+            dst_ip=remoteHP[0], dst_port=remoteHP[1])
     return CowrieConnectForwardingChannel(remoteHP,
-       remoteWindow=remoteWindow,
-       remoteMaxPacket=remoteMaxPacket,
+       remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
        avatar=avatar)
 
 class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
     def channelOpen(self, specificData):
-        log.msg("Faking channel open %s:%i" % self.hostport)
+        pass
 
     def dataReceived(self, data):
-        log.msg("received data %s" % repr(data))
-
+        log.msg(eventid='KIPP0015', format='direct-tcp forward to %(dst_ip)s:%(dst_port)s with data %(data)s',
+            dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
 
 # vim: set et sw=4 et:

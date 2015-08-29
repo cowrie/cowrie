@@ -45,6 +45,8 @@ import socket
 # KIPP0011 : Connection Lost
 # KIPP0012 : TTY log closed
 # KIPP0013 : env var requested
+# KIPP0014 : direct-tcpip request
+# KIPP0015 : direct-tcpip data
 
 class Output(object):
     """
