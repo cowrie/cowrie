@@ -32,8 +32,94 @@ class command_cat(HoneyPotCommand):
 
     def handle_CTRL_D(self):
         self.exit()
-
 commands['/bin/cat'] = command_cat
+
+class command_tail(HoneyPotCommand):
+    def start(self):
+        self.n = 10
+        if not self.args or self.args[0] == '>':
+            pass
+        else:
+            try:
+                optlist, args = getopt.getopt(self.args, 'n:')
+            except getopt.GetoptError as err:
+                self.writeln("tail: invalid option -- '%s'" % (arg,))
+                self.exit()
+                return
+
+            for opt in optlist:
+                if opt[0] == '-n':
+                    self.n = int(opt[1])
+
+            for arg in args:
+                path = self.fs.resolve_path(arg, self.honeypot.cwd)
+                if self.fs.is_dir(path):
+                    self.writeln("tail: error reading `%s': Is a directory" % (arg,))
+                    continue
+                try:
+                    file = self.fs.file_contents(path).split('\n')
+                    lines = int(len(file))
+                    if lines < self.n:
+                        self.n = lines - 1
+                    i = 0
+                    for j in range((lines - self.n - 1), lines):
+                        if i < self.n:
+                            self.writeln(file[j])
+                        i += 1
+                except:
+                    self.writeln("tail: cannot open `%s' for reading: No such file or directory" % (arg,))
+            self.exit()
+
+    def lineReceived(self, line):
+        log.msg( eventid='KIPP0008', realm='tail', input=line,
+            format='INPUT (%(realm)s): %(input)s' )
+
+    def handle_CTRL_D(self):
+        self.exit()
+commands['/bin/tail'] = command_tail
+
+
+class command_head(HoneyPotCommand):
+    def start(self):
+        self.n = 10
+        if not self.args or self.args[0] == '>':
+            pass
+        else:
+            try:
+                optlist, args = getopt.getopt(self.args, 'n:')
+            except getopt.GetoptError as err:
+                self.writeln("head: invalid option -- '%s'" % (arg,))
+                self.exit()
+                return
+
+            for opt in optlist:
+                if opt[0] == '-n':
+                    self.n = int(opt[1])
+
+            for arg in args:
+                path = self.fs.resolve_path(arg, self.honeypot.cwd)
+                if self.fs.is_dir(path):
+                    self.writeln("head: error reading `%s': Is a directory" % (arg,))
+                    continue
+                try:
+                    file = self.fs.file_contents(path).split('\n')
+                    i = 0
+                    for line in file:
+                        if i < self.n:
+                            self.writeln(line)
+                        i += 1
+                except:
+                    self.writeln("head: cannot open `%s' for reading: No such file or directory" % (arg,))
+            self.exit()
+
+    def lineReceived(self, line):
+        log.msg( eventid='KIPP0008', realm='head', input=line,
+            format='INPUT (%(realm)s): %(input)s' )
+
+    def handle_CTRL_D(self):
+        self.exit()
+commands['/bin/head'] = command_head
+
 
 class command_cd(HoneyPotCommand):
     def call(self):
