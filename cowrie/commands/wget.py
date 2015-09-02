@@ -66,9 +66,12 @@ class command_wget(HoneyPotCommand):
             return
 
         outfile = None
+        self.quiet = False
         for opt in optlist:
             if opt[0] == '-O':
                 outfile = opt[1]
+            if opt[0] == '-q':
+                self.quiet = True
 
         if '://' not in url:
             url = 'http://%s' % url
@@ -121,9 +124,10 @@ class command_wget(HoneyPotCommand):
             self.exit()
             return None
 
-        self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
-        self.writeln('Connecting to %s:%d... connected.' % (host, port))
-        self.write('HTTP request sent, awaiting response... ')
+        if self.quiet == False:
+            self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
+            self.writeln('Connecting to %s:%d... connected.' % (host, port))
+            self.write('HTTP request sent, awaiting response... ')
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
@@ -131,7 +135,7 @@ class command_wget(HoneyPotCommand):
         if self.honeypot.env.cfg.has_option('honeypot', 'out_addr'):
             out_addr = (self.honeypot.env.cfg.get('honeypot', 'out_addr'), 0)
 
-	if scheme == 'https':
+        if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()
             contextFactory.method = SSL.SSLv23_METHOD
             reactor.connectSSL(host, port, factory, contextFactory)
@@ -199,6 +203,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.started = time.time()
         self.proglen = 0
         self.nomore = False
+        self.quiet = self.wget.quiet
 
     def noPage(self, reason): # called for non-200 responses
         if self.status == '304':
@@ -208,7 +213,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
     def gotHeaders(self, headers):
         if self.status == '200':
-            self.wget.writeln('200 OK')
+            if self.quiet == False:
+                self.wget.writeln('200 OK')
             if headers.has_key('content-length'):
                 self.totallength = int(headers['content-length'][0])
             else:
@@ -220,21 +226,24 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.currentlength = 0.0
 
             if self.totallength > 0:
-                self.wget.writeln('Length: %d (%s) [%s]' % \
-                    (self.totallength,
-                    sizeof_fmt(self.totallength),
-                    self.contenttype))
+                if self.quiet == False:
+                    self.wget.writeln('Length: %d (%s) [%s]' % \
+                        (self.totallength,
+                        sizeof_fmt(self.totallength),
+                        self.contenttype))
             else:
-                self.wget.writeln('Length: unspecified [%s]' % \
-                    (self.contenttype))
+                if self.quiet == False:
+                    self.wget.writeln('Length: unspecified [%s]' % \
+                        (self.contenttype))
             if self.wget.limit_size > 0 and \
                     self.totallength > self.wget.limit_size:
                 log.msg( 'Not saving URL (%s) due to file size limit' % \
                     (self.wget.url,) )
                 self.fileName = os.path.devnull
                 self.nomore = True
-            self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
-            self.wget.honeypot.terminal.nextLine()
+            if self.quiet == False:
+                self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
+                self.wget.honeypot.terminal.nextLine()
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
@@ -267,7 +276,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 splitthousands(str(int(self.currentlength))).ljust(12),
                 self.speed / 1000,
                 tdiff(eta))
-            self.wget.write(s.ljust(self.proglen))
+            if self.quiet == False:
+                self.wget.write(s.ljust(self.proglen))
             self.proglen = len(s)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
@@ -275,17 +285,19 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def pageEnd(self):
         if self.totallength != 0 and self.currentlength != self.totallength:
             return client.HTTPDownloader.pageEnd(self)
-        self.wget.write('\r100%%[%s] %s %dK/s' % \
-            ('%s>' % (38 * '='),
-            splitthousands(str(int(self.totallength))).ljust(12),
-            self.speed / 1000))
-        self.wget.honeypot.terminal.nextLine()
-        self.wget.honeypot.terminal.nextLine()
-        self.wget.writeln(
-            '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
-            (time.strftime('%Y-%m-%d %H:%M:%S'),
-            self.speed / 1000,
-            self.fakeoutfile, self.currentlength, self.totallength))
+        if self.quiet == False:
+            self.wget.write('\r100%%[%s] %s %dK/s' % \
+                ('%s>' % (38 * '='),
+                splitthousands(str(int(self.totallength))).ljust(12),
+                self.speed / 1000))
+            self.wget.honeypot.terminal.nextLine()
+            self.wget.honeypot.terminal.nextLine()
+            self.wget.writeln(
+                '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
+                (time.strftime('%Y-%m-%d %H:%M:%S'),
+                self.speed / 1000,
+                self.fakeoutfile, self.currentlength, self.totallength))
+
         self.wget.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
         self.wget.fs.update_realfile(
             self.wget.fs.getfile(self.fakeoutfile),
