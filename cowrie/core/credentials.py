@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from zope.interface import implementer
+from zope.interface import implements
 
 from twisted.cred.credentials import IUsernamePassword, \
     ICredentials
@@ -53,8 +53,8 @@ class IUsernamePasswordIP(IUsernamePassword):
     @ivar ip: The source ip address associated with these credentials.
     """
 
-@implementer(IUsername)
 class Username:
+    implements(IUsername)
     """
     
     """
@@ -62,8 +62,8 @@ class Username:
         self.username = username
 
 # This credential interface also provides an IP address
-@implementer(IUsernamePasswordIP)
 class UsernamePasswordIP:
+    implements(IUsernamePasswordIP)
     """
     
     """

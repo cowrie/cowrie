@@ -6,7 +6,7 @@ import copy
 import time
 import uuid
 
-from zope.interface import implementer
+from zope.interface import implements
 
 import twisted
 from twisted.conch import avatar, interfaces as conchinterfaces
@@ -187,9 +187,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         t.factory = self
         return t
 
-@implementer(twisted.cred.portal.IRealm)
 class HoneyPotRealm:
-
+    implements(twisted.cred.portal.IRealm)
+    
     def __init__(self, cfg):
         self.cfg = cfg
         self.env = honeypot.HoneyPotEnvironment(cfg)
@@ -358,9 +358,9 @@ class HoneyPotSSHSession(session.SSHSession):
     def channelClosed(self):
         log.msg("Called channelClosed in SSHSession")
 
-# FIXME: recent twisted conch avatar.py uses IConchuser here
-@implementer(conchinterfaces.ISession)
 class HoneyPotAvatar(avatar.ConchUser):
+    # FIXME: recent twisted conch avatar.py uses IConchuser here
+    implements(conchinterfaces.ISession)
 
     def __init__(self, username, env):
         avatar.ConchUser.__init__(self)
@@ -465,8 +465,8 @@ def getDSAKeys(cfg):
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
-@implementer(conchinterfaces.ISFTPFile)
 class CowrieSFTPFile:
+    implements(conchinterfaces.ISFTPFile)
 
     def __init__(self, server, filename, flags, attrs):
         self.server = server
@@ -546,8 +546,8 @@ class CowrieSFTPDirectory:
     def close(self):
         self.files = []
 
-@implementer(conchinterfaces.ISFTPServer)
 class CowrieSFTPServer:
+    implements(conchinterfaces.ISFTPServer)
 
     def __init__(self, avatar):
         self.avatar = avatar

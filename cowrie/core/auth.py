@@ -7,7 +7,7 @@ from os import path
 from sys import modules
 from random import randint
 
-from zope.interface import implementer
+from zope.interface import implements
 
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import ISSHPrivateKey
@@ -240,8 +240,8 @@ class AuthRandom(object):
         self.savevars()
         return auth
 
-@implementer(ICredentialsChecker)
 class HoneypotPublicKeyChecker:
+    implements(ICredentialsChecker)
     """
     Checker that accepts, logs and denies public key authentication attempts
     """
@@ -258,8 +258,8 @@ class HoneypotPublicKeyChecker:
                 fingerprint=_pubKey.fingerprint())
         return failure.Failure(error.ConchError('Incorrect signature'))
 
-@implementer(ICredentialsChecker)
 class HoneypotNoneChecker:
+    implements(ICredentialsChecker)
     """
     Checker that does no authentication check
     """
@@ -272,8 +272,8 @@ class HoneypotNoneChecker:
     def requestAvatarId(self, credentials):
         return defer.succeed(credentials.username)
 
-@implementer(ICredentialsChecker)
 class HoneypotPasswordChecker:
+    implements(ICredentialsChecker)
     """
     Checker that accepts "keyboard-interactive" and "password"
     """
