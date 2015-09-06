@@ -233,7 +233,7 @@ class command_passwd(HoneyPotCommand):
             self.exit()
             return
 
-        userdb = UserDB()
+        userdb = UserDB(self.honeypot.env.cfg)
         userdb.adduser(self.honeypot.user.username,
             self.honeypot.user.uid, self.passwd)
 
