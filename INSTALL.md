@@ -45,3 +45,22 @@ The following firewall rule will forward incoming traffic on port 22 to port 222
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 ```
 
+
+# Bugs and workarounds
+
+* For some versions of Twisted you may receive the following error messagse:
+
+```
+....
+  File "/usr/lib/python2.7/site-packages/Crypto/PublicKey/DSA.py", line 342, in _generate
+      key = self._math.dsa_construct(obj.y, obj.g, obj.p, obj.q, obj.x)
+      TypeError: must be long, not mpz
+```
+
+This is caused by Twisted incompatibilities. A workaround is to run:
+
+```
+$ cd cowrie/data
+$ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
+```
+
