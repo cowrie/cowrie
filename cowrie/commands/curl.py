@@ -84,7 +84,7 @@ class command_curl(HoneyPotCommand):
             path = os.path.dirname(outfile)
             if not path or \
                     not self.fs.exists(path) or \
-                    not self.fs.is_dir(path):
+                    not self.fs.isdir(path):
                 self.writeln('curl: %s: Cannot open: No such file or directory' % \
                     outfile)
                 self.exit()
