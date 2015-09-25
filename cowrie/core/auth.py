@@ -278,7 +278,8 @@ class HoneypotPasswordChecker:
     Checker that accepts "keyboard-interactive" and "password"
     """
 
-    credentialInterfaces = (credentials.IUsernamePasswordIP,)
+    credentialInterfaces = (credentials.IUsernamePasswordIP,
+        credentials.IPluggableAuthenticationModulesIP)
 
     def __init__(self, cfg):
         self.cfg = cfg

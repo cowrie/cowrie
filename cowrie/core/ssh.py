@@ -4,6 +4,7 @@
 import os
 import copy
 import time
+import struct
 import uuid
 
 from zope.interface import implements
@@ -32,8 +33,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
         self.interfaceToMethod[credentials.IUsername] = 'none'
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = 'password'
+        self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = 'keyboard-interactive'
         userauth.SSHUserAuthServer.serviceStarted(self)
         self.bannerSent = False
+        self._pamDeferred = None
 
     def sendBanner(self):
         if self.bannerSent:
@@ -67,8 +70,14 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         return self.portal.login(c, None,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
-    # Overridden to pass src_ip to credentials.PluggableAuthenticationModulesIP
     def auth_keyboard_interactive(self, packet):
+        """
+        Keyboard interactive authentication.  No payload.  We create a
+        PluggableAuthenticationModules credential and authenticate with our
+        portal.
+
+        Overridden to pass src_ip to credentials.PluggableAuthenticationModulesIP
+        """
         if self._pamDeferred is not None:
             self.transport.sendDisconnect(
                     transport.DISCONNECT_PROTOCOL_ERROR,
@@ -78,6 +87,64 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
         return self.portal.login(c, None,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
+
+    def _pamConv(self, items):
+         """
+         Convert a list of PAM authentication questions into a
+         MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
+         back when the user has responses to the questions.
+    
+         @param items: a list of 2-tuples (message, kind).  We only care about
+             kinds 1 (password) and 2 (text).
+         @type items: C{list}
+         @rtype: L{defer.Deferred}
+         """
+         resp = []
+         for message, kind in items:
+             if kind == 1: # password
+                 resp.append((message, 0))
+             elif kind == 2: # text
+                 resp.append((message, 1))
+             elif kind in (3, 4):
+                 return defer.fail(error.ConchError(
+                     'cannot handle PAM 3 or 4 messages'))
+             else:
+                 return defer.fail(error.ConchError(
+                     'bad PAM auth kind %i' % kind))
+         packet = NS('') + NS('') + NS('')
+         packet += struct.pack('>L', len(resp))
+         for prompt, echo in resp:
+             packet += NS(prompt)
+             packet += chr(echo)
+         self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
+         self._pamDeferred = defer.Deferred()
+         return self._pamDeferred
+
+    def ssh_USERAUTH_INFO_RESPONSE(self, packet):
+        """
+        The user has responded with answers to PAMs authentication questions.
+        Parse the packet into a PAM response and callback self._pamDeferred.
+        Payload::
+            uint32 numer of responses
+            string response 1
+            ...
+            string response n
+        """
+        d, self._pamDeferred = self._pamDeferred, None
+    
+        try:
+            resp = []
+            numResps = struct.unpack('>L', packet[:4])[0]
+            packet = packet[4:]
+            while len(resp) < numResps:
+                response, packet = getNS(packet)
+                resp.append((response, 0))
+            if packet:
+                raise error.ConchError("%i bytes of extra data" % len(packet))
+        except:
+            d.errback(failure.Failure())
+        else:
+            d.callback(resp)
 
 # As implemented by Kojoney
 class HoneyPotSSHFactory(factory.SSHFactory):
