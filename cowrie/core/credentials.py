@@ -53,6 +53,21 @@ class IUsernamePasswordIP(IUsernamePassword):
     @ivar ip: The source ip address associated with these credentials.
     """
 
+class IPluggableAuthenticationModules(ICredentials):
+    """
+    Twisted removed IPAM in 15, adding in Cowrie now
+    """
+
+class PluggableAuthenticationModules:
+    implements(IPluggableAuthenticationModules)
+    """
+    Twisted removed IPAM in 15, adding in Cowrie now
+    """
+
+    def __init__(self, username, pamConversion):
+        self.username = username
+        self.pamConversion = pamConversion
+
 class Username:
     implements(IUsername)
     """
