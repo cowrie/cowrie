@@ -91,7 +91,10 @@ class HoneyPotFilesystem(object):
         foo(pieces, cwd)
         return found
 
-    def get_path(self, path):
+    def get_path(self, path, follow_symlinks=True):
+        '''
+        this returns the Cowrie file system objects for a directory
+        '''
         cwd = self.fs
         for part in path.split('/'):
             if not len(part):
@@ -99,7 +102,10 @@ class HoneyPotFilesystem(object):
             ok = False
             for c in cwd[A_CONTENTS]:
                 if c[A_NAME] == part:
-                    cwd = c
+                    if c[A_TYPE] == T_LINK:
+                        cwd = self.getfile(c[A_TARGET], follow_symlinks=follow_symlinks)
+                    else:
+                        cwd = c
                     ok = True
                     break
             if not ok:
@@ -107,7 +113,22 @@ class HoneyPotFilesystem(object):
         return cwd[A_CONTENTS]
 
     def exists(self, path):
+        '''
+        Return True if path refers to an existing path. Returns False for
+        broken symbolic links. On some platforms, this function may return
+        False if permission is not granted to execute os.stat() on the
+        requested file, even if the path physically exists.
+        '''
         f = self.getfile(path)
+        if f is not False:
+            return True
+
+    def lexists(self, path):
+        '''
+        Return True if path refers to an existing path.
+        Returns True for broken symbolic links.
+        '''
+        f = self.getfile(path, follow_symlinks=False)
         if f is not False:
             return True
 
@@ -124,19 +145,35 @@ class HoneyPotFilesystem(object):
             return f[A_REALFILE]
         return None
 
-    def getfile(self, path):
+    def getfile(self, path, follow_symlinks=True):
+        '''
+        this returns the Cowrie file system object for a path
+        '''
         if path == '/':
             return self.fs
         pieces = path.strip('/').split('/')
+        cwd = ''
         p = self.fs
-        while 1:
-            if not len(pieces):
-                break
-            piece = pieces.pop(0)
+        for piece in pieces:
+            cwd = '/'.join((cwd, piece))
             if piece not in [x[A_NAME] for x in p[A_CONTENTS]]:
                 return False
-            p = [x for x in p[A_CONTENTS] \
-                if x[A_NAME] == piece][0]
+            for x in p[A_CONTENTS]:
+                if x[A_NAME] == piece:
+                    if piece == pieces[-1] and follow_symlinks==False:
+                        p = x
+                    elif x[A_TYPE] == T_LINK:
+                        if x[A_TARGET][0] == '/':
+                            # absolute link
+                            p = self.getfile(x[A_TARGET], follow_symlinks=follow_symlinks)
+                        else:
+                            # relative link
+                            p = self.getfile('/'.join((cwd, x[A_TARGET])),follow_symlinks=follow_symlinks)
+                        if p == False:
+                            # broken link
+                            return False
+                    else:
+                        p = x
         return p
 
     def file_contents(self, target, count=0):
@@ -185,7 +222,23 @@ class HoneyPotFilesystem(object):
         self.newcount += 1
         return True
 
+    def isfile(self, path):
+        '''
+        Return True if path is an existing regular file. This follows symbolic
+        links, so both islink() and isfile() can be true for the same path.
+        '''
+        try:
+            f = self.getfile(path)
+        except:
+            return False
+        return f[A_TYPE] == T_FILE
+
     def islink(self, path):
+        '''
+        Return True if path refers to a directory entry that is a symbolic
+        link. Always False if symbolic links are not supported by the python
+        runtime.
+        '''
         try:
             f = self.getfile(path)
         except:
@@ -193,20 +246,22 @@ class HoneyPotFilesystem(object):
         return f[A_TYPE] == T_LINK
 
     def isdir(self, path):
+        '''
+        Return True if path is an existing directory.
+        This follows symbolic links, so both islink() and isdir() can be true for the same path.
+        '''
         if path == '/':
             return True
         try:
-            dir = self.get_path(os.path.dirname(path))
+            dir = self.getfile(path)
         except:
             dir = None
         if dir is None:
             return False
-        l = [x for x in dir
-            if x[A_NAME] == os.path.basename(path) and
-            x[A_TYPE] == T_DIR]
-        if l:
+        if dir[A_TYPE] == T_DIR:
             return True
-        return False
+        else:
+            return False
 
     # additions for SFTP support, try to keep functions here similar to os.*
 
@@ -351,32 +406,13 @@ class HoneyPotFilesystem(object):
         return names
 
     def lstat(self, path):
-        # need to treat / as exception
+        return self.stat(path, follow_symlinks=False)
+
+    def stat(self, path, follow_symlinks=True):
         if (path == "/"):
             p = {A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time()}
         else:
-            p = self.getfile(path)
-
-        if p == False:
-            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-
-        return _statobj(
-               p[A_MODE],
-         0,
-         0,
-         1,
-         p[A_UID],
-         p[A_GID],
-         p[A_SIZE],
-         p[A_CTIME],
-         p[A_CTIME],
-         p[A_CTIME])
-
-    def stat(self, path):
-        if (path == "/"):
-            p = {A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877, A_CTIME:time.time()}
-        else:
-            p = self.getfile(path)
+            p = self.getfile(path, follow_symlinks=follow_symlinks)
 
         if (p == False):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -392,9 +428,9 @@ class HoneyPotFilesystem(object):
 
     def update_size(self, filename, size):
         f = self.getfile(filename)
-        if (f == False):
+        if f == False:
             return
-        if (f[A_TYPE] != T_FILE):
+        if f[A_TYPE] != T_FILE:
             return
         f[A_SIZE] = size
 

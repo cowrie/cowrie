@@ -129,24 +129,16 @@ class command_cd(HoneyPotCommand):
             path = self.args[0]
         try:
             newpath = self.fs.resolve_path(path, self.honeypot.cwd)
-            newdir = self.fs.get_path(newpath)
+            inode = self.fs.getfile(newpath)
         except:
             newdir = None
         if path == "-":
             self.writeln('bash: cd: OLDPWD not set')
             return
-        if newdir is None:
+        if inode is None:
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
-        count = 0
-        while self.fs.islink(newpath):
-            f = self.fs.getfile(newpath)
-            newpath = f[A_TARGET]
-            count += 1
-            if count > 10:
-                self.writeln('bash: cd: %s: Too many levels of symbolic links' % path)
-                return
-        if not self.fs.isdir(newpath):
+        if inode[A_TYPE] != T_DIR:
             self.writeln('bash: cd: %s: Not a directory' % path)
             return
         self.honeypot.cwd = newpath
