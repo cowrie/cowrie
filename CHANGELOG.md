@@ -1,4 +1,5 @@
 
+* 2015-09-26 keyboard-interactive is back as authentication method, after Twisted removed support initially
 * 2015-07-30 Local syslog output module
 * 2015-06-15 Cowrie now has a '-c' startup switch to specify the configuration file
 * 2015-06-15 Removed exec_enabled option. This feature is now always enabled
