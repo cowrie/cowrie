@@ -370,14 +370,14 @@ class HoneyPotFilesystem(object):
             p[A_GID] = gid
 
     def remove(self, path):
-        p = self.getfile(path)
+        p = self.getfile(path, follow_symlinks=False)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         self.get_path(os.path.dirname(path)).remove(p)
         return
 
     def readlink(self, path):
-        p = self.getfile(path)
+        p = self.getfile(path, follow_symlinks=False)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if not (p[A_MODE] & stat.S_IFLNK):
@@ -417,11 +417,8 @@ class HoneyPotFilesystem(object):
         if (p == False):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
 
-        #if p[A_MODE] & stat.S_IFLNK == stat.S_IFLNK:
-        if p[A_TYPE] == T_LINK:
-            return self.stat(p[A_TARGET])
-
-        return self.lstat(path)
+        return _statobj( p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE],
+            p[A_CTIME], p[A_CTIME], p[A_CTIME])
 
     def realpath(self, path):
         return path
