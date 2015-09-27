@@ -312,12 +312,13 @@ class command_mkdir(HoneyPotCommand):
                 self.writeln(
                     'mkdir: cannot create directory `%s\': File exists' % f)
                 return
-            ok = self.fs.mkdir(path, 0, 0, 4096, 16877)
-            if not ok:
+            try:
+                self.fs.mkdir(path, 0, 0, 4096, 16877)
+            except (FileNotFound) as err:
                 self.writeln(
                     'mkdir: cannot create directory `%s\': ' % f + \
                     'No such file or directory')
-                return
+            return
 commands['/bin/mkdir'] = command_mkdir
 
 class command_rmdir(HoneyPotCommand):

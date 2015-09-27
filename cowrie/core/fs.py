@@ -209,19 +209,19 @@ class HoneyPotFilesystem(object):
 
     def mkdir(self, path, uid, gid, size, mode, ctime=None):
         if self.newcount > 10000:
-            return False
+            raise OSError(errno.EDQUOT, os.strerror(errno.EDQUOT), path)
         if ctime is None:
             ctime = time.time()
         if not len(path.strip('/')):
-            return False
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
         try:
             dir = self.get_path(os.path.dirname(path.strip('/')))
         except IndexError:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
             return False
         dir.append([os.path.basename(path), T_DIR, uid, gid, size, mode,
             ctime, [], None, None])
         self.newcount += 1
-        return True
 
     def isfile(self, path):
         '''
@@ -337,7 +337,7 @@ class HoneyPotFilesystem(object):
         dir = self.getfile(path)
         if dir != False:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
-        return self.mkdir(path, 0, 0, 4096, 16877)
+        self.mkdir(path, 0, 0, 4096, 16877)
 
     def rmdir(self, path):
         path = path.rstrip('/')
