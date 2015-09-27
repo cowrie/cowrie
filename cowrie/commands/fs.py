@@ -135,7 +135,7 @@ class command_cd(HoneyPotCommand):
         if path == "-":
             self.writeln('bash: cd: OLDPWD not set')
             return
-        if inode is None:
+        if inode is None or inode is False:
             self.writeln('bash: cd: %s: No such file or directory' % path)
             return
         if inode[A_TYPE] != T_DIR:
