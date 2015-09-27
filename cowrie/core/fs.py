@@ -346,7 +346,22 @@ class HoneyPotFilesystem(object):
         return self.mkdir(path, 0, 0, 4096, 16877)
 
     def rmdir(self, path):
-        raise notImplementedError
+        path = path.rstrip('/')
+        parent = '/'.join(path.split('/')[:-1])
+        name = path.split('/')[-1]
+        dir = self.getfile(path, follow_symlinks=False)
+        if dir == False:
+            raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
+        if dir[A_TYPE] != T_DIR:
+            raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
+        if len(self.get_path(path))>0:
+            raise OSError(errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), path)
+        pdir = self.get_path(parent,follow_symlinks=True)
+        for i in pdir[:]:
+            if i[A_NAME] == name:
+                pdir.remove(i)
+                return True
+        return False
 
     def utime(self, path, atime, mtime):
         p = self.getfile(path)
