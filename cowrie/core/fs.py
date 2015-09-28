@@ -114,12 +114,10 @@ class HoneyPotFilesystem(object):
 
     def exists(self, path):
         '''
-        Return True if path refers to an existing path. Returns False for
-        broken symbolic links. On some platforms, this function may return
-        False if permission is not granted to execute os.stat() on the
-        requested file, even if the path physically exists.
+        Return True if path refers to an existing path.
+        Returns False for broken symbolic links. 
         '''
-        f = self.getfile(path)
+        f = self.getfile(path, follow_symlinks=True)
         if f is not False:
             return True
 
@@ -155,7 +153,6 @@ class HoneyPotFilesystem(object):
         cwd = ''
         p = self.fs
         for piece in pieces:
-            cwd = '/'.join((cwd, piece))
             if piece not in [x[A_NAME] for x in p[A_CONTENTS]]:
                 return False
             for x in p[A_CONTENTS]:
@@ -174,6 +171,7 @@ class HoneyPotFilesystem(object):
                             return False
                     else:
                         p = x
+            cwd = '/'.join((cwd, piece))
         return p
 
     def file_contents(self, target, count=0):
@@ -199,7 +197,6 @@ class HoneyPotFilesystem(object):
             ctime = time.time()
         dir = self.get_path(os.path.dirname(path))
         outfile = os.path.basename(path)
-        print "mkfile path=%s outfile=%s" % (path, outfile)
         if outfile in [x[A_NAME] for x in dir]:
             dir.remove([x for x in dir if x[A_NAME] == outfile][0])
         dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [],
