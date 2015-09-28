@@ -6,7 +6,7 @@ import time
 from twisted.internet import protocol
 from twisted.conch import telnet, recvline
 
-import ttylog
+from . import ttylog
 
 class Interact(telnet.Telnet):
 

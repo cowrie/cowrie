@@ -13,8 +13,8 @@ from twisted.python import log, failure
 from twisted.conch import error
 from twisted.conch.ssh import keys
 
-import credentials
-import auth
+from . import credentials
+from . import auth
 
 class HoneypotPublicKeyChecker:
     implements(ICredentialsChecker)

@@ -10,9 +10,9 @@ from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.python import log
 
-import honeypot
-import ttylog
-import utils
+from . import honeypot
+from . import ttylog
+from . import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol):
     def __init__(self, avatar, env):

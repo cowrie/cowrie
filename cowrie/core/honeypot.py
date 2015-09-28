@@ -9,7 +9,7 @@ import pickle
 
 from twisted.python import log
 
-import fs
+from . import fs
 
 class HoneyPotCommand(object):
     def __init__(self, protocol, *args):

@@ -6,6 +6,7 @@ import copy
 import time
 import struct
 import uuid
+import ConfigParser
 
 from zope.interface import implements
 
@@ -19,14 +20,12 @@ from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh.common import NS, getNS
 from twisted.internet import defer
 
-import ConfigParser
-
-import credentials
-import fs
-import auth
-import connection
-import honeypot
-import protocol
+from . import credentials
+from . import fs
+from . import auth
+from . import connection
+from . import honeypot
+from . import protocol
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
