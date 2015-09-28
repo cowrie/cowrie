@@ -12,6 +12,7 @@ from twisted.cred import portal
 from cowrie.core.config import readConfigFile
 from cowrie import core
 import cowrie.core.ssh
+import cowrie.core.checkers
 
 class Options(usage.Options):
     optParameters = [
@@ -51,13 +52,13 @@ class CowrieServiceMaker(object):
 
         factory = core.ssh.HoneyPotSSHFactory(cfg)
         factory.portal = portal.Portal(core.ssh.HoneyPotRealm(cfg))
-        factory.portal.registerChecker(core.auth.HoneypotPublicKeyChecker(cfg))
-        factory.portal.registerChecker(core.auth.HoneypotPasswordChecker(cfg))
+        factory.portal.registerChecker(cowrie.core.checkers.HoneypotPublicKeyChecker(cfg))
+        factory.portal.registerChecker(cowrie.core.checkers.HoneypotPasswordChecker(cfg))
 
         if cfg.has_option('honeypot', 'auth_none_enabled') and \
                  cfg.get('honeypot', 'auth_none_enabled').lower() in \
                  ('yes', 'true', 'on'):
-            factory.portal.registerChecker(core.auth.HoneypotNoneChecker())
+            factory.portal.registerChecker(cowrie.core.checkers.HoneypotNoneChecker())
 
         top_service = top_service = service.MultiService()
 
