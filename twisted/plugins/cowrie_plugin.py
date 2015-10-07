@@ -32,7 +32,7 @@ class CowrieServiceMaker(object):
         """
 
         if os.name == 'posix' and os.getuid() == 0:
-            print 'ERROR: You must not run cowrie as root!'
+            print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
         cfg = readConfigFile(options["config"])
