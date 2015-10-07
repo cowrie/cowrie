@@ -215,11 +215,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         if self.status == '200':
             if self.quiet == False:
                 self.wget.writeln('200 OK')
-            if headers.has_key('content-length'):
+            if 'content-length' in headers:
                 self.totallength = int(headers['content-length'][0])
             else:
                 self.totallength = 0
-            if headers.has_key('content-type'):
+            if 'content-type' in headers:
                 self.contenttype = headers['content-type'][0]
             else:
                 self.contenttype = 'text/whatever'
