@@ -23,7 +23,7 @@ Additional functionality over standard kippo:
 Software required:
 
 * An operating system (tested on Debian, CentOS, FreeBSD and Windows 7)
-* Python 2.5+
+* Python 2.7+
 * Twisted 8.0+
 * PyCrypto
 * pyasn1
