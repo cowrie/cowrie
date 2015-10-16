@@ -6,7 +6,6 @@ This module contains ...
 """
 
 import os
-import shlex
 import re
 import stat
 import copy
@@ -17,6 +16,7 @@ from twisted.python import log, failure
 from twisted.internet import error
 
 from cowrie.core import fs
+from cowrie.core import shlex
 
 class HoneyPotCommand(object):
     """
@@ -167,6 +167,7 @@ class HoneyPotShell(object):
             return
 
         line = self.cmdpending.pop(0)
+        cmdAndArgs = shlex.split(unicode(line))
         try:
             line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
             cmdAndArgs = shlex.split(line)
