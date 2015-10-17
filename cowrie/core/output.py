@@ -47,6 +47,7 @@ import socket
 # KIPP0013 : env var requested
 # KIPP0014 : direct-tcpip request
 # KIPP0015 : direct-tcpip data
+# KIPP0016 : key fingerprint
 
 class Output(object):
     """

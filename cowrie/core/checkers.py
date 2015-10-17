@@ -30,6 +30,7 @@ class HoneypotPublicKeyChecker:
     def requestAvatarId(self, credentials):
         _pubKey = keys.Key.fromString(credentials.blob)
         log.msg(format='public key attempt for user %(username)s with fingerprint %(fingerprint)s',
+                eventid='KIPP0016',
                 username=credentials.username,
                 fingerprint=_pubKey.fingerprint())
         return failure.Failure(error.ConchError('Incorrect signature'))
