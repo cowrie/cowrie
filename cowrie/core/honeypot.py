@@ -124,22 +124,31 @@ class HoneyPotShell(object):
         self.interactive = interactive
         self.cmdpending = []
         self.environ = protocol.environ
+        #self.lexer.debug = 1
 
         self.showPrompt()
-
 
     def lineReceived(self, line):
         """
         """
         log.msg('CMD: %s' % (line,))
-        line = line[:500]
-        comment = re.compile('^\s*#')
-        for i in [x.strip() for x in re.split(';|&&|\n', line.strip())[:10]]:
-            if not len(i):
+        self.lexer = shlex.shlex(punctuation_chars=True);
+        self.lexer.push_source(line)
+        tokens = []
+        while True:
+            tok = self.lexer.get_token()
+            log.msg( "tok: %s" % (repr(tok)) )
+            # for now, execute all after &&
+            if tok == ';' or tok == self.lexer.eof or tok == '&&':
+                self.cmdpending.append((tokens))
+                tokens = []
+            if tok == ';':
                 continue
-            if comment.match(i):
+            if tok == '&&':
                 continue
-            self.cmdpending.append(i)
+            if tok == self.lexer.eof:
+                break
+            tokens.append(tok)
         if len(self.cmdpending):
             self.runCommand()
         else:
