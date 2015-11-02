@@ -40,7 +40,7 @@ class command_ping(HoneyPotCommand):
                     self.max = int(opt[1])
                 except:
                     self.max = 0
-                if self.max == 0:
+                if self.max <= 0:
                     self.writeln('ping: bad number of packets to transmit.')
                     self.exit()
                     return
