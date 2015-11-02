@@ -80,7 +80,6 @@ class command_ping(HoneyPotCommand):
         self.writeln(
             '64 bytes from %s (%s): icmp_seq=%d ttl=50 time=%.1f ms' % \
             (self.host, self.ip, self.count + 1, ms))
-        self.writeln( "self.max: %d, self.count: %d" % (self.max,self.count))
         self.count += 1
         if self.count == self.max:
             self.running = False
