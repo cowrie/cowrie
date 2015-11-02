@@ -9,12 +9,13 @@ import copy
 from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.python import log
+from twisted.protocols.policies import TimeoutMixin
 
 from . import honeypot
 from . import ttylog
 from . import utils
 
-class HoneyPotBaseProtocol(insults.TerminalProtocol):
+class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def __init__(self, avatar, env):
         self.user = avatar
         self.env = env
@@ -42,6 +43,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         self.realClientPort = transport.transport.getPeer().port
         self.clientVersion = transport.otherVersionString
         self.logintime = time.time()
+        self.setTimeout(1800)
 
         # source IP of client in user visible reports (can be fake or real)
         if self.cfg.has_option('honeypot', 'fake_addr'):
@@ -60,6 +62,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
                 s.close()
             except:
                 self.kippoIP = '192.168.0.1'
+
+    def timeoutConnection(self):
+        self.terminal.writeln( 'timed out waiting for input: auto-logout' )
+        self.terminal.transport.session.sendEOF()
+        self.terminal.transport.session.sendClose()
 
     # this is only called on explicit logout, not on disconnect
     # this indicates the closing of the channel/session, not the closing of the connection
@@ -104,6 +111,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol):
         return None
 
     def lineReceived(self, line):
+        self.resetTimeout()
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
 
@@ -139,6 +147,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
+        self.setTimeout(60)
         self.terminal.stdinlog_open = True
 
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
