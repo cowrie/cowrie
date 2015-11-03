@@ -64,7 +64,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 self.kippoIP = '192.168.0.1'
 
     def timeoutConnection(self):
-        self.terminal.writeln( 'timed out waiting for input: auto-logout' )
+        self.writeln( 'timed out waiting for input: auto-logout' )
         self.terminal.transport.session.sendEOF()
         self.terminal.transport.session.sendClose()
 
