@@ -487,14 +487,14 @@ def getRSAKeys(cfg):
         rsaKey = RSA.generate(KEY_LENGTH, randbytes.secureRandom)
         publicKeyString = keys.Key(rsaKey).public().toString('openssh')
         privateKeyString = keys.Key(rsaKey).toString('openssh')
-        with file(public_key, 'w+b') as f:
+        with open(public_key, 'w+b') as f:
             f.write(publicKeyString)
-        with file(private_key, 'w+b') as f:
+        with open(private_key, 'w+b') as f:
             f.write(privateKeyString)
     else:
-        with file(public_key) as f:
+        with open(public_key, 'r') as f:
             publicKeyString = f.read()
-        with file(private_key) as f:
+        with open(private_key, 'r') as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
@@ -509,14 +509,14 @@ def getDSAKeys(cfg):
         dsaKey = DSA.generate(KEY_LENGTH, randbytes.secureRandom)
         publicKeyString = keys.Key(dsaKey).public().toString('openssh')
         privateKeyString = keys.Key(dsaKey).toString('openssh')
-        with file(public_key, 'w+b') as f:
+        with open(public_key, 'w+b') as f:
             f.write(publicKeyString)
-        with file(private_key, 'w+b') as f:
+        with open(private_key, 'w+b') as f:
             f.write(privateKeyString)
     else:
-        with file(public_key) as f:
+        with open(public_key, 'r') as f:
             publicKeyString = f.read()
-        with file(private_key) as f:
+        with open(private_key, 'r') as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
@@ -543,7 +543,7 @@ class CowrieSFTPFile:
             openFlags |= os.O_TRUNC
         if flags & FXF_EXCL == FXF_EXCL:
             openFlags |= os.O_EXCL
-        if attrs.has_key("permissions"):
+        if "permissions" in attrs:
             mode = attrs["permissions"]
             del attrs["permissions"]
         else:
@@ -613,11 +613,11 @@ class CowrieSFTPServer:
         return os.path.abspath(os.path.join(home, path))
 
     def _setAttrs(self, path, attrs):
-        if attrs.has_key("uid") and attrs.has_key("gid"):
+        if "uid" in attrs and "gid" in attrs:
             self.fs.chown(path, attrs["uid"], attrs["gid"])
-        if attrs.has_key("permissions"):
+        if "permissions" in attrs:
             self.fs.chmod(path, attrs["permissions"])
-        if attrs.has_key("atime") and attrs.has_key("mtime"):
+        if "atime" in attrs and "mtime" in attrs:
             self.fs.utime(path, attrs["atime"], attrs["mtime"])
 
     def _getAttrs(self, s):
