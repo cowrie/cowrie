@@ -26,6 +26,7 @@ from . import auth
 from . import connection
 from . import honeypot
 from . import protocol
+from . import server
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
@@ -59,14 +60,15 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
     def auth_none(self, packet):
         c = credentials.Username(self.user)
-        return self.portal.login(c, None, conchinterfaces.IConchUser)
+        src_ip = self.transport.transport.getPeer().host
+        return self.portal.login(c, src_ip, conchinterfaces.IConchUser)
 
     # Overridden to pass src_ip to credentials.UsernamePasswordIP
     def auth_password(self, packet):
         password = getNS(packet[1:])[0]
         src_ip = self.transport.transport.getPeer().host
         c = credentials.UsernamePasswordIP(self.user, password, src_ip)
-        return self.portal.login(c, None,
+        return self.portal.login(c, src_ip,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
     def auth_keyboard_interactive(self, packet):
@@ -84,7 +86,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
         c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
-        return self.portal.login(c, None,
+        return self.portal.login(c, src_ip,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
     def _pamConv(self, items):
@@ -258,12 +260,13 @@ class HoneyPotRealm:
     
     def __init__(self, cfg):
         self.cfg = cfg
-        self.env = honeypot.HoneyPotEnvironment(cfg)
+	self.myserver = server.CowrieServer(self.cfg)
 
     def requestAvatar(self, avatarId, mind, *interfaces):
+	log.msg( "reqAva: %s" % (repr( mind )))
         if conchinterfaces.IConchUser in interfaces:
             return interfaces[0], \
-                HoneyPotAvatar(avatarId, self.env), lambda: None
+                HoneyPotAvatar(avatarId, self.myserver), lambda: None
         else:
             raise Exception("No supported interfaces found.")
 
@@ -428,11 +431,13 @@ class HoneyPotAvatar(avatar.ConchUser):
     # FIXME: recent twisted conch avatar.py uses IConchuser here
     implements(conchinterfaces.ISession)
 
-    def __init__(self, username, env):
+    def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
         self.username = username
-        self.env = env
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.env.fs),self.env.cfg)
+	self.server = server
+	self.cfg = server.cfg
+        self.env = server.env
+        self.fs = server.fs
         self.hostname = self.env.hostname
         self.protocol = None
 
@@ -452,7 +457,7 @@ class HoneyPotAvatar(avatar.ConchUser):
 
     def openShell(self, proto):
         serverProtocol = protocol.LoggingServerProtocol(
-            protocol.HoneyPotInteractiveProtocol, self, self.env)
+            protocol.HoneyPotInteractiveProtocol, self)
         self.protocol = serverProtocol
         serverProtocol.makeConnection(proto)
         proto.makeConnection(session.wrapProtocol(serverProtocol))
@@ -469,7 +474,7 @@ class HoneyPotAvatar(avatar.ConchUser):
 
     def execCommand(self, proto, cmd):
         serverProtocol = protocol.LoggingServerProtocol(
-            protocol.HoneyPotExecProtocol, self, self.env, cmd)
+            protocol.HoneyPotExecProtocol, self, cmd)
         self.protocol = serverProtocol
         serverProtocol.makeConnection(proto)
         proto.makeConnection(session.wrapProtocol(serverProtocol))

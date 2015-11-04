@@ -16,9 +16,9 @@ from . import ttylog
 from . import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
-    def __init__(self, avatar, env):
+    def __init__(self, avatar):
         self.user = avatar
-        self.env = env
+        self.env = avatar.env
         self.cfg = self.env.cfg
         self.hostname = avatar.hostname
         self.fs = avatar.fs
@@ -141,9 +141,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
-    def __init__(self, avatar, env, execcmd):
+    def __init__(self, avatar, execcmd):
         self.execcmd = execcmd
-        HoneyPotBaseProtocol.__init__(self, avatar, env)
+        HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self):
         HoneyPotBaseProtocol.connectionMade(self)
@@ -155,9 +155,9 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
 
-    def __init__(self, avatar, env):
+    def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
-        HoneyPotBaseProtocol.__init__(self, avatar, env)
+        HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self):
         self.displayMOTD()
@@ -259,7 +259,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
-        self.cfg = a[1].cfg
+        self.cfg = a[0].cfg
 
     def connectionMade(self):
         transport = self.transport.session.conn.transport
