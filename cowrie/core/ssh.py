@@ -162,7 +162,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
     def startFactory(self):
 
-        # protocol^Wwhatever instances are kept here for the interact feature
+        # interactive protocols are kept here for the interact feature
         self.sessions = {}
 
         # for use by the uptime command
@@ -422,7 +422,6 @@ class HoneyPotAvatar(avatar.ConchUser):
 	self.server = server
 	self.cfg = self.server.cfg
         self.protocol = None
-	self.IAMAVATAR = server
 
         self.channelLookup.update({'session': HoneyPotSSHSession})
         self.channelLookup['direct-tcpip'] = CowrieOpenConnectForwardingClient
