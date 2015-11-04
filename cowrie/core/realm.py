@@ -54,7 +54,7 @@ class HoneyPotRealm:
 	    log.msg( "Starting new server for mind %s" % mind )
 	    self.servers[mind] = _server = server.CowrieServer(self.cfg)
 
-	for i in self.servers.keys():
+	for i in list(self.servers.keys()):
 	    log.msg( "REFCOUNT: key: %s, refcount %d" % ( i, sys.getrefcount(self.servers[i])))
 	    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
