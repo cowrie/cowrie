@@ -16,18 +16,26 @@ from . import ttylog
 from . import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
+
     def __init__(self, avatar):
         self.user = avatar
-        self.env = avatar.env
-        self.cfg = self.env.cfg
+        self.cfg = self.user.cfg
         self.hostname = avatar.server.hostname
         self.fs = avatar.server.fs
         if self.fs.exists(avatar.home):
             self.cwd = avatar.home
         else:
             self.cwd = '/'
+
         # commands is also a copy so we can add stuff on the fly
-        self.commands = copy.copy(self.env.commands)
+        # self.commands = copy.copy(self.commands)
+	self.commands = {}
+        import cowrie.commands
+        for c in cowrie.commands.__all__:
+            module = __import__('cowrie.commands.%s' % (c,),
+                globals(), locals(), ['commands'])
+            self.commands.update(module.commands)
+
         self.password_input = False
         self.cmdstack = []
 
@@ -54,14 +62,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.cfg.has_option('honeypot', 'internet_facing_ip'):
             self.kippoIP = self.cfg.get('honeypot', 'internet_facing_ip')
         else:
-            # Hack to get ip
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
                 self.kippoIP = s.getsockname()[0]
-                s.close()
             except:
                 self.kippoIP = '192.168.0.1'
+	    finally:
+		s.close()
 
     def timeoutConnection(self):
         self.writeln( 'timed out waiting for input: auto-logout' )
@@ -69,13 +77,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.terminal.transport.session.sendClose()
 
     # this is only called on explicit logout, not on disconnect
-    # this indicates the closing of the channel/session, not the closing of the connection
+    # this indicates the closing of the channel/session, not the closing of the transport
     def connectionLost(self, reason):
-        pass
-        # not sure why i need to do this:
-        # scratch that, these don't seem to be necessary anymore:
-        #del self.fs
-        #del self.commands
+	self.terminal = None # (this should be done by super below)
+	insults.TerminalProtocol.connectionLost(self, reason)
+	self.cmdstack = None
+	del self.commands
+	self.fs = None
+	self.cfg = None
+	self.user = None
+        log.msg( "honeypot terminal protocol connection lost %s" % reason)
 
     def txtcmd(self, txt):
         class command_txtcmd(honeypot.HoneyPotCommand):
@@ -103,7 +114,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     path = i
                     break
         txt = os.path.normpath('%s/%s' % \
-            (self.env.cfg.get('honeypot', 'txtcmds_path'), path))
+            (self.cfg.get('honeypot', 'txtcmds_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
         if path in self.commands:
@@ -153,6 +164,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
 
+
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
 
     def __init__(self, avatar):
@@ -195,7 +207,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         endtime = time.strftime('%H:%M',
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
-        f = file('%s/lastlog.txt' % self.env.cfg.get('honeypot', 'data_path'), 'a')
+        f = file('%s/lastlog.txt' % self.cfg.get('honeypot', 'data_path'), 'a')
         f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
             (self.clientIP, starttime, endtime, duration))
         f.close()
@@ -312,7 +324,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
     # FIXME: this method is called 4 times on logout....
     # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
-        # log.msg("received call to LSP.connectionLost")
+	self.cfg = None
+        log.msg("received call to LSP.connectionLost")
         transport = self.transport.session.conn.transport
         if self.ttylog_open:
             log.msg(eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',

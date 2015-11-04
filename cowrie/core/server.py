@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import copy
 import pickle
 
 import twisted.python.log as log
@@ -45,9 +44,8 @@ class CowrieServer:
     """
     def __init__(self, cfg):
 	self.cfg = cfg
-        self.env = honeypot.HoneyPotEnvironment(cfg)
+	self.avatars = []
         self.hostname = self.cfg.get('honeypot', 'hostname')
-        log.msg ("Loading pickle file...")
-        self.pickle = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
-        self.fs = fs.HoneyPotFilesystem(self.pickle,self.cfg)
+        pckl = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
+        self.fs = fs.HoneyPotFilesystem(pckl,self.cfg)
 

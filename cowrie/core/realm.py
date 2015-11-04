@@ -44,23 +44,25 @@ class HoneyPotRealm:
     
     def __init__(self, cfg):
         self.cfg = cfg
-	self.servers = {}
+	# self.servers = {}
 
     def requestAvatar(self, avatarId, mind, *interfaces):
 
-        if mind in self.servers:
-	    log.msg( "Using existing server for mind %s" % mind )
-	else:
-	    log.msg( "Starting new server for mind %s" % mind )
-	    self.servers[mind] = _server = server.CowrieServer(self.cfg)
+        # if mind in self.servers:
+	#    log.msg( "Using existing server for mind %s" % mind )
+        #    for i in self.servers[mind].avatars:
+	#	log.msg( "attached avatar: %s" % repr(i) )
+	#else:
+	#    log.msg( "Starting new server for mind %s" % mind )
+	#    self.servers[mind] = server.CowrieServer(self.cfg)
 
-	for i in list(self.servers.keys()):
-	    log.msg( "REFCOUNT: key: %s, refcount %d" % ( i, sys.getrefcount(self.servers[i])))
-	    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
+	# for i in list(self.servers.keys()):
+        #    log.msg( "REFCOUNT: key: %s, refcount %d" % ( i, sys.getrefcount(self.servers[i])))
+	#    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
         if conchinterfaces.IConchUser in interfaces:
             return interfaces[0], \
-                ssh.HoneyPotAvatar(avatarId, self.servers[mind]), lambda: None
+                ssh.HoneyPotAvatar(avatarId, server.CowrieServer(self.cfg)), lambda:None
         else:
             raise Exception("No supported interfaces found.")
 
