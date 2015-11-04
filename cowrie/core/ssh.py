@@ -2,11 +2,9 @@
 # See the COPYRIGHT file for more information
 
 import os
-import copy
 import time
 import struct
 import uuid
-import ConfigParser
 
 from zope.interface import implements
 
@@ -21,7 +19,6 @@ from twisted.conch.ssh.common import NS, getNS
 from twisted.internet import defer
 
 from . import credentials
-from . import fs
 from . import auth
 from . import connection
 from . import honeypot
