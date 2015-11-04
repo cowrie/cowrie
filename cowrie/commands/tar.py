@@ -45,8 +45,8 @@ class command_tar(HoneyPotCommand):
         if 'v' in self.args[0]:
             verbose = True
 
-        path = self.fs.resolve_path(filename, self.honeypot.cwd)
-        if not path or not self.honeypot.fs.exists(path):
+        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        if not path or not self.protocol.fs.exists(path):
             self.writeln('tar: %s: Cannot open: No such file or directory' % \
                 filename)
             self.writeln('tar: Error is not recoverable: exiting now')
@@ -70,7 +70,7 @@ class command_tar(HoneyPotCommand):
             return
 
         for f in t:
-            dest = self.fs.resolve_path(f.name.strip('/'), self.honeypot.cwd)
+            dest = self.fs.resolve_path(f.name.strip('/'), self.protocol.cwd)
             if verbose:
                 self.writeln(f.name)
             if not extract or not len(dest):
@@ -80,7 +80,7 @@ class command_tar(HoneyPotCommand):
             elif f.isfile():
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
-                self.honeypot.commands[dest] = \
+                self.protocol.commands[dest] = \
                     pick_handler(os.path.basename(dest), f.size)
             else:
                 log.msg( 'tar: skipping [%s]' % f.name )

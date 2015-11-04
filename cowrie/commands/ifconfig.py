@@ -27,9 +27,9 @@ lo        Link encap:Local Loopback
           TX packets:110 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:0
           RX bytes:19932 (19.9 KB)  TX bytes:19932 (19.9 KB)""" % \
-        (self.honeypot.kippoIP,
-        self.honeypot.kippoIP.rsplit('.', 1)[0])
-        self.honeypot.writeln(l)
+        (self.protocol.kippoIP,
+        self.protocol.kippoIP.rsplit('.', 1)[0])
+        self.protocol.writeln(l)
 
 commands['/sbin/ifconfig'] = command_ifconfig
 

@@ -22,13 +22,13 @@ class command_ls(HoneyPotCommand):
         return gid
 
     def call(self):
-        path = self.honeypot.cwd
+        path = self.protocol.cwd
         paths = []
         if len(self.args):
             for arg in self.args:
                 if not arg.startswith('-'):
-                    paths.append(self.honeypot.fs.resolve_path(arg,
-                        self.honeypot.cwd))
+                    paths.append(self.protocol.fs.resolve_path(arg,
+                        self.protocol.cwd))
 
         self.show_hidden = False
         func = self.do_ls_normal
@@ -46,10 +46,10 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_normal(self, path):
         try:
-            files = self.honeypot.fs.get_path(path)
+            files = self.protocol.fs.get_path(path)
             files.sort()
         except:
-            self.honeypot.writeln(
+            self.protocol.writeln(
                 'ls: cannot access %s: No such file or directory' % path)
             return
         l = [x[A_NAME] for x in files \
@@ -63,7 +63,7 @@ class command_ls(HoneyPotCommand):
         maxlen = max([len(x) for x in l])
 
         try:
-            wincols = self.honeypot.user.windowSize[1]
+            wincols = self.protocol.user.windowSize[1]
         except AttributeError:
             wincols = 80
 
@@ -78,10 +78,10 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_l(self, path):
         try:
-            files = self.honeypot.fs.get_path(path)[:]
+            files = self.protocol.fs.get_path(path)[:]
             files.sort()
         except:
-            self.honeypot.writeln(
+            self.protocol.writeln(
                 'ls: cannot access %s: No such file or directory' % path)
             return
 
@@ -129,7 +129,7 @@ class command_ls(HoneyPotCommand):
                 file[A_NAME],
                 linktarget)
 
-            self.honeypot.writeln(l)
+            self.protocol.writeln(l)
 commands['/bin/ls'] = command_ls
 commands['/bin/dir'] = command_ls
 

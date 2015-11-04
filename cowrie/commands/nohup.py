@@ -16,7 +16,7 @@ class command_nohup(HoneyPotCommand):
             self.writeln('nohup: missing operand')
             self.writeln('Try `nohup --help\' for more information.')
             return
-        path = self.fs.resolve_path("nohup.out", self.honeypot.cwd)
+        path = self.fs.resolve_path("nohup.out", self.protocol.cwd)
         if self.fs.exists(path):
             return
         self.fs.mkfile(path, 0, 0, 0, 33188)

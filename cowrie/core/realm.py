@@ -36,6 +36,9 @@ from . import protocol
 from . import server
 from . import ssh
 
+import sys
+import gc
+
 class HoneyPotRealm:
     implements(twisted.cred.portal.IRealm)
     
@@ -47,15 +50,17 @@ class HoneyPotRealm:
 
         if mind in self.servers:
 	    log.msg( "Using existing server for mind %s" % mind )
-	    _server = self.servers[mind]
 	else:
 	    log.msg( "Starting new server for mind %s" % mind )
-	    _server = server.CowrieServer(self.cfg)
-	    self.servers[mind] = _server
+	    self.servers[mind] = _server = server.CowrieServer(self.cfg)
+
+	for i in self.servers.keys():
+	    log.msg( "REFCOUNT: key: %s, refcount %d" % ( i, sys.getrefcount(self.servers[i])))
+	    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
         if conchinterfaces.IConchUser in interfaces:
             return interfaces[0], \
-                ssh.HoneyPotAvatar(avatarId, _server), lambda: None
+                ssh.HoneyPotAvatar(avatarId, self.servers[mind]), lambda: None
         else:
             raise Exception("No supported interfaces found.")
 

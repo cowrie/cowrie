@@ -79,7 +79,7 @@ class command_ssh(HoneyPotCommand):
             'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.' % \
             self.host)
         self.write('%s@%s\'s password: ' % (self.user, self.host))
-        self.honeypot.password_input = True
+        self.protocol.password_input = True
 
     def wait(self, line):
         reactor.callLater(2, self.finish, line)
@@ -90,14 +90,14 @@ class command_ssh(HoneyPotCommand):
         rest = self.host.strip().split('.')
         if len(rest) and rest[0].isalpha():
             host = rest[0]
-        self.honeypot.hostname = host
-        self.honeypot.cwd = '/root'
-        if not self.fs.exists(self.honeypot.cwd):
-            self.honeypot.cwd = '/'
-        self.honeypot.password_input = False
+        self.protocol.hostname = host
+        self.protocol.cwd = '/root'
+        if not self.fs.exists(self.protocol.cwd):
+            self.protocol.cwd = '/'
+        self.protocol.password_input = False
         self.writeln(
             'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686' % \
-            self.honeypot.hostname)
+            self.protocol.hostname)
         self.writeln('Last login: %s from 192.168.9.4' % \
             time.ctime(time.time() - 123123))
         self.exit()

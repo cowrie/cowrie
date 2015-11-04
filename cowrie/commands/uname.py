@@ -9,7 +9,7 @@ class command_uname(HoneyPotCommand):
         if len(self.args) and self.args[0].strip() in ('-a', '--all'):
             self.writeln(
                 'Linux %s 3.2.0-4-amd64 #1 SMP Debian 3.2.68-1+deb7u1 x86_64 GNU/Linux' % \
-                self.honeypot.hostname)
+                self.protocol.hostname)
         elif len(self.args) and self.args[0].strip() in ('-r', '--kernel-release'):
             self.writeln( '3.2.0-4-amd64' )
         elif len(self.args) and self.args[0].strip() in ('-m', '--machine'):

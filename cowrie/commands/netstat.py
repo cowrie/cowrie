@@ -53,7 +53,7 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
     x25 (CCITT X.25)""")
 
     def do_netstat_route(self):
-        self.honeypot.writeln("""Kernel IP routing table
+        self.protocol.writeln("""Kernel IP routing table
 Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface""")
         if self.show_numeric:
             default = "default"
@@ -61,48 +61,48 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface""
         else:
             default = "0.0.0.0"
             lgateway = "*"
-        destination = self.honeypot.kippoIP.rsplit('.', 1)[0] + ".0"
-        gateway = self.honeypot.kippoIP.rsplit('.', 1)[0] + ".1"
+        destination = self.protocol.kippoIP.rsplit('.', 1)[0] + ".0"
+        gateway = self.protocol.kippoIP.rsplit('.', 1)[0] + ".1"
         l1 = "%s%s0.0.0.0         UG        0 0          0 eth0" % \
             ('{:<16}'.format(default),
             '{:<16}'.format(gateway))
         l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % \
             ('{:<16}'.format(destination),
             '{:<16}'.format(lgateway))
-        self.honeypot.writeln(l1)
-        self.honeypot.writeln(l2)
+        self.protocol.writeln(l1)
+        self.protocol.writeln(l2)
 
     def do_netstat_normal(self):
-        self.honeypot.writeln("""Active Internet connections (w/o servers)
+        self.protocol.writeln("""Active Internet connections (w/o servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State""")
-        s_name = self.honeypot.hostname
-        c_port = str(self.honeypot.realClientPort)
+        s_name = self.protocol.hostname
+        c_port = str(self.protocol.realClientPort)
         if self.show_numeric:
             s_port = "22"
-            c_name = str(self.honeypot.clientIP)
-            s_name = str(self.honeypot.kippoIP)
+            c_name = str(self.protocol.clientIP)
+            s_name = str(self.protocol.kippoIP)
         else:
             s_port = "ssh"
-            c_name = socket.gethostbyaddr(self.honeypot.clientIP)[0][:17]
+            c_name = socket.gethostbyaddr(self.protocol.clientIP)[0][:17]
         if self.show_listen or self.show_all:
-            self.honeypot.writeln("tcp        0      0 *:ssh                   *:*                     LISTEN")
+            self.protocol.writeln("tcp        0      0 *:ssh                   *:*                     LISTEN")
         if not self.show_listen or self.show_all:
             l = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
                 (s_name, s_port,
                 " "*(24-len(s_name+s_port)-1), c_name, c_port,
                 " "*(24-len(c_name+c_port)-1), "ESTABLISHED")
-            self.honeypot.writeln(l)
+            self.protocol.writeln(l)
         if self.show_listen or self.show_all:
-            self.honeypot.writeln("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN")
-        self.honeypot.writeln("""Active UNIX domain sockets (only servers)
+            self.protocol.writeln("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN")
+        self.protocol.writeln("""Active UNIX domain sockets (only servers)
 Proto RefCnt Flags       Type       State         I-Node   Path""")
         if self.show_listen:
-            self.honeypot.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
+            self.protocol.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
 unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
 unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
 unix  2      [ ACC ]     SEQPACKET  LISTENING     7159     /run/udev/control""")
         elif self.show_all:
-            self.honeypot.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
+            self.protocol.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
 unix  4      [ ]         DGRAM                    7445     /dev/log
 unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
 unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
@@ -124,7 +124,7 @@ unix  3      [ ]         DGRAM                    7198
 unix  2      [ ]         DGRAM                    9570
 unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart""")
         else:
-            self.honeypot.writeln("""unix  4      [ ]         DGRAM                    7445     /dev/log
+            self.protocol.writeln("""unix  4      [ ]         DGRAM                    7445     /dev/log
 unix  3      [ ]         STREAM     CONNECTED     7323
 unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
 unix  3      [ ]         STREAM     CONNECTED     7330

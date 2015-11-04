@@ -80,7 +80,7 @@ class command_curl(HoneyPotCommand):
                     return
 
         if outfile:
-            outfile = self.fs.resolve_path(outfile, self.honeypot.cwd)
+            outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
             path = os.path.dirname(outfile)
             if not path or \
                     not self.fs.exists(path) or \
@@ -92,7 +92,7 @@ class command_curl(HoneyPotCommand):
 
         self.url = url
         self.limit_size = 0
-        cfg = self.honeypot.env.cfg
+        cfg = self.protocol.env.cfg
         if cfg.has_option('honeypot', 'download_limit_size'):
             self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
 
@@ -128,8 +128,8 @@ class command_curl(HoneyPotCommand):
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
         out_addr = None
-        if self.honeypot.env.cfg.has_option('honeypot', 'out_addr'):
-            out_addr = (self.honeypot.env.cfg.get('honeypot', 'out_addr'), 0)
+        if self.protocol.env.cfg.has_option('honeypot', 'out_addr'):
+            out_addr = (self.protocol.env.cfg.get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()
@@ -160,7 +160,7 @@ class command_curl(HoneyPotCommand):
             os.remove(self.safeoutfile)
             log.msg("Not storing duplicate content " + shasum)
 
-        self.honeypot.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+        self.protocol.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
             eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum)
 
         log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
@@ -235,7 +235,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.fileName = os.path.devnull
                 self.nomore = True
             #self.curl.writeln('Saving to: `%s' % self.fakeoutfile)
-            #self.curl.honeypot.terminal.nextLine()
+            #self.curl.protocol.terminal.nextLine()
 
             if self.fakeoutfile:
                 self.curl.writeln('  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current')
@@ -284,8 +284,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         #    ('%s>' % (38 * '='),
         #    splitthousands(str(int(self.totallength))).ljust(12),
         #    self.speed / 1000))
-        #self.curl.honeypot.terminal.nextLine()
-        #self.curl.honeypot.terminal.nextLine()
+        #self.curl.protocol.terminal.nextLine()
+        #self.curl.protocol.terminal.nextLine()
         #self.curl.writeln(
         #    '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
         #    (time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -296,7 +296,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
                 (self.currentlength, self.currentlength  , 63673, 65181)
             )
-            self.curl.honeypot.terminal.nextLine()
+            self.curl.protocol.terminal.nextLine()
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
             self.curl.fs.update_realfile(

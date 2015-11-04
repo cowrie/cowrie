@@ -64,7 +64,7 @@ class command_adduser(HoneyPotCommand):
         l = self.output[self.item]
         self.write(l[1] % {'username': self.username})
         if l[0] == O_P:
-            self.honeypot.password_input = True
+            self.protocol.password_input = True
             return
         if l[0] == O_Q:
             return
@@ -88,7 +88,7 @@ class command_adduser(HoneyPotCommand):
         else:
             self.item += 1
         self.schedule_next()
-        self.honeypot.password_input = False
+        self.protocol.password_input = False
 commands['/usr/sbin/adduser'] = command_adduser
 commands['/usr/sbin/useradd'] = command_adduser
 

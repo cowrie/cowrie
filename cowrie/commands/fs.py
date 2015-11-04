@@ -16,7 +16,7 @@ class command_cat(HoneyPotCommand):
             pass
         else:
             for arg in self.args:
-                path = self.fs.resolve_path(arg, self.honeypot.cwd)
+                path = self.fs.resolve_path(arg, self.protocol.cwd)
                 if self.fs.isdir(path):
                     self.writeln('cat: %s: Is a directory' % (arg,))
                     continue
@@ -52,7 +52,7 @@ class command_tail(HoneyPotCommand):
                     self.n = int(opt[1])
 
             for arg in args:
-                path = self.fs.resolve_path(arg, self.honeypot.cwd)
+                path = self.fs.resolve_path(arg, self.protocol.cwd)
                 if self.fs.isdir(path):
                     self.writeln("tail: error reading `%s': Is a directory" % (arg,))
                     continue
@@ -97,7 +97,7 @@ class command_head(HoneyPotCommand):
                     self.n = int(opt[1])
 
             for arg in args:
-                path = self.fs.resolve_path(arg, self.honeypot.cwd)
+                path = self.fs.resolve_path(arg, self.protocol.cwd)
                 if self.fs.isdir(path):
                     self.writeln("head: error reading `%s': Is a directory" % (arg,))
                     continue
@@ -124,11 +124,11 @@ commands['/bin/head'] = command_head
 class command_cd(HoneyPotCommand):
     def call(self):
         if not self.args or self.args[0] == "~":
-            path = self.honeypot.user.home
+            path = self.protocol.user.home
         else:
             path = self.args[0]
         try:
-            newpath = self.fs.resolve_path(path, self.honeypot.cwd)
+            newpath = self.fs.resolve_path(path, self.protocol.cwd)
             inode = self.fs.getfile(newpath)
         except:
             newdir = None
@@ -141,7 +141,7 @@ class command_cd(HoneyPotCommand):
         if inode[A_TYPE] != T_DIR:
             self.writeln('bash: cd: %s: Not a directory' % path)
             return
-        self.honeypot.cwd = newpath
+        self.protocol.cwd = newpath
 commands['cd'] = command_cd
 
 class command_rm(HoneyPotCommand):
@@ -151,7 +151,7 @@ class command_rm(HoneyPotCommand):
             if f.startswith('-') and 'r' in f:
                 recursive = True
         for f in self.args:
-            path = self.fs.resolve_path(f, self.honeypot.cwd)
+            path = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 dir = self.fs.get_path('/'.join(path.split('/')[:-1]))
             except (IndexError, FileNotFound):
@@ -188,7 +188,7 @@ class command_cp(HoneyPotCommand):
                 recursive = True
 
         def resolv(path):
-            return self.fs.resolve_path(path, self.honeypot.cwd)
+            return self.fs.resolve_path(path, self.protocol.cwd)
 
         if len(args) < 2:
             self.writeln("cp: missing destination file operand after `%s'" % \
@@ -252,7 +252,7 @@ class command_mv(HoneyPotCommand):
             self.exit()
 
         def resolv(path):
-            return self.fs.resolve_path(path, self.honeypot.cwd)
+            return self.fs.resolve_path(path, self.protocol.cwd)
 
         if len(args) < 2:
             self.writeln("mv: missing destination file operand after `%s'" % \
@@ -307,7 +307,7 @@ commands['/bin/mv'] = command_mv
 class command_mkdir(HoneyPotCommand):
     def call(self):
         for f in self.args:
-            path = self.fs.resolve_path(f, self.honeypot.cwd)
+            path = self.fs.resolve_path(f, self.protocol.cwd)
             if self.fs.exists(path):
                 self.writeln(
                     'mkdir: cannot create directory `%s\': File exists' % f)
@@ -324,7 +324,7 @@ commands['/bin/mkdir'] = command_mkdir
 class command_rmdir(HoneyPotCommand):
     def call(self):
         for f in self.args:
-            path = self.fs.resolve_path(f, self.honeypot.cwd)
+            path = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 if len(self.fs.get_path(path)):
                     self.writeln(
@@ -350,7 +350,7 @@ commands['/bin/rmdir'] = command_rmdir
 
 class command_pwd(HoneyPotCommand):
     def call(self):
-        self.writeln(self.honeypot.cwd)
+        self.writeln(self.protocol.cwd)
 commands['/bin/pwd'] = command_pwd
 
 class command_touch(HoneyPotCommand):
@@ -360,7 +360,7 @@ class command_touch(HoneyPotCommand):
             self.writeln('Try `touch --help\' for more information.')
             return
         for f in self.args:
-            path = self.fs.resolve_path(f, self.honeypot.cwd)
+            path = self.fs.resolve_path(f, self.protocol.cwd)
             if not self.fs.exists(os.path.dirname(path)):
                 self.writeln(
                     'touch: cannot touch `%s`: no such file or directory' % \

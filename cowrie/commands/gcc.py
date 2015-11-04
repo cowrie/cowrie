@@ -105,7 +105,7 @@ class command_gcc(HoneyPotCommand):
         # Check for *.c or *.cpp files
         for value in args:
             if '.c' in value.lower():
-                sourcefile = self.fs.resolve_path(value, self.honeypot.cwd)
+                sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
 
                 if self.fs.exists(sourcefile):
                     input_files = input_files + 1
@@ -165,7 +165,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
         data = ""
         # TODO: make sure it is written to temp file, not downloads
         safeoutfile = '%s/%s_%s' % \
-            (self.honeypot.env.cfg.get('honeypot', 'download_path'),
+            (self.protocol.env.cfg.get('honeypot', 'download_path'),
             time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', outfile))
 
@@ -181,9 +181,9 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
         with open(safeoutfile, 'wb') as f: f.write(data)
 
         # Output file
-        outfile = self.fs.resolve_path(outfile, self.honeypot.cwd)
+        outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
 
-        # Create file for the honeypot
+        # Create file for the protocol
         self.fs.mkfile(outfile, 0, 0, len(data), 33188)
         self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
 
@@ -193,7 +193,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
                 self.write("Segmentation fault\n")
 
         # Trick the 'new compiled file' as an segfault
-        self.honeypot.commands[outfile] = segfault_command
+        self.protocol.commands[outfile] = segfault_command
 
         # Done
         self.exit()

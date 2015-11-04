@@ -5,7 +5,6 @@ import os
 import shlex
 import re
 import copy
-import pickle
 
 from twisted.python import log
 
@@ -13,24 +12,24 @@ from . import fs
 
 class HoneyPotCommand(object):
     def __init__(self, protocol, *args):
-        self.honeypot = protocol
+	self.protocol = protocol
         self.args = args
-        self.env = self.honeypot.cmdstack[0].envvars
-        self.writeln = self.honeypot.writeln
-        self.write = self.honeypot.terminal.write
-        self.nextLine = self.honeypot.terminal.nextLine
-        self.fs = self.honeypot.fs
+        self.env = self.protocol.cmdstack[0].envvars
+        self.writeln = self.protocol.writeln
+        self.write = self.protocol.terminal.write
+        self.nextLine = self.protocol.terminal.nextLine
+        self.fs = self.protocol.fs
 
     def start(self):
         self.call()
         self.exit()
 
     def call(self):
-        self.honeypot.writeln('Hello World! [%s]' % (repr(self.args),))
+        self.protocol.writeln('Hello World! [%s]' % (repr(self.args),))
 
     def exit(self):
-        self.honeypot.cmdstack.pop()
-        self.honeypot.cmdstack[-1].resume()
+        self.protocol.cmdstack.pop()
+        self.protocol.cmdstack[-1].resume()
 
     def handle_CTRL_C(self):
         log.msg('Received CTRL-C, exiting..')
@@ -51,7 +50,7 @@ class HoneyPotCommand(object):
 
 class HoneyPotShell(object):
     def __init__(self, protocol, interactive=True):
-        self.honeypot = protocol
+	self.protocol = protocol
         self.interactive = interactive
         self.showPrompt()
         self.cmdpending = []
@@ -81,15 +80,15 @@ class HoneyPotShell(object):
             elif self.interactive:
                 self.showPrompt()
             else:
-                self.honeypot.terminal.transport.session.sendEOF()
-                self.honeypot.terminal.transport.session.sendClose()
+                self.protocol.terminal.transport.session.sendEOF()
+                self.protocol.terminal.transport.session.sendClose()
 
         if not len(self.cmdpending):
             if self.interactive:
                 self.showPrompt()
             else:
-                self.honeypot.terminal.transport.session.sendEOF()
-                self.honeypot.terminal.transport.session.sendClose()
+                self.protocol.terminal.transport.session.sendEOF()
+                self.protocol.terminal.transport.session.sendClose()
             return
 
         line = self.cmdpending.pop(0)
@@ -97,7 +96,7 @@ class HoneyPotShell(object):
 	    line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
             cmdAndArgs = shlex.split(line)
         except:
-            self.honeypot.writeln(
+            self.protocol.writeln(
                 'bash: syntax error: unexpected end of file')
             # could run runCommand here, but i'll just clear the list instead
             self.cmdpending = []
@@ -123,49 +122,49 @@ class HoneyPotShell(object):
 
         rargs = []
         for arg in args:
-            matches = self.honeypot.fs.resolve_path_wc(arg, self.honeypot.cwd)
+            matches = self.protocol.fs.resolve_path_wc(arg, self.protocol.cwd)
             if matches:
                 rargs.extend(matches)
             else:
                 rargs.append(arg)
-        cmdclass = self.honeypot.getCommand(cmd, envvars['PATH'].split(':'))
+        cmdclass = self.protocol.getCommand(cmd, envvars['PATH'].split(':'))
         if cmdclass:
             log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
-            #self.honeypot.logDispatch('Command found: %s' % (line,))
-            self.honeypot.call_command(cmdclass, *rargs)
+            #self.protocol.logDispatch('Command found: %s' % (line,))
+            self.protocol.call_command(cmdclass, *rargs)
         else:
             log.msg(eventid='KIPP0006',
                 input=line, format='Command not found: %(input)s')
-            #self.honeypot.logDispatch('Command not found: %s' % (line,))
+            #self.protocol.logDispatch('Command not found: %s' % (line,))
             if len(line):
-                self.honeypot.writeln('bash: %s: command not found' % (cmd,))
+                self.protocol.writeln('bash: %s: command not found' % (cmd,))
                 runOrPrompt()
 
     def resume(self):
         if self.interactive:
-            self.honeypot.setInsertMode()
+            self.protocol.setInsertMode()
         self.runCommand()
 
     def showPrompt(self):
         if not self.interactive:
             return
         # Example: srv03:~#
-        #prompt = '%s:%%(path)s' % self.honeypot.hostname
+        #prompt = '%s:%%(path)s' % self.protocol.hostname
         # Example: root@svr03:~#     (More of a "Debianu" feel)
-        prompt = '%s@%s:%%(path)s' % (self.honeypot.user.username, self.honeypot.hostname,)
+        prompt = '%s@%s:%%(path)s' % (self.protocol.user.username, self.protocol.hostname,)
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
-        #prompt = '[%s@%s %%(path)s]' % (self.honeypot.user.username, self.honeypot.hostname,)
-        if not self.honeypot.user.uid:
+        #prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
+        if not self.protocol.user.uid:
             prompt += '# '    # "Root" user
         else:
             prompt += '$ '    # "Non-Root" user
 
-        path = self.honeypot.cwd
-        homelen = len(self.honeypot.user.home)
-        if path == self.honeypot.user.home:
+        path = self.protocol.cwd
+        homelen = len(self.protocol.user.home)
+        if path == self.protocol.user.home:
             path = '~'
         elif len(path) > (homelen+1) and \
-                path[:(homelen+1)] == self.honeypot.user.home + '/':
+                path[:(homelen+1)] == self.protocol.user.home + '/':
             path = '~' + path[homelen:]
         # Uncomment the three lines below for a 'better' CentOS look.
         # Rather than '[root@svr03 /var/log]#' is shows '[root@svr03 log]#'.
@@ -174,27 +173,27 @@ class HoneyPotShell(object):
         #    path = '/'
 
         attrs = {'path': path}
-        self.honeypot.terminal.write(prompt % attrs)
+        self.protocol.terminal.write(prompt % attrs)
 
     def handle_CTRL_C(self):
-        self.honeypot.lineBuffer = []
-        self.honeypot.lineBufferIndex = 0
-        self.honeypot.terminal.nextLine()
+        self.protocol.lineBuffer = []
+        self.protocol.lineBufferIndex = 0
+        self.protocol.terminal.nextLine()
         self.showPrompt()
 
     def handle_CTRL_D(self):
         log.msg('Received CTRL-D, exiting..')
-        self.honeypot.call_command(self.honeypot.commands['exit'])
+        self.protocol.call_command(self.protocol.commands['exit'])
 
     # Tab completion
     def handle_TAB(self):
-        if not len(self.honeypot.lineBuffer):
+        if not len(self.protocol.lineBuffer):
             return
-        l = ''.join(self.honeypot.lineBuffer)
+        l = ''.join(self.protocol.lineBuffer)
         if l[-1] == ' ':
             clue = ''
         else:
-            clue = ''.join(self.honeypot.lineBuffer).split()[-1]
+            clue = ''.join(self.protocol.lineBuffer).split()[-1]
         try:
             basedir = os.path.dirname(clue)
         except:
@@ -205,12 +204,12 @@ class HoneyPotShell(object):
         files = []
         tmppath = basedir
         if not len(basedir):
-            tmppath = self.honeypot.cwd
+            tmppath = self.protocol.cwd
         try:
-            r = self.honeypot.fs.resolve_path(tmppath, self.honeypot.cwd)
+            r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
         except:
             return
-        for x in self.honeypot.fs.get_path(r):
+        for x in self.protocol.fs.get_path(r):
             if clue == '':
                 files.append(x)
                 continue
@@ -222,9 +221,9 @@ class HoneyPotShell(object):
             return
 
         # Clear early so we can call showPrompt if needed
-        for i in range(self.honeypot.lineBufferIndex):
-            self.honeypot.terminal.cursorBackward()
-            self.honeypot.terminal.deleteCharacter()
+        for i in range(self.protocol.lineBufferIndex):
+            self.protocol.terminal.cursorBackward()
+            self.protocol.terminal.deleteCharacter()
 
         newbuf = ''
         if len(files) == 1:
@@ -241,39 +240,35 @@ class HoneyPotShell(object):
                 prefix = ''
             first = l.split(' ')[:-1]
             newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
-            if newbuf == ''.join(self.honeypot.lineBuffer):
-                self.honeypot.terminal.nextLine()
+            if newbuf == ''.join(self.protocol.lineBuffer):
+                self.protocol.terminal.nextLine()
                 maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
-                perline = int(self.honeypot.user.windowSize[1] / (maxlen + 1))
+                perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
                 count = 0
                 for file in files:
                     if count == perline:
                         count = 0
-                        self.honeypot.terminal.nextLine()
-                    self.honeypot.terminal.write(file[fs.A_NAME].ljust(maxlen))
+                        self.protocol.terminal.nextLine()
+                    self.protocol.terminal.write(file[fs.A_NAME].ljust(maxlen))
                     count += 1
-                self.honeypot.terminal.nextLine()
+                self.protocol.terminal.nextLine()
                 self.showPrompt()
 
-        self.honeypot.lineBuffer = list(newbuf)
-        self.honeypot.lineBufferIndex = len(self.honeypot.lineBuffer)
-        self.honeypot.terminal.write(newbuf)
+        self.protocol.lineBuffer = list(newbuf)
+        self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
+        self.protocol.terminal.write(newbuf)
 
 class HoneyPotEnvironment(object):
     """
     """
     def __init__(self, cfg):
         self.cfg = cfg
-
         self.commands = {}
-        self.hostname = self.cfg.get('honeypot', 'hostname')
 
         import cowrie.commands
         for c in cowrie.commands.__all__:
             module = __import__('cowrie.commands.%s' % (c,),
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
-
-        self.fs = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
 # vim: set sw=4 et:

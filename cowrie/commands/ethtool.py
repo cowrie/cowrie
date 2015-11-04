@@ -20,15 +20,15 @@ class command_ethtool(HoneyPotCommand):
 
     def do_ethtool_help(self):
         """No real help output."""
-        self.honeypot.writeln("""ethtool: bad command line argument(s)
+        self.protocol.writeln("""ethtool: bad command line argument(s)
 For more information run ethtool -h """)
 
     def do_ethtool_lo(self):
-        self.honeypot.writeln("""Settings for lo:
+        self.protocol.writeln("""Settings for lo:
             Link detected: yes""")
 
     def do_ethtool_eth0(self):
-        self.honeypot.writeln("""Settings for eth0:
+        self.protocol.writeln("""Settings for eth0:
 Supported ports: [ TP MII ]
 Supported link modes:   10baseT/Half 10baseT/Full 
                         100baseT/Half 100baseT/Full 
@@ -58,7 +58,7 @@ Current message level: 0x00000033 (51)
 Link detected: yes""")
 
     def do_ethtool_eth1(self):
-        self.honeypot.writeln("""Settings for eth1:
+        self.protocol.writeln("""Settings for eth1:
 Cannot get device settings: No such device
 Cannot get wake-on-lan settings: No such device
 Cannot get message level: No such device

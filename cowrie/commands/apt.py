@@ -156,7 +156,7 @@ pages for more information and options.
                 (p, packages[p]['version']))
             self.fs.mkfile('/usr/bin/%s' % p,
                 0, 0, random.randint(10000, 90000), 33188)
-            self.honeypot.commands['/usr/bin/%s' % p] = \
+            self.protocol.commands['/usr/bin/%s' % p] = \
                 command_faked_package_class_factory.getCommand(p)
             yield self.sleep(2)
         self.exit()

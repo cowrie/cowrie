@@ -9,7 +9,7 @@ commands = {}
 
 class command_last(HoneyPotCommand):
     def call(self):
-        fn = '%s/lastlog.txt' % self.honeypot.env.cfg.get('honeypot', 'data_path')
+        fn = '%s/lastlog.txt' % self.protocol.env.cfg.get('honeypot', 'data_path')
         if not os.path.exists(fn):
             return
         l = list(self.args)
