@@ -24,30 +24,28 @@ class UserDB(object):
         load the user db
         """
 
-        f = open(self.userdb_file, 'r')
-        while True:
-            line = f.readline()
-            if not line:
-                break
+        with open(self.userdb_file, 'r') as f:
+            while True:
+                line = f.readline()
+                if not line:
+                    break
 
-            line = string.strip(line)
-            if not line:
-                continue
+                line = string.strip(line)
+                if not line:
+                    continue
 
-            if line.startswith('#'):
-                continue
+                if line.startswith('#'):
+                    continue
 
-            (login, uid_str, passwd) = line.split(':', 2)
+                (login, uid_str, passwd) = line.split(':', 2)
 
-            uid = 0
-            try:
-                uid = int(uid_str)
-            except ValueError:
-                uid = 1001
+                uid = 0
+                try:
+                    uid = int(uid_str)
+                except ValueError:
+                    uid = 1001
 
-            self.userdb.append((login, uid, passwd))
-
-        f.close()
+                self.userdb.append((login, uid, passwd))
 
     def save(self):
         """
@@ -55,10 +53,9 @@ class UserDB(object):
         """
 
         # Note: this is subject to races between cowrie instances, but hey ...
-        f = open(self.userdb_file, 'w')
-        for (login, uid, passwd) in self.userdb:
-            f.write('%s:%d:%s\n' % (login, uid, passwd))
-        f.close()
+        with open(self.userdb_file, 'w') as f:
+            for (login, uid, passwd) in self.userdb:
+                f.write('%s:%d:%s\n' % (login, uid, passwd))
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
         """
