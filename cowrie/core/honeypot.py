@@ -159,11 +159,11 @@ class HoneyPotShell(object):
             prompt += '$ '    # "Non-Root" user
 
         path = self.protocol.cwd
-        homelen = len(self.protocol.user.home)
-        if path == self.protocol.user.home:
+        homelen = len(self.protocol.user.avatar.home)
+        if path == self.protocol.user.avatar.home:
             path = '~'
         elif len(path) > (homelen+1) and \
-                path[:(homelen+1)] == self.protocol.user.home + '/':
+                path[:(homelen+1)] == self.protocol.user.avatar.home + '/':
             path = '~' + path[homelen:]
         # Uncomment the three lines below for a 'better' CentOS look.
         # Rather than '[root@svr03 /var/log]#' is shows '[root@svr03 log]#'.

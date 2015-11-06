@@ -22,8 +22,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cfg = self.user.cfg
         self.hostname = avatar.server.hostname
         self.fs = avatar.server.fs
-        if self.fs.exists(avatar.home):
-            self.cwd = avatar.home
+        if self.fs.exists(avatar.avatar.home):
+            self.cwd = avatar.avatar.home
         else:
             self.cwd = '/'
 

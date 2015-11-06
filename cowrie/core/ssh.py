@@ -410,30 +410,54 @@ class HoneyPotSSHSession(session.SSHSession):
     def channelClosed(self):
         log.msg("Called channelClosed in SSHSession")
 
-class HoneyPotAvatar(avatar.ConchUser):
-    # FIXME: recent twisted conch avatar.py uses IConchuser here
-    implements(conchinterfaces.ISession)
+class CowrieUser(avatar.ConchUser):
+    implements(conchinterfaces.IConchUser)
 
     def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
         self.username = username
-	self.server = server
-	self.cfg = self.server.cfg
-        self.protocol = None
+        self.server = server
+        self.cfg = self.server.cfg
 
-        self.channelLookup.update({'session': HoneyPotSSHSession})
-        self.channelLookup['direct-tcpip'] = CowrieOpenConnectForwardingClient
-
-        # sftp support enabled only when option is explicitly set
-        if self.cfg.has_option('honeypot', 'sftp_enabled'):
-            if (self.cfg.get('honeypot', 'sftp_enabled') == "true"):
-                self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
+        self.channelLookup.update(
+            {"session": HoneyPotSSHSession,
+             "direct-tcpip": CowrieOpenConnectForwardingClient})
 
         self.uid = self.gid = auth.UserDB(self.cfg).getUID(self.username)
         if not self.uid:
             self.home = '/root'
         else:
             self.home = '/home/' + username
+
+        # sftp support enabled only when option is explicitly set
+        if self.cfg.has_option('honeypot', 'sftp_enabled'):
+            if (self.cfg.get('honeypot', 'sftp_enabled') == "true"):
+                self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
+
+    def logout(self):
+        log.msg(
+            'avatar %s logging out'
+            % (self.username,))
+
+class SSHSessionForCowrieUser:
+    implements(conchinterfaces.ISession)
+
+    def __init__(self, avatar, reactor=None):
+        """
+        Construct an C{SSHSessionForCowrwieUser}.
+
+        @param avatar: The L{CowrieUser} for whom this is an SSH session.
+        @param reactor: An L{IReactorProcess} used to handle shell and exec
+            requests. Uses the default reactor if None.
+        """
+        self.protocol = None
+        self.environ = {'PATH': '/bin:/usr/bin:/usr/local/bin'}
+        self.avatar = avatar
+        self.server = avatar.server
+        self.cfg = avatar.cfg
+        self.uid = avatar.uid
+        self.username = avatar.username
+
 
     def openShell(self, proto):
         serverProtocol = protocol.LoggingServerProtocol(
@@ -598,7 +622,7 @@ class CowrieSFTPDirectory:
     def close(self):
         self.files = []
 
-class CowrieSFTPServer:
+class SFTPServerForCowrieUser:
     implements(conchinterfaces.ISFTPServer)
 
     def __init__(self, avatar):
@@ -689,7 +713,8 @@ class CowrieSFTPServer:
     def extendedRequest(self, extName, extData):
         raise NotImplementedError
 
-components.registerAdapter(CowrieSFTPServer, HoneyPotAvatar, conchinterfaces.ISFTPServer)
+components.registerAdapter(SFTPServerForCowrieUser, CowrieUser, conchinterfaces.ISFTPServer)
+components.registerAdapter(SSHSessionForCowrieUser, CowrieUser, session.ISession)
 
 def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)

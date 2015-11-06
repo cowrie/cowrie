@@ -62,7 +62,7 @@ class HoneyPotRealm:
 
         if conchinterfaces.IConchUser in interfaces:
             return interfaces[0], \
-                ssh.HoneyPotAvatar(avatarId, server.CowrieServer(self.cfg)), lambda:None
+                ssh.CowrieUser(avatarId, server.CowrieServer(self.cfg)), lambda:None
         else:
             raise Exception("No supported interfaces found.")
 
