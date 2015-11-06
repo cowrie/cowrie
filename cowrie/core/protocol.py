@@ -29,7 +29,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         # commands is also a copy so we can add stuff on the fly
         # self.commands = copy.copy(self.commands)
-	self.commands = {}
+        self.commands = {}
         import cowrie.commands
         for c in cowrie.commands.__all__:
             module = __import__('cowrie.commands.%s' % (c,),
@@ -68,8 +68,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 self.kippoIP = s.getsockname()[0]
             except:
                 self.kippoIP = '192.168.0.1'
-	    finally:
-		s.close()
+            finally:
+                s.close()
 
     def timeoutConnection(self):
         self.writeln( 'timed out waiting for input: auto-logout' )
@@ -79,13 +79,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     # this is only called on explicit logout, not on disconnect
     # this indicates the closing of the channel/session, not the closing of the transport
     def connectionLost(self, reason):
-	self.terminal = None # (this should be done by super below)
-	insults.TerminalProtocol.connectionLost(self, reason)
-	del self.cmdstack
-	del self.commands
-	self.fs = None
-	self.cfg = None
-	self.user = None
+        self.setTimeout(None)
+        insults.TerminalProtocol.connectionLost(self, reason)
+        self.terminal = None # (this should be done by super above)
+        del self.cmdstack
+        del self.commands
+        self.fs = None
+        self.cfg = None
+        self.user = None
         log.msg( "honeypot terminal protocol connection lost %s" % reason)
 
     def txtcmd(self, txt):
@@ -206,7 +207,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         endtime = time.strftime('%H:%M',
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
-	with open( '%s/lastlog.txt' % self.cfg.get('honeypot', 'data_path'), 'a') as f:
+        with open( '%s/lastlog.txt' % self.cfg.get('honeypot', 'data_path'), 'a') as f:
             f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
                 (self.clientIP, starttime, endtime, duration))
 
@@ -322,7 +323,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     # FIXME: this method is called 4 times on logout....
     # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
-	self.cfg = None
+        self.cfg = None
         log.msg("received call to LSP.connectionLost")
         transport = self.transport.session.conn.transport
         if self.ttylog_open:
