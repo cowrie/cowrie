@@ -254,7 +254,7 @@ class HoneyPotFilesystem(object):
             dir = self.getfile(path)
         except:
             dir = None
-        if dir is None:
+        if dir is None or dir is False:
             return False
         if dir[A_TYPE] == T_DIR:
             return True
