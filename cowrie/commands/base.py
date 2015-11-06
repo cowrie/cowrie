@@ -120,7 +120,9 @@ commands['/bin/echo'] = command_echo
 
 class command_exit(HoneyPotCommand):
     def call(self):
-        self.protocol.terminal.loseConnection()
+        #self.protocol.terminal.transport.session.sendEOF()
+        #self.protocol.terminal.transport.session.sendClose()
+        self.protocol.terminal.transport.session.loseConnection()
         return
     def exit(self):
         pass

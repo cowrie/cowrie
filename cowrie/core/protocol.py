@@ -17,6 +17,9 @@ from . import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
+    def __del__(self):
+        print "PROTOCOL GONE"
+
     def __init__(self, avatar):
         self.user = avatar
         self.cfg = self.user.cfg
@@ -167,6 +170,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
     def connectionMade(self):
         self.displayMOTD()
+
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 

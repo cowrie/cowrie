@@ -36,6 +36,10 @@ class FileNotFound(Exception):
     pass
 
 class HoneyPotFilesystem(object):
+
+#    def __del__(self):
+#        print "FS GONE!"
+
     def __init__(self, fs, cfg):
         self.fs = fs
         self.cfg = cfg

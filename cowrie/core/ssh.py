@@ -460,29 +460,22 @@ class SSHSessionForCowrieUser:
 
 
     def openShell(self, proto):
-        serverProtocol = protocol.LoggingServerProtocol(
+        self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
-        self.protocol = serverProtocol
-        serverProtocol.makeConnection(proto)
-        proto.makeConnection(session.wrapProtocol(serverProtocol))
-        #self.protocol = serverProtocol
-        self.protocol = proto
+        self.protocol.makeConnection(proto)
+        proto.makeConnection(session.wrapProtocol(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
-        #log.msg('Terminal size: %s %s' % windowSize[0:2])
         log.msg(eventid='KIPP0010', width=windowSize[0], height=windowSize[1],
             format='Terminal Size: %(width)s %(height)s')
-
         self.windowSize = windowSize
         return None
 
     def execCommand(self, proto, cmd):
-        serverProtocol = protocol.LoggingServerProtocol(
+        self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
-        self.protocol = serverProtocol
-        serverProtocol.makeConnection(proto)
-        proto.makeConnection(session.wrapProtocol(serverProtocol))
-        self.protocol = serverProtocol
+        self.protocol.makeConnection(proto)
+        proto.makeConnection(session.wrapProtocol(self.protocol))
 
     # this is reliably called on both logout and disconnect
     # we notify the protocol here we lost the connection
