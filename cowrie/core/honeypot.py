@@ -81,15 +81,13 @@ class HoneyPotShell(object):
             elif self.interactive:
                 self.showPrompt()
             else:
-                self.protocol.terminal.transport.session.sendEOF()
-                self.protocol.terminal.transport.session.sendClose()
+                self.protocol.terminal.transport.session.loseConnection()
 
         if not len(self.cmdpending):
             if self.interactive:
                 self.showPrompt()
             else:
-                self.protocol.terminal.transport.session.sendEOF()
-                self.protocol.terminal.transport.session.sendClose()
+                self.protocol.terminal.transport.session.loseConnection()
             return
 
         line = self.cmdpending.pop(0)
