@@ -92,7 +92,7 @@ class command_curl(HoneyPotCommand):
 
         self.url = url
         self.limit_size = 0
-        cfg = self.protocol.env.cfg
+        cfg = self.protocol.cfg
         if cfg.has_option('honeypot', 'download_limit_size'):
             self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
 
@@ -128,8 +128,8 @@ class command_curl(HoneyPotCommand):
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
         out_addr = None
-        if self.protocol.env.cfg.has_option('honeypot', 'out_addr'):
-            out_addr = (self.protocol.env.cfg.get('honeypot', 'out_addr'), 0)
+        if self.protocol.cfg.has_option('honeypot', 'out_addr'):
+            out_addr = (self.protocol.cfg.get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()

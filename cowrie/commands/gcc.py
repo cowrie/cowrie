@@ -165,7 +165,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
         data = ""
         # TODO: make sure it is written to temp file, not downloads
         safeoutfile = '%s/%s_%s' % \
-            (self.protocol.env.cfg.get('honeypot', 'download_path'),
+            (self.protocol.cfg.get('honeypot', 'download_path'),
             time.strftime('%Y%m%d%H%M%S'),
             re.sub('[^A-Za-z0-9]', '_', outfile))
 

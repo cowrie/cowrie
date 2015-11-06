@@ -226,7 +226,7 @@ class command_passwd(HoneyPotCommand):
             self.exit()
             return
 
-        userdb = UserDB(self.protocol.env.cfg)
+        userdb = UserDB(self.protocol.cfg)
         userdb.adduser(self.protocol.user.username,
             self.protocol.user.uid, self.passwd)
 

@@ -155,8 +155,8 @@ class command_iptables(HoneyPotCommand):
         """
 
         # Create fresh tables on start
-        if not hasattr(self.protocol.env, 'iptables'):
-            setattr(self.protocol.env, 'iptables', {
+        if not hasattr(self.protocol.user.server, 'iptables'):
+            setattr(self.protocol.user.server, 'iptables', {
                 "raw": {
                     "PREROUTING": [],
                     "OUTPUT": []
@@ -183,7 +183,7 @@ class command_iptables(HoneyPotCommand):
             })
 
         # Get the tables
-        self.tables = getattr(self.protocol.env, 'iptables')
+        self.tables = getattr(self.protocol.user.server, 'iptables')
 
         # Verify selected table
         if not self.is_valid_table(table):
