@@ -13,7 +13,7 @@ from . import fs
 class HoneyPotCommand(object):
 
     def __init__(self, protocol, *args):
-	self.protocol = protocol
+        self.protocol = protocol
         self.args = args
         self.env = self.protocol.cmdstack[0].envvars
         self.writeln = self.protocol.writeln
@@ -51,7 +51,7 @@ class HoneyPotCommand(object):
 
 class HoneyPotShell(object):
     def __init__(self, protocol, interactive=True):
-	self.protocol = protocol
+        self.protocol = protocol
         self.interactive = interactive
         self.showPrompt()
         self.cmdpending = []
@@ -92,7 +92,7 @@ class HoneyPotShell(object):
 
         line = self.cmdpending.pop(0)
         try:
-	    line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
+            line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
             cmdAndArgs = shlex.split(line)
         except:
             self.protocol.writeln(
