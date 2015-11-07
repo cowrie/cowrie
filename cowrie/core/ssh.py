@@ -218,8 +218,6 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         @return: The built transport.
         """
 
-	log.msg(" MICHEL: currently open session %s" % self.sessions )
-
         _modulis = '/etc/ssh/moduli', '/private/etc/moduli'
 
         # FIXME: try to mimic something real 100%
