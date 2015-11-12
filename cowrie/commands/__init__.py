@@ -24,5 +24,6 @@ __all__ = [
     'iptables',
     'ethtool',
     'ifconfig',
-    'nohup'
+    'nohup',
+    'busybox'
     ]
