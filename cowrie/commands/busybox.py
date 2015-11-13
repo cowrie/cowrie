@@ -19,31 +19,49 @@ Usage: busybox [function] [arguments]...
 	will act like whatever it was invoked as.
 
 Currently defined functions:
-	[, [[, adjtimex, ar, arp, arping, ash, awk, basename, blockdev, brctl, bunzip2, bzcat, bzip2, cal, cat, chgrp, chmod, chown, chroot, chvt, clear, cmp, cp, cpio, cttyhack, cut, date, dc, dd, deallocvt, depmod, df,
-	diff, dirname, dmesg, dnsdomainname, dos2unix, du, dumpkmap, dumpleases, echo, egrep, env, expand, expr, false, fgrep, find, fold, free, freeramdisk, ftpget, ftpput, getopt, getty, grep, groups, gunzip, gzip, halt,
-	head, hexdump, hostid, hostname, httpd, hwclock, id, ifconfig, init, insmod, ionice, ip, ipcalc, kill, killall, klogd, last, less, ln, loadfont, loadkmap, logger, login, logname, logread, losetup, ls, lsmod, lzcat,
-	lzma, md5sum, mdev, microcom, mkdir, mkfifo, mknod, mkswap, mktemp, modinfo, modprobe, more, mount, mt, mv, nameif, nc, netstat, nslookup, od, openvt, patch, pidof, ping, ping6, pivot_root, poweroff, printf, ps, pwd,
-	rdate, readlink, realpath, reboot, renice, reset, rev, rm, rmdir, rmmod, route, rpm, rpm2cpio, run-parts, sed, seq, setkeycodes, setsid, sh, sha1sum, sha256sum, sha512sum, sleep, sort, start-stop-daemon, stat,
-	strings, stty, swapoff, swapon, switch_root, sync, sysctl, syslogd, tac, tail, tar, taskset, tee, telnet, test, tftp, time, timeout, top, touch, tr, traceroute, traceroute6, true, tty, udhcpc, udhcpd, umount, uname,
-	uncompress, unexpand, uniq, unix2dos, unlzma, unxz, unzip, uptime, usleep, uudecode, uuencode, vconfig, vi, watch, watchdog, wc, wget, which, who, whoami, xargs, xz, xzcat, yes, zcat
+	[, [[, adjtimex, ar, arp, arping, ash, awk, basename, blockdev, brctl,
+	bunzip2, bzcat, bzip2, cal, cat, chgrp, chmod, chown, chroot, chvt,
+	clear, cmp, cp, cpio, cttyhack, cut, date, dc, dd, deallocvt, depmod,
+	df, diff, dirname, dmesg, dnsdomainname, dos2unix, du, dumpkmap,
+	dumpleases, echo, egrep, env, expand, expr, false, fgrep, find, fold,
+	free, freeramdisk, ftpget, ftpput, getopt, getty, grep, groups, gunzip,
+	gzip, halt, head, hexdump, hostid, hostname, httpd, hwclock, id,
+	ifconfig, init, insmod, ionice, ip, ipcalc, kill, killall, klogd, last,
+	less, ln, loadfont, loadkmap, logger, login, logname, logread, losetup,
+	ls, lsmod, lzcat, lzma, md5sum, mdev, microcom, mkdir, mkfifo, mknod,
+	mkswap, mktemp, modinfo, modprobe, more, mount, mt, mv, nameif, nc,
+	netstat, nslookup, od, openvt, patch, pidof, ping, ping6, pivot_root,
+	poweroff, printf, ps, pwd, rdate, readlink, realpath, reboot, renice,
+	reset, rev, rm, rmdir, rmmod, route, rpm, rpm2cpio, run-parts, sed, seq,
+	setkeycodes, setsid, sh, sha1sum, sha256sum, sha512sum, sleep, sort,
+	start-stop-daemon, stat, strings, stty, swapoff, swapon, switch_root,
+	sync, sysctl, syslogd, tac, tail, tar, taskset, tee, telnet, test, tftp,
+	time, timeout, top, touch, tr, traceroute, traceroute6, true, tty,
+	udhcpc, udhcpd, umount, uname, uncompress, unexpand, uniq, unix2dos,
+	unlzma, unxz, unzip, uptime, usleep, uudecode, uuencode, vconfig, vi,
+	watch, watchdog, wc, wget, which, who, whoami, xargs, xz, xzcat, yes,
+	zcat
 ''').strip().split('\n')
 
 class command_busybox(HoneyPotCommand):
 
     def help(self):
-        for ln in bosybox_help:
+        for ln in busybox_help:
             self.writeln(ln)
 
     def call(self):
-        args =list(self.args)
-        line = ' '.join(args)
-        cmd = args[0]
-        args = args[1:]
-        cmdclass = self.protocol.getCommand(cmd, self.env['PATH'].split(':'))
-        if cmdclass:
-            log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
-            #self.protocol.logDispatch('Command found: %s' % (line,))
-            self.protocol.call_command(cmdclass, *args)
+        args = list(self.args)
+        if len(args) > 0:
+            line = ' '.join(args)
+            cmd = args[0]
+            args = args[1:]
+            cmdclass = self.protocol.getCommand(cmd, self.env['PATH'].split(':'))
+            if cmdclass:
+                log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
+                #self.protocol.logDispatch('Command found: %s' % (line,))
+                self.protocol.call_command(cmdclass, *args)
+            else:
+                self.help() 
         else:
             self.help() 
 commands['busybox'] = command_busybox
