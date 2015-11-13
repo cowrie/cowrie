@@ -1,4 +1,4 @@
-from kippo.core.honeypot import HoneyPotCommand
+from cowrie.core.honeypot import HoneyPotCommand
 from twisted.python import log
 commands = {}
 
@@ -31,19 +31,19 @@ Currently defined functions:
 class command_busybox(HoneyPotCommand):
 
     def help(self):
-	for ln in bosybox_help:
-	    self.writeln(ln)
+        for ln in bosybox_help:
+            self.writeln(ln)
 
     def call(self):
-	args =list(self.args)
-	line = ' '.join(args)
-	cmd = args[0]
-	args = args[1:]
-	cmdclass = self.protocol.getCommand(cmd, self.env['PATH'].split(':'))
-	if cmdclass:
+        args =list(self.args)
+        line = ' '.join(args)
+        cmd = args[0]
+        args = args[1:]
+        cmdclass = self.protocol.getCommand(cmd, self.env['PATH'].split(':'))
+        if cmdclass:
             log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
             #self.protocol.logDispatch('Command found: %s' % (line,))
             self.protocol.call_command(cmdclass, *args)
-	else:
-	    self.help() 
+        else:
+            self.help() 
 commands['busybox'] = command_busybox
