@@ -40,8 +40,8 @@ class HoneyPotCommand(object):
 
     def lineReceived(self, line):
         log.msg('INPUT: %s' % (line,))
-	if isinstance(self.protocol.cmdstack[0], HoneyPotShell):
-		self.protocol.cmdstack[0].lineReceived(line)
+        if isinstance(self.protocol.cmdstack[0], HoneyPotShell):
+            self.protocol.cmdstack[0].lineReceived(line)
 
     def resume(self):
         pass
@@ -88,7 +88,7 @@ class HoneyPotShell(object):
 
         if ( (self.protocol) and (hasattr(self.protocol, 'deferred_pending_command')) ):
             reactor.callLater(1, self.runCommand)
-	    return
+            return
 
         if not len(self.cmdpending):
             if self.interactive:

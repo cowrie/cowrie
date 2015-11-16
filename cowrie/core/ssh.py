@@ -397,14 +397,14 @@ class HoneyPotSSHSession(session.SSHSession):
 
     def eofReceived(self):
         log.msg('got eof')
-	if ( 
-		(self.avatar.protocol) and
-		(self.avatar.protocol.terminalProtocol) and
-		hasattr(self.avatar.protocol.terminalProtocol, 'deferred_pending_command')
-	   ):
-		reactor.callLater(1, self.eofReceived)
-	else:
-	        self.sendClose()
+        if ( 
+             (self.avatar.protocol) and
+             (self.avatar.protocol.terminalProtocol) and
+             (hasattr(self.avatar.protocol.terminalProtocol, 'deferred_pending_command')) 
+           ):
+            reactor.callLater(1, self.eofReceived)
+         else:
+            self.sendClose()
 
     # utility function to request to send close for this session
     def sendClose(self):
