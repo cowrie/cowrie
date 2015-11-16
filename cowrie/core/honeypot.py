@@ -7,6 +7,7 @@ import re
 import copy
 
 from twisted.python import log
+from twisted.internet import reactor
 
 from . import fs
 
@@ -39,6 +40,8 @@ class HoneyPotCommand(object):
 
     def lineReceived(self, line):
         log.msg('INPUT: %s' % (line,))
+        if isinstance(self.protocol.cmdstack[0], HoneyPotShell):
+            self.protocol.cmdstack[0].lineReceived(line)
 
     def resume(self):
         pass
@@ -82,6 +85,10 @@ class HoneyPotShell(object):
                 self.showPrompt()
             else:
                 self.protocol.terminal.transport.session.loseConnection()
+
+        if ( (self.protocol) and (hasattr(self.protocol, 'deferred_pending_command')) ):
+            reactor.callLater(1, self.runCommand)
+            return
 
         if not len(self.cmdpending):
             if self.interactive:
