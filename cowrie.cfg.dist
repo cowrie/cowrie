@@ -26,6 +26,13 @@
 # (default: 2222)
 #listen_port = 2222
 
+# Source Port to report in logs (useful if you use iptables to forward ports to cowrie)
+#reported_ssh_port = 22
+
+# Enable to log the public IP of the honeypot (useful if listening on 127.0.0.1)
+# IP address is obtained by querying http://myip.threatstream.com
+#report_public_ip = true
+
 # Hostname for the honeypot. Displayed by the shell prompt of the virtual
 # environment.
 #

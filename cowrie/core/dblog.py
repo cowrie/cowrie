@@ -49,6 +49,17 @@ class DBLogger(object):
             'KIPP0012': self.handleTTYLogClosed,
         }
 
+        self.reported_ssh_port = None
+        if self.cfg.has_option('honeypot', 'reported_ssh_port'):
+            self.reported_ssh_port = int(cfg.get('honeypot', 'reported_ssh_port'))
+
+        self.report_public_ip = False
+        if self.cfg.has_option('honeypot', 'report_public_ip'):
+            if cfg.get('honeypot', 'report_public_ip') == "true" or cfg.get('honeypot', 'report_public_ip') == "1":
+                self.report_public_ip = True
+                import urllib
+                self.public_ip = urllib.urlopen('http://myip.threatstream.com').readline()
+
         self.start(cfg)
 
     # used when the HoneypotTransport prefix is not available.
@@ -82,9 +93,17 @@ class DBLogger(object):
         # connection event is special. adds to list
         if ev['eventid'] == 'KIPP0001':
             sessionno = ev['sessionno']
+            peerIP, peerPort = ev['src_ip'], ev['src_port']
+            hostIP, hostPort = ev['dst_ip'], ev['dst_port']
+
+            if self.reported_ssh_port:
+                hostPort = self.reported_ssh_port
+            if self.report_public_ip:
+                hostIP = self.public_ip
+
             self.sessions[sessionno] = \
                 self.createSession(
-                    ev['src_ip'], ev['src_port'], ev['dst_ip'], ev['dst_port'])
+                    peerIP, peerPort, hostIP, hostPort)
             return
 
         # use explicit sessionno if coming from dispatch
