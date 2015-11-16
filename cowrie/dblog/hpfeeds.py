@@ -103,6 +103,9 @@ class hpclient(object):
 			self.handle_established()
 
 	def send(self, data):
+		if not self.s:
+			self.connect()
+
 		if not self.s: return
 		self.s.send(data)
 
