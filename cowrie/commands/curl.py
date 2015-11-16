@@ -176,7 +176,7 @@ class command_curl(HoneyPotCommand):
         # update the honeyfs to point to downloaded file
         f = self.fs.getfile(outfile)
         f[A_REALFILE] = hash_path
-	del self.protocol.deferred_pending_command
+        del self.protocol.deferred_pending_command
         self.exit()
 
     def error(self, error, url):
@@ -186,7 +186,7 @@ class command_curl(HoneyPotCommand):
         # Real curl also adds this:
         #self.writeln('%s ERROR 404: Not Found.' % \
         #    time.strftime('%Y-%m-%d %T'))
-	del self.protocol.deferred_pending_command
+        del self.protocol.deferred_pending_command
         self.exit()
 commands['/usr/bin/curl'] = command_curl
 
