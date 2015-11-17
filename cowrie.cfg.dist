@@ -237,7 +237,7 @@ logfile = log/cowrie.json
 # Supports logging to elasticsearch
 # This is a simple early release
 #
-#[output-elasticsearch]
+#[output_elasticsearch]
 #host = localhost
 #port = 9200
 #index = cowrie
