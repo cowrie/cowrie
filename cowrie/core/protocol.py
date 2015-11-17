@@ -343,17 +343,21 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transport = self.transport.session.conn.transport
 
         if self.stdinlog_open:
-            with open(self.stdinlog_file, 'rb') as f:
-                shasum = hashlib.sha256(f.read()).hexdigest()
-                shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
-                if (os.path.exists(shasumfile)):
-                    os.remove(self.stdinlog_file)
-                else:
-                    os.rename(self.stdinlog_file, shasumfile)
-                    os.symlink(shasum, self.stdinlog_file)
-            log.msg(eventid='KIPP0007', format='Saved stdin contents to %(outfile)s',
-                url='stdin', outfile=shasumfile, shasum='')
-            self.stdinlog_open = False
+            try:
+                with open(self.stdinlog_file, 'rb') as f:
+                    shasum = hashlib.sha256(f.read()).hexdigest()
+                    shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
+                    if (os.path.exists(shasumfile)):
+                        os.remove(self.stdinlog_file)
+                    else:
+                        os.rename(self.stdinlog_file, shasumfile)
+                        os.symlink(shasum, self.stdinlog_file)
+                log.msg(eventid='KIPP0007', format='Saved stdin contents to %(outfile)s',
+                    url='stdin', outfile=shasumfile, shasum='')
+            except IOError as e:
+                pass
+            finally:
+                self.stdinlog_open = False
 
         if self.ttylog_open:
             log.msg(eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
