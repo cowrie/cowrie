@@ -76,6 +76,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.terminal.transport.session.sendEOF()
         self.terminal.transport.session.sendClose()
 
+    def eofReceived(self):
+        log.msg("received eof, sending ctrl-d to command")
+        if len(self.cmdstack):
+            self.cmdstack[-1].handle_CTRL_D()
+
     # this is only called on explicit logout, not on disconnect
     # this indicates the closing of the channel/session, not the closing of the transport
     def connectionLost(self, reason):
@@ -318,6 +323,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             f.close
 
         insults.ServerProtocol.dataReceived(self, data)
+
+    def eofReceived(self):
+        if self.terminalProtocol:
+            self.terminalProtocol.eofReceived()
 
     # override super to remove the terminal reset on logout
     def loseConnection(self):

@@ -395,10 +395,6 @@ class HoneyPotSSHSession(session.SSHSession):
     def sendEOF(self):
         self.conn.sendEOF(self)
 
-    def eofReceived(self):
-        log.msg('got eof')
-        session.SSHSession.eofReceived(self)
-
     # utility function to request to send close for this session
     def sendClose(self):
         self.conn.sendClose(self)
@@ -485,7 +481,8 @@ class SSHSessionForCowrieUser:
             self.protocol = None
 
     def eofReceived(self):
-        pass
+        if self.protocol:
+            self.protocol.eofReceived()
 
     def windowChanged(self, windowSize):
         self.windowSize = windowSize
