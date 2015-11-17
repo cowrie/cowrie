@@ -1,12 +1,16 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+This module contains ...
+"""
+
 import time
 
 from twisted.internet import protocol
 from twisted.conch import telnet, recvline
 
-from . import ttylog
+from cowrie.core import ttylog
 
 class Interact(telnet.Telnet):
 

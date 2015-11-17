@@ -26,12 +26,16 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+"""
+This module contains ...
+"""
+
 import pickle
 
 import twisted.python.log as log
 
-from . import fs
-from . import honeypot
+from cowrie.core import fs
+from cowrie.core import honeypot
 
 class CowrieServer:
     """

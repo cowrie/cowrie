@@ -1,6 +1,10 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+This module contains ...
+"""
+
 import os
 import time
 import socket
@@ -12,9 +16,9 @@ from twisted.conch.insults import insults
 from twisted.python import log
 from twisted.protocols.policies import TimeoutMixin
 
-from . import honeypot
-from . import ttylog
-from . import utils
+from cowrie.core import honeypot
+from cowrie.core import ttylog
+from cowrie.core import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 

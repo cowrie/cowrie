@@ -1,11 +1,13 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+This module contains ...
+"""
+
 import json
 from os import path
 from random import randint
-
-from zope.interface import implements
 
 from twisted.python import log
 

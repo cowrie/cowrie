@@ -26,15 +26,19 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+"""
+This module contains ...
+"""
+
 from zope.interface import implements
 
 import twisted
 from twisted.conch import interfaces as conchinterfaces
 from twisted.python import log 
 
-from . import protocol
-from . import server
-from . import ssh
+from cowrie.core import protocol
+from cowrie.core import server
+from cowrie.core import ssh
 
 import sys
 import gc

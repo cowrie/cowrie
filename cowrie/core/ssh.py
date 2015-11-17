@@ -1,6 +1,10 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+This module contains ...
+"""
+
 import os
 import time
 import struct
@@ -18,12 +22,12 @@ from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh.common import NS, getNS
 from twisted.internet import defer
 
-from . import credentials
-from . import auth
-from . import connection
-from . import honeypot
-from . import protocol
-from . import server
+from cowrie.core import credentials
+from cowrie.core import auth
+from cowrie.core import connection
+from cowrie.core import honeypot
+from cowrie.core import protocol
+from cowrie.core import server
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 

@@ -1,6 +1,10 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+This module contains ...
+"""
+
 import os
 import shlex
 import re
@@ -8,7 +12,7 @@ import copy
 
 from twisted.python import log
 
-from . import fs
+from cowrie.core import fs
 
 class HoneyPotCommand(object):
 

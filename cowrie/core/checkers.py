@@ -1,6 +1,10 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+This module contains ...
+"""
+
 from sys import modules
 
 from zope.interface import implements
@@ -13,14 +17,14 @@ from twisted.python import log, failure
 from twisted.conch import error
 from twisted.conch.ssh import keys
 
-from . import credentials
-from . import auth
+from cowrie.core import credentials
+from cowrie.core import auth
 
 class HoneypotPublicKeyChecker:
-    implements(ICredentialsChecker)
     """
     Checker that accepts, logs and denies public key authentication attempts
     """
+    implements(ICredentialsChecker)
 
     credentialInterfaces = (ISSHPrivateKey,)
 
@@ -36,10 +40,10 @@ class HoneypotPublicKeyChecker:
         return failure.Failure(error.ConchError('Incorrect signature'))
 
 class HoneypotNoneChecker:
-    implements(ICredentialsChecker)
     """
     Checker that does no authentication check
     """
+    implements(ICredentialsChecker)
 
     credentialInterfaces = (credentials.IUsername,)
 
@@ -50,10 +54,10 @@ class HoneypotNoneChecker:
         return defer.succeed(credentials.username)
 
 class HoneypotPasswordChecker:
-    implements(ICredentialsChecker)
     """
     Checker that accepts "keyboard-interactive" and "password"
     """
+    implements(ICredentialsChecker)
 
     credentialInterfaces = (credentials.IUsernamePasswordIP,
         credentials.IPluggableAuthenticationModulesIP)

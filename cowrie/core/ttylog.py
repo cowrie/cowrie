@@ -3,6 +3,10 @@
 
 # Should be compatible with user mode linux
 
+"""
+This module contains ...
+"""
+
 import struct
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4

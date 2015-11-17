@@ -26,6 +26,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+"""
+This module contains ...
+"""
+
 from zope.interface import implements
 
 from twisted.cred.credentials import IUsernamePassword, \
