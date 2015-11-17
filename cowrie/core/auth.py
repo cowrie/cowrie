@@ -1,10 +1,8 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-import string
 import json
 from os import path
-from sys import modules
 from random import randint
 
 from zope.interface import implements
@@ -26,11 +24,11 @@ class UserDB(object):
 
         with open(self.userdb_file, 'r') as f:
             while True:
-                line = f.readline()
-                if not line:
+                rawline = f.readline()
+                if not rawline:
                     break
-
-                line = string.strip(line)
+                
+                line = rawline.strip()
                 if not line:
                     continue
 
