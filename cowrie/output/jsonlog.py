@@ -49,7 +49,7 @@ class Output(cowrie.core.output.Output):
         self.outfile.close()
 
     def write(self, logentry):
-        for i in logentry.keys():
+        for i in list(logentry.keys()):
             # remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
