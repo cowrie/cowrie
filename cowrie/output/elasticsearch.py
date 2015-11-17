@@ -26,7 +26,7 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, logentry):
-        for i in logentry.keys():
+        for i in list(logentry.keys()):
             # remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
