@@ -4,6 +4,7 @@
 import os
 import time
 import socket
+import hashlib
 import copy
 
 from twisted.conch import recvline
@@ -317,7 +318,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
         if self.stdinlog_open and not noLog:
-            log.msg("Saving %s bytes to stdin log: %s" % ( len(data), self.stdinlog_file))
             f = file(self.stdinlog_file, 'ab')
             f.write(data)
             f.close
@@ -335,20 +335,29 @@ class LoggingServerProtocol(insults.ServerProtocol):
     # FIXME: this method is called 4 times on logout....
     # it's called once from Avatar.closed() if disconnected
     def connectionLost(self, reason):
-        self.cfg = None
         log.msg("received call to LSP.connectionLost")
         transport = self.transport.session.conn.transport
 
-        # TODO: calculate shasum
         if self.stdinlog_open:
+            with open(self.stdinlog_file, 'rb') as f:
+                shasum = hashlib.sha256(f.read()).hexdigest()
+                shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
+                if (os.path.exists(shasumfile)):
+                    os.remove(self.stdinlog_file)
+                else:
+                    os.rename(self.stdinlog_file, shasumfile)
+                    os.symlink(shasum, self.stdinlog_file)
             log.msg(eventid='KIPP0007', format='Saved stdin contents to %(outfile)s',
-                url='stdin', outfile=self.stdinlog_file, shasum='')
+                url='stdin', outfile=shasumfile, shasum='')
+            self.stdinlog_open = False
 
         if self.ttylog_open:
             log.msg(eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
                 ttylog=transport.ttylog_file)
             ttylog.ttylog_close(transport.ttylog_file, time.time())
             self.ttylog_open = False
+
+        self.cfg = None
         insults.ServerProtocol.connectionLost(self, reason)
 
 # vim: set sw=4 et:
