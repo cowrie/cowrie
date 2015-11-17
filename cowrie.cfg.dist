@@ -227,6 +227,14 @@ interact_port = 5123
 [output_jsonlog]
 logfile = log/cowrie.json
 
+# Supports logging to elasticsearch
+# This is a simple early release
+#
+#[output-elasticsearch]
+#host = localhost
+#port = 9200
+#index = cowrie
+#type = cowrie
 
 # Local Syslog output module
 #
