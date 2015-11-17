@@ -328,6 +328,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.cfg = None
         log.msg("received call to LSP.connectionLost")
         transport = self.transport.session.conn.transport
+
+        # TODO: calculate shasum
+        if self.stdinlog_open:
+            log.msg(eventid='KIPP0007', format='Saved stdin contents to %(outfile)s',
+                url='stdin', outfile=self.stdinlog_file, shasum='')
+
         if self.ttylog_open:
             log.msg(eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
                 ttylog=transport.ttylog_file)
