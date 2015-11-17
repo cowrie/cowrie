@@ -342,8 +342,8 @@ class HoneyPotTransport(transport.SSHServerTransport):
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
         transport.SSHServerTransport.connectionLost(self, reason)
-	self.transport.connectionLost(reason)
-	self.transport = None
+        self.transport.connectionLost(reason)
+        self.transport = None
         log.msg(eventid='KIPP0011', format='Connection lost')
 
     def sendDisconnect(self, reason, desc):

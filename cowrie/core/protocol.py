@@ -17,9 +17,6 @@ from . import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
-    def __del__(self):
-        print "PROTOCOL GONE"
-
     def __init__(self, avatar):
         self.user = avatar
         self.cfg = self.user.cfg
