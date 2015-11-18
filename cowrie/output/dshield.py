@@ -1,4 +1,4 @@
-# Simple elasticsearch logger
+# Sends SSH logins to SANS.
 
 import os
 import json

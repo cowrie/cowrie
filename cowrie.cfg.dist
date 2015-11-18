@@ -245,8 +245,7 @@ logfile = log/cowrie.json
 #userid = userid_here 
 #batch_size = 100 
 
-
-## Local Syslog output module
+# Local Syslog output module
 #
 # This sends log messages to the local syslog daemon.
 # Facility can be:
