@@ -1,7 +1,9 @@
-# Sends SSH logins to SANS.
+"""
+Send SSH logins to SANS DShield.
+See https://isc.sans.edu/ssh.html
 
-import os
-import json
+"""
+
 import dateutil.parser
 import time
 import base64
@@ -31,12 +33,6 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        for i in entry.keys():
-            # remove twisted 15 legacy keys
-            if i.startswith('log_'):
-                del entry[i]
-
-        # we only want login events
         if entry["eventid"] == 'KIPP0002' or entry["eventid"] == 'KIPP0003':
             date = dateutil.parser.parse(entry["timestamp"])
             self.batch.append({
@@ -54,27 +50,31 @@ class Output(cowrie.core.output.Output):
                 self.batch = []
 
     def transmission_error(self, batch):
-        self.batch.extend(batch) # adds all the events we just tried to send back in again
+        self.batch.extend(batch) 
         if len(self.batch) > self.batch_size * 2:
             self.batch = self.batch[-self.batch_size:]
 
     def submit_entries(self, batch):
-        '''
-            Large parts of this method are adapted from kippo-pyshield by jkakavas
-            Many thanks to their efforts.
-            source: https://github.com/jkakavas/kippo-pyshield
-        '''
-        log_output = ''
-        # Format login attempts as tab seperated log entries
-        for attempt in self.batch:
-            log_output += '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(attempt['date'],attempt['time'],attempt['timezone'],attempt['source_ip'],attempt['user'],attempt['password'])
+        """
+        Large parts of this method are adapted from kippo-pyshield by jkakavas
+        Many thanks to their efforts. https://github.com/jkakavas/kippo-pyshield
+        """
         # The nonce is predefined as explained in the original script :
         # trying to avoid sending the authentication key in the "clear" but not wanting to
         # deal with a full digest like exchange. Using a fixed nonce to mix up the limited
         # userid.
-        nonce = base64.b64decode('ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM=')
-        digest = base64.b64encode(hmac.new('{0}{1}'.format(nonce,self.userid),base64.b64decode(self.auth_key),  hashlib.sha256).digest())
-        auth_header = 'credentials={0} nonce=ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM= userid={1}'.format(digest, self.userid)
+        _nonceb64 = 'ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM='
+
+        log_output = ''
+        for attempt in self.batch:
+            log_output += '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(attempt['date'],
+                attempt['time'], attempt['timezone'], attempt['source_ip'],
+                attempt['user'], attempt['password'])
+
+        nonce = base64.b64decode(_nonceb64)
+        digest = base64.b64encode(hmac.new('{0}{1}'.format(nonce, self.userid), 
+            base64.b64decode(self.auth_key), hashlib.sha256).digest())
+        auth_header = 'credentials={0} nonce={1} userid={2}'.format(digest, _nonceb64, self.userid)
         headers = {'X-ISC-Authorization': auth_header,
                   'Content-Type':'text/plain',
                   'Content-Length': len(log_output)}
@@ -98,7 +98,7 @@ class Output(cowrie.core.output.Output):
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output)
                 if sha1_match.group(1) != sha1_local.hexdigest():
-                    log.err('\ndshield ERROR: SHA1 Mismatch {0} {1} .\n'.format(sha1_match.group(1), sha1_local.hexdigest()))
+                    log.err('dshield ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
                     failed = True
                 md5_regex = re.compile(ur'<md5checksum>([^<]+)<\/md5checksum>')
                 md5_match = md5_regex.search(response)
@@ -108,11 +108,11 @@ class Output(cowrie.core.output.Output):
                 md5_local = hashlib.md5()
                 md5_local.update(log_output)
                 if md5_match.group(1) != md5_local.hexdigest():
-                    log.err('\ndshield ERROR: MD5 Mismatch {0} {1} .\n'.format(md5_match.group(1), md5_local.hexdigest()))
+                    log.err('dshield ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
                     failed = True
-                log.msg('\ndshield SUCCESS: Sent {0} bytes worth of data to secure.dshield.org\n'.format(len(log_output)))
+                log.msg('dshield SUCCESS: Sent {0} bytes worth of data to secure.dshield.org'.format(len(log_output)))
             else:
-                log.err('\ndshield ERROR: error {0} .\n'.format(resp.status_code))
+                log.err('dshield ERROR: error {0}.'.format(resp.status_code))
                 log.err('Response was {0}'.format(response))
                 failed = True
 
