@@ -26,6 +26,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+"""
+Docstring
+"""
+
 import json
 import os
 
@@ -34,6 +38,9 @@ import twisted.python.logfile
 import cowrie.core.output
 
 class Output(cowrie.core.output.Output):
+    """
+    Docstring class
+    """
 
     def __init__(self, cfg):
         cowrie.core.output.Output.__init__(self, cfg)
@@ -42,15 +49,24 @@ class Output(cowrie.core.output.Output):
         base = os.path.basename(fn)
         self.outfile = twisted.python.logfile.DailyLogFile(base, dirs)
 
+
     def start(self):
+        """
+        """
         pass
 
+
     def stop(self):
+        """
+        """
         self.outfile.close()
 
+
     def write(self, logentry):
+        """
+        """
         for i in list(logentry.keys()):
-            # remove twisted 15 legacy keys
+            # Remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
         json.dump(logentry, self.outfile)
