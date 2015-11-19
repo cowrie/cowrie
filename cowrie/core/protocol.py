@@ -465,7 +465,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         os.symlink(shasum, self.stdinlog_file)
                 log.msg(eventid='KIPP0007',
                     format='Saved stdin contents to %(outfile)s',
-                    url='stdin', outfile=shasumfile, shasum='')
+                    url='stdin', outfile=shasumfile, shasum=shasum)
             except IOError as e:
                 pass
             finally:
