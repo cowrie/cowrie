@@ -21,6 +21,8 @@ from cowrie.core import ttylog
 from cowrie.core import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
+    """
+    """
 
     def __init__(self, avatar):
         self.user = avatar
@@ -32,8 +34,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         else:
             self.cwd = '/'
 
-        # commands is also a copy so we can add stuff on the fly
-        # self.commands = copy.copy(self.commands)
         self.commands = {}
         import cowrie.commands
         for c in cowrie.commands.__all__:
@@ -44,12 +44,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.password_input = False
         self.cmdstack = []
 
+
     def logDispatch(self, *msg, **args):
+        """
+        """
         transport = self.terminal.transport.session.conn.transport
         args['sessionno'] = transport.transport.sessionno
         transport.factory.logDispatch(*msg, **args)
 
+
     def connectionMade(self):
+        """
+        """
         transport = self.terminal.transport.session.conn.transport
 
         self.realClientIP = transport.transport.getPeer().host
@@ -58,7 +64,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.logintime = time.time()
         self.setTimeout(1800)
 
-        # source IP of client in user visible reports (can be fake or real)
+        # Source IP of client in user visible reports (can be fake or real)
         if self.cfg.has_option('honeypot', 'fake_addr'):
             self.clientIP = self.cfg.get('honeypot', 'fake_addr')
         else:
@@ -76,19 +82,28 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             finally:
                 s.close()
 
+
     def timeoutConnection(self):
+        """
+        """
         self.writeln( 'timed out waiting for input: auto-logout' )
         self.terminal.transport.session.sendEOF()
         self.terminal.transport.session.sendClose()
 
+
     def eofReceived(self):
+        """
+        """
         log.msg("received eof, sending ctrl-d to command")
         if len(self.cmdstack):
             self.cmdstack[-1].handle_CTRL_D()
 
-    # this is only called on explicit logout, not on disconnect
-    # this indicates the closing of the channel/session, not the closing of the transport
+
     def connectionLost(self, reason):
+        """
+        this is only called on explicit logout, not on disconnect
+        this indicates the closing of the channel/session, not the closing of the transport
+        """
         self.setTimeout(None)
         insults.TerminalProtocol.connectionLost(self, reason)
         self.terminal = None # (this should be done by super above)
@@ -99,7 +114,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.user = None
         log.msg( "honeypot terminal protocol connection lost %s" % reason)
 
+
     def txtcmd(self, txt):
+        """
+        """
         class command_txtcmd(honeypot.HoneyPotCommand):
             def call(self):
                 log.msg('Reading txtcmd from "%s"' % txt)
@@ -107,7 +125,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     self.write(f.read())
         return command_txtcmd
 
+
     def getCommand(self, cmd, paths):
+        """
+        """
         if not len(cmd.strip()):
             return None
         path = None
@@ -131,36 +152,55 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return self.commands[path]
         return None
 
+
     def lineReceived(self, line):
+        """
+        """
         self.resetTimeout()
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
 
+
     def writeln(self, data):
-        # sometimes still called after disconnect because of a deferred
+        """
+        Sometimes still called after disconnect because of a deferred
+        """
         if self.terminal:
             self.terminal.write(data)
             self.terminal.nextLine()
 
+
     def call_command(self, cmd, *args):
+        """
+        """
         obj = cmd(self, *args)
         self.cmdstack.append(obj)
         obj.start()
 
+
     def uptime(self, reset=None):
+        """
+        """
         transport = self.terminal.transport.session.conn.transport
         r = time.time() - transport.factory.starttime
         if reset:
             transport.factory.starttime = reset
         return r
 
+
+
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
+    """
+    """
 
     def __init__(self, avatar, execcmd):
         self.execcmd = execcmd
         HoneyPotBaseProtocol.__init__(self, avatar)
 
+
     def connectionMade(self):
+        """
+        """
         HoneyPotBaseProtocol.connectionMade(self)
         self.setTimeout(60)
         self.terminal.stdinlog_open = True
@@ -169,13 +209,19 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack[0].lineReceived(self.execcmd)
 
 
+
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
+    """
+    """
 
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
         HoneyPotBaseProtocol.__init__(self, avatar)
 
+
     def connectionMade(self):
+        """
+        """
         self.displayMOTD()
 
         HoneyPotBaseProtocol.connectionMade(self)
@@ -200,47 +246,72 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x15':     self.handle_CTRL_U,	# CTRL-U
             })
 
+
     def addInteractor(self, interactor):
+        """
+        """
         transport = self.terminal.transport.session.conn.transport
         transport.interactors.append(interactor)
 
+
     def delInteractor(self, interactor):
+        """
+        """
         transport = self.terminal.transport.session.conn.transport
         transport.interactors.remove(interactor)
 
+
     def displayMOTD(self):
+        """
+        """
         try:
             self.writeln(self.fs.file_contents('/etc/motd'))
         except:
             pass
 
+
     def lastlogExit(self):
+        """
+        """
         starttime = time.strftime('%a %b %d %H:%M',
             time.localtime(self.logintime))
         endtime = time.strftime('%H:%M',
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
-        with open( '%s/lastlog.txt' % self.cfg.get('honeypot', 'data_path'), 'a') as f:
+        with open( '%s/lastlog.txt' % self.cfg.get('honeypot',
+            'data_path'), 'a') as f:
             f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
                 (self.clientIP, starttime, endtime, duration))
 
-    # this doesn't seem to be called upon disconnect, so please use
-    # HoneyPotTransport.connectionLost instead
+
     def connectionLost(self, reason):
+        """
+        this doesn't seem to be called upon disconnect, so please use
+        HoneyPotTransport.connectionLost instead
+        """
         self.lastlogExit()
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
 
-    # Overriding to prevent terminal.reset()
+
     def initializeScreen(self):
+        """
+        Overriding super to prevent terminal.reset()
+        """
         self.setInsertMode()
 
+
     def call_command(self, cmd, *args):
+        """
+        """
         self.setTypeoverMode()
         HoneyPotBaseProtocol.call_command(self, cmd, *args)
 
-    # Easier way to implement password input?
+
     def characterReceived(self, ch, moreCharactersComing):
+        """
+        Easier way to implement password input?
+        """
         if self.mode == 'insert':
             self.lineBuffer.insert(self.lineBufferIndex, ch)
         else:
@@ -249,32 +320,52 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         if not self.password_input:
             self.terminal.write(ch)
 
+
     def handle_RETURN(self):
+        """
+        """
         if len(self.cmdstack) == 1:
             if self.lineBuffer:
                 self.historyLines.append(''.join(self.lineBuffer))
             self.historyPosition = len(self.historyLines)
         return recvline.RecvLine.handle_RETURN(self)
 
+
     def handle_CTRL_C(self):
+        """
+        """
         self.cmdstack[-1].handle_CTRL_C()
 
+
     def handle_CTRL_D(self):
+        """
+        """
         self.cmdstack[-1].handle_CTRL_D()
 
+
     def handle_TAB(self):
+        """
+        """
         self.cmdstack[-1].handle_TAB()
 
+
     def handle_CTRL_K(self):
+        """
+        """
         self.terminal.eraseToLineEnd()
         self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
 
+
     def handle_CTRL_U(self):
+        """
+        """
         for i in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
             self.terminal.deleteCharacter()
         self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
         self.lineBufferIndex = 0
+
+
 
 class LoggingServerProtocol(insults.ServerProtocol):
     """
@@ -285,7 +376,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
         self.cfg = a[0].cfg
 
+
     def connectionMade(self):
+        """
+        """
         transport = self.transport.session.conn.transport
 
         transport.ttylog_file = '%s/tty/%s-%s.log' % \
@@ -306,7 +400,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.connectionMade(self)
 
+
     def write(self, bytes, noLog=False):
+        """
+        """
         transport = self.transport.session.conn.transport
         for i in transport.interactors:
             i.sessionWrite(bytes)
@@ -316,7 +413,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.write(self, bytes)
 
+
     def dataReceived(self, data, noLog=False):
+        """
+        """
         transport = self.transport.session.conn.transport
         if self.ttylog_open and not noLog:
             ttylog.ttylog_write(transport.ttylog_file, len(data),
@@ -328,17 +428,27 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.dataReceived(self, data)
 
+
     def eofReceived(self):
+        """
+        """
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
 
-    # override super to remove the terminal reset on logout
+
     def loseConnection(self):
+        """
+        override super to remove the terminal reset on logout
+
+        """
         self.transport.loseConnection()
 
-    # FIXME: this method is called 4 times on logout....
-    # it's called once from Avatar.closed() if disconnected
+
     def connectionLost(self, reason):
+        """
+        FIXME: this method is called 4 times on logout....
+        it's called once from Avatar.closed() if disconnected
+        """
         log.msg("received call to LSP.connectionLost")
         transport = self.transport.session.conn.transport
 
@@ -346,13 +456,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
             try:
                 with open(self.stdinlog_file, 'rb') as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
+                    shasumfile = self.cfg.get('honeypot',
+                        'download_path') + "/" + shasum
                     if (os.path.exists(shasumfile)):
                         os.remove(self.stdinlog_file)
                     else:
                         os.rename(self.stdinlog_file, shasumfile)
                         os.symlink(shasum, self.stdinlog_file)
-                log.msg(eventid='KIPP0007', format='Saved stdin contents to %(outfile)s',
+                log.msg(eventid='KIPP0007',
+                    format='Saved stdin contents to %(outfile)s',
                     url='stdin', outfile=shasumfile, shasum='')
             except IOError as e:
                 pass
