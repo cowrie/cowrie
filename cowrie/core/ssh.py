@@ -14,7 +14,13 @@ from zope.interface import implements
 
 import twisted
 from twisted.conch import avatar, interfaces as conchinterfaces
-from twisted.conch.ssh import factory, userauth, keys, session, transport, filetransfer, forwarding
+from twisted.conch.ssh import factory
+from twisted.conch.ssh import userauth
+from twisted.conch.ssh import keys
+from twisted.conch.ssh import session
+from twisted.conch.ssh import transport
+from twisted.conch.ssh import filetransfer
+from twisted.conch.ssh import forwarding
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
 from twisted.python import log, components
@@ -28,6 +34,7 @@ from cowrie.core import connection
 from cowrie.core import honeypot
 from cowrie.core import protocol
 from cowrie.core import server
+
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
@@ -85,41 +92,42 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                     "only one keyboard interactive attempt at a time")
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
-        c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
+        c = credentials.PluggableAuthenticationModulesIP(self.user,
+            self._pamConv, src_ip)
         return self.portal.login(c, src_ip,
             conchinterfaces.IConchUser).addErrback(self._ebPassword)
 
     def _pamConv(self, items):
-         """
-         Convert a list of PAM authentication questions into a
-         MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
-         back when the user has responses to the questions.
+        """
+        Convert a list of PAM authentication questions into a
+        MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
+        back when the user has responses to the questions.
 
-         @param items: a list of 2-tuples (message, kind).  We only care about
-             kinds 1 (password) and 2 (text).
-         @type items: C{list}
-         @rtype: L{defer.Deferred}
-         """
-         resp = []
-         for message, kind in items:
-             if kind == 1: # password
-                 resp.append((message, 0))
-             elif kind == 2: # text
-                 resp.append((message, 1))
-             elif kind in (3, 4):
-                 return defer.fail(error.ConchError(
-                     'cannot handle PAM 3 or 4 messages'))
-             else:
-                 return defer.fail(error.ConchError(
-                     'bad PAM auth kind %i' % kind))
-         packet = NS('') + NS('') + NS('')
-         packet += struct.pack('>L', len(resp))
-         for prompt, echo in resp:
-             packet += NS(prompt)
-             packet += chr(echo)
-         self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
-         self._pamDeferred = defer.Deferred()
-         return self._pamDeferred
+        @param items: a list of 2-tuples (message, kind).  We only care about
+            kinds 1 (password) and 2 (text).
+        @type items: C{list}
+        @rtype: L{defer.Deferred}
+        """
+        resp = []
+        for message, kind in items:
+            if kind == 1: # password
+                resp.append((message, 0))
+            elif kind == 2: # text
+                resp.append((message, 1))
+            elif kind in (3, 4):
+                return defer.fail(error.ConchError(
+                    'cannot handle PAM 3 or 4 messages'))
+            else:
+                return defer.fail(error.ConchError(
+                    'bad PAM auth kind %i' % kind))
+        packet = NS('') + NS('') + NS('')
+        packet += struct.pack('>L', len(resp))
+        for prompt, echo in resp:
+            packet += NS(prompt)
+            packet += chr(echo)
+        self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
+        self._pamDeferred = defer.Deferred()
+        return self._pamDeferred
 
     def ssh_USERAUTH_INFO_RESPONSE(self, packet):
         """
@@ -147,7 +155,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         else:
             d.callback(resp)
 
-# As implemented by Kojoney
+
 class HoneyPotSSHFactory(factory.SSHFactory):
     services = {
         'ssh-userauth': HoneyPotSSHUserAuthServer,
@@ -255,6 +263,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         t.factory = self
         return t
 
+
 class HoneyPotTransport(transport.SSHServerTransport):
     """
     """
@@ -326,13 +335,6 @@ class HoneyPotTransport(transport.SSHServerTransport):
         k = getNS(packet[16:], 10)
         strings, rest = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS, langSC) = [s.split(',') for s in strings]
-        log.msg('KEXINIT: client supported key exchange: %s' % kexAlgs)
-        log.msg('KEXINIT: client supported public keys: %s' % keyAlgs)
-        log.msg('KEXINIT: client supported encryption: %s' % encCS)
-        log.msg('KEXINIT: client supported MAC: %s' % macCS)
-        log.msg('KEXINIT: client supported compression: %s' % compCS)
-        log.msg('KEXINIT: client supported lang: %s' % langCS)
-
         log.msg(eventid='KIPP0009', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, format='Remote SSH version: %(version)s')
@@ -370,6 +372,8 @@ class HoneyPotTransport(transport.SSHServerTransport):
 
 
 class HoneyPotSSHSession(session.SSHSession):
+    """
+    """
 
     def __init__(self, *args, **kw):
         session.SSHSession.__init__(self, *args, **kw)
@@ -410,7 +414,10 @@ class HoneyPotSSHSession(session.SSHSession):
     def channelClosed(self):
         log.msg("Called channelClosed in SSHSession")
 
+
 class CowrieUser(avatar.ConchUser):
+    """
+    """
     implements(conchinterfaces.IConchUser)
 
     def __init__(self, username, server):
@@ -441,6 +448,8 @@ class CowrieUser(avatar.ConchUser):
 
 
 class SSHSessionForCowrieUser:
+    """
+    """
     implements(conchinterfaces.ISession)
 
     def __init__(self, avatar, reactor=None):
@@ -492,6 +501,7 @@ class SSHSessionForCowrieUser:
     def windowChanged(self, windowSize):
         self.windowSize = windowSize
 
+
 def getRSAKeys(cfg):
     public_key = cfg.get('honeypot', 'rsa_public_key')
     private_key = cfg.get('honeypot', 'rsa_private_key')
@@ -513,6 +523,7 @@ def getRSAKeys(cfg):
         with open(private_key, 'r') as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
+
 
 def getDSAKeys(cfg):
     public_key = cfg.get('honeypot', 'dsa_public_key')
@@ -536,7 +547,10 @@ def getDSAKeys(cfg):
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
+
 class CowrieSFTPFile:
+    """
+    """
     implements(conchinterfaces.ISFTPFile)
 
     def __init__(self, server, filename, flags, attrs):
@@ -593,8 +607,10 @@ class CowrieSFTPFile:
     def setAttrs(self, attrs):
         raise NotImplementedError
 
-class CowrieSFTPDirectory:
 
+class CowrieSFTPDirectory:
+    """
+    """
     def __init__(self, server, directory):
         self.server = server
         self.files = server.fs.listdir(directory)
@@ -617,7 +633,10 @@ class CowrieSFTPDirectory:
     def close(self):
         self.files = []
 
+
 class SFTPServerForCowrieUser:
+    """
+    """
     implements(conchinterfaces.ISFTPServer)
 
     def __init__(self, avatar):
@@ -711,6 +730,7 @@ class SFTPServerForCowrieUser:
 components.registerAdapter(SFTPServerForCowrieUser, CowrieUser, conchinterfaces.ISFTPServer)
 components.registerAdapter(SSHSessionForCowrieUser, CowrieUser, session.ISession)
 
+
 def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
     log.msg(eventid='KIPP0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
@@ -719,8 +739,10 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
        remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
        avatar=avatar)
 
-class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
+class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
+    """
+    """
     def channelOpen(self, specificData):
         pass
 
