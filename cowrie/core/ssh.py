@@ -439,6 +439,7 @@ class CowrieUser(avatar.ConchUser):
             'avatar %s logging out'
             % (self.username,))
 
+
 class SSHSessionForCowrieUser:
     implements(conchinterfaces.ISession)
 
@@ -456,8 +457,8 @@ class SSHSessionForCowrieUser:
         self.server = avatar.server
         self.cfg = avatar.cfg
         self.uid = avatar.uid
+        self.gid = avatar.gid
         self.username = avatar.username
-
 
     def openShell(self, proto):
         self.protocol = protocol.LoggingServerProtocol(
