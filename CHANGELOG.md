@@ -1,5 +1,11 @@
 
-* 2015-09-26 keyboard-interactive is back as authentication method, after Twisted removed support initially
+* 2015-11-19 Queued input during commands is now sent to shell to be executed
+             when command is finished
+* 2015-11-18 Added SANS DShield output (Thanks @UnrealAkama)
+* 2015-11-17 Added ElasticSearch output (Thanks @UnrealAkama)
+* 2015-11-17 Standard input is now saved with SHA256 checksum. Duplicate data is not saved
+* 2015-09-26 keyboard-interactive is back as authentication method, after
+             Twisted removed support initially
 * 2015-07-30 Local syslog output module
 * 2015-06-15 Cowrie now has a '-c' startup switch to specify the configuration file
 * 2015-06-15 Removed exec_enabled option. This feature is now always enabled
@@ -9,7 +15,8 @@
 * 2015-04-10 Fix for downloading files via SFTP
 * 2015-03-31 Small tweaks on session close, closing session does not close ssh transport
 * 2015-03-18 Merged 'AuthRandom' login class by Honigbij
-* 2015-02-25 Internals for dblog/ modules changed completely. Now accepts structured logging arguments, and uses eventids instead of regex parsing
+* 2015-02-25 Internals for dblog/ modules changed completely.
+             Now accepts structured logging arguments, and uses eventids instead of regex parsing
 * 2015-02-20 Removed screen clear/reset on logout
 * 2015-02-19 Configuration directives have changed! ssh_addr has become listen_addr and ssh_port has become listen_port. The old keywords are still accepted for backwards compatibility
 
