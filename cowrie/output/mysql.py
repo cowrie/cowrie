@@ -12,7 +12,8 @@ from twisted.python import log
 import cowrie.core.output
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):
-    """Reconnecting adbapi connection pool for MySQL.
+    """
+    Reconnecting adbapi connection pool for MySQL.
 
     This class improves on the solution posted at
     http://www.gelens.org/2008/09/12/reinitializing-twisted-connectionpool/
@@ -21,7 +22,6 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
 
     Also see:
     http://twistedmatrix.com/pipermail/twisted-python/2009-July/020007.html
-
     """
     def _runInteraction(self, interaction, *args, **kw):
         try:
@@ -32,9 +32,11 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
                 raise log.msg("RCP: got error %s, retrying operation" %(e))
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
-            # try the interaction again
+            # Try the interaction again
             return adbapi.ConnectionPool._runInteraction(
                 self, interaction, *args, **kw)
+
+
 
 class Output(cowrie.core.output.Output):
     """
@@ -42,11 +44,9 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self, cfg):
-        """
-        docstring here
-        """
         self.cfg = cfg
         cowrie.core.output.Output.__init__(self, cfg)
+
 
     def start(self):
         """
@@ -70,11 +70,13 @@ class Output(cowrie.core.output.Output):
 
         self.db.start()
 
+
     def stop(self):
         """
         docstring here
         """
         self.db.close()
+
 
     def sqlerror(self, error):
         """
@@ -82,10 +84,14 @@ class Output(cowrie.core.output.Output):
         """
         log.err( 'MySQL Error:', error.value )
 
+
     def simpleQuery(self, sql, args):
-        """ Just run a deferred sql query, only care about errors """
+        """
+        Just run a deferred sql query, only care about errors
+        """
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
+
 
     @defer.inlineCallbacks
     def write(self, entry):
@@ -97,16 +103,17 @@ class Output(cowrie.core.output.Output):
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `sensors` WHERE `ip` = %s", (self.sensor,))
             if r:
-                sensor_id = r[0][0]
+                sensorid = r[0][0]
             else:
                 yield self.db.runQuery(
                     'INSERT INTO `sensors` (`ip`) VALUES (%s)', (self.sensor,))
                 r = yield self.db.runQuery('SELECT LAST_INSERT_ID()')
-                sensor_id = int(r[0][0])
+                sensorid = int(r[0][0])
             self.simpleQuery(
-                "INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`)" + \
-                " VALUES (%s, STR_TO_DATE(%s, %s), %s, %s)",
-                (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ', sensor_id, entry["src_ip"]))
+                "INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`)"
+                +  " VALUES (%s, STR_TO_DATE(%s, %s), %s, %s)",
+                (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
+                    sensorid, entry["src_ip"]))
 
         elif entry["eventid"] == 'KIPP0002':
             self.simpleQuery('INSERT INTO `auth` (`session`, `success`' + \
@@ -169,12 +176,14 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'KIPP0010':
             self.simpleQuery(
                 'UPDATE `sessions` SET `termsize` = %s WHERE `id` = %s',
-                ('%sx%s' % (entry['width'], entry['height']), entry["session"]))
+                ('%sx%s' % (entry['width'], entry['height']),
+                    entry["session"]))
 
         elif entry["eventid"] == 'KIPP0011':
             self.simpleQuery(
                 'UPDATE `sessions` SET `endtime` = STR_TO_DATE(%s, %s)' + \
-                ' WHERE `id` = %s', (entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ', entry["session"]))
+                ' WHERE `id` = %s', (entry["timestamp"],
+                    '%Y-%m-%dT%H:%i:%s.%fZ', entry["session"]))
 
         elif entry["eventid"] == 'KIPP0012':
             self.simpleQuery(
