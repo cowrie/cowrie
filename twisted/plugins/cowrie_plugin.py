@@ -30,9 +30,9 @@
 FIXME: This module contains ...
 """
 
-from zope.interface import implementer
-
 from __future__ import print_function
+
+from zope.interface import implementer
 
 import os
 import sys
@@ -96,7 +96,7 @@ class CowrieServiceMaker(object):
         factory = core.ssh.HoneyPotSSHFactory(cfg)
         factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
         factory.portal.registerChecker(
-            core.checkers.HoneypotPublicKeyChecker(cfg))
+            core.checkers.HoneypotPublicKeyChecker())
         factory.portal.registerChecker(
             core.checkers.HoneypotPasswordChecker(cfg))
 
