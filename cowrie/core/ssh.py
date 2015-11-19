@@ -365,6 +365,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
 
     # this seems to be the only reliable place of catching lost connection
     def connectionLost(self, reason):
+        self.setTimeout(None)
         for i in self.interactors:
             i.sessionClosed()
         if self.transport.sessionno in self.factory.sessions:
