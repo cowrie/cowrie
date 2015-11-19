@@ -1,4 +1,38 @@
+# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The names of the author(s) may not be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+"""
+FIXME: This module contains ...
+"""
+
 from zope.interface import implementer
+
+from __future__ import print_function
 
 import os
 import sys
@@ -16,13 +50,21 @@ import cowrie.core.realm
 import cowrie.core.checkers
 
 class Options(usage.Options):
+    """
+    FIXME: Docstring
+    """
     optParameters = [
         ["port", "p", 0, "The port number to listen on.", int],
         ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
 
+
+
 @implementer(IServiceMaker, IPlugin)
 class CowrieServiceMaker(object):
+    """
+    FIXME: Docstring
+    """
     tapname = "cowrie"
     description = "She sells sea shells by the sea shore."
     options = Options
@@ -43,7 +85,7 @@ class CowrieServiceMaker(object):
         else:
             listen_addr = '0.0.0.0'
 
-        # preference: 1, option, 2, config, 3, default of 2222
+        # Preference: 1, option, 2, config, 3, default of 2222
         if options['port'] != 0:
             listen_port = int(options["port"])
         elif cfg.has_option('honeypot', 'listen_port'):
@@ -53,13 +95,16 @@ class CowrieServiceMaker(object):
 
         factory = core.ssh.HoneyPotSSHFactory(cfg)
         factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
-        factory.portal.registerChecker(cowrie.core.checkers.HoneypotPublicKeyChecker(cfg))
-        factory.portal.registerChecker(cowrie.core.checkers.HoneypotPasswordChecker(cfg))
+        factory.portal.registerChecker(
+            core.checkers.HoneypotPublicKeyChecker(cfg))
+        factory.portal.registerChecker(
+            core.checkers.HoneypotPasswordChecker(cfg))
 
         if cfg.has_option('honeypot', 'auth_none_enabled') and \
                  cfg.get('honeypot', 'auth_none_enabled').lower() in \
                  ('yes', 'true', 'on'):
-            factory.portal.registerChecker(cowrie.core.checkers.HoneypotNoneChecker())
+            factory.portal.registerChecker(
+                core.checkers.HoneypotNoneChecker())
 
         top_service = top_service = service.MultiService()
 
@@ -72,13 +117,13 @@ class CowrieServiceMaker(object):
                  ('yes', 'true', 'on'):
             iport = int(cfg.get('honeypot', 'interact_port'))
             from cowrie.core import interact
-            svc = internet.TCPServer(iport, interact.makeInteractFactory(factory))
+            svc = internet.TCPServer(iport,
+                interact.makeInteractFactory(factory))
             svc.setServiceParent(top_service)
 
         application = service.Application('cowrie')
         top_service.setServiceParent(application)
         return top_service
-
 
 # Now construct an object which *provides* the relevant interfaces
 # The name of this variable is irrelevant, as long as there is *some*
