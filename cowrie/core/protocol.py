@@ -401,30 +401,29 @@ class LoggingServerProtocol(insults.ServerProtocol):
         insults.ServerProtocol.connectionMade(self)
 
 
-    def write(self, bytes, noLog=False):
+    def write(self, bytes):
         """
         """
         transport = self.transport.session.conn.transport
         for i in transport.interactors:
             i.sessionWrite(bytes)
-        if self.ttylog_open and not noLog:
+        if self.ttylog_open:
             ttylog.ttylog_write(transport.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
 
         insults.ServerProtocol.write(self, bytes)
 
 
-    def dataReceived(self, data, noLog=False):
+    def dataReceived(self, data):
         """
         """
-        transport = self.transport.session.conn.transport
-        if self.ttylog_open and not noLog:
+        if self.stdinlog_open:
+            with file(self.stdinlog_file, 'ab') as f:
+                f.write(data)
+        elif self.ttylog_open:
+            transport = self.transport.session.conn.transport
             ttylog.ttylog_write(transport.ttylog_file, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
-        if self.stdinlog_open and not noLog:
-            f = file(self.stdinlog_file, 'ab')
-            f.write(data)
-            f.close
 
         insults.ServerProtocol.dataReceived(self, data)
 
@@ -462,7 +461,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         os.remove(self.stdinlog_file)
                     else:
                         os.rename(self.stdinlog_file, shasumfile)
-                        os.symlink(shasum, self.stdinlog_file)
+                    os.symlink(shasum, self.stdinlog_file)
                 log.msg(eventid='KIPP0007',
                     format='Saved stdin contents to %(outfile)s',
                     url='stdin', outfile=shasumfile, shasum=shasum)
