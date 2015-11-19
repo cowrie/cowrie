@@ -194,12 +194,16 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             if not x.startswith('database_'):
                 continue
             engine = x.split('_')[1]
-            log.msg('Loading dblog engine: %s' % (engine,))
-            dblogger = __import__(
-                'cowrie.dblog.%s' % (engine,),
-                globals(), locals(), ['dblog']).DBLogger(self.cfg)
-            log.addObserver(dblogger.emit)
-            self.dbloggers.append(dblogger)
+            try:
+                dblogger = __import__(
+                    'cowrie.dblog.%s' % (engine,),
+                    globals(), locals(), ['dblog']).DBLogger(self.cfg)
+                log.addObserver(dblogger.emit)
+                self.dbloggers.append(dblogger)
+                log.msg("Loaded dblog engine: %s" % (engine,))
+            except:
+                log.err()
+                log.msg("Failed to load dblog engine: %s" % (engine,))
 
         # load output modules
         self.output_plugins = []
@@ -207,12 +211,16 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             if not x.startswith('output_'):
                 continue
             engine = x.split('_')[1]
-            log.msg('Loading output engine: %s' % (engine,))
-            output = __import__(
-                'cowrie.output.%s' % (engine,)
-                ,globals(), locals(), ['output']).Output(self.cfg)
-            log.addObserver(output.emit)
-            self.output_plugins.append(output)
+            try:
+                output = __import__(
+                    'cowrie.output.%s' % (engine,)
+                    ,globals(), locals(), ['output']).Output(self.cfg)
+                log.addObserver(output.emit)
+                self.output_plugins.append(output)
+                log.msg('Loaded output plugin: %s' % (engine,))
+            except:
+                log.err()
+                log.msg('Failed to load output plugin: %s' % (engine,))
 
         factory.SSHFactory.startFactory(self)
 
