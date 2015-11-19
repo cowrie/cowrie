@@ -203,6 +203,10 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         """
         HoneyPotBaseProtocol.connectionMade(self)
         self.setTimeout(60)
+
+        # Write command to tty log
+        self.terminal.dataReceived(self.execcmd + '\n')
+
         self.terminal.stdinlog_open = True
 
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
