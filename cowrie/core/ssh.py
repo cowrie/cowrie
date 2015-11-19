@@ -27,6 +27,7 @@ from twisted.python import log, components
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh.common import NS, getNS
 from twisted.internet import defer
+from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core import credentials
 from cowrie.core import auth
@@ -272,7 +273,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         return t
 
 
-class HoneyPotTransport(transport.SSHServerTransport):
+class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     """
 
@@ -293,6 +294,7 @@ class HoneyPotTransport(transport.SSHServerTransport):
         self.transport.write('%s\r\n' % (self.ourVersionString,))
         self.currentEncryptions = transport.SSHCiphers('none', 'none', 'none', 'none')
         self.currentEncryptions.setKeys('', '', '', '', '', '')
+        self.setTimeout(120)
 
     def sendKexInit(self):
         # Don't send key exchange prematurely
@@ -348,6 +350,18 @@ class HoneyPotTransport(transport.SSHServerTransport):
             compCS=compCS, format='Remote SSH version: %(version)s')
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
+
+    def timeoutConnection(self):
+        log.msg( "Authentication Timeout reached" )
+        self.transport.loseConnection()
+
+    def setService(self, service):
+        """
+        Remove login grace timeout
+        """
+        if service.name == "ssh-connection":
+            self.setTimeout(None)
+        transport.SSHServerTransport.setService(self, service)
 
     # this seems to be the only reliable place of catching lost connection
     def connectionLost(self, reason):
