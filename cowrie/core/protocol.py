@@ -418,13 +418,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         """
         transport = self.transport.session.conn.transport
-        if self.ttylog_open and not noLog:
-            ttylog.ttylog_write(transport.ttylog_file, len(data),
-                ttylog.TYPE_INPUT, time.time(), data)
-        if self.stdinlog_open and not noLog:
-            f = file(self.stdinlog_file, 'ab')
-            f.write(data)
-            f.close
+        if not noLog:
+            if self.stdinlog_open:
+                f = file(self.stdinlog_file, 'ab')
+                f.write(data)
+                f.close
+            elif self.ttylog_open:
+                ttylog.ttylog_write(transport.ttylog_file, len(data),
+                    ttylog.TYPE_INPUT, time.time(), data)
 
         insults.ServerProtocol.dataReceived(self, data)
 
