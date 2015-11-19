@@ -29,7 +29,7 @@ class UserDB(object):
                 rawline = f.readline()
                 if not rawline:
                     break
-                
+
                 line = rawline.strip()
                 if not line:
                     continue

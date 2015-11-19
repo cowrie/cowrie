@@ -120,7 +120,7 @@ class HoneyPotFilesystem(object):
     def exists(self, path):
         '''
         Return True if path refers to an existing path.
-        Returns False for broken symbolic links. 
+        Returns False for broken symbolic links.
         '''
         f = self.getfile(path, follow_symlinks=True)
         if f is not False:

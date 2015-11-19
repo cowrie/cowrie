@@ -34,7 +34,7 @@ from zope.interface import implements
 
 import twisted
 from twisted.conch import interfaces as conchinterfaces
-from twisted.python import log 
+from twisted.python import log
 
 from cowrie.core import protocol
 from cowrie.core import server
@@ -45,7 +45,7 @@ import gc
 
 class HoneyPotRealm:
     implements(twisted.cred.portal.IRealm)
-    
+
     def __init__(self, cfg):
         self.cfg = cfg
 	# self.servers = {}

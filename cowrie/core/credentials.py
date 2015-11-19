@@ -76,7 +76,7 @@ class PluggableAuthenticationModulesIP:
 class Username:
     implements(IUsername)
     """
-    
+
     """
     def __init__(self, username):
         self.username = username
@@ -85,7 +85,7 @@ class Username:
 class UsernamePasswordIP:
     implements(IUsernamePasswordIP)
     """
-    
+
     """
     def __init__(self, username, password, ip):
         self.username = username
