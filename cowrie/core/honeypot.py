@@ -60,6 +60,7 @@ class HoneyPotCommand(object):
         """
         """
         log.msg('QUEUED INPUT: %s' % (line,))
+        # FIXME: naive command parsing, see lineReceived below
         self.protocol.cmdstack[0].cmdpending.append(line)
 
 
