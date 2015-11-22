@@ -248,7 +248,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         except:
             t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 
-        t.supportedPublicKeys = self.privateKeys.keys()
+        t.supportedPublicKeys = list(self.privateKeys.keys())
 
         for _moduli in _modulis:
             try:
