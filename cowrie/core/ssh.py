@@ -241,12 +241,11 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
         _modulis = '/etc/ssh/moduli', '/private/etc/moduli'
 
-        # FIXME: try to mimic something real 100%
         t = HoneyPotTransport()
 
-        if self.cfg.has_option('honeypot', 'ssh_version_string'):
+	try:
             t.ourVersionString = self.cfg.get('honeypot', 'ssh_version_string')
-        else:
+        except:
             t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 
         t.supportedPublicKeys = self.privateKeys.keys()
@@ -460,9 +459,11 @@ class CowrieUser(avatar.ConchUser):
             self.home = '/home/' + username
 
         # sftp support enabled only when option is explicitly set
-        if self.cfg.has_option('honeypot', 'sftp_enabled'):
+        try:
             if (self.cfg.get('honeypot', 'sftp_enabled') == "true"):
                 self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
+        except:
+            pass
 
     def logout(self):
         log.msg(

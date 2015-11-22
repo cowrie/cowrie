@@ -65,9 +65,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.setTimeout(1800)
 
         # Source IP of client in user visible reports (can be fake or real)
-        if self.cfg.has_option('honeypot', 'fake_addr'):
+        try:
             self.clientIP = self.cfg.get('honeypot', 'fake_addr')
-        else:
+        except:
             self.clientIP = self.realClientIP
 
         if self.cfg.has_option('honeypot', 'internet_facing_ip'):
@@ -428,7 +428,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             log.msg(eventid='KIPP0015', format='Data upload limit reached')
             #self.loseConnection()
             self.eofReceived()
-	    return
+            return
 
         if self.stdinlog_open:
             with file(self.stdinlog_file, 'ab') as f:
