@@ -375,12 +375,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
         self.cfg = a[0].cfg
-        self.dataReceived = 0
+        self.bytesReceived = 0
 
         try:
-            self.dataReceivedLimit = int(self.cfg.get('honeypot', 'download_limit_size'))
+            self.bytesReceivedLimit = int(self.cfg.get('honeypot', 'download_limit_size'))
         except:
-            self.dataReceivedLimit = 0
+            self.bytesReceivedLimit = 0
 
 
     def connectionMade(self):
@@ -423,9 +423,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
     def dataReceived(self, data):
         """
         """
-        self.dataReceived += len(data)
-        if self.dataReceivedLimit and self.dataReceived > self.dataReceivedLimit:
-            self.transport.loseConnection()
+        self.bytesReceived += len(data)
+        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
+            log.msg(eventid='KIPP0015', format='Data upload limit reached')
+            #self.loseConnection()
+            self.eofReceived()
+	    return
 
         if self.stdinlog_open:
             with file(self.stdinlog_file, 'ab') as f:
