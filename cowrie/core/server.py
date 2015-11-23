@@ -47,8 +47,8 @@ class CowrieServer:
     multiple Cowrie connections
     """
     def __init__(self, cfg):
-	self.cfg = cfg
-	self.avatars = []
+        self.cfg = cfg
+        self.avatars = []
         self.hostname = self.cfg.get('honeypot', 'hostname')
         pckl = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
         self.fs = fs.HoneyPotFilesystem(pckl,self.cfg)
