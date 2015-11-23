@@ -67,65 +67,72 @@ class Output(object):
         self.ips = {}
         self.re_sessionlog = re.compile(
             '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
-        if self.cfg.has_option('honeypot', 'sensor_name'):
+        try:
             self.sensor = self.cfg.get('honeypot', 'sensor_name')
-        else:
+        except:
             self.sensor = socket.gethostname()
 
         self.start()
 
-    # use logDispatch when the HoneypotTransport prefix is not available.
-    # here you can explicitly set the sessionIds to tie the sessions together
-    #def logDispatch(self, sessionid, msg):
-    #    if isinstance( msg, dict ):
-    #        msg['sessionid'] = sessionid
-    #        return self.emit( msg )
-    #    elif isinstance( msg, str ):
-    #        return self.emit( { 'message':msg, 'sessionid':sessionid } )
+
     def logDispatch(self, *msg, **kw):
+        """
+        Use logDispatch when the HoneypotTransport prefix is not available.
+        Here you can explicitly set the sessionIds to tie the sessions together
+        """
         ev = kw
         ev['message'] = msg
         self.emit(ev)
 
+
     @abc.abstractmethod
     def start(self):
-        """Abstract method to initialize output plugin"""
+        """
+        Abstract method to initialize output plugin
+        """
         pass
+
 
     @abc.abstractmethod
     def stop(self):
-        """Abstract method to shut down output plugin"""
+        """
+        Abstract method to shut down output plugin
+        """
         pass
+
 
     @abc.abstractmethod
     def write(self, event):
-        """Handle a general event within the output plugin"""
+        """
+        Handle a general event within the output plugin
+        """
         pass
 
-    # this is the main emit() hook that gets called by the the Twisted logging
+
     def emit(self, event):
-        # ignore stdout and stderr in output plugins
+        """
+        This is the main emit() hook that gets called by the the Twisted logging
+        """
+        # Ignore stdout and stderr in output plugins
         if 'printed' in event:
             return
 
-        # ignore anything without eventid
+        # Ignore anything without eventid
         if not 'eventid' in event:
             return
 
         ev = copy.copy(event)
 
-        #if 'isError' in ev:
-        #    del ev['isError']
         ev['sensor'] = self.sensor
 
-        # add ISO timestamp and sensor data
+        # Add ISO timestamp and sensor data
         if not 'time' in ev:
             ev['timestamp'] = datetime.datetime.today().isoformat() + 'Z'
         else:
             ev['timestamp'] = datetime.datetime.fromtimestamp(ev['time']).isoformat() + 'Z'
             del ev['time']
 
-        # on disconnect, add the tty log
+        # On disconnect add the tty log
         #if ev['eventid'] == 'KIPP0012':
             # FIXME: file is read for each output plugin
             #f = file(ev['ttylog'])
@@ -133,22 +140,21 @@ class Output(object):
             #f.close()
             #pass
 
-        # explicit sessionno (from logDispatch) overrides from 'system'
+        # Explicit sessionno (from logDispatch) overrides from 'system'
         if 'sessionno' in ev:
             sessionno = ev['sessionno']
             del ev['sessionno']
-        # extract session id from the twisted log prefix
+        # Extract session id from the twisted log prefix
         elif 'system' in ev:
             match = self.re_sessionlog.match(ev['system'])
             if not match:
                 return
             sessionno = int(match.groups()[0])
-            #del ev['system']
 
         if sessionno in self.ips:
             ev['src_ip'] = self.ips[sessionno]
 
-        # connection event is special. adds to session list
+        # Connection event is special. adds to session list
         if ev['eventid'] == 'KIPP0001':
             self.sessions[sessionno] = ev['id']
             self.ips[sessionno] = ev['src_ip']
@@ -158,7 +164,7 @@ class Output(object):
 
         self.write(ev)
 
-        # disconnect is special, remove cached data
+        # Disconnect is special, remove cached data
         if ev['eventid'] == 'KIPP0011':
             del self.sessions[sessionno]
             del self.ips[sessionno]
