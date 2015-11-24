@@ -43,6 +43,8 @@ class IUsername(ICredentials):
     @ivar username: The username associated with these credentials.
     """
 
+
+
 class IUsernamePasswordIP(IUsernamePassword):
     """
     I encapsulate a username, a plaintext password and a source IP
@@ -57,13 +59,17 @@ class IUsernamePasswordIP(IUsernamePassword):
     @ivar ip: The source ip address associated with these credentials.
     """
 
+
+
 class IPluggableAuthenticationModulesIP(ICredentials):
     """
     Twisted removed IPAM in 15, adding in Cowrie now
     """
 
+
+
+@implementer(IPluggableAuthenticationModulesIP)
 class PluggableAuthenticationModulesIP:
-    implements(IPluggableAuthenticationModulesIP)
     """
     Twisted removed IPAM in 15, adding in Cowrie now
     """
@@ -73,19 +79,21 @@ class PluggableAuthenticationModulesIP:
         self.pamConversion = pamConversion
         self.ip = ip
 
-class Username:
-    implements(IUsername)
-    """
 
+
+@implementer(IUsername)
+class Username:
+    """
     """
     def __init__(self, username):
         self.username = username
 
-# This credential interface also provides an IP address
-class UsernamePasswordIP:
-    implements(IUsernamePasswordIP)
-    """
 
+
+@implementer(IUsernamePasswordIP)
+class UsernamePasswordIP:
+    """
+    This credential interface also provides an IP address
     """
     def __init__(self, username, password, ip):
         self.username = username
