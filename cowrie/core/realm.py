@@ -30,7 +30,7 @@
 This module contains ...
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 import twisted
 from twisted.conch import interfaces as conchinterfaces

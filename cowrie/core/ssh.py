@@ -10,7 +10,7 @@ import time
 import struct
 import uuid
 
-from zope.interface import implements
+from zope.interface import implementer
 
 import twisted
 from twisted.conch import avatar, interfaces as conchinterfaces
@@ -437,10 +437,10 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg("Called channelClosed in SSHSession")
 
 
+@implementer(conchinterfaces.IConchUser)
 class CowrieUser(avatar.ConchUser):
     """
     """
-    implements(conchinterfaces.IConchUser)
 
     def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
@@ -471,10 +471,10 @@ class CowrieUser(avatar.ConchUser):
             % (self.username,))
 
 
+@implementer(conchinterfaces.ISession)
 class SSHSessionForCowrieUser:
     """
     """
-    implements(conchinterfaces.ISession)
 
     def __init__(self, avatar, reactor=None):
         """
@@ -572,10 +572,10 @@ def getDSAKeys(cfg):
     return publicKeyString, privateKeyString
 
 
+@implementer(conchinterfaces.ISFTPFile)
 class CowrieSFTPFile:
     """
     """
-    implements(conchinterfaces.ISFTPFile)
 
     def __init__(self, server, filename, flags, attrs):
         self.server = server
@@ -658,10 +658,10 @@ class CowrieSFTPDirectory:
         self.files = []
 
 
+@implementer(conchinterfaces.ISFTPServer)
 class SFTPServerForCowrieUser:
     """
     """
-    implements(conchinterfaces.ISFTPServer)
 
     def __init__(self, avatar):
         self.avatar = avatar
