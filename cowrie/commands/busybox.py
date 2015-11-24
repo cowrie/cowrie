@@ -57,8 +57,7 @@ class command_busybox(HoneyPotCommand):
             args = args[1:]
             cmdclass = self.protocol.getCommand(cmd, self.env['PATH'].split(':'))
             if cmdclass:
-                log.msg(eventid='KIPP0005', input=line, format='Command found: %(busybox)s')
-                #self.protocol.logDispatch('Command found: %s' % (line,))
+                log.msg(eventid='KIPP0005', busybox=line, format='Command found: %(busybox)s')
                 self.protocol.call_command(cmdclass, *args)
             else:
                 self.help() 
