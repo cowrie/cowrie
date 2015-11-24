@@ -392,11 +392,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         """
         transport = self.transport.session.conn.transport
-        channel_id = self.transport.session.id
+        channelId = self.transport.session.id
 
         transport.ttylog_file = '%s/tty/%s-%s-%s%s.log' % \
             (self.cfg.get('honeypot', 'log_path'),
-            time.strftime('%Y%m%d-%H%M%S'), transport.transportId, channel_id,
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId, channelId,
             self.type)
 
         self.ttylog_file = transport.ttylog_file
@@ -408,7 +408,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.stdinlog_file = '%s/%s-%s-%s-stdin.log' % \
             (self.cfg.get('honeypot', 'download_path'),
-            time.strftime('%Y%m%d-%H%M%S'), transport.transportId, channel_id)
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId, channelId)
         self.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
