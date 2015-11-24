@@ -11,13 +11,16 @@ from random import randint
 
 from twisted.python import log
 
-# by Walter de Jong <walter@sara.nl>
 class UserDB(object):
+    """
+    By Walter de Jong <walter@sara.nl>
+    """
 
     def __init__(self, cfg):
         self.userdb = []
         self.userdb_file = '%s/userdb.txt' % cfg.get('honeypot', 'data_path')
         self.load()
+
 
     def load(self):
         """
@@ -47,6 +50,7 @@ class UserDB(object):
 
                 self.userdb.append((login, uid, passwd))
 
+
     def save(self):
         """
         save the user db
@@ -57,6 +61,7 @@ class UserDB(object):
             for (login, uid, passwd) in self.userdb:
                 f.write('%s:%d:%s\n' % (login, uid, passwd))
 
+
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
         """
         check entered username/password against database
@@ -65,30 +70,40 @@ class UserDB(object):
         prepend password with ! to explicitly deny it. Denials must come before wildcards
         """
         for (login, uid, passwd) in self.userdb:
-            # explicitly fail on !password
+            # Explicitly fail on !password
             if login == thelogin and passwd == '!' + thepasswd:
                 return False
             if login == thelogin and passwd in (thepasswd, '*'):
                 return True
         return False
 
+
     def user_exists(self, thelogin):
+        """
+        """
         for (login, uid, passwd) in self.userdb:
             if login == thelogin:
                 return True
         return False
 
+
     def user_password_exists(self, thelogin, thepasswd):
+        """
+        """
         for (login, uid, passwd) in self.userdb:
             if login == thelogin and passwd == thepasswd:
                 return True
         return False
 
+
     def getUID(self, loginname):
+        """
+        """
         for (login, uid, passwd) in self.userdb:
             if loginname == login:
                 return uid
         return 1001
+
 
     def allocUID(self):
         """
@@ -101,11 +116,16 @@ class UserDB(object):
                 min_uid = uid
         return min_uid + 1
 
+
     def adduser(self, login, uid, passwd):
+        """
+        """
         if self.user_password_exists(login, passwd):
             return
         self.userdb.append((login, uid, passwd))
         self.save()
+
+
 
 class AuthRandom(object):
     """
@@ -128,13 +148,16 @@ class AuthRandom(object):
 
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
-            log.msg('maxtry < mintry, adjusting maxtry to: %d' % self.maxtry)
+            log.msg('maxtry < mintry, adjusting maxtry to: %d' % (self.maxtry,))
         self.uservar = {}
         self.uservar_file = '%s/uservar.json' % cfg.get('honeypot', 'data_path')
         self.loadvars()
 
+
     def loadvars(self):
-        # Load user vars from json file
+        """
+        Load user vars from json file
+        """
         if path.isfile(self.uservar_file):
             with open(self.uservar_file, 'rb') as fp:
                 try:
@@ -142,12 +165,16 @@ class AuthRandom(object):
                 except:
                     self.uservar = {}
 
+
     def savevars(self):
-        # Save the user vars to json file
+        """
+        Save the user vars to json file
+        """
         data = self.uservar
         # Note: this is subject to races between cowrie logins
         with open(self.uservar_file, 'wb') as fp:
             json.dump(data, fp)
+
 
     def checklogin(self, thelogin, thepasswd, src_ip):
         """
@@ -203,7 +230,7 @@ class AuthRandom(object):
         ipinfo['try'] += 1
         attempts = ipinfo['try']
         need = ipinfo['max']
-        log.msg('login attempt: %d' % attempts)
+        log.msg('login attempt: %d' % (attempts,))
 
         # Check if enough login attempts are tried
         if attempts < need:
