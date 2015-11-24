@@ -382,15 +382,22 @@ class LoggingServerProtocol(insults.ServerProtocol):
         except:
             self.bytesReceivedLimit = 0
 
+        if prot is HoneyPotExecProtocol:
+            self.type = 'e' # execcmd
+        else:
+            self.type = 'i' # interactive
+
 
     def connectionMade(self):
         """
         """
         transport = self.transport.session.conn.transport
+        channel_id = self.transport.session.id
 
-        transport.ttylog_file = '%s/tty/%s-%s.log' % \
+        transport.ttylog_file = '%s/tty/%s-%s-%s%s.log' % \
             (self.cfg.get('honeypot', 'log_path'),
-            time.strftime('%Y%m%d-%H%M%S'), transport.transportId)
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId, channel_id,
+            self.type)
 
         self.ttylog_file = transport.ttylog_file
         log.msg(eventid='KIPP0004', ttylog=transport.ttylog_file,
@@ -399,9 +406,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         ttylog.ttylog_open(transport.ttylog_file, time.time())
         self.ttylog_open = True
 
-        self.stdinlog_file = '%s/%s-%s-stdin.log' % \
+        self.stdinlog_file = '%s/%s-%s-%s-stdin.log' % \
             (self.cfg.get('honeypot', 'download_path'),
-            time.strftime('%Y%m%d-%H%M%S'), transport.transportId)
+            time.strftime('%Y%m%d-%H%M%S'), transport.transportId, channel_id)
         self.stdinlog_open = False
 
         insults.ServerProtocol.connectionMade(self)
