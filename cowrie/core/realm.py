@@ -43,14 +43,19 @@ from cowrie.core import ssh
 import sys
 import gc
 
+@implementer(twisted.cred.portal.IRealm)
 class HoneyPotRealm:
-    implements(twisted.cred.portal.IRealm)
+    """
+    """
 
     def __init__(self, cfg):
         self.cfg = cfg
 	# self.servers = {}
 
+
     def requestAvatar(self, avatarId, mind, *interfaces):
+        """
+        """
 
         # if mind in self.servers:
 	#    log.msg( "Using existing server for mind %s" % mind )
@@ -69,4 +74,5 @@ class HoneyPotRealm:
                 ssh.CowrieUser(avatarId, server.CowrieServer(self.cfg)), lambda:None
         else:
             raise Exception("No supported interfaces found.")
+
 
