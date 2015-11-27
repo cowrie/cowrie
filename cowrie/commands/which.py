@@ -12,12 +12,12 @@ class command_which(HoneyPotCommand):
         """ Look up all the arguments on PATH and print each (first) result """
 
         # No arguments, just exit
-        if not len(self.args) or not 'PATH' in self.env:
+        if not len(self.args) or not 'PATH' in self.environ:
             return
 
         # Look up each file
         for f in self.args:
-            for path in self.env['PATH'].split(':'):
+            for path in self.environ['PATH'].split(':'):
                 resolved = self.fs.resolve_path(f, path)
 
                 if self.fs.exists(resolved):

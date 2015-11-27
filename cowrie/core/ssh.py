@@ -567,13 +567,16 @@ class SSHSessionForCowrieUser:
             requests. Uses the default reactor if None.
         """
         self.protocol = None
-        self.environ = {'PATH': '/bin:/usr/bin:/usr/local/bin'}
         self.avatar = avatar
         self.server = avatar.server
         self.cfg = avatar.cfg
         self.uid = avatar.uid
         self.gid = avatar.gid
         self.username = avatar.username
+        self.environ = {'PATH': '/bin:/usr/bin:/usr/local/bin',
+            'LOGNAME': self.username,
+            'USER': self.username,
+            'HOME': self.avatar.home}
 
 
     def openShell(self, proto):
@@ -588,6 +591,7 @@ class SSHSessionForCowrieUser:
     def getPty(self, terminal, windowSize, attrs):
         """
         """
+        self.environ['TERM'] = terminal
         log.msg(eventid='KIPP0010', width=windowSize[0], height=windowSize[1],
             format='Terminal Size: %(width)s %(height)s')
         self.windowSize = windowSize

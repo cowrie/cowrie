@@ -26,6 +26,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def __init__(self, avatar):
         self.user = avatar
+        self.environ = avatar.environ
         self.cfg = self.user.cfg
         self.hostname = avatar.server.hostname
         self.fs = avatar.server.fs

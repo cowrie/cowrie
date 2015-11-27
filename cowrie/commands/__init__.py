@@ -8,6 +8,7 @@ __all__ = [
     'busybox',
     'curl',
     'dice',
+    'env',
     'ethtool',
     'fs',
     'gcc',

@@ -21,7 +21,7 @@ class HoneyPotCommand(object):
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = args
-        self.env = self.protocol.cmdstack[0].envvars
+        self.environ = self.protocol.cmdstack[0].environ
         self.writeln = self.protocol.writeln
         self.write = self.protocol.terminal.write
         self.nextLine = self.protocol.terminal.nextLine
@@ -92,9 +92,7 @@ class HoneyPotShell(object):
         self.interactive = interactive
         self.showPrompt()
         self.cmdpending = []
-        self.envvars = {
-            'PATH':     '/bin:/usr/bin:/sbin:/usr/sbin',
-            }
+        self.environ = protocol.environ
 
 
     def lineReceived(self, line):
@@ -146,13 +144,13 @@ class HoneyPotShell(object):
             return
 
         # Probably no reason to be this comprehensive for just PATH...
-        envvars = copy.copy(self.envvars)
+        environ = copy.copy(self.environ)
         cmd = None
         while len(cmdAndArgs):
             piece = cmdAndArgs.pop(0)
             if piece.count('='):
                 key, value = piece.split('=', 1)
-                envvars[key] = value
+                environ[key] = value
                 continue
             cmd = piece
             break
@@ -169,7 +167,7 @@ class HoneyPotShell(object):
                 rargs.extend(matches)
             else:
                 rargs.append(arg)
-        cmdclass = self.protocol.getCommand(cmd, envvars['PATH'].split(':'))
+        cmdclass = self.protocol.getCommand(cmd, environ['PATH'].split(':'))
         if cmdclass:
             log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
             self.protocol.call_command(cmdclass, *rargs)
