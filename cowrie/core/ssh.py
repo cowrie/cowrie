@@ -684,11 +684,19 @@ class CowrieSFTPFile:
     """
     """
 
-    def __init__(self, server, filename, flags, attrs):
-        self.server = server
+    def __init__(self, sftpserver, filename, flags, attrs):
+        self.sftpserver = sftpserver
         self.filename = filename
         self.transfer_completed = 0
         self.bytes_written = 0
+
+        try:
+            self.bytesReceivedLimit = int(
+                self.sftpserver.avatar.server.cfg.get('honeypot',
+                    'download_limit_size'))
+        except:
+            self.bytesReceivedLimit = 0
+
         openFlags = 0
         if flags & FXF_READ == FXF_READ and flags & FXF_WRITE == 0:
             openFlags = os.O_RDONLY
@@ -709,22 +717,22 @@ class CowrieSFTPFile:
             del attrs["permissions"]
         else:
             mode = 0777
-        fd = server.fs.open(filename, openFlags, mode)
+        fd = sftpserver.fs.open(filename, openFlags, mode)
         if attrs:
-            self.server.setAttrs(filename, attrs)
+            self.sftpserver.setAttrs(filename, attrs)
         self.fd = fd
 
         # Cache a copy of file in memory to read from in readChunk
         if flags & FXF_READ == FXF_READ:
-            self.contents = self.server.fs.file_contents(self.filename)
+            self.contents = self.sftpserver.fs.file_contents(self.filename)
 
 
     def close(self):
         """
         """
         if (self.bytes_written > 0):
-            self.server.fs.update_size(self.filename, self.bytes_written)
-        return self.server.fs.close(self.fd)
+            self.sftpserver.fs.update_size(self.filename, self.bytes_written)
+        return self.sftpserver.fs.close(self.fd)
 
 
     def readChunk(self, offset, length):
@@ -736,16 +744,19 @@ class CowrieSFTPFile:
     def writeChunk(self, offset, data):
         """
         """
-        self.server.fs.lseek(self.fd, offset, os.SEEK_SET)
-        self.server.fs.write(self.fd, data)
         self.bytes_written += len(data)
+        if self.bytesReceivedLimit and self.bytes_written > self.bytesReceivedLimit:
+            log.msg(eventid='KIPP0015', format='Data upload limit reached')
+            raise filetransfer.SFTPError( 15, "Quota exceeded" )
+        self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
+        self.sftpserver.fs.write(self.fd, data)
 
 
     def getAttrs(self):
         """
         """
-        s = self.server.fs.stat(self.filename)
-        return self.server._getAttrs(s)
+        s = self.sftpserver.fs.stat(self.filename)
+        return self.sftpserver._getAttrs(s)
 
 
     def setAttrs(self, attrs):
