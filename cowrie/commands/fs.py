@@ -124,7 +124,7 @@ commands['/bin/head'] = command_head
 class command_cd(HoneyPotCommand):
     def call(self):
         if not self.args or self.args[0] == "~":
-            path = self.protocol.user.home
+            path = self.protocol.user.avatar.home
         else:
             path = self.args[0]
         try:
