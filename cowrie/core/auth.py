@@ -78,15 +78,6 @@ class UserDB(object):
         return False
 
 
-    def user_exists(self, thelogin):
-        """
-        """
-        for (login, uid, passwd) in self.userdb:
-            if login == thelogin:
-                return True
-        return False
-
-
     def user_password_exists(self, thelogin, thepasswd):
         """
         """

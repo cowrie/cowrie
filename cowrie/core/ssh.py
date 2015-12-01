@@ -31,6 +31,7 @@ from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core import credentials
 from cowrie.core import auth
+from cowrie.core import passwd
 from cowrie.core import connection
 from cowrie.core import honeypot
 from cowrie.core import protocol
@@ -268,7 +269,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         @type addr: L{twisted.internet.interfaces.IAddress} provider
         @param addr: The address at which the server will listen.
 
-        @rtype: L{twisted.conch.ssh.SSHServerTransport}
+        @rtype: L{cowrie.core.HoneyPotTransport}
         @return: The built transport.
         """
 
@@ -530,11 +531,10 @@ class CowrieUser(avatar.ConchUser):
             {"session": HoneyPotSSHSession,
              "direct-tcpip": CowrieOpenConnectForwardingClient})
 
-        self.uid = self.gid = auth.UserDB(self.cfg).getUID(self.username)
-        if not self.uid:
-            self.home = '/root'
-        else:
-            self.home = '/home/' + username
+        pwentry = passwd.Passwd(self.cfg).getpwnam(self.username)
+        self.uid = pwentry["pw_uid"]
+        self.gid = pwentry["pw_gid"]
+        self.home = pwentry["pw_dir"]
 
         # Sftp support enabled only when option is explicitly set
         try:
