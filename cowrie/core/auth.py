@@ -87,27 +87,6 @@ class UserDB(object):
         return False
 
 
-    def getUID(self, loginname):
-        """
-        """
-        for (login, uid, passwd) in self.userdb:
-            if loginname == login:
-                return uid
-        return 1001
-
-
-    def allocUID(self):
-        """
-        allocate the next UID
-        """
-
-        min_uid = 0
-        for (login, uid, passwd) in self.userdb:
-            if uid > min_uid:
-                min_uid = uid
-        return min_uid + 1
-
-
     def adduser(self, login, uid, passwd):
         """
         """
