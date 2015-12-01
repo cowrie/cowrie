@@ -227,8 +227,7 @@ class command_passwd(HoneyPotCommand):
             return
 
         userdb = UserDB(self.protocol.cfg)
-        userdb.adduser(self.protocol.user.username,
-            self.protocol.user.uid, self.passwd)
+        userdb.adduser(self.protocol.user.username, self.passwd)
 
         self.writeln('passwd: password updated successfully')
         self.exit()

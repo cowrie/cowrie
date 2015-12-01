@@ -7,16 +7,23 @@ import time
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
 
+from cowrie.core.passwd import Passwd
+
 commands = {}
 
 class command_ls(HoneyPotCommand):
+    """
+    """
 
     def uid2name(self, uid):
-        if uid == 0:
-            return 'root'
-        return uid
+        """
+        """
+        return Passwd(self.protocol.cfg).getpwuid(uid)["pw_name"]
+
 
     def gid2name(self, gid):
+        """
+        """
         if gid == 0:
             return 'root'
         return gid
