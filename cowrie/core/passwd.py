@@ -40,13 +40,14 @@ class Passwd(object):
     """
 
     def __init__(self, cfg):
-        self.passwd_file = '%s/etc/passwd' % cfg.get('honeypot', 'contents_path')
+        self.passwd_file = '%s/etc/passwd' % cfg.get('honeypot',
+            'contents_path')
         self.load()
 
 
     def load(self):
         """
-        load the passwd db
+        load /etc/passwd
         """
         self.passwd = []
         with open(self.passwd_file, 'r') as f:
@@ -90,8 +91,7 @@ class Passwd(object):
 #        with open(self.passwd_file, 'w') as f:
 #            for (login, uid, passwd) in self.userdb:
 #                f.write('%s:%d:%s\n' % (login, uid, passwd))
-
-        pass
+        raise NotImplementedError
 
     def getpwnam(self, name): 
         """
