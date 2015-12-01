@@ -18,7 +18,7 @@ class UserDB(object):
 
     def __init__(self, cfg):
         self.userdb = []
-        self.userdb_file = '%s/userdb.txt' % cfg.get('honeypot', 'data_path')
+        self.userdb_file = '%s/passwords.txt' % cfg.get('honeypot', 'data_path')
         self.load()
 
 
@@ -40,15 +40,9 @@ class UserDB(object):
                 if line.startswith('#'):
                     continue
 
-                (login, uid_str, passwd) = line.split(':', 2)
+                (login, passwd) = line.split(':', 2)
 
-                uid = 0
-                try:
-                    uid = int(uid_str)
-                except ValueError:
-                    uid = 1001
-
-                self.userdb.append((login, uid, passwd))
+                self.userdb.append((login, passwd))
 
 
     def save(self):
@@ -58,8 +52,8 @@ class UserDB(object):
 
         # Note: this is subject to races between cowrie instances, but hey ...
         with open(self.userdb_file, 'w') as f:
-            for (login, uid, passwd) in self.userdb:
-                f.write('%s:%d:%s\n' % (login, uid, passwd))
+            for (login, passwd) in self.userdb:
+                f.write('%s:%s\n' % (login, passwd))
 
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
@@ -69,7 +63,7 @@ class UserDB(object):
         it also knows wildcard '*' for any password
         prepend password with ! to explicitly deny it. Denials must come before wildcards
         """
-        for (login, uid, passwd) in self.userdb:
+        for (login, passwd) in self.userdb:
             # Explicitly fail on !password
             if login == thelogin and passwd == '!' + thepasswd:
                 return False
@@ -81,18 +75,18 @@ class UserDB(object):
     def user_password_exists(self, thelogin, thepasswd):
         """
         """
-        for (login, uid, passwd) in self.userdb:
+        for (login, passwd) in self.userdb:
             if login == thelogin and passwd == thepasswd:
                 return True
         return False
 
 
-    def adduser(self, login, uid, passwd):
+    def adduser(self, login, passwd):
         """
         """
         if self.user_password_exists(login, passwd):
             return
-        self.userdb.append((login, uid, passwd))
+        self.userdb.append((login, passwd))
         self.save()
 
 
