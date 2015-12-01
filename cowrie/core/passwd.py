@@ -27,7 +27,9 @@
 # SUCH DAMAGE.
 
 """
-This module contains ...
+This module contains code to handle the users and their properties in 
+/etc/passwd. Note that contrary to the name, it does not handle any
+passwords.
 """
 
 from twisted.python import log
