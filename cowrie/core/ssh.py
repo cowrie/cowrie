@@ -31,7 +31,7 @@ from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core import credentials
 from cowrie.core import auth
-from cowrie.core import passwd
+from cowrie.core import pwd
 from cowrie.core import connection
 from cowrie.core import honeypot
 from cowrie.core import protocol
@@ -531,7 +531,7 @@ class CowrieUser(avatar.ConchUser):
             {"session": HoneyPotSSHSession,
              "direct-tcpip": CowrieOpenConnectForwardingClient})
 
-        pwentry = passwd.Passwd(self.cfg).getpwnam(self.username)
+        pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
         self.uid = pwentry["pw_uid"]
         self.gid = pwentry["pw_gid"]
         self.home = pwentry["pw_dir"]

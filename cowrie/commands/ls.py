@@ -7,7 +7,7 @@ import time
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
 
-from cowrie.core.passwd import Passwd
+from cowrie.core.pwd import Passwd
 
 commands = {}
 
