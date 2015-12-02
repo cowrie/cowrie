@@ -1,4 +1,5 @@
-root:0:!root
-root:0:!123456
-root:0:*
-richard:0:*
+root:x:!root
+root:x:!123456
+root:x:*
+richard:x:*
+richard:x:fout
