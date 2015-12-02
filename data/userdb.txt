@@ -1,3 +1,4 @@
 root:0:!root
 root:0:!123456
 root:0:*
+richard:0:*

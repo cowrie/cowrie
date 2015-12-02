@@ -18,7 +18,7 @@ class UserDB(object):
 
     def __init__(self, cfg):
         self.userdb = []
-        self.userdb_file = '%s/passwords.txt' % cfg.get('honeypot', 'data_path')
+        self.userdb_file = '%s/userdb.txt' % cfg.get('honeypot', 'data_path')
         self.load()
 
 
@@ -40,7 +40,7 @@ class UserDB(object):
                 if line.startswith('#'):
                     continue
 
-                (login, passwd) = line.split(':', 2)
+                (login, uid, passwd) = line.split(':', 2)
 
                 self.userdb.append((login, passwd))
 
@@ -53,7 +53,7 @@ class UserDB(object):
         # Note: this is subject to races between cowrie instances, but hey ...
         with open(self.userdb_file, 'w') as f:
             for (login, passwd) in self.userdb:
-                f.write('%s:%s\n' % (login, passwd))
+                f.write('%s:x:%s\n' % (login, passwd))
 
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
