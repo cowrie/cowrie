@@ -27,9 +27,7 @@
 # SUCH DAMAGE.
 
 """
-This module contains code to handle the users and their properties in 
-/etc/passwd. Note that contrary to the name, it does not handle any
-passwords.
+This module contains ...
 """
 
 from twisted.python import log
@@ -37,6 +35,9 @@ from twisted.python import log
 
 class Passwd(object):
     """
+    This class contains code to handle the users and their properties in
+    /etc/passwd. Note that contrary to the name, it does not handle any
+    passwords.
     """
 
     def __init__(self, cfg):
@@ -93,7 +94,7 @@ class Passwd(object):
 #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-    def getpwnam(self, name): 
+    def getpwnam(self, name):
         """
         get passwd entry for username
         """
@@ -103,7 +104,7 @@ class Passwd(object):
         return None
 
 
-    def getpwuid(self, uid): 
+    def getpwuid(self, uid):
         """
         get passwd entry for uid
         """
@@ -112,5 +113,85 @@ class Passwd(object):
                 return _
         return None
 
+
+    def getgrgid(self, gid):
+        """
+        get group entry for uid
+        """
+
+
+
+class Group(object):
+    """
+    This class contains code to handle the groups and their properties in
+    /etc/group.
+    """
+
+    def __init__(self, cfg):
+        self.group_file = '%s/etc/group' % cfg.get('honeypot',
+            'contents_path')
+        self.load()
+
+
+    def load(self):
+        """
+        load /etc/group
+        """
+        self.group = []
+        with open(self.group_file, 'r') as f:
+            while True:
+                rawline = f.readline()
+                if not rawline:
+                    break
+
+                line = rawline.strip()
+                if not line:
+                    continue
+
+                if line.startswith('#'):
+                    continue
+
+                (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(':')
+
+                e = {}
+                e["gr_name"] = pw_name
+                try:
+                    e["gr_gid"] = int(gr_gid)
+                except ValueError:
+                    e["gr_gid"] = 1001
+                e["gr_mem"] = pw_dir
+
+                self.group.append(e)
+
+
+    def save(self):
+        """
+        save the group db
+        Note: this is subject to races between cowrie instances, but hey ...
+        """
+#        with open(self.group_file, 'w') as f:
+#            for (login, uid, passwd) in self.userdb:
+#                f.write('%s:%d:%s\n' % (login, uid, passwd))
+        raise NotImplementedError
+
+
+    def getgrnam(self, name):
+        """
+        get group entry for groupname
+        """
+        for _ in self.group:
+            if name == _["gr_name"]:
+                return _
+        raise KeyError
+
+
+    def getgrgid(self, uid):
+        """
+        get group entry for gid
+        """
+        for _ in self.group:
+            if uid == _["gr_gid"]:
+                return _
+        raise KeyError
 
 # vim: set sw=4 et:
