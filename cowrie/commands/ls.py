@@ -7,7 +7,7 @@ import time
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
 
-from cowrie.core.pwd import Passwd
+from cowrie.core.pwd import Passwd, Group
 
 commands = {}
 
@@ -18,17 +18,24 @@ class command_ls(HoneyPotCommand):
     def uid2name(self, uid):
         """
         """
-        return Passwd(self.protocol.cfg).getpwuid(uid)["pw_name"]
+	try:
+            return Passwd(self.protocol.cfg).getpwuid(uid)["pw_name"]
+	except:
+	    return str(uid)
 
 
     def gid2name(self, gid):
         """
         """
-        if gid == 0:
-            return 'root'
-        return gid
+        try:
+            return Group(self.protocol.cfg).getgrgid(gid)["gr_name"]
+        except:
+            return str(gid)
+
 
     def call(self):
+        """
+        """
         path = self.protocol.cwd
         paths = []
         if len(self.args):

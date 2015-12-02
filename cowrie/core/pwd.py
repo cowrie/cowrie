@@ -154,12 +154,12 @@ class Group(object):
                 (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(':')
 
                 e = {}
-                e["gr_name"] = pw_name
+                e["gr_name"] = gr_name
                 try:
                     e["gr_gid"] = int(gr_gid)
                 except ValueError:
                     e["gr_gid"] = 1001
-                e["gr_mem"] = pw_dir
+                e["gr_mem"] = gr_mem
 
                 self.group.append(e)
 
