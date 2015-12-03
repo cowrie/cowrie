@@ -93,6 +93,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def eofReceived(self):
         """
+        this should probably not go through ctrl-d, but use processprotocol to close stdin
         """
         log.msg("received eof, sending ctrl-d to command")
         if len(self.cmdstack):
