@@ -5,8 +5,11 @@ from cowrie.core.honeypot import HoneyPotCommand
 
 commands = {}
 
-'''sleep'''
 class command_sleep(HoneyPotCommand):
+    """
+    Sleep
+    """
+
     def done(self):
         self.exit()
 

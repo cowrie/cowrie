@@ -19,10 +19,12 @@ class command_faked_package_class_factory(object):
                 self.writeln("%s: Segmentation fault" % name)
         return command_faked_installation
 
-'''apt-get fake
-suppports only the 'install PACKAGE' command & 'moo'.
-Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
 class command_aptget(HoneyPotCommand):
+    """
+    apt-get fake
+    suppports only the 'install PACKAGE' command & 'moo'.
+    Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
+    """
     def start(self):
 	if len(self.args) == 0:
 	    self.do_help()
