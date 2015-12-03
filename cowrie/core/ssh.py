@@ -170,7 +170,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 response, packet = getNS(packet)
                 resp.append((response, 0))
             if packet:
-                raise error.ConchError("%i bytes of extra data" % (len(packet),))
+                raise error.ConchError("{:d} bytes of extra data".format(len(packet)))
         except:
             d.errback(failure.Failure())
         else:
@@ -226,15 +226,14 @@ class HoneyPotSSHFactory(factory.SSHFactory):
                 continue
             engine = x.split('_')[1]
             try:
-                dblogger = __import__(
-                    'cowrie.dblog.%s' % (engine,),
+                dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
                     globals(), locals(), ['dblog']).DBLogger(self.cfg)
                 log.addObserver(dblogger.emit)
                 self.dbloggers.append(dblogger)
-                log.msg("Loaded dblog engine: %s" % (engine,))
+                log.msg("Loaded dblog engine: {}".format(engine))
             except:
                 log.err()
-                log.msg("Failed to load dblog engine: %s" % (engine,))
+                log.msg("Failed to load dblog engine: {}".format(engine))
 
         # Load output modules
         self.output_plugins = []
@@ -243,15 +242,15 @@ class HoneyPotSSHFactory(factory.SSHFactory):
                 continue
             engine = x.split('_')[1]
             try:
-                output = __import__(
-                    'cowrie.output.%s' % (engine,)
-                    ,globals(), locals(), ['output']).Output(self.cfg)
+                output = __import__( 'cowrie.output.{}'.format(engine),
+                    globals(), locals(), ['output']).Output(self.cfg)
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
-                log.msg('Loaded output plugin: %s' % (engine,))
+                log.msg("Loaded output engine: {}".format(engine))
             except:
                 log.err()
-                log.msg('Failed to load output plugin: %s' % (engine,))
+                log.msg("Failed to load output engine: {}".format(engine))
+
 
         factory.SSHFactory.startFactory(self)
 
@@ -325,7 +324,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            id=self.transportId, sessionno=self.transport.sessionno)
 
-        self.transport.write('%s\r\n' % (self.ourVersionString,))
+        self.transport.write('{}\r\n'.format(self.ourVersionString))
         self.currentEncryptions = transport.SSHCiphers('none', 'none', 'none', 'none')
         self.currentEncryptions.setKeys('', '', '', '', '', '')
         self.setTimeout(120)
@@ -547,9 +546,7 @@ class CowrieUser(avatar.ConchUser):
     def logout(self):
         """
         """
-        log.msg(
-            'avatar %s logging out'
-            % (self.username,))
+        log.msg('avatar {} logging out'.format(self.username))
 
 
 
