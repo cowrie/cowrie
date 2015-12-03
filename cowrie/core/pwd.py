@@ -41,14 +41,14 @@ class Passwd(object):
     """
 
     def __init__(self, cfg):
-        self.passwd_file = '%s/etc/passwd' % cfg.get('honeypot',
-            'contents_path')
+        self.passwd_file = '%s/etc/passwd' % (cfg.get('honeypot',
+            'contents_path'),)
         self.load()
 
 
     def load(self):
         """
-        load /etc/passwd
+        Load /etc/passwd
         """
         self.passwd = []
         with open(self.passwd_file, 'r') as f:
@@ -64,7 +64,8 @@ class Passwd(object):
                 if line.startswith('#'):
                     continue
 
-                (pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir, pw_shell) = line.split(':')
+                (pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir,
+                    pw_shell) = line.split(':')
 
                 e = {}
                 e["pw_name"] = pw_name
@@ -86,7 +87,7 @@ class Passwd(object):
 
     def save(self):
         """
-        save the user db
+        Save the user db
         Note: this is subject to races between cowrie instances, but hey ...
         """
 #        with open(self.passwd_file, 'w') as f:
@@ -94,9 +95,10 @@ class Passwd(object):
 #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
+
     def getpwnam(self, name):
         """
-        get passwd entry for username
+        Get passwd entry for username
         """
         for _ in self.passwd:
             if name == _["pw_name"]:
@@ -106,18 +108,12 @@ class Passwd(object):
 
     def getpwuid(self, uid):
         """
-        get passwd entry for uid
+        Get passwd entry for uid
         """
         for _ in self.passwd:
             if uid == _["pw_uid"]:
                 return _
         return None
-
-
-    def getgrgid(self, gid):
-        """
-        get group entry for uid
-        """
 
 
 
@@ -128,14 +124,14 @@ class Group(object):
     """
 
     def __init__(self, cfg):
-        self.group_file = '%s/etc/group' % cfg.get('honeypot',
-            'contents_path')
+        self.group_file = '%s/etc/group' % (cfg.get('honeypot',
+            'contents_path'),)
         self.load()
 
 
     def load(self):
         """
-        load /etc/group
+        Load /etc/group
         """
         self.group = []
         with open(self.group_file, 'r') as f:
@@ -166,7 +162,7 @@ class Group(object):
 
     def save(self):
         """
-        save the group db
+        Save the group db
         Note: this is subject to races between cowrie instances, but hey ...
         """
 #        with open(self.group_file, 'w') as f:
@@ -177,7 +173,7 @@ class Group(object):
 
     def getgrnam(self, name):
         """
-        get group entry for groupname
+        Get group entry for groupname
         """
         for _ in self.group:
             if name == _["gr_name"]:
@@ -187,7 +183,7 @@ class Group(object):
 
     def getgrgid(self, uid):
         """
-        get group entry for gid
+        Get group entry for gid
         """
         for _ in self.group:
             if uid == _["gr_gid"]:
