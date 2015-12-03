@@ -6,6 +6,8 @@ This module contains ...
 """
 
 def durationHuman(seconds):
+    """
+    """
     seconds = long(round(seconds))
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
@@ -33,9 +35,13 @@ def durationHuman(seconds):
 
     return ''.join(duration)
 
-# From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
+
+
 def tail(the_file, lines_2find=20):
-    the_file.seek(0, 2)                         #go to end of file
+    """
+    From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
+    """
+    the_file.seek(0, 2)
     bytes_in_file = the_file.tell()
     lines_found, total_bytes_scanned = 0, 0
     while lines_2find+1 > lines_found and bytes_in_file > total_bytes_scanned:
@@ -46,13 +52,17 @@ def tail(the_file, lines_2find=20):
     the_file.seek(-total_bytes_scanned, 2)
     line_list = list(the_file.readlines())
     return line_list[-lines_2find:]
-    #we read at least 21 line breaks from the bottom, block by block for speed
-    #21 to ensure we don't get a half line
+    # We read at least 21 line breaks from the bottom, block by block for speed
+    # 21 to ensure we don't get a half line
 
-# Gives a human-readable uptime string
-# Thanks to http://thesmithfam.org/blog/2005/11/19/python-uptime-script/
-# (modified to look like the real uptime command)
+
+
 def uptime(total_seconds):
+    """
+    Gives a human-readable uptime string
+    Thanks to http://thesmithfam.org/blog/2005/11/19/python-uptime-script/
+    (modified to look like the real uptime command)
+    """
     total_seconds = float(total_seconds)
 
     # Helper vars:
@@ -76,5 +86,6 @@ def uptime(total_seconds):
     else:
         s += '%s min' % (str(minutes))
     return s
+
 
 # vim: set sw=4 et:
