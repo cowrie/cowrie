@@ -13,13 +13,17 @@ from twisted.conch import telnet, recvline
 from cowrie.core import ttylog
 
 class Interact(telnet.Telnet):
+    """
+    """
 
     def connectionMade(self):
+        """
+        """
         self.interacting = None
         self.cmdbuf = ''
         self.honeypotFactory = self.factory.honeypotFactory
 
-        # someone tell me if i'm doing this wrong?
+        # Someone tell me if i'm doing this wrong?
         d = self.do(telnet.LINEMODE)
         self.requestNegotiation(telnet.LINEMODE, telnet.LINEMODE_EDIT + '\0')
         self.will(telnet.ECHO)
@@ -27,18 +31,30 @@ class Interact(telnet.Telnet):
         self.transport.write('*** cowrie session management console ***\r\n')
         self.cmd_help()
 
+
     def connectionLost(self, reason):
+        """
+        """
         if self.interacting != None:
             self.interacting.delInteractor(self)
 
+
     def enableRemote(self, option):
+        """
+        """
         return option == telnet.LINEMODE
 
+
     def disableRemote(self, option):
+        """
+        """
         pass
 
+
     def applicationDataReceived(self, bytes):
-        # in command mode, we want to echo characters and buffer the input
+        """
+        """
+        # In command mode, we want to echo characters and buffer the input
         if not self.interacting:
             self.transport.write(bytes)
             if bytes in ('\r', '\n'):
@@ -57,7 +73,7 @@ class Interact(telnet.Telnet):
             else:
                 self.cmdbuf += bytes
 
-        # in non-command mode we are passing input to the session we are
+        # In non-command mode we are passing input to the session we are
         # watching
         else:
             for c in bytes:
@@ -76,7 +92,10 @@ class Interact(telnet.Telnet):
                     recvline.HistoricRecvLine.keystrokeReceived(
                         self.interacting, c, None)
 
+
     def sessionWrite(self, data):
+        """
+        """
         buf, prev = '', ''
         for c in data:
             if c == '\n' and prev != '\r':
@@ -86,16 +105,25 @@ class Interact(telnet.Telnet):
             prev = c
         self.transport.write(buf)
 
+
     def sessionClosed(self):
+        """
+        """
         self.interacting.delInteractor(self)
         self.interacting = None
         self.transport.write('\r\n** Interactive session disconnected.\r\n')
 
+
     def cmd_hijack(self, args):
+        """
+        """
         self.cmd_view(args)
         self.readonly = False
 
+
     def cmd_view(self, args):
+        """
+        """
         self.readonly = True
         try:
             sessionno = int(args)
@@ -108,14 +136,20 @@ class Interact(telnet.Telnet):
                 return
         self.transport.write('** No such session found.\r\n')
 
+
     def view(self, sessionno):
+        """
+        """
         session = self.honeypotFactory.sessions[sessionno]
         self.transport.write(
-            '** Attaching to #%d, hit ESC to return\r\n' % sessionno)
+            '** Attaching to #%d, hit ESC to return\r\n' % (sessionno,))
         session.addInteractor(self)
         self.interacting = session
 
+
     def cmd_list(self, args):
+        """
+        """
         self.transport.write('ID   clientIP        clientVersion\r\n')
         for s in self.honeypotFactory.sessions:
             session = self.honeypotFactory.sessions[s]
@@ -124,7 +158,10 @@ class Interact(telnet.Telnet):
                 session.realClientIP.ljust(15),
                 session.clientVersion))
 
+
     def cmd_help(self, args=''):
+        """
+        """
         self.transport.write('List of commands:\r\n')
         self.transport.write(' list       - list all active sessions\r\n')
         self.transport.write(
@@ -136,7 +173,10 @@ class Interact(telnet.Telnet):
         self.transport.write(' help       - this help\r\n')
         self.transport.write(' exit       - disconnect the console\r\n')
 
+
     def cmd_disconnect(self, args):
+        """
+        """
         try:
             sessionno = int(args)
         except ValueError:
@@ -145,15 +185,22 @@ class Interact(telnet.Telnet):
         for s in self.honeypotFactory.sessions:
             if sessionno == s:
                 self.transport.write(
-                    '** Disconnecting session #%d\r\n' % sessionno)
+                    '** Disconnecting session #%d\r\n' % (sessionno,))
                 self.honeypotFactory.sessions[s].terminal.loseConnection()
                 return
         self.transport.write('** No such session found.\r\n')
 
+
     def cmd_exit(self, args=''):
+        """
+        """
         self.transport.loseConnection()
 
+
+
 def makeInteractFactory(honeypotFactory):
+    """
+    """
     ifactory = protocol.Factory()
     ifactory.protocol = Interact
     ifactory.honeypotFactory = honeypotFactory
