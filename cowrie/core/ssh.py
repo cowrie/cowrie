@@ -470,14 +470,14 @@ class HoneyPotSSHSession(session.SSHSession):
     def request_agent(self, data):
         """
         """
-        log.msg('request_agent: %s' % repr(data))
+        log.msg('request_agent: %s' % (repr(data),))
         return 0
 
 
     def request_x11_req(self, data):
         """
         """
-        log.msg('request_x11: %s' % repr(data))
+        log.msg('request_x11: %s' % (repr(data),))
         return 0
 
 
@@ -632,6 +632,8 @@ class SSHSessionForCowrieUser:
 
 
 def getRSAKeys(cfg):
+    """
+    """
     publicKeyFile = cfg.get('honeypot', 'rsa_public_key')
     privateKeyFile = cfg.get('honeypot', 'rsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
@@ -656,6 +658,8 @@ def getRSAKeys(cfg):
 
 
 def getDSAKeys(cfg):
+    """
+    """
     publicKeyFile = cfg.get('honeypot', 'dsa_public_key')
     privateKeyFile = cfg.get('honeypot', 'dsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
@@ -852,14 +856,14 @@ class SFTPServerForCowrieUser:
     def openFile(self, filename, flags, attrs):
         """
         """
-        log.msg("SFTP openFile: %s" % filename)
+        log.msg("SFTP openFile: %s" % (filename,))
         return CowrieSFTPFile(self, self._absPath(filename), flags, attrs)
 
 
     def removeFile(self, filename):
         """
         """
-        log.msg("SFTP removeFile: %s" % filename)
+        log.msg("SFTP removeFile: %s" % (filename,))
         return self.fs.remove(self._absPath(filename))
 
 
@@ -873,7 +877,7 @@ class SFTPServerForCowrieUser:
     def makeDirectory(self, path, attrs):
         """
         """
-        log.msg("SFTP makeDirectory: %s" % path)
+        log.msg("SFTP makeDirectory: %s" % (path,))
         path = self._absPath(path)
         self.fs.mkdir2(path)
         self._setAttrs(path, attrs)
@@ -883,21 +887,21 @@ class SFTPServerForCowrieUser:
     def removeDirectory(self, path):
         """
         """
-        log.msg("SFTP removeDirectory: %s" % path)
+        log.msg("SFTP removeDirectory: %s" % (path,))
         return self.fs.rmdir(self._absPath(path))
 
 
     def openDirectory(self, path):
         """
         """
-        log.msg("SFTP OpenDirectory: %s" % path)
+        log.msg("SFTP OpenDirectory: %s" % (path,))
         return CowrieSFTPDirectory(self, self._absPath(path))
 
 
     def getAttrs(self, path, followLinks):
         """
         """
-        log.msg("SFTP getAttrs: %s" % path)
+        log.msg("SFTP getAttrs: %s" % (path,))
         path = self._absPath(path)
         if followLinks:
             s = self.fs.stat(path)
@@ -909,7 +913,7 @@ class SFTPServerForCowrieUser:
     def setAttrs(self, path, attrs):
         """
         """
-        log.msg("SFTP setAttrs: %s" % path)
+        log.msg("SFTP setAttrs: %s" % (path,))
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
@@ -917,7 +921,7 @@ class SFTPServerForCowrieUser:
     def readLink(self, path):
         """
         """
-        log.msg("SFTP readLink: %s" % path)
+        log.msg("SFTP readLink: %s" % (path,))
         path = self._absPath(path)
         return self.fs.readlink(path)
 
@@ -925,7 +929,7 @@ class SFTPServerForCowrieUser:
     def makeLink(self, linkPath, targetPath):
         """
         """
-        log.msg("SFTP makeLink: %s" % path)
+        log.msg("SFTP makeLink: %s %s" % (linkPath, targetPath))
         linkPath = self._absPath(linkPath)
         targetPath = self._absPath(targetPath)
         return self.fs.symlink(targetPath, linkPath)
@@ -934,7 +938,7 @@ class SFTPServerForCowrieUser:
     def realPath(self, path):
         """
         """
-        log.msg("SFTP realPath: %s" % path)
+        log.msg("SFTP realPath: %s" % (path,))
         return self.fs.realpath(self._absPath(path))
 
 
@@ -950,6 +954,8 @@ components.registerAdapter(SSHSessionForCowrieUser, CowrieUser, session.ISession
 
 
 def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
+    """
+    """
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
     log.msg(eventid='KIPP0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
             dst_ip=remoteHP[0], dst_port=remoteHP[1])
