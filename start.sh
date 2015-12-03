@@ -25,4 +25,4 @@ then
 fi
 
 echo "Starting cowrie in the background..."
-twistd -l log/cowrie.log --pidfile cowrie.pid cowrie
+twistd --spew -l log/cowrie.log --pidfile cowrie.pid cowrie
