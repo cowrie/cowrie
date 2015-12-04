@@ -26,10 +26,10 @@ class command_aptget(HoneyPotCommand):
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
     def start(self):
-	if len(self.args) == 0:
-	    self.do_help()
-	elif len(self.args) > 0 and self.args[0] == '-v':
-	    self.do_version()
+        if len(self.args) == 0:
+            self.do_help()
+        elif len(self.args) > 0 and self.args[0] == '-v':
+            self.do_version()
         elif len(self.args) > 0 and self.args[0] == 'install':
             self.do_install()
         elif len(self.args) > 0 and self.args[0] == 'moo':
@@ -45,7 +45,7 @@ class command_aptget(HoneyPotCommand):
         return d
 
     def do_version(self):
-	self.writeln("""apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+    self.writeln("""apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Supported modules:
 *Ver: Standard .deb
 *Pkg:  Debian dpkg interface (Priority 30)
@@ -61,7 +61,7 @@ Supported modules:
         return
 
     def do_help(self):
-	self.writeln("""apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+    self.writeln("""apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Usage: apt-get [options] command
        apt-get [options] install|remove pkg1 [pkg2 ...]
        apt-get [options] source pkg1 [pkg2 ...]

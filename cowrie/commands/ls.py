@@ -18,10 +18,10 @@ class command_ls(HoneyPotCommand):
     def uid2name(self, uid):
         """
         """
-	try:
+        try:
             return Passwd(self.protocol.cfg).getpwuid(uid)["pw_name"]
-	except:
-	    return str(uid)
+        except:
+            return str(uid)
 
 
     def gid2name(self, gid):
