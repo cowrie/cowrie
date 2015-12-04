@@ -1,9 +1,15 @@
 
+* 2015-12-04 New 'free' command with '-h' and '-m' options
+* 2015-12-03 New 'env' command that prints environment variables
+* 2015-02-02 Now use honeyfs/etc/passwd and group to get uid/gid info
+* 2015-11-29 Size limit now enforced for SFTP uploads
+* 2015-11-25 New 'sudo' command added
 * 2015-11-19 Queued input during commands is now sent to shell to be executed
              when command is finished
 * 2015-11-18 Added SANS DShield output (Thanks @UnrealAkama)
 * 2015-11-17 Added ElasticSearch output (Thanks @UnrealAkama)
 * 2015-11-17 Standard input is now saved with SHA256 checksum. Duplicate data is not saved
+* 2015-11-12 New 'busybox' command added (Thanks @mak)
 * 2015-09-26 keyboard-interactive is back as authentication method, after
              Twisted removed support initially
 * 2015-07-30 Local syslog output module
