@@ -10,6 +10,7 @@ __all__ = [
     'dice',
     'env',
     'ethtool',
+    'free',
     'fs',
     'gcc',
     'ifconfig',
