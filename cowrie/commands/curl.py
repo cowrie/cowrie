@@ -234,8 +234,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                     (self.curl.url,))
                 self.fileName = os.path.devnull
                 self.nomore = True
-            #self.curl.writeln('Saving to: `%s' % self.fakeoutfile)
-            #self.curl.protocol.terminal.nextLine()
 
             if self.fakeoutfile:
                 self.curl.writeln('  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current')
@@ -293,10 +291,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         #    self.fakeoutfile, self.currentlength, self.totallength))
 
         if self.fakeoutfile:
-            self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
+            self.curl.writeln("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
                 (self.currentlength, self.currentlength  , 63673, 65181)
             )
-            self.curl.protocol.terminal.nextLine()
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
             self.curl.fs.update_realfile(
