@@ -463,6 +463,9 @@ class HoneyPotSSHSession(session.SSHSession):
             raise ValueError("Bad data given in env request")
         log.msg(eventid='KIPP0013', format='request_env: %(name)s=%(value)s',
             name=name, value=value)
+        # Environment variables come after shell or before exec command
+	if self.session:
+            self.session.environ[name] = value
         return 0
 
 
