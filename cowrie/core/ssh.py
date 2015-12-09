@@ -501,13 +501,6 @@ class HoneyPotSSHSession(session.SSHSession):
         self.conn.sendClose(self)
 
 
-    def loseConnection(self):
-        """
-        """
-        self.conn.sendRequest(self, 'exit-status', "\x00"*4)
-        session.SSHSession.loseConnection(self)
-
-
     def channelClosed(self):
         """
         """
@@ -576,13 +569,14 @@ class SSHSessionForCowrieUser:
             'HOME': self.avatar.home}
 
 
-    def openShell(self, proto):
+    def openShell(self, processprotocol):
         """
         """
+	log.msg( "openshell: %s" % (repr(processprotocol),) )
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
-        self.protocol.makeConnection(proto)
-        proto.makeConnection(session.wrapProtocol(self.protocol))
+        self.protocol.makeConnection(processprotocol)
+        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
 
     def getPty(self, terminal, windowSize, attrs):
@@ -595,13 +589,13 @@ class SSHSessionForCowrieUser:
         return None
 
 
-    def execCommand(self, proto, cmd):
+    def execCommand(self, processprotocol, cmd):
         """
         """
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
-        self.protocol.makeConnection(proto)
-        proto.makeConnection(session.wrapProtocol(self.protocol))
+        self.protocol.makeConnection(processprotocol)
+        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
 
     def closed(self):
