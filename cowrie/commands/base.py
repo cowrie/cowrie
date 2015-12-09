@@ -6,8 +6,8 @@ import datetime
 import functools
 import getopt
 
-from twisted.internet import reactor
-from twisted.python import log
+from twisted.python import failure, log
+from twisted.internet import error, reactor
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.auth import UserDB
@@ -160,7 +160,8 @@ class command_exit(HoneyPotCommand):
     def call(self):
         """
         """
-        self.protocol.terminal.loseConnection()
+        stat = failure.Failure(error.ProcessDone(status=""))
+        self.protocol.terminal.transport.processEnded(stat)
         return
 
 
@@ -207,7 +208,7 @@ class command_ps(HoneyPotCommand):
         if len(self.args):
             args = self.args[0].strip()
         _user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, \
-            _start, _time, _command = range(11)
+            _start, _time, _command = list(range(11))
         output = (
             ('USER      ', ' PID', ' %CPU', ' %MEM', '    VSZ', '   RSS', ' TTY      ', 'STAT ', 'START', '   TIME ', 'COMMAND',),
             ('root      ', '   1', '  0.0', '  0.1', '   2100', '   688', ' ?        ', 'Ss   ', 'Nov06', '   0:07 ', 'init [2]  ',),
