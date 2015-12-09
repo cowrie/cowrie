@@ -579,7 +579,7 @@ class SSHSessionForCowrieUser:
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
         self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProcessProtocol(self.protocol))
+        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
 
     def getPty(self, terminal, windowSize, attrs):
@@ -598,7 +598,7 @@ class SSHSessionForCowrieUser:
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
         self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProcessProtocol(self.protocol))
+        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
 
     def closed(self):
