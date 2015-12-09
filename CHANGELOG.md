@@ -1,4 +1,6 @@
 
+* 2015-12-06 UID information is now retrieved from honeyfs/etc/passwd. If you added additional users
+             you will need to add these to the passwd file as well
 * 2015-11-19 Queued input during commands is now sent to shell to be executed
              when command is finished
 * 2015-11-18 Added SANS DShield output (Thanks @UnrealAkama)
