@@ -451,7 +451,7 @@ class HoneyPotSSHSession(session.SSHSession):
 
     def __init__(self, *args, **kw):
         session.SSHSession.__init__(self, *args, **kw)
-        self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
+        #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
 
     def request_env(self, data):
@@ -579,7 +579,7 @@ class SSHSessionForCowrieUser:
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
         self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
+        processprotocol.makeConnection(session.wrapProcessProtocol(self.protocol))
 
 
     def getPty(self, terminal, windowSize, attrs):
@@ -598,7 +598,7 @@ class SSHSessionForCowrieUser:
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
         self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
+        processprotocol.makeConnection(session.wrapProcessProtocol(self.protocol))
 
 
     def closed(self):
