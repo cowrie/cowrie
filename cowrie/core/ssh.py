@@ -7,7 +7,6 @@ This module contains ...
 
 import os
 import time
-import struct
 import uuid
 
 from zope.interface import implementer
@@ -15,7 +14,6 @@ from zope.interface import implementer
 import twisted
 from twisted.conch import avatar, interfaces as conchinterfaces
 from twisted.conch.ssh import factory
-from twisted.conch.ssh import userauth
 from twisted.conch.ssh import keys
 from twisted.conch.ssh import session
 from twisted.conch.ssh import transport
@@ -36,146 +34,7 @@ from cowrie.core import connection
 from cowrie.core import honeypot
 from cowrie.core import protocol
 from cowrie.core import server
-
-
-class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
-    """
-    """
-
-    def serviceStarted(self):
-        """
-        """
-        self.interfaceToMethod[credentials.IUsername] = 'none'
-        self.interfaceToMethod[credentials.IUsernamePasswordIP] = 'password'
-        self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = 'keyboard-interactive'
-        userauth.SSHUserAuthServer.serviceStarted(self)
-        self.bannerSent = False
-        self._pamDeferred = None
-
-
-    def sendBanner(self):
-        """
-        """
-        if self.bannerSent:
-            return
-        self.bannerSent = True
-        try:
-            honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
-            issuefile = honeyfs + "/etc/issue.net"
-            data = file(issuefile).read()
-        except IOError:
-            return
-        if not data or not len(data.strip()):
-            return
-        self.transport.sendPacket(
-            userauth.MSG_USERAUTH_BANNER, NS(data) + NS('en'))
-
-
-    def ssh_USERAUTH_REQUEST(self, packet):
-        """
-        """
-        self.sendBanner()
-        return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
-
-
-    def auth_none(self, packet):
-        """
-        """
-        c = credentials.Username(self.user)
-        src_ip = self.transport.transport.getPeer().host
-        return self.portal.login(c, src_ip, conchinterfaces.IConchUser)
-
-
-    def auth_password(self, packet):
-        """
-        Overridden to pass src_ip to credentials.UsernamePasswordIP
-        """
-        password = getNS(packet[1:])[0]
-        src_ip = self.transport.transport.getPeer().host
-        c = credentials.UsernamePasswordIP(self.user, password, src_ip)
-        return self.portal.login(c, src_ip,
-            conchinterfaces.IConchUser).addErrback(self._ebPassword)
-
-
-    def auth_keyboard_interactive(self, packet):
-        """
-        Keyboard interactive authentication.  No payload.  We create a
-        PluggableAuthenticationModules credential and authenticate with our
-        portal.
-
-        Overridden to pass src_ip to credentials.PluggableAuthenticationModulesIP
-        """
-        if self._pamDeferred is not None:
-            self.transport.sendDisconnect(
-                    transport.DISCONNECT_PROTOCOL_ERROR,
-                    "only one keyboard interactive attempt at a time")
-            return defer.fail(error.IgnoreAuthentication())
-        src_ip = self.transport.transport.getPeer().host
-        c = credentials.PluggableAuthenticationModulesIP(self.user,
-            self._pamConv, src_ip)
-        return self.portal.login(c, src_ip,
-            conchinterfaces.IConchUser).addErrback(self._ebPassword)
-
-
-    def _pamConv(self, items):
-        """
-        Convert a list of PAM authentication questions into a
-        MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
-        back when the user has responses to the questions.
-
-        @param items: a list of 2-tuples (message, kind).  We only care about
-            kinds 1 (password) and 2 (text).
-        @type items: C{list}
-        @rtype: L{defer.Deferred}
-        """
-        resp = []
-        for message, kind in items:
-            if kind == 1: # Password
-                resp.append((message, 0))
-            elif kind == 2: # Text
-                resp.append((message, 1))
-            elif kind in (3, 4):
-                return defer.fail(error.ConchError(
-                    'cannot handle PAM 3 or 4 messages'))
-            else:
-                return defer.fail(error.ConchError(
-                    'bad PAM auth kind %i' % (kind,)))
-        packet = NS('') + NS('') + NS('')
-        packet += struct.pack('>L', len(resp))
-        for prompt, echo in resp:
-            packet += NS(prompt)
-            packet += chr(echo)
-        self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
-        self._pamDeferred = defer.Deferred()
-        return self._pamDeferred
-
-
-    def ssh_USERAUTH_INFO_RESPONSE(self, packet):
-        """
-        The user has responded with answers to PAMs authentication questions.
-        Parse the packet into a PAM response and callback self._pamDeferred.
-        Payload::
-            uint32 numer of responses
-            string response 1
-            ...
-            string response n
-        """
-        d, self._pamDeferred = self._pamDeferred, None
-
-        try:
-            resp = []
-            numResps = struct.unpack('>L', packet[:4])[0]
-            packet = packet[4:]
-            while len(resp) < numResps:
-                response, packet = getNS(packet)
-                resp.append((response, 0))
-            if packet:
-                raise error.ConchError("{:d} bytes of extra data".format(len(packet)))
-        except:
-            d.errback(failure.Failure())
-        else:
-            d.callback(resp)
-
+from cowrie.core import userauth
 
 
 class HoneyPotSSHFactory(factory.SSHFactory):
@@ -183,7 +42,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
     """
 
     services = {
-        'ssh-userauth': HoneyPotSSHUserAuthServer,
+        'ssh-userauth': userauth.HoneyPotSSHUserAuthServer,
         'ssh-connection': connection.CowrieSSHConnection,
         }
 
@@ -461,7 +320,7 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg(eventid='KIPP0013', format='request_env: %(name)s=%(value)s',
             name=name, value=value)
         # Environment variables come after shell or before exec command
-	if self.session:
+        if self.session:
             self.session.environ[name] = value
         return 0
 
@@ -572,7 +431,6 @@ class SSHSessionForCowrieUser:
     def openShell(self, processprotocol):
         """
         """
-	log.msg( "openshell: %s" % (repr(processprotocol),) )
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
         self.protocol.makeConnection(processprotocol)
