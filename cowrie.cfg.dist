@@ -238,13 +238,13 @@ logfile = log/cowrie.json
 
 # Send login attemp information to SANS DShield
 # See https://isc.sans.edu/ssh.html
-# You must signup for an api key. 
+# You must signup for an api key.
 # Once registered, find your details at: https://isc.sans.edu/myaccount.html
 #
 #[output_dshield]
-#userid = userid_here 
-#auth_key = auth_key_here 
-#batch_size = 100 
+#userid = userid_here
+#auth_key = auth_key_here
+#batch_size = 100
 
 
 # Local Syslog output module
@@ -258,7 +258,6 @@ logfile = log/cowrie.json
 
 
 # MySQL logging module (output)
-# Identical functionality as [database_mysql] but with different internals
 # Database structure for this module is supplied in doc/sql/mysql.sql
 #
 #[output_mysql]
