@@ -98,8 +98,8 @@ Sudoers I/O plugin version 1.8.5p2''')
                 self.protocol.call_command(cmdclass, *args)
                 self.exit()
             else:
-                self.short_help() 
+                self.short_help()
         else:
-            self.short_help() 
+            self.short_help()
 
 commands['sudo'] = command_sudo

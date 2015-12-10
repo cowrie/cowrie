@@ -3,7 +3,7 @@
 import os
 import json
 
-import pyes 
+import pyes
 
 import cowrie.core.output
 
