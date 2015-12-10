@@ -36,7 +36,7 @@ class Interact(telnet.Telnet):
         """
         """
         if self.interacting != None:
-            self.interacting.delInteractor(self)
+            self.interacting.terminal.delInteractor(self)
 
 
     def enableRemote(self, option):
@@ -78,7 +78,7 @@ class Interact(telnet.Telnet):
         else:
             for c in bytes:
                 if ord(c) == 27: # escape
-                    self.interacting.delInteractor(self)
+                    self.interacting.terminal.delInteractor(self)
                     self.interacting = None
                     self.transport.write(
                         '\r\n** Interactive session closed.\r\n')
@@ -109,7 +109,7 @@ class Interact(telnet.Telnet):
     def sessionClosed(self):
         """
         """
-        self.interacting.delInteractor(self)
+        self.interacting.terminal.delInteractor(self)
         self.interacting = None
         self.transport.write('\r\n** Interactive session disconnected.\r\n')
 
@@ -143,7 +143,7 @@ class Interact(telnet.Telnet):
         session = self.honeypotFactory.sessions[sessionno]
         self.transport.write(
             '** Attaching to #%d, hit ESC to return\r\n' % (sessionno,))
-        session.addInteractor(self)
+        session.terminal.addInteractor(self)
         self.interacting = session
 
 

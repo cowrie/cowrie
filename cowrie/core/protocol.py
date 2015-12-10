@@ -253,18 +253,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             })
 
 
-    def addInteractor(self, interactor):
-        """
-        """
-        self.terminal.interactors.append(interactor)
-
-
-    def delInteractor(self, interactor):
-        """
-        """
-        self.terminal.interactors.remove(interactor)
-
-
     def displayMOTD(self):
         """
         """
@@ -456,6 +444,18 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
+
+
+    def addInteractor(self, interactor):
+        """
+        """
+        self.interactors.append(interactor)
+
+
+    def delInteractor(self, interactor):
+        """
+        """
+        self.interactors.remove(interactor)
 
 
     def loseConnection(self):
