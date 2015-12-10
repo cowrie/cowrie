@@ -86,7 +86,7 @@ class Interact(telnet.Telnet):
             if not self.readonly:
                 if type(bytes) == type(''):
                     ttylog.ttylog_write(
-                        self.interacting.terminal.transport.session.conn.transport.ttylog_file,
+                        self.interacting.terminal.ttylog_file,
                         len(bytes), ttylog.TYPE_INTERACT, time.time(), bytes)
                 for c in bytes:
                     recvline.HistoricRecvLine.keystrokeReceived(

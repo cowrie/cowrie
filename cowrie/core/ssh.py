@@ -316,7 +316,6 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         We send our version, but wait with sending KEXINIT
         """
         self.transportId = uuid.uuid4().hex[:8]
-        self.interactors = []
 
         log.msg(eventid='KIPP0001',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
@@ -414,8 +413,6 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         This seems to be the only reliable place of catching lost connection
         """
         self.setTimeout(None)
-        for i in self.interactors:
-            i.sessionClosed()
         if self.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.sessionno]
         transport.SSHServerTransport.connectionLost(self, reason)
