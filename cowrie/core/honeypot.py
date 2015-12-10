@@ -10,7 +10,9 @@ import shlex
 import re
 import copy
 
-from twisted.python import log
+from twisted.python import log, failure
+
+from twisted.internet import error
 
 from cowrie.core import fs
 
@@ -122,13 +124,15 @@ class HoneyPotShell(object):
             elif self.interactive:
                 self.showPrompt()
             else:
-                self.protocol.terminal.transport.session.loseConnection()
+                ret = failure.Failure(error.ProcessDone(status=""))
+                self.protocol.terminal.transport.processEnded(ret)
 
         if not len(self.cmdpending):
             if self.interactive:
                 self.showPrompt()
             else:
-                self.protocol.terminal.transport.session.loseConnection()
+                ret = failure.Failure(error.ProcessDone(status=""))
+                self.protocol.terminal.transport.processEnded(ret)
             return
 
         line = self.cmdpending.pop(0)

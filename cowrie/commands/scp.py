@@ -46,16 +46,16 @@ class command_scp(HoneyPotCommand):
             self.help()
             self.exit()
             return
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
-        self.protocol.terminal.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
+        self.write( '\x00' )
 
     def lineReceived(self, line):
         log.msg( eventid='KIPP0008', realm='scp', input=line,

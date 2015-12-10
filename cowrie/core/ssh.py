@@ -451,7 +451,7 @@ class HoneyPotSSHSession(session.SSHSession):
 
     def __init__(self, *args, **kw):
         session.SSHSession.__init__(self, *args, **kw)
-        self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
+        #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
 
     def request_env(self, data):
@@ -463,6 +463,9 @@ class HoneyPotSSHSession(session.SSHSession):
             raise ValueError("Bad data given in env request")
         log.msg(eventid='KIPP0013', format='request_env: %(name)s=%(value)s',
             name=name, value=value)
+        # Environment variables come after shell or before exec command
+	if self.session:
+            self.session.environ[name] = value
         return 0
 
 
@@ -499,13 +502,6 @@ class HoneyPotSSHSession(session.SSHSession):
         Utility function to request to send close for this session
         """
         self.conn.sendClose(self)
-
-
-    def loseConnection(self):
-        """
-        """
-        self.conn.sendRequest(self, 'exit-status', "\x00"*4)
-        session.SSHSession.loseConnection(self)
 
 
     def channelClosed(self):
@@ -576,13 +572,14 @@ class SSHSessionForCowrieUser:
             'HOME': self.avatar.home}
 
 
-    def openShell(self, proto):
+    def openShell(self, processprotocol):
         """
         """
+	log.msg( "openshell: %s" % (repr(processprotocol),) )
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
-        self.protocol.makeConnection(proto)
-        proto.makeConnection(session.wrapProtocol(self.protocol))
+        self.protocol.makeConnection(processprotocol)
+        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
 
     def getPty(self, terminal, windowSize, attrs):
@@ -595,13 +592,13 @@ class SSHSessionForCowrieUser:
         return None
 
 
-    def execCommand(self, proto, cmd):
+    def execCommand(self, processprotocol, cmd):
         """
         """
         self.protocol = protocol.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
-        self.protocol.makeConnection(proto)
-        proto.makeConnection(session.wrapProtocol(self.protocol))
+        self.protocol.makeConnection(processprotocol)
+        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
 
     def closed(self):

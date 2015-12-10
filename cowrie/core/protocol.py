@@ -10,10 +10,12 @@ import time
 import socket
 import hashlib
 
+from twisted.python import failure, log
+from twisted.internet import error
+from twisted.protocols.policies import TimeoutMixin
+
 from twisted.conch import recvline
 from twisted.conch.insults import insults
-from twisted.python import log
-from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core import honeypot
 from cowrie.core import ttylog
@@ -56,6 +58,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def connectionMade(self):
         """
         """
+
+
         transport = self.terminal.transport.session.conn.transport
 
         self.realClientIP = transport.transport.getPeer().host
@@ -85,10 +89,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def timeoutConnection(self):
         """
+	this logs out when connection times out
         """
         self.writeln( 'timed out waiting for input: auto-logout' )
-        self.terminal.transport.session.sendEOF()
-        self.terminal.transport.session.sendClose()
+        ret = failure.Failure(error.ProcessTerminated(exitCode=1))
+        self.terminal.transport.processEnded(ret)
 
 
     def eofReceived(self):

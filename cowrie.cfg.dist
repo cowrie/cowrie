@@ -193,17 +193,6 @@ interact_enabled = false
 interact_port = 5123
 
 
-# MySQL logging module (database)
-# Database structure for this module is supplied in doc/sql/mysql.sql
-#
-#[database_mysql]
-#host = localhost
-#database = cowrie
-#username = cowrie
-#password = secret
-#port = 3306
-
-
 # XMPP Logging
 # Log to an xmpp server.
 #

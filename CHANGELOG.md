@@ -1,4 +1,6 @@
 
+* 2015-12-06 UID information is now retrieved from honeyfs/etc/passwd. If you added additional users
+             you will need to add these to the passwd file as well
 * 2015-12-04 New 'free' command with '-h' and '-m' options
 * 2015-12-03 New 'env' command that prints environment variables
 * 2015-02-02 Now use honeyfs/etc/passwd and group to get uid/gid info
