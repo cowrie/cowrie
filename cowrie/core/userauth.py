@@ -7,15 +7,12 @@ This module contains ...
 
 import struct
 
-import twisted
-from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
 from twisted.internet import defer
 
 from cowrie.core import credentials
-from cowrie.core import auth
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -40,6 +37,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
     def sendBanner(self):
         """
+        Display contents of <honeyfs>/etc/issue.net
         """
         if self.bannerSent:
             return
@@ -65,10 +63,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
     def auth_none(self, packet):
         """
+        Allow every login
         """
         c = credentials.Username(self.user)
-        src_ip = self.transport.transport.getPeer().host
-        return self.portal.login(c, src_ip, IConchUser)
+        srcIp = self.transport.transport.getPeer().host
+        return self.portal.login(c, srcIp, IConchUser)
 
 
     def auth_password(self, packet):
@@ -76,9 +75,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         Overridden to pass src_ip to credentials.UsernamePasswordIP
         """
         password = getNS(packet[1:])[0]
-        src_ip = self.transport.transport.getPeer().host
-        c = credentials.UsernamePasswordIP(self.user, password, src_ip)
-        return self.portal.login(c, src_ip,
+        srcIp = self.transport.transport.getPeer().host
+        c = credentials.UsernamePasswordIP(self.user, password, srcIp)
+        return self.portal.login(c, srcIp,
             IConchUser).addErrback(self._ebPassword)
 
 
