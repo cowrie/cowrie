@@ -60,7 +60,7 @@ class command_busybox(HoneyPotCommand):
                 log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
                 self.protocol.call_command(cmdclass, *args)
             else:
-                self.help() 
+                self.help()
         else:
-            self.help() 
+            self.help()
 commands['busybox'] = command_busybox

@@ -42,7 +42,7 @@ def strpack8(x):
 def strunpack8(x):
 	l = x[0]
 	return x[1:1+l], x[1+l:]
-	
+
 def msghdr(op, data):
 	return struct.pack('!iB', 5+len(data), op) + data
 def msgpublish(ident, chan, data):

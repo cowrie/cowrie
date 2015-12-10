@@ -1,6 +1,6 @@
 #
-# Basic Splunk connector. 
-# Not recommended for production use. 
+# Basic Splunk connector.
+# Not recommended for production use.
 # JSON log file is still recommended way to go
 #
 

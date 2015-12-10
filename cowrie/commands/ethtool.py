@@ -30,19 +30,19 @@ For more information run ethtool -h """)
     def do_ethtool_eth0(self):
         self.protocol.writeln("""Settings for eth0:
 Supported ports: [ TP MII ]
-Supported link modes:   10baseT/Half 10baseT/Full 
-                        100baseT/Half 100baseT/Full 
-                        1000baseT/Half 1000baseT/Full 
+Supported link modes:   10baseT/Half 10baseT/Full
+                        100baseT/Half 100baseT/Full
+                        1000baseT/Half 1000baseT/Full
 Supported pause frame use: No
 Supports auto-negotiation: Yes
-Advertised link modes:  10baseT/Half 10baseT/Full 
-                        100baseT/Half 100baseT/Full 
-                        1000baseT/Half 1000baseT/Full 
+Advertised link modes:  10baseT/Half 10baseT/Full
+                        100baseT/Half 100baseT/Full
+                        1000baseT/Half 1000baseT/Full
 Advertised pause frame use: Symmetric Receive-only
 Advertised auto-negotiation: Yes
-Link partner advertised link modes:  10baseT/Half 10baseT/Full 
-                                     100baseT/Half 100baseT/Full 
-                                     1000baseT/Full 
+Link partner advertised link modes:  10baseT/Half 10baseT/Full
+                                     100baseT/Half 100baseT/Full
+                                     1000baseT/Full
 Link partner advertised pause frame use: Symmetric Receive-only
 Link partner advertised auto-negotiation: Yes
 Speed: 1000Mb/s
