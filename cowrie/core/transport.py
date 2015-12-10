@@ -25,6 +25,7 @@ from cowrie.core import keys as cowriekeys
 class HoneyPotSSHFactory(factory.SSHFactory):
     """
     This factory creates HoneyPotTransport instances
+    They listen directly to the TCP port
     """
 
     services = {
@@ -104,6 +105,8 @@ class HoneyPotSSHFactory(factory.SSHFactory):
     def stopFactory(self):
         """
         """
+        for output in self.output_plugins:
+            output.stop()
         factory.SSHFactory.stopFactory(self)
 
 

@@ -26,6 +26,7 @@ from cowrie.core import protocol
 
 class HoneyPotSSHSession(session.SSHSession):
     """
+    This is an SSH channel that's used for SSH sessions
     """
 
     def __init__(self, *args, **kw):
@@ -132,7 +133,7 @@ class SSHSessionForCowrieUser:
 
     def __init__(self, avatar, reactor=None):
         """
-        Construct an C{SSHSessionForCowrwieUser}.
+        Construct an C{SSHSessionForCowrieUser}.
 
         @param avatar: The L{CowrieUser} for whom this is an SSH session.
         @param reactor: An L{IReactorProcess} used to handle shell and exec
