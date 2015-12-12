@@ -103,7 +103,7 @@ class Passwd(object):
         for _ in self.passwd:
             if name == _["pw_name"]:
                 return _
-	raise KeyError("getpwnam(): name not found in passwd file: " + name)
+        raise KeyError("getpwnam(): name not found in passwd file: " + name)
 
 
     def getpwuid(self, uid):
@@ -113,7 +113,7 @@ class Passwd(object):
         for _ in self.passwd:
             if uid == _["pw_uid"]:
                 return _
-	raise KeyError("getpwuid(): uid not found in passwd file: " + uid)
+        raise KeyError("getpwuid(): uid not found in passwd file: " + uid)
 
 
 
@@ -178,7 +178,7 @@ class Group(object):
         for _ in self.group:
             if name == _["gr_name"]:
                 return _
-	raise KeyError("getgrnam(): name not found in group file: " + name)
+        raise KeyError("getgrnam(): name not found in group file: " + name)
 
 
     def getgrgid(self, uid):
@@ -188,6 +188,6 @@ class Group(object):
         for _ in self.group:
             if uid == _["gr_gid"]:
                 return _
-	raise KeyError("getgruid(): uid not found in group file: " + uid)
+        raise KeyError("getgruid(): uid not found in group file: " + uid)
 
 # vim: set sw=4 et:
