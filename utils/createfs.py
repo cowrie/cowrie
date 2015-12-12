@@ -1,7 +1,16 @@
 #!/usr/bin/env python
 
-import os, pickle, sys, locale, getopt
+###############################################################
+# This program creates a cowrie file system pickle file.
+#
+# This is meant to build a brand new filesystem.
+# To edit the file structure, please use './utils/fsctl.py'
+#
+##############################################################
+
+import os, pickle, sys, locale, getopt, fnmatch
 from stat import *
+
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, \
     A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = range(0, 10)
@@ -9,9 +18,24 @@ T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = range(0, 7)
 PROC = False
 VERBOSE = False
 
+blacklist_files = [
+            '/root/fs.pickle',
+            '/root/createfs.py',
+            '/root/.bash_history',
+            '*cowrie*',
+            '*kippo*',
+            ]
+
+
 def logit(ftxt):
     if VERBOSE:
         sys.stderr.write(ftxt)
+
+def checkblacklist(ftxt):
+    for value in blacklist_files:
+        if fnmatch.fnmatch(ftxt, value):
+            return True
+    return False
 
 def recurse(localroot, root, tree, maxdepth = sys.maxint):
     if maxdepth == 0: return
@@ -26,12 +50,9 @@ def recurse(localroot, root, tree, maxdepth = sys.maxint):
 
     for name in os.listdir(localpath):
         fspath = os.path.join(root, name)
-        if fspath in (
-                '/root/fs.pickle',
-                '/root/createfs.py',
-                '/root/.bash_history',
-                ):
+        if checkblacklist(fspath):
             continue
+
 
         path = os.path.join(localpath, name)
 
@@ -124,4 +145,3 @@ if __name__ == '__main__':
         pickle.dump(tree, open(output, 'wb'))
     else:
         print pickle.dumps(tree)
-

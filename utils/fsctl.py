@@ -1,21 +1,22 @@
 #!/usr/bin/python
 
-###############################################################
+################################################################
 # This program creates a command line interpreter used to edit
 # cowrie file system pickle files.
 #
-# It is intended to mimic a basic bash shell and supports relative
-# file references.
+# It is intended to mimic a basic bash shell and supports
+# relative file references.
 #
-# This isn't meant to build a brand new filesystem. Instead it
-# should be used to edit existing filesystems such as the default
-# /opt/cowrie/data/fs.pickle.
+# Do not use to build a complete file system. Use:
+# /opt/cowrie/utils/createfs.py
+# Instead it should be used to edit existing file systems
+# such as the default: /opt/cowrie/data/fs.pickle.
 #
 # Donovan Hubbard
 # Douglas Hubbard
 # March 2013
 #
-###############################################################
+################################################################
 
 import os, pickle, sys, locale, time, cmd
 from stat import *
@@ -97,7 +98,7 @@ class fseditCmd(cmd.Cmd):
 
         self.update_pwd("/")
 
-        self.intro = "\nKippo file system interactive editor\n" + \
+        self.intro = "\nKippo/Cowrie file system interactive editor\n" + \
             "Donovan Hubbard, Douglas Hubbard, March 2013\n" + \
             "Type 'help' for help\n"
 
@@ -117,7 +118,7 @@ class fseditCmd(cmd.Cmd):
 
     def do_EOF(self, args):
         '''The escape character ctrl+d exits the session'''
-        #exiting from the do_EOF method does not create a newline automaticaly
+        #exiting from the do_EOF method does not create a newline automatically
         #so we add it manually
         print
         return True
@@ -241,13 +242,14 @@ class fseditCmd(cmd.Cmd):
     def do_mkdir(self, args):
         """Add a new directory in the target directory.
         Handles relative or absolute file paths. \n
-        Usage: mkdir <destination>"""
+        Usage: mkdir <destination>..."""
 
         arg_list=args.split()
-        if len(arg_list) != 1:
-            print "usage: mkdir <new directory>"
+        if len(arg_list) < 1:
+            print "usage: mkdir <new directory> <new directory>..."
         else:
-            self.mkfile(arg_list, T_DIR)
+            for arg in arg_list:
+                self.mkfile(arg.split(), T_DIR)
 
     def do_touch(self, args):
         """Add a new file in the target directory.
@@ -270,10 +272,9 @@ class fseditCmd(cmd.Cmd):
         fileName = pathList[len(pathList) - 1]
 
         if not exists(self.fs, parentdir):
-            print ('Parent directory %s doesn\'t exist! ' +
-                'Please create it first.') % \
+            print ('Parent directory %s doesn\'t exist!') % \
                 (parentdir,)
-            return
+            self.mkfile(parentdir.split(), T_DIR)
 
         if exists(self.fs, path):
             print 'Error: %s already exists!' % (path,)
@@ -292,7 +293,7 @@ class fseditCmd(cmd.Cmd):
         else:
             size = args[1]
 
-        #set the last update timestamp to now
+        #set the last update time stamp to now
         ctime = time.time()
 
         cwd[A_CONTENTS].append(
@@ -303,7 +304,7 @@ class fseditCmd(cmd.Cmd):
         print "Added '%s'" % path
 
     def do_rm(self, arguments):
-        '''Remove an object from the filesystem.
+        '''Remove an object from the file system.
         Will not remove a directory unless the -r switch is invoked.\n
         Usage: rm [-r] <target>'''
 
@@ -474,7 +475,7 @@ class fseditCmd(cmd.Cmd):
         #Get the object for source
         srcl = getpath(self.fs, src)
 
-        #Get the ojbect for the source's parent
+        #Get the object for the source's parent
         srcparentl = getpath(self.fs, srcparent)
 
         #if the specified filepath is a directory, maintain the current name
@@ -553,13 +554,13 @@ class fseditCmd(cmd.Cmd):
         print "Type help <topic> to get more information."
 
     def help_about(self):
-        print "Kippo stores information about its file systems in a " + \
+        print "Kippo/Cowrie stores information about its file systems in a " + \
             "series of nested lists. Once the lists are made, they are " + \
             "stored in a pickle file on the hard drive. Every time cowrie " + \
             "gets a new client, it reads from the pickle file and loads " + \
-            "the fake filesystem into memory. By default this file " + \
+            "the fake file system into memory. By default this file " + \
             "is /opt/cowrie/data/fs.pickle. Originally the script " + \
-            "/opt/cowrie/createfs.py was used to copy the filesystem " + \
+            "/opt/cowrie/createfs.py was used to copy the file system " + \
             "of the existing computer. However, it quite difficult to " + \
             "edit the pickle file by hand.\n\nThis script strives to be " + \
             "a bash-like interface that allows users to modify " + \
