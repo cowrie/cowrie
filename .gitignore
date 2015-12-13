@@ -16,3 +16,4 @@ __pycache__/
 env/
 env1/
 env2/
+twisted/plugins/dropin.cache
