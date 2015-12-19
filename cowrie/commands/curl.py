@@ -70,12 +70,13 @@ class command_curl(HoneyPotCommand):
         """
         """
         try:
-            optlist, args = getopt.getopt(self.args, 'ho:O')
+            optlist, args = getopt.getopt(self.args, 'ho:O', 
+                [ 'help', 'manual' ] )
         except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
 
         for opt in optlist:
-            if opt[0] == '-h':
+            if opt[0] == '-h' or opt[0] == '--help':
                 self.curl_help()
                 return
 
