@@ -14,15 +14,22 @@ from cowrie.core.honeypot import HoneyPotCommand
 commands = {}
 
 class command_ping(HoneyPotCommand):
+    """
+    """
 
     def valid_ip(self, address):
+        """
+        """
         try:
             socket.inet_aton(address)
             return True
         except:
             return False
 
+
     def start(self):
+        """
+        """
         self.host = None
         self.max = 0
         self.running = False
@@ -30,7 +37,7 @@ class command_ping(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(self.args, "c:")
         except getopt.GetoptError as err:
-            self.writeln('ping: %s' % err )
+            self.writeln('ping: %s' % (err,))
             self.exit()
             return
 
@@ -62,7 +69,7 @@ class command_ping(HoneyPotCommand):
             if self.valid_ip(self.host):
                 self.ip = self.host
             else:
-                self.writeln('ping: unknown host %s' % self.host)
+                self.writeln('ping: unknown host %s' % (self.host,))
                 self.exit()
         else:
             s = hashlib.md5(self.host).hexdigest()
@@ -75,7 +82,10 @@ class command_ping(HoneyPotCommand):
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
+
     def showreply(self):
+        """
+        """
         ms = 40 + random.random() * 10
         self.writeln(
             '64 bytes from %s (%s): icmp_seq=%d ttl=50 time=%.1f ms' % \
@@ -89,13 +99,19 @@ class command_ping(HoneyPotCommand):
         else:
             self.scheduled = reactor.callLater(1, self.showreply)
 
+
     def printstatistics(self):
-        self.writeln('--- %s ping statistics ---' % self.host)
+        """
+        """
+        self.writeln('--- %s ping statistics ---' % (self.host,))
         self.writeln('%d packets transmitted, %d received, 0%% packet loss, time 907ms' % \
             (self.count, self.count))
         self.writeln('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms')
 
+
     def handle_CTRL_C(self):
+        """
+        """
         if self.running == False:
             return HoneyPotCommand.handle_CTRL_C(self)
         else:
