@@ -1,6 +1,9 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+"""
+"""
+
 import time
 import re
 import hashlib
@@ -15,15 +18,22 @@ from cowrie.core.honeypot import HoneyPotCommand
 commands = {}
 
 class command_ssh(HoneyPotCommand):
+    """
+    """
 
     def valid_ip(self, address):
+        """
+        """
         try:
             socket.inet_aton(address)
             return True
         except:
             return False
 
+
     def start(self):
+        """
+        """
         try:
             optlist, args = getopt.getopt(self.args,
                 '-1246AaCfgKkMNnqsTtVvXxYb:c:D:e:F:i:L:l:m:O:o:p:R:S:w:')
@@ -58,7 +68,7 @@ class command_ssh(HoneyPotCommand):
             if self.valid_ip(host):
                 self.ip = host
             else:
-                self.writeln('ssh: Could not resolve hostname %s: Name or service not known' % host )
+                self.writeln('ssh: Could not resolve hostname %s: Name or service not known' % (host,))
                 self.exit()
         else:
             s = hashlib.md5(host).hexdigest()
@@ -74,17 +84,26 @@ class command_ssh(HoneyPotCommand):
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 
+
     def yesno(self, line):
+        """
+        """
         self.writeln(
             'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.' % \
             self.host)
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.protocol.password_input = True
 
+
     def wait(self, line):
+        """
+        """
         reactor.callLater(2, self.finish, line)
 
+
     def finish(self, line):
+        """
+        """
         self.pause = False
         rest, host = self.host, 'localhost'
         rest = self.host.strip().split('.')
@@ -97,12 +116,15 @@ class command_ssh(HoneyPotCommand):
         self.protocol.password_input = False
         self.writeln(
             'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686' % \
-            self.protocol.hostname)
+            (self.protocol.hostname,))
         self.writeln('Last login: %s from 192.168.9.4' % \
-            time.ctime(time.time() - 123123))
+            (time.ctime(time.time() - 123123),))
         self.exit()
 
+
     def lineReceived(self, line):
+        """
+        """
         log.msg( 'INPUT (ssh):', line )
         if len(self.callbacks):
             self.callbacks.pop(0)(line)
