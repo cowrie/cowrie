@@ -26,51 +26,13 @@ from cowrie.core.fs import *
 commands = {}
 
 
-def tdiff(seconds):
-    """
-    """
-    t = seconds
-    days = int(t / (24 * 60 * 60))
-    t -= (days * 24 * 60 * 60)
-    hours = int(t / (60 * 60))
-    t -= (hours * 60 * 60)
-    minutes = int(t / 60)
-    t -= (minutes * 60)
-
-    s = '%ds' % (int(t),)
-    if minutes >= 1: s = '%dm %s' % (minutes, s)
-    if hours >= 1: s = '%dh %s' % (hours, s)
-    if days >= 1: s = '%dd %s' % (days, s)
-    return s
-
-
-
-def sizeof_fmt(num):
-    """
-    """
-    for x in ['bytes','K','M','G','T']:
-        if num < 1024.0:
-            return "%d%s" % (num, x)
-        num /= 1024.0
-
-
-
-def splitthousands( s, sep=','):
-    """
-    Luciano Ramalho @ http://code.activestate.com/recipes/498181/
-    """
-    if len(s) <= 3: return s
-    return splitthousands(s[:-3], sep) + sep + s[-3:]
-
-
-
 class command_curl(HoneyPotCommand):
 
     def start(self):
         """
         """
         try:
-            optlist, args = getopt.getopt(self.args, 'ho:O', 
+            optlist, args = getopt.getopt(self.args, 'ho:O',
                 [ 'help', 'manual' ] )
         except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
@@ -291,6 +253,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
  -q                 If used as the first parameter disables .curlrc""")
         self.exit()
 
+
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
         """
         """
@@ -341,7 +304,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
         hashPath = '%s/%s' % (self.download_path, shasum)
 
-        # if we have content already, delete temp file
+        # If we have content already, delete temp file
         if not os.path.exists(hashPath):
             os.rename(self.safeoutfile, hashPath)
         else:
@@ -369,7 +332,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
     def error(self, error, url):
         """
         """
-        if hasattr(error, 'getErrorMessage'): # exceptions
+        if hasattr(error, 'getErrorMessage'): # Exceptions
             error = error.getErrorMessage()
         self.writeln(error)
         # Real curl also adds this:
