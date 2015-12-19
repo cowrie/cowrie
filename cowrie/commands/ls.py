@@ -58,13 +58,16 @@ class command_ls(HoneyPotCommand):
             for path in paths:
                 func(path)
 
+
     def do_ls_normal(self, path):
+        """
+        """
         try:
             files = self.protocol.fs.get_path(path)
             files.sort()
         except:
             self.protocol.writeln(
-                'ls: cannot access %s: No such file or directory' % path)
+                'ls: cannot access %s: No such file or directory' % (path,))
             return
         l = [x[A_NAME] for x in files \
             if self.show_hidden or not x[A_NAME].startswith('.')]
@@ -90,13 +93,16 @@ class command_ls(HoneyPotCommand):
             count += 1
         self.nextLine()
 
+
     def do_ls_l(self, path):
+        """
+        """
         try:
             files = self.protocol.fs.get_path(path)[:]
             files.sort()
         except:
             self.protocol.writeln(
-                'ls: cannot access %s: No such file or directory' % path)
+                'ls: cannot access %s: No such file or directory' % (path,))
             return
 
         largest = 0
