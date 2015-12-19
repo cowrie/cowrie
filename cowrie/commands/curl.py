@@ -20,9 +20,15 @@ from OpenSSL import SSL
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
 
+"""
+"""
+
 commands = {}
 
+
 def tdiff(seconds):
+    """
+    """
     t = seconds
     days = int(t / (24 * 60 * 60))
     t -= (days * 24 * 60 * 60)
@@ -31,31 +37,47 @@ def tdiff(seconds):
     minutes = int(t / 60)
     t -= (minutes * 60)
 
-    s = '%ds' % int(t)
+    s = '%ds' % (int(t),)
     if minutes >= 1: s = '%dm %s' % (minutes, s)
     if hours >= 1: s = '%dh %s' % (hours, s)
     if days >= 1: s = '%dd %s' % (days, s)
     return s
 
+
+
 def sizeof_fmt(num):
+    """
+    """
     for x in ['bytes','K','M','G','T']:
         if num < 1024.0:
             return "%d%s" % (num, x)
         num /= 1024.0
 
-# Luciano Ramalho @ http://code.activestate.com/recipes/498181/
+
+
 def splitthousands( s, sep=','):
+    """
+    Luciano Ramalho @ http://code.activestate.com/recipes/498181/
+    """
     if len(s) <= 3: return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
+
+
 class command_curl(HoneyPotCommand):
+
     def start(self):
+        """
+        """
         try:
-            optlist, args = getopt.getopt(self.args, 'o:O')
+            optlist, args = getopt.getopt(self.args, 'ho:O')
         except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
-            self.exit()
-            return
+
+        for opt in optlist:
+            if opt[0] == '-h':
+                self.curl_help()
+                return
 
         if len(args):
             url = args[0].strip()
@@ -65,7 +87,7 @@ class command_curl(HoneyPotCommand):
             return
 
         if '://' not in url:
-            url = 'http://%s' % url
+            url = 'http://%s' % (url,)
         urldata = urlparse.urlparse(url)
 
         outfile = None
@@ -86,7 +108,7 @@ class command_curl(HoneyPotCommand):
                     not self.fs.exists(path) or \
                     not self.fs.isdir(path):
                 self.writeln('curl: %s: Cannot open: No such file or directory' % \
-                    outfile)
+                    (outfile,))
                 self.exit()
                 return
 
@@ -107,7 +129,170 @@ class command_curl(HoneyPotCommand):
             self.deferred.addCallback(self.success, outfile)
             self.deferred.addErrback(self.error, url)
 
+
+    def curl_help(self):
+        """
+        """
+
+        self.writeln("""Usage: curl [options...] <url>
+Options: (H) means HTTP/HTTPS only, (F) means FTP only
+     --anyauth       Pick "any" authentication method (H)
+ -a, --append        Append to target file when uploading (F/SFTP)
+     --basic         Use HTTP Basic Authentication (H)
+     --cacert FILE   CA certificate to verify peer against (SSL)
+     --capath DIR    CA directory to verify peer against (SSL)
+ -E, --cert CERT[:PASSWD] Client certificate file and password (SSL)
+     --cert-type TYPE Certificate file type (DER/PEM/ENG) (SSL)
+     --ciphers LIST  SSL ciphers to use (SSL)
+     --compressed    Request compressed response (using deflate or gzip)
+ -K, --config FILE   Specify which config file to read
+     --connect-timeout SECONDS  Maximum time allowed for connection
+ -C, --continue-at OFFSET  Resumed transfer offset
+ -b, --cookie STRING/FILE  String or file to read cookies from (H)
+ -c, --cookie-jar FILE  Write cookies to this file after operation (H)
+     --create-dirs   Create necessary local directory hierarchy
+     --crlf          Convert LF to CRLF in upload
+     --crlfile FILE  Get a CRL list in PEM format from the given file
+ -d, --data DATA     HTTP POST data (H)
+     --data-ascii DATA  HTTP POST ASCII data (H)
+     --data-binary DATA  HTTP POST binary data (H)
+     --data-urlencode DATA  HTTP POST data url encoded (H)
+     --delegation STRING GSS-API delegation permission
+     --digest        Use HTTP Digest Authentication (H)
+     --disable-eprt  Inhibit using EPRT or LPRT (F)
+     --disable-epsv  Inhibit using EPSV (F)
+ -D, --dump-header FILE  Write the headers to this file
+     --egd-file FILE  EGD socket path for random data (SSL)
+     --engine ENGINGE  Crypto engine (SSL). "--engine list" for list
+ -f, --fail          Fail silently (no output at all) on HTTP errors (H)
+ -F, --form CONTENT  Specify HTTP multipart POST data (H)
+     --form-string STRING  Specify HTTP multipart POST data (H)
+     --ftp-account DATA  Account data string (F)
+     --ftp-alternative-to-user COMMAND  String to replace "USER [name]" (F)
+     --ftp-create-dirs  Create the remote dirs if not present (F)
+     --ftp-method [MULTICWD/NOCWD/SINGLECWD] Control CWD usage (F)
+     --ftp-pasv      Use PASV/EPSV instead of PORT (F)
+ -P, --ftp-port ADR  Use PORT with given address instead of PASV (F)
+     --ftp-skip-pasv-ip Skip the IP address for PASV (F)
+     --ftp-pret      Send PRET before PASV (for drftpd) (F)
+     --ftp-ssl-ccc   Send CCC after authenticating (F)
+     --ftp-ssl-ccc-mode ACTIVE/PASSIVE  Set CCC mode (F)
+     --ftp-ssl-control Require SSL/TLS for ftp login, clear for transfer (F)
+ -G, --get           Send the -d data with a HTTP GET (H)
+ -g, --globoff       Disable URL sequences and ranges using {} and []
+ -H, --header LINE   Custom header to pass to server (H)
+ -I, --head          Show document info only
+ -h, --help          This help text
+     --hostpubmd5 MD5  Hex encoded MD5 string of the host public key. (SSH)
+ -0, --http1.0       Use HTTP 1.0 (H)
+     --ignore-content-length  Ignore the HTTP Content-Length header
+ -i, --include       Include protocol headers in the output (H/F)
+ -k, --insecure      Allow connections to SSL sites without certs (H)
+     --interface INTERFACE  Specify network interface/address to use
+ -4, --ipv4          Resolve name to IPv4 address
+ -6, --ipv6          Resolve name to IPv6 address
+ -j, --junk-session-cookies Ignore session cookies read from file (H)
+     --keepalive-time SECONDS  Interval between keepalive probes
+     --key KEY       Private key file name (SSL/SSH)
+     --key-type TYPE Private key file type (DER/PEM/ENG) (SSL)
+     --krb LEVEL     Enable Kerberos with specified security level (F)
+     --libcurl FILE  Dump libcurl equivalent code of this command line
+     --limit-rate RATE  Limit transfer speed to this rate
+ -l, --list-only     List only names of an FTP directory (F)
+     --local-port RANGE  Force use of these local port numbers
+ -L, --location      Follow redirects (H)
+     --location-trusted like --location and send auth to other hosts (H)
+ -M, --manual        Display the full manual
+     --mail-from FROM  Mail from this address
+     --mail-rcpt TO  Mail to this receiver(s)
+     --mail-auth AUTH  Originator address of the original email
+     --max-filesize BYTES  Maximum file size to download (H/F)
+     --max-redirs NUM  Maximum number of redirects allowed (H)
+ -m, --max-time SECONDS  Maximum time allowed for the transfer
+     --negotiate     Use HTTP Negotiate Authentication (H)
+ -n, --netrc         Must read .netrc for user name and password
+     --netrc-optional Use either .netrc or URL; overrides -n
+     --netrc-file FILE  Set up the netrc filename to use
+ -N, --no-buffer     Disable buffering of the output stream
+     --no-keepalive  Disable keepalive use on the connection
+     --no-sessionid  Disable SSL session-ID reusing (SSL)
+     --noproxy       List of hosts which do not use proxy
+     --ntlm          Use HTTP NTLM authentication (H)
+ -o, --output FILE   Write output to <file> instead of stdout
+     --pass PASS     Pass phrase for the private key (SSL/SSH)
+     --post301       Do not switch to GET after following a 301 redirect (H)
+     --post302       Do not switch to GET after following a 302 redirect (H)
+     --post303       Do not switch to GET after following a 303 redirect (H)
+ -#, --progress-bar  Display transfer progress as a progress bar
+     --proto PROTOCOLS  Enable/disable specified protocols
+     --proto-redir PROTOCOLS  Enable/disable specified protocols on redirect
+ -x, --proxy [PROTOCOL://]HOST[:PORT] Use proxy on given port
+     --proxy-anyauth Pick "any" proxy authentication method (H)
+     --proxy-basic   Use Basic authentication on the proxy (H)
+     --proxy-digest  Use Digest authentication on the proxy (H)
+     --proxy-negotiate Use Negotiate authentication on the proxy (H)
+     --proxy-ntlm    Use NTLM authentication on the proxy (H)
+ -U, --proxy-user USER[:PASSWORD]  Proxy user and password
+     --proxy1.0 HOST[:PORT]  Use HTTP/1.0 proxy on given port
+ -p, --proxytunnel   Operate through a HTTP proxy tunnel (using CONNECT)
+     --pubkey KEY    Public key file name (SSH)
+ -Q, --quote CMD     Send command(s) to server before transfer (F/SFTP)
+     --random-file FILE  File for reading random data from (SSL)
+ -r, --range RANGE   Retrieve only the bytes within a range
+     --raw           Do HTTP "raw", without any transfer decoding (H)
+ -e, --referer       Referer URL (H)
+ -J, --remote-header-name Use the header-provided filename (H)
+ -O, --remote-name   Write output to a file named as the remote file
+     --remote-name-all Use the remote file name for all URLs
+ -R, --remote-time   Set the remote file's time on the local output
+ -X, --request COMMAND  Specify request command to use
+     --resolve HOST:PORT:ADDRESS  Force resolve of HOST:PORT to ADDRESS
+     --retry NUM   Retry request NUM times if transient problems occur
+     --retry-delay SECONDS When retrying, wait this many seconds between each
+     --retry-max-time SECONDS  Retry only within this period
+ -S, --show-error    Show error. With -s, make curl show errors when they occur
+ -s, --silent        Silent mode. Don't output anything
+     --socks4 HOST[:PORT]  SOCKS4 proxy on given host + port
+     --socks4a HOST[:PORT]  SOCKS4a proxy on given host + port
+     --socks5 HOST[:PORT]  SOCKS5 proxy on given host + port
+     --socks5-hostname HOST[:PORT] SOCKS5 proxy, pass host name to proxy
+     --socks5-gssapi-service NAME  SOCKS5 proxy service name for gssapi
+     --socks5-gssapi-nec  Compatibility with NEC SOCKS5 server
+ -Y, --speed-limit RATE  Stop transfers below speed-limit for 'speed-time' secs
+ -y, --speed-time SECONDS  Time for trig speed-limit abort. Defaults to 30
+     --ssl           Try SSL/TLS (FTP, IMAP, POP3, SMTP)
+     --ssl-reqd      Require SSL/TLS (FTP, IMAP, POP3, SMTP)
+ -2, --sslv2         Use SSLv2 (SSL)
+ -3, --sslv3         Use SSLv3 (SSL)
+     --ssl-allow-beast Allow security flaw to improve interop (SSL)
+     --stderr FILE   Where to redirect stderr. - means stdout
+     --tcp-nodelay   Use the TCP_NODELAY option
+ -t, --telnet-option OPT=VAL  Set telnet option
+     --tftp-blksize VALUE  Set TFTP BLKSIZE option (must be >512)
+ -z, --time-cond TIME  Transfer based on a time condition
+ -1, --tlsv1         Use TLSv1 (SSL)
+     --trace FILE    Write a debug trace to the given file
+     --trace-ascii FILE  Like --trace but without the hex output
+     --trace-time    Add time stamps to trace/verbose output
+     --tr-encoding   Request compressed transfer encoding (H)
+ -T, --upload-file FILE  Transfer FILE to destination
+     --url URL       URL to work with
+ -B, --use-ascii     Use ASCII/text transfer
+ -u, --user USER[:PASSWORD]  Server user and password
+     --tlsuser USER  TLS username
+     --tlspassword STRING TLS password
+     --tlsauthtype STRING  TLS authentication type (default SRP)
+ -A, --user-agent STRING  User-Agent to send to server (H)
+ -v, --verbose       Make the operation more talkative
+ -V, --version       Show version number and quit
+ -w, --write-out FORMAT  What to output after completion
+     --xattr        Store metadata in extended file attributes
+ -q                 If used as the first parameter disables .curlrc""")
+        self.exit()
+
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
+        """
+        """
         try:
             parsed = urlparse.urlparse(url)
             scheme = parsed.scheme
@@ -121,10 +306,6 @@ class command_curl(HoneyPotCommand):
             self.exit()
             return None
 
-        #self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
-        #self.writeln('Connecting to %s:%d... connected.' % (host, port))
-        #self.write('HTTP request sent, awaiting response... ')
-
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
         out_addr = None
@@ -135,61 +316,76 @@ class command_curl(HoneyPotCommand):
             contextFactory = ssl.ClientContextFactory()
             contextFactory.method = SSL.SSLv23_METHOD
             reactor.connectSSL(host, port, factory, contextFactory)
-        else: #can only be http
+        else: # Can only be http
             self.connection = reactor.connectTCP(
                 host, port, factory, bindAddress=out_addr)
 
         return factory.deferred
 
+
     def handle_CTRL_C(self):
+        """
+        """
         self.writeln('^C')
         self.connection.transport.loseConnection()
 
+
     def success(self, data, outfile):
+        """
+        """
         if not os.path.isfile(self.safeoutfile):
             log.msg("there's no file " + self.safeoutfile)
             self.exit()
 
         shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
-        hash_path = '%s/%s' % (self.download_path, shasum)
+        hashPath = '%s/%s' % (self.download_path, shasum)
 
         # if we have content already, delete temp file
-        if not os.path.exists(hash_path):
-            os.rename(self.safeoutfile, hash_path)
+        if not os.path.exists(hashPath):
+            os.rename(self.safeoutfile, hashPath)
         else:
             os.remove(self.safeoutfile)
             log.msg("Not storing duplicate content " + shasum)
 
         self.protocol.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum)
+            eventid='KIPP0007', url=self.url, outfile=hashPath, shasum=shasum)
 
         log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum)
+            eventid='KIPP0007', url=self.url, outfile=hashPath, shasum=shasum)
 
-        # link friendly name to hash
+        # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)
 
         # FIXME: is this necessary?
-        self.safeoutfile = hash_path
+        self.safeoutfile = hashPath
 
-        # update the honeyfs to point to downloaded file
+        # Update the honeyfs to point to downloaded file
         f = self.fs.getfile(outfile)
-        f[A_REALFILE] = hash_path
+        f[A_REALFILE] = hashPath
         self.exit()
 
+
     def error(self, error, url):
+        """
+        """
         if hasattr(error, 'getErrorMessage'): # exceptions
             error = error.getErrorMessage()
         self.writeln(error)
         # Real curl also adds this:
-        #self.writeln('%s ERROR 404: Not Found.' % \
+        # self.writeln('%s ERROR 404: Not Found.' % \
         #    time.strftime('%Y-%m-%d %T'))
         self.exit()
 commands['/usr/bin/curl'] = command_curl
 
-# from http://code.activestate.com/recipes/525493/
+
+
 class HTTPProgressDownloader(client.HTTPDownloader):
+    """
+    From http://code.activestate.com/recipes/525493/
+    """
     def __init__(self, curl, fakeoutfile, url, outfile, headers=None):
+        """
+        """
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
             agent='curl/7.38.0')
         self.status = None
@@ -200,15 +396,20 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.proglen = 0
         self.nomore = False
 
-    def noPage(self, reason): # called for non-200 responses
+
+    def noPage(self, reason): # Called for non-200 responses
+        """
+        """
         if self.status == '304':
             client.HTTPDownloader.page(self, '')
         else:
             client.HTTPDownloader.noPage(self, reason)
 
+
     def gotHeaders(self, headers):
+        """
+        """
         if self.status == '200':
-            #self.curl.writeln('200 OK')
             if 'content-length' in headers:
                 self.totallength = int(headers['content-length'][0])
             else:
@@ -218,15 +419,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             else:
                 self.contenttype = 'text/whatever'
             self.currentlength = 0.0
-
-            #if self.totallength > 0:
-            #    self.curl.writeln('Length: %d (%s) [%s]' % \
-            #        (self.totallength,
-            #        sizeof_fmt(self.totallength),
-            #        self.contenttype))
-            #else:
-            #    self.curl.writeln('Length: unspecified [%s]' % \
-            #        (self.contenttype))
 
             if self.curl.limit_size > 0 and \
                     self.totallength > self.curl.limit_size:
@@ -241,11 +433,14 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
+
     def pagePart(self, data):
+        """
+        """
         if self.status == '200':
             self.currentlength += len(data)
 
-            # if downloading files of unspecified size, this could happen:
+            # If downloading files of unspecified size, this could happen:
             if not self.nomore and self.curl.limit_size > 0 and \
                     self.currentlength > self.curl.limit_size:
                 log.msg('File limit reached, not saving any more data!')
@@ -258,37 +453,20 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 return client.HTTPDownloader.pagePart(self, data)
             if self.totallength:
                 percent = (self.currentlength/self.totallength)*100
-                spercent = "%i%%" % percent
+                spercent = "%i%%" % (percent,)
             else:
                 spercent = '%dK' % (self.currentlength/1000)
                 percent = 0
             self.speed = self.currentlength / (time.time() - self.started)
-            #eta = (self.totallength - self.currentlength) / self.speed
-            #s = '\r%s [%s] %s %dK/s  eta %s' % \
-            #    (spercent.rjust(3),
-            #    ('%s>' % (int(39.0 / 100.0 * percent) * '=')).ljust(39),
-            #    splitthousands(str(int(self.currentlength))).ljust(12),
-            #    self.speed / 1000,
-            #    tdiff(eta))
-            #self.curl.write(s.ljust(self.proglen))
-            #self.proglen = len(s)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
 
+
     def pageEnd(self):
+        """
+        """
         if self.totallength != 0 and self.currentlength != self.totallength:
             return client.HTTPDownloader.pageEnd(self)
-        #self.curl.write('\r100%%[%s] %s %dK/s' % \
-        #    ('%s>' % (38 * '='),
-        #    splitthousands(str(int(self.totallength))).ljust(12),
-        #    self.speed / 1000))
-        #self.curl.protocol.terminal.nextLine()
-        #self.curl.protocol.terminal.nextLine()
-        #self.curl.writeln(
-        #    '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
-        #    (time.strftime('%Y-%m-%d %H:%M:%S'),
-        #    self.speed / 1000,
-        #    self.fakeoutfile, self.currentlength, self.totallength))
 
         if self.fakeoutfile:
             self.curl.writeln("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d" % \
@@ -300,8 +478,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.curl.fs.getfile(self.fakeoutfile),
                 self.curl.safeoutfile)
         else:
-            # stdout
-            # write to stdout here
             self.curl.writeln("Your file here")
 
         self.curl.fileName = self.fileName
