@@ -151,11 +151,14 @@ class SSHSessionForCowrieUser:
         self.uid = avatar.uid
         self.gid = avatar.gid
         self.username = avatar.username
-        self.environ = {'PATH': '/bin:/usr/bin:/usr/local/bin',
+        self.environ = {
             'LOGNAME': self.username,
             'USER': self.username,
             'HOME': self.avatar.home}
-
+        if self.uid==0:
+            self.environ['PATH']='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+        else:
+            self.environ['PATH']='/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
 
     def openShell(self, processprotocol):
         """

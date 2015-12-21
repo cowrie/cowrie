@@ -1,3 +1,7 @@
+
+"""
+"""
+
 from cowrie.core.honeypot import HoneyPotCommand
 from twisted.python import log
 commands = {}
@@ -44,20 +48,29 @@ Currently defined functions:
 ''').strip().split('\n')
 
 class command_busybox(HoneyPotCommand):
+    """
+    """
 
     def help(self):
+        """
+        """
         for ln in busybox_help:
             self.writeln(ln)
 
+
     def call(self):
+        """
+        """
         args = list(self.args)
         if len(args) > 0:
             line = ' '.join(args)
             cmd = args[0]
             args = args[1:]
-            cmdclass = self.protocol.getCommand(cmd, self.environ['PATH'].split(':'))
+            cmdclass = self.protocol.getCommand(cmd,
+                self.environ['PATH'].split(':'))
             if cmdclass:
-                log.msg(eventid='KIPP0005', input=line, format='Command found: %(input)s')
+                log.msg(eventid='KIPP0005', input=line,
+                    format='Command found: %(input)s')
                 self.protocol.call_command(cmdclass, *args)
             else:
                 self.help()

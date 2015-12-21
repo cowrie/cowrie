@@ -11,6 +11,8 @@ from cowrie.core.fs import *
 commands = {}
 
 class command_cat(HoneyPotCommand):
+    """
+    """
     def start(self):
         if not self.args or self.args[0] == '>':
             pass
@@ -26,15 +28,19 @@ class command_cat(HoneyPotCommand):
                     self.writeln('cat: %s: No such file or directory' % (arg,))
             self.exit()
 
+
     def lineReceived(self, line):
         log.msg( eventid='KIPP0008', realm='cat', input=line,
             format='INPUT (%(realm)s): %(input)s' )
+
 
     def handle_CTRL_D(self):
         self.exit()
 commands['/bin/cat'] = command_cat
 
 class command_tail(HoneyPotCommand):
+    """
+    """
     def start(self):
         self.n = 10
         if not self.args or self.args[0] == '>':
@@ -70,16 +76,21 @@ class command_tail(HoneyPotCommand):
                     self.writeln("tail: cannot open `%s' for reading: No such file or directory" % (arg,))
             self.exit()
 
+
     def lineReceived(self, line):
         log.msg( eventid='KIPP0008', realm='tail', input=line,
             format='INPUT (%(realm)s): %(input)s' )
+
 
     def handle_CTRL_D(self):
         self.exit()
 commands['/bin/tail'] = command_tail
 
 
+
 class command_head(HoneyPotCommand):
+    """
+    """
     def start(self):
         self.n = 10
         if not self.args or self.args[0] == '>':
@@ -112,16 +123,21 @@ class command_head(HoneyPotCommand):
                     self.writeln("head: cannot open `%s' for reading: No such file or directory" % (arg,))
             self.exit()
 
+
     def lineReceived(self, line):
         log.msg( eventid='KIPP0008', realm='head', input=line,
             format='INPUT (%(realm)s): %(input)s' )
+
 
     def handle_CTRL_D(self):
         self.exit()
 commands['/bin/head'] = command_head
 
 
+
 class command_cd(HoneyPotCommand):
+    """
+    """
     def call(self):
         if not self.args or self.args[0] == "~":
             path = self.protocol.user.avatar.home
@@ -136,13 +152,15 @@ class command_cd(HoneyPotCommand):
             self.writeln('bash: cd: OLDPWD not set')
             return
         if inode is None or inode is False:
-            self.writeln('bash: cd: %s: No such file or directory' % path)
+            self.writeln('bash: cd: %s: No such file or directory' % (path,))
             return
         if inode[A_TYPE] != T_DIR:
-            self.writeln('bash: cd: %s: Not a directory' % path)
+            self.writeln('bash: cd: %s: Not a directory' % (path,))
             return
         self.protocol.cwd = newpath
 commands['cd'] = command_cd
+
+
 
 class command_rm(HoneyPotCommand):
     def call(self):
@@ -170,7 +188,11 @@ class command_rm(HoneyPotCommand):
                         dir.remove(i)
 commands['/bin/rm'] = command_rm
 
+
+
 class command_cp(HoneyPotCommand):
+    """
+    """
     def call(self):
         if not len(self.args):
             self.writeln("cp: missing file operand")
@@ -238,7 +260,11 @@ class command_cp(HoneyPotCommand):
             dir.append(s)
 commands['/bin/cp'] = command_cp
 
+
+
 class command_mv(HoneyPotCommand):
+    """
+    """
     def call(self):
         if not len(self.args):
             self.writeln("mv: missing file operand")
@@ -304,7 +330,11 @@ class command_mv(HoneyPotCommand):
                 s[A_NAME] = outfile
 commands['/bin/mv'] = command_mv
 
+
+
 class command_mkdir(HoneyPotCommand):
+    """
+    """
     def call(self):
         for f in self.args:
             path = self.fs.resolve_path(f, self.protocol.cwd)
@@ -321,7 +351,11 @@ class command_mkdir(HoneyPotCommand):
             return
 commands['/bin/mkdir'] = command_mkdir
 
+
+
 class command_rmdir(HoneyPotCommand):
+    """
+    """
     def call(self):
         for f in self.args:
             path = self.fs.resolve_path(f, self.protocol.cwd)
@@ -348,12 +382,20 @@ class command_rmdir(HoneyPotCommand):
                     break
 commands['/bin/rmdir'] = command_rmdir
 
+
+
 class command_pwd(HoneyPotCommand):
+    """
+    """
     def call(self):
         self.writeln(self.protocol.cwd)
 commands['/bin/pwd'] = command_pwd
 
+
+
 class command_touch(HoneyPotCommand):
+    """
+    """
     def call(self):
         if not len(self.args):
             self.writeln('touch: missing file operand')
@@ -364,7 +406,7 @@ class command_touch(HoneyPotCommand):
             if not self.fs.exists(os.path.dirname(path)):
                 self.writeln(
                     'touch: cannot touch `%s`: no such file or directory' % \
-                    (path))
+                    (path,))
                 return
             if self.fs.exists(path):
                 # FIXME: modify the timestamp here

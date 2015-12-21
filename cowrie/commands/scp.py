@@ -33,13 +33,21 @@ from cowrie.core.honeypot import HoneyPotCommand
 commands = {}
 
 class command_scp(HoneyPotCommand):
+    """
+    """
 
     def help(self):
-        self.writeln( """usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]
-[-l limit] [-o ssh_option] [-P port] [-S program]
-[[user@]host1:]file1 ... [[user@]host2:]file2""")
+        """
+        """
+        self.writeln(
+"""usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]
+           [-l limit] [-o ssh_option] [-P port] [-S program]
+           [[user@]host1:]file1 ... [[user@]host2:]file2""")
+
 
     def start(self):
+        """
+        """
         try:
             optlist, args = getopt.getopt(self.args, 'tdv:')
         except getopt.GetoptError as err:
@@ -57,7 +65,10 @@ class command_scp(HoneyPotCommand):
         self.write( '\x00' )
         self.write( '\x00' )
 
+
     def lineReceived(self, line):
+        """
+        """
         log.msg( eventid='KIPP0008', realm='scp', input=line,
             format='INPUT (%(realm)s): %(input)s' )
         self.protocol.terminal.write( '\x00' )
