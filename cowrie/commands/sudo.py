@@ -108,7 +108,7 @@ Sudoers I/O plugin version 1.8.5p2''')
             cmdclass = self.protocol.getCommand(cmd,
                 self.environ['PATH'].split(':'))
             if cmdclass:
-                log.msg(eventid='KIPP0005', input=line,
+                log.msg(eventid='COW0005', input=line,
                     format='Command found: %(input)s')
                 self.protocol.call_command(cmdclass, *args)
                 self.exit()

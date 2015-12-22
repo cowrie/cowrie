@@ -69,7 +69,7 @@ class command_scp(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='KIPP0008', realm='scp', input=line,
+        log.msg( eventid='COW0008', realm='scp', input=line,
             format='INPUT (%(realm)s): %(input)s' )
         self.protocol.terminal.write( '\x00' )
 

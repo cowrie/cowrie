@@ -395,7 +395,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         ttylog.ttylog_open(self.ttylog_file, time.time())
         self.ttylog_open = True
 
-        log.msg(eventid='KIPP0004', ttylog=self.ttylog_file,
+        log.msg(eventid='COW0004', ttylog=self.ttylog_file,
             format='Opening TTY Log: %(ttylog)s')
 
         self.stdinlog_file = '%s/%s-%s-%s-stdin.log' % \
@@ -424,7 +424,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg(eventid='KIPP0015', format='Data upload limit reached')
+            log.msg(eventid='COW0015', format='Data upload limit reached')
             #self.loseConnection()
             self.eofReceived()
             return
@@ -489,7 +489,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     else:
                         os.rename(self.stdinlog_file, shasumfile)
                     os.symlink(shasum, self.stdinlog_file)
-                log.msg(eventid='KIPP0007',
+                log.msg(eventid='COW0007',
                     format='Saved stdin contents to %(outfile)s',
                     url='stdin', outfile=shasumfile, shasum=shasum)
             except IOError as e:
@@ -498,7 +498,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlog_open = False
 
         if self.ttylog_open:
-            log.msg(eventid='KIPP0012', format='Closing TTY Log: %(ttylog)s',
+            log.msg(eventid='COW0012', format='Closing TTY Log: %(ttylog)s',
                 ttylog=self.ttylog_file)
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False

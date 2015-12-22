@@ -41,7 +41,7 @@ class HoneyPotSSHSession(session.SSHSession):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg(eventid='KIPP0013', format='request_env: %(name)s=%(value)s',
+        log.msg(eventid='COW0013', format='request_env: %(name)s=%(value)s',
             name=name, value=value)
         # Environment variables come after shell or before exec command
         if self.session:
@@ -173,7 +173,7 @@ class SSHSessionForCowrieUser:
         """
         """
         self.environ['TERM'] = terminal
-        log.msg(eventid='KIPP0010', width=windowSize[0], height=windowSize[1],
+        log.msg(eventid='COW0010', width=windowSize[0], height=windowSize[1],
             format='Terminal Size: %(width)s %(height)s')
         self.windowSize = windowSize
         return None
@@ -279,7 +279,7 @@ class CowrieSFTPFile:
         """
         self.bytes_written += len(data)
         if self.bytesReceivedLimit and self.bytes_written > self.bytesReceivedLimit:
-            log.msg(eventid='KIPP0015', format='Data upload limit reached')
+            log.msg(eventid='COW0015', format='Data upload limit reached')
             raise filetransfer.SFTPError( filetransfer.FX_FAILURE, "Quota exceeded" )
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
         self.sftpserver.fs.write(self.fd, data)
@@ -486,7 +486,7 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     """
     """
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg(eventid='KIPP0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
+    log.msg(eventid='COW0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
             dst_ip=remoteHP[0], dst_port=remoteHP[1])
     return CowrieConnectForwardingChannel(remoteHP,
        remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
@@ -506,7 +506,7 @@ class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
     def dataReceived(self, data):
         """
         """
-        log.msg(eventid='KIPP0015',
+        log.msg(eventid='COW0015',
             format='direct-tcp forward to %(dst_ip)s:%(dst_port)s with data %(data)s',
             dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
         self._close("Connection refused")

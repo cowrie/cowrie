@@ -36,22 +36,22 @@ import re
 import copy
 import socket
 
-# KIPP0001 : create session
-# KIPP0002 : succesful login
-# KIPP0003 : failed login
-# KIPP0004 : TTY log opened
-# KIPP0005 : handle command
-# KIPP0006 : handle unknown command
-# KIPP0007 : file download
-# KIPP0008 : INPUT
-# KIPP0009 : SSH Version
-# KIPP0010 : Terminal Size
-# KIPP0011 : Connection Lost
-# KIPP0012 : TTY log closed
-# KIPP0013 : env var requested
-# KIPP0014 : direct-tcpip request
-# KIPP0015 : direct-tcpip data
-# KIPP0016 : key fingerprint
+# COW0001 : create session
+# COW0002 : succesful login
+# COW0003 : failed login
+# COW0004 : TTY log opened
+# COW0005 : handle command
+# COW0006 : handle unknown command
+# COW0007 : file download
+# COW0008 : INPUT
+# COW0009 : SSH Version
+# COW0010 : Terminal Size
+# COW0011 : Connection Lost
+# COW0012 : TTY log closed
+# COW0013 : env var requested
+# COW0014 : direct-tcpip request
+# COW0015 : direct-tcpip data
+# COW0016 : key fingerprint
 
 class Output(object):
     """
@@ -133,7 +133,7 @@ class Output(object):
             del ev['time']
 
         # On disconnect add the tty log
-        #if ev['eventid'] == 'KIPP0012':
+        #if ev['eventid'] == 'COW0012':
             # FIXME: file is read for each output plugin
             #f = file(ev['ttylog'])
             #ev['ttylog'] = f.read(10485760)
@@ -155,7 +155,7 @@ class Output(object):
             ev['src_ip'] = self.ips[sessionno]
 
         # Connection event is special. adds to session list
-        if ev['eventid'] == 'KIPP0001':
+        if ev['eventid'] == 'COW0001':
             self.sessions[sessionno] = ev['id']
             self.ips[sessionno] = ev['src_ip']
             del ev['id']
@@ -165,7 +165,7 @@ class Output(object):
         self.write(ev)
 
         # Disconnect is special, remove cached data
-        if ev['eventid'] == 'KIPP0011':
+        if ev['eventid'] == 'COW0011':
             del self.sessions[sessionno]
             del self.ips[sessionno]
 
