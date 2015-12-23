@@ -9,12 +9,14 @@ import os
 import shlex
 import re
 import copy
+import time
 
 from twisted.python import log, failure
 
 from twisted.internet import error
 
 from cowrie.core import fs
+
 
 class HoneyPotCommand(object):
     """
@@ -24,10 +26,44 @@ class HoneyPotCommand(object):
         self.protocol = protocol
         self.args = args
         self.environ = self.protocol.cmdstack[0].environ
-        self.writeln = self.protocol.writeln
-        self.write = self.protocol.terminal.write
+        self.writeln = self.writeln
+        self.write = self.write
         self.nextLine = self.protocol.terminal.nextLine
         self.fs = self.protocol.fs
+
+    def write(self,data):
+        if ">" in self.args:
+            try:
+                self.writeToFile(data,"")
+            except:
+                self.protocol.terminal.write(data)
+        else:
+            self.protocol.terminal.write(data)
+
+    def writeToFile(self,data,line):
+        safeoutfile = '%s/%s_%s' % (self.protocol.cfg.get('honeypot', 'download_path'),
+                                    time.strftime('%Y%m%d%H%M%S'),
+                                    re.sub('[^A-Za-z0-9]', '_', "tmpecho"))
+
+        index = self.args.index(">")
+        data = data.replace(" > ","")
+        data = data.replace(self.args[(index+1)],"")
+        file = open(safeoutfile, "a")
+        file.write(data + line)
+        file.close()
+        outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
+        self.fs.mkfile(outfile, 0, 0, len(data), 33188)
+        self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
+
+    def writeln(self, data):
+        if ">" in self.args:
+            try:
+               self.writeToFile(data,"\n")
+            except:
+                self.protocol.writeln(data)
+        else:
+            self.protocol.writeln(data)
+
 
 
     def start(self):
@@ -36,19 +72,16 @@ class HoneyPotCommand(object):
         self.call()
         self.exit()
 
-
     def call(self):
         """
         """
         self.writeln('Hello World! [%s]' % (repr(self.args),))
-
 
     def exit(self):
         """
         """
         self.protocol.cmdstack.pop()
         self.protocol.cmdstack[-1].resume()
-
 
     def handle_CTRL_C(self):
         """
@@ -57,7 +90,6 @@ class HoneyPotCommand(object):
         self.writeln('^C')
         self.exit()
 
-
     def lineReceived(self, line):
         """
         """
@@ -65,24 +97,20 @@ class HoneyPotCommand(object):
         # FIXME: naive command parsing, see lineReceived below
         self.protocol.cmdstack[0].cmdpending.append(line)
 
-
     def resume(self):
         """
         """
         pass
-
 
     def handle_TAB(self):
         """
         """
         pass
 
-
     def handle_CTRL_D(self):
         """
         """
         pass
-
 
 
 class HoneyPotShell(object):
@@ -95,7 +123,6 @@ class HoneyPotShell(object):
         self.showPrompt()
         self.cmdpending = []
         self.environ = protocol.environ
-
 
     def lineReceived(self, line):
         """
@@ -114,10 +141,10 @@ class HoneyPotShell(object):
         else:
             self.showPrompt()
 
-
     def runCommand(self):
         """
         """
+
         def runOrPrompt():
             if len(self.cmdpending):
                 self.runCommand()
@@ -137,7 +164,7 @@ class HoneyPotShell(object):
 
         line = self.cmdpending.pop(0)
         try:
-            line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
+            line = line.replace('>', ' > ').replace('|', ' | ').replace('<', ' < ')
             cmdAndArgs = shlex.split(line)
         except:
             self.protocol.writeln(
@@ -177,11 +204,10 @@ class HoneyPotShell(object):
             self.protocol.call_command(cmdclass, *rargs)
         else:
             log.msg(eventid='KIPP0006',
-                input=line, format='Command not found: %(input)s')
+                    input=line, format='Command not found: %(input)s')
             if len(line):
                 self.protocol.writeln('bash: %s: command not found' % (cmd,))
                 runOrPrompt()
-
 
     def resume(self):
         """
@@ -190,39 +216,37 @@ class HoneyPotShell(object):
             self.protocol.setInsertMode()
         self.runCommand()
 
-
     def showPrompt(self):
         """
         """
         if not self.interactive:
             return
         # Example: srv03:~#
-        #prompt = '%s:%%(path)s' % self.protocol.hostname
+        # prompt = '%s:%%(path)s' % self.protocol.hostname
         # Example: root@svr03:~#     (More of a "Debianu" feel)
         prompt = '%s@%s:%%(path)s' % (self.protocol.user.username, self.protocol.hostname,)
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
-        #prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
+        # prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
         if not self.protocol.user.uid:
-            prompt += '# '    # "Root" user
+            prompt += '# '  # "Root" user
         else:
-            prompt += '$ '    # "Non-Root" user
+            prompt += '$ '  # "Non-Root" user
 
         path = self.protocol.cwd
         homelen = len(self.protocol.user.avatar.home)
         if path == self.protocol.user.avatar.home:
             path = '~'
-        elif len(path) > (homelen+1) and \
-                path[:(homelen+1)] == self.protocol.user.avatar.home + '/':
+        elif len(path) > (homelen + 1) and \
+                        path[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
             path = '~' + path[homelen:]
         # Uncomment the three lines below for a 'better' CentOS look.
         # Rather than '[root@svr03 /var/log]#' is shows '[root@svr03 log]#'.
-        #path = path.rsplit('/', 1)[-1]
-        #if not path:
+        # path = path.rsplit('/', 1)[-1]
+        # if not path:
         #    path = '/'
 
         attrs = {'path': path}
         self.protocol.terminal.write(prompt % attrs)
-
 
     def handle_CTRL_C(self):
         """
@@ -232,13 +256,11 @@ class HoneyPotShell(object):
         self.protocol.terminal.nextLine()
         self.showPrompt()
 
-
     def handle_CTRL_D(self):
         """
         """
         log.msg('Received CTRL-D, exiting..')
         self.protocol.call_command(self.protocol.commands['exit'])
-
 
     def handle_TAB(self):
         """
@@ -284,7 +306,7 @@ class HoneyPotShell(object):
         newbuf = ''
         if len(files) == 1:
             newbuf = ' '.join(l.split()[:-1] + \
-                ['%s%s' % (basedir, files[0][fs.A_NAME])])
+                              ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
@@ -313,4 +335,3 @@ class HoneyPotShell(object):
         self.protocol.lineBuffer = list(newbuf)
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
         self.protocol.terminal.write(newbuf)
-
