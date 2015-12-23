@@ -138,13 +138,9 @@ class command_echo(HoneyPotCommand):
         """
         write_fn = self.writeln
         escape_fn = lambda s: s
-        """
-        """
 
         try:
-            write_fn = self.writeln
             optlist, args = getopt.getopt(self.args, "eEn")
-
             for opt in optlist:
                 if opt[0] == '-e':
                     escape_fn = functools.partial(str.decode, encoding="string_escape")
@@ -153,8 +149,7 @@ class command_echo(HoneyPotCommand):
                 elif opt[0] == '-n':
                     write_fn = self.write
         except:
-                    write_fn = self.writeln
-                    args = self.args
+            args = self.args
 
         write_fn(escape_fn(' '.join(args)))
 
