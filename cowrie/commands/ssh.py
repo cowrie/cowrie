@@ -80,7 +80,7 @@ class command_ssh(HoneyPotCommand):
 
         self.writeln('The authenticity of host \'%s (%s)\' can\'t be established.' % \
             (self.host, self.ip))
-        self.writeln('RSA key fingerprint is 9E:3A:9C:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.')
+        self.writeln('RSA key fingerprint is 9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.')
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 

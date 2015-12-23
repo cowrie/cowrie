@@ -43,25 +43,23 @@ class command_curl(HoneyPotCommand):
                 return
 
         if len(args):
-            if args[0] is not None:
-                url = str(args[0]).strip()
+            url = args[0].strip()
         else:
             self.writeln("curl: try 'curl --help' or 'curl --manual' for more information'")
             self.exit()
             return
 
         if '://' not in url:
-            url = 'http://'+ url
-            urldata = urlparse.urlparse(url)
+            url = 'http://%s' % (url,)
+        urldata = urlparse.urlparse(url)
 
         outfile = None
-
         for opt in optlist:
             if opt[0] == '-o':
                 outfile = opt[1]
             if opt[0] == '-O':
                 outfile = urldata.path.split('/')[-1]
-                if outfile is None or not len(outfile.strip()) or not urldata.path.count('/'):
+                if not len(outfile.strip()) or not urldata.path.count('/'):
                     self.writeln('curl: Remote file name has no length!')
                     self.exit()
                     return
@@ -314,10 +312,10 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             log.msg("Not storing duplicate content " + shasum)
 
         self.protocol.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hashPath, shasum=shasum)
+            eventid='COW0007', url=self.url, outfile=hashPath, shasum=shasum)
 
         log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hashPath, shasum=shasum)
+            eventid='COW0007', url=self.url, outfile=hashPath, shasum=shasum)
 
         # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)
@@ -326,9 +324,8 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.safeoutfile = hashPath
 
         # Update the honeyfs to point to downloaded file
-        if outfile is not None:
-            f = self.fs.getfile(outfile)
-            f[A_REALFILE] = hashPath
+        f = self.fs.getfile(outfile)
+        f[A_REALFILE] = hashPath
         self.exit()
 
 
@@ -445,9 +442,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.curl.fs.getfile(self.fakeoutfile),
                 self.curl.safeoutfile)
         else:
-            file = open(self.curl.safeoutfile,'r')
-            self.curl.writeln(file.read())
-            file.close()
+            self.curl.writeln("Your file here")
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)

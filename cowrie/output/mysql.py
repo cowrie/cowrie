@@ -99,7 +99,7 @@ class Output(cowrie.core.output.Output):
         docstring here
         """
 
-        if entry["eventid"] == 'KIPP0001':
+        if entry["eventid"] == 'COW0001':
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `sensors` WHERE `ip` = %s", (self.sensor,))
             if r:
@@ -115,49 +115,49 @@ class Output(cowrie.core.output.Output):
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                     sensorid, entry["src_ip"]))
 
-        elif entry["eventid"] == 'KIPP0002':
+        elif entry["eventid"] == 'COW0002':
             self.simpleQuery('INSERT INTO `auth` (`session`, `success`' + \
                 ', `username`, `password`, `timestamp`)' + \
                 ' VALUES (%s, %s, %s, %s, STR_TO_DATE(%s, %s))',
                 (entry["session"], 1, entry['username'], entry['password'],
                 entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ'))
 
-        elif entry["eventid"] == 'KIPP0003':
+        elif entry["eventid"] == 'COW0003':
             self.simpleQuery('INSERT INTO `auth` (`session`, `success`' + \
                 ', `username`, `password`, `timestamp`)' + \
                 ' VALUES (%s, %s, %s, %s, STR_TO_DATE(%s, %s))',
                 (entry["session"], 0, entry['username'], entry['password'],
                 entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ'))
 
-        elif entry["eventid"] == 'KIPP0005':
+        elif entry["eventid"] == 'COW0005':
             self.simpleQuery('INSERT INTO `input`' + \
                 ' (`session`, `timestamp`, `success`, `input`)' + \
                 ' VALUES (%s, STR_TO_DATE(%s, %s), %s , %s)',
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                 1, entry["input"]))
 
-        elif entry["eventid"] == 'KIPP0006':
+        elif entry["eventid"] == 'COW0006':
             self.simpleQuery('INSERT INTO `input`' + \
                 ' (`session`, `timestamp`, `success`, `input`)' + \
                 ' VALUES (%s, STR_TO_DATE(%s, %s), %s , %s)',
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                 0, entry["input"]))
 
-        elif entry["eventid"] == 'KIPP0007':
+        elif entry["eventid"] == 'COW0007':
             self.simpleQuery('INSERT INTO `downloads`' + \
                 ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
                 ' VALUES (%s, STR_TO_DATE(%s, %s), %s, %s)',
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                 entry['url'], entry['outfile'], entry['shasum']))
 
-        elif entry["eventid"] == 'KIPP0008':
+        elif entry["eventid"] == 'COW0008':
             self.simpleQuery('INSERT INTO `input`' + \
                 ' (`session`, `timestamp`, `realm`, `input`)' + \
                 ' VALUES (%s, STR_TO_DATE(%s, %s), %s , %s)',
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                 entry["realm"], entry["input"]))
 
-        elif entry["eventid"] == 'KIPP0009':
+        elif entry["eventid"] == 'COW0009':
             r = yield self.db.runQuery(
                 'SELECT `id` FROM `clients` WHERE `version` = %s', \
                 (entry['version'],))
@@ -173,19 +173,19 @@ class Output(cowrie.core.output.Output):
                 'UPDATE `sessions` SET `client` = %s WHERE `id` = %s',
                 (id, entry["session"]))
 
-        elif entry["eventid"] == 'KIPP0010':
+        elif entry["eventid"] == 'COW0010':
             self.simpleQuery(
                 'UPDATE `sessions` SET `termsize` = %s WHERE `id` = %s',
                 ('%sx%s' % (entry['width'], entry['height']),
                     entry["session"]))
 
-        elif entry["eventid"] == 'KIPP0011':
+        elif entry["eventid"] == 'COW0011':
             self.simpleQuery(
                 'UPDATE `sessions` SET `endtime` = STR_TO_DATE(%s, %s)' + \
                 ' WHERE `id` = %s', (entry["timestamp"],
                     '%Y-%m-%dT%H:%i:%s.%fZ', entry["session"]))
 
-        elif entry["eventid"] == 'KIPP0012':
+        elif entry["eventid"] == 'COW0012':
             self.simpleQuery(
                 'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
                 (entry["session"], entry["ttylog"]))

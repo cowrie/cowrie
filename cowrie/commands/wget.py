@@ -48,15 +48,8 @@ def splitthousands( s, sep=','):
 
 class command_wget(HoneyPotCommand):
     def start(self):
-        argsCopy = list(self.args)
-        if ">" in argsCopy:
-            index = argsCopy.index(">")
-            del argsCopy[index]
-            del argsCopy[index]
-
         try:
-            optlist, args = getopt.getopt(argsCopy, 'cqO:')
-            
+            optlist, args = getopt.getopt(self.args, 'cqO:')
         except getopt.GetoptError as err:
             self.writeln('Unrecognized option')
             self.exit()
@@ -172,10 +165,10 @@ class command_wget(HoneyPotCommand):
             log.msg("Not storing duplicate content " + shasum)
 
         self.protocol.logDispatch( format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum )
+            eventid='COW0007', url=self.url, outfile=hash_path, shasum=shasum )
 
         log.msg( format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hash_path, shasum=shasum )
+            eventid='COW0007', url=self.url, outfile=hash_path, shasum=shasum )
 
         # link friendly name to hash
         os.symlink( shasum, self.safeoutfile )

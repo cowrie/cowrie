@@ -134,24 +134,19 @@ class command_echo(HoneyPotCommand):
     """
     """
     def call(self):
+        """
+        """
+        write_fn = self.writeln
         escape_fn = lambda s: s
-        """
-        """
+        optlist, args = getopt.getopt(self.args, "eEn")
 
-        try:
-            write_fn = self.writeln
-            optlist, args = getopt.getopt(self.args, "eEn")
-
-            for opt in optlist:
-                if opt[0] == '-e':
-                    escape_fn = functools.partial(str.decode, encoding="string_escape")
-                elif opt[0] == '-E':
-                    escape_fn = lambda s: s
-                elif opt[0] == '-n':
-                    write_fn = self.write
-        except:
-                    write_fn = self.writeln
-                    args = self.args
+        for opt in optlist:
+            if opt[0] == '-e':
+                escape_fn = functools.partial(str.decode, encoding="string_escape")
+            elif opt[0] == '-E':
+                escape_fn = lambda s: s
+            elif opt[0] == '-n':
+                write_fn = self.write
 
         write_fn(escape_fn(' '.join(args)))
 
@@ -322,7 +317,7 @@ class command_passwd(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='KIPP0008', realm='passwd', input=line,
+        log.msg( eventid='COW0008', realm='passwd', input=line,
             format='INPUT (%(realm)s): %(input)s' )
         self.password = line.strip()
         self.callbacks.pop(0)(line)
@@ -586,7 +581,7 @@ class command_perl(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='KIPP0008', realm='perl', input=line,
+        log.msg( eventid='COW0008', realm='perl', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
 
@@ -666,7 +661,7 @@ class command_php(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='KIPP0008', realm='php', input=line,
+        log.msg( eventid='COW0008', realm='php', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
 

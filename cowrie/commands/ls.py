@@ -38,21 +38,15 @@ class command_ls(HoneyPotCommand):
         """
         path = self.protocol.cwd
         paths = []
-        argsCopy = list(self.args)
-        if ">" in argsCopy:
-            index = argsCopy.index(">")
-            del argsCopy[index]
-            del argsCopy[index]
-
-        if len(argsCopy):
-            for arg in argsCopy:
+        if len(self.args):
+            for arg in self.args:
                 if not arg.startswith('-'):
                     paths.append(self.protocol.fs.resolve_path(arg,
                         self.protocol.cwd))
 
         self.show_hidden = False
         func = self.do_ls_normal
-        for x in argsCopy:
+        for x in self.args:
             if x.startswith('-') and x.count('l'):
                 func = self.do_ls_l
             if x.startswith('-') and x.count('a'):
@@ -155,7 +149,7 @@ class command_ls(HoneyPotCommand):
                 file[A_NAME],
                 linktarget)
 
-            self.writeln(l)
+            self.protocol.writeln(l)
 commands['/bin/ls'] = command_ls
 commands['/bin/dir'] = command_ls
 
