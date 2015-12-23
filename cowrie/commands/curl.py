@@ -444,9 +444,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.curl.fs.getfile(self.fakeoutfile),
                 self.curl.safeoutfile)
         else:
-            file = open(self.curl.safeoutfile,'r')
-            self.curl.writeln(file.read())
-            file.close()
+            with open(self.curl.safeoutfile, 'r') as f:
+                self.curl.writeln(f.read())
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
