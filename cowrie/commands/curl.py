@@ -43,15 +43,16 @@ class command_curl(HoneyPotCommand):
                 return
 
         if len(args):
-            url = args[0].strip()
+            if args[0] is not None:
+                url = str(args[0]).strip()
         else:
             self.writeln("curl: try 'curl --help' or 'curl --manual' for more information'")
             self.exit()
             return
 
         if '://' not in url:
-            url = 'http://%s' % (url,)
-        urldata = urlparse.urlparse(url)
+            url = 'http://'+ url
+            urldata = urlparse.urlparse(url)
 
         outfile = None
         for opt in optlist:
@@ -59,7 +60,7 @@ class command_curl(HoneyPotCommand):
                 outfile = opt[1]
             if opt[0] == '-O':
                 outfile = urldata.path.split('/')[-1]
-                if not len(outfile.strip()) or not urldata.path.count('/'):
+                if outfile is None or not len(outfile.strip()) or not urldata.path.count('/'):
                     self.writeln('curl: Remote file name has no length!')
                     self.exit()
                     return
@@ -324,8 +325,9 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.safeoutfile = hashPath
 
         # Update the honeyfs to point to downloaded file
-        f = self.fs.getfile(outfile)
-        f[A_REALFILE] = hashPath
+        if outfile is not None:
+            f = self.fs.getfile(outfile)
+            f[A_REALFILE] = hashPath
         self.exit()
 
 
@@ -442,7 +444,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.curl.fs.getfile(self.fakeoutfile),
                 self.curl.safeoutfile)
         else:
-            self.curl.writeln("Your file here")
+            file = open(self.curl.safeoutfile,'r')
+            self.curl.writeln(file.read())
+            file.close()
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
