@@ -312,10 +312,10 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             log.msg("Not storing duplicate content " + shasum)
 
         self.protocol.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hashPath, shasum=shasum)
+            eventid='COW0007', url=self.url, outfile=hashPath, shasum=shasum)
 
         log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='KIPP0007', url=self.url, outfile=hashPath, shasum=shasum)
+            eventid='COW0007', url=self.url, outfile=hashPath, shasum=shasum)
 
         # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)

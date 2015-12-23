@@ -30,7 +30,7 @@ class command_cat(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg( eventid='KIPP0008', realm='cat', input=line,
+        log.msg( eventid='COW0008', realm='cat', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
 
@@ -78,7 +78,7 @@ class command_tail(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg( eventid='KIPP0008', realm='tail', input=line,
+        log.msg( eventid='COW0008', realm='tail', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
 
@@ -125,7 +125,7 @@ class command_head(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg( eventid='KIPP0008', realm='head', input=line,
+        log.msg( eventid='COW0008', realm='head', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
 
