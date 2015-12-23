@@ -58,9 +58,9 @@ class HoneyPotCommand(object):
     def writeln(self, data):
         if ">" in self.args:
             try:
-               self.writeToFile(data)
+               self.writeToFile(data,"\n")
             except:
-                self.protocol.writeln(data,"\n")
+                self.protocol.writeln(data)
         else:
             self.protocol.writeln(data)
 
