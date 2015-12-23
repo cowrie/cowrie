@@ -234,6 +234,7 @@ logfile = log/cowrie.json
 #port = 9200
 #index = cowrie
 #type = cowrie
+#daily_index = y # change the index to include current date.
 
 
 # Send login attemp information to SANS DShield
