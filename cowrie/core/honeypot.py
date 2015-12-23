@@ -27,32 +27,45 @@ class HoneyPotCommand(object):
         self.args = args
         self.environ = self.protocol.cmdstack[0].environ
         self.writeln = self.writeln
-        self.write = self.protocol.terminal.write
+        self.write = self.write
         self.nextLine = self.protocol.terminal.nextLine
         self.fs = self.protocol.fs
+
+    def write(self,data):
+        if ">" in self.args:
+            try:
+                self.writeToFile(data,"")
+            except:
+                self.protocol.terminal.write(data)
+        else:
+            self.protocol.terminal.write(data)
+
+    def writeToFile(self,data,line):
+        safeoutfile = '%s/%s_%s' % (self.protocol.cfg.get('honeypot', 'download_path'),
+                                    time.strftime('%Y%m%d%H%M%S'),
+                                    re.sub('[^A-Za-z0-9]', '_', "tmpecho"))
+
+        index = self.args.index(">")
+        data = data.replace(" > ","")
+        data = data.replace(self.args[(index+1)],"")
+        file = open(safeoutfile, "a")
+        file.write(data + line)
+        file.close()
+        outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
+        self.fs.mkfile(outfile, 0, 0, len(data), 33188)
+        self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
 
     def writeln(self, data):
         if ">" in self.args:
             try:
-
-                safeoutfile = '%s/%s_%s' % (self.protocol.cfg.get('honeypot', 'download_path'),
-                                            time.strftime('%Y%m%d%H%M%S'),
-                                            re.sub('[^A-Za-z0-9]', '_', "tmpecho"))
-
-                index = self.args.index(">")
-                data = data.replace(" > ","")
-                data = data.replace(self.args[(index+1)],"")
-                file = open(safeoutfile, "w")
-                file.write(data + "\n")
-                file.close()
-                outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
-                self.fs.mkfile(outfile, 0, 0, len(data), 33188)
-                self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
-
+               self.writeToFile(data)
             except:
-                self.protocol.writeln(data)
+                self.protocol.writeln(data,"\n")
         else:
             self.protocol.writeln(data)
+
+
+
     def start(self):
         """
         """
