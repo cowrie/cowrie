@@ -60,7 +60,7 @@ class command_sudo(HoneyPotCommand):
         """
         """
         for ln in sudo_shorthelp:
-            self.writeln(ln)
+            self.write(ln+'\n')
         self.exit()
 
 
@@ -68,18 +68,18 @@ class command_sudo(HoneyPotCommand):
         """
         """
         for ln in sudo_longhelp:
-            self.writeln(ln)
+            self.write(ln+'\n')
         self.exit()
 
 
     def version(self):
         """
         """
-        self.writeln(
+        self.write(
 '''Sudo version 1.8.5p2
 Sudoers policy plugin version 1.8.5p2
 Sudoers file grammar version 41
-Sudoers I/O plugin version 1.8.5p2''')
+Sudoers I/O plugin version 1.8.5p2\n''')
         self.exit()
 
 
@@ -89,7 +89,7 @@ Sudoers I/O plugin version 1.8.5p2''')
         try:
             optlist, args = getopt.getopt(self.args, 'shV')
         except getopt.GetoptError as err:
-            self.writeln('invalid option')
+            self.write('invalid option\n')
             self.short_help()
             return
 

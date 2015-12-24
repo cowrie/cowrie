@@ -39,10 +39,10 @@ class command_scp(HoneyPotCommand):
     def help(self):
         """
         """
-        self.writeln(
+        self.write(
 """usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]
            [-l limit] [-o ssh_option] [-P port] [-S program]
-           [[user@]host1:]file1 ... [[user@]host2:]file2""")
+           [[user@]host1:]file1 ... [[user@]host2:]file2\n""")
 
 
     def start(self):

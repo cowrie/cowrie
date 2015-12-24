@@ -110,7 +110,7 @@ class command_gcc(HoneyPotCommand):
                 if self.fs.exists(sourcefile):
                     input_files = input_files + 1
                 else:
-                    self.writeln("%s: %s: No such file or directory" % (command_gcc.APP_NAME, value))
+                    self.write("%s: %s: No such file or directory\n" % (command_gcc.APP_NAME, value))
                     complete = False
 
         # To generate, or not
@@ -131,8 +131,8 @@ class command_gcc(HoneyPotCommand):
 
     def no_files(self):
         """ Notify user there are no input files, and exit """
-        self.writeln( """gcc: fatal error: no input files
-compilation terminated.""" )
+        self.write( """gcc: fatal error: no input files
+compilation terminated.\n""" )
         self.exit()
 
 
@@ -158,7 +158,7 @@ Thread model: posix
 gcc version %s (Debian %s-5)""" % (version, version_short, version_short, version_short, version, version))
 
         # Write
-        self.writeln(data)
+        self.write(data+'\n')
         self.exit()
 
     def generate_file(self, outfile):
@@ -200,7 +200,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
 
     def arg_missing(self, arg):
         """ Print missing argument message, and exit """
-        self.writeln("%s: argument to '%s' is missing" % (command_gcc.APP_NAME, arg))
+        self.write("%s: argument to '%s' is missing\n" % (command_gcc.APP_NAME, arg))
         self.exit()
 
     def help(self):
@@ -208,7 +208,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
 
         version = '.'.join([ str(v) for v in command_gcc.APP_VERSION[:2] ])
 
-        self.writeln( """Usage: gcc [options] file...
+        self.write( """Usage: gcc [options] file...
 Options:
   -pass-exit-codes         Exit with highest error code from a phase
   --help                   Display this information
@@ -267,7 +267,8 @@ Options starting with -g, -f, -m, -O, -W, or --param are automatically
  other options on to these processes the -W<letter> options must be used.
 
 For bug reporting instructions, please see:
-<file:///usr/share/doc/gcc-4.7/README.Bugs>.""")
+<file:///usr/share/doc/gcc-4.7/README.Bugs>.
+""")
         self.exit()
 
 # Definitions

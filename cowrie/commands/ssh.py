@@ -38,11 +38,11 @@ class command_ssh(HoneyPotCommand):
             optlist, args = getopt.getopt(self.args,
                 '-1246AaCfgKkMNnqsTtVvXxYb:c:D:e:F:i:L:l:m:O:o:p:R:S:w:')
         except getopt.GetoptError as err:
-            self.writeln('Unrecognized option')
+            self.write('Unrecognized option\n')
             self.exit()
         for opt in optlist:
             if opt[0] == '-V':
-                self.writeln('OpenSSH_6.7p1 Debian-5, OpenSSL 1.0.1k 8 Jan 2015')
+                self.write('OpenSSH_6.7p1 Debian-5, OpenSSL 1.0.1k 8 Jan 2015\n')
                 self.exit()
                 return
         if not len(args):
@@ -54,7 +54,7 @@ class command_ssh(HoneyPotCommand):
                     '           [-R [bind_address:]port:host:hostport] [-S ctl_path]',
                     '           [-w local_tun[:remote_tun]] [user@]hostname [command]',
                     ):
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
             return
         user, host = 'root', args[0]
@@ -68,7 +68,7 @@ class command_ssh(HoneyPotCommand):
             if self.valid_ip(host):
                 self.ip = host
             else:
-                self.writeln('ssh: Could not resolve hostname %s: Name or service not known' % (host,))
+                self.write('ssh: Could not resolve hostname %s: Name or service not known\n' % (host,))
                 self.exit()
         else:
             s = hashlib.md5(host).hexdigest()
@@ -78,9 +78,9 @@ class command_ssh(HoneyPotCommand):
         self.host = host
         self.user = user
 
-        self.writeln('The authenticity of host \'%s (%s)\' can\'t be established.' % \
+        self.write('The authenticity of host \'%s (%s)\' can\'t be established.\n' % \
             (self.host, self.ip))
-        self.writeln('RSA key fingerprint is 9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.')
+        self.write('RSA key fingerprint is 9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.\n')
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 
@@ -88,8 +88,8 @@ class command_ssh(HoneyPotCommand):
     def yesno(self, line):
         """
         """
-        self.writeln(
-            'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.' % \
+        self.write(
+            'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.\n' % \
             self.host)
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.protocol.password_input = True
@@ -114,10 +114,10 @@ class command_ssh(HoneyPotCommand):
         if not self.fs.exists(self.protocol.cwd):
             self.protocol.cwd = '/'
         self.protocol.password_input = False
-        self.writeln(
-            'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686' % \
+        self.write(
+            'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686\n' % \
             (self.protocol.hostname,))
-        self.writeln('Last login: %s from 192.168.9.4' % \
+        self.write('Last login: %s from 192.168.9.4\n' % \
             (time.ctime(time.time() - 123123),))
         self.exit()
 

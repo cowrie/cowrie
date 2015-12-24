@@ -55,7 +55,7 @@ class command_busybox(HoneyPotCommand):
         """
         """
         for ln in busybox_help:
-            self.writeln(ln)
+            self.write(ln+'\n')
 
 
     def call(self):

@@ -32,8 +32,8 @@ class command_tar(HoneyPotCommand):
 
     def call(self):
         if len(self.args) < 2:
-            self.writeln('tar: You must specify one of the `-Acdtrux\' options')
-            self.writeln('Try `tar --help\' or `tar --usage\' for more information.')
+            self.write('tar: You must specify one of the `-Acdtrux\' options\n')
+            self.write('Try `tar --help\' or `tar --usage\' for more information.\n')
             return
 
         filename = self.args[1]
@@ -47,32 +47,32 @@ class command_tar(HoneyPotCommand):
 
         path = self.fs.resolve_path(filename, self.protocol.cwd)
         if not path or not self.protocol.fs.exists(path):
-            self.writeln('tar: %s: Cannot open: No such file or directory' % \
+            self.write('tar: %s: Cannot open: No such file or directory\n' % \
                 filename)
-            self.writeln('tar: Error is not recoverable: exiting now')
-            self.writeln('tar: Child returned status 2')
-            self.writeln('tar: Error exit delayed from previous errors')
+            self.write('tar: Error is not recoverable: exiting now\n')
+            self.write('tar: Child returned status 2\n')
+            self.write('tar: Error exit delayed from previous errors\n')
             return
 
         f = self.fs.getfile(path)
         if not f[A_REALFILE]:
-            self.writeln('tar: this does not look like a tar archive')
-            self.writeln('tar: skipping to next header')
-            self.writeln('tar: error exit delayed from previous errors')
+            self.write('tar: this does not look like a tar archive\n')
+            self.write('tar: skipping to next header\n')
+            self.write('tar: error exit delayed from previous errors\n')
             return
 
         try:
             t = tarfile.open(f[A_REALFILE])
         except:
-            self.writeln('tar: this does not look like a tar archive')
-            self.writeln('tar: skipping to next header')
-            self.writeln('tar: error exit delayed from previous errors')
+            self.write('tar: this does not look like a tar archive\n')
+            self.write('tar: skipping to next header\n')
+            self.write('tar: error exit delayed from previous errors\n')
             return
 
         for f in t:
             dest = self.fs.resolve_path(f.name.strip('/'), self.protocol.cwd)
             if verbose:
-                self.writeln(f.name)
+                self.write(f.name+'\n')
             if not extract or not len(dest):
                 continue
             if f.isdir():

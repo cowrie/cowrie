@@ -78,7 +78,7 @@ class HoneyPotCommand(object):
     def call(self):
         """
         """
-        self.writeln('Hello World! [%s]' % (repr(self.args),))
+        self.write('Hello World! [%s]\n' % (repr(self.args),))
 
 
     def exit(self):
@@ -92,7 +92,7 @@ class HoneyPotCommand(object):
         """
         """
         log.msg('Received CTRL-C, exiting..')
-        self.writeln('^C')
+        self.write('^C\n')
         self.exit()
 
 
@@ -178,8 +178,8 @@ class HoneyPotShell(object):
             line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
             cmdAndArgs = shlex.split(line)
         except:
-            self.protocol.writeln(
-                'bash: syntax error: unexpected end of file')
+            self.protocol.terminal.write(
+                'bash: syntax error: unexpected end of file\n')
             # Could run runCommand here, but i'll just clear the list instead
             self.cmdpending = []
             self.showPrompt()
@@ -217,7 +217,7 @@ class HoneyPotShell(object):
             log.msg(eventid='COW0006',
                 input=line, format='Command not found: %(input)s')
             if len(line):
-                self.protocol.writeln('bash: %s: command not found' % (cmd,))
+                self.protocol.terminal.write('bash: %s: command not found\n' % (cmd,))
                 runOrPrompt()
 
 
@@ -267,7 +267,7 @@ class HoneyPotShell(object):
         """
         self.protocol.lineBuffer = []
         self.protocol.lineBufferIndex = 0
-        self.protocol.terminal.nextLine()
+        self.protocol.terminal.write('\n')
         self.showPrompt()
 
 
@@ -335,17 +335,17 @@ class HoneyPotShell(object):
             first = l.split(' ')[:-1]
             newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
             if newbuf == ''.join(self.protocol.lineBuffer):
-                self.protocol.terminal.nextLine()
+                self.protocol.terminal.write('\n')
                 maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
                 count = 0
                 for file in files:
                     if count == perline:
                         count = 0
-                        self.protocol.terminal.nextLine()
+                        self.protocol.terminal.write('\n')
                     self.protocol.terminal.write(file[fs.A_NAME].ljust(maxlen))
                     count += 1
-                self.protocol.terminal.nextLine()
+                self.protocol.terminal.write('\n')
                 self.showPrompt()
 
         self.protocol.lineBuffer = list(newbuf)

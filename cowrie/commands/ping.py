@@ -37,7 +37,7 @@ class command_ping(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(self.args, "c:")
         except getopt.GetoptError as err:
-            self.writeln('ping: %s' % (err,))
+            self.write('ping: %s\n' % (err,))
             self.exit()
             return
 
@@ -48,7 +48,7 @@ class command_ping(HoneyPotCommand):
                 except:
                     self.max = 0
                 if self.max <= 0:
-                    self.writeln('ping: bad number of packets to transmit.')
+                    self.write('ping: bad number of packets to transmit.\n')
                     self.exit()
                     return
 
@@ -61,7 +61,7 @@ class command_ping(HoneyPotCommand):
                     '            [-M mtu discovery hint] [-S sndbuf]',
                     '            [ -T timestamp option ] [ -Q tos ] [hop1 ...] destination',
                     ):
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
             return
 
@@ -69,7 +69,7 @@ class command_ping(HoneyPotCommand):
             if self.valid_ip(self.host):
                 self.ip = self.host
             else:
-                self.writeln('ping: unknown host %s' % (self.host,))
+                self.write('ping: unknown host %s\n' % (self.host,))
                 self.exit()
         else:
             s = hashlib.md5(self.host).hexdigest()
@@ -77,7 +77,7 @@ class command_ping(HoneyPotCommand):
                 (s[0:2], s[2:4], s[4:6], s[6:8])])
 
         self.running = True
-        self.writeln('PING %s (%s) 56(84) bytes of data.' % \
+        self.write('PING %s (%s) 56(84) bytes of data.\n' % \
             (self.host, self.ip))
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
@@ -87,13 +87,13 @@ class command_ping(HoneyPotCommand):
         """
         """
         ms = 40 + random.random() * 10
-        self.writeln(
-            '64 bytes from %s (%s): icmp_seq=%d ttl=50 time=%.1f ms' % \
+        self.write(
+            '64 bytes from %s (%s): icmp_seq=%d ttl=50 time=%.1f ms\n' % \
             (self.host, self.ip, self.count + 1, ms))
         self.count += 1
         if self.count == self.max:
             self.running = False
-            self.writeln('')
+            self.write('\n')
             self.printstatistics()
             self.exit()
         else:
@@ -103,10 +103,10 @@ class command_ping(HoneyPotCommand):
     def printstatistics(self):
         """
         """
-        self.writeln('--- %s ping statistics ---' % (self.host,))
-        self.writeln('%d packets transmitted, %d received, 0%% packet loss, time 907ms' % \
+        self.write('--- %s ping statistics ---\n' % (self.host,))
+        self.write('%d packets transmitted, %d received, 0%% packet loss, time 907ms\n' % \
             (self.count, self.count))
-        self.writeln('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms')
+        self.write('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n')
 
 
     def handle_CTRL_C(self):
@@ -115,7 +115,7 @@ class command_ping(HoneyPotCommand):
         if self.running == False:
             return HoneyPotCommand.handle_CTRL_C(self)
         else:
-            self.writeln('^C')
+            self.write('^C\n')
             self.scheduled.cancel()
             self.printstatistics()
             self.exit()

@@ -21,7 +21,7 @@ class command_whoami(HoneyPotCommand):
     def call(self):
         """
         """
-        self.writeln(self.protocol.user.username)
+        self.write(self.protocol.user.username+'\n')
 commands['/usr/bin/whoami'] = command_whoami
 commands['/usr/bin/users'] = command_whoami
 
@@ -36,7 +36,7 @@ class command_uptime(HoneyPotCommand):
         if len(self.args):
             secs = int(self.args[0])
             self.protocol.uptime(time.time() - secs)
-        self.writeln(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00' % \
+        self.write(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00\n' % \
             (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
 commands['/usr/bin/uptime'] = command_uptime
 
@@ -48,7 +48,7 @@ class command_help(HoneyPotCommand):
     def call(self):
         """
         """
-        self.writeln("""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
+        self.write("""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
 These shell commands are defined internally.  Type `help' to see this list.
 Type `help name' to find out more about the function `name'.
 Use `info bash' to find out more about the shell in general.
@@ -93,7 +93,7 @@ A star (*) next to a name means that the command is disabled.
  function name { COMMANDS ; } or name () { COMMANDS ; }                                         variables - Names and meanings of some shell variables
  getopts optstring name [arg]                                                                   wait [id]
  hash [-lr] [-p pathname] [-dt] [name ...]                                                      while COMMANDS; do COMMANDS; done
- help [-dms] [pattern ...]                                                                      { COMMANDS ; }""")
+ help [-dms] [pattern ...]                                                                      { COMMANDS ; }\n""")
 commands['help'] = command_help
 
 
@@ -104,10 +104,10 @@ class command_w(HoneyPotCommand):
     def call(self):
         """
         """
-        self.writeln(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00' % \
+        self.write(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00\n' % \
             (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
-        self.writeln('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT')
-        self.writeln('%-8s pts/0    %s %s    0.00s  0.00s  0.00s w' % \
+        self.write('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n')
+        self.write('%-8s pts/0    %s %s    0.00s  0.00s  0.00s w\n' % \
             (self.protocol.user.username,
             self.protocol.clientIP[:17].ljust(17),
             time.strftime('%H:%M', time.localtime(self.protocol.logintime))))
@@ -121,7 +121,7 @@ class command_who(HoneyPotCommand):
     def call(self):
         """
         """
-        self.writeln('%-8s pts/0        %s %s (%s)' % \
+        self.write('%-8s pts/0        %s %s (%s)\n' % \
             (self.protocol.user.username,
             time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime)),
             time.strftime('%H:%M', time.localtime(self.protocol.logintime)),
@@ -136,8 +136,8 @@ class command_echo(HoneyPotCommand):
     def call(self):
         """
         """
-        write_fn = self.writeln
         escape_fn = lambda s: s
+        newline = True
 
         try:
             optlist, args = getopt.getopt(self.args, "eEn")
@@ -147,11 +147,13 @@ class command_echo(HoneyPotCommand):
                 elif opt[0] == '-E':
                     escape_fn = lambda s: s
                 elif opt[0] == '-n':
-                    write_fn = self.write
+                    newline = False
         except:
             args = self.args
 
-        write_fn(escape_fn(' '.join(args)))
+        self.write(escape_fn(' '.join(args)))
+        if newline is True: 
+            self.write('\n')
 
 commands['/bin/echo'] = command_echo
 
@@ -195,7 +197,7 @@ class command_hostname(HoneyPotCommand):
     def call(self):
         """
         """
-        self.writeln(self.protocol.hostname)
+        self.write(self.protocol.hostname+'\n')
 commands['/bin/hostname'] = command_hostname
 
 
@@ -263,7 +265,7 @@ class command_ps(HoneyPotCommand):
             s = ''.join([output[i][x] for x in l])
             if 'w' not in args:
                 s = s[:80]
-            self.writeln(s)
+            self.write(s+'\n')
 commands['/bin/ps'] = command_ps
 
 
@@ -275,7 +277,7 @@ class command_id(HoneyPotCommand):
         """
         """
         u = self.protocol.user
-        self.writeln('uid=%d(%s) gid=%d(%s) groups=%d(%s)' % \
+        self.write('uid=%d(%s) gid=%d(%s) groups=%d(%s)\n' % \
             (u.uid, u.username, u.gid, u.username, u.gid, u.username))
 commands['/usr/bin/id'] = command_id
 
@@ -306,14 +308,14 @@ class command_passwd(HoneyPotCommand):
         self.protocol.password_input = False
 
         if line != self.passwd or self.passwd == '*':
-            self.writeln('Sorry, passwords do not match')
+            self.write('Sorry, passwords do not match\n')
             self.exit()
             return
 
         userdb = UserDB(self.protocol.cfg)
         userdb.adduser(self.protocol.user.username, self.passwd)
 
-        self.writeln('passwd: password updated successfully')
+        self.write('passwd: password updated successfully\n')
         self.exit()
 
 
@@ -351,28 +353,28 @@ class command_shutdown(HoneyPotCommand):
                 "** the \"time\" argument is mandatory! (try \"now\") **",
                 )
             for l in output:
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
-            self.nextLine()
-            self.writeln(
-                'Broadcast message from root@%s (pts/0) (%s):' % \
+            self.write('\n')
+            self.write(
+                'Broadcast message from root@%s (pts/0) (%s):\n' % \
                 (self.protocol.hostname, time.ctime()))
-            self.nextLine()
-            self.writeln('The system is going down for maintenance NOW!')
+            self.write('\n')
+            self.write('The system is going down for maintenance NOW!\n')
             reactor.callLater(3, self.finish)
         elif len(self.args) > 1 and self.args[0].strip().count('-r') \
                 and self.args[1].strip().count('now'):
-            self.nextLine()
-            self.writeln(
-                'Broadcast message from root@%s (pts/0) (%s):' % \
+            self.write('\n')
+            self.write(
+                'Broadcast message from root@%s (pts/0) (%s):\n' % \
                 (self.protocol.hostname, time.ctime()))
-            self.nextLine()
-            self.writeln('The system is going down for reboot NOW!')
+            self.write('\n')
+            self.write('The system is going down for reboot NOW!\n')
             reactor.callLater(3, self.finish)
         else:
-            self.writeln("Try `shutdown --help' for more information.")
+            self.write("Try `shutdown --help' for more information.\n")
             self.exit()
             return
 
@@ -380,7 +382,7 @@ class command_shutdown(HoneyPotCommand):
     def finish(self):
         """
         """
-        self.writeln('Connection to server closed.')
+        self.write('Connection to server closed.\n')
         self.protocol.hostname = 'localhost'
         self.protocol.cwd = '/root'
         if not self.fs.exists(self.protocol.cwd):
@@ -399,19 +401,18 @@ class command_reboot(HoneyPotCommand):
     def start(self):
         """
         """
-        self.nextLine()
-        self.writeln(
-            'Broadcast message from root@%s (pts/0) (%s):' % \
+        self.write('\n')
+        self.write(
+            'Broadcast message from root@%s (pts/0) (%s):\n\n' % \
             (self.protocol.hostname, time.ctime()))
-        self.nextLine()
-        self.writeln('The system is going down for reboot NOW!')
+        self.write('The system is going down for reboot NOW!\n')
         reactor.callLater(3, self.finish)
 
 
     def finish(self):
         """
         """
-        self.writeln('Connection to server closed.')
+        self.write('Connection to server closed.\n')
         self.protocol.hostname = 'localhost'
         self.protocol.cwd = '/root'
         if not self.fs.exists(self.protocol.cwd):
@@ -435,7 +436,7 @@ class command_history(HoneyPotCommand):
                 return
             count = 1
             for l in self.protocol.historyLines:
-                self.writeln(' %s  %s' % (str(count).rjust(4), l))
+                self.write(' %s  %s\n' % (str(count).rjust(4), l))
                 count += 1
         except:
             # Non-interactive shell, do nothing
@@ -451,7 +452,7 @@ class command_date(HoneyPotCommand):
         """
         """
         time = datetime.datetime.utcnow();
-        self.writeln(time.strftime("%a %b %d %H:%M:%S UTC %Y"))
+        self.write(time.strftime("%a %b %d %H:%M:%S UTC %Y")+'\n')
 commands['/bin/date'] = command_date
 
 
@@ -468,7 +469,7 @@ class command_yes(HoneyPotCommand):
     def y(self):
         """
         """
-        self.writeln('y')
+        self.write('y\n')
         self.scheduled = reactor.callLater(0.01, self.y)
 
 
@@ -501,14 +502,14 @@ class command_chmod(HoneyPotCommand):
         """
         """
         if len(self.args) < 2:
-            self.writeln('chmod: missing operand')
-            self.writeln('Try chmod --help for more information.')
+            self.write('chmod: missing operand\n')
+            self.write('Try chmod --help for more information.\n')
             return
         for arg in self.args[1:]:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if not self.fs.exists(path):
-                self.writeln(
-                    'chmod: cannot access %s: No such file or directory' % \
+                self.write(
+                    'chmod: cannot access %s: No such file or directory\n' % \
                     (arg,))
 commands['/bin/chmod'] = command_chmod
 
@@ -538,7 +539,7 @@ class command_perl(HoneyPotCommand):
                 ''
             )
             for l in output:
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
         elif self.args[0] == '-h':
             output = (
@@ -575,7 +576,7 @@ class command_perl(HoneyPotCommand):
                 ''
             )
             for l in output:
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
         else:
             self.exit()
@@ -611,7 +612,7 @@ class command_php(HoneyPotCommand):
                 'Copyright (c) 1997-2010 The PHP Group'
             )
             for l in output:
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
         elif self.args[0] == '-h':
             output = (
@@ -655,7 +656,7 @@ class command_php(HoneyPotCommand):
                 ''
             )
             for l in output:
-                self.writeln(l)
+                self.write(l+'\n')
             self.exit()
         else:
             self.exit()
@@ -684,13 +685,13 @@ class command_chattr(HoneyPotCommand):
         """
         """
         if len(self.args) < 1:
-            self.writeln('Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...')
+            self.write('Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...\n')
             return
         elif len(self.args) < 2:
-            self.writeln("Must use '-v', =, - or +'")
+            self.write("Must use '-v', =, - or +'\n")
             return
         if not self.fs.exists(self.args[1]):
-            self.writeln('chattr: No such file or directory while trying to stat ' + self.args[1])
+            self.write('chattr: No such file or directory while trying to stat ' + self.args[1] + '\n')
         return
 commands['/usr/bin/chattr'] = command_chattr
 

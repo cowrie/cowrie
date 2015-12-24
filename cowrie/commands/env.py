@@ -43,7 +43,7 @@ class command_env(HoneyPotCommand):
         """
         """
         for i in list(self.environ.keys()):
-            self.writeln("%s=%s" % (i,self.environ[i]))
+            self.write("%s=%s\n" % (i,self.environ[i]))
         self.exit()
 
 

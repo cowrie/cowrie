@@ -20,15 +20,15 @@ class command_ethtool(HoneyPotCommand):
 
     def do_ethtool_help(self):
         """No real help output."""
-        self.writeln("""ethtool: bad command line argument(s)
-For more information run ethtool -h """)
+        self.write("""ethtool: bad command line argument(s)
+For more information run ethtool -h\n""")
 
     def do_ethtool_lo(self):
-        self.writeln("""Settings for lo:
-            Link detected: yes""")
+        self.write("""Settings for lo:
+            Link detected: yes\n""")
 
     def do_ethtool_eth0(self):
-        self.writeln("""Settings for eth0:
+        self.write("""Settings for eth0:
 Supported ports: [ TP MII ]
 Supported link modes:   10baseT/Half 10baseT/Full
                         100baseT/Half 100baseT/Full
@@ -55,15 +55,15 @@ Supports Wake-on: pumbg
 Wake-on: g
 Current message level: 0x00000033 (51)
                        drv probe ifdown ifup
-Link detected: yes""")
+Link detected: yes\n""")
 
     def do_ethtool_eth1(self):
-        self.writeln("""Settings for eth1:
+        self.write("""Settings for eth1:
 Cannot get device settings: No such device
 Cannot get wake-on-lan settings: No such device
 Cannot get message level: No such device
 Cannot get link status: No such device
-No data available""")
+No data available\n""")
 
 commands['/sbin/ethtool'] = command_ethtool
 

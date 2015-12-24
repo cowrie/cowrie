@@ -25,7 +25,7 @@ class command_adduser(HoneyPotCommand):
             self.username = arg
             break
         if self.username is None:
-            self.writeln('adduser: Only one or two names allowed.')
+            self.write('adduser: Only one or two names allowed.\n')
             self.exit()
             return
 
@@ -95,9 +95,9 @@ class command_adduser(HoneyPotCommand):
             return
         elif self.item == 20 and line.strip() not in ('y', 'yes'):
             self.item = 7
-            self.writeln('Ok, starting over')
+            self.write('Ok, starting over\n')
         elif not len(line) and self.output[self.item][0] == O_Q:
-            self.writeln('Must enter a value!')
+            self.write('Must enter a value!\n')
         else:
             self.item += 1
         self.schedule_next()

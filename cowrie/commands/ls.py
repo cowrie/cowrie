@@ -66,8 +66,8 @@ class command_ls(HoneyPotCommand):
             files = self.protocol.fs.get_path(path)
             files.sort()
         except:
-            self.writeln(
-                'ls: cannot access %s: No such file or directory' % (path,))
+            self.write(
+                'ls: cannot access %s: No such file or directory\n' % (path,))
             return
         l = [x[A_NAME] for x in files \
             if self.show_hidden or not x[A_NAME].startswith('.')]
@@ -88,10 +88,10 @@ class command_ls(HoneyPotCommand):
         for f in l:
             if count == perline:
                 count = 0
-                self.nextLine()
+                self.write('\n')
             self.write(f.ljust(maxlen + 1))
             count += 1
-        self.nextLine()
+        self.write('\n')
 
 
     def do_ls_l(self, path):
@@ -101,8 +101,8 @@ class command_ls(HoneyPotCommand):
             files = self.protocol.fs.get_path(path)[:]
             files.sort()
         except:
-            self.writeln(
-                'ls: cannot access %s: No such file or directory' % (path,))
+            self.write(
+                'ls: cannot access %s: No such file or directory\n' % (path,))
             return
 
         largest = 0
@@ -149,7 +149,7 @@ class command_ls(HoneyPotCommand):
                 file[A_NAME],
                 linktarget)
 
-            self.writeln(l)
+            self.write(l+'\n')
 commands['/bin/ls'] = command_ls
 commands['/bin/dir'] = command_ls
 
