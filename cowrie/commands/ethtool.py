@@ -7,7 +7,12 @@ from cowrie.core.honeypot import HoneyPotCommand
 commands = {}
 
 class command_ethtool(HoneyPotCommand):
+    """
+    """
+
     def call(self):
+        """
+        """
         func = self.do_ethtool_help
         for x in self.args:
             if x.startswith('lo'):
@@ -18,16 +23,25 @@ class command_ethtool(HoneyPotCommand):
                 func = self.do_ethtool_eth1
         func()
 
+
     def do_ethtool_help(self):
-        """No real help output."""
+        """
+        No real help output.
+        """
         self.write("""ethtool: bad command line argument(s)
 For more information run ethtool -h\n""")
 
+
     def do_ethtool_lo(self):
+        """
+        """
         self.write("""Settings for lo:
             Link detected: yes\n""")
 
+
     def do_ethtool_eth0(self):
+        """
+        """
         self.write("""Settings for eth0:
 Supported ports: [ TP MII ]
 Supported link modes:   10baseT/Half 10baseT/Full
@@ -57,7 +71,10 @@ Current message level: 0x00000033 (51)
                        drv probe ifdown ifup
 Link detected: yes\n""")
 
+
     def do_ethtool_eth1(self):
+        """
+        """
         self.write("""Settings for eth1:
 Cannot get device settings: No such device
 Cannot get wake-on-lan settings: No such device
