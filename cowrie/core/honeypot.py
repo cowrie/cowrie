@@ -78,9 +78,11 @@ class HoneyPotCommand(object):
 
     def exit(self):
         """
+        Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
-        self.protocol.cmdstack.pop()
-        self.protocol.cmdstack[-1].resume()
+        if self.protocol.cmdstack:
+            self.protocol.cmdstack.pop()
+            self.protocol.cmdstack[-1].resume()
 
 
     def handle_CTRL_C(self):
