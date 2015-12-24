@@ -53,7 +53,7 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
     x25 (CCITT X.25)""")
 
     def do_netstat_route(self):
-        self.protocol.writeln("""Kernel IP routing table
+        self.writeln("""Kernel IP routing table
 Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface""")
         if self.show_numeric:
             default = "default"
@@ -69,11 +69,11 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface""
         l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % \
             ('{:<16}'.format(destination),
             '{:<16}'.format(lgateway))
-        self.protocol.writeln(l1)
-        self.protocol.writeln(l2)
+        self.writeln(l1)
+        self.writeln(l2)
 
     def do_netstat_normal(self):
-        self.protocol.writeln("""Active Internet connections (w/o servers)
+        self.writeln("""Active Internet connections (w/o servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State""")
         s_name = self.protocol.hostname
         c_port = str(self.protocol.realClientPort)
@@ -85,24 +85,24 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State""")
             s_port = "ssh"
             c_name = socket.gethostbyaddr(self.protocol.clientIP)[0][:17]
         if self.show_listen or self.show_all:
-            self.protocol.writeln("tcp        0      0 *:ssh                   *:*                     LISTEN")
+            self.writeln("tcp        0      0 *:ssh                   *:*                     LISTEN")
         if not self.show_listen or self.show_all:
             l = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
                 (s_name, s_port,
                 " "*(24-len(s_name+s_port)-1), c_name, c_port,
                 " "*(24-len(c_name+c_port)-1), "ESTABLISHED")
-            self.protocol.writeln(l)
+            self.writeln(l)
         if self.show_listen or self.show_all:
-            self.protocol.writeln("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN")
-        self.protocol.writeln("""Active UNIX domain sockets (only servers)
+            self.writeln("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN")
+        self.writeln("""Active UNIX domain sockets (only servers)
 Proto RefCnt Flags       Type       State         I-Node   Path""")
         if self.show_listen:
-            self.protocol.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
+            self.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
 unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
 unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
 unix  2      [ ACC ]     SEQPACKET  LISTENING     7159     /run/udev/control""")
         elif self.show_all:
-            self.protocol.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
+            self.writeln("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
 unix  4      [ ]         DGRAM                    7445     /dev/log
 unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
 unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
@@ -124,7 +124,7 @@ unix  3      [ ]         DGRAM                    7198
 unix  2      [ ]         DGRAM                    9570
 unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart""")
         else:
-            self.protocol.writeln("""unix  4      [ ]         DGRAM                    7445     /dev/log
+            self.writeln("""unix  4      [ ]         DGRAM                    7445     /dev/log
 unix  3      [ ]         STREAM     CONNECTED     7323
 unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
 unix  3      [ ]         STREAM     CONNECTED     7330
