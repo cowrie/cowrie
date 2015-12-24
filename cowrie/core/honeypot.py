@@ -33,7 +33,6 @@ class HoneyPotCommand(object):
             self.writtenBytes = 0
             self.writeln = self.writeToFileLn
             self.write = self.writeToFile
-            self.nextLine = self.nextLineToFile
 
             index = self.args.index(">")
             self.outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
@@ -47,10 +46,6 @@ class HoneyPotCommand(object):
         else:
             self.write = self.protocol.terminal.write
             self.writeln = self.protocol.writeln
-            self.nextLine = self.protocol.terminal.nextLine
-
-    def nextLineToFile(self):
-        self.writeToFile('\n')
 
 
     def writeToFile(self, data):
