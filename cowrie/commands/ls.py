@@ -66,7 +66,7 @@ class command_ls(HoneyPotCommand):
             files = self.protocol.fs.get_path(path)
             files.sort()
         except:
-            self.protocol.writeln(
+            self.writeln(
                 'ls: cannot access %s: No such file or directory' % (path,))
             return
         l = [x[A_NAME] for x in files \
@@ -101,7 +101,7 @@ class command_ls(HoneyPotCommand):
             files = self.protocol.fs.get_path(path)[:]
             files.sort()
         except:
-            self.protocol.writeln(
+            self.writeln(
                 'ls: cannot access %s: No such file or directory' % (path,))
             return
 
@@ -149,7 +149,7 @@ class command_ls(HoneyPotCommand):
                 file[A_NAME],
                 linktarget)
 
-            self.protocol.writeln(l)
+            self.writeln(l)
 commands['/bin/ls'] = command_ls
 commands['/bin/dir'] = command_ls
 
