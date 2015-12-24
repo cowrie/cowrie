@@ -8,6 +8,7 @@ This module contains ...
 import os
 import shlex
 import re
+import stat
 import copy
 import time
 
@@ -23,46 +24,44 @@ class HoneyPotCommand(object):
 
     def __init__(self, protocol, *args):
         self.protocol = protocol
-        self.args = args
+        self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
-        self.writeln = self.writeln
-        self.write = self.write
         self.nextLine = self.protocol.terminal.nextLine
         self.fs = self.protocol.fs
 
-    def write(self,data):
-        if ">" in self.args:
-            try:
-                self.writeToFile(data,"")
-            except:
-                self.protocol.terminal.write(data)
+        # MS-DOS style redirect handling, inside the command
+        if '>' in self.args:
+            self.writtenBytes = 0
+            self.writeln = self.writeToFileLn
+            self.write = self.writeToFile
+
+            index = self.args.index(">")
+            self.outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
+            del self.args[index:]
+            self.safeoutfile = '%s/%s_%s' % (self.protocol.cfg.get('honeypot', 'download_path'),
+                time.strftime('%Y%m%d%H%M%S'), re.sub('[^A-Za-z0-9]', '_', "tmpecho"))
+            perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
+            self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)
+            with open(self.safeoutfile, 'a'):
+                self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
         else:
-            self.protocol.terminal.write(data)
+            self.write = self.protocol.terminal.write
+            self.writeln = self.protocol.writeln
 
-    def writeToFile(self,data,line):
-        safeoutfile = '%s/%s_%s' % (self.protocol.cfg.get('honeypot', 'download_path'),
-                                    time.strftime('%Y%m%d%H%M%S'),
-                                    re.sub('[^A-Za-z0-9]', '_', "tmpecho"))
 
-        index = self.args.index(">")
-        data = data.replace(" > ","")
-        data = data.replace(self.args[(index+1)],"")
-        file = open(safeoutfile, "a")
-        file.write(data + line)
-        file.close()
-        outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
-        self.fs.mkfile(outfile, 0, 0, len(data), 33188)
-        self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
+    def writeToFile(self, data):
+        """
+        """
+        with open(self.safeoutfile, 'a') as f:
+            f.write(data)
+        self.writtenBytes += len(data)
+        self.fs.update_size(self.outfile, self.writtenBytes)
 
-    def writeln(self, data):
-        if ">" in self.args:
-            try:
-               self.writeToFile(data,"\n")
-            except:
-                self.protocol.writeln(data)
-        else:
-            self.protocol.writeln(data)
 
+    def writeToFileLn(self, data):
+        """
+        """
+        self.writeToFile(data+'\n')
 
 
     def start(self):
