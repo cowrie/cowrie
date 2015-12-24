@@ -9,6 +9,7 @@ import os
 import shlex
 import re
 import copy
+import time
 
 from twisted.python import log, failure
 
@@ -24,10 +25,44 @@ class HoneyPotCommand(object):
         self.protocol = protocol
         self.args = args
         self.environ = self.protocol.cmdstack[0].environ
-        self.writeln = self.protocol.writeln
-        self.write = self.protocol.terminal.write
+        self.writeln = self.writeln
+        self.write = self.write
         self.nextLine = self.protocol.terminal.nextLine
         self.fs = self.protocol.fs
+
+    def write(self,data):
+        if ">" in self.args:
+            try:
+                self.writeToFile(data,"")
+            except:
+                self.protocol.terminal.write(data)
+        else:
+            self.protocol.terminal.write(data)
+
+    def writeToFile(self,data,line):
+        safeoutfile = '%s/%s_%s' % (self.protocol.cfg.get('honeypot', 'download_path'),
+                                    time.strftime('%Y%m%d%H%M%S'),
+                                    re.sub('[^A-Za-z0-9]', '_', "tmpecho"))
+
+        index = self.args.index(">")
+        data = data.replace(" > ","")
+        data = data.replace(self.args[(index+1)],"")
+        file = open(safeoutfile, "a")
+        file.write(data + line)
+        file.close()
+        outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
+        self.fs.mkfile(outfile, 0, 0, len(data), 33188)
+        self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
+
+    def writeln(self, data):
+        if ">" in self.args:
+            try:
+               self.writeToFile(data,"\n")
+            except:
+                self.protocol.writeln(data)
+        else:
+            self.protocol.writeln(data)
+
 
 
     def start(self):
