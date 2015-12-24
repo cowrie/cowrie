@@ -14,6 +14,8 @@ from cowrie.commands import dice, malware
 commands = {}
 
 def pick_handler(cmd, size):
+    """
+    """
     if size in malware.slist:
         handler = malware.slist[size]
     elif cmd in malware.clist:
@@ -22,15 +24,25 @@ def pick_handler(cmd, size):
         handler = random.choice(dice.clist)
     return handler
 
+
+
 class command_tar(HoneyPotCommand):
+    """
+    """
+
     def mkfullpath(self, path, f):
+        """
+        """
         l, d = path.split('/'), []
         while len(l):
             d.append(l.pop(0))
             if not self.fs.exists('/'.join(d)):
                 self.fs.mkdir('/'.join(d), 0, 0, 4096, f.mode, f.mtime)
 
+
     def call(self):
+        """
+        """
         if len(self.args) < 2:
             self.write('tar: You must specify one of the `-Acdtrux\' options\n')
             self.write('Try `tar --help\' or `tar --usage\' for more information.\n')
