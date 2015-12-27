@@ -28,5 +28,6 @@ __all__ = [
     'tar',
     'uname',
     'wget',
-    'which'
+    'which',
+    'dd'
     ]
