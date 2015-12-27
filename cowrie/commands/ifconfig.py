@@ -29,7 +29,7 @@ lo        Link encap:Local Loopback
           RX bytes:19932 (19.9 KB)  TX bytes:19932 (19.9 KB)""" % \
         (self.protocol.kippoIP,
         self.protocol.kippoIP.rsplit('.', 1)[0])
-        self.protocol.writeln(l)
+        self.write(l+'\n')
 
 commands['/sbin/ifconfig'] = command_ifconfig
 

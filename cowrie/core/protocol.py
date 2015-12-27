@@ -91,7 +91,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
 	this logs out when connection times out
         """
-        self.writeln( 'timed out waiting for input: auto-logout' )
+        self.write( 'timed out waiting for input: auto-logout\n' )
         ret = failure.Failure(error.ProcessTerminated(exitCode=1))
         self.terminal.transport.processEnded(ret)
 
@@ -172,8 +172,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Sometimes still called after disconnect because of a deferred
         """
         if self.terminal:
-            self.terminal.write(data)
-            self.terminal.nextLine()
+            self.terminal.write(data+'\n')
 
 
     def call_command(self, cmd, *args):
@@ -257,7 +256,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         """
         try:
-            self.writeln(self.fs.file_contents('/etc/motd'))
+            self.write(self.fs.file_contents('/etc/motd')+'\n')
         except:
             pass
 

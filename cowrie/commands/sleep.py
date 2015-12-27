@@ -29,7 +29,7 @@ class command_sleep(HoneyPotCommand):
             _time = int( self.args[0] )
             self.scheduled = reactor.callLater(_time, self.done)
         else:
-            self.writeln('usage: sleep seconds')
+            self.write('usage: sleep seconds\n')
             self.exit()
 
 

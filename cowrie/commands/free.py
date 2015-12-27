@@ -56,11 +56,11 @@ class command_free(HoneyPotCommand):
         print free statistics
         """
         if fmt=='bytes':
-            self.writeln(FREE_BYTES)
+            self.write(FREE_BYTES+'\n')
         elif fmt=='megabytes':
-            self.writeln(FREE_MEGA)
+            self.write(FREE_MEGA+'\n')
         elif fmt=='human':
-            self.writeln(FREE_HUMAN)
+            self.write(FREE_HUMAN+'\n')
 
 commands['/usr/bin/free'] = command_free
 

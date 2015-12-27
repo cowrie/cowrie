@@ -16,7 +16,7 @@ class command_faked_package_class_factory(object):
     def getCommand(name):
         class command_faked_installation(HoneyPotCommand):
             def call(self):
-                self.writeln("%s: Segmentation fault" % name)
+                self.write("%s: Segmentation fault\n" % name)
         return command_faked_installation
 
 class command_aptget(HoneyPotCommand):
@@ -45,7 +45,7 @@ class command_aptget(HoneyPotCommand):
         return d
 
     def do_version(self):
-        self.writeln('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+        self.write('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Supported modules:
 *Ver: Standard .deb
 *Pkg:  Debian dpkg interface (Priority 30)
@@ -56,12 +56,12 @@ Supported modules:
  Idx: Debian Package Index
  Idx: Debian Translation Index
  Idx: Debian dpkg status file
- Idx: EDSP scenario file''')
+ Idx: EDSP scenario file\n''')
         self.exit()
         return
 
     def do_help(self):
-        self.writeln('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+        self.write('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Usage: apt-get [options] command
        apt-get [options] install|remove pkg1 [pkg2 ...]
        apt-get [options] source pkg1 [pkg2 ...]
@@ -103,14 +103,14 @@ Options:
   -o=? Set an arbitrary configuration option, eg -o dir::cache=/tmp
 See the apt-get(8), sources.list(5) and apt.conf(5) manual
 pages for more information and options.
-                       This APT has Super Cow Powers.''')
+                       This APT has Super Cow Powers.\n''')
         self.exit()
         return
 
     @inlineCallbacks
     def do_install(self,*args):
         if len(self.args) <= 1:
-            self.writeln('0 upgraded, 0 newly installed, 0 to remove and %s not upgraded.' % random.randint(200,300))
+            self.write('0 upgraded, 0 newly installed, 0 to remove and %s not upgraded.\n' % random.randint(200,300))
             self.exit()
             return
 
@@ -125,36 +125,36 @@ pages for more information and options.
                 }
         totalsize = sum([packages[x]['size'] for x in packages])
 
-        self.writeln('Reading package lists... Done')
-        self.writeln('Building dependency tree')
-        self.writeln('Reading state information... Done')
-        self.writeln('The following NEW packages will be installed:')
-        self.writeln('  %s ' % ' '.join(packages))
-        self.writeln('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.' % \
+        self.write('Reading package lists... Done\n')
+        self.write('Building dependency tree\n')
+        self.write('Reading state information... Done\n')
+        self.write('The following NEW packages will be installed:\n')
+        self.write('  %s ' % ' '.join(packages) + '\n')
+        self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % \
             len(packages))
-        self.writeln('Need to get %s.2kB of archives.' % (totalsize))
-        self.writeln('After this operation, %skB of additional disk space will be used.' % \
+        self.write('Need to get %s.2kB of archives.\n' % (totalsize))
+        self.write('After this operation, %skB of additional disk space will be used.\n' % \
             (totalsize * 2.2,))
         i = 1
         for p in packages:
-            self.writeln('Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]' % \
+            self.write('Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]\n' % \
                 (i, p, packages[p]['version'], packages[p]['size']))
             i += 1
             yield self.sleep(1, 2)
-        self.writeln('Fetched %s.2kB in 1s (4493B/s)''' % (totalsize))
-        self.writeln('Reading package fields... Done')
+        self.write('Fetched %s.2kB in 1s (4493B/s)''\n' % (totalsize))
+        self.write('Reading package fields... Done\n')
         yield self.sleep(1, 2)
-        self.writeln('Reading package status... Done')
-        self.writeln('(Reading database ... 177887 files and directories currently installed.)')
+        self.write('Reading package status... Done\n')
+        self.write('(Reading database ... 177887 files and directories currently installed.)\n')
         yield self.sleep(1, 2)
         for p in packages:
-            self.writeln('Unpacking %s (from .../archives/%s_%s_i386.deb) ...' % \
+            self.write('Unpacking %s (from .../archives/%s_%s_i386.deb) ...\n' % \
                 (p, p, packages[p]['version']))
             yield self.sleep(1, 2)
-        self.writeln('Processing triggers for man-db ...')
+        self.write('Processing triggers for man-db ...\n')
         yield self.sleep(2)
         for p in packages:
-            self.writeln('Setting up %s (%s) ...' % \
+            self.write('Setting up %s (%s) ...\n' % \
                 (p, packages[p]['version']))
             self.fs.mkfile('/usr/bin/%s' % p,
                 0, 0, random.randint(10000, 90000), 33188)
@@ -164,18 +164,18 @@ pages for more information and options.
         self.exit()
 
     def do_moo(self):
-        self.writeln('         (__)')
-        self.writeln('         (oo)')
-        self.writeln('   /------\/')
-        self.writeln('  / |    ||')
-        self.writeln(' *  /\---/\ ')
-        self.writeln('    ~~   ~~')
-        self.writeln('...."Have you mooed today?"...')
+        self.write('         (__)\n')
+        self.write('         (oo)\n')
+        self.write('   /------\/\n')
+        self.write('  / |    ||\n')
+        self.write(' *  /\---/\ \n')
+        self.write('    ~~   ~~\n')
+        self.write('...."Have you mooed today?"...\n')
         self.exit()
 
     def do_locked(self):
-        self.writeln('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)')
-        self.writeln('E: Unable to lock the list directory')
+        self.write('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
+        self.write('E: Unable to lock the list directory\n')
         self.exit()
 commands['/usr/bin/apt-get'] = command_aptget
 

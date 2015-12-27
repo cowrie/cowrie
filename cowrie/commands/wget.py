@@ -51,17 +51,16 @@ class command_wget(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(self.args, 'cqO:')
         except getopt.GetoptError as err:
-            self.writeln('Unrecognized option')
+            self.write('Unrecognized option\n')
             self.exit()
             return
 
         if len(args):
             url = args[0].strip()
         else:
-            self.writeln('wget: missing URL')
-            self.writeln('Usage: wget [OPTION]... [URL]...')
-            self.nextLine()
-            self.writeln('Try `wget --help\' for more options.')
+            self.write('wget: missing URL\n')
+            self.write('Usage: wget [OPTION]... [URL]...\n\n')
+            self.write('Try `wget --help\' for more options.\n')
             self.exit()
             return
 
@@ -88,7 +87,7 @@ class command_wget(HoneyPotCommand):
         if not path or \
                 not self.fs.exists(path) or \
                 not self.fs.isdir(path):
-            self.writeln('wget: %s: Cannot open: No such file or directory' % \
+            self.write('wget: %s: Cannot open: No such file or directory\n' % \
                 outfile)
             self.exit()
             return
@@ -120,13 +119,13 @@ class command_wget(HoneyPotCommand):
             if scheme != 'http' and scheme != 'https':
                 raise exceptions.NotImplementedError
         except:
-            self.writeln('%s: Unsupported scheme.' % (url,))
+            self.write('%s: Unsupported scheme.\n' % (url,))
             self.exit()
             return None
 
         if self.quiet == False:
-            self.writeln('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
-            self.writeln('Connecting to %s:%d... connected.' % (host, port))
+            self.write('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S\n'), url))
+            self.write('Connecting to %s:%d... connected.\n' % (host, port))
             self.write('HTTP request sent, awaiting response... ')
 
         factory = HTTPProgressDownloader(
@@ -146,7 +145,7 @@ class command_wget(HoneyPotCommand):
         return factory.deferred
 
     def handle_CTRL_C(self):
-        self.writeln('^C')
+        self.write('^C\n')
         self.connection.transport.loseConnection()
 
     def success(self, data, outfile):
@@ -184,9 +183,9 @@ class command_wget(HoneyPotCommand):
     def error(self, error, url):
         if hasattr(error, 'getErrorMessage'): # exceptions
             error = error.getErrorMessage()
-        self.writeln(error)
+        self.write(error+'\n')
         # Real wget also adds this:
-        #self.writeln('%s ERROR 404: Not Found.' % \
+        #self.write('%s ERROR 404: Not Found.\n' % \
         #    time.strftime('%Y-%m-%d %T'))
         self.exit()
 commands['/usr/bin/wget'] = command_wget
@@ -214,7 +213,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def gotHeaders(self, headers):
         if self.status == '200':
             if self.quiet == False:
-                self.wget.writeln('200 OK')
+                self.wget.write('200 OK\n')
             if 'content-length' in headers:
                 self.totallength = int(headers['content-length'][0])
             else:
@@ -227,13 +226,13 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if self.totallength > 0:
                 if self.quiet == False:
-                    self.wget.writeln('Length: %d (%s) [%s]' % \
+                    self.wget.write('Length: %d (%s) [%s]\n' % \
                         (self.totallength,
                         sizeof_fmt(self.totallength),
                         self.contenttype))
             else:
                 if self.quiet == False:
-                    self.wget.writeln('Length: unspecified [%s]' % \
+                    self.wget.write('Length: unspecified [%s]\n' % \
                         (self.contenttype))
             if self.wget.limit_size > 0 and \
                     self.totallength > self.wget.limit_size:
@@ -242,8 +241,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.fileName = os.path.devnull
                 self.nomore = True
             if self.quiet == False:
-                self.wget.writeln('Saving to: `%s' % self.fakeoutfile)
-                self.wget.nextLine()
+                self.wget.write('Saving to: `%s\n\n' % self.fakeoutfile)
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
@@ -290,10 +288,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 ('%s>' % (38 * '='),
                 splitthousands(str(int(self.totallength))).ljust(12),
                 self.speed / 1000))
-            self.wget.nextLine()
-            self.wget.nextLine()
-            self.wget.writeln(
-                '%s (%d KB/s) - `%s\' saved [%d/%d]' % \
+            self.wget.write('\n\n')
+            self.wget.write(
+                '%s (%d KB/s) - `%s\' saved [%d/%d]\n' % \
                 (time.strftime('%Y-%m-%d %H:%M:%S'),
                 self.speed / 1000,
                 self.fakeoutfile, self.currentlength, self.totallength))

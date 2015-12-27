@@ -199,8 +199,8 @@ class command_iptables(HoneyPotCommand):
         if self.user_is_root():
             # Verify table existence
             if not table in self.tables.iterkeys():
-                self.writeln( """%s: can\'t initialize iptables table \'%s\': Table does not exist (do you need to insmod?)
-Perhaps iptables or your kernel needs to be upgraded.""" % (command_iptables.APP_NAME, table) )
+                self.write( """%s: can\'t initialize iptables table \'%s\': Table does not exist (do you need to insmod?)
+Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, table) )
                 self.exit()
             else:
                 # Exists
@@ -214,7 +214,7 @@ Perhaps iptables or your kernel needs to be upgraded.""" % (command_iptables.APP
     def is_valid_chain(self, chain):
         # Verify chain existence. Requires valid table first
         if not chain in self.current_table.iterkeys():
-            self.writeln("%s: No chain/target/match by that name." % command_iptables.APP_NAME)
+            self.write("%s: No chain/target/match by that name.\n" % command_iptables.APP_NAME)
             self.exit()
             return False
 
@@ -223,13 +223,13 @@ Perhaps iptables or your kernel needs to be upgraded.""" % (command_iptables.APP
 
     def show_version(self):
         """ Show version and exit """
-        self.writeln('%s %s' % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+        self.write('%s %s\n' % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
         self.exit()
 
     def show_help(self):
         """ Show help and exit """
 
-        self.writeln( """%s %s'
+        self.write( """%s %s'
 
 Usage: iptables -[AD] chain rule-specification [options]
        iptables -I chain [rulenum] rule-specification [options]
@@ -291,7 +291,7 @@ Options:
 [!] --fragment -f      match second or further fragments only
   --modprobe=<command>     try to insert modules using this command
   --set-counters PKTS BYTES    set the counter during insert/append
-[!] --version  -V      print package version.""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+[!] --version  -V      print package version.\n""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
         self.exit()
 
     def list_rules(self, chain):
@@ -315,7 +315,7 @@ Options:
                 output.append("-P %s ACCEPT" % chain)
 
             # Done
-            self.writeln(output)
+            self.write(output+'\n')
             self.exit()
         else:
             self.no_permission()
@@ -354,7 +354,7 @@ Options:
                 output.append("\n".join(chain_output))
 
             # Done
-            self.writeln("\n\n".join(output))
+            self.write("\n\n".join(output)+'\n')
             self.exit()
         else:
             self.no_permission()
@@ -381,32 +381,32 @@ Options:
             self.no_permission()
 
     def no_permission(self):
-        self.writeln( """%s %s: can\'t initialize iptables table \'filter\': Permission denied (you must be root)
-Perhaps iptables or your kernel needs to be upgraded."""
+        self.write( """%s %s: can\'t initialize iptables table \'filter\': Permission denied (you must be root)
+Perhaps iptables or your kernel needs to be upgraded.\n"""
             % (command_iptables.APP_NAME, command_iptables.APP_VERSION) )
         self.exit()
 
     def no_command(self):
         """ Print no command message and exit """
 
-        self.writeln( """%s %s: no command specified'
-Try `iptables -h\' or \'iptables --help\' for more information."""
+        self.write( """%s %s: no command specified'
+Try `iptables -h\' or \'iptables --help\' for more information.\n"""
             % (command_iptables.APP_NAME, command_iptables.APP_VERSION) )
         self.exit()
 
     def unknown_option(self, option):
         """ Print unknown option message and exit """
 
-        self.writeln( """%s %s: unknown option \'%s\''
-Try `iptables -h\' or \'iptables --help\' for more information."""
+        self.write( """%s %s: unknown option \'%s\''
+Try `iptables -h\' or \'iptables --help\' for more information.\n"""
             % (command_iptables.APP_NAME, command_iptables.APP_VERSION, option) )
         self.exit()
 
     def bad_argument(self, argument):
         """ Print bad argument and exit """
 
-        self.writeln( """Bad argument \'%s\'
-Try `iptables -h\' or \'iptables --help\' for more information."""
+        self.write( """Bad argument \'%s\'
+Try `iptables -h\' or \'iptables --help\' for more information.\n"""
             % argument )
         self.exit()
 
