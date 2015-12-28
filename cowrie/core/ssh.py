@@ -91,46 +91,6 @@ class HoneyPotSSHSession(session.SSHSession):
 
 
 
-@implementer(conchinterfaces.IConchUser)
-class CowrieUser(avatar.ConchUser):
-    """
-    """
-
-    def __init__(self, username, server):
-        avatar.ConchUser.__init__(self)
-        self.username = username
-        self.server = server
-        self.cfg = self.server.cfg
-
-        self.channelLookup.update(
-            {"session": HoneyPotSSHSession,
-             "direct-tcpip": CowrieOpenConnectForwardingClient})
-
-        try:
-            pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
-            self.uid = pwentry["pw_uid"]
-            self.gid = pwentry["pw_gid"]
-            self.home = pwentry["pw_dir"]
-        except:
-            self.uid = 1001
-            self.gid = 1001
-            self.home = '/home'
-
-        # Sftp support enabled only when option is explicitly set
-        try:
-            if (self.cfg.get('honeypot', 'sftp_enabled') == "true"):
-                self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
-        except:
-            pass
-
-
-    def logout(self):
-        """
-        """
-        log.msg('avatar {} logging out'.format(self.username))
-
-
-
 @implementer(conchinterfaces.ISession)
 class SSHSessionForCowrieUser:
     """
