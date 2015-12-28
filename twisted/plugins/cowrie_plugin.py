@@ -81,6 +81,25 @@ class CowrieServiceMaker(object):
 
         cfg = readConfigFile(options["config"])
 
+        top_service = service.MultiService()
+        application = service.Application('cowrie')
+        top_service.setServiceParent(application)
+
+        factory = cowrie.ssh.transport.HoneyPotSSHFactory(cfg)
+
+        factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
+        factory.portal.registerChecker(
+            core.checkers.HoneypotPublicKeyChecker())
+        factory.portal.registerChecker(
+            core.checkers.HoneypotPasswordChecker(cfg))
+
+        if cfg.has_option('honeypot', 'auth_none_enabled') and \
+                 cfg.get('honeypot', 'auth_none_enabled').lower() in \
+                 ('yes', 'true', 'on'):
+            factory.portal.registerChecker(
+                core.checkers.HoneypotNoneChecker())
+
+
         if cfg.has_option('honeypot', 'listen_addr'):
             listen_addr = cfg.get('honeypot', 'listen_addr')
         else:
@@ -94,23 +113,9 @@ class CowrieServiceMaker(object):
         else:
             listen_port = 2222
 
-        factory = cowrie.ssh.transport.HoneyPotSSHFactory(cfg)
-        factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
-        factory.portal.registerChecker(
-            core.checkers.HoneypotPublicKeyChecker())
-        factory.portal.registerChecker(
-            core.checkers.HoneypotPasswordChecker(cfg))
-
-        if cfg.has_option('honeypot', 'auth_none_enabled') and \
-                 cfg.get('honeypot', 'auth_none_enabled').lower() in \
-                 ('yes', 'true', 'on'):
-            factory.portal.registerChecker(
-                core.checkers.HoneypotNoneChecker())
-
-        top_service = top_service = service.MultiService()
-
         for i in listen_addr.split():
             svc = internet.TCPServer(listen_port, factory, interface=i)
+            # FIXME: Use addService on top_service ?
             svc.setServiceParent(top_service)
 
         if cfg.has_option('honeypot', 'interact_enabled') and \
@@ -119,11 +124,10 @@ class CowrieServiceMaker(object):
             iport = int(cfg.get('honeypot', 'interact_port'))
             from cowrie.core import interact
             svc = internet.TCPServer(iport,
-                interact.makeInteractFactory(factory))
+                interact.makeInteractFactory(factory), interface='127.0.0.1')
+            # FIXME: Use addService on top_service ?
             svc.setServiceParent(top_service)
 
-        application = service.Application('cowrie')
-        top_service.setServiceParent(application)
         return top_service
 
 # Now construct an object which *provides* the relevant interfaces
