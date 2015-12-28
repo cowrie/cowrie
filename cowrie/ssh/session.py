@@ -15,8 +15,9 @@ from twisted.conch.ssh import session
 from twisted.python import log
 from twisted.conch.ssh.common import getNS
 
-from cowrie.core import pwd
 from cowrie.core import protocol
+from cowrie.core import pwd
+from cowrie.insults import insults
 
 
 class HoneyPotSSHSession(session.SSHSession):
@@ -118,7 +119,7 @@ class SSHSessionForCowrieUser:
     def openShell(self, processprotocol):
         """
         """
-        self.protocol = protocol.LoggingServerProtocol(
+        self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
@@ -137,7 +138,7 @@ class SSHSessionForCowrieUser:
     def execCommand(self, processprotocol, cmd):
         """
         """
-        self.protocol = protocol.LoggingServerProtocol(
+        self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
