@@ -127,9 +127,10 @@ class HoneyPotShell(object):
     def __init__(self, protocol, interactive=True):
         self.protocol = protocol
         self.interactive = interactive
-        self.showPrompt()
         self.cmdpending = []
         self.environ = protocol.environ
+
+        self.showPrompt()
 
 
     def lineReceived(self, line):
@@ -257,6 +258,7 @@ class HoneyPotShell(object):
 
         attrs = {'path': path}
         self.protocol.terminal.write(prompt % attrs)
+        self.protocol.ps = (prompt % attrs , '> ')
 
 
     def handle_CTRL_C(self):

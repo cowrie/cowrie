@@ -150,12 +150,15 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 if self.fs.exists(i):
                     path = i
                     break
+
         txt = os.path.normpath('%s/%s' % \
             (self.cfg.get('honeypot', 'txtcmds_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
+
         if path in self.commands:
             return self.commands[path]
+
         return None
 
 
@@ -246,6 +249,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x06':     self.handle_RIGHT,	# CTRL-F
             '\x09':     self.handle_TAB,
             '\x0B':     self.handle_CTRL_K,	# CTRL-K
+            '\x0C':     self.handle_CTRL_L,	# CTRL-L
             '\x0E':     self.handle_DOWN,	# CTRL-N
             '\x10':     self.handle_UP,		# CTRL-P
             '\x15':     self.handle_CTRL_U,	# CTRL-U
@@ -346,6 +350,16 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         self.terminal.eraseToLineEnd()
         self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
+
+
+    def handle_CTRL_L(self):
+        """
+        Handle a 'form feed' byte - generally used to request a screen
+        refresh/redraw.
+        """
+        self.terminal.eraseDisplay()
+        self.terminal.cursorHome()
+        self.drawInputLine()
 
 
     def handle_CTRL_U(self):
