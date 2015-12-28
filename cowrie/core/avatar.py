@@ -14,9 +14,9 @@ from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.python import log, components
 
 from cowrie.core import pwd
-from cowrie.core import session
-from cowrie.core import filetransfer
-from cowrie.core import forwarding
+from cowrie.ssh import session
+from cowrie.ssh import filetransfer
+from cowrie.ssh import forwarding
 
 
 @implementer(IConchUser)

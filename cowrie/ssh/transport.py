@@ -17,8 +17,8 @@ from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
 
-from cowrie.core import connection
-from cowrie.core import userauth
+from cowrie.ssh import connection
+from cowrie.ssh import userauth
 from cowrie.core import keys as cowriekeys
 
 

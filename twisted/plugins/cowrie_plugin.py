@@ -45,9 +45,10 @@ from twisted.cred import portal
 
 from cowrie.core.config import readConfigFile
 from cowrie import core
-import cowrie.core.transport
 import cowrie.core.realm
 import cowrie.core.checkers
+
+import cowrie.ssh.transport
 
 class Options(usage.Options):
     """
@@ -93,7 +94,7 @@ class CowrieServiceMaker(object):
         else:
             listen_port = 2222
 
-        factory = core.transport.HoneyPotSSHFactory(cfg)
+        factory = cowrie.ssh.transport.HoneyPotSSHFactory(cfg)
         factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
         factory.portal.registerChecker(
             core.checkers.HoneypotPublicKeyChecker())

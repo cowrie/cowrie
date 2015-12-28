@@ -42,6 +42,7 @@ class TooManyLevels(Exception):
 
 class FileNotFound(Exception):
     """
+    raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
     """
     pass
 
