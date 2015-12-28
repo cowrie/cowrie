@@ -260,7 +260,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         """
         try:
-            self.write(self.fs.file_contents('/etc/motd')+'\n')
+            self.terminal.write(self.fs.file_contents('/etc/motd')+'\n')
         except:
             pass
 
