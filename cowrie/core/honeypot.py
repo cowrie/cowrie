@@ -31,7 +31,6 @@ class HoneyPotCommand(object):
         # MS-DOS style redirect handling, inside the command
         if '>' in self.args:
             self.writtenBytes = 0
-            self.writeln = self.writeToFileLn
             self.write = self.writeToFile
 
             index = self.args.index(">")
@@ -45,7 +44,6 @@ class HoneyPotCommand(object):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
         else:
             self.write = self.protocol.terminal.write
-            self.writeln = self.protocol.writeln
 
 
     def writeToFile(self, data):
@@ -55,12 +53,6 @@ class HoneyPotCommand(object):
             f.write(data)
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
-
-
-    def writeToFileLn(self, data):
-        """
-        """
-        self.writeToFile(data+'\n')
 
 
     def start(self):

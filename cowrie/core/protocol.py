@@ -170,14 +170,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cmdstack[-1].lineReceived(line)
 
 
-    def writeln(self, data):
-        """
-        Sometimes still called after disconnect because of a deferred
-        """
-        if self.terminal:
-            self.terminal.write(data+'\n')
-
-
     def call_command(self, cmd, *args):
         """
         """
