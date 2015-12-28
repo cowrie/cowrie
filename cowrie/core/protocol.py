@@ -91,7 +91,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
 	this logs out when connection times out
         """
-        self.write( 'timed out waiting for input: auto-logout\n' )
+        self.terminal.write( 'timed out waiting for input: auto-logout\n' )
         ret = failure.Failure(error.ProcessTerminated(exitCode=1))
         self.terminal.transport.processEnded(ret)
 
