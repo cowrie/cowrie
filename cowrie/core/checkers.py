@@ -130,4 +130,3 @@ class HoneypotPasswordChecker:
                 username=theusername, password=thepassword)
             return False
 
-# vim: set sw=4 et:

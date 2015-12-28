@@ -190,4 +190,3 @@ class Group(object):
                 return _
         raise KeyError("getgruid(): uid not found in group file: " + uid)
 
-# vim: set sw=4 et:

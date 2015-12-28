@@ -100,4 +100,3 @@ class UsernamePasswordIP:
         self.password = password
         self.ip = ip
 
-# vim: set sw=4 et:

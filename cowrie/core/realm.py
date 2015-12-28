@@ -75,4 +75,3 @@ class HoneyPotRealm:
         else:
             raise Exception("No supported interfaces found.")
 
-

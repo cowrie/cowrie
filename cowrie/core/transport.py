@@ -291,4 +291,3 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
                 % (reason, desc))
             self.transport.loseConnection()
 
-

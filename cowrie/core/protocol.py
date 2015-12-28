@@ -505,4 +505,3 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.cfg = None
         insults.ServerProtocol.connectionLost(self, reason)
 
-# vim: set sw=4 et:

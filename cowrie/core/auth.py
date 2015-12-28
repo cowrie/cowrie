@@ -219,4 +219,3 @@ class AuthRandom(object):
         self.savevars()
         return auth
 
-# vim: set sw=4 et:
