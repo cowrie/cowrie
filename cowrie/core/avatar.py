@@ -15,6 +15,7 @@ from twisted.python import log, components
 
 from cowrie.core import pwd
 from cowrie.core import ssh
+from cowrie.core import session
 
 
 @implementer(IConchUser)
@@ -29,7 +30,7 @@ class CowrieUser(avatar.ConchUser):
         self.cfg = self.server.cfg
 
         self.channelLookup.update(
-            {"session": ssh.HoneyPotSSHSession,
+            {"session": session.HoneyPotSSHSession,
              "direct-tcpip": ssh.CowrieOpenConnectForwardingClient})
 
         try:
@@ -57,6 +58,6 @@ class CowrieUser(avatar.ConchUser):
 
 
 components.registerAdapter(ssh.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
-components.registerAdapter(ssh.SSHSessionForCowrieUser, CowrieUser, ISession)
+components.registerAdapter(session.SSHSessionForCowrieUser, CowrieUser, ISession)
 
 
