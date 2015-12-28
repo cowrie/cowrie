@@ -38,7 +38,6 @@ from twisted.python import log
 
 from cowrie.core import protocol
 from cowrie.core import server
-from cowrie.core import ssh
 from cowrie.core import avatar
 
 import sys

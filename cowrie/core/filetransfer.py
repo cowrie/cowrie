@@ -12,7 +12,6 @@ from zope.interface import implementer
 import twisted
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
-from twisted.conch.ssh import forwarding
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
 from twisted.python import log
@@ -282,34 +281,3 @@ class SFTPServerForCowrieUser:
         """
         raise NotImplementedError
 
-
-def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
-    """
-    """
-    remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg(eventid='COW0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
-            dst_ip=remoteHP[0], dst_port=remoteHP[1])
-    return CowrieConnectForwardingChannel(remoteHP,
-       remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
-       avatar=avatar)
-
-
-
-class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
-    """
-    """
-    def channelOpen(self, specificData):
-        """
-        """
-        pass
-
-
-    def dataReceived(self, data):
-        """
-        """
-        log.msg(eventid='COW0015',
-            format='direct-tcp forward to %(dst_ip)s:%(dst_port)s with data %(data)s',
-            dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
-        self._close("Connection refused")
-
-# vim: set et sw=4 et:

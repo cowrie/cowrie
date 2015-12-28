@@ -10,12 +10,13 @@ from zope.interface import implementer
 import twisted
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
-from twisted.conch.ssh import filetransfer
+from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.python import log, components
 
 from cowrie.core import pwd
-from cowrie.core import ssh
 from cowrie.core import session
+from cowrie.core import filetransfer
+from cowrie.core import forwarding
 
 
 @implementer(IConchUser)
@@ -31,7 +32,7 @@ class CowrieUser(avatar.ConchUser):
 
         self.channelLookup.update(
             {"session": session.HoneyPotSSHSession,
-             "direct-tcpip": ssh.CowrieOpenConnectForwardingClient})
+             "direct-tcpip": forwarding.CowrieOpenConnectForwardingClient})
 
         try:
             pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
@@ -46,7 +47,7 @@ class CowrieUser(avatar.ConchUser):
         # Sftp support enabled only when option is explicitly set
         try:
             if (self.cfg.get('honeypot', 'sftp_enabled') == "true"):
-                self.subsystemLookup['sftp'] = filetransfer.FileTransferServer
+                self.subsystemLookup['sftp'] = conchfiletransfer.FileTransferServer
         except:
             pass
 
@@ -57,7 +58,7 @@ class CowrieUser(avatar.ConchUser):
         log.msg('avatar {} logging out'.format(self.username))
 
 
-components.registerAdapter(ssh.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
+components.registerAdapter(filetransfer.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
 components.registerAdapter(session.SSHSessionForCowrieUser, CowrieUser, ISession)
 
 
