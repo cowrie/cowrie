@@ -9,11 +9,12 @@ from zope.interface import implementer
 
 import twisted
 from twisted.conch import avatar
-from twisted.conch.interfaces import IConchUser
+from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
 from twisted.conch.ssh import filetransfer
-from twisted.python import log
+from twisted.python import log, components
 
 from cowrie.core import pwd
+from cowrie.core import ssh
 
 
 @implementer(IConchUser)
@@ -28,8 +29,8 @@ class CowrieUser(avatar.ConchUser):
         self.cfg = self.server.cfg
 
         self.channelLookup.update(
-            {"session": HoneyPotSSHSession,
-             "direct-tcpip": CowrieOpenConnectForwardingClient})
+            {"session": ssh.HoneyPotSSHSession,
+             "direct-tcpip": ssh.CowrieOpenConnectForwardingClient})
 
         try:
             pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
@@ -53,4 +54,9 @@ class CowrieUser(avatar.ConchUser):
         """
         """
         log.msg('avatar {} logging out'.format(self.username))
+
+
+components.registerAdapter(ssh.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
+components.registerAdapter(ssh.SSHSessionForCowrieUser, CowrieUser, ISession)
+
 

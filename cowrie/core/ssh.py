@@ -10,13 +10,13 @@ import os
 from zope.interface import implementer
 
 import twisted
-from twisted.conch import avatar, interfaces as conchinterfaces
+from twisted.conch.interfaces import ISFTPFile, ISFTPServer, ISession
 from twisted.conch.ssh import session
 from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh import forwarding
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
-from twisted.python import log, components
+from twisted.python import log
 from twisted.conch.ssh.common import getNS
 
 from cowrie.core import pwd
@@ -91,7 +91,7 @@ class HoneyPotSSHSession(session.SSHSession):
 
 
 
-@implementer(conchinterfaces.ISession)
+@implementer(ISession)
 class SSHSessionForCowrieUser:
     """
     """
@@ -172,7 +172,7 @@ class SSHSessionForCowrieUser:
 
 
 
-@implementer(conchinterfaces.ISFTPFile)
+@implementer(ISFTPFile)
 class CowrieSFTPFile:
     """
     """
@@ -295,7 +295,7 @@ class CowrieSFTPDirectory:
 
 
 
-@implementer(conchinterfaces.ISFTPServer)
+@implementer(ISFTPServer)
 class SFTPServerForCowrieUser:
     """
     """
@@ -435,11 +435,6 @@ class SFTPServerForCowrieUser:
         """
         """
         raise NotImplementedError
-
-
-
-components.registerAdapter(SFTPServerForCowrieUser, CowrieUser, conchinterfaces.ISFTPServer)
-components.registerAdapter(SSHSessionForCowrieUser, CowrieUser, session.ISession)
 
 
 def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
