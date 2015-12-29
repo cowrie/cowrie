@@ -80,9 +80,12 @@ class HoneyPotCommand(object):
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
-        if self.protocol.cmdstack:
+        try:
             self.protocol.cmdstack.pop()
             self.protocol.cmdstack[-1].resume()
+        except AttributeError:
+            # cmdstack could be gone already (wget + disconnect)
+            pass
 
 
     def handle_CTRL_C(self):
