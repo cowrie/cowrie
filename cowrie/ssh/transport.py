@@ -105,9 +105,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
     def stopFactory(self):
         """
         """
+        factory.SSHFactory.stopFactory(self)
         for output in self.output_plugins:
             output.stop()
-        factory.SSHFactory.stopFactory(self)
 
 
     def buildProtocol(self, addr):
