@@ -42,6 +42,7 @@ class TooManyLevels(Exception):
 
 class FileNotFound(Exception):
     """
+    raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
     """
     pass
 
@@ -561,4 +562,3 @@ class _statobj:
         self.st_mtime = st_mtime
         self.st_ctime = st_ctime
 
-# vim: set sw=4 et:

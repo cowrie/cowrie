@@ -169,4 +169,3 @@ class Output(object):
             del self.sessions[sessionno]
             del self.ips[sessionno]
 
-# vim: set sw=4 et:

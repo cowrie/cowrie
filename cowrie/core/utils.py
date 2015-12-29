@@ -87,5 +87,3 @@ def uptime(total_seconds):
         s += '%s min' % (str(minutes))
     return s
 
-
-# vim: set sw=4 et:

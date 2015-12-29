@@ -61,4 +61,3 @@ def getDSAKeys(cfg):
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
 
-

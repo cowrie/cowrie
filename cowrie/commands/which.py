@@ -25,4 +25,4 @@ class command_which(HoneyPotCommand):
                     continue
 
 # Definition
-commands['/bin/which'] = command_which
+commands['which'] = command_which

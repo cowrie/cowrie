@@ -1,27 +1,30 @@
 from twisted.words.xish import domish
 from twisted.python import log
 from wokkel.xmppim import AvailablePresence
+from twisted.words.protocols.jabber.jid import JID
 from wokkel import muc
 import uuid
+import json
 
 class XMPPLoggerProtocol(muc.MUCClient):
 
-    def __init__(self, server, rooms, nick):
+    def __init__(self, rooms, server, nick):
         muc.MUCClient.__init__(self)
-        self.server   = server
-        self.jrooms     = rooms
+        self.server   = rooms.host
+        self.jrooms = rooms
+        self._roomOccupantMap = {}
+        log.msg(rooms.user)
+        log.msg(rooms.host)
         self.nick     = nick
         self.last     = {}
         self.activity = None
 
-    def initialized(self):
+    def connectionInitialized(self):
         """The bot has connected to the xmpp server, now try to join the room.
         """
-        for i in self.jrooms:
-            print(i)
-            self.join(self.server, i, self.nick).addCallback(self.initRoom)
+        self.join(self.jrooms, self.nick);
 
-    def initRoom(self, room):
+    def joinedRoom(self, room):
         log.msg( 'Joined room %s' % room.name )
 
     def connectionMade(self):
@@ -31,7 +34,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
         self.send(AvailablePresence())
 
     def connectionLost(self, reason):
-        logmsg( 'Disconnected!' )
+        log.msg( 'Disconnected!' )
 
     def onMessage(self, msg):
         pass
@@ -69,10 +72,11 @@ class DBLogger(dblog.DBLogger):
             for i in range(8)])
         jid = user + '/' + resource
         application = service.Application('honeypot')
-        self.run(application, jid, password, muc, channels)
+        self.run(application, jid, password, JID(None,[muc,server,None]), channels)
 
     def run(self, application, jidstr, password, muc, channels, anon=True):
-        self.xmppclient = XMPPClient(jid.JID(jidstr), password)
+
+        self.xmppclient = XMPPClient(JID(jidstr), password)
         if self.cfg.has_option('database_xmpp', 'debug') and \
                 self.cfg.get('database_xmpp', 'debug') in ('1', 'true', 'yes'):
             self.xmppclient.logTraffic = True # DEBUG HERE
@@ -94,18 +98,16 @@ class DBLogger(dblog.DBLogger):
                 (self.signals[msgtype], self.muc.server) , msg)
 
     def report(self, msgtype, to, xmsg):
-        body = domish.Element((None, 'body'))
-        body.addContent('\n')
-        msg = domish.Element(('http://github.com/micheloosterhof/cowrie', 'cowrie'))
+        msg = {}
         msg['type'] = msgtype
-        msg.addChild(xmsg)
-        body.addChild(msg)
-        self.muc.groupChat(jid.JID(to), body)
+        msg['message'] = xmsg
+        msgJson = json.dumps(msg,indent=5)
+        self.muc.groupChat(self.muc.jrooms, msgJson)
 
     # We have to return an unique ID
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
         session = uuid.uuid4().hex
-        ses = domish.Element((None, 'session'))
+        ses = {}
         ses['session'] = session
         ses['remote_host'] = peerIP
         ses['remote_port'] = str(peerPort)
@@ -122,50 +124,50 @@ class DBLogger(dblog.DBLogger):
         pass
 
     def handleConnectionLost(self, session, args):
-        ses = domish.Element((None, 'session'))
+        ses = {}
         ses['session'] = session
         self.broadcast('connectionlost', ses)
 
     def handleLoginFailed(self, session, args):
-        ses = domish.Element((None, 'credentials'))
+        ses = {}
         ses['session'] = session
         ses['username'] = args['username']
         ses['password'] = args['password']
         self.broadcast('loginfailed', ses)
 
     def handleLoginSucceeded(self, session, args):
-        ses = domish.Element((None, 'credentials'))
+        ses = {}
         ses['session'] = session
         ses['username'] = args['username']
         ses['password'] = args['password']
         self.broadcast('loginsucceeded', ses)
 
     def handleCommand(self, session, args):
-        ses = domish.Element((None, 'command'))
+        ses = {}
         ses['session'] = session
         ses['command'] = 'known'
-        ses.addContent(args['input'])
+        ses['input'] = args['input']
         self.broadcast('command', ses)
 
     def handleUnknownCommand(self, session, args):
-        ses = domish.Element((None, 'command'))
+        ses = {}
         ses['session'] = session
         ses['command'] = 'unknown'
-        ses.addContent(args['input'])
+        ses['input']  = args['input']
         self.broadcast('command', ses)
 
     def handleInput(self, session, args):
-        ses = domish.Element((None, 'input'))
+        ses = {}
         ses['session'] = session
         ses['realm'] = args['realm']
-        ses.addContent(args['input'])
+        ses['input'] = args['input']
         self.broadcast('input', ses)
 
     def handleTerminalSize(self, session, args):
         pass
 
     def handleClientVersion(self, session, args):
-        ses = domish.Element((None, 'version'))
+        ses = {}
         ses['session'] = session
         ses['version'] = args['version']
         self.broadcast('clientversion', ses)
