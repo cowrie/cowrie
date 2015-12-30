@@ -187,7 +187,11 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == 'COW0012':
             self.simpleQuery(
-                'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
-                (entry["session"], entry["ttylog"]))
+                'INSERT INTO `ttylog` (`session`, `ttylog`, `size`) VALUES (%s, %s, %s)',
+                (entry["session"], entry["ttylog"], entry["size"]))
 
+        elif entry["eventid"] == 'COW0016':
+            self.simpleQuery(
+                'INSERT INTO `keyfingerprints` (`session`, `username`, `fingerprint`) VALUES (%s, %s, %s)',
+                (entry["session"], entry["username"], entry["fingerprint"]))
 # vim: set sw=4 et:

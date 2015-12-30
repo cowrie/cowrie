@@ -59,11 +59,13 @@ class LoggingServerProtocol(insults.ServerProtocol):
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
         self.stdinlog_open = False
 
-        insults.ServerProtocol.connectionMade(self)
+        self.ttylog_size = {self.ttylog_file: 0}
 
+        insults.ServerProtocol.connectionMade(self)
 
     def write(self, bytes):
         """
+        Output sent back to user
         """
         for i in self.interactors:
             i.sessionWrite(bytes)
@@ -72,11 +74,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(self.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
 
+            self.ttylog_size[self.ttylog_file] += len(bytes)
+
         insults.ServerProtocol.write(self, bytes)
 
 
     def dataReceived(self, data):
         """
+        Input received from user
         """
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
@@ -154,8 +159,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlog_open = False
 
         if self.ttylog_open:
-            log.msg(eventid='COW0012', format='Closing TTY Log: %(ttylog)s',
-                ttylog=self.ttylog_file)
+            size = self.ttylog_size[self.ttylog_file]
+            log.msg(eventid='COW0012',
+                    format='Closing TTY Log: %(ttylog)s',
+                    ttylog=self.ttylog_file,
+                    size=size)
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
 
