@@ -52,7 +52,7 @@ class command_curl(HoneyPotCommand):
 
         if '://' not in url:
             url = 'http://'+ url
-            urldata = urlparse.urlparse(url)
+        urldata = urlparse.urlparse(url)
 
         outfile = None
         for opt in optlist:
