@@ -187,7 +187,7 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == 'COW0012':
             self.simpleQuery(
-                'INSERT INTO `ttylog` (`session`, `ttylog`) VALUES (%s, %s)',
-                (entry["session"], entry["ttylog"]))
+                'INSERT INTO `ttylog` (`session`, `ttylog`, `size`) VALUES (%s, %s, %s)',
+                (entry["session"], entry["ttylog"], entry["size"]))
 
 # vim: set sw=4 et:

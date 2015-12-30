@@ -46,7 +46,8 @@ CREATE TABLE `sessions` (
 CREATE TABLE `ttylog` (
   `id` int(11) NOT NULL auto_increment,
   `session` char(32) NOT NULL,
-  `ttylog` mediumblob NOT NULL,
+  `ttylog` varchar(100) NOT NULL,
+  `size` int(11) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ;
 
