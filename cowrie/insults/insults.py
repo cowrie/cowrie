@@ -160,8 +160,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.ttylog_open:
             size = self.ttylog_size[self.ttylog_file]
-            log.msg(eventid='COW0012', format='Closing TTY Log: %(ttylog)s',
-                ttylog=self.ttylog_file, size=size)
+            log.msg(eventid='COW0012',
+                    format='Closing TTY Log: %(ttylog)s',
+                    ttylog=self.ttylog_file,
+                    size=size)
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
 
