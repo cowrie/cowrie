@@ -146,7 +146,7 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'COW0007':
             self.simpleQuery('INSERT INTO `downloads`' + \
                 ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
-                ' VALUES (%s, STR_TO_DATE(%s, %s), %s, %s)',
+                ' VALUES (%s, STR_TO_DATE(%s, %s), %s, %s, %s)',
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                 entry['url'], entry['outfile'], entry['shasum']))
 
