@@ -1,7 +1,9 @@
-#
 # Basic Splunk connector.
 # Not recommended for production use.
 # JSON log file is still recommended way to go
+# 
+# IDEA: convert to new HTTP input, no splunk libraries 
+# required then
 #
 
 import os
@@ -14,7 +16,9 @@ import cowrie.core.output
 class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
-        """ Initializing the class."""
+        """
+        Initializing the class
+        """
         self.index = cfg.get('output_splunk', 'index')
         self.username = cfg.get('output_splunk', 'username')
         self.password = cfg.get('output_splunk', 'password')
@@ -24,6 +28,8 @@ class Output(cowrie.core.output.Output):
 
 
     def start(self):
+        """
+        """
         self.service = client.connect(
             host=self.host,
             port=self.port,
@@ -33,11 +39,16 @@ class Output(cowrie.core.output.Output):
 
 
     def stop(self):
+        """
+        """
         pass
 
+
     def write(self, logentry):
+        """
+        """
         for i in list(logentry.keys()):
-            # remove twisted 15 legacy keys
+            # Remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
 

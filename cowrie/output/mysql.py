@@ -194,4 +194,4 @@ class Output(cowrie.core.output.Output):
             self.simpleQuery(
                 'INSERT INTO `keyfingerprints` (`session`, `username`, `fingerprint`) VALUES (%s, %s, %s)',
                 (entry["session"], entry["username"], entry["fingerprint"]))
-# vim: set sw=4 et:
+

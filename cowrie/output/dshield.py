@@ -26,11 +26,14 @@ class Output(cowrie.core.output.Output):
         self.batch_size = int(cfg.get('output_dshield', 'batch_size'))
         cowrie.core.output.Output.__init__(self, cfg)
 
+
     def start(self):
-        self.batch = [] # this is used to store login attempts in batches
+        self.batch = [] # This is used to store login attempts in batches
+
 
     def stop(self):
         pass
+
 
     def write(self, entry):
         if entry["eventid"] == 'COW0002' or entry["eventid"] == 'COW0003':
@@ -49,10 +52,12 @@ class Output(cowrie.core.output.Output):
                 self.submit_entries(batch_to_send)
                 self.batch = []
 
+
     def transmission_error(self, batch):
         self.batch.extend(batch)
         if len(self.batch) > self.batch_size * 2:
             self.batch = self.batch[-self.batch_size:]
+
 
     def submit_entries(self, batch):
         """
@@ -60,9 +65,9 @@ class Output(cowrie.core.output.Output):
         Many thanks to their efforts. https://github.com/jkakavas/kippo-pyshield
         """
         # The nonce is predefined as explained in the original script :
-        # trying to avoid sending the authentication key in the "clear" but not wanting to
-        # deal with a full digest like exchange. Using a fixed nonce to mix up the limited
-        # userid.
+        # trying to avoid sending the authentication key in the "clear" but
+        # not wanting to deal with a full digest like exchange. Using a
+        # fixed nonce to mix up the limited userid.
         _nonceb64 = 'ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM='
 
         log_output = ''
@@ -85,6 +90,7 @@ class Output(cowrie.core.output.Output):
                                 headers = headers,
                                 timeout = 10,
                                 data = log_output)
+
 
         def check_response(resp):
             failed = False
@@ -117,7 +123,8 @@ class Output(cowrie.core.output.Output):
                 failed = True
 
             if failed:
-                # something went wrong, we need to add them to batch.
+                # Something went wrong, we need to add them to batch.
                 reactor.callFromThread(self.transmission_error, batch)
 
         req.addCallback(check_response)
+

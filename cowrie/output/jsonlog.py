@@ -73,4 +73,3 @@ class Output(cowrie.core.output.Output):
         self.outfile.write('\n')
         self.outfile.flush()
 
-# vim: set sw=4 et:

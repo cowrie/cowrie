@@ -34,22 +34,28 @@ import cowrie.core.output
 class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
+        """
+        """
         cowrie.core.output.Output.__init__(self, cfg)
-        facility_string = cfg.get('output_localsyslog', 'facility')
-        self.facility = vars(syslog)['LOG_' + facility_string]
+        facilityString = cfg.get('output_localsyslog', 'facility')
+        self.facility = vars(syslog)['LOG_' + facilityString]
         self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie', facility=self.facility)
 
+
     def start(self):
+        """
+        """
         pass
+
 
     def stop(self):
+        """
+        """
         pass
 
+
     def write(self, logentry):
-        #for i in logentry.keys():
-            # remove twisted 15 legacy keys
-            #if i.startswith('log_'):
-            #    del logentry[i]
+        """
+        """
         self.syslog.emit(logentry)
 
-# vim: set sw=4 et:
