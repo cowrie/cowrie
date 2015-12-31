@@ -28,14 +28,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.interactors = []
 
         try:
-            self.bytesReceivedLimit = int(self.cfg.get('honeypot', 'download_limit_size'))
+            self.bytesReceivedLimit = int(self.cfg.get('honeypot',
+                'download_limit_size'))
         except:
             self.bytesReceivedLimit = 0
 
         if prot is protocol.HoneyPotExecProtocol:
-            self.type = 'e' # execcmd
+            self.type = 'e' # Execcmd
         else:
-            self.type = 'i' # interactive
+            self.type = 'i' # Interactive
 
 
     def connectionMade(self):
@@ -63,6 +64,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.connectionMade(self)
 
+
     def write(self, bytes):
         """
         Output sent back to user
@@ -84,9 +86,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         Input received from user
         """
         self.bytesReceived += len(data)
-        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
+        if self.bytesReceivedLimit \
+          and self.bytesReceived > self.bytesReceivedLimit:
             log.msg(eventid='COW0015', format='Data upload limit reached')
-            #self.loseConnection()
             self.eofReceived()
             return
 
@@ -102,6 +104,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def eofReceived(self):
         """
+        Receive channel close and pass on to terminal
         """
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
@@ -109,20 +112,21 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def addInteractor(self, interactor):
         """
+        Add to list of interactors
         """
         self.interactors.append(interactor)
 
 
     def delInteractor(self, interactor):
         """
+        Remove from list of interactors
         """
         self.interactors.remove(interactor)
 
 
     def loseConnection(self):
         """
-        override super to remove the terminal reset on logout
-
+        Override super to remove the terminal reset on logout
         """
         self.transport.loseConnection()
 
