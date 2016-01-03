@@ -35,6 +35,8 @@ T_LINK, \
 
 class TooManyLevels(Exception):
     """
+    62 ELOOP Too many levels of symbolic links.  A path name lookup involved more than 8 symbolic links.
+    raise OSError(errno.ELOOP, os.strerror(errno.ENOENT))
     """
     pass
 
@@ -215,7 +217,7 @@ class HoneyPotFilesystem(object):
         It follows links.
         It tries A_REALFILE first and then tries honeyfs directory
         """
-        if count > 10:
+        if count > 8:
             raise TooManyLevels
         path = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
