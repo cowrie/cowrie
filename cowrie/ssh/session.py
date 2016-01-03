@@ -88,7 +88,7 @@ class HoneyPotSSHSession(session.SSHSession):
 
 
 @implementer(ISession)
-class SSHSessionForCowrieUser:
+class SSHSessionForCowrieUser(object):
     """
     """
 

@@ -18,7 +18,7 @@ from twisted.python import log
 
 
 @implementer(ISFTPFile)
-class CowrieSFTPFile:
+class CowrieSFTPFile(object):
     """
     """
 
@@ -104,7 +104,7 @@ class CowrieSFTPFile:
 
 
 
-class CowrieSFTPDirectory:
+class CowrieSFTPDirectory(object):
     """
     """
     def __init__(self, server, directory):
@@ -141,7 +141,7 @@ class CowrieSFTPDirectory:
 
 
 @implementer(ISFTPServer)
-class SFTPServerForCowrieUser:
+class SFTPServerForCowrieUser(object):
     """
     """
 

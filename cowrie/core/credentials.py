@@ -69,7 +69,7 @@ class IPluggableAuthenticationModulesIP(ICredentials):
 
 
 @implementer(IPluggableAuthenticationModulesIP)
-class PluggableAuthenticationModulesIP:
+class PluggableAuthenticationModulesIP(object):
     """
     Twisted removed IPAM in 15, adding in Cowrie now
     """
@@ -82,7 +82,7 @@ class PluggableAuthenticationModulesIP:
 
 
 @implementer(IUsername)
-class Username:
+class Username(object):
     """
     """
     def __init__(self, username):
@@ -91,7 +91,7 @@ class Username:
 
 
 @implementer(IUsernamePasswordIP)
-class UsernamePasswordIP:
+class UsernamePasswordIP(object):
     """
     This credential interface also provides an IP address
     """

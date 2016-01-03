@@ -546,7 +546,7 @@ class HoneyPotFilesystem(object):
 
 
 
-class _statobj:
+class _statobj(object):
     """
     Transform a tuple into a stat object
     """

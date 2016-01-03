@@ -44,7 +44,7 @@ import sys
 import gc
 
 @implementer(twisted.cred.portal.IRealm)
-class HoneyPotRealm:
+class HoneyPotRealm(object):
     """
     """
 

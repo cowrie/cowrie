@@ -37,7 +37,7 @@ import twisted.python.log as log
 from cowrie.core import fs
 from cowrie.core import honeypot
 
-class CowrieServer:
+class CowrieServer(object):
     """
     In traditional Kippo each connection gets its own simulated machine.
     This is not always ideal, sometimes two connections come from the same
