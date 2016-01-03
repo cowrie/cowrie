@@ -4,9 +4,7 @@ import json, getopt, sys, traceback
 def usage():
     print "-e COWXXXXX      Event Id's to List"
     print "-l               Files to List that were uploaded"
-    print "-h XXXXXXXXXXX   Hash to match file with"
     print "-f cowrie.json   log file to read "
-    print "-u http://xxxxx  expression to match file"
     print "-s sessionid     Session ID to match"
     print "-k key:value     Search for key:value in json object"
 
@@ -64,7 +62,7 @@ def read_cowrie_file(file, searchterms):
             for line in f:
                 event_object = json.loads(line)
                 for key in searchterms:
-                    if searchterms[key] == event_object[key]:
+                    if searchterms[key] == event_object[key]:   
                         pass
                     else:
                         has_all_flags = False
