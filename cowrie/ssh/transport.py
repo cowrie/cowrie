@@ -17,8 +17,8 @@ from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
 
-from cowrie.core import connection
-from cowrie.core import userauth
+from cowrie.ssh import connection
+from cowrie.ssh import userauth
 from cowrie.core import keys as cowriekeys
 
 
@@ -105,9 +105,9 @@ class HoneyPotSSHFactory(factory.SSHFactory):
     def stopFactory(self):
         """
         """
+        factory.SSHFactory.stopFactory(self)
         for output in self.output_plugins:
             output.stop()
-        factory.SSHFactory.stopFactory(self)
 
 
     def buildProtocol(self, addr):
@@ -290,5 +290,4 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
             log.msg('[SERVER] - Disconnecting with error, code %s\nreason: %s'
                 % (reason, desc))
             self.transport.loseConnection()
-
 

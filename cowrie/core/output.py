@@ -37,7 +37,7 @@ import copy
 import socket
 
 # COW0001 : create session
-# COW0002 : succesful login
+# COW0002 : successful login
 # COW0003 : failed login
 # COW0004 : TTY log opened
 # COW0005 : handle command
@@ -168,5 +168,3 @@ class Output(object):
         if ev['eventid'] == 'COW0011':
             del self.sessions[sessionno]
             del self.ips[sessionno]
-
-# vim: set sw=4 et:

@@ -21,7 +21,7 @@ from cowrie.core import credentials
 from cowrie.core import auth
 
 @implementer(ICredentialsChecker)
-class HoneypotPublicKeyChecker:
+class HoneypotPublicKeyChecker(object):
     """
     Checker that accepts, logs and denies public key authentication attempts
     """
@@ -41,7 +41,7 @@ class HoneypotPublicKeyChecker:
 
 
 @implementer(ICredentialsChecker)
-class HoneypotNoneChecker:
+class HoneypotNoneChecker(object):
     """
     Checker that does no authentication check
     """
@@ -56,7 +56,7 @@ class HoneypotNoneChecker:
 
 
 @implementer(ICredentialsChecker)
-class HoneypotPasswordChecker:
+class HoneypotPasswordChecker(object):
     """
     Checker that accepts "keyboard-interactive" and "password"
     """
@@ -130,4 +130,3 @@ class HoneypotPasswordChecker:
                 username=theusername, password=thepassword)
             return False
 
-# vim: set sw=4 et:

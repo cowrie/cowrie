@@ -12,4 +12,3 @@ def readConfigFile(cfgfile):
     cfg.readfp(open(cfgfile))
     return cfg
 
-# vim: set sw=4 et:

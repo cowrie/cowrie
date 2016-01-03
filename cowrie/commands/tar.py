@@ -9,21 +9,8 @@ from twisted.python import log
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
-from cowrie.commands import dice, malware
 
 commands = {}
-
-def pick_handler(cmd, size):
-    """
-    """
-    if size in malware.slist:
-        handler = malware.slist[size]
-    elif cmd in malware.clist:
-        handler = malware.clist[cmd]
-    else:
-        handler = random.choice(dice.clist)
-    return handler
-
 
 
 class command_tar(HoneyPotCommand):
@@ -92,8 +79,6 @@ class command_tar(HoneyPotCommand):
             elif f.isfile():
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
-                self.protocol.commands[dest] = \
-                    pick_handler(os.path.basename(dest), f.size)
             else:
                 log.msg( 'tar: skipping [%s]' % f.name )
 

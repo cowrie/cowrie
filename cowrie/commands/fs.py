@@ -412,6 +412,7 @@ class command_touch(HoneyPotCommand):
                 # FIXME: modify the timestamp here
                 continue
             self.fs.mkfile(path, 0, 0, 0, 33188)
+commands['/usr/bin/touch'] = command_touch
 commands['/bin/touch'] = command_touch
 
 # vim: set sw=4 et:

@@ -31,7 +31,6 @@ class HoneyPotCommand(object):
         # MS-DOS style redirect handling, inside the command
         if '>' in self.args:
             self.writtenBytes = 0
-            self.writeln = self.writeToFileLn
             self.write = self.writeToFile
 
             index = self.args.index(">")
@@ -45,7 +44,6 @@ class HoneyPotCommand(object):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
         else:
             self.write = self.protocol.terminal.write
-            self.writeln = self.protocol.writeln
 
 
     def writeToFile(self, data):
@@ -55,12 +53,6 @@ class HoneyPotCommand(object):
             f.write(data)
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
-
-
-    def writeToFileLn(self, data):
-        """
-        """
-        self.writeToFile(data+'\n')
 
 
     def start(self):
@@ -80,9 +72,12 @@ class HoneyPotCommand(object):
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
-        if self.protocol.cmdstack:
+        try:
             self.protocol.cmdstack.pop()
             self.protocol.cmdstack[-1].resume()
+        except AttributeError:
+            # cmdstack could be gone already (wget + disconnect)
+            pass
 
 
     def handle_CTRL_C(self):
@@ -127,9 +122,10 @@ class HoneyPotShell(object):
     def __init__(self, protocol, interactive=True):
         self.protocol = protocol
         self.interactive = interactive
-        self.showPrompt()
         self.cmdpending = []
         self.environ = protocol.environ
+
+        self.showPrompt()
 
 
     def lineReceived(self, line):
@@ -257,6 +253,7 @@ class HoneyPotShell(object):
 
         attrs = {'path': path}
         self.protocol.terminal.write(prompt % attrs)
+        self.protocol.ps = (prompt % attrs , '> ')
 
 
     def handle_CTRL_C(self):

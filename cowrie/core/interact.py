@@ -206,4 +206,3 @@ def makeInteractFactory(honeypotFactory):
     ifactory.honeypotFactory = honeypotFactory
     return ifactory
 
-# vim: set sw=4 et:

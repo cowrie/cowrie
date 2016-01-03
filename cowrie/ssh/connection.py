@@ -27,7 +27,8 @@
 # SUCH DAMAGE.
 
 """
-This module contains ...
+This module contains connection code to work around issues with the 
+Granados SSH client library.
 """
 
 import struct
