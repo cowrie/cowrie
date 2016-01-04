@@ -286,3 +286,12 @@ logfile = log/cowrie.json
 #identifier = abc123
 #secret = secret
 #debug=false
+
+
+# Virustotal output module
+#
+#
+#[output_virustotal]
+#api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+#
+

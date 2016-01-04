@@ -1,18 +1,40 @@
+# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The names of the author(s) may not be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
 """
 Send SSH logins to Virustotal
-
 Work in Progress - not functional yet
 """
 
-import dateutil.parser
-import time
-import base64
-import hmac
-import hashlib
+import json
 import re
 import urllib
 import urllib2
-import simplejson
 
 from twisted.python import log
 
@@ -25,84 +47,80 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
         self.apiKey = cfg.get('output_virustotal', 'api_key')
-        self.batchSize = int(cfg.get('output_virustotal', 'batch_size'))
         cowrie.core.output.Output.__init__(self, cfg)
 
 
     def start(self):
         """
+        Start output plugin
         """
-        self.batch = [] # this is used to store login attempts in batches
+        pass
 
 
     def stop(self):
         """
+        Stop output plugin
         """
-        self.send_batch()
+        pass
 
 
     def write(self, entry):
         """
         """
-        if entry["eventid"] == 'COW0002' or entry["eventid"] == 'COW0003':
-            date = dateutil.parser.parse(entry["timestamp"])
-            self.batch.append({
-                'date' : date.date().__str__(),
-                'time' : date.time().strftime("%H:%M:%S"),
-                'timezone' : time.strftime("%z"),
-                'source_ip' : entry['src_ip'],
-                'user' : entry['username'],
-                'password' : entry['password'],
-            })
-
-            if len(self.batch) >= self.batch_size:
-                self.send_batch()
-
-
-    def send_batch(self):
-        """
-        """
-        batch_to_send = self.batch
-        self.submit_entries(batch_to_send)
-        self.batch = []
+        if entry["eventid"] == 'COW0007':
+            log.msg("Sending url to VT")
+            if self.posturl(entry["url"]) == 0:
+                log.msg("Not seen before by VT")
+                self.postcomment(entry["url"])
 
 
     def postfile(self, scanFile):
         """
+        Send a file to VirusTotal
         """
         vtHost = "www.virustotal.com"
         vtUrl = "https://www.virustotal.com/vtapi/v2/file/scan"
         fields = [("apikey", self.apiKey)]
         file_to_send = open("test.txt", "rb").read()
         files = [("file", "test.txt", file_to_send)]
-        json = postfile.post_multipart(vtHost, vtUrl, fields, files)
-        log.msg( "Sent file to VT: %s" % (json,) )
+        response_data = postfile.post_multipart(vtHost, vtUrl, fields, files)
+        j = json.loads(response_data)
+        log.msg( "Sent file to VT: %s" % (j,) )
 
 
     def posturl(self, scanUrl):
         """
+        Send a URL to VirusTotal
+
+        response_code: if the item you searched for was not present in VirusTotal's dataset this result will be 0.
+        If the requested item is still queued for analysis it will be -2.
+        If the item was indeed present and it could be retrieved it will be 1.
         """
         vtUrl = "https://www.virustotal.com/vtapi/v2/url/scan"
-        fields = {apikey: self.apiKey, url: scanUrl}
-        data = urllib.urlencode(parameters)
+        fields = {"apikey": self.apiKey, "url": scanUrl}
+        data = urllib.urlencode(fields)
         req = urllib2.Request(vtUrl, data)
         response = urllib2.urlopen(req)
-        json = response.read()
-        log.msg( "Sent URL to VT: %s" % (json,) )
+        response_data = response.read()
+        j = json.loads(response_data)
+        log.msg( "Sent URL to VT: %s" % (j,) )
+        return j["response_code"]
 
 
-    def make_comment(resource):
+    def postcomment(self, resource):
         """
+        Send a comment to VirusTotal
         """
         url = "https://www.virustotal.com/vtapi/v2/comments/put"
         parameters = { "resource": resource,
-                       "comment": "Captured by Cowrie SSH honeypot",
-                       "apikey": apikey}
+                       "comment": "Captured by Cowrie SSH honeypot http://github.com/cowrie/cowrie",
+                       "apikey": self.apiKey}
         data = urllib.urlencode(parameters)
         req = urllib2.Request(url, data)
         response = urllib2.urlopen(req)
-        json = response.read()
-        print json
+        response_data = response.read()
+        j = json.loads(response_data)
+        log.msg( "Updated comment for %s to VT: %s" % (resource, j,) )
 
 
 """
