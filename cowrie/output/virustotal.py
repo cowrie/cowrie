@@ -1,7 +1,7 @@
 """
-Send SSH logins to SANS DShield.
-See https://isc.sans.edu/ssh.html
+Send SSH logins to Virustotal
 
+Work in Progress - not functional yet
 """
 
 import dateutil.parser
@@ -9,36 +9,42 @@ import time
 import base64
 import hmac
 import hashlib
-import requests
 import re
 import urllib
 import urllib2
 import simplejson
-import postfile
-import virustotal_backlogs
 
 from twisted.python import log
-from twisted.internet import threads, reactor
 
 import cowrie.core.output
 
 
 class Output(cowrie.core.output.Output):
+    """
+    """
 
     def __init__(self, cfg):
-        self.auth_key = cfg.get('output_virustotal', 'auth_key')
-        self.userid = cfg.get('output_virustotal', 'userid')
-        self.batch_size = int(cfg.get('output_virustotal', 'batch_size'))
+        self.apiKey = cfg.get('output_virustotal', 'api_key')
+        self.batchSize = int(cfg.get('output_virustotal', 'batch_size'))
         cowrie.core.output.Output.__init__(self, cfg)
 
+
     def start(self):
+        """
+        """
         self.batch = [] # this is used to store login attempts in batches
 
+
     def stop(self):
-        pass
+        """
+        """
+        self.send_batch()
+
 
     def write(self, entry):
-        if entry["eventid"] == 'KIPP0002' or entry["eventid"] == 'KIPP0003':
+        """
+        """
+        if entry["eventid"] == 'COW0002' or entry["eventid"] == 'COW0003':
             date = dateutil.parser.parse(entry["timestamp"])
             self.batch.append({
                 'date' : date.date().__str__(),
@@ -50,10 +56,56 @@ class Output(cowrie.core.output.Output):
             })
 
             if len(self.batch) >= self.batch_size:
-                batch_to_send = self.batch
-                self.submit_entries(batch_to_send)
-                self.batch = []
+                self.send_batch()
 
+
+    def send_batch(self):
+        """
+        """
+        batch_to_send = self.batch
+        self.submit_entries(batch_to_send)
+        self.batch = []
+
+
+    def postfile(self, scanFile):
+        """
+        """
+        vtHost = "www.virustotal.com"
+        vtUrl = "https://www.virustotal.com/vtapi/v2/file/scan"
+        fields = [("apikey", self.apiKey)]
+        file_to_send = open("test.txt", "rb").read()
+        files = [("file", "test.txt", file_to_send)]
+        json = postfile.post_multipart(vtHost, vtUrl, fields, files)
+        log.msg( "Sent file to VT: %s" % (json,) )
+
+
+    def posturl(self, scanUrl):
+        """
+        """
+        vtUrl = "https://www.virustotal.com/vtapi/v2/url/scan"
+        fields = {apikey: self.apiKey, url: scanUrl}
+        data = urllib.urlencode(parameters)
+        req = urllib2.Request(vtUrl, data)
+        response = urllib2.urlopen(req)
+        json = response.read()
+        log.msg( "Sent URL to VT: %s" % (json,) )
+
+
+    def make_comment(resource):
+        """
+        """
+        url = "https://www.virustotal.com/vtapi/v2/comments/put"
+        parameters = { "resource": resource,
+                       "comment": "Captured by Cowrie SSH honeypot",
+                       "apikey": apikey}
+        data = urllib.urlencode(parameters)
+        req = urllib2.Request(url, data)
+        response = urllib2.urlopen(req)
+        json = response.read()
+        print json
+
+
+"""
 def get_report(resource, filename, dl_url='unknown', honeypot=None, origin=None):
 
     apikey = config().get('virustotal', 'apikey')
@@ -73,17 +125,15 @@ def get_report(resource, filename, dl_url='unknown', honeypot=None, origin=None)
 
         # we don't use dispatcher, so this check is needed
         if cfg.has_section('database_mysql'):
-            mysql_logger = kippo.dblog.mysql.DBLogger(cfg)
-
+            mysql_logger = cowrie.output.mysql.DBLogger(cfg)
             mysql_logger.handleVirustotal(args)
-
             args_scan = {'shasum': resource, 'json': json}
             mysql_logger.handleVirustotalScan(args_scan)
 
         if origin == 'db':
             # we don't use dispatcher, so this check is needed
             if cfg.has_section('database_textlog'):
-                text_logger = kippo.dblog.textlog.DBLogger(cfg)
+                text_logger = cowrie.output.textlog.DBLogger(cfg)
                 text_logger.handleVirustotalLog('log_from database', args)
         else:
             msg = 'Virustotal report of %s [%s] at %s' % \
@@ -117,14 +167,4 @@ def get_report(resource, filename, dl_url='unknown', honeypot=None, origin=None)
         print msg
     return j['response_code']
 
-def make_comment(resource):
-    apikey = config().get('virustotal', 'apikey')
-    url = "https://www.virustotal.com/vtapi/v2/comments/put"
-    parameters = {"resource": resource,
-                   "comment": "captured by ssh honeypot",
-                   "apikey": apikey}
-    data = urllib.urlencode(parameters)
-    req = urllib2.Request(url, data)
-    response = urllib2.urlopen(req)
-    json = response.read()
-    print json
+"""
