@@ -272,7 +272,7 @@ class SFTPServerForCowrieUser(object):
     def realPath(self, path):
         """
         """
-        log.msg("SFTP realPath: %s" % (path,))
+        #log.msg("SFTP realPath: %s" % (path,))
         return self.fs.realpath(self._absPath(path))
 
 

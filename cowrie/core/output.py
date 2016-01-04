@@ -52,6 +52,7 @@ import socket
 # COW0014 : direct-tcpip request
 # COW0015 : direct-tcpip data
 # COW0016 : key fingerprint
+# COW0017 : SFTP uploaded file
 
 class Output(object):
     """
