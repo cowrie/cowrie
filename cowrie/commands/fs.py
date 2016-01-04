@@ -85,6 +85,7 @@ class command_tail(HoneyPotCommand):
     def handle_CTRL_D(self):
         self.exit()
 commands['/bin/tail'] = command_tail
+commands['/usr/bin/tail'] = command_tail
 
 
 
@@ -132,6 +133,7 @@ class command_head(HoneyPotCommand):
     def handle_CTRL_D(self):
         self.exit()
 commands['/bin/head'] = command_head
+commands['/usr/bin/head'] = command_head
 
 
 
