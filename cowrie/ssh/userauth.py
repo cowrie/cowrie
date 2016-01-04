@@ -7,10 +7,13 @@ This module contains ...
 
 import struct
 
+from twisted.python import log
+from twisted.internet import defer
+
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
-from twisted.internet import defer
+from twisted.conch import error
 
 from cowrie.core import credentials
 
@@ -59,6 +62,17 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         """
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
+
+
+    def auth_publickey(self, packet):
+        """
+        We subclass to intercept non-dsa/rsa keys, or Conch will crash on ecdsa..
+        """
+        algName, blob, rest = getNS(packet[1:], 2)
+        if not algName in ('ssh-rsa', 'ssh-dsa'):
+            log.msg( "Attempted public key authentication with %s algorithm" % (algName,))
+            return defer.fail(error.ConchError("Incorrect signature"))
+        return userauth.SSHUserAuthServer.auth_publickey(self, packet)
 
 
     def auth_none(self, packet):
