@@ -34,7 +34,9 @@ Work in Progress - not functional yet
 from zope.interface import implementer
 
 import json
+import os
 import urllib
+import urlparse
 
 from twisted.python import log
 from twisted.web.iweb import IBodyProducer
@@ -75,9 +77,17 @@ class Output(cowrie.core.output.Output):
             log.msg("Sending url to VT")
             self.posturl(entry["url"])
 
-        elif entry["eventid"] == 'COW0017':
-            log.msg("Sending SFTP file to VT")
-            self.postfile(entry["outfile"], entry["filename"])
+            log.msg("Sending file to VT")
+            p = urlparse.urlparse(entry["url"]).path
+            if p == "":
+                fileName = entry["shasum"]
+            else:
+                b = os.path.basename(p)
+                if b == "":
+                    fileName = entry["shasum"]
+                else:
+                    fileName = b
+            self.postfile(entry["outfile"], fileName)
 
 
     def postfile(self, artifact, fileName):
