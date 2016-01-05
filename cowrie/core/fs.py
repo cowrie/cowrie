@@ -377,15 +377,14 @@ class HoneyPotFilesystem(object):
         if self.tempfiles[fd] is not None:
             shasum = hashlib.sha256(open(self.tempfiles[fd], 'rb').read()).hexdigest()
             shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
-            log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
-                eventid='COW0017', filename=os.path.basename(self.filenames[fd]), outfile=shasumfile, shasum=shasum )
             if (os.path.exists(shasumfile)):
                 os.remove(self.tempfiles[fd])
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
             os.symlink(shasum, self.tempfiles[fd])
             self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
-
+            log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
+                eventid='COW0017', filename=os.path.basename(self.filenames[fd]), outfile=shasumfile, shasum=shasum )
             del self.tempfiles[fd]
             del self.filenames[fd]
         return os.close(fd)
