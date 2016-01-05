@@ -27,7 +27,6 @@ Software required:
 * Twisted 8.0+
 * PyCrypto
 * pyasn1
-* python-requests (for VirusTotal integration)
 * Zope Interface 3.6.0+
 
 ## Files of interest:
