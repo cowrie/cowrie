@@ -205,7 +205,7 @@ class Output(cowrie.core.output.Output):
         """
         vtUrl = "https://www.virustotal.com/vtapi/v2/comments/put"
         parameters = { "resource": resource,
-                       "comment": "Captured by Cowrie SSH honeypot http://github.com/cowrie/cowrie",
+                       "comment": "First seen by Cowrie SSH honeypot http://github.com/micheloosterhof/cowrie",
                        "apikey": self.apiKey}
         headers = http_headers.Headers({'User-Agent': ['Cowrie SSH Honeypot']})
         data = urllib.urlencode(parameters)
