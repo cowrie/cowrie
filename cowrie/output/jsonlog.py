@@ -59,7 +59,7 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         """
         """
-        self.outfile.close()
+        self.outfile.flush()
 
 
     def write(self, logentry):
