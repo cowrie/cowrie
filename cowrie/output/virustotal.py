@@ -34,21 +34,13 @@ Work in Progress - not functional yet
 from zope.interface import implementer
 
 import json
-import re
 import urllib
-import warnings
-import urllib2
 
 from twisted.python import log
 from twisted.web.iweb import IBodyProducer
-from twisted.internet import abstract, defer, reactor, protocol
-from twisted.web import client, http_headers, iweb
+from twisted.internet import defer, reactor
+from twisted.web import client, http_headers
 from twisted.internet.ssl import ClientContextFactory
-
-from twisted.web.error import SchemeNotSupported
-from twisted.web._newclient import Request, Response, HTTP11ClientProtocol
-from twisted.web._newclient import ResponseDone, ResponseFailed
-from twisted.web._newclient import PotentialDataLoss
 
 import cowrie.core.output
 
@@ -81,40 +73,72 @@ class Output(cowrie.core.output.Output):
         """
         if entry["eventid"] == 'COW0007':
             log.msg("Sending url to VT")
-            if self.posturl(entry["url"]) == 0:
-                log.msg("Not seen before by VT")
-                self.postcomment(entry["url"])
+            self.posturl(entry["url"])
 
         elif entry["eventid"] == 'COW0017':
             log.msg("Sending SFTP file to VT")
-            if self.postfile(entry["outfile"], entry["filename"]) == 0:
-                log.msg("Not seen before by VT")
-                self.postcomment(entry["url"])
+            self.postfile(entry["outfile"], entry["filename"])
 
 
-#    def postfile(self, artifact, fileName):
-#        """
-#        Send a file to VirusTotal
-#        """
-#        vtUrl = "https://www.virustotal.com/vtapi/v2/file/scan"
-#        fields = [("apikey", self.apiKey)]
-#        files = {'file': (fileName, open(artifact, 'rb'))}
-#
-#        agent = agent.request('POST', vtUrl, None, None)
-#
-#        def cbResponse(ignored):
-#            print 'Response received'
-#            d.addCallback(cbResponse)
-#
-#        r = requests.post(vtUrl, files=files, data=fields)
-#        # if r.status_code != 200 # error
-#        j = r.json()
-#        log.msg( "Sent file to VT: %s" % (j,) )
-#        return j["response_code"]
-#
-#        #contentType = "multipart/form-data; boundary={}".format(boundary)
-#        #headers.setRawHeaders("Content-Type", [contentType])
-#        #headers.setRawHeaders("Content-Length", [len(body)])
+    def postfile(self, artifact, fileName):
+        """
+        Send a file to VirusTotal
+        """
+        vtUrl = "https://www.virustotal.com/vtapi/v2/file/scan"
+        contextFactory = WebClientContextFactory()
+        fields = {('apikey', self.apiKey)}
+        files = {('file', fileName, open(artifact, 'rb'))}
+        contentType, body = encode_multipart_formdata(fields, files)
+        producer = StringProducer(body)
+        headers = http_headers.Headers({
+            'User-Agent': ['Cowrie SSH Honeypot'],
+            'Accept': ['*/*'],
+            'Content-Type': [contentType]
+        })
+
+        agent = client.Agent(reactor, contextFactory)
+        d = agent.request('POST', vtUrl, headers, producer)
+
+        def cbBody(body):
+            return processResult(body)
+
+
+        def cbPartial(failure):
+            """
+            Google HTTP Server does not set Content-Length. Twisted marks it as partial
+            """
+            return processResult(failure.value.response)
+
+
+        def cbResponse(response):
+            if response.code == 200:
+                d = client.readBody(response)
+                d.addCallback(cbBody)
+                d.addErrback(cbPartial)
+                return d
+            else:
+                log.msg("VT Request failed: %s %s" % (response.code, response.phrase,))
+                return
+
+
+        def cbError(failure):
+            failure.printTraceback()
+
+
+        def processResult(result):
+            log.msg( "VT postfile result: %s" % result)
+            j = json.loads(result)
+            #log.msg( "VT postfile result: %s", repr(j) )
+            if j["response_code"] == 0:
+                log.msg( "response=0: posting comment")
+                d = self.postcomment(j["resource"])
+                return d
+
+
+        d.addCallback(cbResponse)
+        d.addErrback(cbError)
+        return d
+
 
     def posturl(self, scanUrl):
         """
@@ -141,18 +165,21 @@ class Output(cowrie.core.output.Output):
 
         def cbPartial(failure):
             """
-            Google HTTP Server does not set Content-Length. Twisted marks it as partial 
+            Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
+            #failure.printTraceback()
             return processResult(failure.value.response)
 
 
         def cbResponse(response):
-            # print 'Response code:', response.code
-            # FIXME: Check for 200
-            d = readBody(response)
-            d.addCallback(cbBody)
-            d.addErrback(cbPartial)
-            return d
+            if response.code == 200:
+                d = client.readBody(response)
+                d.addCallback(cbBody)
+                d.addErrback(cbPartial)
+                return d
+            else:
+                log.msg("VT Request failed: %s %s" % (response.code, response.phrase,))
+                return
 
 
         def cbError(failure):
@@ -163,10 +190,10 @@ class Output(cowrie.core.output.Output):
             j = json.loads(result)
             log.msg( "VT posturl result: %s", repr(j) )
             if j["response_code"] == 0:
-		log.msg( "response=0: posting comment")
+                log.msg( "response=0: posting comment")
                 d = self.postcomment(j["resource"])
                 return d
-            
+
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -194,18 +221,20 @@ class Output(cowrie.core.output.Output):
 
         def cbPartial(failure):
             """
-            Google HTTP Server does not set Content-Length. Twisted marks it as partial 
+            Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
             return processResult(failure.value.response)
 
 
         def cbResponse(response):
-            # print 'Response code:', response.code
-            # FIXME: Check for 200
-            d = readBody(response)
-            d.addCallback(cbBody)
-            d.addErrback(cbPartial)
-            return d
+            if response.code == 200:
+                d = client.readBody(response)
+                d.addCallback(cbBody)
+                d.addErrback(cbPartial)
+                return d
+            else:
+                log.msg("VT Request failed: %s %s" % (response.code, response.phrase,))
+                return
 
 
         def cbError(failure):
@@ -216,7 +245,7 @@ class Output(cowrie.core.output.Output):
             j = json.loads(result)
             log.msg( "VT postcomment result: %s", repr(j) )
             return j["response_code"]
-            
+
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
@@ -225,103 +254,6 @@ class Output(cowrie.core.output.Output):
 class WebClientContextFactory(ClientContextFactory):
     def getContext(self, hostname, port):
         return ClientContextFactory.getContext(self)
-
-
-
-class _ReadBodyProtocol(protocol.Protocol):
-    """
-    Protocol that collects data sent to it.
-
-    This is a helper for L{IResponse.deliverBody}, which collects the body and
-    fires a deferred with it.
-
-    @ivar deferred: See L{__init__}.
-    @ivar status: See L{__init__}.
-    @ivar message: See L{__init__}.
-
-    @ivar dataBuffer: list of byte-strings received
-    @type dataBuffer: L{list} of L{bytes}
-    """
-
-    def __init__(self, status, message, deferred):
-        """
-        @param status: Status of L{IResponse}
-        @ivar status: L{int}
-
-        @param message: Message of L{IResponse}
-        @type message: L{bytes}
-
-        @param deferred: deferred to fire when response is complete
-        @type deferred: L{Deferred} firing with L{bytes}
-        """
-        self.deferred = deferred
-        self.status = status
-        self.message = message
-        self.dataBuffer = []
-
-
-    def dataReceived(self, data):
-        """
-        Accumulate some more bytes from the response.
-        """
-        self.dataBuffer.append(data)
-
-
-    def connectionLost(self, reason):
-        """
-        Deliver the accumulated response bytes to the waiting L{Deferred}, if
-        the response body has been completely received without error.
-        """
-        if reason.check(ResponseDone):
-            self.deferred.callback(b''.join(self.dataBuffer))
-        elif reason.check(PotentialDataLoss):
-            self.deferred.errback(
-                client.PartialDownloadError(self.status, self.message,
-                                     b''.join(self.dataBuffer)))
-        else:
-            self.deferred.errback(reason)
-
-
-
-def readBody(response):
-    """
-    Get the body of an L{IResponse} and return it as a byte string.
-
-    This is a helper function for clients that don't want to incrementally
-    receive the body of an HTTP response.
-
-    @param response: The HTTP response for which the body will be read.
-    @type response: L{IResponse} provider
-
-    @return: A L{Deferred} which will fire with the body of the response.
-        Cancelling it will close the connection to the server immediately.
-    """
-    def cancel(deferred):
-        """
-        Cancel a L{readBody} call, close the connection to the HTTP server
-        immediately, if it is still open.
-
-        @param deferred: The cancelled L{defer.Deferred}.
-        """
-        abort = getAbort()
-        if abort is not None:
-            abort()
-
-    d = defer.Deferred(cancel)
-    protocol = _ReadBodyProtocol(response.code, response.phrase, d)
-    def getAbort():
-        return getattr(protocol.transport, 'abortConnection', None)
-
-    response.deliverBody(protocol)
-
-    if protocol.transport is not None and getAbort() is None:
-        warnings.warn(
-            'Using readBody with a transport that does not have an '
-            'abortConnection method',
-            category=DeprecationWarning,
-            stacklevel=2)
-
-    return d
 
 
 
@@ -345,66 +277,31 @@ class StringProducer(object):
     def stopProducing(self):
         pass
 
-"""
-def get_report(resource, filename, dl_url='unknown', honeypot=None, origin=None):
 
-    apikey = config().get('virustotal', 'apikey')
-    url = "https://www.virustotal.com/vtapi/v2/file/report"
-    parameters = {"resource": resource,
-                  "apikey":   apikey }
+def encode_multipart_formdata(fields, files):
+    """
+    fields is a sequence of (name, value) elements for regular form fields.
+    files is a sequence of (name, filename, value) elements for data to be uploaded as files
+    Return (content_type, body) ready for httplib.HTTPS instance
+    """
+    BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
+    CRLF = '\r\n'
+    L = []
+    for (key, value) in fields:
+        L.append('--' + BOUNDARY)
+        L.append('Content-Disposition: form-data; name="%s"' % key)
+        L.append('')
+        L.append(value)
+    for (key, filename, value) in files:
+        L.append('--' + BOUNDARY)
+        L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
+        L.append('Content-Type: application/octet-stream')
+        L.append('')
+        L.append(value.read())
+    L.append('--' + BOUNDARY + '--')
+    L.append('')
+    body = CRLF.join(L)
+    content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
+    return content_type, body
 
-    data = urllib.urlencode(parameters)
-    req = urllib2.Request(url, data)
-    response = urllib2.urlopen(req)
-    json = response.read()
-    j = simplejson.loads(json)
 
-    if j['response_code'] == 1: # file known
-        cfg = config()
-        args = {'shasum': resource, 'url': dl_url, 'permalink': j['permalink']}
-
-        # we don't use dispatcher, so this check is needed
-        if cfg.has_section('database_mysql'):
-            mysql_logger = cowrie.output.mysql.DBLogger(cfg)
-            mysql_logger.handleVirustotal(args)
-            args_scan = {'shasum': resource, 'json': json}
-            mysql_logger.handleVirustotalScan(args_scan)
-
-        if origin == 'db':
-            # we don't use dispatcher, so this check is needed
-            if cfg.has_section('database_textlog'):
-                text_logger = cowrie.output.textlog.DBLogger(cfg)
-                text_logger.handleVirustotalLog('log_from database', args)
-        else:
-            msg = 'Virustotal report of %s [%s] at %s' % \
-                (resource, dl_url, j['permalink'])
-            # we need to print msg, because logs from SFTP are dispatched this way
-            print msg
-            if honeypot:
-                honeypot.logDispatch(msg)
-
-    elif j['response_code'] == 0: # file not known
-        if origin == 'db':
-            return j['response_code']
-
-        msg = 'Virustotal not known, response code: %s' % (j['response_code'])
-        print msg
-        host = "www.virustotal.com"
-        url = "https://www.virustotal.com/vtapi/v2/file/scan"
-        fields = [("apikey", apikey)]
-        filepath = "dl/%s" % resource
-        file_to_send = open(filepath, "rb").read()
-        files = [("file", filename, file_to_send)]
-        json = postfile.post_multipart(host, url, fields, files)
-        print json
-
-        msg = 'insert to Virustotal backlog %s [%s]' % \
-            (resource, dl_url)
-        print msg
-        virustotal_backlogs.insert(resource, dl_url)
-    else:
-        msg = 'Virustotal not known, response code: %s' % (j['response_code'])
-        print msg
-    return j['response_code']
-
-"""
