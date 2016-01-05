@@ -93,29 +93,29 @@ class Output(cowrie.core.output.Output):
                 self.postcomment(entry["url"])
 
 
-    def postfile(self, artifact, fileName):
-        """
-        Send a file to VirusTotal
-        """
-        vtUrl = "https://www.virustotal.com/vtapi/v2/file/scan"
-        fields = [("apikey", self.apiKey)]
-        files = {'file': (fileName, open(artifact, 'rb'))}
-
-        agent = agent.request('POST', vtUrl, None, None)
-
-        def cbResponse(ignored):
-            print 'Response received'
-            d.addCallback(cbResponse)
-
-        r = requests.post(vtUrl, files=files, data=fields)
-        # if r.status_code != 200 # error
-        j = r.json()
-        log.msg( "Sent file to VT: %s" % (j,) )
-        return j["response_code"]
-
-        #contentType = "multipart/form-data; boundary={}".format(boundary)
-        #headers.setRawHeaders("Content-Type", [contentType])
-        #headers.setRawHeaders("Content-Length", [len(body)])
+#    def postfile(self, artifact, fileName):
+#        """
+#        Send a file to VirusTotal
+#        """
+#        vtUrl = "https://www.virustotal.com/vtapi/v2/file/scan"
+#        fields = [("apikey", self.apiKey)]
+#        files = {'file': (fileName, open(artifact, 'rb'))}
+#
+#        agent = agent.request('POST', vtUrl, None, None)
+#
+#        def cbResponse(ignored):
+#            print 'Response received'
+#            d.addCallback(cbResponse)
+#
+#        r = requests.post(vtUrl, files=files, data=fields)
+#        # if r.status_code != 200 # error
+#        j = r.json()
+#        log.msg( "Sent file to VT: %s" % (j,) )
+#        return j["response_code"]
+#
+#        #contentType = "multipart/form-data; boundary={}".format(boundary)
+#        #headers.setRawHeaders("Content-Type", [contentType])
+#        #headers.setRawHeaders("Content-Length", [len(body)])
 
 
     def posturl(self, scanUrl):
@@ -137,16 +137,6 @@ class Output(cowrie.core.output.Output):
         agent = client.Agent(reactor, contextFactory)
         d = agent.request('POST', vtUrl, headers, body)
 
-
-        def cbResponse(response):
-            # print 'Response code:', response.code
-            # FIXME: Check for 200
-            d = readBody(response)
-            d.addCallback(cbBody)
-            d.addErrback(cbPartial)
-            return d
-
-
         def cbBody(body):
             return logResult(body)
 
@@ -156,6 +146,15 @@ class Output(cowrie.core.output.Output):
             Google HTTP Server does not set Content-Length. Twisted marks it as partial 
             """
             return logResult(failure.value.response)
+
+
+        def cbResponse(response):
+            # print 'Response code:', response.code
+            # FIXME: Check for 200
+            d = readBody(response)
+            d.addCallback(cbBody)
+            d.addErrback(cbPartial)
+            return d
 
 
         def cbError(failure):
