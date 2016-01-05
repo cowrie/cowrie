@@ -89,6 +89,10 @@ class Output(cowrie.core.output.Output):
                     fileName = b
             self.postfile(entry["outfile"], fileName)
 
+        elif entry["eventid"] == 'COW0017':
+            log.msg("Sending file to VT")
+            self.postfile(entry["outfile"], entry["filename"])
+
 
     def postfile(self, artifact, fileName):
         """
