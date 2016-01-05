@@ -70,8 +70,9 @@ class HoneyPotRealm(object):
 	#    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
         if conchinterfaces.IConchUser in interfaces:
-            return interfaces[0], \
-                avatar.CowrieUser(avatarId, server.CowrieServer(self.cfg)), lambda:None
+            serv = server.CowrieServer(self.cfg)
+            user = avatar.CowrieUser(avatarId, serv)
+            return interfaces[0], user, user.logout
         else:
             raise Exception("No supported interfaces found.")
 
