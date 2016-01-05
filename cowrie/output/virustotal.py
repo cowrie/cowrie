@@ -35,7 +35,6 @@ from zope.interface import implementer
 
 import json
 import re
-import requests
 import urllib
 import warnings
 import urllib2
