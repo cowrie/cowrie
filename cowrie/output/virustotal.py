@@ -116,7 +116,6 @@ class Output(cowrie.core.output.Output):
 #        #headers.setRawHeaders("Content-Type", [contentType])
 #        #headers.setRawHeaders("Content-Length", [len(body)])
 
-
     def posturl(self, scanUrl):
         """
         Send a URL to VirusTotal with Twisted
@@ -137,14 +136,14 @@ class Output(cowrie.core.output.Output):
         d = agent.request('POST', vtUrl, headers, body)
 
         def cbBody(body):
-            return logResult(body)
+            return processResult(body)
 
 
         def cbPartial(failure):
             """
             Google HTTP Server does not set Content-Length. Twisted marks it as partial 
             """
-            return logResult(failure.value.response)
+            return processResult(failure.value.response)
 
 
         def cbResponse(response):
@@ -160,31 +159,67 @@ class Output(cowrie.core.output.Output):
             failure.printTraceback()
 
 
-        def logResult(result):
+        def processResult(result):
             j = json.loads(result)
-            log.msg( "VT result: %s", repr(j) )
+            log.msg( "VT posturl result: %s", repr(j) )
+            if j["response_code"] == 0:
+		log.msg( "response=0: posting comment")
+                d = self.postcomment(j["resource"])
+                return d
+            
+
+        d.addCallback(cbResponse)
+        d.addErrback(cbError)
+        return d
+
+    def postcomment(self, resource):
+        """
+        Send a comment to VirusTotal with Twisted
+        """
+        vtUrl = "https://www.virustotal.com/vtapi/v2/comments/put"
+        parameters = { "resource": resource,
+                       "comment": "Captured by Cowrie SSH honeypot http://github.com/cowrie/cowrie",
+                       "apikey": self.apiKey}
+        headers = http_headers.Headers({'User-Agent': ['Cowrie SSH Honeypot']})
+        data = urllib.urlencode(parameters)
+        body = StringProducer(data)
+        contextFactory = WebClientContextFactory()
+
+        agent = client.Agent(reactor, contextFactory)
+        d = agent.request('POST', vtUrl, headers, body)
+
+        def cbBody(body):
+            return processResult(body)
+
+
+        def cbPartial(failure):
+            """
+            Google HTTP Server does not set Content-Length. Twisted marks it as partial 
+            """
+            return processResult(failure.value.response)
+
+
+        def cbResponse(response):
+            # print 'Response code:', response.code
+            # FIXME: Check for 200
+            d = readBody(response)
+            d.addCallback(cbBody)
+            d.addErrback(cbPartial)
+            return d
+
+
+        def cbError(failure):
+            failure.printTraceback()
+
+
+        def processResult(result):
+            j = json.loads(result)
+            log.msg( "VT postcomment result: %s", repr(j) )
             return j["response_code"]
             
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
-
-
-    def postcomment(self, resource):
-        """
-        Send a comment to VirusTotal
-        """
-        url = "https://www.virustotal.com/vtapi/v2/comments/put"
-        parameters = { "resource": resource,
-                       "comment": "Captured by Cowrie SSH honeypot http://github.com/cowrie/cowrie",
-                       "apikey": self.apiKey}
-        data = urllib.urlencode(parameters)
-        req = urllib2.Request(url, data)
-        response = urllib2.urlopen(req)
-        response_data = response.read()
-        j = json.loads(response_data)
-        log.msg( "Updated comment for %s to VT: %s" % (resource, j,) )
-
 
 
 class WebClientContextFactory(ClientContextFactory):
