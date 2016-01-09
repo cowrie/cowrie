@@ -503,6 +503,48 @@ class fseditCmd(cmd.Cmd):
 
         print 'File copied from /%s to /%s/%s' % (src, dstparent, dstname)
 
+    def do_chown(self, args):
+        '''Change file ownership'''
+        arg_list = args.split()
+
+        if len(arg_list) != 2:
+            print "Incorrect number of arguments.\nUsage: chown <uid> <file>"
+            return
+
+        uid = arg_list[0]
+        target_path = resolve_reference(self.pwd, arg_list[1])
+
+        if not exists(self.fs, target_path):
+            print "File '%s' doesn't exist." % target_path
+            return
+
+        target_object = getpath(self.fs, target_path)
+        olduid = target_object[A_UID]
+        target_object[A_UID] = int(uid)
+        print "former UID: " + str(olduid) + ". New UID: " + str(uid)
+
+
+    def do_chgrp(self, args):
+        '''Change file ownership'''
+        arg_list = args.split()
+
+        if len(arg_list) != 2:
+            print "Incorrect number of arguments.\nUsage: chgrp <gid> <file>"
+            return
+
+        gid = arg_list[0]
+        target_path = resolve_reference(self.pwd, arg_list[1])
+
+        if not exists(self.fs, target_path):
+            print "File '%s' doesn't exist." % target_path
+            return
+
+        target_object = getpath(self.fs, target_path)
+        oldgid = target_object[A_UID]
+        target_object[A_UID] = int(gid)
+        print "former GID: " + str(oldgid) + ". New GID: " + str(gid)
+
+
     def do_file(self, args):
         '''Identifies file types.\nUsage: file <file name>'''
         arg_list = args.split()
