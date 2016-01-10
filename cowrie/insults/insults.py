@@ -21,6 +21,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
     Wrapper for ServerProtocol that implements TTY logging
     """
 
+    def __del__(self):
+	log.msg( "DEL LSP")
+
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
         self.cfg = a[0].cfg
@@ -59,8 +62,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             (self.cfg.get('honeypot', 'download_path'),
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
         self.stdinlog_open = False
-
-        self.ttylog_size = {self.ttylog_file: 0}
+        self.ttylogSize = 0
 
         insults.ServerProtocol.connectionMade(self)
 
@@ -76,7 +78,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(self.ttylog_file, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
 
-            self.ttylog_size[self.ttylog_file] += len(bytes)
+            self.ttylogSize += len(bytes)
 
         insults.ServerProtocol.write(self, bytes)
 
@@ -163,11 +165,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlog_open = False
 
         if self.ttylog_open:
-            size = self.ttylog_size[self.ttylog_file]
             log.msg(eventid='COW0012',
                     format='Closing TTY Log: %(ttylog)s',
                     ttylog=self.ttylog_file,
-                    size=size)
+                    size=self.ttylogSize)
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
 
