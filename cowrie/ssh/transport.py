@@ -264,8 +264,6 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         This seems to be the only reliable place of catching lost connection
         """
         self.setTimeout(None)
-        if self.transport.sessionno in self.factory.sessions:
-            del self.factory.sessions[self.transport.sessionno]
         transport.SSHServerTransport.connectionLost(self, reason)
         self.transport.connectionLost(reason)
         self.transport = None

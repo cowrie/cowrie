@@ -107,8 +107,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def connectionLost(self, reason):
         """
-        this is only called on explicit logout, not on disconnect
-        this indicates the closing of the channel/session, not the closing of the transport
         """
         self.setTimeout(None)
         insults.TerminalProtocol.connectionLost(self, reason)
@@ -273,9 +271,11 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
     def connectionLost(self, reason):
         """
-        this doesn't seem to be called upon disconnect, so please use
-        HoneyPotTransport.connectionLost instead
         """
+        transport = self.terminal.transport.session.conn.transport
+        if transport.transport.sessionno in transport.factory.sessions:
+            del transport.factory.sessions[transport.transport.sessionno]
+
         self.lastlogExit()
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
