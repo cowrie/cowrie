@@ -21,17 +21,17 @@ class LoggingServerProtocol(insults.ServerProtocol):
     Wrapper for ServerProtocol that implements TTY logging
     """
 
-    def __del__(self):
-	log.msg( "DEL LSP")
-
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
-        self.cfg = a[0].cfg
+        cfg = a[0].cfg
         self.bytesReceived = 0
         self.interactors = []
 
+        self.ttylogPath = cfg.get('honeypot', 'log_path')
+        self.downloadPath = cfg.get('honeypot', 'download_path')
+
         try:
-            self.bytesReceivedLimit = int(self.cfg.get('honeypot',
+            self.bytesReceivedLimit = int(cfg.get('honeypot',
                 'download_limit_size'))
         except:
             self.bytesReceivedLimit = 0
@@ -49,7 +49,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         channelId = self.transport.session.id
 
         self.ttylog_file = '%s/tty/%s-%s-%s%s.log' % \
-            (self.cfg.get('honeypot', 'log_path'),
+            (self.ttylogPath,
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId,
             self.type)
         ttylog.ttylog_open(self.ttylog_file, time.time())
@@ -59,7 +59,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             format='Opening TTY Log: %(ttylog)s')
 
         self.stdinlog_file = '%s/%s-%s-%s-stdin.log' % \
-            (self.cfg.get('honeypot', 'download_path'),
+            (self.downloadPath,
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
         self.stdinlog_open = False
         self.ttylogSize = 0
@@ -149,8 +149,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             try:
                 with open(self.stdinlog_file, 'rb') as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = self.cfg.get('honeypot',
-                        'download_path') + "/" + shasum
+                    shasumfile = self.downloadPath + "/" + shasum
                     if (os.path.exists(shasumfile)):
                         os.remove(self.stdinlog_file)
                     else:
@@ -172,6 +171,5 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_close(self.ttylog_file, time.time())
             self.ttylog_open = False
 
-        self.cfg = None
         insults.ServerProtocol.connectionLost(self, reason)
 
