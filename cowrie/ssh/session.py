@@ -64,6 +64,7 @@ class HoneyPotSSHSession(session.SSHSession):
         This is reliably called on session close/disconnect and calls the avatar
         """
         session.SSHSession.closed(self)
+        self.client = None
 
 
     def sendEOF(self):
