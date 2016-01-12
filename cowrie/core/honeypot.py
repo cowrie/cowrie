@@ -128,13 +128,30 @@ class HoneyPotShell(object):
         self.showPrompt()
 
 
+    def parseCommands(self, line):
+        separators = [';', '&&', '||']
+        tokens = shlex.split(line, True) # ignore comments
+        commands = []
+        command = ''
+        for t in tokens:
+            if t not in separators:
+                if len(command):
+                    command = command + ' ' + t
+                else:
+                    command = t
+            else:
+                commands.append(command)
+                command = ''
+        commands.append(command)
+        return commands
+
     def lineReceived(self, line):
         """
         """
         log.msg('CMD: %s' % (line,))
         line = line[:500]
         comment = re.compile('^\s*#')
-        for i in [x.strip() for x in re.split(';|&&|\n', line.strip())[:10]]:
+        for i in [x.strip() for x in self.parseCommands(line)]:
             if not len(i):
                 continue
             if comment.match(i):
