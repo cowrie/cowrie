@@ -16,6 +16,8 @@ from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_
 import twisted.conch.ls
 from twisted.python import log
 
+import cowrie.core.pwd as pwd
+
 
 @implementer(ISFTPFile)
 class CowrieSFTPFile(object):
@@ -128,7 +130,10 @@ class CowrieSFTPDirectory(object):
             raise StopIteration
         else:
             s = self.server.fs.lstat(os.path.join(self.dir, f))
-            longname = twisted.conch.ls.lsLine(f, s)
+            s2 = self.server.fs.lstat(os.path.join(self.dir, f))
+            s2.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
+            s2.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+            longname = twisted.conch.ls.lsLine(f, s2)
             attrs = self.server._getAttrs(s)
             return (f, longname, attrs)
 
