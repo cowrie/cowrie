@@ -1,4 +1,8 @@
 
+* 2016-01-13 Correct '.' support and +s and +t bits in ls
+* 2016-01-13 Full username/group in SFTP ls
+* 2016-01-05 Basic VirusTotal support has been added
+* 2016-01-04 No longer crash when client tries ecdsa
 * 2015-12-28 Interact port (default 5123) only listens on loopback interface now (127.0.0.1)
 * 2015-12-24 Redirect to file (>) now works for most commands and is logged in dl/ directory
 * 2015-12-06 UID information is now retrieved from honeyfs/etc/passwd. If you added additional users
