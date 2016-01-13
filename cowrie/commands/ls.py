@@ -99,35 +99,46 @@ class command_ls(HoneyPotCommand):
         """
         try:
             files = self.protocol.fs.get_path(path)[:]
-            files.sort()
         except:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
 
+        if self.show_hidden:
+            # FIXME: should grab dotdot off the parent instead
+            dot = self.protocol.fs.getfile(path)[:]
+            dot[A_NAME] = '.'
+            files.append(dot)
+            dotdot = self.protocol.fs.getfile(path)[:]
+            dotdot[A_NAME] = '..'
+            files.append(dotdot)
+
+        files.sort()
+
         largest = 0
         if len(files):
             largest = max([x[A_SIZE] for x in files])
 
-        # FIXME: should grab these off the parents instead
-        files.insert(0,
-            ['..', T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
-        files.insert(0,
-            ['.', T_DIR, 0, 0, 4096, 16877, time.time(), [], None])
         for file in files:
             perms = ['-'] * 10
 
             if file[A_MODE] & stat.S_IRUSR: perms[1] = 'r'
             if file[A_MODE] & stat.S_IWUSR: perms[2] = 'w'
             if file[A_MODE] & stat.S_IXUSR: perms[3] = 'x'
+            if file[A_MODE] & stat.S_ISUID: perms[3] = 'S'
+            if file[A_MODE] & stat.S_IXUSR and file[A_MODE] & stat.S_ISUID: perms[3] = 's'
 
             if file[A_MODE] & stat.S_IRGRP: perms[4] = 'r'
             if file[A_MODE] & stat.S_IWGRP: perms[5] = 'w'
             if file[A_MODE] & stat.S_IXGRP: perms[6] = 'x'
+            if file[A_MODE] & stat.S_ISGID: perms[6] = 'S'
+            if file[A_MODE] & stat.S_IXGRP and file[A_MODE] & stat.S_ISGID: perms[6] = 's'
 
             if file[A_MODE] & stat.S_IROTH: perms[7] = 'r'
             if file[A_MODE] & stat.S_IWOTH: perms[8] = 'w'
             if file[A_MODE] & stat.S_IXOTH: perms[9] = 'x'
+            if file[A_MODE] & stat.S_ISVTX: perms[9] = 'T'
+            if file[A_MODE] & stat.S_IXOTH and file[A_MODE] & stat.S_ISVTX: perms[9] = 't'
 
             linktarget = ''
 
@@ -153,4 +164,3 @@ class command_ls(HoneyPotCommand):
 commands['/bin/ls'] = command_ls
 commands['/bin/dir'] = command_ls
 
-# vim: set sw=4 et:
