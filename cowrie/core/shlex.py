@@ -1,5 +1,6 @@
-"""A lexical analyzer class for simple shell-like syntaxes."""
 # coding: UTF-8
+
+"""A lexical analyzer class for simple shell-like syntaxes."""
 
 # Module and documentation by Eric S. Raymond, 21 Dec 1998
 # Input stacking and error message cleanup added by ESR, March 2000
