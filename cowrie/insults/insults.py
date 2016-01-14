@@ -155,9 +155,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     else:
                         os.rename(self.stdinlog_file, shasumfile)
                     os.symlink(shasum, self.stdinlog_file)
-                log.msg(eventid='COW0007',
+                log.msg(eventid='COW0017',
                     format='Saved stdin contents to %(outfile)s',
-                    url='stdin', outfile=shasumfile, shasum=shasum)
+                    filename='stdin', outfile=shasumfile, shasum=shasum)
             except IOError as e:
                 pass
             finally:
