@@ -42,7 +42,7 @@ import socket
 # COW0004 : TTY log opened
 # COW0005 : handle command
 # COW0006 : handle unknown command
-# COW0007 : file download
+# COW0007 : HTTP file download
 # COW0008 : INPUT
 # COW0009 : SSH Version
 # COW0010 : Terminal Size
