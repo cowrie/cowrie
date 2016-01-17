@@ -2,7 +2,7 @@
 
 Installing cowrie in six easy steps.
 
-It's recommended to install under a separate non-root user id:
+It's strongly recommended to install under a dedicated non-root user id:
 
 ```
 $ sudo adduser --disabled-password cowrie
@@ -37,13 +37,24 @@ $ ./start.sh
 Starting cowrie in the background...
 ```
 
-Cowry runs by default on port 2222. This can be modified in the configuration file. Running on port 22 is not recommended.
+Cowry runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
 
 ```
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 ```
 
+Alternatively you can run authbind to listen as non-root on port 22 directly:
+
+```
+$ apt-get install authbind
+$ touch /etc/authbind/byport/22
+$ chown cowrie:cowrie /etc/authbind/byport/22
+$ chmod 777 /etc/authbind/byport/22
+```
+
+* Edit start.sh and modify the AUTHBIND_ENABLED setting
+* Change listen_port to 22 in cowrie.cfg
 
 # Bugs and workarounds
 
