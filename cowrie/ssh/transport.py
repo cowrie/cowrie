@@ -238,6 +238,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         strings, rest = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS,
             langSC) = [s.split(',') for s in strings]
+        log.msg("ssh KEXINIT langCS langSC %s %s" % (langCS,langSC,))
         log.msg(eventid='COW0009', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, format='Remote SSH version: %(version)s')
