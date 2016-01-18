@@ -26,7 +26,7 @@ then
 fi
 
 echo "Starting cowrie in the background..."
-if [ $AUTHBIND_ENABLED == "no" ]
+if [ $AUTHBIND_ENABLED = "no" ]
 then
     twistd -l log/cowrie.log --pidfile cowrie.pid cowrie
 else
