@@ -7,6 +7,7 @@ This module contains ...
 
 import time
 import uuid
+import zlib
 
 import twisted
 from twisted.conch.ssh import factory
@@ -151,6 +152,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             'aes192-cbc', 'aes256-cbc']
         t.supportedPublicKeys = ['ssh-rsa', 'ssh-dss']
         t.supportedMACs = ['hmac-md5', 'hmac-sha1']
+        t.supportedCompressions = ['zlib@openssh.com', 'zlib', 'none']
 
         t.factory = self
         return t
@@ -255,10 +257,21 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def setService(self, service):
         """
-        Remove login grace timeout
+        Remove login grace timeout, set zlib compression after auth
         """
+
+        # Remove authentication timeout
         if service.name == "ssh-connection":
             self.setTimeout(None)
+
+        # when auth is successful we enable compression
+        # this is called right after MSG_USERAUTH_SUCCESS
+        if service.name == "ssh-connection":
+            if self.outgoingCompressionType == 'zlib@openssh.com':
+                self.outgoingCompression = zlib.compressobj(6)
+            if self.incomingCompressionType == 'zlib@openssh.com':
+                self.incomingCompression = zlib.decompressobj()
+
         transport.SSHServerTransport.setService(self, service)
 
 
