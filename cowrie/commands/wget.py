@@ -189,6 +189,7 @@ class command_wget(HoneyPotCommand):
         #    time.strftime('%Y-%m-%d %T'))
         self.exit()
 commands['/usr/bin/wget'] = command_wget
+commands['/usr/bin/dget'] = command_wget
 
 # from http://code.activestate.com/recipes/525493/
 class HTTPProgressDownloader(client.HTTPDownloader):
