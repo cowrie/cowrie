@@ -522,7 +522,7 @@ class fseditCmd(cmd.Cmd):
         olduid = target_object[A_UID]
         target_object[A_UID] = int(uid)
         print "former UID: " + str(olduid) + ". New UID: " + str(uid)
-
+        self.save_pickle()
 
     def do_chgrp(self, args):
         '''Change file ownership'''
@@ -543,7 +543,44 @@ class fseditCmd(cmd.Cmd):
         oldgid = target_object[A_UID]
         target_object[A_UID] = int(gid)
         print "former GID: " + str(oldgid) + ". New GID: " + str(gid)
+        self.save_pickle()
 
+    def do_chmod(self, args):
+        '''Change file permissions
+        only modes between 000 and 777 are implemented'''
+
+        arg_list = args.split()
+
+        if len(arg_list) != 2:
+            print "Incorrect number of arguments.\nUsage: chmod <mode> <file>"
+            return
+
+        mode = arg_list[0]
+        target_path = resolve_reference(self.pwd, arg_list[1])
+
+        if not exists(self.fs, target_path):
+            print "File '%s' doesn't exist." % target_path
+            return
+
+        target_object = getpath(self.fs, target_path)
+        oldmode = target_object[A_MODE]
+
+        if target_object [A_TYPE] == T_LINK:
+            print target_path + " is a link, nothing changed."
+            return
+
+        try:
+            num = int(mode, 8)
+        except:
+            print "Incorrect mode: " + mode
+            return
+
+        if num < 0 or num > 511:
+            print "Incorrect mode: " + mode
+            return
+
+        target_object[A_MODE] = (oldmode & 07777000) | (num & 0777)
+        self.save_pickle()
 
     def do_file(self, args):
         '''Identifies file types.\nUsage: file <file name>'''
