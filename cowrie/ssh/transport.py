@@ -232,6 +232,8 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
     def ssh_KEXINIT(self, packet):
         """
         """
+        cookie = packet[:16]
+        log.msg("ssh KEXINIT cookie %s" % (cookie.encode('hex'),))
         k = getNS(packet[16:], 10)
         strings, rest = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS,
