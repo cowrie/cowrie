@@ -1,4 +1,5 @@
 
+* 2016-01-19 Support openssh style delayed compression
 * 2016-01-13 Correct '.' support and +s and +t bits in ls
 * 2016-01-13 Full username/group in SFTP ls
 * 2016-01-05 Basic VirusTotal support has been added
