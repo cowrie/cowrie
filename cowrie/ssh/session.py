@@ -37,7 +37,7 @@ class HoneyPotSSHSession(session.SSHSession):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg(eventid='COW0013', format='request_env: %(name)s=%(value)s',
+        log.msg(eventid='cowrie.client.var', format='request_env: %(name)s=%(value)s',
             name=name, value=value)
         # FIXME: This only works for shell, not for exec command
         if self.session:
@@ -131,7 +131,7 @@ class SSHSessionForCowrieUser(object):
         """
         """
         self.environ['TERM'] = terminal
-        log.msg(eventid='COW0010', width=windowSize[0], height=windowSize[1],
+        log.msg(eventid='cowrie.client.size', width=windowSize[0], height=windowSize[1],
             format='Terminal Size: %(width)s %(height)s')
         self.windowSize = windowSize
         return None

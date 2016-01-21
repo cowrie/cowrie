@@ -11,21 +11,6 @@ import abc
 
 # dblog now operates based on eventids, no longer on regex parsing of the entry.
 # add an eventid using keyword args and it will be picked up by the dblogger
-# the COWxxxx naming convention is still subject to change.
-
-# COW0001 : create session
-# COW0002 : succesful login
-# COW0003 : failed login
-# COW0004 : TTY log opened
-# COW0005 : handle command
-# COW0006 : handle unknown command
-# COW0007 : file download
-# COW0008 : INPUT
-# COW0009 : SSH Version
-# COW0010 : Terminal Size
-# COW0011 : Connection Lost
-# COW0012 : TTY log closed
-# COW0013 : env var requested
 
 class DBLogger(object):
     __metaclass__ = abc.ABCMeta
@@ -37,20 +22,20 @@ class DBLogger(object):
         self.re_sessionlog = re.compile(
             '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
 
-        # COW0001 is special since it kicks off new logging session,
+        # cowrie.session.connect is special since it kicks off new logging session,
         # and is not handled here
         self.events = {
-            'COW0002': self.handleLoginSucceeded,
-            'COW0003': self.handleLoginFailed,
-            'COW0004': self.handleTTYLogOpened,
-            'COW0005': self.handleCommand,
-            'COW0006': self.handleUnknownCommand,
-            'COW0007': self.handleFileDownload,
-            'COW0008': self.handleInput,
-            'COW0009': self.handleClientVersion,
-            'COW0010': self.handleTerminalSize,
-            'COW0011': self._connectionLost,
-            'COW0012': self.handleTTYLogClosed,
+            'cowrie.login.success': self.handleLoginSucceeded,
+            'cowrie.login.failed': self.handleLoginFailed,
+            'cowrie.log.open': self.handleTTYLogOpened,
+            'cowrie.command.success': self.handleCommand,
+            'cowrie.command.failed': self.handleUnknownCommand,
+            'cowrie.session.file_download': self.handleFileDownload,
+            'cowrie.session.file_download': self.handleInput,
+            'cowrie.client.version': self.handleClientVersion,
+            'cowrie.client.size': self.handleTerminalSize,
+            'cowrie.session.closed': self._connectionLost,
+            'cowrie.log.closed': self.handleTTYLogClosed,
         }
 
         self.reported_ssh_port = None
@@ -95,7 +80,7 @@ class DBLogger(object):
             return
 
         # connection event is special. adds to list
-        if ev['eventid'] == 'COW0001':
+        if ev['eventid'] == 'cowrie.session.connect':
             sessionno = ev['sessionno']
             peerIP, peerPort = ev['src_ip'], ev['src_port']
             hostIP, hostPort = ev['dst_ip'], ev['dst_port']

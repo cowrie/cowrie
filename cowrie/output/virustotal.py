@@ -89,7 +89,7 @@ class Output(cowrie.core.output.Output):
                     fileName = b
             self.postfile(entry["outfile"], fileName)
 
-        elif entry["eventid"] == 'COW0017':
+        elif entry["eventid"] == 'cowrie.session.file_upload':
             log.msg("Sending file to VT")
             self.postfile(entry["outfile"], entry["filename"])
 

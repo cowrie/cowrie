@@ -32,8 +32,8 @@ class HoneypotPublicKeyChecker(object):
         """
         """
         _pubKey = keys.Key.fromString(credentials.blob)
-        log.msg(format='public key attempt for user %(username)s with fingerprint %(fingerprint)s',
-                eventid='COW0016',
+        log.msg(eventid='cowrie.client.fingerprint',
+                format='public key attempt for user %(username)s with fingerprint %(fingerprint)s',
                 username=credentials.username,
                 fingerprint=_pubKey.fingerprint())
         return failure.Failure(error.ConchError('Incorrect signature'))
@@ -120,13 +120,15 @@ class HoneypotPasswordChecker(object):
         theauth = authname(self.cfg)
 
         if theauth.checklogin(theusername, thepassword, ip):
-            log.msg(eventid='COW0002',
-                format='login attempt [%(username)s/%(password)s] succeeded',
-                username=theusername, password=thepassword)
+            log.msg(eventid='cowrie.login.success',
+                    format='login attempt [%(username)s/%(password)s] succeeded',
+                    username=theusername,
+                    password=thepassword)
             return True
         else:
-            log.msg(eventid='COW0003',
-                format='login attempt [%(username)s/%(password)s] failed',
-                username=theusername, password=thepassword)
+            log.msg(eventid='cowrie.login.failed',
+                    format='login attempt [%(username)s/%(password)s] failed',
+                    username=theusername,
+                    password=thepassword)
             return False
 

@@ -36,7 +36,7 @@ class Output(cowrie.core.output.Output):
 
 
     def write(self, entry):
-        if entry["eventid"] == 'COW0002' or entry["eventid"] == 'COW0003':
+        if entry["eventid"] == 'cowrie.login.success' or entry["eventid"] == 'cowrie.login.failed':
             date = dateutil.parser.parse(entry["timestamp"])
             self.batch.append({
                 'date' : date.date().__str__(),

@@ -204,10 +204,10 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.protocol.getCommand(cmd, environ['PATH'].split(':'))
         if cmdclass:
-            log.msg(eventid='COW0005', input=line, format='Command found: %(input)s')
+            log.msg(eventid='cowrie.command.success', input=line, format='Command found: %(input)s')
             self.protocol.call_command(cmdclass, *rargs)
         else:
-            log.msg(eventid='COW0006',
+            log.msg(eventid='cowrie.command.failed',
                 input=line, format='Command not found: %(input)s')
             if len(line):
                 self.protocol.terminal.write('bash: %s: command not found\n' % (cmd,))

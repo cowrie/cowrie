@@ -170,7 +170,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.transportId = uuid.uuid4().hex[:8]
 
-        log.msg(eventid='COW0001',
+        log.msg(eventid='cowrie.session.connect',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
            src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
@@ -241,7 +241,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS,
             langSC) = [s.split(',') for s in strings]
         log.msg("EXPERIMENTAL KEXINIT langCS langSC %s %s" % (langCS,langSC,))
-        log.msg(eventid='COW0009', version=self.otherVersionString,
+        log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, format='Remote SSH version: %(version)s')
 
@@ -283,7 +283,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         transport.SSHServerTransport.connectionLost(self, reason)
         self.transport.connectionLost(reason)
         self.transport = None
-        log.msg(eventid='COW0011', format='Connection lost')
+        log.msg(eventid='cowrie.session.closed', format='Connection lost')
 
 
     def sendDisconnect(self, reason, desc):

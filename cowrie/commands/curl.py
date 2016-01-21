@@ -312,11 +312,17 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             os.remove(self.safeoutfile)
             log.msg("Not storing duplicate content " + shasum)
 
-        self.protocol.logDispatch(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='COW0007', url=self.url, outfile=hashPath, shasum=shasum)
+        self.protocol.logDispatch(eventid='cowrie.session.file_download',
+                                  format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                                  url=self.url,
+                                  outfile=hashPath,
+                                  shasum=shasum)
 
-        log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            eventid='COW0007', url=self.url, outfile=hashPath, shasum=shasum)
+        log.msg(eventid='cowrie.session.file_download',
+                format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                url=self.url,
+                outfile=hashPath,
+                shasum=shasum)
 
         # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)

@@ -14,7 +14,7 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     """
     """
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg(eventid='COW0014', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
+    log.msg(eventid='cowrie.direct-tcpip.request', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
             dst_ip=remoteHP[0], dst_port=remoteHP[1])
     return CowrieConnectForwardingChannel(remoteHP,
        remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
@@ -34,7 +34,7 @@ class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
     def dataReceived(self, data):
         """
         """
-        log.msg(eventid='COW0015',
+        log.msg(eventid='cowrie.direct-tcpip.data',
             format='direct-tcp forward to %(dst_ip)s:%(dst_port)s with data %(data)s',
             dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
         self._close("Connection refused")
