@@ -63,7 +63,7 @@ def playlog(fd, settings):
 
 def help(brief = 0):
 
-    print 'Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file>\n' % \
+    print 'Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
         os.path.basename(sys.argv[0])
 
     if not brief:
@@ -106,11 +106,11 @@ if __name__ == '__main__':
         help()
 
     try:
-        logfd = open(args[0], 'rb')
+        for logfile in args:
+            logfd = open(logfile, 'rb')
+            playlog(logfd, settings)
     except IOError:
-        print "Couldn't open log file!"
+        print "\n\n[!] Couldn't open log file (%s)!" % logfile
         sys.exit(2)
-
-    playlog(logfd, settings)
 
 # vim: set sw=4:
