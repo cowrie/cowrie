@@ -69,8 +69,10 @@ class command_scp(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='COW0008', realm='scp', input=line,
-            format='INPUT (%(realm)s): %(input)s' )
+        log.msg(eventid='cowrie.session.file_download',
+                realm='scp',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s')
         self.protocol.terminal.write( '\x00' )
 
 commands['/usr/bin/scp'] = command_scp

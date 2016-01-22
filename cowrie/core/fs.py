@@ -227,7 +227,7 @@ class HoneyPotFilesystem(object):
             raise IsADirectoryError
         elif f[A_TYPE] == T_LINK:
             return self.file_contents(f[A_TARGET], count + 1)
-        elif f[A_TYPE] == T_FILE and f[A_REALFILE]: 
+        elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return file(f[A_REALFILE], 'rb').read()
         realfile = self.realfile(f, '%s/%s' % \
             (self.cfg.get('honeypot', 'contents_path'), path))
@@ -384,7 +384,10 @@ class HoneyPotFilesystem(object):
             os.symlink(shasum, self.tempfiles[fd])
             self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
             log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
-                eventid='COW0017', filename=os.path.basename(self.filenames[fd]), outfile=shasumfile, shasum=shasum )
+                    eventid='cowrie.session.file_upload',
+                    filename=os.path.basename(self.filenames[fd]),
+                    outfile=shasumfile,
+                    shasum=shasum)
             del self.tempfiles[fd]
             del self.filenames[fd]
         return os.close(fd)

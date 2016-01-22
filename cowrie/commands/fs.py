@@ -30,8 +30,10 @@ class command_cat(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg( eventid='COW0008', realm='cat', input=line,
-            format='INPUT (%(realm)s): %(input)s' )
+        log.msg(eventid='cowrie.session.file_download',
+                realm='cat',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s')
 
 
     def handle_CTRL_D(self):
@@ -78,8 +80,10 @@ class command_tail(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg( eventid='COW0008', realm='tail', input=line,
-            format='INPUT (%(realm)s): %(input)s' )
+        log.msg(eventid='cowrie.session.file_download',
+                realm='tail',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s')
 
 
     def handle_CTRL_D(self):
@@ -126,7 +130,7 @@ class command_head(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg( eventid='COW0008', realm='head', input=line,
+        log.msg(eventid='cowrie.session.file_download', realm='head', input=line,
             format='INPUT (%(realm)s): %(input)s' )
 
 

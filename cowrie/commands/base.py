@@ -322,8 +322,10 @@ class command_passwd(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='COW0008', realm='passwd', input=line,
-            format='INPUT (%(realm)s): %(input)s' )
+        log.msg(eventid='cowrie.session.file_download',
+                realm='passwd',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s')
         self.password = line.strip()
         self.callbacks.pop(0)(line)
 commands['/usr/bin/passwd'] = command_passwd
@@ -585,8 +587,10 @@ class command_perl(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='COW0008', realm='perl', input=line,
-            format='INPUT (%(realm)s): %(input)s' )
+        log.msg(eventid='cowrie.session.file_download',
+                realm='perl',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s')
 
 
     def handle_CTRL_D(self):
@@ -665,8 +669,10 @@ class command_php(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg( eventid='COW0008', realm='php', input=line,
-            format='INPUT (%(realm)s): %(input)s' )
+        log.msg(eventid='cowrie.session.file_download',
+                realm='php',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s' )
 
 
     def handle_CTRL_D(self):
