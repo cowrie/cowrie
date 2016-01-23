@@ -73,7 +73,7 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         """
         """
-        if entry["eventid"] == 'COW0007':
+        if entry["eventid"] == 'cowrie.session.file_download':
             log.msg("Sending url to VT")
             self.posturl(entry["url"])
 
