@@ -23,8 +23,8 @@ class shlex:
     def __init__(self, instream=None, infile=None, posix=False,
                  punctuation_chars=False):
         if isinstance(instream, str):
-            #instream = StringIO(instream)
-            instream = BytesIO(instream)
+            instream = StringIO(instream)
+            #instream = BytesIO(instream)
         if instream is not None:
             self.instream = instream
             self.infile = infile
