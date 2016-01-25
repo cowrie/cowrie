@@ -169,7 +169,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlog_open = False
 
         if self.ttylog_open:
-            size = self.ttylog_size[self.ttylog_file]
             log.msg(eventid='cowrie.log.closed',
                     format='Closing TTY Log: %(ttylog)s',
                     ttylog=self.ttylog_file,
