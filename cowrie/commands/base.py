@@ -471,7 +471,10 @@ class command_yes(HoneyPotCommand):
     def y(self):
         """
         """
-        self.write('y\n')
+        if len(self.args):
+            self.write(' '.join(self.args)+'\n')
+        else:
+            self.write('y\n')
         self.scheduled = reactor.callLater(0.01, self.y)
 
 
