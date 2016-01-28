@@ -114,11 +114,8 @@ class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, ProtocolTranspor
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            session=self.transportId, sessionno=sessionno)
 
-        # p/Cisco telnetd/ d/router/ o/IOS/ cpe:/a:cisco:telnet/ cpe:/o:cisco:ios/a
-        # NB _write() is for raw data and write() handles telnet special bytes
-        self.transport._write("\xff\xfb\x01\xff\xfb\x03\xff\xfb\0\xff\xfd\0\xff\xfd\x1f\r\n")
         self.transport.write(self.factory.banner)
-        self.transport._write("User Access Verification\r\n\r\nUsername: ")
+        self.transport.write("User Access Verification\n\nUsername: ")
 
         self.setTimeout(120)
 
@@ -131,9 +128,10 @@ class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, ProtocolTranspor
         self.setTimeout(None)
         if self.transport.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.transport.sessionno]
-        self.transport.connectionLost(reason)
-        self.transport = None
         log.msg(eventid='cowrie.session.closed', format='Connection lost')
+
+        AuthenticatingTelnetProtocol.connectionLost(self, reason)
+
 
     def telnet_Password(self, line):
         username, password = self.username, line
@@ -144,7 +142,11 @@ class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, ProtocolTranspor
             d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
             d.addCallback(self._cbLogin)
             d.addErrback(self._ebLogin)
-        self.transport.wont(ECHO).addCallback(login)
+
+        # even if ECHO negotiation fails we still want to attempt a login
+        # this allows us to support dumb clients which is common in malware
+        # thus the addBoth: on success and on exception (AlreadyNegotiating)
+        self.transport.wont(ECHO).addBoth(login)
 
         return 'Discard'
 

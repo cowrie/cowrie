@@ -10,7 +10,8 @@ from zope.interface import implementer
 from twisted.internet import interfaces, protocol
 from twisted.python import log
 from twisted.conch.ssh import session
-from twisted.conch.telnet import StatefulTelnetProtocol, TelnetBootstrapProtocol
+from twisted.conch.telnet import ECHO, StatefulTelnetProtocol, SGA, \
+                                 TelnetBootstrapProtocol
 
 from cowrie.core import pwd
 from cowrie.core import protocol as cproto
@@ -52,6 +53,10 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
 
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
+
+        # Enable some Telnet options for proper output and echo
+        self.transport.will(SGA)
+        self.transport.will(ECHO)
 
         self.protocol = insults.LoggingTelnetServerProtocol(
                 cproto.HoneyPotInteractiveTelnetProtocol, self)
