@@ -82,10 +82,10 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 log.msg("Failed to load output engine: {}".format(engine))
 
         # hook protocol
-        self.protocol = lambda: TelnetTransport(HoneyPotTelnetAuthTransport,
-                                                self.portal)
-
+        self.protocol = lambda: MyTelnet(HoneyPotTelnetAuthTransport,
+                                         self.portal)
         protocol.ServerFactory.startFactory(self)
+
 
     def stopFactory(self):
         """
@@ -96,7 +96,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.stopFactory(self)
 
 
-class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, ProtocolTransportMixin, TimeoutMixin):
+class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, TimeoutMixin):
     """
     Telnet Transport that takes care of Authentication. Once authenticated this
     transport is replaced with HoneyPotTelnetSession.
@@ -164,3 +164,15 @@ class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, ProtocolTranspor
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
+
+class MyTelnet(TelnetTransport):
+    """Sole purpose is to override write() and fix a CRLF nesting bug"""
+
+    # Because of the presence of two ProtocolTransportMixin in the protocol
+    # stack once authenticated, I need to override write() and remove a \r
+    # otherwise we end up with \r\r\n on the wire.
+    #
+    # It is kind of a hack. I asked for a better solution here:
+    # http://stackoverflow.com/questions/35087250/twisted-telnet-server-how-to-avoid-nested-crlf
+    def write(self, bytes):
+        self.transport.write(bytes.replace('\r\n', '\n'))
