@@ -51,6 +51,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # to be populated by HoneyPotTelnetAuthTransport after auth
         self.transportId = None
 
+
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
 
@@ -72,14 +73,12 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     #        del pt.factory.sessions[pt.transport.sessionno]
     #    pt.connectionLost(reason)
 
-#    def lineReceived(self, line):
-#        self.transport.write("I received %r from you\r\n" % (line,))
-
 
     def logout(self):
         """
         """
         log.msg('avatar {} logging out'.format(self.username))
+
 
 # Taken and adapted from
 # https://github.com/twisted/twisted/blob/26ad16ab41db5f0f6d2526a891e81bbd3e260247/twisted/conch/ssh/session.py#L186
@@ -100,11 +99,14 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
     #        self.session.write(self.session.buf)
     #        self.session.buf = None
 
+
     def outReceived(self, data):
         self.session.write(data)
 
+
     def errReceived(self, err):
         self.session.writeExtended(connection.EXTENDED_DATA_STDERR, err)
+
 
     def outConnectionLost(self):
         """
@@ -115,11 +117,13 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         else:
             self.lostOutOrErrFlag = True
 
+
     def errConnectionLost(self):
         """
         See outConnectionLost().
         """
         self.outConnectionLost()
+
 
     def connectionLost(self, reason = None):
         self.session.loseConnection()
