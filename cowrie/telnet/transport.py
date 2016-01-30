@@ -19,7 +19,7 @@ from cowrie.core.credentials import UsernamePasswordIP
 
 class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
-    This factory creates HoneyPotTelnetAuthTransport instances
+    This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
 
@@ -82,7 +82,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 log.msg("Failed to load output engine: {}".format(engine))
 
         # hook protocol
-        self.protocol = lambda: MyTelnet(HoneyPotTelnetAuthTransport,
+        self.protocol = lambda: MyTelnet(HoneyPotTelnetAuthProtocol,
                                          self.portal)
         protocol.ServerFactory.startFactory(self)
 
@@ -96,7 +96,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.stopFactory(self)
 
 
-class HoneyPotTelnetAuthTransport(AuthenticatingTelnetProtocol, TimeoutMixin):
+class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
     """
     Telnet Transport that takes care of Authentication. Once authenticated this
     transport is replaced with HoneyPotTelnetSession.

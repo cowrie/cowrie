@@ -48,7 +48,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # required because HoneyPotBaseProtocol relies on avatar.avatar.home
         self.avatar = self
 
-        # to be populated by HoneyPotTelnetAuthTransport after auth
+        # to be populated by HoneyPotTelnetAuthProtocol after auth
         self.transportId = None
 
 
@@ -65,7 +65,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
     # TODO do I need to implement connectionLost?
-    # XXX verify if HoneyPotTelnetAuthTransport's connectionLost fires otherwise
+    # XXX verify if HoneyPotTelnetAuthProtocol's connectionLost fires otherwise
     #     we'll have to reimplement some of the stuff here
     #def connectionLost(self, reason):
     #    pt = self.transport
