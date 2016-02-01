@@ -234,13 +234,10 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
     def ssh_KEXINIT(self, packet):
         """
         """
-        cookie = packet[:16]
-        log.msg("EXPERIMENTAL KEXINIT cookie %s" % (cookie.encode('hex'),))
         k = getNS(packet[16:], 10)
         strings, rest = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS,
             langSC) = [s.split(',') for s in strings]
-        log.msg("EXPERIMENTAL KEXINIT langCS langSC %s %s" % (langCS,langSC,))
         log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, format='Remote SSH version: %(version)s')
