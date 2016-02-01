@@ -82,7 +82,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 log.msg("Failed to load output engine: {}".format(engine))
 
         # hook protocol
-        self.protocol = lambda: MyTelnet(HoneyPotTelnetAuthProtocol,
+        self.protocol = lambda: StripCrTelnetTransport(HoneyPotTelnetAuthProtocol,
                                          self.portal)
         protocol.ServerFactory.startFactory(self)
 
@@ -165,7 +165,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
 
-class MyTelnet(TelnetTransport):
+class StripCrTelnetTransport(TelnetTransport):
     """Sole purpose is to override write() and fix a CRLF nesting bug"""
 
     # Because of the presence of two ProtocolTransportMixin in the protocol
