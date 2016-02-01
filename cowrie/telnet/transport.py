@@ -117,7 +117,17 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         self.transport.write(self.factory.banner)
         self.transport.write("User Access Verification\n\nUsername: ")
 
+        # Enable some Telnet options for proper output and echo
+        # This supports both smart Telnet clients and raw bytes sending
+        # malware
+        # XXX this works with dumb but not smart
+        #     check how I should negotiate
+        #self.transport.do(ECHO)
+        #self.transport.will(SGA)
+        self.transport.will(ECHO)
+
         self.setTimeout(120)
+
 
     # FIXME TelnetTransport is throwing an exception when client disconnects
     #       Not sure if this is true anymore
@@ -133,20 +143,32 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         AuthenticatingTelnetProtocol.connectionLost(self, reason)
 
 
+    def telnet_User(self, line):
+        """
+        Overriden to kill Will ECHO which confuses badly coded malware not
+        expecting Telnet commands.
+        """
+        self.username = line
+        #self.transport.will(ECHO)
+        self.transport.write("Password: ")
+        return 'Password'
+
+
     def telnet_Password(self, line):
         username, password = self.username, line
         del self.username
-        def login(ignored):
-            self.src_ip = self.transport.getPeer().host
-            creds = UsernamePasswordIP(username, password, self.src_ip)
-            d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
-            d.addCallback(self._cbLogin)
-            d.addErrback(self._ebLogin)
 
+        self.src_ip = self.transport.getPeer().host
+        creds = UsernamePasswordIP(username, password, self.src_ip)
+        d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
+        d.addCallback(self._cbLogin)
+        d.addErrback(self._ebLogin)
+
+        # XXX disabled since it seems to confuse dumb clients
         # even if ECHO negotiation fails we still want to attempt a login
         # this allows us to support dumb clients which is common in malware
         # thus the addBoth: on success and on exception (AlreadyNegotiating)
-        self.transport.wont(ECHO).addBoth(login)
+        #self.transport.wont(ECHO).addBoth(login)
 
         return 'Discard'
 
