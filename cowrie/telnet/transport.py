@@ -114,17 +114,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            session=self.transportId, sessionno=sessionno)
 
+        # I need to doubly escape here since my underlying
+        # StripCrTelnetTransport hack would remove it and leave just \n
         self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
         self.transport.write("User Access Verification\n\nUsername: ".replace('\n', '\r\r\n'))
-
-        # Enable some Telnet options for proper output and echo
-        # This supports both smart Telnet clients and raw bytes sending
-        # malware
-        # XXX this works with dumb but not smart
-        #     check how I should negotiate
-        #self.transport.do(ECHO)
-        #self.transport.will(SGA)
-        #self.transport.will(ECHO)
 
         self.setTimeout(120)
 
@@ -145,11 +138,13 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
 
     def telnet_User(self, line):
         """
-        Overriden to kill Will ECHO which confuses badly coded malware not
-        expecting Telnet commands.
+        Overridden to conditionally kill 'WILL ECHO' which confuses clients
+        that don't implement a proper Telnet protocol (most malware)
         """
         self.username = line
-        #self.transport.will(ECHO)
+        # only send ECHO option if we are chatting with a real Telnet client
+        if self.transport.options:
+            self.transport.will(ECHO)
         self.transport.write("Password: ")
         return 'Password'
 
@@ -157,18 +152,23 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
     def telnet_Password(self, line):
         username, password = self.username, line
         del self.username
+        def login(ignored):
+            self.src_ip = self.transport.getPeer().host
+            creds = UsernamePasswordIP(username, password, self.src_ip)
+            d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
+            d.addCallback(self._cbLogin)
+            d.addErrback(self._ebLogin)
 
-        self.src_ip = self.transport.getPeer().host
-        creds = UsernamePasswordIP(username, password, self.src_ip)
-        d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
-        d.addCallback(self._cbLogin)
-        d.addErrback(self._ebLogin)
-
-        # XXX disabled since it seems to confuse dumb clients
-        # even if ECHO negotiation fails we still want to attempt a login
-        # this allows us to support dumb clients which is common in malware
-        # thus the addBoth: on success and on exception (AlreadyNegotiating)
-        #self.transport.wont(ECHO).addBoth(login)
+        # are we dealing with a real Telnet client?
+        if self.transport.options:
+            # stop ECHO
+            # even if ECHO negotiation fails we still want to attempt a login
+            # this allows us to support dumb clients which is common in malware
+            # thus the addBoth: on success and on exception (AlreadyNegotiating)
+            self.transport.wont(ECHO).addBoth(login)
+        else:
+            # process login
+            login('')
 
         return 'Discard'
 
@@ -186,20 +186,6 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
-
-    def enableLocal(self, opt):
-        if opt == ECHO:
-            return True
-        elif opt == SGA:
-            return True
-        else:
-            return False
-
-    def enableRemote(self, opt):
-        if opt == SGA:
-            return True
-        else:
-            return False
 
 
 class StripCrTelnetTransport(TelnetTransport):
