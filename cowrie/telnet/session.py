@@ -75,6 +75,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     #    pt.connectionLost(reason)
 
 
+    # TODO this never fires in Telnet connections is it misplaced?
     def logout(self):
         """
         """

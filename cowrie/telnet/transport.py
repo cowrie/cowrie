@@ -26,6 +26,8 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     def __init__(self, cfg):
         self.cfg = cfg
 
+
+    # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
         """
         Special delivery to the loggers to avoid scope problems
@@ -34,6 +36,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             dblog.logDispatch(*msg, **args)
         for output in self.output_plugins:
             output.logDispatch(*msg, **args)
+
 
     def startFactory(self):
         """
@@ -122,11 +125,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         self.setTimeout(120)
 
 
-    # FIXME TelnetTransport is throwing an exception when client disconnects
-    #       Not sure if this is true anymore
     def connectionLost(self, reason):
         """
-        This seems to be the only reliable place of catching lost connection
+        Fires on pre-authentication disconnects
         """
         self.setTimeout(None)
         if self.transport.transport.sessionno in self.factory.sessions:
