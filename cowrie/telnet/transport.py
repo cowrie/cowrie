@@ -12,7 +12,7 @@ from twisted.python import log
 from twisted.internet import protocol
 from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, \
                                  ITelnetProtocol, ProtocolTransportMixin, \
-                                 TelnetTransport
+                                 SGA, TelnetTransport
 from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
@@ -114,8 +114,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            session=self.transportId, sessionno=sessionno)
 
-        self.transport.write(self.factory.banner)
-        self.transport.write("User Access Verification\n\nUsername: ")
+        self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
+        self.transport.write("User Access Verification\n\nUsername: ".replace('\n', '\r\r\n'))
 
         # Enable some Telnet options for proper output and echo
         # This supports both smart Telnet clients and raw bytes sending
@@ -124,7 +124,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         #     check how I should negotiate
         #self.transport.do(ECHO)
         #self.transport.will(SGA)
-        self.transport.will(ECHO)
+        #self.transport.will(ECHO)
 
         self.setTimeout(120)
 
@@ -186,6 +186,21 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
+
+    def enableLocal(self, opt):
+        if opt == ECHO:
+            return True
+        elif opt == SGA:
+            return True
+        else:
+            return False
+
+    def enableRemote(self, opt):
+        if opt == SGA:
+            return True
+        else:
+            return False
+
 
 class StripCrTelnetTransport(TelnetTransport):
     """Sole purpose is to override write() and fix a CRLF nesting bug"""
