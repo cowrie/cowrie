@@ -55,9 +55,10 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
 
+        # XXX SGA is refused by some clients
         # Enable some Telnet options for proper output and echo
-        self.transport.will(SGA)
-        self.transport.will(ECHO)
+        #self.transport.will(SGA)
+        #self.transport.will(ECHO)
 
         self.protocol = insults.LoggingTelnetServerProtocol(
                 cproto.HoneyPotInteractiveTelnetProtocol, self)
