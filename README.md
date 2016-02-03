@@ -28,8 +28,9 @@ Software required:
 * An operating system (tested on Debian, CentOS, FreeBSD and Windows 7)
 * Python 2.7+
 * Twisted 8.0+
-* PyCrypto
-* pyasn1
+* python-crypto
+* python-pyasn1
+* python-gmpy2 (recommended)
 * Zope Interface 3.6.0+
 
 ## Files of interest:
