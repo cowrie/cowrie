@@ -2,6 +2,18 @@
 
 Installing cowrie in six easy steps.
 
+Install prerequisites on Debian based systems:
+
+```
+$ sudo apt-get install python-twisted python-crypto python-pyasn1 python-gmpy2 python-zope.interface
+```
+ 
+Install prerequisites on RedHat based systems:
+ 
+```
+$ sudo yum install ... ... ... ... 
+```
+
 It's strongly recommended to install under a dedicated non-root user id:
 
 ```
