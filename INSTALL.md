@@ -1,6 +1,6 @@
 # Installation
 
-Installing cowrie in six easy steps.
+## Installing cowrie in six easy steps.
 
 Install prerequisites on Debian based systems:
 
@@ -11,7 +11,7 @@ $ sudo apt-get install python-twisted python-crypto python-pyasn1 python-gmpy2 p
 Install prerequisites on RedHat based systems:
  
 ```
-$ sudo yum install ... ... ... ... 
+$ sudo yum install <tbd> <tbd> <tbd>
 ```
 
 It's strongly recommended to install under a dedicated non-root user id:
@@ -47,6 +47,8 @@ $ cp cowrie.cfg.dist cowrie.cfg
 
 $ ./start.sh
 Starting cowrie in the background...
+
+$ exit
 ```
 
 Cowry runs by default on port 2222. This can be modified in the configuration file.
@@ -62,13 +64,13 @@ Alternatively you can run authbind to listen as non-root on port 22 directly:
 $ apt-get install authbind
 $ touch /etc/authbind/byport/22
 $ chown cowrie:cowrie /etc/authbind/byport/22
-$ chmod 777 /etc/authbind/byport/22
+$ chmod 770 /etc/authbind/byport/22
 ```
 
 * Edit start.sh and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
-# Bugs and workarounds
+## Bugs and workarounds
 
 * For some versions of Twisted you may receive the following error messagse:
 
