@@ -120,6 +120,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         # I need to doubly escape here since my underlying
         # StripCrTelnetTransport hack would remove it and leave just \n
         self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
+        # FIXME: this should be configurable or provided via filesystem
         self.transport.write("User Access Verification\n\nUsername: ".replace('\n', '\r\r\n'))
 
         self.setTimeout(120)
@@ -146,6 +147,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         # only send ECHO option if we are chatting with a real Telnet client
         if self.transport.options:
             self.transport.will(ECHO)
+        # FIXME: this should be configurable or provided via filesystem
         self.transport.write("Password: ")
         return 'Password'
 
@@ -187,6 +189,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
+
+    # TODO: provide a way to have user configurable strings for wrong password
 
 
 class StripCrTelnetTransport(TelnetTransport):
