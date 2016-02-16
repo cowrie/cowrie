@@ -26,9 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import syslog
-import twisted.python.syslog
-
 import cowrie.core.output
 import cowrie.core.cef
 
@@ -38,10 +35,8 @@ class Output(cowrie.core.output.Output):
         """
         """
         cowrie.core.output.Output.__init__(self, cfg)
-        facilityString = cfg.get('output_localsyslog', 'facility')
-        self.format = cfg.get('output_localsyslog', 'format')
-        self.facility = vars(syslog)['LOG_' + facilityString]
-        self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie', facility=self.facility)
+        self.format = cfg.get('output_textlog', 'format')
+        self.outfile = file(cfg.get('output_textlog', 'logfile'), 'a')
 
 
     def start(self):
@@ -60,7 +55,8 @@ class Output(cowrie.core.output.Output):
         """
         """
         if self.format == 'cef':
-            self.syslog.emit(cowrie.core.cef.formatCef(logentry))
+            self.outfile.write(cowrie.core.cef.formatCef(logentry)+'\n')
+            self.outfile.flush()
         else:
-            self.syslog.emit(logentry)
+            self.outfile.write(logentry["message"])
 

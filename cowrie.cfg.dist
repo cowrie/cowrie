@@ -288,8 +288,24 @@ logfile = log/cowrie.json
 # Facility can be:
 # KERN, USER, MAIL, DAEMON, AUTH, LPR, NEWS, UUCP, CRON, SYSLOG and LOCAL0 to LOCAL7.
 #
+# Format can be:
+# text, cef
+#
 #[output_localsyslog]
 #facility = USER
+#format = text
+
+
+# Text output
+#
+# This writes log entries to a text file
+#
+# Format can be:
+# text, cef
+#
+#[output_textlog]
+#logfile = log/cowrie.textlog
+#format = text
 
 
 # MySQL logging module (output)

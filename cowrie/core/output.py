@@ -158,11 +158,10 @@ class Output(object):
 
         # Connection event is special. adds to session list
         if ev['eventid'] == 'cowrie.session.connect':
-            self.sessions[sessionno] = ev['id']
+            self.sessions[sessionno] = ev['session']
             self.ips[sessionno] = ev['src_ip']
-            del ev['id']
-
-        ev['session'] = self.sessions[sessionno]
+        else:
+            ev['session'] = self.sessions[sessionno]
 
         self.write(ev)
 

@@ -171,10 +171,10 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transportId = uuid.uuid4().hex[:8]
 
         log.msg(eventid='cowrie.session.connect',
-           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
+           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
            src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           id=self.transportId, sessionno=self.transport.sessionno)
+           session=self.transportId, sessionno=self.transport.sessionno)
 
         self.transport.write('{}\r\n'.format(self.ourVersionString))
         self.currentEncryptions = transport.SSHCiphers('none', 'none', 'none', 'none')
