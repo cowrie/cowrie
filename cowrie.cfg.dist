@@ -304,6 +304,13 @@ logfile = log/cowrie.json
 #port = 3306
 
 
+# SQLite3 logging module
+#
+# Logging to SQLite3 database
+#
+# [output_sqlite]
+# db_file = cowrie.db
+
 # Splunk SDK output module - EARLY RELEASE NOT RECOMMENDED
 # This sends logs directly to Splunk using the Python REST SDK
 #
