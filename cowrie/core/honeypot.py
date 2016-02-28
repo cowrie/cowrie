@@ -188,6 +188,7 @@ class HoneyPotShell(object):
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
+        cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
@@ -215,7 +216,7 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.protocol.getCommand(cmd, environ['PATH'].split(':'))
         if cmdclass:
-            log.msg(eventid='cowrie.command.success', input=' '.join(cmdAndArgs), format='Command found: %(input)s')
+            log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
             self.protocol.call_command(cmdclass, *rargs)
         else:
             log.msg(eventid='cowrie.command.failed',
