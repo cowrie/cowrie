@@ -220,7 +220,7 @@ class HoneyPotShell(object):
             self.protocol.call_command(cmdclass, *rargs)
         else:
             log.msg(eventid='cowrie.command.failed',
-                input=' '.join(cmdAndArgs), format='Command not found: %(input)s')
+                input=' '.join(cmd2), format='Command not found: %(input)s')
             self.protocol.terminal.write('bash: %s: command not found\n' % (cmd,))
             runOrPrompt()
 
