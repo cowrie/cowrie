@@ -145,12 +145,14 @@ class HoneyPotShell(object):
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
-                if tok == ';' or tok == '&&':
+                if tok == ';' or tok == '&&' or tok == '||':
                     self.cmdpending.append((tokens))
                     tokens = []
                 if tok == ';':
                     continue
                 if tok == '&&':
+                    continue
+                if tok == '||':
                     continue
                 tokens.append(tok)
             except Exception as e:
