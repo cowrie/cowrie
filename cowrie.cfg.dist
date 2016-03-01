@@ -320,6 +320,15 @@ logfile = log/cowrie.json
 #port = 3306
 
 
+# SQLite3 logging module
+#
+# Logging to SQLite3 database. To init the database, use the script
+# doc/sql/sqlite3.sql:
+#     sqlite3 <db_file> < doc/sql/sqlite3.sql
+#
+# [output_sqlite]
+# db_file = cowrie.db
+
 # Splunk SDK output module - EARLY RELEASE NOT RECOMMENDED
 # This sends logs directly to Splunk using the Python REST SDK
 #

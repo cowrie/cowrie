@@ -6,7 +6,6 @@ This module contains ...
 """
 
 import os
-import shlex
 import re
 import stat
 import copy
@@ -17,6 +16,7 @@ from twisted.python import log, failure
 from twisted.internet import error
 
 from cowrie.core import fs
+from cowrie.core import shlex
 
 class HoneyPotCommand(object):
     """
@@ -124,22 +124,45 @@ class HoneyPotShell(object):
         self.interactive = interactive
         self.cmdpending = []
         self.environ = protocol.environ
+        #self.lexer.debug = 1
 
         self.showPrompt()
-
 
     def lineReceived(self, line):
         """
         """
         log.msg('CMD: %s' % (line,))
-        line = line[:500]
-        comment = re.compile('^\s*#')
-        for i in [x.strip() for x in re.split(';|&&|\n', line.strip())[:10]]:
-            if not len(i):
-                continue
-            if comment.match(i):
-                continue
-            self.cmdpending.append(i)
+        self.lexer = shlex.shlex(punctuation_chars=True);
+        self.lexer.push_source(line)
+        tokens = []
+        while True:
+            try:
+                tok = self.lexer.get_token()
+                #log.msg( "tok: %s" % (repr(tok)) )
+                # for now, execute all after &&
+                if tok == self.lexer.eof:
+                    if len(tokens):
+                        self.cmdpending.append((tokens))
+                        tokens = []
+                    break
+                if tok == ';' or tok == '&&' or tok == '||':
+                    self.cmdpending.append((tokens))
+                    tokens = []
+                if tok == ';':
+                    continue
+                if tok == '&&':
+                    continue
+                if tok == '||':
+                    continue
+                tokens.append(tok)
+            except Exception as e:
+                self.protocol.terminal.write(
+                    'bash: syntax error: unexpected end of file\n')
+                # Could run runCommand here, but i'll just clear the list instead
+                self.cmdpending = []
+                self.showPrompt()
+                return
+
         if len(self.cmdpending):
             self.runCommand()
         else:
@@ -166,17 +189,8 @@ class HoneyPotShell(object):
                 self.protocol.terminal.transport.processEnded(ret)
             return
 
-        line = self.cmdpending.pop(0)
-        try:
-            line = line.replace('>', ' > ').replace('|', ' | ').replace('<',' < ')
-            cmdAndArgs = shlex.split(line)
-        except:
-            self.protocol.terminal.write(
-                'bash: syntax error: unexpected end of file\n')
-            # Could run runCommand here, but i'll just clear the list instead
-            self.cmdpending = []
-            self.showPrompt()
-            return
+        cmdAndArgs = self.cmdpending.pop(0)
+        cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
@@ -204,14 +218,13 @@ class HoneyPotShell(object):
                 rargs.append(arg)
         cmdclass = self.protocol.getCommand(cmd, environ['PATH'].split(':'))
         if cmdclass:
-            log.msg(eventid='cowrie.command.success', input=line, format='Command found: %(input)s')
+            log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
             self.protocol.call_command(cmdclass, *rargs)
         else:
             log.msg(eventid='cowrie.command.failed',
-                input=line, format='Command not found: %(input)s')
-            if len(line):
-                self.protocol.terminal.write('bash: %s: command not found\n' % (cmd,))
-                runOrPrompt()
+                input=' '.join(cmd2), format='Command not found: %(input)s')
+            self.protocol.terminal.write('bash: %s: command not found\n' % (cmd,))
+            runOrPrompt()
 
 
     def resume(self):
