@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from twisted.python import log
+
 import cowrie.core.output
 import cowrie.core.cef
 
@@ -56,7 +58,7 @@ class Output(cowrie.core.output.Output):
         """
         if self.format == 'cef':
             self.outfile.write(cowrie.core.cef.formatCef(logentry)+'\n')
-            self.outfile.flush()
         else:
-            self.outfile.write(logentry["message"])
+            self.outfile.write(log.textFromEventDict(logentry)+'\n')
+        self.outfile.flush()
 
