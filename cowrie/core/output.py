@@ -129,7 +129,7 @@ class Output(object):
 
         # Add ISO timestamp and sensor data
         if not 'time' in ev:
-            ev['timestamp'] = datetime.datetime.today().isoformat() + 'Z'
+            ev['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
         else:
             ev['timestamp'] = datetime.datetime.fromtimestamp(ev['time']).isoformat() + 'Z'
             del ev['time']
