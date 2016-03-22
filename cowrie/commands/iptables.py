@@ -299,7 +299,7 @@ Options:
 
         if self.user_is_root():
             if len(chain) > 0:
-                print chain
+                print(chain)
                 # Check chain
                 if not self.is_valid_chain(chain):
                     return
@@ -325,7 +325,7 @@ Options:
 
         if self.user_is_root():
             if len(chain) > 0:
-                print chain
+                print(chain)
                 # Check chain
                 if not self.is_valid_chain(chain):
                     return
