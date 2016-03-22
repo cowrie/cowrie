@@ -48,7 +48,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         try:
             honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
-            data = file(issuefile).read()
+            data = open(issuefile).read()
         except IOError:
             return
         if not data or not len(data.strip()):

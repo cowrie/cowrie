@@ -98,7 +98,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             return
 
         if self.stdinlog_open:
-            with file(self.stdinlog_file, 'ab') as f:
+            with open(self.stdinlog_file, 'ab') as f:
                 f.write(data)
         elif self.ttylog_open:
             ttylog.ttylog_write(self.ttylog_file, len(data),
