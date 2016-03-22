@@ -131,7 +131,8 @@ class Output(object):
         if not 'time' in ev:
             ev['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
         else:
-            ev['timestamp'] = datetime.datetime.fromtimestamp(ev['time']).isoformat() + 'Z'
+            ev['timestamp'] = datetime.datetime.utcfromtimestamp(ev['time']).isoformat() + 'Z'
+
             del ev['time']
 
         # On disconnect add the tty log
