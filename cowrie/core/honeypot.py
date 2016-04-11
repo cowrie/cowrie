@@ -154,11 +154,31 @@ class HoneyPotShell(object):
                     continue
                 if tok == '||':
                     continue
+                if tok == '$?':
+                    tok = "0"
+                elif tok[0] == '$':
+                    env_rex = re.compile('^\$([_a-zA-Z0-9]+)$')
+                    env_search = env_rex.search(tok)
+                    if env_search != None:
+                        env_match = env_search.group(1)
+                        if env_match in list(self.environ.keys()):
+                            tok = self.environ[env_match]
+                        else:
+                            continue
+                    env_rex = re.compile('^\${([_a-zA-Z0-9]+)}$')
+                    env_search = env_rex.search(tok)
+                    if env_search != None:
+                        env_match = env_search.group(1)
+                        if env_match in list(self.environ.keys()):
+                            tok = self.environ[env_match]
+                        else:
+                            continue
                 tokens.append(tok)
             except Exception as e:
                 self.protocol.terminal.write(
                     'bash: syntax error: unexpected end of file\n')
                 # Could run runCommand here, but i'll just clear the list instead
+                log.msg( "exception: {}".format(e) )
                 self.cmdpending = []
                 self.showPrompt()
                 return
