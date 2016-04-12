@@ -5,6 +5,7 @@
 This module contains ...
 """
 
+import re
 import time
 import uuid
 import zlib
@@ -170,9 +171,15 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.transportId = uuid.uuid4().hex[:8]
 
+        src_ip = self.transport.getPeer().host
+        ipv4rex = re.compile( '^::ffff:(\d+\.\d+\.\d+\.\d+)$')
+        ipv4_search = ipv4rex.search(src_ip)
+        if ipv4_search != None:
+            src_ip = ipv4_search.group(1)
+
         log.msg(eventid='cowrie.session.connect',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
-           src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
+           src_ip=src_ip, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            session=self.transportId, sessionno=self.transport.sessionno)
 
