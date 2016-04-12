@@ -169,6 +169,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlog_open = False
 
         if self.ttylog_open:
+            # TODO: Add session duration to this entry
             log.msg(eventid='cowrie.log.closed',
                     format='Closing TTY Log: %(ttylog)s',
                     ttylog=self.ttylog_file,
