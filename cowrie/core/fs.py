@@ -338,9 +338,9 @@ class HoneyPotFilesystem(object):
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
             hostmode = mode & ~(111)
-            hostfile = '%s/sftp_%s_%s' % \
+            hostfile = '%s/%s_sftp_%s' % \
                        (self.cfg.get('honeypot', 'download_path'),
-                    time.strftime('%Y%m%d%H%M%S'),
+                    time.strftime('%Y%m%d-%H%M%S'),
                     re.sub('[^A-Za-z0-9]', '_', filename))
             #log.msg("fs.open file for writing, saving to %s" % safeoutfile)
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
