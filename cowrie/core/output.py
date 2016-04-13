@@ -68,7 +68,7 @@ class Output(object):
         self.sessions = {}
         self.ips = {}
         self.re_sessionlog = re.compile(
-            '.*HoneyPotTransport,([0-9]+),[0-9.]+$')
+            '.*HoneyPotTransport,([0-9]+),[0-9a-f:.]+$')
         try:
             self.sensor = self.cfg.get('honeypot', 'sensor_name')
         except:
@@ -132,7 +132,6 @@ class Output(object):
             ev['timestamp'] = datetime.datetime.utcnow().isoformat() + 'Z'
         else:
             ev['timestamp'] = datetime.datetime.utcfromtimestamp(ev['time']).isoformat() + 'Z'
-
             del ev['time']
 
         # On disconnect add the tty log
