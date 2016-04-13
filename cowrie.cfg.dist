@@ -70,7 +70,7 @@ filesystem_file = data/fs.pickle
 # The contents of the file will be the output of the command when run inside
 # the honeypot.
 #
-# In addition to this, the file must exist in the virtual filesystem 
+# In addition to this, the file must exist in the virtual filesystem
 #
 # (default: txtcmds)
 txtcmds_path = txtcmds
@@ -87,7 +87,7 @@ txtcmds_path = txtcmds
 # Session management interface.
 #
 # This is a telnet based service that can be used to interact with active
-# sessions. Disabled by default. The interact feature is only available on 
+# sessions. Disabled by default. The interact feature is only available on
 # the loopback interface.
 #
 # (default: false)
@@ -100,6 +100,7 @@ interact_port = 5123
 # ============================================================================
 # Network Specific Options
 # ============================================================================
+
 
 # IP address to bind to when opening outgoing connections. Used by wget and
 # curl commands.
@@ -163,6 +164,7 @@ auth_class = UserDB
 #
 # (default: false)
 #auth_none_enabled = false
+
 
 
 # ============================================================================
@@ -250,8 +252,12 @@ sftp_enabled = true
 #debug=true
 
 
+
 # ============================================================================
 # Output Plugins
+# These provide an extensible mechanism to send audit log entries to third
+# parties. The audit entries contain information on clients connecting to
+# the honeypot.
 # ============================================================================
 
 
@@ -261,7 +267,7 @@ sftp_enabled = true
 logfile = log/cowrie.json
 
 
-# Supports logging to elasticsearch
+# Supports logging to Elasticsearch
 # This is a simple early release
 #
 #[output_elasticsearch]
@@ -297,8 +303,7 @@ logfile = log/cowrie.json
 
 
 # Text output
-#
-# This writes log entries to a text file
+# This writes audit log entries to a text file
 #
 # Format can be:
 # text, cef
@@ -308,7 +313,7 @@ logfile = log/cowrie.json
 #format = text
 
 
-# MySQL logging module (output)
+# MySQL logging module
 # Identical functionality as [database_mysql] but with different internals
 # Database structure for this module is supplied in doc/sql/mysql.sql
 #
@@ -326,8 +331,9 @@ logfile = log/cowrie.json
 # doc/sql/sqlite3.sql:
 #     sqlite3 <db_file> < doc/sql/sqlite3.sql
 #
-# [output_sqlite]
-# db_file = cowrie.db
+#[output_sqlite]
+#db_file = cowrie.db
+
 
 # Splunk SDK output module - EARLY RELEASE NOT RECOMMENDED
 # This sends logs directly to Splunk using the Python REST SDK
@@ -340,6 +346,8 @@ logfile = log/cowrie.json
 #index = cowrie
 
 
+# HPFeeds
+#
 #[database_hpfeeds]
 #server = hpfeeds.mysite.org
 #port = 10000
