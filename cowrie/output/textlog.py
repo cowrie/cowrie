@@ -57,8 +57,10 @@ class Output(cowrie.core.output.Output):
         """
         """
         if self.format == 'cef':
+            self.outfile.write(logentry['timestamp']+" ")
             self.outfile.write(cowrie.core.cef.formatCef(logentry)+'\n')
         else:
+            self.outfile.write(logentry['timestamp']+" ")
             self.outfile.write(log.textFromEventDict(logentry)+'\n')
         self.outfile.flush()
 
