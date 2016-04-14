@@ -31,6 +31,7 @@ Software required:
 * python-crypto
 * python-pyasn1
 * python-gmpy2 (recommended)
+* python-mysqldb (for MySQL output)
 * Zope Interface 3.6.0+
 
 ## Files of interest:

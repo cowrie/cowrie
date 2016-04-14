@@ -5,7 +5,7 @@
 Install prerequisites on Debian based systems:
 
 ```
-$ sudo apt-get install python-twisted python-crypto python-pyasn1 python-gmpy2 python-zope.interface
+$ sudo apt-get install python-twisted python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
 ```
  
 Install prerequisites on RedHat based systems:
