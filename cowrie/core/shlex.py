@@ -23,8 +23,7 @@ class shlex:
     def __init__(self, instream=None, infile=None, posix=False,
                  punctuation_chars=False):
         if isinstance(instream, str):
-            instream = StringIO(instream)
-            #instream = BytesIO(instream)
+            instream = BytesIO(instream)
         if instream is not None:
             self.instream = instream
             self.infile = infile
@@ -83,7 +82,6 @@ class shlex:
     def push_source(self, newstream, newfile=None):
         "Push an input source onto the lexer's input source stack."
         if isinstance(newstream, str):
-            #newstream = StringIO(newstream)
             newstream = BytesIO(newstream)
         self.filestack.appendleft((self.infile, self.instream, self.lineno))
         self.infile = newfile

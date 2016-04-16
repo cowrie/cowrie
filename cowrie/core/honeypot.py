@@ -136,8 +136,7 @@ class HoneyPotShell(object):
         """
         """
         log.msg('CMD: %s' % (line,))
-        self.lexer = shlex.shlex(punctuation_chars=True);
-        self.lexer.push_source(line)
+        self.lexer = shlex.shlex(instream=line, punctuation_chars=True);
         tokens = []
         while True:
             try:
