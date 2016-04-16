@@ -2,7 +2,7 @@
 
 Cowrie is a medium interaction SSH honeypot designed to log brute force attacks and the shell interaction performed by the attacker.
 
-Cowrie is directly based on [Kippo](http://github.com/desaster/kippo/) by Upi Tamminen (desaster).
+[Cowrie](http://github.com/micheloosterhof/cowrie/) is developed by Michel Oosterhof and is based on [Kippo](http://github.com/desaster/kippo/) by Upi Tamminen (desaster).
 
 ## Features
 
