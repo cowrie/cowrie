@@ -29,6 +29,7 @@ class HoneyPotCommand(object):
         self.fs = self.protocol.fs
 
         # MS-DOS style redirect handling, inside the command
+        # TODO: handle >>, 2>, etc
         if '>' in self.args:
             self.writtenBytes = 0
             self.write = self.writeToFile
