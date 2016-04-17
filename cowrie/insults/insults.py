@@ -48,22 +48,22 @@ class LoggingServerProtocol(insults.ServerProtocol):
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
 
-        self.ttylog_file = '%s/tty/%s-%s-%s%s.log' % \
-            (self.ttylogPath,
-            time.strftime('%Y%m%d-%H%M%S'), transportId, channelId,
-            self.type)
-        ttylog.ttylog_open(self.ttylog_file, time.time())
+        self.startTime = time.time()
+        self.ttylogFile = '%s/tty/%s-%s-%s%s.log' % \
+            (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
+            transportId, channelId, self.type)
+        ttylog.ttylog_open(self.ttylogFile, self.startTime)
         self.ttylog_open = True
+        self.ttylogSize = 0
 
         log.msg(eventid='cowrie.log.open',
-                ttylog=self.ttylog_file,
+                ttylog=self.ttylogFile,
                 format='Opening TTY Log: %(ttylog)s')
 
-        self.stdinlog_file = '%s/%s-%s-%s-stdin.log' % \
+        self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
             (self.downloadPath,
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
         self.stdinlog_open = False
-        self.ttylogSize = 0
 
         insults.ServerProtocol.connectionMade(self)
 
@@ -76,9 +76,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
             i.sessionWrite(bytes)
 
         if self.ttylog_open:
-            ttylog.ttylog_write(self.ttylog_file, len(bytes),
+            ttylog.ttylog_write(self.ttylogFile, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
-
             self.ttylogSize += len(bytes)
 
         insults.ServerProtocol.write(self, bytes)
@@ -91,17 +90,16 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit \
           and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg(eventid='cowrie.direct-tcpip.data',
-                    format='Data upload limit reached')
+            log.msg(format='Data upload limit reached')
             #self.loseConnection()
             self.eofReceived()
             return
 
         if self.stdinlog_open:
-            with open(self.stdinlog_file, 'ab') as f:
+            with open(self.stdinlogFile, 'ab') as f:
                 f.write(data)
         elif self.ttylog_open:
-            ttylog.ttylog_write(self.ttylog_file, len(data),
+            ttylog.ttylog_write(self.ttylogFile, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
 
         insults.ServerProtocol.dataReceived(self, data)
@@ -141,23 +139,19 @@ class LoggingServerProtocol(insults.ServerProtocol):
         FIXME: this method is called 4 times on logout....
         it's called once from Avatar.closed() if disconnected
         """
-        log.msg("received call to LSP.connectionLost")
-
         for i in self.interactors:
             i.sessionClosed()
 
-        transport = self.transport.session.conn.transport
-
         if self.stdinlog_open:
             try:
-                with open(self.stdinlog_file, 'rb') as f:
+                with open(self.stdinlogFile, 'rb') as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
                     shasumfile = self.downloadPath + "/" + shasum
                     if (os.path.exists(shasumfile)):
-                        os.remove(self.stdinlog_file)
+                        os.remove(self.stdinlogFile)
                     else:
-                        os.rename(self.stdinlog_file, shasumfile)
-                    os.symlink(shasum, self.stdinlog_file)
+                        os.rename(self.stdinlogFile, shasumfile)
+                    os.symlink(shasum, self.stdinlogFile)
                 log.msg(eventid='cowrie.session.file_download',
                         format='Saved stdin contents to %(outfile)s',
                         url='stdin',
@@ -171,10 +165,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.ttylog_open:
             # TODO: Add session duration to this entry
             log.msg(eventid='cowrie.log.closed',
-                    format='Closing TTY Log: %(ttylog)s',
-                    ttylog=self.ttylog_file,
-                    size=self.ttylogSize)
-            ttylog.ttylog_close(self.ttylog_file, time.time())
+                    format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
+                    ttylog=self.ttylogFile,
+                    size=self.ttylogSize,
+                    duration=time.time()-self.startTime)
+            ttylog.ttylog_close(self.ttylogFile, time.time())
             self.ttylog_open = False
 
         insults.ServerProtocol.connectionLost(self, reason)

@@ -187,6 +187,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         self.currentEncryptions = transport.SSHCiphers('none', 'none', 'none', 'none')
         self.currentEncryptions.setKeys('', '', '', '', '', '')
         self.setTimeout(120)
+        self.logintime = time.time()
 
 
     def sendKexInit(self):
@@ -287,7 +288,10 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         transport.SSHServerTransport.connectionLost(self, reason)
         self.transport.connectionLost(reason)
         self.transport = None
-        log.msg(eventid='cowrie.session.closed', format='Connection lost')
+        duration = time.time() - self.logintime
+        log.msg(eventid='cowrie.session.closed',
+            format='Connection lost after %(duration)d seconds',
+            duration=duration)
 
 
     def sendDisconnect(self, reason, desc):
