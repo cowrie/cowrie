@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     if len(args)<1:
         help()
-        sys.exit(1)
+        sys.exit(2)
 
     for logfile in args:
         try:
