@@ -177,6 +177,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
 
     def _cbLogin(self, ial):
         """
+        Fired on a successful login
         """
         interface, protocol, logout = ial
         self.protocol = protocol
@@ -185,6 +186,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
 
         # transfer important state info to new transport
         protocol.transportId = self.transportId
+
+        # Remove the short timeout of the login prompt. Timeout will be
+        # provided later by the HoneyPotBaseProtocol class.
+        self.setTimeout(None)
 
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
