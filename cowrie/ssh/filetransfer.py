@@ -86,7 +86,7 @@ class CowrieSFTPFile(object):
         """
         self.bytes_written += len(data)
         if self.bytesReceivedLimit and self.bytes_written > self.bytesReceivedLimit:
-            log.msg(eventid='cowrie.direct-tcpip.data', format='Data upload limit reached')
+            log.msg(format='Data upload limit reached')
             raise filetransfer.SFTPError( filetransfer.FX_FAILURE, "Quota exceeded" )
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
         self.sftpserver.fs.write(self.fd, data)
