@@ -95,7 +95,9 @@ interact_enabled = false
 # (default: 5123)
 interact_port = 5123
 
-
+smtp_forwarding_enabled = false
+smtp_forwarding_port = 12525
+smtp_forwarding_host = 127.0.0.1
 
 # ============================================================================
 # Network Specific Options
