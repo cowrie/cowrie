@@ -14,13 +14,20 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     """
     """
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg(eventid='cowrie.direct-tcpip.request', format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s',
-            dst_ip=remoteHP[0], dst_port=remoteHP[1])
-    return CowrieConnectForwardingChannel(remoteHP,
-       remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
-       avatar=avatar)
-
-
+    log.msg(eventid='cowrie.direct-tcpip.request', format='direct-tcp connection request
+     to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s',
+            dst_ip=remoteHP[0], dst_port=remoteHP[1],
+            src_ip=origHP[0], src_port=origHP[1])
+    if remoteHP[1] == 25:
+        log.msg(eventid='cowrie.direct-tcpip.request',format='found smtp, forwarding to local honeypot')
+        remoteHPLocal = ('127.0.0.1', 12525)
+        return forwarding.SSHConnectForwardingChannel(remoteHPLocal,
+            remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
+            avatar=avatar)
+    else:
+        return CowrieConnectForwardingChannel(remoteHP,
+           remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
+           avatar=avatar)
 
 class CowrieConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
     """
