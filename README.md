@@ -18,6 +18,7 @@ Additional functionality over standard kippo:
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
+* Forward SMTP connections to SMTP Honeypot (e.g. [mailoney](https://github.com/awhitehatter/mailoney))
 * Logging in JSON format for easy processing in log management solutions
 * Many, many additional commands
 
