@@ -14,26 +14,29 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     """
     """
     cfg = avatar.cfg
+    if cfg.has_option('forward_mapping', 'ports') and \
+            cfg.get('forward_mapping', 'ports').lower() not in \
+            ('false', 'no'):
+        mappedPortsComma = cfg.get('forward_mapping', 'ports').split(',')
+        mappedPorts = [int(x.strip()) for x in mappedPortsComma]
+    else:
+        mappedPorts = []
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
     log.msg(eventid='cowrie.direct-tcpip.request', 
     format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s',
             dst_ip=remoteHP[0], dst_port=remoteHP[1],
             src_ip=origHP[0], src_port=origHP[1])
-
-    if cfg.has_option('honeypot', 'smtp_forwarding_enabled') and \
-            cfg.get('honeypot', 'smtp_forwarding_enabled').lower() in \
-            ('yes', 'true', 'on'):
-        honey_smtp = True
-        honey_port = int(cfg.get('honeypot', 'smtp_forwarding_port'))
-        honey_host = cfg.get('honeypot', 'smtp_forwarding_host')
-    else:
-        honey_smtp = False
-
-    if (remoteHP[1] == 25 or remoteHP[1] == 587) and honey_smtp:
+    portRule = 'port_{dst_port}'.format(dst_port=remoteHP[1])
+    if remoteHP[1] in mappedPorts \
+            and cfg.has_option('forward_mapping', portRule):
+        newAddr = cfg.get('forward_mapping', portRule)
+        newIp = newAddr.split(':')[0].strip()
+        newPort = int(newAddr.split(':')[1].strip())
+        remoteHPNew = (newIp, newPort)
         log.msg(eventid='cowrie.direct-tcpip.request',
-            format='found smtp, forwarding to local honeypot')
-        remoteHPLocal = (honey_host, honey_port)
-        return forwarding.SSHConnectForwardingChannel(remoteHPLocal,
+            format='found custom port, forwarding to %(new_ip)s:%(new_port)s',
+                 new_ip=newIp, new_port=newPort)
+        return forwarding.SSHConnectForwardingChannel(remoteHPNew,
             remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
             avatar=avatar)
 

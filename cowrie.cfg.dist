@@ -95,14 +95,6 @@ interact_enabled = false
 # (default: 5123)
 interact_port = 5123
 
-#SMTP forwarding.
-#
-#If you want to record SMTP traffic, install SMTP honeypoint.
-# (e.g https://github.com/awhitehatter/mailoney)
-# python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
-smtp_forwarding_enabled = false
-smtp_forwarding_port = 12525
-smtp_forwarding_host = 127.0.0.1
 
 # ============================================================================
 # Network Specific Options
@@ -370,3 +362,21 @@ logfile = log/cowrie.json
 #api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 #
 
+# Port forward mapping.
+#
+# Mapped port will be realy forwarded to new address
+# Useful for forwarding some protocols to other honeypots
+#
+[forward_mapping]
+# Comma separated port list
+ports = no
+# ports = 80,443,25,587
+port_80 = 127.0.0.1:8080
+port_443 = 127.0.0.1:8443
+# If you want to record SMTP traffic, install SMTP honeypoint.
+# (e.g https://github.com/awhitehatter/mailoney), run
+# python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
+# uncomment
+# ports = 25,587
+port_25 = 127.0.0.1:12525
+port_587 = 127.0.0.1:12525
