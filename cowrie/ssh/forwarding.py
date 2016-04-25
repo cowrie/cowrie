@@ -14,8 +14,8 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     """
     """
     remoteHP, origHP = twisted.conch.ssh.forwarding.unpackOpen_direct_tcpip(data)
-    log.msg(eventid='cowrie.direct-tcpip.request', format='direct-tcp connection request
-     to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s',
+    log.msg(eventid='cowrie.direct-tcpip.request', 
+    format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s',
             dst_ip=remoteHP[0], dst_port=remoteHP[1],
             src_ip=origHP[0], src_port=origHP[1])
     if remoteHP[1] == 25:
