@@ -25,6 +25,8 @@ def CowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         honey_smtp = True
         honey_port = int(cfg.get('honeypot', 'smtp_forwarding_port'))
         honey_host  = cfg.get('honeypot', 'smtp_forwarding_host')
+    else:
+        honey_smtp= False
 
     if remoteHP[1] == 25 and honey_smtp:
         log.msg(eventid='cowrie.direct-tcpip.request',format='found smtp, forwarding to local honeypot')
