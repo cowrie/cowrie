@@ -28,7 +28,7 @@ fi
 echo "Starting cowrie in the background..."
 if [ $AUTHBIND_ENABLED = "no" ]
 then
-    twistd -l log/cowrie.log --pidfile cowrie.pid cowrie
+    twistd -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
 else
-    authbind --deep twistd -l log/cowrie.log --pidfile cowrie.pid cowrie
+    authbind --deep twistd -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
 fi

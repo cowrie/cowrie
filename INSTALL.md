@@ -88,3 +88,6 @@ $ cd cowrie/data
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 ```
 
+* Default file permissions
+To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
+*
