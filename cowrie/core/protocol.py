@@ -200,7 +200,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         """
         """
         HoneyPotBaseProtocol.connectionMade(self)
-        self.setTimeout(60)
+        self.setTimeout(300)
         self.terminal.stdinlog_open = True
 
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
