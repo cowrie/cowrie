@@ -81,9 +81,9 @@ class CowrieServiceMaker(object):
 
         cfg = readConfigFile(options["config"])
 
-        top_service = service.MultiService()
+        topService = service.MultiService()
         application = service.Application('cowrie')
-        top_service.setServiceParent(application)
+        topService.setServiceParent(application)
 
         factory = cowrie.ssh.transport.HoneyPotSSHFactory(cfg)
 
@@ -99,24 +99,23 @@ class CowrieServiceMaker(object):
             factory.portal.registerChecker(
                 core.checkers.HoneypotNoneChecker())
 
-
-        if cfg.has_option('honeypot', 'listen_addr'):
-            listen_addr = cfg.get('honeypot', 'listen_addr')
+        if cfg.has_option('honeypot', 'listenAddr'):
+            listenAddr = cfg.get('honeypot', 'listenAddr')
         else:
-            listen_addr = '0.0.0.0'
+            listenAddr = '0.0.0.0'
 
         # Preference: 1, option, 2, config, 3, default of 2222
         if options['port'] != 0:
-            listen_port = int(options["port"])
-        elif cfg.has_option('honeypot', 'listen_port'):
-            listen_port = int(cfg.get('honeypot', 'listen_port'))
+            listenPort = int(options["port"])
+        elif cfg.has_option('honeypot', 'listenPort'):
+            listenPort = int(cfg.get('honeypot', 'listenPort'))
         else:
-            listen_port = 2222
+            listenPort = 2222
 
-        for i in listen_addr.split():
-            svc = internet.TCPServer(listen_port, factory, interface=i)
-            # FIXME: Use addService on top_service ?
-            svc.setServiceParent(top_service)
+        for i in listenAddr.split():
+            svc = internet.TCPServer(listenPort, factory, interface=i)
+            # FIXME: Use addService on topService ?
+            svc.setServiceParent(topService)
 
         if cfg.has_option('honeypot', 'interact_enabled') and \
                  cfg.get('honeypot', 'interact_enabled').lower() in \
@@ -125,10 +124,10 @@ class CowrieServiceMaker(object):
             from cowrie.core import interact
             svc = internet.TCPServer(iport,
                 interact.makeInteractFactory(factory), interface='127.0.0.1')
-            # FIXME: Use addService on top_service ?
-            svc.setServiceParent(top_service)
+            # FIXME: Use addService on topService ?
+            svc.setServiceParent(topService)
 
-        return top_service
+        return topService
 
 # Now construct an object which *provides* the relevant interfaces
 # The name of this variable is irrelevant, as long as there is *some*
