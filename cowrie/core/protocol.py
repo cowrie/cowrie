@@ -207,6 +207,12 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack[0].lineReceived(self.execcmd)
 
 
+    def timeoutConnection(self):
+        """
+        """
+        ret = failure.Failure(error.ProcessTerminated(exitCode=1))
+        self.terminal.transport.processEnded(ret)
+
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
     """
