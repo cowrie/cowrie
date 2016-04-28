@@ -1,10 +1,14 @@
-# Basic Splunk connector.
-# Not recommended for production use.
-# JSON log file is still recommended way to go
-# 
-# IDEA: convert to new HTTP input, no splunk libraries 
-# required then
-#
+# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+
+"""
+Basic Splunk connector.
+Not recommended for production use.
+JSON log file is still recommended way to go
+
+IDEA: convert to new HTTP input, no splunk libraries
+required then
+
+"""
 
 import os
 import json
@@ -14,6 +18,8 @@ import splunklib.client as client
 import cowrie.core.output
 
 class Output(cowrie.core.output.Output):
+    """
+    """
 
     def __init__(self, cfg):
         """

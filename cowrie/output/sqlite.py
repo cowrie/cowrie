@@ -1,3 +1,6 @@
+
+"""
+"""
 import sqlite3
 
 from twisted.internet import defer
@@ -5,14 +8,15 @@ from twisted.enterprise import adbapi
 from twisted.python import log
 
 import cowrie.core.output
+
 class Output(cowrie.core.output.Output):
     """
-    docstring here
     """
 
     def __init__(self, cfg):
         self.cfg = cfg
         cowrie.core.output.Output.__init__(self, cfg)
+
 
     def start(self):
         """
@@ -20,20 +24,22 @@ class Output(cowrie.core.output.Output):
         Need to be started with check_same_thread=False. See
         https://twistedmatrix.com/trac/ticket/3629.
         """
-        sqlite_file = self.cfg.get('output_sqlite', 'db_file')
+        sqliteFilename = self.cfg.get('output_sqlite', 'db_file')
         try:
             self.db = adbapi.ConnectionPool('sqlite3',
-                    database = sqlite_file, check_same_thread=False)
+                    database = sqliteFilename, check_same_thread=False)
         except sqlite3.OperationalError as e:
             log.msg(e)
 
         self.db.start()
-        
+
+
     def stop(self):
         """
         Close connection to db
         """
         self.db.close()
+
 
     def sqlerror(self, error):
         """
@@ -41,6 +47,7 @@ class Output(cowrie.core.output.Output):
         """
         log.err('sqlite error')
         error.printTraceback()
+
 
     def simpleQuery(self, sql, args):
         """
