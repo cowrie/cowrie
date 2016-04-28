@@ -41,13 +41,13 @@ Software required:
 * `data/fs.pickle` - fake filesystem
 * `data/userdb.txt` - credentials allowed or disallowed to access the honeypot
 * `dl/` - files transferred from the attacker to the honeypot are stored here
-* `honeyfs/` - file contents for the fake filesystem - feel free to copy a real system here or use `utils/fsctl.py`
+* `honeyfs/` - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
 * `log/cowrie.json` - transaction output in JSON format
 * `log/cowrie.log` - log/debug output
 * `log/tty/*.log` - session logs
 * `txtcmds/` - file contents for the fake commands
-* `utils/createfs.py` - used to create the fake filesystem
-* `utils/playlog.py` - utility to replay session logs
+* `bin/createfs` - used to create the fake filesystem
+* `bin/playlog` - utility to replay session logs
 
 ## Is it secure?
 
