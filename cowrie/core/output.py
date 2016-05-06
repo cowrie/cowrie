@@ -134,6 +134,12 @@ class Output(object):
             ev['timestamp'] = datetime.datetime.utcfromtimestamp(ev['time']).isoformat() + 'Z'
             del ev['time']
 
+        if 'format' in ev and (not 'message' in ev or ev['message'] == () ):
+            try:
+                ev['message'] = ev['format'] % ev
+            except:
+                pass
+
         # On disconnect add the tty log
         #if ev['eventid'] == 'cowrie.log.closed':
             # FIXME: file is read for each output plugin
