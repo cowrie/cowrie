@@ -32,6 +32,10 @@ This module contains ...
 
 from zope.interface import implementer
 
+import sys
+import gc
+import pickle
+
 import twisted
 from twisted.conch import interfaces as conchinterfaces
 from twisted.python import log
@@ -39,9 +43,8 @@ from twisted.python import log
 from cowrie.core import protocol
 from cowrie.core import server
 from cowrie.core import avatar
+from cowrie.core import fs
 
-import sys
-import gc
 
 @implementer(twisted.cred.portal.IRealm)
 class HoneyPotRealm(object):
@@ -52,6 +55,8 @@ class HoneyPotRealm(object):
         self.cfg = cfg
 	# self.servers = {}
 
+        # load the pickle file system here, so servers can copy it later
+        self.pckl = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         """
@@ -70,7 +75,7 @@ class HoneyPotRealm(object):
 	#    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
         if conchinterfaces.IConchUser in interfaces:
-            serv = server.CowrieServer(self.cfg)
+            serv = server.CowrieServer(self)
             user = avatar.CowrieUser(avatarId, serv)
             return interfaces[0], user, user.logout
         else:

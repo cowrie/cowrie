@@ -30,7 +30,7 @@
 This module contains ...
 """
 
-import pickle
+import copy
 
 import twisted.python.log as log
 
@@ -46,10 +46,9 @@ class CowrieServer(object):
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self, realm):
+        self.cfg = realm.cfg
         self.avatars = []
         self.hostname = self.cfg.get('honeypot', 'hostname')
-        pckl = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
-        self.fs = fs.HoneyPotFilesystem(pckl,self.cfg)
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(realm.pckl),self.cfg)
 
