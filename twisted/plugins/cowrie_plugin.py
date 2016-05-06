@@ -99,16 +99,16 @@ class CowrieServiceMaker(object):
             factory.portal.registerChecker(
                 core.checkers.HoneypotNoneChecker())
 
-        if cfg.has_option('honeypot', 'listenAddr'):
-            listenAddr = cfg.get('honeypot', 'listenAddr')
+        if cfg.has_option('honeypot', 'listen_addr'):
+            listenAddr = cfg.get('honeypot', 'listen_addr')
         else:
             listenAddr = '0.0.0.0'
 
         # Preference: 1, option, 2, config, 3, default of 2222
         if options['port'] != 0:
             listenPort = int(options["port"])
-        elif cfg.has_option('honeypot', 'listenPort'):
-            listenPort = int(cfg.get('honeypot', 'listenPort'))
+        elif cfg.has_option('honeypot', 'listen_port'):
+            listenPort = int(cfg.get('honeypot', 'listen_port'))
         else:
             listenPort = 2222
 
