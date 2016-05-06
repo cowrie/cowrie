@@ -1,4 +1,6 @@
 
+* 2016-05-06 Load pickle once at startup for improved speed
+* 2016-04-28 files in utils/ have been moved to bin/
 * 2016-01-19 Support openssh style delayed compression
 * 2016-01-13 Correct '.' support and +s and +t bits in ls
 * 2016-01-13 Full username/group in SFTP ls
