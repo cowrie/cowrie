@@ -152,7 +152,7 @@ class command_echo(HoneyPotCommand):
             args = self.args
 
         self.write(escape_fn(' '.join(args)))
-        if newline is True: 
+        if newline is True:
             self.write('\n')
 
 commands['/bin/echo'] = command_echo
@@ -197,7 +197,13 @@ class command_hostname(HoneyPotCommand):
     def call(self):
         """
         """
-        self.write(self.protocol.hostname+'\n')
+        if len(self.args):
+            if self.protocol.user.username == "root":
+                self.protocol.hostname = self.args[0]
+            else:
+                self.write("hostname: you must be root to change the host name\n")
+        else:
+            self.write(self.protocol.hostname+'\n')
 commands['/bin/hostname'] = command_hostname
 
 
