@@ -26,5 +26,7 @@ __all__ = [
     'tar',
     'uname',
     'wget',
-    'which'
+    'which',
+    'perl',
+    'python'
     ]

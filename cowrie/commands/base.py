@@ -7,6 +7,7 @@ import functools
 import getopt
 
 from twisted.python import failure, log
+
 from twisted.internet import error, reactor
 
 from cowrie.core.honeypot import HoneyPotCommand
@@ -459,11 +460,9 @@ class command_date(HoneyPotCommand):
     def call(self):
         """
         """
-        time = datetime.datetime.utcnow();
+        time = datetime.datetime.utcnow()
         self.write(time.strftime("%a %b %d %H:%M:%S UTC %Y")+'\n')
 commands['/bin/date'] = command_date
-
-
 
 class command_yes(HoneyPotCommand):
     """
@@ -523,93 +522,6 @@ class command_chmod(HoneyPotCommand):
                     'chmod: cannot access %s: No such file or directory\n' % \
                     (arg,))
 commands['/bin/chmod'] = command_chmod
-
-
-
-class command_perl(HoneyPotCommand):
-    """
-    """
-    def start(self):
-        """
-        """
-        if not len(self.args):
-            pass
-        elif self.args[0] == '-v':
-            output = (
-                '',
-                'This is perl 5, version 14, subversion 2 (v5.14.2) built for x86_64-linux-thread-multi',
-                '',
-                'Copyright 1987-2014, Larry Wall',
-                '',
-                'Perl may be copied only under the terms of either the Artistic License or the',
-                'GNU General Public License, which may be found in the Perl 5 source kit.',
-                '',
-                'Complete documentation for Perl, including FAQ lists, should be found on',
-                'this system using "man perl" or "perldoc perl".  If you have access to the',
-                'Internet, point your browser at http://www.perl.org/, the Perl Home Page.',
-                ''
-            )
-            for l in output:
-                self.write(l+'\n')
-            self.exit()
-        elif self.args[0] == '-h':
-            output = (
-                '',
-                'Usage: perl [switches] [--] [programfile] [arguments]',
-                '  -0[octal]         specify record separator (\0, if no argument)',
-                '  -a                autosplit mode with -n or -p (splits $_ into @F)',
-                '  -C[number/list]   enables the listed Unicode features',
-                '  -c                check syntax only (runs BEGIN and CHECK blocks)',
-                '  -d[:debugger]     run program under debugger',
-                '  -D[number/list]   set debugging flags (argument is a bit mask or alphabets)',
-                "  -e program        one line of program (several -e's allowed, omit programfile)",
-                '  -E program        like -e, but enables all optional features',
-                "  -f                don't do $sitelib/sitecustomize.pl at startup",
-                "  -F/pattern/       split() pattern for -a switch (//'s are optional)",
-                '  -i[extension]     edit <> files in place (makes backup if extension supplied)',
-                "  -Idirectory       specify @INC/#include directory (several -I's allowed)",
-                '  -l[octal]         enable line ending processing, specifies line terminator',
-                '  -[mM][-]module    execute "use/no module..." before executing program',
-                '  -n                assume "while (<>) { ... }" loop around program',
-                '  -p                assume loop like -n but print line also, like sed',
-                '  -s                enable rudimentary parsing for switches after programfile',
-                '  -S                look for programfile using PATH environment variable',
-                '  -t                enable tainting warnings',
-                '  -T                enable tainting checks',
-                '  -u                dump core after parsing program',
-                '  -U                allow unsafe operations',
-                '  -v                print version, subversion (includes VERY IMPORTANT perl info)',
-                '  -V[:variable]     print configuration summary (or a single Config.pm variable)',
-                '  -w                enable many useful warnings (RECOMMENDED)',
-                '  -W                enable all warnings',
-                '  -x[directory]     strip off text before #!perl line and perhaps cd to directory',
-                '  -X                disable all warnings',
-                ''
-            )
-            for l in output:
-                self.write(l+'\n')
-            self.exit()
-        else:
-            self.exit()
-
-
-    def lineReceived(self, line):
-        """
-        """
-        log.msg(eventid='cowrie.session.file_download',
-                realm='perl',
-                input=line,
-                format='INPUT (%(realm)s): %(input)s')
-
-
-    def handle_CTRL_D(self):
-        """
-        """
-        self.exit()
-
-commands['/usr/bin/perl'] = command_perl
-
-
 
 class command_php(HoneyPotCommand):
     """
