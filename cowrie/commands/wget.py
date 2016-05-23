@@ -124,7 +124,7 @@ class command_wget(HoneyPotCommand):
             return None
 
         if self.quiet == False:
-            self.write('--%s--  %s' % (time.strftime('%Y-%m-%d %H:%M:%S\n'), url))
+            self.write('--%s--  %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S'), url))
             self.write('Connecting to %s:%d... connected.\n' % (host, port))
             self.write('HTTP request sent, awaiting response... ')
 
@@ -191,9 +191,9 @@ class command_wget(HoneyPotCommand):
             error = error.getErrorMessage()
         self.write(error+'\n')
         # Real wget also adds this:
-        #self.write('%s ERROR 404: Not Found.\n' % \
-        #    time.strftime('%Y-%m-%d %T'))
+        self.write('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
         self.exit()
+
 commands['/usr/bin/wget'] = command_wget
 commands['/usr/bin/dget'] = command_wget
 
@@ -248,7 +248,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.fileName = os.path.devnull
                 self.nomore = True
             if self.quiet == False:
-                self.wget.write('Saving to: `%s\n\n' % self.fakeoutfile)
+                self.wget.write('Saving to: `%s\'\n\n' % self.fakeoutfile)
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
@@ -297,7 +297,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.speed / 1000))
             self.wget.write('\n\n')
             self.wget.write(
-                '%s (%d KB/s) - `%s\' saved [%d/%d]\n' % \
+                '%s (%d KB/s) - `%s\' saved [%d/%d]\n\n' % \
                 (time.strftime('%Y-%m-%d %H:%M:%S'),
                 self.speed / 1000,
                 self.fakeoutfile, self.currentlength, self.totallength))
