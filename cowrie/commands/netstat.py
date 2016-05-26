@@ -84,7 +84,10 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
             s_name = str(self.protocol.kippoIP)
         else:
             s_port = "ssh"
-            c_name = socket.gethostbyaddr(self.protocol.clientIP)[0][:17]
+            try:
+                c_name = socket.gethostbyaddr(self.protocol.clientIP)[0][:17]
+            except:
+                c_name = self.protocol.clientIP
         if self.show_listen or self.show_all:
             self.write("tcp        0      0 *:ssh                   *:*                     LISTEN\n")
         if not self.show_listen or self.show_all:
