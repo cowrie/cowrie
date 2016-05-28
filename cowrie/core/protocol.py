@@ -13,10 +13,9 @@ import hashlib
 from twisted.python import failure, log
 from twisted.internet import error
 from twisted.protocols.policies import TimeoutMixin
-
 from twisted.conch import recvline
+from twisted.conch.ssh import session
 from twisted.conch.insults import insults
-
 from cowrie.core import honeypot
 from cowrie.core import ttylog
 from cowrie.core import utils
@@ -31,18 +30,19 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cfg = self.user.cfg
         self.hostname = avatar.server.hostname
         self.fs = avatar.server.fs
+        self.pp = None
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
         else:
             self.cwd = '/'
-
+        self.input_data = None
+        self.data = None;
         self.commands = {}
         import cowrie.commands
         for c in cowrie.commands.__all__:
             module = __import__('cowrie.commands.%s' % (c,),
                 globals(), locals(), ['commands'])
             self.commands.update(module.commands)
-
         self.password_input = False
         self.cmdstack = []
 
@@ -58,8 +58,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def connectionMade(self):
         """
         """
-
-
         transport = self.terminal.transport.session.conn.transport
 
         self.realClientIP = transport.transport.getPeer().host
@@ -168,12 +166,17 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cmdstack[-1].lineReceived(line)
 
 
-    def call_command(self, cmd, *args):
+    def call_command(self, pp,cmd, *args):
         """
         """
+        self.pp = pp
         obj = cmd(self, *args)
+        obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
+        self.pp.outConnectionLost()
+
+
 
 
     def uptime(self, reset=None):
@@ -208,6 +211,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
 
 
+
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
     """
     """
@@ -215,7 +219,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
         HoneyPotBaseProtocol.__init__(self, avatar)
-
 
     def connectionMade(self):
         """
@@ -251,6 +254,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         try:
             self.terminal.write(self.fs.file_contents('/etc/motd')+'\n')
+
         except:
             pass
 
@@ -289,11 +293,14 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.setInsertMode()
 
 
-    def call_command(self, cmd, *args):
+    def call_command(self, pp,cmd, *args):
         """
         """
+        self.pp = pp
         self.setTypeoverMode()
-        HoneyPotBaseProtocol.call_command(self, cmd, *args)
+        HoneyPotBaseProtocol.call_command(self, pp,cmd, *args)
+
+
 
 
     def characterReceived(self, ch, moreCharactersComing):

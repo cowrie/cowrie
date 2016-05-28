@@ -75,6 +75,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
         for i in self.interactors:
             i.sessionWrite(bytes)
 
+        self.data = bytes
+
         if self.ttylog_open:
             ttylog.ttylog_write(self.ttylogFile, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
