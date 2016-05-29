@@ -32,21 +32,27 @@ class command_curl(HoneyPotCommand):
         """
         """
         try:
-            optlist, args = getopt.getopt(self.args, 'ho:O',
-                [ 'help', 'manual' ] )
+            optlist, args = getopt.getopt(self.args, 'sho:O',
+                [ 'help', 'manual', 'silent' ] )
         except getopt.GetoptError as err:
-            self.write('Unrecognized option\n')
+            # TODO: should be 'unknown' instead of 'not recognized'
+            self.write("curl: {}\n".format(err))
+            self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
+            self.exit()
+            return
 
         for opt in optlist:
             if opt[0] == '-h' or opt[0] == '--help':
                 self.curl_help()
                 return
+            elif opt[0] == '-s' or opt[0] == '--silent':
+                self.silent = True
 
         if len(args):
             if args[0] is not None:
                 url = str(args[0]).strip()
         else:
-            self.write("curl: try 'curl --help' or 'curl --manual' for more information'\n")
+            self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
             self.exit()
             return
 
