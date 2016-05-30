@@ -257,7 +257,7 @@ class HoneyPotShell(object):
                 environ[key] = value
                 continue
             cmd['command'] = piece
-            cmd['rargs'] = [];
+            cmd['rargs'] = []
             break
 
         if not cmd['command']:
@@ -267,7 +267,7 @@ class HoneyPotShell(object):
         pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
         multipleCmdArgs = []
         pipe_indices.append(len(cmdAndArgs))
-        start = 0;
+        start = 0
 
         # Gather all arguments with pipes
 

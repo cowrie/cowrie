@@ -36,7 +36,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         else:
             self.cwd = '/'
         self.input_data = None
-        self.data = None;
+        self.data = None
         self.commands = {}
         import cowrie.commands
         for c in cowrie.commands.__all__:
