@@ -49,7 +49,10 @@ class HoneyPotCommand(object):
             self.write = self.protocol.pp.outReceived
             self.error = self.protocol.pp.errReceived
 
+
     def check_arguments(self,application,args):
+        """
+        """
         files = []
         for arg in args:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
@@ -59,8 +62,12 @@ class HoneyPotCommand(object):
             files.append(path)
         return files
 
+
     def set_input_data(self,data):
+        """
+        """
         self.input_data = data
+
 
     def write_to_file(self, data):
         """
@@ -69,6 +76,7 @@ class HoneyPotCommand(object):
             f.write(data)
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
+
 
     def start(self):
         """
@@ -91,7 +99,7 @@ class HoneyPotCommand(object):
             self.protocol.cmdstack.pop()
             self.protocol.cmdstack[-1].resume()
         except AttributeError:
-            # cmdstack could be gone already (wget + disconnect)
+            # Cmdstack could be gone already (wget + disconnect)
             pass
 
 
@@ -101,6 +109,7 @@ class HoneyPotCommand(object):
         log.msg('Received CTRL-C, exiting..')
         self.write('^C\n')
         self.exit()
+
 
     def lineReceived(self, line):
         """
@@ -138,9 +147,9 @@ class HoneyPotShell(object):
         self.interactive = interactive
         self.cmdpending = []
         self.environ = protocol.environ
-        #self.lexer.debug = 1
-
+        # self.lexer.debug = 1
         self.showPrompt()
+
 
     def lineReceived(self, line):
         """
@@ -301,6 +310,7 @@ class HoneyPotShell(object):
                 if not exit:
                     runOrPrompt()
 
+
     def resume(self):
         """
         """
@@ -341,6 +351,7 @@ class HoneyPotShell(object):
         attrs = {'path': path}
         self.protocol.terminal.write(prompt % attrs)
         self.protocol.ps = (prompt % attrs , '> ')
+
 
     def eofReceived(self):
         """
@@ -443,10 +454,11 @@ class HoneyPotShell(object):
         self.protocol.terminal.write(newbuf)
 
 
+
 class StdOutStdErrEmulationProtocol(object):
     """
+    Pipe support written by Dave Germiquet
     """
-
     __author__ = 'davegermiquet'
 
     def __init__(self,protocol,cmd,cmdargs,input_data,next_protocol):
