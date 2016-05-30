@@ -278,8 +278,11 @@ class HoneyPotShell(object):
                 cmd = {}
 
             lastpp = None
-
+            exit = False
             for index,cmd in reversed(list(enumerate(cmd_array))):
+                if cmd['command'] == "exit":
+                    exit = True
+
                 cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
                 if cmdclass:
                     log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
@@ -295,8 +298,9 @@ class HoneyPotShell(object):
                     self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
                     runOrPrompt()
             if pp:
-                self.protocol.call_command(pp,cmdclass,*cmd['rargs'])
-                runOrPrompt()
+                self.protocol.call_command(pp,cmdclass,*cmd_array[0]['rargs'])
+                if not exit:
+                    runOrPrompt()
 
     def resume(self):
         """
