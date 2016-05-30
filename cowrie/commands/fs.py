@@ -16,7 +16,6 @@ class command_cat(HoneyPotCommand):
         if not self.args or self.args[0] == '>':
             pass
         if self.input_data:
-            self.write("\n")
             self.write(self.input_data)
         else:
             for arg in self.args:
@@ -91,7 +90,6 @@ class command_grep(HoneyPotCommand):
             for path in files:
                 self.grep_get_contents(path,args[0])
         else:
-            self.write("\n")
             self.grep_application(self.input_data,args[0])
 
         self.exit()
@@ -155,7 +153,6 @@ class command_tail(HoneyPotCommand):
             for path in files:
                 self.tail_get_contents(path)
         else:
-            self.write("\n")
             self.tail_application(self.input_data)
 
         self.exit()
@@ -217,7 +214,6 @@ class command_head(HoneyPotCommand):
             for path in files:
                 self.head_get_file_contents(path)
         else:
-            self.write("\n")
             self.head_application(self.input_data)
         self.exit()
 

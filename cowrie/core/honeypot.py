@@ -234,76 +234,69 @@ class HoneyPotShell(object):
 
             return parsed_arguments
 
-
-        if not len(self.cmdpending):
-            if self.interactive:
-                self.showPrompt()
-            else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
-            return
-
-        cmdAndArgs = self.cmdpending.pop(0)
-        cmd2 = copy.copy(cmdAndArgs)
+        if len(self.cmdpending) >= 1:
+            cmdAndArgs = self.cmdpending.pop(0)
+            cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
-        environ = copy.copy(self.environ)
-        cmd_array = [ ]
-        cmd = {}
-        while len(cmdAndArgs):
-            piece = cmdAndArgs.pop(0)
-            if piece.count('='):
-                key, value = piece.split('=', 1)
-                environ[key] = value
-                continue
-            cmd['command'] = piece
-            cmd['rargs'] = []
-            break
+            environ = copy.copy(self.environ)
+            cmd_array = [ ]
+            cmd = {}
+            while len(cmdAndArgs):
+                piece = cmdAndArgs.pop(0)
+                if piece.count('='):
+                    key, value = piece.split('=', 1)
+                    environ[key] = value
+                    continue
+                cmd['command'] = piece
+                cmd['rargs'] = []
+                break
 
-        if not cmd['command']:
-            runOrPrompt()
-            return
+            if not cmd['command']:
+                runOrPrompt()
+                return
 
-        pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
-        multipleCmdArgs = []
-        pipe_indices.append(len(cmdAndArgs))
-        start = 0
+            pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
+            multipleCmdArgs = []
+            pipe_indices.append(len(cmdAndArgs))
+            start = 0
 
-        # Gather all arguments with pipes
+            # Gather all arguments with pipes
 
-        for index,pipe_indice in enumerate(pipe_indices):
-            multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
-            start = pipe_indice+1
+            for index,pipe_indice in enumerate(pipe_indices):
+                multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
+                start = pipe_indice+1
 
-        cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
-        cmd_array.append(cmd)
-        cmd = {}
-
-        for index,value in enumerate(multipleCmdArgs):
-            cmd['command'] = value.pop(0)
-            cmd['rargs'] = parsed_arguments(value)
+            cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
             cmd_array.append(cmd)
             cmd = {}
 
-        lastpp = None
+            for index,value in enumerate(multipleCmdArgs):
+                cmd['command'] = value.pop(0)
+                cmd['rargs'] = parsed_arguments(value)
+                cmd_array.append(cmd)
+                cmd = {}
 
-        for index,cmd in reversed(list(enumerate(cmd_array))):
-            cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
-            if cmdclass:
-                log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
-                if index == len(cmd_array)-1:
-                    lastpp =  pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
-                    pp = lastpp
+            lastpp = None
+
+            for index,cmd in reversed(list(enumerate(cmd_array))):
+                cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
+                if cmdclass:
+                    log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
+                    if index == len(cmd_array)-1:
+                        lastpp =  pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
+                        pp = lastpp
+                    else:
+                        pp = pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
+                        lastpp = pp
                 else:
-                    pp = pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
-                    lastpp = pp
-            else:
-                log.msg(eventid='cowrie.command.failed',
-                    input=' '.join(cmd2), format='Command not found: %(input)s')
-                self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
-                runOrPrompt()
+                    log.msg(eventid='cowrie.command.failed',
+                        input=' '.join(cmd2), format='Command not found: %(input)s')
+                    self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
+                    runOrPrompt()
             if pp:
                 self.protocol.call_command(pp,cmdclass,*cmd['rargs'])
+                runOrPrompt()
 
     def resume(self):
         """

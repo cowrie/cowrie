@@ -198,7 +198,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.execcmd = execcmd
         HoneyPotBaseProtocol.__init__(self, avatar)
 
-
     def connectionMade(self):
         """
         """
