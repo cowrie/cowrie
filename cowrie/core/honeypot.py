@@ -12,7 +12,6 @@ import copy
 import time
 
 from twisted.python import log, failure
-from cowrie.core import StdOutStdErrEmulationProtocol as pipe
 from twisted.internet import error
 from cowrie.core import fs
 from cowrie.core import shlex
@@ -287,10 +286,10 @@ class HoneyPotShell(object):
                 if cmdclass:
                     log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
                     if index == len(cmd_array)-1:
-                        lastpp =  pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
+                        lastpp =  StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
                         pp = lastpp
                     else:
-                        pp = pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
+                        pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
                         lastpp = pp
                 else:
                     log.msg(eventid='cowrie.command.failed',
@@ -442,4 +441,75 @@ class HoneyPotShell(object):
         self.protocol.lineBuffer = list(newbuf)
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
         self.protocol.terminal.write(newbuf)
+
+
+class StdOutStdErrEmulationProtocol(object):
+    """
+    """
+
+    __author__ = 'davegermiquet'
+
+    def __init__(self,protocol,cmd,cmdargs,input_data,next_protocol):
+        self.cmd=cmd
+        self.cmdargs=cmdargs
+        self.input_data=input_data
+        self.next_protocol=next_protocol
+        self.data = ""
+        self.err_data = ""
+        self.protocol = protocol
+
+
+    def connectionMade(self):
+        """
+        """
+        self.input_data = None
+
+
+    def outReceived(self, data):
+        """
+        """
+        self.data = self.data + data
+        if not self.next_protocol:
+            self.protocol.terminal.write(data)
+
+
+    def errReceived(self, data):
+        """
+        """
+        self.protocol.terminal.write(data   )
+        self.err_data = self.err_data + data
+
+
+    def inConnectionLost(self):
+        """
+        """
+        pass
+
+
+    def outConnectionLost(self):
+        """
+        """
+        if self.next_protocol:
+            self.next_protocol.input_data = self.data
+            npcmd=self.next_protocol.cmd
+            npcmdargs=self.next_protocol.cmdargs
+            self.protocol.call_command(self.next_protocol,npcmd,*npcmdargs)
+
+
+    def errConnectionLost(self):
+        """
+        """
+        pass
+
+
+    def processExited(self, reason):
+        """
+        """
+        log.msg("processExited for %s, status %d" % (self.cmd,reason.value.exitCode,))
+
+
+    def processEnded(self, reason):
+        """
+        """
+        log.msg("processEnded for %s, status %d" % (self.cmd,reason.value.exitCode,))
 
