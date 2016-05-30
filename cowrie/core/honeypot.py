@@ -12,28 +12,27 @@ import copy
 import time
 
 from twisted.python import log, failure
-
+from cowrie.core import StdOutStdErrEmulationProtocol as pipe
 from twisted.internet import error
-
 from cowrie.core import fs
 from cowrie.core import shlex
+from twisted.conch.ssh import session
 
 class HoneyPotCommand(object):
     """
     """
-
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
-
+        self.data = None
+        self.input_data = None
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if '>' in self.args:
             self.writtenBytes = 0
-            self.write = self.writeToFile
-
+            self.write = self.write_to_file
             index = self.args.index(">")
             self.outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
             del self.args[index:]
@@ -48,17 +47,29 @@ class HoneyPotCommand(object):
             with open(self.safeoutfile, 'a'):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
         else:
-            self.write = self.protocol.terminal.write
+            self.write = self.protocol.pp.outReceived
+            self.error = self.protocol.pp.errReceived
 
+    def check_arguments(self,application,args):
+        files = []
+        for arg in args:
+            path = self.fs.resolve_path(arg, self.protocol.cwd)
+            if self.fs.isdir(path):
+                self.error("%s: error reading `%s': Is a directory\n" % (application,arg,))
+                continue
+            files.append(path)
+        return files
 
-    def writeToFile(self, data):
+    def set_input_data(self,data):
+        self.input_data = data
+
+    def write_to_file(self, data):
         """
         """
         with open(self.safeoutfile, 'a') as f:
             f.write(data)
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
-
 
     def start(self):
         """
@@ -91,7 +102,6 @@ class HoneyPotCommand(object):
         log.msg('Received CTRL-C, exiting..')
         self.write('^C\n')
         self.exit()
-
 
     def lineReceived(self, line):
         """
@@ -137,7 +147,7 @@ class HoneyPotShell(object):
         """
         """
         log.msg('CMD: %s' % (line,))
-        self.lexer = shlex.shlex(instream=line, punctuation_chars=True);
+        self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []
         while True:
             try:
@@ -196,6 +206,7 @@ class HoneyPotShell(object):
     def runCommand(self):
         """
         """
+        pp = None
         def runOrPrompt():
             if len(self.cmdpending):
                 self.runCommand()
@@ -205,51 +216,91 @@ class HoneyPotShell(object):
                 ret = failure.Failure(error.ProcessDone(status=""))
                 self.protocol.terminal.transport.processEnded(ret)
 
-        if not len(self.cmdpending):
-            if self.interactive:
-                self.showPrompt()
-            else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
-            return
+        def parsed_arguments(arguments):
+            parsed_arguments = []
+            for arg in arguments:
+                parsed_arguments.append(arg)
 
-        cmdAndArgs = self.cmdpending.pop(0)
-        cmd2 = copy.copy(cmdAndArgs)
+            return parsed_arguments
+
+        def parse_file_arguments(arguments):
+            parsed_arguments = []
+            for arg in arguments:
+                matches = self.protocol.fs.resolve_path_wc(arg, self.protocol.cwd)
+                if matches:
+                    parsed_arguments.extend(matches)
+                else:
+                    parsed_arguments.append(arg)
+
+            return parsed_arguments
+
+        if len(self.cmdpending) >= 1:
+            cmdAndArgs = self.cmdpending.pop(0)
+            cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
-        environ = copy.copy(self.environ)
-        cmd = None
-        while len(cmdAndArgs):
-            piece = cmdAndArgs.pop(0)
-            if piece.count('='):
-                key, value = piece.split('=', 1)
-                environ[key] = value
-                continue
-            cmd = piece
-            break
-        args = cmdAndArgs
+            environ = copy.copy(self.environ)
+            cmd_array = [ ]
+            cmd = {}
+            while len(cmdAndArgs):
+                piece = cmdAndArgs.pop(0)
+                if piece.count('='):
+                    key, value = piece.split('=', 1)
+                    environ[key] = value
+                    continue
+                cmd['command'] = piece
+                cmd['rargs'] = []
+                break
 
-        if not cmd:
-            runOrPrompt()
-            return
+            if not cmd['command']:
+                runOrPrompt()
+                return
 
-        rargs = []
-        for arg in args:
-            matches = self.protocol.fs.resolve_path_wc(arg, self.protocol.cwd)
-            if matches:
-                rargs.extend(matches)
-            else:
-                rargs.append(arg)
-        cmdclass = self.protocol.getCommand(cmd, environ['PATH'].split(':'))
-        if cmdclass:
-            log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
-            self.protocol.call_command(cmdclass, *rargs)
-        else:
-            log.msg(eventid='cowrie.command.failed',
-                input=' '.join(cmd2), format='Command not found: %(input)s')
-            self.protocol.terminal.write('bash: %s: command not found\n' % (cmd,))
-            runOrPrompt()
+            pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
+            multipleCmdArgs = []
+            pipe_indices.append(len(cmdAndArgs))
+            start = 0
 
+            # Gather all arguments with pipes
+
+            for index,pipe_indice in enumerate(pipe_indices):
+                multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
+                start = pipe_indice+1
+
+            cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
+            cmd_array.append(cmd)
+            cmd = {}
+
+            for index,value in enumerate(multipleCmdArgs):
+                cmd['command'] = value.pop(0)
+                cmd['rargs'] = parsed_arguments(value)
+                cmd_array.append(cmd)
+                cmd = {}
+
+            lastpp = None
+            exit = False
+            for index,cmd in reversed(list(enumerate(cmd_array))):
+                if cmd['command'] == "exit":
+                    exit = True
+
+                cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
+                if cmdclass:
+                    log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
+                    if index == len(cmd_array)-1:
+                        lastpp =  pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
+                        pp = lastpp
+                    else:
+                        pp = pipe.StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
+                        lastpp = pp
+                else:
+                    log.msg(eventid='cowrie.command.failed',
+                        input=' '.join(cmd2), format='Command not found: %(input)s')
+                    self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
+                    runOrPrompt()
+            if pp:
+                self.protocol.call_command(pp,cmdclass,*cmd_array[0]['rargs'])
+                if not exit:
+                    runOrPrompt()
 
     def resume(self):
         """
@@ -292,6 +343,14 @@ class HoneyPotShell(object):
         self.protocol.terminal.write(prompt % attrs)
         self.protocol.ps = (prompt % attrs , '> ')
 
+    def eofReceived(self):
+        """
+        this should probably not go through ctrl-d, but use processprotocol to close stdin
+        """
+        log.msg("received eof, sending ctrl-d to command")
+        if len(self.cmdstack):
+            self.cmdstack[-1].handle_CTRL_D()
+
 
     def handle_CTRL_C(self):
         """
@@ -306,7 +365,8 @@ class HoneyPotShell(object):
         """
         """
         log.msg('Received CTRL-D, exiting..')
-        self.protocol.call_command(self.protocol.commands['exit'])
+        self.pp.outConnectionLost()
+        self.protocol.call_command(None,self.protocol.commands['exit'])
 
 
     def handle_TAB(self):
