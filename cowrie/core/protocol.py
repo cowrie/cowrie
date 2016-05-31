@@ -239,6 +239,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x04':     self.handle_CTRL_D,	# CTRL-D
             '\x05':     self.handle_END,	# CTRL-E
             '\x06':     self.handle_RIGHT,	# CTRL-F
+            '\x08':     self.handle_BACKSPACE,	# CTRL-H
             '\x09':     self.handle_TAB,
             '\x0B':     self.handle_CTRL_K,	# CTRL-K
             '\x0C':     self.handle_CTRL_L,	# CTRL-L
