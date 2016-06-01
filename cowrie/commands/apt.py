@@ -174,8 +174,8 @@ pages for more information and options.
         self.exit()
 
     def do_locked(self):
-        self.error('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
-        self.error('E: Unable to lock the list directory\n')
+        self.errorWrite('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
+        self.errorWrite('E: Unable to lock the list directory\n')
         self.exit()
 commands['/usr/bin/apt-get'] = command_aptget
 

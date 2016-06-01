@@ -47,7 +47,7 @@ class HoneyPotCommand(object):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
         else:
             self.write = self.protocol.pp.outReceived
-            self.error = self.protocol.pp.errReceived
+            self.errorWrite = self.protocol.pp.errReceived
 
 
     def check_arguments(self,application,args):
@@ -57,7 +57,7 @@ class HoneyPotCommand(object):
         for arg in args:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if self.fs.isdir(path):
-                self.error("%s: error reading `%s': Is a directory\n" % (application,arg,))
+                self.errorWrite("%s: error reading `%s': Is a directory\n" % (application,arg,))
                 continue
             files.append(path)
         return files

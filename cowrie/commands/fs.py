@@ -21,12 +21,12 @@ class command_cat(HoneyPotCommand):
             for arg in self.args:
                 path = self.fs.resolve_path(arg, self.protocol.cwd)
                 if self.fs.isdir(path):
-                    self.error('cat: %s: Is a directory\n' % (arg,))
+                    self.errorWrite('cat: %s: Is a directory\n' % (arg,))
                     continue
                 try:
                     self.write(self.fs.file_contents(path))
                 except:
-                    self.error('cat: %s: No such file or directory\n' % (arg,))
+                    self.errorWrite('cat: %s: No such file or directory\n' % (arg,))
         self.exit()
 
     def lineReceived(self, line):
@@ -51,7 +51,7 @@ class command_grep(HoneyPotCommand):
             contents = self.fs.file_contents(filename)
             self.grep_application(contents, match)
         except:
-            self.error("grep: %s: No such file or directory\n" % (filename,))
+            self.errorWrite("grep: %s: No such file or directory\n" % (filename,))
 
     def grep_application(self, contents, match):
         match = path.basename(match)
@@ -63,10 +63,10 @@ class command_grep(HoneyPotCommand):
                 self.write(line + '\n')
 
     def help(self):
-        self.error( '\nusage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n ')
-        self.error ('[-e pattern] [-f file] [--binary-files=value] [--color=when]\n ')
-        self.error ('[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
-        self.error ('[--null] [pattern] [file ...]\n')
+        self.errorWrite( '\nusage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n ')
+        self.errorWrite ('[-e pattern] [-f file] [--binary-files=value] [--color=when]\n ')
+        self.errorWrite ('[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
+        self.errorWrite ('[--null] [pattern] [file ...]\n')
 
     def start(self):
         self.n = 10
@@ -76,7 +76,7 @@ class command_grep(HoneyPotCommand):
             try:
                 optlist, args = getopt.getopt(self.args, 'abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:')
             except getopt.GetoptError as err:
-                self.error("grep: invalid option -- %s" % (err.opt))
+                self.errorWrite("grep: invalid option -- %s" % (err.opt))
                 self.help()
                 self.exit()
                 return
@@ -117,7 +117,7 @@ class command_tail(HoneyPotCommand):
             contents = self.fs.file_contents(filename)
             self.tail_application(contents)
         except:
-            self.error("tail: cannot open `%s' for reading: No such file or directory\n" % (filename,))
+            self.errorWrite("tail: cannot open `%s' for reading: No such file or directory\n" % (filename,))
 
     def tail_application(self, contents):
         contentsplit = contents.split('\n')
@@ -138,14 +138,14 @@ class command_tail(HoneyPotCommand):
             try:
                 optlist, args = getopt.getopt(self.args, 'n:')
             except getopt.GetoptError as err:
-                self.error("tail: invalid option -- '%s'\n" % (err.opt))
+                self.errorWrite("tail: invalid option -- '%s'\n" % (err.opt))
                 self.exit()
                 return
 
             for opt in optlist:
                 if opt[0] == '-n':
                     if not opt[1].isdigit():
-                        self.error("tail: illegal offset -- %s\n" % opt[1])
+                        self.errorWrite("tail: illegal offset -- %s\n" % opt[1])
                     else:
                         self.n = int(opt[1])
         if not self.input_data:
@@ -198,14 +198,14 @@ class command_head(HoneyPotCommand):
             try:
                 optlist, args = getopt.getopt(self.args, 'n:')
             except getopt.GetoptError as err:
-                self.error("head: invalid option -- '%s'\n" % (err.opt,))
+                self.errorWrite("head: invalid option -- '%s'\n" % (err.opt,))
                 self.exit()
                 return
 
             for opt in optlist:
                 if opt[0] == '-n':
                     if not opt[1].isdigit():
-                        self.error("head: illegal offset -- %s\n" % opt[1])
+                        self.errorWrite("head: illegal offset -- %s\n" % opt[1])
                     else:
                         self.n = int(opt[1])
 
@@ -247,10 +247,10 @@ class command_cd(HoneyPotCommand):
             self.write('bash: cd: OLDPWD not set\n')
             return
         if inode is None or inode is False:
-            self.error('bash: cd: %s: No such file or directory\n' % (path,))
+            self.errorWrite('bash: cd: %s: No such file or directory\n' % (path,))
             return
         if inode[A_TYPE] != T_DIR:
-            self.error('bash: cd: %s: Not a directory\n' % (path,))
+            self.errorWrite('bash: cd: %s: Not a directory\n' % (path,))
             return
         self.protocol.cwd = newpath
 
