@@ -161,22 +161,22 @@ class HoneyPotShell(object):
             try:
                 tok = self.lexer.get_token()
                 #log.msg( "tok: %s" % (repr(tok)) )
-                # for now, execute all after &&
                 if tok == self.lexer.eof:
                     if len(tokens):
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
-                if tok == ';' or tok == '&&' or tok == '||':
-                    self.cmdpending.append((tokens))
-                    tokens = []
-                if tok == ';':
-                    continue
-                if tok == '&&':
-                    continue
-                if tok == '||':
-                    continue
-                if tok == '$?':
+                # For now, execute all after &&
+                elif tok == ';' or tok == '&&' or tok == '||':
+                    if len(tokens):
+                        self.cmdpending.append((tokens))
+                        tokens = []
+                        continue
+                    else:
+                        self.protocol.terminal.write(
+                            '-bash: syntax error near unexpected token `{}\'\n'.format(tok))
+                        break
+                elif tok == '$?':
                     tok = "0"
                 elif tok[0] == '$':
                     env_rex = re.compile('^\$([_a-zA-Z0-9]+)$')
