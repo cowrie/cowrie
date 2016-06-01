@@ -120,8 +120,10 @@ class command_ls(HoneyPotCommand):
             largest = max([x[A_SIZE] for x in files])
 
         for file in files:
-            perms = ['-'] * 10
+            if file[A_NAME].startswith('.') and not self.show_hidden:
+                continue
 
+            perms = ['-'] * 10
             if file[A_MODE] & stat.S_IRUSR: perms[1] = 'r'
             if file[A_MODE] & stat.S_IWUSR: perms[2] = 'w'
             if file[A_MODE] & stat.S_IXUSR: perms[3] = 'x'
