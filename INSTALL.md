@@ -1,18 +1,51 @@
-# Installation
+# Installing cowrie in six easy steps.
 
-## Installing cowrie in six easy steps.
+## Installing with Python packages from your Linux Distribution
 
 Install prerequisites on Debian based systems:
 
 ```
 $ sudo apt-get install python-twisted python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
 ```
- 
+
 Install prerequisites on RedHat based systems:
- 
+
 ```
 $ sudo yum install <tbd> <tbd> <tbd>
 ```
+
+## Installing with Python Virtual Environments
+
+On Debian based systems:
+```
+$ sudo apt-get install virtualenv
+```
+On RedHat based systems:
+```
+$ sudo yum install virtualenv
+```
+
+Create a virtual environment
+
+```
+$ virtualenv v2
+New python executable in ./cowrie/v2/bin/python
+Installing setuptools, pip, wheel...done.
+```
+
+Activate the virtual environment
+
+```
+$ source v2/bin/activate
+(v2) $
+```
+
+```
+$ source v2/bin/activate
+(v2) $ pip install twisted cryptography pyopenssl gmpy2
+```
+
+## Add a user
 
 It's strongly recommended to install under a dedicated non-root user id:
 
@@ -47,8 +80,11 @@ $ cp cowrie.cfg.dist cowrie.cfg
 
 $ ./start.sh
 Starting cowrie in the background...
+```
+When using Python Virtual Environments you can add the name of the venv as the first argument
 
-$ exit
+```
+$ ./start.sh v2
 ```
 
 Cowry runs by default on port 2222. This can be modified in the configuration file.
