@@ -1,6 +1,6 @@
 # Installing cowrie in six easy steps.
 
-## Installing with Python packages from your Linux Distribution
+## Install with Python packages from your Linux Distribution
 
 Install prerequisites on Debian based systems:
 
@@ -14,7 +14,7 @@ Install prerequisites on RedHat based systems:
 $ sudo yum install <tbd> <tbd> <tbd>
 ```
 
-## Installing with Python Virtual Environments
+## Install with Python Virtual Environments
 
 On Debian based systems:
 ```
@@ -33,12 +33,7 @@ New python executable in ./cowrie/v2/bin/python
 Installing setuptools, pip, wheel...done.
 ```
 
-Activate the virtual environment
-
-```
-$ source v2/bin/activate
-(v2) $
-```
+Activate the virtual environment and install packages
 
 ```
 $ source v2/bin/activate
@@ -85,6 +80,7 @@ When using Python Virtual Environments you can add the name of the venv as the f
 
 ```
 $ ./start.sh v2
+Starting cowrie in the background...
 ```
 
 Cowry runs by default on port 2222. This can be modified in the configuration file.
