@@ -484,7 +484,9 @@ class StdOutStdErrEmulationProtocol(object):
         """
         self.data = self.data + data
         if not self.next_protocol:
-            self.protocol.terminal.write(data)
+            if not self.protocol is None and not self.protocol.terminal is None:
+                log.msg("Connection was probably lost. Could not write to terminal")
+                self.protocol.terminal.write(data)
 
 
     def errReceived(self, data):
