@@ -47,7 +47,7 @@ class HoneyPotCommand(object):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
         else:
             self.write = self.protocol.pp.outReceived
-            self.error = self.protocol.pp.errReceived
+            self.errorWrite = self.protocol.pp.errReceived
 
 
     def check_arguments(self,application,args):
@@ -57,7 +57,7 @@ class HoneyPotCommand(object):
         for arg in args:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if self.fs.isdir(path):
-                self.error("%s: error reading `%s': Is a directory\n" % (application,arg,))
+                self.errorWrite("%s: error reading `%s': Is a directory\n" % (application,arg,))
                 continue
             files.append(path)
         return files
@@ -375,9 +375,11 @@ class HoneyPotShell(object):
         """
         """
         log.msg('Received CTRL-D, exiting..')
-        self.pp.outConnectionLost()
-        self.protocol.call_command(None,self.protocol.commands['exit'])
 
+
+        cmdclass =  self.protocol.commands['exit']
+        pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,None,None,None)
+        self.protocol.call_command(pp,self.protocol.commands['exit'])
 
     def handle_TAB(self):
         """
