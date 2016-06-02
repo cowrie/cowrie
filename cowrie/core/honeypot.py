@@ -375,9 +375,11 @@ class HoneyPotShell(object):
         """
         """
         log.msg('Received CTRL-D, exiting..')
-        self.pp.outConnectionLost()
-        self.protocol.call_command(None,self.protocol.commands['exit'])
 
+
+        cmdclass =  self.protocol.commands['exit']
+        pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,None,None,None)
+        self.protocol.call_command(pp,self.protocol.commands['exit'])
 
     def handle_TAB(self):
         """
