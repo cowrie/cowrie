@@ -27,22 +27,6 @@ commands['/usr/bin/whoami'] = command_whoami
 commands['/usr/bin/users'] = command_whoami
 
 
-
-class command_uptime(HoneyPotCommand):
-    """
-    """
-    def call(self):
-        """
-        """
-        if len(self.args):
-            secs = int(self.args[0])
-            self.protocol.uptime(time.time() - secs)
-        self.write(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00\n' % \
-            (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
-commands['/usr/bin/uptime'] = command_uptime
-
-
-
 class command_help(HoneyPotCommand):
     """
     """

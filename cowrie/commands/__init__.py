@@ -28,5 +28,6 @@ __all__ = [
     'wget',
     'which',
     'perl',
+    'uptime',
     'python'
     ]
