@@ -16,6 +16,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.conch import recvline
 from twisted.conch.ssh import session
 from twisted.conch.insults import insults
+
 from cowrie.core import honeypot
 from cowrie.core import ttylog
 from cowrie.core import utils
@@ -177,15 +178,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.pp.outConnectionLost()
 
 
-
-
-    def uptime(self, reset=None):
+    def uptime(self):
         """
         """
         transport = self.terminal.transport.session.conn.transport
         r = time.time() - transport.factory.starttime
-        if reset:
-            transport.factory.starttime = reset
         return r
 
 
