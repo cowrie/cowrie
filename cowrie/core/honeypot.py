@@ -274,11 +274,13 @@ class HoneyPotShell(object):
             for index,pipe_indice in enumerate(pipe_indices):
                 multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
                 start = pipe_indice+1
+
             # handle first command
+
             cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
             cmd_array.append(cmd)
             if cmd['command'] == "sudo" or cmd['command'] == "busybox":
-                if len(cmd['rargs']) > 1:
+                if len(cmd['rargs']) >= 1:
                     value2 = copy.copy(cmd['rargs'])
                     cmd2 = {}
                     cmd2['command'] = value2.pop(0)
@@ -286,13 +288,14 @@ class HoneyPotShell(object):
                     cmd_array.append(cmd2)
             cmd = {}
 
+            # Handle all other arguments and pipes
 
             for index,value in enumerate(multipleCmdArgs):
                 cmd['command'] = value.pop(0)
                 cmd['rargs'] = parsed_arguments(value)
                 cmd_array.append(cmd)
                 if cmd['command'] == "sudo" or cmd['command'] == "busybox":
-                    if len(cmd['rargs']) > 1:
+                    if len(cmd['rargs']) >= 1:
                         value2 = copy.copy(cmd['rargs'])
                         cmd2 = {}
                         cmd2['command'] = value2.pop(0)
