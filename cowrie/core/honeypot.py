@@ -260,7 +260,7 @@ class HoneyPotShell(object):
                 cmd['rargs'] = []
                 break
 
-            if not cmd['command']:
+            if not cmd or not cmd['command']:
                 runOrPrompt()
                 return
 
@@ -274,15 +274,30 @@ class HoneyPotShell(object):
             for index,pipe_indice in enumerate(pipe_indices):
                 multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
                 start = pipe_indice+1
-
+            # handle first command
             cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
             cmd_array.append(cmd)
+            if cmd['command'] == "sudo" or cmd['command'] == "busybox":
+                if len(cmd['rargs']) > 1:
+                    value2 = copy.copy(cmd['rargs'])
+                    cmd2 = {}
+                    cmd2['command'] = value2.pop(0)
+                    cmd2['rargs'] = parsed_arguments(value2)
+                    cmd_array.append(cmd2)
             cmd = {}
+
 
             for index,value in enumerate(multipleCmdArgs):
                 cmd['command'] = value.pop(0)
                 cmd['rargs'] = parsed_arguments(value)
                 cmd_array.append(cmd)
+                if cmd['command'] == "sudo" or cmd['command'] == "busybox":
+                    if len(cmd['rargs']) > 1:
+                        value2 = copy.copy(cmd['rargs'])
+                        cmd2 = {}
+                        cmd2['command'] = value2.pop(0)
+                        cmd2['rargs'] = parsed_arguments(value2)
+                        cmd_array.append(cmd2)
                 cmd = {}
 
             lastpp = None
@@ -293,16 +308,16 @@ class HoneyPotShell(object):
 
                 cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
                 if cmdclass:
-                    log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
+                    log.msg(eventid='cowrie.command.success', input=''.join(cmd['command']), format='Command found: %(input)s')
                     if index == len(cmd_array)-1:
-                        lastpp =  StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
+                        lastpp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
                         pp = lastpp
                     else:
                         pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
                         lastpp = pp
                 else:
                     log.msg(eventid='cowrie.command.failed',
-                        input=' '.join(cmd2), format='Command not found: %(input)s')
+                        input=''.join(cmd['command']), format='Command not found: %(input)s')
                     self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
                     runOrPrompt()
             if pp:

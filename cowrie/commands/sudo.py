@@ -111,8 +111,8 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                self.protocol.call_command(cmdclass, *args)
-                self.exit()
+            if self.input_data:
+                self.write(self.input_data)
             else:
                 self.short_help()
         else:
