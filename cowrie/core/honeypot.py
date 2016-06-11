@@ -10,7 +10,7 @@ import re
 import stat
 import copy
 import time
-
+import getopt
 from twisted.python import log, failure
 from twisted.internet import error
 from cowrie.core import fs
@@ -224,11 +224,32 @@ class HoneyPotShell(object):
                 ret = failure.Failure(error.ProcessDone(status=""))
                 self.protocol.terminal.transport.processEnded(ret)
 
-        def parsed_arguments(arguments):
+        def parse_arguments(arguments):
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
 
+            return parsed_arguments
+
+        # take options off sudo and busybox and keep the arguments of the command
+
+        def parsed_arguments_take_off_options(arguments):
+            parsed_arguments = []
+            start_value = None
+            for count in range(0,len(arguments)):
+                class_found =  self.protocol.getCommand(arguments[count], environ['PATH'] .split(':'))
+                if class_found:
+                    start_value = count
+                    break
+            try:
+                optlist, args = getopt.getopt(arguments[0:start_value], 'bEeHKknPSVva:C:g:i:l:p:r:s:t:U:u:')
+            except:
+                return parsed_arguments
+
+            if start_value is not None:
+                for index_2 in range(start_value,len(arguments)):
+                    parsed_arguments.append(arguments[index_2])
+                    log.msg(arguments[index_2])
             return parsed_arguments
 
         def parse_file_arguments(arguments):
@@ -244,7 +265,6 @@ class HoneyPotShell(object):
 
         if len(self.cmdpending) >= 1:
             cmdAndArgs = self.cmdpending.pop(0)
-            cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
             environ = copy.copy(self.environ)
@@ -260,7 +280,7 @@ class HoneyPotShell(object):
                 cmd['rargs'] = []
                 break
 
-            if not cmd['command']:
+            if not cmd or not cmd['command']:
                 runOrPrompt()
                 return
 
@@ -275,14 +295,42 @@ class HoneyPotShell(object):
                 multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
                 start = pipe_indice+1
 
+            # handle first command
+
             cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
             cmd_array.append(cmd)
+
+            # handle sudo and busybox options, so we can chain them
+
+            if cmd['command'] == "sudo" or cmd['command'] == "busybox":
+                if len(cmd['rargs']) >= 1:
+                    sudo_command = copy.copy(cmd['rargs'])
+                    value2 = parsed_arguments_take_off_options(sudo_command)
+                    if len(value2) > 0:
+                        cmd2 = {}
+                        cmd2['command'] = value2.pop(0)
+                        cmd2['rargs'] =  parse_arguments(value2)
+                        cmd_array.append(cmd2)
             cmd = {}
+
+            # Handle all other arguments and pipes
 
             for index,value in enumerate(multipleCmdArgs):
                 cmd['command'] = value.pop(0)
-                cmd['rargs'] = parsed_arguments(value)
+                cmd['rargs'] = parse_arguments(value)
                 cmd_array.append(cmd)
+
+                # handle sudo and busybox options, so we can chain them
+
+                if cmd['command'] == "sudo" or cmd['command'] == "busybox":
+                    if len(cmd['rargs']) >= 1:
+                        value2 = copy.copy(cmd['rargs'])
+                        value2 = parsed_arguments_take_off_options(value2)
+                        if len(value2) > 0:
+                            cmd2 = {}
+                            cmd2['command'] = value2.pop(0)
+                            cmd2['rargs'] =  parse_arguments(value2)
+                            cmd_array.append(cmd2)
                 cmd = {}
 
             lastpp = None
@@ -293,16 +341,16 @@ class HoneyPotShell(object):
 
                 cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
                 if cmdclass:
-                    log.msg(eventid='cowrie.command.success', input=' '.join(cmd2), format='Command found: %(input)s')
+                    log.msg(eventid='cowrie.command.success', input=''.join(cmd['command']), format='Command found: %(input)s')
                     if index == len(cmd_array)-1:
-                        lastpp =  StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
+                        lastpp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
                         pp = lastpp
                     else:
                         pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
                         lastpp = pp
                 else:
                     log.msg(eventid='cowrie.command.failed',
-                        input=' '.join(cmd2), format='Command not found: %(input)s')
+                        input=''.join(cmd['command']), format='Command not found: %(input)s')
                     self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
                     runOrPrompt()
             if pp:

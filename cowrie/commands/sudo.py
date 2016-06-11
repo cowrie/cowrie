@@ -87,9 +87,9 @@ Sudoers I/O plugin version 1.8.5p2\n''')
         """
         """
         try:
-            optlist, args = getopt.getopt(self.args, 'shV')
+            optlist, args = getopt.getopt(self.args, 'bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:')
         except getopt.GetoptError as err:
-            self.write('invalid option\n')
+            self.write('sudo: illegal option -- ' + err.opt + '\n')
             self.short_help()
             return
 
@@ -111,7 +111,8 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                self.protocol.call_command(cmdclass, *args)
+                if self.input_data:
+                    self.write(self.input_data)
                 self.exit()
             else:
                 self.short_help()

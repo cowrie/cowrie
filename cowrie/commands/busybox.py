@@ -2,7 +2,7 @@
 """
 """
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.core.honeypot import HoneyPotCommand,HoneyPotShell,StdOutStdErrEmulationProtocol
 from twisted.python import log
 commands = {}
 
@@ -72,9 +72,12 @@ class command_busybox(HoneyPotCommand):
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                self.protocol.call_command(cmdclass, *args)
+                if self.input_data:
+                    self.write(self.input_data)
             else:
                 self.help()
         else:
             self.help()
+
+
 commands['busybox'] = command_busybox
