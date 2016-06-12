@@ -474,16 +474,12 @@ class StdOutStdErrEmulationProtocol(object):
         """
         """
         self.data = self.data + data
-        log.msg(str(self.cmd))
 
-        # We do not print the output of sudo or busybox we print the NEXT command
-
-        if not 'command_sudo' in str(self.cmd) and not 'command_busybox' in str(self.cmd):
-            if not self.next_command:
-                if not self.protocol is None and not self.protocol.terminal is None:
-                        self.protocol.terminal.write(data)
-                else:
-                    log.msg("Connection was probably lost. Could not write to terminal")
+        if not self.next_command:
+            if not self.protocol is None and not self.protocol.terminal is None:
+                    self.protocol.terminal.write(str(data))
+            else:
+                log.msg("Connection was probably lost. Could not write to terminal")
 
     # Insert the next command into the list.
 

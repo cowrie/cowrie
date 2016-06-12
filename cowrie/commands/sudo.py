@@ -123,9 +123,10 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                         input=line,
                         format='Command found: %(input)s')
                 command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:], None ,None)
+                self.protocol.pp.insert_command(command)
+                # this needs to go here so it doesn't write it out....
                 if self.input_data:
                     self.write(self.input_data)
-                self.protocol.pp.insert_command(command)
                 self.exit()
             else:
                 self.short_help()

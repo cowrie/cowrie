@@ -77,14 +77,16 @@ class command_busybox(HoneyPotCommand):
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd,
                                                 self.environ['PATH'].split(':'))
-            if self.input_data:
-                self.write(self.input_data)
             if cmdclass:
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
                 command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:],self.input_data,None)
                 self.protocol.pp.insert_command(command)
+                # Place this here so it doesn't write out only if last statement
+
+                if self.input_data:
+                    self.write(self.input_data)
             else:
                 self.help()
         else:
