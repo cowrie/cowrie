@@ -3,7 +3,7 @@ import getopt
 
 from twisted.python import log
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 
 commands = {}
 
@@ -86,10 +86,21 @@ Sudoers I/O plugin version 1.8.5p2\n''')
     def start(self):
         """
         """
+        start_value = None
+        for count in range(0,len(self.args)):
+            parsed_arguments = []
+            class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'] .split(':'))
+            if class_found:
+                start_value = count
+                break
+        if start_value is not None:
+            for index_2 in range(start_value,len(self.args)):
+                parsed_arguments.append(self.args[index_2])
+
         try:
-            optlist, args = getopt.getopt(self.args, 'shV')
+            optlist, args = getopt.getopt(self.args[0:start_value], 'bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:')
         except getopt.GetoptError as err:
-            self.write('invalid option\n')
+            self.write('sudo: illegal option -- ' + err.opt + '\n')
             self.short_help()
             return
 
@@ -101,17 +112,20 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 self.long_help()
                 return
 
-        if len(args) > 0:
-            line = ' '.join(args)
-            cmd = args[0]
-            args = args[1:]
+        if len(parsed_arguments) > 0:
+            line = ' '.join(parsed_arguments    )
+            cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd,
                 self.environ['PATH'].split(':'))
+
             if cmdclass:
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                self.protocol.call_command(cmdclass, *args)
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:], None ,None)
+                if self.input_data:
+                    self.write(self.input_data)
+                self.protocol.pp.insert_command(command)
                 self.exit()
             else:
                 self.short_help()

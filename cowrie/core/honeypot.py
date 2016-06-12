@@ -13,9 +13,10 @@ import time
 
 from twisted.python import log, failure
 from twisted.internet import error
+
 from cowrie.core import fs
 from cowrie.core import shlex
-from twisted.conch.ssh import session
+
 
 class HoneyPotCommand(object):
     """
@@ -49,7 +50,6 @@ class HoneyPotCommand(object):
             self.write = self.protocol.pp.outReceived
             self.errorWrite = self.protocol.pp.errReceived
 
-
     def check_arguments(self,application,args):
         """
         """
@@ -62,12 +62,10 @@ class HoneyPotCommand(object):
             files.append(path)
         return files
 
-
     def set_input_data(self,data):
         """
         """
         self.input_data = data
-
 
     def write_to_file(self, data):
         """
@@ -77,13 +75,11 @@ class HoneyPotCommand(object):
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
 
-
     def start(self):
         """
         """
         self.call()
         self.exit()
-
 
     def call(self):
         """
@@ -110,7 +106,6 @@ class HoneyPotCommand(object):
         self.write('^C\n')
         self.exit()
 
-
     def lineReceived(self, line):
         """
         """
@@ -118,25 +113,23 @@ class HoneyPotCommand(object):
         # FIXME: naive command parsing, see lineReceived below
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line))
 
-
     def resume(self):
         """
         """
         pass
-
 
     def handle_TAB(self):
         """
         """
         pass
 
-
     def handle_CTRL_D(self):
         """
         """
         pass
 
-
+    def __repr__(self):
+        return str(self.__class__.__name__)
 
 class HoneyPotShell(object):
     """
@@ -463,67 +456,70 @@ class StdOutStdErrEmulationProtocol(object):
     """
     __author__ = 'davegermiquet'
 
-    def __init__(self,protocol,cmd,cmdargs,input_data,next_protocol):
+    def __init__(self, protocol, cmd, cmdargs, input_data, next_command):
         self.cmd=cmd
         self.cmdargs=cmdargs
         self.input_data=input_data
-        self.next_protocol=next_protocol
+        self.next_command = next_command
         self.data = ""
         self.err_data = ""
         self.protocol = protocol
-
 
     def connectionMade(self):
         """
         """
         self.input_data = None
 
-
     def outReceived(self, data):
         """
         """
         self.data = self.data + data
-        if not self.next_protocol:
-            if not self.protocol is None and not self.protocol.terminal is None:
-                self.protocol.terminal.write(data)
-            else:
-                log.msg("Connection was probably lost. Could not write to terminal")
+        log.msg(str(self.cmd))
 
+        # We do not print the output of sudo or busybox we print the NEXT command
+
+        if not 'command_sudo' in str(self.cmd) and not 'command_busybox' in str(self.cmd):
+            if not self.next_command:
+                if not self.protocol is None and not self.protocol.terminal is None:
+                        self.protocol.terminal.write(data)
+                else:
+                    log.msg("Connection was probably lost. Could not write to terminal")
+
+    # Insert the next command into the list.
+
+    def insert_command(self, command):
+        command.next_command = self.next_command
+        self.next_command = command
 
     def errReceived(self, data):
         """
         """
-        self.protocol.terminal.write(data   )
+        self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
-
 
     def inConnectionLost(self):
         """
         """
         pass
 
-
     def outConnectionLost(self):
         """
         """
-        if self.next_protocol:
-            self.next_protocol.input_data = self.data
-            npcmd=self.next_protocol.cmd
-            npcmdargs=self.next_protocol.cmdargs
-            self.protocol.call_command(self.next_protocol,npcmd,*npcmdargs)
-
+        if self.next_command:
+            self.next_command.input_data = self.data
+            npcmd = self.next_command.cmd
+            npcmdargs = self.next_command.cmdargs
+            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
     def errConnectionLost(self):
         """
         """
         pass
 
-
     def processExited(self, reason):
         """
         """
         log.msg("processExited for %s, status %d" % (self.cmd,reason.value.exitCode,))
-
 
     def processEnded(self, reason):
         """
