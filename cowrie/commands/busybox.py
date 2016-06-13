@@ -2,7 +2,7 @@
 """
 """
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 from twisted.python import log
 commands = {}
 
@@ -55,24 +55,38 @@ class command_busybox(HoneyPotCommand):
         """
         """
         for ln in busybox_help:
-            self.write(ln+'\n')
+            self.errorWrite(ln+'\n')
 
 
     def call(self):
         """
         """
-        args = list(self.args)
-        if len(args) > 0:
-            line = ' '.join(args)
-            cmd = args[0]
-            args = args[1:]
+        start_value = None
+        for count in range(0,len(self.args)):
+            parsed_arguments = []
+            class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'] .split(':'))
+            if class_found:
+                start_value = count
+                break
+        if start_value is not None:
+            for index_2 in range(start_value,len(self.args)):
+                parsed_arguments.append(self.args[index_2])
+
+        if len(parsed_arguments) > 0:
+            line = ' '.join(parsed_arguments    )
+            cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd,
-                self.environ['PATH'].split(':'))
+                                                self.environ['PATH'].split(':'))
             if cmdclass:
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                self.protocol.call_command(cmdclass, *args)
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:],self.input_data,None)
+                self.protocol.pp.insert_command(command)
+                # Place this here so it doesn't write out only if last statement
+
+                if self.input_data:
+                    self.write(self.input_data)
             else:
                 self.help()
         else:
