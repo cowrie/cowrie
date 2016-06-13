@@ -50,6 +50,7 @@ class HoneyPotCommand(object):
             self.write = self.protocol.pp.outReceived
             self.errorWrite = self.protocol.pp.errReceived
 
+
     def check_arguments(self,application,args):
         """
         """
@@ -62,10 +63,12 @@ class HoneyPotCommand(object):
             files.append(path)
         return files
 
+
     def set_input_data(self,data):
         """
         """
         self.input_data = data
+
 
     def write_to_file(self, data):
         """
@@ -75,11 +78,13 @@ class HoneyPotCommand(object):
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
 
+
     def start(self):
         """
         """
         self.call()
         self.exit()
+
 
     def call(self):
         """
@@ -106,6 +111,7 @@ class HoneyPotCommand(object):
         self.write('^C\n')
         self.exit()
 
+
     def lineReceived(self, line):
         """
         """
@@ -113,23 +119,29 @@ class HoneyPotCommand(object):
         # FIXME: naive command parsing, see lineReceived below
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line))
 
+
     def resume(self):
         """
         """
         pass
+
 
     def handle_TAB(self):
         """
         """
         pass
 
+
     def handle_CTRL_D(self):
         """
         """
         pass
 
+
     def __repr__(self):
         return str(self.__class__.__name__)
+
+
 
 class HoneyPotShell(object):
     """
@@ -153,7 +165,7 @@ class HoneyPotShell(object):
         while True:
             try:
                 tok = self.lexer.get_token()
-                #log.msg( "tok: %s" % (repr(tok)) )
+                # log.msg( "tok: %s" % (repr(tok)) )
                 if tok == self.lexer.eof:
                     if len(tokens):
                         self.cmdpending.append((tokens))
@@ -369,10 +381,10 @@ class HoneyPotShell(object):
         """
         log.msg('Received CTRL-D, exiting..')
 
-
         cmdclass =  self.protocol.commands['exit']
         pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,None,None,None)
         self.protocol.call_command(pp,self.protocol.commands['exit'])
+
 
     def handle_TAB(self):
         """
@@ -465,10 +477,12 @@ class StdOutStdErrEmulationProtocol(object):
         self.err_data = ""
         self.protocol = protocol
 
+
     def connectionMade(self):
         """
         """
         self.input_data = None
+
 
     def outReceived(self, data):
         """
@@ -477,15 +491,18 @@ class StdOutStdErrEmulationProtocol(object):
 
         if not self.next_command:
             if not self.protocol is None and not self.protocol.terminal is None:
-                    self.protocol.terminal.write(str(data))
+                self.protocol.terminal.write(str(data))
             else:
                 log.msg("Connection was probably lost. Could not write to terminal")
 
-    # Insert the next command into the list.
 
     def insert_command(self, command):
+        """
+        Insert the next command into the list.
+        """
         command.next_command = self.next_command
         self.next_command = command
+
 
     def errReceived(self, data):
         """
@@ -493,10 +510,12 @@ class StdOutStdErrEmulationProtocol(object):
         self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
 
+
     def inConnectionLost(self):
         """
         """
         pass
+
 
     def outConnectionLost(self):
         """
@@ -507,18 +526,22 @@ class StdOutStdErrEmulationProtocol(object):
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
+
     def errConnectionLost(self):
         """
         """
         pass
+
 
     def processExited(self, reason):
         """
         """
         log.msg("processExited for %s, status %d" % (self.cmd,reason.value.exitCode,))
 
+
     def processEnded(self, reason):
         """
         """
         log.msg("processEnded for %s, status %d" % (self.cmd,reason.value.exitCode,))
+
 
