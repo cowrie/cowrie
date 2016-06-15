@@ -9,12 +9,11 @@ import os
 
 from zope.interface import implementer
 
-import twisted
+from twisted.python import log
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
-from twisted.python import log
 
 import cowrie.core.pwd as pwd
 
@@ -23,12 +22,11 @@ import cowrie.core.pwd as pwd
 class CowrieSFTPFile(object):
     """
     """
+    bytesReceived = 0
 
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
-        self.transfer_completed = 0
-        self.bytes_written = 0
 
         try:
             self.bytesReceivedLimit = int(
@@ -70,8 +68,8 @@ class CowrieSFTPFile(object):
     def close(self):
         """
         """
-        if (self.bytes_written > 0):
-            self.sftpserver.fs.update_size(self.filename, self.bytes_written)
+        if (self.bytesReceived > 0):
+            self.sftpserver.fs.update_size(self.filename, self.bytesReceived)
         return self.sftpserver.fs.close(self.fd)
 
 
@@ -84,10 +82,10 @@ class CowrieSFTPFile(object):
     def writeChunk(self, offset, data):
         """
         """
-        self.bytes_written += len(data)
-        if self.bytesReceivedLimit and self.bytes_written > self.bytesReceivedLimit:
+        self.bytesReceived += len(data)
+        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             log.msg(format='Data upload limit reached')
-            raise filetransfer.SFTPError( filetransfer.FX_FAILURE, "Quota exceeded" )
+            raise filetransfer.SFTPError(filetransfer.FX_FAILURE, "Quota exceeded")
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
         self.sftpserver.fs.write(self.fd, data)
 
@@ -277,7 +275,6 @@ class SFTPServerForCowrieUser(object):
     def realPath(self, path):
         """
         """
-        #log.msg("SFTP realPath: %s" % (path,))
         return self.fs.realpath(self._absPath(path))
 
 
