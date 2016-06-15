@@ -32,7 +32,7 @@ class CowrieUser(avatar.ConchUser):
 
         self.channelLookup.update(
             {"session": session.HoneyPotSSHSession,
-             "direct-tcpip": forwarding.CowrieOpenConnectForwardingClient})
+             "direct-tcpip": forwarding.cowrieOpenConnectForwardingClient})
 
         try:
             pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
