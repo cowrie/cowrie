@@ -9,14 +9,12 @@ import os
 
 from zope.interface import implementer
 
-import twisted
+from twisted.python import log
 from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
-from twisted.python import log
 from twisted.conch.ssh.common import getNS
 
 from cowrie.core import protocol
-from cowrie.core import pwd
 from cowrie.insults import insults
 
 
