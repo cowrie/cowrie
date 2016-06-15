@@ -1,8 +1,8 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
+# Copyright (c) 2009-2014 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
 """
-This module contains code for handling SSH forwarding requests
+This module contains code for handling SSH direct-tcpip connection requests
 """
 
 from twisted.python import log
@@ -14,15 +14,6 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     This function will redirect an SSH forward request to a another address
     or will log the request and do nothing
     """
-    cfg = avatar.cfg
-    if cfg.has_option('forward_mapping', 'ports') and \
-            cfg.get('forward_mapping', 'ports').lower() in \
-            ('true', 'yes'):
-        mappedPortsComma = cfg.get('forward_mapping', 'ports').split(',')
-        mappedPorts = [int(x.strip()) for x in mappedPortsComma]
-    else:
-        mappedPorts = []
-
     remoteHP, origHP = forwarding.unpackOpen_direct_tcpip(data)
 
     log.msg(eventid='cowrie.direct-tcpip.request',
@@ -30,19 +21,33 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         dst_ip=remoteHP[0], dst_port=remoteHP[1],
         src_ip=origHP[0], src_port=origHP[1])
 
-    portRule = 'port_{dst_port}'.format(dst_port=remoteHP[1])
-    if remoteHP[1] in mappedPorts \
-            and cfg.has_option('forward_mapping', portRule):
-        newAddr = cfg.get('forward_mapping', portRule)
-        newIp = newAddr.split(':')[0].strip()
-        newPort = int(newAddr.split(':')[1].strip())
-        remoteHPNew = (newIp, newPort)
-        log.msg(eventid='cowrie.direct-tcpip.redirect',
-            format='found custom port, redirecting to %(new_ip)s:%(new_port)s',
-                 new_ip=newIp, new_port=newPort)
-        return forwarding.SSHConnectForwardingChannel(remoteHPNew,
-            remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
-            avatar=avatar)
+    cfg = avatar.cfg
+    try:
+        if cfg.get('honeypot', 'ssh_forward_redirect') == "true":
+            redirectEnabled = True
+        else:
+            redirectEnabled = False
+    except:
+        redirectEnabled = False
+
+    if redirectEnabled:
+        redirects = {}
+        items = cfg.items('honeypot')
+        for i in items:
+            if i[0] == 'forward_redirect_rule':
+                destPort, _HP = i[1].split(',')
+                redirectHP = _HP.split(':')
+                redirects[int(destPort)] = (redirectHP[0], int(redirectHP[1]))
+        if remoteHP[1] in redirects:
+            remoteHPNew = redirects[remoteHP[1]]
+            log.msg(eventid='cowrie.direct-tcpip.redirect',
+                format='redirecting direct-tcp connection request %(src_ip)s:%(src_port)d->%(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
+                    new_ip=remoteHPNew[0], new_port=remoteHPNew[1],
+                    dst_ip=remoteHP[0], dst_port=remoteHP[1],
+                    src_ip=origHP[0], src_port=origHP[1])
+            return forwarding.SSHConnectForwardingChannel(remoteHPNew,
+                remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
+                avatar=avatar)
 
     return CowrieConnectForwardingChannel(remoteHP,
            remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,

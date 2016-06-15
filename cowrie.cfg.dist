@@ -229,6 +229,21 @@ dsa_private_key = data/ssh_host_dsa_key
 sftp_enabled = true
 
 
+# SSH forwarding
+# Useful for forwarding protocols to other honeypots
+
+# This enables redirecting forwarding requests to another address
+ssh_forward_redirect = false
+# (default: false)
+
+# forward_redirect_rule = <portnumber>,<redirect ip>:<redirect port>
+forward_redirect_rule = 80,127.0.0.1:8080
+forward_redirect_rule = 443,127.0.0.1:8443
+# If you want to record SMTP traffic, install SMTP honeypoint.
+# (e.g https://github.com/awhitehatter/mailoney), run
+# python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
+forward_redirect_rule = 25,127.0.0.1:12525
+forward_redirect_rule = 587,127.0.0.1:12525
 
 # ============================================================================
 # Database logging Specific Options
@@ -362,21 +377,3 @@ logfile = log/cowrie.json
 #api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 #
 
-# Port forward mapping.
-#
-# Mapped port will be realy forwarded to new address
-# Useful for forwarding some protocols to other honeypots
-#
-[forward_mapping]
-# Comma separated port list
-ports = no
-# ports = 80,443,25,587
-port_80 = 127.0.0.1:8080
-port_443 = 127.0.0.1:8443
-# If you want to record SMTP traffic, install SMTP honeypoint.
-# (e.g https://github.com/awhitehatter/mailoney), run
-# python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
-# uncomment
-# ports = 25,587
-port_25 = 127.0.0.1:12525
-port_587 = 127.0.0.1:12525
