@@ -10,7 +10,7 @@ from twisted.python import failure, log
 
 from twisted.internet import error, reactor
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 from cowrie.core.auth import UserDB
 from cowrie.core import utils
 
@@ -483,8 +483,20 @@ class command_sh(HoneyPotCommand):
         """
         """
         if len(self.args) and self.args[0].strip() == '-c':
-            self.protocol.cmdstack[0].cmdpending.append(
-                ' '.join(self.args[1:]))
+            line = ' '.join(self.args)
+            cmd = self.args[1]
+            cmdclass = self.protocol.getCommand(cmd,
+                                                self.environ['PATH'].split(':'))
+            if cmdclass:
+                log.msg(eventid='cowrie.command.success',
+                        input=line,
+                        format='Command found: %(input)s')
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[2:],self.input_data,None)
+                self.protocol.pp.insert_command(command)
+                # Place this here so it doesn't write out only if last statement
+
+                if self.input_data:
+                    self.write(self.input_data)
 commands['/bin/bash'] = command_sh
 commands['/bin/sh'] = command_sh
 
