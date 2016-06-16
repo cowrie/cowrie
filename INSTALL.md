@@ -83,7 +83,7 @@ $ ./start.sh v2
 Starting cowrie in the background...
 ```
 
-Cowry runs by default on port 2222. This can be modified in the configuration file.
+Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
 
 ```
