@@ -62,5 +62,7 @@ class Output(cowrie.core.output.Output):
         if self.format == 'cef':
             self.syslog.emit(cowrie.core.cef.formatCef(logentry))
         else:
+            # message appears with additional spaces if message key is defined
+            logentry['message'] = None
             self.syslog.emit(logentry)
 
