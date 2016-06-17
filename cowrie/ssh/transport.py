@@ -145,10 +145,11 @@ class HoneyPotSSHFactory(factory.SSHFactory):
             ske = t.supportedKeyExchanges[:]
             if 'diffie-hellman-group-exchange-sha1' in ske:
                 ske.remove('diffie-hellman-group-exchange-sha1')
+                log.msg("No moduli, no diffie-hellman-group-exchange-sha1")
             if 'diffie-hellman-group-exchange-sha256' in ske:
                 ske.remove('diffie-hellman-group-exchange-sha256')
+                log.msg("No moduli, no diffie-hellman-group-exchange-sha256")
             t.supportedKeyExchanges = ske
-            log.msg("No moduli, disabled diffie-hellman-group-exchange-sha1")
 
         # Reorder supported ciphers to resemble current openssh more
         t.supportedCiphers = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr',

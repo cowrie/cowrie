@@ -39,7 +39,7 @@ Software required:
 
 ```
 apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
-        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress
+        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
 pip install enum34
 ```
 
