@@ -25,10 +25,10 @@ then
     . $VENV/bin/activate
 fi
 
-echo "Starting cowrie in the background..."
+echo "Starting cowrie with extra arguments [$XARGS] ..."
 if [ $AUTHBIND_ENABLED = "no" ]
 then
-    twistd -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
+    twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
 else
-    authbind --deep twistd -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
+    authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
 fi
