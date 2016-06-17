@@ -497,6 +497,12 @@ class command_sh(HoneyPotCommand):
 
                 if self.input_data:
                     self.write(self.input_data)
+            else:
+                log.msg(eventid='cowrie.command.failed',
+                        input=''.join(cmd), format='Command not found: %(input)s')
+                self.write('bash: %s: command not found\n' % (cmd))
+
+
 commands['/bin/bash'] = command_sh
 commands['/bin/sh'] = command_sh
 
