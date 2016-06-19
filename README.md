@@ -26,22 +26,14 @@ Additional functionality over standard kippo:
 
 Software required:
 
-* An operating system (tested on Debian, CentOS, FreeBSD and Windows 7)
 * Python 2.7+
+* Zope Interface 3.6.0+
 * Twisted 8.0+
+* python-crypto
 * python-cryptography
 * python-pyasn1
 * python-gmpy2 (recommended)
 * python-mysqldb (for MySQL output)
-* Zope Interface 3.6.0+
-
-### Example requirements in alpine 3.4
-
-```
-apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
-        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
-pip install enum34
-```
 
 ## Files of interest:
 

@@ -14,6 +14,14 @@ Install prerequisites on RedHat based systems:
 $ sudo yum install <tbd> <tbd> <tbd>
 ```
 
+Install prerequisites on Alpine based systems:
+
+```
+$ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
+        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
+$ sudo pip install enum34
+```
+
 ## Install with Python Virtual Environments
 
 On Debian based systems:
