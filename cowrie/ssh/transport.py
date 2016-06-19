@@ -143,9 +143,13 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
         if not self.primes:
             ske = t.supportedKeyExchanges[:]
-            ske.remove('diffie-hellman-group-exchange-sha1')
+            if 'diffie-hellman-group-exchange-sha1' in ske:
+                ske.remove('diffie-hellman-group-exchange-sha1')
+                log.msg("No moduli, no diffie-hellman-group-exchange-sha1")
+            if 'diffie-hellman-group-exchange-sha256' in ske:
+                ske.remove('diffie-hellman-group-exchange-sha256')
+                log.msg("No moduli, no diffie-hellman-group-exchange-sha256")
             t.supportedKeyExchanges = ske
-            log.msg("No moduli, disabled diffie-hellman-group-exchange-sha1")
 
         # Reorder supported ciphers to resemble current openssh more
         t.supportedCiphers = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr',
@@ -312,4 +316,3 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
             log.msg('[SERVER] - Disconnecting with error, code %s\nreason: %s'
                 % (reason, desc))
             self.transport.loseConnection()
-
