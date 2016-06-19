@@ -2,6 +2,7 @@
 # See the COPYRIGHT file for more information
 
 import stat
+import getopt
 import time
 
 from cowrie.core.honeypot import HoneyPotCommand
@@ -38,19 +39,25 @@ class command_ls(HoneyPotCommand):
         """
         path = self.protocol.cwd
         paths = []
-        if len(self.args):
-            for arg in self.args:
-                if not arg.startswith('-'):
-                    paths.append(self.protocol.fs.resolve_path(arg,
-                        self.protocol.cwd))
-
-        self.show_hidden = False
+        self.showHidden = False
         func = self.do_ls_normal
-        for x in self.args:
-            if x.startswith('-') and x.count('l'):
+
+        # Parse options or display no files
+        try:
+            opts, args = getopt.gnu_getopt(self.args, '1@ABCFGHLOPRSTUWabcdefghiklmnopqrstuvwx', ['help', 'version', 'param'])
+        except getopt.GetoptError as err:
+            self.write("ls: {}\n".format(err))
+            self.write("Try 'ls --help' for more information.\n")
+            return
+
+        for x, a in opts:
+            if x in ('-l'):
                 func = self.do_ls_l
-            if x.startswith('-') and x.count('a'):
-                self.show_hidden = True
+            if x in ('-a'):
+                self.showHidden = True
+
+        for arg in args:
+            paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
 
         if not paths:
             func(path)
@@ -70,8 +77,8 @@ class command_ls(HoneyPotCommand):
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
         l = [x[A_NAME] for x in files \
-            if self.show_hidden or not x[A_NAME].startswith('.')]
-        if self.show_hidden:
+            if self.showHidden or not x[A_NAME].startswith('.')]
+        if self.showHidden:
             l.insert(0, '..')
             l.insert(0, '.')
         if not l:
@@ -104,7 +111,7 @@ class command_ls(HoneyPotCommand):
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
 
-        if self.show_hidden:
+        if self.showHidden:
             # FIXME: should grab dotdot off the parent instead
             dot = self.protocol.fs.getfile(path)[:]
             dot[A_NAME] = '.'
@@ -120,7 +127,7 @@ class command_ls(HoneyPotCommand):
             largest = max([x[A_SIZE] for x in files])
 
         for file in files:
-            if file[A_NAME].startswith('.') and not self.show_hidden:
+            if file[A_NAME].startswith('.') and not self.showHidden:
                 continue
 
             perms = ['-'] * 10
