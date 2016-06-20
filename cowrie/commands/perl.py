@@ -34,6 +34,7 @@ class command_perl(HoneyPotCommand):
             self.write(l + '\n')
         self.exit()
 
+
     def help(self):
         output = (
             '',
@@ -71,6 +72,7 @@ class command_perl(HoneyPotCommand):
         for l in output:
             self.write(l + '\n')
 
+
     def start(self):
         """
         """
@@ -104,13 +106,15 @@ class command_perl(HoneyPotCommand):
         if not len(self.args):
             pass
 
+
     def lineReceived(self, line):
         """
         """
-        log.msg(eventid='cowrie.session.file_download',
+        log.msg(eventid='cowrie.command.success',
                 realm='perl',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
+
 
     def handle_CTRL_D(self):
         """
