@@ -92,7 +92,7 @@ class command_service(HoneyPotCommand):
         """
         """
         try:
-            opts, args = getopt.gnu_getopt(self.args, 'BdEhiORsStuvVx3c:m:Q:W:', ['help', 'status-all', 'full-restart'])
+            opts, args = getopt.gnu_getopt(self.args, '', ['help', 'status-all', 'full-restart'])
         except getopt.GetoptError as err:
             self.help()
             self.exit()
@@ -119,6 +119,7 @@ class command_service(HoneyPotCommand):
         leviathan@ubuntu:~$ sudo service ufw start
         leviathan@ubuntu:~$
         """
+        self.exit()
         return
 
 
