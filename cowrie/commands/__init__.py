@@ -20,6 +20,7 @@ __all__ = [
     'nohup',
     'ping',
     'scp',
+    'service',
     'sleep',
     'ssh',
     'sudo',
