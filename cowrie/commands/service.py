@@ -101,18 +101,10 @@ class command_service(HoneyPotCommand):
         # Parse options
         print(opts)
         for o, a in opts:
-            if o in ("--help"):
+            if o in ("--help") or o in ('-h'):
                 self.help()
-                self.exit()
-                return
-            elif o in ('-h'):
-                self.help()
-                self.exit()
-                return
             elif o in ('--status-all'):
                 self.status_all()
-                self.exit()
-                return
         """
         Ubuntu shows no response when stopping, starting
         leviathan@ubuntu:~$ sudo service ufw stop
@@ -121,21 +113,6 @@ class command_service(HoneyPotCommand):
         """
         self.exit()
         return
-
-
-    def lineReceived(self, line):
-        """
-        """
-        log.msg(eventid='cowrie.command.success',
-                realm='service',
-                input=line,
-                format='INPUT (%(realm)s): %(input)s')
-
-
-    def handle_CTRL_D(self):
-        """
-        """
-        self.exit()
 
 
 commands['service'] = command_service
