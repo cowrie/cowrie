@@ -236,14 +236,14 @@ sftp_enabled = true
 ssh_forward_redirect = false
 # (default: false)
 
-# forward_redirect_rule = <portnumber>,<redirect ip>:<redirect port>
-forward_redirect_rule = 80,127.0.0.1:8080
-forward_redirect_rule = 443,127.0.0.1:8443
+# forward_redirect_<portnumber> = <redirect ip>:<redirect port>
+forward_redirect_80 = 127.0.0.1:8080
+forward_redirect_443 = 127.0.0.1:8443
 # If you want to record SMTP traffic, install SMTP honeypoint.
 # (e.g https://github.com/awhitehatter/mailoney), run
 # python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
-forward_redirect_rule = 25,127.0.0.1:12525
-forward_redirect_rule = 587,127.0.0.1:12525
+forward_redirect_25 = 127.0.0.1:12525
+forward_redirect_587 = 127.0.0.1:12525
 
 # ============================================================================
 # Database logging Specific Options

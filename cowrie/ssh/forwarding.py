@@ -34,9 +34,9 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         redirects = {}
         items = cfg.items('honeypot')
         for i in items:
-            if i[0] == 'forward_redirect_rule':
-                destPort, _HP = i[1].split(',')
-                redirectHP = _HP.split(':')
+            if i[0].startswith('forward_redirect'):
+                destPort = i[0].split('_')[-1]
+                redirectHP = i[1].split(':')
                 redirects[int(destPort)] = (redirectHP[0], int(redirectHP[1]))
         if remoteHP[1] in redirects:
             remoteHPNew = redirects[remoteHP[1]]
