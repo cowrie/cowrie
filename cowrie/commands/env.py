@@ -32,21 +32,11 @@ For complete documentation, run: info coreutils 'env invocation'
 class command_env(HoneyPotCommand):
     """
     """
-
-    def done(self):
-        """
-        """
-        self.exit()
-
-
-    def start(self):
+    def call(self):
         """
         """
         for i in list(self.environ.keys()):
             self.write("%s=%s\n" % (i,self.environ[i]))
-        self.exit()
 
 
 commands['/usr/bin/env'] = command_env
-
-# vim: set sw=4 et tw=0:
