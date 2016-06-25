@@ -5,9 +5,11 @@
 This module contains the service commnad
 """
 
-from cowrie.core.honeypot import HoneyPotCommand
 import getopt
+
 from twisted.python import log
+
+from cowrie.core.honeypot import HoneyPotCommand
 
 commands = {}
 
@@ -84,25 +86,29 @@ class command_service(HoneyPotCommand):
 
 
     def help(self):
+        """
+        """
         output = 'Usage: service < option > | --status-all | [ service_name [ command | --full-restart ] ]'
         self.write(output + '\n')
 
 
-    def start(self):
+    def call(self):
         """
         """
         try:
-            opts, args = getopt.gnu_getopt(self.args, '', ['help', 'status-all', 'full-restart'])
+            opts, args = getopt.gnu_getopt(self.args, 'h', ['help', 'status-all', 'full-restart'])
         except getopt.GetoptError as err:
             self.help()
-            self.exit()
             return
 
-        # Parse options
-        print(opts)
+        if not opts and not args: 
+            self.help()
+            return
+
         for o, a in opts:
             if o in ("--help") or o in ('-h'):
                 self.help()
+                return
             elif o in ('--status-all'):
                 self.status_all()
         """
@@ -111,10 +117,8 @@ class command_service(HoneyPotCommand):
         leviathan@ubuntu:~$ sudo service ufw start
         leviathan@ubuntu:~$
         """
-        self.exit()
         return
 
 
-commands['service'] = command_service
+commands['/usr/sbin/service'] = command_service
 
-# vim: set sw=4 et tw=0:
