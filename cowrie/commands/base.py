@@ -380,7 +380,10 @@ class command_shutdown(HoneyPotCommand):
         self.protocol.cwd = '/root'
         if not self.fs.exists(self.protocol.cwd):
             self.protocol.cwd = '/'
-        self.exit()
+        stat = failure.Failure(error.ProcessDone(status=""))
+        self.protocol.terminal.transport.processEnded(stat)
+
+
 commands['/sbin/shutdown'] = command_shutdown
 commands['/sbin/poweroff'] = command_shutdown
 commands['/sbin/reboot'] = command_shutdown
