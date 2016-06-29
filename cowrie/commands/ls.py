@@ -70,17 +70,27 @@ class command_ls(HoneyPotCommand):
         """
         """
         try:
-            files = self.protocol.fs.get_path(path)
-            files.sort()
+            if self.protocol.fs.isdir(path):
+                files = self.protocol.fs.get_path(path)[:]
+                if self.showHidden:
+                    dot = self.protocol.fs.getfile(path)[:]
+                    dot[A_NAME] = '.'
+                    files.append(dot)
+                    # FIXME: should grab dotdot off the parent instead
+                    dotdot = self.protocol.fs.getfile(path)[:]
+                    dotdot[A_NAME] = '..'
+                    files.append(dotdot)
+                else:
+                    files = [x for x in files if not x[A_NAME].startswith('.')]
+                files.sort()
+            else:
+                files = (self.protocol.fs.getfile(path)[:],)
         except:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
-        l = [x[A_NAME] for x in files \
-            if self.showHidden or not x[A_NAME].startswith('.')]
-        if self.showHidden:
-            l.insert(0, '..')
-            l.insert(0, '.')
+
+        l = [x[A_NAME] for x in files]
         if not l:
             return
         count = 0
@@ -105,22 +115,25 @@ class command_ls(HoneyPotCommand):
         """
         """
         try:
-            files = self.protocol.fs.get_path(path)[:]
+            if self.protocol.fs.isdir(path):
+                files = self.protocol.fs.get_path(path)[:]
+                if self.showHidden:
+                    dot = self.protocol.fs.getfile(path)[:]
+                    dot[A_NAME] = '.'
+                    files.append(dot)
+                    # FIXME: should grab dotdot off the parent instead
+                    dotdot = self.protocol.fs.getfile(path)[:]
+                    dotdot[A_NAME] = '..'
+                    files.append(dotdot)
+                else:
+                    files = [x for x in files if not x[A_NAME].startswith('.')]
+                files.sort()
+            else:
+                files = (self.protocol.fs.getfile(path)[:],)
         except:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
-
-        if self.showHidden:
-            # FIXME: should grab dotdot off the parent instead
-            dot = self.protocol.fs.getfile(path)[:]
-            dot[A_NAME] = '.'
-            files.append(dot)
-            dotdot = self.protocol.fs.getfile(path)[:]
-            dotdot[A_NAME] = '..'
-            files.append(dotdot)
-
-        files.sort()
 
         largest = 0
         if len(files):
