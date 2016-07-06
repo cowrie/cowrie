@@ -34,6 +34,7 @@ Software required:
 * python-pyasn1
 * python-gmpy2 (recommended)
 * python-mysqldb (for MySQL output)
+* python-OpenSSL
 
 ## Files of interest:
 
