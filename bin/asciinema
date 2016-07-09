@@ -62,10 +62,17 @@ def playlog(fd, settings):
                 if settings['colorify'] and color:
                     sys.stdout.write(color)
 
+                # rtrox: While playback works properly
+                #        with the asciinema client, upload
+                #        causes mangling of the data due to
+                #        newlines being misinterpreted without
+                #        carriage returns.
+                data = data.replace("\n", "\r\n")
+
                 thedata = [sleeptime, data]
                 thelog['duration'] = curtime
                 stdout.append(thedata)
-                
+
                 if settings['colorify'] and color:
                     sys.stdout.write(COLOR_RESET)
                     color = None
