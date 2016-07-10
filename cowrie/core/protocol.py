@@ -88,9 +88,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def timeoutConnection(self):
         """
-	this logs out when connection times out
+        this logs out when connection times out
         """
-        self.terminal.write( 'timed out waiting for input: auto-logout\n' )
         ret = failure.Failure(error.ProcessTerminated(exitCode=1))
         self.terminal.transport.processEnded(ret)
 
@@ -115,7 +114,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.fs = None
         self.cfg = None
         self.user = None
-        log.msg( "honeypot terminal protocol connection lost %s" % reason)
+        log.msg("honeypot terminal protocol connection lost {}".format(reason))
 
 
     def txtcmd(self, txt):
@@ -123,7 +122,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         class command_txtcmd(honeypot.HoneyPotCommand):
             def call(self):
-                log.msg('Reading txtcmd from "%s"' % txt)
+                log.msg('Reading txtcmd from "{}"'.format(txt))
                 with open(txt, 'r') as f:
                     self.write(f.read())
         return command_txtcmd
@@ -195,6 +194,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.execcmd = execcmd
         HoneyPotBaseProtocol.__init__(self, avatar)
 
+
     def connectionMade(self):
         """
         """
@@ -207,7 +207,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
 
 
-
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
     """
     """
@@ -215,6 +214,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
         HoneyPotBaseProtocol.__init__(self, avatar)
+
 
     def connectionMade(self):
         """
@@ -256,6 +256,14 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             pass
 
 
+    def timeoutConnection(self):
+        """
+        this logs out when connection times out
+        """
+        self.terminal.write( 'timed out waiting for input: auto-logout\n' )
+        HoneypotBaseProtocol.timeoutConnection()
+
+
     def lastlogExit(self):
         """
         """
@@ -264,8 +272,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         endtime = time.strftime('%H:%M',
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
-        with open( '%s/lastlog.txt' % self.cfg.get('honeypot',
-            'data_path'), 'a') as f:
+        with open( '%s/lastlog.txt' % (self.cfg.get('honeypot',
+            'data_path'),), 'a') as f:
             f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
                 (self.clientIP, starttime, endtime, duration))
 
@@ -296,8 +304,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.pp = pp
         self.setTypeoverMode()
         HoneyPotBaseProtocol.call_command(self, pp,cmd, *args)
-
-
 
 
     def characterReceived(self, ch, moreCharactersComing):
