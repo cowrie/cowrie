@@ -36,16 +36,16 @@ $ sudo yum install virtualenv
 Create a virtual environment
 
 ```
-$ virtualenv v2
-New python executable in ./cowrie/v2/bin/python
+$ virtualenv cowrie-env
+New python executable in ./cowrie/cowrie-env/bin/python
 Installing setuptools, pip, wheel...done.
 ```
 
 Activate the virtual environment and install packages
 
 ```
-$ source v2/bin/activate
-(v2) $ pip install twisted cryptography pyopenssl gmpy2
+$ source cowrie-env/bin/activate
+(cowrie-env) $ pip install twisted cryptography pyopenssl gmpy2
 ```
 
 ## Add a user
@@ -87,7 +87,7 @@ Starting cowrie in the background...
 When using Python Virtual Environments you can add the name of the venv as the first argument
 
 ```
-$ ./start.sh v2
+$ ./start.sh cowrie-env
 Starting cowrie in the background...
 ```
 
