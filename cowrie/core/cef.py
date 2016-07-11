@@ -94,7 +94,7 @@ def formatCef(logentry):
 
     cefList = []
     for key in cefExtensions.keys():
-        value = str(cefExtensions[key]).replace(' ', '\ ')
+        value = str(cefExtensions[key]).replace(' ', r'\ ')
         cefList.append(key+"="+value)
     cefExtension = ' '.join(cefList)
 

@@ -39,7 +39,7 @@ class command_perl(HoneyPotCommand):
         output = (
             '',
             'Usage: perl [switches] [--] [programfile] [arguments]',
-            '  -0[octal]         specify record separator (\0, if no argument)',
+            '  -0[octal]         specify record separator (\\0, if no argument)',
             '  -a                autosplit mode with -n or -p (splits $_ into @F)',
             '  -C[number/list]   enables the listed Unicode features',
             '  -c                check syntax only (runs BEGIN and CHECK blocks)',

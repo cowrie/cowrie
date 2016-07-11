@@ -166,9 +166,9 @@ pages for more information and options.
     def do_moo(self):
         self.write('         (__)\n')
         self.write('         (oo)\n')
-        self.write('   /------\/\n')
+        self.write('   /------\\/\n')
         self.write('  / |    ||\n')
-        self.write(' *  /\---/\ \n')
+        self.write(' *  /\\---/\\ \n')
         self.write('    ~~   ~~\n')
         self.write('...."Have you mooed today?"...\n')
         self.exit()

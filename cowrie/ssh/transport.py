@@ -176,7 +176,7 @@ class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transportId = uuid.uuid4().hex[:8]
 
         src_ip = self.transport.getPeer().host
-        ipv4rex = re.compile( '^::ffff:(\d+\.\d+\.\d+\.\d+)$')
+        ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
         ipv4_search = ipv4rex.search(src_ip)
         if ipv4_search != None:
             src_ip = ipv4_search.group(1)

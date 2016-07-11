@@ -21,7 +21,7 @@ class DBLogger(object):
         self.ttylogs = {}
         #:* Handles ipv6 
         self.re_sessionlog = re.compile(
-            '.*HoneyPotTransport,([0-9]+),[:a-f0-9.]+$')
+            r'.*HoneyPotTransport,([0-9]+),[:a-f0-9.]+$')
 
         # cowrie.session.connect is special since it kicks off new logging session,
         # and is not handled here

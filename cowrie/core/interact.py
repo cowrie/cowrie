@@ -25,7 +25,7 @@ class Interact(telnet.Telnet):
 
         # Someone tell me if i'm doing this wrong?
         d = self.do(telnet.LINEMODE)
-        self.requestNegotiation(telnet.LINEMODE, telnet.LINEMODE_EDIT + '\0')
+        self.requestNegotiation(telnet.LINEMODE, telnet.LINEMODE_EDIT + '\x00')
         self.will(telnet.ECHO)
 
         self.transport.write('*** cowrie session management console ***\r\n')
