@@ -28,6 +28,8 @@ class HoneyPotCommand(object):
         self.fs = self.protocol.fs
         self.data = None
         self.input_data = None
+        self.write = self.protocol.pp.outReceived
+        self.errorWrite = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if '>' in self.args:
@@ -46,25 +48,22 @@ class HoneyPotCommand(object):
             self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)
             with open(self.safeoutfile, 'a'):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
-        else:
-            self.write = self.protocol.pp.outReceived
-            self.errorWrite = self.protocol.pp.errReceived
 
 
-    def check_arguments(self,application,args):
+    def check_arguments(self, application, args):
         """
         """
         files = []
         for arg in args:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if self.fs.isdir(path):
-                self.errorWrite("%s: error reading `%s': Is a directory\n" % (application,arg,))
+                self.errorWrite("{}: error reading `{}': Is a directory\n".format(application, arg))
                 continue
             files.append(path)
         return files
 
 
-    def set_input_data(self,data):
+    def set_input_data(self, data):
         """
         """
         self.input_data = data
@@ -115,7 +114,7 @@ class HoneyPotCommand(object):
     def lineReceived(self, line):
         """
         """
-        log.msg('QUEUED INPUT: %s' % (line,))
+        log.msg('QUEUED INPUT: {}'.format(line))
         # FIXME: naive command parsing, see lineReceived below
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line))
 
@@ -152,14 +151,14 @@ class HoneyPotShell(object):
         self.interactive = interactive
         self.cmdpending = []
         self.environ = protocol.environ
-        # self.lexer.debug = 1
+        self.lexer = None
         self.showPrompt()
 
 
     def lineReceived(self, line):
         """
         """
-        log.msg('CMD: %s' % (line,))
+        log.msg('CMD: {}'.format(line))
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []
         while True:
@@ -184,20 +183,20 @@ class HoneyPotShell(object):
                 elif tok == '$?':
                     tok = "0"
                 elif tok[0] == '$':
-                    env_rex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
-                    env_search = env_rex.search(tok)
-                    if env_search != None:
-                        env_match = env_search.group(1)
-                        if env_match in list(self.environ.keys()):
-                            tok = self.environ[env_match]
+                    envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
+                    envSearch = envRex.search(tok)
+                    if envSearch != None:
+                        envMatch = envSearch.group(1)
+                        if envMatch in list(self.environ.keys()):
+                            tok = self.environ[envMatch]
                         else:
                             continue
-                    env_rex = re.compile(r'^\${([_a-zA-Z0-9]+)}$')
-                    env_search = env_rex.search(tok)
-                    if env_search != None:
-                        env_match = env_search.group(1)
-                        if env_match in list(self.environ.keys()):
-                            tok = self.environ[env_match]
+                    envRex = re.compile(r'^\${([_a-zA-Z0-9]+)}$')
+                    envSearch = envRex.search(tok)
+                    if envSearch != None:
+                        envMatch = envSearch.group(1)
+                        if envMatch in list(self.environ.keys()):
+                            tok = self.environ[envMatch]
                         else:
                             continue
                 tokens.append(tok)
@@ -276,7 +275,7 @@ class HoneyPotShell(object):
 
             # Gather all arguments with pipes
 
-            for index,pipe_indice in enumerate(pipe_indices):
+            for index, pipe_indice in enumerate(pipe_indices):
                 multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
                 start = pipe_indice+1
 
@@ -284,7 +283,7 @@ class HoneyPotShell(object):
             cmd_array.append(cmd)
             cmd = {}
 
-            for index,value in enumerate(multipleCmdArgs):
+            for index, value in enumerate(multipleCmdArgs):
                 cmd['command'] = value.pop(0)
                 cmd['rargs'] = parsed_arguments(value)
                 cmd_array.append(cmd)
@@ -292,7 +291,7 @@ class HoneyPotShell(object):
 
             lastpp = None
             exit = False
-            for index,cmd in reversed(list(enumerate(cmd_array))):
+            for index, cmd in reversed(list(enumerate(cmd_array))):
                 if cmd['command'] == "exit":
                     exit = True
 
@@ -300,10 +299,10 @@ class HoneyPotShell(object):
                 if cmdclass:
                     log.msg(eventid='cowrie.command.success', input=cmd['command'] + "  " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
                     if index == len(cmd_array)-1:
-                        lastpp =  StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,None)
+                        lastpp =  StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None)
                         pp = lastpp
                     else:
-                        pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmd['rargs'],None,lastpp)
+                        pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, lastpp)
                         lastpp = pp
                 else:
                     log.msg(eventid='cowrie.command.failed',
@@ -311,7 +310,7 @@ class HoneyPotShell(object):
                     self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
                     runOrPrompt()
             if pp:
-                self.protocol.call_command(pp,cmdclass,*cmd_array[0]['rargs'])
+                self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
                 if not exit:
                     runOrPrompt()
 
@@ -332,7 +331,7 @@ class HoneyPotShell(object):
         # Example: srv03:~#
         #prompt = '%s:%%(path)s' % self.protocol.hostname
         # Example: root@svr03:~#     (More of a "Debianu" feel)
-        prompt = '%s@%s:%%(path)s' % (self.protocol.user.username, self.protocol.hostname,)
+        prompt = '%s@%s:%%(path)s' % (self.protocol.user.username, self.protocol.hostname)
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
         #prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
         if not self.protocol.user.uid:
@@ -382,8 +381,8 @@ class HoneyPotShell(object):
         log.msg('Received CTRL-D, exiting..')
 
         cmdclass =  self.protocol.commands['exit']
-        pp = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,None,None,None)
-        self.protocol.call_command(pp,self.protocol.commands['exit'])
+        pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
+        self.protocol.call_command(pp, self.protocol.commands['exit'])
 
 
     def handle_TAB(self):
@@ -469,9 +468,9 @@ class StdOutStdErrEmulationProtocol(object):
     __author__ = 'davegermiquet'
 
     def __init__(self, protocol, cmd, cmdargs, input_data, next_command):
-        self.cmd=cmd
-        self.cmdargs=cmdargs
-        self.input_data=input_data
+        self.cmd = cmd
+        self.cmdargs = cmdargs
+        self.input_data = input_data
         self.next_command = next_command
         self.data = ""
         self.err_data = ""
@@ -536,12 +535,12 @@ class StdOutStdErrEmulationProtocol(object):
     def processExited(self, reason):
         """
         """
-        log.msg("processExited for %s, status %d" % (self.cmd,reason.value.exitCode,))
+        log.msg("processExited for %s, status %d" % (self.cmd, reason.value.exitCode))
 
 
     def processEnded(self, reason):
         """
         """
-        log.msg("processEnded for %s, status %d" % (self.cmd,reason.value.exitCode,))
+        log.msg("processEnded for %s, status %d" % (self.cmd, reason.value.exitCode))
 
 
