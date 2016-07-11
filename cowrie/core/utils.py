@@ -8,6 +8,7 @@ This module contains ...
 
 def durationHuman(seconds):
     """
+    Turn number of seconds into human readable string
     """
     seconds = long(round(seconds))
     minutes, seconds = divmod(seconds, 60)
@@ -23,16 +24,16 @@ def durationHuman(seconds):
 
     duration = []
     if years > 0:
-        duration.append('%s year' % syears + 's'*(years != 1) + ' ')
+        duration.append('{} year'.format(syears) + 's'*(years != 1) + ' ')
     else:
         if days > 0:
-            duration.append('%s day' % sdays + 's'*(days != 1) + ' ')
+            duration.append('{} day'.format(days) + 's'*(days != 1) + ' ')
         if hours > 0:
-            duration.append('%s:' % shours)
+            duration.append('{}:'.format(shours))
         if minutes >= 0:
-            duration.append('%s:' % sminutes)
+            duration.append('{}:'.format(sminutes))
         if seconds >= 0:
-            duration.append('%s' % sseconds)
+            duration.append('{}'.format(sseconds))
 
     return ''.join(duration)
 
@@ -85,6 +86,6 @@ def uptime(total_seconds):
     if len(s) > 0 or hours > 0:
         s += '%s:%s' % (str(hours).rjust(2), str(minutes).rjust(2, '0'))
     else:
-        s += '%s min' % (str(minutes))
+        s += '{} min'.format(str(minutes))
     return s
 
