@@ -1,3 +1,4 @@
+# -*- test-case-name: cowrie.test.protocol -*-
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
@@ -8,21 +9,19 @@ This module contains ...
 import os
 import time
 import socket
-import hashlib
 
 from twisted.python import failure, log
 from twisted.internet import error
 from twisted.protocols.policies import TimeoutMixin
 from twisted.conch import recvline
-from twisted.conch.ssh import session
 from twisted.conch.insults import insults
 
 from cowrie.core import honeypot
-from cowrie.core import ttylog
 from cowrie.core import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
+    Base protocol for interactive and non-interactive use
     """
 
     def __init__(self, avatar):
@@ -32,6 +31,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.hostname = avatar.server.hostname
         self.fs = avatar.server.fs
         self.pp = None
+        self.logintime = None
+        self.realClientIP = None
+        self.realClientPort = None
+        self.clientVersion = None
+        self.kippoIP = None
+        self.clientIP = None
+
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
         else:
@@ -50,6 +56,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def logDispatch(self, *msg, **args):
         """
+        Send log directly to factory, avoiding normal log dispatch
         """
         transport = self.terminal.transport.session.conn.transport
         args['sessionno'] = transport.transport.sessionno
@@ -160,13 +167,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def lineReceived(self, line):
         """
+        Line Received
         """
         self.resetTimeout()
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
 
 
-    def call_command(self, pp,cmd, *args):
+    def call_command(self, pp, cmd, *args):
         """
         """
         self.pp = pp
@@ -179,6 +187,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def uptime(self):
         """
+        Uptime
         """
         transport = self.terminal.transport.session.conn.transport
         r = time.time() - transport.factory.starttime
@@ -261,7 +270,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         this logs out when connection times out
         """
         self.terminal.write( 'timed out waiting for input: auto-logout\n' )
-        HoneypotBaseProtocol.timeoutConnection()
+        HoneyPotBaseProtocol.timeoutConnection()
 
 
     def lastlogExit(self):
@@ -298,12 +307,12 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.setInsertMode()
 
 
-    def call_command(self, pp,cmd, *args):
+    def call_command(self, pp, cmd, *args):
         """
         """
         self.pp = pp
         self.setTypeoverMode()
-        HoneyPotBaseProtocol.call_command(self, pp,cmd, *args)
+        HoneyPotBaseProtocol.call_command(self, pp, cmd, *args)
 
 
     def characterReceived(self, ch, moreCharactersComing):
