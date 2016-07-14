@@ -4,7 +4,7 @@
 # This program creates a cowrie file system pickle file.
 #
 # This is meant to build a brand new filesystem.
-# To edit the file structure, please use './utils/fsctl.py'
+# To edit the file structure, please use 'bin/fsctl'
 #
 ##############################################################
 
@@ -20,8 +20,7 @@ VERBOSE = False
 
 blacklist_files = [
             '/root/fs.pickle',
-            '/root/createfs.py',
-            '/root/.bash_history',
+            '/root/createfs',
             '*cowrie*',
             '*kippo*',
             ]

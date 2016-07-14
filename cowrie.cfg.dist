@@ -55,7 +55,7 @@ contents_path = honeyfs
 # File in the python pickle format containing the virtual filesystem.
 #
 # This includes the filenames, paths, permissions for the Cowrie filesystem,
-# but not the file contents. This is created by the createfs.py utility from
+# but not the file contents. This is created by the bin/createfs utility from
 # a real template linux installation.
 #
 # (default: fs.pickle)

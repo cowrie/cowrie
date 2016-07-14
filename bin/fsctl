@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
 ################################################################
-# This program creates a command line interpreter used to edit
+# This is a command line interpreter used to edit
 # cowrie file system pickle files.
 #
 # It is intended to mimic a basic bash shell and supports
 # relative file references.
 #
 # Do not use to build a complete file system. Use:
-# /opt/cowrie/utils/createfs.py
+# /opt/cowrie/bin/createfs
+#
 # Instead it should be used to edit existing file systems
 # such as the default: /opt/cowrie/data/fs.pickle.
 #
 # Donovan Hubbard
 # Douglas Hubbard
 # March 2013
-#
 ################################################################
 
 import os, pickle, sys, locale, time, cmd
@@ -639,7 +639,7 @@ class fseditCmd(cmd.Cmd):
             "gets a new client, it reads from the pickle file and loads " + \
             "the fake file system into memory. By default this file " + \
             "is /opt/cowrie/data/fs.pickle. Originally the script " + \
-            "/opt/cowrie/createfs.py was used to copy the file system " + \
+            "/opt/cowrie/bin/createfs was used to copy the file system " + \
             "of the existing computer. However, it quite difficult to " + \
             "edit the pickle file by hand.\n\nThis script strives to be " + \
             "a bash-like interface that allows users to modify " + \
