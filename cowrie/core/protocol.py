@@ -270,7 +270,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         this logs out when connection times out
         """
         self.terminal.write( 'timed out waiting for input: auto-logout\n' )
-        HoneyPotBaseProtocol.timeoutConnection()
+        HoneyPotBaseProtocol.timeoutConnection(self)
 
 
     def lastlogExit(self):
