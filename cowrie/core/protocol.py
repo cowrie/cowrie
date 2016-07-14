@@ -252,6 +252,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x0E':     self.handle_DOWN,	# CTRL-N
             '\x10':     self.handle_UP,		# CTRL-P
             '\x15':     self.handle_CTRL_U,	# CTRL-U
+            '\x16':     self.handle_CTRL_V,	# CTRL-V
             })
 
 
@@ -381,4 +382,10 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.terminal.deleteCharacter()
         self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
         self.lineBufferIndex = 0
+
+
+    def handle_CTRL_V(self):
+        """
+        """
+        pass
 
