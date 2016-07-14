@@ -1,0 +1,20 @@
+[Unit]
+Description=Cowrie SSH Honeypot
+After=network.target
+#Wants=syslog.target
+Wants=mysql.service
+
+[Service]
+Type=forking
+User=cowrie
+Group=cowrie
+PIDFile=/home/cowrie/cowrie/cowrie.pid
+ExecStart=/home/cowrie/cowrie/start.sh
+ExecStop=/home/cowrie/cowrie/stop.sh
+ExecReload=/home/cowrie/cowrie/stop.sh && sleep 10 && /home/cowrie/cowrie/start.sh
+WorkingDirectory=/home/cowrie/cowrie/
+Restart=on-failure
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target
