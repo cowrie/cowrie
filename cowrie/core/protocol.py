@@ -247,12 +247,13 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x06':     self.handle_RIGHT,	# CTRL-F
             '\x08':     self.handle_BACKSPACE,	# CTRL-H
             '\x09':     self.handle_TAB,
-            '\x0B':     self.handle_CTRL_K,	# CTRL-K
-            '\x0C':     self.handle_CTRL_L,	# CTRL-L
-            '\x0E':     self.handle_DOWN,	# CTRL-N
+            '\x0b':     self.handle_CTRL_K,	# CTRL-K
+            '\x0c':     self.handle_CTRL_L,	# CTRL-L
+            '\x0e':     self.handle_DOWN,	# CTRL-N
             '\x10':     self.handle_UP,		# CTRL-P
             '\x15':     self.handle_CTRL_U,	# CTRL-U
             '\x16':     self.handle_CTRL_V,	# CTRL-V
+            '\x1b':     self.handle_ESC,	# ESC
             })
 
 
@@ -385,6 +386,12 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
 
     def handle_CTRL_V(self):
+        """
+        """
+        pass
+
+
+    def handle_ESC(self):
         """
         """
         pass
