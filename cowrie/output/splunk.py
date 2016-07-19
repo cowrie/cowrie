@@ -1,19 +1,24 @@
 # Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
 
 """
-Basic Splunk connector.
-Not recommended for production use.
+Splunk HTTP Event Collector (HEC) Connector.
+Not ready for production use.
 JSON log file is still recommended way to go
-
-IDEA: convert to new HTTP input, no splunk libraries
-required then
-
 """
 
-import os
-import json
+from zope.interface import implementer
+from StringIO import StringIO
 
-import splunklib.client as client
+import json
+import os
+import urllib
+import urlparse
+
+from twisted.python import log
+from twisted.internet import defer, reactor
+from twisted.web import client, http_headers
+from twisted.web.client import FileBodyProducer
+from twisted.internet.ssl import ClientContextFactory
 
 import cowrie.core.output
 
@@ -23,25 +28,36 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
         """
-        Initializing the class
+        Required: token, url
+        Optional: index, sourcetype, source, host
         """
-        self.index = cfg.get('output_splunk', 'index')
-        self.username = cfg.get('output_splunk', 'username')
-        self.password = cfg.get('output_splunk', 'password')
-        self.host = cfg.get('output_splunk', 'host')
-        self.port = cfg.get('output_splunk', 'port')
+        self.token = cfg.get('output_splunk', 'token')
+        self.url = cfg.get('output_splunk', 'url')
+        try:
+            self.index = cfg.get('output_splunk', 'index')
+        except:
+            self.index = None
+        try:
+            self.source = cfg.get('output_splunk', 'source')
+        except:
+            self.source = None
+        try:
+            self.sourcetype = cfg.get('output_splunk', 'sourcetype')
+        except:
+            self.sourcetype = None
+        try:
+            self.host = cfg.get('output_splunk', 'host')
+        except:
+            self.host = None
+
         cowrie.core.output.Output.__init__(self, cfg)
 
 
     def start(self):
         """
         """
-        self.service = client.connect(
-            host=self.host,
-            port=self.port,
-            username=self.username,
-            password=self.password)
-        self.index = self.service.indexes['cowrie']
+        contextFactory = WebClientContextFactory()
+        self.agent = client.Agent(reactor, contextFactory)
 
 
     def stop(self):
@@ -58,10 +74,76 @@ class Output(cowrie.core.output.Output):
             if i.startswith('log_'):
                 del logentry[i]
 
-        self.mysocket = self.index.attach(
-            sourcetype='cowrie',
-            host=self.sensor,
-            source='cowrie-splunk-connector')
-        self.mysocket.send(json.dumps(logentry))
-        self.mysocket.close()
+        splunkentry = {}
+        if self.index:
+            splunkentry["index"] = self.index
+        if self.source:
+            splunkentry["source"] = self.source
+        if self.sourcetype:
+            splunkentry["sourcetype"] = self.sourcetype
+        if self.host:
+            splunkentry["host"] = self.host
+        else:
+            splunkentry["host"] = logentry["sensor"]
+        splunkentry["event"] = logentry
+        self.postentry(splunkentry)
+
+
+    def postentry(self, entry):
+        """
+        Send a JSON log entry to Splunk with Twisted
+        """
+        headers = http_headers.Headers({
+            'User-Agent': ['Cowrie SSH Honeypot'],
+            'Authorization': ["Splunk " + self.token],
+            'Content-Type': ["application/json"]
+        })
+        body = FileBodyProducer(StringIO(json.dumps(entry)))
+        d = self.agent.request('POST', self.url, headers, body)
+
+        def cbBody(body):
+            return processResult(body)
+
+
+        def cbPartial(failure):
+            """
+            Google HTTP Server does not set Content-Length. Twisted marks it as partial
+            """
+            failure.printTraceback()
+            return processResult(failure.value.response)
+
+
+        def cbResponse(response):
+            if response.code == 200:
+                return
+            else:
+                log.msg("SplunkHEC response: {} {}".format(response.code, response.phrase))
+                d = client.readBody(response)
+                d.addCallback(cbBody)
+                d.addErrback(cbPartial)
+                return d
+
+
+        def cbError(failure):
+            failure.printTraceback()
+
+
+        def processResult(result):
+            j = json.loads(result)
+            log.msg( "SplunkHEC response: {}".format(j["text"]))
+
+        d.addCallback(cbResponse)
+        d.addErrback(cbError)
+        return d
+
+
+
+class WebClientContextFactory(ClientContextFactory):
+    """
+    """
+    def getContext(self, hostname, port):
+        """
+        """
+        return ClientContextFactory.getContext(self)
+
 

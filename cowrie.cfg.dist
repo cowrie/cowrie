@@ -349,15 +349,28 @@ logfile = log/cowrie.json
 #db_file = cowrie.db
 
 
-# Splunk SDK output module - EARLY RELEASE NOT RECOMMENDED
+# Splunk SDK output module - Legacy. Requires Splunk API installed
 # This sends logs directly to Splunk using the Python REST SDK
 #
-#[output_splunk]
+#[output_splunklegacy]
 #host = localhost
 #port = 8889
 #username = admin
 #password = password
 #index = cowrie
+
+
+# Splunk HTTP Event Collector (HEC) output module 
+# Sends JSON directly to Splunk over HTTPS
+# mandatory fields: url, token
+# optional fields: index, source, sourcetype, host
+#
+#[output_splunk]
+#url = https://localhost:8088/services/collector/event
+#token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
+#index = cowrie
+#sourcetype = cowrie
+#source = cowrie
 
 
 # HPFeeds
