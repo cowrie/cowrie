@@ -137,6 +137,7 @@ class Output(object):
         if 'format' in ev and (not 'message' in ev or ev['message'] == () ):
             try:
                 ev['message'] = ev['format'] % ev
+                del ev['format']
             except:
                 pass
 
