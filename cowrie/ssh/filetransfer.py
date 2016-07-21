@@ -28,7 +28,7 @@ class CowrieSFTPFile(object):
         self.sftpserver = sftpserver
         self.filename = filename
         self.transfer_completed = 0
-        self.bytes_written = 0
+        self.bytesRecieved = 0
 
         try:
             self.bytesReceivedLimit = int(
@@ -70,8 +70,8 @@ class CowrieSFTPFile(object):
     def close(self):
         """
         """
-        if (self.bytes_written > 0):
-            self.sftpserver.fs.update_size(self.filename, self.bytes_written)
+        if (self.bytesRecieved > 0):
+            self.sftpserver.fs.update_size(self.filename, self.bytesRecieved)
         return self.sftpserver.fs.close(self.fd)
 
 
@@ -84,8 +84,8 @@ class CowrieSFTPFile(object):
     def writeChunk(self, offset, data):
         """
         """
-        self.bytes_written += len(data)
-        if self.bytesReceivedLimit and self.bytes_written > self.bytesReceivedLimit:
+       self.bytesRecieved += len(data)
+        if self.bytesReceivedLimit and self.bytesRecieved > self.bytesReceivedLimit:
             log.msg(eventid='cowrie.direct-tcpip.data', format='Data upload limit reached')
             raise filetransfer.SFTPError( filetransfer.FX_FAILURE, "Quota exceeded" )
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
