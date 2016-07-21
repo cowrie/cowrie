@@ -86,7 +86,6 @@ class CowrieSFTPFile(object):
         """
        self.bytesRecieved += len(data)
         if self.bytesReceivedLimit and self.bytesRecieved > self.bytesReceivedLimit:
-            log.msg(eventid='cowrie.direct-tcpip.data', format='Data upload limit reached')
             raise filetransfer.SFTPError( filetransfer.FX_FAILURE, "Quota exceeded" )
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
         self.sftpserver.fs.write(self.fd, data)
@@ -127,19 +126,12 @@ class CowrieSFTPDirectory(object):
         """
         try:
             f = self.files.pop(0)
-	    log.msg(type(f))
         except IndexError:
             raise StopIteration
         else:
 	    if(f == "." or f == ".."):
-		#s = self.server.fs.lstat(os.path.join(self.dir, "/home"))
-		#attrs = self.server._getAttrs(s)
-		log.msg("in else in changed :")
-		
 		if(f == ".."):
-#			log.msg("parent is :",self.pardir)
 			directory = self.dir.strip().split("/")
-			log.msg("Directory is : ",directory)
 			pdir ="/"+"/".join(directory[:-1])
 			s1 = self.server.fs.lstat(pdir)
 			s = self.server.fs.lstat(pdir)
@@ -157,17 +149,13 @@ class CowrieSFTPDirectory(object):
 			s1.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
 			longname = twisted.conch.ls.lsLine(f, s1)			
 			attrs = self.server._getAttrs(s)
-			log.msg("username is :",s1.st_uid)
-#			log.msg("longname is :",longname)
 			return(f,longname,attrs)
 	    else:
-		log.msg(f+"In CowrieSFTPDirectory :")
 		s = self.server.fs.lstat(os.path.join(self.dir, f))
 		s2 = self.server.fs.lstat(os.path.join(self.dir, f))
 		s2.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
 		s2.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
 		longname = twisted.conch.ls.lsLine(f, s2)
-		log.msg(longname)
 		attrs = self.server._getAttrs(s)
 		return (f, longname, attrs)
 
