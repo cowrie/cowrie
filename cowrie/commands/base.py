@@ -375,18 +375,12 @@ class command_shutdown(HoneyPotCommand):
     def finish(self):
         """
         """
-        self.write('Connection to server closed.\n')
-        self.protocol.hostname = 'localhost'
-        self.protocol.cwd = '/root'
-        if not self.fs.exists(self.protocol.cwd):
-            self.protocol.cwd = '/'
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
-
+        return
 
 commands['/sbin/shutdown'] = command_shutdown
 commands['/sbin/poweroff'] = command_shutdown
-commands['/sbin/reboot'] = command_shutdown
 commands['/sbin/halt'] = command_shutdown
 
 
@@ -408,13 +402,10 @@ class command_reboot(HoneyPotCommand):
     def finish(self):
         """
         """
-        self.write('Connection to server closed.\n')
-        self.protocol.hostname = 'localhost'
-        self.protocol.cwd = '/root'
-        if not self.fs.exists(self.protocol.cwd):
-            self.protocol.cwd = '/'
-        self.protocol.uptime(time.time())
-        self.exit()
+        stat = failure.Failure(error.ProcessDone(status=""))
+        self.protocol.terminal.transport.processEnded(stat)
+        return
+
 commands['/sbin/reboot'] = command_reboot
 
 
