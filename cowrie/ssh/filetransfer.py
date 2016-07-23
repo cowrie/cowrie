@@ -9,11 +9,12 @@ import os
 
 from zope.interface import implementer
 
-from twisted.python import log
+import twisted
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
+from twisted.python import log
 
 import cowrie.core.pwd as pwd
 
@@ -22,11 +23,12 @@ import cowrie.core.pwd as pwd
 class CowrieSFTPFile(object):
     """
     """
-    bytesReceived = 0
 
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
+        self.transfer_completed = 0
+        self.bytesRecieved = 0
 
         try:
             self.bytesReceivedLimit = int(
@@ -68,8 +70,8 @@ class CowrieSFTPFile(object):
     def close(self):
         """
         """
-        if (self.bytesReceived > 0):
-            self.sftpserver.fs.update_size(self.filename, self.bytesReceived)
+        if (self.bytesRecieved > 0):
+            self.sftpserver.fs.update_size(self.filename, self.bytesRecieved)
         return self.sftpserver.fs.close(self.fd)
 
 
@@ -82,10 +84,9 @@ class CowrieSFTPFile(object):
     def writeChunk(self, offset, data):
         """
         """
-        self.bytesReceived += len(data)
-        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg(format='Data upload limit reached')
-            raise filetransfer.SFTPError(filetransfer.FX_FAILURE, "Quota exceeded")
+       self.bytesRecieved += len(data)
+        if self.bytesReceivedLimit and self.bytesRecieved > self.bytesReceivedLimit:
+            raise filetransfer.SFTPError( filetransfer.FX_FAILURE, "Quota exceeded" )
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
         self.sftpserver.fs.write(self.fd, data)
 
@@ -110,6 +111,7 @@ class CowrieSFTPDirectory(object):
     def __init__(self, server, directory):
         self.server = server
         self.files = server.fs.listdir(directory)
+	self.files = [".",".."]+self.files
         self.dir = directory
 
 
@@ -127,14 +129,35 @@ class CowrieSFTPDirectory(object):
         except IndexError:
             raise StopIteration
         else:
-            s = self.server.fs.lstat(os.path.join(self.dir, f))
-            s2 = self.server.fs.lstat(os.path.join(self.dir, f))
-            s2.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
-            s2.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
-            longname = twisted.conch.ls.lsLine(f, s2)
-            attrs = self.server._getAttrs(s)
-            return (f, longname, attrs)
-
+	    if(f == "." or f == ".."):
+		if(f == ".."):
+			directory = self.dir.strip().split("/")
+			pdir ="/"+"/".join(directory[:-1])
+			s1 = self.server.fs.lstat(pdir)
+			s = self.server.fs.lstat(pdir)
+			s1.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
+			s1.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+			longname = twisted.conch.ls.lsLine(f, s1)			
+			attrs = self.server._getAttrs(s)
+			
+			return(f,longname,attrs)
+		if(f== "."):
+			s1 = self.server.fs.lstat(self.dir)
+			s = self.server.fs.lstat(self.dir)
+			log.msg("s1 is :",s1,"dir is :",self.dir)
+			s1.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
+			s1.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+			longname = twisted.conch.ls.lsLine(f, s1)			
+			attrs = self.server._getAttrs(s)
+			return(f,longname,attrs)
+	    else:
+		s = self.server.fs.lstat(os.path.join(self.dir, f))
+		s2 = self.server.fs.lstat(os.path.join(self.dir, f))
+		s2.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
+		s2.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+		longname = twisted.conch.ls.lsLine(f, s2)
+		attrs = self.server._getAttrs(s)
+		return (f, longname, attrs)
 
     def close(self):
         """
@@ -275,6 +298,7 @@ class SFTPServerForCowrieUser(object):
     def realPath(self, path):
         """
         """
+        #log.msg("SFTP realPath: %s" % (path,))
         return self.fs.realpath(self._absPath(path))
 
 
@@ -282,4 +306,3 @@ class SFTPServerForCowrieUser(object):
         """
         """
         raise NotImplementedError
-
