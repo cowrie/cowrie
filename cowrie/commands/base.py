@@ -307,7 +307,14 @@ class command_passwd(HoneyPotCommand):
         userdb.adduser(self.protocol.user.username, self.passwd)
 
         self.write('passwd: password updated successfully\n')
+        self.showPrompt()
         self.exit()
+
+
+    def showPrompt(self):
+        """
+        """
+        super(command_passwd,self).lineReceived('\n')
 
 
     def lineReceived(self, line):

@@ -184,6 +184,7 @@ class command_wget(HoneyPotCommand):
         # update the honeyfs to point to downloaded file
         f = self.fs.getfile(outfile)
         f[A_REALFILE] = hash_path
+        self.lineReceived('\n')
         self.exit()
 
     def error(self, error, url):
