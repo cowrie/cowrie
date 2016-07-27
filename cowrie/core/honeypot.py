@@ -222,6 +222,10 @@ class HoneyPotShell(object):
         def runOrPrompt():
             if len(self.cmdpending):
                 self.runCommand()
+            elif self.protocol.password_input:
+                 pass
+            elif self.protocol.no_prompt:
+                 pass
             elif self.interactive:
                 self.showPrompt()
             else:
@@ -264,6 +268,9 @@ class HoneyPotShell(object):
                 cmd['rargs'] = []
                 break
 
+            if not cmd:
+                runOrPrompt()
+                return
             if not cmd['command']:
                 runOrPrompt()
                 return

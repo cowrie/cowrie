@@ -223,7 +223,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
         HoneyPotBaseProtocol.__init__(self, avatar)
-
+        self.no_prompt = False
 
     def connectionMade(self):
         """

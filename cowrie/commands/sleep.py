@@ -19,6 +19,8 @@ class command_sleep(HoneyPotCommand):
     def done(self):
         """
         """
+        self.protocol.no_prompt = False
+        self.lineReceived('\n')
         self.exit()
 
 
@@ -27,10 +29,10 @@ class command_sleep(HoneyPotCommand):
         """
         if len(self.args) == 1:
             _time = int( self.args[0] )
-            self.scheduled = reactor.callLater(_time, self.done)
+            reactor.callLater(_time, self.done)
+            self.protocol.no_prompt = True
         else:
             self.write('usage: sleep seconds\n')
-            self.exit()
 
 
 commands['/bin/sleep'] = command_sleep
