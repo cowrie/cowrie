@@ -45,7 +45,7 @@ Activate the virtual environment and install packages
 
 ```
 $ source cowrie-env/bin/activate
-(cowrie-env) $ pip install twisted cryptography pyopenssl gmpy2
+(cowrie-env) $ pip install -r requirements.txt
 ```
 
 ## Add a user
