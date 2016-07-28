@@ -26,11 +26,11 @@ $ sudo pip install enum34
 
 On Debian based systems:
 ```
-$ sudo apt-get install virtualenv
+$ sudo apt-get install virtualenv libmpfr-dev
 ```
 On RedHat based systems:
 ```
-$ sudo yum install virtualenv
+$ sudo yum install virtualenv libmpfr-devel
 ```
 
 Create a virtual environment
