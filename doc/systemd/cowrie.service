@@ -1,5 +1,6 @@
 [Unit]
 Description=Cowrie SSH Honeypot
+Documentation=https://github.com/micheloosterhof/cowrie
 After=network.target
 #Wants=syslog.target
 Wants=mysql.service
