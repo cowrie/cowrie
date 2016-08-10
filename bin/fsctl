@@ -540,8 +540,8 @@ class fseditCmd(cmd.Cmd):
             return
 
         target_object = getpath(self.fs, target_path)
-        oldgid = target_object[A_UID]
-        target_object[A_UID] = int(gid)
+        oldgid = target_object[A_GID]
+        target_object[A_GID] = int(gid)
         print "former GID: " + str(oldgid) + ". New GID: " + str(gid)
         self.save_pickle()
 
