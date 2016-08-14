@@ -16,7 +16,6 @@
 # (default: not specified)
 #sensor_name=myhostname
 
-
 # Hostname for the honeypot. Displayed by the shell prompt of the virtual
 # environment
 #
@@ -174,15 +173,15 @@ auth_class = UserDB
 # IP addresses to listen for incoming SSH connections.
 #
 # (default: 0.0.0.0) = any IPv4 address
-#listen_addr = 0.0.0.0
+#listen_ssh_addr = 0.0.0.0
 # (use :: for listen to all IPv6 and IPv4 addresses)
-#listen_addr = ::
+#listen_ssh_addr = ::
 
 
 # Port to listen for incoming SSH connections.
 #
 # (default: 2222)
-#listen_port = 2222
+#listen_ssh_port = 2222
 
 
 # SSH Version String
@@ -244,6 +243,28 @@ forward_redirect_443 = 127.0.0.1:8443
 # python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
 forward_redirect_25 = 127.0.0.1:12525
 forward_redirect_587 = 127.0.0.1:12525
+
+
+# ============================================================================
+# Telnet Specific Options
+# ============================================================================
+
+# IP addresses to listen for incoming Telnet connections.
+#
+# (default: 0.0.0.0) = any IPv4 address
+#listen_telnet_addr = 0.0.0.0
+# (use :: for listen to all IPv6 and IPv4 addresses)
+#listen_telnet_addr = ::
+
+
+# Port to listen for incoming Telnet connections.
+#
+# (default: 2223)
+#listen_telnet_port = 2223
+
+# Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
+#reported_telnet_port = 23
+
 
 # ============================================================================
 # Database logging Specific Options

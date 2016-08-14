@@ -41,12 +41,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
         else:
             self.type = 'i' # Interactive
 
+    def getSessionId(self):
+        transportId = self.transport.session.conn.transport.transportId
+        channelId = self.transport.session.id
+        return (transportId, channelId)
 
     def connectionMade(self):
         """
         """
-        transportId = self.transport.session.conn.transport.transportId
-        channelId = self.transport.session.id
+        transportId, channelId = self.getSessionId()
 
         self.startTime = time.time()
         self.ttylogFile = '%s/tty/%s-%s-%s%s.log' % \
@@ -176,3 +179,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.connectionLost(self, reason)
 
+class LoggingTelnetServerProtocol(LoggingServerProtocol):
+    """
+    Wrap LoggingServerProtocol with single method to fetch session id for Telnet
+    """
+
+    def getSessionId(self):
+        transportId = self.transport.session.transportId
+        sn = self.transport.session.transport.transport.sessionno
+        return (transportId, sn)
