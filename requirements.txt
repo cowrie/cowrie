@@ -1,4 +1,5 @@
 twisted
 cryptography
+configparser
 pyopenssl
 gmpy2
