@@ -26,7 +26,7 @@ Additional functionality over standard kippo:
 
 Software required:
 
-* Python 2.7+, 3.3+
+* Python 2.7+, (Python 3 not yet supported due to Twisted dependencies)
 * Zope Interface 3.6.0+
 * Twisted 8.0+
 * python-crypto
