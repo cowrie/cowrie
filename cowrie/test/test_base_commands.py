@@ -13,7 +13,7 @@ from . import fake_transport
 
 class ShellBaseCommandsTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = config.readConfigFile("cowrie/test/unittests.cfg")
+        self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol \
             (fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
@@ -203,7 +203,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 class ShellFileCommandsTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = config.readConfigFile("cowrie/test/unittests.cfg")
+        self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
@@ -277,7 +277,7 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 class ShellPipeCommandsTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = config.readConfigFile("cowrie/test/unittests.cfg")
+        self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
