@@ -1,5 +1,5 @@
 group: stable
-dist": trusty
+dist: trusty
 os: linux
 language: python
 python:
