@@ -10,7 +10,7 @@ def durationHuman(seconds):
     """
     Turn number of seconds into human readable string
     """
-    seconds = long(round(seconds))
+    seconds = int(round(seconds))
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
