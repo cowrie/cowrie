@@ -1,3 +1,6 @@
+group: stable
+dist": trusty
+os: linux
 language: python
 python:
   - "2.7"
