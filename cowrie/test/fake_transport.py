@@ -40,13 +40,13 @@ class FakeTransport(proto_helpers.StringTransport):
     width = 80
     height = 24
     void = object()
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = range(9)
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 
     for keyID in ('UP_ARROW', 'DOWN_ARROW', 'RIGHT_ARROW', 'LEFT_ARROW',
                   'HOME', 'INSERT', 'DELETE', 'END', 'PGUP', 'PGDN',
                   'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9',
                   'F10', 'F11', 'F12'):
-        exec '%s = object()' % (keyID,)
+        exec('%s = object()' % (keyID,))
 
     TAB = '\x09'
     BACKSPACE = '\x08'
@@ -136,7 +136,7 @@ class FakeTransport(proto_helpers.StringTransport):
 
 
     def eraseDisplay(self):
-        self.lines = [self._emptyLine(self.width) for i in xrange(self.height)]
+        self.lines = [self._emptyLine(self.width) for i in range(self.height)]
 
 
     def _currentFormattingState(self):
@@ -146,5 +146,5 @@ class FakeTransport(proto_helpers.StringTransport):
 
     def _emptyLine(self, width):
         return [(self.void, self._currentFormattingState())
-                for i in xrange(width)]
+                for i in range(width)]
 
