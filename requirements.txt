@@ -1,4 +1,4 @@
-twisted
+twisted[conch]
 cryptography
 configparser
 pyopenssl
