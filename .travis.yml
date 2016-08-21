@@ -3,16 +3,17 @@ dist: trusty
 os: linux
 language: python
 python:
-  - "2.7"
-#  - "3.3"
-  - "3.4"
-#  - "3.5"
-#  - "3.5-dev" # 3.5 development branch
-#  - "nightly" # currently points to 3.6-dev
+- '2.7'
+- '3.4'
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libmpc-dev
-# command to install dependencies
-install: "pip install -r requirements.txt"
-# command to run tests
+- sudo apt-get -qq update
+- sudo apt-get install -y libmpc-dev
+install: pip install -r requirements.txt
 script: trial cowrie
+notifications:
+  email: false
+  slack:
+    matrix:
+    - true
+    rooms:
+      secure: fRnXJOrhRfFphgRuuhQcZSAIYwytn2hXJu5U6t33h9zADHR8+OL7Hf41uzOt/8jGi0Ee7Z0L6WSiFbn6OlNZFq0PcydYoHRr2PVmDMXOow6FO95ddTsxPGIXbm1d0qe4lskEThbu2zMwlYPrq209uEsrJjjeZ9DJ+7rv2DlhmbmHVq8UXrXty5ndtVV2WFkfbz1Ar2wQACU9qxQn/6QUlpAjP3n6bGl9Emfd12566THTOUSRR4GCorDGK+ThUAz/rxF79VstJ0ZCfR4btD7JDGGkJyO2evUulUvRcbB6ck/8/AGGsDihrXI3Mdvj0P5qKuEtq5qVjZiAnOv3nVC0TeG3NnSDi32XlUq6MfM045cA7NJcc45ajgYjEwdjUSY5bpo2IllPScBkzYYWvfNZanmYIqQkUeNaNmvARTO2H8gvwGXSYtWSE9Htybeb+srijdI9Qsly2INMwbzA5dKgpApSx3Whbhq5uM9bUHGMDDvGQK7tj6lUJufz6DDYljSYa7VlN+njTasC1W1a5YCLZNliJLEv+9wOGplR4uIOdkbKHZSId72Y6+gAjYssZprIKa6ySloWWnfApKHObEsyeSZQPI6MfbMZ+zCdLAKdqoVUuEgA+u3yNIlRMHzsaSP7F1iWser3iPdanQBntR6+DGT5qoQvLrL+aciSJ31/U/8=
