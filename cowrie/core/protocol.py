@@ -199,8 +199,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         pt = self.getProtoTransport()
         r = time.time() - pt.factory.starttime
-        if reset:
-            pt.factory.starttime = reset
+        #if reset:
+        #    pt.factory.starttime = reset
         return r
 
     def getClientVersion(self):
