@@ -26,7 +26,7 @@ from cowrie.core import keys as cowriekeys
 
 class HoneyPotSSHFactory(factory.SSHFactory):
     """
-    This factory creates HoneyPotTransport instances
+    This factory creates HoneyPotSSHTransport instances
     They listen directly to the TCP port
     """
 
@@ -119,13 +119,13 @@ class HoneyPotSSHFactory(factory.SSHFactory):
         @type addr: L{twisted.internet.interfaces.IAddress} provider
         @param addr: The address at which the server will listen.
 
-        @rtype: L{cowrie.core.HoneyPotTransport}
+        @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
 
         _modulis = '/etc/ssh/moduli', '/private/etc/moduli'
 
-        t = HoneyPotTransport()
+        t = HoneyPotSSHTransport()
 
         try:
             t.ourVersionString = self.cfg.get('honeypot', 'ssh_version_string')
@@ -164,7 +164,7 @@ class HoneyPotSSHFactory(factory.SSHFactory):
 
 
 
-class HoneyPotTransport(transport.SSHServerTransport, TimeoutMixin):
+class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     """
 
