@@ -2,7 +2,7 @@
 
 Cowrie is a medium interaction SSH and Telnet honeypot designed to log brute force attacks and the shell interaction performed by the attacker.
 
-[Cowrie](http://github.com/micheloosterhof/cowrie/) is developed by Michel Oosterhof and is based on [Kippo](http://github.com/desaster/kippo/) by Upi Tamminen (desaster).
+[Cowrie](http://github.com/micheloosterhof/cowrie/) is developed by Michel Oosterhof.
 
 ## Features
 
@@ -28,7 +28,7 @@ Software required:
 
 * Python 2.7+, (Python 3 not yet supported due to Twisted dependencies)
 * Zope Interface 3.6.0+
-* Twisted 8.0+
+* Twisted 12.0+
 * python-crypto
 * python-cryptography
 * python-pyasn1
@@ -57,3 +57,10 @@ Maybe. See [FAQ](https://github.com/desaster/kippo/wiki/FAQ)
 ## I have some questions!
 
 Please visit https://github.com/micheloosterhof/cowrie/issues
+
+## Contributors
+
+Many people have contributed to Cowrie over the years. Special thanks to:
+
+* Upi Tamminen (desaster) for all his work developing Kippo on which Cowrie was based
+
