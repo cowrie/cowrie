@@ -173,15 +173,15 @@ auth_class = UserDB
 # IP addresses to listen for incoming SSH connections.
 #
 # (default: 0.0.0.0) = any IPv4 address
-#listen_ssh_addr = 0.0.0.0
+#listen_addr = 0.0.0.0
 # (use :: for listen to all IPv6 and IPv4 addresses)
-#listen_ssh_addr = ::
+#listen_addr = ::
 
 
 # Port to listen for incoming SSH connections.
 #
 # (default: 2222)
-#listen_ssh_port = 2222
+#listen_port = 2222
 
 
 # SSH Version String
