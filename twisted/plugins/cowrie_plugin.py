@@ -49,7 +49,7 @@ import cowrie.core.realm
 import cowrie.core.checkers
 
 import cowrie.telnet.transport
-import cowrie.ssh.transport
+import cowrie.ssh.factory
 
 class Options(usage.Options):
     """
@@ -86,7 +86,7 @@ class CowrieServiceMaker(object):
         application = service.Application('cowrie')
         topService.setServiceParent(application)
 
-        factory = cowrie.ssh.transport.HoneyPotSSHFactory(cfg)
+        factory = cowrie.ssh.factory.CowrieSSHFactory(cfg)
 
         factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
         factory.portal.registerChecker(
