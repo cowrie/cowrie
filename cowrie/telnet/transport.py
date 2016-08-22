@@ -101,15 +101,20 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
 
 class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
     """
-    Telnet Transport that takes care of Authentication. Once authenticated this
-    transport is replaced with HoneyPotTelnetSession.
+    TelnetAuthProtocol that takes care of Authentication. Once authenticated this
+    protocol is replaced with HoneyPotTelnetSession.
     """
 
-    def connectionMade(self):
+    loginPrompt = 'login: '
+    passwordPrompt = 'Password: '
 
+    def connectionMade(self):
+        """
+        """
         self.transportId = uuid.uuid4().hex[:8]
         sessionno = self.transport.transport.sessionno
         self.factory.sessions[sessionno] = self.transportId
+        self.setTimeout(120)
 
         log.msg(eventid='cowrie.session.connect',
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
@@ -120,10 +125,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         # I need to doubly escape here since my underlying
         # StripCrTelnetTransport hack would remove it and leave just \n
         self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
-        # FIXME: this should be configurable or provided via filesystem
-        self.transport.write("User Access Verification\n\nUsername: ".replace('\n', '\r\r\n'))
-
-        self.setTimeout(120)
+        self.transport.write(self.loginPrompt)
 
 
     def connectionLost(self, reason):
@@ -145,10 +147,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         """
         self.username = line
         # only send ECHO option if we are chatting with a real Telnet client
-        if self.transport.options:
-            self.transport.will(ECHO)
+        #if self.transport.options: <-- doesn't work
+        self.transport.will(ECHO)
         # FIXME: this should be configurable or provided via filesystem
-        self.transport.write("Password: ")
+        self.transport.write(self.passwordPrompt)
         return 'Password'
 
 
@@ -195,7 +197,12 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
 
+
+    def _ebLogin(self, failure):
     # TODO: provide a way to have user configurable strings for wrong password
+        self.transport.write("\nLogin incorrect\n")
+        self.transport.write(self.loginPrompt)
+        self.state = "User"
 
 
 class StripCrTelnetTransport(TelnetTransport):

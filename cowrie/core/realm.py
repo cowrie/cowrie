@@ -81,9 +81,9 @@ class HoneyPotRealm(object):
             user = avatar.CowrieUser(avatarId, serv)
             return interfaces[0], user, user.logout
         elif ITelnetProtocol in interfaces:
-            cs = server.CowrieServer(self)
-            av = session.HoneyPotTelnetSession(avatarId, cs)
-            return interfaces[0], av, lambda:None
+            serv = server.CowrieServer(self)
+            user = session.HoneyPotTelnetSession(avatarId, serv)
+            return interfaces[0], user, user.logout
 
         log.msg('No supported interfaces found.')
         # TODO: this exception doesn't raise for a reason I don't understand

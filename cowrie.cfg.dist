@@ -248,22 +248,26 @@ forward_redirect_587 = 127.0.0.1:12525
 # ============================================================================
 # Telnet Specific Options
 # ============================================================================
+[telnet]
+
+# Enable Telnet support, disabled by default
+enabled = false
 
 # IP addresses to listen for incoming Telnet connections.
 #
 # (default: 0.0.0.0) = any IPv4 address
-#listen_telnet_addr = 0.0.0.0
+#listen_addr = 0.0.0.0
 # (use :: for listen to all IPv6 and IPv4 addresses)
-#listen_telnet_addr = ::
+#listen_addr = ::
 
 
 # Port to listen for incoming Telnet connections.
 #
 # (default: 2223)
-#listen_telnet_port = 2223
+#listen_port = 2223
 
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
-#reported_telnet_port = 23
+#reported_port = 23
 
 
 # ============================================================================
