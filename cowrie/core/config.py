@@ -5,10 +5,10 @@
 This module contains ...
 """
 
-import configparser
+import ConfigParser
 
 def readConfigFile(cfgfile):
-    cfg = configparser.SafeConfigParser()
+    cfg = ConfigParser.SafeConfigParser()
     cfg.readfp(open(cfgfile))
     return cfg
 
