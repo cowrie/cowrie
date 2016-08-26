@@ -49,7 +49,7 @@ def splitthousands( s, sep=','):
 class command_wget(HoneyPotCommand):
     def start(self):
         try:
-            optlist, args = getopt.getopt(self.args, 'cqO:')
+            optlist, args = getopt.getopt(self.args, 'cqO:P:')
         except getopt.GetoptError as err:
             self.write('Unrecognized option\n')
             self.exit()
