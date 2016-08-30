@@ -1,18 +1,48 @@
 
-# Installing cowrie in six steps.
+# Installing cowrie in seven steps.
 
-  * [Step 1: Create a user account](#step-1--create-a-user-account)
-  * [Step 2: Checkout the code](#step-2--checkout-the-code)
-  * [Step 3: Setup Dependencies](#step-3--setup-dependencies)
-    + [Option A: Install with Python packages from your Linux Distribution](#option-a--install-with-python-packages-from-your-linux-distribution)
-    + [Option B: Install with Python Virtual Environments](#option-b-install-with-python-virtual-environments)
+- [Installing cowrie in seven steps.](#installing-cowrie-in-six-steps)
+  * [Step 1: Install required debian packages](#step-1--install-required-debian-packages)
+    + [Option A: dependencies for virtualenv](#option-a--dependencies-for-virtualenv)
+    + [Option B: dependencies for bare install](#option-b--dependencies-for-bare-install)
+  * [Step 2: Create a user account](#step-2--create-a-user-account)
+  * [Step 3: Checkout the code](#step-3--checkout-the-code)
+  * [Step 3: Setup virtualenv (if desired)](#step-3--setup-virtualenv--if-desired-)
   * [Step 4: Install configuration file](#step-4--install-configuration-file)
-  * [Step 5: Start](#step-5--start)
-  * [Step 6: Port redirection (optional)](#step-6--port-redirection--optional-)
+  * [Step 5: Generate a DSA key](#step-5--generate-a-dsa-key)
+  * [Step 6: Turning on cowrie](#step-6--turning-on-cowrie)
+  * [Step 7: Port redirection (optional)](#step-7--port-redirection--optional-)
   * [Troubleshooting](#troubleshooting)
 
+## Step 1: Install required debian packages
 
-## Step 1: Create a user account
+There are two ways to install cowrie: with a python virtual environment, or directly on to the system.  The virtual environment is generally prefered as it isolates cowrie and its dependencies from other python software on the system.
+
+### Option A: dependencies for virtualenv
+
+On Debian based systems (tested on Debian 8):
+```
+$ sudo apt-get git install virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev
+```
+
+
+### Option B: dependencies for bare install
+
+Install prerequisites on Debian based systems (untested 8/30/2016):
+
+```
+$ sudo apt-get git install python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
+```
+
+Install prerequisites on Alpine based systems (untested 8/30/2016):
+
+```
+$ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
+        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
+$ sudo pip install enum34
+```
+
+## Step 2: Create a user account
 
 It's strongly recommended to install under a dedicated non-root user id:
 
@@ -33,7 +63,7 @@ Is the information correct? [Y/n]
 $ sudo su - cowrie
 ```
 
-## Step 2: Checkout the code
+## Step 3: Checkout the code
 
 ```
 $ git clone http://github.com/micheloosterhof/cowrie
@@ -48,33 +78,13 @@ Checking connectivity... done.
 $ cd cowrie
 ```
 
-## Step 3: Setup Dependencies 
-### Option A: Install with Python packages from your Linux Distribution
+## Step 3: Setup virtualenv (if desired)
 
-Install prerequisites on Debian based systems:
-
-```
-$ sudo apt-get install python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
-```
-
-Install prerequisites on Alpine based systems:
+If you're choosing the virtualenv installation route, you need to create your virtual environment:
 
 ```
-$ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
-        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
-$ sudo pip install enum34
-```
-
-### Option B: Install with Python Virtual Environments
-
-On Debian based systems:
-```
-$ sudo apt-get install virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev
-```
-
-Create a virtual environment
-
-```
+$ pwd
+/home/cowrie/cowrie
 $ virtualenv cowrie-env
 New python executable in ./cowrie/cowrie-env/bin/python
 Installing setuptools, pip, wheel...done.
@@ -89,13 +99,24 @@ $ source cowrie-env/bin/activate
 
 ## Step 4: Install configuration file
 
+Take a look at the configuration file and make changes as desired.  The defaults seem to work well in most cases.
 ```
 $ cp cowrie.cfg.dist cowrie.cfg
 ```
 
-## Step 5: Start
+## Step 5: Generate a DSA key
 
-Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in os.path.  This sometimes won't happen correctly, so make it explicit:
+This step should not be necessary, however some versions of twisted are not compatible.  To avoid problems in advance, run:
+
+```
+$ cd cowrie/data
+$ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
+$ cd ..
+```
+
+## Step 6: Turning on cowrie
+
+Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in python's os.path.  This sometimes won't happen correctly, so make it explicit:
 
 ```
 $ export PYTHONPATH=/path/to/cowrie
@@ -114,7 +135,7 @@ $ ./start.sh cowrie-env
 Starting cowrie in the background...
 ```
 
-## Step 6: Port redirection (optional)
+## Step 7: Port redirection (optional)
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
@@ -153,7 +174,7 @@ $ cd cowrie/data
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 ```
 
-* If you see `twistd: Unknown command: cowrie` there are two possibilities.  If there's a python stack trace, it probably means there's a missing dependency.  If there's no stack trace, double check that your PYTHONPATH is set to the source code directory.
+* If you see `twistd: Unknown command: cowrie` there are two possibilities.  If there's a python stack trace, it probably means there's a missing or broken dependency.  If there's no stack trace, double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
 To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
