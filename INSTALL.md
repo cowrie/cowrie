@@ -9,8 +9,6 @@
   * [Step 6: Port redirection (optional)](#step-6--port-redirection--optional-)
   * [Troubleshooting](#troubleshooting)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 # Installing cowrie in six steps.
 
