@@ -1,8 +1,20 @@
-# Installing cowrie in five steps.
+- [Installing cowrie in six steps.](#installing-cowrie-in-six-steps)
+  * [Step 1: Create a user account](#step-1--create-a-user-account)
+  * [Step 2: Checkout the code](#step-2--checkout-the-code)
+  * [Step 3: Setup Dependencies](#step-3--setup-dependencies)
+    + [Option A: Install with Python packages from your Linux Distribution](#option-a--install-with-python-packages-from-your-linux-distribution)
+    + [Option B Install with Python Virtual Environments](#option-b-install-with-python-virtual-environments)
+  * [Step 4: Install configuration file](#step-4--install-configuration-file)
+  * [Step 5: Start](#step-5--start)
+  * [Step 6: Port redirection (optional)](#step-6--port-redirection--optional-)
+  * [Troubleshooting](#troubleshooting)
 
-## Step 1: Create a user account, checkout the code
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
-## Add a user
+
+# Installing cowrie in six steps.
+
+## Step 1: Create a user account
 
 It's strongly recommended to install under a dedicated non-root user id:
 
@@ -21,7 +33,11 @@ Other []:
 Is the information correct? [Y/n]
 
 $ sudo su - cowrie
+```
 
+## Step 2: Checkout the code
+
+```
 $ git clone http://github.com/micheloosterhof/cowrie
 Cloning into 'cowrie'...
 remote: Counting objects: 2965, done.
@@ -34,7 +50,7 @@ Checking connectivity... done.
 $ cd cowrie
 ```
 
-## Step 2: Setup Dependencies 
+## Step 3: Setup Dependencies 
 ### Option A: Install with Python packages from your Linux Distribution
 
 Install prerequisites on Debian based systems:
@@ -80,13 +96,13 @@ $ source cowrie-env/bin/activate
 (cowrie-env) $ pip install -r requirements.txt
 ```
 
-## Step 3: Install configuration file
+## Step 4: Install configuration file
 
 ```
 $ cp cowrie.cfg.dist cowrie.cfg
 ```
 
-## Step 4: Start
+## Step 5: Start
 
 Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in os.path.  If you're using a virtual environment this sometimes won't happen correctly, so make it explicit:
 
@@ -107,7 +123,7 @@ $ ./start.sh cowrie-env
 Starting cowrie in the background...
 ```
 
-## Step 5: Port redirection (optional)
+## Step 6: Port redirection (optional)
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
@@ -130,7 +146,7 @@ $ chmod 770 /etc/authbind/byport/22
 
 ## Troubleshooting
 
-* For some versions of Twisted you may receive the following error messagse:
+* For some versions of Twisted you may receive the following error messages:
 
 ```
 ....
