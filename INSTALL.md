@@ -95,7 +95,7 @@ $ cp cowrie.cfg.dist cowrie.cfg
 
 ## Step 5: Start
 
-Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in os.path.  If you're using a virtual environment this sometimes won't happen correctly, so make it explicit:
+Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in os.path.  This sometimes won't happen correctly, so make it explicit:
 
 ```
 $ export PYTHONPATH=/path/to/cowrie
