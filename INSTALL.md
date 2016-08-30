@@ -20,9 +20,9 @@ There are two ways to install cowrie: with a python virtual environment, or dire
 
 ### Option A: dependencies for virtualenv
 
-On Debian based systems (tested on Debian 8):
+On Debian based systems (tested on Debian 8 8/30/2016):
 ```
-$ sudo apt-get git install virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev
+$ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev
 ```
 
 
@@ -31,7 +31,7 @@ $ sudo apt-get git install virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-d
 Install prerequisites on Debian based systems (untested 8/30/2016):
 
 ```
-$ sudo apt-get git install python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
+$ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
 ```
 
 Install prerequisites on Alpine based systems (untested 8/30/2016):
@@ -109,7 +109,7 @@ $ cp cowrie.cfg.dist cowrie.cfg
 This step should not be necessary, however some versions of twisted are not compatible.  To avoid problems in advance, run:
 
 ```
-$ cd cowrie/data
+$ cd data
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 $ cd ..
 ```
@@ -119,7 +119,8 @@ $ cd ..
 Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in python's os.path.  This sometimes won't happen correctly, so make it explicit:
 
 ```
-$ export PYTHONPATH=/path/to/cowrie
+# or whatever path to the top-level cowrie folder
+$ export PYTHONPATH=/home/cowrie/cowrie
 ```
 
 In the absence of a virtual environment, you may run:
@@ -128,7 +129,7 @@ In the absence of a virtual environment, you may run:
 $ ./start.sh
 ```
 
-When using Python Virtual Environments you can add the name of the venv as the first argument
+When using Python Virtual Environments you should add the name of the venv as the first argument
 
 ```
 $ ./start.sh cowrie-env
@@ -144,7 +145,7 @@ The following firewall rule will forward incoming traffic on port 22 to port 222
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 ```
 
-Alternatively you can run authbind to listen as non-root on port 22 directly:
+Note that you should test this rule only from another host; it doesn't apply to loopback connections.  Alternatively you can run authbind to listen as non-root on port 22 directly:
 
 ```
 $ apt-get install authbind
