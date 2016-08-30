@@ -57,12 +57,6 @@ Install prerequisites on Debian based systems:
 $ sudo apt-get install python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
 ```
 
-Install prerequisites on RedHat based systems:
-
-```
-$ sudo yum install <tbd> <tbd> <tbd>
-```
-
 Install prerequisites on Alpine based systems:
 
 ```
@@ -77,7 +71,6 @@ On Debian based systems:
 ```
 $ sudo apt-get install virtualenv libmpfr-dev openssl-dev libmpc-dev libffi-dev
 ```
-On RedHat based systems you will need the corresponding packages.
 
 Create a virtual environment
 
