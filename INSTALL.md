@@ -1,16 +1,16 @@
-- [Installing cowrie in six steps.](#installing-cowrie-in-six-steps)
+
+# Installing cowrie in six steps.
+
   * [Step 1: Create a user account](#step-1--create-a-user-account)
   * [Step 2: Checkout the code](#step-2--checkout-the-code)
   * [Step 3: Setup Dependencies](#step-3--setup-dependencies)
     + [Option A: Install with Python packages from your Linux Distribution](#option-a--install-with-python-packages-from-your-linux-distribution)
-    + [Option B Install with Python Virtual Environments](#option-b-install-with-python-virtual-environments)
+    + [Option B: Install with Python Virtual Environments](#option-b-install-with-python-virtual-environments)
   * [Step 4: Install configuration file](#step-4--install-configuration-file)
   * [Step 5: Start](#step-5--start)
   * [Step 6: Port redirection (optional)](#step-6--port-redirection--optional-)
   * [Troubleshooting](#troubleshooting)
 
-
-# Installing cowrie in six steps.
 
 ## Step 1: Create a user account
 
@@ -71,7 +71,7 @@ $ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
 $ sudo pip install enum34
 ```
 
-### Option B Install with Python Virtual Environments
+### Option B: Install with Python Virtual Environments
 
 On Debian based systems:
 ```
