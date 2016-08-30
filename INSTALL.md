@@ -1,52 +1,6 @@
-# Installing cowrie in six easy steps.
+# Installing cowrie in five steps.
 
-## Install with Python packages from your Linux Distribution
-
-Install prerequisites on Debian based systems:
-
-```
-$ sudo apt-get install python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
-```
-
-Install prerequisites on RedHat based systems:
-
-```
-$ sudo yum install <tbd> <tbd> <tbd>
-```
-
-Install prerequisites on Alpine based systems:
-
-```
-$ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
-        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
-$ sudo pip install enum34
-```
-
-## Install with Python Virtual Environments
-
-On Debian based systems:
-```
-$ sudo apt-get install virtualenv libmpfr-dev
-```
-On RedHat based systems:
-```
-$ sudo yum install virtualenv libmpfr-devel
-```
-
-Create a virtual environment
-
-```
-$ virtualenv cowrie-env
-New python executable in ./cowrie/cowrie-env/bin/python
-Installing setuptools, pip, wheel...done.
-```
-
-Activate the virtual environment and install packages
-
-```
-$ source cowrie-env/bin/activate
-(cowrie-env) $ pip install -r requirements.txt
-```
+## Step 1: Create a user account, checkout the code
 
 ## Add a user
 
@@ -78,18 +32,82 @@ Resolving deltas: 100% (1908/1908), done.
 Checking connectivity... done.
 
 $ cd cowrie
-
-$ cp cowrie.cfg.dist cowrie.cfg
-
-$ ./start.sh
-Starting cowrie in the background...
 ```
+
+## Step 2: Setup Dependencies 
+### Option A: Install with Python packages from your Linux Distribution
+
+Install prerequisites on Debian based systems:
+
+```
+$ sudo apt-get install python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
+```
+
+Install prerequisites on RedHat based systems:
+
+```
+$ sudo yum install <tbd> <tbd> <tbd>
+```
+
+Install prerequisites on Alpine based systems:
+
+```
+$ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
+        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
+$ sudo pip install enum34
+```
+
+### Option B Install with Python Virtual Environments
+
+On Debian based systems:
+```
+$ sudo apt-get install virtualenv libmpfr-dev openssl-dev libmpc-dev libffi-dev
+```
+On RedHat based systems you will need the corresponding packages.
+
+Create a virtual environment
+
+```
+$ virtualenv cowrie-env
+New python executable in ./cowrie/cowrie-env/bin/python
+Installing setuptools, pip, wheel...done.
+```
+
+Activate the virtual environment and install packages
+
+```
+$ source cowrie-env/bin/activate
+(cowrie-env) $ pip install -r requirements.txt
+```
+
+## Step 3: Install configuration file
+
+```
+$ cp cowrie.cfg.dist cowrie.cfg
+```
+
+## Step 4: Start
+
+Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in os.path.  If you're using a virtual environment this sometimes won't happen correctly, so make it explicit:
+
+```
+$ export PYTHONPATH=/path/to/cowrie
+```
+
+In the absence of a virtual environment, you may run:
+
+```
+$ ./start.sh
+```
+
 When using Python Virtual Environments you can add the name of the venv as the first argument
 
 ```
 $ ./start.sh cowrie-env
 Starting cowrie in the background...
 ```
+
+## Step 5: Port redirection (optional)
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
@@ -110,7 +128,7 @@ $ chmod 770 /etc/authbind/byport/22
 * Edit start.sh and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
-## Bugs and workarounds
+## Troubleshooting
 
 * For some versions of Twisted you may receive the following error messagse:
 
@@ -128,6 +146,7 @@ $ cd cowrie/data
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 ```
 
+* If you see `twistd: Unknown command: cowrie` there are two possibilities.  If there's a python stack trace, it probably means there's a missing dependency.  If there's no stack trace, double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
 To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
