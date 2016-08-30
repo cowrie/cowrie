@@ -69,7 +69,7 @@ $ sudo pip install enum34
 
 On Debian based systems:
 ```
-$ sudo apt-get install virtualenv libmpfr-dev openssl-dev libmpc-dev libffi-dev
+$ sudo apt-get install virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev
 ```
 
 Create a virtual environment
