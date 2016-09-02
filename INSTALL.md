@@ -33,6 +33,7 @@ Install prerequisites on Debian based systems (untested 8/30/2016):
 ```
 $ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
 ```
+**NOTE**: 'python-gmpy2' will cause a signficant delay when attempting to login to the fake ssh server if installed on a Raspberry Pi (Tested on a RPi model 1B). Use 'python-gmpy' to reduce the login delay significantly. 
 
 Install prerequisites on Alpine based systems (untested 8/30/2016):
 
