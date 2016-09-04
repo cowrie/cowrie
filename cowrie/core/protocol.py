@@ -297,7 +297,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
         with open( '%s/lastlog.txt' % (self.cfg.get('honeypot',
-            'data_path'),), 'a') as f:
+            'log_path'),), 'a') as f:
             f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
                 (self.clientIP, starttime, endtime, duration))
 
