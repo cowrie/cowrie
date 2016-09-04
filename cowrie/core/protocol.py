@@ -187,8 +187,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         self.pp = pp
         obj = cmd(self, *args)
-        obj.set_input_data(pp.input_data)
-        self.cmdstack.append(obj)
+        if pp.input_data:
+          obj.set_input_data(pp.input_data)
         obj.start()
         self.pp.outConnectionLost()
 
@@ -267,6 +267,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x15':     self.handle_CTRL_U,	# CTRL-U
             '\x16':     self.handle_CTRL_V,	# CTRL-V
             '\x1b':     self.handle_ESC,	# ESC
+            '\x1d':     self.handle_CTRL_D #EXIT
             })
 
 
@@ -327,7 +328,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         self.pp = pp
         self.setTypeoverMode()
-        HoneyPotBaseProtocol.call_command(self, pp, cmd, *args)
+
+        HoneyPotBaseProtocol.call_command(self, pp, cmd, *args);
 
 
     def characterReceived(self, ch, moreCharactersComing):
@@ -356,19 +358,22 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def handle_CTRL_C(self):
         """
         """
-        self.cmdstack[-1].handle_CTRL_C()
+        if len(self.cmdstack) == 1:
+            self.cmdstack[-1].handle_CTRL_C()
 
 
     def handle_CTRL_D(self):
         """
         """
-        self.cmdstack[-1].handle_CTRL_D()
+        if len(self.cmdstack) == 1:
+           self.cmdstack[-1].handle_CTRL_D()
 
 
     def handle_TAB(self):
         """
         """
-        self.cmdstack[-1].handle_TAB()
+        if len(self.cmdstack) == 1:
+            self.cmdstack[-1].handle_TAB()
 
 
     def handle_CTRL_K(self):
