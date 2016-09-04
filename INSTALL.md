@@ -1,8 +1,8 @@
 
-# Installing cowrie in seven steps.
+# Installing Cowrie in seven steps.
 
-- [Installing cowrie in seven steps.](#installing-cowrie-in-six-steps)
-  * [Step 1: Install required debian packages](#step-1--install-required-debian-packages)
+- [Installing Cowrie in seven steps.](#installing-cowrie-in-six-steps)
+  * [Step 1: Install required Debian packages](#step-1--install-required-debian-packages)
     + [Option A: dependencies for virtualenv](#option-a--dependencies-for-virtualenv)
     + [Option B: dependencies for bare install](#option-b--dependencies-for-bare-install)
   * [Step 2: Create a user account](#step-2--create-a-user-account)
@@ -14,13 +14,16 @@
   * [Step 7: Port redirection (optional)](#step-7--port-redirection--optional-)
   * [Troubleshooting](#troubleshooting)
 
-## Step 1: Install required debian packages
+## Step 1: Install required Debian packages
 
-There are two ways to install cowrie: with a python virtual environment, or directly on to the system.  The virtual environment is generally prefered as it isolates cowrie and its dependencies from other python software on the system.
+There are two ways to install Cowrie: with a python virtual
+environment, or directly on to the system.  The virtual environment
+is prefered as it isolates Cowrie and its dependencies from other
+python software on the system.
 
 ### Option A: dependencies for virtualenv
 
-On Debian based systems (tested on Debian 8 8/30/2016):
+On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
 $ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev
 ```
@@ -28,13 +31,13 @@ $ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-d
 
 ### Option B: dependencies for bare install
 
-Install prerequisites on Debian based systems (untested 8/30/2016):
+Install prerequisites on Debian based systems (untested 2016-08-30):
 
 ```
 $ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
 ```
 
-Install prerequisites on Alpine based systems (untested 8/30/2016):
+Install prerequisites on Alpine based systems (untested 2016-08-30):
 
 ```
 $ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
@@ -99,14 +102,15 @@ $ source cowrie-env/bin/activate
 
 ## Step 4: Install configuration file
 
-Take a look at the configuration file and make changes as desired.  The defaults seem to work well in most cases.
+Take a look at the configuration file and make changes as desired.  The defaults work well in most cases.
 ```
 $ cp cowrie.cfg.dist cowrie.cfg
 ```
 
 ## Step 5: Generate a DSA key
 
-This step should not be necessary, however some versions of twisted are not compatible.  To avoid problems in advance, run:
+This step should not be necessary, however some versions of twisted
+are not compatible.  To avoid problems in advance, run:
 
 ```
 $ cd data
@@ -116,7 +120,10 @@ $ cd ..
 
 ## Step 6: Turning on cowrie
 
-Cowrite is implemented as a module for twisted, but to properly import everything the top-level source directory needs to be in python's os.path.  This sometimes won't happen correctly, so make it explicit:
+Cowrie is implemented as a module for twisted, but to properly
+import everything the top-level source directory needs to be in
+python's os.path.  This sometimes won't happen correctly, so make
+it explicit:
 
 ```
 # or whatever path to the top-level cowrie folder
@@ -145,7 +152,9 @@ The following firewall rule will forward incoming traffic on port 22 to port 222
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 ```
 
-Note that you should test this rule only from another host; it doesn't apply to loopback connections.  Alternatively you can run authbind to listen as non-root on port 22 directly:
+Note that you should test this rule only from another host; it
+doesn't apply to loopback connections.  Alternatively you can run
+authbind to listen as non-root on port 22 directly:
 
 ```
 $ apt-get install authbind
@@ -175,7 +184,10 @@ $ cd cowrie/data
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 ```
 
-* If you see `twistd: Unknown command: cowrie` there are two possibilities.  If there's a python stack trace, it probably means there's a missing or broken dependency.  If there's no stack trace, double check that your PYTHONPATH is set to the source code directory.
+* If you see `twistd: Unknown command: cowrie` there are two
+possibilities.  If there's a python stack trace, it probably means
+there's a missing or broken dependency.  If there's no stack trace,
+double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
 To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
