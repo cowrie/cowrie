@@ -2,7 +2,7 @@
 # Installing Cowrie in seven steps.
 
 - [Installing Cowrie in seven steps.](#installing-cowrie-in-six-steps)
-  * [Step 1: Install required Debian packages](#step-1--install-required-debian-packages)
+  * [Step 1: Install required Python packages](#step-1--install-required-debian-packages)
     + [Option A: dependencies for virtualenv](#option-a--dependencies-for-virtualenv)
     + [Option B: dependencies for bare install](#option-b--dependencies-for-bare-install)
   * [Step 2: Create a user account](#step-2--create-a-user-account)
@@ -14,20 +14,21 @@
   * [Step 7: Port redirection (optional)](#step-7--port-redirection--optional-)
   * [Troubleshooting](#troubleshooting)
 
-## Step 1: Install required Debian packages
+## Step 1: Install dependencies
 
-There are two ways to install Cowrie: with a python virtual
-environment, or directly on to the system.  The virtual environment
-is prefered as it isolates Cowrie and its dependencies from other
-python software on the system.
+There are two ways to install Cowrie's Python dependencies: in a
+Python virtual environment or directly on to the system.  The virtual
+environment is preferred as it isolates Cowrie and its dependencies
+from other Python software on the system.
 
 ### Option A: dependencies for virtualenv
+
+This install virtual environments and other dependencies. The actual python packages are installed later.
 
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
 $ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev
 ```
-
 
 ### Option B: dependencies for bare install
 
@@ -136,7 +137,8 @@ In the absence of a virtual environment, you may run:
 $ ./start.sh
 ```
 
-When using Python Virtual Environments you should add the name of the venv as the first argument
+When using Python Virtual Environments you can add the name of the
+venv as the first argument or activate it before starting.
 
 ```
 $ ./start.sh cowrie-env
