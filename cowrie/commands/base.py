@@ -313,7 +313,7 @@ class command_passwd(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg(eventid='cowrie.session.file_download',
+        log.msg(eventid='cowrie.command.success',
                 realm='passwd',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
@@ -586,7 +586,7 @@ class command_php(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg(eventid='cowrie.session.file_download',
+        log.msg(eventid='cowrie.command.success',
                 realm='php',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s' )
