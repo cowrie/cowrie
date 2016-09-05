@@ -18,7 +18,7 @@
 # March 2013
 ################################################################
 
-import os, pickle, sys, locale, time, cmd
+import os, pickle, sys, locale, time, cmd, copy
 from stat import *
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, \
@@ -495,9 +495,9 @@ class fseditCmd(cmd.Cmd):
             return
 
         dstparentl = getpath(self.fs, dstparent)
-        copy = srcl[:]
-        copy[A_NAME] = dstname
-        dstparentl[A_CONTENTS].append(copy)
+        coppy = copy.deepcopy(srcl)
+        coppy[A_NAME] = dstname
+        dstparentl[A_CONTENTS].append(coppy)
 
         self.save_pickle()
 
