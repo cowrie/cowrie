@@ -2,7 +2,7 @@
 
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
-from twisted.conch.insults import insults, helper
+from twisted.conch.insults import insults,helper
 from twisted.test import proto_helpers
 
 
@@ -110,7 +110,6 @@ class FakeTransport(proto_helpers.StringTransport):
         for m in modes:
             self.privateModes[m] = True
 
-
     def reset(self):
         self.home = insults.Vector(0, 0)
         self.x = self.y = 0
@@ -140,9 +139,10 @@ class FakeTransport(proto_helpers.StringTransport):
 
 
     def _currentFormattingState(self):
-        return helper._FormattingState(self.activeCharset,
-                                       **self.graphicRendition)
+        return True
 
+    def _FormattingState(self):
+        return True
 
     def _emptyLine(self, width):
         return [(self.void, self._currentFormattingState())
