@@ -40,6 +40,7 @@ class command_ls(HoneyPotCommand):
         path = self.protocol.cwd
         paths = []
         self.showHidden = False
+        self.showDirectories = False
         func = self.do_ls_normal
 
         # Parse options or display no files
@@ -55,6 +56,8 @@ class command_ls(HoneyPotCommand):
                 func = self.do_ls_l
             if x in ('-a'):
                 self.showHidden = True
+            if x in ('-d'):
+                self.showDirectories = True
 
         for arg in args:
             paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
@@ -70,7 +73,7 @@ class command_ls(HoneyPotCommand):
         """
         """
         try:
-            if self.protocol.fs.isdir(path):
+            if self.protocol.fs.isdir(path) and self.showDirectories == False:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
@@ -115,7 +118,7 @@ class command_ls(HoneyPotCommand):
         """
         """
         try:
-            if self.protocol.fs.isdir(path):
+            if self.protocol.fs.isdir(path) and self.showDirectories == False:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
