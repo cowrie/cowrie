@@ -10,7 +10,6 @@ import re
 import stat
 import copy
 import time
-import exceptions
 
 from twisted.python import log, failure
 from twisted.internet import error
@@ -22,15 +21,17 @@ from cowrie.core import shlex
 class HoneyPotCommand(object):
     """
     """
-    def __init__(self, protocol, *args):
+    def __init__(self, stdout,protocol, *args):
         self.protocol = protocol
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
         self.data = None
         self.input_data = None
-        self.write = self.protocol.pp.outReceived
-        self.errorWrite = self.protocol.pp.errReceived
+        self.process_type = "nonePipe"
+
+        self.write = stdout.outReceived
+        self.errorWrite = stdout.errReceived
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if '>' in self.args:
@@ -50,7 +51,6 @@ class HoneyPotCommand(object):
             with open(self.safeoutfile, 'a'):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
 
-
     def check_arguments(self, application, args):
         """
         """
@@ -68,6 +68,12 @@ class HoneyPotCommand(object):
         """
         """
         self.input_data = data
+
+
+    def set_process_type(self, data):
+        """
+        """
+        self.process_type = data
 
 
     def write_to_file(self, data):
@@ -97,15 +103,18 @@ class HoneyPotCommand(object):
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
         try:
-            self.protocol.cmdstack.pop()
 
+            self.protocol.pp.removeFromStack()
             """
             If Cmd Stack is equal to 1 means its the base shell
             """
-
             if (len(self.protocol.cmdstack) == 1):
                 self.protocol.cmdstack[-1].showPrompt()
-        except AttributeError, exceptions.IndexError:
+
+        except Exception as inst:
+            log.msg("Exception: " + str(inst))
+            log.msg("Command Stack: " + str(self.protocol.cmdstack))
+            # ignore disregarded stack requests
             # Cmdstack could be gone already (wget + disconnect)
             pass
 
@@ -240,16 +249,6 @@ class HoneyPotShell(object):
     def runCommand(self):
         """
         """
-        pp = None
-
-        log.msg(self.cmdpending)
-
-        def parsed_arguments(arguments):
-            parsed_arguments = []
-            for arg in arguments:
-                parsed_arguments.append(arg)
-
-            return parsed_arguments
 
         def parse_file_arguments(arguments):
             parsed_arguments = []
@@ -274,48 +273,59 @@ class HoneyPotShell(object):
                 key, value = piece.split('=', 1)
                 environ[key] = value
                 continue;
-            log.msg(piece[0])
             cmd = {}
             cmd['command'] = piece[0]
             if len(piece) > 1:
                 cmd['rargs'] = piece[1:]
-            else :
-                cmd['rargs'] =  [ ]
+            else:
+                cmd['rargs'] = []
             cmd['type'] = cmdStructure['type']
             cmd_array.append(cmd)
             continue
 
         lastpp = None
-        exit = False
         for index, cmd in reversed(list(enumerate(cmd_array))):
-            if cmd['command'] == "exit":
-                exit = True
             cmdclass = self.protocol.getCommand(cmd['command'], environ['PATH'].split(':'))
-            log.msg(cmd['command'] + " COMMAND")
             if cmdclass:
                 log.msg(eventid='cowrie.command.success',
-                        input=cmd['command'] + "  " + " " + " ".join(cmd['rargs']),
+                        input=cmd['command'] + " ".join(cmd['rargs']),
                         format='Command found: %(input)s')
                 if index == len(cmd_array) - 1:
-                    lastpp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd, None, None)
+                    lastpp = ProcessHandling(self.protocol, cmdclass, cmd, None)
+                    lastpp.addToStack()
                     pp = lastpp
                 else:
-                    pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd, None, lastpp)
+                    pp = ProcessHandling(self.protocol, cmdclass, cmd, lastpp)
+                    pp.addToStack()
                     lastpp = pp
             else:
                 log.msg(eventid='cowrie.command.failed',
-                        input=' '.join(str(cmd2)), format='Command not found: %(input)s')
+                        input=str(cmd2), format='Command not found: %(input)s')
                 self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
-
+                self.showPrompt()
                 return
         if pp:
+
+            cmdclass = self.protocol.getCommand(cmd_array[0]['command'], environ['PATH'].split(':'))
+            pp.set_protocol(self.protocol)
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
+
 
     def showPrompt(self):
         """
         """
         if not self.interactive:
             return
+        # Example: srv03:~#
+        # prompt = '%s:%%(path)s' % self.protocol.hostname
+        # Example: root@svr03:~#     (More of a "Debianu" feel)
+        prompt = '%s@%s:%%(path)s' % (self.protocol.user.username, self.protocol.hostname)
+        # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
+        # prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
+        if not self.protocol.user.uid:
+            prompt += '# '  # "Root" user
+        else:
+            prompt += '$ '    # "Non-Root" user
 
         cwd = self.protocol.cwd
         homelen = len(self.protocol.user.avatar.home)
@@ -364,7 +374,7 @@ class HoneyPotShell(object):
         """
         log.msg('Received CTRL-D, exiting..')
 
-        cmdclass = self.protocol.commands['exit']
+        cmdclass =  self.protocol.commands['exit']
         pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
         self.protocol.call_command(pp, self.protocol.commands['exit'])
 
@@ -413,7 +423,7 @@ class HoneyPotShell(object):
         newbuf = ''
         if len(files) == 1:
             newbuf = ' '.join(l.split()[:-1] + \
-                ['%s%s' % (basedir, files[0][fs.A_NAME])])
+                              ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
@@ -443,6 +453,68 @@ class HoneyPotShell(object):
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
         self.protocol.terminal.write(newbuf)
 
+class ProcessHandling(object):
+
+    def __init__(self, protocol, cmdclass, cmd, next_command):
+
+
+        self.protocol = protocol
+        self.stdout = StdOutStdErrEmulationProtocol(self,self.protocol,cmd)
+
+
+
+        self.cmd_name = cmd['command']
+        self.cmdargs = cmd['rargs']
+        self.cmd_type = cmd['type']
+        self.cmd = cmdclass
+        self.input_data = ""
+        self.next_command = next_command
+        self.data = ""
+        self.err_data = ""
+
+
+
+
+    def setInputData(self,data):
+        self.data = self.data + data
+
+    def addToStack(self):
+
+        self.runningCommand = self.cmd(self.stdout,self.protocol, *self.cmdargs)
+        self.runningCommand.set_process_type(self.cmd_type)
+        self.protocol.cmdstack.append(self.runningCommand)
+
+
+    def removeFromStack(self):
+        if not self.cmd_name == 'exit':
+            service = self.protocol.cmdstack.pop(self.protocol.cmdstack.index(self.runningCommand))
+
+
+    def getCommandInstance(self):
+        return self.protocol.cmdstack[self.protocol.cmdstack.index(self.runningCommand)]
+
+
+    def callNextCommand(self):
+        if self.next_command:
+            self.next_command.input_data = self.data
+            npcmd = self.next_command.cmd
+            npcmdargs = self.next_command.cmdargs
+            self.protocol.pp = self.next_command
+            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
+
+
+    def insert_command(self, command):
+        """
+        Insert the next command into the list.
+        """
+        tmp = self.next_command
+        command.next_command = tmp
+        self.next_command = command
+        self.next_command.addToStack()
+
+    def set_protocol(self, protocol):
+         self.protocol = protocol
+         self.protocol.pp = self
 
 
 class StdOutStdErrEmulationProtocol(object):
@@ -451,44 +523,27 @@ class StdOutStdErrEmulationProtocol(object):
     """
     __author__ = 'davegermiquet'
 
-    def __init__(self, protocol, cmdclass, cmd, input_data, next_command):
-        self.cmd = cmdclass
-        self.cmdargs = cmd['rargs']
-        self.cmdType = cmd['type']
-        self.next_command = next_command
-        self.input_data = None
-        if (self.cmdType == 'pipe'):
-            self.next_command.input_data = input_data
+    command_list_to_ignore_output = ["sudo", "bash", "sh", "busybox"]
 
-        self.data = ""
-        self.err_data = ""
+
+    def __init__(self,process,protocol,commandStructure):
+
         self.protocol = protocol
-        self.protocol.cmdstack.append(cmdclass)
-
-    def connectionMade(self):
-        """
-        """
-        self.input_data = None
-
+        self.commandStructure = commandStructure
+        self.process = process
+        self.data = ""
 
     def outReceived(self, data):
         """
         """
         self.data = self.data + data
-
-        if not self.cmdType == 'pipe':
+        self.process.setInputData(data)
+        if not self.commandStructure['type'] == "pipe" and not self.commandStructure['command'] in self.command_list_to_ignore_output:
             if not self.protocol is None and not self.protocol.terminal is None:
                 self.protocol.terminal.write(str(data))
             else:
                 log.msg("Connection was probably lost. Could not write to terminal")
 
-
-    def insert_command(self, command):
-        """
-        Insert the next command into the list.
-        """
-        command.next_command = self.next_command
-        self.next_command = command
 
 
     def errReceived(self, data):
@@ -507,28 +562,8 @@ class StdOutStdErrEmulationProtocol(object):
     def outConnectionLost(self):
         """
         """
-        if self.next_command:
-            self.next_command.input_data = self.data
-            npcmd = self.next_command.cmd
-            npcmdargs = self.next_command.cmdargs
-            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
-
 
     def errConnectionLost(self):
         """
         """
         pass
-
-
-    def processExited(self, reason):
-        """
-        """
-        log.msg("processExited for %s, status %d" % (self.cmd, reason.value.exitCode))
-
-
-    def processEnded(self, reason):
-        """
-        """
-        log.msg("processEnded for %s, status %d" % (self.cmd, reason.value.exitCode))
-
-
