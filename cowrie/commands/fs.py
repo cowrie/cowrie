@@ -243,6 +243,7 @@ class command_head(HoneyPotCommand):
             for pname in files:
                 self.head_get_file_contents(pname)
         else:
+            log.msg(self.input_data)
             self.head_application(self.input_data)
         self.exit()
 

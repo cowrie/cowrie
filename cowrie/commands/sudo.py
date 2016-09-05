@@ -87,8 +87,9 @@ Sudoers I/O plugin version 1.8.5p2\n''')
         """
         """
         start_value = None
+        parsed_arguments = []
         for count in range(0,len(self.args)):
-            parsed_arguments = []
+
             class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'] .split(':'))
             if class_found:
                 start_value = count
@@ -122,7 +123,11 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:], None ,None)
+                cmdStructure = {}
+                cmdStructure['type'] = self.process_type
+                cmdStructure['command'] = cmd
+                cmdStructure['rargs'] = parsed_arguments[1:]
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmdStructure, None ,None)
                 self.protocol.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....
                 if self.input_data:

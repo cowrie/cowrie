@@ -37,6 +37,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.clientVersion = None
         self.kippoIP = None
         self.clientIP = None
+        self.pp = None
 
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
@@ -186,9 +187,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         """
         self.pp = pp
-        obj = cmd(self, *args)
-        if pp.input_data:
-          obj.set_input_data(pp.input_data)
+        obj = self.pp.getCommandInstance()
+        if self.pp.input_data:
+            obj.set_input_data(self.pp.input_data)
         obj.start()
         self.pp.outConnectionLost()
 
@@ -267,7 +268,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             '\x15':     self.handle_CTRL_U,	# CTRL-U
             '\x16':     self.handle_CTRL_V,	# CTRL-V
             '\x1b':     self.handle_ESC,	# ESC
-            '\x1d':     self.handle_CTRL_D #EXIT
             })
 
 
@@ -326,10 +326,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def call_command(self, pp, cmd, *args):
         """
         """
-        self.pp = pp
         self.setTypeoverMode()
-
-        HoneyPotBaseProtocol.call_command(self, pp, cmd, *args);
+        HoneyPotBaseProtocol.call_command(self, pp, cmd, *args)
 
 
     def characterReceived(self, ch, moreCharactersComing):
@@ -358,22 +356,19 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def handle_CTRL_C(self):
         """
         """
-        if len(self.cmdstack) == 1:
-            self.cmdstack[-1].handle_CTRL_C()
+        self.cmdstack[-1].handle_CTRL_C()
 
 
     def handle_CTRL_D(self):
         """
         """
-        if len(self.cmdstack) == 1:
-           self.cmdstack[-1].handle_CTRL_D()
+        self.cmdstack[-1].handle_CTRL_D()
 
 
     def handle_TAB(self):
         """
         """
-        if len(self.cmdstack) == 1:
-            self.cmdstack[-1].handle_TAB()
+        self.cmdstack[-1].handle_TAB()
 
 
     def handle_CTRL_K(self):
