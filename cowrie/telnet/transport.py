@@ -85,7 +85,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 log.msg("Failed to load output engine: {}".format(engine))
 
         # hook protocol
-        self.protocol = lambda: StripCrTelnetTransport(HoneyPotTelnetAuthProtocol,
+        self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol,
                                          self.portal)
         protocol.ServerFactory.startFactory(self)
 
@@ -99,7 +99,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.stopFactory(self)
 
 
-class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
+class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     """
     TelnetAuthProtocol that takes care of Authentication. Once authenticated this
     protocol is replaced with HoneyPotTelnetSession.
@@ -111,19 +111,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
     def connectionMade(self):
         """
         """
-        self.transportId = uuid.uuid4().hex[:8]
-        sessionno = self.transport.transport.sessionno
-        self.factory.sessions[sessionno] = self.transportId
-        self.setTimeout(120)
-
-        log.msg(eventid='cowrie.session.connect',
-           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
-           src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
-           dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           session=self.transportId, sessionno=sessionno)
-
+        self.factory.sessions[self.transport.transport.sessionno] = self.transport.transportId
         # I need to doubly escape here since my underlying
-        # StripCrTelnetTransport hack would remove it and leave just \n
+        # CowrieTelnetTransport hack would remove it and leave just \n
         self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
         self.transport.write(self.loginPrompt)
 
@@ -132,11 +122,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         """
         Fires on pre-authentication disconnects
         """
-        self.setTimeout(None)
         if self.transport.transport.sessionno in self.factory.sessions:
             del self.factory.sessions[self.transport.transport.sessionno]
-        log.msg(eventid='cowrie.session.closed', format='Connection lost')
-
         AuthenticatingTelnetProtocol.connectionLost(self, reason)
 
 
@@ -186,12 +173,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         self.logout = logout
         self.state = 'Command'
 
-        # transfer important state info to new transport
-        protocol.transportId = self.transportId
-
         # Remove the short timeout of the login prompt. Timeout will be
         # provided later by the HoneyPotBaseProtocol class.
-        self.setTimeout(None)
+        self.transport.setTimeout(None)
 
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
@@ -205,14 +189,41 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol, TimeoutMixin):
         self.state = "User"
 
 
-class StripCrTelnetTransport(TelnetTransport):
-    """Sole purpose is to override write() and fix a CRLF nesting bug"""
+class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
+    """
+    """
+    def connectionMade(self):
+        self.transportId = uuid.uuid4().hex[:8]
+        sessionno = self.transport.sessionno
+        self.startTime = time.time()
+        self.setTimeout(300)
 
-    # Because of the presence of two ProtocolTransportMixin in the protocol
-    # stack once authenticated, I need to override write() and remove a \r
-    # otherwise we end up with \r\r\n on the wire.
-    #
-    # It is kind of a hack. I asked for a better solution here:
-    # http://stackoverflow.com/questions/35087250/twisted-telnet-server-how-to-avoid-nested-crlf
+        log.msg(eventid='cowrie.session.connect',
+           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
+           src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
+           dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
+           session=self.transportId, sessionno=sessionno)
+        TelnetTransport.connectionMade(self)
+
     def write(self, bytes):
+        """
+        Because of the presence of two ProtocolTransportMixin in the protocol
+        stack once authenticated, I need to override write() and remove a \r
+        otherwise we end up with \r\r\n on the wire.
+
+        It is kind of a hack. I asked for a better solution here:
+        http://stackoverflow.com/questions/35087250/twisted-telnet-server-how-to-avoid-nested-crlf
+        """
         self.transport.write(bytes.replace('\r\n', '\n'))
+
+
+    def connectionLost(self, reason):
+        """
+        Fires on pre-authentication disconnects
+        """
+        self.setTimeout(None)
+        TelnetTransport.connectionLost(self, reason)
+        duration = time.time() - self.startTime
+        log.msg(eventid='cowrie.session.closed',
+            format='Connection lost after %(duration)d seconds',
+            duration=duration)
