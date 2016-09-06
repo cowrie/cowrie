@@ -304,7 +304,7 @@ class HoneyPotShell(object):
 
             cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
             if cmdclass:
-                log.msg(eventid='cowrie.command.success', input=cmd['command'] + "  " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
+                log.msg(eventid='cowrie.command.success', input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
                 if index == len(cmd_array)-1:
                     lastpp =  StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None)
                     pp = lastpp
