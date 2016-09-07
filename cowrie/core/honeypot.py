@@ -317,13 +317,13 @@ class HoneyPotShell(object):
         if not self.interactive:
             return
         # Example: srv03:~#
-        # prompt = '%s:%%(path)s' % self.protocol.hostname
+        #prompt = '%s:%%(path)s' % self.protocol.hostname
         # Example: root@svr03:~#     (More of a "Debianu" feel)
         prompt = '%s@%s:%%(path)s' % (self.protocol.user.username, self.protocol.hostname)
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
-        # prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
+        #prompt = '[%s@%s %%(path)s]' % (self.protocol.user.username, self.protocol.hostname,)
         if not self.protocol.user.uid:
-            prompt += '# '  # "Root" user
+            prompt += '# '    # "Root" user
         else:
             prompt += '$ '    # "Non-Root" user
 
@@ -423,7 +423,7 @@ class HoneyPotShell(object):
         newbuf = ''
         if len(files) == 1:
             newbuf = ' '.join(l.split()[:-1] + \
-                              ['%s%s' % (basedir, files[0][fs.A_NAME])])
+                ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
@@ -462,7 +462,6 @@ class ProcessHandling(object):
         self.stdout = StdOutStdErrEmulationProtocol(self,self.protocol,cmd)
 
 
-
         self.cmd_name = cmd['command']
         self.cmdargs = cmd['rargs']
         self.cmd_type = cmd['type']
@@ -473,10 +472,9 @@ class ProcessHandling(object):
         self.err_data = ""
 
 
-
-
     def setInputData(self,data):
         self.data = self.data + data
+
 
     def addToStack(self):
 
@@ -532,7 +530,8 @@ class StdOutStdErrEmulationProtocol(object):
         self.commandStructure = commandStructure
         self.process = process
         self.data = ""
-
+        self.err_data = ""
+        
     def outReceived(self, data):
         """
         """
