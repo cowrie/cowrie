@@ -22,7 +22,7 @@ class Interact(telnet.Telnet):
         self.interacting = None
         self.cmdbuf = ''
         self.honeypotFactory = self.factory.honeypotFactory
-
+        self.readonly = True
         # Someone tell me if i'm doing this wrong?
         d = self.do(telnet.LINEMODE)
         self.requestNegotiation(telnet.LINEMODE, telnet.LINEMODE_EDIT + '\x00')
@@ -86,7 +86,7 @@ class Interact(telnet.Telnet):
             if not self.readonly:
                 if type(bytes) == type(''):
                     ttylog.ttylog_write(
-                        self.interacting.terminal.ttylog_file,
+                        self.interacting.terminal.ttylogFile,
                         len(bytes), ttylog.TYPE_INTERACT, time.time(), bytes)
                 for c in bytes:
                     recvline.HistoricRecvLine.keystrokeReceived(
