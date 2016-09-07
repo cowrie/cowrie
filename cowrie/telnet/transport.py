@@ -41,10 +41,12 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     def startFactory(self):
         """
         """
-        # The banner to serve
-        honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
-        issuefile = honeyfs + "/etc/issue.net"
-        self.banner = file(issuefile).read()
+        try:
+            honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
+            issuefile = honeyfs + "/etc/issue.net"
+            self.banner = open(issuefile).read()
+        except IOError:
+            self.banner = ""
 
         # Interactive protocols are kept here for the interact feature
         self.sessions = {}
