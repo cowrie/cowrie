@@ -11,6 +11,7 @@ from zope.interface import implementer
 
 from pyelliptic import ECC
 from base64 import b64decode
+from base64 import b64encode
 
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import ISSHPrivateKey
@@ -64,8 +65,8 @@ class PasswordCrypto:
     """
 
     def __init__(self, pubkey):
-        self.pubkey = pubkey
-        self.actor = pyelliptic.ECC(pubkey=self.pubkey)
+        self.pubkey = b64decode(pubkey)
+        self.actor = ECC(pubkey=self.pubkey)
 
     def encrypt(self, pwd):
         return b64encode(self.actor.encrypt(pwd, self.actor.get_pubkey()))
@@ -85,11 +86,11 @@ class HoneypotPasswordChecker(object):
         self.cfg = cfg
 
         # Are we encrypting passwords?
-        if self.cfg.has_option('honeypot', 'encryption_pubkey'):
-            pubkey = self.cfg.get_option('honeypot', 'encryption_pubkey')
-            self.pwcrypto = PasswordCrypto(pubkey)
-        else:
-            self.pwcrypto = False
+        self.pwcrypto = False
+        if self.cfg.has_option('honeypot', 'pw_pubkey'):
+            pubkey = self.cfg.get('honeypot', 'pw_pubkey')
+            if len(pubkey):
+                self.pwcrypto = PasswordCrypto(pubkey)
 
 
     def requestAvatarId(self, credentials):
@@ -146,7 +147,7 @@ class HoneypotPasswordChecker(object):
         if theauth.checklogin(theusername, thepassword, ip):
 
             if self.pwcrypto:
-                thepassword = self.pwcrypto.encrypt(thepassword)
+                thepassword = "|" + self.pwcrypto.encrypt(thepassword) + "|"
 
             log.msg(eventid='cowrie.login.success',
                     format='login attempt [%(username)s/%(password)s] succeeded',
@@ -156,7 +157,7 @@ class HoneypotPasswordChecker(object):
         else:
 
             if self.pwcrypto:
-                thepassword = self.pwcrypto.encrypt(thepassword)
+                thepassword = "|" + self.pwcrypto.encrypt(thepassword) + "|"
 
             log.msg(eventid='cowrie.login.failed',
                     format='login attempt [%(username)s/%(password)s] failed',

@@ -106,7 +106,7 @@ interact_port = 5123
 # performed.
 # 
 # (default: "")
-#password_pubkey = 
+#pw_pubkey = 
 
 # ============================================================================
 # Network Specific Options

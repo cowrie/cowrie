@@ -5,3 +5,4 @@ pyopenssl
 gmpy2
 service_identity
 pyelliptic==1.5.7
+pycrypto

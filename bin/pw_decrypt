@@ -58,9 +58,10 @@ if pubkey == "":
 actor = pyelliptic.ECC(privkey=seckey, pubkey=pubkey)
 
 for line in sys.stdin:
-    m = re.search("[A-za-z0-9=+/]{184}", line)
-    ciphertext = m.group(0)    
-    plaintext = actor.decrypt(b64decode(ciphertext))
-    print line.replace(ciphertext, plaintext)
+    m = re.search("[A-za-z0-9=+/]{90,}", line)
+    if m:
+        ciphertext = m.group(0)    
+        plaintext = actor.decrypt(b64decode(ciphertext))
+        print line.replace(ciphertext, plaintext).strip()
 
 
