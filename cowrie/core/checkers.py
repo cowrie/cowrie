@@ -9,6 +9,10 @@ from sys import modules
 
 from zope.interface import implementer
 
+from pyelliptic import ECC
+from base64 import b64decode
+from base64 import b64encode
+
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
@@ -54,6 +58,20 @@ class HoneypotNoneChecker(object):
         return defer.succeed(credentials.username)
 
 
+class PasswordCrypto:
+    """
+    Small wrapper around pyelliptic to perform assymetric encryption of
+    passwords.
+    """
+
+    def __init__(self, pubkey):
+        self.pubkey = b64decode(pubkey)
+        self.actor = ECC(pubkey=self.pubkey)
+
+    def encrypt(self, pwd):
+        return b64encode(self.actor.encrypt(pwd, self.actor.get_pubkey()))
+
+
 
 @implementer(ICredentialsChecker)
 class HoneypotPasswordChecker(object):
@@ -66,6 +84,13 @@ class HoneypotPasswordChecker(object):
 
     def __init__(self, cfg):
         self.cfg = cfg
+
+        # Are we encrypting passwords?
+        self.pwcrypto = False
+        if self.cfg.has_option('honeypot', 'pw_pubkey'):
+            pubkey = self.cfg.get('honeypot', 'pw_pubkey')
+            if len(pubkey):
+                self.pwcrypto = PasswordCrypto(pubkey)
 
 
     def requestAvatarId(self, credentials):
@@ -120,12 +145,20 @@ class HoneypotPasswordChecker(object):
         theauth = authname(self.cfg)
 
         if theauth.checklogin(theusername, thepassword, ip):
+
+            if self.pwcrypto:
+                thepassword = "|" + self.pwcrypto.encrypt(thepassword) + "|"
+
             log.msg(eventid='cowrie.login.success',
                     format='login attempt [%(username)s/%(password)s] succeeded',
                     username=theusername.encode('string-escape'),
                     password=thepassword.encode('string-escape'))
             return True
         else:
+
+            if self.pwcrypto:
+                thepassword = "|" + self.pwcrypto.encrypt(thepassword) + "|"
+
             log.msg(eventid='cowrie.login.failed',
                     format='login attempt [%(username)s/%(password)s] failed',
                     username=theusername.encode('string-escape'),
