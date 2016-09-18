@@ -1,9 +1,10 @@
 #!/bin/sh
 AUTHBIND_ENABLED=no
+COWRIEDIR=$(dirname $0)
+export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 
 set -e
-
-cd $(dirname $0)
+cd ${COWRIEDIR}
 
 if [ "$1" != "" ]
 then
