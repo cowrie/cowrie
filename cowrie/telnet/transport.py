@@ -32,6 +32,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         Special delivery to the loggers to avoid scope problems
         """
+        args['sessionno'] = 'T'+str(args['sessionno'])
         for dblog in self.dbloggers:
             dblog.logDispatch(*msg, **args)
         for output in self.output_plugins:
