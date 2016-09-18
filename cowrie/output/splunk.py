@@ -6,16 +6,12 @@ Not ready for production use.
 JSON log file is still recommended way to go
 """
 
-from zope.interface import implementer
 from StringIO import StringIO
 
 import json
-import os
-import urllib
-import urlparse
 
 from twisted.python import log
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
 from twisted.internet.ssl import ClientContextFactory
