@@ -111,9 +111,9 @@ class CowrieServiceMaker(object):
         if options['port'] != 0:
             listen_ssh_port = int(options["port"])
         elif cfg.has_option('ssh', 'listen_port'):
-            listen_ssh_port = int(cfg.get('ssh', 'listen_port'))
+            listen_ssh_port = cfg.getint('ssh', 'listen_port')
         elif cfg.has_option('honeypot', 'listen_port'):
-            listen_ssh_port = int(cfg.get('honeypot', 'listen_port'))
+            listen_ssh_port = cfg.getint('honeypot', 'listen_port')
         else:
             listen_ssh_port = 2222
 
@@ -133,7 +133,7 @@ class CowrieServiceMaker(object):
 
             # Preference: 1, config, 2, default of 2223
             if cfg.has_option('telnet', 'listen_port'):
-                listen_telnet_port = int(cfg.get('telnet', 'listen_port'))
+                listen_telnet_port = cfg.getint('telnet', 'listen_port')
             else:
                 listen_telnet_port = 2223
 

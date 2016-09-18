@@ -53,11 +53,11 @@ class CowrieSFTPFile(object):
         if flags & FXF_EXCL == FXF_EXCL:
             openFlags |= os.O_EXCL
         if "permissions" in attrs:
-            mode = attrs["permissions"]
+            filemode = attrs["permissions"]
             del attrs["permissions"]
         else:
-            mode = 0777
-        fd = sftpserver.fs.open(filename, openFlags, mode)
+            filemode = 0777
+        fd = sftpserver.fs.open(filename, openFlags, filemode)
         if attrs:
             self.sftpserver.setAttrs(filename, attrs)
         self.fd = fd
