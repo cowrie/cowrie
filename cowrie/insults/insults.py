@@ -20,6 +20,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
+    stdinlogOpen = False
+    ttylogOpen = False
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
@@ -55,8 +57,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogFile = '%s/tty/%s-%s-%s%s.log' % \
             (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
             transportId, channelId, self.type)
-        ttylog.ttylog_open(self.ttylogFile, self.startTime)
-        self.ttylog_open = True
+        ttylog.ttylogOpen(self.ttylogFile, self.startTime)
+        self.ttylogOpen = True
         self.ttylogSize = 0
 
         log.msg(eventid='cowrie.log.open',
@@ -66,7 +68,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
             (self.downloadPath,
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
-        self.stdinlog_open = False
+        self.stdinlogOpen = False
 
         insults.ServerProtocol.connectionMade(self)
 
@@ -78,7 +80,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         for i in self.interactors:
             i.sessionWrite(bytes)
 
-        if self.ttylog_open:
+        if self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
             self.ttylogSize += len(bytes)
@@ -98,10 +100,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.eofReceived()
             return
 
-        if self.stdinlog_open:
+        if self.stdinlogOpen:
             with open(self.stdinlogFile, 'ab') as f:
                 f.write(data)
-        elif self.ttylog_open:
+        elif self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
 
@@ -145,7 +147,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         for i in self.interactors:
             i.sessionClosed()
 
-        if self.stdinlog_open:
+        if self.stdinlogOpen:
             try:
                 with open(self.stdinlogFile, 'rb') as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
@@ -163,9 +165,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
             except IOError as e:
                 pass
             finally:
-                self.stdinlog_open = False
+                self.stdinlogOpen = False
 
-        if self.ttylog_open:
+        if self.ttylogOpen:
             # TODO: Add session duration to this entry
             log.msg(eventid='cowrie.log.closed',
                     format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
@@ -173,7 +175,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     size=self.ttylogSize,
                     duration=time.time()-self.startTime)
             ttylog.ttylog_close(self.ttylogFile, time.time())
-            self.ttylog_open = False
+            self.ttylogOpen = False
 
         insults.ServerProtocol.connectionLost(self, reason)
 
