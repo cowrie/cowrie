@@ -68,10 +68,11 @@ class Output(object):
         self.cfg = cfg
         self.sessions = {}
         self.ips = {}
-        # FIXME figure out what needs to be done here regarding
-        #       HoneyPotTransport renamed to HoneyPotSSHTransport
-        self.re_sessionlog = re.compile(
-            '.*Transport,([0-9]+),[0-9a-f:.]+$')
+        # Need these for each individual transport, or else the session numbers overlap
+        self.sshRegex = re.compile(
+            '.*SSHTransport,([0-9]+),[0-9a-f:.]+$')
+        self.telnetRegex = re.compile(
+            '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
         try:
             self.sensor = self.cfg.get('honeypot', 'sensor_name')
         except:
@@ -158,10 +159,15 @@ class Output(object):
             del ev['sessionno']
         # Extract session id from the twisted log prefix
         elif 'system' in ev:
-            match = self.re_sessionlog.match(ev['system'])
-            if not match:
+            telnetmatch = self.telnetRegex.match(ev['system'])
+            if telnetmatch:
+                sessionno = 'T'+str(telnetmatch.groups()[0])
+            else:
+                sshmatch = self.sshRegex.match(ev['system'])
+                if sshmatch:
+                    sessionno = 'S'+str(sshmatch.groups()[0])
+            if not sessionno:
                 return
-            sessionno = int(match.groups()[0])
 
         if sessionno in self.ips:
             ev['src_ip'] = self.ips[sessionno]

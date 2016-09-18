@@ -201,10 +201,10 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self.setTimeout(300)
 
         log.msg(eventid='cowrie.session.connect',
-           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(sessionno)s]',
+           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: S%(sessionno)s]',
            src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           session=self.transportId, sessionno=sessionno)
+           session=self.transportId, sessionno='T'+str(sessionno))
         TelnetTransport.connectionMade(self)
 
     def write(self, bytes):
