@@ -2,18 +2,21 @@
 # See the COPYRIGHT file for more information
 
 import time
-import urlparse
 import re
 import exceptions
 import os
 import getopt
 import hashlib
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
+from OpenSSL import SSL
 
 from twisted.web import client
 from twisted.internet import reactor, ssl
 from twisted.python import log
-
-from OpenSSL import SSL
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
@@ -75,7 +78,7 @@ class command_wget(HoneyPotCommand):
         if '://' not in url:
             url = 'http://%s' % url
 
-        urldata = urlparse.urlparse(url)
+        urldata = urlparse(url)
 
         if outfile is None:
             outfile = urldata.path.split('/')[-1]
@@ -111,7 +114,7 @@ class command_wget(HoneyPotCommand):
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
         try:
-            parsed = urlparse.urlparse(url)
+            parsed = urlparse(url)
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)
@@ -187,6 +190,7 @@ class command_wget(HoneyPotCommand):
         self.exit()
 
     def error(self, error, url):
+        print(repr(error))
         if hasattr(error, 'getErrorMessage'): # exceptions
             error = error.getErrorMessage()
         self.write(error+'\n')

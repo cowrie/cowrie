@@ -3,19 +3,22 @@
 
 import stat
 import time
-import urlparse
 import random
 import re
 import exceptions
 import os
 import getopt
 import hashlib
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
+from OpenSSL import SSL
 
 from twisted.web import client
 from twisted.internet import reactor, ssl
 from twisted.python import log
-
-from OpenSSL import SSL
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
@@ -58,7 +61,7 @@ class command_curl(HoneyPotCommand):
 
         if '://' not in url:
             url = 'http://'+ url
-        urldata = urlparse.urlparse(url)
+        urldata = urlparse(url)
 
         outfile = None
         for opt in optlist:
@@ -265,7 +268,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         """
         """
         try:
-            parsed = urlparse.urlparse(url)
+            parsed = urlparse(url)
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)

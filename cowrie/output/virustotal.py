@@ -35,8 +35,11 @@ from zope.interface import implementer
 
 import json
 import os
-import urllib
-import urlparse
+try:
+    from urllib.parse import urlparse, urlencode
+except ImportError:
+    from urllib import urlencode
+    from urlparse import urlparse
 
 from twisted.python import log
 from twisted.web.iweb import IBodyProducer
@@ -78,7 +81,7 @@ class Output(cowrie.core.output.Output):
             self.posturl(entry["url"])
 
             log.msg("Sending file to VT")
-            p = urlparse.urlparse(entry["url"]).path
+            p = urlparse(entry["url"]).path
             if p == "":
                 fileName = entry["shasum"]
             else:
