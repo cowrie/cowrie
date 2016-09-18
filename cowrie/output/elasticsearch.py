@@ -1,8 +1,5 @@
 # Simple elasticsearch logger
 
-import os
-import json
-
 import pyes
 
 import cowrie.core.output
