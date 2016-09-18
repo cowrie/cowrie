@@ -41,6 +41,7 @@ import socket
 #  cowrie.client.size
 #  cowrie.client.var
 #  cowrie.client.version
+#  cowrie.command.input
 #  cowrie.command.failed
 #  cowrie.command.success
 #  cowrie.direct-tcpip.data

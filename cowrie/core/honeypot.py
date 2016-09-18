@@ -158,7 +158,7 @@ class HoneyPotShell(object):
     def lineReceived(self, line):
         """
         """
-        log.msg('CMD: {}'.format(line))
+        log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []
         while True:

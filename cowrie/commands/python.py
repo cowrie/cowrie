@@ -120,7 +120,7 @@ class command_python(HoneyPotCommand):
     def lineReceived(self, line):
         """
         """
-        log.msg(eventid='cowrie.command.success',
+        log.msg(eventid='cowrie.command.input',
                 realm='python',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
