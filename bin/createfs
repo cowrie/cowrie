@@ -36,7 +36,7 @@ def checkblacklist(ftxt):
             return True
     return False
 
-def recurse(localroot, root, tree, maxdepth = sys.maxint):
+def recurse(localroot, root, tree, maxdepth = 100):
     if maxdepth == 0: return
 
     localpath = os.path.join(localroot, root[1:])
@@ -99,27 +99,27 @@ def recurse(localroot, root, tree, maxdepth = sys.maxint):
         tree.append(entry)
 
 def help(brief = False):
-    print 'Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n' % \
-        os.path.basename(sys.argv[0])
+    print( 'Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n' % \
+        os.path.basename(sys.argv[0]))
 
     if not brief:
-        print '  -v             verbose'
-        print '  -p             include /proc'
-        print '  -l <dir>       local root directory (default is current working directory)'
-        print '  -d <depth>     maximum depth (default is full depth)'
-        print '  -o <file>      write output to file instead of stdout'
-        print '  -h             display this help\n'
+        print('  -v             verbose')
+        print('  -p             include /proc')
+        print('  -l <dir>       local root directory (default is current working directory)')
+        print('  -d <depth>     maximum depth (default is full depth)')
+        print('  -o <file>      write output to file instead of stdout')
+        print('  -h             display this help\n')
 
     sys.exit(1)
 
 if __name__ == '__main__':
-    maxdepth = sys.maxint
+    maxdepth = 100
     localroot = os.getcwd()
     output = ''
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'hvpl:d:o:', ['help'])
-    except getopt.GetoptError, error:
+    except getopt.GetoptError as error:
         sys.stderr.write('Error: %s\n' % error)
         help()
 
@@ -143,4 +143,4 @@ if __name__ == '__main__':
     if output:
         pickle.dump(tree, open(output, 'wb'))
     else:
-        print pickle.dumps(tree)
+        print(pickle.dumps(tree))
