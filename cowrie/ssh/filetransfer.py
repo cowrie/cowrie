@@ -56,7 +56,7 @@ class CowrieSFTPFile(object):
             filemode = attrs["permissions"]
             del attrs["permissions"]
         else:
-            filemode = 0777
+            filemode = 0o777
         fd = sftpserver.fs.open(filename, openFlags, filemode)
         if attrs:
             self.sftpserver.setAttrs(filename, attrs)
