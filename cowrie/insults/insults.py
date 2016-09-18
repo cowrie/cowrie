@@ -57,7 +57,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogFile = '%s/tty/%s-%s-%s%s.log' % \
             (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
             transportId, channelId, self.type)
-        ttylog.ttylogOpen(self.ttylogFile, self.startTime)
+        ttylog.ttylog_open(self.ttylogFile, self.startTime)
         self.ttylogOpen = True
         self.ttylogSize = 0
 
