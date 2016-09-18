@@ -41,7 +41,7 @@ class HoneyPotCommand(object):
             self.safeoutfile = '%s/%s-%s-%s-redir_%s' % (
                 self.protocol.cfg.get('honeypot', 'download_path'),
                 time.strftime('%Y%m%d-%H%M%S'),
-                self.protocol.terminal.transport.session.conn.transport.transportId,
+                self.protocol.getProtoTransport().transportId,
                 self.protocol.terminal.transport.session.id,
                 re.sub('[^A-Za-z0-9]', '_', self.outfile))
             perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
