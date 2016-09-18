@@ -89,13 +89,13 @@ def playlog(fd, settings):
 
 def help(verbose=False):
 
-    print 'usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' % \
-        os.path.basename(sys.argv[0])
+    print(( 'usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' % \
+        os.path.basename(sys.argv[0])))
 
     if verbose:
-        print '  -c             colorify the output based on what streams are being received'
-        print '  -h             display this help'
-        print '  -o             write to the specified output file'
+        print('  -c             colorify the output based on what streams are being received')
+        print('  -h             display this help')
+        print('  -o             write to the specified output file')
 
 
 if __name__ == '__main__':
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'hco:' )
-    except getopt.GetoptError, error:
+    except getopt.GetoptError as error:
         sys.stderr.write( '{}: {}\n'.format(sys.argv[0], error))
         help()
         sys.exit(1)

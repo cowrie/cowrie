@@ -22,8 +22,8 @@ import os, pickle, sys, locale, time, cmd, copy
 from stat import *
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, \
-    A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = range(0, 10)
-T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = range(0, 7)
+    A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = list(range(0, 10))
+T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 def getpath(fs, path):
     cwd = fs
@@ -44,7 +44,7 @@ def exists(fs, path):
     try:
         getpath(fs, path)
         return True
-    except Exception, e:
+    except Exception as e:
         if str(e) == 'File not found':
             return False
         else:
@@ -73,21 +73,21 @@ class fseditCmd(cmd.Cmd):
         cmd.Cmd.__init__(self)
 
         if not os.path.isfile(pickle_file_path):
-            print "File %s does not exist." % pickle_file_path
+            print(("File %s does not exist." % pickle_file_path))
             sys.exit(1)
 
         try:
             pickle_file = open(pickle_file_path, 'rb')
         except IOError as e:
-            print "Unable to open file %s" % pickle_file_path
+            print(("Unable to open file %s" % pickle_file_path))
             sys.exit(1)
 
         try:
             self.fs = pickle.load(pickle_file)
         except:
-            print ("Unable to load file '%s'. " + \
+            print((("Unable to load file '%s'. " + \
                 "Are you sure it is a valid pickle file?") % \
-                (pickle_file_path,)
+                (pickle_file_path,)))
             sys.exit(1)
 
         self.pickle_file_path=pickle_file_path
@@ -107,9 +107,9 @@ class fseditCmd(cmd.Cmd):
         try:
             pickle.dump(self.fs, file(self.pickle_file_path, 'wb'))
         except:
-            print ("Unable to save pickle file '%s'. " + \
+            print((("Unable to save pickle file '%s'. " + \
                 "Are you sure you have write access?") % \
-                (self.pickle_file_path,)
+                (self.pickle_file_path,)))
             sys.exit(1)
 
     def do_exit(self, args):
@@ -120,7 +120,7 @@ class fseditCmd(cmd.Cmd):
         '''The escape character ctrl+d exits the session'''
         #exiting from the do_EOF method does not create a newline automatically
         #so we add it manually
-        print
+        print()
         return True
 
     def do_ls(self, args):
@@ -139,11 +139,11 @@ class fseditCmd(cmd.Cmd):
             path = resolve_reference(self.pwd, args)
 
         if exists(self.fs, path) == False:
-            print "ls: cannot access %s: No such file or directory" % (path,)
+            print(("ls: cannot access %s: No such file or directory" % (path,)))
             return
 
         if is_directory(self.fs, path) == False:
-            print "ls: %s is not a directory" % (path,)
+            print(("ls: %s is not a directory" % (path,)))
             return
 
         cwd = getpath(self.fs, path)
@@ -155,12 +155,11 @@ class fseditCmd(cmd.Cmd):
             largest = max([x[A_SIZE] for x in files])
 
         for file in files:
-
             if not longls:
                 if file[A_TYPE] == T_DIR:
-                    print file[A_NAME] + '/'
+                    print((file[A_NAME] + '/'))
                 else:
-                    print file[A_NAME]
+                    print((file[A_NAME]))
                 continue
 
             perms = ['-'] * 10
@@ -200,14 +199,14 @@ class fseditCmd(cmd.Cmd):
             else:
                 gid=str(gid).rjust(4)
 
-            print '%s 1 %s %s %s %s %s%s' % \
+            print(('%s 1 %s %s %s %s %s%s' % \
                 (perms,
                 uid,
                 gid,
                 str(file[A_SIZE]).rjust(len(str(largest))),
                 time.strftime('%Y-%m-%d %H:%M', ctime),
                 file[A_NAME],
-                linktarget)
+                linktarget)))
 
     def update_pwd(self, directory):
         self.pwd = directory
@@ -229,15 +228,15 @@ class fseditCmd(cmd.Cmd):
             target_dir = resolve_reference(self.pwd, relative_dir)
 
             if exists(self.fs, target_dir) == False:
-                print "cd: %s: No such file or directory" %  target_dir
+                print(("cd: %s: No such file or directory" % target_dir))
             elif is_directory(self.fs, target_dir):
                 self.update_pwd(target_dir)
             else:
-                print "cd: %s: Not a directory" % target_dir
+                print(("cd: %s: Not a directory" % target_dir))
 
     def do_pwd(self, args):
         '''Prints the current working directory'''
-        print self.pwd
+        print((self.pwd))
 
     def do_mkdir(self, args):
         """Add a new directory in the target directory.
@@ -246,7 +245,7 @@ class fseditCmd(cmd.Cmd):
 
         arg_list=args.split()
         if len(arg_list) < 1:
-            print "usage: mkdir <new directory> <new directory>..."
+            print("usage: mkdir <new directory> <new directory>...")
         else:
             for arg in arg_list:
                 self.mkfile(arg.split(), T_DIR)
@@ -259,7 +258,7 @@ class fseditCmd(cmd.Cmd):
         arg_list=args.split()
 
         if len(arg_list) < 1:
-            print 'Usage: touch <destination> (<size in bytes>)'
+            print('Usage: touch <destination> (<size in bytes>)')
         else:
             self.mkfile(arg_list, T_FILE)
 
@@ -272,12 +271,12 @@ class fseditCmd(cmd.Cmd):
         fileName = pathList[len(pathList) - 1]
 
         if not exists(self.fs, parentdir):
-            print ('Parent directory %s doesn\'t exist!') % \
-                (parentdir,)
+            print((('Parent directory %s doesn\'t exist!') % \
+                (parentdir,)))
             self.mkfile(parentdir.split(), T_DIR)
 
         if exists(self.fs, path):
-            print 'Error: %s already exists!' % (path,)
+            print(('Error: %s already exists!' % (path,)))
             return
 
         cwd = getpath(self.fs, parentdir)
@@ -301,7 +300,7 @@ class fseditCmd(cmd.Cmd):
 
         self.save_pickle()
 
-        print "Added '%s'" % path
+        print(("Added '%s'" % path))
 
     def do_rm(self, arguments):
         '''Remove an object from the file system.
@@ -311,11 +310,11 @@ class fseditCmd(cmd.Cmd):
         args = arguments.split()
 
         if len(args) < 1 or len(args) > 2:
-            print 'Usage: rm [-r] <target>'
+            print('Usage: rm [-r] <target>')
             return
 
         if len(args) == 2 and args[0] != "-r":
-            print 'Usage: rm [-r] <target>'
+            print('Usage: rm [-r] <target>')
             return
 
         if len(args) == 1:
@@ -324,17 +323,17 @@ class fseditCmd(cmd.Cmd):
             target_path = resolve_reference(self.pwd, args[1])
 
         if exists(self.fs, target_path) == False:
-            print "File \'%s\' doesn\'t exist" % (target_path,)
+            print(("File \'%s\' doesn\'t exist" % (target_path,)))
             return
 
         if target_path == "/":
-            print "rm: cannot delete root directory '/'"
+            print("rm: cannot delete root directory '/'")
             return
 
         target_object = getpath(self.fs, target_path)
 
         if target_object[A_TYPE]==T_DIR and args[0] != "-r":
-            print "rm: cannot remove '%s': Is a directory" % (target_path,)
+            print(("rm: cannot remove '%s': Is a directory" % (target_path,)))
             return
 
         parent_path = '/'.join(target_path.split('/')[:-1])
@@ -344,7 +343,7 @@ class fseditCmd(cmd.Cmd):
 
         self.save_pickle()
 
-        print "Deleted %s" % target_path
+        print(("Deleted %s" % target_path))
 
     def do_rmdir(self, arguments):
         '''Remove a file object. Like the unix command,
@@ -354,27 +353,27 @@ class fseditCmd(cmd.Cmd):
         args = arguments.split()
 
         if len(args) != 1:
-            print 'Usage: rmdir <target>'
+            print('Usage: rmdir <target>')
             return
 
         target_path = resolve_reference(self.pwd, args[0])
 
         if exists(self.fs, target_path) == False:
-            print "File \'%s\' doesn\'t exist" % (target_path,)
+            print(("File \'%s\' doesn\'t exist" % (target_path,)))
             return
 
         target_object = getpath(self.fs, target_path)
 
         if target_object[A_TYPE] != T_DIR:
-            print "rmdir: failed to remove '%s': Not a directory" % \
-                (target_path,)
+            print(("rmdir: failed to remove '%s': Not a directory" % \
+                (target_path,)))
             return
 
         #The unix rmdir command does not delete directories if they are not
         #empty
         if len(target_object[A_CONTENTS]) != 0:
-            print "rmdir: failed to remove '%s': Directory not empty" % \
-                (target_path,)
+            print(("rmdir: failed to remove '%s': Directory not empty" % \
+                (target_path,)))
             return
 
         parent_path = '/'.join(target_path.split('/')[:-1])
@@ -387,27 +386,27 @@ class fseditCmd(cmd.Cmd):
         if self.pwd == target_path:
            self.do_cd("..")
 
-        print "Deleted %s" % target_path
+        print(("Deleted %s" % target_path))
 
     def do_mv(self, arguments):
         '''Moves a file/directory from one directory to another.\n
         Usage: mv <source file> <destination file>'''
         args = arguments.split()
         if len(args) != 2:
-            print 'Usage: mv <source> <destination>'
+            print('Usage: mv <source> <destination>')
             return
         src = resolve_reference(self.pwd, args[0])
         dst = resolve_reference(self.pwd, args[1])
 
         if src == "/":
-           print "mv: cannot move the root directory '/'"
+           print("mv: cannot move the root directory '/'")
            return
 
         src = src.strip('/')
         dst = dst.strip('/')
 
         if not exists(self.fs, src):
-           print "Source file \'%s\' does not exist!" % src
+           print(("Source file \'%s\' does not exist!" % src))
            return
 
         #Get the parent directory of the source file
@@ -429,11 +428,11 @@ class fseditCmd(cmd.Cmd):
             dstname = dst.split('/')[-1]
 
         if exists(self.fs, dstparent + '/' + dstname):
-            print "A file already exists at "+dst+"!"
+            print(("A file already exists at "+dst+"!"))
             return
 
         if not exists(self.fs, dstparent):
-            print 'Destination directory \'%s\' doesn\'t exist!' % dst
+            print(('Destination directory \'%s\' doesn\'t exist!' % dst))
             return
 
         if src == self.pwd:
@@ -447,14 +446,14 @@ class fseditCmd(cmd.Cmd):
 
         self.save_pickle()
 
-        print 'File moved from /%s to /%s' % (src, dst)
+        print(('File moved from /%s to /%s' % (src, dst)))
 
     def do_cp(self, arguments):
         '''Copies a file/directory from one directory to another.\n
         Usage: cp <source file> <destination file>'''
         args = arguments.split()
         if len(args) != 2:
-            print 'Usage: cp <source> <destination>'
+            print('Usage: cp <source> <destination>')
             return
 
         #src, dst = args[0], args[1]
@@ -466,7 +465,7 @@ class fseditCmd(cmd.Cmd):
         dst = dst.strip('/')
 
         if not exists(self.fs, src):
-           print "Source file '%s' does not exist!" % (src,)
+           print(("Source file '%s' does not exist!" % (src,)))
            return
 
         #Get the parent directory of the source file
@@ -487,11 +486,11 @@ class fseditCmd(cmd.Cmd):
             dstname = dst.split('/')[-1]
 
         if exists(self.fs, dstparent + '/' + dstname):
-            print 'A file already exists at %s/%s!' % (dstparent, dstname)
+            print(('A file already exists at %s/%s!' % (dstparent, dstname)))
             return
 
         if not exists(self.fs, dstparent):
-            print 'Destination directory %s doesn\'t exist!' % (dstparent,)
+            print(('Destination directory %s doesn\'t exist!' % (dstparent,)))
             return
 
         dstparentl = getpath(self.fs, dstparent)
@@ -501,27 +500,27 @@ class fseditCmd(cmd.Cmd):
 
         self.save_pickle()
 
-        print 'File copied from /%s to /%s/%s' % (src, dstparent, dstname)
+        print(('File copied from /%s to /%s/%s' % (src, dstparent, dstname)))
 
     def do_chown(self, args):
         '''Change file ownership'''
         arg_list = args.split()
 
         if len(arg_list) != 2:
-            print "Incorrect number of arguments.\nUsage: chown <uid> <file>"
+            print("Incorrect number of arguments.\nUsage: chown <uid> <file>")
             return
 
         uid = arg_list[0]
         target_path = resolve_reference(self.pwd, arg_list[1])
 
         if not exists(self.fs, target_path):
-            print "File '%s' doesn't exist." % target_path
+            print(("File '%s' doesn't exist." % target_path))
             return
 
         target_object = getpath(self.fs, target_path)
         olduid = target_object[A_UID]
         target_object[A_UID] = int(uid)
-        print "former UID: " + str(olduid) + ". New UID: " + str(uid)
+        print(("former UID: " + str(olduid) + ". New UID: " + str(uid)))
         self.save_pickle()
 
     def do_chgrp(self, args):
@@ -529,20 +528,20 @@ class fseditCmd(cmd.Cmd):
         arg_list = args.split()
 
         if len(arg_list) != 2:
-            print "Incorrect number of arguments.\nUsage: chgrp <gid> <file>"
+            print("Incorrect number of arguments.\nUsage: chgrp <gid> <file>")
             return
 
         gid = arg_list[0]
         target_path = resolve_reference(self.pwd, arg_list[1])
 
         if not exists(self.fs, target_path):
-            print "File '%s' doesn't exist." % target_path
+            print(("File '%s' doesn't exist." % target_path))
             return
 
         target_object = getpath(self.fs, target_path)
         oldgid = target_object[A_GID]
         target_object[A_GID] = int(gid)
-        print "former GID: " + str(oldgid) + ". New GID: " + str(gid)
+        print(("former GID: " + str(oldgid) + ". New GID: " + str(gid)))
         self.save_pickle()
 
     def do_chmod(self, args):
@@ -552,34 +551,34 @@ class fseditCmd(cmd.Cmd):
         arg_list = args.split()
 
         if len(arg_list) != 2:
-            print "Incorrect number of arguments.\nUsage: chmod <mode> <file>"
+            print("Incorrect number of arguments.\nUsage: chmod <mode> <file>")
             return
 
         mode = arg_list[0]
         target_path = resolve_reference(self.pwd, arg_list[1])
 
         if not exists(self.fs, target_path):
-            print "File '%s' doesn't exist." % target_path
+            print("File '%s' doesn't exist." % target_path)
             return
 
         target_object = getpath(self.fs, target_path)
         oldmode = target_object[A_MODE]
 
         if target_object [A_TYPE] == T_LINK:
-            print target_path + " is a link, nothing changed."
+            print(target_path + " is a link, nothing changed.")
             return
 
         try:
             num = int(mode, 8)
         except:
-            print "Incorrect mode: " + mode
+            print("Incorrect mode: " + mode)
             return
 
         if num < 0 or num > 511:
-            print "Incorrect mode: " + mode
+            print("Incorrect mode: " + mode)
             return
 
-        target_object[A_MODE] = (oldmode & 07777000) | (num & 0777)
+        target_object[A_MODE] = (oldmode & 0o7777000) | (num & 0o777)
         self.save_pickle()
 
     def do_file(self, args):
@@ -587,13 +586,13 @@ class fseditCmd(cmd.Cmd):
         arg_list = args.split()
 
         if len(arg_list) != 1:
-            print "Incorrect number of arguments.\nUsage: file <file>"
+            print("Incorrect number of arguments.\nUsage: file <file>")
             return
 
         target_path = resolve_reference(self.pwd, arg_list[0])
 
         if not exists(self.fs, target_path):
-            print "File '%s' doesn't exist." % target_path
+            print("File '%s' doesn't exist." % target_path)
             return
 
         target_object = getpath(self.fs, target_path)
@@ -617,7 +616,7 @@ class fseditCmd(cmd.Cmd):
         else:
             msg = "unrecognized file"
 
-        print target_path+" is a "+msg
+        print(target_path+" is a "+msg)
 
     def do_clear(self, args):
         '''Clears the screen'''
@@ -630,10 +629,10 @@ class fseditCmd(cmd.Cmd):
         pass
 
     def help_help(self):
-        print "Type help <topic> to get more information."
+        print("Type help <topic> to get more information.")
 
     def help_about(self):
-        print "Kippo/Cowrie stores information about its file systems in a " + \
+        print("Kippo/Cowrie stores information about its file systems in a " + \
             "series of nested lists. Once the lists are made, they are " + \
             "stored in a pickle file on the hard drive. Every time cowrie " + \
             "gets a new client, it reads from the pickle file and loads " + \
@@ -648,15 +647,15 @@ class fseditCmd(cmd.Cmd):
             "paths. Keep in mind that you need to restart the " + \
             "cowrie process in order for the new file system to be " + \
             "reloaded into memory.\n\nDonovan Hubbard, Douglas Hubbard, " + \
-            "March 2013\nVersion 1.0"
+            "March 2013\nVersion 1.0")
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print "Usage: %s <fs.pickle>" % os.path.basename(sys.argv[0],)
+        print("Usage: %s <fs.pickle>" % os.path.basename(sys.argv[0],))
         sys.exit(1)
 
     pickle_file_name = sys.argv[1].strip()
-    print pickle_file_name
+    print(pickle_file_name)
 
     fseditCmd(pickle_file_name).cmdloop()
 

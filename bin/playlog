@@ -63,18 +63,18 @@ def playlog(fd, settings):
 
 def help(brief = 0):
 
-    print 'Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
-        os.path.basename(sys.argv[0])
+    print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
+        os.path.basename(sys.argv[0]))
 
     if not brief:
-        print '  -f             keep trying to read the log until it\'s closed'
-        print '  -m <seconds>   maximum delay in seconds, to avoid' + \
+        print('  -f             keep trying to read the log until it\'s closed')
+        print('  -m <seconds>   maximum delay in seconds, to avoid' + \
             ' boredom or fast-forward\n' + \
-            '                 to the end. (default is 3.0)'
-        print '  -i             show the input stream instead of output'
-        print '  -b             show both input and output streams'
-        print '  -c             colorify the output stream based on what streams are being received'
-        print '  -h             display this help\n'
+            '                 to the end. (default is 3.0)')
+        print('  -i             show the input stream instead of output')
+        print('  -b             show both input and output streams')
+        print('  -c             colorify the output stream based on what streams are being received')
+        print('  -h             display this help\n')
 
     sys.exit(1)
 
@@ -90,8 +90,8 @@ if __name__ == '__main__':
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'fhibcm:w:', ['help'])
-    except getopt.GetoptError, error:
-        print 'Error: %s\n' % error
+    except getopt.GetoptError as error:
+        print('Error: %s\n' % error)
         help()
 
     for o, a in optlist:
@@ -110,7 +110,7 @@ if __name__ == '__main__':
             logfd = open(logfile, 'rb')
             playlog(logfd, settings)
     except IOError:
-        print "\n\n[!] Couldn't open log file (%s)!" % logfile
+        print("\n\n[!] Couldn't open log file (%s)!" % logfile)
         sys.exit(2)
 
 # vim: set sw=4:
