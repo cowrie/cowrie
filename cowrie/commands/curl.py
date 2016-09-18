@@ -5,7 +5,6 @@ import stat
 import time
 import random
 import re
-import exceptions
 import os
 import getopt
 import hashlib
@@ -274,7 +273,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             port = parsed.port or (443 if scheme == 'https' else 80)
             path = parsed.path or '/'
             if scheme != 'http' and scheme != 'https':
-                raise exceptions.NotImplementedError
+                raise NotImplementedError
         except:
             self.write('%s: Unsupported scheme.\n' % (url,))
             self.exit()
