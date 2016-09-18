@@ -52,7 +52,7 @@ Software required:
 
 ## Is it secure?
 
-Maybe. See [FAQ](https://github.com/desaster/kippo/wiki/FAQ)
+Maybe. See [FAQ](https://github.com/micheloosterhof/cowrie/wiki/Frequently-Asked-Questions)
 
 ## I have some questions!
 
