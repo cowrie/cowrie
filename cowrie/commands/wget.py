@@ -215,14 +215,17 @@ class command_wget(HoneyPotCommand):
         self.exit()
 
 
-    def error(self, error, url):
-        """
-        """
-        if hasattr(error, 'getErrorMessage'): # Exceptions
-            error = error.getErrorMessage()
-        self.write(error+'\n')
-        # Real wget also adds this:
-        self.write('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
+    def error(self, error,url):
+
+        if hasattr(error, 'getErrorMessage'): # exceptions
+            errorMessage = error.getErrorMessage()
+            self.write(errorMessage +'\n')
+            # Real wget also adds this:
+        if hasattr(error, 'webStatus') and hasattr(error,'webMessage'): # exceptions
+            dateWithError = '{} ERROR '.format(time.strftime('%Y-%m-%d %T'))
+            self.write(dateWithError + str(error.webStatus) + ': ' + error.webMessage + '\n')
+        else:
+            self.write('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
         self.exit()
 
 commands['/usr/bin/wget'] = command_wget
@@ -249,6 +252,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         if self.status == '304':
             client.HTTPDownloader.page(self, '')
         else:
+            reason.webStatus = self.status
+            reason.webMessage = self.message
             client.HTTPDownloader.noPage(self, reason)
 
 
