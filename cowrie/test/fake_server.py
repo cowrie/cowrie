@@ -21,7 +21,7 @@ class FakeServer:
         self.hostname = "unitTest"
 
         self.pckl = pickle.load(
-            file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
+            open(cfg.get('honeypot', 'filesystem_file'), 'rb'))
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), self.cfg)
 
 
