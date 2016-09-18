@@ -8,7 +8,7 @@ This module contains ...
 import ConfigParser
 
 def readConfigFile(cfgfile):
-    cfg = ConfigParser.SafeConfigParser()
+    cfg = ConfigParser.ConfigParser()
     cfg.readfp(open(cfgfile))
     return cfg
 
