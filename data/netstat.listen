@@ -1,0 +1,10 @@
+tcp        0      0 *:ssh                   *:*                     LISTEN
+tcp        0      0 127.0.0.1:18888         0.0.0.0:*               LISTEN     
+tcp        0      0 127.0.0.1:53            0.0.0.0:*               LISTEN     
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN  
+tcp6       0      0 [::]:ssh                [::]:*                  LISTEN
+unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
+unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
+unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
+unix  2      [ ACC ]     SEQPACKET  LISTENING     7159     /run/udev/control\n

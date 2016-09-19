@@ -487,7 +487,10 @@ class StdOutStdErrEmulationProtocol(object):
     def outReceived(self, data):
         """
         """
-        self.data = self.data + data
+        if data:
+            self.data = self.data + data
+        else:
+            self.data = self.data
 
         if not self.next_command:
             if not self.protocol is None and not self.protocol.terminal is None:

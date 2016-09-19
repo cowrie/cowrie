@@ -1,12 +1,34 @@
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
 import socket
+import re
 
 from cowrie.core.honeypot import HoneyPotCommand
 
 commands = {}
 
 class command_netstat(HoneyPotCommand):
+
+    contentsListen= None
+    def load_netstat_listen(self):
+        if not self.contentsListen:
+            with open( '%s/netstat.listen' % (self.protocol.cfg.get('honeypot','data_path'),), 'r') as f:
+                self.contentsListen = f.read()
+
+
+    contentsDefault = None
+    def load_netstat_default(self):
+        if not self.contentsDefault:
+            with open( '%s/netstat.normal' % (self.protocol.cfg.get('honeypot','data_path'),), 'r') as f:
+                contentsDefault = f.read()
+        self.contentsDefault = contentsDefault
+
+    def writeType(self,type,contents):
+        contentsplit = contents.split('\n')
+        matches = re.compile("^" + type + ".*")
+        for line in contentsplit:
+            if matches.match(line):
+                self.write(line + '\n')
 
     def show_version(self):
         self.write('net-tools 1.60\n')
@@ -74,8 +96,13 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         self.write(l2+'\n')
 
     def do_netstat_normal(self):
-        self.write("""Active Internet connections (w/o servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
+        if self.show_all:
+            self.write("Active Internet connections (servers and established)\n")
+        elif self.show_listen:
+            self.write("Active Internet connections (only servers)\n")
+        else:
+            self.write("Active Internet connections (w/o servers)\n")
+        self.write("Proto Recv-Q Send-Q Local Address           Foreign Address         State\n")
         s_name = self.protocol.hostname
         c_port = str(self.protocol.realClientPort)
         if self.show_numeric:
@@ -89,7 +116,7 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
             except:
                 c_name = self.protocol.clientIP
         if self.show_listen or self.show_all:
-            self.write("tcp        0      0 *:ssh                   *:*                     LISTEN\n")
+            self.writeType("tcp ",self.contentsListen)
         if not self.show_listen or self.show_all:
             l = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
                 (s_name, s_port,
@@ -97,59 +124,29 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
                 " "*(24-len(c_name+c_port)-1), "ESTABLISHED")
             self.write(l+'\n')
         if self.show_listen or self.show_all:
-            self.write("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN\n")
-        self.write("""Active UNIX domain sockets (only servers)
-Proto RefCnt Flags       Type       State         I-Node   Path\n""")
-        if self.show_listen:
-            self.write("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
-unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
-unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
-unix  2      [ ACC ]     SEQPACKET  LISTENING     7159     /run/udev/control\n""")
-        elif self.show_all:
-            self.write("""unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket
-unix  4      [ ]         DGRAM                    7445     /dev/log
-unix  2      [ ACC ]     STREAM     LISTENING     6807     @/com/ubuntu/upstart
-unix  2      [ ACC ]     STREAM     LISTENING     7299     /var/run/dbus/system_bus_socket
-unix  2      [ ACC ]     SEQPACKET  LISTENING     7159     /run/udev/control
-unix  3      [ ]         STREAM     CONNECTED     7323
-unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7330
-unix  2      [ ]         DGRAM                    8966
-unix  3      [ ]         STREAM     CONNECTED     7424     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7140
-unix  3      [ ]         STREAM     CONNECTED     7145     @/com/ubuntu/upstart
-unix  3      [ ]         DGRAM                    7199
-unix  3      [ ]         STREAM     CONNECTED     7347
-unix  3      [ ]         STREAM     CONNECTED     8594
-unix  3      [ ]         STREAM     CONNECTED     7331
-unix  3      [ ]         STREAM     CONNECTED     7364     @/com/ubuntu/upstart
-unix  3      [ ]         STREAM     CONNECTED     7423
-unix  3      [ ]         DGRAM                    7198
-unix  2      [ ]         DGRAM                    9570
-unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\n""")
+            self.writeType("tcp6 ",self.contentsListen)
+        if self.show_all:
+            self.write("Active UNIX domain sockets (servers and established)\n")
+        elif self.show_listen:
+            self.write("Active UNIX domain sockets (only servers)\n")
         else:
-            self.write("""unix  4      [ ]         DGRAM                    7445     /dev/log
-unix  3      [ ]         STREAM     CONNECTED     7323
-unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7330
-unix  2      [ ]         DGRAM                    8966
-unix  3      [ ]         STREAM     CONNECTED     7424     /var/run/dbus/system_bus_socket
-unix  3      [ ]         STREAM     CONNECTED     7140
-unix  3      [ ]         STREAM     CONNECTED     7145     @/com/ubuntu/upstart
-unix  3      [ ]         DGRAM                    7199
-unix  3      [ ]         STREAM     CONNECTED     7347
-unix  3      [ ]         STREAM     CONNECTED     8594
-unix  3      [ ]         STREAM     CONNECTED     7331
-unix  3      [ ]         STREAM     CONNECTED     7364     @/com/ubuntu/upstart
-unix  3      [ ]         STREAM     CONNECTED     7423
-unix  3      [ ]         DGRAM                    7198
-unix  2      [ ]         DGRAM                    9570
-unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\n""")
+            self.write("Active UNIX domain sockets (w/o servers)\n")
+
+        self.write("Proto RefCnt Flags       Type       State         I-Node   Path\n")
+        if self.show_listen:
+            self.writeType("unix ",self.contentsListen)
+        elif self.show_all:
+            self.writeType("unix ",self.contentsListen)
+            self.write(self.contentsDefault)
+        else:
+            self.write(self.contentsDefault)
 
     def call(self):
         self.show_all = False
         self.show_numeric = False
         self.show_listen = False
+        self.load_netstat_listen()
+        self.load_netstat_default()
         func = self.do_netstat_normal
         for x in self.args:
             if x.startswith('-') and x.count('a'):
