@@ -159,6 +159,7 @@ class Output(object):
             del ev['sessionno']
         # Extract session id from the twisted log prefix
         elif 'system' in ev:
+            sessionno = 0
             telnetmatch = self.telnetRegex.match(ev['system'])
             if telnetmatch:
                 sessionno = 'T'+str(telnetmatch.groups()[0])
@@ -166,7 +167,7 @@ class Output(object):
                 sshmatch = self.sshRegex.match(ev['system'])
                 if sshmatch:
                     sessionno = 'S'+str(sshmatch.groups()[0])
-            if not sessionno:
+            if sessionno == 0:
                 return
 
         if sessionno in self.ips:
