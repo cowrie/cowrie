@@ -265,6 +265,17 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.proto.lineReceived('pwd')
         print(self.tr.value())
 
+    def test_netstat_outputa(self):
+        self.proto.lineReceived('netstat -a')
+        print(self.tr.value())
+
+    def test_netstat_outputn(self):
+        self.proto.lineReceived('netstat -n')
+        print(self.tr.value())
+
+    def test_netstat_outputl(self):
+        self.proto.lineReceived('netstat -l')
+        print(self.tr.value())
 
     def test_touch_output(self):
         self.proto.lineReceived('touch unittests.txt')
