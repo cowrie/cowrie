@@ -47,7 +47,7 @@ class Output(cowrie.core.output.Output):
         fn = cfg.get('output_jsonlog', 'logfile')
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
-        self.outfile = twisted.python.logfile.DailyLogFile(base, dirs)
+        self.outfile = twisted.python.logfile.DailyLogFile(base, dirs, defaultMode=0o664)
 
 
     def start(self):
