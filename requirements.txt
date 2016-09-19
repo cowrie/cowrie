@@ -1,4 +1,4 @@
-twisted[conch]
+twisted>=15.2.1
 cryptography
 configparser
 pyopenssl
