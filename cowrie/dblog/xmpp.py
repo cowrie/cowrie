@@ -78,7 +78,7 @@ class DBLogger(dblog.DBLogger):
 
         self.xmppclient = XMPPClient(JID(jidstr), password)
         if self.cfg.has_option('database_xmpp', 'debug') and \
-                self.cfg.get('database_xmpp', 'debug') in ('1', 'true', 'yes'):
+                self.cfg.getboolean('database_xmpp', 'debug') == True:
             self.xmppclient.logTraffic = True # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(

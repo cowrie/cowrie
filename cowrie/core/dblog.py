@@ -47,7 +47,7 @@ class DBLogger(object):
 
         self.report_public_ip = False
         if self.cfg.has_option('honeypot', 'report_public_ip'):
-            if cfg.get('honeypot', 'report_public_ip') == "true" or cfg.get('honeypot', 'report_public_ip') == "1":
+            if cfg.getboolean('honeypot', 'report_public_ip') == True:
                 self.report_public_ip = True
                 import urllib
                 self.public_ip = urllib.urlopen('http://myip.threatstream.com').readline()
