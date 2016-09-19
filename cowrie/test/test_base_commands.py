@@ -7,194 +7,194 @@ from twisted.trial import unittest
 
 from cowrie.core import protocol
 from cowrie.core import config
-from . import fake_server
-from . import fake_transport
+import fake_server
+import fake_transport
+import json
+
 
 
 class ShellBaseCommandsTests(unittest.TestCase):
+
+
     def setUp(self):
+        with open('../cowrie/test/expected_results.json') as data_file:
+            self.data = json.load(data_file)
         self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol \
             (fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
+        self.tr.clear()
 
 
     def test_whoami_command(self):
         self.proto.lineReceived('whoami \n')
-        print(self.tr.value())
+        self.assertEqual(self.tr.value(),self.data['results']['whoami'])
 
 
     def test_users_command(self):
         self.proto.lineReceived('users \n')
-        print(self.tr.value())
+        self.assertEqual(self.tr.value(),self.data['results']['users'])
 
 
     def test_help_command(self):
         self.proto.lineReceived('help \n')
-        print(self.tr.value())
-
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['help']))
 
     def test_w_command(self):
         self.proto.lineReceived('w \n')
-        print(self.tr.value())
+        self.assertRegexpMatches(self.tr.value(),("\n").join(self.data['results']['w']))
 
 
     def test_who_command(self):
         self.proto.lineReceived('who \n')
-        print(self.tr.value())
+        self.assertRegexpMatches(self.tr.value(),"\n".join(self.data['results']['who']))
 
 
     def test_echo_command(self):
         self.proto.lineReceived('echo "test worked correctly" \n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['echo']))
 
 
     def test_exit_command(self):
         self.proto.lineReceived('exit \n')
-        print(self.tr.value())
 
 
     def test_logout_command(self):
         self.proto.lineReceived('logout \n')
-        print(self.tr.value())
 
 
     def test_clear_command(self):
         self.proto.lineReceived('clear \n')
-        print(self.tr.value())
-
-
-    def test_reset_command(self):
-        self.proto.lineReceived('hostname unitChanged\n')
-        print(self.tr.value())
 
 
     def test_hostname_command(self):
         self.proto.lineReceived('hostname unitChanged\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['hostname']))
+
+
+    def test_reset_command(self):
+        self.proto.lineReceived('reset')
 
 
     def test_ps_command(self):
         self.proto.lineReceived('ps\n')
-        print(self.tr.value())
-
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['ps']))
 
     def test_id_command(self):
         self.proto.lineReceived('id\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['id']))
 
 
     def test_passwd_command(self):
         self.proto.lineReceived('passwd\n')
         self.proto.lineReceived('changeme\n')
         self.proto.lineReceived('changeme\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['passwd']))
 
 
     def test_shutdown_command(self):
         self.proto.lineReceived('shutdown\n')
-        print(self.tr.value())
 
 
     def test_poweroff_command(self):
         self.proto.lineReceived('poweroff\n')
-        print(self.tr.value())
 
 
     def test_history_command(self):
-        self.proto.lineReceived('history\n')
-        print(self.tr.value())
+        self.proto.lineReceived("history\n")
+        self.proto.lineReceived("history\n")
+        # Not Sure HOW TO TEST THIS!!
+        print self.tr.value()
 
 
     def test_date_command(self):
         self.proto.lineReceived('date\n')
-        print(self.tr.value())
+        self.assertRegexpMatches(self.tr.value(),("\n").join(self.data['results']['date']))
 
 
     def test_bash_command(self):
         self.proto.lineReceived('bash\n')
-        print(self.tr.value())
 
 
     def test_sh_command(self):
-        self.proto.lineReceived('sh\n')
-        print(self.tr.value())
+        self.proto.lineReceived('sh -c who\n')
+        self.assertRegexpMatches(self.tr.value(),"\n".join(self.data['results']['who']))
 
 
     def test_php_command(self):
-        self.proto.lineReceived('php\n')
+        self.proto.lineReceived('php -h');
         print(self.tr.value())
+
 
 
     def test_chattr_command(self):
         self.proto.lineReceived('chattr\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['chattr']))
 
 
     def test_umask_command(self):
         self.proto.lineReceived('umask\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['umask']))
 
 
     def test_set_command(self):
         self.proto.lineReceived('set\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['set']))
 
 
     def test_unset_command(self):
         self.proto.lineReceived('unset\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['unset']))
 
 
     def test_export_command(self):
         self.proto.lineReceived('export\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['export']))
 
 
     def test_alias_command(self):
         self.proto.lineReceived('alias\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['alias']))
 
 
     def test_jobs_command(self):
         self.proto.lineReceived('jobs\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['jobs']))
 
 
     def test_kill_command(self):
         self.proto.lineReceived('/bin/kill\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['kill']))
 
 
     def test_pkill_command(self):
         self.proto.lineReceived('/bin/pkill\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['kill']))
 
 
     def test_killall_command(self):
         self.proto.lineReceived('/bin/killall\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['kill']))
 
 
     def test_killall5_command(self):
         self.proto.lineReceived('/bin/killall5\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['kill']))
 
 
     def test_su_command(self):
         self.proto.lineReceived('su\n')
-        print(self.tr.value())
-
+        self.assertEquals(self.tr.value(),"\67n".join(self.data['results']['su']))
 
     def test_chown_command(self):
         self.proto.lineReceived('chown\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['chown']))
 
 
     def test_chgrp_command(self):
         self.proto.lineReceived('chgrp\n')
-        print(self.tr.value())
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['chgrp']))
 
 
     def tearDown(self):
