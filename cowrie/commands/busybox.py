@@ -62,8 +62,8 @@ class command_busybox(HoneyPotCommand):
         """
         """
         start_value = None
+        parsed_arguments = []
         for count in range(0,len(self.args)):
-            parsed_arguments = []
             class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'] .split(':'))
             if class_found:
                 start_value = count
@@ -73,7 +73,7 @@ class command_busybox(HoneyPotCommand):
                 parsed_arguments.append(self.args[index_2])
 
         if len(parsed_arguments) > 0:
-            line = ' '.join(parsed_arguments    )
+            line = ' '.join(parsed_arguments)
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd,
                                                 self.environ['PATH'].split(':'))
@@ -81,7 +81,11 @@ class command_busybox(HoneyPotCommand):
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:],self.input_data,None)
+                cmdStructure = {}
+                cmdStructure['command'] = cmd
+                cmdStructure['rargs'] = parsed_arguments[1:]
+                cmdStructure['type'] =  self.process_type
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmdStructure,self.input_data,None)
                 self.protocol.pp.insert_command(command)
                 # Place this here so it doesn't write out only if last statement
 

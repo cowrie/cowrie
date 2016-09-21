@@ -277,6 +277,7 @@ commands['/usr/bin/id'] = command_id
 class command_passwd(HoneyPotCommand):
     """
     """
+
     def start(self):
         """
         """
@@ -485,9 +486,12 @@ class command_sh(HoneyPotCommand):
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[2:],self.input_data,None)
+                cmdStructure = {}
+                cmdStructure['rargs'] = self.args[2:]
+                cmdStructure['type'] = self.process_type
+                cmdStructure['command'] = cmd
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,cmdStructure,self.input_data,None)
                 self.protocol.pp.insert_command(command)
-                # Place this here so it doesn't write out only if last statement
 
                 if self.input_data:
                     self.write(self.input_data)
