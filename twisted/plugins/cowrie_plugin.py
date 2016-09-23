@@ -99,31 +99,49 @@ class CowrieServiceMaker(object):
             factory.portal.registerChecker(
                 core.checkers.HoneypotNoneChecker())
 
-        if cfg.has_option('ssh', 'listen_addr'):
-            listen_ssh_addr = cfg.get('ssh', 'listen_addr')
-        elif cfg.has_option('honeypot', 'listen_addr'):
-            listen_ssh_addr = cfg.get('honeypot', 'listen_addr')
+        # ssh is enabled by default
+        if cfg.has_option('ssh', 'enabled') == False or \
+           (cfg.has_option('ssh', 'enabled') and \
+               cfg.getboolean('ssh', 'enabled') == True):
+            enableSSH = True
         else:
-            listen_ssh_addr = '0.0.0.0'
+            enableSSH = False
 
-        # Preference: 1, option, 2, config, 3, default of 2222
-        if options['port'] != 0:
-            listen_ssh_port = int(options["port"])
-        elif cfg.has_option('ssh', 'listen_port'):
-            listen_ssh_port = cfg.getint('ssh', 'listen_port')
-        elif cfg.has_option('honeypot', 'listen_port'):
-            listen_ssh_port = cfg.getint('honeypot', 'listen_port')
-        else:
-            listen_ssh_port = 2222
-
-        for i in listen_ssh_addr.split():
-            svc = internet.TCPServer(listen_ssh_port, factory, interface=i)
-            # FIXME: Use addService on topService ?
-            svc.setServiceParent(topService)
-
+        # telnet is disabled by default
         if cfg.has_option('telnet', 'enabled') and \
                  cfg.getboolean('telnet', 'enabled') == True:
+            enableTelnet = True
+        else:
+            enableTelnet = False
 
+        if enableTelnet == False and enableSSH == False:
+            print('ERROR: You must at least enable SSH or Telnet')
+            sys.exit(1)
+
+        if enableSSH:
+            if cfg.has_option('ssh', 'listen_addr'):
+                listen_ssh_addr = cfg.get('ssh', 'listen_addr')
+            elif cfg.has_option('honeypot', 'listen_addr'):
+                listen_ssh_addr = cfg.get('honeypot', 'listen_addr')
+            else:
+                listen_ssh_addr = '0.0.0.0'
+
+            # Preference: 1, option, 2, config, 3, default of 2222
+            if options['port'] != 0:
+                listen_ssh_port = int(options["port"])
+            elif cfg.has_option('ssh', 'listen_port'):
+                listen_ssh_port = cfg.getint('ssh', 'listen_port')
+            elif cfg.has_option('honeypot', 'listen_port'):
+                listen_ssh_port = cfg.getint('honeypot', 'listen_port')
+            else:
+                listen_ssh_port = 2222
+
+            for i in listen_ssh_addr.split():
+                svc = internet.TCPServer(listen_ssh_port, factory, interface=i)
+                # FIXME: Use addService on topService ?
+                svc.setServiceParent(topService)
+
+        if enableTelnet:
             if cfg.has_option('telnet', 'listen_addr'):
                 listen_telnet_addr = cfg.get('telnet', 'listen_addr')
             else:
