@@ -21,15 +21,17 @@ from cowrie.core import shlex
 class HoneyPotCommand(object):
     """
     """
-    def __init__(self, protocol, *args):
+    def __init__(self, stdout,protocol, *args):
         self.protocol = protocol
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
         self.data = None
         self.input_data = None
-        self.write = self.protocol.pp.outReceived
-        self.errorWrite = self.protocol.pp.errReceived
+        self.process_type = "nonePipe"
+
+        self.write = stdout.outReceived
+        self.errorWrite = stdout.errReceived
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if '>' in self.args:
@@ -49,7 +51,6 @@ class HoneyPotCommand(object):
             with open(self.safeoutfile, 'a'):
                 self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
 
-
     def check_arguments(self, application, args):
         """
         """
@@ -67,6 +68,12 @@ class HoneyPotCommand(object):
         """
         """
         self.input_data = data
+
+
+    def set_process_type(self, data):
+        """
+        """
+        self.process_type = data
 
 
     def write_to_file(self, data):
@@ -96,9 +103,18 @@ class HoneyPotCommand(object):
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
         try:
-            self.protocol.cmdstack.pop()
-            self.protocol.cmdstack[-1].resume()
-        except AttributeError:
+
+            self.protocol.pp.removeFromStack()
+            """
+            If Cmd Stack is equal to 1 means its the base shell
+            """
+            if (len(self.protocol.cmdstack) == 1):
+                self.protocol.cmdstack[-1].showPrompt()
+
+        except Exception as inst:
+            log.msg("Exception: " + str(inst))
+            log.msg("Command Stack: " + str(self.protocol.cmdstack))
+            # ignore disregarded stack requests
             # Cmdstack could be gone already (wget + disconnect)
             pass
 
@@ -167,13 +183,30 @@ class HoneyPotShell(object):
                 # log.msg( "tok: %s" % (repr(tok)) )
                 if tok == self.lexer.eof:
                     if len(tokens):
-                        self.cmdpending.append((tokens))
+                        tokenType = {}
+                        tokenType['type'] = 'eof'
+                        tokenType['commands'] = tokens
+                        self.cmdpending.append(tokenType)
+                        tokeType = {}
                         tokens = []
                     break
                 # For now, execute all after &&
-                elif tok == ';' or tok == '&&' or tok == '||':
+                elif tok == ';' or tok == '&&':
                     if len(tokens):
-                        self.cmdpending.append((tokens))
+                        tokenType = {}
+                        tokenType['type'] = 'nonePipe'
+                        tokenType['commands'] = tokens
+                        self.cmdpending.append(tokenType)
+                        tokenType = {}
+                        tokens = []
+                        continue
+                elif tok == '|' or tok == '||':
+                    if len(tokens):
+                        tokenType = {}
+                        tokenType['type'] = 'pipe'
+                        tokenType['commands'] = tokens
+                        self.cmdpending.append(tokenType)
+                        tokenType = {}
                         tokens = []
                         continue
                     else:
@@ -204,11 +237,9 @@ class HoneyPotShell(object):
                 self.protocol.terminal.write(
                     'bash: syntax error: unexpected end of file\n')
                 # Could run runCommand here, but i'll just clear the list instead
-                log.msg( "exception: {}".format(e) )
+                log.msg("exception: {}".format(e))
                 self.cmdpending = []
-                self.showPrompt()
                 return
-
         if len(self.cmdpending):
             self.runCommand()
         else:
@@ -218,22 +249,6 @@ class HoneyPotShell(object):
     def runCommand(self):
         """
         """
-        pp = None
-        def runOrPrompt():
-            if len(self.cmdpending):
-                self.runCommand()
-            elif self.interactive:
-                self.showPrompt()
-            else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
-
-        def parsed_arguments(arguments):
-            parsed_arguments = []
-            for arg in arguments:
-                parsed_arguments.append(arg)
-
-            return parsed_arguments
 
         def parse_file_arguments(arguments):
             parsed_arguments = []
@@ -246,86 +261,54 @@ class HoneyPotShell(object):
 
             return parsed_arguments
 
-        if not len(self.cmdpending):
-            if self.interactive:
-                self.showPrompt()
-            else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
-            return
-
-        cmdAndArgs = self.cmdpending.pop(0)
-        cmd2 = copy.copy(cmdAndArgs)
+        cmd2 = copy.copy(self.cmdpending)
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
-        cmd_array = [ ]
-        cmd = {}
-        while len(cmdAndArgs):
-            piece = cmdAndArgs.pop(0)
+        cmd_array = []
+        while len(self.cmdpending):
+            cmdStructure = self.cmdpending.pop(0)
+            piece = cmdStructure['commands']
             if piece.count('='):
                 key, value = piece.split('=', 1)
                 environ[key] = value
-                continue
-            cmd['command'] = piece
-            cmd['rargs'] = []
-            break
-
-        if not cmd['command']:
-            runOrPrompt()
-            return
-
-        pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
-        multipleCmdArgs = []
-        pipe_indices.append(len(cmdAndArgs))
-        start = 0
-
-        # Gather all arguments with pipes
-
-        for index, pipe_indice in enumerate(pipe_indices):
-            multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
-            start = pipe_indice+1
-
-        cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
-        cmd_array.append(cmd)
-        cmd = {}
-
-        for index, value in enumerate(multipleCmdArgs):
-            cmd['command'] = value.pop(0)
-            cmd['rargs'] = parsed_arguments(value)
-            cmd_array.append(cmd)
+                continue;
             cmd = {}
+            cmd['command'] = piece[0]
+            if len(piece) > 1:
+                cmd['rargs'] = piece[1:]
+            else:
+                cmd['rargs'] = []
+            cmd['type'] = cmdStructure['type']
+            cmd_array.append(cmd)
+            continue
 
         lastpp = None
-        exit = False
         for index, cmd in reversed(list(enumerate(cmd_array))):
-            if cmd['command'] == "exit":
-                exit = True
-
-            cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
+            cmdclass = self.protocol.getCommand(cmd['command'], environ['PATH'].split(':'))
             if cmdclass:
-                log.msg(eventid='cowrie.command.success', input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
-                if index == len(cmd_array)-1:
-                    lastpp =  StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None)
+                log.msg(eventid='cowrie.command.success',
+                        input=cmd['command'] + " ".join(cmd['rargs']),
+                        format='Command found: %(input)s')
+                if index == len(cmd_array) - 1:
+                    lastpp = ProcessHandling(self.protocol, cmdclass, cmd, None)
+                    lastpp.addToStack()
                     pp = lastpp
                 else:
-                    pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, lastpp)
+                    pp = ProcessHandling(self.protocol, cmdclass, cmd, lastpp)
+                    pp.addToStack()
                     lastpp = pp
             else:
                 log.msg(eventid='cowrie.command.failed',
-                    input=' '.join(cmd2), format='Command not found: %(input)s')
+                        input=str(cmd2), format='Command not found: %(input)s')
                 self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
-                runOrPrompt()
+                self.showPrompt()
+                return
         if pp:
+
+            cmdclass = self.protocol.getCommand(cmd_array[0]['command'], environ['PATH'].split(':'))
+            pp.set_protocol(self.protocol)
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
-
-
-    def resume(self):
-        """
-        """
-        if self.interactive:
-            self.protocol.setInsertMode()
-        self.runCommand()
 
 
     def showPrompt(self):
@@ -460,6 +443,66 @@ class HoneyPotShell(object):
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
         self.protocol.terminal.write(newbuf)
 
+class ProcessHandling(object):
+
+    def __init__(self, protocol, cmdclass, cmd, next_command):
+
+
+        self.protocol = protocol
+        self.stdout = StdOutStdErrEmulationProtocol(self,self.protocol,cmd)
+
+
+        self.cmd_name = cmd['command']
+        self.cmdargs = cmd['rargs']
+        self.cmd_type = cmd['type']
+        self.cmd = cmdclass
+        self.input_data = ""
+        self.next_command = next_command
+        self.data = ""
+        self.err_data = ""
+
+
+    def setInputData(self,data):
+        self.data = self.data + data
+
+
+    def addToStack(self):
+
+        self.runningCommand = self.cmd(self.stdout,self.protocol, *self.cmdargs)
+        self.runningCommand.set_process_type(self.cmd_type)
+        self.protocol.cmdstack.append(self.runningCommand)
+
+
+    def removeFromStack(self):
+        if not self.cmd_name == 'exit':
+            service = self.protocol.cmdstack.pop(self.protocol.cmdstack.index(self.runningCommand))
+
+
+    def getCommandInstance(self):
+        return self.protocol.cmdstack[self.protocol.cmdstack.index(self.runningCommand)]
+
+
+    def callNextCommand(self):
+        if self.next_command:
+            self.next_command.input_data = self.data
+            npcmd = self.next_command.cmd
+            npcmdargs = self.next_command.cmdargs
+            self.protocol.pp = self.next_command
+            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
+
+
+    def insert_command(self, command):
+        """
+        Insert the next command into the list.
+        """
+        tmp = self.next_command
+        command.next_command = tmp
+        self.next_command = command
+        self.next_command.addToStack()
+
+    def set_protocol(self, protocol):
+         self.protocol = protocol
+         self.protocol.pp = self
 
 
 class StdOutStdErrEmulationProtocol(object):
@@ -468,40 +511,28 @@ class StdOutStdErrEmulationProtocol(object):
     """
     __author__ = 'davegermiquet'
 
-    def __init__(self, protocol, cmd, cmdargs, input_data, next_command):
-        self.cmd = cmd
-        self.cmdargs = cmdargs
-        self.input_data = input_data
-        self.next_command = next_command
+    command_list_to_ignore_output = ["sudo", "bash", "sh", "busybox"]
+
+
+    def __init__(self,process,protocol,commandStructure):
+
+        self.protocol = protocol
+        self.commandStructure = commandStructure
+        self.process = process
         self.data = ""
         self.err_data = ""
-        self.protocol = protocol
-
-
-    def connectionMade(self):
-        """
-        """
-        self.input_data = None
-
-
+        
     def outReceived(self, data):
         """
         """
         self.data = self.data + data
-
-        if not self.next_command:
+        self.process.setInputData(data)
+        if not self.commandStructure['type'] == "pipe" and not self.commandStructure['command'] in self.command_list_to_ignore_output:
             if not self.protocol is None and not self.protocol.terminal is None:
                 self.protocol.terminal.write(str(data))
             else:
                 log.msg("Connection was probably lost. Could not write to terminal")
 
-
-    def insert_command(self, command):
-        """
-        Insert the next command into the list.
-        """
-        command.next_command = self.next_command
-        self.next_command = command
 
 
     def errReceived(self, data):
@@ -520,28 +551,8 @@ class StdOutStdErrEmulationProtocol(object):
     def outConnectionLost(self):
         """
         """
-        if self.next_command:
-            self.next_command.input_data = self.data
-            npcmd = self.next_command.cmd
-            npcmdargs = self.next_command.cmdargs
-            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
-
 
     def errConnectionLost(self):
         """
         """
         pass
-
-
-    def processExited(self, reason):
-        """
-        """
-        log.msg("processExited for %s, status %d" % (self.cmd, reason.value.exitCode))
-
-
-    def processEnded(self, reason):
-        """
-        """
-        log.msg("processEnded for %s, status %d" % (self.cmd, reason.value.exitCode))
-
-
