@@ -27,7 +27,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             redirectEnabled = True
         else:
             redirectEnabled = False
-    except ValueError as e:
+    except:
         redirectEnabled = False
 
     if redirectEnabled:
