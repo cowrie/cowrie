@@ -10,7 +10,7 @@ from twisted.python import failure, log
 
 from twisted.internet import error, reactor
 
-from cowrie.core.honeypot import HoneyPotCommand, CowrieProcess
+from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 from cowrie.core.auth import UserDB
 from cowrie.core import utils
 
@@ -277,7 +277,6 @@ commands['/usr/bin/id'] = command_id
 class command_passwd(HoneyPotCommand):
     """
     """
-
     def start(self):
         """
         """
@@ -486,11 +485,9 @@ class command_sh(HoneyPotCommand):
                 log.msg(eventid='cowrie.command.success',
                         input=line,
                         format='Command found: %(input)s')
-                cmdStructure = {}
-                cmdStructure['argv'] = self.args[1:]
-                cmdStructure['type'] = self.process_type
-                command = CowrieProcess(self.protocol, cmdclass, cmdStructure, None)
+                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[2:],self.input_data,None)
                 self.protocol.pp.insert_command(command)
+                # Place this here so it doesn't write out only if last statement
 
                 if self.input_data:
                     self.write(self.input_data)

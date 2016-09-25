@@ -37,7 +37,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.clientVersion = None
         self.kippoIP = None
         self.clientIP = None
-        self.pp = None
 
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
@@ -187,11 +186,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         """
         self.pp = pp
-        obj = self.pp.getCommandInstance()
-        if self.pp.input_data:
-            obj.set_input_data(self.pp.input_data)
+        obj = cmd(self, *args)
+        obj.set_input_data(pp.input_data)
+        self.cmdstack.append(obj)
         obj.start()
-        self.pp.callNextCommand();
+        self.pp.outConnectionLost()
 
 
     def uptime(self):
@@ -326,6 +325,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def call_command(self, pp, cmd, *args):
         """
         """
+        self.pp = pp
         self.setTypeoverMode()
         HoneyPotBaseProtocol.call_command(self, pp, cmd, *args)
 
