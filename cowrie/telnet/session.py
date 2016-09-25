@@ -41,6 +41,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.environ = {
             'LOGNAME': self.username,
             'USER': self.username,
+            'SHELL': '/bin/bash',
             'HOME': self.home,
             'TMOUT': '1800'}
 

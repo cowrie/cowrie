@@ -108,6 +108,7 @@ class SSHSessionForCowrieUser(object):
         self.username = avatar.username
         self.environ = {
             'LOGNAME': self.username,
+            'SHELL': '/bin/bash',
             'USER': self.username,
             'HOME': self.avatar.home,
             'TMOUT': '1800'}
