@@ -169,7 +169,7 @@ class Output(cowrie.core.output.Output):
         vtUrl = "https://www.virustotal.com/vtapi/v2/url/scan"
         headers = http_headers.Headers({'User-Agent': ['Cowrie SSH Honeypot']})
         fields = {"apikey": self.apiKey, "url": scanUrl}
-        data = urllib.urlencode(fields)
+        data = urlencode(fields)
         body = StringProducer(data)
         contextFactory = WebClientContextFactory()
 
@@ -225,7 +225,7 @@ class Output(cowrie.core.output.Output):
                        "comment": "First seen by Cowrie SSH honeypot http://github.com/micheloosterhof/cowrie",
                        "apikey": self.apiKey}
         headers = http_headers.Headers({'User-Agent': ['Cowrie SSH Honeypot']})
-        data = urllib.urlencode(parameters)
+        data = urlencode(parameters)
         body = StringProducer(data)
         contextFactory = WebClientContextFactory()
 
