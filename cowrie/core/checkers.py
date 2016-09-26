@@ -145,25 +145,26 @@ class HoneypotPasswordChecker(object):
         theauth = authname(self.cfg)
 
         if self.pwcrypto:
-            encpassword = self.pwcrypto.encrypt(thepassword)
-            thepassword = ""
+            enc_password = self.pwcrypto.encrypt(thepassword)
+            clear_password = ""
         else:
-            encpassword = ""
+            enc_password = ""
+            clear_password = thepassword
 
         if theauth.checklogin(theusername, thepassword, ip):
 
             log.msg(eventid='cowrie.login.success',
                     format='login attempt [%(username)s/%(password)s] succeeded',
                     username=theusername.encode('string-escape'),
-                    password=thepassword.encode('string-escape'),
-                    encpassword=encpassword.encode('string-escape'))
+                    password=clear_password.encode('string-escape'),
+                    encpassword=enc_password.encode('string-escape'))
             return True
         else:
 
             log.msg(eventid='cowrie.login.failed',
                     format='login attempt [%(username)s/%(password)s] failed',
                     username=theusername.encode('string-escape'),
-                    password=thepassword.encode('string-escape'),
-                    encpassword=encpassword.encode('string-escape'))
+                    password=clear_password.encode('string-escape'),
+                    encpassword=enc_password.encode('string-escape'))
             return False
 
