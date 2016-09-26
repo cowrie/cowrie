@@ -86,7 +86,7 @@ class command_busybox(HoneyPotCommand):
                 cmdStructure['argv'] = parsed_arguments
                 cmdStructure['type'] =  self.process_type
                 command = CowrieProcess(self.protocol, cmdclass, cmdStructure, None)
-                self.protocol.pp.insert_command(command)
+                self.protocol.pp.insert_before_command(command)
                 # Place this here so it doesn't write out only if last statement
 
                 if self.input_data:

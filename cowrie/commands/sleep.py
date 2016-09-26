@@ -21,7 +21,6 @@ class command_sleep(HoneyPotCommand):
         """
         self.exit()
 
-
     def start(self):
         """
         """
@@ -31,7 +30,6 @@ class command_sleep(HoneyPotCommand):
         else:
             self.write('usage: sleep seconds\n')
             self.exit()
-
 
 commands['/bin/sleep'] = command_sleep
 
