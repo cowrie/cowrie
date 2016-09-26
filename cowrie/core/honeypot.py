@@ -110,11 +110,12 @@ class HoneyPotCommand(object):
         """
         try:
 
-            self.protocol.pp.removeFromStack()
+            if self.protocol.pp:
+                self.protocol.pp.removeFromStack()
             """
-            If Cmd Stack is equal to 1 means its the base shell
+            If Cmd Stack is equal to 1 means its the base shell:
             """
-            if (len(self.protocol.cmdstack) == 1):
+            if len(self.protocol.cmdstack) == 1:
                 self.protocol.cmdstack[-1].showPrompt()
 
         except Exception as inst:
@@ -137,9 +138,7 @@ class HoneyPotCommand(object):
         """
         """
         log.msg('QUEUED INPUT: {}'.format(line))
-        # FIXME: naive command parsing, see lineReceived below
-        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line))
-
+        self.protocol.shell.lineReceived(line)
 
     def resume(self):
         """
@@ -156,7 +155,7 @@ class HoneyPotCommand(object):
     def handle_CTRL_D(self):
         """
         """
-        pass
+        self.exit()
 
 
     def __repr__(self):
@@ -169,6 +168,7 @@ class HoneyPotShell(object):
     """
 
     def __init__(self, protocol, interactive=True):
+        protocol.shell = self
         self.protocol = protocol
         self.interactive = interactive
         self.cmdpending = []
@@ -249,30 +249,41 @@ class HoneyPotShell(object):
                 return
         if len(self.cmdpending):
             self.runCommand()
-        else:
-            self.showPrompt()
 
+    def return_link_cmdclass(self,cmd_array,environ,is_queue = False):
+        pp = None
+        for index, cmd in list(enumerate(cmd_array)):
+            if len(cmd['argv'])==0:
+                continue
+            cmdclass = self.protocol.getCommand(cmd['argv'][0], environ['PATH'].split(':'))
+            if cmdclass:
+                log.msg(eventid='cowrie.command.success',
+                        input=" ".join(cmd['argv']),
+                        format='Command found: %(input)s')
+                if index == 0:
+                    pp = CowrieProcess(self.protocol, cmdclass, cmd, None, env=environ)
+                    pp.addToStack()
+                else:
+                    tmp = CowrieProcess(self.protocol, cmdclass, cmd, None, env=environ)
+                    tmp.addToStack()
+                    pp.insert_after_command(tmp)
+
+            else:
+                log.msg(eventid='cowrie.command.failed',
+                        input=" ".join(cmd['argv']),
+                        format='Command not found: %(input)s')
+                self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['argv'][0],))
+        return pp
 
     def runCommand(self):
         """
         """
-
-        def parse_file_arguments(arguments):
-            parsed_arguments = []
-            for arg in arguments:
-                matches = self.protocol.fs.resolve_path_wc(arg, self.protocol.cwd)
-                if matches:
-                    parsed_arguments.extend(matches)
-                else:
-                    parsed_arguments.append(arg)
-
-            return parsed_arguments
-
         # this bit handles things like "PATH=/bin ls"
         environ = copy.copy(self.environ)
         cmd_array = []
         while len(self.cmdpending):
             cmd = self.cmdpending.pop(0)
+            log.msg(cmd)
             cmd['argv'] = []
             for i in cmd['tokens']:
                 if i.count('='):
@@ -282,39 +293,20 @@ class HoneyPotShell(object):
                 cmd['argv'].append(i)
             cmd_array.append(cmd)
             continue
-
-        lastpp = None
+        self.cmdpending = []
         pp = None
-        for index, cmd in reversed(list(enumerate(cmd_array))):
-            if len(cmd['argv'])==0:
-                continue
-            cmdclass = self.protocol.getCommand(cmd['argv'][0], environ['PATH'].split(':'))
-            if cmdclass:
-                log.msg(eventid='cowrie.command.success',
-                        input=" ".join(cmd['argv']),
-                        format='Command found: %(input)s')
-                if index == len(cmd_array) - 1:
-                    lastpp = CowrieProcess(self.protocol, cmdclass, cmd, None, env=environ)
-                    lastpp.addToStack()
-                    pp = lastpp
-                else:
-                    pp = CowrieProcess(self.protocol, cmdclass, cmd, lastpp, env=environ)
-                    pp.addToStack()
-                    lastpp = pp
-            else:
-                log.msg(eventid='cowrie.command.failed',
-                        input=" ".join(cmd['argv']),
-                        format='Command not found: %(input)s')
-                self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['argv'][0],))
-                self.showPrompt()
-                return
-        if pp:
-            cmdclass = self.protocol.getCommand(cmd_array[0]['argv'][0], environ['PATH'].split(':'))
-            pp.set_protocol(self.protocol)
-            self.protocol.call_command(pp, cmdclass, *cmd_array[0]['argv'][1:])
+
+        if self.protocol.pp:
+            self.protocol.pp.insert_after_command(self.return_link_cmdclass(cmd_array,environ,self.protocol.pp))
         else:
-            self.showPrompt()
-            return
+            pp = self.return_link_cmdclass(cmd_array,environ)
+
+            if pp:
+                if not self.protocol.pp:
+                    self.protocol.pp = pp
+                    self.protocol.call_command(self.protocol.pp, None, None)
+            else:
+                self.showPrompt()
 
 
     def showPrompt(self):
@@ -362,8 +354,8 @@ class HoneyPotShell(object):
         this should probably not go through ctrl-d, but use processprotocol to close stdin
         """
         log.msg("received eof, sending ctrl-d to command")
-        if len(self.cmdstack):
-            self.cmdstack[-1].handle_CTRL_D()
+        if len(self.protocol.cmdstack):
+            self.protocol.cmdstack[-1].handle_CTRL_D()
 
 
     def handle_CTRL_C(self):
@@ -381,7 +373,7 @@ class HoneyPotShell(object):
         log.msg('Received CTRL-D, exiting..')
 
         cmdclass =  self.protocol.commands['exit']
-        pp = CowrieProcessProtocol(self.protocol, cmdclass, None, None, None)
+        pp = CowrieProcess(self.protocol, cmdclass, None, None, None)
         self.protocol.call_command(pp, self.protocol.commands['exit'])
 
 
@@ -472,6 +464,7 @@ class CowrieProcess(object):
         """
         """
         self.protocol = protocol
+        self.running = False
         self.stdout = CowrieProcessProtocol(self, self.protocol, cmd)
         self.cmd_name = cmd['argv'][0]
         self.cmd_type = cmd['type']
@@ -488,7 +481,7 @@ class CowrieProcess(object):
         """
         """
         self.data = self.data + data
-
+        log.msg(data)
 
     def addToStack(self):
         """
@@ -502,7 +495,8 @@ class CowrieProcess(object):
         """
         """
         if not self.cmd_name == 'exit':
-            service = self.protocol.cmdstack.pop(self.protocol.cmdstack.index(self.runningCommand))
+            self.setRunning(False)
+            service = self.protocol.cmdstack.pop(self.protocol.cmdstack.index(self.protocol.pp.runningCommand))
 
 
     def getCommandInstance(self):
@@ -519,10 +513,15 @@ class CowrieProcess(object):
             npcmd = self.next_command.cmd
             npcmdargs = self.next_command.cmdargs
             self.protocol.pp = self.next_command
-            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
+            self.protocol.call_command(self.protocol.pp, npcmd, *npcmdargs)
 
+    def setRunning(self,flag_to_set):
+        self.running = flag_to_set
 
-    def insert_command(self, command):
+    def isRunning(self):
+        return self.running
+
+    def insert_before_command(self, command):
         """
         Insert the next command into the list.
         """
@@ -531,13 +530,12 @@ class CowrieProcess(object):
         self.next_command = command
         self.next_command.addToStack()
 
+    def insert_after_command(self,command):
 
-    def set_protocol(self, protocol):
-        """
-        """
-        self.protocol = protocol
-        self.protocol.pp = self
-
+        if self.next_command:
+            self.next_command.next_command = command
+        else:
+            self.next_command = command
 
 
 @implementer(IProcessProtocol)

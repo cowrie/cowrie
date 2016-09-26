@@ -490,7 +490,7 @@ class command_sh(HoneyPotCommand):
                 cmdStructure['argv'] = self.args[1:]
                 cmdStructure['type'] = self.process_type
                 command = CowrieProcess(self.protocol, cmdclass, cmdStructure, None)
-                self.protocol.pp.insert_command(command)
+                self.protocol.pp.insert_before_command(command)
 
                 if self.input_data:
                     self.write(self.input_data)

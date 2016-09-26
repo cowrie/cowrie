@@ -128,7 +128,7 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 cmdStructure['type'] = self.process_type
                 cmdStructure['argv'] = parsed_arguments
                 command = CowrieProcess(self.protocol, cmdclass, cmdStructure, None)
-                self.protocol.pp.insert_command(command)
+                self.protocol.pp.insert_before_command(command)
                 # this needs to go here so it doesn't write it out....
                 if self.input_data:
                     self.write(self.input_data)

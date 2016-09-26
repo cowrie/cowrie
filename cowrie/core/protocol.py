@@ -9,7 +9,7 @@ This module contains ...
 import os
 import time
 import socket
-
+from twisted.internet import task
 from twisted.python import failure, log
 from twisted.internet import error
 from twisted.protocols.policies import TimeoutMixin
@@ -18,6 +18,7 @@ from twisted.conch.insults import insults
 
 from cowrie.core import honeypot
 from cowrie.core import utils
+from twisted.internet import reactor
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
@@ -38,6 +39,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.kippoIP = None
         self.clientIP = None
         self.pp = None
+        self.shell = None
 
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
@@ -116,7 +118,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         log.msg("received eof, sending ctrl-d to command")
         if len(self.cmdstack):
-            self.cmdstack[-1].handle_CTRL_D()
+            self.cmdstack[-1].self.exit()
 
 
     def connectionLost(self, reason):
@@ -186,12 +188,27 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def call_command(self, pp, cmd, *args):
         """
         """
-        self.pp = pp
-        obj = self.pp.getCommandInstance()
-        if self.pp.input_data:
-            obj.set_input_data(self.pp.input_data)
-        obj.start()
-        self.pp.callNextCommand();
+        def run_next_command():
+            if self.pp.next_command:
+                self.pp.callNextCommand()
+            else:
+                self.pp = None
+            l.stop()
+
+        def isRunning():
+            if self.pp:
+                if not self.pp.isRunning():
+                    run_next_command()
+
+        if self.pp:
+            obj = self.pp.getCommandInstance()
+            if self.pp.input_data:
+                obj.set_input_data(self.pp.input_data)
+            self.pp.setRunning(True)
+            obj.start()
+            if self.pp:
+                l = task.LoopingCall(isRunning)
+                l.start(0.1)
 
 
     def uptime(self):
