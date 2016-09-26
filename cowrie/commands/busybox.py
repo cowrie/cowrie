@@ -92,3 +92,4 @@ class command_busybox(HoneyPotCommand):
         else:
             self.help()
 commands['busybox'] = command_busybox
+commands['/bin/busybox'] = command_busybox
