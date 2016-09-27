@@ -157,7 +157,7 @@ class command_tail(HoneyPotCommand):
     def start(self):
         self.n = 10
         if not self.args or self.args[0] == '>':
-            pass
+            return
         else:
             try:
                 optlist, args = getopt.getopt(self.args, 'n:')
