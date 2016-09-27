@@ -20,7 +20,7 @@ class command_cat(HoneyPotCommand):
     """
     def start(self):
         if not self.args or self.args[0] == '>':
-            pass
+            return
         if self.input_data:
             self.write(self.input_data)
         else:
@@ -37,7 +37,7 @@ class command_cat(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg(eventid='cowrie.session.file_download',
+        log.msg(eventid='cowrie.session.input',
                 realm='cat',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
@@ -113,8 +113,8 @@ class command_grep(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg(eventid='cowrie.session.file_download',
-                realm='tail',
+        log.msg(eventid='cowrie.command.input',
+                realm='grep',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
 
@@ -183,7 +183,7 @@ class command_tail(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg(eventid='cowrie.session.file_download',
+        log.msg(eventid='cowrie.command.input',
                 realm='tail',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
@@ -248,7 +248,7 @@ class command_head(HoneyPotCommand):
 
 
     def lineReceived(self, line):
-        log.msg(eventid='cowrie.session.file_download', realm='head', input=line,
+        log.msg(eventid='cowrie.command.input', realm='head', input=line,
                 format='INPUT (%(realm)s): %(input)s')
 
 
