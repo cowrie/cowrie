@@ -164,7 +164,7 @@ class command_wget(HoneyPotCommand):
             contextFactory.method = SSL.SSLv23_METHOD
             self.connection = reactor.connectSSL(
                 host, port, factory, contextFactory, bindAddress=out_addr)
-        elif scheme = 'http':
+        elif scheme == 'http':
             self.connection = reactor.connectTCP(
                 host, port, factory, bindAddress=out_addr)
         else:
