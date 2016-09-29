@@ -161,7 +161,7 @@ class command_wget(HoneyPotCommand):
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()
             contextFactory.method = SSL.SSLv23_METHOD
-            reactor.connectSSL(host, port, factory, contextFactory)
+            self.connection = reactor.connectSSL(host, port, factory, contextFactory)
         else: # Can only be http, since we raised an error above for unknown schemes
             self.connection = reactor.connectTCP(
                 host, port, factory, bindAddress=out_addr)
@@ -311,7 +311,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             if (time.time() - self.lastupdate) < 0.5:
                 return client.HTTPDownloader.pagePart(self, data)
             if self.totallength:
-                percent = (self.currentlength/self.totallength)*100
+                percent = int(self.currentlength/self.totallength*100)
                 spercent = "{}%".format(percent)
             else:
                 spercent = '%dK' % (self.currentlength/1000)
