@@ -179,22 +179,26 @@ class hpclient(object):
         self.unpacker.feed(d)
         try:
             for opcode, data in self.unpacker:
-                if self.debug: log.msg('hpclient msg opcode {0} data {1}'.format(opcode, data))
+                if self.debug: log.msg('hpclient msg opcode {0:x} data {1}'.format(opcode,
+                    ''.join('{:02x}'.format(x) for x in data)))
                 if opcode == OP_INFO:
                     name, rand = strunpack8(data)
-                    if self.debug: log.msg('hpclient server name {0} rand {1}'.format(name, rand))
+                    if self.debug: log.msg('hpclient server name {0} rand {1}'.format(name,
+                    ''.join('{:02x}'.format(x) for x in rand)))
                     self.send(msgauth(rand, self.ident, self.secret))
                     self.state = 'GOTINFO'
 
                 elif opcode == OP_PUBLISH:
                     ident, data = strunpack8(data)
                     chan, data = strunpack8(data)
-                    if self.debug: log.msg('publish to {0} by {1}: {2}'.format(chan, ident, data))
-
+                    if self.debug:
+                        log.msg('publish to {0} by {1}: {2}'.format(chan, ident,
+                                 ''.join('{:02x}'.format(x) for x in data)))
                 elif opcode == OP_ERROR:
-                    log.err('errormessage from server: {0}'.format(data))
+                    log.err('errormessage from server: {0}'.format(
+                                 ''.join('{:02x}'.format(x) for x in data)))
                 else:
-                    log.err('unknown opcode message: {0}'.format(opcode))
+                    log.err('unknown opcode message: {0:x}'.format(opcode))
         except BadClient:
             log.err('unpacker error, disconnecting.')
             self.close()
@@ -274,12 +278,13 @@ class Output(cowrie.core.output.Output):
         """
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
-            startTime = entry["timestamp"]
-            self.meta[session] = {'session':session, 'startTime':startTime,
-                'endTime':'', 'peerIP': src_ip, 'peerPort': src_port,
-                'hostIP': dst_ip, 'hostPort': dst_port, 'loggedin': None,
-                'credentials':[], 'commands':[], "unknownCommands":[],
-                'urls':[], 'version': None, 'ttylog': None }
+            self.meta[session] = {'session':session,
+                'startTime': entry["timestamp"], 'endTime':'',
+                'peerIP': entry["src_ip"], 'peerPort': entry["src_port"],
+                'hostIP': entry["dst_ip"], 'hostPort': entry["dst_port"],
+                'loggedin': None, 'credentials':[], 'commands':[],
+                'unknownCommands':[], 'urls':[], 'version': None,
+                'ttylog': None }
 
         elif entry["eventid"] == 'cowrie.login.success':
             u, p = entry['username'], entry['password']
@@ -307,9 +312,8 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == 'cowrie.log.closed':
             # entry["ttylog"]
-            ttylog = self.ttylog(session)
-            if ttylog:
-                meta['ttylog'] = ttylog.encode('hex')
+            with open( entry["ttylog"]) as ttylog:
+                self.meta['ttylog'] = ttylog.read().encode('hex')
 
         elif entry["eventid"] == 'cowrie.session.closed':
             log.msg('publishing metadata to hpfeeds')
