@@ -1,6 +1,7 @@
 
 """
 Output plugin for HPFeeds
+
 """
 
 import os
@@ -9,6 +10,8 @@ import hashlib
 import json
 import socket
 import uuid
+
+from twisted.python import log
 
 import cowrie.core.output
 
@@ -99,7 +102,7 @@ class FeedUnpack(object):
         if len(self.buf) < 5:
             raise StopIteration('No message.')
 
-        ml, opcode = struct.unpack('!iB', buffer(self.buf,0,5))
+        ml, opcode = struct.unpack('!iB', buffer(self.buf, 0, 5))
         if ml > SIZES.get(opcode, MAXBUF):
             raise BadClient('Not respecting MAXBUF.')
 
@@ -244,6 +247,7 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
         self.cfg = cfg
+        log.msg("Early version of hpfeeds-output, untested!")
         cowrie.core.output.Output.__init__(self, cfg)
 
 
@@ -272,19 +276,19 @@ class Output(cowrie.core.output.Output):
         session = entry["id"]
         if entry["eventid"] == 'cowrie.session.connect':
             startTime = entry["timestamp"]
-            self.meta[session] = {'session':session,'startTime':startTime,
-                'endTime':'','peerIP': peerIP, 'peerPort': peerPort,
+            self.meta[session] = {'session':session, 'startTime':startTime,
+                'endTime':'', 'peerIP': peerIP, 'peerPort': peerPort,
                 'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
-                'credentials':[], 'commands':[],"unknownCommands":[],
+                'credentials':[], 'commands':[], "unknownCommands":[],
                 'urls':[], 'version': None, 'ttylog': None }
 
         elif entry["eventid"] == 'cowrie.login.success':
             u, p = args['username'], args['password']
-            self.meta[session]['loggedin'] = (u,p)
+            self.meta[session]['loggedin'] = (u, p)
 
         elif entry["eventid"] == 'cowrie.login.failed':
             u, p = args['username'], args['password']
-            self.meta[session]['credentials'].append((u,p))
+            self.meta[session]['credentials'].append((u, p))
 
         elif entry["eventid"] == 'cowrie.command.success':
             c = args['input']
@@ -311,5 +315,5 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'cowrie.session.closed':
             log.msg('publishing metadata to hpfeeds')
             meta = self.meta[session]
-            self.meta[session]['endTime']=entry["timestamp"]
+            self.meta[session]['endTime'] = entry["timestamp"]
             self.client.publish(COWRIECHAN, **meta)
