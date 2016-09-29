@@ -154,6 +154,7 @@ class command_wget(HoneyPotCommand):
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
+
         out_addr = None
         if self.protocol.cfg.has_option('honeypot', 'out_addr'):
             out_addr = (self.protocol.cfg.get('honeypot', 'out_addr'), 0)
@@ -161,10 +162,13 @@ class command_wget(HoneyPotCommand):
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()
             contextFactory.method = SSL.SSLv23_METHOD
-            self.connection = reactor.connectSSL(host, port, factory, contextFactory)
-        else: # Can only be http, since we raised an error above for unknown schemes
+            self.connection = reactor.connectSSL(
+                host, port, factory, contextFactory, bindAddress=out_addr)
+        elif scheme = 'http':
             self.connection = reactor.connectTCP(
                 host, port, factory, bindAddress=out_addr)
+        else:
+            raise NotImplementedError
 
         return factory.deferred
 
