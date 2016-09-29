@@ -251,15 +251,14 @@ class Output(cowrie.core.output.Output):
         cowrie.core.output.Output.__init__(self, cfg)
 
 
-    def start(self, cfg):
+    def start(self):
         """
         """
-        server = cfg.get('database_hpfeeds', 'server')
-        port = cfg.get('database_hpfeeds', 'port')
-        ident = cfg.get('database_hpfeeds', 'identifier')
-        secret = cfg.get('database_hpfeeds', 'secret')
-        debug = cfg.get('database_hpfeeds', 'debug')
-
+        server = self.cfg.get('output_hpfeeds', 'server')
+        port = self.cfg.get('output_hpfeeds', 'port')
+        ident = self.cfg.get('output_hpfeeds', 'identifier')
+        secret = self.cfg.get('output_hpfeeds', 'secret')
+        debug = self.cfg.get('output_hpfeeds', 'debug')
         self.client = hpclient(server, port, ident, secret, debug)
         self.meta = {}
 
@@ -273,37 +272,37 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         """
         """
-        session = entry["id"]
+        session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
             startTime = entry["timestamp"]
             self.meta[session] = {'session':session, 'startTime':startTime,
-                'endTime':'', 'peerIP': peerIP, 'peerPort': peerPort,
-                'hostIP': hostIP, 'hostPort': hostPort, 'loggedin': None,
+                'endTime':'', 'peerIP': src_ip, 'peerPort': src_port,
+                'hostIP': dst_ip, 'hostPort': dst_port, 'loggedin': None,
                 'credentials':[], 'commands':[], "unknownCommands":[],
                 'urls':[], 'version': None, 'ttylog': None }
 
         elif entry["eventid"] == 'cowrie.login.success':
-            u, p = args['username'], args['password']
+            u, p = entry['username'], entry['password']
             self.meta[session]['loggedin'] = (u, p)
 
         elif entry["eventid"] == 'cowrie.login.failed':
-            u, p = args['username'], args['password']
+            u, p = entry['username'], entry['password']
             self.meta[session]['credentials'].append((u, p))
 
         elif entry["eventid"] == 'cowrie.command.success':
-            c = args['input']
+            c = entry['input']
             self.meta[session]['commands'].append(c)
 
         elif entry["eventid"] == 'cowrie.command.failed':
-            uc = args['input']
+            uc = entry['input']
             self.meta[session]['unknownCommands'].append(uc)
 
         elif entry["eventid"] == 'cowrie.session.file_download':
-            url = args['url']
+            url = entry['url']
             self.meta[session]['urls'].append(url)
 
         elif entry["eventid"] == 'cowrie.client.version':
-            v = args['version']
+            v = entry['version']
             self.meta[session]['version'] = v
 
         elif entry["eventid"] == 'cowrie.log.closed':
