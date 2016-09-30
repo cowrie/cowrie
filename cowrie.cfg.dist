@@ -95,6 +95,19 @@ interact_enabled = false
 interact_port = 5123
 
 
+# Encrypt passwords.
+# 
+# You may encrypt the passwords users enter into the system so that
+# only you may access them later. To use this option, generate a
+# public/private key pair using the /bin/pw_keygen script. Place
+# the base64-encoded public key in the option below, and keep the
+# private key safe. When you wish to decrypt log entries, use the
+# bin/pw_decrypt script. If empty (the default) no encryption will be
+# performed.
+# 
+# (default: "")
+#pw_pubkey = 
+
 # ============================================================================
 # Network Specific Options
 # ============================================================================

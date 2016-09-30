@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import pyelliptic
+from base64 import b64encode
+from base64 import b64decode
+
+print "# Usage instructions"
+print "# "
+print "# Run this script without any arguments. It will generate a"
+print "# public key and a private key. Copy the public key into your"
+print "# config file. Keep the secret key safe. Whenever you want to"
+print "# decrypt passwords encrypted by cowrie, just run the decrypt"
+print "# script."
+print ""
+
+actor = pyelliptic.ECC()
+
+print "# Copy this into your config file:"
+print "pw_pubkey = " + b64encode(actor.get_pubkey())
+print ""
+print "# Keep this secret:"
+print "pw_secret = " + b64encode(actor.get_privkey())
+print ""
+
+
