@@ -187,6 +187,13 @@ $ cd cowrie/data
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 ```
 
+* If there are issues creating the RSA keys, the following is a workaround:
+
+```
+$ cd cowrie/data
+$ ssh-keygen -t rsa -b 2048 -f ssh_host_rsa_key
+```
+
 * If you see `twistd: Unknown command: cowrie` there are two
 possibilities.  If there's a python stack trace, it probably means
 there's a missing or broken dependency.  If there's no stack trace,
