@@ -403,16 +403,6 @@ logfile = log/cowrie.json
 #source = cowrie
 
 
-# Legacy HPFeeds output
-#
-#[database_hpfeeds]
-#server = hpfeeds.mysite.org
-#port = 10000
-#identifier = abc123
-#secret = secret
-#debug=false
-
-
 # HPFeeds
 #
 #[output_hpfeeds]
