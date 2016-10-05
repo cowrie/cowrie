@@ -33,7 +33,6 @@ class DBLogger(object):
             'cowrie.log.open': self.handleTTYLogOpened,
             'cowrie.command.success': self.handleCommand,
             'cowrie.command.failed': self.handleUnknownCommand,
-            'cowrie.session.file_download': self.handleFileDownload,
             'cowrie.session.file_download': self.handleInput,
             'cowrie.client.version': self.handleClientVersion,
             'cowrie.client.size': self.handleTerminalSize,
