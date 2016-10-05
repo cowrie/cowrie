@@ -88,7 +88,7 @@ class command_busybox(HoneyPotCommand):
                 if self.input_data:
                     self.write(self.input_data)
             else:
-                self.help()
+                self.write('{}: applet not found\n'.format(cmd))
         else:
             self.help()
 
