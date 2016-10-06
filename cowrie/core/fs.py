@@ -168,15 +168,6 @@ class HoneyPotFilesystem(object):
             f[A_REALFILE] = realfile
 
 
-    def realfile(self, f, path):
-        """
-        """
-        self.update_realfile(f, path)
-        if f[A_REALFILE]:
-            return f[A_REALFILE]
-        return None
-
-
     def getfile(self, path, follow_symlinks=True):
         """
         This returns the Cowrie file system object for a path
@@ -223,12 +214,11 @@ class HoneyPotFilesystem(object):
         f = self.getfile(path)
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
-        elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
-            return file(f[A_REALFILE], 'rb').read()
-        realfile = self.realfile(f, '%s/%s' % \
-            (self.cfg.get('honeypot', 'contents_path'), path))
-        if realfile:
-            return file(realfile, 'rb').read()
+        elif f[A_TYPE] == T_FILE:
+            self.update_realfile(f, '%s/%s' % \
+                (self.cfg.get('honeypot', 'contents_path'), path))
+            if f[A_REALFILE]:
+                return file(f[A_REALFILE], 'rb').read()
 
 
     def mkfile(self, path, uid, gid, size, mode, ctime=None):
