@@ -555,5 +555,6 @@ class command_touch(HoneyPotCommand):
 
 commands['/usr/bin/touch'] = command_touch
 commands['/bin/touch'] = command_touch
+commands['>'] = command_touch
 
 # vim: set sw=4 et:
