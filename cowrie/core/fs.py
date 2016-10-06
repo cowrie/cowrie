@@ -235,6 +235,11 @@ class HoneyPotFilesystem(object):
             raise IsADirectoryError
         elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return file(f[A_REALFILE], 'rb').read()
+        elif f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
+            # Zero-byte file lacking A_REALFILE backing: probably empty.
+            # (The exceptions to this are some system files in /proc and /sys,
+            # but it's likely better to return nothing than suspiciously fail.)
+            return ''
 
 
     def mkfile(self, path, uid, gid, size, mode, ctime=None):
