@@ -211,22 +211,18 @@ class HoneyPotFilesystem(object):
         return p
 
 
-    def file_contents(self, target, count=0):
+    def file_contents(self, target):
         """
         Retrieve the content of a file in the honeyfs
         It follows links.
         It tries A_REALFILE first and then tries honeyfs directory
         """
-        if count > 8:
-            raise TooManyLevels
         path = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
             raise FileNotFound
         f = self.getfile(path)
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
-        elif f[A_TYPE] == T_LINK:
-            return self.file_contents(f[A_TARGET], count + 1)
         elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return file(f[A_REALFILE], 'rb').read()
         realfile = self.realfile(f, '%s/%s' % \
