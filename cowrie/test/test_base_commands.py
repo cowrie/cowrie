@@ -105,7 +105,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived("history\n")
         self.proto.lineReceived("history\n")
         # Not Sure HOW TO TEST THIS!!
-        print self.tr.value()
+        print(self.tr.value())
 
 
     def test_date_command(self):
@@ -123,7 +123,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 
     def test_php_command(self):
-        self.proto.lineReceived('php -h');
+        self.proto.lineReceived('php -h')
         print(self.tr.value())
 
 
