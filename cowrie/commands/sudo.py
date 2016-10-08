@@ -87,9 +87,9 @@ Sudoers I/O plugin version 1.8.5p2\n''')
         """
         """
         start_value = None
+        parsed_arguments = []
         for count in range(0,len(self.args)):
-            parsed_arguments = []
-            class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'] .split(':'))
+            class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'].split(':'))
             if class_found:
                 start_value = count
                 break
@@ -113,7 +113,7 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 return
 
         if len(parsed_arguments) > 0:
-            line = ' '.join(parsed_arguments    )
+            line = ' '.join(parsed_arguments)
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd,
                 self.environ['PATH'].split(':'))
