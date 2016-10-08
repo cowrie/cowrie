@@ -62,9 +62,9 @@ class command_busybox(HoneyPotCommand):
         """
         """
         start_value = None
+        parsed_arguments = []
         for count in range(0,len(self.args)):
-            parsed_arguments = []
-            class_found =  self.protocol.getCommand(self.args[count], self.environ['PATH'] .split(':'))
+            class_found = self.protocol.getCommand(self.args[count], self.environ['PATH'].split(':'))
             if class_found:
                 start_value = count
                 break
@@ -73,7 +73,7 @@ class command_busybox(HoneyPotCommand):
                 parsed_arguments.append(self.args[index_2])
 
         if len(parsed_arguments) > 0:
-            line = ' '.join(parsed_arguments    )
+            line = ' '.join(parsed_arguments)
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd,
                                                 self.environ['PATH'].split(':'))
@@ -91,5 +91,6 @@ class command_busybox(HoneyPotCommand):
                 self.help()
         else:
             self.help()
+
 commands['busybox'] = command_busybox
 commands['/bin/busybox'] = command_busybox
