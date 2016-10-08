@@ -134,7 +134,7 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg("VT Request failed: %s %s" % (response.code, response.phrase,))
+                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
 
@@ -143,14 +143,12 @@ class Output(cowrie.core.output.Output):
 
 
         def processResult(result):
-            log.msg( "VT postfile result: %s" % result)
+            log.msg( "VT postfile result: {}".format(result))
             j = json.loads(result)
-            #log.msg( "VT postfile result: %s", repr(j) )
             if j["response_code"] == 0:
                 log.msg( "response=0: posting comment")
                 d = self.postcomment(j["resource"])
                 return d
-
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -195,7 +193,7 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg("VT Request failed: %s %s" % (response.code, response.phrase,))
+                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
 
@@ -205,16 +203,16 @@ class Output(cowrie.core.output.Output):
 
         def processResult(result):
             j = json.loads(result)
-            log.msg( "VT posturl result: %s", repr(j) )
+            log.msg("VT posturl result: {}".format(repr(j)))
             if j["response_code"] == 0:
                 log.msg( "response=0: posting comment")
                 d = self.postcomment(j["resource"])
                 return d
 
-
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
+
 
     def postcomment(self, resource):
         """
@@ -250,7 +248,7 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg("VT Request failed: %s %s" % (response.code, response.phrase,))
+                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
 
@@ -260,7 +258,7 @@ class Output(cowrie.core.output.Output):
 
         def processResult(result):
             j = json.loads(result)
-            log.msg( "VT postcomment result: %s", repr(j) )
+            log.msg( "VT postcomment result: {}".format(repr(j)))
             return j["response_code"]
 
         d.addCallback(cbResponse)
@@ -268,7 +266,10 @@ class Output(cowrie.core.output.Output):
         return d
 
 
+
 class WebClientContextFactory(ClientContextFactory):
+    """
+    """
     def getContext(self, hostname, port):
         return ClientContextFactory.getContext(self)
 
@@ -276,6 +277,8 @@ class WebClientContextFactory(ClientContextFactory):
 
 @implementer(IBodyProducer)
 class StringProducer(object):
+    """
+    """
 
     def __init__(self, body):
         self.body = body
@@ -293,6 +296,7 @@ class StringProducer(object):
 
     def stopProducing(self):
         pass
+
 
 
 def encode_multipart_formdata(fields, files):
