@@ -7,8 +7,7 @@ from twisted.trial import unittest
 
 from cowrie.core import protocol
 from cowrie.core import config
-import fake_server
-import fake_transport
+from cowrie.test import fake_server, fake_transport
 import json
 
 
