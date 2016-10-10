@@ -61,36 +61,26 @@ class command_busybox(HoneyPotCommand):
     def call(self):
         """
         """
-        start_value = None
-        parsed_arguments = []
-        for count in range(0,len(self.args)):
-            class_found = self.protocol.getCommand(self.args[count], self.environ['PATH'].split(':'))
-            if class_found:
-                start_value = count
-                break
-        if start_value is not None:
-            for index_2 in range(start_value,len(self.args)):
-                parsed_arguments.append(self.args[index_2])
-
-        if len(parsed_arguments) > 0:
-            line = ' '.join(parsed_arguments)
-            cmd = parsed_arguments[0]
-            cmdclass = self.protocol.getCommand(cmd,
-                                                self.environ['PATH'].split(':'))
-            if cmdclass:
-                log.msg(eventid='cowrie.command.success',
-                        input=line,
-                        format='Command found: %(input)s')
-                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:],self.input_data,None)
-                self.protocol.pp.insert_command(command)
-                # Place this here so it doesn't write out only if last statement
-
-                if self.input_data:
-                    self.write(self.input_data)
-            else:
-                self.write('{}: applet not found\n'.format(cmd))
-        else:
+        if len(self.args) == 0:
             self.help()
+            return
+
+        line = ' '.join(self.args)
+        cmd = self.args[0]
+        cmdclass = self.protocol.getCommand(cmd,
+                                            self.environ['PATH'].split(':'))
+        if cmdclass:
+            log.msg(eventid='cowrie.command.success',
+                    input=line,
+                    format='Command found: %(input)s')
+            command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[1:],self.input_data,None)
+            self.protocol.pp.insert_command(command)
+            # Place this here so it doesn't write out only if last statement
+
+            if self.input_data:
+                self.write(self.input_data)
+        else:
+            self.write('{}: applet not found\n'.format(cmd))
 
 commands['busybox'] = command_busybox
 commands['/bin/busybox'] = command_busybox
