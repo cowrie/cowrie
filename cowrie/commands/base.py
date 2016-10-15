@@ -4,6 +4,7 @@
 import time
 import datetime
 import functools
+import exceptions
 import getopt
 
 from twisted.python import failure, log
@@ -136,7 +137,12 @@ class command_echo(HoneyPotCommand):
         except:
             args = self.args
 
-        self.write(escape_fn(' '.join(args)))
+        # FIXME: Wrap in exception, Python escape cannot handle single digit \x codes (e.g. \x1)
+        try:
+            self.write(escape_fn(' '.join(args)))
+        except exceptions.ValueError as e:
+            log.msg("echo command received Python incorrect hex escape")
+
         if newline is True:
             self.write('\n')
 
