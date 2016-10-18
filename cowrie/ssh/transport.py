@@ -89,12 +89,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
 
-        # Later versions seem to call sendKexInit again on their own
-        if twisted.version.major < 11 and \
-                not self._hadVersion and self.gotVersion:
-            self.sendKexInit()
-            self._hadVersion = True
-
 
     def ssh_KEXINIT(self, packet):
         """
