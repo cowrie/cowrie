@@ -32,8 +32,6 @@ class CowrieSSHFactory(factory.SSHFactory):
     sessions = {}
     privateKeys = None
     publicKeys = None
-    dbloggers = None
-    output_plugins = None
     primes = None
 
     def __init__(self, cfg):
@@ -45,9 +43,9 @@ class CowrieSSHFactory(factory.SSHFactory):
         Special delivery to the loggers to avoid scope problems
         """
         args['sessionno'] = 'S'+str(args['sessionno'])
-        for dblog in self.dbloggers:
+        for dblog in self.tac.dbloggers:
             dblog.logDispatch(*msg, **args)
-        for output in self.output_plugins:
+        for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
 
@@ -70,38 +68,6 @@ class CowrieSSHFactory(factory.SSHFactory):
           'ssh-rsa': keys.Key.fromString(data=rsaPrivKeyString),
           'ssh-dss': keys.Key.fromString(data=dsaPrivKeyString)}
 
-        # Load db loggers
-        self.dbloggers = []
-        for x in self.cfg.sections():
-            if not x.startswith('database_'):
-                continue
-            engine = x.split('_')[1]
-            try:
-                dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
-                    globals(), locals(), ['dblog']).DBLogger(self.cfg)
-                log.addObserver(dblogger.emit)
-                self.dbloggers.append(dblogger)
-                log.msg("Loaded dblog engine: {}".format(engine))
-            except:
-                log.err()
-                log.msg("Failed to load dblog engine: {}".format(engine))
-
-        # Load output modules
-        self.output_plugins = []
-        for x in self.cfg.sections():
-            if not x.startswith('output_'):
-                continue
-            engine = x.split('_')[1]
-            try:
-                output = __import__( 'cowrie.output.{}'.format(engine),
-                    globals(), locals(), ['output']).Output(self.cfg)
-                log.addObserver(output.emit)
-                self.output_plugins.append(output)
-                log.msg("Loaded output engine: {}".format(engine))
-            except:
-                log.err()
-                log.msg("Failed to load output engine: {}".format(engine))
-
         factory.SSHFactory.startFactory(self)
 
 
@@ -109,8 +75,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         """
         """
         factory.SSHFactory.stopFactory(self)
-        for output in self.output_plugins:
-            output.stop()
 
 
     def buildProtocol(self, addr):
