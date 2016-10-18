@@ -37,7 +37,7 @@ from zope.interface import implementer
 import os
 import sys
 
-from twisted.python import usage
+from twisted.python import log, usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet, service
@@ -72,6 +72,7 @@ class CowrieServiceMaker(object):
     options = Options
     dbloggers = None
     output_plugins = None
+    cfg = None
 
     def makeService(self, options):
         """
@@ -105,13 +106,13 @@ class CowrieServiceMaker(object):
 
         # Load db loggers
         self.dbloggers = []
-        for x in self.cfg.sections():
+        for x in cfg.sections():
             if not x.startswith('database_'):
                 continue
             engine = x.split('_')[1]
             try:
                 dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
-                    globals(), locals(), ['dblog']).DBLogger(self.cfg)
+                    globals(), locals(), ['dblog']).DBLogger(cfg)
                 log.addObserver(dblogger.emit)
                 self.dbloggers.append(dblogger)
                 log.msg("Loaded dblog engine: {}".format(engine))
@@ -121,13 +122,13 @@ class CowrieServiceMaker(object):
 
         # Load output modules
         self.output_plugins = []
-        for x in self.cfg.sections():
+        for x in cfg.sections():
             if not x.startswith('output_'):
                 continue
             engine = x.split('_')[1]
             try:
                 output = __import__( 'cowrie.output.{}'.format(engine),
-                    globals(), locals(), ['output']).Output(self.cfg)
+                    globals(), locals(), ['output']).Output(cfg)
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg("Loaded output engine: {}".format(engine))
