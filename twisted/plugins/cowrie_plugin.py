@@ -56,7 +56,7 @@ class Options(usage.Options):
     FIXME: Docstring
     """
     optParameters = [
-        ["port", "p", 0, "The port number to listen on.", int],
+        ["port", "p", 0, "The port number to listen on for SSH.", int],
         ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
 
