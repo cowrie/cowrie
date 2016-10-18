@@ -35,7 +35,7 @@ $ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-d
 Install prerequisites on Debian based systems (untested 2016-08-30):
 
 ```
-$ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface
+$ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface python-service-identity
 ```
 **NOTE**: 'python-gmpy2' will cause a signficant delay when attempting to login to the fake ssh server if installed on a Raspberry Pi (Tested on a RPi model 1B). Use 'python-gmpy' to reduce the login delay significantly. 
 
