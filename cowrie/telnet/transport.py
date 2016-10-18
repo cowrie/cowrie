@@ -22,6 +22,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
+    tac = None # gets set later
 
     def __init__(self, cfg):
         self.cfg = cfg

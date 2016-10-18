@@ -33,6 +33,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     privateKeys = None
     publicKeys = None
     primes = None
+    tac = None # gets set later
 
     def __init__(self, cfg):
         self.cfg = cfg
