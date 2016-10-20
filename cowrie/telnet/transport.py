@@ -22,6 +22,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
+    tac = None # gets set later
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -33,9 +34,9 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         Special delivery to the loggers to avoid scope problems
         """
         args['sessionno'] = 'T'+str(args['sessionno'])
-        for dblog in self.dbloggers:
+        for dblog in self.tac.dbloggers:
             dblog.logDispatch(*msg, **args)
-        for output in self.output_plugins:
+        for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
 
@@ -55,38 +56,6 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         # For use by the uptime command
         self.starttime = time.time()
 
-        # Load db loggers
-        self.dbloggers = []
-        for x in self.cfg.sections():
-            if not x.startswith('database_'):
-                continue
-            engine = x.split('_')[1]
-            try:
-                dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
-                    globals(), locals(), ['dblog']).DBLogger(self.cfg)
-                log.addObserver(dblogger.emit)
-                self.dbloggers.append(dblogger)
-                log.msg("Loaded dblog engine: {}".format(engine))
-            except:
-                log.err()
-                log.msg("Failed to load dblog engine: {}".format(engine))
-
-        # Load output modules
-        self.output_plugins = []
-        for x in self.cfg.sections():
-            if not x.startswith('output_'):
-                continue
-            engine = x.split('_')[1]
-            try:
-                output = __import__( 'cowrie.output.{}'.format(engine),
-                    globals(), locals(), ['output']).Output(self.cfg)
-                log.addObserver(output.emit)
-                self.output_plugins.append(output)
-                log.msg("Loaded output engine: {}".format(engine))
-            except:
-                log.err()
-                log.msg("Failed to load output engine: {}".format(engine))
-
         # hook protocol
         self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol,
                                          self.portal)
@@ -97,8 +66,6 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         Stop output plugins
         """
-        for output in self.output_plugins:
-            output.stop()
         protocol.ServerFactory.stopFactory(self)
 
 
