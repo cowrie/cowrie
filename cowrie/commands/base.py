@@ -5,6 +5,7 @@ import time
 import datetime
 import functools
 import getopt
+import re
 
 from twisted.python import failure, log
 
@@ -138,7 +139,7 @@ class command_echo(HoneyPotCommand):
 
         # FIXME: Wrap in exception, Python escape cannot handle single digit \x codes (e.g. \x1)
         try:
-            self.write(escape_fn(' '.join(args)))
+            self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F]{1})(?=\\\\|\"|\s|$)', 'x0\g<1>', ' '.join(args))))
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
 
