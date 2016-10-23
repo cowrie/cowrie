@@ -32,7 +32,6 @@ class command_perl(HoneyPotCommand):
         )
         for l in output:
             self.write(l + '\n')
-        self.exit()
 
 
     def help(self):
@@ -77,11 +76,10 @@ class command_perl(HoneyPotCommand):
         """
         """
         try:
-            opts, args = getopt.gnu_getopt(self.args, 'acfnpsStTuUvwWXC:D:e:E:F:i:I:l:m:M:V:X:')
+            opts, args = getopt.gnu_getopt(self.args, 'acfhnpsStTuUvwWXC:D:e:E:F:i:I:l:m:M:V:X:')
         except getopt.GetoptError as err:
             self.write("Unrecognized switch: -" + err.opt + " (-h will show valid options).\n")
             self.exit()
-            return
 
         # Parse options
         for o, a in opts:
