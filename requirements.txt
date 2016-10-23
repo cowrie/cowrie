@@ -5,4 +5,4 @@ pyopenssl
 gmpy2
 service_identity
 pycrypto
-dateutils
+python-dateutil
