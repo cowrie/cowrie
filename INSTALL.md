@@ -1,18 +1,17 @@
 
 # Installing Cowrie in seven steps.
 
-- [Installing Cowrie in seven steps.](#installing-cowrie-in-six-steps)
-  * [Step 1: Install required Python packages](#step-1--install-required-debian-packages)
-    + [Option A: dependencies for virtualenv](#option-a--dependencies-for-virtualenv)
-    + [Option B: dependencies for bare install](#option-b--dependencies-for-bare-install)
-  * [Step 2: Create a user account](#step-2--create-a-user-account)
-  * [Step 3: Checkout the code](#step-3--checkout-the-code)
-  * [Step 3: Setup virtualenv (if desired)](#step-3--setup-virtualenv--if-desired-)
-  * [Step 4: Install configuration file](#step-4--install-configuration-file)
-  * [Step 5: Generate a DSA key](#step-5--generate-a-dsa-key)
-  * [Step 6: Turning on cowrie](#step-6--turning-on-cowrie)
-  * [Step 7: Port redirection (optional)](#step-7--port-redirection--optional-)
-  * [Troubleshooting](#troubleshooting)
+* [Step 1: Install dependencies](#step-1-install-dependencies)
+    + [Option A: dependencies for virtualenv](#option-a-dependencies-for-virtualenv)
+    + [Option B: dependencies for bare install](#option-b-dependencies-for-bare-install)
+* [Step 2: Create a user account](#step-2-create-a-user-account)
+* [Step 3: Checkout the code](#step-3-checkout-the-code)
+* [Step 3: Setup virtualenv (if desired)](#step-3-setup-virtualenv-if-desired)
+* [Step 4: Install configuration file](#step-4-install-configuration-file)
+* [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
+* [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
+* [Step 7: Port redirection (optional)](#step-7-port-redirection-optional)
+* [Troubleshooting](#troubleshooting)
 
 ## Step 1: Install dependencies
 
@@ -37,7 +36,7 @@ Install prerequisites on Debian based systems (untested 2016-08-30):
 ```
 $ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface python-service-identity
 ```
-**NOTE**: 'python-gmpy2' will cause a signficant delay when attempting to login to the fake ssh server if installed on a Raspberry Pi (Tested on a RPi model 1B). Use 'python-gmpy' to reduce the login delay significantly. 
+**NOTE**: 'python-gmpy2' will cause a signficant delay when attempting to login to the fake ssh server if installed on a Raspberry Pi (Tested on a RPi model 1B). Use 'python-gmpy' to reduce the login delay significantly.
 
 Install prerequisites on Alpine based systems (untested 2016-08-30):
 
