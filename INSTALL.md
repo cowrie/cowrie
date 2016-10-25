@@ -27,7 +27,7 @@ This install virtual environments and other dependencies. The actual python pack
 
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
-$ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev
+$ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal
 ```
 
 ### Option B: dependencies for bare install
