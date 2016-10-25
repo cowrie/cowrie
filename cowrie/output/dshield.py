@@ -18,11 +18,17 @@ import cowrie.core.output
 
 
 class Output(cowrie.core.output.Output):
-
+    """
+    """
     def __init__(self, cfg):
         self.auth_key = cfg.get('output_dshield', 'auth_key')
         self.userid = cfg.get('output_dshield', 'userid')
         self.batch_size = int(cfg.get('output_dshield', 'batch_size'))
+        try:
+            self.debug = cfg.getboolean('output_dshield', 'debug')
+        except:
+            self.debug = False
+
         cowrie.core.output.Output.__init__(self, cfg)
 
 
@@ -82,7 +88,11 @@ class Output(cowrie.core.output.Output):
         headers = {'X-ISC-Authorization': auth_header,
                   'Content-Type':'text/plain',
                   'Content-Length': len(log_output)}
-        log.msg(headers)
+        #log.msg(headers)
+
+        if self.debug:
+            log.msg('dshield: posting: {}'.format(log_output))
+
         req = threads.deferToThread(requests.request,
                                 method ='PUT',
                                 url = 'https://secure.dshield.org/api/file/sshlog',
@@ -94,31 +104,37 @@ class Output(cowrie.core.output.Output):
         def check_response(resp):
             failed = False
             response = resp.content
+
+            if self.debug:
+                log.msg("dshield: status code {}".format(resp.status_code))
+                log.msg("dshield: response {}".format(resp.content))
+
             if resp.status_code == requests.codes.ok:
                 sha1_regex = re.compile(r'<sha1checksum>([^<]+)<\/sha1checksum>')
                 sha1_match = sha1_regex.search(response)
                 if sha1_match is None:
-                    log.err('dshield ERROR: Could not find sha1checksum in response')
+                    log.err('dshield: ERROR: Could not find sha1checksum in response')
+                    log.err('dshield: ERROR: Response: '+repr(response))
                     failed = True
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output)
                 if sha1_match.group(1) != sha1_local.hexdigest():
-                    log.err('dshield ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
+                    log.err('dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
                     failed = True
                 md5_regex = re.compile(r'<md5checksum>([^<]+)<\/md5checksum>')
                 md5_match = md5_regex.search(response)
                 if md5_match is None:
-                    log.err('dshield ERROR: Could not find md5checksum in response')
+                    log.err('dshield: ERROR: Could not find md5checksum in response')
                     failed = True
                 md5_local = hashlib.md5()
                 md5_local.update(log_output)
                 if md5_match.group(1) != md5_local.hexdigest():
-                    log.err('dshield ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
+                    log.err('dshield: ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
                     failed = True
-                log.msg('dshield SUCCESS: Sent {0} bytes worth of data to secure.dshield.org'.format(len(log_output)))
+                log.msg('dshield: SUCCESS: Sent {0} bytes worth of data to secure.dshield.org'.format(len(log_output)))
             else:
                 log.err('dshield ERROR: error {0}.'.format(resp.status_code))
-                log.err('Response was {0}'.format(response))
+                log.err('dshield response was {0}'.format(response))
                 failed = True
 
             if failed:

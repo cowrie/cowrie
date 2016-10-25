@@ -315,7 +315,7 @@ Options:
                 output.append("-P %s ACCEPT" % chain)
 
             # Done
-            self.write(output+'\n')
+            self.write("\n".join(output)+'\n')
             self.exit()
         else:
             self.no_permission()

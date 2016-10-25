@@ -105,11 +105,12 @@ class fseditCmd(cmd.Cmd):
     def save_pickle(self):
         '''saves the current file system to the pickle'''
         try:
-            pickle.dump(self.fs, file(self.pickle_file_path, 'wb'))
-        except:
+            pickle.dump(self.fs, open(self.pickle_file_path, 'wb'))
+        except Exception as e:
             print((("Unable to save pickle file '%s'. " + \
                 "Are you sure you have write access?") % \
                 (self.pickle_file_path,)))
+            print(str(e))
             sys.exit(1)
 
     def do_exit(self, args):
