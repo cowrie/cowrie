@@ -70,6 +70,7 @@ class CowrieSSHFactory(factory.SSHFactory):
           'ssh-dss': keys.Key.fromString(data=dsaPrivKeyString)}
 
         factory.SSHFactory.startFactory(self)
+        log.msg("Ready to accept SSH connections")
 
 
     def stopFactory(self):

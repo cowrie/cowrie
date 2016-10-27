@@ -60,6 +60,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol,
                                          self.portal)
         protocol.ServerFactory.startFactory(self)
+        log.msg("Ready to accept Telnet connections")
 
 
     def stopFactory(self):
