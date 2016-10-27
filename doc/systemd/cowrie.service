@@ -1,5 +1,5 @@
 [Unit]
-Description=Cowrie SSH Honeypot
+Description=Cowrie SSH and Telnet Honeypot
 Documentation=https://github.com/micheloosterhof/cowrie
 After=network.target
 #Wants=syslog.target
