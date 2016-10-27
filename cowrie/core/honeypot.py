@@ -37,12 +37,14 @@ class HoneyPotCommand(object):
             self.write = self.write_to_file
             if '>>' in self.args:
                 index = self.args.index('>>')
+                b_append = True
             else:
                 index = self.args.index('>')
+                b_append = False
             self.outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
             del self.args[index:]
             p = self.fs.getfile(self.outfile)
-            if not p:
+            if not p or not b_append:
                 self.safeoutfile = '%s/%s-%s-%s-redir_%s' % (
                     self.protocol.cfg.get('honeypot', 'download_path'),
                     time.strftime('%Y%m%d-%H%M%S'),
