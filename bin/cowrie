@@ -1,0 +1,93 @@
+#!/bin/sh
+AUTHBIND_ENABLED=no
+
+################################################################################
+## dont' modify below here ##
+################################################################################
+
+find_cowrie_directory() {
+    # Determine Cowrie directory
+    if [[ "$0" = /* ]]
+    then
+        COWRIEDIR=$(dirname $0)/..
+    else
+        COWRIEDIR=$(dirname $PWD/$0)/..
+    fi
+    COWRIEDIR=$(cd ${COWRIEDIR} && pwd -P 2>/dev/null | pwd)
+}
+
+activate_venv() {
+    # Activate Python virtual environment
+    VENV="$1"
+    if [ ! -d "$VENV" ]
+    then
+        echo "The specified virtualenv \"$VENV\" was not found!"
+        exit 1
+    fi
+    if [ ! -f "$VENV/bin/activate" ]
+    then
+        echo "The specified virtualenv \"$VENV\" was not found!"
+        exit 2
+    fi
+    echo "Activating virtualenv \"$VENV\""
+    . $VENV/bin/activate
+}
+
+cowrie_status() {
+    # Print status
+    PID=$(cat ${PIDFILE} 2>/dev/null)
+}
+
+cowrie_start() {
+    # Start Cowrie
+    activate_venv "cowrie-env"
+    echo "Starting cowrie with extra arguments [$XARGS] ..."
+    if [ $AUTHBIND_ENABLED = "no" ]
+    then
+        twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
+    else
+        authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
+    fi
+}
+
+cowrie_stop () {
+    # Stop Cowrie
+    PID=$(cat ${PIDFILE} 2>/dev/null)
+    if [ -n "$PID" ]; then
+      echo "Stopping cowrie..."
+      kill -TERM $PID
+    fi
+}
+
+################################################################################
+## Main script 
+################################################################################
+
+if [ "$#" = 0 ]
+then
+    echo "Usage: $0 <command>"
+    echo 'Command can be "start" or "stop"'
+    exit 0
+fi
+
+find_cowrie_directory $0
+cd ${COWRIEDIR}
+export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
+PIDFILE=var/run/cowrie.pid
+set -e
+
+for key in "$@"
+do
+    key=$1
+    case $key in 
+        stop)
+            cowrie_stop
+            ;;
+        start)
+            cowrie_start
+            ;;
+        status)
+            cowrie_status
+            ;;
+    esac
+done
