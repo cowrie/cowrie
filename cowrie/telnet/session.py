@@ -22,6 +22,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     """
 
     id = 0 # telnet can only have 1 simultaneous session, unlike SSH
+    windowSize = [40, 80]
 
     def __init__(self, username, server):
         self.username = username
