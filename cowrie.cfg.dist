@@ -358,7 +358,6 @@ logfile = log/cowrie.json
 
 
 # MySQL logging module
-# Identical functionality as [database_mysql] but with different internals
 # Database structure for this module is supplied in doc/sql/mysql.sql
 #
 #[output_mysql]
