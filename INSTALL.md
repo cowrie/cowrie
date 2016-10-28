@@ -165,6 +165,15 @@ $ chown cowrie:cowrie /etc/authbind/byport/22
 $ chmod 770 /etc/authbind/byport/22
 ```
 
+Or for telnet:
+
+```
+$ apt-get install authbind
+$ sudo touch /etc/authbind/byport/23
+$ sudo chown cowrie:cowrie /etc/authbind/byport/23
+$ sudo chmod 770 /etc/authbind/byport/23
+```
+
 * Edit start.sh and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
