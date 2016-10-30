@@ -51,7 +51,7 @@ data_path = data
 contents_path = honeyfs
 
 
-# File in the python pickle format containing the virtual filesystem.
+# File in the Python pickle format containing the virtual filesystem.
 #
 # This includes the filenames, paths, permissions for the Cowrie filesystem,
 # but not the file contents. This is created by the bin/createfs utility from
@@ -359,6 +359,9 @@ logfile = log/cowrie.json
 
 # MySQL logging module
 # Database structure for this module is supplied in doc/sql/mysql.sql
+#
+# MySQL logging requires extra software: sudo apt-get install libmysqlclient-dev
+# MySQL logging requires an extra Python module: pip install mysql-python
 #
 #[output_mysql]
 #host = localhost
