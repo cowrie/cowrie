@@ -68,7 +68,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
             (self.downloadPath,
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
-        self.stdinlogOpen = True
+        self.stdinlogOpen = False
 
         insults.ServerProtocol.connectionMade(self)
 
