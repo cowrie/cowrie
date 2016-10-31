@@ -22,7 +22,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     stdinlogOpen = False
     ttylogOpen = False
-    redirlogOpen = False  # it will be set at base/protocol.py
+    redirlogOpen = False  # it will be set at core/protocol.py
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
@@ -33,7 +33,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogPath = cfg.get('honeypot', 'log_path')
         self.downloadPath = cfg.get('honeypot', 'download_path')
 
-        self.redirlogFile = None  # it will be set at base/protocol.py
+        self.redirlogFile = None  # it will be set at core/protocol.py
 
         try:
             self.bytesReceivedLimit = int(cfg.get('honeypot',
