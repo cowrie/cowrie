@@ -44,7 +44,7 @@ class HoneyPotCommand(object):
             self.outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
             del self.args[index:]
             p = self.fs.getfile(self.outfile)
-            if not p or not b_append:
+            if not p or not p[fs.A_REALFILE] or not b_append:
                 self.safeoutfile = '%s/%s-%s-%s-redir_%s' % (
                     self.protocol.cfg.get('honeypot', 'download_path'),
                     time.strftime('%Y%m%d-%H%M%S'),
