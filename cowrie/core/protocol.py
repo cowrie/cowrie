@@ -190,6 +190,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
+        if hasattr(obj, 'safeoutfile'):
+            self.terminal.redirlogOpen = True
+            self.terminal.redirlogFile = obj.safeoutfile
         self.pp.outConnectionLost()
 
 
