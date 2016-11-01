@@ -30,5 +30,6 @@ __all__ = [
     'which',
     'perl',
     'uptime',
-    'python'
+    'python',
+    'tftp'
     ]
