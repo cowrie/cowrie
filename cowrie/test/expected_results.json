@@ -78,7 +78,7 @@
       "root@unitTest:~# "
     ],
     "echo": [
-      "\"test worked correctly\"",
+      "test worked correctly",
       "root@unitTest:~# "
     ],
     "hostname": [
