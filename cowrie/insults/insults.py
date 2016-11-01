@@ -69,7 +69,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             (self.downloadPath,
             time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
 
-        if self.type = 'e':
+        if self.type == 'e':
             self.stdinlogOpen = True
         else: #i
             self.stdinlogOpen = False
