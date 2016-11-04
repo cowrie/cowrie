@@ -1,6 +1,12 @@
+import time
+from datetime import datetime
 import rethinkdb as r
 
 import cowrie.core.output
+
+
+def iso8601_to_timestamp(value):
+    return time.mktime(datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())
 
 
 class Output(cowrie.core.output.Output):
@@ -47,5 +53,8 @@ class Output(cowrie.core.output.Output):
             # remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
+
+        if 'timestamp' in logentry:
+            logentry['timestamp'] = iso8601_to_timestamp(logentry['timestamp'])
 
         r.table(self.table).insert(logentry).run(self.connection)
