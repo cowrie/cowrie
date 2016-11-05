@@ -12,7 +12,7 @@ from twisted.python import log
 from twisted.internet import protocol
 from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, \
                                  ITelnetProtocol, ProtocolTransportMixin, \
-                                 SGA, TelnetTransport
+                                 SGA, NAWS, LINEMODE, TelnetTransport
 from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
@@ -83,6 +83,11 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         """
         """
         self.factory.sessions[self.transport.transport.sessionno] = self.transport.transportId
+        
+        # Initial option negotation. Want something at least for Mirai
+        for opt in (ECHO,):
+            self.transport.do(opt).addErrback(log.err)
+
         # I need to doubly escape here since my underlying
         # CowrieTelnetTransport hack would remove it and leave just \n
         self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
@@ -158,6 +163,28 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write("\nLogin incorrect\n")
         self.transport.write(self.loginPrompt)
         self.state = "User"
+
+
+    def enableLocal(self, opt):
+        if opt == ECHO:
+            return True
+        elif opt == SGA:
+            return True
+        else:
+            return False
+
+
+    def enableRemote(self, opt):
+        if opt == LINEMODE:
+            self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
+            return True
+        elif opt == NAWS:
+            return True
+        elif opt == SGA:
+            return True
+        else:
+            return False
+
 
 
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
