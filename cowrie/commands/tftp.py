@@ -125,4 +125,5 @@ class command_tftp(HoneyPotCommand):
 
         self.exit()
 
+commands['tftp'] = command_tftp
 commands['/usr/bin/tftp'] = command_tftp
