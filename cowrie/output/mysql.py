@@ -1,6 +1,6 @@
 
 """
-docstring
+MySQL output connector. Writes audit logs to MySQL database
 """
 
 import MySQLdb
@@ -29,7 +29,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
                 self, interaction, *args, **kw)
         except MySQLdb.OperationalError as e:
             if e[0] not in (2003, 2006, 2013):
-                raise log.msg("RCP: got error %s, retrying operation" %(e))
+                raise log.msg("RCP: got error %s, retrying operation" %(e,))
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             # Try the interaction again
@@ -42,6 +42,8 @@ class Output(cowrie.core.output.Output):
     """
     docstring here
     """
+    debug = False
+    db = None
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -52,6 +54,9 @@ class Output(cowrie.core.output.Output):
         """
         docstring here
         """
+        if self.cfg.has_option('output_mysql', 'debug'):
+            self.debug = self.cfg.getbool('output_mysql', 'debug')
+
         if self.cfg.has_option('output_mysql', 'port'):
             port = int(self.cfg.get('output_mysql', 'port'))
         else:
@@ -66,7 +71,7 @@ class Output(cowrie.core.output.Output):
                 cp_min = 1,
                 cp_max = 1)
         except MySQLdb.Error as e:
-            log.msg("Error %d: %s" % (e.args[0], e.args[1]))
+            log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
         self.db.start()
 
@@ -82,13 +87,15 @@ class Output(cowrie.core.output.Output):
         """
         docstring here
         """
-        log.err( 'MySQL Error:', error.value )
+        log.err( 'output_mysql: MySQL Error:', error.value )
 
 
     def simpleQuery(self, sql, args):
         """
         Just run a deferred sql query, only care about errors
         """
+        if self.debug:
+            log.msg("output_mysql: MySQL query: {} {}".format(sql, repr(args)))
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
 
