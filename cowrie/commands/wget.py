@@ -256,8 +256,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         if self.status == '304':
             client.HTTPDownloader.page(self, '')
         else:
-            reason.webStatus = self.status
-            reason.webMessage = self.message
+            if hasattr(self, 'status'):
+                reason.webStatus = self.status
+            if hasattr(self, 'message'):
+                reason.webMessage = self.message
+
             client.HTTPDownloader.noPage(self, reason)
 
 

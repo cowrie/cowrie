@@ -59,15 +59,18 @@ cowrie_stop () {
     fi
 }
 
+cowrie_usage() {
+    echo "usage: $0 <start|stop>"
+}
+
 ################################################################################
 ## Main script 
 ################################################################################
 
 if [ "$#" = 0 ]
 then
-    echo "Usage: $0 <command>"
-    echo 'Command can be "start" or "stop"'
-    exit 0
+    cowrie_usage
+    exit 1
 fi
 
 find_cowrie_directory $0
@@ -88,6 +91,10 @@ do
             ;;
         status)
             cowrie_status
+            ;;
+        *)
+            cowrie_usage
+            exit 1
             ;;
     esac
 done
