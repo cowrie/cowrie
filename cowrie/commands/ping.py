@@ -52,9 +52,7 @@ class command_ping(HoneyPotCommand):
                     self.exit()
                     return
 
-        self.host = args[0].strip()
-
-        if not self.host:
+        if len(args)==0:
             for l in (
                     'Usage: ping [-LRUbdfnqrvVaA] [-c count] [-i interval] [-w deadline]',
                     '            [-p pattern] [-s packetsize] [-t ttl] [-I interface or address]',
@@ -64,6 +62,7 @@ class command_ping(HoneyPotCommand):
                 self.write(l+'\n')
             self.exit()
             return
+        self.host = args[0].strip()
 
         if re.match('^[0-9.]+$', self.host):
             if self.valid_ip(self.host):
