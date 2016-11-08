@@ -85,7 +85,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.factory.sessions[self.transport.transport.sessionno] = self.transport.transportId
         
         # Initial option negotation. Want something at least for Mirai
-        for opt in (ECHO,):
+        for opt in (NAWS,):
             self.transport.do(opt).addErrback(log.err)
 
         # I need to doubly escape here since my underlying
