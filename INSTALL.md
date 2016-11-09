@@ -11,6 +11,7 @@
 * [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
 * [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
 * [Step 7: Port redirection (optional)](#step-7-port-redirection-optional)
+* [Running within supervisord(optional)](#running-using-supervisord)
 * [Troubleshooting](#troubleshooting)
 * [Installing on OSX for development](#installing-on-osx-for-development)
 
