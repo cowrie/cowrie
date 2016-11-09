@@ -1,5 +1,5 @@
 
-# Welcome to the Cowrie Docker GitHub repository
+# Welcome to the Cowrie GitHub repository
 
 This is the official repository for the Cowrie SSH and Telnet
 Honeypot effort.
