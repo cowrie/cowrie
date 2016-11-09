@@ -1,8 +1,10 @@
 #!/bin/sh
-AUTHBIND_ENABLED=no
+AUTHBIND_ENABLED=yes
 COWRIEDIR=$(dirname $0)
 PIDFILE="var/run/cowrie.pid"
 export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
+#Change the below to -n to disable daemonizing (for instance when using supervisor)
+DAEMONIZE="-n"
 
 set -e
 cd ${COWRIEDIR}
@@ -27,10 +29,10 @@ then
     . $VENV/bin/activate
 fi
 
-echo "Starting cowrie with extra arguments [$XARGS] ..."
+echo "Starting cowrie with extra arguments [$XARGS $DAEMONIZE] ..."
 if [ $AUTHBIND_ENABLED = "no" ]
 then
-    twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
+    twistd $XARGS $DAEMONIZE -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
 else
-    authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
+    authbind --deep twistd $DAEMONIZE $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
 fi
