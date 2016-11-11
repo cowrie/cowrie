@@ -1,10 +1,10 @@
 #!/bin/sh
-AUTHBIND_ENABLED=yes
+AUTHBIND_ENABLED=no
 COWRIEDIR=$(dirname $0)
 PIDFILE="var/run/cowrie.pid"
 export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 #Change the below to -n to disable daemonizing (for instance when using supervisor)
-DAEMONIZE="-n"
+DAEMONIZE=""
 
 set -e
 cd ${COWRIEDIR}
