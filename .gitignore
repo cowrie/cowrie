@@ -8,13 +8,9 @@ data/ssh_host_rsa_key.pub
 dl/*
 log/*
 log/tty/*
-cowrie-textlog.log
-private.key
-public.key
 __pycache__/
 *.py[cod]
-env/
-env1/
-env2/
+*env/
 twisted/plugins/dropin.cache
 .DS_Store
+
