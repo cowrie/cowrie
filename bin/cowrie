@@ -40,6 +40,7 @@ cowrie_status() {
 
 cowrie_start() {
     # Start Cowrie
+    XARGS=$*
     activate_venv "cowrie-env"
     echo "Starting cowrie with extra arguments [$XARGS] ..."
     if [ $AUTHBIND_ENABLED = "no" ]
@@ -64,7 +65,7 @@ cowrie_usage() {
 }
 
 ################################################################################
-## Main script 
+## Main script
 ################################################################################
 
 if [ "$#" = 0 ]
@@ -79,22 +80,20 @@ export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 PIDFILE=var/run/cowrie.pid
 set -e
 
-for key in "$@"
-do
-    key=$1
-    case $key in 
-        stop)
-            cowrie_stop
-            ;;
-        start)
-            cowrie_start
-            ;;
-        status)
-            cowrie_status
-            ;;
-        *)
-            cowrie_usage
-            exit 1
-            ;;
-    esac
-done
+key=$1
+shift 1
+case $key in
+    stop)
+        cowrie_stop $*
+        ;;
+    start)
+        cowrie_start $*
+        ;;
+    status)
+        cowrie_status $*
+        ;;
+    *)
+        cowrie_usage
+        exit 1
+        ;;
+esac
