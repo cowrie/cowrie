@@ -1,5 +1,0 @@
-root:x:!root
-root:x:!123456
-root:x:*
-richard:x:*
-richard:x:fout

@@ -1,7 +1,0 @@
-/dev/sda1 on / type ext3 (rw,errors=remount-ro)
-tmpfs on /lib/init/rw type tmpfs (rw,nosuid,mode=0755)
-proc on /proc type proc (rw,noexec,nosuid,nodev)
-sysfs on /sys type sysfs (rw,noexec,nosuid,nodev)
-udev on /dev type tmpfs (rw,mode=0755)
-tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)
-devpts on /dev/pts type devpts (rw,noexec,nosuid,gid=5,mode=620)

@@ -82,7 +82,7 @@ $ source cowrie-env/bin/activate
 
 Take a look at the configuration file and make changes as desired.  The defaults work well in most cases.
 ```
-$ cp cowrie.cfg.dist cowrie.cfg
+$ cp etc/cowrie.cfg.dist etc/cowrie.cfg
 ```
 
 ## Step 5: Generate a DSA key
@@ -91,7 +91,7 @@ This step should not be necessary, however some versions of twisted
 are not compatible.  To avoid problems in advance, run:
 
 ```
-$ cd data
+$ cd etc
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 $ cd ..
 ```
@@ -152,7 +152,7 @@ $ sudo chmod 770 /etc/authbind/byport/23
 ```
 
 * Edit start.sh and modify the AUTHBIND_ENABLED setting
-* Change listen_port to 22 in cowrie.cfg
+* Change listen_port to 22 in etc/cowrie.cfg
 
 ## Running using Supervisord
 On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf
@@ -187,14 +187,14 @@ Update the start.sh script, change:
 This is caused by Twisted incompatibilities. A workaround is to run:
 
 ```
-$ cd cowrie/data
+$ cd cowrie/etc
 $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 ```
 
 * If there are issues creating the RSA keys, the following is a workaround:
 
 ```
-$ cd cowrie/data
+$ cd cowrie/etc
 $ ssh-keygen -t rsa -b 2048 -f ssh_host_rsa_key
 ```
 

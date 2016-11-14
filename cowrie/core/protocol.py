@@ -44,12 +44,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cwd = '/'
         self.input_data = None
         self.data = None
+
         self.commands = {}
         import cowrie.commands
         for c in cowrie.commands.__all__:
-            module = __import__('cowrie.commands.%s' % (c,),
-                globals(), locals(), ['commands'])
-            self.commands.update(module.commands)
+            try:
+                module = __import__('cowrie.commands.%s' % (c,),
+                    globals(), locals(), ['commands'])
+                self.commands.update(module.commands)
+            except Exception as e:
+                log.err(e, "Error while loading cowrie.commands.{0}".format(c))
         self.password_input = False
         self.cmdstack = []
 
