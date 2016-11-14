@@ -18,7 +18,12 @@ class UserDB(object):
 
     def __init__(self, cfg):
         self.userdb = []
-        self.userdb_file = '%s/userdb.txt' % cfg.get('honeypot', 'data_path')
+        self.userdb_file = 'etc/userdb.txt'
+        # Backwards compatibility check
+        if not path.isfile(self.userdb_file) and path.isfile('data/userdb.txt'):
+            print('WARNING: reading userdb.txt from old location. Default is now etc/userdb.txt')
+            self.userdb_file = 'data/userdb.txt'
+        # End of backwards compatibility check
         self.load()
 
 
@@ -114,7 +119,7 @@ class AuthRandom(object):
             self.maxtry = self.mintry + 1
             log.msg('maxtry < mintry, adjusting maxtry to: %d' % (self.maxtry,))
         self.uservar = {}
-        self.uservar_file = '%s/uservar.json' % cfg.get('honeypot', 'data_path')
+        self.uservar_file = 'etc/uservar.json'
         self.loadvars()
 
 

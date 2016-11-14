@@ -46,7 +46,7 @@ Software required:
 
 ## Files of interest:
 
-* `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `cowrie.cfg.dist`
+* `etc/cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist`
 * `data/fs.pickle` - fake filesystem
 * `data/userdb.txt` - credentials allowed or disallowed to access the honeypot
 * `dl/` - files transferred from the attacker to the honeypot are stored here

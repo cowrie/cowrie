@@ -57,7 +57,7 @@ class Options(usage.Options):
     """
     optParameters = [
         ["port", "p", 0, "The port number to listen on for SSH.", int],
-        ["config", "c", 'cowrie.cfg', "The configuration file to use."]
+        ["config", "c", 'etc/cowrie.cfg', "The configuration file to use."]
         ]
 
 
@@ -78,12 +78,17 @@ class CowrieServiceMaker(object):
         """
         Construct a TCPServer from a factory defined in Cowrie.
         """
-
         if os.name == 'posix' and os.getuid() == 0:
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
-        cfg = readConfigFile(options["config"])
+        cfgfile = options["config"]
+        # Backwards compatibility check
+        if not os.path.isfile(cfgfile) and os.path.isfile('cowrie.cfg'):
+            print('WARNING: reading cowrie.cfg from old location. Default is now etc/cowrie.cfg')
+            cfgfile = 'cowrie.cfg'
+        # End of backwards compatibility check
+        cfg = readConfigFile(cfgfile)
 
         # ssh is enabled by default
         if cfg.has_option('ssh', 'enabled') == False or \
