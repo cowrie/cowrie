@@ -123,27 +123,19 @@ $ cd ..
 
 ## Step 6: Turning on cowrie
 
-Cowrie is implemented as a module for Twisted, but to properly
-import everything the top-level source directory needs to be in
-python's os.path. This sometimes won't happen correctly, so make
-it explicit:
+If you use a virtual environment and it uses the default name of
+'cowrie-env' it will be activated automatically.
+
+If you use another virtual environment activate it first:
 
 ```
-# or whatever path to the top-level cowrie folder
-$ export PYTHONPATH=/home/cowrie/cowrie
+$ source venv/bin/activate
 ```
 
-In the absence of a virtual environment, you may run:
+To start Cowrie:
 
 ```
-$ ./start.sh
-```
-
-When using Python Virtual Environments you can add the name of the
-venv as the first argument or activate it before starting.
-
-```
-$ ./start.sh cowrie-env
+$ bin/cowrie start
 Starting cowrie in the background...
 ```
 
@@ -176,7 +168,7 @@ $ sudo chown cowrie:cowrie /etc/authbind/byport/23
 $ sudo chmod 770 /etc/authbind/byport/23
 ```
 
-* Edit start.sh and modify the AUTHBIND_ENABLED setting
+* Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in etc/cowrie.cfg
 
 ## Troubleshooting
@@ -210,5 +202,5 @@ there's a missing or broken dependency. If there's no stack trace,
 double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
-To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
+To make Cowrie logfiles public readable, change the ```UMASK=0077``` variable in bin/cowrie to ```UMASK=0022```
 
