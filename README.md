@@ -47,16 +47,16 @@ Software required:
 ## Files of interest:
 
 * `etc/cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist`
-* `data/fs.pickle` - fake filesystem
-* `data/userdb.txt` - credentials allowed or disallowed to access the honeypot
-* `dl/` - files transferred from the attacker to the honeypot are stored here
-* `honeyfs/` - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
-* `log/cowrie.json` - transaction output in JSON format
-* `log/cowrie.log` - log/debug output
-* `log/tty/*.log` - session logs
-* `txtcmds/` - file contents for the fake commands
-* `bin/createfs` - used to create the fake filesystem
-* `bin/playlog` - utility to replay session logs
+* `etc/userdb.txt` - credentials allowed or disallowed to access the honeypot
+* `var/log/cowrie/cowrie.log` - Twisted format log
+* `var/log/cowrie/cowrie.json` - transaction output in JSON format
+* `var/lib/ttylog/` - session logs UML format
+* `var/lib/dl/` - files transferred from the attacker to the honeypot are stored here
+* `share/cowrie/fs.pickle` - fake filesystem
+* `share/cowrie/txtcmds/` - file contents for fake commands
+* `share/cowrie/honeyfs/` - file contents for the fake filesystem
+* `bin/createfs` - used to create the honeypot filesystem
+* `bin/playlog` - utility to replay session logs in UML format
 
 ## Is it secure?
 
