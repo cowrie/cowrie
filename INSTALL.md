@@ -16,13 +16,14 @@
 ## Step 1: Install dependencies
 
 There are two ways to install Cowrie's Python dependencies: in a
-Python virtual environment or directly on to the system.  The virtual
+Python virtual environment or directly on to the system. The virtual
 environment is preferred as it isolates Cowrie and its dependencies
 from other Python software on the system.
 
 ### Option A: dependencies for virtualenv
 
-This install virtual environments and other dependencies. The actual python packages are installed later.
+This installs virtual environment software and other dependencies.
+The actual Python packages are installed later.
 
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
@@ -103,15 +104,16 @@ $ source cowrie-env/bin/activate
 
 ## Step 4: Install configuration file
 
-Take a look at the configuration file and make changes as desired.  The defaults work well in most cases.
+Take a look at the configuration file and make changes as desired.
+The defaults work well in most cases.
 ```
 $ cp etc/cowrie.cfg.dist etc/cowrie.cfg
 ```
 
 ## Step 5: Generate a DSA key
 
-This step should not be necessary, however some versions of twisted
-are not compatible.  To avoid problems in advance, run:
+This step should not be necessary, however some versions of Twisted
+are not compatible. To avoid problems in advance, run:
 
 ```
 $ cd etc
@@ -121,9 +123,9 @@ $ cd ..
 
 ## Step 6: Turning on cowrie
 
-Cowrie is implemented as a module for twisted, but to properly
+Cowrie is implemented as a module for Twisted, but to properly
 import everything the top-level source directory needs to be in
-python's os.path.  This sometimes won't happen correctly, so make
+python's os.path. This sometimes won't happen correctly, so make
 it explicit:
 
 ```
@@ -155,7 +157,7 @@ $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 222
 ```
 
 Note that you should test this rule only from another host; it
-doesn't apply to loopback connections.  Alternatively you can run
+doesn't apply to loopback connections. Alternatively you can run
 authbind to listen as non-root on port 22 directly:
 
 ```
@@ -203,8 +205,8 @@ $ ssh-keygen -t rsa -b 2048 -f ssh_host_rsa_key
 ```
 
 * If you see `twistd: Unknown command: cowrie` there are two
-possibilities.  If there's a python stack trace, it probably means
-there's a missing or broken dependency.  If there's no stack trace,
+possibilities. If there's a python stack trace, it probably means
+there's a missing or broken dependency. If there's no stack trace,
 double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
