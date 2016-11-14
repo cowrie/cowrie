@@ -179,7 +179,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def lineReceived(self, line):
         """
-        Line Received
+        Line received and sent to the currently running command
         """
         self.resetTimeout()
         if len(self.cmdstack):

@@ -118,8 +118,7 @@ class HoneyPotCommand(object):
         """
         """
         log.msg('QUEUED INPUT: {}'.format(line))
-        # FIXME: naive command parsing, see lineReceived below
-        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line))
+        self.protocol.cmdstack[0].lineQueue.append(line)
 
 
     def resume(self):
@@ -148,11 +147,11 @@ class HoneyPotCommand(object):
 class HoneyPotShell(object):
     """
     """
-
     def __init__(self, protocol, interactive=True):
         self.protocol = protocol
         self.interactive = interactive
-        self.cmdpending = []
+        self.lineQueue = [] # raw lines queue
+        self.cmdpending = [] # tokenized queue
         self.environ = protocol.environ
         self.lexer = None
         self.showPrompt()
@@ -162,6 +161,15 @@ class HoneyPotShell(object):
         """
         """
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
+        self.lineQueue.append(line)
+        self.run()
+
+
+    def run(self):
+        """
+        """
+        line = self.lineQueue.pop(0)
+
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []
         while True:
@@ -220,21 +228,10 @@ class HoneyPotShell(object):
 
     def runCommand(self):
         """
+        runCommand takes first command from cmdpending and runs this
         """
-        pp = None
-        def runOrPrompt():
-            if len(self.cmdpending):
-                self.runCommand()
-            elif self.interactive:
-                self.showPrompt()
-            else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
-
         if not len(self.cmdpending):
-            if self.interactive:
-                self.showPrompt()
-            else:
+            if not self.interactive:
                 ret = failure.Failure(error.ProcessDone(status=""))
                 self.protocol.terminal.transport.processEnded(ret)
             return
@@ -251,8 +248,8 @@ class HoneyPotShell(object):
         for _, pipe in enumerate(pipes):
             cmd_array.append(cmdAndArgs[start:pipe])
             start = pipe+1
-        print 'DEBUG: '+repr(cmd_array)
 
+        pp = None
         lastpp = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
 
@@ -262,12 +259,18 @@ class HoneyPotShell(object):
                 key, value = piece.split('=', 1)
                 environ[key] = value
                 log.msg("Setting environment {0}={1}".format(key,value))
+            if len(cmd)==0:
+                self.showPrompt() # no command print prompt immediately
+                continue
 
-            cmdclass =  self.protocol.getCommand(cmd[0], environ['PATH'] .split(':'))
+            cmdclass = self.protocol.getCommand(cmd[0], environ['PATH'] .split(':'))
+
             if cmdclass:
-                log.msg(eventid='cowrie.command.success', input=cmd[0] + " " + ' '.join(cmd[1:]), format='Command found: %(input)s')
+                log.msg(eventid='cowrie.command.success',
+                    input=cmd[0] + " " + ' '.join(cmd[1:]), format='Command found: %(input)s')
+
                 if index == len(cmd_array)-1:
-                    lastpp =  StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd[1:], None, None)
+                    lastpp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd[1:], None, None)
                     pp = lastpp
                 else:
                     pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd[1:], None, lastpp)
@@ -276,7 +279,7 @@ class HoneyPotShell(object):
                 log.msg(eventid='cowrie.command.failed',
                     input=' '.join(cmd2), format='Command not found: %(input)s')
                 self.protocol.terminal.write('bash: %s: command not found\n' % (cmd[0],))
-                runOrPrompt()
+                self.showPrompt() # no command print prompt immediately
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0][1:])
 
@@ -286,6 +289,10 @@ class HoneyPotShell(object):
         """
         if self.interactive:
             self.protocol.setInsertMode()
+        self.showPrompt()
+        while len(self.lineQueue):
+            self.lineReceived(self.lineQueue.pop())
+
         self.runCommand()
 
 
@@ -342,7 +349,7 @@ class HoneyPotShell(object):
         """
         log.msg('Received CTRL-D, exiting..')
 
-        cmdclass =  self.protocol.commands['exit']
+        cmdclass = self.protocol.commands['exit']
         pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
         self.protocol.call_command(pp, self.protocol.commands['exit'])
 
