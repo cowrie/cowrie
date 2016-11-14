@@ -1,4 +1,6 @@
 
+* 2016-11-14 Moved log/download directories to var/
+* 2016-11-14 Moved honeyfs/txtcms/pickle directories to share/cowrie
 * 2016-11-09 Moved config files to etc/ (cowrie.cfg and userdb.txt)
 * 2016-08-22 Merged Telnet support by @obilodeau!
 * 2016-08-20 Update your libraries! 'configparser' now required: "pip install configparser"
