@@ -5,6 +5,7 @@
 This module contains ...
 """
 
+import abc
 import os
 import re
 import stat
@@ -21,6 +22,8 @@ from cowrie.core import shlex
 class HoneyPotCommand(object):
     """
     """
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
