@@ -35,12 +35,6 @@ log_path = log
 download_path = dl
 
 
-# Directory for miscellaneous data files, such as the password database.
-#
-# (default: data_path)
-data_path = data
-
-
 # Directory where virtual file contents are kept in.
 #
 # This is only used by commands like 'cat' to display the contents of files.
@@ -48,7 +42,7 @@ data_path = data
 # actual virtual filesystem is kept in filesystem_file (see below)
 #
 # (default: honeyfs)
-contents_path = honeyfs
+contents_path = share/cowrie/honeyfs
 
 
 # File in the Python pickle format containing the virtual filesystem.
@@ -58,7 +52,7 @@ contents_path = honeyfs
 # a real template linux installation.
 #
 # (default: fs.pickle)
-filesystem_file = data/fs.pickle
+filesystem_file = share/cowrie/fs.pickle
 
 
 # Directory for creating simple commands that only output text.
@@ -72,7 +66,7 @@ filesystem_file = data/fs.pickle
 # In addition to this, the file must exist in the virtual filesystem
 #
 # (default: txtcmds)
-txtcmds_path = txtcmds
+txtcmds_path = share/cowrie/txtcmds
 
 
 # Maximum file size (in bytes) for downloaded files to be stored in 'download_path'.
@@ -206,10 +200,10 @@ ssh_version_string = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 # Public and private SSH key files. If these don't exist, they are created
 # automatically.
-rsa_public_key = data/ssh_host_rsa_key.pub
-rsa_private_key = data/ssh_host_rsa_key
-dsa_public_key = data/ssh_host_dsa_key.pub
-dsa_private_key = data/ssh_host_dsa_key
+rsa_public_key = etc/ssh_host_rsa_key.pub
+rsa_private_key = etc/ssh_host_rsa_key
+dsa_public_key = etc/ssh_host_dsa_key.pub
+dsa_private_key = etc/ssh_host_dsa_key
 
 
 # sftp_enabled enables the sftp subsystem
