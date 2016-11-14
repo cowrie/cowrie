@@ -94,6 +94,10 @@ case $key in
     status)
         cowrie_status $*
         ;;
+    restart)
+        cowrie_stop
+        cowrie_start $*
+        ;;
     *)
         cowrie_usage
         exit 1
