@@ -45,9 +45,9 @@ cowrie_start() {
     echo "Starting cowrie with extra arguments [$XARGS] ..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then
-        twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
+        twistd $XARGS -l ${LOGFILE} --umask 0077 --pidfile ${PIDFILE} cowrie
     else
-        authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
+        authbind --deep twistd $XARGS -l ${LOGFILE} --umask 0077 --pidfile ${PIDFILE} cowrie
     fi
 }
 
@@ -78,6 +78,7 @@ find_cowrie_directory $0
 cd ${COWRIEDIR}
 export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 PIDFILE=var/run/cowrie.pid
+LOGFILE="var/log/cowrie/cowrie.log"
 set -e
 
 key=$1

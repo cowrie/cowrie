@@ -25,14 +25,20 @@ hostname = svr04
 
 # Directory where to save log files in.
 #
-# (default: log)
-log_path = log
+# (default: var/log/cowrie)
+log_path = var/log/cowrie
 
 
 # Directory where to save downloaded artifacts in.
 #
-# (default: dl)
-download_path = dl
+# (default: var/lib/dl)
+download_path = var/lib/dl
+
+
+# Directory where to save tty logfiles in.
+#
+# (default: var/lib/ttylog)
+ttylog_path = var/lib/ttylog
 
 
 # Directory where virtual file contents are kept in.
@@ -238,7 +244,7 @@ enabled = true
 [telnet]
 
 # Enable Telnet support, disabled by default
-enabled = false
+enabled = true
 
 # IP addresses to listen for incoming Telnet connections.
 #
@@ -297,7 +303,7 @@ enabled = false
 # JSON based logging module
 #
 [output_jsonlog]
-logfile = log/cowrie.json
+logfile = var/log/cowrie/cowrie.json
 
 
 # Supports logging to Elasticsearch
