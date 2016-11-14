@@ -9,7 +9,7 @@
 * [Step 3: Setup virtualenv (if desired)](#step-3-setup-virtualenv-if-desired)
 * [Step 4: Install configuration file](#step-4-install-configuration-file)
 * [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
-* [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
+* [Step 6: Starting cowrie](#step-6-starting-cowrie)
 * [Step 7: Port redirection (optional)](#step-7-port-redirection-optional)
 * [Troubleshooting](#troubleshooting)
 
@@ -121,7 +121,7 @@ $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 $ cd ..
 ```
 
-## Step 6: Turning on cowrie
+## Step 6: Starting cowrie
 
 If you use a virtual environment and it uses the default name of
 'cowrie-env' it will be activated automatically.
