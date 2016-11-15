@@ -13,4 +13,4 @@ __pycache__/
 *env/
 twisted/plugins/dropin.cache
 .DS_Store
-
+*_trial_temp
