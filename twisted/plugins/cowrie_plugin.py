@@ -88,6 +88,11 @@ class CowrieServiceMaker(object):
             print('WARNING: reading cowrie.cfg from old location. Default is now etc/cowrie.cfg')
             cfgfile = 'cowrie.cfg'
         # End of backwards compatibility check
+
+        if not os.path.isfile(cfgfile):
+            print("ERROR: Can't find config file {}".format(cfgfile))
+            sys.exit(1)
+
         cfg = readConfigFile(cfgfile)
 
         # ssh is enabled by default
