@@ -12,7 +12,7 @@ from twisted.python import log
 from twisted.internet import protocol
 from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, \
                                  ITelnetProtocol, ProtocolTransportMixin, \
-                                 SGA, NAWS, LINEMODE, TelnetTransport
+                                 SGA, NAWS, MODE, LINEMODE, TelnetTransport
 from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
