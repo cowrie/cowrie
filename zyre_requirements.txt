@@ -1,4 +1,4 @@
-https://github.com/zeromq/pyzmq/archive/f37052960e1dc510ea2c1d2e69a32d727afa9d69.tar.gz#egg=zmq
+https://github.com/zeromq/pyzmq/archive/f37052960e1dc510ea2c1d2e69a32d727afa9d69.tar.gz#egg=pyzmq>=16.0.1
 names>=0.3.0,<0.4.0
-https://github.com/wesyoung/pyzyre/archive/b550be1aa945b23f424e0f5f627cca743e53b482.tar.gz#egg=pyzyre
+pyzyre>=0.0.0a1<1.0
 csirtg_indicator<1.0
