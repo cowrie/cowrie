@@ -432,3 +432,10 @@ logfile = log/cowrie.json
 #api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 #
 
+# https://csirtg.io
+# You must signup for an api key.
+#
+#[output_csirtg]
+#username=wes
+#feed=scanners
+#token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
