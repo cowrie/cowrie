@@ -70,7 +70,6 @@ class CowrieServiceMaker(object):
     tapname = "cowrie"
     description = "She sells sea shells by the sea shore."
     options = Options
-    dbloggers = None
     output_plugins = None
     cfg = None
 
@@ -113,22 +112,6 @@ class CowrieServiceMaker(object):
         if enableTelnet == False and enableSSH == False:
             print('ERROR: You must at least enable SSH or Telnet')
             sys.exit(1)
-
-        # Load db loggers
-        self.dbloggers = []
-        for x in cfg.sections():
-            if not x.startswith('database_'):
-                continue
-            engine = x.split('_')[1]
-            try:
-                dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
-                    globals(), locals(), ['dblog']).DBLogger(cfg)
-                log.addObserver(dblogger.emit)
-                self.dbloggers.append(dblogger)
-                log.msg("Loaded dblog engine: {}".format(engine))
-            except:
-                log.err()
-                log.msg("Failed to load dblog engine: {}".format(engine))
 
         # Load output modules
         self.output_plugins = []
