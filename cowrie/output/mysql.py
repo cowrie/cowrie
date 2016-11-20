@@ -87,7 +87,7 @@ class Output(cowrie.core.output.Output):
         """
         docstring here
         """
-        log.err( 'output_mysql: MySQL Error:', error.value )
+        log.err('output_mysql: MySQL Error: {}'.format(error.value))
 
 
     def simpleQuery(self, sql, args):
