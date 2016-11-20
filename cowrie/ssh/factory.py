@@ -44,8 +44,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         Special delivery to the loggers to avoid scope problems
         """
         args['sessionno'] = 'S'+str(args['sessionno'])
-        for dblog in self.tac.dbloggers:
-            dblog.logDispatch(*msg, **args)
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
