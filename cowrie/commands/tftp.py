@@ -55,23 +55,43 @@ class command_tftp(HoneyPotCommand):
                             time.strftime('%Y%m%d%H%M%S'),
                             re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
 
-        self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                  format='Downloaded tftpFile to %(outfile)s',
-                                  outfile=self.safeoutfile
-                                  )
-
-        log.msg(eventid='cowrie.session.file_download',
-                format='Downloaded tftpFile to %(outfile)s',
-                outfile=self.safeoutfile
-                )
-
         try:
             tclient.download(self.file_to_get, self.safeoutfile, progresshook)
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
             self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
+
+            shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
+            hash_path = '%s/%s' % (self.download_path, shasum)
+
+            # If we have content already, delete temp file
+            if not os.path.exists(hash_path):
+                os.rename(self.safeoutfile, hash_path)
+            else:
+                os.remove(self.safeoutfile)
+                log.msg("Not storing duplicate content " + shasum)
+
+            self.protocol.logDispatch(eventid='cowrie.session.file_download',
+                                      format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                                      url=self.file_to_get,
+                                      outfile=hash_path,
+                                      shasum=shasum)
+
+            log.msg(eventid='cowrie.session.file_download',
+                    format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                    url=self.file_to_get,
+                    outfile=hash_path,
+                    shasum=shasum)
+
+            # Link friendly name to hash
+            os.symlink(shasum, self.safeoutfile)
+
+            # FIXME: is this necessary?
+            self.safeoutfile = hash_path
+
+            # Update the honeyfs to point to downloaded file
             f = self.fs.getfile(self.file_to_get)
-            f[A_REALFILE] = self.safeoutfile
+            f[A_REALFILE] = hash_path
 
         except tftpy.TftpException, err:
             return
