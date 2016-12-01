@@ -8,3 +8,4 @@ pycrypto
 python-dateutil
 tftpy
 csirtgsdk
+requests
