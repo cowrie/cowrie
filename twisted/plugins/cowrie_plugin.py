@@ -32,7 +32,7 @@ FIXME: This module contains ...
 
 from __future__ import print_function
 
-from zope.interface import implementer
+from zope.interface import implementer, provider
 
 import os
 import sys
@@ -42,6 +42,7 @@ from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet, service
 from twisted.cred import portal
+from twisted.logger import ILogObserver, globalLogPublisher
 
 from cowrie.core.config import readConfigFile
 from cowrie import core
@@ -60,6 +61,16 @@ class Options(usage.Options):
         ["config", "c", 'etc/cowrie.cfg', "The configuration file to use."]
         ]
 
+
+@provider(ILogObserver)
+def importFailureObserver(event):
+    if 'failure' in event and event['failure'].type is ImportError:
+        log.err("ERROR: %s. Please run `pip install -U -r requirements.txt` "
+                "from Cowrie's install directory to install the new dependency" %
+                event['failure'].value.message)
+
+
+globalLogPublisher.addObserver(importFailureObserver)
 
 
 @implementer(IServiceMaker, IPlugin)
@@ -125,7 +136,7 @@ class CowrieServiceMaker(object):
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg("Loaded output engine: {}".format(engine))
-            except:
+            except Exception:
                 log.err()
                 log.msg("Failed to load output engine: {}".format(engine))
 
