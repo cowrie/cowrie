@@ -75,6 +75,6 @@ class Output(cowrie.core.output.Output):
         self.sc.api_call(
             "chat.postMessage",
             channel=self.slack_channel,
-            text="%s %s" % (time.strftime('%Y-%m-%d %H:%M:%S'), json.dumps(logentry))
+            text="%s %s" % (time.strftime('%Y-%m-%d %H:%M:%S'), json.dumps(logentry, indent=4, sort_keys=True))
         )
 
