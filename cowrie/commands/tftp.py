@@ -55,16 +55,6 @@ class command_tftp(HoneyPotCommand):
                             time.strftime('%Y%m%d%H%M%S'),
                             re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
 
-        self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                  format='Downloaded tftpFile to %(outfile)s',
-                                  outfile=self.safeoutfile
-                                  )
-
-        log.msg(eventid='cowrie.session.file_download',
-                format='Downloaded tftpFile to %(outfile)s',
-                outfile=self.safeoutfile
-                )
-
         try:
             tclient.download(self.file_to_get, self.safeoutfile, progresshook)
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
@@ -72,6 +62,16 @@ class command_tftp(HoneyPotCommand):
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
             f = self.fs.getfile(self.file_to_get)
             f[A_REALFILE] = self.safeoutfile
+
+            self.protocol.logDispatch(eventid='cowrie.session.file_download',
+                                      format='Downloaded tftpFile to %(outfile)s',
+                                      outfile=self.safeoutfile
+                                      )
+
+            log.msg(eventid='cowrie.session.file_download',
+                    format='Downloaded tftpFile to %(outfile)s',
+                    outfile=self.safeoutfile
+                    )
 
         except tftpy.TftpException, err:
             return
