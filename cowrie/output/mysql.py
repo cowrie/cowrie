@@ -55,7 +55,7 @@ class Output(cowrie.core.output.Output):
         docstring here
         """
         if self.cfg.has_option('output_mysql', 'debug'):
-            self.debug = self.cfg.getbool('output_mysql', 'debug')
+            self.debug = self.cfg.getboolean('output_mysql', 'debug')
 
         if self.cfg.has_option('output_mysql', 'port'):
             port = int(self.cfg.get('output_mysql', 'port'))
