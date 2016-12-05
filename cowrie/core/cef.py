@@ -65,8 +65,8 @@ def formatCef(logentry):
         'app': 'SSHv2',
         'destinationServicename': 'sshd',
         'deviceExternalId': logentry['sensor'],
-        'msg': log.textFromEventDict(logentry),
-        'src' : logentry['src_ip'],
+        'msg': logentry['message'],
+        'src': logentry['src_ip'],
         'proto': 'tcp'
     }
 
@@ -94,8 +94,9 @@ def formatCef(logentry):
 
     cefList = []
     for key in list(cefExtensions.keys()):
-        value = str(cefExtensions[key]).replace(' ', r'\ ')
-        cefList.append(key+"="+value)
+        value = str(cefExtensions[key])
+        cefList.append('{}={}'.format(key, value))
+
     cefExtension = ' '.join(cefList)
 
     cefString = "CEF:0|" + \
