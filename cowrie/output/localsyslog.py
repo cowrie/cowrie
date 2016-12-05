@@ -60,7 +60,11 @@ class Output(cowrie.core.output.Output):
         """
         """
         if self.format == 'cef':
-            self.syslog.emit(cowrie.core.cef.formatCef(logentry))
+            self.syslog.emit({
+                'message': cowrie.core.cef.formatCef(logentry),
+                'isError': False,
+                'system': 'cowrie'
+            })
         else:
             # message appears with additional spaces if message key is defined
             logentry['message'] = [ logentry['message'] ]
