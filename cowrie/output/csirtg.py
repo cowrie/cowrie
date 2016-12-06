@@ -3,7 +3,6 @@ import cowrie.core.output
 from csirtgsdk.indicator import Indicator
 from csirtgsdk.client import Client
 from datetime import datetime
-from pprint import pprint
 import logging
 import os
 
@@ -61,5 +60,6 @@ class Output(cowrie.core.output.Output):
 
             logger.info('logged to csirtg %s ' % ret['indicator']['location'])
         else:
-            pprint(self.context)
+            pass
+   
         self.context[today][peerIP].append(sid)
