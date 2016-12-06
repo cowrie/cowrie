@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 USERNAME = os.environ.get('CSIRTG_USER')
 FEED = os.environ.get('CSIRTG_FEED')
 TOKEN = os.environ.get('CSIRG_TOKEN')
+DESCRIPTION = os.environ.get('CSIRTG_DESCRIPTION', 'random scanning activity')
 
 
 class Output(cowrie.core.output.Output):
@@ -20,6 +21,10 @@ class Output(cowrie.core.output.Output):
         self.user = cfg.get('output_csirtg', 'username') or USERNAME
         self.feed = cfg.get('output_csirtg', 'feed') or FEED
         self.token = cfg.get('output_csirtg', 'token') or TOKEN
+        try:
+            self.description = cfg.get('output_csirtg', 'description')
+        except Exception:
+            self.description = DESCRIPTION
         self.port = os.environ.get('COWRIE_PORT', 22)
         self.context = {}
         self.client = Client(token=self.token)
@@ -54,7 +59,8 @@ class Output(cowrie.core.output.Output):
                 'protocol': 'tcp',
                 'tags': 'scanner,ssh',
                 'firsttime': ts,
-                'lasttime': ts
+                'lasttime': ts,
+                'description': self.description
             }
 
             ret = Indicator(self.client, i).submit()
