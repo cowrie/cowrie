@@ -438,4 +438,5 @@ logfile = log/cowrie.json
 #[output_csirtg]
 #username=wes
 #feed=scanners
+#description=random scanning activity
 #token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
