@@ -36,10 +36,10 @@ class Output(cowrie.core.output.Output):
         ts = e['timestamp']
 
         today = str(datetime.now().date())
-        logger.info('today is %s' % today)
+        logger.debug('today is %s' % today)
 
         if not self.context.get(today):
-            logger.info('resetting context for %s' % today)
+            logger.debug('resetting context for %s' % today)
             self.context = {}
             self.context[today] = {}
 
@@ -60,6 +60,5 @@ class Output(cowrie.core.output.Output):
             ret = Indicator(self.client, i).submit()
 
             logger.info('logged to csirtg %s ' % ret['indicator']['location'])
-        else:
-            pprint(self.context)
+
         self.context[today][peerIP].append(sid)
