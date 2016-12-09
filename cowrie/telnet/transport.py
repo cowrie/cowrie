@@ -5,6 +5,7 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
+import struct
 import time
 import uuid
 
@@ -12,7 +13,7 @@ from twisted.python import log
 from twisted.internet import protocol
 from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, TRAPSIG, \
                                  ITelnetProtocol, ProtocolTransportMixin, \
-                                 SGA, NAWS, MODE, LINEMODE, TelnetTransport
+                                 SGA, NAWS, MODE, LINEMODE, TelnetTransport, AlreadyNegotiating
 from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
@@ -78,15 +79,20 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
     loginPrompt = 'login: '
     passwordPrompt = 'Password: '
+    windowSize = [40, 80]
 
     def connectionMade(self):
         """
         """
         self.factory.sessions[self.transport.transport.sessionno] = self.transport.transportId
         
+        self.transport.negotiationMap[NAWS] = self.telnet_NAWS
         # Initial option negotation. Want something at least for Mirai
+        #for opt in (LINEMODE, NAWS, SGA, ECHO):
         for opt in (NAWS,):
-            self.transport.do(opt).addErrback(log.err)
+            self.transport.doChain(opt).addErrback(log.err)
+        #for opt in (ECHO,):
+        #    self.transport.willChain(opt).addErrback(log.err)
 
         # I need to doubly escape here since my underlying
         # CowrieTelnetTransport hack would remove it and leave just \n
@@ -111,7 +117,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.username = line
         # only send ECHO option if we are chatting with a real Telnet client
         #if self.transport.options: <-- doesn't work
-        self.transport.will(ECHO)
+        self.transport.willChain(ECHO)
         # FIXME: this should be configurable or provided via filesystem
         self.transport.write(self.passwordPrompt)
         return 'Password'
@@ -133,7 +139,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
             # even if ECHO negotiation fails we still want to attempt a login
             # this allows us to support dumb clients which is common in malware
             # thus the addBoth: on success and on exception (AlreadyNegotiating)
-            self.transport.wont(ECHO).addBoth(login)
+            self.transport.wontChain(ECHO).addBoth(login)
         else:
             # process login
             login('')
@@ -145,6 +151,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         Fired on a successful login
         """
         interface, protocol, logout = ial
+        protocol.windowSize = self.windowSize
         self.protocol = protocol
         self.logout = logout
         self.state = 'Command'
@@ -160,10 +167,22 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
     def _ebLogin(self, failure):
     # TODO: provide a way to have user configurable strings for wrong password
+        self.transport.wontChain(ECHO)
         self.transport.write("\nLogin incorrect\n")
         self.transport.write(self.loginPrompt)
         self.state = "User"
 
+    def telnet_NAWS(self, data):
+        # NAWS is client -> server *only*.  self.protocol will
+        # therefore be an ITerminalTransport, the `.protocol'
+        # attribute of which will be an ITerminalProtocol.  Maybe.
+        # You know what, XXX TODO clean this up.
+        if len(data) == 4:
+            width, height = struct.unpack('!HH', b''.join(data))
+            #self.protocol.terminalProtocol.terminalSize(width, height)
+            self.windowSize = [height, width]
+        else:
+            log.msg("Wrong number of NAWS bytes")
 
     def enableLocal(self, opt):
         if opt == ECHO:
@@ -225,3 +244,37 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         log.msg(eventid='cowrie.session.closed',
             format='Connection lost after %(duration)d seconds',
             duration=duration)
+
+    def willChain(self, option):
+        return self._chainNegotiation(None, self.will, option)
+
+    def wontChain(self, option):
+        return self._chainNegotiation(None, self.wont, option)
+
+    def doChain(self, option):
+        return self._chainNegotiation(None, self.do, option)
+
+    def dontChain(self, option):
+        return self._chainNegotiation(None, self.dont, option)
+
+    def _handleNegotiationError(self, f, func, option):
+        if f.type is AlreadyNegotiating:
+            s = self.getOptionState(option)
+            if func in (self.do, self.dont):
+                s.him.onResult.addCallback(self._chainNegotiation, func, option)
+                s.him.onResult.addErrback(self._handleNegotiationError, func, option)
+            if func in (self.will, self.wont):
+                s.us.onResult.addCallback(self._chainNegotiation, func, option)
+                s.us.onResult.addErrback(self._handleNegotiationError, func, option)
+        # We only care about AlreadyNegotiating, everything else can be ignored
+        # Possible other types include OptionRefused, AlreadyDisabled, AlreadyEnabled, ConnectionDone, ConnectionLost
+        elif f.type is AssertionError:
+            log.err('Client tried to illegally refuse to disable an option; ignoring, but undefined behavior may result')
+            # TODO: Is ignoring this violation of the protocol the proper behavior?
+            # Should the connection be terminated instead?
+            # The telnetd package on Ubuntu (netkit-telnet) does all negotiation before sending the login prompt,
+            # but does handle client-initiated negotiation at any time.
+        return None  # This Failure has been handled, no need to continue processing errbacks
+
+    def _chainNegotiation(self, res, func, option):
+        return func(option).addErrback(self._handleNegotiationError, func, option)
