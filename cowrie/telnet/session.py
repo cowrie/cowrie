@@ -63,9 +63,9 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
 
         # Negotiating options here is non-standard, stop doing it for now
         # If we are dealing with a proper Telnet client: enable server echo
-        #if self.transport.options:
-        #    self.transport.willChain(SGA)
-        #    self.transport.willChain(ECHO)
+        if self.transport.options:
+            self.transport.willChain(SGA)
+            self.transport.willChain(ECHO)
 
         self.protocol = insults.LoggingTelnetServerProtocol(
                 cproto.HoneyPotInteractiveTelnetProtocol, self)
