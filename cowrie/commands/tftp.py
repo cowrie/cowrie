@@ -77,12 +77,6 @@ class command_tftp(HoneyPotCommand):
                 os.remove(self.safeoutfile)
                 log.msg("Not storing duplicate content " + shasum)
 
-            self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                      format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                                      url=self.file_to_get,
-                                      outfile=hash_path,
-                                      shasum=shasum)
-
             log.msg(eventid='cowrie.session.file_download',
                     format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                     url=self.file_to_get,
@@ -98,11 +92,6 @@ class command_tftp(HoneyPotCommand):
             # Update the honeyfs to point to downloaded file
             f = self.fs.getfile(self.file_to_get)
             f[A_REALFILE] = hash_path
-
-            self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                      format='Downloaded tftpFile to %(outfile)s',
-                                      outfile=self.safeoutfile
-                                      )
 
             log.msg(eventid='cowrie.session.file_download',
                     format='Downloaded tftpFile to %(outfile)s',
