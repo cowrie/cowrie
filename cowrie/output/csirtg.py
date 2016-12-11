@@ -24,7 +24,6 @@ class Output(cowrie.core.output.Output):
             self.description = cfg.get('output_csirtg', 'description')
         except Exception:
             self.description = DESCRIPTION
-        self.port = os.environ.get('COWRIE_PORT', 22)
         self.context = {}
         self.client = Client(token=self.token)
 
@@ -38,32 +37,45 @@ class Output(cowrie.core.output.Output):
         sid = e['session']
         peerIP = e['src_ip']
         ts = e['timestamp']
+        system = e['system']
+
+        if system not in ['cowrie.ssh.factory.CowrieSSHFactory', 'cowrie.telnet.transport.HoneyPotTelnetFactory']:
+            logger.debug('skipping {}'.format(system))
+            return
 
         today = str(datetime.now().date())
-        logger.debug('today is %s' % today)
 
         if not self.context.get(today):
             logger.debug('resetting context for %s' % today)
             self.context = {}
-            self.context[today] = {}
+            self.context[today] = set()
 
-        if not self.context[today].get(peerIP):
-            self.context[today][peerIP] = []
+        key = ','.join([peerIP, system])
 
-            i = {
-                'user': self.user,
-                'feed': self.feed,
-                'indicator': peerIP,
-                'portlist': self.port,
-                'protocol': 'tcp',
-                'tags': 'scanner,ssh',
-                'firsttime': ts,
-                'lasttime': ts,
-                'description': self.description
-            }
+        if key in self.context[today]:
+            logger.debug('skipping {}'.format(key))
+            return
 
-            ret = Indicator(self.client, i).submit()
+        self.context[today].add(key)
 
-            logger.info('logged to csirtg %s ' % ret['indicator']['location'])
+        tags = 'scanner,ssh'
+        port = 22
+        if e['system'] == 'cowrie.telnet.transport.HoneyPotTelnetFactory':
+            tags = 'scanner,telnet'
+            port = 23
 
-        self.context[today][peerIP].append(sid)
+        i = {
+            'user': self.user,
+            'feed': self.feed,
+            'indicator': peerIP,
+            'portlist': port,
+            'protocol': 'tcp',
+            'tags': tags,
+            'firsttime': ts,
+            'lasttime': ts,
+            'description': self.description
+        }
+
+        ret = Indicator(self.client, i).submit()
+        logger.info('logged to csirtg %s ' % ret['indicator']['location'])
+
