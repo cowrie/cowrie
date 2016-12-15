@@ -4,7 +4,7 @@
 * [Step 1: Install dependencies](#step-1-install-dependencies)
 * [Step 2: Create a user account](#step-2-create-a-user-account)
 * [Step 3: Checkout the code](#step-3-checkout-the-code)
-* [Step 3: Setup virtualenv (if desired)](#step-3-setup-virtualenv-if-desired)
+* [Step 3: Setup Virtual Environment](#step-3-setup-virtual-environment)
 * [Step 4: Install configuration file](#step-4-install-configuration-file)
 * [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
 * [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
