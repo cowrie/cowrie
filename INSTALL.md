@@ -2,11 +2,9 @@
 # Installing Cowrie in seven steps.
 
 * [Step 1: Install dependencies](#step-1-install-dependencies)
-    + [Option A: dependencies for virtualenv](#option-a-dependencies-for-virtualenv)
-    + [Option B: dependencies for bare install](#option-b-dependencies-for-bare-install)
 * [Step 2: Create a user account](#step-2-create-a-user-account)
 * [Step 3: Checkout the code](#step-3-checkout-the-code)
-* [Step 3: Setup virtualenv (if desired)](#step-3-setup-virtualenv-if-desired)
+* [Step 3: Setup Virtual Environment](#step-3-setup-virtual-environment)
 * [Step 4: Install configuration file](#step-4-install-configuration-file)
 * [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
 * [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
@@ -15,35 +13,12 @@
 
 ## Step 1: Install dependencies
 
-There are two ways to install Cowrie's Python dependencies: in a
-Python virtual environment or directly on to the system.  The virtual
-environment is preferred as it isolates Cowrie and its dependencies
-from other Python software on the system.
-
-### Option A: dependencies for virtualenv
-
-This install virtual environments and other dependencies. The actual python packages are installed later.
+First we install support for Python virtual environments and other dependencies.
+The actual Python packages are installed later.
 
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
 $ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal
-```
-
-### Option B: dependencies for bare install
-
-Install prerequisites on Debian based systems (untested 2016-08-30):
-
-```
-$ sudo apt-get install git python-twisted python-configparser python-crypto python-pyasn1 python-gmpy2 python-mysqldb python-zope.interface python-service-identity
-```
-**NOTE**: 'python-gmpy2' will cause a signficant delay when attempting to login to the fake ssh server if installed on a Raspberry Pi (Tested on a RPi model 1B). Use 'python-gmpy' to reduce the login delay significantly.
-
-Install prerequisites on Alpine based systems (untested 2016-08-30):
-
-```
-$ sudo apk add python py-asn1 py-twisted py-zope-interface libffi-dev \
-        py-cryptography py-pip py-six py-cffi py-idna py-ipaddress py-openssl
-$ sudo pip install enum34
 ```
 
 ## Step 2: Create a user account
@@ -82,9 +57,9 @@ Checking connectivity... done.
 $ cd cowrie
 ```
 
-## Step 3: Setup virtualenv (if desired)
+## Step 3: Setup Virtual Environment
 
-If you're choosing the virtualenv installation route, you need to create your virtual environment:
+Next you need to create your virtual environment:
 
 ```
 $ pwd
