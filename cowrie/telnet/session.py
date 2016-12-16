@@ -61,7 +61,6 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
 
-        # Negotiating options here is non-standard, stop doing it for now
         # If we are dealing with a proper Telnet client: enable server echo
         if self.transport.options:
             self.transport.willChain(SGA)

@@ -88,11 +88,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         
         self.transport.negotiationMap[NAWS] = self.telnet_NAWS
         # Initial option negotation. Want something at least for Mirai
-        #for opt in (LINEMODE, NAWS, SGA, ECHO):
         for opt in (NAWS,):
             self.transport.doChain(opt).addErrback(log.err)
-        #for opt in (ECHO,):
-        #    self.transport.willChain(opt).addErrback(log.err)
 
         # I need to doubly escape here since my underlying
         # CowrieTelnetTransport hack would remove it and leave just \n
@@ -172,14 +169,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write(self.loginPrompt)
         self.state = "User"
 
+    # From TelnetBootstrapProtocol in twisted/conch/telnet.py
     def telnet_NAWS(self, data):
-        # NAWS is client -> server *only*.  self.protocol will
-        # therefore be an ITerminalTransport, the `.protocol'
-        # attribute of which will be an ITerminalProtocol.  Maybe.
-        # You know what, XXX TODO clean this up.
         if len(data) == 4:
             width, height = struct.unpack('!HH', b''.join(data))
-            #self.protocol.terminalProtocol.terminalSize(width, height)
             self.windowSize = [height, width]
         else:
             log.msg("Wrong number of NAWS bytes")
