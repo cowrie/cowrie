@@ -63,8 +63,8 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
 
         # If we are dealing with a proper Telnet client: enable server echo
         if self.transport.options:
-            self.transport.will(SGA)
-            self.transport.will(ECHO)
+            self.transport.willChain(SGA)
+            self.transport.willChain(ECHO)
 
         self.protocol = insults.LoggingTelnetServerProtocol(
                 cproto.HoneyPotInteractiveTelnetProtocol, self)
