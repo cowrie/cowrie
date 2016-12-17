@@ -11,6 +11,7 @@ __all__ = [
     'ethtool',
     'free',
     'fs',
+    'ftpget',
     'gcc',
     'ifconfig',
     'iptables',
