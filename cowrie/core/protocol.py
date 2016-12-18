@@ -120,6 +120,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def connectionLost(self, reason):
         """
+        Called when the connection is shut down.
+        Clear any circular references here, and any external references to
+        this Protocol. The connection has been closed.
         """
         self.setTimeout(None)
         insults.TerminalProtocol.connectionLost(self, reason)
@@ -127,8 +130,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         del self.cmdstack
         del self.commands
         self.fs = None
+        self.pp = None
         self.cfg = None
         self.user = None
+        self.environ = None
         log.msg("honeypot terminal protocol connection lost {}".format(reason))
 
 
