@@ -8,6 +8,10 @@ Telnet Transport and Authentication for the Honeypot
 import struct
 import time
 import uuid
+import inspect
+import random
+
+import objgraph
 
 from twisted.python import log
 from twisted.internet import protocol
@@ -214,6 +218,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            session=self.transportId, sessionno='T'+str(sessionno))
         TelnetTransport.connectionMade(self)
+
+        log.msg(objgraph.show_most_common_types())
 
     def write(self, bytes):
         """
