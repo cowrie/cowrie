@@ -80,7 +80,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = pt.transport.getPeer().port
         self.clientVersion = self.getClientVersion()
         self.logintime = time.time()
-        self.setTimeout(1800)
+        self.setTimeout(180)
 
         # Source IP of client in user visible reports (can be fake or real)
         try:
