@@ -143,6 +143,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
 
     def connectionLost(self, reason = None):
         self.session.loseConnection()
+        self.session = None
 
 
     # here SSH is doing signal handling, I don't think telnet supports that so
