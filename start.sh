@@ -32,5 +32,5 @@ if [ $AUTHBIND_ENABLED = "no" ]
 then
     twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
 else
-    authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile cowrie.pid cowrie
+    authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
 fi
