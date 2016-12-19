@@ -78,7 +78,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     # XXX verify if HoneyPotTelnetAuthProtocol's connectionLost fires otherwise
     #     we'll have to reimplement some of the stuff here
         """
-        TelnetBootstrapProtocol.connectionLost(reason)
+        TelnetBootstrapProtocol.connectionLost(self, reason)
         self.server = None
         self.cfg = None
         self.avatar = None
