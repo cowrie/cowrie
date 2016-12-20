@@ -10,12 +10,17 @@ from cowrie.core import config
 from cowrie.test import fake_server, fake_transport
 import json
 
+import os
+import shutil
 
 
 class ShellBaseCommandsTests(unittest.TestCase):
 
 
     def setUp(self):
+        if '_trial_temp' in os.getcwd():
+            if not os.path.exists('etc'):
+                shutil.copytree('../etc', 'etc')
         with open('../cowrie/test/expected_results.json') as data_file:
             self.data = json.load(data_file)
         self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
@@ -202,6 +207,9 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 class ShellFileCommandsTests(unittest.TestCase):
     def setUp(self):
+        if '_trial_temp' in os.getcwd():
+            if not os.path.exists('etc'):
+                shutil.copytree('../etc', 'etc')
         self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
@@ -276,6 +284,9 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 class ShellPipeCommandsTests(unittest.TestCase):
     def setUp(self):
+        if '_trial_temp' in os.getcwd():
+            if not os.path.exists('etc'):
+                shutil.copytree('../etc', 'etc')
         self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
