@@ -82,6 +82,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.server = None
         self.cfg = None
         self.avatar = None
+        self.protocol = None
 
     #    pt = self.transport
     #    if pt.transport.sessionno in pt.factory.sessions:
