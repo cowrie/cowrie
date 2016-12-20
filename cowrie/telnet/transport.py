@@ -11,8 +11,6 @@ import uuid
 import inspect
 import random
 
-import objgraph
-
 from twisted.python import log
 from twisted.internet import protocol
 from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, TRAPSIG, \
@@ -219,7 +217,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
            session=self.transportId, sessionno='T'+str(sessionno))
         TelnetTransport.connectionMade(self)
 
-        log.msg(objgraph.show_most_common_types())
 
     def write(self, bytes):
         """
