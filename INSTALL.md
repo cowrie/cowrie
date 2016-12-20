@@ -9,7 +9,9 @@
 * [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
 * [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
 * [Step 7: Port redirection (optional)](#step-7-port-redirection-optional)
+* [Running within supervisord(optional)](#running-using-supervisord)
 * [Troubleshooting](#troubleshooting)
+* [Installing on OSX for development](#installing-on-osx-for-development)
 
 ## Step 1: Install dependencies
 
@@ -152,6 +154,25 @@ $ sudo chmod 770 /etc/authbind/byport/23
 * Edit start.sh and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
+## Running using Supervisord
+On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf
+```
+[program:cowrie]
+command=/home/cowrie/cowrie/start.sh cowrie-env
+directory=/home/cowrie/cowrie/
+user=cowrie
+autorestart=true
+redirect_stderr=true
+```
+Update the start.sh script, change:
+ ```
+ DAEMONIZE=""
+ ```
+ to:
+ ```
+ DAEMONIZE="-n"
+ ```
+
 ## Troubleshooting
 
 * For some versions of Twisted you may receive the following error messages:
@@ -185,3 +206,13 @@ double check that your PYTHONPATH is set to the source code directory.
 
 To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
 
+## Installing on OSX for development
+
+gmpy2 requires a number of libraries which are not included by default with Sierra and must be installed, suggested method is by using [homebrew](http://brew.sh/) 
+
+```
+brew install gmp
+brew install mpfr
+brew install mpc
+brew install libmpc
+```
