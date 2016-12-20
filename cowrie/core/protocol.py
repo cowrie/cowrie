@@ -251,9 +251,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
         self.cmdstack = [honeypot.HoneyPotShell(self)]
 
-        pt = self.getProtoTransport()
-        pt.factory.sessions[pt.transport.sessionno] = self
-
         self.keyHandlers.update({
             '\x01':     self.handle_HOME,	# CTRL-A
             '\x02':     self.handle_LEFT,	# CTRL-B
@@ -308,10 +305,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def connectionLost(self, reason):
         """
         """
-        pt = self.getProtoTransport()
-        if pt.transport.sessionno in pt.factory.sessions:
-            del pt.factory.sessions[pt.transport.sessionno]
-
         self.lastlogExit()
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)

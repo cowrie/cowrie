@@ -27,7 +27,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
         cfg = a[0].cfg
         self.bytesReceived = 0
-        self.interactors = []
 
         self.ttylogPath = cfg.get('honeypot', 'log_path')
         self.downloadPath = cfg.get('honeypot', 'download_path')
@@ -81,9 +80,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         Output sent back to user
         """
-        for i in self.interactors:
-            i.sessionWrite(bytes)
-
         if self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(bytes),
                 ttylog.TYPE_OUTPUT, time.time(), bytes)
@@ -122,20 +118,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.terminalProtocol.eofReceived()
 
 
-    def addInteractor(self, interactor):
-        """
-        Add to list of interactors
-        """
-        self.interactors.append(interactor)
-
-
-    def delInteractor(self, interactor):
-        """
-        Remove from list of interactors
-        """
-        self.interactors.remove(interactor)
-
-
     def loseConnection(self):
         """
         Override super to remove the terminal reset on logout
@@ -148,9 +130,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         FIXME: this method is called 4 times on logout....
         it's called once from Avatar.closed() if disconnected
         """
-        for i in self.interactors:
-            i.sessionClosed()
-
         if self.stdinlogOpen:
             try:
                 with open(self.stdinlogFile, 'rb') as f:

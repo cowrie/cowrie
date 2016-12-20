@@ -74,20 +74,12 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
 
     def connectionLost(self, reason):
         """
-    # TODO do I need to implement connectionLost?
-    # XXX verify if HoneyPotTelnetAuthProtocol's connectionLost fires otherwise
-    #     we'll have to reimplement some of the stuff here
         """
         TelnetBootstrapProtocol.connectionLost(self, reason)
         self.server = None
         self.cfg = None
         self.avatar = None
         self.protocol = None
-
-    #    pt = self.transport
-    #    if pt.transport.sessionno in pt.factory.sessions:
-    #        del pt.factory.sessions[pt.transport.sessionno]
-    #    pt.connectionLost(reason)
 
 
     # TODO this never fires in Telnet connections is it misplaced?

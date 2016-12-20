@@ -197,16 +197,6 @@ class CowrieServiceMaker(object):
                 # FIXME: Use addService on topService ?
                 tsvc.setServiceParent(topService)
 
-        if cfg.has_option('honeypot', 'interact_enabled') and \
-                 cfg.getboolean('honeypot', 'interact_enabled') == True:
-            iport = int(cfg.get('honeypot', 'interact_port'))
-            # FIXME this doesn't support checking both Telnet and SSH sessions
-            from cowrie.core import interact
-            svc = internet.TCPServer(iport,
-                interact.makeInteractFactory(factory), interface='127.0.0.1')
-            # FIXME: Use addService on topService ?
-            svc.setServiceParent(topService)
-
         return topService
 
 # Now construct an object which *provides* the relevant interfaces

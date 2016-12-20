@@ -29,7 +29,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         'ssh-connection': connection.CowrieSSHConnection,
         }
     starttime = None
-    sessions = {}
     privateKeys = None
     publicKeys = None
     primes = None
@@ -53,9 +52,6 @@ class CowrieSSHFactory(factory.SSHFactory):
     def startFactory(self):
         """
         """
-        # Interactive protocols are kept here for the interact feature
-        self.sessions = {}
-
         # For use by the uptime command
         self.starttime = time.time()
 

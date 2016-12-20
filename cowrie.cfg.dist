@@ -83,18 +83,6 @@ txtcmds_path = txtcmds
 #download_limit_size = 10485760
 
 
-# Session management interface.
-#
-# This is a telnet based service that can be used to interact with active
-# sessions. Disabled by default. The interact feature is only available on
-# the loopback interface.
-#
-# (default: false)
-interact_enabled = false
-# (default: 5123)
-interact_port = 5123
-
-
 # ============================================================================
 # Network Specific Options
 # ============================================================================
