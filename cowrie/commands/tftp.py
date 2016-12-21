@@ -98,6 +98,16 @@ class command_tftp(HoneyPotCommand):
                     outfile=self.safeoutfile
                     )
 
+            self.protocol.logDispatch(eventid='cowrie.session.file_download',
+                                      format='Downloaded tftpFile to %(outfile)s',
+                                      outfile=self.safeoutfile
+                                      )
+
+            log.msg(eventid='cowrie.session.file_download',
+                    format='Downloaded tftpFile to %(outfile)s',
+                    outfile=self.safeoutfile
+                    )
+
         except tftpy.TftpException, err:
             return
 
