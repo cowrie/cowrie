@@ -24,7 +24,6 @@ hugetlbfs /dev/hugepages hugetlbfs rw,relatime 0 0
 debugfs /sys/kernel/debug debugfs rw,relatime 0 0
 fusectl /sys/fs/fuse/connections fusectl rw,relatime 0 0
 /dev/sda1 /boot ext2 rw,relatime 0 0
-/dev/sdb1 /mnt/boron ext4 rw,noatime,data=ordered 0 0
 /dev/mapper/home /home ext3 rw,relatime,data=ordered 0 0
 binfmt_misc /proc/sys/fs/binfmt_misc binfmt_misc rw,relatime 0 0
 tmpfs /run/user/1000 tmpfs rw,nosuid,nodev,relatime,size=806668k,mode=700,uid=1000,gid=1000 0 0
