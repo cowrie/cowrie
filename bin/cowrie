@@ -40,14 +40,13 @@ cowrie_status() {
 
 cowrie_start() {
     # Start Cowrie
-    XARGS=$*
-    activate_venv "cowrie-env"
-    echo "Starting cowrie with extra arguments [$XARGS] ..."
+    activate_venv "${COWRIE_VENV:-cowrie-env}"
+    echo "Starting cowrie with extra arguments [$@] ..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then
-        twistd $XARGS -l ${LOGFILE} --umask ${UMASK} --pidfile ${PIDFILE} cowrie
+        twistd "$@" -l ${LOGFILE} --umask ${UMASK} --pidfile ${PIDFILE} cowrie
     else
-        authbind --deep twistd $XARGS -l ${LOGFILE} --umask ${UMASK} --pidfile ${PIDFILE} cowrie
+        authbind --deep twistd "$@" -l ${LOGFILE} --umask ${UMASK} --pidfile ${PIDFILE} cowrie
     fi
 }
 
@@ -86,17 +85,17 @@ key=$1
 shift 1
 case $key in
     stop)
-        cowrie_stop $*
+        cowrie_stop "$@"
         ;;
     start)
-        cowrie_start $*
+        cowrie_start "$@"
         ;;
     status)
-        cowrie_status $*
+        cowrie_status "$@"
         ;;
     restart)
         cowrie_stop
-        cowrie_start $*
+        cowrie_start "$@"
         ;;
     *)
         cowrie_usage
