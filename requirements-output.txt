@@ -1,0 +1,20 @@
+# output_csirtg:
+csirtgsdk>=0.0.0a6 # Specify version because pip won't install pre-release versions by default
+
+# output_dshield:
+requests
+
+# output_elasticsearch
+pyes
+
+# output_mysql
+MySQL-python
+
+# output_rethinkdblog
+rethinkdb
+
+# output_slack
+slackclient
+
+# output_splunklegacy
+splunk-sdk
