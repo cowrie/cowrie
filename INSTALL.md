@@ -151,20 +151,12 @@ $ sudo chmod 770 /etc/authbind/byport/23
 On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf
 ```
 [program:cowrie]
-command=/home/cowrie/cowrie/start.sh cowrie-env
+command=/home/cowrie/cowrie/bin/cowrie start -n
 directory=/home/cowrie/cowrie/
 user=cowrie
 autorestart=true
 redirect_stderr=true
 ```
-Update the start.sh script, change:
- ```
- DAEMONIZE=""
- ```
- to:
- ```
- DAEMONIZE="-n"
- ```
 
 ## Troubleshooting
 
