@@ -18,6 +18,12 @@
 First we install support for Python virtual environments and other dependencies.
 The actual Python packages are installed later.
 
+On Ubuntu based systems (tested on Ubuntu 14.04 and 16.04, 2016-12-28):
+```
+$ sudo apt-get install git python-virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal
+```
+Note: On Ubuntu 16.04 and later, the virtualenv package exists, but it will install the Python 3 version while Cowrie requires Python 2.
+
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
 $ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal
@@ -102,10 +108,10 @@ $ cd ..
 If you use a virtual environment and it uses the default name of
 'cowrie-env' it will be activated automatically.
 
-If you use another virtual environment activate it first:
+If you use another virtual environment, set the COWRIE_VENV environment variable to the name of the virtual environment:
 
 ```
-$ source venv/bin/activate
+$ export COWRIE_VENV=your-venv-name
 ```
 
 To start Cowrie:
