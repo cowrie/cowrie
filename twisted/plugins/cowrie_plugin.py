@@ -136,6 +136,9 @@ class CowrieServiceMaker(object):
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg("Loaded output engine: {}".format(engine))
+            except ImportError as e:
+                log.err("Failed to load output engine: {} due to ImportError: {}".format(engine, e))
+                log.msg("Please install the dependencies for {} listed in requirements-output.txt".format(engine))
             except Exception:
                 log.err()
                 log.msg("Failed to load output engine: {}".format(engine))
