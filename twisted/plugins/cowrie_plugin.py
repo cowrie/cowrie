@@ -66,8 +66,8 @@ class Options(usage.Options):
 def importFailureObserver(event):
     if 'failure' in event and event['failure'].type is ImportError:
         log.err("ERROR: %s. Please run `pip install -U -r requirements.txt` "
-                "from Cowrie's install directory (and virtualenv if used) to "
-                "install the new dependency" % event['failure'].value.message)
+                "from Cowrie's install directory and virtualenv to install "
+                "the new dependency" % event['failure'].value.message)
 
 
 globalLogPublisher.addObserver(importFailureObserver)
