@@ -1,0 +1,20 @@
+# csirtg
+csirtgsdk>=0.0.0a6 # Specify version because pip won't install pre-release versions by default
+
+# dshield
+requests
+
+# elasticsearch
+pyes
+
+# mysql
+MySQL-python
+
+# rethinkdblog
+rethinkdb
+
+# slack
+slackclient
+
+# splunklegacy
+splunk-sdk

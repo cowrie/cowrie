@@ -7,4 +7,3 @@ service_identity
 pycrypto
 python-dateutil
 tftpy
-csirtgsdk
