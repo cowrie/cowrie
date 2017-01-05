@@ -138,6 +138,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         return 'Discard'
 
+    def telnet_Command(self, command):
+        self.transport.protocol.dataReceived(command+'\r')
+        return "Command"
+
     def _cbLogin(self, ial):
         """
         Fired on a successful login
