@@ -22,6 +22,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     stdinlogOpen = False
     ttylogOpen = False
+    redirlogOpen = False  # it will be set at core/protocol.py
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
@@ -30,6 +31,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.ttylogPath = cfg.get('honeypot', 'log_path')
         self.downloadPath = cfg.get('honeypot', 'download_path')
+
+        self.redirlogFile = None  # it will be set at core/protocol.py
 
         try:
             self.bytesReceivedLimit = int(cfg.get('honeypot',
@@ -149,6 +152,26 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 pass
             finally:
                 self.stdinlogOpen = False
+
+        if self.redirlogOpen:
+            try:
+                with open(self.redirlogFile, 'rb') as f:
+                    shasum = hashlib.sha256(f.read()).hexdigest()
+                    shasumfile = self.downloadPath + "/" + shasum
+                    if (os.path.exists(shasumfile)):
+                        os.remove(self.redirlogFile)
+                    else:
+                        os.rename(self.redirlogFile, shasumfile)
+                    os.symlink(shasum, self.redirlogFile)
+                log.msg(eventid='cowrie.session.file_download',
+                        format='Saved redir contents to %(outfile)s',
+                        url='redir',
+                        outfile=shasumfile,
+                        shasum=shasum)
+            except IOError as e:
+                pass
+            finally:
+                self.redirlogOpen = False
 
         if self.ttylogOpen:
             # TODO: Add session duration to this entry

@@ -195,6 +195,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
+        # don't save redir content if we deal with ExecProtocol (data will be saved as stdin)
+        if not isinstance(self, HoneyPotExecProtocol):
+            if hasattr(obj, 'safeoutfile'):
+                self.terminal.redirlogOpen = True
+                self.terminal.redirlogFile = obj.safeoutfile
         self.pp.outConnectionLost()
 
 
