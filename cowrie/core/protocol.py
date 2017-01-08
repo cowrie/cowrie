@@ -195,7 +195,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
-        self.pp.outConnectionLost()
+        if self.pp:
+            self.pp.outConnectionLost()
 
 
     def uptime(self):
