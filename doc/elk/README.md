@@ -65,3 +65,9 @@ http://<hostname>:9200/_search?q=cowrie&size=5
 
 * If this gives output, your data is correctly loaded into ElasticSearch
 
+## How to process old logs
+
+* A lot of people have trouble to send previously generated logs into Logstash. 
+
+Refer to [this](https://github.com/auyer/TCP-Log-Sender-logstash) GitHub project to a very simple Python program that sends the Logs line-by-line over TCP to a Local Logstash:
+[github.com/auyer/TCP-Log-Sender-logstash](https://github.com/auyer/TCP-Log-Sender-logstash)
