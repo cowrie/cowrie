@@ -86,8 +86,7 @@ class Output(cowrie.core.output.Output):
             base64.b64decode(self.auth_key), hashlib.sha256).digest())
         auth_header = 'credentials={0} nonce={1} userid={2}'.format(digest, _nonceb64, self.userid)
         headers = {'X-ISC-Authorization': auth_header,
-                  'Content-Type':'text/plain',
-                  'Content-Length': str(len(log_output))}
+                  'Content-Type':'text/plain'}
         #log.msg(headers)
 
         if self.debug:
