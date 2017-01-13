@@ -78,6 +78,55 @@ http://<hostname>:9200/_search?q=cowrie&size=5
 
 * When you successfully configured logstash, remove "file" and "stdout" blocks from output section of logstash configuration.
 
+## Distributed setup of sensors or multiple sensors on the same host
+
+ If you have multiple sensors, you will need to setup up FileBeat to feed logstash with logs from all sensors
+ 
+ On the logstash server:
+ 
+ * Change "input" section of the logstash to the following:
+ 
+ ```
+ input {
+    beats {
+        port => 5044
+    }
+ }
+ ```
+ 
+ On the sensor servers:
+ 
+ * Install filebeat
+ ```
+ wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+ echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
+ apt-get update
+ apt-get install filebeat
+ ```
+ 
+ * Enable autorun for it
+ ```
+ update-rc.d filebeat defaults 95 10
+ ```
+
+ * Configure filebeat
+ 
+ ```
+ cp filebeat-cowrie.conf /etc/filebeat/filebeat.yml
+ ```
+
+ * Check the following parameters
+ ```
+ paths - path to cowrie's json logs
+ logstash - check ip of the logstash host
+ ```
+ 
+ * Start filebeat
+ 
+ ```
+ service filebeat start
+ ``` 
+
 ## Tuning ELK stack
 
 * Refer to elastic's documentation about proper configuration of the system for the best elasticsearch's performance
