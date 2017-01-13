@@ -37,6 +37,25 @@ update-rc.d kibana defaults 95 10
 
 TBD
 
+## Kibana Configuration
+
+* Make a folder for logs
+
+```
+mkdir /var/log/kibana
+chown kibana:kibana /var/log/kibana
+```
+
+* Change the following parameters in /etc/kibana/kibana.yml to reflect your server setup:
+
+```
+"server.host"  - set it to "localhost" if you use nginx for basic authentication or external interface if you use XPack (see below)
+"server.name" - name of the server
+"elasticsearch.url" - address of the elasticsearch
+"elasticsearch.username", "elasticsearch.password" - needed only if you use XPack (see below)
+"logging.dest" - set path to logs (/var/log/kibana/kibana.log)
+```
+
 ## Logstash Configuration
 
 * Download GeoIP data
