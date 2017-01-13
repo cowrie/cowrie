@@ -150,4 +150,4 @@ http://<hostname>:9200/_search?q=cowrie&size=5
 
 * Refer to elastic's documentation about proper configuration of the system for the best elasticsearch's performance
 
-* You may avoid installing nginx for restricting access to the kibana by installing official elastic's plugin called "XPack" 
+* You may avoid installing nginx for restricting access to the kibana by installing official elastic's plugin called "XPack" (https://www.elastic.co/products/x-pack) 
