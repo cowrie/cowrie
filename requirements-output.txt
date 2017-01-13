@@ -10,6 +10,9 @@ pyes
 # mysql
 MySQL-python
 
+# mongodb
+pymongo
+
 # rethinkdblog
 rethinkdb
 
