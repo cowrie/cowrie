@@ -23,6 +23,13 @@ class Output(cowrie.core.output.Output):
             print e
             # ToDo Log me here
 
+    def update_one(self, collection, session, doc):
+        try:
+            object_id = collection.update({'session': session}, {"set": doc})
+            return object_id
+        except Exception as e:
+            print e
+            # ToDo Log me here
 
     def start(self):
         """
@@ -66,12 +73,17 @@ class Output(cowrie.core.output.Output):
 
         if eventid == 'cowrie.session.connect':
             # Check if sensor exists, else add it.
-            row = self.col_sensors.find_one({'sensor': self.sensor})
-            if row:
-                sensorid = row['sensor']
+            doc = self.col_sensors.find_one({'sensor': self.sensor})
+            if doc:
+                sensorid = doc['sensor']
             else:
                 sensorid = self.insert_one(self.col_sensors, entry)
 
+            # Prep extra elements just to make django happy later on
+            entry['starttime'] = entry['timestamp']
+            entry['endtime'] = None
+            entry['sshversion'] = None
+            entry['termsize'] = None
             # Add the session
             self.insert_one(self.col_sessions, entry)
 
@@ -86,26 +98,38 @@ class Output(cowrie.core.output.Output):
             # we will add an option to set max size, if its 16mb or less we can store as normal,
             # If over 16 either fail or we just use gridfs both are simple enough.
             self.insert_one(self.col_downloads, entry)
-            self.insert_one(self.col_input, entry)
 
         elif eventid == 'cowrie.client.version':
-            row = self.col_clients.find_one({'version': entry['version']})
-            if row:
-                pass
-                # ToDo: add version to session
+            doc = self.col_sessions.find_one({'session': entry['session']})
+            if doc:
+                doc['sshversion'] = entry['version']
+                self.update_one(self.col_sessions, entry['session'], doc)
             else:
-                self.insert_one(self.col_clients, entry)
+                pass
 
         elif eventid == 'cowrie.client.size':
-            # ToDo add term size to session
-            pass
+            doc = self.col_sessions.find_one({'session': entry['session']})
+            log.msg(entry)
+            log.msg(doc)
+            if doc:
+                doc['termsize'] = '{0}x{1}'.format(entry['width'], entry['height'])
+                self.update_one(self.col_sessions, entry['session'], doc)
+            else:
+                pass
 
         elif eventid == 'cowrie.session.closed':
-            # ToDo update session add endtime
-            pass
+            doc = self.col_sessions.find_one({'session': entry['session']})
+            if doc:
+                doc['endtime'] = entry['timestamp']
+                self.update_one(self.col_sessions, entry['session'], doc)
+            else:
+                pass
 
         elif eventid == 'cowrie.log.closed':
-            # ToDo add a config section and offer to store the tty in the db - useful for central logging
+            # ToDo Compress to opimise the space and if your sending to remote db
+            with open(entry["ttylog"]) as ttylog:
+                entry['ttylogpath'] = entry['ttylog']
+                entry['ttylog'] = ttylog.read().encode('hex')
             self.insert_one(self.col_ttylog, entry)
 
         elif eventid == 'cowrie.client.fingerprint':
