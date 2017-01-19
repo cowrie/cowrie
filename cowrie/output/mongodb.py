@@ -20,16 +20,14 @@ class Output(cowrie.core.output.Output):
             object_id = collection.insert_one(event).inserted_id
             return object_id
         except Exception as e:
-            print e
-            # ToDo Log me here
+            log.msg('mongo error - {0}'.format(e))
 
     def update_one(self, collection, session, doc):
         try:
-            object_id = collection.update({'session': session}, {"set": doc})
+            object_id = collection.update({'session': session}, doc)
             return object_id
         except Exception as e:
-            print e
-            # ToDo Log me here
+            log.msg('mongo error - {0}'.format(e))
 
     def start(self):
         """
@@ -50,7 +48,7 @@ class Output(cowrie.core.output.Output):
             self.col_clients = self.mongo_db['clients']
             self.col_ttylog = self.mongo_db['ttylog']
             self.col_keyfingerprints = self.mongo_db['keyfingerprints']
-            self.coll = self.mongo_db['events']
+            self.col_event = self.mongo_db['event']
         except Exception, e:
             log.msg('output_mongodb: Error: %s' % str(e))
 
@@ -84,7 +82,7 @@ class Output(cowrie.core.output.Output):
             entry['endtime'] = None
             entry['sshversion'] = None
             entry['termsize'] = None
-            # Add the session
+            log.msg('Session Created')
             self.insert_one(self.col_sessions, entry)
 
         elif eventid in ['cowrie.login.success', 'cowrie.login.failed']:
@@ -109,8 +107,6 @@ class Output(cowrie.core.output.Output):
 
         elif eventid == 'cowrie.client.size':
             doc = self.col_sessions.find_one({'session': entry['session']})
-            log.msg(entry)
-            log.msg(doc)
             if doc:
                 doc['termsize'] = '{0}x{1}'.format(entry['width'], entry['height'])
                 self.update_one(self.col_sessions, entry['session'], doc)
@@ -134,3 +130,7 @@ class Output(cowrie.core.output.Output):
 
         elif eventid == 'cowrie.client.fingerprint':
             self.insert_one(self.col_keyfingerprints, entry)
+
+        # Catch any other event types
+        else:
+            self.insert_one(self.col_event, entry)
