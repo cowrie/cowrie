@@ -180,15 +180,17 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         if opt == ECHO:
             return True
         elif opt == SGA:
-            return True
+            return False
+            #return True
         else:
             return False
 
 
     def enableRemote(self, opt):
         if opt == LINEMODE:
-            self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
-            return True
+            return False
+            #self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
+            #return True
         elif opt == NAWS:
             return True
         elif opt == SGA:
