@@ -180,6 +180,14 @@ class HoneyPotShell(object):
             try:
                 tok = self.lexer.get_token()
                 # log.msg( "tok: %s" % (repr(tok)) )
+
+                # Ignore parentheses
+                tok_len = len(tok)
+                tok = tok.strip('(')
+                tok = tok.strip(')')
+                if len(tok) != tok_len and tok == '':
+                    continue
+
                 if tok == self.lexer.eof:
                     if len(tokens):
                         self.cmdpending.append((tokens))
