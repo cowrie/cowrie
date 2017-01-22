@@ -112,8 +112,9 @@ class HoneyPotCommand(object):
         """
         try:
             self.protocol.cmdstack.pop()
-            self.protocol.cmdstack[-1].resume()
-        except AttributeError:
+            if len(self.protocol.cmdstack):
+                self.protocol.cmdstack[-1].resume()
+        except (AttributeError, IndexError):
             # Cmdstack could be gone already (wget + disconnect)
             pass
 
