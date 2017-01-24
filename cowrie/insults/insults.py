@@ -31,6 +31,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogPath = cfg.get('honeypot', 'log_path')
         self.downloadPath = cfg.get('honeypot', 'download_path')
 
+        self.redirFiles = set()
+
         try:
             self.bytesReceivedLimit = int(cfg.get('honeypot',
                 'download_limit_size'))
@@ -134,8 +136,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
             try:
                 with open(self.stdinlogFile, 'rb') as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = self.downloadPath + "/" + shasum
-                    if (os.path.exists(shasumfile)):
+                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    if os.path.exists(shasumfile):
                         os.remove(self.stdinlogFile)
                     else:
                         os.rename(self.stdinlogFile, shasumfile)
@@ -149,6 +151,32 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 pass
             finally:
                 self.stdinlogOpen = False
+
+        if self.redirFiles:
+            for f in self.redirFiles:
+                try:
+                    if not os.path.exists(f):
+                        continue
+
+                    if os.path.getsize(f) == 0:
+                        os.remove(f)
+                        continue
+
+                    shasum = hashlib.sha256(open(f, 'rb').read()).hexdigest()
+                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    if os.path.exists(shasumfile):
+                        os.remove(f)
+                    else:
+                        os.rename(f, shasumfile)
+                    os.symlink(shasum, f)
+                    log.msg(eventid='cowrie.session.file_download',
+                            format='Saved redir contents to %(outfile)s',
+                            url='redir',
+                            outfile=shasumfile,
+                            shasum=shasum)
+                except IOError:
+                    pass
+            self.redirFiles.clear()
 
         if self.ttylogOpen:
             # TODO: Add session duration to this entry
