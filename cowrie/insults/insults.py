@@ -139,6 +139,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     shasumfile = os.path.join(self.downloadPath, shasum)
                     if os.path.exists(shasumfile):
                         os.remove(self.stdinlogFile)
+                        log.msg("Not storing duplicate content " + shasum)
                     else:
                         os.rename(self.stdinlogFile, shasumfile)
                     os.symlink(shasum, self.stdinlogFile)
@@ -153,22 +154,24 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlogOpen = False
 
         if self.redirFiles:
-            for f in self.redirFiles:
+            for rf in self.redirFiles:
                 try:
-                    if not os.path.exists(f):
+                    if not os.path.exists(rf):
                         continue
 
-                    if os.path.getsize(f) == 0:
-                        os.remove(f)
+                    if os.path.getsize(rf) == 0:
+                        os.remove(rf)
                         continue
 
-                    shasum = hashlib.sha256(open(f, 'rb').read()).hexdigest()
-                    shasumfile = os.path.join(self.downloadPath, shasum)
-                    if os.path.exists(shasumfile):
-                        os.remove(f)
-                    else:
-                        os.rename(f, shasumfile)
-                    os.symlink(shasum, f)
+                    with open(rf, 'rb') as f:
+                        shasum = hashlib.sha256(f.read()).hexdigest()
+                        shasumfile = os.path.join(self.downloadPath, shasum)
+                        if os.path.exists(shasumfile):
+                            os.remove(rf)
+                            log.msg("Not storing duplicate content " + shasum)
+                        else:
+                            os.rename(rf, shasumfile)
+                        os.symlink(shasum, rf)
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
                             url='redir',
