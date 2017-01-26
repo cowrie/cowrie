@@ -42,7 +42,7 @@ class HoneyPotCommand(object):
                 index = self.args.index('>')
                 b_append = False
             self.outfile = self.fs.resolve_path(str(self.args[(index + 1)]), self.protocol.cwd)
-            del self.args[index:index+1]
+            del self.args[index:]
             p = self.fs.getfile(self.outfile)
             if not p or not p[fs.A_REALFILE] or p[fs.A_REALFILE].startswith('honeyfs') or not b_append:
                 self.safeoutfile = '%s/%s-%s-%s-redir_%s' % (
