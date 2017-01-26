@@ -121,7 +121,7 @@ class command_wget(HoneyPotCommand):
 
         self.download_path = cfg.get('honeypot', 'download_path')
 
-        if not self.safeoutfile:
+        if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s' % (time.strftime('%Y%m%d%H%M%S'), re.sub('[^A-Za-z0-9]', '_', url))
             self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
