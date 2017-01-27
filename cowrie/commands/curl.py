@@ -93,7 +93,11 @@ class command_curl(HoneyPotCommand):
         self.download_path = cfg.get('honeypot', 'download_path')
 
         if not hasattr(self, 'safeoutfile'):
-            tmp_fname = '%s_%s' % (time.strftime('%Y%m%d%H%M%S'), re.sub('[^A-Za-z0-9]', '_', url))
+            tmp_fname = '%s_%s_%s_%s' % \
+                        (time.strftime('%Y%m%d%H%M%S'),
+                         self.protocol.getProtoTransport().transportId,
+                         self.protocol.terminal.transport.session.id,
+                         re.sub('[^A-Za-z0-9]', '_', url))
             self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
         self.deferred = self.download(url, outfile, self.safeoutfile)
