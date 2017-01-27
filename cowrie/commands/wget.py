@@ -142,6 +142,9 @@ class command_wget(HoneyPotCommand):
             path = parsed.path or '/'
             if scheme != 'http' and scheme != 'https':
                 raise NotImplementedError
+            if not host:
+                self.exit()
+                return None
         except:
             self.write('%s: Unsupported scheme.\n' % (url,))
             self.exit()
