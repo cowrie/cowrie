@@ -124,9 +124,8 @@ class command_grep(HoneyPotCommand):
 
 
 commands['/bin/grep'] = command_grep
-commands['/usr/bin/grep'] = command_grep
-commands['/usr/bin/egrep'] = command_grep
-commands['/usr/bin/fgrep'] = command_grep
+commands['/bin/egrep'] = command_grep
+commands['/bin/fgrep'] = command_grep
 
 
 class command_tail(HoneyPotCommand):
