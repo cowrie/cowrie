@@ -56,7 +56,11 @@ class command_tftp(HoneyPotCommand):
 
         self.download_path = cfg.get('honeypot', 'download_path')
 
-        tmp_fname = '%s_%s' % (time.strftime('%Y%m%d%H%M%S'), re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
+        tmp_fname = '%s_%s_%s_%s' % \
+                    (time.strftime('%Y%m%d%H%M%S'),
+                     self.protocol.getProtoTransport().transportId,
+                     self.protocol.terminal.transport.session.id,
+                     re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
         self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
         try:
@@ -90,8 +94,6 @@ class command_tftp(HoneyPotCommand):
                             shasum=shasum)
 
                     # Link friendly name to hash
-                    os.symlink(shasum, self.safeoutfile)
-
                     os.symlink(shasum, self.safeoutfile)
 
                     # Update the honeyfs to point to downloaded file
