@@ -101,6 +101,9 @@ class command_tftp(HoneyPotCommand):
                     f[A_REALFILE] = hash_path
 
         except tftpy.TftpException, err:
+            if os.path.exists(self.safeoutfile):
+                if os.path.getsize(self.safeoutfile) == 0:
+                    os.remove(self.safeoutfile)
             return
 
         except KeyboardInterrupt:
