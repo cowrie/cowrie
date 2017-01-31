@@ -121,10 +121,14 @@ class command_wget(HoneyPotCommand):
 
         self.download_path = cfg.get('honeypot', 'download_path')
 
-        self.safeoutfile = '%s/%s_%s' % \
-            (self.download_path,
-            time.strftime('%Y%m%d%H%M%S'),
-            re.sub('[^A-Za-z0-9]', '_', url))
+        if not hasattr(self, 'safeoutfile'):
+            tmp_fname = '%s_%s_%s_%s' % \
+                        (time.strftime('%Y%m%d%H%M%S'),
+                         self.protocol.getProtoTransport().transportId,
+                         self.protocol.terminal.transport.session.id,
+                         re.sub('[^A-Za-z0-9]', '_', url))
+            self.safeoutfile = os.path.join(self.download_path, tmp_fname)
+
         self.deferred = self.download(url, outfile, self.safeoutfile)
         if self.deferred:
             self.deferred.addCallback(self.success, outfile)
@@ -188,8 +192,9 @@ class command_wget(HoneyPotCommand):
             log.msg("there's no file " + self.safeoutfile)
             self.exit()
 
-        shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
-        hash_path = '%s/%s' % (self.download_path, shasum)
+        with open(self.safeoutfile, 'rb') as f:
+            shasum = hashlib.sha256(f.read()).hexdigest()
+        hash_path = os.path.join(self.download_path, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hash_path):
@@ -211,10 +216,10 @@ class command_wget(HoneyPotCommand):
                 shasum=shasum)
 
         # Link friendly name to hash
-        os.symlink( shasum, self.safeoutfile )
+        os.symlink(shasum, self.safeoutfile)
 
         # FIXME: is this necessary?
-        self.safeoutfile = hash_path
+        # self.safeoutfile = hash_path
 
         # Update the honeyfs to point to downloaded file
         f = self.fs.getfile(outfile)
