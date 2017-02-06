@@ -450,3 +450,10 @@ logfile = log/cowrie.json
 #feed=scanners
 #description=random scanning activity
 #token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+# ZMQ Zyre output module
+# https://github.com/zeromq/zyre
+# this attaches cowrie to a p2p mesh and dumps data to it's peers
+#[output_zyre]
+#interface=tap0
+#group=ZYRE

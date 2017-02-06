@@ -1,3 +1,6 @@
+.idea
+.vagrant.d
+docker
 cowrie.cfg
 cowrie.pid
 data/lastlog.txt
