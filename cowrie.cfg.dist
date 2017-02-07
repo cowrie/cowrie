@@ -283,13 +283,6 @@ enabled = false
 #signal_clientversion = cowrie-events
 #debug=true
 
-# Slack Logging
-# Log to an slack channel.
-#
-#[database_slack]
-#channel = channel_that_events_should_be_posted_in
-#token = slack_token_for_your_bot
-#debug=true
 
 
 # ============================================================================
