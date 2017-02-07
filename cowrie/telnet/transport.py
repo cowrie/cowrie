@@ -138,6 +138,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         return 'Discard'
 
+    def telnet_Command(self, command):
+        self.transport.protocol.dataReceived(command+'\r')
+        return "Command"
+
     def _cbLogin(self, ial):
         """
         Fired on a successful login
@@ -176,15 +180,17 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         if opt == ECHO:
             return True
         elif opt == SGA:
-            return True
+            return False
+            #return True
         else:
             return False
 
 
     def enableRemote(self, opt):
         if opt == LINEMODE:
-            self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
-            return True
+            return False
+            #self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
+            #return True
         elif opt == NAWS:
             return True
         elif opt == SGA:

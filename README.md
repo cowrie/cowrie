@@ -35,14 +35,9 @@ Additional functionality over standard kippo:
 Software required:
 
 * Python 2.7+, (Python 3 not yet supported due to Twisted dependencies)
-* Zope Interface 3.6.0+
-* Twisted 12.0+
-* python-crypto
-* python-cryptography
-* python-pyasn1
-* python-gmpy2 (recommended)
-* python-mysqldb (for MySQL output)
-* python-OpenSSL
+* python-virtualenv
+
+For Python dependencies, see requirements.txt
 
 ## Files of interest:
 

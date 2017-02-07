@@ -195,7 +195,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
-        self.pp.outConnectionLost()
+        if hasattr(obj, 'safeoutfile'):
+            if obj.safeoutfile:
+                self.terminal.redirFiles.add(obj.safeoutfile)
+        if self.pp:
+            self.pp.outConnectionLost()
 
 
     def uptime(self):
@@ -352,19 +356,22 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def handle_CTRL_C(self):
         """
         """
-        self.cmdstack[-1].handle_CTRL_C()
+        if len(self.cmdstack):
+            self.cmdstack[-1].handle_CTRL_C()
 
 
     def handle_CTRL_D(self):
         """
         """
-        self.cmdstack[-1].handle_CTRL_D()
+        if len(self.cmdstack):
+            self.cmdstack[-1].handle_CTRL_D()
 
 
     def handle_TAB(self):
         """
         """
-        self.cmdstack[-1].handle_TAB()
+        if len(self.cmdstack):
+            self.cmdstack[-1].handle_TAB()
 
 
     def handle_CTRL_K(self):
