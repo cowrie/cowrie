@@ -314,8 +314,9 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             log.msg("there's no file " + self.safeoutfile)
             self.exit()
 
-        shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
-        hashPath = os.path.join(self.download_path, shasum)
+        with open(self.safeoutfile, 'rb') as f:
+            shasum = hashlib.sha256(f.read()).hexdigest()
+            hashPath = os.path.join(self.download_path, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hashPath):
@@ -323,12 +324,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         else:
             os.remove(self.safeoutfile)
             log.msg("Not storing duplicate content " + shasum)
-
-        self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                  format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                                  url=self.url,
-                                  outfile=hashPath,
-                                  shasum=shasum)
 
         log.msg(eventid='cowrie.session.file_download',
                 format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
@@ -343,9 +338,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         # self.safeoutfile = hashPath
 
         # Update the honeyfs to point to downloaded file
-        if outfile is not None:
-            f = self.fs.getfile(outfile)
-            f[A_REALFILE] = hashPath
+        self.fs.update_realfile(self.fs.getfile(outfile), hashPath)
         self.exit()
 
 
