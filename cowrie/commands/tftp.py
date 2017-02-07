@@ -87,9 +87,11 @@ class command_tftp(HoneyPotCommand):
                         os.remove(self.safeoutfile)
                         log.msg("Not storing duplicate content " + shasum)
 
+                    url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
+
                     log.msg(eventid='cowrie.session.file_download',
                             format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                            url=self.file_to_get,
+                            url=url,
                             outfile=hash_path,
                             shasum=shasum)
 
