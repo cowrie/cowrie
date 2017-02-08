@@ -74,7 +74,13 @@ class command_busybox(HoneyPotCommand):
                     input=line,
                     format='Command found: %(input)s')
             command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[1:],self.input_data,None)
-            self.protocol.pp.insert_command(command)
+            # Workaround for the issue: #352
+            # https://github.com/fe7ch/cowrie/commit/9b33509
+            # For an unknown reason inserted command won't be invoked later, if it's followed by an invalid command
+            # so lets just call the command in question
+            # self.protocol.pp.insert_command(command)
+            self.protocol.call_command(command, cmdclass, *self.args[1:])
+
             # Place this here so it doesn't write out only if last statement
 
             if self.input_data:
