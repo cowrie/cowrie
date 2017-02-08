@@ -48,7 +48,6 @@ class command_tftp(HoneyPotCommand):
         """
         """
         progresshook = Progress(self).progresshook
-        tclient = tftpy.TftpClient(self.hostname, int(self.port))
         cfg = self.protocol.cfg
 
         if cfg.has_option('honeypot', 'download_limit_size'):
@@ -63,51 +62,52 @@ class command_tftp(HoneyPotCommand):
                      re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
         self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
-        try:
-            tclient.download(self.file_to_get, self.safeoutfile, progresshook)
-            self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
-            self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
-            self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
+        with tftpy.TftpClient(self.hostname, int(self.port)) as tclient:
+            try:
+                tclient.download(self.file_to_get, self.safeoutfile, progresshook)
+                self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
+                if hasattr(tclient.context, 'metrics'):
+                    self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
+                else:
+                    self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
+                self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
+            except tftpy.TftpException, err:
+                pass
 
-            if os.path.exists(self.safeoutfile):
+        if os.path.exists(self.safeoutfile):
 
-                if os.path.getsize(self.safeoutfile) == 0:
-                    os.remove(self.safeoutfile)
-                    self.safeoutfile = None
-                    return
+            if os.path.getsize(self.safeoutfile) == 0:
+                os.remove(self.safeoutfile)
+                self.safeoutfile = None
+                return
 
-                with open(self.safeoutfile, 'rb') as f:
-                    shasum = hashlib.sha256(f.read()).hexdigest()
-                    hash_path = os.path.join(self.download_path, shasum)
+            with open(self.safeoutfile, 'rb') as f:
+                shasum = hashlib.sha256(f.read()).hexdigest()
+                hash_path = os.path.join(self.download_path, shasum)
 
-                    # If we have content already, delete temp file
-                    if not os.path.exists(hash_path):
-                        os.rename(self.safeoutfile, hash_path)
-                    else:
-                        os.remove(self.safeoutfile)
-                        log.msg("Not storing duplicate content " + shasum)
+            # If we have content already, delete temp file
+            if not os.path.exists(hash_path):
+                os.rename(self.safeoutfile, hash_path)
+            else:
+                os.remove(self.safeoutfile)
+                log.msg("Not storing duplicate content " + shasum)
 
-                    log.msg(eventid='cowrie.session.file_download',
-                            format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                            url=self.file_to_get,
-                            outfile=hash_path,
-                            shasum=shasum)
+            url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
 
-                    # Link friendly name to hash
-                    os.symlink(shasum, self.safeoutfile)
+            log.msg(eventid='cowrie.session.file_download',
+                    format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                    url=url,
+                    outfile=hash_path,
+                    shasum=shasum)
 
-                    # Update the honeyfs to point to downloaded file
-                    f = self.fs.getfile(self.file_to_get)
-                    f[A_REALFILE] = hash_path
+            # Link friendly name to hash
+            os.symlink(shasum, self.safeoutfile)
 
-        except tftpy.TftpException, err:
-            if os.path.exists(self.safeoutfile):
-                if os.path.getsize(self.safeoutfile) == 0:
-                    os.remove(self.safeoutfile)
-            return
+            # Update the honeyfs to point to downloaded file
+            f = self.fs.getfile(self.file_to_get)
+            f[A_REALFILE] = hash_path
 
-        except KeyboardInterrupt:
-            pass
+
 
 
     def start(self):
