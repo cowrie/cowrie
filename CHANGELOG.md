@@ -1,4 +1,5 @@
 
+* 2017-02-12 Implemented toggle for SSH forwarding
 * 2016-08-22 Merged Telnet support by @obilodeau!
 * 2016-08-20 Update your libraries! 'configparser' now required: "pip install configparser"
 * 2016-05-06 Load pickle once at startup for improved speed
