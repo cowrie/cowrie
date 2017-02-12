@@ -238,6 +238,9 @@ forward_redirect_587 = 127.0.0.1:12525
 # Enable SSH support, enabled by default
 enabled = true
 
+# Enable SSH direct-tcpip forwarding, enabled by default
+forwarding = true
+
 # ============================================================================
 # Telnet Specific Options
 # ============================================================================

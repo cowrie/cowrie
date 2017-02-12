@@ -7,7 +7,6 @@ This module contains ...
 
 from zope.interface import implementer
 
-import twisted
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
 from twisted.conch.ssh import filetransfer as conchfiletransfer
@@ -30,9 +29,7 @@ class CowrieUser(avatar.ConchUser):
         self.server = server
         self.cfg = self.server.cfg
 
-        self.channelLookup.update(
-            {"session": session.HoneyPotSSHSession,
-             "direct-tcpip": forwarding.cowrieOpenConnectForwardingClient})
+        self.channelLookup['session'] = session.HoneyPotSSHSession
 
         try:
             pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
@@ -49,6 +46,14 @@ class CowrieUser(avatar.ConchUser):
             if self.cfg.getboolean('honeypot', 'sftp_enabled') == True:
                 self.subsystemLookup['sftp'] = conchfiletransfer.FileTransferServer
         except ValueError as e:
+            pass
+
+        # SSH forwarding disabled only when option is explicitly set
+        self.channelLookup['direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
+        try:
+            if self.cfg.getboolean('ssh', 'forwarding') == False:
+                del self.channelLookup['direct-tcpip']
+        except:
             pass
 
 
