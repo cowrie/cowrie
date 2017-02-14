@@ -401,7 +401,7 @@ logfile = log/cowrie.json
 #index = cowrie
 
 
-# Splunk HTTP Event Collector (HEC) output module 
+# Splunk HTTP Event Collector (HEC) output module
 # Sends JSON directly to Splunk over HTTPS
 # mandatory fields: url, token
 # optional fields: index, source, sourcetype, host
