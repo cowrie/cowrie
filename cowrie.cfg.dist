@@ -86,7 +86,7 @@ txtcmds_path = txtcmds
 # TTY logging will log a transcript of the complete terminal interaction in UML
 # compatible format.
 # (default: true)
-ttylog_enabled = true
+ttylog = true
 
 
 
