@@ -104,6 +104,7 @@ Download a file via FTP
         result = self.ftp_download(self.safeoutfile)
 
         if not result:
+            self.safeoutfile = None
             self.exit()
             return
 
@@ -112,15 +113,16 @@ Download a file via FTP
             self.exit()
             return
 
-        shasum = hashlib.sha256(open(self.safeoutfile, 'rb').read()).hexdigest()
-        hash_path = os.path.join(self.download_path, shasum)
+        with open(self.safeoutfile, 'rb') as f:
+            shasum = hashlib.sha256(f.read()).hexdigest()
+            hash_path = os.path.join(self.download_path, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hash_path):
             os.rename(self.safeoutfile, hash_path)
         else:
             os.remove(self.safeoutfile)
-        os.symlink( shasum, self.safeoutfile )
+            log.msg("Not storing duplicate content " + shasum)
 
         log.msg(eventid='cowrie.session.file_download',
                 format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
@@ -128,10 +130,13 @@ Download a file via FTP
                 outfile=hash_path,
                 shasum=shasum)
 
-        # Update the honeyfs to point to downloaded file
-        self.fs.mkfile(fakeoutfile, 0, 0, os.path.getsize(hash_path), 33188)
-        self.fs.update_realfile(self.fs.getfile(fakeoutfile), hash_path)
+        # Link friendly name to hash
+        os.symlink(shasum, self.safeoutfile)
 
+        self.safeoutfile = None
+
+        # Update the honeyfs to point to downloaded file
+        self.fs.update_realfile(self.fs.getfile(fakeoutfile), hash_path)
         self.exit()
 
     def ftp_download(self, safeoutfile):

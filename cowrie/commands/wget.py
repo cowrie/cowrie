@@ -194,7 +194,7 @@ class command_wget(HoneyPotCommand):
 
         with open(self.safeoutfile, 'rb') as f:
             shasum = hashlib.sha256(f.read()).hexdigest()
-        hash_path = os.path.join(self.download_path, shasum)
+            hash_path = os.path.join(self.download_path, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hash_path):
@@ -204,10 +204,10 @@ class command_wget(HoneyPotCommand):
             log.msg("Not storing duplicate content " + shasum)
 
         self.protocol.logDispatch(eventid='cowrie.session.file_download',
-            format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-            url=self.url,
-            outfile=hash_path,
-            shasum=shasum )
+                                  format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                                  url=self.url,
+                                  outfile=hash_path,
+                                  shasum=shasum)
 
         log.msg(eventid='cowrie.session.file_download',
                 format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
@@ -218,12 +218,10 @@ class command_wget(HoneyPotCommand):
         # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)
 
-        # FIXME: is this necessary?
-        # self.safeoutfile = hash_path
+        self.safeoutfile = None
 
         # Update the honeyfs to point to downloaded file
-        f = self.fs.getfile(outfile)
-        f[A_REALFILE] = hash_path
+        self.fs.update_realfile(self.fs.getfile(outfile), hash_path)
         self.exit()
 
 
