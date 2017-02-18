@@ -62,17 +62,20 @@ class command_tftp(HoneyPotCommand):
                      re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
         self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
-        with tftpy.TftpClient(self.hostname, int(self.port)) as tclient:
-            try:
-                tclient.download(self.file_to_get, self.safeoutfile, progresshook)
-                self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
-                if hasattr(tclient.context, 'metrics'):
-                    self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
-                else:
-                    self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
-                self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
-            except tftpy.TftpException, err:
-                pass
+        tclient = None
+
+        try:
+            tclient = tftpy.TftpClient(self.hostname, int(self.port))
+            tclient.download(self.file_to_get, self.safeoutfile, progresshook)
+            self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
+            if hasattr(tclient.context, 'metrics'):
+                self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
+            else:
+                self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
+            self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
+        except tftpy.TftpException, err:
+            if tclient and tclient.context and not tclient.context.fileobj.closed:
+                tclient.context.fileobj.close()
 
         if os.path.exists(self.safeoutfile):
 
@@ -103,11 +106,11 @@ class command_tftp(HoneyPotCommand):
             # Link friendly name to hash
             os.symlink(shasum, self.safeoutfile)
 
+            self.safeoutfile = None
+
             # Update the honeyfs to point to downloaded file
-            f = self.fs.getfile(self.file_to_get)
-            f[A_REALFILE] = hash_path
-
-
+            self.fs.update_realfile(self.fs.getfile(self.file_to_get), hash_path)
+            self.exit()
 
 
     def start(self):

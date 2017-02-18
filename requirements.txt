@@ -3,6 +3,11 @@ cryptography
 configparser
 pyopenssl
 gmpy2
+pyparsing
+packaging
+appdirs
+pyasn1_modules
+attrs
 service_identity
 pycrypto
 python-dateutil

@@ -28,6 +28,8 @@
 
 import getopt
 
+from twisted.python import log
+
 from cowrie.core.honeypot import HoneyPotCommand
 
 commands = {}
