@@ -12,5 +12,3 @@ service_identity
 pycrypto
 python-dateutil
 tftpy
-packaging
-appdirs
