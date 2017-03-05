@@ -148,7 +148,7 @@ Download a file via FTP
 
         try:
             ftp.connect(host=self.host, port=self.port, timeout=30)
-        except Exception, e:
+        except Exception as e:
             log.msg('FTP connect failed: host=%s, port=%s, err=%s' % (self.host, self.port, str(e)))
             self.write('ftpget: can\'t connect to remote host: Connection refused\n')
             return False
@@ -167,7 +167,7 @@ Download a file via FTP
 
         try:
             ftp.login(user=self.username, passwd=self.password)
-        except Exception, e:
+        except Exception as e:
             log.msg('FTP login failed: user=%s, passwd=%s, err=%s' % (self.username, self.password, str(e)))
             self.write('ftpget: unexpected server response to USER: %s\n' % str(e))
             ftp.quit()
@@ -183,7 +183,7 @@ Download a file via FTP
         try:
             ftp.cwd(self.remote_dir)
             ftp.retrbinary('RETR %s' % self.remote_file, open(safeoutfile, 'wb').write)
-        except Exception, e:
+        except Exception as e:
             log.msg('FTP retrieval failed: %s' % str(e))
             self.write('ftpget: unexpected server response to USER: %s\n' % str(e))
             ftp.quit()
