@@ -4,11 +4,11 @@
 * [Step 1: Install dependencies](#step-1-install-dependencies)
 * [Step 2: Create a user account](#step-2-create-a-user-account)
 * [Step 3: Checkout the code](#step-3-checkout-the-code)
-* [Step 3: Setup Virtual Environment](#step-3-setup-virtual-environment)
-* [Step 4: Install configuration file](#step-4-install-configuration-file)
-* [Step 5: Generate a DSA key](#step-5-generate-a-dsa-key)
-* [Step 6: Turning on cowrie](#step-6-turning-on-cowrie)
-* [Step 7: Port redirection (optional)](#step-7-port-redirection-optional)
+* [Step 4: Setup Virtual Environment](#step-3-setup-virtual-environment)
+* [Step 5: Install configuration file](#step-4-install-configuration-file)
+* [Step 6: Generate a DSA key](#step-5-generate-a-dsa-key)
+* [Step 7: Turning on cowrie](#step-6-turning-on-cowrie)
+* [Step 8: Port redirection (optional)](#step-7-port-redirection-optional)
 * [Running within supervisord(optional)](#running-using-supervisord)
 * [Troubleshooting](#troubleshooting)
 * [Installing on MacOS for development](#installing-on-macos-for-development)
@@ -20,7 +20,7 @@ The actual Python packages are installed later.
 
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
-$ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal
+$ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
 ```
 
 ## Step 2: Create a user account
@@ -59,7 +59,7 @@ Checking connectivity... done.
 $ cd cowrie
 ```
 
-## Step 3: Setup Virtual Environment
+## Step 4: Setup Virtual Environment
 
 Next you need to create your virtual environment:
 
@@ -78,14 +78,14 @@ $ source cowrie-env/bin/activate
 (cowrie-env) $ pip install -r requirements.txt
 ```
 
-## Step 4: Install configuration file
+## Step 5: Install configuration file
 
 Take a look at the configuration file and make changes as desired.  The defaults work well in most cases.
 ```
 $ cp cowrie.cfg.dist cowrie.cfg
 ```
 
-## Step 5: Generate a DSA key
+## Step 6: Generate a DSA key
 
 This step should not be necessary, however some versions of twisted
 are not compatible.  To avoid problems in advance, run:
@@ -96,7 +96,7 @@ $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 $ cd ..
 ```
 
-## Step 6: Turning on cowrie
+## Step 7: Turning on cowrie
 
 Cowrie is implemented as a module for twisted, but to properly
 import everything the top-level source directory needs to be in
@@ -122,7 +122,7 @@ $ ./start.sh cowrie-env
 Starting cowrie in the background...
 ```
 
-## Step 7: Port redirection (optional)
+## Step 8: Port redirection (optional)
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
