@@ -73,8 +73,6 @@ class Output(cowrie.core.output.Output):
         except MySQLdb.Error as e:
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
-        self.db.start()
-
 
     def stop(self):
         """
