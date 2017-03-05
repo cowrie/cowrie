@@ -20,7 +20,7 @@ The actual Python packages are installed later.
 
 On Debian based systems (tested on Debian 8, 2016-08-30):
 ```
-$ sudo apt-get install git virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
+$ sudo apt-get install git python-virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
 ```
 
 ## Step 2: Create a user account
