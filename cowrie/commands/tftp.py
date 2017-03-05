@@ -73,7 +73,7 @@ class command_tftp(HoneyPotCommand):
             else:
                 self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
-        except tftpy.TftpException, err:
+        except tftpy.TftpException as err:
             if tclient and tclient.context and not tclient.context.fileobj.closed:
                 tclient.context.fileobj.close()
 
