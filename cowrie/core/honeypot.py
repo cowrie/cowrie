@@ -112,7 +112,7 @@ class HoneyPotCommand(object):
     def call(self):
         """
         """
-        self.write('Hello World! [%s]\n' % (repr(self.args),))
+        self.write(b'Hello World! [%s]\n' % (repr(self.args),))
 
 
     def exit(self):
@@ -132,7 +132,7 @@ class HoneyPotCommand(object):
         """
         """
         log.msg('Received CTRL-C, exiting..')
-        self.write('^C\n')
+        self.write(b'^C\n')
         self.exit()
 
 
@@ -211,7 +211,7 @@ class HoneyPotShell(object):
                         continue
                     else:
                         self.protocol.terminal.write(
-                            '-bash: syntax error near unexpected token `{}\'\n'.format(tok))
+                            b'-bash: syntax error near unexpected token `{}\'\n'.format(tok))
                         break
                 elif tok == '$?':
                     tok = "0"
@@ -235,7 +235,7 @@ class HoneyPotShell(object):
                 tokens.append(tok)
             except Exception as e:
                 self.protocol.terminal.write(
-                    'bash: syntax error: unexpected end of file\n')
+                    b'bash: syntax error: unexpected end of file\n')
                 # Could run runCommand here, but i'll just clear the list instead
                 log.msg( "exception: {}".format(e) )
                 self.cmdpending = []
@@ -347,7 +347,7 @@ class HoneyPotShell(object):
             else:
                 log.msg(eventid='cowrie.command.failed',
                     input=' '.join(cmd2), format='Command not found: %(input)s')
-                self.protocol.terminal.write('bash: %s: command not found\n' % (cmd['command'],))
+                self.protocol.terminal.write(b'bash: %s: command not found\n' % (cmd['command'],))
                 runOrPrompt()
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
@@ -382,13 +382,13 @@ class HoneyPotShell(object):
 
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
         # Example: root@svr03:~#     (More of a "Debian" feel)
-        prompt = '{}@{}:{}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
+        prompt = b'{}@{}:{}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
         if not self.protocol.user.uid:
-            prompt += '# '    # "Root" user
+            prompt += b'# '    # "Root" user
         else:
-            prompt += '$ '    # "Non-Root" user
+            prompt += b'$ '    # "Non-Root" user
         self.protocol.terminal.write(prompt)
-        self.protocol.ps = (prompt , '> ')
+        self.protocol.ps = (prompt , b'> ')
 
 
     def eofReceived(self):
@@ -405,7 +405,7 @@ class HoneyPotShell(object):
         """
         self.protocol.lineBuffer = []
         self.protocol.lineBufferIndex = 0
-        self.protocol.terminal.write('\n')
+        self.protocol.terminal.write(b'\n')
         self.showPrompt()
 
 
@@ -476,17 +476,17 @@ class HoneyPotShell(object):
             first = l.split(' ')[:-1]
             newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
             if newbuf == ''.join(self.protocol.lineBuffer):
-                self.protocol.terminal.write('\n')
+                self.protocol.terminal.write(b'\n')
                 maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
                 count = 0
                 for file in files:
                     if count == perline:
                         count = 0
-                        self.protocol.terminal.write('\n')
+                        self.protocol.terminal.write(b'\n')
                     self.protocol.terminal.write(file[fs.A_NAME].ljust(maxlen))
                     count += 1
-                self.protocol.terminal.write('\n')
+                self.protocol.terminal.write(b'\n')
                 self.showPrompt()
 
         self.protocol.lineBuffer = list(newbuf)
