@@ -34,7 +34,7 @@ class command_help(HoneyPotCommand):
     def call(self):
         """
         """
-        self.write("""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
+        self.write(b"""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
 These shell commands are defined internally.  Type `help' to see this list.
 Type `help name' to find out more about the function `name'.
 Use `info bash' to find out more about the shell in general.
