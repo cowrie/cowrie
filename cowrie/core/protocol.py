@@ -140,7 +140,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cfg = None
         self.user = None
         self.environ = None
-        log.msg("honeypot terminal protocol connection lost {}".format(reason))
+        #log.msg("honeypot terminal protocol connection lost {}".format(reason))
 
 
     def txtcmd(self, txt):
