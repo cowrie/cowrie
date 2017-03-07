@@ -148,20 +148,20 @@ $ sudo chown cowrie:cowrie /etc/authbind/byport/23
 $ sudo chmod 770 /etc/authbind/byport/23
 ```
 
-* Edit start.sh and modify the AUTHBIND_ENABLED setting
+* Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
 ## Running using Supervisord
 On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf
 ```
 [program:cowrie]
-command=/home/cowrie/cowrie/start.sh cowrie-env
+command=/home/cowrie/cowrie/bin/cowrie start
 directory=/home/cowrie/cowrie/
 user=cowrie
 autorestart=true
 redirect_stderr=true
 ```
-Update the start.sh script, change:
+Update the bin/cowrie script, change:
  ```
  DAEMONIZE=""
  ```

@@ -1,5 +1,7 @@
 #!/bin/bash
 AUTHBIND_ENABLED=no
+#Change the below to -n to disable daemonizing (for instance when using supervisor)
+DAEMONIZE=""
 
 ################################################################################
 ## dont' modify below here ##
