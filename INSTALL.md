@@ -98,28 +98,25 @@ $ cd ..
 
 ## Step 7: Turning on cowrie
 
-Cowrie is implemented as a module for twisted, but to properly
+Cowrie is implemented as a module for Twisted, but to properly
 import everything the top-level source directory needs to be in
 python's os.path.  This sometimes won't happen correctly, so make
 it explicit:
 
 ```
-# or whatever path to the top-level cowrie folder
+# or another path to the top-level cowrie folder
 $ export PYTHONPATH=/home/cowrie/cowrie
 ```
 
-In the absence of a virtual environment, you may run:
+Start Cowrie with the cowrie command. You can add the cowrie/bin directory
+to your path if desired. If the virtual environment is called "cowrie-env"
+it will be automatically activated. Otherwise you will need to activate it
+manually
 
 ```
-$ ./start.sh
-```
-
-When using Python Virtual Environments you can add the name of the
-venv as the first argument or activate it before starting.
-
-```
-$ ./start.sh cowrie-env
-Starting cowrie in the background...
+$ bin/cowrie start
+Activating virtualenv "cowrie-env"
+Starting cowrie with extra arguments [] ...
 ```
 
 ## Step 8: Port redirection (optional)
