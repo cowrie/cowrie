@@ -188,7 +188,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Line Received
         """
-        self.resetTimeout()
+        # Turn idle timeout into time-based timout by commenting out reset
+        #self.resetTimeout()
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
 
