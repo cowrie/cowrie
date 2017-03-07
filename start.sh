@@ -6,6 +6,11 @@ export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 #Change the below to -n to disable daemonizing (for instance when using supervisor)
 DAEMONIZE=""
 
+echo
+echo 'WARNING: start.sh is deprecated and will be removed in the future.'
+echo 'WARNING: you can start cowrie with "bin/cowrie start"'
+echo
+
 set -e
 cd ${COWRIEDIR}
 
