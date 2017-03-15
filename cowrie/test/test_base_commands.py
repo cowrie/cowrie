@@ -52,8 +52,11 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_echo_command(self):
         self.proto.lineReceived('echo "test worked correctly" \n')
-        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['echo']))
-
+        self.assertEquals(self.tr.value(),"\n".join(self.data['results']['echo']['plain']))
+        self.proto.lineReceived('echo -ne "\x27\x22\x45\x4c\x46\x27\x22" \n')
+        self.assertEquals(self.tr.value(), "\n".join(self.data['results']['echo']['ne_double']))
+        self.proto.lineReceived('echo -ne \'\x27\x22\x45\x4c\x46\x27\x22\' \n')
+        self.assertEquals(self.tr.value(), "\n".join(self.data['results']['echo']['ne_single']))
 
     def test_exit_command(self):
         self.proto.lineReceived('exit \n')
