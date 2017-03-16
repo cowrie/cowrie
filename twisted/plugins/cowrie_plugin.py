@@ -57,7 +57,6 @@ class Options(usage.Options):
     FIXME: Docstring
     """
     optParameters = [
-        ["port", "p", 0, "The port number to listen on for SSH.", int],
         ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
 
@@ -175,10 +174,8 @@ class CowrieServiceMaker(object):
             else:
                 listen_ssh_addr = '0.0.0.0'
 
-            # Preference: 1, option, 2, config, 3, default of 2222
-            if options['port'] != 0:
-                listen_ssh_port = int(options["port"])
-            elif cfg.has_option('ssh', 'listen_port'):
+            # Preference: 1: config, 2: default of 2222
+            if cfg.has_option('ssh', 'listen_port'):
                 listen_ssh_port = cfg.getint('ssh', 'listen_port')
             elif cfg.has_option('honeypot', 'listen_port'):
                 listen_ssh_port = cfg.getint('honeypot', 'listen_port')
