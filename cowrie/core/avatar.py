@@ -43,7 +43,7 @@ class CowrieUser(avatar.ConchUser):
 
         # SFTP support enabled only when option is explicitly set
         try:
-            if self.cfg.getboolean('honeypot', 'sftp_enabled') == True:
+            if self.cfg.getboolean('ssh', 'sftp_enabled') == True:
                 self.subsystemLookup['sftp'] = conchfiletransfer.FileTransferServer
         except ValueError as e:
             pass

@@ -91,7 +91,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         t = transport.HoneyPotSSHTransport()
 
         try:
-            t.ourVersionString = self.cfg.get('honeypot', 'ssh_version_string')
+            t.ourVersionString = self.cfg.get('ssh', 'version')
         except:
             t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 

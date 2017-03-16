@@ -23,7 +23,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
 
     cfg = avatar.cfg
     try:
-        if cfg.getboolean('honeypot', 'ssh_forward_redirect') == True:
+        if cfg.getboolean('ssh', 'forward_redirect') == True:
             redirectEnabled = True
         else:
             redirectEnabled = False
@@ -32,7 +32,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
 
     if redirectEnabled:
         redirects = {}
-        items = cfg.items('honeypot')
+        items = cfg.items('ssh')
         for i in items:
             if i[0].startswith('forward_redirect'):
                 destPort = i[0].split('_')[-1]

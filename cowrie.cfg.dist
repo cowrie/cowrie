@@ -165,19 +165,27 @@ auth_class = UserDB
 # historical options in [honeypot] that have not yet been moved to [ssh]
 # ============================================================================
 
-
-# IP addresses to listen for incoming SSH connections.
-#
-# (default: 0.0.0.0) = any IPv4 address
-#listen_addr = 0.0.0.0
-# (use :: for listen to all IPv6 and IPv4 addresses)
-#listen_addr = ::
+# Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
+#reported_ssh_port = 22
 
 
-# Port to listen for incoming SSH connections.
-#
-# (default: 2222)
-#listen_port = 2222
+
+# ============================================================================
+# SSH Specific Options
+# ============================================================================
+[ssh]
+
+# Enable SSH support
+# (default: true)
+enabled = true
+
+
+# Public and private SSH key files. If these don't exist, they are created
+# automatically.
+rsa_public_key = etc/ssh_host_rsa_key.pub
+rsa_private_key = etc/ssh_host_rsa_key
+dsa_public_key = etc/ssh_host_dsa_key.pub
+dsa_private_key = etc/ssh_host_dsa_key
 
 
 # SSH Version String
@@ -205,56 +213,50 @@ auth_class = UserDB
 # SSH-2.0-OpenSSH_5.9
 #
 # (default: "SSH-2.0-SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
-ssh_version_string = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
+version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 
-# Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
-#reported_ssh_port = 22
+# IP addresses to listen for incoming SSH connections.
+#
+# (default: 0.0.0.0) = any IPv4 address
+#listen_addr = 0.0.0.0
+# (use :: for listen to all IPv6 and IPv4 addresses)
+#listen_addr = ::
 
 
-# Public and private SSH key files. If these don't exist, they are created
-# automatically.
-rsa_public_key = data/ssh_host_rsa_key.pub
-rsa_private_key = data/ssh_host_rsa_key
-dsa_public_key = data/ssh_host_dsa_key.pub
-dsa_private_key = data/ssh_host_dsa_key
+# Port to listen for incoming SSH connections.
+#
+# (default: 2222)
+#listen_port = 2222
 
 
 # sftp_enabled enables the sftp subsystem
 sftp_enabled = true
 
 
-# SSH forwarding
-# Useful for forwarding protocols to other honeypots
+# Enable SSH direct-tcpip forwarding
+# (default: true)
+forwarding = true
+
 
 # This enables redirecting forwarding requests to another address
-ssh_forward_redirect = false
+# Useful for forwarding protocols to other honeypots
 # (default: false)
+forward_redirect = false
 
+
+# Configure where to forward the data to.
 # forward_redirect_<portnumber> = <redirect ip>:<redirect port>
-forward_redirect_80 = 127.0.0.1:8080
+
+# Redirect http/https
+forward_redirect_80 = 127.0.0.1:8000
 forward_redirect_443 = 127.0.0.1:8443
-# If you want to record SMTP traffic, install SMTP honeypoint.
+
+# To record SMTP traffic, install an SMTP honeypoint.
 # (e.g https://github.com/awhitehatter/mailoney), run
 # python mailoney.py -s yahoo.com -t schizo_open_relay -p 12525
 forward_redirect_25 = 127.0.0.1:12525
 forward_redirect_587 = 127.0.0.1:12525
-
-
-
-# ============================================================================
-# SSH Specific Options
-# ============================================================================
-[ssh]
-
-# Enable SSH support
-# (default: true)
-enabled = true
-
-
-# Enable SSH direct-tcpip forwarding
-# (default: true)
-forwarding = true
 
 
 

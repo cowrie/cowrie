@@ -1,4 +1,4 @@
-
+* 2017-03-15 SSH Forwarding/SFTP/keys/version config have been moved to [ssh]. Change your config file!
 * 2017-02-12 Implemented toggle for SSH forwarding
 * 2016-08-22 Merged Telnet support by @obilodeau!
 * 2016-08-20 Update your libraries! 'configparser' now required: "pip install configparser"

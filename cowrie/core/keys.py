@@ -14,8 +14,8 @@ from twisted.python import log
 def getRSAKeys(cfg):
     """
     """
-    publicKeyFile = cfg.get('honeypot', 'rsa_public_key')
-    privateKeyFile = cfg.get('honeypot', 'rsa_private_key')
+    publicKeyFile = cfg.get('ssh', 'rsa_public_key')
+    privateKeyFile = cfg.get('ssh', 'rsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
         log.msg("Generating new RSA keypair...")
         from Crypto.PublicKey import RSA
@@ -40,8 +40,8 @@ def getRSAKeys(cfg):
 def getDSAKeys(cfg):
     """
     """
-    publicKeyFile = cfg.get('honeypot', 'dsa_public_key')
-    privateKeyFile = cfg.get('honeypot', 'dsa_private_key')
+    publicKeyFile = cfg.get('ssh', 'dsa_public_key')
+    privateKeyFile = cfg.get('ssh', 'dsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
         log.msg("Generating new DSA keypair...")
         from Crypto.PublicKey import DSA
