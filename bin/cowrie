@@ -15,7 +15,7 @@ find_cowrie_directory() {
     else
         COWRIEDIR=$(dirname $PWD/$0)/..
     fi
-    COWRIEDIR=$(cd ${COWRIEDIR} && pwd -P 2>/dev/null | pwd)
+    COWRIEDIR=$(cd ${COWRIEDIR} && pwd -P 2>/dev/null || pwd)
 }
 
 activate_venv() {
