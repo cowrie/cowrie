@@ -34,7 +34,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         redirects = {}
         items = cfg.items('ssh')
         for i in items:
-            if i[0].startswith('forward_redirect'):
+            if i[0].startswith('forward_redirect_'):
                 destPort = i[0].split('_')[-1]
                 redirectHP = i[1].split(':')
                 redirects[int(destPort)] = (redirectHP[0], int(redirectHP[1]))
