@@ -24,13 +24,13 @@ apt-get update
 * Install logstash, elasticsearch and kibana
 
 ```
-apt-get install elasticsearch logstash kibana
+sudo apt-get install elasticsearch logstash kibana
 ```
 
 * Set them to autostart
 ```
-update-rc.d elasticsearch defaults 95 10
-update-rc.d kibana defaults 95 10
+sudo update-rc.d elasticsearch defaults 95 10
+sudo update-rc.d kibana defaults 95 10
 ```
 
 ## ElasticSearch Configuration
@@ -42,11 +42,11 @@ TBD
 * Make a folder for logs
 
 ```
-mkdir /var/log/kibana
-chown kibana:kibana /var/log/kibana
+sudo mkdir /var/log/kibana
+sudo chown kibana:kibana /var/log/kibana
 ```
 
-* Change the following parameters in /etc/kibana/kibana.yml to reflect your server setup:
+* Change the following parameters in `/etc/kibana/kibana.yml` to reflect your server setup:
 
 ```
 "server.host"  - set it to "localhost" if you use nginx for basic authentication or external interface if you use XPack (see below)
@@ -55,6 +55,14 @@ chown kibana:kibana /var/log/kibana
 "elasticsearch.username", "elasticsearch.password" - needed only if you use XPack (see below)
 "logging.dest" - set path to logs (/var/log/kibana/kibana.log)
 ```
+
+* Make sure the file `/etc/kibana/kibana.yml` contains a line like
+
+```
+tilemap.url: https://tiles.elastic.co/v2/default/{z}/{x}/{y}.png?elastic_tile_service_tos=agree&my_app_name=kibana
+```
+or your map visualizations won't have any background. When this file is created during the installation
+of Kibana, it does _not_ contain such a line, not even in commented out form.
 
 ## Logstash Configuration
 
@@ -66,16 +74,21 @@ wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
 
 * Place these somewhere in your filesystem and make sure that "logstash" user can read it
 
+```
+sudo mkdir -p /var/opt/logstash/vendor/geoip/
+sudo mv GeoLite2-City.mmdb /var/opt/logstash/vendor/geoip
+```
+
 * Configure logstash
 
 ```
-cp logstash-cowrie.conf /etc/logstash/conf.d
+sudo cp logstash-cowrie.conf /etc/logstash/conf.d
 ```
 
 * Make sure the configuration file is correct. Check the input section (path), filter (geoip databases) and output (elasticsearch hostname)
 
 ```
-service logstash restart
+sudo service logstash restart
 ```
 
 * By default the logstash is creating debug logs in /tmp.
@@ -89,8 +102,10 @@ tail /tmp/cowrie-logstash.log
 * To test whether data is loaded into ElasticSearch, run the following query:
 
 ```
-http://<hostname>:9200/_search?q=cowrie&size=5
+curl 'http://<hostname>:9200/_search?q=cowrie&size=5'
 ```
+
+(Replace `<hostname>` with the name or IP address of the machine on which ElasticSearch is running, e.g., `localhost`.)
 
 * If this gives output, your data is correctly loaded into ElasticSearch
 
@@ -118,19 +133,19 @@ http://<hostname>:9200/_search?q=cowrie&size=5
  ```
  wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
  echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
- apt-get update
- apt-get install filebeat
+ sudo apt-get update
+ sudo apt-get install filebeat
  ```
  
  * Enable autorun for it
  ```
- update-rc.d filebeat defaults 95 10
+ sudo update-rc.d filebeat defaults 95 10
  ```
 
  * Configure filebeat
  
  ```
- cp filebeat-cowrie.conf /etc/filebeat/filebeat.yml
+ sudo cp filebeat-cowrie.conf /etc/filebeat/filebeat.yml
  ```
 
  * Check the following parameters
@@ -142,11 +157,11 @@ http://<hostname>:9200/_search?q=cowrie&size=5
  * Start filebeat
  
  ```
- service filebeat start
+ sudo service filebeat start
  ``` 
 
 ## Tuning ELK stack
 
 * Refer to elastic's documentation about proper configuration of the system for the best elasticsearch's performance
 
-* You may avoid installing nginx for restricting access to the kibana by installing official elastic's plugin called "X-Pack" (https://www.elastic.co/products/x-pack) 
+* You may avoid installing nginx for restricting access to kibana by installing official elastic's plugin called "X-Pack" (https://www.elastic.co/products/x-pack) 
