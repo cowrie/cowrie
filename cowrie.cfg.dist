@@ -466,3 +466,8 @@ logfile = log/cowrie.json
 #feed=scanners
 #description=random scanning activity
 #token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+
+#[output_socketlog]
+#address = 127.0.0.1:9000
+#timeout = 5
