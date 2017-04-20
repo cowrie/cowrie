@@ -4,7 +4,7 @@ PIDFILE=var/run/cowrie.pid
 
 echo
 echo 'WARNING: stop.sh is deprecated and will be removed in the future.'
-echo 'WARNING: you can start cowrie with "bin/cowrie stop"'
+echo 'WARNING: you can stop cowrie with "bin/cowrie stop"'
 echo
 
 cd $(dirname $0)
