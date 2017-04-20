@@ -37,7 +37,12 @@ activate_venv() {
 
 cowrie_status() {
     # Print status
-    PID=$(cat ${PIDFILE} 2>/dev/null)
+    PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
+    if [ -n "$PID" ]; then
+        echo "cowrie is running (PID: ${PID})."
+    else
+        echo "cowrie is not running."
+    fi
 }
 
 cowrie_start() {
@@ -54,10 +59,17 @@ cowrie_start() {
 
 cowrie_stop () {
     # Stop Cowrie
-    PID=$(cat ${PIDFILE} 2>/dev/null)
+    PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
     if [ -n "$PID" ]; then
       echo "Stopping cowrie..."
-      kill -TERM $PID
+      if kill -TERM $PID; then
+          echo -n
+      else
+          echo "Removing stale PID file"
+          rm -f ${PIDFILE}
+      fi
+    else
+        echo "cowrie is not running."
     fi
 }
 
@@ -66,7 +78,7 @@ cowrie_usage() {
 }
 
 ################################################################################
-## Main script 
+## Main script
 ################################################################################
 
 if [ "$#" = 0 ]
@@ -84,7 +96,7 @@ set -e
 for key in "$@"
 do
     key=$1
-    case $key in 
+    case $key in
         stop)
             cowrie_stop
             ;;
