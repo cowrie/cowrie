@@ -230,6 +230,17 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 #listen_port = 2222
 
 
+# Endpoint to listen on for incoming SSH connections.
+# Specify this instead of listen_addr/listen_port
+# See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
+# (default: converts listen_addr/listen_port settings into endpoints)
+
+# (use tcp: endpoints to listen on ports and interfaces)
+# listen_endpoints = tcp:2222:interface=0.0.0.0 tcp:8888:interface=0.0.0.0
+
+# (use systemd: endpoint to use systemd activation)
+# listend_endpoints = systemd:domain=INET:index=0
+
 # sftp_enabled enables the sftp subsystem
 sftp_enabled = true
 
@@ -280,6 +291,17 @@ enabled = false
 #
 # (default: 2223)
 #listen_port = 2223
+
+# Endpoint to listen on for incoming Telnet connections.
+# Specify this instead of listen_addr/listen_port
+# See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
+# (default: converts listen_addr/listen_port settings into endpoints)
+
+# (use tcp: endpoints to listen on ports and interfaces)
+# listen_endpoints = tcp:2223:interface=0.0.0.0 tcp:8888:interface=0.0.0.0
+
+# (use systemd: endpoint to use systemd activation)
+# listend_endpoints = systemd:domain=INET:index=0
 
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_port = 23
