@@ -39,7 +39,13 @@ cowrie_status() {
     # Print status
     PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
     if [ -n "$PID" ]; then
-        echo "cowrie is running (PID: ${PID})."
+        if ps -p "$PID" 2>&1 >/dev/null; then
+            echo "cowrie is running (PID: ${PID})."
+        else
+            echo "cowrie is not running (PID: ${PID})."
+            echo "Removing stale PID file"
+            rm -f ${PIDFILE}
+        fi
     else
         echo "cowrie is not running."
     fi
