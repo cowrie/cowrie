@@ -91,20 +91,22 @@ set -e
 
 for key in "$@"
 do
-    key=$1
     case $key in 
         stop)
-            cowrie_stop
+		    func() { cowrie_stop; }
             ;;
         start)
-            cowrie_start
+		    func() { cowrie_start; }
             ;;
         status)
-            cowrie_status
+		    func() { cowrie_status; }
             ;;
+        -n)
+            DAEMONIZE="-n"
+	        ;;
         *)
-            cowrie_usage
-            exit 1
+		func() { cowrie_usage; }
             ;;
     esac
 done
+func
