@@ -6,6 +6,10 @@
 This module contains ...
 """
 
+from twisted.application import internet
+from twisted.internet import endpoints, reactor
+
+
 def durationHuman(seconds):
     """
     Turn number of seconds into human readable string
@@ -89,3 +93,31 @@ def uptime(total_seconds):
         s += '{} min'.format(str(minutes))
     return s
 
+
+def get_endpoints_from_section(cfg, section, default_port):
+    if cfg.has_option(section, 'listen_endpoints'):
+        return cfg.get(section, 'listen_endpoints').split()
+
+    if cfg.has_option(section, 'listen_addr'):
+        listen_addr = cfg.get(section, 'listen_addr')
+    else:
+        listen_addr = '0.0.0.0'
+
+    if cfg.has_option(section, 'listen_port'):
+        listen_port = cfg.getint(section, 'listen_port')
+    else:
+        listen_port = default_port
+
+    listen_endpoints = []
+    for i in listen_addr.split():
+        listen_endpoints.append('tcp:{}:interface={}'.format(listen_port, i))
+
+    return listen_endpoints
+
+
+def create_endpoint_services(reactor, parent, listen_endpoints, factory):
+    for listen_endpoint in listen_endpoints:
+        endpoint = endpoints.serverFromString(reactor, listen_endpoint.encode('utf-8'))
+        service = internet.StreamServerEndpointService(endpoint, factory)
+        # FIXME: Use addService on parent ?
+        service.setServiceParent(parent)

@@ -42,9 +42,11 @@ from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet, service
 from twisted.cred import portal
+from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 
 from cowrie.core.config import readConfigFile
+from cowrie.core.utils import get_endpoints_from_section, create_endpoint_services
 from cowrie import core
 import cowrie.core.realm
 import cowrie.core.checkers
@@ -167,46 +169,21 @@ class CowrieServiceMaker(object):
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 
-            if cfg.has_option('ssh', 'listen_addr'):
-                listen_ssh_addr = cfg.get('ssh', 'listen_addr')
-            elif cfg.has_option('honeypot', 'listen_addr'):
-                listen_ssh_addr = cfg.get('honeypot', 'listen_addr')
+            if cfg.has_section('ssh'):
+                listen_endpoints = get_endpoints_from_section(cfg, 'ssh', 2222)
             else:
-                listen_ssh_addr = '0.0.0.0'
+                listen_endpoints = get_endpoints_from_section(cfg, 'honeypot', 2222)
 
-            # Preference: 1: config, 2: default of 2222
-            if cfg.has_option('ssh', 'listen_port'):
-                listen_ssh_port = cfg.getint('ssh', 'listen_port')
-            elif cfg.has_option('honeypot', 'listen_port'):
-                listen_ssh_port = cfg.getint('honeypot', 'listen_port')
-            else:
-                listen_ssh_port = 2222
-
-            for i in listen_ssh_addr.split():
-                svc = internet.TCPServer(listen_ssh_port, factory, interface=i)
-                # FIXME: Use addService on topService ?
-                svc.setServiceParent(topService)
+            create_endpoint_services(reactor, topService, listen_endpoints, factory)
 
         if enableTelnet:
-            if cfg.has_option('telnet', 'listen_addr'):
-                listen_telnet_addr = cfg.get('telnet', 'listen_addr')
-            else:
-                listen_telnet_addr = '0.0.0.0'
-
-            # Preference: 1, config, 2, default of 2223
-            if cfg.has_option('telnet', 'listen_port'):
-                listen_telnet_port = cfg.getint('telnet', 'listen_port')
-            else:
-                listen_telnet_port = 2223
-
             f = cowrie.telnet.transport.HoneyPotTelnetFactory(cfg)
             f.tac = self
             f.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker(cfg))
-            for i in listen_telnet_addr.split():
-                tsvc = internet.TCPServer(listen_telnet_port, f, interface=i)
-                # FIXME: Use addService on topService ?
-                tsvc.setServiceParent(topService)
+
+            listen_endpoints = get_endpoints_from_section(cfg, 'telnet', 2223)
+            create_endpoint_services(reactor, topService, listen_endpoints, f)
 
         return topService
 
