@@ -1,3 +1,4 @@
+* 2017-04-27 New syntax "listen_endpoints" for configuring listening IP addresses/portnumbers
 * 2017-03-15 SSH Forwarding/SFTP/keys/version config have been moved to [ssh]. Change your config file!
 * 2017-02-12 Implemented toggle for SSH forwarding
 * 2016-08-22 Merged Telnet support by @obilodeau!

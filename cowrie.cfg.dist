@@ -217,6 +217,7 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 
 # IP addresses to listen for incoming SSH connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 0.0.0.0) = any IPv4 address
 #listen_addr = 0.0.0.0
@@ -225,23 +226,22 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 
 # Port to listen for incoming SSH connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 2222)
 #listen_port = 2222
 
 
 # Endpoint to listen on for incoming SSH connections.
-# Specify this instead of listen_addr/listen_port
 # See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
-# (default: converts listen_addr/listen_port settings into endpoints)
+# (default: listen_endpoints = tcp:2222:interface=0.0.0.0)
+# (use systemd: endpoint for systemd activation)
+# listen_endpoints = systemd:domain=INET:index=0
+listen_endpoints = tcp:2222:interface=0.0.0.0
 
-# (use tcp: endpoints to listen on ports and interfaces)
-# listen_endpoints = tcp:2222:interface=0.0.0.0 tcp:8888:interface=0.0.0.0
 
-# (use systemd: endpoint to use systemd activation)
-# listend_endpoints = systemd:domain=INET:index=0
-
-# sftp_enabled enables the sftp subsystem
+# Enable the SFTP subsystem
+# (default: true)
 sftp_enabled = true
 
 
@@ -280,6 +280,7 @@ forward_redirect_587 = 127.0.0.1:12525
 enabled = false
 
 # IP addresses to listen for incoming Telnet connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 0.0.0.0) = any IPv4 address
 #listen_addr = 0.0.0.0
@@ -288,20 +289,19 @@ enabled = false
 
 
 # Port to listen for incoming Telnet connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 2223)
 #listen_port = 2223
 
+
 # Endpoint to listen on for incoming Telnet connections.
-# Specify this instead of listen_addr/listen_port
 # See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
-# (default: converts listen_addr/listen_port settings into endpoints)
+# (default: listen_endpoints = tcp:2223:interface=0.0.0.0)
+# (use systemd: endpoint for systemd activation)
+# listen_endpoints = systemd:domain=INET:index=0
+listen_endpoints = tcp:2223:interface=0.0.0.0
 
-# (use tcp: endpoints to listen on ports and interfaces)
-# listen_endpoints = tcp:2223:interface=0.0.0.0 tcp:8888:interface=0.0.0.0
-
-# (use systemd: endpoint to use systemd activation)
-# listend_endpoints = systemd:domain=INET:index=0
 
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_port = 23
