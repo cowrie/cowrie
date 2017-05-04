@@ -38,7 +38,7 @@ class Output(cowrie.core.output.Output):
         """
         cowrie.core.output.Output.__init__(self, cfg)
         self.format = cfg.get('output_textlog', 'format')
-        self.outfile = file(cfg.get('output_textlog', 'logfile'), 'a')
+        self.outfile = open(cfg.get('output_textlog', 'logfile'), 'a')
 
 
     def start(self):
