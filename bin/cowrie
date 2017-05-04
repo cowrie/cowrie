@@ -51,7 +51,7 @@ cowrie_start() {
     then
         activate_venv "cowrie-env"
     fi
-    echo "Starting cowrie with extra arguments [$XARGS $DAEMONIZE] ..."
+    echo "Starting cowrie with extra arguments [twistd $XARGS $DAEMONIZE cowrie $COWRIEARGS] ..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then
         twistd $XARGS $DAEMONIZE -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie $COWRIEARGS
