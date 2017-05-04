@@ -234,7 +234,7 @@ class HoneyPotFilesystem(object):
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
         elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
-            return file(f[A_REALFILE], 'rb').read()
+            return open(f[A_REALFILE], 'rb').read()
         elif f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,
