@@ -54,9 +54,9 @@ cowrie_start() {
     echo "Starting cowrie with extra arguments [$XARGS $DAEMONIZE] ..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then
-        twistd $XARGS $DAEMONIZE -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
+        twistd $XARGS $DAEMONIZE -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie $COWRIEARGS
     else
-        authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie
+        authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie $COWRIEARGS
     fi
 }
 
@@ -74,7 +74,7 @@ cowrie_usage() {
 }
 
 ################################################################################
-## Main script 
+## Main script
 ################################################################################
 
 if [ "$#" = 0 ]
@@ -92,7 +92,7 @@ set -e
 for key in "$@"
 do
     key=$1
-    case $key in 
+    case $key in
         stop)
             cowrie_stop
             ;;
