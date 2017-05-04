@@ -1,9 +1,9 @@
 cowrie.cfg
 cowrie.pid
-etc/ssh_host_dsa_key
-etc/ssh_host_dsa_key.pub
-etc/ssh_host_rsa_key
-etc/ssh_host_rsa_key.pub
+data/ssh_host_dsa_key
+data/ssh_host_dsa_key.pub
+data/ssh_host_rsa_key
+data/ssh_host_rsa_key.pub
 var/log/cowrie/*
 dl/*
 log/*
