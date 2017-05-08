@@ -88,7 +88,7 @@ cowrie_stop () {
 }
 
 cowrie_usage() {
-    echo "usage: $0 <start|stop>"
+    echo "usage: $0 <start|stop|status>"
 }
 
 ################################################################################
