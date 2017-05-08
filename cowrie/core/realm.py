@@ -58,7 +58,7 @@ class HoneyPotRealm(object):
 	# self.servers = {}
 
         # load the pickle file system here, so servers can copy it later
-        self.pckl = pickle.load(file(cfg.get('honeypot', 'filesystem_file'), 'rb'))
+        self.pckl = pickle.load(open(cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         """

@@ -62,7 +62,7 @@ class HoneyPotCommand(object):
                     self.safeoutfile = None
 
                 else:
-                    with open(self.safeoutfile, 'a'):
+                    with open(self.safeoutfile, 'ab'):
                         self.fs.update_realfile(self.fs.getfile(self.outfile), self.safeoutfile)
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
@@ -90,7 +90,7 @@ class HoneyPotCommand(object):
     def write_to_file(self, data):
         """
         """
-        with open(self.safeoutfile, 'a') as f:
+        with open(self.safeoutfile, 'ab') as f:
             f.write(data)
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)

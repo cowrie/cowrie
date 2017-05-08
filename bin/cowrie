@@ -1,5 +1,10 @@
 #!/bin/bash
+#Change the below to yes if you are using authbind to listen to port 22
 AUTHBIND_ENABLED=no
+
+#Change the below to yes to activate the "cowrie-env" virtual environment
+VIRTUALENV_ENABLED=yes
+
 #Change the below to -n to disable daemonizing (for instance when using supervisor)
 DAEMONIZE=""
 
@@ -53,7 +58,10 @@ cowrie_status() {
 
 cowrie_start() {
     # Start Cowrie
-    activate_venv "cowrie-env"
+    if [ $VIRTUALENV_ENABLED = "yes" ]
+    then
+        activate_venv "cowrie-env"
+    fi
     echo "Starting cowrie with extra arguments [$XARGS $DAEMONIZE] ..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then

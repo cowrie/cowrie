@@ -217,6 +217,7 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 
 # IP addresses to listen for incoming SSH connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 0.0.0.0) = any IPv4 address
 #listen_addr = 0.0.0.0
@@ -225,12 +226,22 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 
 # Port to listen for incoming SSH connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 2222)
 #listen_port = 2222
 
 
-# sftp_enabled enables the sftp subsystem
+# Endpoint to listen on for incoming SSH connections.
+# See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
+# (default: listen_endpoints = tcp:2222:interface=0.0.0.0)
+# (use systemd: endpoint for systemd activation)
+# listen_endpoints = systemd:domain=INET:index=0
+listen_endpoints = tcp:2222:interface=0.0.0.0
+
+
+# Enable the SFTP subsystem
+# (default: true)
 sftp_enabled = true
 
 
@@ -269,6 +280,7 @@ forward_redirect_587 = 127.0.0.1:12525
 enabled = false
 
 # IP addresses to listen for incoming Telnet connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 0.0.0.0) = any IPv4 address
 #listen_addr = 0.0.0.0
@@ -277,9 +289,19 @@ enabled = false
 
 
 # Port to listen for incoming Telnet connections.
+# (DEPRECATED: use listen_endpoints instead)
 #
 # (default: 2223)
 #listen_port = 2223
+
+
+# Endpoint to listen on for incoming Telnet connections.
+# See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
+# (default: listen_endpoints = tcp:2223:interface=0.0.0.0)
+# (use systemd: endpoint for systemd activation)
+# listen_endpoints = systemd:domain=INET:index=0
+listen_endpoints = tcp:2223:interface=0.0.0.0
+
 
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_port = 23
@@ -466,3 +488,8 @@ logfile = log/cowrie.json
 #feed=scanners
 #description=random scanning activity
 #token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+
+#[output_socketlog]
+#address = 127.0.0.1:9000
+#timeout = 5
