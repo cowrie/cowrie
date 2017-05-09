@@ -27,6 +27,7 @@ __all__ = [
     'sudo',
     'tar',
     'uname',
+    'ulimit',
     'wget',
     'which',
     'perl',
