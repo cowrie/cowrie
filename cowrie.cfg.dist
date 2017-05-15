@@ -342,8 +342,8 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 
 # JSON based logging module
 #
-[output_jsonlog]
-logfile = log/cowrie.json
+#[output_jsonlog]
+#logfile = log/cowrie.json
 
 
 # Supports logging to Elasticsearch
