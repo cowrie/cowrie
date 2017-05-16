@@ -12,6 +12,7 @@ DAEMONIZE=""
 ## dont' modify below here ##
 ################################################################################
 
+
 find_cowrie_directory() {
     # Determine Cowrie directory
     if [[ "$0" = /* ]]
@@ -58,16 +59,20 @@ cowrie_status() {
 
 cowrie_start() {
     # Start Cowrie
+    COWRIEARGS="$*"
+    TWISTEDARGS="${DAEMONIZE} ${XARGS} -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE}"
+
     if [ $VIRTUALENV_ENABLED = "yes" ]
     then
         activate_venv "cowrie-env"
     fi
-    echo "Starting cowrie with extra arguments [twistd $XARGS $DAEMONIZE cowrie $COWRIEARGS] ..."
+
+    echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then
-        twistd $XARGS $DAEMONIZE -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie $COWRIEARGS
+        twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}
     else
-        authbind --deep twistd $XARGS -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE} cowrie $COWRIEARGS
+        authbind --deep twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}
     fi
 }
 
@@ -107,22 +112,20 @@ export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 PIDFILE=var/run/cowrie.pid
 set -e
 
-for key in "$@"
-do
-    key=$1
-    case $key in
-        stop)
-            cowrie_stop
-            ;;
-        start)
-            cowrie_start
-            ;;
-        status)
-            cowrie_status
-            ;;
-        *)
-            cowrie_usage
-            exit 1
-            ;;
-    esac
-done
+key=$1
+shift 1
+case $key in
+    stop)
+        cowrie_stop $*
+        ;;
+    start)
+        cowrie_start $*
+        ;;
+    status)
+        cowrie_status $*
+        ;;
+    *)
+        cowrie_usage
+        exit 1
+        ;;
+esac
