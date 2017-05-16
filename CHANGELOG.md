@@ -1,3 +1,5 @@
+* 2017-05-16 now reads config files: etc/system/cowrie.cfg cowrie.cfg and etc/local/cowrie.cfg in this order
+* 2017-05-09 start.sh and stop.sh have been replace by bin/cowrie start|stop
 * 2017-04-27 New syntax "listen_endpoints" for configuring listening IP addresses/portnumbers
 * 2017-03-15 SSH Forwarding/SFTP/keys/version config have been moved to [ssh]. Change your config file!
 * 2017-02-12 Implemented toggle for SSH forwarding

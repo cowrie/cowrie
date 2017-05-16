@@ -56,11 +56,17 @@ import cowrie.ssh.factory
 
 class Options(usage.Options):
     """
-    FIXME: Docstring
+    This defines commandline options and flags
     """
+    # The '-c' parameters is currently ignored
     optParameters = [
         ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
+
+    optFlags = [
+        ['help', 'h', 'Display this help and exit.']
+        ]
+
 
 
 @provider(ILogObserver)
@@ -86,16 +92,33 @@ class CowrieServiceMaker(object):
     output_plugins = None
     cfg = None
 
+    def printHelp(self):
+        """
+        Print cowrie help
+        """
+
+        print( """Usage: twistd [options] cowrie [-h]
+Options:
+  -h, --help             print this help message.
+
+Makes a Cowrie SSH/Telnet honeypot.
+""")
+
+
     def makeService(self, options):
         """
         Construct a TCPServer from a factory defined in Cowrie.
         """
 
+        if options["help"] == True:
+            self.printHelp()
+            sys.exit(1)
+
         if os.name == 'posix' and os.getuid() == 0:
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
-        cfg = readConfigFile(options["config"])
+        cfg = readConfigFile(("etc/default/cowrie.cfg","cowrie.cfg","etc/local/cowrie.cfg"))
 
         # ssh is enabled by default
         if cfg.has_option('ssh', 'enabled') == False or \
