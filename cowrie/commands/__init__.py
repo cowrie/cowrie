@@ -7,6 +7,7 @@ __all__ = [
     'base',
     'busybox',
     'curl',
+    'dd',
     'env',
     'ethtool',
     'free',
