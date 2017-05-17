@@ -28,7 +28,7 @@ class command_dd(HoneyPotCommand):
                 self.write('unknown operand: {}'.format(arg))
                 HoneyPotCommand.exit()
             operand, value = arg.split('=')
-            if operand not in ('if', 'bs', 'of'):
+            if operand not in ('if', 'bs', 'of', 'count'):
                 self.write('unknown operand: {}'.format(operand))
                 self.exit(success=False)
             self.ddargs[operand] = value
