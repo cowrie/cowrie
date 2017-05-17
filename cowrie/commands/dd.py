@@ -5,9 +5,8 @@
 dd commands
 """
 
-import getopt
-import copy
 from os import path
+
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
 
@@ -46,10 +45,11 @@ class command_dd(HoneyPotCommand):
                         continue
                     try:
                         self.write(self.fs.file_contents(pname))
+                        self.exit()
                     except:
                         self.errorWrite('dd: {}: No such file or directory\n'.format(value))
                         HoneyPotCommand.exit(self)
-        self.exit()
+
 
 
     def exit(self, success=True):
