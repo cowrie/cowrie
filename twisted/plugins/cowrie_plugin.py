@@ -118,7 +118,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
-        cfg = readConfigFile(("etc/default/cowrie.cfg","cowrie.cfg","etc/local/cowrie.cfg"))
+        cfg = readConfigFile(("cowrie.cfg.dist","cowrie.cfg"))
 
         # ssh is enabled by default
         if cfg.has_option('ssh', 'enabled') == False or \
