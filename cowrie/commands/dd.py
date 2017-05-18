@@ -26,7 +26,7 @@ class command_dd(HoneyPotCommand):
         for arg in self.args:
             if not arg.index('='):
                 self.write('unknown operand: {}'.format(arg))
-                HoneyPotCommand.exit()
+                HoneyPotCommand.exit(self)
             operand, value = arg.split('=')
             if operand not in ('if', 'bs', 'of', 'count'):
                 self.write('unknown operand: {}'.format(operand))
@@ -36,19 +36,46 @@ class command_dd(HoneyPotCommand):
         if self.input_data:
             self.write(self.input_data)
         else:
-            for arg in self.ddargs.keys():
-                value = self.ddargs[arg]
-                if arg == 'if':
-                    pname = self.fs.resolve_path(value, self.protocol.cwd)
-                    if self.fs.isdir(pname):
-                        self.errorWrite('dd: {}: Is a directory\n'.format(value))
-                        continue
+            bSuccess = True
+            c = -1
+            block = 512
+            if 'if' in self.ddargs:
+                iname = self.ddargs['if']
+                pname = self.fs.resolve_path(iname, self.protocol.cwd)
+                if self.fs.isdir(pname):
+                    self.errorWrite('dd: {}: Is a directory\n'.format(iname))
+                    bSuccess = False
+
+                if bSuccess:
+                    if 'bs' in self.ddargs:
+                        block = int(self.ddargs['bs'])
+                        if block <= 0:
+                            self.errorWrite('dd: invalid number \'{}\'\n'.format(block))
+                            bSuccess = False
+
+                if bSuccess:
+                    if 'count' in self.ddargs:
+                        c = int(self.ddargs['count'])
+                        if c < 0:
+                            self.errorWrite('dd: invalid number \'{}\'\n'.format(c))
+                            bSuccess = False
+
+                if bSuccess:
                     try:
-                        self.write(self.fs.file_contents(pname))
-                        self.exit()
+                        if c == -1:
+                            self.write(self.fs.file_contents(pname))
+                        else:
+                            tsize = block * c
+                            data = self.fs.file_contents(pname)
+                            if len(data) > tsize:
+                                self.write(data[:tsize])
+                            else:
+                                self.write(data)
                     except:
-                        self.errorWrite('dd: {}: No such file or directory\n'.format(value))
-                        HoneyPotCommand.exit(self)
+                        self.errorWrite('dd: {}: No such file or directory\n'.format(iname))
+                        bSuccess = False
+
+                self.exit(success=bSuccess)
 
 
 
