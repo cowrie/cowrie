@@ -23,7 +23,7 @@ class command_last(HoneyPotCommand):
             elif arg == '-n' and len(l) and l[0].isdigit():
                 numlines = int(l.pop(0))
         data = utils.tail(file(fn), numlines)
-        self.write(''.join(data)+'\n')
+        self.write(''.join(data))
 commands['/usr/bin/last'] = command_last
 
 # vim: set sw=4 et:
