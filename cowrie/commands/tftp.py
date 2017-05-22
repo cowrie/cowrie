@@ -67,6 +67,9 @@ class command_tftp(HoneyPotCommand):
         try:
             tclient = tftpy.TftpClient(self.hostname, int(self.port))
             tclient.download(self.file_to_get, self.safeoutfile, progresshook)
+
+            url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
+
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
             if hasattr(tclient.context, 'metrics'):
                 self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
@@ -94,8 +97,6 @@ class command_tftp(HoneyPotCommand):
             else:
                 os.remove(self.safeoutfile)
                 log.msg("Not storing duplicate content " + shasum)
-
-            url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
 
             log.msg(eventid='cowrie.session.file_download',
                     format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
