@@ -61,9 +61,22 @@ Maybe. See [FAQ](https://github.com/micheloosterhof/cowrie/wiki/Frequently-Asked
 
 Please visit https://github.com/micheloosterhof/cowrie/issues
 
+## Contributing
+
+Cowrie welcomes any kind of contribution, please follow the next steps:
+
+Fork the project on github.com.
+Create a new branch.
+Commit changes to the new branch.
+Send a pull request.
+
 ## Contributors
 
 Many people have contributed to Cowrie over the years. Special thanks to:
 
 * Upi Tamminen (desaster) for all his work developing Kippo on which Cowrie was based
+* Dave Germiquet (davegermiquet) for TFTP support, unit testes, new process handling
+* Olivier Bilodeau (obilodeau) for Telnet support
+* Ivan Korolev (fe7ch) for many improvements over the years.
+* And many many others.
 
