@@ -97,6 +97,12 @@ class command_tftp(HoneyPotCommand):
 
             url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
 
+            self.protocol.logDispatch(eventid='cowrie.session.file_download',
+                                      format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                                      url=url,
+                                      outfile=hash_path,
+                                      shasum=shasum)
+
             log.msg(eventid='cowrie.session.file_download',
                     format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                     url=url,
