@@ -137,6 +137,8 @@ Download a file via FTP
 
         # Update the honeyfs to point to downloaded file
         self.fs.update_realfile(self.fs.getfile(fakeoutfile), hash_path)
+        self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+
         self.exit()
 
     def ftp_download(self, safeoutfile):
