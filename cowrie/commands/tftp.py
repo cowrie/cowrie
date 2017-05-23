@@ -71,11 +71,14 @@ class command_tftp(HoneyPotCommand):
             url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
 
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
+
             if hasattr(tclient.context, 'metrics'):
                 self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
             else:
                 self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
+
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
+
         except tftpy.TftpException as err:
             if tclient and tclient.context and not tclient.context.fileobj.closed:
                 tclient.context.fileobj.close()
