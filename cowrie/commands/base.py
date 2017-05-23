@@ -159,7 +159,6 @@ class command_printf(HoneyPotCommand):
             self.write('printf: usage: printf [-v var] format [arguments]')
         else:
             if '-v' not in self.args:
-                print self.args
                 if len(self.args) < 2:
                     escape_fn = functools.partial(str.decode, encoding="string_escape")
                     self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
