@@ -339,6 +339,8 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
 
         # Update the honeyfs to point to downloaded file
         self.fs.update_realfile(self.fs.getfile(outfile), hashPath)
+        self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+
         self.exit()
 
 

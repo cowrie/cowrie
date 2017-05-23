@@ -78,7 +78,7 @@ class command_tftp(HoneyPotCommand):
                 self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
 
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.safeoutfile)
-
+            self.fs.chown(self.file_to_get, self.protocol.user.uid, self.protocol.user.gid)
         except tftpy.TftpException as err:
             if tclient and tclient.context and not tclient.context.fileobj.closed:
                 tclient.context.fileobj.close()
@@ -114,6 +114,7 @@ class command_tftp(HoneyPotCommand):
 
             # Update the honeyfs to point to downloaded file
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), hash_path)
+            self.fs.chown(self.file_to_get, self.protocol.user.uid, self.protocol.user.gid)
             self.exit()
 
 
