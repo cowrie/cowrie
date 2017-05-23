@@ -150,6 +150,23 @@ class command_echo(HoneyPotCommand):
 commands['/bin/echo'] = command_echo
 
 
+class command_printf(HoneyPotCommand):
+    """
+    """
+
+    def call(self):
+        if not len(self.args):
+            self.write('printf: usage: printf [-v var] format [arguments]')
+        else:
+            if '-v' not in self.args:
+                if len(self.args) < 2:
+                    escape_fn = functools.partial(str.decode, encoding="string_escape")
+                    self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
+                                                ''.join(self.args[0]).replace('\\\\x', '\\x'))).strip('\"\''))
+
+
+commands['printf'] = command_printf
+
 
 class command_exit(HoneyPotCommand):
     """
