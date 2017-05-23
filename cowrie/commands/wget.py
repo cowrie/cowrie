@@ -209,12 +209,6 @@ class command_wget(HoneyPotCommand):
                                   outfile=hash_path,
                                   shasum=shasum)
 
-        log.msg(eventid='cowrie.session.file_download',
-                format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                url=self.url,
-                outfile=hash_path,
-                shasum=shasum)
-
         # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)
 

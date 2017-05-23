@@ -124,11 +124,11 @@ Download a file via FTP
             os.remove(self.safeoutfile)
             log.msg("Not storing duplicate content " + shasum)
 
-        log.msg(eventid='cowrie.session.file_download',
-                format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                url=url,
-                outfile=hash_path,
-                shasum=shasum)
+        self.protocol.logDispatch(eventid='cowrie.session.file_download',
+                                  format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                                  url=url,
+                                  outfile=hash_path,
+                                  shasum=shasum)
 
         # Link friendly name to hash
         os.symlink(shasum, self.safeoutfile)
@@ -137,7 +137,7 @@ Download a file via FTP
 
         # Update the honeyfs to point to downloaded file
         self.fs.update_realfile(self.fs.getfile(fakeoutfile), hash_path)
-        self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+        self.fs.chown(fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
 
         self.exit()
 
