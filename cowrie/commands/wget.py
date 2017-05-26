@@ -120,7 +120,11 @@ class command_wget(HoneyPotCommand):
             self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
 
         self.download_path = cfg.get('honeypot', 'download_path')
-        self.download_path_uniq = cfg.get('honeypot', 'download_path_uniq')
+
+        try:
+            self.download_path_uniq = cfg.get('honeypot', 'download_path_uniq')
+        except:
+            self.download_path_uniq = self.download_path
 
         if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s_%s_%s' % \

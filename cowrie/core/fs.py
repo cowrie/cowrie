@@ -383,9 +383,14 @@ class HoneyPotFilesystem(object):
             return True
         if self.tempfiles[fd] is not None:
 
+            try:
+                dl_path = self.cfg.get('honeypot', 'download_path_uniq')
+            except:
+                dl_path = self.cfg.get('honeypot', 'download_path')
+
             with open(self.tempfiles[fd], 'rb') as f:
                 shasum = hashlib.sha256(f.read()).hexdigest()
-                shasumfile = os.path.join(self.cfg.get('honeypot', 'download_path_uniq'), shasum)
+                shasumfile = os.path.join(dl_path, shasum)
 
             if os.path.exists(shasumfile):
                 log.msg("Not storing duplicate content " + shasum)
@@ -397,7 +402,7 @@ class HoneyPotFilesystem(object):
             log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
                     eventid='cowrie.session.file_upload',
                     filename=os.path.basename(self.filenames[fd]),
-                    url=os.path.basename(self.filenames[fd]),
+                    url=self.filenames[fd],
                     outfile=shasumfile,
                     shasum=shasum)
 

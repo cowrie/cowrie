@@ -30,7 +30,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.ttylogPath = cfg.get('honeypot', 'log_path')
         self.downloadPath = cfg.get('honeypot', 'download_path')
-        self.downloadPathUniq = cfg.get('honeypot', 'download_path_uniq')
+
+        try:
+            self.downloadPathUniq = cfg.get('honeypot', 'download_path_uniq')
+        except:
+            self.downloadPathUniq = self.downloadPath
 
         try:
             self.ttylogEnabled = cfg.getboolean('honeypot', 'ttylog')
