@@ -120,6 +120,7 @@ class command_wget(HoneyPotCommand):
             self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
 
         self.download_path = cfg.get('honeypot', 'download_path')
+        self.download_path_uniq = cfg.get('honeypot', 'download_path_uniq')
 
         if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s_%s_%s' % \
@@ -194,7 +195,7 @@ class command_wget(HoneyPotCommand):
 
         with open(self.safeoutfile, 'rb') as f:
             shasum = hashlib.sha256(f.read()).hexdigest()
-            hash_path = os.path.join(self.download_path, shasum)
+            hash_path = os.path.join(self.download_path_uniq, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hash_path):

@@ -34,6 +34,11 @@ log_path = log
 # (default: dl)
 download_path = dl
 
+# Directory where to save unique artifacts in.
+#
+# (default: dl)
+download_path_uniq = dl_uniq
+
 
 # Directory for miscellaneous data files, such as the password database.
 #

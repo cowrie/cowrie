@@ -91,6 +91,7 @@ class command_curl(HoneyPotCommand):
             self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
 
         self.download_path = cfg.get('honeypot', 'download_path')
+        self.download_path_uniq = cfg.get('honeypot', 'download_path_uniq')
 
         if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s_%s_%s' % \
@@ -316,7 +317,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
 
         with open(self.safeoutfile, 'rb') as f:
             shasum = hashlib.sha256(f.read()).hexdigest()
-            hashPath = os.path.join(self.download_path, shasum)
+            hashPath = os.path.join(self.download_path_uniq, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hashPath):
