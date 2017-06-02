@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import getopt
+import getopt, re, os
 
 from twisted.python import log
 
@@ -76,6 +76,25 @@ class command_scp(HoneyPotCommand):
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
         self.protocol.terminal.write( '\x00' )
+
+    def handle_CTRL_D(self):
+
+        if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \
+                os.path.exists(self.protocol.terminal.stdinlogFile):
+            with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
+                data = f.read()
+                header = data[:data.find('\n')]
+                if re.match('C0[\d]{3} [\d]+ [^\s]+', header):
+                    data = data[data.find('\n')+1:]
+                else:
+                    data = ''
+
+            if data:
+                with open(self.protocol.terminal.stdinlogFile, 'wb') as f:
+                    f.write(data)
+
+
+        self.exit()
 
 commands['/usr/bin/scp'] = command_scp
 
