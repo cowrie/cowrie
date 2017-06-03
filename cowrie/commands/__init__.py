@@ -18,6 +18,7 @@ __all__ = [
     'iptables',
     'last',
     'ls',
+    'nc',
     'netstat',
     'nohup',
     'ping',
