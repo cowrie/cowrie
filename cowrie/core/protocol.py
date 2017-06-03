@@ -204,7 +204,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         obj.start()
         if hasattr(obj, 'safeoutfile'):
             if obj.safeoutfile:
-                self.terminal.redirFiles.add(obj.safeoutfile)
+                if hasattr(obj, 'outfile'):
+                    self.terminal.redirFiles.add((obj.safeoutfile, obj.outfile))
+                else:
+                    self.terminal.redirFiles.add((obj.safeoutfile, ''))
         if self.pp:
             self.pp.outConnectionLost()
 
