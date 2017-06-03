@@ -22,6 +22,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     stdinlogOpen = False
     ttylogOpen = False
+    redirlogOpen = False  # it will be set at core/protocol.py
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
@@ -168,7 +169,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.stdinlogOpen = False
 
         if self.redirFiles:
-            for rf in self.redirFiles:
+            for rp in self.redirFiles:
+
+                rf = rp[0]
+
+                if rp[1]:
+                    url = rp[1]
+                else:
+                    url = rf[rf.find('redir_')+len('redir_'):]
+                    
                 try:
                     if not os.path.exists(rf):
                         continue
@@ -188,7 +197,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         os.symlink(shasum, rf)
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
-                            url='redir',
+                            url=url,
                             outfile=shasumfile,
                             shasum=shasum)
                 except IOError:
