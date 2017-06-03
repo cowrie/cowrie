@@ -16,12 +16,8 @@ class command_python(HoneyPotCommand):
     """
     """
     def version(self):
-        output = (
-            'Python 2.7.11+'
-        )
-        for l in output:
-            self.write(l + '\n')
-        self.exit()
+        ver = 'Python 2.7.11+'
+        self.write(ver + '\n')
 
 
     def help(self):
@@ -89,19 +85,22 @@ class command_python(HoneyPotCommand):
 
         # Parse options
         for o, a in opts:
-            if o in ("-v"):
+            if o in "-V":
                 self.version()
                 self.exit()
                 return
-            elif o in ("--help"):
+            elif o in "--help":
                 self.help()
                 self.exit()
                 return
-            elif o in ('-h'):
+            elif o in '-h':
                 self.help()
                 self.exit()
-            elif o in ('--version'):
+                return
+            elif o in '--version':
                 self.version()
+                self.exit()
+                return
 
         for value in args:
             sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
