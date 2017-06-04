@@ -56,7 +56,11 @@ class command_scp(HoneyPotCommand):
         """
         """
         self.download_path = self.protocol.cfg.get('honeypot', 'download_path')
-        self.download_path_uniq = self.protocol.cfg.get('honeypot', 'download_path_uniq')
+
+        try:
+           self.download_path_uniq = self.protocol.cfg.get('honeypot', 'download_path_uniq')
+        except:
+           self.download_path_uniq = self.protocol.cfg.get('honeypot', 'download_path')
 
         try:
             optlist, args = getopt.getopt(self.args, 'tdv:')
