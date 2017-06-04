@@ -156,7 +156,7 @@ class command_printf(HoneyPotCommand):
 
     def call(self):
         if not len(self.args):
-            self.write('printf: usage: printf [-v var] format [arguments]')
+            self.write('printf: usage: printf [-v var] format [arguments]\n')
         else:
             if '-v' not in self.args:
                 if len(self.args) < 2:
@@ -166,6 +166,7 @@ class command_printf(HoneyPotCommand):
 
 
 commands['printf'] = command_printf
+commands['/usr/bin/printf'] = command_printf
 
 
 class command_exit(HoneyPotCommand):
