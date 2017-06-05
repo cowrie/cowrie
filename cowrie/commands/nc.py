@@ -34,6 +34,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         if not args or len(args) < 2:
             self.help()
             self.exit()
+            return
 
         host = args[0]
         port = args[1]
