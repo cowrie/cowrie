@@ -7,12 +7,13 @@ This module contains ...
 
 import re
 import time
+import struct
 import uuid
 import zlib
 
 import twisted
 from twisted.conch.ssh import transport
-from twisted.python import log
+from twisted.python import log, randbytes
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
 
@@ -88,6 +89,41 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             messageNum = ord(packet[0])
             self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
+
+
+    def sendPacket(self, messageType, payload):
+        """
+        Override because OpenSSH pads with 0 on KEXINIT
+        """
+        if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
+            if not self._allowedKeyExchangeMessageType(messageType):
+                self._blockedByKeyExchange.append((messageType, payload))
+                return
+
+        payload = chr(messageType) + payload
+        if self.outgoingCompression:
+            payload = (self.outgoingCompression.compress(payload)
+                       + self.outgoingCompression.flush(2))
+        bs = self.currentEncryptions.encBlockSize
+        # 4 for the packet length and 1 for the padding length
+        totalSize = 5 + len(payload)
+        lenPad = bs - (totalSize % bs)
+        if lenPad < 4:
+            lenPad = lenPad + bs
+        if messageType == transport.MSG_KEXINIT:
+            padding = '\0' * lenPad
+        else:
+            padding = randbytes.secureRandom(lenPad)
+
+        packet = (struct.pack('!LB',
+                              totalSize + lenPad - 4, lenPad) +
+                  payload + padding)
+        encPacket = (
+            self.currentEncryptions.encrypt(packet) +
+            self.currentEncryptions.makeMAC(
+                self.outgoingPacketSequence, packet))
+        self.transport.write(encPacket)
+        self.outgoingPacketSequence += 1
 
 
     def ssh_KEXINIT(self, packet):
