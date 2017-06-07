@@ -397,6 +397,7 @@ logfile = log/cowrie.json
 #
 # MySQL logging requires extra software: sudo apt-get install libmysqlclient-dev
 # MySQL logging requires an extra Python module: pip install mysql-python
+# Make sure to install the Python module inside the virtual environment!
 #
 #[output_mysql]
 #host = localhost
