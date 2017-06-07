@@ -33,6 +33,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.downloadPath = cfg.get('honeypot', 'download_path')
 
         try:
+            self.downloadPathUniq = cfg.get('honeypot', 'download_path_uniq')
+        except:
+            self.downloadPathUniq = self.downloadPath
+
+        try:
             self.ttylogEnabled = cfg.getboolean('honeypot', 'ttylog')
         except:
             self.ttylogEnabled = True
@@ -146,7 +151,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             try:
                 with open(self.stdinlogFile, 'rb') as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    shasumfile = os.path.join(self.downloadPathUniq, shasum)
                     if os.path.exists(shasumfile):
                         os.remove(self.stdinlogFile)
                         log.msg("Not storing duplicate content " + shasum)
@@ -183,7 +188,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
                     with open(rf, 'rb') as f:
                         shasum = hashlib.sha256(f.read()).hexdigest()
-                        shasumfile = os.path.join(self.downloadPath, shasum)
+                        shasumfile = os.path.join(self.downloadPathUniq, shasum)
                         if os.path.exists(shasumfile):
                             os.remove(rf)
                             log.msg("Not storing duplicate content " + shasum)

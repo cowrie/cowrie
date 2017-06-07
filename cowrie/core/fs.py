@@ -382,21 +382,35 @@ class HoneyPotFilesystem(object):
         if not fd:
             return True
         if self.tempfiles[fd] is not None:
-            shasum = hashlib.sha256(open(self.tempfiles[fd], 'rb').read()).hexdigest()
-            shasumfile = self.cfg.get('honeypot', 'download_path') + "/" + shasum
-            if (os.path.exists(shasumfile)):
+
+            try:
+                dl_path = self.cfg.get('honeypot', 'download_path_uniq')
+            except:
+                dl_path = self.cfg.get('honeypot', 'download_path')
+
+            with open(self.tempfiles[fd], 'rb') as f:
+                shasum = hashlib.sha256(f.read()).hexdigest()
+                shasumfile = os.path.join(dl_path, shasum)
+
+            if os.path.exists(shasumfile):
+                log.msg("Not storing duplicate content " + shasum)
                 os.remove(self.tempfiles[fd])
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
             os.symlink(shasum, self.tempfiles[fd])
-            self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
+
             log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
                     eventid='cowrie.session.file_upload',
                     filename=os.path.basename(self.filenames[fd]),
+                    url=self.filenames[fd],
                     outfile=shasumfile,
                     shasum=shasum)
+
+            self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
+
             del self.tempfiles[fd]
             del self.filenames[fd]
+
         return os.close(fd)
 
 

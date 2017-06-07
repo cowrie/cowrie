@@ -90,15 +90,14 @@ Download a file via FTP
             self.exit()
             return
 
-        cfg = self.protocol.cfg
         url = 'ftp://%s/%s' % (self.host, self.remote_path)
-        self.download_path = cfg.get('honeypot', 'download_path')
 
         tmp_fname = '%s_%s_%s_%s' % \
                     (time.strftime('%Y%m%d%H%M%S'),
                      self.protocol.getProtoTransport().transportId,
                      self.protocol.terminal.transport.session.id,
                      re.sub('[^A-Za-z0-9]', '_', url))
+
         self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
         result = self.ftp_download(self.safeoutfile)
@@ -115,7 +114,7 @@ Download a file via FTP
 
         with open(self.safeoutfile, 'rb') as f:
             shasum = hashlib.sha256(f.read()).hexdigest()
-            hash_path = os.path.join(self.download_path, shasum)
+            hash_path = os.path.join(self.download_path_uniq, shasum)
 
         # If we have content already, delete temp file
         if not os.path.exists(hash_path):
