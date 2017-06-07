@@ -141,7 +141,7 @@ class command_scp(HoneyPotCommand):
                     shasum=shasum)
 
             # Link friendly name to hash
-            os.symlink(hash_path, self.safeoutfile)
+            # os.symlink(hash_path, self.safeoutfile)
 
             self.safeoutfile = None
 

@@ -332,7 +332,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   shasum=shasum)
 
         # Link friendly name to hash
-        os.symlink(shasum, self.safeoutfile)
+        # os.symlink(shasum, self.safeoutfile)
 
         # FIXME: is this necessary?
         # self.safeoutfile = hashPath
