@@ -92,7 +92,7 @@ class command_curl(HoneyPotCommand):
 
         self.download_path = cfg.get('honeypot', 'download_path')
 
-        if not hasattr(self, 'safeoutfile'):
+        if not hasattr(self, 'safeoutfile') or re.match('[a-fA-F0-9]{64}', self.safeoutfile):
             tmp_fname = '%s_%s_%s_%s' % \
                         (time.strftime('%Y%m%d%H%M%S'),
                          self.protocol.getProtoTransport().transportId,
