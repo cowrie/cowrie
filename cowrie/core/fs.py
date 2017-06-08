@@ -388,7 +388,7 @@ class HoneyPotFilesystem(object):
                 os.remove(self.tempfiles[fd])
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
-            os.symlink(shasum, self.tempfiles[fd])
+            #os.symlink(shasum, self.tempfiles[fd])
             self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
             log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
                     eventid='cowrie.session.file_upload',

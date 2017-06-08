@@ -152,7 +152,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         log.msg("Not storing duplicate content " + shasum)
                     else:
                         os.rename(self.stdinlogFile, shasumfile)
-                    os.symlink(shasum, self.stdinlogFile)
+                    # os.symlink(shasum, self.stdinlogFile)
                 log.msg(eventid='cowrie.session.file_download',
                         format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
                         url='stdin',
