@@ -124,7 +124,6 @@ class command_scp(HoneyPotCommand):
         if os.path.exists(self.safeoutfile):
             with open(self.safeoutfile, 'rb') as f:
                 shasum = hashlib.sha256(data).hexdigest()
-                sha1sum = hashlib.sha1(data).hexdigest()
                 hash_path = os.path.join(self.download_path_uniq, shasum)
 
             # If we have content already, delete temp file
@@ -139,11 +138,10 @@ class command_scp(HoneyPotCommand):
                     filename=os.path.basename(fname),
                     url=fname,
                     outfile=shasum,
-                    shasum=shasum,
-                    sha1=sha1sum)
+                    shasum=shasum)
 
             # Link friendly name to hash
-            os.symlink(hash_path, self.safeoutfile)
+            # os.symlink(hash_path, self.safeoutfile)
 
             self.safeoutfile = None
 

@@ -34,6 +34,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         if not args or len(args) < 2:
             self.help()
             self.exit()
+            return
 
         host = args[0]
         port = args[1]
@@ -46,10 +47,10 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         if self.protocol.cfg.has_option('honeypot', 'out_addr'):
             out_addr = (self.protocol.cfg.get('honeypot', 'out_addr'), 0)
         else:
-            out_addr = '0.0.0.0'
+            out_addr = ('0.0.0.0', 0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind((out_addr, 0))
+        self.s.bind(out_addr)
         self.s.connect((host, int(port)))
         self.recv_data()
 

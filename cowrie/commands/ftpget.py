@@ -131,7 +131,7 @@ Download a file via FTP
                                   shasum=shasum)
 
         # Link friendly name to hash
-        os.symlink(shasum, self.safeoutfile)
+        # os.symlink(shasum, self.safeoutfile)
 
         self.safeoutfile = None
 
