@@ -70,9 +70,9 @@ cowrie_start() {
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
     if [ $AUTHBIND_ENABLED = "no" ]
     then
-        twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}
+        twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
     else
-        authbind --deep twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}
+        authbind --deep twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
     fi
 }
 
