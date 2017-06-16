@@ -89,6 +89,12 @@ txtcmds_path = txtcmds
 ttylog = true
 
 
+# Interactive timeout determines when logged in sessions are
+# terminated for being idle.
+# (default: 180)
+interactive_timeout = 180
+
+
 
 # ============================================================================
 # Network Specific Options
