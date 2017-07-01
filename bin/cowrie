@@ -9,7 +9,7 @@ VIRTUALENV_ENABLED=yes
 DAEMONIZE=""
 
 ################################################################################
-## dont' modify below here ##
+## don't modify below here ##
 ################################################################################
 
 
@@ -60,7 +60,15 @@ cowrie_status() {
 cowrie_start() {
     # Start Cowrie
     COWRIEARGS="$*"
-    TWISTEDARGS="${DAEMONIZE} ${XARGS} -l log/cowrie.log --umask 0077 --pidfile ${PIDFILE}"
+    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0077 --pidfile ${PIDFILE}"
+
+    # For Docker log to stdout, for non-Docker log to file
+    if [ $DOCKER = "yes" ]
+    then
+        TWISTEDARGS="${TWISTEDARGS} -l -"
+    else
+        TWISTEDARGS="${TWISTEDARGS} -l log/cowrie.log"
+    fi
 
     if [ $VIRTUALENV_ENABLED = "yes" ]
     then
