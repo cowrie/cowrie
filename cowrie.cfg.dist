@@ -481,6 +481,13 @@ logfile = log/cowrie.json
 #api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 #
 
+# Cuckoo output module
+#[output_cuckoo]
+#url_file = http://127.0.0.1:8090/tasks/create/file
+#url_url = http://127.0.0.1:8090/tasks/create/url
+#user = user
+#passwd = passwd
+
 #[output_slack]
 # This will produce a _lot_ of messages - you have been warned....
 #channel = channel_that_events_should_be_posted_in
