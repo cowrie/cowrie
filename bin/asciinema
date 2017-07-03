@@ -67,7 +67,7 @@ def playlog(fd, settings):
                 #        causes mangling of the data due to
                 #        newlines being misinterpreted without
                 #        carriage returns.
-                data = data.replace("\n", "\r\n")
+                data = data.replace(b"\n", b"\r\n").decode('UTF-8')
 
                 thedata = [sleeptime, data]
                 thelog['duration'] += sleeptime
