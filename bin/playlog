@@ -53,7 +53,7 @@ def playlog(fd, settings):
                 prevtime = curtime
                 if settings['colorify'] and color:
                     sys.stdout.write(color)
-                sys.stdout.write(data)
+                sys.stdout.write(data.decode('UTF-8'))
                 if settings['colorify'] and color:
                     sys.stdout.write('\033[0m')
                     color = None
