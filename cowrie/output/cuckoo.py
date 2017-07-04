@@ -73,7 +73,6 @@ class Output(cowrie.core.output.Output):
         """
         """
         if entry["eventid"] == "cowrie.session.file_download":
-
             print("Sending file to Cuckoo")
             p = urlparse(entry["url"]).path
             if p == "":
