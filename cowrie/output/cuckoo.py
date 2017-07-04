@@ -14,7 +14,7 @@
 #    products derived from this software without specific prior written
 #    permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS`` AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -30,14 +30,12 @@
 Send downloaded/uplaoded files to Cuckoo
 """
 
-from zope.interface import implementer
-
 import json
 import os
 try:
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, urljoin
 except ImportError:
-    from urlparse import urlparse
+    from urlparse import urlparse, urljoin
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -50,11 +48,10 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self, cfg):
-        self.apiurl_file = cfg.get('output_cuckoo', 'url_file').encode("utf-8")
-        self.apiurl_url = cfg.get('output_cuckoo', 'url_url').encode("utf-8")
-        self.api_user = cfg.get('output_cuckoo', 'user')
-        self.api_passwd = cfg.get('output_cuckoo', 'passwd')
-
+        self.url_base = cfg.get("output_cuckoo", "url_base").encode("utf-8")
+        self.api_user = cfg.get("output_cuckoo", "user")
+        self.api_passwd = cfg.get("output_cuckoo", "passwd")
+        self.cuckoo_force = int(cfg.get("output_cuckoo", "force"))
         cowrie.core.output.Output.__init__(self, cfg)
 
 
@@ -75,7 +72,7 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         """
         """
-        if entry["eventid"] == 'cowrie.session.file_download':
+        if entry["eventid"] == "cowrie.session.file_download":
 
             print("Sending file to Cuckoo")
             p = urlparse(entry["url"]).path
@@ -87,12 +84,33 @@ class Output(cowrie.core.output.Output):
                     fileName = entry["shasum"]
                 else:
                     fileName = b
-            self.postfile(entry["outfile"], fileName)
 
-        elif entry["eventid"] == 'cowrie.session.file_upload':
-            print("Sending file to Cuckoo")
-            self.postfile(entry["outfile"], entry["filename"])
+            if self.cuckoo_force or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False:
+                self.postfile(entry["outfile"], fileName)
 
+        elif entry["eventid"] == "cowrie.session.file_upload":
+            if self.cuckoo_force or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False:
+                print("Sending file to Cuckoo")
+                self.postfile(entry["outfile"], entry["filename"])
+
+
+    def cuckoo_check_if_dup(self, sha256):
+        """
+        Check if file already was analyzed by cuckoo
+        """
+        res = ""
+        try:
+            print("Looking for tasks for: {}".format(sha256))
+            res = requests.get(urljoin(self.url_base, "/files/view/sha256/{}".format(sha256)),
+                verify=False,
+                auth=HTTPBasicAuth(self.api_user,self.api_passwd),
+                timeout=60)
+            if res and res.ok:
+                print("Sample found in Sandbox, with ID: {}".format(res.json().get("sample", {}).get("id", 0)))
+        except Exception as e:
+            print(e)
+
+        return res
 
     def postfile(self, artifact, fileName):
         """
@@ -100,7 +118,7 @@ class Output(cowrie.core.output.Output):
         """
         files = {"file": (fileName, open(artifact, "rb").read())}
         try:
-            res = requests.post(self.apiurl_file, files=files, auth=HTTPBasicAuth(
+            res = requests.post(urljoin(self.url_base, "tasks/create/file").encode("utf-8"), files=files, auth=HTTPBasicAuth(
                             self.api_user,
                             self.api_passwd
                         ),
@@ -116,11 +134,11 @@ class Output(cowrie.core.output.Output):
 
     def posturl(self, scanUrl):
         """
-        Send a URL to Cuckoo with Twisted
+        Send a URL to Cuckoo
         """
         data = {"url": scanUrl}
         try:
-            res = requests.post(self.apiurl_url, data=data, auth=HTTPBasicAuth(
+            res = requests.post(urljoin(self.url_base, "tasks/create/url").encode("utf-8"), data=data, auth=HTTPBasicAuth(
                             self.api_user,
                             self.api_passwd
                         ),

@@ -483,10 +483,12 @@ logfile = log/cowrie.json
 
 # Cuckoo output module
 #[output_cuckoo]
-#url_file = http://127.0.0.1:8090/tasks/create/file
-#url_url = http://127.0.0.1:8090/tasks/create/url
+# no slash at the end
+#url_base = http://127.0.0.1:8090
 #user = user
 #passwd = passwd
+# force will upload duplicated files to cuckoo
+#force = 0
 
 #[output_slack]
 # This will produce a _lot_ of messages - you have been warned....
