@@ -90,7 +90,7 @@ ttylog = true
 
 
 # Interactive timeout determines when logged in sessions are
-# terminated for being idle.
+# terminated for being idle. In seconds.
 # (default: 180)
 interactive_timeout = 180
 
