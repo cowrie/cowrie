@@ -75,7 +75,7 @@ Cowrie welcomes any kind of contribution, please follow the next steps:
 Many people have contributed to Cowrie over the years. Special thanks to:
 
 * Upi Tamminen (desaster) for all his work developing Kippo on which Cowrie was based
-* Dave Germiquet (davegermiquet) for TFTP support, unit testes, new process handling
+* Dave Germiquet (davegermiquet) for TFTP support, unit tests, new process handling
 * Olivier Bilodeau (obilodeau) for Telnet support
 * Ivan Korolev (fe7ch) for many improvements over the years.
 * And many many others.
