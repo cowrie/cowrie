@@ -6,6 +6,7 @@ etc/ssh_host_rsa_key
 etc/ssh_host_rsa_key.pub
 var/log/cowrie/*
 dl/*
+build/
 log/*
 log/tty/*
 __pycache__/
