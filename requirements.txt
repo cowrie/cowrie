@@ -9,6 +9,5 @@ appdirs
 pyasn1_modules
 attrs
 service_identity
-pycrypto
 python-dateutil
 tftpy
