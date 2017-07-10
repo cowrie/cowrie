@@ -1,11 +1,11 @@
 twisted>=15.2.1
-cryptography
+cryptography>=0.9.1
 configparser
 pyopenssl
 gmpy2
 pyparsing
 packaging
-appdirs
+appdirs>=1.4.0
 pyasn1_modules
 attrs
 service_identity
