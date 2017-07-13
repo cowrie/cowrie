@@ -1,4 +1,4 @@
-# How to process Cowrie output in kippo-graph
+# How to process cowrie output in kippo-graph
 
 * (Note: work in progress, instructions are not verified)
 * Tested on Debian 9.
@@ -7,7 +7,7 @@
 
 ## Prerequisites
 
-* Working Cowrie installation
+* Working cowrie installation
 * LAMP (See below)
 
 ## Installation
