@@ -189,7 +189,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                             log.msg("Not storing duplicate content " + shasum)
                         else:
                             os.rename(rf, shasumfile)
-                        os.symlink(shasum, rf)
+                        # os.symlink(shasum, rf)
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
                             url=url,
