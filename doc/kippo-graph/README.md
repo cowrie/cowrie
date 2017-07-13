@@ -2,6 +2,10 @@
 
 (Note: work in progress, instructions are not verified)
 
+Tested on Debian 9.
+
+Just work for new attacks!
+
 
 ## Prerequisites
 
@@ -9,7 +13,6 @@
 * LAMP (See below)
 
 ## Installation
-
 
 We'll examine simple installation, when we install kippo-graph on the same machine that used for cowrie.
 
@@ -25,6 +28,7 @@ to install the tables and create the kippo user account enter the following comm
 mysql -u root -p
 CREATE DATABASE cowrie;
 GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
+FLUSH PRIVILEGES;
 exit
 ```
 
@@ -51,7 +55,7 @@ password = secret (please change!)
 port = 3306
 debug = false
 
-* set read access to tty-files for group www-data (on debian! maybe differ on other distributions)
+* set read access to tty-files for group www-data (group maybe differ on other distributions)
 sudo apt-get install act
 sudo setfacl -Rm g:www-data:rx /opt/cowrie/log/tty/
 
