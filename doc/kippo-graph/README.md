@@ -16,7 +16,28 @@ We'll examine simple installation, when we install kippo-graph on the same machi
 Please see here for installation:
 https://github.com/ikoniaris/kippo-graph
 
-## cowrie Configuration
+
+## mySQL configuration
+
+Configuring Kippo requires setting up the sql tables and then telling kippo to use them.
+to install the tables and create the kippo user account enter the following commands:
+```
+mysql -u root -p
+CREATE DATABASE cowrie;
+GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
+exit
+```
+
+now we need to populate the table structure
+```
+cd /opt/cowrie/
+mysql -u cowrie -p
+USE cowrie;
+source ./doc/sql/mysql.sql;
+exit
+```
+
+## cowrie configuration
 
 cd /opt/cowrie
 vi cowrie.cfg
@@ -41,10 +62,10 @@ cd /var/www/html/kippo-graph
 vi config.php
 
 * Change db settings
-define('DB_HOST', '127.0.0.1');
-define('DB_USER', 'username');
-define('DB_PASS', 'password');
-define('DB_NAME', 'database');
+define('DB_HOST', 'localhost');
+define('DB_USER', 'cowrie');
+define('DB_PASS', 'secret'); (please change!)
+define('DB_NAME', 'cowrie'); 
 define('DB_PORT', '3306');
 
 
