@@ -1,7 +1,6 @@
 # How to process Cowrie output in kippo-graph
 
 (Note: work in progress, instructions are not verified)
-
 Tested on Debian 9.
 
 Just work for new attacks!
@@ -47,6 +46,7 @@ cd /opt/cowrie
 vi cowrie.cfg
 
 * Activate output to mysql
+```
 [output_mysql]
 host = localhost
 database = cowrie
@@ -54,6 +54,7 @@ username = cowrie
 password = secret (please change!)
 port = 3306
 debug = false
+```
 
 * set read access to tty-files for group www-data (group maybe differ on other distributions)
 sudo apt-get install act
@@ -66,10 +67,11 @@ cd /var/www/html/kippo-graph
 vi config.php
 
 * Change db settings
+```
 define('DB_HOST', 'localhost');
 define('DB_USER', 'cowrie');
 define('DB_PASS', 'secret'); (please change!)
 define('DB_NAME', 'cowrie'); 
 define('DB_PORT', '3306');
-
+```
 
