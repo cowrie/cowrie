@@ -41,9 +41,10 @@ exit
 ```
 
 ## cowrie configuration
-
+```
 cd /opt/cowrie
 vi cowrie.cfg
+```
 
 * Activate output to mysql
 ```
@@ -57,14 +58,16 @@ debug = false
 ```
 
 * set read access to tty-files for group www-data (group maybe differ on other distributions)
+```
 sudo apt-get install act
 sudo setfacl -Rm g:www-data:rx /opt/cowrie/log/tty/
-
+```
 
 ## kippo-graph Configuration
-
+```
 cd /var/www/html/kippo-graph
 vi config.php
+```
 
 * Change db settings
 ```
