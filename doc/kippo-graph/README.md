@@ -2,7 +2,6 @@
 
 * (Note: work in progress, instructions are not verified)
 * Tested on Debian 9.
-
 * Just work for new attacks!
 
 
