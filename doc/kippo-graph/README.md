@@ -1,9 +1,9 @@
 # How to process Cowrie output in kippo-graph
 
-(Note: work in progress, instructions are not verified)
-Tested on Debian 9.
+* (Note: work in progress, instructions are not verified)
+* Tested on Debian 9.
 
-Just work for new attacks!
+* Just work for new attacks!
 
 
 ## Prerequisites
@@ -76,5 +76,32 @@ define('DB_USER', 'cowrie');
 define('DB_PASS', 'secret'); (please change!)
 define('DB_NAME', 'cowrie'); 
 define('DB_PORT', '3306');
+```
+
+## apache2 Configuration (optional)
+
+* to secure the installation
+
+Create password database
+```
+cd /etc/apache2/
+htpasswd -c /etc/apache2/cowrie.passwd <username>
+htpasswd /etc/apache2/cowrie.passwd <username> (second user)
+```
+
+
+vi /etc/apache2/sites-enabled/000-default.conf
+```
+Between the <VirtualHost> </VirtualHost> tags
+
+<Location />
+    AuthBasicAuthoritative On
+    AllowOverride AuthConfig
+
+    AuthType Basic
+    AuthName "cowrie honeypot"
+    AuthUserFile /etc/apache2/cowrie.passwd
+    Require valid-user
+   </Location>
 ```
 
