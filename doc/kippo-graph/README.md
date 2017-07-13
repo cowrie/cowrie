@@ -40,10 +40,9 @@ exit
 ```
 
 ## cowrie configuration
-```
-cd /opt/cowrie
-vi cowrie.cfg
-```
+
+vi /opt/cowrie/cowrie.cfg
+
 
 * Activate output to mysql
 ```
