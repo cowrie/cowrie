@@ -155,7 +155,14 @@ class Output(cowrie.core.output.Output):
                 (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
                 entry['url'], entry['outfile'], entry['shasum']))
 
-        elif entry["eventid"] == 'cowrie.session.file_download':
+        elif entry["eventid"] == 'cowrie.session.file_upload':
+            self.simpleQuery('INSERT INTO `downloads`' + \
+                ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
+                ' VALUES (%s, STR_TO_DATE(%s, %s), %s, %s)',
+                (entry["session"], entry["timestamp"], '%Y-%m-%dT%H:%i:%s.%fZ',
+                '', entry['outfile'], entry['shasum']))
+
+        elif entry["eventid"] == 'cowrie.session.input':
             self.simpleQuery('INSERT INTO `input`' + \
                 ' (`session`, `timestamp`, `realm`, `input`)' + \
                 ' VALUES (%s, STR_TO_DATE(%s, %s), %s , %s)',
