@@ -82,7 +82,7 @@ class DBLogger(dblog.DBLogger):
             self.xmppclient.logTraffic = True # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
-            muc, channels.keys(), user + '-' + resource)
+            muc, list(channels.keys()), user + '-' + resource)
         self.muc.setHandlerParent(self.xmppclient)
         self.xmppclient.setServiceParent(application)
         self.signals = {}
