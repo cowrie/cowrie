@@ -24,14 +24,14 @@ A_NAME, \
     A_CTIME, \
     A_CONTENTS, \
     A_TARGET, \
-    A_REALFILE = range(0, 10)
+    A_REALFILE = list(range(0, 10))
 T_LINK, \
     T_DIR, \
     T_FILE, \
     T_BLK, \
     T_CHR, \
     T_SOCK, \
-    T_FIFO = range(0, 7)
+    T_FIFO = list(range(0, 7))
 
 class TooManyLevels(Exception):
     """
