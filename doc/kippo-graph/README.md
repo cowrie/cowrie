@@ -59,7 +59,10 @@ debug = false
 * set read access to tty-files for group www-data (group maybe differ on other distributions)
 ```
 sudo apt-get install act
-sudo setfacl -Rm g:www-data:rx /opt/cowrie/log/tty/
+## for current logs
+sudo setfacl -m g:www-data:rx /opt/cowrie/log/tty/*.log
+## and new default for new logs
+sudo setfacl -Rdm g:www-data:rx /opt/cowrie/log/tty/
 ```
 
 ## kippo-graph Configuration
@@ -87,12 +90,11 @@ htpasswd -c /etc/apache2/cowrie.passwd <username>
 htpasswd /etc/apache2/cowrie.passwd <username> (second user)
 ```
 
-
-vi /etc/apache2/sites-enabled/000-default.conf
+vi /etc/apache2/sites-enabled/000-default.conf (for http!)
 ```
 Between the <VirtualHost> </VirtualHost> tags
 
-<Location />
+<Location /kippo-graph>
     AuthBasicAuthoritative On
     AllowOverride AuthConfig
 
@@ -103,3 +105,7 @@ Between the <VirtualHost> </VirtualHost> tags
    </Location>
 ```
 
+Don't forget to reload apache to activate your changes ;)
+
+## open kippo-graph
+You can now access kippo-graph with http(s)://your-server-address/kippo-graph/
