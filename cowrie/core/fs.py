@@ -87,6 +87,7 @@ class HoneyPotFilesystem(object):
 
     def resolve_path(self, path, cwd):
         """
+        This function does not need to be in this class, it has no dependencies
         """
         pieces = path.rstrip('/').split('/')
 
@@ -111,6 +112,7 @@ class HoneyPotFilesystem(object):
 
     def resolve_path_wc(self, path, cwd):
         """
+        Resolve_path with wildcard support (globbing)
         """
         pieces = path.rstrip('/').split('/')
         if len(pieces[0]):
