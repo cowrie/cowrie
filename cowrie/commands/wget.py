@@ -97,6 +97,7 @@ class command_wget(HoneyPotCommand):
             url = 'http://%s' % url
 
         urldata = urlparse(url)
+        url = bytes(url)
 
         if outfile is None:
             outfile = urldata.path.split('/')[-1]
@@ -240,7 +241,7 @@ commands['/usr/bin/dget'] = command_wget
 class HTTPProgressDownloader(client.HTTPDownloader):
     def __init__(self, wget, fakeoutfile, url, outfile, headers=None):
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
-            agent='Wget/1.11.4')
+            agent=b'Wget/1.11.4')
         self.status = None
         self.wget = wget
         self.fakeoutfile = fakeoutfile

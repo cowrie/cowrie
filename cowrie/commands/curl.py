@@ -84,6 +84,7 @@ class command_curl(HoneyPotCommand):
                 self.exit()
                 return
 
+        url=bytes(url)
         self.url = url
         self.limit_size = 0
         cfg = self.protocol.cfg
@@ -366,7 +367,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         """
         """
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
-            agent='curl/7.38.0')
+            agent=b'curl/7.38.0')
         self.status = None
         self.curl = curl
         self.fakeoutfile = fakeoutfile
