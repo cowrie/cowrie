@@ -9,6 +9,7 @@ JSON log file is still recommended way to go
 from StringIO import StringIO
 
 import json
+import unicodedata
 
 from twisted.python import log
 from twisted.internet import reactor
@@ -29,6 +30,7 @@ class Output(cowrie.core.output.Output):
         """
         self.token = cfg.get('output_splunk', 'token')
         self.url = cfg.get('output_splunk', 'url')
+        self.url = unicodedata.normalize('NFKD',self.url).encode('ascii','ignore')
         try:
             self.index = cfg.get('output_splunk', 'index')
         except:
