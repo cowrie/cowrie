@@ -17,9 +17,9 @@
 First we install support for Python virtual environments and other dependencies.
 The actual Python packages are installed later.
 
-On Debian based systems (tested on Debian 8, 2016-08-30):
+On Debian based systems (last verified on Debian 9, 2017-07-25):
 ```
-$ sudo apt-get install git python-virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
+$ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
 ```
 
 ## Step 2: Create a user account
