@@ -28,7 +28,7 @@ class Output(cowrie.core.output.Output):
         Optional: index, sourcetype, source, host
         """
         self.token = cfg.get('output_splunk', 'token')
-        self.url = cfg.get('output_splunk', 'url')
+        self.url = bytes(cfg.get('output_splunk', 'url'))
         try:
             self.index = cfg.get('output_splunk', 'index')
         except:
