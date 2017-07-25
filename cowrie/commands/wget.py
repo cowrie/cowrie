@@ -8,16 +8,11 @@ import re
 import os
 import getopt
 import hashlib
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
 from OpenSSL import SSL
 
 from twisted.web import client
 from twisted.internet import reactor, ssl
-from twisted.python import log
+from twisted.python import log, compat
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
@@ -98,7 +93,7 @@ class command_wget(HoneyPotCommand):
         if '://' not in url:
             url = 'http://%s' % url
 
-        urldata = urlparse(url)
+        urldata = compat.urllib_parse.urlparse(url)
         url = bytes(url)
 
         if outfile is None:
@@ -142,7 +137,7 @@ class command_wget(HoneyPotCommand):
         """
         """
         try:
-            parsed = urlparse(url)
+            parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)
