@@ -3,6 +3,8 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
+from __future__ import division, absolute_import
+
 from twisted.trial import unittest
 
 from cowrie.core import protocol

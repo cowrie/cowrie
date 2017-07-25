@@ -7,6 +7,8 @@
 Should be compatible with user mode linux
 """
 
+from __future__ import division, absolute_import
+
 import struct
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4

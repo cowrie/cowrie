@@ -30,14 +30,16 @@
 Docstring
 """
 
+from __future__ import division, absolute_import
+
 import json
 import os
+import time
 
 import twisted.python.logfile
+from slackclient import SlackClient
 
 import cowrie.core.output
-from slackclient import SlackClient
-import time
 
 
 class Output(cowrie.core.output.Output):

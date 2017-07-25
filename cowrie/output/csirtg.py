@@ -1,3 +1,5 @@
+from __future__ import division, absolute_import
+
 import cowrie.core.output
 
 from csirtgsdk.indicator import Indicator

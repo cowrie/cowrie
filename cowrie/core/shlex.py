@@ -9,6 +9,8 @@
 # iterator interface by Gustavo Niemeyer, April 2003.
 # changes to tokenize more like Posix shells by Vinay Sajip, January 2012.
 
+from __future__ import division, absolute_import
+
 import os
 import re
 import sys

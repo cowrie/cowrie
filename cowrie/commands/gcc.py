@@ -1,5 +1,7 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
+from __future__ import division, absolute_import
+
 import time
 import re
 import getopt

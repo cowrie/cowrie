@@ -4,6 +4,8 @@ Output plugin for HPFeeds
 
 """
 
+from __future__ import division, absolute_import
+
 import os
 import struct
 import hashlib

@@ -5,6 +5,8 @@
 This module contains ...
 """
 
+from __future__ import division, absolute_import
+
 import time
 
 from twisted.conch.ssh import factory

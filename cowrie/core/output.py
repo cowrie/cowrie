@@ -30,6 +30,8 @@
 This module contains ...
 """
 
+from __future__ import division, absolute_import
+
 import abc
 import datetime
 import re

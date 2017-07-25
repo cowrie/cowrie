@@ -30,6 +30,8 @@
 Send downloaded/uplaoded files to Cuckoo
 """
 
+from __future__ import division, absolute_import
+
 import json
 import os
 try:

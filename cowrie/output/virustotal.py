@@ -31,6 +31,8 @@ Send SSH logins to Virustotal
 Work in Progress - not functional yet
 """
 
+from __future__ import division, absolute_import
+
 from zope.interface import implementer
 
 import json

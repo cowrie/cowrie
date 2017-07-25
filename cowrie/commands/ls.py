@@ -1,13 +1,14 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import division, absolute_import
+
 import stat
 import getopt
 import time
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
-
 from cowrie.core.pwd import Passwd, Group
 
 commands = {}

@@ -5,6 +5,8 @@
 This module ...
 """
 
+from __future__ import division, absolute_import
+
 import getopt
 
 from cowrie.core.honeypot import HoneyPotCommand

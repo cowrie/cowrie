@@ -1,10 +1,15 @@
-from twisted.words.xish import domish
-from twisted.python import log
-from wokkel.xmppim import AvailablePresence
-from twisted.words.protocols.jabber.jid import JID
-from wokkel import muc
+
+from __future__ import division, absolute_import
+
 import uuid
 import json
+
+from twisted.words.xish import domish
+from twisted.python import log
+from twisted.words.protocols.jabber.jid import JID
+
+from wokkel.xmppim import AvailablePresence
+from wokkel import muc
 
 class XMPPLoggerProtocol(muc.MUCClient):
 

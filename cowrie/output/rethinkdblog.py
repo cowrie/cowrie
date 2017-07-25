@@ -1,3 +1,5 @@
+from __future__ import division, absolute_import
+
 import time
 from datetime import datetime
 import rethinkdb as r

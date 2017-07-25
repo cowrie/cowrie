@@ -5,6 +5,8 @@
 dd commands
 """
 
+from __future__ import division, absolute_import
+
 from os import path
 
 from cowrie.core.honeypot import HoneyPotCommand

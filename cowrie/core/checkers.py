@@ -5,6 +5,8 @@
 This module contains ...
 """
 
+from __future__ import division, absolute_import
+
 from sys import modules
 
 from zope.interface import implementer

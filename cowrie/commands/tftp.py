@@ -1,5 +1,7 @@
 #
 
+from __future__ import division, absolute_import
+
 import time
 import re
 import tftpy

@@ -1,3 +1,5 @@
+from __future__ import division, absolute_import
+
 import getopt
 import re
 import socket

@@ -1,5 +1,7 @@
 # Simple elasticsearch logger
 
+from __future__ import division, absolute_import
+
 import pyes
 
 import cowrie.core.output

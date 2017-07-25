@@ -3,6 +3,8 @@ Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html
 """
 
+from __future__ import division, absolute_import
+
 import dateutil.parser
 import time
 import base64

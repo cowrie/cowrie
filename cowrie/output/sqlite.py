@@ -1,6 +1,9 @@
 
 """
 """
+
+from __future__ import division, absolute_import
+
 import sqlite3
 
 from twisted.internet import defer
