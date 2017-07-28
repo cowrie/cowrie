@@ -160,9 +160,9 @@ class command_printf(HoneyPotCommand):
         else:
             if '-v' not in self.args:
                 if len(self.args) < 2:
-                    escape_fn = functools.partial(str.decode, encoding="string_escape")
+                    escape_fn = functools.partial(unicode.decode, encoding="string_escape")
                     self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
-                                                ''.join(self.args[0]).replace('\\\\x', '\\x'))).strip('\"\''))
+                                                ''.join(self.args[0]).replace(b'\\\\x', b'\\x'))).strip(b'\"\''))
 
 
 commands['printf'] = command_printf
