@@ -31,11 +31,11 @@ Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
 
 Download a file via FTP
 
-	-c	Continue previous transfer
-	-v	Verbose
-	-u USER	Username
-	-p PASS	Password
-	-P NUM	Port\n\n""")
+    -c	Continue previous transfer
+    -v	Verbose
+    -u USER	Username
+    -p PASS	Password
+    -P NUM	Port\n\n""")
 
     def start(self):
         try:
@@ -136,6 +136,7 @@ Download a file via FTP
         self.safeoutfile = None
 
         # Update the honeyfs to point to downloaded file
+        self.fs.mkfile(fakeoutfile, 0, 0, os.path.getsize(hash_path), 33188)
         self.fs.update_realfile(self.fs.getfile(fakeoutfile), hash_path)
         self.fs.chown(fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
 
