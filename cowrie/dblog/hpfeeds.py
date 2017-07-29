@@ -1,8 +1,6 @@
 ## From https://github.com/threatstream/kippo/blob/master/kippo/dblog/hpfeeds.py
 
-from cowrie.core import dblog
-from twisted.python import log
-from datetime import datetime
+from __future__ import division, absolute_import
 
 import os
 import struct
@@ -10,6 +8,11 @@ import hashlib
 import json
 import socket
 import uuid
+from datetime import datetime
+
+from twisted.python import log
+
+from cowrie.core import dblog
 
 BUFSIZ = 16384
 

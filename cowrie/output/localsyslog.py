@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import division, absolute_import
+
 import syslog
 import twisted.python.syslog
 

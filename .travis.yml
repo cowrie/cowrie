@@ -7,7 +7,6 @@ python:
 - '3.6'
 before_install:
 - sudo apt-get -qq update
-- sudo apt-get install -y libmpc-dev
 install: pip install -r requirements.txt
 script: PYTHONPATH=${TRAVIS_BUILD_DIR} trial cowrie
 notifications:

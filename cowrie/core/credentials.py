@@ -30,6 +30,8 @@
 This module contains ...
 """
 
+from __future__ import division, absolute_import
+
 from zope.interface import implementer
 
 from twisted.cred.credentials import IUsernamePassword, \

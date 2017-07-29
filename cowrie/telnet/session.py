@@ -5,6 +5,8 @@ Telnet User Session management for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
+from __future__ import division, absolute_import
+
 from zope.interface import implementer
 
 from twisted.internet import interfaces, protocol

@@ -5,9 +5,10 @@
 This module contains code for handling SSH direct-tcpip connection requests
 """
 
+from __future__ import division, absolute_import
+
 from twisted.python import log
 from twisted.conch.ssh import forwarding
-
 
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     """

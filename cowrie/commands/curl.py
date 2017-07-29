@@ -1,6 +1,8 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import division, absolute_import
+
 import stat
 import time
 import random
@@ -8,16 +10,11 @@ import re
 import os
 import getopt
 import hashlib
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
 from OpenSSL import SSL
 
 from twisted.web import client
 from twisted.internet import reactor, ssl
-from twisted.python import log
+from twisted.python import log, compat
 
 from cowrie.core.honeypot import HoneyPotCommand
 from cowrie.core.fs import *
@@ -60,7 +57,7 @@ class command_curl(HoneyPotCommand):
 
         if '://' not in url:
             url = 'http://'+ url
-        urldata = urlparse(url)
+        urldata = compat.urllib_parse.urlparse(url)
 
         outfile = None
         for opt in optlist:
@@ -84,6 +81,7 @@ class command_curl(HoneyPotCommand):
                 self.exit()
                 return
 
+        url=bytes(url)
         self.url = url
         self.limit_size = 0
         cfg = self.protocol.cfg
@@ -271,7 +269,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         """
         """
         try:
-            parsed = urlparse(url)
+            parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)
@@ -366,7 +364,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         """
         """
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
-            agent='curl/7.38.0')
+            agent=b'curl/7.38.0')
         self.status = None
         self.curl = curl
         self.fakeoutfile = fakeoutfile

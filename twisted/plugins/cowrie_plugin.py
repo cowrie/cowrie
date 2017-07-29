@@ -30,7 +30,7 @@
 FIXME: This module contains ...
 """
 
-from __future__ import print_function
+from __future__ import print_function, division, absolute_import
 
 from zope.interface import implementer, provider
 

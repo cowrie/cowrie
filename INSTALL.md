@@ -11,16 +11,15 @@
 * [Step 8: Port redirection (optional)](#step-8-port-redirection-optional)
 * [Running within supervisord(optional)](#running-using-supervisord)
 * [Troubleshooting](#troubleshooting)
-* [Installing on MacOS for development](#installing-on-macos-for-development)
 
 ## Step 1: Install dependencies
 
 First we install support for Python virtual environments and other dependencies.
 The actual Python packages are installed later.
 
-On Debian based systems (tested on Debian 8, 2016-08-30):
+On Debian based systems (last verified on Debian 9, 2017-07-25):
 ```
-$ sudo apt-get install git python-virtualenv libmpfr-dev libssl-dev libmpc-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
+$ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
 ```
 
 ## Step 2: Create a user account
@@ -179,29 +178,6 @@ Update the bin/cowrie script, change:
 
 ## Troubleshooting
 
-* For some versions of Twisted you may receive the following error messages:
-
-```
-....
-  File "/usr/lib/python2.7/site-packages/Crypto/PublicKey/DSA.py", line 342, in _generate
-      key = self._math.dsa_construct(obj.y, obj.g, obj.p, obj.q, obj.x)
-      TypeError: must be long, not mpz
-```
-
-This is caused by Twisted incompatibilities. A workaround is to run:
-
-```
-$ cd cowrie/data
-$ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
-```
-
-* If there are issues creating the RSA keys, the following is a workaround:
-
-```
-$ cd cowrie/data
-$ ssh-keygen -t rsa -b 2048 -f ssh_host_rsa_key
-```
-
 * If you see `twistd: Unknown command: cowrie` there are two
 possibilities. If there's a python stack trace, it probably means
 there's a missing or broken dependency. If there's no stack trace,
@@ -210,13 +186,3 @@ double check that your PYTHONPATH is set to the source code directory.
 
 To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
 
-## Installing on MacOS for development
-
-gmpy2 requires a number of libraries which are not included by default with MacOS Sierra and must be installed, suggested method is by using [homebrew](http://brew.sh/)
-
-```
-brew install gmp
-brew install mpfr
-brew install mpc
-brew install libmpc
-```

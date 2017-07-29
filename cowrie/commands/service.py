@@ -5,6 +5,8 @@
 This module contains the service commnad
 """
 
+from __future__ import division, absolute_import
+
 import getopt
 
 from twisted.python import log

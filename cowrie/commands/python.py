@@ -5,12 +5,15 @@
 This module contains the python commnad
 """
 
-from cowrie.core.honeypot import HoneyPotCommand
+from __future__ import division, absolute_import
+
 import getopt
+
 from twisted.python import log
 
-commands = {}
+from cowrie.core.honeypot import HoneyPotCommand
 
+commands = {}
 
 class command_python(HoneyPotCommand):
     """

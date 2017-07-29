@@ -1,10 +1,15 @@
-from twisted.words.xish import domish
-from twisted.python import log
-from wokkel.xmppim import AvailablePresence
-from twisted.words.protocols.jabber.jid import JID
-from wokkel import muc
+
+from __future__ import division, absolute_import
+
 import uuid
 import json
+
+from twisted.words.xish import domish
+from twisted.python import log
+from twisted.words.protocols.jabber.jid import JID
+
+from wokkel.xmppim import AvailablePresence
+from wokkel import muc
 
 class XMPPLoggerProtocol(muc.MUCClient):
 
@@ -82,7 +87,7 @@ class DBLogger(dblog.DBLogger):
             self.xmppclient.logTraffic = True # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
-            muc, channels.keys(), user + '-' + resource)
+            muc, list(channels.keys()), user + '-' + resource)
         self.muc.setHandlerParent(self.xmppclient)
         self.xmppclient.setServiceParent(application)
         self.signals = {}

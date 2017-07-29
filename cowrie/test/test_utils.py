@@ -1,3 +1,5 @@
+from __future__ import division, absolute_import
+
 import ConfigParser
 import io
 import textwrap

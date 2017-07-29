@@ -5,6 +5,8 @@
 This module contains ...
 """
 
+from __future__ import division, absolute_import
+
 import struct
 
 from twisted.python import log

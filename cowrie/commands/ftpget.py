@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
 # Author: Claud Xiao
 
+from __future__ import division, absolute_import
 
 import os
 import re
@@ -10,16 +10,12 @@ import getopt
 import hashlib
 from ftplib import FTP
 
-from cowrie.core.honeypot import HoneyPotCommand
-from cowrie.core.fs import *
 from twisted.python import log
 
-
-"""
-"""
+from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.core.fs import *
 
 commands = {}
-
 
 class command_ftpget(HoneyPotCommand):
     """
