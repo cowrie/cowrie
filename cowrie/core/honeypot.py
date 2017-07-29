@@ -546,7 +546,8 @@ class StdOutStdErrEmulationProtocol(object):
     def errReceived(self, data):
         """
         """
-        self.protocol.terminal.write(data)
+        if self.protocol and self.protocol.terminal:
+            self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
 
 
