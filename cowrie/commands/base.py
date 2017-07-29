@@ -131,7 +131,7 @@ class command_echo(HoneyPotCommand):
             optlist, args = getopt.getopt(self.args, "eEn")
             for opt in optlist:
                 if opt[0] == '-e':
-                    escape_fn = functools.partial(str.decode, encoding="string_escape")
+                    escape_fn = functools.partial(unicode.decode, encoding="string_escape")
                 elif opt[0] == '-E':
                     escape_fn = lambda s: s
                 elif opt[0] == '-n':
@@ -142,7 +142,7 @@ class command_echo(HoneyPotCommand):
         # FIXME: Wrap in exception, Python escape cannot handle single digit \x codes (e.g. \x1)
         try:
             self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F]{1})(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
-                ''.join(args).replace('\\\\x', '\\x')).strip('\"\'')))
+                ''.join(args).replace(b'\\\\x', b'\\x')).strip(b'\"\'')))
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
 
@@ -162,9 +162,9 @@ class command_printf(HoneyPotCommand):
         else:
             if '-v' not in self.args:
                 if len(self.args) < 2:
-                    escape_fn = functools.partial(str.decode, encoding="string_escape")
+                    escape_fn = functools.partial(unicode.decode, encoding="string_escape")
                     self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
-                                                ''.join(self.args[0]).replace('\\\\x', '\\x'))).strip('\"\''))
+                                                ''.join(self.args[0]).replace(b'\\\\x', b'\\x'))).strip(b'\"\''))
 
 
 commands['printf'] = command_printf
