@@ -141,8 +141,22 @@ class command_echo(HoneyPotCommand):
 
         # FIXME: Wrap in exception, Python escape cannot handle single digit \x codes (e.g. \x1)
         try:
-            self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F]{1})(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
-                ''.join(args).replace(b'\\\\x', b'\\x')).strip(b'\"\'')))
+            # replace r'\\x' with r'\x'
+            s = ''.join(args).replace(b'\\\\x', b'\\x')
+
+            # replace single character escape \x0 with \x00
+            s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+
+            # strip single and double quotes
+            s = s.strip(b'\"\'')
+
+            # if the string ends with \c escape, strip it and set newline flag to False
+            if s.endswith('\\c'):
+                s = s[:-2]
+                newline = False
+
+            self.write(escape_fn(s))
+
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
 
@@ -163,8 +177,21 @@ class command_printf(HoneyPotCommand):
             if '-v' not in self.args:
                 if len(self.args) < 2:
                     escape_fn = functools.partial(unicode.decode, encoding="string_escape")
-                    self.write(escape_fn(re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>',
-                                                ''.join(self.args[0]).replace(b'\\\\x', b'\\x'))).strip(b'\"\''))
+
+                    # replace r'\\x' with r'\x'
+                    s = ''.join(self.args[0]).replace(b'\\\\x', b'\\x')
+
+                    # replace single character escape \x0 with \x00
+                    s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+
+                    # strip single and double quotes
+                    s = s.strip(b'\"\'')
+
+                    # if the string ends with \c escape, strip it
+                    if s.endswith('\\c'):
+                        s = s[:-2]
+
+                    self.write(escape_fn(s))
 
 
 commands['printf'] = command_printf
