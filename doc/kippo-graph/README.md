@@ -1,28 +1,25 @@
-# How to process cowrie output in kippo-graph
+# How to process Cowrie output in kippo-graph
 
 * (Note: work in progress, instructions are not verified)
 * Tested on Debian 9.
-* Just work for new attacks!
 
 
 ## Prerequisites
 
-* Working cowrie installation
-* LAMP (See below)
+* Working Cowrie installation
+* LAMP stack (Linux, Apache, MySQL, PHP)
 
 ## Installation
 
-We'll examine simple installation, when we install kippo-graph on the same machine that used for cowrie.
-
-Please see here for installation:
-https://github.com/ikoniaris/kippo-graph
+This covers a simple installation, with kippo-graph and Cowrie on the same server.
+Please see here for installation: https://github.com/ikoniaris/kippo-graph
 
 
 ## mySQL configuration
 
-Configuring cowrie requires setting up the sql tables and then telling cowrie to use them.
+Configuring Cowrie requires setting up the SQL tables and then telling Cowrie to use them.
 
-To install the tables and create the cowrie user account enter the following commands:
+To install the tables and create the Cowrie user account enter the following commands:
 ```
 mysql -u root -p
 CREATE DATABASE cowrie;
@@ -31,7 +28,7 @@ FLUSH PRIVILEGES;
 exit
 ```
 
-now we need to populate the table structure
+next create the database schema:
 ```
 cd /opt/cowrie/
 mysql -u cowrie -p
@@ -42,7 +39,9 @@ exit
 
 ## cowrie configuration
 
+```
 vi /opt/cowrie/cowrie.cfg
+```
 
 
 * Activate output to mysql
@@ -51,7 +50,7 @@ vi /opt/cowrie/cowrie.cfg
 host = localhost
 database = cowrie
 username = cowrie
-password = secret >>> (please change!)
+password = PASSWORD HERE
 port = 3306
 debug = false
 ```
@@ -64,23 +63,25 @@ sudo setfacl -Rm g:www-data:rx /opt/cowrie/log/tty/
 
 ## kippo-graph Configuration
 
+```
 vi /var/www/html/kippo-graph/config.php
+```
 
 
 * Change db settings
 ```
 define('DB_HOST', 'localhost');
 define('DB_USER', 'cowrie');
-define('DB_PASS', 'secret'); >>> (please change!)
+define('DB_PASS', 'PASSWORD HERE');
 define('DB_NAME', 'cowrie'); 
 define('DB_PORT', '3306');
 ```
 
-## apache2 Configuration (optional)
+## Apache2 configuration (optional)
 
 * to secure the installation
 
-Create password database
+Create password database:
 ```
 cd /etc/apache2/
 htpasswd -c /etc/apache2/cowrie.passwd <username>
@@ -88,10 +89,11 @@ htpasswd /etc/apache2/cowrie.passwd <username> (second user)
 ```
 
 
+```
 vi /etc/apache2/sites-enabled/000-default.conf
 ```
-Between the <VirtualHost> </VirtualHost> tags
-
+Between the <VirtualHost> </VirtualHost> tags, add:
+```
 <Location />
     AuthBasicAuthoritative On
     AllowOverride AuthConfig
