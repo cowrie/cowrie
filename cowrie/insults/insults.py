@@ -121,7 +121,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(self.ttylogFile, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
 
-        insults.ServerProtocol.dataReceived(self, data)
+        # prevent crash if something like this was passed:
+        # echo cmd ; exit; \n\n
+        if self.terminalProtocol:
+            insults.ServerProtocol.dataReceived(self, data)
 
 
     def eofReceived(self):
