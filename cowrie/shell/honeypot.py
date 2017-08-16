@@ -316,7 +316,7 @@ class HoneyPotShell(object):
             cmd['rargs'] = []
             break
 
-        if not cmd['command']:
+        if 'command' not in cmd or not cmd['command']:
             runOrPrompt()
             return
 
