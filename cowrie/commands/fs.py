@@ -16,6 +16,7 @@ from cowrie.shell.fs import *
 
 commands = {}
 
+
 class command_cat(HoneyPotCommand):
     """
     cat command
@@ -44,6 +45,7 @@ class command_cat(HoneyPotCommand):
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
 
+        self.write(line)
 
     def handle_CTRL_D(self):
         self.exit()
