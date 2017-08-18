@@ -13,7 +13,7 @@ from twisted.python import failure, log
 
 from twisted.internet import error, reactor
 
-from cowrie.shell.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
+from cowrie.shell.honeypot import HoneyPotCommand, HoneyPotShell, StdOutStdErrEmulationProtocol
 from cowrie.core.auth import UserDB
 from cowrie.core import utils
 
@@ -142,7 +142,7 @@ class command_echo(HoneyPotCommand):
         # FIXME: Wrap in exception, Python escape cannot handle single digit \x codes (e.g. \x1)
         try:
             # replace r'\\x' with r'\x'
-            s = ''.join(args).replace(b'\\\\x', b'\\x')
+            s = ' '.join(args).replace(b'\\\\x', b'\\x')
 
             # replace single character escape \x0 with \x00
             s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
@@ -533,13 +533,12 @@ class command_sh(HoneyPotCommand):
         if len(self.args) and self.args[0].strip() == '-c':
             line = ' '.join(self.args)
             cmd = self.args[1]
-            cmdclass = self.protocol.getCommand(cmd,
-                                                self.environ['PATH'].split(':'))
+            if (cmd[0] == '\'' and cmd[-1] == '\'') or (cmd[0] == '"' and cmd[-1] == '"'):
+                cmd = cmd[1:-1]
+            cmdclass = self.protocol.getCommand(cmd, self.environ['PATH'].split(':'))
             if cmdclass:
-                log.msg(eventid='cowrie.command.success',
-                        input=line,
-                        format='Command found: %(input)s')
-                command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[2:],self.input_data,None)
+                log.msg(eventid='cowrie.command.success', input=line, format='Command found: %(input)s')
+                command = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, self.args[2:], self.input_data, None)
                 self.protocol.pp.insert_command(command)
                 # Place this here so it doesn't write out only if last statement
 
@@ -548,7 +547,18 @@ class command_sh(HoneyPotCommand):
             else:
                 log.msg(eventid='cowrie.command.failed',
                         input=''.join(cmd), format='Command not found: %(input)s')
-                self.write('bash: %s: command not found\n' % (cmd))
+                self.write('bash: %s: command not found\n' % cmd)
+        elif self.input_data:
+
+            # self.input_data holds commands passed via PIPE
+            # create new HoneyPotShell for our a new 'sh' shell
+            self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False))
+
+            # call lineReceived method that indicates that we have some commands to parse
+            self.protocol.cmdstack[-1].lineReceived(self.input_data)
+
+            # remove the shell
+            self.protocol.cmdstack.pop()
 
 
 commands['/bin/bash'] = command_sh
