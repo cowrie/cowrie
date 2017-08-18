@@ -28,8 +28,8 @@ class HoneyPotCommand(object):
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
-        self.data = None
-        self.input_data = None
+        self.data = None        # output data
+        self.input_data = None  # used to store STDIN data passed via PIPE
         self.write = self.protocol.pp.outReceived
         self.errorWrite = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command
@@ -152,7 +152,7 @@ class HoneyPotCommand(object):
         # FIXME: naive command parsing, see lineReceived below
         line = b"".join(line)
         line = line.decode("utf-8")
-        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line,posix=False))
+        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=False))
 
 
     def resume(self):
@@ -264,14 +264,12 @@ class HoneyPotShell(object):
         """
         """
         pp = None
+
         def runOrPrompt():
             if len(self.cmdpending):
                 self.runCommand()
-            elif self.interactive:
-                self.showPrompt()
             else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
+                self.showPrompt()
 
         def parsed_arguments(arguments):
             parsed_arguments = []
@@ -295,8 +293,14 @@ class HoneyPotShell(object):
             if self.interactive:
                 self.showPrompt()
             else:
-                ret = failure.Failure(error.ProcessDone(status=""))
-                self.protocol.terminal.transport.processEnded(ret)
+                # when commands passed to a shell via PIPE, we spawn a HoneyPotShell in none interactive mode
+                # if there are another shells on stack (cmdstack), let's just exit our new shell
+                # else close connection
+                if len(self.protocol.cmdstack) == 1:
+                    ret = failure.Failure(error.ProcessDone(status=""))
+                    self.protocol.terminal.transport.processEnded(ret)
+                else:
+                    return
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
@@ -342,12 +346,9 @@ class HoneyPotShell(object):
             cmd = {}
 
         lastpp = None
-        exit = False
         for index, cmd in reversed(list(enumerate(cmd_array))):
-            if cmd['command'] == "exit":
-                exit = True
 
-            cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
+            cmdclass = self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
             if cmdclass:
                 log.msg(eventid='cowrie.command.success', input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
                 if index == len(cmd_array)-1:
@@ -357,8 +358,7 @@ class HoneyPotShell(object):
                     pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, lastpp)
                     lastpp = pp
             else:
-                log.msg(eventid='cowrie.command.failed',
-                    input=' '.join(cmd2), format='Command not found: %(input)s')
+                log.msg(eventid='cowrie.command.failed', input=' '.join(cmd2), format='Command not found: %(input)s')
                 self.protocol.terminal.write(b'bash: %s: command not found\n' % (cmd['command'],))
                 runOrPrompt()
         if pp:
@@ -532,14 +532,18 @@ class StdOutStdErrEmulationProtocol(object):
     def outReceived(self, data):
         """
         """
-        self.data = self.data + data
+        self.data = data
 
         if not self.next_command:
             if not self.protocol is None and not self.protocol.terminal is None:
                 self.protocol.terminal.write(str(data))
             else:
                 log.msg("Connection was probably lost. Could not write to terminal")
-
+        else:
+            self.next_command.input_data = self.data
+            npcmd = self.next_command.cmd
+            npcmdargs = self.next_command.cmdargs
+            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
     def insert_command(self, command):
         """
