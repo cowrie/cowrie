@@ -79,7 +79,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
         """
         """
         log.msg(eventid='cowrie.direct-tcpip.data',
-            format='direct-tcp forward to %(dst_ip)s:%(dst_port)s with data %(data)s',
+            format='direct-tcp forward request to %(dst_ip)s:%(dst_port)s with data %(data)s',
             dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
         self._close("Connection refused")
 
