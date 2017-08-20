@@ -243,7 +243,7 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 # (default: listen_endpoints = tcp:2222:interface=0.0.0.0)
 # (use systemd: endpoint for systemd activation)
 # listen_endpoints = systemd:domain=INET:index=0
-# For IPv4 and IPv6: listen_endpoints = tcp6:2222:interface=\:\: tcp:2222:interface=0.0.0.0
+# For both IPv4 and IPv6: listen_endpoints = tcp6:2222:interface=\:\:
 listen_endpoints = tcp:2222:interface=0.0.0.0
 
 
