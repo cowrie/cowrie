@@ -122,6 +122,12 @@ class HoneyPotCommand(object):
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
         try:
+            if self.protocol and self.protocol.terminal and hasattr(self, 'safeoutfile') and self.safeoutfile:
+                if hasattr(self, 'outfile') and self.outfile:
+                    self.protocol.terminal.redirFiles.add((self.safeoutfile, self.outfile))
+                else:
+                    self.protocol.terminal.redirFiles.add((self.safeoutfile, ''))
+
             self.protocol.cmdstack.pop()
             if len(self.protocol.cmdstack):
                 self.protocol.cmdstack[-1].resume()
@@ -247,7 +253,6 @@ class HoneyPotShell(object):
                 self.cmdpending = []
                 self.showPrompt()
                 return
-
         if len(self.cmdpending):
             self.runCommand()
         else:
