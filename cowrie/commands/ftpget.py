@@ -8,6 +8,7 @@ import re
 import time
 import getopt
 import hashlib
+import socket
 from ftplib import FTP
 
 from twisted.python import log
@@ -169,7 +170,10 @@ Download a file via FTP
         except Exception as e:
             log.msg('FTP login failed: user=%s, passwd=%s, err=%s' % (self.username, self.password, str(e)))
             self.write('ftpget: unexpected server response to USER: %s\n' % str(e))
-            ftp.quit()
+            try:
+                ftp.quit()
+            except socket.timeout:
+                pass
             return False
 
         # download
@@ -185,7 +189,10 @@ Download a file via FTP
         except Exception as e:
             log.msg('FTP retrieval failed: %s' % str(e))
             self.write('ftpget: unexpected server response to USER: %s\n' % str(e))
-            ftp.quit()
+            try:
+                ftp.quit()
+            except socket.timeout:
+                pass
             return False
 
         # quit
@@ -193,7 +200,11 @@ Download a file via FTP
             self.write('ftpget: cmd (null) (null)\n')
             self.write('ftpget: cmd QUIT (null)\n')
 
-        ftp.quit()
+        try:
+            ftp.quit()
+        except socket.timeout:
+            pass
+        
         return True
 
 
