@@ -215,7 +215,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: T%(sessionno)s]',
            src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           session=self.transportId, sessionno='T'+str(sessionno))
+           session=self.transportId, sessionno='T'+str(sessionno), protocol='telnet')
         TelnetTransport.connectionMade(self)
 
 
