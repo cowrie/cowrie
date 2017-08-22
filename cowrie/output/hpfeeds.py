@@ -44,6 +44,11 @@ class BadClient(Exception):
     pass
 
 
+def set2json(value):
+    if isinstance(value, set):
+        return list(value)
+    return value
+
 
 def strpack8(x):
     """
@@ -208,12 +213,12 @@ class hpclient(object):
 
     def publish(self, channel, **kwargs):
         try:
-            self.send(msgpublish(self.ident, channel, json.dumps(kwargs).encode('latin1')))
+            self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
         except Exception as e:
             log.err('connection to hpfriends lost: {0}'.format(e))
             log.err('connecting')
             self.connect()
-            self.send(msgpublish(self.ident, channel, json.dumps(kwargs).encode('latin1')))
+            self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
 
 
     def sendfile(self, filepath):
@@ -286,7 +291,7 @@ class Output(cowrie.core.output.Output):
                 'hostIP': entry["dst_ip"], 'hostPort': entry["dst_port"],
                 'loggedin': None, 'credentials':[], 'commands':[],
                 'unknownCommands':[], 'urls':[], 'version': None,
-                'ttylog': None }
+                'ttylog': None, 'hashes': set()}
 
         elif entry["eventid"] == 'cowrie.login.success':
             u, p = entry['username'], entry['password']
@@ -307,6 +312,10 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'cowrie.session.file_download':
             url = entry['url']
             self.meta[session]['urls'].append(url)
+            self.meta[session]['hashes'].add(entry['shasum'])
+
+        elif entry["eventid"] == 'cowrie.session.file_upload':
+            self.meta[session]['hashes'].add(entry['shasum'])
 
         elif entry["eventid"] == 'cowrie.client.version':
             v = entry['version']
