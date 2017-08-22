@@ -515,3 +515,27 @@ logfile = log/cowrie.json
 #[output_socketlog]
 #address = 127.0.0.1:9000
 #timeout = 5
+
+# Upload files that cowrie has captured to an S3 (or compatible bucket)
+# Files are stored with a name that is the SHA of their contents
+#
+#[output_s3]
+#
+# The AWS credentials to use
+#access_key_id = AKIDEXAMPLE
+#secret_access_key = wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
+#
+# The bucket to store the files in. The bucket must already exist.
+#bucket = my-cowrie-bucket
+#
+# The region the bucket is in
+#region = eu-west-1
+#
+# An alternate endpoint URL. If you self host a pithos instance you can set
+# this to its URL (e.g. https://s3.mydomain.com) - can otherwise be blank
+#endpoint =
+#
+# Whether or not to validate the S3 certificate. Set this to 'no' to turn this
+# off. Do not do this for real AWS. It's only needed for self-hosted S3 clone
+# where you don't yet have real certificates.
+#verify = no

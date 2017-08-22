@@ -16,6 +16,9 @@ pymongo
 # rethinkdblog
 rethinkdb
 
+# s3
+botocore
+
 # slack
 slackclient
 
