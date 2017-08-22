@@ -61,6 +61,14 @@ Maybe. See [FAQ](https://github.com/micheloosterhof/cowrie/wiki/Frequently-Asked
 
 Please visit https://github.com/micheloosterhof/cowrie/issues
 
+## I'd like to install with Docker
+
+Run:
+```docker pull cowrie/cowrie```
+to download images from hub.docker.com
+
+Or look at https://github.com/micheloosterhof/docker-cowrie for the Dockerfile
+
 ## Contributing
 
 Cowrie welcomes any kind of contribution, please follow the next steps:
