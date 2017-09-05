@@ -60,6 +60,9 @@ class SSHConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
     """
     This class modifies the original to close the connection
     """
+    name = b'cowrie-forwarded-direct-tcpip'
+
+
     def eofReceived(self):
         self.loseConnection()
 
@@ -69,6 +72,8 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
     """
     This channel does not forward, but just logs requests.
     """
+    name = b'cowrie-discarded-direct-tcpip'
+
     def channelOpen(self, specificData):
         """
         """
