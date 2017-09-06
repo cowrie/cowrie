@@ -37,6 +37,10 @@ from zope.interface import implementer, provider
 import os
 import sys
 
+from twisted._version import __version__
+if __version__.major < 17:
+    raise ImportError( "Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
+
 from twisted.python import log, usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
