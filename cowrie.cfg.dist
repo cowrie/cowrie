@@ -317,6 +317,26 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 
 
 # ============================================================================
+# Command Customization Specific Options
+# ============================================================================
+
+[uname]
+# Version strings for each uname parameter
+
+uname_version = uname (GNU coreutils) 8.23${\n}Copyright (C) 2014 Free Software Foundation, Inc.${\n}License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.${\n}This is free software: you are free to change and redistribute it.${\n}There is NO WARRANTY, to the extent permitted by law.${\n}${\n}Written by David MacKenzie.${\n}
+uname_help = Usage: uname [OPTION]...${\n}Print certain system information.  With no OPTION, same as -s.${\n}${\n}  -a, --all                print all information, in the following order,${\n}                             except omit -p and -i if unknown:${\n}  -s, --kernel-name        print the kernel name${\n}  -n, --nodename           print the network node hostname${\n}  -r, --kernel-release     print the kernel release${\n}  -v, --kernel-version     print the kernel version${\n}  -m, --machine            print the machine hardware name${\n}  -p, --processor          print the processor type or "unknown"${\n}  -i, --hardware-platform  print the hardware platform or "unknown"${\n}  -o, --operating-system   print the operating system${\n}      --help     display this help and exit${\n}      --version  output version information and exit${\n}${\n}GNU coreutils online help: <http://www.gnu.org/software/coreutils/>${\n}Full documentation at: <http://www.gnu.org/software/coreutils/uname>${\n}or available locally via: info '(coreutils) uname invocation'${\n}
+
+kernel_name = Linux
+kernel_release = 3.16.0-4-amd64
+kernel_version = #1 SMP Debian 3.16.36-1+deb8u2 (2016-10-19)
+machine = x86_64
+processor = unknown
+hardware_platform = unknown
+operating_system = GNU/Linux
+
+
+
+# ============================================================================
 # Database logging Specific Options
 # ============================================================================
 
