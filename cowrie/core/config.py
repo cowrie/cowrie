@@ -10,15 +10,7 @@ from __future__ import division, absolute_import
 import configparser
 
 def readConfigFile(cfgfile):
-    """
-    Read config files and return ConfigParser object
-
-    @param cfgfile: filename or array of filenames
-    @return: ConfigParser object
-    """
-    parser = configparser.ConfigParser()
-    parser.read(cfgfile)
-    return parser
-
-CONFIG = readConfigFile(("cowrie.cfg.dist", "etc/cowrie.cfg", "cowrie.cfg"))
+    config = configparser.ConfigParser()
+    config.read(cfgfile)
+    return config
 

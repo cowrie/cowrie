@@ -41,13 +41,13 @@ from twisted._version import __version__
 if __version__.major < 17:
     raise ImportError( "Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
 
-from twisted.python import usage, logfile
+from twisted.python import log, usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet, service
 from twisted.cred import portal
 from twisted.internet import reactor
-from twisted.logger import ILogObserver, globalLogPublisher, textFileLogObserver, Logger
+from twisted.logger import ILogObserver, globalLogPublisher
 
 from cowrie.core.config import readConfigFile
 from cowrie.core.utils import get_endpoints_from_section, create_endpoint_services
@@ -76,7 +76,7 @@ class Options(usage.Options):
 @provider(ILogObserver)
 def importFailureObserver(event):
     if 'failure' in event and event['failure'].type is ImportError:
-        log.error("ERROR: %s. Please run `pip install -U -r requirements.txt` "
+        log.err("ERROR: %s. Please run `pip install -U -r requirements.txt` "
                 "from Cowrie's install directory and virtualenv to install "
                 "the new dependency" % event['failure'].value.message)
 
@@ -113,7 +113,6 @@ Makes a Cowrie SSH/Telnet honeypot.
         """
         Construct a TCPServer from a factory defined in Cowrie.
         """
-        log=Logger()
 
         if options["help"] == True:
             self.printHelp()
@@ -144,10 +143,6 @@ Makes a Cowrie SSH/Telnet honeypot.
             print('ERROR: You must at least enable SSH or Telnet')
             sys.exit(1)
 
-        dailylog = logfile.DailyLogFile.fromFullPath(
-          os.path.join("log", "cowrienew.log"))
-        globalLogPublisher.addObserver(textFileLogObserver(dailylog))
-
         # Load db loggers
         self.dbloggers = []
         for x in cfg.sections():
@@ -157,12 +152,12 @@ Makes a Cowrie SSH/Telnet honeypot.
             try:
                 dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
                     globals(), locals(), ['dblog']).DBLogger(cfg)
-                globalLogPublisher.addObserver(dblogger.emit)
+                log.addObserver(dblogger.emit)
                 self.dbloggers.append(dblogger)
-                log.info("Loaded dblog engine: {}".format(engine))
+                log.msg("Loaded dblog engine: {}".format(engine))
             except:
-                log.error()
-                log.info("Failed to load dblog engine: {}".format(engine))
+                log.err()
+                log.msg("Failed to load dblog engine: {}".format(engine))
 
         # Load output modules
         self.output_plugins = []
@@ -173,15 +168,15 @@ Makes a Cowrie SSH/Telnet honeypot.
             try:
                 output = __import__( 'cowrie.output.{}'.format(engine),
                     globals(), locals(), ['output']).Output(cfg)
-                globalLogPublisher.addObserver(output.emit)
+                log.addObserver(output.emit)
                 self.output_plugins.append(output)
-                log.info("Loaded output engine: {}".format(engine))
+                log.msg("Loaded output engine: {}".format(engine))
             except ImportError as e:
-                log.error("Failed to load output engine: {} due to ImportError: {}".format(engine, e))
-                log.info("Please install the dependencies for {} listed in requirements-output.txt".format(engine))
+                log.err("Failed to load output engine: {} due to ImportError: {}".format(engine, e))
+                log.msg("Please install the dependencies for {} listed in requirements-output.txt".format(engine))
             except Exception:
-                log.error()
-                log.info("Failed to load output engine: {}".format(engine))
+                log.err()
+                log.msg("Failed to load output engine: {}".format(engine))
 
         topService = service.MultiService()
         application = service.Application('cowrie')
