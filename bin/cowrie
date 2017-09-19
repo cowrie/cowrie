@@ -101,7 +101,7 @@ cowrie_stop () {
 }
 
 cowrie_usage() {
-    echo "usage: $0 <start|stop|status>"
+    echo "usage: $0 <start|stop|restart|status>"
 }
 
 ################################################################################
@@ -127,6 +127,10 @@ case $key in
         cowrie_stop $*
         ;;
     start)
+        cowrie_start $*
+        ;;
+    restart)
+        cowrie_stop $*
         cowrie_start $*
         ;;
     status)
