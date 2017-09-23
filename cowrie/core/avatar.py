@@ -16,6 +16,7 @@ from twisted.python import log, components
 
 from cowrie.core import pwd
 from cowrie.ssh import session
+from cowrie.proxy import session as proxy
 from cowrie.ssh import filetransfer
 from cowrie.ssh import forwarding
 
@@ -31,7 +32,13 @@ class CowrieUser(avatar.ConchUser):
         self.server = server
         self.cfg = self.server.cfg
 
-        self.channelLookup[b'session'] = session.HoneyPotSSHSession
+        try:
+            if self.cfg.get('honeypot', 'backend') == "proxy":
+                self.channelLookup[b'session'] = proxy.ProxySSHSession
+            else:
+                self.channelLookup[b'session'] = session.HoneyPotSSHSession
+        except:
+            self.channelLookup[b'session'] = session.HoneyPotSSHSession
 
         try:
             pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
