@@ -95,6 +95,11 @@ ttylog = true
 interactive_timeout = 180
 
 
+# EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
+# a limited implementation is available for proxy, with request_exec functionality only
+# (default: shell)
+backend = shell
+
 
 # ============================================================================
 # Network Specific Options
