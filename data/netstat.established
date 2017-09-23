@@ -1,0 +1,17 @@
+tcp4       0      0  ?.?.?.?.61529      104.16.13.8.80         ESTABLISHED
+tcp4       0      0  ?.?.?.?.61518      52.85.88.220.80        ESTABLISHED
+tcp6       0      0  2607:fea8:559f:f.61475 2800:3f0:4003:c0.443   ESTABLISHED
+tcp6       0      0  2607:fea8:559f:f.61474 2607:f8b0:400d:c.443   ESTABLISHED
+tcp4       0      0  ?.?.?.?.61192      ?,?,?.42.8008      ESTABLISHED
+tcp4       0      0  ?.?.?.?.61191      ?,?,?.89.8008      ESTABLISHED
+tcp4       0      0  ?.?.?.?.61172      192.30.253.125.443     ESTABLISHED
+tcp4       0      0  ?.?.?.?.60922      54.84.126.191.443      ESTABLISHED
+tcp6       0      0  2607:fea8:559f:f.60862 2607:f8b0:400b:8.443   ESTABLISHED
+tcp4       0      0  ?.?.?.?.60815      17.249.188.8.5223      ESTABLISHED
+tcp4       0      0  ?.?.?.?.60804      54.84.126.191.443      ESTABLISHED
+tcp4       0      0  ?.?.?.?.60788      ?,?,?.89.8009      ESTABLISHED
+tcp4       0      0  ?.?.?.?.60786      91.190.219.39.12350    ESTABLISHED
+tcp4       0      0  ?.?.?.?.60781      ?,?,?.42.8009      ESTABLISHED
+tcp4       0      0  ?.?.?.?.60779      137.116.75.55.443      ESTABLISHED
+tcp4       0      0  ?.?.?.?.60777      64.4.46.53.443         ESTABLISHED
+tcp4       0      0  ?.?.?.?.60776      65.55.223.29.40032     ESTABLISHED

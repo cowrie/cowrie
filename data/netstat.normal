@@ -1,0 +1,17 @@
+unix  4      [ ]         DGRAM                    7445     /dev/log
+unix  3      [ ]         STREAM     CONNECTED     7323
+unix  3      [ ]         STREAM     CONNECTED     7348     /var/run/dbus/system_bus_socket
+unix  3      [ ]         STREAM     CONNECTED     7330
+unix  2      [ ]         DGRAM                    8966
+unix  3      [ ]         STREAM     CONNECTED     7424     /var/run/dbus/system_bus_socket
+unix  3      [ ]         STREAM     CONNECTED     7140
+unix  3      [ ]         STREAM     CONNECTED     7145     @/com/ubuntu/upstart
+unix  3      [ ]         DGRAM                    7199
+unix  3      [ ]         STREAM     CONNECTED     7347
+unix  3      [ ]         STREAM     CONNECTED     8594
+unix  3      [ ]         STREAM     CONNECTED     7331
+unix  3      [ ]         STREAM     CONNECTED     7364     @/com/ubuntu/upstart
+unix  3      [ ]         STREAM     CONNECTED     7423
+unix  3      [ ]         DGRAM                    7198
+unix  2      [ ]         DGRAM                    9570
+unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart
