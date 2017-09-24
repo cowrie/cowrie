@@ -6,7 +6,7 @@ from __future__ import division, absolute_import
 import time
 
 from cowrie.shell.honeypot import HoneyPotCommand
-from cowrie.shell import utils
+from cowrie.core import utils
 
 commands = {}
 
