@@ -16,7 +16,7 @@ from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
 from twisted.conch.ssh.common import getNS
 
-from cowrie.core import protocol
+from cowrie.shell import protocol
 from cowrie.insults import insults
 
 

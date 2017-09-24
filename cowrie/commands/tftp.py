@@ -7,11 +7,11 @@ import re
 import tftpy
 import os
 
-from cowrie.core.honeypot import HoneyPotCommand
-from cowrie.core.fs import *
-from cowrie.core.customparser import CustomParser
-from cowrie.core.customparser import OptionNotFound
-from cowrie.core.customparser import ExitException
+from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.fs import *
+from cowrie.shell.customparser import CustomParser
+from cowrie.shell.customparser import OptionNotFound
+from cowrie.shell.customparser import ExitException
 
 """
 """

@@ -13,7 +13,7 @@ from twisted.python import failure, log
 
 from twisted.internet import error, reactor
 
-from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
+from cowrie.shell.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 from cowrie.core.auth import UserDB
 from cowrie.core import utils
 

@@ -8,7 +8,7 @@ from __future__ import division, absolute_import
 import pickle
 import copy
 
-from cowrie.core import fs
+from cowrie.shell import fs
 
 
 class FakeServer:

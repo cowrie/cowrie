@@ -15,8 +15,8 @@ from twisted.conch.ssh import session
 from twisted.conch.telnet import ECHO, StatefulTelnetProtocol, SGA, \
                                  TelnetBootstrapProtocol
 
-from cowrie.core import pwd
-from cowrie.core import protocol as cproto
+from cowrie.shell import pwd
+from cowrie.shell import protocol as cproto
 from cowrie.insults import insults
 
 class HoneyPotTelnetSession(TelnetBootstrapProtocol):

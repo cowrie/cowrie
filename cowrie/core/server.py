@@ -36,8 +36,8 @@ import copy
 
 import twisted.python.log as log
 
-from cowrie.core import fs
-from cowrie.core import honeypot
+from cowrie.shell import fs
+from cowrie.shell import honeypot
 
 class CowrieServer(object):
     """

@@ -7,7 +7,7 @@ from __future__ import division, absolute_import
 
 from twisted.trial import unittest
 
-from cowrie.core import protocol
+from cowrie.shell import protocol
 from cowrie.core import config
 from cowrie.test import fake_server, fake_transport
 import json

@@ -15,7 +15,7 @@ import socket
 from twisted.python import log
 from twisted.internet import reactor
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.shell.honeypot import HoneyPotCommand
 
 commands = {}
 

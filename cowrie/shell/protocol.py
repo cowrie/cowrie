@@ -20,7 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.conch import recvline
 from twisted.conch.insults import insults
 
-from cowrie.core import honeypot
+from cowrie.shell import honeypot
 from cowrie.core import utils
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):

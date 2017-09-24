@@ -16,8 +16,8 @@ import time
 from twisted.python import log, failure
 from twisted.internet import error
 
-from cowrie.core import fs
-from cowrie.core import shlex
+from cowrie.shell import fs
+from cowrie.shell import shlex
 
 
 class HoneyPotCommand(object):

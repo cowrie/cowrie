@@ -14,7 +14,7 @@ from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
 from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.python import log, components
 
-from cowrie.core import pwd
+from cowrie.shell import pwd
 from cowrie.ssh import session
 from cowrie.proxy import session as proxy
 from cowrie.ssh import filetransfer

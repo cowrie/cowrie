@@ -18,7 +18,7 @@ from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
 import twisted.conch.ls
 
-import cowrie.core.pwd as pwd
+import cowrie.shell.pwd as pwd
 
 
 @implementer(ISFTPFile)

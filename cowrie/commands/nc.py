@@ -5,7 +5,7 @@ import re
 import socket
 import struct
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.shell.honeypot import HoneyPotCommand
 
 commands = {}
 

@@ -3,7 +3,7 @@
 
 from __future__ import division, absolute_import
 
-from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
+from cowrie.shell.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 from twisted.python import log
 commands = {}
 

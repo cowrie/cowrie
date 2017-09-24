@@ -15,7 +15,7 @@ from twisted.python import log
 from twisted.conch.insults import insults
 
 from cowrie.core import ttylog
-from cowrie.core import protocol
+from cowrie.shell import protocol
 
 
 class LoggingServerProtocol(insults.ServerProtocol):

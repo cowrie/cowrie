@@ -13,8 +13,8 @@ from ftplib import FTP
 
 from twisted.python import log
 
-from cowrie.core.honeypot import HoneyPotCommand
-from cowrie.core.fs import *
+from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.fs import *
 
 commands = {}
 

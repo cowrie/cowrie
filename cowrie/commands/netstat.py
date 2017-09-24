@@ -4,7 +4,7 @@ from __future__ import division, absolute_import
 
 import socket
 
-from cowrie.core.honeypot import HoneyPotCommand
+from cowrie.shell.honeypot import HoneyPotCommand
 
 commands = {}
 

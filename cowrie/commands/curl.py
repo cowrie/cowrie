@@ -16,8 +16,8 @@ from twisted.web import client
 from twisted.internet import reactor, ssl
 from twisted.python import log, compat
 
-from cowrie.core.honeypot import HoneyPotCommand
-from cowrie.core.fs import *
+from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.fs import *
 
 """
 """

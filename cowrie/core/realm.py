@@ -43,10 +43,10 @@ from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.python import log
 
-from cowrie.core import protocol
+from cowrie.shell import protocol
 from cowrie.core import server
 from cowrie.core import avatar
-from cowrie.core import fs
+from cowrie.shell import fs
 from cowrie.telnet import session
 
 

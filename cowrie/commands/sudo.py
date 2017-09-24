@@ -6,7 +6,7 @@ import getopt
 
 from twisted.python import log
 
-from cowrie.core.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
+from cowrie.shell.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 
 commands = {}
 
