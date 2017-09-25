@@ -9,11 +9,13 @@ from __future__ import division, absolute_import
 
 from twisted.internet import reactor, protocol
 from twisted.python import log
-from twisted.conch.ssh import session, common, keys
+from twisted.conch.ssh import common, keys
 from twisted.conch.client.knownhosts import KnownHostsFile
 from twisted.conch import endpoints
 
 from cowrie.core.config import CONFIG
+
+from cowrie.ssh import channel
 
 class _ProtocolFactory():
     """
@@ -65,6 +67,9 @@ class InBetween(protocol.Protocol):
 
     def connectionMade(self):
         log.msg(" IB: connection Made")
+        if len(self.buf) and self.transport != None:
+            self.transport.dataReceived(self.buf)
+            self.buf = None
 
 
     def write(self, bytes):
@@ -74,9 +79,6 @@ class InBetween(protocol.Protocol):
         if not self.transport:
             self.buf += bytes
             return
-        elif len(self.buf) and self.transport != None:
-            self.transport.dataReceived(self.buf)
-            self.buf = None
         self.transport.dataReceived(bytes)
 
 
@@ -121,10 +123,15 @@ class InBetween(protocol.Protocol):
 
 
 
-class ProxySSHSession(session.SSHSession):
+class ProxySSHSession(channel.CowrieSSHChannel):
     """
-    This is an SSH channel to proxy SSH session.
+    For SSH sessions that are proxied to a back-end, this is the
+    SSHSession object that speaks to the client. It is responsible
+    for forwarding this incoming requests to the backend.
     """
+    name = b'proxy-session'
+    buf = b''
+
     keys = []
     host = ""
     port = 22
@@ -133,7 +140,7 @@ class ProxySSHSession(session.SSHSession):
     knownHosts = None
 
     def __init__(self, *args, **kw):
-        session.SSHSession.__init__(self, *args, **kw)
+        channel.CowrieSSHChannel.__init__(self, *args, **kw)
         #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
         keyPath = CONFIG.get('proxy', 'private_key')
@@ -168,24 +175,56 @@ class ProxySSHSession(session.SSHSession):
         return 0
 
 
+    def request_pty_req(self, data):
+        """
+        """
+        term, windowSize, modes = parseRequest_pty_req(data)
+        log.msg('pty request: %r %r' % (term, windowSize))
+        return 0
+
+
+    def request_window_change(self, data):
+        """
+        """
+        winSize = parseRequest_window_change(data)
+        return 0
+
+
+    def request_subsystem(self, data):
+        """
+        """
+        subsystem, _ = common.getNS(data)
+        log.msg('asking for subsystem "{}"'.format(subsystem))
+        return 0
+
+
+    def request_shell(self, data):
+        """
+        """
+        log.msg('getting shell')
+        return 0
+
+
     def request_exec(self, data):
         cmd, data = common.getNS(data)
-        log.msg('request_exec "%s"' % cmd)
+        log.msg('request_exec "{}"'.format(cmd))
         self.client = ProxyClient(self)
         pf = _ProtocolFactory(self.client.transport)
         ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd,
             self.user, self.host, port=self.port, password=self.password).connect(pf)
-        #ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd,
-        #    self.user, self.host, port=self.port, keys=self.keys, knownHosts=self.knownHosts).connect(pf)
-        #ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd,
-        #    USER, HOST, port=PORT, password=PASSWORD).connect(pf)
         return 1
+
+
+    def extReceived(self, dataType, data):
+        """
+        """
+        log.msg('weird extended data: {}'.format(dataType))
 
 
     def request_agent(self, data):
         """
         """
-        log.msg('request_agent: %s' % (repr(data),))
+        log.msg('request_agent: {}'.format(repr(data),))
         return 0
 
 
@@ -196,12 +235,31 @@ class ProxySSHSession(session.SSHSession):
         return 0
 
 
+    def sendClose(self):
+        """
+        Utility function to request to send close for this session
+        """
+        self.conn.sendClose(self)
+
+
     def closed(self):
         """
         This is reliably called on session close/disconnect and calls the avatar
         """
-        session.SSHSession.closed(self)
+        channel.CowrieSSHChannel.closed(self)
         self.client = None
+
+
+    def channelClosed(self):
+        """
+        """
+        log.msg("Called channelClosed in SSHSession")
+
+
+    def closeReceived(self):
+        """
+        """
+        log.msg("closeReceived")
 
 
     def sendEOF(self):
@@ -211,15 +269,11 @@ class ProxySSHSession(session.SSHSession):
         self.conn.sendEOF(self)
 
 
-    def sendClose(self):
-        """
-        Utility function to request to send close for this session
-        """
-        self.conn.sendClose(self)
-
-
-    def channelClosed(self):
+    def eofReceived(self):
         """
         """
-        log.msg("Called channelClosed in SSHSession")
+        if self.session:
+            self.session.eofReceived()
+        elif self.client:
+            self.conn.sendClose(self)
 
