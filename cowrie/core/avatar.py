@@ -17,7 +17,7 @@ from twisted.python import log, components
 from cowrie.shell import pwd
 from cowrie.ssh import session
 from cowrie.proxy import session as proxy
-from cowrie.ssh import filetransfer
+from cowrie.shell import filetransfer
 from cowrie.ssh import forwarding
 
 
