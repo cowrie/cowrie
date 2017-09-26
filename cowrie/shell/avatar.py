@@ -14,11 +14,12 @@ from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
 from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.python import log, components
 
-from cowrie.shell import pwd
-from cowrie.ssh import session
-from cowrie.proxy import session as proxy
-from cowrie.shell import filetransfer
+from cowrie.ssh import session as sshsession
 from cowrie.ssh import forwarding
+from cowrie.proxy import session as proxysession
+from cowrie.shell import session as shellsession
+from cowrie.shell import pwd
+from cowrie.shell import filetransfer
 
 
 @implementer(IConchUser)
@@ -34,11 +35,11 @@ class CowrieUser(avatar.ConchUser):
 
         try:
             if self.cfg.get('honeypot', 'backend') == "proxy":
-                self.channelLookup[b'session'] = proxy.ProxySSHSession
+                self.channelLookup[b'session'] = proxysession.ProxySSHSession
             else:
-                self.channelLookup[b'session'] = session.HoneyPotSSHSession
+                self.channelLookup[b'session'] = sshsession.HoneyPotSSHSession
         except:
-            self.channelLookup[b'session'] = session.HoneyPotSSHSession
+            self.channelLookup[b'session'] = sshsession.HoneyPotSSHSession
 
         try:
             pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
@@ -73,5 +74,5 @@ class CowrieUser(avatar.ConchUser):
 
 
 components.registerAdapter(filetransfer.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
-components.registerAdapter(session.SSHSessionForCowrieUser, CowrieUser, ISession)
+components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)
 

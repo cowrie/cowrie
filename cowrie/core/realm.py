@@ -45,7 +45,7 @@ from twisted.python import log
 
 from cowrie.shell import protocol
 from cowrie.core import server
-from cowrie.core import avatar
+from cowrie.shell import avatar
 from cowrie.shell import fs
 from cowrie.telnet import session
 

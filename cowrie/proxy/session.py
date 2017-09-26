@@ -9,7 +9,7 @@ from __future__ import division, absolute_import
 
 from twisted.internet import reactor, protocol
 from twisted.python import log
-from twisted.conch.ssh import common, keys
+from twisted.conch.ssh import common, keys, session
 from twisted.conch.client.knownhosts import KnownHostsFile
 from twisted.conch import endpoints
 
@@ -178,16 +178,16 @@ class ProxySSHSession(channel.CowrieSSHChannel):
     def request_pty_req(self, data):
         """
         """
-        term, windowSize, modes = parseRequest_pty_req(data)
+        term, windowSize, modes = session.parseRequest_pty_req(data)
         log.msg('pty request: %r %r' % (term, windowSize))
-        return 0
+        return 1
 
 
     def request_window_change(self, data):
         """
         """
-        winSize = parseRequest_window_change(data)
-        return 0
+        winSize = session.parseRequest_window_change(data)
+        return 1
 
 
     def request_subsystem(self, data):
