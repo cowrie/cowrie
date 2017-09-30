@@ -11,10 +11,10 @@ from twisted.internet import reactor, protocol
 from twisted.python import log
 from twisted.conch.ssh import common, keys, session
 from twisted.conch.client.knownhosts import KnownHostsFile
-from twisted.conch import endpoints
+#from twisted.conch import endpoints
 
 from cowrie.core.config import CONFIG
-
+from cowrie.proxy import endpoints
 from cowrie.ssh import channel
 
 class _ProtocolFactory():
@@ -198,19 +198,21 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return 0
 
 
-    def request_shell(self, data):
-        """
-        """
-        log.msg('getting shell')
-        return 0
-
-
     def request_exec(self, data):
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
         self.client = ProxyClient(self)
         pf = _ProtocolFactory(self.client.transport)
         ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd,
+            self.user, self.host, port=self.port, password=self.password).connect(pf)
+        return 1
+
+
+    def request_shell(self, data):
+        log.msg('request_shell')
+        self.client = ProxyClient(self)
+        pf = _ProtocolFactory(self.client.transport)
+        ep = endpoints.SSHShellClientEndpoint.newConnection(reactor,
             self.user, self.host, port=self.port, password=self.password).connect(pf)
         return 1
 
