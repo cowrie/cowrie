@@ -100,8 +100,35 @@ cowrie_stop () {
     fi
 }
 
+cowrie_force_stop () {
+    # Force Stop Cowrie
+    PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
+    if [ -n "$PID" ]; then
+        echo -n "Stopping cowrie..."
+        if kill -TERM $PID; then
+            ((t = 10))
+            while ((t > 0)); do
+                sleep 1
+                echo .
+                if kill -0 $PID 2>/dev/null; then
+                    ((t -= 1))
+                else
+                    return
+                fi
+            done
+            kill -KILL $PID
+            echo
+        else
+            echo "Removing stale PID file"
+            rm -f ${PIDFILE}
+        fi
+    else
+        echo "cowrie is not running."
+    fi
+}
+
 cowrie_usage() {
-    echo "usage: $0 <start|stop|restart|status>"
+    echo "usage: $0 <start|stop|force-stop|restart|status>"
 }
 
 ################################################################################
@@ -125,6 +152,9 @@ shift 1
 case $key in
     stop)
         cowrie_stop $*
+        ;;
+    force-stop)
+        cowrie_force_stop $*
         ;;
     start)
         cowrie_start $*
