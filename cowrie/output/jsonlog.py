@@ -71,6 +71,8 @@ class Output(cowrie.core.output.Output):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
+            elif i == "time":
+                del logentry[i]
         json.dump(logentry, self.outfile)
         self.outfile.write('\n')
         self.outfile.flush()
