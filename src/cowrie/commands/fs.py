@@ -261,7 +261,10 @@ class command_rm(HoneyPotCommand):
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
+                # verify path to file exists
                 dir = self.fs.get_path('/'.join(pname.split('/')[:-1]))
+                # verify that the file itself exists
+                self.fs.get_path(pname)
             except (IndexError, fs.FileNotFound):
                 self.errorWrite(
                     'rm: cannot remove `{}\': No such file or directory\n'.format(f))
