@@ -70,6 +70,12 @@ class HoneyPotCommand(object):
                     self.writefn = self.write_to_failed
                     self.outfile = None
                     self.safeoutfile = None
+                except fs.PermissionDenied:
+                    # The outfile locates in a file-system that doesn't allow file creation
+                    self.protocol.pp.outReceived('-bash: %s: Permission denied\n' % self.outfile)
+                    self.writefn = self.write_to_failed
+                    self.outfile = None
+                    self.safeoutfile = None
 
                 else:
                     with open(self.safeoutfile, 'ab'):

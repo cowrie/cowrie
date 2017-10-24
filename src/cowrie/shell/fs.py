@@ -32,6 +32,8 @@ A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_R
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 
+SPECIAL_PATHS = ['/sys', '/proc', '/dev/pts']
+
 class TooManyLevels(Exception):
     """
     62 ELOOP Too many levels of symbolic links.  A path name lookup involved more than 8 symbolic links.
@@ -50,6 +52,27 @@ class IsADirectoryError(Exception):
 class FileNotFound(Exception):
     """
     raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+    """
+    pass
+
+
+class PermissionDenied(Exception):
+    """
+    Our implementation is naive for now and works only on file redirects
+
+    * TODO: PermissionDenied errors when using touch
+    * TODO: Top-level /proc should return no such file not permission denied
+
+    $ sudo touch /sys/.nippon
+    touch: cannot touch '/sys/.nippon': Permission denied
+    $ sudo touch /proc/test
+    touch: cannot touch '/proc/test': No such file or directory
+    $ sudo touch /dev/pts/test
+    touch: cannot touch '/dev/pts/test': Permission denied
+    $ sudo touch /proc/sys/fs/binfmt_misc/.nippon
+    touch: cannot touch '/proc/sys/fs/binfmt_misc/.nippon': Permission denied
+    $ sudo touch /sys/fs/fuse/connections/.nippon
+    touch: cannot touch '/sys/fs/fuse/connections/.nippon': Permission denied
     """
     pass
 
@@ -246,11 +269,17 @@ class HoneyPotFilesystem(object):
             return False
         if ctime is None:
             ctime = time.time()
-        dir = self.get_path(os.path.dirname(path))
+        _path = os.path.dirname(path)
+
+        if any([_path.startswith(_p) for _p in SPECIAL_PATHS]):
+            raise PermissionDenied
+
+        _dir = self.get_path(_path)
         outfile = os.path.basename(path)
-        if outfile in [x[A_NAME] for x in dir]:
-            dir.remove([x for x in dir if x[A_NAME] == outfile][0])
-        dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None])
+        if outfile in [x[A_NAME] for x in _dir]:
+            _dir.remove([x for x in _dir if x[A_NAME] == outfile][0])
+        _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [],
+            None, None])
         self.newcount += 1
         return True
 
