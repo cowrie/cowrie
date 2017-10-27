@@ -37,7 +37,7 @@ class command_ping(HoneyPotCommand):
         self.running = False
 
         try:
-            optlist, args = getopt.getopt(self.args, "c:")
+            optlist, args = getopt.gnu_getopt(self.args, "c:")
         except getopt.GetoptError as err:
             self.write('ping: %s\n' % (err,))
             self.exit()
