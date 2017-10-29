@@ -102,22 +102,23 @@ cowrie_stop () {
 
 cowrie_force_stop () {
     # Force Stop Cowrie
-    PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
+    PID=$(cat ${PIDFILE} 2>/dev/null || echo -n "")
     if [ -n "$PID" ]; then
         echo -n "Stopping cowrie..."
         if kill -TERM $PID; then
-            ((t = 10))
-            while ((t > 0)); do
+            ((t = 60))
+            while ((t > 1)); do
                 sleep 1
                 echo .
                 if kill -0 $PID 2>/dev/null; then
                     ((t -= 1))
                 else
+                    echo "terminated."
                     return
                 fi
             done
             kill -KILL $PID
-            echo
+            echo "killed."
         else
             echo "Removing stale PID file"
             rm -f ${PIDFILE}
