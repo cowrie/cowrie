@@ -63,6 +63,16 @@ class HoneyPotSSHSession(session.SSHSession):
         self.client = None
 
 
+    def eofReceived(self):
+        """
+        Redirect EOF to emulated shell. If shell is gone, then disconnect
+        """
+        if self.session:
+            self.session.eofReceived()
+        else:
+            self.loseConnection()
+
+
     def sendEOF(self):
         """
         Utility function to request to send EOF for this session
