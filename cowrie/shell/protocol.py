@@ -122,15 +122,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.terminal.transport.processEnded(ret)
 
 
-    def eofReceived(self):
-        """
-        this should probably not go through ctrl-d, but use processprotocol to close stdin
-        """
-        log.msg("received eof, sending ctrl-d to command")
-        if len(self.cmdstack):
-            self.cmdstack[-1].handle_CTRL_D()
-
-
     def connectionLost(self, reason):
         """
         Called when the connection is shut down.
@@ -224,9 +215,20 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         #    pt.factory.starttime = reset
         return r
 
+
     def getClientVersion(self):
         pt = self.getProtoTransport()
         return pt.otherVersionString
+
+
+    def eofReceived(self):
+        # Shell received EOF, nicely exit
+        """
+        TODO: this should probably not go through transport, but use processprotocol to close stdin
+        """
+        ret = failure.Failure(error.ProcessTerminated(exitCode=0))
+        self.terminal.transport.processEnded(ret)
+
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
@@ -246,6 +248,14 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
 
+
+    def eofReceived(self):
+        """
+        Received EOF, run command to finish and then exit
+        """
+        log.msg("received eof, sending ctrl-d to command")
+        if len(self.cmdstack):
+            self.cmdstack[-1].handle_CTRL_D()
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
