@@ -109,7 +109,7 @@ cowrie_force_stop () {
             ((t = 60))
             while ((t > 1)); do
                 sleep 1
-                echo .
+                echo -n .
                 if kill -0 $PID 2>/dev/null; then
                     ((t -= 1))
                 else
