@@ -19,6 +19,7 @@ from cowrie.core import utils
 
 commands = {}
 
+
 class command_whoami(HoneyPotCommand):
     """
     """
@@ -531,34 +532,31 @@ class command_sh(HoneyPotCommand):
         """
         """
         if len(self.args) and self.args[0].strip() == '-c':
-            line = ' '.join(self.args)
-            cmd = self.args[1]
-            if (cmd[0] == '\'' and cmd[-1] == '\'') or (cmd[0] == '"' and cmd[-1] == '"'):
-                cmd = cmd[1:-1]
-            cmdclass = self.protocol.getCommand(cmd, self.environ['PATH'].split(':'))
-            if cmdclass:
-                log.msg(eventid='cowrie.command.success', input=line, format='Command found: %(input)s')
-                command = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, self.args[2:], self.input_data, None)
-                self.protocol.pp.insert_command(command)
-                # Place this here so it doesn't write out only if last statement
 
-                if self.input_data:
-                    self.write(self.input_data)
-            else:
-                log.msg(eventid='cowrie.command.failed',
-                        input=''.join(cmd), format='Command not found: %(input)s')
-                self.write('bash: %s: command not found\n' % cmd)
+            line = ' '.join(self.args[1:])
+
+            # it might be sh -c 'echo "sometext"', so don't use line.strip('\'\"')
+            if (line[0] == '\'' and line[-1] == '\'') or (line[0] == '"' and line[-1] == '"'):
+                line = line[1:-1]
+
+            self.execute_commands(line)
+
         elif self.input_data:
+            self.execute_commands(self.input_data)
 
-            # self.input_data holds commands passed via PIPE
-            # create new HoneyPotShell for our a new 'sh' shell
-            self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False))
+        # TODO: handle spawning multiple shells, support other sh flags
 
-            # call lineReceived method that indicates that we have some commands to parse
-            self.protocol.cmdstack[-1].lineReceived(self.input_data)
+    def execute_commands(self, cmds):
 
-            # remove the shell
-            self.protocol.cmdstack.pop()
+        # self.input_data holds commands passed via PIPE
+        # create new HoneyPotShell for our a new 'sh' shell
+        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False))
+
+        # call lineReceived method that indicates that we have some commands to parse
+        self.protocol.cmdstack[-1].lineReceived(cmds)
+
+        # remove the shell
+        self.protocol.cmdstack.pop()
 
 
 commands['/bin/bash'] = command_sh
