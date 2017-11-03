@@ -41,7 +41,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
            format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
            src_ip=src_ip, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           session=self.transportId, sessionno='S'+str(self.transport.sessionno))
+           session=self.transportId, sessionno='S'+str(self.transport.sessionno), protocol='ssh')
 
         self.transport.write('{}\r\n'.format(self.ourVersionString))
         self.currentEncryptions = transport.SSHCiphers('none', 'none', 'none', 'none')
