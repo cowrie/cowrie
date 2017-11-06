@@ -52,5 +52,5 @@ class CowrieServer(object):
         self.cfg = realm.cfg
         self.avatars = []
         self.hostname = self.cfg.get('honeypot', 'hostname')
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(realm.pckl),self.cfg)
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE),self.cfg)
 

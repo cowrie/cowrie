@@ -36,17 +36,14 @@ from zope.interface import implementer
 
 import sys
 import gc
-import pickle
 
 import twisted
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.python import log
 
-from cowrie.shell import protocol
-from cowrie.core import server
+from cowrie.shell import server
 from cowrie.shell import avatar
-from cowrie.shell import fs
 from cowrie.telnet import session
 
 
@@ -59,8 +56,6 @@ class HoneyPotRealm(object):
         self.cfg = cfg
 	# self.servers = {}
 
-        # load the pickle file system here, so servers can copy it later
-        self.pckl = pickle.load(open(cfg.get('honeypot', 'filesystem_file'), 'rb'))
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         """
