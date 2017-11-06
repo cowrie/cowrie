@@ -7,6 +7,11 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
+try:
+    import cPickle as pickle
+except:
+    import pickle
+
 import os
 import time
 import fnmatch
@@ -16,6 +21,10 @@ import stat
 import errno
 
 from twisted.python import log
+
+from cowrie.core.config import CONFIG
+
+PICKLE = pickle.load(open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
 
 A_NAME, \
     A_TYPE, \
