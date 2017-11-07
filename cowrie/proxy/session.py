@@ -61,31 +61,33 @@ class InBetween(protocol.Protocol):
     buf = "" # buffer to send to back-end
 
     def makeConnection(self, transport):
-        log.msg( "IB:making connection")
         protocol.Protocol.makeConnection(self, transport)
 
 
     def connectionMade(self):
-        log.msg(" IB: connection Made")
+        log.msg("IB: connection Made")
         if len(self.buf) and self.transport != None:
-            self.transport.dataReceived(self.buf)
+            #self.transport.dataReceived(self.buf)
+            self.transport.write(self.buf)
             self.buf = None
 
 
     def write(self, bytes):
         """
+        This is data going from the end-user to the back-end
         """
-        # This is data going from the end-user to the back-end
         if not self.transport:
             self.buf += bytes
             return
-        self.transport.dataReceived(bytes)
+        log.msg( "IB: write: "+repr(bytes)+" to transport "+repr(self.transport))
+        self.transport.write(bytes)
 
 
     def dataReceived(self, data):
         """
+        This is data going from the back-end to the end-user
         """
-        # This is data going from the back-end to the end-user
+        log.msg( "IB: dataReceived: "+repr(data))
         self.client.write(data)
 
 
@@ -127,9 +129,9 @@ class ProxySSHSession(channel.CowrieSSHChannel):
     """
     For SSH sessions that are proxied to a back-end, this is the
     SSHSession object that speaks to the client. It is responsible
-    for forwarding this incoming requests to the backend.
+    for forwarding incoming requests to the backend.
     """
-    name = b'proxy-session'
+    name = b'proxy-frontend-session'
     buf = b''
 
     keys = []
@@ -143,21 +145,60 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         channel.CowrieSSHChannel.__init__(self, *args, **kw)
         #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
-        keyPath = CONFIG.get('proxy', 'private_key')
-        self.keys.append(keys.Key.fromFile(keyPath))
+        try:
+            keyPath = CONFIG.get('proxy', 'private_key')
+            self.keys.append(keys.Key.fromFile(keyPath))
+        except:
+            self.keys = None
 
         knownHostsPath = CONFIG.get('proxy', 'known_hosts')
         self.knownHosts = KnownHostsFile.fromPath(knownHostsPath)
+        log.msg( "knownHosts = "+repr(self.knownHosts))
 
         self.host = CONFIG.get('proxy', 'host')
         self.port = CONFIG.getint('proxy', 'port')
         self.user = CONFIG.get('proxy', 'user')
-        self.password = CONFIG.get('proxy', 'password')
+        try:
+            self.password = CONFIG.get('proxy', 'password')
+        except:
+            self.password = None
 
         log.msg( "host = "+self.host)
         log.msg( "port = "+str(self.port))
         log.msg( "user = "+self.user)
-        log.msg( "known = "+str(self.knownHosts))
+
+        self.client = ProxyClient(self)
+
+
+    def channelOpen(self, specificData):
+        """
+        Once we open the frontend-session, also start connecting to back end
+        """
+        channel.CowrieSSHChannel.channelOpen(self, specificData)
+        return
+        log.msg("channelOpen")
+        helper = endpoints._NewConnectionHelper(reactor, self.host, self.port,
+            self.user, self.keys, self.password, None, self.knownHosts, None)
+        log.msg( "helper = "+repr(helper))
+        d = helper.secureConnection()
+        d.addCallback(self._cbConnect)
+        d.addErrback(self._ebConnect)
+        log.msg( "d = "+repr(d))
+        return d
+
+
+    def _ebConnect(self):
+        """
+        """
+        log.msg("ERROR CONNECTED TO BACKEND")
+        self._state = b'ERROR'
+
+
+    def _cbConnect(self):
+        """
+        """
+        log.msg("CONNECTED TO BACKEND")
+        self._state = b'CONNECTED'
 
 
     def request_env(self, data):
@@ -199,21 +240,25 @@ class ProxySSHSession(channel.CowrieSSHChannel):
 
 
     def request_exec(self, data):
+        """
+        """
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
-        self.client = ProxyClient(self)
         pf = _ProtocolFactory(self.client.transport)
+        #ep = endpoints.SSHCommandClientEndpoint.existingConnection(self.conn, cmd).connect(pf)
         ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd,
             self.user, self.host, port=self.port, password=self.password).connect(pf)
         return 1
 
 
     def request_shell(self, data):
+        """
+        """
         log.msg('request_shell')
-        self.client = ProxyClient(self)
         pf = _ProtocolFactory(self.client.transport)
         ep = endpoints.SSHShellClientEndpoint.newConnection(reactor,
-            self.user, self.host, port=self.port, password=self.password).connect(pf)
+            self.user, self.host, port=self.port,
+            password=self.password).connect(pf)
         return 1
 
 
@@ -271,11 +316,19 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         self.conn.sendEOF(self)
 
 
+    def dataReceived(self, data):
+        if not self.client:
+            #self.conn.sendClose(self)
+            self.buf += data
+            return
+        self.client.transport.write(data)
+
+
     def eofReceived(self):
         """
         """
-        if self.session:
-            self.session.eofReceived()
-        elif self.client:
+        log.msg("RECEIVED EOF")
+        return
+        if self.client:
             self.conn.sendClose(self)
 

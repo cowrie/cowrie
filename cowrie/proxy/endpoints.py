@@ -29,6 +29,7 @@ from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.connection import SSHConnection
 from twisted.conch.ssh.userauth import SSHUserAuthClient
 from twisted.conch.ssh.channel import SSHChannel
+from twisted.conch.ssh.session import SSHSession, packRequest_pty_req
 from twisted.conch.client.knownhosts import ConsoleUI, KnownHostsFile
 from twisted.conch.client.agent import SSHAgentClient
 from twisted.conch.client.default import _KNOWN_HOSTS
@@ -43,9 +44,9 @@ class AuthenticationFailed(Exception):
 
 
 # This should be public.  See #6541.
-class _ISSHConnectionCreator(Interface):
+class ICowrieSSHConnectionCreator(Interface):
     """
-    An L{_ISSHConnectionCreator} knows how to create SSH connections somehow.
+    An L{ICowrieSSHConnectionCreator} knows how to create SSH connections somehow.
     """
     def secureConnection():
         """
@@ -102,10 +103,11 @@ class SSHCommandAddress(object):
         self.command = command
 
 
+
 class SSHShellAddress(object):
     """
-    An L{SSHShellAddress} instance represents the address of an SSH server, a
-    username which was used to authenticate with that server
+    An L{SSHShellAddress} instance represents the address of an SSH server and
+    a username which was used to authenticate with that server
 
     @ivar server: See L{__init__}
     @ivar username: See L{__init__}
@@ -125,6 +127,7 @@ class SSHShellAddress(object):
         self.username = username
 
 
+
 class _CommandChannel(SSHChannel):
     """
     A L{_CommandChannel} executes a command in a session channel and connects
@@ -137,13 +140,14 @@ class _CommandChannel(SSHChannel):
     @ivar _protocol: An L{IProtocol} provider created using C{_protocolFactory}
         which is hooked up to the running command's input and output streams.
     """
+    name = b'proxy-backend-session'
     name = b'session'
 
     def __init__(self, creator, command, protocolFactory, commandConnected):
         """
-        @param creator: The L{_ISSHConnectionCreator} provider which was used
+        @param creator: The L{ICowrieSSHConnectionCreator} provider which was used
             to get the connection which this channel exists on.
-        @type creator: L{_ISSHConnectionCreator} provider
+        @type creator: L{ICowrieSSHConnectionCreator} provider
 
         @param command: The command to be executed.
         @type command: L{bytes}
@@ -205,11 +209,14 @@ class _CommandChannel(SSHChannel):
 
         @param ignored: The (ignored) result of the execute request
         """
+
+        log.msg("command = "+self._command)
+
         self._protocol = self._protocolFactory.buildProtocol(
             SSHCommandAddress(
                 self.conn.transport.transport.getPeer(),
                 self.conn.transport.creator.username,
-                self.conn.transport.creator.command))
+                self._command))
         self._protocol.makeConnection(self)
         self._commandConnected.callback(self._protocol)
 
@@ -222,6 +229,7 @@ class _CommandChannel(SSHChannel):
         @param data: The bytes from the command's stdout.
         @type data: L{bytes}
         """
+        log.msg("command output received"+repr(data))
         self._protocol.dataReceived(data)
 
 
@@ -266,7 +274,7 @@ class _CommandChannel(SSHChannel):
 
 
 
-class _ShellChannel(SSHChannel):
+class _ShellChannel(SSHSession):
     """
     A L{_ShellChannel} opens a shell channel and connects
     its input and output to an L{IProtocol} provider.
@@ -278,12 +286,13 @@ class _ShellChannel(SSHChannel):
         which is hooked up to the shell's input and output streams.
     """
     name = b'session'
+    connected = False
 
     def __init__(self, creator, protocolFactory, shellConnected):
         """
-        @param creator: The L{_ISSHConnectionCreator} provider which was used
+        @param creator: The L{ICowrieSSHConnectionCreator} provider which was used
             to get the connection which this channel exists on.
-        @type creator: L{_ISSHConnectionCreator} provider
+        @type creator: L{ICowrieSSHConnectionCreator} provider
 
         @param protocolFactory: A client factory to use to build a L{IProtocol}
             provider to use to associate with the shell
@@ -307,12 +316,21 @@ class _ShellChannel(SSHChannel):
         self._shellConnected.errback(reason)
 
 
+    def ttyRequest(self, something):
+        log.msg("tty-request")
+        term = "vt100"
+        winSize = (25,80,0,0) # struct.unpack('4H', winsz)
+        ptyReqData = packRequest_pty_req(term, winSize, '')
+        req = self.conn.sendRequest(self, b'pty-req', ptyReqData, wantReply=True)
+        req.addCallback(self.shellRequest)
+
+
     def channelOpen(self, ignored):
         """
         When the request to open a new channel in succeeds,
         issue a C{"shell"} request.
         """
-        command = self.conn.sendRequest( self, b'shell', b'', wantReply=True)
+        command = self.conn.sendRequest(self, b'shell', b'', wantReply=True)
         command.addCallbacks(self._shellSuccess, self._shellFailure)
 
 
@@ -324,6 +342,7 @@ class _ShellChannel(SSHChannel):
         @param reason: The cause of the shell opening failure.
         @type reason: L{Failure}
         """
+        log.msg("failed to connect to proxy backend: "+reason)
         self._shellConnected.errback(reason)
 
 
@@ -339,6 +358,8 @@ class _ShellChannel(SSHChannel):
 
         @param ignored: The (ignored) result of the execute request
         """
+        log.msg("connected to proxy backend")
+        self.connected = True
         self._protocol = self._protocolFactory.buildProtocol(
             SSHShellAddress(
                 self.conn.transport.transport.getPeer(),
@@ -355,6 +376,7 @@ class _ShellChannel(SSHChannel):
         @param data: The bytes from the command's stdout.
         @type data: L{bytes}
         """
+        log.msg("client-session dataReceived: "+repr(data))
         self._protocol.dataReceived(data)
 
 
@@ -587,6 +609,10 @@ class _CommandTransport(SSHClientTransport):
         @return: A L{Deferred} which fires with the result of
             L{KnownHostsFile.verifyHostKey}.
         """
+        # TODO: re-enable host key check
+        self._state = b'SECURING'
+        return succeed(None)
+
         hostname = self.creator.hostname
         ip = networkString(self.transport.getPeer().host)
 
@@ -618,9 +644,9 @@ class _CommandTransport(SSHClientTransport):
         """
         self._state = b'AUTHENTICATING'
 
-        command = _ConnectionReady(self.connectionReady)
+        instance = _ConnectionReady(self.connectionReady)
 
-        self._userauth = _UserAuth(self.creator.username, command)
+        self._userauth = _UserAuth(self.creator.username, instance)
         self._userauth.password = self.creator.password
         if self.creator.keys:
             self._userauth.keys = list(self.creator.keys)
@@ -658,13 +684,10 @@ class _CommandTransport(SSHClientTransport):
 @implementer(IStreamClientEndpoint)
 class SSHShellClientEndpoint(object):
     """
-    L{SSHShellClientEndpoint} exposes the command-executing functionality of
-    SSH servers.
+    L{SSHShellClientEndpoint} exposes a connection to an SSH server.
 
     L{SSHShellClientEndpoint} can set up a new SSH connection, authenticate
     it in any one of a number of different ways (keys, passwords, agents),
-    launch a command over that connection and then associate its input and
-    output with a protocol.
 
     It can also re-use an existing, already-authenticated SSH connection
     (perhaps one which already has some SSH channels being used for other
@@ -675,10 +698,10 @@ class SSHShellClientEndpoint(object):
 
     def __init__(self, creator):
         """
-        @param creator: An L{_ISSHConnectionCreator} provider which will be
+        @param creator: An L{ICowrieSSHConnectionCreator} provider which will be
             used to set up the SSH connection which will be used to run a
             command.
-        @type creator: L{_ISSHConnectionCreator} provider
+        @type creator: L{ICowrieSSHConnectionCreator} provider
         """
         self._creator = creator
 
@@ -736,7 +759,7 @@ class SSHShellClientEndpoint(object):
             L{SSHShellClientEndpoint}).
         """
         helper = _NewConnectionHelper(
-            reactor, hostname, port, b'', username, keys, password,
+            reactor, hostname, port, username, keys, password,
             agentEndpoint, knownHosts, ui)
         return cls(helper)
 
@@ -802,9 +825,10 @@ class SSHShellClientEndpoint(object):
             return passthrough
         shellConnected.addErrback(disconnectOnFailure)
 
-        channel = _ShellChannel( self._creator, protocolFactory, shellConnected)
+        channel = _ShellChannel(self._creator, protocolFactory, shellConnected)
         connection.openChannel(channel)
         return shellConnected
+
 
 
 @implementer(IStreamClientEndpoint)
@@ -827,10 +851,10 @@ class SSHCommandClientEndpoint(object):
 
     def __init__(self, creator, command):
         """
-        @param creator: An L{_ISSHConnectionCreator} provider which will be
+        @param creator: An L{ICowrieSSHConnectionCreator} provider which will be
             used to set up the SSH connection which will be used to run a
             command.
-        @type creator: L{_ISSHConnectionCreator} provider
+        @type creator: L{ICowrieSSHConnectionCreator} provider
 
         @param command: The command line to execute on the SSH server.  This
             byte string is interpreted by a shell on the SSH server, so it may
@@ -899,7 +923,7 @@ class SSHCommandClientEndpoint(object):
             L{SSHCommandClientEndpoint}).
         """
         helper = _NewConnectionHelper(
-            reactor, hostname, port, command, username, keys, password,
+            reactor, hostname, port, username, keys, password,
             agentEndpoint, knownHosts, ui)
         return cls(helper, command)
 
@@ -1017,16 +1041,16 @@ class _ReadFile(object):
 
 
 
-@implementer(_ISSHConnectionCreator)
+@implementer(ICowrieSSHConnectionCreator)
 class _NewConnectionHelper(object):
     """
-    L{_NewConnectionHelper} implements L{_ISSHConnectionCreator} by
+    L{_NewConnectionHelper} implements L{ICowrieSSHConnectionCreator} by
     establishing a brand new SSH connection, securing it, and authenticating.
     """
     _KNOWN_HOSTS = _KNOWN_HOSTS
     port = 22
 
-    def __init__(self, reactor, hostname, port, command, username, keys,
+    def __init__(self, reactor, hostname, port, username, keys,
                  password, agentEndpoint, knownHosts, ui,
                  tty=FilePath(b"/dev/tty")):
         """
@@ -1040,7 +1064,6 @@ class _NewConnectionHelper(object):
         if port is not None:
             self.port = port
         self.username = username
-        self.command = command
         self.keys = keys
         self.password = password
         self.agentEndpoint = agentEndpoint
@@ -1120,10 +1143,10 @@ class _NewConnectionHelper(object):
 
 
 
-@implementer(_ISSHConnectionCreator)
+@implementer(ICowrieSSHConnectionCreator)
 class _ExistingConnectionHelper(object):
     """
-    L{_ExistingConnectionHelper} implements L{_ISSHConnectionCreator} by
+    L{_ExistingConnectionHelper} implements L{ICowrieSSHConnectionCreator} by
     handing out an existing SSH connection which is supplied to its
     initializer.
     """
