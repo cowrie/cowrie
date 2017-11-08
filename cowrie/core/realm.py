@@ -43,7 +43,8 @@ from twisted.conch.telnet import ITelnetProtocol
 from twisted.python import log
 
 from cowrie.shell import server
-from cowrie.shell import avatar
+from cowrie.shell import avatar as shellavatar
+from cowrie.proxy import avatar as proxyavatar
 from cowrie.telnet import session
 
 
@@ -73,15 +74,29 @@ class HoneyPotRealm(object):
         #    log.msg( "REFCOUNT: key: %s, refcount %d" % ( i, sys.getrefcount(self.servers[i])))
 	#    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
-        if conchinterfaces.IConchUser in interfaces:
-            serv = server.CowrieServer(self)
-            user = avatar.CowrieUser(avatarId, serv)
-            return interfaces[0], user, user.logout
-        elif ITelnetProtocol in interfaces:
-            serv = server.CowrieServer(self)
-            user = session.HoneyPotTelnetSession(avatarId, serv)
-            return interfaces[0], user, user.logout
+        try:
+            backend = self.cfg.get('honeypot', 'backend')
+        except:
+            backend = "shell"
 
-        log.msg('No supported interfaces found.')
-        # TODO: this exception doesn't raise for a reason I don't understand
-        raise NotImplementedError("No supported interfaces found.")
+        if backend == "shell":
+            if conchinterfaces.IConchUser in interfaces:
+                serv = server.CowrieServer(self)
+                user = shellavatar.CowrieUser(avatarId, serv)
+                return interfaces[0], user, user.logout
+            elif ITelnetProtocol in interfaces:
+                serv = server.CowrieServer(self)
+                user = session.HoneyPotTelnetSession(avatarId, serv)
+                return interfaces[0], user, user.logout
+            raise NotImplementedError("No supported interfaces found.")
+        elif backend == "proxy":
+            if conchinterfaces.IConchUser in interfaces:
+                serv = server.CowrieServer(self)
+                user = proxyavatar.CowrieUser(avatarId, serv)
+                return interfaces[0], user, user.logout
+            elif ITelnetProtocol in interfaces:
+                raise NotImplementedError("Telnet not yet supported for proxy mode.")
+            log.msg('No supported interfaces found.')
+            raise NotImplementedError("No supported interfaces found.")
+        else:
+            raise NotImplementedError("No supported backend found.")
