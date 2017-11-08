@@ -14,6 +14,7 @@ from os.path import expanduser
 
 from zope.interface import Interface, implementer
 
+from twisted.python import log
 from twisted.python.compat import nativeString, networkString
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
