@@ -42,9 +42,10 @@ from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.python import log
 
-from cowrie.shell import server
+from cowrie.shell import server as shellserver
 from cowrie.shell import avatar as shellavatar
 from cowrie.proxy import avatar as proxyavatar
+from cowrie.proxy import server as proxyserver
 from cowrie.telnet import session
 
 
@@ -81,17 +82,17 @@ class HoneyPotRealm(object):
 
         if backend == "shell":
             if conchinterfaces.IConchUser in interfaces:
-                serv = server.CowrieServer(self)
+                serv = shellserver.CowrieServer(self)
                 user = shellavatar.CowrieUser(avatarId, serv)
                 return interfaces[0], user, user.logout
             elif ITelnetProtocol in interfaces:
-                serv = server.CowrieServer(self)
+                serv = shellserver.CowrieServer(self)
                 user = session.HoneyPotTelnetSession(avatarId, serv)
                 return interfaces[0], user, user.logout
             raise NotImplementedError("No supported interfaces found.")
         elif backend == "proxy":
             if conchinterfaces.IConchUser in interfaces:
-                serv = server.CowrieServer(self)
+                serv = proxyserver.CowrieServer(self)
                 user = proxyavatar.CowrieUser(avatarId, serv)
                 return interfaces[0], user, user.logout
             elif ITelnetProtocol in interfaces:
