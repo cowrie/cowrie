@@ -154,6 +154,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.logout = logout
         self.state = 'Command'
 
+        self.transport.write("\n")
+
         # Remove the short timeout of the login prompt. Timeout will be
         # provided later by the HoneyPotBaseProtocol class.
         self.transport.setTimeout(None)
