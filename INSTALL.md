@@ -74,7 +74,7 @@ Activate the virtual environment and install packages
 
 ```
 $ source cowrie-env/bin/activate
-(cowrie-env) $ pip install -r requirements.txt
+(cowrie-env) $ pip install --upgrade -r requirements.txt
 ```
 
 ## Step 5: Install configuration file
