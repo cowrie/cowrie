@@ -303,20 +303,19 @@ class HoneyPotShell(object):
         cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
-        environ = copy.copy(self.environ)
         cmd_array = [ ]
         cmd = {}
         while len(cmdAndArgs):
             piece = cmdAndArgs.pop(0)
             if piece.count('='):
                 key, value = piece.split('=', 1)
-                environ[key] = value
+                self.environ[key] = value
                 continue
             cmd['command'] = piece
             cmd['rargs'] = []
             break
 
-        if not cmd['command']:
+        if not cmd.get('command'):
             runOrPrompt()
             return
 
@@ -347,7 +346,7 @@ class HoneyPotShell(object):
             if cmd['command'] == "exit":
                 exit = True
 
-            cmdclass =  self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
+            cmdclass =  self.protocol.getCommand(cmd['command'], self.environ['PATH'] .split(':'))
             if cmdclass:
                 log.msg(eventid='cowrie.command.success', input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
                 if index == len(cmd_array)-1:
