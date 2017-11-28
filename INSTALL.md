@@ -10,6 +10,7 @@
 * [Step 7: Turning on cowrie](#step-7-turning-on-cowrie)
 * [Step 8: Port redirection (optional)](#step-8-port-redirection-optional)
 * [Running within supervisord(optional)](#running-using-supervisord)
+* [Configure Additional Output Plugins (Optional)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
 
 ## Step 1: Install dependencies
@@ -178,6 +179,20 @@ Update the bin/cowrie script, change:
  ```
  DAEMONIZE="-n"
  ```
+ 
+## Configure Additional Output Plugins (Optional)
+Cowrie automatically outputs event data to text and json log files in ~/cowrie/log.  Additional ouput plugins can be 
+configured to record the data other ways.  Supported output plugins include:
+
+* Cuckoo
+* ELK (Elastic) Stack
+* Graylog
+* Kippo-Graph
+* Splunk
+* SQL (MySQL, SQLite3, RethinkDB)
+
+See ~/cowrie/doc/[Output Plugin]/README.md for details.
+
 
 ## Troubleshooting
 
