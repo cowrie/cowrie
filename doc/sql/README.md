@@ -10,9 +10,10 @@
 ## Installation
 
 ```
+$ sudo apt-get install mysql-server libmysqlclient-dev python-mysqldb
 $ su - cowrie
 $ source cowrie/cowrie-env/bin/activate
-$ pip install libmysqlclient-dev MySQL-python
+$ pip install MySQL-python
 ```
 
 
