@@ -10,6 +10,7 @@
 * [Step 7: Turning on cowrie](#step-7-turning-on-cowrie)
 * [Step 8: Port redirection (optional)](#step-8-port-redirection-optional)
 * [Running within supervisord(optional)](#running-using-supervisord)
+* [Configure Additional Output Plugins (Optional)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
 
 ## Step 1: Install dependencies
