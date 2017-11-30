@@ -1,5 +1,5 @@
 # csirtg
-csirtgsdk>=0.0.0a6 # Specify version because pip won't install pre-release versions by default
+csirtgsdk>=0.0.0a17 # Specify version because pip won't install pre-release versions by default
 
 # dshield
 requests
@@ -8,6 +8,7 @@ requests
 pyes
 
 # mysql
+# If this fails, see documentation /home/cowrie/cowrie/doc/sql/README.md
 MySQL-python
 
 # mongodb
@@ -23,4 +24,5 @@ botocore
 slackclient
 
 # splunklegacy
+# For more info, see documentation /home/cowrie/cowrie/doc/splunk/README.md
 splunk-sdk
