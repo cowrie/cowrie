@@ -1,5 +1,5 @@
 # csirtg
-csirtgsdk>=0.0.0a6 # Specify version because pip won't install pre-release versions by default
+csirtgsdk>=0.0.0a17 # Specify version because pip won't install pre-release versions by default
 
 # dshield
 requests
@@ -8,7 +8,8 @@ requests
 pyes
 
 # mysql
-MySQL-python
+# apt-get install libmysqlclient-dev
+MySQL-python # (if this fails to install run the command above as root)
 
 # mongodb
 pymongo
