@@ -230,7 +230,7 @@ class HoneyPotFilesystem(object):
                             return False
                     else:
                         p = x
-            cwd = '/'.join((cwd, piece))
+            # cwd = '/'.join((cwd, piece))
         return p
 
 
