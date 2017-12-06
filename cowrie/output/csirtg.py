@@ -7,8 +7,7 @@ from csirtgsdk.client import Client
 from datetime import datetime
 import logging
 import os
-
-logger = logging.getLogger(__name__)
+from twisted.python import log
 
 USERNAME = os.environ.get('CSIRTG_USER')
 FEED = os.environ.get('CSIRTG_FEED')
@@ -42,20 +41,17 @@ class Output(cowrie.core.output.Output):
         system = e['system']
 
         if system not in ['cowrie.ssh.factory.CowrieSSHFactory', 'cowrie.telnet.transport.HoneyPotTelnetFactory']:
-            logger.debug('skipping {}'.format(system))
             return
 
         today = str(datetime.now().date())
 
         if not self.context.get(today):
-            logger.debug('resetting context for %s' % today)
             self.context = {}
             self.context[today] = set()
 
         key = ','.join([peerIP, system])
 
         if key in self.context[today]:
-            logger.debug('skipping {}'.format(key))
             return
 
         self.context[today].add(key)
@@ -79,5 +75,5 @@ class Output(cowrie.core.output.Output):
         }
 
         ret = Indicator(self.client, i).submit()
-        logger.info('logged to csirtg %s ' % ret['indicator']['location'])
+        log.msg('logged to csirtg %s ' % ret['location'])
 
