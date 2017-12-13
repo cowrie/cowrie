@@ -12,12 +12,18 @@ import re
 import stat
 import copy
 import time
+import sys
 
 from twisted.python import log, failure
 from twisted.internet import error
 
 from cowrie.shell import fs
-from cowrie.shell import shlex
+
+# From Python3.6 we get the new shlex version
+if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+    import shlex
+else:
+    from cowrie.shell import shlex
 
 
 class HoneyPotCommand(object):
@@ -195,7 +201,7 @@ class HoneyPotShell(object):
         """
         """
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
-        line = b"".join(line)
+        #line = b"".join(line)
         line = line.decode("utf-8")
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []

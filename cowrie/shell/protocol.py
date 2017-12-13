@@ -370,7 +370,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         if len(self.cmdstack) == 1:
             if self.lineBuffer:
-                self.historyLines.append(''.join(self.lineBuffer))
+                self.historyLines.append(b''.join(self.lineBuffer))
             self.historyPosition = len(self.historyLines)
         return recvline.RecvLine.handle_RETURN(self)
 
