@@ -93,9 +93,9 @@ class CowrieSSHFactory(factory.SSHFactory):
         t = transport.HoneyPotSSHTransport()
 
         try:
-            t.ourVersionString = self.cfg.get('ssh', 'version')
+            t.ourVersionString = self.cfg.get('ssh', 'version').encode('ascii')
         except:
-            t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
+            t.ourVersionString = b"SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 
         t.supportedPublicKeys = list(self.privateKeys.keys())
 
