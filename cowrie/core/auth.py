@@ -29,7 +29,7 @@ class UserDB(object):
         load the user db
         """
 
-        with open(self.userdb_file, 'r') as f:
+        with open(self.userdb_file, 'rb') as f:
             while True:
                 rawline = f.readline()
                 if not rawline:
@@ -39,10 +39,10 @@ class UserDB(object):
                 if not line:
                     continue
 
-                if line.startswith('#'):
+                if line.startswith(b'#'):
                     continue
 
-                (login, uid, passwd) = line.split(':', 2)
+                (login, uid, passwd) = line.split(b':', 2)
 
                 self.userdb.append((login, passwd))
 
@@ -67,9 +67,9 @@ class UserDB(object):
         """
         for (login, passwd) in self.userdb:
             # Explicitly fail on !password
-            if login == thelogin and passwd == '!' + thepasswd:
+            if login == thelogin and passwd == b'!' + thepasswd:
                 return False
-            if login == thelogin and passwd in (thepasswd, '*'):
+            if login == thelogin and passwd in (thepasswd, b'*'):
                 return True
         return False
 

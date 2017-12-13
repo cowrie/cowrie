@@ -27,8 +27,8 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     services = {
-        'ssh-userauth': userauth.HoneyPotSSHUserAuthServer,
-        'ssh-connection': connection.CowrieSSHConnection,
+        b'ssh-userauth': userauth.HoneyPotSSHUserAuthServer,
+        b'ssh-connection': connection.CowrieSSHConnection,
         }
     starttime = None
     privateKeys = None

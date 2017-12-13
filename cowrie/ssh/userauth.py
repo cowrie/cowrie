@@ -10,6 +10,7 @@ from __future__ import division, absolute_import
 import struct
 
 from twisted.python import log
+from twisted.python.compat import _bytesChr as chr
 from twisted.internet import defer
 
 from twisted.conch.interfaces import IConchUser
@@ -32,9 +33,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
         """
         """
-        self.interfaceToMethod[credentials.IUsername] = 'none'
-        self.interfaceToMethod[credentials.IUsernamePasswordIP] = 'password'
-        self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = 'keyboard-interactive'
+        self.interfaceToMethod[credentials.IUsername] = b'none'
+        self.interfaceToMethod[credentials.IUsernamePasswordIP] = b'password'
+        self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = b'keyboard-interactive'
         self.bannerSent = False
         self._pamDeferred = None
         userauth.SSHUserAuthServer.serviceStarted(self)
@@ -56,7 +57,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         if not data or not len(data.strip()):
             return
         self.transport.sendPacket(
-            userauth.MSG_USERAUTH_BANNER, NS(data) + NS('en'))
+            userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b'en'))
 
 
     def ssh_USERAUTH_REQUEST(self, packet):
@@ -71,7 +72,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         We subclass to intercept non-dsa/rsa keys, or Conch will crash on ecdsa..
         """
         algName, blob, rest = getNS(packet[1:], 2)
-        if not algName in ('ssh-rsa', 'ssh-dsa'):
+        if not algName in (b'ssh-rsa', b'ssh-dsa'):
             log.msg( "Attempted public key authentication with %s algorithm" % (algName,))
             return defer.fail(error.ConchError("Incorrect signature"))
         return userauth.SSHUserAuthServer.auth_publickey(self, packet)
@@ -140,7 +141,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             else:
                 return defer.fail(error.ConchError(
                     'bad PAM auth kind %i' % (kind,)))
-        packet = NS('') + NS('') + NS('')
+        packet = NS(b'') + NS(b'') + NS(b'')
         packet += struct.pack('>L', len(resp))
         for prompt, echo in resp:
             packet += NS(prompt)

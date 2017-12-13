@@ -124,13 +124,15 @@ class HoneypotPasswordChecker(object):
         if theauth.checklogin(theusername, thepassword, ip):
             log.msg(eventid='cowrie.login.success',
                     format='login attempt [%(username)s/%(password)s] succeeded',
-                    username=theusername.encode('string-escape'),
-                    password=thepassword.encode('string-escape'))
+                    username=theusername, password=thepassword)
+                    #username=theusername.encode('string-escape'),
+                    #password=thepassword.encode('string-escape'))
             return True
         else:
             log.msg(eventid='cowrie.login.failed',
                     format='login attempt [%(username)s/%(password)s] failed',
-                    username=theusername.encode('string-escape'),
-                    password=thepassword.encode('string-escape'))
+                    username=theusername, password=thepassword)
+                    #username=theusername.encode('string-escape'),
+                    #password=thepassword.encode('string-escape'))
             return False
 
