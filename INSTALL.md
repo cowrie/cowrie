@@ -179,9 +179,9 @@ Update the bin/cowrie script, change:
  ```
  DAEMONIZE="-n"
  ```
- 
+
 ## Configure Additional Output Plugins (Optional)
-Cowrie automatically outputs event data to text and json log files in ~/cowrie/log.  Additional ouput plugins can be 
+Cowrie automatically outputs event data to text and json log files in ~/cowrie/log.  Additional ouput plugins can be
 configured to record the data other ways.  Supported output plugins include:
 
 * Cuckoo
@@ -203,4 +203,15 @@ double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
 To make Cowrie logfiles public readable, change the ```--umask 0077``` option in start.sh into ```--umask 0022```
+
+# Updating Cowrie
+
+Updating is an easy process. First stop your honeypot. Then fetch updates from GitHub, as a next step upgrade your Python dependencies.
+
+```
+bin/cowrie stop
+git pull
+pip install --upgrade -r requirements.txt
+bin/cowrie start
+```
 
