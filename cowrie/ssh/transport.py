@@ -18,6 +18,8 @@ from twisted.conch.ssh import transport
 from twisted.python import log, randbytes
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
+from twisted.python.compat import _bytesChr as chr
+
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
@@ -44,8 +46,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
            session=self.transportId, sessionno='S'+str(self.transport.sessionno), protocol='ssh')
 
         self.transport.write(b''+self.ourVersionString+b'\r\n')
-        self.currentEncryptions = transport.SSHCiphers('none', 'none', 'none', 'none')
-        self.currentEncryptions.setKeys('', '', '', '', '', '')
+        self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
+        self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
         self.setTimeout(120)
         self.logintime = time.time()
 
@@ -69,26 +71,27 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.buf = self.buf + data
         if not self.gotVersion:
-            if not '\n' in self.buf:
+            if not b'\n' in self.buf:
                 return
-            self.otherVersionString = self.buf.split('\n')[0].strip().encode('string-escape')
-            if self.buf.startswith('SSH-'):
+            #self.otherVersionString = self.buf.split(b'\n')[0].strip().encode('string-escape')
+            self.otherVersionString = self.buf.split(b'\n')[0].strip()
+            if self.buf.startswith(b'SSH-'):
                 self.gotVersion = True
-                remoteVersion = self.buf.split('-')[1]
+                remoteVersion = self.buf.split(b'-')[1]
                 if remoteVersion not in self.supportedVersions:
                     self._unsupportedVersionReceived(remoteVersion)
                     return
-                i = self.buf.index('\n')
+                i = self.buf.index(b'\n')
                 self.buf = self.buf[i+1:]
                 self.sendKexInit()
             else:
-                self.transport.write('Protocol mismatch.\n')
+                self.transport.write(b'Protocol mismatch.\n')
                 log.msg('Bad protocol version identification: %s' % (self.otherVersionString,))
                 self.transport.loseConnection()
                 return
         packet = self.getPacket()
         while packet:
-            messageNum = ord(packet[0])
+            messageNum = ord(packet[0:1])
             self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
 
@@ -113,11 +116,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if lenPad < 4:
             lenPad = lenPad + bs
         if messageType == transport.MSG_KEXINIT:
-            padding = '\0' * lenPad
+            padding = b'\0' * lenPad
         else:
             padding = randbytes.secureRandom(lenPad)
 
-        packet = (struct.pack('!LB',
+        packet = (struct.pack(b'!LB',
                               totalSize + lenPad - 4, lenPad) +
                   payload + padding)
         encPacket = (
@@ -134,7 +137,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         k = getNS(packet[16:], 10)
         strings, rest = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS,
-            langSC) = [s.split(',') for s in strings]
+            langSC) = [s.split(b',') for s in strings]
         log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, format='Remote SSH version: %(version)s')
