@@ -2,8 +2,8 @@
 #Change the below to yes if you are using authbind to listen to port 22
 AUTHBIND_ENABLED=no
 
-#Change the below to yes to activate the "cowrie-env" virtual environment
-VIRTUALENV_ENABLED=yes
+#Change the below to change default "cowrie-env" virtual environment
+COWRIE_VIRTUAL_ENV=cowrie-env
 
 #Change the below to -n to disable daemonizing (for instance when using supervisor)
 DAEMONIZE=""
@@ -63,16 +63,16 @@ cowrie_start() {
     TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0077 --pidfile ${PIDFILE}"
 
     # For Docker log to stdout, for non-Docker log to file
-    if [ "$DOCKER" = "yes" ]
-    then
+    if [ "$DOCKER" = "yes" ]; then
         TWISTEDARGS="${TWISTEDARGS} -l -"
     else
         TWISTEDARGS="${TWISTEDARGS} -l log/cowrie.log"
     fi
 
-    if [ "$VIRTUALENV_ENABLED" = "yes" ]
-    then
-        activate_venv "cowrie-env"
+    if [ ! -z "$VIRTUAL_ENV" ]; then
+        echo "Found existing Python virtual environment \"$VIRTUAL_ENV\""
+    elif [ ! -z "$COWRIE_VIRTUAL_ENV" ]; then
+        activate_venv "$COWRIE_VIRTUAL_ENV"
     fi
 
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
