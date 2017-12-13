@@ -4,15 +4,18 @@ import getopt
 import re
 import socket
 import struct
+import sys
 
 from cowrie.shell.honeypot import HoneyPotCommand
 
-commands = {}
+if sys.version_info > (3,):
+    long = int
 
+commands = {}
 
 def makeMask(n):
     """return a mask of n bits as a long integer"""
-    return (2L << n - 1) - 1
+    return (long(2) << n - 1) - 1
 
 
 

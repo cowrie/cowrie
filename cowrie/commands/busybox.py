@@ -46,7 +46,7 @@ Currently defined functions:
 	unlzma, unxz, unzip, uptime, usleep, uudecode, uuencode, vconfig, vi,
 	watch, watchdog, wc, wget, which, who, whoami, xargs, xz, xzcat, yes,
 	zcat
-''').strip().split('\n')
+''').strip().split(b'\n')
 
 class command_busybox(HoneyPotCommand):
     """
