@@ -1,3 +1,4 @@
+* 2017-12-13 Default umask for logs is now 0007. This means group members can access.
 * 2017-10-24 Can store uploaded and downloaded artifacts to S3
 * 2017-09-23 First proxy implementation for exec commands only
 * 2017-07-03 Cuckoo v2 integration

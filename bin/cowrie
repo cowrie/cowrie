@@ -60,7 +60,7 @@ cowrie_status() {
 cowrie_start() {
     # Start Cowrie
     COWRIEARGS="$*"
-    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0077 --pidfile ${PIDFILE}"
+    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0007 --pidfile ${PIDFILE}"
 
     # For Docker log to stdout, for non-Docker log to file
     if [ "$DOCKER" = "yes" ]; then
