@@ -90,16 +90,19 @@ class LoggingServerProtocol(insults.ServerProtocol):
         insults.ServerProtocol.connectionMade(self)
 
 
-    def write(self, bytes):
+    def write(self, data):
         """
         Output sent back to user
         """
-        if self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(self.ttylogFile, len(bytes),
-                ttylog.TYPE_OUTPUT, time.time(), bytes)
-            self.ttylogSize += len(bytes)
+        if not isinstance(data, bytes):
+            data = data.encode("utf-8")
 
-        insults.ServerProtocol.write(self, bytes)
+        if self.ttylogEnabled and self.ttylogOpen:
+            ttylog.ttylog_write(self.ttylogFile, len(data),
+                ttylog.TYPE_OUTPUT, time.time(), data)
+            self.ttylogSize += len(data)
+
+        insults.ServerProtocol.write(self, data)
 
 
     def dataReceived(self, data):

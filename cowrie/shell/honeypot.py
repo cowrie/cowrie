@@ -394,11 +394,11 @@ class HoneyPotShell(object):
 
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
         # Example: root@svr03:~#     (More of a "Debian" feel)
-        prompt = self.protocol.user.username.encode()+b'@'+self.protocol.hostname.encode()+b':'+cwd.encode()
+        prompt = self.protocol.user.username.decode('utf-8')+'@'+self.protocol.hostname+':'+cwd
         if not self.protocol.user.uid:
-            prompt += b'# '    # "Root" user
+            prompt += '# '    # "Root" user
         else:
-            prompt += b'$ '    # "Non-Root" user
+            prompt += '$ '    # "Non-Root" user
         self.protocol.terminal.write(prompt)
         self.protocol.ps = (prompt , b'> ')
 
