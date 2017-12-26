@@ -28,7 +28,7 @@ class CowrieUser(avatar.ConchUser):
 
     def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
-        self.username = username
+        self.username = username.decode('utf-8')
         self.server = server
         self.cfg = self.server.cfg
 
@@ -39,6 +39,7 @@ class CowrieUser(avatar.ConchUser):
             self.uid = pwentry["pw_uid"]
             self.gid = pwentry["pw_gid"]
             self.home = pwentry["pw_dir"]
+            log.msg( "self.home = " + self.home)
         except:
             self.uid = 1001
             self.gid = 1001
