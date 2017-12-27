@@ -51,7 +51,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         try:
             honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
-            self.banner = open(issuefile).read()
+            self.banner = open(issuefile, 'rb').read()
         except IOError:
             self.banner = ""
 
@@ -78,8 +78,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     protocol is replaced with HoneyPotTelnetSession.
     """
 
-    loginPrompt = 'login: '
-    passwordPrompt = 'Password: '
+    loginPrompt = b'login: '
+    passwordPrompt = b'Password: '
     windowSize = [40, 80]
 
     def connectionMade(self):
@@ -92,7 +92,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         # I need to doubly escape here since my underlying
         # CowrieTelnetTransport hack would remove it and leave just \n
-        self.transport.write(self.factory.banner.replace('\n', '\r\r\n'))
+        self.transport.write(self.factory.banner.replace(b'\n', b'\r\r\n'))
         self.transport.write(self.loginPrompt)
 
 
@@ -108,7 +108,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         Overridden to conditionally kill 'WILL ECHO' which confuses clients
         that don't implement a proper Telnet protocol (most malware)
         """
-        self.username = line
+        self.username = line.decode()
         # only send ECHO option if we are chatting with a real Telnet client
         #if self.transport.options: <-- doesn't work
         self.transport.willChain(ECHO)
@@ -118,7 +118,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
 
     def telnet_Password(self, line):
-        username, password = self.username, line
+        username, password = self.username, line.decode()
         del self.username
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
@@ -140,9 +140,13 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         return 'Discard'
 
+
     def telnet_Command(self, command):
-        self.transport.protocol.dataReceived(command+'\r')
+        """
+        """
+        self.transport.protocol.dataReceived(command+b'\r')
         return "Command"
+
 
     def _cbLogin(self, ial):
         """
@@ -154,7 +158,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.logout = logout
         self.state = 'Command'
 
-        self.transport.write("\n")
+        self.transport.write(b'\n')
 
         # Remove the short timeout of the login prompt. Timeout will be
         # provided later by the HoneyPotBaseProtocol class.
@@ -168,7 +172,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     def _ebLogin(self, failure):
     # TODO: provide a way to have user configurable strings for wrong password
         self.transport.wontChain(ECHO)
-        self.transport.write("\nLogin incorrect\n")
+        self.transport.write(b"\nLogin incorrect\n")
         self.transport.write(self.loginPrompt)
         self.state = "User"
 
@@ -221,7 +225,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         TelnetTransport.connectionMade(self)
 
 
-    def write(self, bytes):
+    def write(self, data):
         """
         Because of the presence of two ProtocolTransportMixin in the protocol
         stack once authenticated, I need to override write() and remove a \r
@@ -230,7 +234,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         It is kind of a hack. I asked for a better solution here:
         http://stackoverflow.com/questions/35087250/twisted-telnet-server-how-to-avoid-nested-crlf
         """
-        self.transport.write(bytes.replace(b'\r\n', b'\n'))
+        self.transport.write(data.replace(b'\r\n', b'\n'))
 
 
     def connectionLost(self, reason):
@@ -243,6 +247,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         log.msg(eventid='cowrie.session.closed',
             format='Connection lost after %(duration)d seconds',
             duration=duration)
+
 
     def willChain(self, option):
         return self._chainNegotiation(None, self.will, option)
