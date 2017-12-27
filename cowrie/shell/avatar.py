@@ -39,7 +39,6 @@ class CowrieUser(avatar.ConchUser):
             self.uid = pwentry["pw_uid"]
             self.gid = pwentry["pw_gid"]
             self.home = pwentry["pw_dir"]
-            log.msg( "self.home = " + self.home)
         except:
             self.uid = 1001
             self.gid = 1001
