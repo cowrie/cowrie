@@ -145,7 +145,6 @@ class Output(cowrie.core.output.Output):
             """
             Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
-            log.msg("cbPartial")
             return processResult(failure.value.response)
 
 
@@ -159,7 +158,7 @@ class Output(cowrie.core.output.Output):
             Extract the information we need from the body
             """
             j = json.loads(result)
-            log.msg("VT scanfile result: {}".format(repr(j)))
+            # log.msg("VT scanfile result: {}".format(repr(j)))
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg("VT: response=0: this is a new file")
@@ -263,7 +262,6 @@ class Output(cowrie.core.output.Output):
             """
             Received body
             """
-            log.msg("cbBody")
             return processResult(body)
 
 
@@ -271,7 +269,6 @@ class Output(cowrie.core.output.Output):
             """
             Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
-            log.msg("cbPartial")
             return processResult(failure.value.response)
 
 
@@ -285,7 +282,7 @@ class Output(cowrie.core.output.Output):
             Extract the information we need from the body
             """
             j = json.loads(result)
-            log.msg("VT scanurl result: {}".format(repr(j)))
+            # log.msg("VT scanurl result: {}".format(repr(j)))
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg("VT: response=0: this is a new file")
