@@ -27,37 +27,37 @@ class command_adduser(HoneyPotCommand):
             self.username = arg
             break
         if self.username is None:
-            self.write(b'adduser: Only one or two names allowed.\n')
+            self.write('adduser: Only one or two names allowed.\n')
             self.exit()
             return
 
         self.output = [
-            (O_O, b'Adding user `%(username)s\' ...\n'),
-            (O_O, b'Adding new group `%(username)s\' (1001) ...\n'),
-            (O_O, b'Adding new user `%(username)s\' (1001) with group `%(username)s\' ...\n'),
-            (O_O, b'Creating home directory `/home/%(username)s\' ...\n'),
-            (O_O, b'Copying files from `/etc/skel\' ...\n'),
-            (O_P, b'Password: '),
-            (O_P, b'Password again: '),
-            (O_O, b'\nChanging the user information for %(username)s\n'),
-            (O_O, b'Enter the new value, or press ENTER for the default\n'),
-            (O_Q, b'        Username []: '),
-            (O_Q, b'        Full Name []: '),
-            (O_Q, b'        Room Number []: '),
-            (O_Q, b'        Work Phone []: '),
-            (O_Q, b'        Home Phone []: '),
-            (O_Q, b'        Mobile Phone []: '),
-            (O_Q, b'        Country []: '),
-            (O_Q, b'        City []: '),
-            (O_Q, b'        Language []: '),
-            (O_Q, b'        Favorite movie []: '),
-            (O_Q, b'        Other []: '),
-            (O_Q, b'Is the information correct? [Y/n] '),
-            (O_O, b'ERROR: Some of the information you entered is invalid\n'),
-            (O_O, b'Deleting user `%(username)s\' ...\n'),
-            (O_O, b'Deleting group `%(username)s\' (1001) ...\n'),
-            (O_O, b'Deleting home directory `/home/%(username)s\' ...\n'),
-            (O_Q, b'Try again? [Y/n] '),
+            (O_O, 'Adding user `%(username)s\' ...\n'),
+            (O_O, 'Adding new group `%(username)s\' (1001) ...\n'),
+            (O_O, 'Adding new user `%(username)s\' (1001) with group `%(username)s\' ...\n'),
+            (O_O, 'Creating home directory `/home/%(username)s\' ...\n'),
+            (O_O, 'Copying files from `/etc/skel\' ...\n'),
+            (O_P, 'Password: '),
+            (O_P, 'Password again: '),
+            (O_O, '\nChanging the user information for %(username)s\n'),
+            (O_O, 'Enter the new value, or press ENTER for the default\n'),
+            (O_Q, '        Username []: '),
+            (O_Q, '        Full Name []: '),
+            (O_Q, '        Room Number []: '),
+            (O_Q, '        Work Phone []: '),
+            (O_Q, '        Home Phone []: '),
+            (O_Q, '        Mobile Phone []: '),
+            (O_Q, '        Country []: '),
+            (O_Q, '        City []: '),
+            (O_Q, '        Language []: '),
+            (O_Q, '        Favorite movie []: '),
+            (O_Q, '        Other []: '),
+            (O_Q, 'Is the information correct? [Y/n] '),
+            (O_O, 'ERROR: Some of the information you entered is invalid\n'),
+            (O_O, 'Deleting user `%(username)s\' ...\n'),
+            (O_O, 'Deleting group `%(username)s\' (1001) ...\n'),
+            (O_O, 'Deleting home directory `/home/%(username)s\' ...\n'),
+            (O_Q, 'Try again? [Y/n] '),
             ]
         self.do_output()
 
@@ -97,9 +97,9 @@ class command_adduser(HoneyPotCommand):
             return
         elif self.item == 20 and line.strip() not in ('y', 'yes'):
             self.item = 7
-            self.write(b'Ok, starting over\n')
+            self.write('Ok, starting over\n')
         elif not len(line) and self.output[self.item][0] == O_Q:
-            self.write(b'Must enter a value!\n')
+            self.write('Must enter a value!\n')
         else:
             self.item += 1
         self.schedule_next()
