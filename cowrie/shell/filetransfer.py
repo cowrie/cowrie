@@ -173,6 +173,7 @@ class SFTPServerForCowrieUser(object):
 
     def __init__(self, avatar):
         self.avatar = avatar
+        self.avatar.server.initFileSystem()
         self.fs = self.avatar.server.fs
 
 
