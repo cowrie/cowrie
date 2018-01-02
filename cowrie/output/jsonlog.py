@@ -35,9 +35,8 @@ from __future__ import division, absolute_import
 import json
 import os
 
-import twisted.python.logfile
-
 import cowrie.core.output
+import cowrie.python.logfile
 
 class Output(cowrie.core.output.Output):
     """
@@ -49,7 +48,7 @@ class Output(cowrie.core.output.Output):
         fn = cfg.get('output_jsonlog', 'logfile')
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
-        self.outfile = twisted.python.logfile.DailyLogFile(base, dirs, defaultMode=0o664)
+        self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
 
 
     def start(self):
