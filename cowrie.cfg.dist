@@ -89,6 +89,10 @@ txtcmds_path = txtcmds
 ttylog = true
 
 
+# Default directory for TTY logs.
+# (default: ttylog_path = %(log_path)s/tty)
+ttylog_path = %(log_path)s/tty
+
 # Interactive timeout determines when logged in sessions are
 # terminated for being idle. In seconds.
 # (default: 180)
