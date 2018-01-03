@@ -28,7 +28,7 @@ class CowrieUser(avatar.ConchUser):
 
     def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
-        self.username = username
+        self.username = username.decode('utf-8')
         self.server = server
         self.cfg = self.server.cfg
 

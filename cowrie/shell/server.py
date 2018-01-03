@@ -52,5 +52,12 @@ class CowrieServer(object):
         self.cfg = realm.cfg
         self.avatars = []
         self.hostname = self.cfg.get('honeypot', 'hostname')
+        self.fs = None
+
+
+    def initFileSystem(self):
+        """
+        Do this so we can trigger it later. Not all sessions need file system
+        """
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE),self.cfg)
 

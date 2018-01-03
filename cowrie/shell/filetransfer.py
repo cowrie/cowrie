@@ -13,6 +13,7 @@ from zope.interface import implementer
 
 import twisted
 from twisted.python import log
+from twisted.python.compat import nativeString
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
@@ -172,6 +173,7 @@ class SFTPServerForCowrieUser(object):
 
     def __init__(self, avatar):
         self.avatar = avatar
+        self.avatar.server.initFileSystem()
         self.fs = self.avatar.server.fs
 
 
@@ -179,7 +181,8 @@ class SFTPServerForCowrieUser(object):
         """
         """
         home = self.avatar.home
-        return os.path.abspath(os.path.join(home, path))
+        return os.path.abspath(os.path.join(nativeString(home),
+          nativeString(path)))
 
 
     def _setAttrs(self, path, attrs):

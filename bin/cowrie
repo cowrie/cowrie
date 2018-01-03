@@ -2,8 +2,9 @@
 #Change the below to yes if you are using authbind to listen to port 22
 AUTHBIND_ENABLED=no
 
-#Change the below to change default "cowrie-env" virtual environment
-COWRIE_VIRTUAL_ENV=cowrie-env
+# To override the default virtual enviroment, either set COWRIE_VIRTUAL_ENV or
+# activate it before starting Cowrie
+#COWRIE_VIRTUAL_ENV=my-env
 
 #Change the below to -n to disable daemonizing (for instance when using supervisor)
 DAEMONIZE=""
@@ -12,6 +13,9 @@ DAEMONIZE=""
 ## don't modify below here ##
 ################################################################################
 
+# The default Python virtual environment is "cowrie-env". If you set the variable
+# COWRIE_VIRTUAL_ENV you can override this
+DEFAULT_VIRTUAL_ENV=cowrie-env
 
 find_cowrie_directory() {
     # Determine Cowrie directory
@@ -27,18 +31,12 @@ find_cowrie_directory() {
 activate_venv() {
     # Activate Python virtual environment
     VENV="$1"
-    if [ ! -d "$VENV" ]
-    then
-        echo "The specified virtualenv \"$VENV\" was not found!"
-        exit 1
-    fi
     if [ ! -f "$VENV/bin/activate" ]
     then
-        echo "The specified virtualenv \"$VENV\" was not found!"
-        exit 2
+        return 1
     fi
-    echo "Activating virtualenv \"$VENV\""
     . $VENV/bin/activate
+    return 0
 }
 
 cowrie_status() {
@@ -60,7 +58,7 @@ cowrie_status() {
 cowrie_start() {
     # Start Cowrie
     COWRIEARGS="$*"
-    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0007 --pidfile ${PIDFILE}"
+    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0022 --pidfile ${PIDFILE}"
 
     # For Docker log to stdout, for non-Docker log to file
     if [ "$DOCKER" = "yes" ]; then
@@ -70,9 +68,13 @@ cowrie_start() {
     fi
 
     if [ ! -z "$VIRTUAL_ENV" ]; then
-        echo "Found existing Python virtual environment \"$VIRTUAL_ENV\""
-    elif [ ! -z "$COWRIE_VIRTUAL_ENV" ]; then
-        activate_venv "$COWRIE_VIRTUAL_ENV"
+        echo 2>&1 "Using activated Python virtual environment \"$VIRTUAL_ENV\""
+    elif activate_venv "$COWRIE_VIRTUAL_ENV"; then
+        echo 2>&1 "Using custom Python virtual environment \"$VIRTUAL_ENV\""
+    elif activate_venv "$DEFAULT_VIRTUAL_ENV"; then
+        echo 2>&1 "Using default Python virtual environment \"$VIRTUAL_ENV\""
+    else
+        echo 2>&1 "Not using Python virtual environment"
     fi
 
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."

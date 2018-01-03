@@ -7,7 +7,7 @@ from cowrie.shell.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
 from twisted.python import log
 commands = {}
 
-busybox_help=(b'''
+busybox_help=('''
 BusyBox v1.20.2 (Debian 1:1.20.0-7) multi-call binary.
 Copyright (C) 1998-2011 Erik Andersen, Rob Landley, Denys Vlasenko
 and others. Licensed under GPLv2.
@@ -46,7 +46,7 @@ Currently defined functions:
 	unlzma, unxz, unzip, uptime, usleep, uudecode, uuencode, vconfig, vi,
 	watch, watchdog, wc, wget, which, who, whoami, xargs, xz, xzcat, yes,
 	zcat
-''').strip().split(b'\n')
+''').strip().split('\n')
 
 class command_busybox(HoneyPotCommand):
     """
@@ -56,7 +56,7 @@ class command_busybox(HoneyPotCommand):
         """
         """
         for ln in busybox_help:
-            self.errorWrite(ln+b'\n')
+            self.errorWrite(ln+'\n')
 
 
     def call(self):
@@ -87,7 +87,7 @@ class command_busybox(HoneyPotCommand):
             if self.input_data:
                 self.write(self.input_data)
         else:
-            self.write(b'{}: applet not found\n'.format(cmd))
+            self.write('{}: applet not found\n'.format(cmd))
 
 commands['busybox'] = command_busybox
 commands['/bin/busybox'] = command_busybox

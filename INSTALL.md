@@ -6,17 +6,17 @@
 * [Step 3: Checkout the code](#step-3-checkout-the-code)
 * [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
 * [Step 5: Install configuration file](#step-5-install-configuration-file)
-* [Step 6: Generate a DSA key](#step-6-generate-a-dsa-key)
-* [Step 7: Turning on cowrie](#step-7-turning-on-cowrie)
-* [Step 8: Port redirection (optional)](#step-8-port-redirection-optional)
-* [Running within supervisord(optional)](#running-using-supervisord)
-* [Configure Additional Output Plugins (Optional)](#configure-additional-output-plugins-optional)
+* [Step 6: Generate a DSA key (OPTIONAL)](#step-6-generate-a-dsa-key)
+* [Step 7: Starting Cowrie](#step-7-turning-on-cowrie)
+* [Step 8: Port redirection (OPTIONAL)](#step-8-port-redirection-optional)
+* [Running within supervisord (OPTIONAL)](#running-using-supervisord)
+* [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
 
 ## Step 1: Install dependencies
 
-First we install support for Python virtual environments and other dependencies.
-The actual Python packages are installed later.
+First we install system-wide support for Python virtual environments and other dependencies.
+Actual Python packages are installed later.
 
 On Debian based systems (last verified on Debian 9, 2017-07-25):
 ```
@@ -25,7 +25,7 @@ $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essenti
 
 ## Step 2: Create a user account
 
-It's strongly recommended to install under a dedicated non-root user id:
+It's strongly recommended to run with a dedicated non-root user id:
 
 ```
 $ sudo adduser --disabled-password cowrie
@@ -71,6 +71,13 @@ New python executable in ./cowrie/cowrie-env/bin/python
 Installing setuptools, pip, wheel...done.
 ```
 
+Alternatively, create a Python3 virtual environment (under development)
+```
+$ virtualenv --python=python3 cowrie-env
+New python executable in ./cowrie/cowrie-env/bin/python
+Installing setuptools, pip, wheel...done.
+```
+
 Activate the virtual environment and install packages
 
 ```
@@ -84,20 +91,20 @@ $ source cowrie-env/bin/activate
 ## Step 5: Install configuration file
 
 The configuration for Cowrie is stored in cowrie.cfg.dist and
-cowrie.cfg. Both files are read, where entries from cowrie.cfg take
-precedence. The .dist file can be overwritten on upgrades, cowrie.cfg
-will not be changed. To run with a standard configuration, there
-is no need to change anything. To enable telnet, for example, create
-cowrie.cfg and input only the following:
+cowrie.cfg. Both files are read on startup, where entries from
+cowrie.cfg take precedence. The .dist file can be overwritten by
+upgrades, cowrie.cfg will not be touched. To run with a standard
+configuration, there is no need to change anything. To enable telnet,
+for example, create cowrie.cfg and input only the following:
 
 ```
 [telnet]
 enabled = true
 ```
 
-## Step 6: Generate a DSA key
+## Step 6: Generate a DSA key (OPTIONAL)
 
-This step should not be necessary, however some versions of twisted
+This step should not be necessary, however some versions of Twisted
 are not compatible. To avoid problems in advance, run:
 
 ```
@@ -106,22 +113,12 @@ $ ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key
 $ cd ..
 ```
 
-## Step 7: Turning on cowrie
+## Step 7: Starting Cowrie
 
-Cowrie is implemented as a module for Twisted, but to properly
-import everything the top-level source directory needs to be in
-python's os.path. This sometimes won't happen correctly, so make
-it explicit:
-
-```
-# or another path to the top-level cowrie folder
-$ export PYTHONPATH=/home/cowrie/cowrie
-```
-
-Start Cowrie with the cowrie command. You can add the cowrie/bin directory
-to your path if desired. If the virtual environment is called "cowrie-env"
-it will be automatically activated. Otherwise you will need to activate it
-manually
+Start Cowrie with the cowrie command. You can add the cowrie/bin
+directory to your path if desired. An existing virtual environment
+is preserved if activated, otherwise Cowrie will attempt to load
+the environment called "cowrie-env"
 
 ```
 $ bin/cowrie start
@@ -129,7 +126,9 @@ Activating virtualenv "cowrie-env"
 Starting cowrie with extra arguments [] ...
 ```
 
-## Step 8: Port redirection (optional)
+## Step 8: Port redirection (OPTIONAL)
+
+All port redirection commands are system-wide and need to be executed as root.
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
@@ -143,10 +142,10 @@ doesn't apply to loopback connections. Alternatively you can run
 authbind to listen as non-root on port 22 directly:
 
 ```
-$ apt-get install authbind
-$ touch /etc/authbind/byport/22
-$ chown cowrie:cowrie /etc/authbind/byport/22
-$ chmod 770 /etc/authbind/byport/22
+$ sudo apt-get install authbind
+$ sudo touch /etc/authbind/byport/22
+$ sudo chown cowrie:cowrie /etc/authbind/byport/22
+$ sudo chmod 770 /etc/authbind/byport/22
 ```
 
 Or for telnet:
@@ -161,7 +160,8 @@ $ sudo chmod 770 /etc/authbind/byport/23
 * Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
-## Running using Supervisord
+## Running using Supervisord (OPTIONAL)
+
 On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf
 ```
 [program:cowrie]
@@ -180,9 +180,11 @@ Update the bin/cowrie script, change:
  DAEMONIZE="-n"
  ```
 
-## Configure Additional Output Plugins (Optional)
-Cowrie automatically outputs event data to text and json log files in ~/cowrie/log.  Additional ouput plugins can be
-configured to record the data other ways.  Supported output plugins include:
+## Configure Additional Output Plugins (OPTIONAL)
+
+Cowrie automatically outputs event data to text and JSON log files
+in ~/cowrie/log.  Additional output plugins can be configured to
+record the data other ways.  Supported output plugins include:
 
 * Cuckoo
 * ELK (Elastic) Stack

@@ -31,7 +31,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         cfg = a[0].cfg
         self.bytesReceived = 0
 
-        self.ttylogPath = cfg.get('honeypot', 'log_path')
+        self.ttylogPath = cfg.get('honeypot', 'ttylog_path')
         self.downloadPath = cfg.get('honeypot', 'download_path')
 
         try:
@@ -68,7 +68,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.startTime = time.time()
 
         if self.ttylogEnabled:
-            self.ttylogFile = '%s/tty/%s-%s-%s%s.log' % \
+            self.ttylogFile = '%s/%s-%s-%s%s.log' % \
                 (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
                 transportId, channelId, self.type)
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
@@ -123,6 +123,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
         elif self.ttylogEnabled and self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
+
+        # TODO: this may need to happen inside the shell rather than here to preserve bytes for redirection
+        #if isinstance(data, bytes):
+        #    data = data.decode("utf-8")
 
         # prevent crash if something like this was passed:
         # echo cmd ; exit; \n\n

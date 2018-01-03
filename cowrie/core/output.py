@@ -64,6 +64,21 @@ in epoch format and in key 'timestamp' as a ISO compliant string
 in UTC.
 """
 
+
+def convert(input):
+    """
+    This converts a nested dictionary with bytes in it to string
+    """
+    if isinstance(input, dict):
+        return {convert(key): convert(value) for key, value in list(input.items())}
+    elif isinstance(input, list):
+        return [convert(element) for element in input]
+    elif isinstance(input, bytes):
+        return input.decode('utf-8')
+    else:
+        return input
+
+
 class Output(object):
     """
     This is the abstract base class intended to be inherited by
@@ -136,8 +151,7 @@ class Output(object):
         if not 'eventid' in event:
             return
 
-        ev = copy.copy(event)
-
+        ev = convert(event)
         ev['sensor'] = self.sensor
 
         # Add ISO timestamp and sensor data

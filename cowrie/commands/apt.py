@@ -47,7 +47,7 @@ class command_aptget(HoneyPotCommand):
         return d
 
     def do_version(self):
-        self.write(b'''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+        self.write('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Supported modules:
 *Ver: Standard .deb
 *Pkg:  Debian dpkg interface (Priority 30)
@@ -63,7 +63,7 @@ Supported modules:
         return
 
     def do_help(self):
-        self.write(b'''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+        self.write('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Usage: apt-get [options] command
        apt-get [options] install|remove pkg1 [pkg2 ...]
        apt-get [options] source pkg1 [pkg2 ...]
@@ -112,7 +112,7 @@ pages for more information and options.
     @inlineCallbacks
     def do_install(self,*args):
         if len(self.args) <= 1:
-            self.write(b'0 upgraded, 0 newly installed, 0 to remove and %s not upgraded.\n' % random.randint(200,300))
+            self.write('0 upgraded, 0 newly installed, 0 to remove and %s not upgraded.\n' % random.randint(200,300))
             self.exit()
             return
 
@@ -127,38 +127,38 @@ pages for more information and options.
                 }
         totalsize = sum([packages[x]['size'] for x in packages])
 
-        self.write(b'Reading package lists... Done\n')
-        self.write(b'Building dependency tree\n')
-        self.write(b'Reading state information... Done\n')
-        self.write(b'The following NEW packages will be installed:\n')
-        self.write(b'  %s ' % ' '.join(packages) + '\n')
-        self.write(b'0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % \
+        self.write('Reading package lists... Done\n')
+        self.write('Building dependency tree\n')
+        self.write('Reading state information... Done\n')
+        self.write('The following NEW packages will be installed:\n')
+        self.write('  %s ' % ' '.join(packages) + '\n')
+        self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % \
             len(packages))
-        self.write(b'Need to get %s.2kB of archives.\n' % (totalsize))
-        self.write(b'After this operation, %skB of additional disk space will be used.\n' % \
+        self.write('Need to get %s.2kB of archives.\n' % (totalsize))
+        self.write('After this operation, %skB of additional disk space will be used.\n' % \
             (totalsize * 2.2,))
         i = 1
         for p in packages:
-            self.write(b'Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]\n' % \
+            self.write('Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]\n' % \
                 (i, p, packages[p]['version'], packages[p]['size']))
             i += 1
             yield self.sleep(1, 2)
-        self.write(b'Fetched %s.2kB in 1s (4493B/s)''\n' % (totalsize))
-        self.write(b'Reading package fields... Done\n')
+        self.write('Fetched %s.2kB in 1s (4493B/s)\n' % (totalsize))
+        self.write('Reading package fields... Done\n')
         yield self.sleep(1, 2)
-        self.write(b'Reading package status... Done\n')
-        self.write(b'(Reading database ... 177887 files and directories currently installed.)\n')
+        self.write('Reading package status... Done\n')
+        self.write('(Reading database ... 177887 files and directories currently installed.)\n')
         yield self.sleep(1, 2)
         for p in packages:
-            self.write(b'Unpacking %s (from .../archives/%s_%s_i386.deb) ...\n' % \
+            self.write('Unpacking %s (from .../archives/%s_%s_i386.deb) ...\n' % \
                 (p, p, packages[p]['version']))
             yield self.sleep(1, 2)
-        self.write(b'Processing triggers for man-db ...\n')
+        self.write('Processing triggers for man-db ...\n')
         yield self.sleep(2)
         for p in packages:
-            self.write(b'Setting up %s (%s) ...\n' % \
+            self.write('Setting up %s (%s) ...\n' % \
                 (p, packages[p]['version']))
-            self.fs.mkfile(b'/usr/bin/%s' % p,
+            self.fs.mkfile('/usr/bin/%s' % p,
                 0, 0, random.randint(10000, 90000), 33188)
             self.protocol.commands['/usr/bin/%s' % p] = \
                 command_faked_package_class_factory.getCommand(p)
@@ -166,18 +166,18 @@ pages for more information and options.
         self.exit()
 
     def do_moo(self):
-        self.write(b'         (__)\n')
-        self.write(b'         (oo)\n')
-        self.write(b'   /------\\/\n')
-        self.write(b'  / |    ||\n')
-        self.write(b' *  /\\---/\\ \n')
-        self.write(b'    ~~   ~~\n')
-        self.write(b'...."Have you mooed today?"...\n')
+        self.write('         (__)\n')
+        self.write('         (oo)\n')
+        self.write('   /------\\/\n')
+        self.write('  / |    ||\n')
+        self.write(' *  /\\---/\\ \n')
+        self.write('    ~~   ~~\n')
+        self.write('...."Have you mooed today?"...\n')
         self.exit()
 
     def do_locked(self):
-        self.errorWrite(b'E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
-        self.errorWrite(b'E: Unable to lock the list directory\n')
+        self.errorWrite('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
+        self.errorWrite('E: Unable to lock the list directory\n')
         self.exit()
 commands['/usr/bin/apt-get'] = command_aptget
 
