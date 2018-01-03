@@ -9,7 +9,11 @@ pyes
 
 # mysql
 # If this fails, see documentation /home/cowrie/cowrie/doc/sql/README.md
-MySQL-python
+#
+# There are two options, mysqlclient is newer and provides Python3 support.
+# MySQL-python is the classic option with Cowrie and has been tested.
+mysqlclient
+# MySQL-python
 
 # mongodb
 pymongo
