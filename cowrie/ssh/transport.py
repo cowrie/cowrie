@@ -157,9 +157,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Remove login grace timeout, set zlib compression after auth
         """
 
-        # Remove authentication timeout
+        # Reset timeout. Not everyone opens shell so need timeout here also
         if service.name == "ssh-connection":
-            self.setTimeout(None)
+            self.setTimeout(300)
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
