@@ -47,12 +47,10 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
                     dst_ip=remoteHP[0], dst_port=remoteHP[1],
                     src_ip=origHP[0], src_port=origHP[1])
             return SSHConnectForwardingChannel(remoteHPNew,
-                remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
-                avatar=avatar)
+                remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
     return FakeForwardingChannel(remoteHP,
-           remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket,
-           avatar=avatar)
+           remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
 
 
