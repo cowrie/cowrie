@@ -147,8 +147,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def timeoutConnection(self):
         """
+        Make sure all sessions time out eventually.
+        Timeout is reset when authentication succeeds.
         """
-        log.msg( "Authentication Timeout reached" )
+        log.msg("Timeout reached in HoneyPotSSHTransport")
         self.transport.loseConnection()
 
 
