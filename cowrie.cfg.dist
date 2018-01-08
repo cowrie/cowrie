@@ -488,7 +488,9 @@ logfile = log/cowrie.json
 #
 #[output_virustotal]
 #api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-#
+#upload = True
+#debug = False
+
 
 # Cuckoo output module
 #[output_cuckoo]

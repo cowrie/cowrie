@@ -63,6 +63,9 @@ class Output(cowrie.core.output.Output):
     def __init__(self, cfg):
         self.apiKey = cfg.get('output_virustotal', 'api_key')
         self.debug = cfg.getboolean('output_virustotal', 'debug', fallback=False)
+        self.upload = cfg.getboolean('output_virustotal', 'upload', fallback=True)
+        self.comment = cfg.getboolean('output_virustotal', 'comment', fallback=True)
+        self.commenttext = cfg.get('output_virustotal', 'commenttext', fallback=COMMENT)
         cowrie.core.output.Output.__init__(self, cfg)
 
 
@@ -153,7 +156,6 @@ class Output(cowrie.core.output.Output):
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg("VT: response=0: this is a new file")
-                #log.msg("Sending file to VT")
                 p = urlparse(entry["url"]).path
                 if p == "":
                     fileName = entry["shasum"]
@@ -163,7 +165,10 @@ class Output(cowrie.core.output.Output):
                         fileName = entry["shasum"]
                     else:
                         fileName = b
-                return self.postfile(entry["outfile"], fileName)
+                if self.upload == True:
+                    return self.postfile(entry["outfile"], fileName)
+                else:
+                    return
             elif j["response_code"] == 1:
                 log.msg("VT: response=1: this has been scanned before")
                 log.msg("VT: {}/{} bad; permalink: {}".format(j["positives"], j["total"], ["permalink"]))
@@ -236,8 +241,10 @@ class Output(cowrie.core.output.Output):
             # This is always a new resource, since we did the scan before
             # so always create the comment
             log.msg( "response=0: posting comment")
-            d = self.postcomment(j["resource"])
-            return d
+            if self.comment == True:
+                return self.postcomment(j["resource"])
+            else:
+                return
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -318,7 +325,7 @@ class Output(cowrie.core.output.Output):
         """
         vtUrl = VTAPI_URL+b'comments/put'
         parameters = { "resource": resource,
-                       "comment": COMMENT,
+                       "comment": self.commenttext,
                        "apikey": self.apiKey}
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         body = StringProducer(urlencode(parameters).encode("utf-8"))
