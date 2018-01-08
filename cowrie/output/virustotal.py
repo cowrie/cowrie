@@ -54,7 +54,7 @@ import cowrie.core.output
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = b'https://www.virustotal.com/vtapi/v2/'
-
+COMMENT = "First seen by Cowrie SSH honeypot http://github.com/micheloosterhof/cowrie"
 
 class Output(cowrie.core.output.Output):
     """
@@ -62,6 +62,7 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self, cfg):
         self.apiKey = cfg.get('output_virustotal', 'api_key')
+        self.debug = cfg.getboolean('output_virustotal', 'debug', fallback=False)
         cowrie.core.output.Output.__init__(self, cfg)
 
 
@@ -83,24 +84,12 @@ class Output(cowrie.core.output.Output):
         """
         """
         if entry["eventid"] == 'cowrie.session.file_download':
-
-            log.msg("Sending url to VT")
-            self.scanurl(entry["url"])
+            #TODO: RENABLE
+            #log.msg("Sending url to VT")
+            #self.scanurl(entry["url"])
 
             log.msg("Checking scan report at VT")
-            self.scanfile(entry["shasum"])
-
-            #log.msg("Sending file to VT")
-            #p = urlparse(entry["url"]).path
-            #if p == "":
-            #    fileName = entry["shasum"]
-            #else:
-            #    b = os.path.basename(p)
-            #    if b == "":
-            #        fileName = entry["shasum"]
-            #    else:
-            #        fileName = b
-            #self.postfile(entry["outfile"], fileName)
+            self.scanfile(entry)
 
         elif entry["eventid"] == 'cowrie.session.file_upload':
             log.msg("Checking scan report at VT")
@@ -110,14 +99,15 @@ class Output(cowrie.core.output.Output):
             #self.postfile(entry["outfile"], entry["filename"])
 
 
-    def scanfile(self, shasum):
+    def scanfile(self, entry):
         """
         Check file scan report for a hash
+        Argument is full event so we can access full file later on
         """
         vtUrl = VTAPI_URL+b'file/report'
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
-        fields = {'apikey': self.apiKey, 'resource': shasum}
-        body = StringProducer(urlencode(fields))
+        fields = {'apikey': self.apiKey, 'resource': entry["shasum"]}
+        body = StringProducer(urlencode(fields).encode("utf-8"))
         d = self.agent.request(b'POST', vtUrl, headers, body)
 
         def cbResponse(response):
@@ -157,12 +147,23 @@ class Output(cowrie.core.output.Output):
             """
             Extract the information we need from the body
             """
+            if self.debug:
+                log.msg("VT scanfile result: {}".format(result))
             j = json.loads(result)
-            # log.msg("VT scanfile result: {}".format(repr(j)))
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg("VT: response=0: this is a new file")
-                return d
+                #log.msg("Sending file to VT")
+                p = urlparse(entry["url"]).path
+                if p == "":
+                    fileName = entry["shasum"]
+                else:
+                    b = os.path.basename(p)
+                    if b == "":
+                        fileName = entry["shasum"]
+                    else:
+                        fileName = b
+                return self.postfile(entry["outfile"], fileName)
             elif j["response_code"] == 1:
                 log.msg("VT: response=1: this has been scanned before")
                 log.msg("VT: {}/{} bad; permalink: {}".format(j["positives"], j["total"], ["permalink"]))
@@ -182,9 +183,10 @@ class Output(cowrie.core.output.Output):
         Send a file to VirusTotal
         """
         vtUrl = VTAPI_URL+b'file/scan'
-        fields = {('apikey', self.apiKey)}
-        files = {('file', fileName, open(artifact, 'rb'))}
-        print( repr(files))
+        fields = {(b'apikey', self.apiKey)}
+        files = {(b'file', fileName.encode('utf-8'), open(artifact, 'rb'))}
+        if self.debug:
+            print("submitting to VT: "+repr(files))
         contentType, body = encode_multipart_formdata(fields, files)
         producer = StringProducer(body)
         headers = http_headers.Headers({
@@ -192,6 +194,10 @@ class Output(cowrie.core.output.Output):
             'Accept': ['*/*'],
             'Content-Type': [contentType]
         })
+
+        print("producer: "+str(type(producer))+repr(producer))
+        print("body: "+str(type(body))+repr(body))
+        print("headers: "+str(type(headers))+repr(headers))
 
         d = self.agent.request(b'POST', vtUrl, headers, producer)
 
@@ -207,6 +213,8 @@ class Output(cowrie.core.output.Output):
 
 
         def cbResponse(response):
+            """
+            """
             if response.code == 200:
                 d = client.readBody(response)
                 d.addCallback(cbBody)
@@ -218,11 +226,16 @@ class Output(cowrie.core.output.Output):
 
 
         def cbError(failure):
+            """
+            """
             failure.printTraceback()
 
 
         def processResult(result):
-            log.msg( "VT postfile result: {}".format(result))
+            """
+            """
+            if self.debug:
+                log.msg("VT postfile result: {}".format(result))
             j = json.loads(result)
             if j["response_code"] == 0:
                 log.msg( "response=0: posting comment")
@@ -241,7 +254,7 @@ class Output(cowrie.core.output.Output):
         vtUrl = VTAPI_URL+b'url/report'
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': url, 'scan': 1}
-        body = StringProducer(urlencode(fields))
+        body = StringProducer(urlencode(fields).encode("utf-8"))
         d = self.agent.request(b'POST', vtUrl, headers, body)
 
         def cbResponse(response):
@@ -308,13 +321,15 @@ class Output(cowrie.core.output.Output):
         """
         vtUrl = VTAPI_URL+b'comments/put'
         parameters = { "resource": resource,
-                       "comment": "First seen by Cowrie SSH honeypot http://github.com/micheloosterhof/cowrie",
+                       "comment": COMMENT,
                        "apikey": self.apiKey}
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
-        body = StringProducer(urlencode(parameters))
-        d = self.agent.request(b'POST', vtUrl, headers, body)
+        body = StringProducer(urlencode(parameters).encode("utf-8"))
+        d = self.agent.request(b'POST', vtUrl, headers, body.encode('utf-8'))
 
         def cbBody(body):
+            """
+            """
             return processResult(body)
 
 
@@ -326,6 +341,8 @@ class Output(cowrie.core.output.Output):
 
 
         def cbResponse(response):
+            """
+            """
             if response.code == 200:
                 d = client.readBody(response)
                 d.addCallback(cbBody)
@@ -337,12 +354,17 @@ class Output(cowrie.core.output.Output):
 
 
         def cbError(failure):
+            """
+            """
             failure.printTraceback()
 
 
         def processResult(result):
+            """
+            """
+            if self.debug:
+                log.msg("VT postcomment result: {}".format(result))
             j = json.loads(result)
-            log.msg( "VT postcomment result: {}".format(repr(j)))
             return j["response_code"]
 
         d.addCallback(cbResponse)
@@ -370,15 +392,21 @@ class StringProducer(object):
 
 
     def startProducing(self, consumer):
+        """
+        """
         consumer.write(self.body)
         return defer.succeed(None)
 
 
     def pauseProducing(self):
+        """
+        """
         pass
 
 
     def stopProducing(self):
+        """
+        """
         pass
 
 
@@ -390,13 +418,12 @@ def encode_multipart_formdata(fields, files):
     Return (content_type, body) ready for httplib.HTTPS instance
     """
     BOUNDARY = b'----------ThIs_Is_tHe_bouNdaRY_$'
-    CRLF = b'\r\n'
     L = []
     for (key, value) in fields:
         L.append(b'--' + BOUNDARY)
         L.append(b'Content-Disposition: form-data; name="%s"' % key.encode())
         L.append(b'')
-        L.append(value)
+        L.append(value.encode())
     for (key, filename, value) in files:
         L.append(b'--' + BOUNDARY)
         L.append(b'Content-Disposition: form-data; name="%s"; filename="%s"' % (key.encode(), filename.encode()))
@@ -405,9 +432,11 @@ def encode_multipart_formdata(fields, files):
         L.append(value.read())
     L.append(b'--' + BOUNDARY + b'--')
     L.append(b'')
-    body = CRLF.join(L)
-    print("body:"+repr(body))
+    body = b'\r\n'.join(L)
     content_type = b'multipart/form-data; boundary=%s' % BOUNDARY
+
+    print("content_type: " + str(type(content_type)) + " " + repr(content_type))
+
     return content_type, body
 
 
