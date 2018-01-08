@@ -233,10 +233,11 @@ class Output(cowrie.core.output.Output):
             if self.debug:
                 log.msg("VT postfile result: {}".format(result))
             j = json.loads(result)
-            if j["response_code"] == 0:
-                log.msg( "response=0: posting comment")
-                d = self.postcomment(j["resource"])
-                return d
+            # This is always a new resource, since we did the scan before
+            # so always create the comment
+            log.msg( "response=0: posting comment")
+            d = self.postcomment(j["resource"])
+            return d
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
