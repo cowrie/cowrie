@@ -195,10 +195,6 @@ class Output(cowrie.core.output.Output):
             'Content-Type': [contentType]
         })
 
-        print("producer: "+str(type(producer))+repr(producer))
-        print("body: "+str(type(body))+repr(body))
-        print("headers: "+str(type(headers))+repr(headers))
-
         d = self.agent.request(b'POST', vtUrl, headers, producer)
 
         def cbBody(body):
