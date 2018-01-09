@@ -122,6 +122,9 @@ Makes a Cowrie SSH/Telnet honeypot.
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
+        log.msg("Python Version {}".format(str(sys.version).replace('\n','')))
+        log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
+
         cfg = readConfigFile(("cowrie.cfg.dist", "etc/cowrie.cfg", "cowrie.cfg"))
 
         # ssh is enabled by default
