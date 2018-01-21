@@ -7,6 +7,8 @@ Telnet User Session management for the Honeypot
 
 from __future__ import division, absolute_import
 
+import traceback
+
 from zope.interface import implementer
 
 from twisted.internet import interfaces, protocol
@@ -59,6 +61,9 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # to be populated by HoneyPotTelnetAuthProtocol after auth
         self.transportId = None
 
+        # Do the delayed file system initialization
+        self.server.initFileSystem()
+
 
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
@@ -70,8 +75,13 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
 
         self.protocol = insults.LoggingTelnetServerProtocol(
                 cproto.HoneyPotInteractiveTelnetProtocol, self)
-        self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
+
+        # somewhere in Twisted this exception gets lost. Log explicitly here
+        try:
+            self.protocol.makeConnection(processprotocol)
+            processprotocol.makeConnection(session.wrapProtocol(self.protocol))
+        except Exception as e:
+            log.msg(traceback.format_exc())
 
 
     def connectionLost(self, reason):
@@ -84,11 +94,11 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.protocol = None
 
 
-    # TODO this never fires in Telnet connections is it misplaced?
     def logout(self):
         """
         """
         log.msg('avatar {} logging out'.format(self.username))
+
 
 
 # Taken and adapted from
@@ -141,9 +151,9 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         self.session = None
 
 
-    # here SSH is doing signal handling, I don't think telnet supports that so
-    # I'm simply going to bail out
     def processEnded(self, reason=None):
+        # here SSH is doing signal handling, I don't think telnet supports that so
+        # I'm simply going to bail out
         # TODO: log reason maybe?
         log.msg("Process ended. Telnet Session disconnected")
         self.session.loseConnection()
