@@ -108,7 +108,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         Overridden to conditionally kill 'WILL ECHO' which confuses clients
         that don't implement a proper Telnet protocol (most malware)
         """
-        self.username = line.decode()
+        self.username = line#.decode()
         # only send ECHO option if we are chatting with a real Telnet client
         #if self.transport.options: <-- doesn't work
         self.transport.willChain(ECHO)
@@ -118,7 +118,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
 
     def telnet_Password(self, line):
-        username, password = self.username, line.decode()
+        username, password = self.username, line#.decode()
         del self.username
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
