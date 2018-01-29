@@ -351,6 +351,9 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         # Real curl also adds this:
         # self.write('%s ERROR 404: Not Found.\n' % \
         #    time.strftime('%Y-%m-%d %T'))
+        self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
+                                  format='Attempt to download file(s) from URL (%(url)s) failed',
+                                  url=self.url)
         self.exit()
 commands['/usr/bin/curl'] = command_curl
 
