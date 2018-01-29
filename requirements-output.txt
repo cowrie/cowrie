@@ -24,3 +24,6 @@ slackclient
 
 # splunklegacy
 splunk-sdk
+
+# influxdb
+influxdb
