@@ -236,6 +236,9 @@ class command_wget(HoneyPotCommand):
             self.errorWrite(dateWithError + str(error.webStatus) + ': ' + error.webMessage + '\n')
         else:
             self.errorWrite('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
+        self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
+                                  format='Attempt to download file(s) from URL (%(url)s) failed',
+                                  url=self.url)
         self.exit()
 
 commands['/usr/bin/wget'] = command_wget
