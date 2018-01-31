@@ -30,3 +30,6 @@ slackclient
 # splunklegacy
 # For more info, see documentation /home/cowrie/cowrie/doc/splunk/README.md
 splunk-sdk
+
+# influxdb
+influxdb
