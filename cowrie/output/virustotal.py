@@ -188,7 +188,7 @@ class Output(cowrie.core.output.Output):
         Send a file to VirusTotal
         """
         vtUrl = VTAPI_URL+b'file/scan'
-        fields = {(b'apikey', self.apiKey)}
+        fields = {(b'apikey', self.apiKey.encode('ascii'))}
         files = {(b'file', fileName.encode('utf-8'), open(artifact, 'rb'))}
         if self.debug:
             print("submitting to VT: "+repr(files))
@@ -425,6 +425,7 @@ def encode_multipart_formdata(fields, files):
     L = []
     for (key, value) in fields:
         L.append(b'--' + BOUNDARY)
+        log.msg("debug:" + repr(key))
         L.append(b'Content-Disposition: form-data; name="%s"' % key.encode())
         L.append(b'')
         L.append(value.encode())
