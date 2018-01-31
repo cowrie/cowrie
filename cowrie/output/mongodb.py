@@ -51,7 +51,7 @@ class Output(cowrie.core.output.Output):
             self.col_ttylog = self.mongo_db['ttylog']
             self.col_keyfingerprints = self.mongo_db['keyfingerprints']
             self.col_event = self.mongo_db['event']
-        except Exception, e:
+        except Exception as e:
             log.msg('output_mongodb: Error: %s' % str(e))
 
 
