@@ -545,3 +545,9 @@ logfile = log/cowrie.json
 # off. Do not do this for real AWS. It's only needed for self-hosted S3 clone
 # where you don't yet have real certificates.
 #verify = no
+
+#[output_influx]
+#host = 127.0.0.1
+#port = 8086
+#database_name = cowrie
+#retention_policy_duration = 12w
