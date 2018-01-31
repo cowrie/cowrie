@@ -10,4 +10,3 @@ attrs
 service_identity
 python-dateutil
 tftpy
-influxdb
