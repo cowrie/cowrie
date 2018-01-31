@@ -188,10 +188,10 @@ class Output(cowrie.core.output.Output):
         Send a file to VirusTotal
         """
         vtUrl = VTAPI_URL+b'file/scan'
-        fields = {(b'apikey', self.apiKey.encode('ascii'))}
-        files = {(b'file', fileName.encode('utf-8'), open(artifact, 'rb'))}
+        fields = {('apikey', self.apiKey)}
+        files = {('file', fileName, open(artifact, 'rb'))}
         if self.debug:
-            print("submitting to VT: "+repr(files))
+            log.msg("submitting to VT: "+repr(files))
         contentType, body = encode_multipart_formdata(fields, files)
         producer = StringProducer(body)
         headers = http_headers.Headers({
@@ -425,7 +425,6 @@ def encode_multipart_formdata(fields, files):
     L = []
     for (key, value) in fields:
         L.append(b'--' + BOUNDARY)
-        log.msg("debug:" + repr(key))
         L.append(b'Content-Disposition: form-data; name="%s"' % key.encode())
         L.append(b'')
         L.append(value.encode())
@@ -439,8 +438,6 @@ def encode_multipart_formdata(fields, files):
     L.append(b'')
     body = b'\r\n'.join(L)
     content_type = b'multipart/form-data; boundary=%s' % BOUNDARY
-
-    print("content_type: " + str(type(content_type)) + " " + repr(content_type))
 
     return content_type, body
 
