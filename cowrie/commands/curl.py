@@ -363,6 +363,10 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     """
     From http://code.activestate.com/recipes/525493/
     """
+    totallength = 0
+    currentlength = 0
+    lastupdate = 0
+
     def __init__(self, curl, fakeoutfile, url, outfile, headers=None):
         """
         """
@@ -371,7 +375,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.status = None
         self.curl = curl
         self.fakeoutfile = fakeoutfile
-        self.lastupdate = 0
         self.started = time.time()
         self.proglen = 0
         self.nomore = False
