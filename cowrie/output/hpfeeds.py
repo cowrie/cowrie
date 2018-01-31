@@ -124,7 +124,7 @@ class FeedUnpack(object):
 
 class hpclient(object):
     def __init__(self, server, port, ident, secret, debug):
-        print 'hpfeeds client init broker {0}:{1}, identifier {2}'.format(server, port, ident)
+        log.msg('hpfeeds client init broker {0}:{1}, identifier {2}'.format(server, port, ident))
         self.server, self.port = server, int(port)
         self.ident, self.secret = ident.encode('latin1'), secret.encode('latin1')
         self.debug = debug
@@ -141,7 +141,7 @@ class hpclient(object):
         self.s.settimeout(3)
         try: self.s.connect((self.server, self.port))
         except:
-            print 'hpfeeds client could not connect to broker.'
+            log.msg('hpfeeds client could not connect to broker.')
             self.s = None
         else:
             self.s.settimeout(None)
@@ -162,7 +162,8 @@ class hpclient(object):
 
 
     def handle_established(self):
-        if self.debug: print 'hpclient established'
+        if self.debug:
+            log.msg('hpclient established')
         while self.state != 'GOTINFO':
             self.read()
 
@@ -323,7 +324,7 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == 'cowrie.log.closed':
             # entry["ttylog"]
-            with open( entry["ttylog"]) as ttylog:
+            with open(entry["ttylog"]) as ttylog:
                 self.meta[session]['ttylog'] = ttylog.read().encode('hex')
 
         elif entry["eventid"] == 'cowrie.session.closed':
