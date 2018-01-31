@@ -329,7 +329,7 @@ class Output(cowrie.core.output.Output):
                        "apikey": self.apiKey}
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         body = StringProducer(urlencode(parameters).encode("utf-8"))
-        d = self.agent.request(b'POST', vtUrl, headers, body.encode('utf-8'))
+        d = self.agent.request(b'POST', vtUrl, headers, body)
 
         def cbBody(body):
             """
