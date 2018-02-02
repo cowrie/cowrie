@@ -54,7 +54,7 @@ import cowrie.core.output
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = b'https://www.virustotal.com/vtapi/v2/'
-COMMENT = "First seen by Cowrie SSH honeypot http://github.com/micheloosterhof/cowrie"
+COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/micheloosterhof/cowrie"
 
 class Output(cowrie.core.output.Output):
     """
