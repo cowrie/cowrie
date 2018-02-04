@@ -1,5 +1,6 @@
 include cowrie.cfg.dist
 include *.md
+recursive-include twisted *.py
 recursive-include data *
 recursive-include txtcmds *
 recursive-include honeyfs *
