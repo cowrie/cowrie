@@ -64,7 +64,7 @@ cowrie_start() {
     if [ "$DOCKER" = "yes" ]; then
         TWISTEDARGS="${TWISTEDARGS} -l -"
     else
-        TWISTEDARGS="${TWISTEDARGS} -l log/cowrie.log"
+        TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger"
     fi
 
     if [ ! -z "$VIRTUAL_ENV" ]; then
