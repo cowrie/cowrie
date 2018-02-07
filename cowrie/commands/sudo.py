@@ -122,9 +122,9 @@ Sudoers I/O plugin version 1.8.5p2\n''')
                 self.environ['PATH'].split(':'))
 
             if cmdclass:
-                log.msg(eventid='cowrie.command.success',
-                        input=line,
-                        format='Command found: %(input)s')
+                #log.msg(eventid='cowrie.command.success',
+                #        input=line,
+                #        format='Command found: %(input)s')
                 command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,parsed_arguments[1:], None ,None)
                 self.protocol.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....

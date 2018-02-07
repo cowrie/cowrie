@@ -71,9 +71,9 @@ class command_busybox(HoneyPotCommand):
         cmdclass = self.protocol.getCommand(cmd,
                                             self.environ['PATH'].split(':'))
         if cmdclass:
-            log.msg(eventid='cowrie.command.success',
-                    input=line,
-                    format='Command found: %(input)s')
+            #log.msg(eventid='cowrie.command.success',
+            #        input=line,
+            #        format='Command found: %(input)s')
             command = StdOutStdErrEmulationProtocol(self.protocol,cmdclass,self.args[1:],self.input_data,None)
             # Workaround for the issue: #352
             # https://github.com/fe7ch/cowrie/commit/9b33509
