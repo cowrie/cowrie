@@ -20,6 +20,8 @@ from twisted.conch import error
 
 from cowrie.core import credentials
 
+from cowrie.core.config import CONFIG
+
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
@@ -49,8 +51,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.bannerSent = True
         try:
-            honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
-            issuefile = honeyfs + "/etc/issue.net"
+            issuefile = CONFIG.get('honeypot', 'contents_path') + "/etc/issue.net"
             data = open(issuefile).read()
         except IOError:
             return

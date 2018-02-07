@@ -10,6 +10,8 @@ from __future__ import division, absolute_import
 from twisted.python import log
 from twisted.conch.ssh import forwarding
 
+from cowrie.core.config import CONFIG
+
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     """
     This function will redirect an SSH forward request to a another address
@@ -22,9 +24,8 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         dst_ip=remoteHP[0], dst_port=remoteHP[1],
         src_ip=origHP[0], src_port=origHP[1])
 
-    cfg = avatar.cfg
     try:
-        if cfg.getboolean('ssh', 'forward_redirect') == True:
+        if CONFIG.getboolean('ssh', 'forward_redirect') == True:
             redirectEnabled = True
         else:
             redirectEnabled = False
@@ -33,7 +34,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
 
     if redirectEnabled:
         redirects = {}
-        items = cfg.items('ssh')
+        items = CONFIG.items('ssh')
         for i in items:
             if i[0].startswith('forward_redirect_'):
                 destPort = i[0].split('_')[-1]

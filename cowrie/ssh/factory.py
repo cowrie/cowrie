@@ -19,6 +19,8 @@ from cowrie.ssh import userauth
 from cowrie.ssh import transport
 from cowrie.ssh import keys as cowriekeys
 
+from cowrie.core.config import CONFIG
+
 
 class CowrieSSHFactory(factory.SSHFactory):
     """
@@ -93,7 +95,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         t = transport.HoneyPotSSHTransport()
 
         try:
-            t.ourVersionString = self.cfg.get('ssh', 'version').encode('ascii')
+            t.ourVersionString = CONFIG.get('ssh', 'version').encode('ascii')
         except:
             t.ourVersionString = b"SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 
