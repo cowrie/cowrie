@@ -302,7 +302,7 @@ class Output(cowrie.core.output.Output):
             u, p = entry['username'], entry['password']
             self.meta[session]['credentials'].append((u, p))
 
-        elif entry["eventid"] == 'cowrie.command.success':
+        elif entry["eventid"] == 'cowrie.command.input':
             c = entry['input']
             self.meta[session]['commands'].append(c)
 

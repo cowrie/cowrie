@@ -112,8 +112,7 @@ class Output(cowrie.core.output.Output):
         }
 
         # event parsing
-        if eventid in ['cowrie.command.success',
-                       'cowrie.command.failed',
+        if eventid in ['cowrie.command.failed',
                        'cowrie.command.input']:
             m['fields'].update({
                 'input': entry['input'],

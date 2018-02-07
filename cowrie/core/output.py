@@ -46,7 +46,7 @@ import time
 #  cowrie.client.version
 #  cowrie.command.input
 #  cowrie.command.failed
-#  cowrie.command.success
+#  cowrie.command.success (deprecated)
 #  cowrie.direct-tcpip.data
 #  cowrie.direct-tcpip.request
 #  cowrie.log.closed

@@ -90,7 +90,7 @@ class Output(cowrie.core.output.Output):
         elif eventid in ['cowrie.login.success', 'cowrie.login.failed']:
             self.insert_one(self.col_auth, entry)
 
-        elif eventid in ['cowrie.command.success', 'cowrie.command.failed']:
+        elif eventid in ['cowrie.command.input', 'cowrie.command.failed']:
             self.insert_one(self.col_input, entry)
 
         elif eventid == 'cowrie.session.file_download':

@@ -96,7 +96,7 @@ class Output(cowrie.core.output.Output):
                 (entry["session"], 0, entry['username'], entry['password'],
                 entry["timestamp"]))
 
-        elif entry["eventid"] == 'cowrie.command.success':
+        elif entry["eventid"] == 'cowrie.command.input':
             self.simpleQuery('INSERT INTO `input`' + \
                 ' (`session`, `timestamp`, `success`, `input`)' + \
                 ' VALUES (?, ?, ?, ?)',
