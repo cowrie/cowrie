@@ -13,6 +13,8 @@ from cowrie.shell.customparser import CustomParser
 from cowrie.shell.customparser import OptionNotFound
 from cowrie.shell.customparser import ExitException
 
+from cowrie.core.config import CONFIG
+
 """
 """
 
@@ -50,12 +52,11 @@ class command_tftp(HoneyPotCommand):
         """
         """
         progresshook = Progress(self).progresshook
-        cfg = self.protocol.cfg
 
-        if cfg.has_option('honeypot', 'download_limit_size'):
-            self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
+        if CONFIG.has_option('honeypot', 'download_limit_size'):
+            self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
 
-        self.download_path = cfg.get('honeypot', 'download_path')
+        self.download_path = CONFIG.get('honeypot', 'download_path')
 
         tmp_fname = '%s_%s_%s_%s' % \
                     (time.strftime('%Y%m%d%H%M%S'),

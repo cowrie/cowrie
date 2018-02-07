@@ -23,6 +23,8 @@ from twisted.conch.insults import insults
 from cowrie.shell import honeypot
 from cowrie.core import utils
 
+from cowrie.core.config import CONFIG
+
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
@@ -31,7 +33,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def __init__(self, avatar):
         self.user = avatar
         self.environ = avatar.environ
-        self.cfg = self.user.cfg
         self.hostname = avatar.server.hostname
         self.fs = avatar.server.fs
         self.pp = None
@@ -90,19 +91,19 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.logintime = time.time()
 
         try:
-            timeout = self.cfg.getint('honeypot', 'interactive_timeout')
+            timeout = CONFIG.getint('honeypot', 'interactive_timeout')
         except:
             timeout = 180
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
         try:
-            self.clientIP = self.cfg.get('honeypot', 'fake_addr')
+            self.clientIP = CONFIG.get('honeypot', 'fake_addr')
         except:
             self.clientIP = self.realClientIP
 
-        if self.cfg.has_option('honeypot', 'internet_facing_ip'):
-            self.kippoIP = self.cfg.get('honeypot', 'internet_facing_ip')
+        if CONFIG.has_option('honeypot', 'internet_facing_ip'):
+            self.kippoIP = CONFIG.get('honeypot', 'internet_facing_ip')
         else:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -135,7 +136,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         del self.commands
         self.fs = None
         self.pp = None
-        self.cfg = None
         self.user = None
         self.environ = None
         #log.msg("honeypot terminal protocol connection lost {}".format(reason))
@@ -172,7 +172,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     break
 
         txt = os.path.normpath('%s/%s' % \
-            (self.cfg.get('honeypot', 'txtcmds_path'), path))
+            (CONFIG.get('honeypot', 'txtcmds_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
 
@@ -322,7 +322,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         endtime = time.strftime('%H:%M',
             time.localtime(time.time()))
         duration = utils.durationHuman(time.time() - self.logintime)
-        with open( '%s/lastlog.txt' % (self.cfg.get('honeypot',
+        with open( '%s/lastlog.txt' % (CONFIG.get('honeypot',
             'log_path'),), 'a') as f:
             f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
                 (self.clientIP, starttime, endtime, duration))

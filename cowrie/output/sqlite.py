@@ -12,13 +12,15 @@ from twisted.python import log
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 class Output(cowrie.core.output.Output):
     """
     """
 
-    def __init__(self, cfg):
-        self.cfg = cfg
-        cowrie.core.output.Output.__init__(self, cfg)
+    def __init__(self):
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):
@@ -27,7 +29,7 @@ class Output(cowrie.core.output.Output):
         Need to be started with check_same_thread=False. See
         https://twistedmatrix.com/trac/ticket/3629.
         """
-        sqliteFilename = self.cfg.get('output_sqlite', 'db_file')
+        sqliteFilename = CONFIG.get('output_sqlite', 'db_file')
         try:
             self.db = adbapi.ConnectionPool('sqlite3',
                     database = sqliteFilename, check_same_thread=False)

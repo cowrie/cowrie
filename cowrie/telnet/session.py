@@ -33,7 +33,6 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     def __init__(self, username, server):
         self.username = username
         self.server = server
-        self.cfg = self.server.cfg
 
         try:
             pwentry = pwd.Passwd().getpwnam(self.username)
@@ -91,7 +90,6 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         """
         TelnetBootstrapProtocol.connectionLost(self, reason)
         self.server = None
-        self.cfg = None
         self.avatar = None
         self.protocol = None
 

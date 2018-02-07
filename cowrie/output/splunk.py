@@ -20,35 +20,38 @@ from twisted.internet.ssl import ClientContextFactory
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 class Output(cowrie.core.output.Output):
     """
     """
 
-    def __init__(self, cfg):
+    def __init__(self):
         """
         Required: token, url
         Optional: index, sourcetype, source, host
         """
-        self.token = cfg.get('output_splunk', 'token')
-        self.url = bytes(cfg.get('output_splunk', 'url'))
+        self.token = CONFIG.get('output_splunk', 'token')
+        self.url = bytes(CONFIG.get('output_splunk', 'url'))
         try:
-            self.index = cfg.get('output_splunk', 'index')
+            self.index = CONFIG.get('output_splunk', 'index')
         except:
             self.index = None
         try:
-            self.source = cfg.get('output_splunk', 'source')
+            self.source = CONFIG.get('output_splunk', 'source')
         except:
             self.source = None
         try:
-            self.sourcetype = cfg.get('output_splunk', 'sourcetype')
+            self.sourcetype = CONFIG.get('output_splunk', 'sourcetype')
         except:
             self.sourcetype = None
         try:
-            self.host = cfg.get('output_splunk', 'host')
+            self.host = CONFIG.get('output_splunk', 'host')
         except:
             self.host = None
 
-        cowrie.core.output.Output.__init__(self, cfg)
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):

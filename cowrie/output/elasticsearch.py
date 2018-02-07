@@ -6,19 +6,22 @@ import pyes
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 
 class Output(cowrie.core.output.Output):
     """
     """
 
-    def __init__(self, cfg):
+    def __init__(self):
         """
         """
-        self.host = cfg.get('output_elasticsearch', 'host')
-        self.port = cfg.get('output_elasticsearch', 'port')
-        self.index = cfg.get('output_elasticsearch', 'index')
-        self.type = cfg.get('output_elasticsearch', 'type')
-        cowrie.core.output.Output.__init__(self, cfg)
+        self.host = CONFIG.get('output_elasticsearch', 'host')
+        self.port = CONFIG.get('output_elasticsearch', 'port')
+        self.index =CONFIGg.get('output_elasticsearch', 'index')
+        self.type = CONFIG.get('output_elasticsearch', 'type')
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):

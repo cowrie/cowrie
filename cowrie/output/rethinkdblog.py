@@ -6,6 +6,9 @@ import rethinkdb as r
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 
 def iso8601_to_timestamp(value):
     return time.mktime(datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())
@@ -17,15 +20,15 @@ class Output(cowrie.core.output.Output):
 
     RETHINK_DB_SEGMENT = 'output_rethinkdblog'
 
-    def __init__(self, cfg):
+    def __init__(self):
         """
         """
-        self.host = cfg.get(self.RETHINK_DB_SEGMENT, 'host')
-        self.port = cfg.get(self.RETHINK_DB_SEGMENT, 'port')
-        self.db = cfg.get(self.RETHINK_DB_SEGMENT, 'db')
-        self.table = cfg.get(self.RETHINK_DB_SEGMENT, 'table')
-        self.password = cfg.get(self.RETHINK_DB_SEGMENT, 'password')
-        cowrie.core.output.Output.__init__(self, cfg)
+        self.host = CONFIG.get(self.RETHINK_DB_SEGMENT, 'host')
+        self.port = CONFIG.getint(self.RETHINK_DB_SEGMENT, 'port')
+        self.db = CONFIG.get(self.RETHINK_DB_SEGMENT, 'db')
+        self.table = CONFIG.get(self.RETHINK_DB_SEGMENT, 'table')
+        self.password = CONFIG.get(self.RETHINK_DB_SEGMENT, 'password')
+        cowrie.core.output.Output.__init__(self)
 
     # noinspection PyAttributeOutsideInit
     def start(self):

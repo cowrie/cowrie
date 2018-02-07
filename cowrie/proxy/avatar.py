@@ -19,6 +19,8 @@ from cowrie.ssh import forwarding
 from cowrie.proxy import session as proxysession
 from cowrie.shell import session as shellsession
 
+from cowrie.core.config import CONFIG
+
 
 @implementer(IConchUser)
 class CowrieUser(avatar.ConchUser):
@@ -29,13 +31,12 @@ class CowrieUser(avatar.ConchUser):
         avatar.ConchUser.__init__(self)
         self.username = username
         self.server = server
-        self.cfg = self.server.cfg
 
         self.channelLookup[b'session'] = proxysession.ProxySSHSession
 
         # SFTP support enabled only when option is explicitly set
         #try:
-        #    if self.cfg.getboolean('ssh', 'sftp_enabled') == True:
+        #    if CONFIG.getboolean('ssh', 'sftp_enabled') == True:
         #        self.subsystemLookup[b'sftp'] = conchfiletransfer.FileTransferServer
         #except ValueError as e:
         #    pass
@@ -43,7 +44,7 @@ class CowrieUser(avatar.ConchUser):
         # SSH forwarding disabled only when option is explicitly set
         self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
         try:
-            if self.cfg.getboolean('ssh', 'forwarding') == False:
+            if CONFIG.getboolean('ssh', 'forwarding') == False:
                 del self.channelLookup[b'direct-tcpip']
         except:
             pass

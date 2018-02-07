@@ -17,6 +17,9 @@ from twisted.python import log
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 """
 From https://github.com/threatstream/kippo/blob/master/kippo/dblog/hpfeeds.py
 """
@@ -257,20 +260,19 @@ class Output(cowrie.core.output.Output):
     Output plugin for HPFeeds
     """
 
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self):
         log.msg("Early version of hpfeeds-output, untested!")
-        cowrie.core.output.Output.__init__(self, cfg)
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):
         """
         """
-        server = self.cfg.get('output_hpfeeds', 'server')
-        port = self.cfg.get('output_hpfeeds', 'port')
-        ident = self.cfg.get('output_hpfeeds', 'identifier')
-        secret = self.cfg.get('output_hpfeeds', 'secret')
-        debug = self.cfg.get('output_hpfeeds', 'debug')
+        server = CONFIG.get('output_hpfeeds', 'server')
+        port = CONFIG.getint('output_hpfeeds', 'port')
+        ident = CONFIG.get('output_hpfeeds', 'identifier')
+        secret = CONFIG.get('output_hpfeeds', 'secret')
+        debug = CONFIG.getboolean('output_hpfeeds', 'debug')
         self.client = hpclient(server, port, ident, secret, debug)
         self.meta = {}
 

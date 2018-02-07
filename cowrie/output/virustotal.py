@@ -52,6 +52,9 @@ from twisted.internet.ssl import ClientContextFactory
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = b'https://www.virustotal.com/vtapi/v2/'
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/micheloosterhof/cowrie"
@@ -60,13 +63,13 @@ class Output(cowrie.core.output.Output):
     """
     """
 
-    def __init__(self, cfg):
-        self.apiKey = cfg.get('output_virustotal', 'api_key')
-        self.debug = cfg.getboolean('output_virustotal', 'debug', fallback=False)
-        self.upload = cfg.getboolean('output_virustotal', 'upload', fallback=True)
-        self.comment = cfg.getboolean('output_virustotal', 'comment', fallback=True)
-        self.commenttext = cfg.get('output_virustotal', 'commenttext', fallback=COMMENT)
-        cowrie.core.output.Output.__init__(self, cfg)
+    def __init__(self):
+        self.apiKey = CONFIG.get('output_virustotal', 'api_key')
+        self.debug = CONFIG.getboolean('output_virustotal', 'debug', fallback=False)
+        self.upload = CONFIG.getboolean('output_virustotal', 'upload', fallback=True)
+        self.comment = CONFIG.getboolean('output_virustotal', 'comment', fallback=True)
+        self.commenttext = CONFIG.get('output_virustotal', 'commenttext', fallback=COMMENT)
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):

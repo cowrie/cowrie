@@ -8,6 +8,8 @@ import sys
 
 from cowrie.shell.honeypot import HoneyPotCommand
 
+from cowrie.core.config import CONFIG
+
 if sys.version_info > (3,):
     long = int
 
@@ -84,9 +86,9 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             return
 
         out_addr = None
-        if self.protocol.cfg.has_option('honeypot', 'out_addr'):
-            out_addr = (self.protocol.cfg.get('honeypot', 'out_addr'), 0)
-        else:
+        try:
+            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
+        except:
             out_addr = ('0.0.0.0', 0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

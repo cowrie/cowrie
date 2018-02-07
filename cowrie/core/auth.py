@@ -20,7 +20,7 @@ class UserDB(object):
     By Walter de Jong <walter@sara.nl>
     """
 
-    def __init__(self, cfg):
+    def __init__(self):
         self.userdb = []
         self.userdb_file = '%s/userdb.txt' % CONFIG.get('honeypot', 'data_path')
         self.load()
@@ -101,7 +101,7 @@ class AuthRandom(object):
     Users will be authenticated after a random number of attempts.
     """
 
-    def __init__(self, cfg):
+    def __init__(self):
         # Default values
         self.mintry, self.maxtry, self.maxcache = 2, 5, 10
 

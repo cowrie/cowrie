@@ -32,15 +32,16 @@ from twisted.python import log
 
 import cowrie.core.output
 import cowrie.core.cef
+from cowrie.core.config import CONFIG
 
 class Output(cowrie.core.output.Output):
 
-    def __init__(self, cfg):
+    def __init__(self):
         """
         """
-        cowrie.core.output.Output.__init__(self, cfg)
-        self.format = cfg.get('output_textlog', 'format')
-        self.outfile = open(cfg.get('output_textlog', 'logfile'), 'a')
+        self.format = CONFIG.get('output_textlog', 'format')
+        self.outfile = open(CONFIG.get('output_textlog', 'logfile'), 'a')
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):

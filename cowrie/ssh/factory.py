@@ -38,10 +38,6 @@ class CowrieSSHFactory(factory.SSHFactory):
     primes = None
     tac = None # gets set later
 
-    def __init__(self, cfg):
-        self.cfg = cfg
-
-
     def logDispatch(self, *msg, **args):
         """
         Special delivery to the loggers to avoid scope problems

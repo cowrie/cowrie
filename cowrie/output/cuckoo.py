@@ -49,12 +49,12 @@ class Output(cowrie.core.output.Output):
     """
     """
 
-    def __init__(self, cfg):
-        self.url_base = cfg.get("output_cuckoo", "url_base").encode("utf-8")
-        self.api_user = cfg.get("output_cuckoo", "user")
-        self.api_passwd = cfg.get("output_cuckoo", "passwd")
-        self.cuckoo_force = int(cfg.get("output_cuckoo", "force"))
-        cowrie.core.output.Output.__init__(self, cfg)
+    def __init__(self):
+        self.url_base = CONFIG.get('output_cuckoo', 'url_base').encode('utf-8')
+        self.api_user = CONFIG.get('output_cuckoo', 'user')
+        self.api_passwd = CONFIG.get('output_cuckoo', 'passwd')
+        self.cuckoo_force = CONFIG.getboolean('output_cuckoo', 'force')
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):

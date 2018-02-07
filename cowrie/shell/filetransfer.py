@@ -20,6 +20,7 @@ from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_
 import twisted.conch.ls
 
 import cowrie.shell.pwd as pwd
+from cowrie.core.config import CONFIG
 
 
 @implementer(ISFTPFile)
@@ -34,9 +35,7 @@ class CowrieSFTPFile(object):
         self.bytesReceived = 0
 
         try:
-            self.bytesReceivedLimit = int(
-                self.sftpserver.avatar.server.cfg.get('honeypot',
-                                                      'download_limit_size'))
+            self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
         except:
             self.bytesReceivedLimit = 0
 

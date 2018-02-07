@@ -16,6 +16,8 @@ from twisted.python import log
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
 
+from cowrie.core.config import CONFIG
+
 commands = {}
 
 class command_ftpget(HoneyPotCommand):
@@ -87,9 +89,8 @@ Download a file via FTP
             self.exit()
             return
 
-        cfg = self.protocol.cfg
         url = 'ftp://%s/%s' % (self.host, self.remote_path)
-        self.download_path = cfg.get('honeypot', 'download_path')
+        self.download_path = CONFIG.get('honeypot', 'download_path')
         
         self.url_log = 'ftp://'
         if self.username:

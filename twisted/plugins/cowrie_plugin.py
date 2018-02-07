@@ -49,7 +49,8 @@ from twisted.cred import portal
 from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 
-from cowrie.core.config import readConfigFile
+from cowrie.core.config import CONFIG
+
 from cowrie.core.utils import get_endpoints_from_section, create_endpoint_services
 from cowrie import core
 import cowrie.core.realm
@@ -64,7 +65,6 @@ class Options(usage.Options):
     """
     # The '-c' parameters is currently ignored
     optParameters = [
-        ["config", "c", 'cowrie.cfg', "The configuration file to use."]
         ]
 
     optFlags = [
@@ -94,7 +94,6 @@ class CowrieServiceMaker(object):
     options = Options
     dbloggers = None
     output_plugins = None
-    cfg = None
 
     def printHelp(self):
         """
@@ -125,19 +124,17 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg("Python Version {}".format(str(sys.version).replace('\n','')))
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
-        cfg = readConfigFile(("cowrie.cfg.dist", "etc/cowrie.cfg", "cowrie.cfg"))
-
         # ssh is enabled by default
-        if cfg.has_option('ssh', 'enabled') == False or \
-           (cfg.has_option('ssh', 'enabled') and \
-               cfg.getboolean('ssh', 'enabled') == True):
+        if CONFIG.has_option('ssh', 'enabled') == False or \
+           (CONFIG.has_option('ssh', 'enabled') and \
+               CONFIG.getboolean('ssh', 'enabled') == True):
             enableSSH = True
         else:
             enableSSH = False
 
         # telnet is disabled by default
-        if cfg.has_option('telnet', 'enabled') and \
-                 cfg.getboolean('telnet', 'enabled') == True:
+        if CONFIG.has_option('telnet', 'enabled') and \
+                 CONFIG.getboolean('telnet', 'enabled') == True:
             enableTelnet = True
         else:
             enableTelnet = False
@@ -148,13 +145,13 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         # Load db loggers
         self.dbloggers = []
-        for x in cfg.sections():
+        for x in CONFIG.sections():
             if not x.startswith('database_'):
                 continue
             engine = x.split('_')[1]
             try:
                 dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
-                    globals(), locals(), ['dblog']).DBLogger(cfg)
+                    globals(), locals(), ['dblog']).DBLogger()
                 log.addObserver(dblogger.emit)
                 self.dbloggers.append(dblogger)
                 log.msg("Loaded dblog engine: {}".format(engine))
@@ -164,13 +161,13 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         # Load output modules
         self.output_plugins = []
-        for x in cfg.sections():
+        for x in CONFIG.sections():
             if not x.startswith('output_'):
                 continue
             engine = x.split('_')[1]
             try:
                 output = __import__( 'cowrie.output.{}'.format(engine),
-                    globals(), locals(), ['output']).Output(cfg)
+                    globals(), locals(), ['output']).Output()
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg("Loaded output engine: {}".format(engine))
@@ -186,33 +183,33 @@ Makes a Cowrie SSH/Telnet honeypot.
         topService.setServiceParent(application)
 
         if enableSSH:
-            factory = cowrie.ssh.factory.CowrieSSHFactory(cfg)
+            factory = cowrie.ssh.factory.CowrieSSHFactory()
             factory.tac = self
-            factory.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
+            factory.portal = portal.Portal(core.realm.HoneyPotRealm())
             factory.portal.registerChecker(
                 core.checkers.HoneypotPublicKeyChecker())
             factory.portal.registerChecker(
-                core.checkers.HoneypotPasswordChecker(cfg))
+                core.checkers.HoneypotPasswordChecker())
 
-            if cfg.has_option('honeypot', 'auth_none_enabled') and \
-                     cfg.getboolean('honeypot', 'auth_none_enabled') == True:
+            if CONFIG.has_option('honeypot', 'auth_none_enabled') and \
+                     CONFIG.getboolean('honeypot', 'auth_none_enabled') == True:
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 
-            if cfg.has_section('ssh'):
-                listen_endpoints = get_endpoints_from_section(cfg, 'ssh', 2222)
+            if CONFIG.has_section('ssh'):
+                listen_endpoints = get_endpoints_from_section(CONFIG, 'ssh', 2222)
             else:
-                listen_endpoints = get_endpoints_from_section(cfg, 'honeypot', 2222)
+                listen_endpoints = get_endpoints_from_section(CONFIG, 'honeypot', 2222)
 
             create_endpoint_services(reactor, topService, listen_endpoints, factory)
 
         if enableTelnet:
-            f = cowrie.telnet.transport.HoneyPotTelnetFactory(cfg)
+            f = cowrie.telnet.transport.HoneyPotTelnetFactory()
             f.tac = self
-            f.portal = portal.Portal(core.realm.HoneyPotRealm(cfg))
-            f.portal.registerChecker(core.checkers.HoneypotPasswordChecker(cfg))
+            f.portal = portal.Portal(core.realm.HoneyPotRealm())
+            f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
-            listen_endpoints = get_endpoints_from_section(cfg, 'telnet', 2223)
+            listen_endpoints = get_endpoints_from_section(CONFIG, 'telnet', 2223)
             create_endpoint_services(reactor, topService, listen_endpoints, f)
 
         return topService

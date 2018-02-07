@@ -34,6 +34,8 @@ from __future__ import division, absolute_import
 
 import twisted.python.log as log
 
+from cowrie.core.config import CONFIG
+
 
 class CowrieServer(object):
     """
@@ -45,7 +47,6 @@ class CowrieServer(object):
     multiple Cowrie connections
     """
     def __init__(self, realm):
-        self.cfg = realm.cfg
         self.avatars = []
-        self.hostname = self.cfg.get('honeypot', 'hostname')
+        self.hostname = CONFIG.get('honeypot', 'hostname')
 

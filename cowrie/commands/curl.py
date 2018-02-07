@@ -19,6 +19,8 @@ from twisted.python import log, compat
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
 
+from cowrie.core.config import CONFIG
+
 """
 """
 
@@ -84,11 +86,10 @@ class command_curl(HoneyPotCommand):
         url=url.encode('ascii')
         self.url = url
         self.limit_size = 0
-        cfg = self.protocol.cfg
-        if cfg.has_option('honeypot', 'download_limit_size'):
-            self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
+        if CONFIG.has_option('honeypot', 'download_limit_size'):
+            self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
 
-        self.download_path = cfg.get('honeypot', 'download_path')
+        self.download_path = CONFIG.get('honeypot', 'download_path')
 
         if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s_%s_%s' % \
@@ -284,8 +285,8 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
         out_addr = None
-        if self.protocol.cfg.has_option('honeypot', 'out_addr'):
-            out_addr = (self.protocol.cfg.get('honeypot', 'out_addr'), 0)
+        if CONFIG.has_option('honeypot', 'out_addr'):
+            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()

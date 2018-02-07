@@ -20,6 +20,8 @@ from cowrie.shell import session as shellsession
 from cowrie.shell import pwd
 from cowrie.shell import filetransfer
 
+from cowrie.core.config import CONFIG
+
 
 @implementer(IConchUser)
 class CowrieUser(avatar.ConchUser):
@@ -30,15 +32,14 @@ class CowrieUser(avatar.ConchUser):
         avatar.ConchUser.__init__(self)
         self.username = username.decode('utf-8')
         self.server = server
-        self.cfg = self.server.cfg
 
         self.channelLookup[b'session'] = sshsession.HoneyPotSSHSession
 
         try:
             pwentry = pwd.Passwd().getpwnam(self.username)
-            self.uid = pwentry["pw_uid"]
-            self.gid = pwentry["pw_gid"]
-            self.home = pwentry["pw_dir"]
+            self.uid = pwentry['pw_uid']
+            self.gid = pwentry['pw_gid']
+            self.home = pwentry['pw_dir']
         except:
             self.uid = 1001
             self.gid = 1001
@@ -46,7 +47,7 @@ class CowrieUser(avatar.ConchUser):
 
         # SFTP support enabled only when option is explicitly set
         try:
-            if self.cfg.getboolean('ssh', 'sftp_enabled') == True:
+            if CONFIG.getboolean('ssh', 'sftp_enabled') == True:
                 self.subsystemLookup[b'sftp'] = conchfiletransfer.FileTransferServer
         except ValueError as e:
             pass
@@ -54,7 +55,7 @@ class CowrieUser(avatar.ConchUser):
         # SSH forwarding disabled only when option is explicitly set
         self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
         try:
-            if self.cfg.getboolean('ssh', 'forwarding') == False:
+            if CONFIG.getboolean('ssh', 'forwarding') == False:
                 del self.channelLookup[b'direct-tcpip']
         except:
             pass
@@ -63,7 +64,7 @@ class CowrieUser(avatar.ConchUser):
     def logout(self):
         """
         """
-        log.msg('avatar {} logging out'.format(self.username))
+        log.msg("avatar {} logging out".format(self.username))
 
 
 components.registerAdapter(filetransfer.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)

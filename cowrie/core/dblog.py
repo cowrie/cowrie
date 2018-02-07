@@ -11,14 +11,15 @@ import re
 import time
 import abc
 
+from cowrie.core.config import CONFIG
+
 # dblog now operates based on eventids, no longer on regex parsing of the entry.
 # add an eventid using keyword args and it will be picked up by the dblogger
 
 class DBLogger(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self):
         self.sessions = {}
         self.ttylogs = {}
         # FIXME figure out what needs to be done here regarding
@@ -44,17 +45,17 @@ class DBLogger(object):
         }
 
         self.reported_ssh_port = None
-        if self.cfg.has_option('honeypot', 'reported_ssh_port'):
-            self.reported_ssh_port = int(cfg.get('honeypot', 'reported_ssh_port'))
+        if CONFIG.has_option('honeypot', 'reported_ssh_port'):
+            self.reported_ssh_port = CONFIG.getint('honeypot', 'reported_ssh_port')
 
         self.report_public_ip = False
-        if self.cfg.has_option('honeypot', 'report_public_ip'):
-            if cfg.getboolean('honeypot', 'report_public_ip') == True:
+        if CONFIG.has_option('honeypot', 'report_public_ip'):
+            if CONFIG.getboolean('honeypot', 'report_public_ip') == True:
                 self.report_public_ip = True
                 import urllib
                 self.public_ip = urllib.urlopen('http://myip.threatstream.com').readline()
 
-        self.start(cfg)
+        self.start()
 
     # used when the HoneypotTransport prefix is not available.
     def logDispatch(self, *msg, **kw):
@@ -62,13 +63,13 @@ class DBLogger(object):
         ev['message'] = msg
         self.emit(ev)
 
-    def start(self, cfg):
+    def start(self):
         """Hook that can be used to set up connections in dbloggers"""
         pass
 
     def getSensor(self):
-        if self.cfg.has_option('honeypot', 'sensor_name'):
-            return self.cfg.get('honeypot', 'sensor_name')
+        if CONFIG.has_option('honeypot', 'sensor_name'):
+            return CONFIG.get('honeypot', 'sensor_name')
         return None
 
     def nowUnix(self):

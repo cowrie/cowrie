@@ -39,6 +39,9 @@ import copy
 import socket
 import time
 
+from cowrie.core.config import CONFIG
+
+
 # Events:
 #  cowrie.client.fingerprint
 #  cowrie.client.size
@@ -88,8 +91,7 @@ class Output(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self):
         self.sessions = {}
         self.ips = {}
         # Need these for each individual transport, or else the session numbers overlap
@@ -98,7 +100,7 @@ class Output(object):
         self.telnetRegex = re.compile(
             '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
         try:
-            self.sensor = self.cfg.get('honeypot', 'sensor_name')
+            self.sensor = CONFIG.get('honeypot', 'sensor_name')
         except:
             self.sensor = socket.gethostname()
 

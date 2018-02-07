@@ -39,6 +39,8 @@ import twisted.python.log as log
 from cowrie.shell import fs
 from cowrie.shell import honeypot
 
+from cowrie.core.config import CONFIG
+
 class CowrieServer(object):
     """
     In traditional Kippo each connection gets its own simulated machine.
@@ -49,9 +51,8 @@ class CowrieServer(object):
     multiple Cowrie connections
     """
     def __init__(self, realm):
-        self.cfg = realm.cfg
         self.avatars = []
-        self.hostname = self.cfg.get('honeypot', 'hostname')
+        self.hostname = CONFIG.get('honeypot', 'hostname')
         self.fs = None
 
 
@@ -59,5 +60,5 @@ class CowrieServer(object):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE),self.cfg)
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE))
 

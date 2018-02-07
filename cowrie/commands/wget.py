@@ -19,6 +19,8 @@ from twisted.python import log, compat
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
 
+from cowrie.core.config import CONFIG
+
 """
 """
 
@@ -121,11 +123,10 @@ class command_wget(HoneyPotCommand):
 
         self.url = url
 
-        cfg = self.protocol.cfg
         self.limit_size = 0
-        if cfg.has_option('honeypot', 'download_limit_size'):
-            self.limit_size = int(cfg.get('honeypot', 'download_limit_size'))
-        self.downloadPath = cfg.get('honeypot', 'download_path')
+        if CONFIG.has_option('honeypot', 'download_limit_size'):
+            self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
+        self.downloadPath = CONFIG.get('honeypot', 'download_path')
 
         self.artifactFile = tempfile.NamedTemporaryFile(dir=self.downloadPath, delete=False)
         # HTTPDownloader will close() the file object so need to preserve the name
@@ -167,8 +168,8 @@ class command_wget(HoneyPotCommand):
         factory = HTTPProgressDownloader(self, fakeoutfile, url, outputfile, *args, **kwargs)
 
         out_addr = None
-        if self.protocol.cfg.has_option('honeypot', 'out_addr'):
-            out_addr = (self.protocol.cfg.get('honeypot', 'out_addr'), 0)
+        if CONFIG.has_option('honeypot', 'out_addr'):
+            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
 
         if scheme == b'https':
             contextFactory = ssl.ClientContextFactory()

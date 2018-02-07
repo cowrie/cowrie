@@ -22,16 +22,14 @@ from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
 
+from cowrie.core.config import CONFIG
+
 class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
     tac = None # gets set later
-
-    def __init__(self, cfg):
-        self.cfg = cfg
-
 
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
@@ -49,7 +47,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         """
         try:
-            honeyfs = self.portal.realm.cfg.get('honeypot', 'contents_path')
+            honeyfs = CONFIG.get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
             self.banner = open(issuefile, 'rb').read()
         except IOError:

@@ -17,21 +17,22 @@ from twisted.python import log
 from twisted.internet import threads, reactor
 
 import cowrie.core.output
+from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
     """
     """
-    def __init__(self, cfg):
-        self.auth_key = cfg.get('output_dshield', 'auth_key')
-        self.userid = cfg.get('output_dshield', 'userid')
-        self.batch_size = int(cfg.get('output_dshield', 'batch_size'))
+    def __init__(self):
+        self.auth_key = CONFIG.get('output_dshield', 'auth_key')
+        self.userid = CONFIG.get('output_dshield', 'userid')
+        self.batch_size = CONFIG.getint('output_dshield', 'batch_size')
         try:
-            self.debug = cfg.getboolean('output_dshield', 'debug')
+            self.debug = CONFIG.getboolean('output_dshield', 'debug')
         except:
             self.debug = False
 
-        cowrie.core.output.Output.__init__(self, cfg)
+        cowrie.core.output.Output.__init__(self)
 
 
     def start(self):

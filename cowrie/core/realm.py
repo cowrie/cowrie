@@ -56,9 +56,9 @@ class HoneyPotRealm(object):
     """
     """
 
-    def __init__(self, cfg):
-        self.cfg = cfg
-	# self.servers = {}
+    def __init__(self):
+        pass
+	    # self.servers = {}
 
 
     def requestAvatar(self, avatarId, mind, *interfaces):

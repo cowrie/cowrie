@@ -17,6 +17,8 @@ from twisted.conch.insults import insults
 from cowrie.core import ttylog
 from cowrie.shell import protocol
 
+from cowrie.core.config import CONFIG
+
 
 class LoggingServerProtocol(insults.ServerProtocol):
     """
@@ -28,22 +30,21 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
-        cfg = a[0].cfg
         self.bytesReceived = 0
 
-        self.ttylogPath = cfg.get('honeypot', 'ttylog_path')
-        self.downloadPath = cfg.get('honeypot', 'download_path')
+        self.ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
+        self.downloadPath = CONFIG.get('honeypot', 'download_path')
 
         try:
-            self.ttylogEnabled = cfg.getboolean('honeypot', 'ttylog')
+            self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
         except:
             self.ttylogEnabled = True
 
         self.redirFiles = set()
 
         try:
-            self.bytesReceivedLimit = int(cfg.get('honeypot',
-                'download_limit_size'))
+            self.bytesReceivedLimit = CONFIG.getint('honeypot',
+                'download_limit_size')
         except:
             self.bytesReceivedLimit = 0
 

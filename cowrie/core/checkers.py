@@ -68,10 +68,6 @@ class HoneypotPasswordChecker(object):
     credentialInterfaces = (credentials.IUsernamePasswordIP,
         credentials.IPluggableAuthenticationModulesIP)
 
-    def __init__(self, cfg):
-        self.cfg = cfg
-
-
     def requestAvatarId(self, credentials):
         """
         """
@@ -121,7 +117,7 @@ class HoneypotPasswordChecker(object):
                 log.msg('auth_class: %s not found in %s' %
                     (authclass, authmodule))
 
-        theauth = authname(self.cfg)
+        theauth = authname()
 
         if theauth.checklogin(theusername, thepassword, ip):
             log.msg(eventid='cowrie.login.success',

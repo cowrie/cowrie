@@ -19,6 +19,8 @@ from twisted.internet import error
 
 from cowrie.shell import fs
 
+from cowrie.core.config import CONFIG
+
 # From Python3.6 we get the new shlex version
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     import shlex
@@ -58,7 +60,7 @@ class HoneyPotCommand(object):
                              self.protocol.getProtoTransport().transportId,
                              self.protocol.terminal.transport.session.id,
                              re.sub('[^A-Za-z0-9]', '_', self.outfile))
-                self.safeoutfile = os.path.join(self.protocol.cfg.get('honeypot', 'download_path'), tmp_fname)
+                self.safeoutfile = os.path.join(CONFIG.get('honeypot', 'download_path'), tmp_fname)
                 perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
                 try:
                     self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)

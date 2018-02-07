@@ -13,25 +13,28 @@ from botocore.exceptions import ClientError
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 
 class Output(cowrie.core.output.Output):
 
-    def __init__(self, cfg):
+    def __init__(self):
         self.seen = set()
 
         self.session = get_session()
         self.session.set_credentials(
-            cfg.get("output_s3", "access_key_id"),
-            cfg.get("output_s3", "secret_access_key"),
+            CONFIG.get("output_s3", "access_key_id"),
+            CONFIG.get("output_s3", "secret_access_key"),
         )
         self.client = self.session.create_client(
             's3',
-            region_name=cfg.get("output_s3", "region"),
-            endpoint_url=cfg.get("output_s3", "endpoint") or None,
-            verify=False if cfg.get("output_s3", "verify") == "no" else True,
+            region_name=CONFIG.get("output_s3", "region"),
+            endpoint_url=CONFIG.get("output_s3", "endpoint") or None,
+            verify=False if CONFIG.get("output_s3", "verify") == "no" else True,
         )
-        self.bucket = cfg.get("output_s3", "bucket")
-        cowrie.core.output.Output.__init__(self, cfg)
+        self.bucket = CONFIG.get("output_s3", "bucket")
+        cowrie.core.output.Output.__init__(self)
 
     def start(self):
         pass

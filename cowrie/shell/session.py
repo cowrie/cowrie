@@ -35,7 +35,6 @@ class SSHSessionForCowrieUser(object):
         self.protocol = None
         self.avatar = avatar
         self.server = avatar.server
-        self.cfg = avatar.cfg
         self.uid = avatar.uid
         self.gid = avatar.gid
         self.username = avatar.username

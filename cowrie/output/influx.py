@@ -8,21 +8,26 @@ from influxdb.exceptions import InfluxDBClientError
 
 import cowrie.core.output
 
+from cowrie.core.config import CONFIG
+
+
 
 class Output(cowrie.core.output.Output):
-    def __init__(self, cfg):
-        self.cfg = cfg
-        cowrie.core.output.Output.__init__(self, cfg)
+
+    def __init__(self):
+        cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        if self.cfg.has_option('output_influx', 'host'):
-            host = self.cfg.get('output_influx', 'host')
-        else:
+        """
+        """
+        try:
+            host = CONFIG.get('output_influx', 'host')
+        except:
             host = ''
 
-        if self.cfg.has_option('output_influx', 'port'):
-            port = int(self.cfg.get('output_influx', 'port'))
-        else:
+        try:
+            port = CONFIG.getint('output_influx', 'port')
+        except:
             port = 8086
 
         self.client = None
@@ -37,22 +42,22 @@ class Output(cowrie.core.output.Output):
             log.err("output_influx: cannot instantiate client!")
             return
 
-        if (self.cfg.has_option('output_influx', 'username') and
-                self.cfg.has_option('output_influx', 'password')):
-            username = self.cfg.get('output_influx', 'username')
-            password = self.cfg.get('output_influx', 'password')
+        if (CONFIG.has_option('output_influx', 'username') and
+                CONFIG.has_option('output_influx', 'password')):
+            username = CONFIG.get('output_influx', 'username')
+            password = CONFIG.get('output_influx', 'password')
             self.client.switch_user(username, password)
 
-        if self.cfg.has_option('output_influx', 'database_name'):
-            dbname = self.cfg.get('output_influx', 'database_name')
+        try:
+            dbname = CONIFG.get('output_influx', 'database_name')
         else:
             dbname = 'cowrie'
 
         retention_policy_duration_default = '12w'
         retention_policy_name = dbname + "_retention_policy"
 
-        if self.cfg.has_option('output_influx', 'retention_policy_duration'):
-            retention_policy_duration = self.cfg.get(
+        if CONFIG.has_option('output_influx', 'retention_policy_duration'):
+            retention_policy_duration = CONFIG.get(
                 'output_influx', 'retention_policy_duration')
 
             match = re.search('^\d+[dhmw]{1}$', retention_policy_duration)

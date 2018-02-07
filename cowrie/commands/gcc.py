@@ -12,6 +12,8 @@ from twisted.internet import reactor
 
 from cowrie.shell.honeypot import HoneyPotCommand
 
+from cowrie.core.config import CONFIG
+
 commands = {}
 
 class command_gcc(HoneyPotCommand):
@@ -172,7 +174,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
                      self.protocol.getProtoTransport().transportId,
                      self.protocol.terminal.transport.session.id,
                      re.sub('[^A-Za-z0-9]', '_', outfile))
-        safeoutfile = os.path.join(self.protocol.cfg.get('honeypot', 'download_path'), tmp_fname)
+        safeoutfile = os.path.join(CONFIG.get('honeypot', 'download_path'), tmp_fname)
 
         # Data contains random garbage from an actual file, so when
         # catting the file, you'll see some 'real' compiled data

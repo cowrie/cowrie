@@ -38,14 +38,16 @@ import os
 import cowrie.core.output
 import cowrie.python.logfile
 
+from cowrie.core.config import CONFIG
+
 class Output(cowrie.core.output.Output):
     """
     Docstring class
     """
 
-    def __init__(self, cfg):
-        cowrie.core.output.Output.__init__(self, cfg)
-        fn = cfg.get('output_jsonlog', 'logfile')
+    def __init__(self):
+        cowrie.core.output.Output.__init__(self)
+        fn = CONFIG.get('output_jsonlog', 'logfile')
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
