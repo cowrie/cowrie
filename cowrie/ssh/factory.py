@@ -17,7 +17,7 @@ from twisted.conch.openssh_compat import primes
 from cowrie.ssh import connection
 from cowrie.ssh import userauth
 from cowrie.ssh import transport
-from cowrie.core import keys as cowriekeys
+from cowrie.ssh import keys as cowriekeys
 
 
 class CowrieSSHFactory(factory.SSHFactory):
@@ -58,8 +58,8 @@ class CowrieSSHFactory(factory.SSHFactory):
         self.starttime = time.time()
 
         # Load/create keys
-        rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys(self.cfg)
-        dsaPubKeyString, dsaPrivKeyString = cowriekeys.getDSAKeys(self.cfg)
+        rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys()
+        dsaPubKeyString, dsaPrivKeyString = cowriekeys.getDSAKeys()
         self.publicKeys = {
           b'ssh-rsa': keys.Key.fromString(data=rsaPubKeyString),
           b'ssh-dss': keys.Key.fromString(data=dsaPubKeyString)}
