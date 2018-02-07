@@ -11,6 +11,8 @@ from __future__ import division, absolute_import
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
 
+from cowrie.core.config import CONFIG
+
 
 class CowrieDailyLogFile(logfile.DailyLogFile):
     """
@@ -30,6 +32,11 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
 def logger():
     """
     """
-    logfile = CowrieDailyLogFile("cowrie.log", "log")
+    try:
+        dir = CONFIG.get("honeypot", "log_path")
+    except:
+        dir = "log"
+
+    logfile = CowrieDailyLogFile("cowrie.log", dir)
     return textFileLogObserver(logfile, timeFormat='%Y-%m-%dT%H:%M:%S.%f%z')
 
