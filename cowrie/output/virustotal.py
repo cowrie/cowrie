@@ -173,8 +173,8 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT: response=1: this has been scanned before")
                 log.msg("VT: {}/{} bad; permalink: {}".format(j["positives"], j["total"], j["permalink"]))
             elif j["response_code"] == -2:
-                log.msg("VT: response=1: this has been queued for analysis already")
-                log.msg("VT: permalink: {}".format(j["permalink"]))
+                log.msg("VT: response=-2: this has been queued for analysis already")
+                #log.msg("VT: permalink: {}".format(j["permalink"]))
             else:
                 log.msg("VT: unexpected response code".format(j["response_code"]))
 
