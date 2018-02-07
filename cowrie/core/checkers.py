@@ -22,6 +22,8 @@ from twisted.conch.ssh import keys
 from cowrie.core import credentials
 from cowrie.core import auth
 
+from cowrie.core.config import CONFIG
+
 @implementer(ICredentialsChecker)
 class HoneypotPublicKeyChecker(object):
     """
@@ -108,8 +110,8 @@ class HoneypotPasswordChecker(object):
         authname = auth.UserDB
 
         # Is the auth_class defined in the config file?
-        if self.cfg.has_option('honeypot', 'auth_class'):
-            authclass = self.cfg.get('honeypot', 'auth_class')
+        if CONFIG.has_option('honeypot', 'auth_class'):
+            authclass = CONFIG.get('honeypot', 'auth_class')
             authmodule = "cowrie.core.auth"
 
             # Check if authclass exists in this module

@@ -13,6 +13,8 @@ from random import randint
 
 from twisted.python import log
 
+from cowrie.core.config import CONFIG
+
 class UserDB(object):
     """
     By Walter de Jong <walter@sara.nl>
@@ -20,7 +22,7 @@ class UserDB(object):
 
     def __init__(self, cfg):
         self.userdb = []
-        self.userdb_file = '%s/userdb.txt' % cfg.get('honeypot', 'data_path')
+        self.userdb_file = '%s/userdb.txt' % CONFIG.get('honeypot', 'data_path')
         self.load()
 
 
@@ -104,8 +106,8 @@ class AuthRandom(object):
         self.mintry, self.maxtry, self.maxcache = 2, 5, 10
 
         # Are there auth_class parameters?
-        if cfg.has_option('honeypot', 'auth_class_parameters'):
-            parameters = cfg.get('honeypot', 'auth_class_parameters')
+        if CONFIG.has_option('honeypot', 'auth_class_parameters'):
+            parameters = CONFIG.get('honeypot', 'auth_class_parameters')
             parlist = parameters.split(',')
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
@@ -116,7 +118,7 @@ class AuthRandom(object):
             self.maxtry = self.mintry + 1
             log.msg('maxtry < mintry, adjusting maxtry to: %d' % (self.maxtry,))
         self.uservar = {}
-        self.uservar_file = '%s/uservar.json' % cfg.get('honeypot', 'data_path')
+        self.uservar_file = '%s/uservar.json' % CONFIG.get('honeypot', 'data_path')
         self.loadvars()
 
 
