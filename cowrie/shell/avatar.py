@@ -35,7 +35,7 @@ class CowrieUser(avatar.ConchUser):
         self.channelLookup[b'session'] = sshsession.HoneyPotSSHSession
 
         try:
-            pwentry = pwd.Passwd(self.cfg).getpwnam(self.username)
+            pwentry = pwd.Passwd().getpwnam(self.username)
             self.uid = pwentry["pw_uid"]
             self.gid = pwentry["pw_gid"]
             self.home = pwentry["pw_dir"]

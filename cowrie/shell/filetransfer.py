@@ -137,24 +137,24 @@ class CowrieSFTPDirectory(object):
             pdir = "/" + "/".join(directory[:-1])
             s1 = self.server.fs.lstat(pdir)
             s = self.server.fs.lstat(pdir)
-            s1.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
-            s1.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+            s1.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
+            s1.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s1)
             attrs = self.server._getAttrs(s)
             return(f, longname, attrs)
         elif f == ".":
             s1 = self.server.fs.lstat(self.dir)
             s = self.server.fs.lstat(self.dir)
-            s1.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
-            s1.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+            s1.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
+            s1.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s1)
             attrs = self.server._getAttrs(s)
             return(f, longname, attrs)
         else:
             s = self.server.fs.lstat(os.path.join(self.dir, f))
             s2 = self.server.fs.lstat(os.path.join(self.dir, f))
-            s2.st_uid = pwd.Passwd(self.server.avatar.cfg).getpwuid(s.st_uid)["pw_name"]
-            s2.st_gid = pwd.Group(self.server.avatar.cfg).getgrgid(s.st_gid)["gr_name"]
+            s2.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
+            s2.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s2)
             attrs = self.server._getAttrs(s)
             return (f, longname, attrs)

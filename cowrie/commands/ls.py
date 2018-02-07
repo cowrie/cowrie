@@ -21,7 +21,7 @@ class command_ls(HoneyPotCommand):
         """
         """
         try:
-            return Passwd(self.protocol.cfg).getpwuid(uid)["pw_name"]
+            return Passwd().getpwuid(uid)["pw_name"]
         except:
             return str(uid)
 
@@ -30,7 +30,7 @@ class command_ls(HoneyPotCommand):
         """
         """
         try:
-            return Group(self.protocol.cfg).getgrgid(gid)["gr_name"]
+            return Group().getgrgid(gid)["gr_name"]
         except:
             return str(gid)
 

@@ -34,6 +34,8 @@ from __future__ import division, absolute_import
 
 from twisted.python import log
 
+from cowrie.core.config import CONFIG
+
 
 class Passwd(object):
     """
@@ -42,8 +44,8 @@ class Passwd(object):
     passwords.
     """
 
-    def __init__(self, cfg):
-        self.passwd_file = '%s/etc/passwd' % (cfg.get('honeypot',
+    def __init__(self):
+        self.passwd_file = '%s/etc/passwd' % (CONFIG.get('honeypot',
             'contents_path'),)
         self.load()
 
@@ -125,8 +127,8 @@ class Group(object):
     /etc/group.
     """
 
-    def __init__(self, cfg):
-        self.group_file = '%s/etc/group' % (cfg.get('honeypot',
+    def __init__(self):
+        self.group_file = '%s/etc/group' % (CONFIG.get('honeypot',
             'contents_path'),)
         self.load()
 
