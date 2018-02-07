@@ -31,5 +31,5 @@ def logger():
     """
     """
     logfile = CowrieDailyLogFile("cowrie.log", "log")
-    return textFileLogObserver(logfile)
+    return textFileLogObserver(logfile, timeFormat='%Y-%m-%dT%H:%M:%S.%f%z')
 
