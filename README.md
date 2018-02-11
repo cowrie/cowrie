@@ -75,15 +75,6 @@ to download images from hub.docker.com
 
 Or look at https://github.com/micheloosterhof/docker-cowrie for the Dockerfile
 
-## Contributing
-
-Cowrie welcomes any kind of contribution, please follow the next steps:
-
-* Fork the project on github.com.
-* Create a new branch.
-* Commit changes to the new branch.
-* Send a pull request.
-
 ## Contributors
 
 Many people have contributed to Cowrie over the years. Special thanks to:
