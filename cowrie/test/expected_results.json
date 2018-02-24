@@ -7,7 +7,6 @@
     "chattr":  [ "root@unitTest:~# " ],
     "chgrp":  [ "root@unitTest:~# " ],
     "chown":  [ "root@unitTest:~# " ],
-    "jobs":  [ "root@unitTest:~# " ],
     "kill":  [ "root@unitTest:~# " ],
     "su":  [ "root@unitTest:~# " ],
     "jobs":  [ "root@unitTest:~# " ],
