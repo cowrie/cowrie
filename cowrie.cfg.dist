@@ -501,6 +501,10 @@ logfile = log/cowrie.json
 # force will upload duplicated files to cuckoo
 #force = 0
 
+# upload to MalShare
+#[output_malshare]
+#apikey =
+
 #[output_slack]
 # This will produce a _lot_ of messages - you have been warned....
 #channel = channel_that_events_should_be_posted_in
