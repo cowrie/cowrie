@@ -49,7 +49,7 @@ class Output(cowrie.core.output.Output):
             self.client.switch_user(username, password)
 
         try:
-            dbname = CONIFG.get('output_influx', 'database_name')
+            dbname = CONFIG.get('output_influx', 'database_name')
         except:
             dbname = 'cowrie'
 
