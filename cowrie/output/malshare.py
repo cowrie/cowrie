@@ -48,7 +48,7 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self):
-        self.apikey = CONFIG.get("output_malshare", "apikey")
+        self.enabled = CONFIG.getboolean("output_malshare", "enabled")
         cowrie.core.output.Output.__init__(self)
 
 
@@ -91,16 +91,16 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to MalShare
         """
-        try:
-            res = requests.post("https://malshare.com/api.php",
-                files={"upload": open(artifact, "rb")},
-                data = {"api_key": self.apikey, "action": "upload"},
-                verify=False
-            )
-            if res and res.ok:
-                print("MalShare: {}".format(res.text))
-            else:
-                print("MalShare Request failed: {}".format(res.status_code))
-        except Exception as e:
-            print("MalShare Request failed: {}".format(e))
+        if self.enabled:
+            try:
+                res = requests.post("https://malshare.com/api.php?mode=cli",
+                    files={fileName: open(artifact, "rb")},
+                    verify=False
+                )
+                if res and res.ok:
+                    print("Submited to MalShare")
+                else:
+                    print("MalShare Request failed: {}".format(res.status_code))
+            except Exception as e:
+                print("MalShare Request failed: {}".format(e))
         return
