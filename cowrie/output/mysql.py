@@ -53,7 +53,7 @@ class Output(cowrie.core.output.Output):
         try:
             self.debug = CONFIG.getboolean('output_mysql', 'debug')
         except:
-            debug = False
+            self.debug = False
 
         cowrie.core.output.Output.__init__(self)
 
