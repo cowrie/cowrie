@@ -50,10 +50,10 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self):
-        self.url_base = CONFIG.get("output_cuckoo", "url_base").encode("utf-8")
-        self.api_user = CONFIG.get("output_cuckoo", "user")
-        self.api_passwd = CONFIG.get("output_cuckoo", "passwd")
-        self.cuckoo_force = int(CONFIG.get("output_cuckoo", "force"))
+        self.url_base = CONFIG.get('output_cuckoo', 'url_base').encode('utf-8')
+        self.api_user = CONFIG.get('output_cuckoo', 'user')
+        self.api_passwd = CONFIG.get('output_cuckoo', 'passwd')
+        self.cuckoo_force = int(CONFIG.getboolean('output_cuckoo', 'force'))
         cowrie.core.output.Output.__init__(self)
 
 
@@ -99,7 +99,7 @@ class Output(cowrie.core.output.Output):
         """
         Check if file already was analyzed by cuckoo
         """
-        res = ""
+        res = None
         try:
             print("Looking for tasks for: {}".format(sha256))
             res = requests.get(urljoin(self.url_base, "/files/view/sha256/{}".format(sha256)),
@@ -108,6 +108,7 @@ class Output(cowrie.core.output.Output):
                 timeout=60)
             if res and res.ok:
                 print("Sample found in Sandbox, with ID: {}".format(res.json().get("sample", {}).get("id", 0)))
+                res = True
         except Exception as e:
             print(e)
 
