@@ -503,7 +503,7 @@ logfile = log/cowrie.json
 
 # upload to MalShare
 #[output_malshare]
-#enabled = true
+#enabled = false
 
 #[output_slack]
 # This will produce a _lot_ of messages - you have been warned....
