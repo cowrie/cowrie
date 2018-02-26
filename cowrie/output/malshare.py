@@ -48,7 +48,7 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self):
-        self.enabled = CONFIG.getboolean("output_malshare", "enabled")
+        self.enabled = CONFIG.getboolean('output_malshare', 'enabled')
         cowrie.core.output.Output.__init__(self)
 
 
