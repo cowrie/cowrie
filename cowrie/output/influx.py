@@ -50,7 +50,7 @@ class Output(cowrie.core.output.Output):
 
         try:
             dbname = CONIFG.get('output_influx', 'database_name')
-        else:
+        except:
             dbname = 'cowrie'
 
         retention_policy_duration_default = '12w'
