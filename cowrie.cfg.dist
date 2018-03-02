@@ -551,3 +551,10 @@ logfile = log/cowrie.json
 #port = 8086
 #database_name = cowrie
 #retention_policy_duration = 12w
+
+
+#[output_redis]
+#host = 127.0.0.1
+#port = 6379
+#db = 0
+#keyname = cowrie
