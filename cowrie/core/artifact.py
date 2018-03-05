@@ -87,7 +87,7 @@ class Artifact:
             os.rename(self.fp.name, shasumFilename)
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(self.fp.name, 0o666 & ~umask)
+            os.chmod(shasumFilename, 0o666 & ~umask)
 
         # if size>0:
         #    linkName = self.artifactDir + "/" \
