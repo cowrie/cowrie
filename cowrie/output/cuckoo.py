@@ -43,7 +43,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 import cowrie.core.output
-
+from cowrie.core.config import CONFIG
 
 class Output(cowrie.core.output.Output):
     """
@@ -53,7 +53,7 @@ class Output(cowrie.core.output.Output):
         self.url_base = CONFIG.get('output_cuckoo', 'url_base').encode('utf-8')
         self.api_user = CONFIG.get('output_cuckoo', 'user')
         self.api_passwd = CONFIG.get('output_cuckoo', 'passwd')
-        self.cuckoo_force = CONFIG.getboolean('output_cuckoo', 'force')
+        self.cuckoo_force = int(CONFIG.getboolean('output_cuckoo', 'force'))
         cowrie.core.output.Output.__init__(self)
 
 
@@ -99,6 +99,7 @@ class Output(cowrie.core.output.Output):
         """
         Check if file already was analyzed by cuckoo
         """
+        res = None
         try:
             print("Looking for tasks for: {}".format(sha256))
             res = requests.get(urljoin(self.url_base, "/files/view/sha256/{}".format(sha256)),
@@ -106,17 +107,12 @@ class Output(cowrie.core.output.Output):
                 auth=HTTPBasicAuth(self.api_user,self.api_passwd),
                 timeout=60)
             if res and res.ok:
-                if res.statuc_code == 200:
-                    print("Sample found in Sandbox, with ID: {}".format(res.json().get("sample", {}).get("id", 0)))
-                    return True
-                else:
-                    return False
-
-
+                print("Sample found in Sandbox, with ID: {}".format(res.json().get("sample", {}).get("id", 0)))
+                res = True
         except Exception as e:
             print(e)
 
-        return False
+        return res
 
     def postfile(self, artifact, fileName):
         """
