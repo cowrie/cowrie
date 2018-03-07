@@ -73,7 +73,7 @@ class Output(cowrie.core.output.Output):
                 host = CONFIG.get('output_mysql', 'host'),
                 db = CONFIG.get('output_mysql', 'database'),
                 user = CONFIG.get('output_mysql', 'username'),
-                passwd = CONFIG.get('output_mysql', 'password'),
+                passwd = CONFIG.get('output_mysql', 'password', raw=True),
                 port = port,
                 cp_min = 1,
                 cp_max = 1)
