@@ -52,7 +52,7 @@ class Output(cowrie.core.output.Output):
     def __init__(self):
         self.url_base = CONFIG.get('output_cuckoo', 'url_base').encode('utf-8')
         self.api_user = CONFIG.get('output_cuckoo', 'user')
-        self.api_passwd = CONFIG.get('output_cuckoo', 'passwd')
+        self.api_passwd = CONFIG.get('output_cuckoo', 'passwd', raw=True)
         self.cuckoo_force = int(CONFIG.getboolean('output_cuckoo', 'force'))
         cowrie.core.output.Output.__init__(self)
 

@@ -27,7 +27,7 @@ class Output(cowrie.core.output.Output):
         self.port = CONFIG.getint(self.RETHINK_DB_SEGMENT, 'port')
         self.db = CONFIG.get(self.RETHINK_DB_SEGMENT, 'db')
         self.table = CONFIG.get(self.RETHINK_DB_SEGMENT, 'table')
-        self.password = CONFIG.get(self.RETHINK_DB_SEGMENT, 'password')
+        self.password = CONFIG.get(self.RETHINK_DB_SEGMENT, 'password', raw=True)
         cowrie.core.output.Output.__init__(self)
 
     # noinspection PyAttributeOutsideInit

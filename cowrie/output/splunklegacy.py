@@ -31,7 +31,7 @@ class Output(cowrie.core.output.Output):
         """
         self.index = CONFIG.get('output_splunklegacy', 'index')
         self.username = CONFIG.get('output_splunklegacy', 'username')
-        self.password = CONFIG.get('output_splunklegacy', 'password')
+        self.password = CONFIG.get('output_splunklegacy', 'password', raw=True)
         self.host = CONFIG.get('output_splunklegacy', 'host')
         self.port = CONFIG.getint('output_splunklegacy', 'port')
         cowrie.core.output.Output.__init__(self)

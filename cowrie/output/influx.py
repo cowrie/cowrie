@@ -45,7 +45,7 @@ class Output(cowrie.core.output.Output):
         if (CONFIG.has_option('output_influx', 'username') and
                 CONFIG.has_option('output_influx', 'password')):
             username = CONFIG.get('output_influx', 'username')
-            password = CONFIG.get('output_influx', 'password')
+            password = CONFIG.get('output_influx', 'password', raw=True)
             self.client.switch_user(username, password)
 
         try:
