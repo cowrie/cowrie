@@ -140,7 +140,6 @@ class command_echo(HoneyPotCommand):
         except:
             args = self.args
 
-        # FIXME: Wrap in exception, Python escape cannot handle single digit \x codes (e.g. \x1)
         try:
             # replace r'\\x' with r'\x'
             s = ' '.join(args).replace('\\\\x', '\\x')
@@ -156,13 +155,14 @@ class command_echo(HoneyPotCommand):
                 s = s[:-2]
                 newline = False
 
+            if newline is True:
+                s += '\n'
+
             self.write(escape_fn(s))
 
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
 
-        if newline is True:
-            self.write('\n')
 
 commands['/bin/echo'] = command_echo
 
