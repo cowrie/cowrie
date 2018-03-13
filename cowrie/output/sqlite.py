@@ -119,6 +119,13 @@ class Output(cowrie.core.output.Output):
                 (entry["session"], entry["timestamp"],
                 entry['url'], entry['outfile'], entry['shasum']))
 
+        elif entry["eventid"] == 'cowrie.session.file_download.failed':
+            self.simpleQuery('INSERT INTO `downloads`' + \
+                ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \
+                ' VALUES (?, ?, ?, ?, ?)',
+                (entry["session"], entry["timestamp"],
+                entry['url'], 'NULL', 'NULL'))
+
         elif entry["eventid"] == 'cowrie.session.file_download':
             self.simpleQuery('INSERT INTO `input`' + \
                 ' (`session`, `timestamp`, `realm`, `input`)' + \
