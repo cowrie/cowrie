@@ -150,7 +150,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 with open(txt, 'r') as f:
                     self.write(f.read())
         return command_txtcmd
-
+    
+    def isCommand(self, cmd):
+        """
+        Check if cmd (the argument of a command) is a command, too.
+        """
+        return True if cmd in self.commands else False
 
     def getCommand(self, cmd, paths):
         """
