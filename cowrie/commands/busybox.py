@@ -92,6 +92,14 @@ class command_busybox(HoneyPotCommand):
         else:
             self.write('{}: applet not found\n'.format(cmd))
 
+    def lineReceived(self, line):
+        log.msg(eventid='cowrie.session.input',
+                realm='busybox',
+                input=line,
+                format='INPUT (%(realm)s): %(input)s')
+
+        self.write(line)
+
 
 commands['busybox'] = command_busybox
 commands['/bin/busybox'] = command_busybox
