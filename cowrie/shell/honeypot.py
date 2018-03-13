@@ -356,7 +356,7 @@ class HoneyPotShell(object):
         lastpp = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
 
-            cmdclass = self.protocol.getCommand(cmd['command'], environ['PATH'] .split(':'))
+            cmdclass = self.protocol.getCommand(cmd['command'], environ['PATH'].split(':'))
             if cmdclass:
                 log.msg(input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
                 if index == len(cmd_array)-1:
@@ -518,6 +518,7 @@ class HoneyPotShell(object):
 class StdOutStdErrEmulationProtocol(object):
     """
     Pipe support written by Dave Germiquet
+    Support for commands chaining added by Ivan Korolev (@fe7ch)
     """
     __author__ = 'davegermiquet'
 
@@ -539,6 +540,9 @@ class StdOutStdErrEmulationProtocol(object):
 
     def outReceived(self, data):
         """
+        Invoked when a command in the chain called 'write' method
+        If we have a next command, pass the data via input_data field
+        Else print data to the terminal
         """
         self.data = data
 
@@ -577,7 +581,9 @@ class StdOutStdErrEmulationProtocol(object):
 
     def outConnectionLost(self):
         """
+        Called from HoneyPotBaseProtocol.call_command() to run a next command in the chain
         """
+
         if self.next_command:
             self.next_command.input_data = self.data
             npcmd = self.next_command.cmd
