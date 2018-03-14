@@ -64,11 +64,29 @@ class command_dd(HoneyPotCommand):
 
                 if bSuccess:
                     try:
+                        try:
+                            fake_arch = CONFIG.getboolean('honeypot', 'fake_arch')
+                        except:
+                            fake_arch = False
+                            
+                        if self.protocol.isCommand(pname) and fake_arch:
+                            dummy_path = \
+                                CONFIG.get('honeypot', 'data_path') + \
+                                '/arch/' + self.protocol.arch
+                            dummy_fd = None
+                            try:
+                                dummy_fd = open(dummy_path, 'r')
+                                contents = dummy_fd.read()
+                            finally:
+                                if dummy_fd is not None:
+                                    dummy_fd.close()
+                        else:
+                            contents = self.fs.file_contents(pname)
                         if c == -1:
-                            self.write(self.fs.file_contents(pname))
+                            self.write(contents)
                         else:
                             tsize = block * c
-                            data = self.fs.file_contents(pname)
+                            data = contents
                             if len(data) > tsize:
                                 self.write(data[:tsize])
                             else:
