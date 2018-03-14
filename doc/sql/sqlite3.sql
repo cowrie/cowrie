@@ -61,3 +61,10 @@ CREATE TABLE IF NOT EXISTS `keyfingerprints` (
   `username` varchar(100) NOT NULL,
   `fingerprint` varchar(100) NOT NULL
 ) ;
+
+CREATE TABLE IF NOT EXISTS `params` (
+  `id` INTEGER PRIMARY KEY,
+  `session` CHAR( 32 ) NOT NULL,
+  `arch` varchar(32) NOT NULL,
+) ;
+CREATE INDEX arch_index ON params(arch);
