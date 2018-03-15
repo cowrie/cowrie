@@ -5,6 +5,13 @@ from cowrie.core.config import CONFIG
 
 import redis
 import json
+from ConfigParser import NoOptionError
+
+SEND_METHODS = {
+    'lpush': lambda redis, key, message: redis.lpush(key, message),
+    'rpush': lambda redis, key, message: redis.rpush(key, message),
+    'publish': lambda redis, key, message: redis.publish(key, message),
+}
 
 class Output(cowrie.core.output.Output):
 
@@ -15,11 +22,29 @@ class Output(cowrie.core.output.Output):
         """
         Initialize pymisp module and ObjectWrapper (Abstract event and object creation)
         """
-        self.host = CONFIG.get('output_redis', 'host')
-        self.port = CONFIG.get('output_redis', 'port')
-        self.db = CONFIG.get('output_redis', 'db')
+        host = CONFIG.get('output_redis', 'host')
+        port = CONFIG.get('output_redis', 'port')
+        
+        try:
+            db = CONFIG.get('output_redis', 'db')
+        except NoOptionError:
+            db = 0
+
+        try:
+            password = CONFIG.get('output_redis', 'password')
+        except NoOptionError:
+            password = None
+
+        self.redis = redis.StrictRedis(host=host, port=port, db=db,
+                                       password=password)
+
         self.keyname = CONFIG.get('output_redis', 'keyname')
-        self.redis = redis.StrictRedis(self.host, self.port, self.db)
+        
+        try:
+            self.send_method = SEND_METHODS[CONFIG.get('output_redis', 'send_method')]
+        except (NoOptionError, KeyError):
+            self.send_method = SEND_METHODS['lpush']
+
 
     def stop(self):
         pass
@@ -33,4 +58,4 @@ class Output(cowrie.core.output.Output):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
-        self.redis.lpush(self.keyname, json.dumps(logentry))
+        self._send_method(self.redis, self.keyname, json.dumps(logentry))
