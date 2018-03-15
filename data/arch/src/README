@@ -1,0 +1,7 @@
+In order to extend the supported arch/os/mode compile src/nop.asm (or a modified version of it if it is necessary).
+nop.asm is a dummy asm file which contain only a NOP instruction (No Operation).
+
+In target arch/mode compile directory:
+1) as src/nop.asm -o obj.o
+2) ld obj.o -o OS-ARCH-MODE
+3) strip -s OS-ARCH-MODE

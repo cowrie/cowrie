@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `downloads` (
   `session` CHAR( 32 ) NOT NULL,
   `timestamp` datetime NOT NULL,
   `url` text NOT NULL,
-  `outfile` text NOT NULL,
+  `outfile` text default NULL,
   `shasum` varchar(64) default NULL
 ) ;
 CREATE INDEX downloads_index ON downloads(session, timestamp);
@@ -61,3 +61,10 @@ CREATE TABLE IF NOT EXISTS `keyfingerprints` (
   `username` varchar(100) NOT NULL,
   `fingerprint` varchar(100) NOT NULL
 ) ;
+
+CREATE TABLE IF NOT EXISTS `params` (
+  `id` INTEGER PRIMARY KEY,
+  `session` CHAR( 32 ) NOT NULL,
+  `arch` varchar(32) NOT NULL,
+) ;
+CREATE INDEX arch_index ON params(arch);
