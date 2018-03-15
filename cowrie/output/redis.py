@@ -8,9 +8,9 @@ import json
 from ConfigParser import NoOptionError
 
 SEND_METHODS = {
-    'lpush': lambda redis, key, message: redis.lpush(key, message),
-    'rpush': lambda redis, key, message: redis.rpush(key, message),
-    'publish': lambda redis, key, message: redis.publish(key, message),
+    'lpush': lambda redis_client, key, message: redis_client.lpush(key, message),
+    'rpush': lambda redis_client, key, message: redis_client.rpush(key, message),
+    'publish': lambda redis_client, key, message: redis_client.publish(key, message),
 }
 
 class Output(cowrie.core.output.Output):
