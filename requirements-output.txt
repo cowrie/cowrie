@@ -5,7 +5,7 @@ csirtgsdk>=0.0.0a17 # Specify version because pip won't install pre-release vers
 requests
 
 # elasticsearch
-pyes
+elasticsearch
 
 # mysql
 # If this fails, see documentation /home/cowrie/cowrie/doc/sql/README.md
