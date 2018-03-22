@@ -13,6 +13,7 @@ import sys
 import time
 import socket
 import traceback
+import random
 
 from twisted.python import failure, log
 from twisted.internet import error
@@ -42,6 +43,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.clientVersion = None
         self.kippoIP = None
         self.clientIP = None
+        self.arch = 'linux-x64-lsb'
 
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
@@ -61,6 +63,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type,exc_value,exc_traceback))))
         self.password_input = False
         self.cmdstack = []
+        
+        try:
+            fake_arch = CONFIG.getboolean('honeypot', 'fake_arch')
+        except:
+            fake_arch = False
+        if fake_arch: 
+            try:
+                archs_emulated = CONFIG.get('honeypot', 'archs_emulated').split(',')
+                self.arch = random.choice(archs_emulated)
+            except:
+                pass
+
 
     def getProtoTransport(self):
         """
@@ -89,6 +103,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = pt.transport.getPeer().port
         self.clientVersion = self.getClientVersion()
         self.logintime = time.time()
+        
+        log.msg(eventid='cowrie.session.params',
+           arch=self.arch)
 
         try:
             timeout = CONFIG.getint('honeypot', 'interactive_timeout')
@@ -150,6 +167,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 with open(txt, 'r') as f:
                     self.write(f.read())
         return command_txtcmd
+
+
+    def isCommand(self, cmd):
+        """
+        Check if cmd (the argument of a command) is a command, too.
+        """
+        return True if cmd in self.commands else False
 
 
     def getCommand(self, cmd, paths):
