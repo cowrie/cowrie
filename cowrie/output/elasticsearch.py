@@ -2,7 +2,7 @@
 
 from __future__ import division, absolute_import
 
-import pyes
+from elasticsearch import Elasticsearch
 
 import cowrie.core.output
 
@@ -19,7 +19,7 @@ class Output(cowrie.core.output.Output):
         """
         self.host = CONFIG.get('output_elasticsearch', 'host')
         self.port = CONFIG.get('output_elasticsearch', 'port')
-        self.index =CONFIGg.get('output_elasticsearch', 'index')
+        self.index =CONFIG.get('output_elasticsearch', 'index')
         self.type = CONFIG.get('output_elasticsearch', 'type')
         cowrie.core.output.Output.__init__(self)
 
@@ -27,7 +27,7 @@ class Output(cowrie.core.output.Output):
     def start(self):
         """
         """
-        self.es = pyes.ES('{0}:{1}'.format(self.host, self.port))
+        self.es = Elasticsearch('{0}:{1}'.format(self.host, self.port))
 
 
     def stop(self):
@@ -44,5 +44,4 @@ class Output(cowrie.core.output.Output):
             if i.startswith('log_'):
                 del logentry[i]
 
-        self.es.index(logentry, self.index, self.type)
-
+        self.es.index(index=self.index, doc_type=self.type, body=logentry)
