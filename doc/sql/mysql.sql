@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `downloads` (
   `session` CHAR( 32 ) NOT NULL,
   `timestamp` datetime NOT NULL,
   `url` text NOT NULL,
-  `outfile` text NOT NULL,
+  `outfile` text default NULL,
   `shasum` varchar(64) default NULL,
   PRIMARY KEY  (`id`),
   KEY `session` (`session`,`timestamp`)
@@ -69,3 +69,11 @@ CREATE TABLE IF NOT EXISTS `keyfingerprints` (
   `fingerprint` varchar(100) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ;
+
+CREATE TABLE IF NOT EXISTS `params` (
+  `id` int(11) NOT NULL auto_increment,
+  `session` CHAR( 32 ) NOT NULL,
+  `arch` varchar(32) NOT NULL,
+  PRIMARY KEY  (`id`)
+) ;
+CREATE INDEX arch_index ON params (arch);
