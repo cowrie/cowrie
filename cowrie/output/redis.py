@@ -58,4 +58,4 @@ class Output(cowrie.core.output.Output):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):
                 del logentry[i]
-        self._send_method(self.redis, self.keyname, json.dumps(logentry))
+        self.send_method(self.redis, self.keyname, json.dumps(logentry))
