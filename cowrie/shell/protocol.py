@@ -314,24 +314,9 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.timeoutConnection(self)
 
 
-    def lastlogExit(self):
-        """
-        """
-        starttime = time.strftime('%a %b %d %H:%M',
-            time.localtime(self.logintime))
-        endtime = time.strftime('%H:%M',
-            time.localtime(time.time()))
-        duration = utils.durationHuman(time.time() - self.logintime)
-        with open( '%s/lastlog.txt' % (CONFIG.get('honeypot',
-            'log_path'),), 'a') as f:
-            f.write('root\tpts/0\t%s\t%s - %s (%s)\n' % \
-                (self.clientIP, starttime, endtime, duration))
-
-
     def connectionLost(self, reason):
         """
         """
-        self.lastlogExit()
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
         self.keyHandlers = None
