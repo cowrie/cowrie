@@ -558,7 +558,21 @@ logfile = log/cowrie.json
 
 
 #[output_redis]
+# Host of the redis server. Required
 #host = 127.0.0.1
+
+# Port of the redis server. Required
 #port = 6379
+
+# DB of the redis server. Defaults to 0
 #db = 0
+
+# Password of the redis server. Defaults to None
+#password = secret
+
+# Name of the list to push to or the channel to publish to. Required
 #keyname = cowrie
+
+# Method to use when sending data to redis.
+# Can be one of [lpush, rpush, publish]. Defaults to lpush
+#send_method = lpush
