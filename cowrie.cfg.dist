@@ -531,7 +531,9 @@ logfile = log/cowrie.json
 #
 #[output_s3]
 #
-# The AWS credentials to use
+# The AWS credentials to use.
+# Leave these blank to use botocore's credential discovery e.g .aws/config or ENV variables.
+# As per https://github.com/boto/botocore/blob/develop/botocore/credentials.py#L50-L65
 #access_key_id = AKIDEXAMPLE
 #secret_access_key = wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 #

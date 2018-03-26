@@ -7,6 +7,8 @@ from __future__ import division, absolute_import
 import os
 
 from twisted.internet import defer, threads
+from twisted.python import log
+
 
 from botocore.session import get_session
 from botocore.exceptions import ClientError
@@ -14,6 +16,7 @@ from botocore.exceptions import ClientError
 import cowrie.core.output
 
 from cowrie.core.config import CONFIG
+from configparser import NoOptionError
 
 
 
@@ -23,10 +26,16 @@ class Output(cowrie.core.output.Output):
         self.seen = set()
 
         self.session = get_session()
-        self.session.set_credentials(
-            CONFIG.get("output_s3", "access_key_id"),
-            CONFIG.get("output_s3", "secret_access_key"),
-        )
+        
+        try:
+          if CONFIG.get("output_s3", "access_key_id") and CONFIG.get("output_s3", "secret_access_key"):
+            self.session.set_credentials(
+                CONFIG.get("output_s3", "access_key_id"),
+                CONFIG.get("output_s3", "secret_access_key"),
+            )
+        except NoOptionError:
+            log.msg("No AWS credentials found in config - using botocore global settings.")
+
         self.client = self.session.create_client(
             's3',
             region_name=CONFIG.get("output_s3", "region"),
