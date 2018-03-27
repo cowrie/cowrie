@@ -64,7 +64,7 @@ class UserDB(object):
         """
         check entered username/password against database
         note that it allows multiple passwords for a single username
-        it also knows wildcard '*' for any username or password 
+        it also knows wildcard '*' for any username or password
         prepend password with ! to explicitly deny it. Denials must come before wildcards
         """
         for (login, passwd) in self.userdb:

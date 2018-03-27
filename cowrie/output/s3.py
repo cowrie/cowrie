@@ -26,7 +26,7 @@ class Output(cowrie.core.output.Output):
         self.seen = set()
 
         self.session = get_session()
-        
+
         try:
           if CONFIG.get("output_s3", "access_key_id") and CONFIG.get("output_s3", "secret_access_key"):
             self.session.set_credentials(

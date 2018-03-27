@@ -24,7 +24,7 @@ class Output(cowrie.core.output.Output):
         """
         host = CONFIG.get('output_redis', 'host')
         port = CONFIG.get('output_redis', 'port')
-        
+
         try:
             db = CONFIG.get('output_redis', 'db')
         except NoOptionError:
@@ -39,7 +39,7 @@ class Output(cowrie.core.output.Output):
                                        password=password)
 
         self.keyname = CONFIG.get('output_redis', 'keyname')
-        
+
         try:
             self.send_method = SEND_METHODS[CONFIG.get('output_redis', 'send_method')]
         except (NoOptionError, KeyError):

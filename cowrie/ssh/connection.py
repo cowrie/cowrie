@@ -27,7 +27,7 @@
 # SUCH DAMAGE.
 
 """
-This module contains connection code to work around issues with the 
+This module contains connection code to work around issues with the
 Granados SSH client library.
 """
 from __future__ import division, absolute_import

@@ -103,7 +103,7 @@ class command_service(HoneyPotCommand):
             self.help()
             return
 
-        if not opts and not args: 
+        if not opts and not args:
             self.help()
             return
 

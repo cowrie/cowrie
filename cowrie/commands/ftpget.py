@@ -91,7 +91,7 @@ Download a file via FTP
 
         url = 'ftp://%s/%s' % (self.host, self.remote_path)
         self.download_path = CONFIG.get('honeypot', 'download_path')
-        
+
         self.url_log = 'ftp://'
         if self.username:
             self.url_log = '{}{}'.format(self.url_log, self.username)
@@ -219,7 +219,7 @@ Download a file via FTP
             ftp.quit()
         except socket.timeout:
             pass
-        
+
         return True
 
 

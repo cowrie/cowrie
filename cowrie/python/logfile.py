@@ -3,7 +3,7 @@
 # See the COPYRIGHT file for more information
 
 """
-This module contains 
+This module contains
 """
 
 from __future__ import division, absolute_import
@@ -18,7 +18,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
     """
     Overload original Twisted with improved date formatting
     """
-    
+
     def suffix(self, tupledate):
         """
         Return the suffix given a (year, month, day) tuple or unixtime
