@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `downloads` (
   `session` CHAR( 32 ) NOT NULL,
   `timestamp` datetime NOT NULL,
   `url` text NOT NULL,
-  `outfile` text NOT NULL,
+  `outfile` text default NULL,
   `shasum` varchar(64) default NULL
 ) ;
 CREATE INDEX downloads_index ON downloads(session, timestamp);

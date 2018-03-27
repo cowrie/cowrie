@@ -286,6 +286,19 @@ forward_redirect = false
 # forward_redirect_587 = 127.0.0.1:12525
 
 
+# This enables tunneling forwarding requests to another address
+# Useful for forwarding protocols to a proxy like Squid
+# (default: false)
+forward_tunnel = false
+
+
+# Configure where to tunnel the data to.
+# forward_tunnel_<portnumber> = <tunnel ip>:<tunnel port>
+
+# Tunnel http/https
+# forward_tunnel_80 = 127.0.0.1:3128
+# forward_tunnel_443 = 127.0.0.1:3128
+
 
 # ============================================================================
 # Telnet Specific Options
@@ -531,7 +544,9 @@ logfile = log/cowrie.json
 #
 #[output_s3]
 #
-# The AWS credentials to use
+# The AWS credentials to use.
+# Leave these blank to use botocore's credential discovery e.g .aws/config or ENV variables.
+# As per https://github.com/boto/botocore/blob/develop/botocore/credentials.py#L50-L65
 #access_key_id = AKIDEXAMPLE
 #secret_access_key = wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 #
@@ -558,7 +573,21 @@ logfile = log/cowrie.json
 
 
 #[output_redis]
+# Host of the redis server. Required
 #host = 127.0.0.1
+
+# Port of the redis server. Required
 #port = 6379
+
+# DB of the redis server. Defaults to 0
 #db = 0
+
+# Password of the redis server. Defaults to None
+#password = secret
+
+# Name of the list to push to or the channel to publish to. Required
 #keyname = cowrie
+
+# Method to use when sending data to redis.
+# Can be one of [lpush, rpush, publish]. Defaults to lpush
+#send_method = lpush

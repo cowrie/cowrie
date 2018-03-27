@@ -24,13 +24,12 @@ from __future__ import division, absolute_import
 
 import hashlib
 import os
-import re
-import time
 import tempfile
 
 from twisted.python import log
 
 from cowrie.core.config import CONFIG
+
 
 class Artifact:
     """
@@ -45,6 +44,8 @@ class Artifact:
         self.fp = tempfile.NamedTemporaryFile(dir=self.artifactDir, delete=False)
         self.tempFilename = self.fp.name
 
+        self.shasum = ''
+        self.shasumFilename = ''
 
     def __enter__(self):
         """
@@ -75,26 +76,23 @@ class Artifact:
         """
         size = self.fp.tell()
         self.fp.seek(0)
-        shasum = hashlib.sha256(self.fp.read()).hexdigest()
+        data = self.fp.read()
         self.fp.close()
-        shasumFilename = self.artifactDir + "/" + shasum
+        self.shasum = hashlib.sha256(data).hexdigest()
+        self.shasumFilename = os.path.join(self.artifactDir, self.shasum)
 
-        if size == 0 and keepEmpty == False:
+        if size == 0 and not keepEmpty:
+            log.msg("Not storing empty file")
             os.remove(self.fp.name)
-        elif os.path.exists(shasumFilename):
+        elif os.path.exists(self.shasumFilename):
+            log.msg("Not storing duplicate content " + self.shasum)
             os.remove(self.fp.name)
         else:
-            os.rename(self.fp.name, shasumFilename)
+            os.rename(self.fp.name, self.shasumFilename)
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(shasumFilename, 0o666 & ~umask)
+            os.chmod(self.shasumFilename, 0o666 & ~umask)
 
-        # if size>0:
-        #    linkName = self.artifactDir + "/" \
-        #        + time.strftime('%Y%m%dT%H%M%S') \
-        #        + "_" + re.sub('[^-A-Za-z0-9]', '_', self.label)
-        #    os.symlink(shasum, linkName)
-
-        return shasum, shasumFilename
+        return self.shasum, self.shasumFilename
 
 
