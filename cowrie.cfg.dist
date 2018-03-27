@@ -286,6 +286,19 @@ forward_redirect = false
 # forward_redirect_587 = 127.0.0.1:12525
 
 
+# This enables tunneling forwarding requests to another address
+# Useful for forwarding protocols to a proxy like Squid
+# (default: false)
+forward_tunnel = false
+
+
+# Configure where to tunnel the data to.
+# forward_tunnel_<portnumber> = <tunnel ip>:<tunnel port>
+
+# Tunnel http/https
+# forward_tunnel_80 = 127.0.0.1:3128
+# forward_tunnel_443 = 127.0.0.1:3128
+
 
 # ============================================================================
 # Telnet Specific Options
