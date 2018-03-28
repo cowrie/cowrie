@@ -104,6 +104,7 @@ interactive_timeout = 180
 # (default: shell)
 backend = shell
 
+[shell]
 # Fake architectures/OS
 # If fake_arch is set true, when Cowrie receive a command like /bin/cat XXXX
 # (where XXXX is a command) in order to print the content of an executable 
