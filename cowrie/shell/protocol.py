@@ -43,7 +43,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.clientVersion = None
         self.kippoIP = None
         self.clientIP = None
-        self.arch = 'linux-x64-lsb'
+        self.server.arch = 'linux-x64-lsb'
 
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
@@ -65,13 +65,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cmdstack = []
         
         try:
-            fake_arch = CONFIG.getboolean('shell', 'fake_arch')
+            fake_arch = CONFIG.getboolean('shell', 'arch')
         except:
             fake_arch = False
         if fake_arch: 
             try:
                 archs_emulated = CONFIG.get('shell', 'archs_emulated').split(',')
-                self.arch = random.choice(archs_emulated)
+                self.server.arch = random.choice(archs_emulated)
             except:
                 pass
 
