@@ -29,7 +29,7 @@ class command_cat(HoneyPotCommand):
             self.write(self.input_data)
         else:
             try:
-                fake_arch = CONFIG.getboolean('shell', 'fake_arch')
+                fake_arch = CONFIG.getboolean('shell', 'arch')
             except:
                 fake_arch = False
             for arg in self.args:
@@ -165,7 +165,7 @@ class command_tail(HoneyPotCommand):
     def tail_get_contents(self, filename):
         
         try:
-            fake_arch = CONFIG.getboolean('shell', 'fake_arch')
+            fake_arch = CONFIG.getboolean('shell', 'arch')
         except:
             fake_arch = False
         
@@ -264,7 +264,7 @@ class command_head(HoneyPotCommand):
     def head_get_file_contents(self, filename):
         
         try:
-            fake_arch = CONFIG.getboolean('shell', 'fake_arch')
+            fake_arch = CONFIG.getboolean('shell', 'arch')
         except:
             fake_arch = False
         
