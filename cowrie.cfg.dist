@@ -111,7 +111,7 @@ backend = shell
 # it replies with the content of a dummy executable (located in data_path/arch) 
 # compiled for an architecture/OS/endian_mode randomly chosen from archs_emulated list.
 # (default: false)
-fake_arch = false
+arch = false
 
 # Here the list of supported OS-ARCH-ENDIANESS executables
 # bsd-aarch64-lsb:	    64-bit	LSB	ARM aarch64 version 1 (SYSV)			
