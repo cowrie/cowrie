@@ -13,6 +13,7 @@ import copy
 from os import path
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
+from cowrie.core.config import CONFIG
 
 commands = {}
 
@@ -27,13 +28,37 @@ class command_cat(HoneyPotCommand):
         if self.input_data:
             self.write(self.input_data)
         else:
+            try:
+                fake_arch = CONFIG.getboolean('shell', 'arch')
+            except:
+                fake_arch = False
             for arg in self.args:
                 pname = self.fs.resolve_path(arg, self.protocol.cwd)
+                
+                if self.protocol.isCommand(pname) and fake_arch:
+                    dummy_path = \
+                        CONFIG.get('honeypot', 'data_path') + \
+                        '/arch/' + self.protocol.arch
+                    dummy_fd = None
+                    try:
+                        dummy_fd = open(dummy_path, 'rb')
+                        self.write(dummy_fd.read())
+                    except:
+                        self.errorWrite('cat: {}: Permission denied\n'.format(arg))
+                    finally:
+                        if dummy_fd is not None:
+                            dummy_fd.close()
+                    continue
+                
                 if self.fs.isdir(pname):
                     self.errorWrite('cat: {}: Is a directory\n'.format(arg))
                     continue
                 try:
-                    self.write(self.fs.file_contents(pname))
+                    contents = self.fs.file_contents(pname)
+                    if contents:
+                        self.write(contents)
+                    else:
+                        raise FileNotFound
                 except:
                     self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
         self.exit()
@@ -138,11 +163,32 @@ class command_tail(HoneyPotCommand):
     """
 
     def tail_get_contents(self, filename):
+        
         try:
-            contents = self.fs.file_contents(filename)
-            self.tail_application(contents)
+            fake_arch = CONFIG.getboolean('shell', 'arch')
         except:
-            self.errorWrite("tail: cannot open `{}' for reading: No such file or directory\n".format(filename))
+            fake_arch = False
+        
+        if self.protocol.isCommand(filename) and fake_arch:
+            dummy_path = \
+                CONFIG.get('honeypot', 'data_path') + \
+                '/arch/' + self.protocol.arch
+            dummy_fd = None
+            try:
+                dummy_fd = open(dummy_path, 'rb')
+                contents = dummy_fd.read()
+                self.tail_application(contents)
+            except:
+                self.errorWrite("tail: cannot open `{}' for reading: No such file or directory\n".format(filename))
+            finally:
+                if dummy_fd is not None:
+                    dummy_fd.close()
+        else:
+            try:
+                contents = self.fs.file_contents(filename)
+                self.tail_application(contents)
+            except:
+                self.errorWrite("tail: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
 
     def tail_application(self, contents):
@@ -152,8 +198,9 @@ class command_tail(HoneyPotCommand):
             self.n = lines - 1
         i = 0
         for j in range((lines - self.n - 1), lines):
+            self.write(contentsplit[j])
             if i < self.n:
-                self.write(contentsplit[j] + '\n')
+                self.write('\n')
             i += 1
 
 
@@ -207,7 +254,7 @@ class command_head(HoneyPotCommand):
 
     def head_application(self, contents):
         i = 0
-        contentsplit = str(contents).split("\n")
+        contentsplit = contents.split("\n")
         for line in contentsplit:
             if i < self.n:
                 self.write(line + '\n')
@@ -215,17 +262,38 @@ class command_head(HoneyPotCommand):
 
 
     def head_get_file_contents(self, filename):
+        
         try:
-            contents = self.fs.file_contents(filename)
-            self.head_application(contents)
+            fake_arch = CONFIG.getboolean('shell', 'arch')
         except:
-            self.errorWrite("head: cannot open `{}' for reading: No such file or directory\n".format(filename))
+            fake_arch = False
+        
+        if self.protocol.isCommand(filename) and fake_arch:
+            dummy_path = \
+                CONFIG.get('honeypot', 'data_path') + \
+                '/arch/' + self.protocol.arch
+            dummy_fd = None
+            try:
+                dummy_fd = open(dummy_path, 'r')
+                contents = dummy_fd.read()
+                self.head_application(contents)
+            except:
+                self.errorWrite("head: cannot open `{}' for reading: No such file or directory\n".format(filename))
+            finally:
+                if dummy_fd is not None:
+                    dummy_fd.close()
+        else:
+            try:
+                contents = self.fs.file_contents(filename)
+                self.head_application(contents)
+            except:
+                self.errorWrite("head: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
 
     def start(self):
         self.n = 10
         if not self.args or self.args[0] == '>':
-            pass
+            return
         else:
             try:
                 optlist, args = getopt.getopt(self.args, 'n:')

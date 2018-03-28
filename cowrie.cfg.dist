@@ -104,6 +104,83 @@ interactive_timeout = 180
 # (default: shell)
 backend = shell
 
+[shell]
+# Fake architectures/OS
+# If fake_arch is set true, when Cowrie receive a command like /bin/cat XXXX
+# (where XXXX is a command) in order to print the content of an executable 
+# it replies with the content of a dummy executable (located in data_path/arch) 
+# compiled for an architecture/OS/endian_mode randomly chosen from archs_emulated list.
+# (default: false)
+arch = false
+
+# Here the list of supported OS-ARCH-ENDIANESS executables
+# bsd-aarch64-lsb:	    64-bit	LSB	ARM aarch64 version 1 (SYSV)			
+# bsd-aarch64-msb:	    64-bit	MSB	ARM aarch64 version 1 (SYSV)			
+# bsd-bfin-msb:		    32-bit	MSB	Analog Devices Blackfin	version	1 (SYSV)		
+# bsd-mips64-lsb:		64-bit	LSB	MIPS MIPS-III version 1	(SYSV)			
+# bsd-mips64-msb:		64-bit	MSB	MIPS MIPS-III version 1	(SYSV)			
+# bsd-mips-lsb:		    32-bit	LSB	MIPS MIPS-I version 1 (FreeBSD)			
+# bsd-mips-msb:		    32-bit	MSB	MIPS MIPS-I version 1 (FreeBSD)			
+# bsd-powepc64-lsb:	    64-bit	MSB	64-bit PowerPC or cisco	7500 version 1 (FreeBSD)
+# bsd-powepc-msb:		32-bit	MSB	PowerPC	or cisco 4500 version 1	(FreeBSD)	
+# bsd-riscv64-lsb:	    64-bit	LSB	UCB RISC-V version 1 (SYSV)			
+# bsd-sparc64-msb:	    64-bit	MSB	SPARC V9 relaxed memory	ordering version 1 (FreeBSD)
+# bsd-sparc-msb:		32-bit	MSB	SPARC version 1	(SYSV) statically			
+# bsd-x32-lsb:		    32-bit	LSB	Intel 80386 version 1 (FreeBSD)			
+# bsd-x64-lsb:		    64-bit	LSB	x86-64 version 1 (FreeBSD)		
+# linux-aarch64-lsb:	64-bit	LSB	ARM aarch64 version 1 (SYSV)			
+# linux-aarch64-msb:	64-bit	MSB	ARM aarch64 version 1 (SYSV)			
+# linux-alpha-lsb:	    64-bit	LSB	Alpha (unofficial) version 1 (SYSV)			
+# linux-am33-lsb:		32-bit	LSB	Matsushita MN10300 version 1 (SYSV)			
+# linux-arc-lsb:		32-bit	LSB	ARC Cores Tangent-A5 version 1 (SYSV)		
+# linux-arc-msb:		32-bit	MSB	ARC Cores Tangent-A5 version 1 (SYSV)		
+# linux-arm-lsb:		32-bit	LSB	ARM EABI5 version 1 (SYSV)			
+# linux-arm-msb:		32-bit	MSB	ARM EABI5 version 1 (SYSV)			
+# linux-avr32-lsb:	    32-bit	LSB	Atmel AVR 8-bit	version 1 (SYSV)		
+# linux-bfin-lsb:		32-bit	LSB	Analog Devices Blackfin version	1 (SYSV)		
+# linux-c6x-lsb:		32-bit	LSB	TI TMS320C6000 DSP family version 1		
+# linux-c6x-msb:		32-bit	MSB	TI TMS320C6000 DSP family version 1		
+# linux-cris-lsb:		32-bit	LSB	Axis cris version 1 (SYSV)
+# linux-frv-msb:		32-bit	MSB	Cygnus FRV (unofficial) version	1 (SYSV)		
+# linux-h8300-msb:	    32-bit	MSB	Renesas	H8/300 version 1 (SYSV)			
+# linux-hppa64-msb:	    64-bit	MSB	PA-RISC	02.00.00 (LP64) version	1			
+# linux-hppa-msb:		32-bit	MSB	PA-RISC	*unknown arch 0xf* version 1 (GNU/Linux)	
+# linux-ia64-lsb:		64-bit	LSB	IA-64 version 1	(SYSV)		
+# linux-m32r-msb:		32-bit	MSB	Renesas	M32R version 1 (SYSV)			
+# linux-m68k-msb:		32-bit	MSB	Motorola m68k 68020 version 1 (SYSV)		
+# linux-microblaze-msb:	32-bit	MSB	Xilinx MicroBlaze 32-bit RISC version 1	(SYSV)	
+# linux-mips64-lsb:	    64-bit	LSB	MIPS MIPS-III version 1	(SYSV)	
+# linux-mips64-msb:	    64-bit	MSB	MIPS MIPS-III version 1	(SYSV)
+# linux-mips-lsb:		32-bit	LSB	MIPS MIPS-I version 1 (SYSV)
+# linux-mips-msb:		32-bit	MSB	MIPS MIPS-I version 1 (SYSV)			
+# linux-mn10300-lsb:	32-bit	LSB	Matsushita MN10300 version 1 (SYSV)			
+# linux-nios-lsb:		32-bit	LSB	Altera Nios II version 1 (SYSV)		
+# linux-nios-msb:		32-bit	MSB	Altera Nios II version 1 (SYSV)		
+# linux-powerpc64-lsb:	64-bit	LSB	64-bit PowerPC or cisco	7500 version 1 (SYSV)
+# linux-powerpc64-msb:	64-bit	MSB	64-bit PowerPC or cisco	7500 version 1 (SYSV)
+# linux-powerpc-lsb:	32-bit	LSB	PowerPC	or cisco 4500 version 1 (SYSV)	
+# linux-powerpc-msb:	32-bit	MSB	PowerPC	or cisco 4500 version 1 (SYSV)	
+# linux-riscv64-lsb:  	64-bit	LSB	UCB RISC-V version 1 (SYSV)			
+# linux-s390x-msb:    	64-bit	MSB	IBM S/390 version 1 (SYSV)			
+# linux-sh-lsb:	    	32-bit	LSB	Renesas	SH version 1 (SYSV)			
+# linux-sh-msb:	    	32-bit	MSB	Renesas	SH version 1 (SYSV)			
+# linux-sparc64-msb:  	64-bit	MSB	SPARC V9 relaxed memory	ordering version 1 (SYSV)
+# linux-sparc-msb:    	32-bit	MSB	SPARC version 1	(SYSV)
+# linux-tilegx64-lsb:	64-bit	LSB	Tilera TILE-Gx version 1 (SYSV)			
+# linux-tilegx64-msb: 	64-bit	MSB	Tilera TILE-Gx version 1 (SYSV)			
+# linux-tilegx-lsb:   	32-bit	LSB	Tilera TILE-Gx version 1 (SYSV)			
+# linux-tilegx-msb:   	32-bit	MSB	Tilera TILE-Gx version 1 (SYSV)			
+# linux-x64-lsb:	    64-bit	LSB	x86-64 version 1 (SYSV)			
+# linux-x86-lsb:	    32-bit	LSB	Intel 80386 version 1 (SYSV)			
+# linux-xtensa-msb:   	32-bit	MSB	Tensilica Xtensa version 1 (SYSV)			
+# osx-x32-lsb:	    	32-bit	LSB Intel 80386
+# osx-x64-lsb:	    	64-bit	LSB	x86-64
+
+# NO SPACE BETWEEN ELEMENTS!
+#archs_emulated = bsd-aarch64-lsb,bsd-aarch64-msb,bsd-bfin-msb,bsd-mips-lsb,bsd-mips-msb,bsd-mips64-lsb,bsd-mips64-msb,bsd-powepc-msb,bsd-powepc64-lsb,bsd-riscv64-lsb,bsd-sparc-msb,bsd-sparc64-msb,bsd-x32-lsb,bsd-x64-lsb,linux-aarch64-lsb,linux-aarch64-msb,linux-alpha-lsb,linux-am33-lsb,linux-arc-lsb,linux-arc-msb,linux-arm-lsb,linux-arm-msb,linux-avr32-lsb,linux-bfin-lsb,linux-c6x-lsb,linux-c6x-msb,linux-cris-lsb,linux-frv-msb,linux-h8300-msb,linux-hppa-msb,linux-hppa64-msb,linux-ia64-lsb,linux-m32r-msb,linux-m68k-msb,linux-microblaze-msb,linux-mips-lsb,linux-mips-msb,linux-mips64-lsb,linux-mips64-msb,linux-mn10300-lsb,linux-nios-lsb,linux-nios-msb,linux-powerpc-lsb,linux-powerpc-msb,linux-powerpc64-lsb,linux-powerpc64-msb,linux-riscv64-lsb,linux-s390x-msb,linux-sh-lsb,linux-sh-msb,linux-sparc-msb,linux-sparc64-msb,linux-tilegx-lsb,linux-tilegx-msb,linux-tilegx64-lsb,linux-tilegx64-msb,linux-x64-lsb,linux-x86-lsb,linux-xtensa-msb,osx-x32-lsb,osx-x64-lsb
+
+archs_emulated = linux-x64-lsb
+
 
 # ============================================================================
 # Network Specific Options
