@@ -54,6 +54,7 @@ class CowrieServer(object):
         self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')
         self.fs = None
+        self.arch = 'linux-x64-lsb'
 
 
     def initFileSystem(self):
