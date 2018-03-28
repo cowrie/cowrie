@@ -43,7 +43,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.clientVersion = None
         self.kippoIP = None
         self.clientIP = None
-        self.server.arch = 'linux-x64-lsb'
 
         if self.fs.exists(avatar.avatar.home):
             self.cwd = avatar.avatar.home
