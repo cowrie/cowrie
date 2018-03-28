@@ -65,12 +65,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cmdstack = []
         
         try:
-            fake_arch = CONFIG.getboolean('honeypot', 'fake_arch')
+            fake_arch = CONFIG.getboolean('shell', 'fake_arch')
         except:
             fake_arch = False
         if fake_arch: 
             try:
-                archs_emulated = CONFIG.get('honeypot', 'archs_emulated').split(',')
+                archs_emulated = CONFIG.get('shell', 'archs_emulated').split(',')
                 self.arch = random.choice(archs_emulated)
             except:
                 pass
