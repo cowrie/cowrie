@@ -64,11 +64,12 @@ class command_dd(HoneyPotCommand):
 
                 if bSuccess:
                     try:
+                        contents = self.fs.file_contents(pname)
                         if c == -1:
-                            self.write(self.fs.file_contents(pname))
+                            self.write(contents)
                         else:
                             tsize = block * c
-                            data = self.fs.file_contents(pname)
+                            data = contents
                             if len(data) > tsize:
                                 self.write(data[:tsize])
                             else:

@@ -13,6 +13,7 @@ import sys
 import time
 import socket
 import traceback
+import random
 
 from twisted.python import failure, log
 from twisted.internet import error
@@ -61,6 +62,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type,exc_value,exc_traceback))))
         self.password_input = False
         self.cmdstack = []
+        
 
     def getProtoTransport(self):
         """
@@ -89,7 +91,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = pt.transport.getPeer().port
         self.clientVersion = self.getClientVersion()
         self.logintime = time.time()
-
+        
         try:
             timeout = CONFIG.getint('honeypot', 'interactive_timeout')
         except:
@@ -150,6 +152,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 with open(txt, 'r') as f:
                     self.write(f.read())
         return command_txtcmd
+
+
+    def isCommand(self, cmd):
+        """
+        Check if cmd (the argument of a command) is a command, too.
+        """
+        return True if cmd in self.commands else False
 
 
     def getCommand(self, cmd, paths):

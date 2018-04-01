@@ -33,6 +33,7 @@ This module contains ...
 from __future__ import division, absolute_import
 
 import copy
+import random
 
 import twisted.python.log as log
 
@@ -55,10 +56,17 @@ class CowrieServer(object):
         self.hostname = CONFIG.get('honeypot', 'hostname')
         self.fs = None
 
+        try:
+            self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
+            # TODO trim whitespace
+        except:
+            self.arch = 'linux-x64-lsb'
+
+        log.msg("Initialized emulated server as architecture: {}".format(self.arch))
 
     def initFileSystem(self):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE))
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
 

@@ -65,8 +65,11 @@ class HoneyPotFilesystem(object):
     """
     """
 
-    def __init__(self, fs):
+    def __init__(self, fs, arch):
         self.fs = fs
+
+        # Keep track of arch so we can return appropriate binary
+        self.arch = arch
 
         # Keep track of open file descriptors
         self.tempfiles = {}
@@ -238,6 +241,7 @@ class HoneyPotFilesystem(object):
         Retrieve the content of a file in the honeyfs
         It follows links.
         It tries A_REALFILE first and then tries honeyfs directory
+        Then return the executable header for executables
         """
         path = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
@@ -252,6 +256,9 @@ class HoneyPotFilesystem(object):
             # (The exceptions to this are some system files in /proc and /sys,
             # but it's likely better to return nothing than suspiciously fail.)
             return ''
+        elif f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
+            return open(CONFIG.get('honeypot', 'data_path') + '/arch/' + self.arch, 'rb').read()
+
 
 
     def mkfile(self, path, uid, gid, size, mode, ctime=None):

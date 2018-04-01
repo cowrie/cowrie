@@ -1,0 +1,10 @@
+nop.asm is the file to be compiled in order to obtain dummy executable for a selected arch.
+nop-XXX.asm are modified version of nop.asm in order to respond to the requests of the as compiler of the architecture XXXX.
+
+If you want to generate a new executable for the OS XXXX, on CPU arch YYY with endianess ZZZ you can use a cross compiler as shown:
+
+cd cowrie/data/arch/src
+cross-as nop.asm
+cross-ld a.out -o XXXX-YYYY-ZZZ
+cross-strip -s XXXX-YYYY-ZZZ
+mv XXXX-YYYY-ZZZ ../XXXX-YYYY-ZZZ

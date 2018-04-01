@@ -139,6 +139,11 @@ class Output(cowrie.core.output.Output):
                 ' VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
                 (entry["session"], 0, entry['username'], entry['password'],
                 entry["time"]))
+                
+        elif entry["eventid"] == 'cowrie.session.params':
+            self.simpleQuery('INSERT INTO `params` (`session`, `arch`)' + \
+                ' VALUES (%s, %s)',
+                (entry["session"], entry["arch"]))
 
         elif entry["eventid"] == 'cowrie.command.input':
             self.simpleQuery('INSERT INTO `input`' + \

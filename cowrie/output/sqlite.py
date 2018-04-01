@@ -111,6 +111,11 @@ class Output(cowrie.core.output.Output):
                 ' VALUES (?, ?, ?, ?)',
                 (entry["session"], entry["timestamp"],
                 0, entry["input"]))
+        
+        elif entry["eventid"] == 'cowrie.session.params':
+            self.simpleQuery('INSERT INTO `params` (`session`, `arch`)' + \
+                ' VALUES (?, ?)',
+                (entry["session"], entry["arch"]))
 
         elif entry["eventid"] == 'cowrie.session.file_download':
             self.simpleQuery('INSERT INTO `downloads`' + \
