@@ -29,7 +29,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
-    tac = None # gets set later
+    tac = None
 
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
@@ -70,6 +70,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.stopFactory(self)
 
 
+
 class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     """
     TelnetAuthProtocol that takes care of Authentication. Once authenticated this
@@ -106,7 +107,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         Overridden to conditionally kill 'WILL ECHO' which confuses clients
         that don't implement a proper Telnet protocol (most malware)
         """
-        self.username = line#.decode()
+        self.username = line  # .decode()
         # only send ECHO option if we are chatting with a real Telnet client
         #if self.transport.options: <-- doesn't work
         self.transport.willChain(ECHO)
@@ -116,7 +117,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
 
     def telnet_Password(self, line):
-        username, password = self.username, line#.decode()
+        """
+        """
+        username, password = self.username, line  # .decode()
         del self.username
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
@@ -168,21 +171,29 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
 
     def _ebLogin(self, failure):
+        """
+        """
     # TODO: provide a way to have user configurable strings for wrong password
         self.transport.wontChain(ECHO)
         self.transport.write(b"\nLogin incorrect\n")
         self.transport.write(self.loginPrompt)
         self.state = "User"
 
-    # From TelnetBootstrapProtocol in twisted/conch/telnet.py
+
     def telnet_NAWS(self, data):
+        """
+        From TelnetBootstrapProtocol in twisted/conch/telnet.py
+        """
         if len(data) == 4:
             width, height = struct.unpack('!HH', b''.join(data))
             self.windowSize = [height, width]
         else:
             log.msg("Wrong number of NAWS bytes")
 
+
     def enableLocal(self, opt):
+        """
+        """
         if opt == ECHO:
             return True
         elif opt == SGA:
@@ -193,6 +204,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
 
     def enableRemote(self, opt):
+        """
+        """
         if opt == LINEMODE:
             return False
             #self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
@@ -210,6 +223,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
     """
     def connectionMade(self):
+        """
+        """
         self.transportId = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
         self.startTime = time.time()
@@ -248,18 +263,32 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
 
 
     def willChain(self, option):
+        """
+        """
         return self._chainNegotiation(None, self.will, option)
 
+
     def wontChain(self, option):
+        """
+        """
         return self._chainNegotiation(None, self.wont, option)
 
+
     def doChain(self, option):
+        """
+        """
         return self._chainNegotiation(None, self.do, option)
 
+
     def dontChain(self, option):
+        """
+        """
         return self._chainNegotiation(None, self.dont, option)
 
+
     def _handleNegotiationError(self, f, func, option):
+        """
+        """
         if f.type is AlreadyNegotiating:
             s = self.getOptionState(option)
             if func in (self.do, self.dont):
@@ -277,6 +306,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             # The telnetd package on Ubuntu (netkit-telnet) does all negotiation before sending the login prompt,
             # but does handle client-initiated negotiation at any time.
         return None  # This Failure has been handled, no need to continue processing errbacks
+
 
     def _chainNegotiation(self, res, func, option):
         return func(option).addErrback(self._handleNegotiationError, func, option)
