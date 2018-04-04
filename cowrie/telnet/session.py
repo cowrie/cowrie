@@ -51,10 +51,10 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
             'HOME': self.home,
             'TMOUT': '1800'}
 
-        if self.uid==0:
-            self.environ['PATH']='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+        if self.uid == 0:
+            self.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
         else:
-            self.environ['PATH']='/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
+            self.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
 
         # required because HoneyPotBaseProtocol relies on avatar.avatar.home
         self.avatar = self
@@ -75,7 +75,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
             self.transport.willChain(ECHO)
 
         self.protocol = insults.LoggingTelnetServerProtocol(
-                cproto.HoneyPotInteractiveTelnetProtocol, self)
+            cproto.HoneyPotInteractiveTelnetProtocol, self)
 
         # somewhere in Twisted this exception gets lost. Log explicitly here
         try:
@@ -146,7 +146,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         self.outConnectionLost()
 
 
-    def connectionLost(self, reason = None):
+    def connectionLost(self, reason=None):
         self.session.loseConnection()
         self.session = None
 
