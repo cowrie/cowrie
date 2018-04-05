@@ -43,7 +43,7 @@ download_path = dl
 
 # Directory for miscellaneous data files, such as the password database.
 #
-# (default: data_path)
+# (default: data)
 data_path = data
 
 
