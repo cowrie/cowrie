@@ -92,6 +92,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.clientVersion = self.getClientVersion()
         self.logintime = time.time()
         
+        log.msg(eventid='cowrie.session.params', arch=self.user.server.arch)
+
         try:
             timeout = CONFIG.getint('honeypot', 'interactive_timeout')
         except:
