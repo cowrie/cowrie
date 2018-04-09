@@ -17,3 +17,4 @@ twisted/plugins/dropin.cache
 _trial_temp
 .project
 .pydevproject
+.idea/
