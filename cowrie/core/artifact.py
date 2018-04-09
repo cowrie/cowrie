@@ -71,7 +71,7 @@ class Artifact:
         return self.fp.fileno()
 
 
-    def close(self, keepEmpty=True):
+    def close(self, keepEmpty=False):
         """
         """
         size = self.fp.tell()
