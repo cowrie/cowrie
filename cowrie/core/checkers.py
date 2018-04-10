@@ -37,9 +37,12 @@ class HoneypotPublicKeyChecker(object):
         """
         _pubKey = keys.Key.fromString(credentials.blob)
         log.msg(eventid='cowrie.client.fingerprint',
-                format='public key attempt for user %(username)s with fingerprint %(fingerprint)s',
+                format='public key attempt for user %(username)s of type %(type)s with fingerprint %(fingerprint)s',
                 username=credentials.username,
-                fingerprint=_pubKey.fingerprint())
+                fingerprint=_pubKey.fingerprint(),
+                key=_pubKey.toString('OPENSSH'),
+                type=_pubKey.sshType())
+
         return failure.Failure(error.ConchError('Incorrect signature'))
 
 
