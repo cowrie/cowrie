@@ -136,7 +136,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.setTimeout(None)
         insults.TerminalProtocol.connectionLost(self, reason)
         self.terminal = None # (this should be done by super above)
-        del self.cmdstack
+        self.cmdstack = []
         del self.commands
         self.fs = None
         self.pp = None

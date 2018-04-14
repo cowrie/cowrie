@@ -135,7 +135,7 @@ class HoneyPotCommand(object):
             else:
                 self.protocol.terminal.redirFiles.add((self.safeoutfile, ''))
 
-        if self.protocol.cmdstack:
+        if len(self.protocol.cmdstack):
             self.protocol.cmdstack.pop()
             if len(self.protocol.cmdstack):
                 self.protocol.cmdstack[-1].resume()
