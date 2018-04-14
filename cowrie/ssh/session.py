@@ -7,8 +7,6 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-import os
-
 from zope.interface import implementer
 
 from twisted.python import log
@@ -34,7 +32,7 @@ class HoneyPotSSHSession(session.SSHSession):
         if rest:
             raise ValueError("Bad data given in env request")
         log.msg(eventid='cowrie.client.var', format='request_env: %(name)s=%(value)s',
-            name=name, value=value)
+                name=name, value=value)
         # FIXME: This only works for shell, not for exec command
         if self.session:
             self.session.environ[name] = value
