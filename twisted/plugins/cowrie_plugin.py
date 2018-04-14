@@ -36,15 +36,16 @@ from zope.interface import implementer, provider
 
 import os
 import sys
+import configparser
 
 from twisted._version import __version__
 if __version__.major < 17:
-    raise ImportError( "Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
+    raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
 
 from twisted.python import log, usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
-from twisted.application import internet, service
+from twisted.application import service
 from twisted.cred import portal
 from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
@@ -75,6 +76,8 @@ class Options(usage.Options):
 
 @provider(ILogObserver)
 def importFailureObserver(event):
+    """
+    """
     if 'failure' in event and event['failure'].type is ImportError:
         log.err("ERROR: %s. Please run `pip install -U -r requirements.txt` "
                 "from Cowrie's install directory and virtualenv to install "
@@ -95,51 +98,40 @@ class CowrieServiceMaker(object):
     dbloggers = None
     output_plugins = None
 
-    def printHelp(self):
-        """
-        Print cowrie help
-        """
-
-        print( """Usage: twistd [options] cowrie [-h]
-Options:
-  -h, --help             print this help message.
-
-Makes a Cowrie SSH/Telnet honeypot.
-""")
-
-
     def makeService(self, options):
         """
         Construct a TCPServer from a factory defined in Cowrie.
         """
 
-        if options["help"] == True:
-            self.printHelp()
+        if options["help"] is True:
+            print("""Usage: twistd [options] cowrie [-h]
+Options:
+  -h, --help             print this help message.
+
+Makes a Cowrie SSH/Telnet honeypot.
+""")
             sys.exit(1)
 
         if os.name == 'posix' and os.getuid() == 0:
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
-        log.msg("Python Version {}".format(str(sys.version).replace('\n','')))
+        log.msg("Python Version {}".format(str(sys.version).replace('\n', '')))
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
         # ssh is enabled by default
-        if CONFIG.has_option('ssh', 'enabled') == False or \
-           (CONFIG.has_option('ssh', 'enabled') and \
-               CONFIG.getboolean('ssh', 'enabled') == True):
+        try:
+            enableSSH = CONFIG.getboolean('ssh', 'enabled')
+        except (configparser.NoSectionError, configparser.NoOptionError):
             enableSSH = True
-        else:
-            enableSSH = False
 
         # telnet is disabled by default
-        if CONFIG.has_option('telnet', 'enabled') and \
-                 CONFIG.getboolean('telnet', 'enabled') == True:
-            enableTelnet = True
-        else:
+        try:
+            enableTelnet = CONFIG.getboolean('telnet', 'enabled')
+        except (configparser.NoSectionError, configparser.NoOptionError):
             enableTelnet = False
 
-        if enableTelnet == False and enableSSH == False:
+        if enableTelnet is False and enableSSH is False:
             print('ERROR: You must at least enable SSH or Telnet')
             sys.exit(1)
 
@@ -150,8 +142,8 @@ Makes a Cowrie SSH/Telnet honeypot.
                 continue
             engine = x.split('_')[1]
             try:
-                dblogger = __import__( 'cowrie.dblog.{}'.format(engine),
-                    globals(), locals(), ['dblog']).DBLogger()
+                dblogger = __import__('cowrie.dblog.{}'.format(engine),
+                                      globals(), locals(), ['dblog']).DBLogger()
                 log.addObserver(dblogger.emit)
                 self.dbloggers.append(dblogger)
                 log.msg("Loaded dblog engine: {}".format(engine))
@@ -166,8 +158,8 @@ Makes a Cowrie SSH/Telnet honeypot.
                 continue
             engine = x.split('_')[1]
             try:
-                output = __import__( 'cowrie.output.{}'.format(engine),
-                    globals(), locals(), ['output']).Output()
+                output = __import__('cowrie.output.{}'.format(engine),
+                                    globals(), locals(), ['output']).Output()
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg("Loaded output engine: {}".format(engine))
@@ -192,7 +184,7 @@ Makes a Cowrie SSH/Telnet honeypot.
                 core.checkers.HoneypotPasswordChecker())
 
             if CONFIG.has_option('honeypot', 'auth_none_enabled') and \
-                     CONFIG.getboolean('honeypot', 'auth_none_enabled') == True:
+                     CONFIG.getboolean('honeypot', 'auth_none_enabled') is True:
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 
