@@ -4,7 +4,7 @@ cpu family	: 6
 model		: 23
 model name	: Intel(R) Core(TM)2 Duo CPU     E8200  @ 2.66GHz
 stepping	: 6
-cpu MHz		: 2133.305
+cpu MHz		: 2133.304
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 2
