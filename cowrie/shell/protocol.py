@@ -289,21 +289,21 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.cmdstack = [honeypot.HoneyPotShell(self)]
 
         self.keyHandlers.update({
-            '\x01':     self.handle_HOME,	# CTRL-A
-            '\x02':     self.handle_LEFT,	# CTRL-B
-            '\x03':     self.handle_CTRL_C,	# CTRL-C
-            '\x04':     self.handle_CTRL_D,	# CTRL-D
-            '\x05':     self.handle_END,	# CTRL-E
-            '\x06':     self.handle_RIGHT,	# CTRL-F
-            '\x08':     self.handle_BACKSPACE,	# CTRL-H
-            '\x09':     self.handle_TAB,
-            '\x0b':     self.handle_CTRL_K,	# CTRL-K
-            '\x0c':     self.handle_CTRL_L,	# CTRL-L
-            '\x0e':     self.handle_DOWN,	# CTRL-N
-            '\x10':     self.handle_UP,		# CTRL-P
-            '\x15':     self.handle_CTRL_U,	# CTRL-U
-            '\x16':     self.handle_CTRL_V,	# CTRL-V
-            '\x1b':     self.handle_ESC,	# ESC
+            b'\x01':     self.handle_HOME,	# CTRL-A
+            b'\x02':     self.handle_LEFT,	# CTRL-B
+            b'\x03':     self.handle_CTRL_C,	# CTRL-C
+            b'\x04':     self.handle_CTRL_D,	# CTRL-D
+            b'\x05':     self.handle_END,	# CTRL-E
+            b'\x06':     self.handle_RIGHT,	# CTRL-F
+            b'\x08':     self.handle_BACKSPACE,	# CTRL-H
+            b'\x09':     self.handle_TAB,
+            b'\x0b':     self.handle_CTRL_K,	# CTRL-K
+            b'\x0c':     self.handle_CTRL_L,	# CTRL-L
+            b'\x0e':     self.handle_DOWN,	# CTRL-N
+            b'\x10':     self.handle_UP,	# CTRL-P
+            b'\x15':     self.handle_CTRL_U,	# CTRL-U
+            b'\x16':     self.handle_CTRL_V,	# CTRL-V
+            b'\x1b':     self.handle_ESC,	# ESC
             })
 
 
