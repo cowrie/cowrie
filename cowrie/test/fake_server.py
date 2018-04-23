@@ -19,7 +19,7 @@ class FakeServer:
     """
     def __init__(self, cfg):
         self.cfg = cfg
-
+        self.arch = 'linux-x64-lsb'
         self.hostname = "unitTest"
 
         self.pckl = pickle.load(
