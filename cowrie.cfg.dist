@@ -462,12 +462,12 @@ logfile = log/cowrie.json
 # Supports logging to Elasticsearch
 # This is a simple early release
 #
-[output_elasticsearch]
-enabled = false
-host = localhost
-port = 9200
-index = cowrie
-type = cowrie
+#[output_elasticsearch]
+#enabled = false
+#host = localhost
+#port = 9200
+#index = cowrie
+#type = cowrie
 
 
 # Send login attemp information to SANS DShield
@@ -475,11 +475,11 @@ type = cowrie
 # You must signup for an api key.
 # Once registered, find your details at: https://isc.sans.edu/myaccount.html
 #
-[output_dshield]
-userid = userid_here
-auth_key = auth_key_here
-batch_size = 100
-enabled = false
+#[output_dshield]
+#userid = userid_here
+#auth_key = auth_key_here
+#batch_size = 100
+#enabled = false
 
 
 # Local Syslog output module
@@ -491,10 +491,10 @@ enabled = false
 # Format can be:
 # text, cef
 #
-[output_localsyslog]
-enabled = false
-facility = USER
-format = text
+#[output_localsyslog]
+#enabled = false
+#facility = USER
+#format = text
 
 
 # Text output
@@ -503,10 +503,10 @@ format = text
 # Format can be:
 # text, cef
 #
-[output_textlog]
-enabled = false
-logfile = log/audit.log
-format = text
+#[output_textlog]
+#enabled = false
+#logfile = log/audit.log
+#format = text
 
 
 # MySQL logging module
@@ -515,25 +515,25 @@ format = text
 # MySQL logging requires extra software: sudo apt-get install libmysqlclient-dev
 # MySQL logging requires an extra Python module: pip install mysql-python
 #
-[output_mysql]
-enabled = false
-host = localhost
-database = cowrie
-username = cowrie
-password = secret
-port = 3306
-debug = false
+#[output_mysql]
+#enabled = false
+#host = localhost
+#database = cowrie
+#username = cowrie
+#password = secret
+#port = 3306
+#debug = false
 
 # Rethinkdb output module
 # Rethinkdb output module requires extra Python module: pip install rethinkdb
 
-[output_rethinkdblog]
-enabled = false
-host = 127.0.0.1
-port = 28015
-table = output
-password =
-db = cowrie
+#[output_rethinkdblog]
+#enabled = false
+#host = 127.0.0.1
+#port = 28015
+#table = output
+#password =
+#db = cowrie
 
 # SQLite3 logging module
 #
@@ -541,30 +541,30 @@ db = cowrie
 # doc/sql/sqlite3.sql:
 #     sqlite3 <db_file> < doc/sql/sqlite3.sql
 #
-[output_sqlite]
-enabled = false
-db_file = cowrie.db
+#[output_sqlite]
+#enabled = false
+#db_file = cowrie.db
 
 # MongoDB logging module
 #
 # MongoDB logging requires an extra Python module: pip install pymongo
 #
-[output_mongodb]
-enabled = false
-connection_string = mongodb://username:password@host:port/database
-database = dbname
+#[output_mongodb]
+#enabled = false
+#connection_string = mongodb://username:password@host:port/database
+#database = dbname
 
 
 # Splunk SDK output module - Legacy. Requires Splunk API installed
 # This sends logs directly to Splunk using the Python REST SDK
 #
-[output_splunklegacy]
-enabled = false
-host = localhost
-port = 8889
-username = admin
-password = password
-index = cowrie
+#[output_splunklegacy]
+#enabled = false
+#host = localhost
+#port = 8889
+#username = admin
+#password = password
+#index = cowrie
 
 
 # Splunk HTTP Event Collector (HEC) output module
@@ -572,73 +572,73 @@ index = cowrie
 # mandatory fields: url, token
 # optional fields: index, source, sourcetype, host
 #
-[output_splunk]
-enabled = false
-url = https://localhost:8088/services/collector/event
-token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
-index = cowrie
-sourcetype = cowrie
-source = cowrie
+#[output_splunk]
+#enabled = false
+#url = https://localhost:8088/services/collector/event
+#token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
+#index = cowrie
+#sourcetype = cowrie
+#source = cowrie
 
 
 # HPFeeds
 #
-[output_hpfeeds]
-enabled = false
-server = hpfeeds.mysite.org
-port = 10000
-identifier = abc123
-secret = secret
-debug=false
+#[output_hpfeeds]
+#enabled = false
+#server = hpfeeds.mysite.org
+#port = 10000
+#identifier = abc123
+#secret = secret
+#debug=false
 
 
 # VirusTotal output module
 # You must signup for an api key.
 #
-[output_virustotal]
-enabled = false
-api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-upload = True
-debug = False
+#[output_virustotal]
+#enabled = false
+#api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+#upload = True
+#debug = False
 
 
 # Cuckoo output module
-[output_cuckoo]
-enabled = false
+#[output_cuckoo]
+#enabled = false
 # no slash at the end
-url_base = http://127.0.0.1:8090
-user = user
-passwd = passwd
+#url_base = http://127.0.0.1:8090
+#user = user
+#passwd = passwd
 # force will upload duplicated files to cuckoo
-force = 0
+#force = 0
 
 # upload to MalShare
-[output_malshare]
-enabled = false
+#[output_malshare]
+#enabled = false
 
 # This will produce a _lot_ of messages - you have been warned....
-[output_slack]
-enabled = false
-channel = channel_that_events_should_be_posted_in
-token = slack_token_for_your_bot
-debug = false
+#[output_slack]
+#enabled = false
+#channel = channel_that_events_should_be_posted_in
+#token = slack_token_for_your_bot
+#debug = false
 
 
 # https://csirtg.io
 # You must signup for an api key.
 #
-[output_csirtg]
-enabled = false
-username = wes
-feed = scanners
-description = random scanning activity
-token = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+#[output_csirtg]
+#enabled = false
+#username = wes
+#feed = scanners
+#description = random scanning activity
+#token = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
 
-[output_socketlog]
-enabled = false
-address = 127.0.0.1:9000
-timeout = 5
+#[output_socketlog]
+#enabled = false
+#address = 127.0.0.1:9000
+#timeout = 5
 
 # Upload files that cowrie has captured to an S3 (or compatible bucket)
 # Files are stored with a name that is the SHA of their contents
@@ -666,24 +666,24 @@ timeout = 5
 # where you don't yet have real certificates.
 #verify = no
 
-[output_influx]
-enabled = false
-host = 127.0.0.1
-port = 8086
-database_name = cowrie
-retention_policy_duration = 12w
+#[output_influx]
+#enabled = false
+#host = 127.0.0.1
+#port = 8086
+#database_name = cowrie
+#retention_policy_duration = 12w
 
 
-[output_redis]
-enabled = false
-host = 127.0.0.1
-port = 6379
+#[output_redis]
+#enabled = false
+#host = 127.0.0.1
+#port = 6379
 # DB of the redis server. Defaults to 0
-db = 0
+#db = 0
 # Password of the redis server. Defaults to None
 #password = secret
 # Name of the list to push to or the channel to publish to. Required
-keyname = cowrie
+#keyname = cowrie
 # Method to use when sending data to redis.
 # Can be one of [lpush, rpush, publish]. Defaults to lpush
 #send_method = lpush
