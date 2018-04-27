@@ -156,6 +156,8 @@ Makes a Cowrie SSH/Telnet honeypot.
         for x in CONFIG.sections():
             if not x.startswith('output_'):
                 continue
+            if CONFIG.getboolean(x, 'enabled') is False:
+                continue
             engine = x.split('_')[1]
             try:
                 output = __import__('cowrie.output.{}'.format(engine),
