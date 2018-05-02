@@ -15,6 +15,11 @@ def playlog(fd, settings):
 
     color = None
 
+    if sys.version_info >= (3,):
+        stdout = sys.stdout.buffer
+    else:
+        stdout = sys.stdout
+
     while 1:
         try:
             (op, tty, length, dir, sec, usec) = \
@@ -52,10 +57,10 @@ def playlog(fd, settings):
                         time.sleep(sleeptime)
                 prevtime = curtime
                 if settings['colorify'] and color:
-                    sys.stdout.write(color)
-                sys.stdout.write(data.decode('UTF-8'))
+                    stdout.write(color)
+                stdout.write(data)
                 if settings['colorify'] and color:
-                    sys.stdout.write('\033[0m')
+                    stdout.write('\033[0m')
                     color = None
                 sys.stdout.flush()
         elif str(tty) == str(currtty) and op == OP_CLOSE:
