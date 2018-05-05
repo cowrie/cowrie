@@ -28,6 +28,7 @@ else:
     from cowrie.shell import shlex
 
 
+
 class HoneyPotCommand(object):
     """
     """
@@ -111,6 +112,7 @@ class HoneyPotCommand(object):
         """
         pass
 
+
     def start(self):
         """
         """
@@ -141,8 +143,11 @@ class HoneyPotCommand(object):
                 self.protocol.cmdstack[-1].resume()
         else:
             ret = failure.Failure(error.ProcessDone(status=""))
-            self.protocol.terminal.transport.processEnded(ret)
-
+            # The session could be disconnected already, when his happens .transport is gone
+            try:
+                self.protocol.terminal.transport.processEnded(ret)
+            except exceptions.AttributeError:
+                pass
 
 
     def handle_CTRL_C(self):
@@ -556,6 +561,7 @@ class StdOutStdErrEmulationProtocol(object):
             npcmd = self.next_command.cmd
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
+
 
     def insert_command(self, command):
         """
