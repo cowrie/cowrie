@@ -102,7 +102,7 @@ class HoneyPotCommand(object):
         """
         """
         with open(self.safeoutfile, 'ab') as f:
-            f.write(data)
+            f.write(data.encode())
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
 
