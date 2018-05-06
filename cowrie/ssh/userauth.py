@@ -45,6 +45,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
     def sendBanner(self):
         """
+        This is the pre-login banner. The post-login banner is the MOTD file
         Display contents of <honeyfs>/etc/issue.net
         """
         if self.bannerSent:
