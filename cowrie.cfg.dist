@@ -109,6 +109,11 @@ interactive_timeout = 180
 # (default: shell)
 backend = shell
 
+# Modify the response of '/bin/uname'
+# Default (uname -a): Linux <hostname> <kernel_version> <kernel_build_string> <hardware_platform> GNU/Linux
+kernel_version = 3.2.0-4-amd64
+kernel_build_string = #1 SMP Debian 3.2.68-1+deb7u1
+hardware_platform = x86_64
 
 
 # ============================================================================
@@ -396,7 +401,7 @@ forward_tunnel = false
 [telnet]
 
 # Enable Telnet support, disabled by default
-enabled = false
+enabled = true
 
 # IP addresses to listen for incoming Telnet connections.
 # (DEPRECATED: use listen_endpoints instead)
