@@ -125,6 +125,13 @@ class CowrieSFTPDirectory(object):
 
     def next(self):
         """
+        Py2 compatibility
+        """
+        return self.__next__()
+
+
+    def __next__(self):
+        """
         """
         try:
             f = self.files.pop(0)
@@ -157,6 +164,7 @@ class CowrieSFTPDirectory(object):
             longname = twisted.conch.ls.lsLine(f, s2)
             attrs = self.server._getAttrs(s)
             return (f, longname, attrs)
+
 
     def close(self):
         """
