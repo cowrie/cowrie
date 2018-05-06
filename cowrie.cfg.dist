@@ -450,6 +450,7 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 
 
 
+
 # ============================================================================
 # Output Plugins
 # These provide an extensible mechanism to send audit log entries to third
@@ -459,6 +460,12 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 # Output entries need to start with 'output_' and have the 'enabled' entry.
 # ============================================================================
 
+#[output_xmpp]
+#enabled=true
+#server = conference.cowrie.local
+#user = cowrie@cowrie.local
+#password = cowrie
+#muc = hacker_room
 
 # JSON based logging module
 #
