@@ -401,7 +401,7 @@ forward_tunnel = false
 [telnet]
 
 # Enable Telnet support, disabled by default
-enabled = true
+enabled = false
 
 # IP addresses to listen for incoming Telnet connections.
 # (DEPRECATED: use listen_endpoints instead)
