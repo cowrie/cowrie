@@ -13,7 +13,7 @@ then
     echo "  Get todays stats with  <path/to/your/logs/folder/cowrie.log>"
     echo "  Get total stats with <path/to/your/logs/folder/cowrie.log.*>"
     echo ""
-    echo "Written by CryptKiddie an NetSysFire"
+    echo "Written by CryptKiddie and NetSysFire"
 else
     cat $1 |grep "login attempt" |grep -Po "\[SSHService 'ssh-userauth' on HoneyPotSSHTransport,[0-9]+,[0-9.]+\] login attempt \[[a-zA-z0-9.-]+\/[a-zA-Z0-9.-]+\]" $1 | awk '{print $NF}' | sort | uniq -c |sort -h
 fi
