@@ -2,21 +2,15 @@
 
 from __future__ import division, absolute_import
 
-import time
-import re
 import tftpy
-import os
 
-from cowrie.shell.honeypot import HoneyPotCommand
-from cowrie.shell.fs import *
-from cowrie.shell.customparser import CustomParser
-from cowrie.shell.customparser import OptionNotFound
-from cowrie.shell.customparser import ExitException
+from twisted.python import log
 
+from cowrie.core.artifact import Artifact
 from cowrie.core.config import CONFIG
+from cowrie.shell.customparser import CustomParser, OptionNotFound
+from cowrie.shell.honeypot import HoneyPotCommand
 
-"""
-"""
 
 commands = {}
 
@@ -28,7 +22,6 @@ class Progress(object):
         self.progress = 0
         self.out = protocol
 
-
     def progresshook(self, pkt):
         """
         """
@@ -37,7 +30,6 @@ class Progress(object):
             self.out.write("Transferred %d bytes" % self.progress + "\n")
         elif isinstance(pkt, tftpy.TftpPacketOACK):
             self.out.write("Received OACK, options are: %s" % pkt.options + "\n")
-
 
 
 class command_tftp(HoneyPotCommand):
@@ -56,20 +48,17 @@ class command_tftp(HoneyPotCommand):
         if CONFIG.has_option('honeypot', 'download_limit_size'):
             self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
 
-        self.download_path = CONFIG.get('honeypot', 'download_path')
-
-        tmp_fname = '%s_%s_%s_%s' % \
-                    (time.strftime('%Y%m%d%H%M%S'),
-                     self.protocol.getProtoTransport().transportId,
-                     self.protocol.terminal.transport.session.id,
-                     re.sub('[^A-Za-z0-9]', '_', self.file_to_get))
-        self.safeoutfile = os.path.join(self.download_path, tmp_fname)
+        self.artifactFile = Artifact(self.file_to_get)
 
         tclient = None
+        url = ''
 
         try:
             tclient = tftpy.TftpClient(self.hostname, int(self.port))
-            tclient.download(self.file_to_get, self.safeoutfile, progresshook)
+
+            # tftpy can't handle unicode string as filename
+            # so we have to convert unicode type to str type
+            tclient.download(str(self.file_to_get), self.artifactFile, progresshook)
 
             url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
 
@@ -80,43 +69,27 @@ class command_tftp(HoneyPotCommand):
             else:
                 self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
 
-        except tftpy.TftpException as err:
+        except tftpy.TftpException:
             if tclient and tclient.context and not tclient.context.fileobj.closed:
                 tclient.context.fileobj.close()
 
-        if os.path.exists(self.safeoutfile):
+        if url:
 
-            if os.path.getsize(self.safeoutfile) == 0:
-                os.remove(self.safeoutfile)
-                self.safeoutfile = None
-                return
-
-            with open(self.safeoutfile, 'rb') as f:
-                shasum = hashlib.sha256(f.read()).hexdigest()
-                hash_path = os.path.join(self.download_path, shasum)
-
-            # If we have content already, delete temp file
-            if not os.path.exists(hash_path):
-                os.rename(self.safeoutfile, hash_path)
-            else:
-                os.remove(self.safeoutfile)
-                log.msg("Not storing duplicate content " + shasum)
+            # log to cowrie.log
+            log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                    url=url,
+                    outfile=self.artifactFile.shasumFilename,
+                    shasum=self.artifactFile.shasum)
 
             self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                      format='Downloaded tftpFile (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                                      format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                       url=url,
-                                      outfile=hash_path,
-                                      shasum=shasum)
-
-            # Link friendly name to hash
-            # os.symlink(shasum, self.safeoutfile)
-
-            self.safeoutfile = None
+                                      outfile=self.artifactFile.shasumFilename,
+                                      shasum=self.artifactFile.shasum)
 
             # Update the honeyfs to point to downloaded file
-            self.fs.update_realfile(self.fs.getfile(self.file_to_get), hash_path)
+            self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.artifactFile.shasumFilename)
             self.fs.chown(self.file_to_get, self.protocol.user.uid, self.protocol.user.gid)
-            self.exit()
 
 
     def start(self):
@@ -151,17 +124,15 @@ class command_tftp(HoneyPotCommand):
             if self.hostname is None:
                 raise OptionNotFound("Hostname is invalid")
 
+            if self.hostname.find(':') != -1:
+                host, port = self.hostname.split(':')
+                self.hostname = host
+                self.port = int(port)
+
             self.makeTftpRetrieval()
 
-        except OptionNotFound:
-            self.exit()
-            return
-        except ExitException:
-            self.exit()
-            return
-        except Exception:
-            self.exit()
-            return
+        except Exception as err:
+            log.err(str(err))
 
         self.exit()
 
