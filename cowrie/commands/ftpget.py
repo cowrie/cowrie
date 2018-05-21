@@ -195,7 +195,7 @@ Download a file via FTP
 
     def ftp_download(self):
 
-        out_addr = None
+        out_addr = ('', 0)
         if CONFIG.has_option('honeypot', 'out_addr'):
             out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
 
