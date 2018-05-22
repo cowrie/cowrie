@@ -328,7 +328,8 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url,
                                   outfile=hashPath,
-                                  shasum=shasum)
+                                  shasum=shasum,
+                                  destfile=self.fakeoutfile)
 
         # Link friendly name to hash
         # os.symlink(shasum, self.safeoutfile)
