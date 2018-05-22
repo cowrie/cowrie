@@ -24,10 +24,10 @@ class command_cat(HoneyPotCommand):
     cat command
     """
     def start(self):
-        if not self.args or self.args[0] == '>':
-            return
         if self.input_data:
             self.write(self.input_data)
+        elif not self.args or self.args[0] == '>':
+            return
         else:
             for arg in self.args:
                 pname = self.fs.resolve_path(arg, self.protocol.cwd)
