@@ -184,7 +184,8 @@ Download a file via FTP
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url_log,
                                   outfile=self.artifactFile.shasumFilename,
-                                  shasum=self.artifactFile.shasum)
+                                  shasum=self.artifactFile.shasum,
+                                  destfile=self.local_file)
 
         # Update the honeyfs to point to downloaded file
         self.fs.mkfile(fakeoutfile, 0, 0, os.path.getsize(self.artifactFile.shasumFilename), 33188)

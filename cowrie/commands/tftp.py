@@ -85,7 +85,8 @@ class command_tftp(HoneyPotCommand):
                                       format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                       url=url,
                                       outfile=self.artifactFile.shasumFilename,
-                                      shasum=self.artifactFile.shasum)
+                                      shasum=self.artifactFile.shasum,
+                                      destfile=self.file_to_get)
 
             # Update the honeyfs to point to downloaded file
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.artifactFile.shasumFilename)
