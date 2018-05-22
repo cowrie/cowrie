@@ -702,3 +702,9 @@ logfile = log/cowrie.json
 # Method to use when sending data to redis.
 # Can be one of [lpush, rpush, publish]. Defaults to lpush
 #send_method = lpush
+
+[output_viper]
+host = 127.0.0.1
+port = 8080
+project = cowrie
+token = 434eb24f40d902e4fd951fbc1e722057493adef1
