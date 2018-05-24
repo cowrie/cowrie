@@ -1,5 +1,6 @@
 root:x:!root
 root:x:!123456
+root:x:!/honeypot/i
 root:x:*
 richard:x:*
 richard:x:fout

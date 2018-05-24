@@ -7,6 +7,7 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
+import re
 import json
 from os import path
 from random import randint
@@ -21,7 +22,7 @@ class UserDB(object):
     """
 
     def __init__(self):
-        self.userdb = []
+        self.userdb = {}
         self.userdb_file = '%s/userdb.txt' % CONFIG.get('honeypot', 'data_path')
         self.load()
 
@@ -44,55 +45,50 @@ class UserDB(object):
                 if line.startswith(b'#'):
                     continue
 
-                (login, uid, passwd) = line.split(b':', 2)
-
-                self.userdb.append((login, passwd))
-
-
-    def save(self):
-        """
-        save the user db
-        """
-
-        # Note: this is subject to races between cowrie instances, but hey ...
-        with open(self.userdb_file, 'w') as f:
-            for (login, passwd) in self.userdb:
-                f.write('%s:x:%s\n' % (login, passwd))
+                login, passwd = re.split(br':\w+:', line, 1)
+                self.adduser(login, passwd)
 
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
-        """
-        check entered username/password against database
-        note that it allows multiple passwords for a single username
-        it also knows wildcard '*' for any username or password
-        prepend password with ! to explicitly deny it. Denials must come before wildcards
-        """
-        for (login, passwd) in self.userdb:
-            # Explicitly fail on !password
-            if login == thelogin and passwd == b'!' + thepasswd:
-                return False
-            if login in (thelogin, b'*') and passwd in (thepasswd, b'*'):
-                return True
+        for credentials, policy in self.userdb.items():
+            login, passwd = credentials
+
+            if self.match_rule(login, thelogin):
+                if self.match_rule(passwd, thepasswd):
+                    return policy
+
         return False
 
 
-    def user_password_exists(self, thelogin, thepasswd):
+    def match_rule(self, rule, input):
+        if type(rule) is bytes:
+            return rule in [b'*', input]
+        else:
+            return bool(rule.search(input))
+
+
+    def re_or_str(self, rule):
         """
+        Convert a /.../ type rule to a regex, otherwise return the string as-is
         """
-        for (login, passwd) in self.userdb:
-            if login == thelogin and passwd == thepasswd:
-                return True
-        return False
+        res = re.match(br'/(.+)/(i)?$', rule)
+        if res:
+            return re.compile(res.group(1), re.IGNORECASE if res.group(2) else 0)
+
+        return rule
 
 
     def adduser(self, login, passwd):
-        """
-        """
-        if self.user_password_exists(login, passwd):
-            return
-        self.userdb.append((login, passwd))
-        self.save()
+        login = self.re_or_str(login)
 
+        if passwd.startswith(b'!'):
+            policy = False
+            passwd = passwd[1:]
+        else:
+            policy = True
+
+        passwd = self.re_or_str(passwd)
+        self.userdb[(login, passwd)] = policy
 
 
 class AuthRandom(object):
