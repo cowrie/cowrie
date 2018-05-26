@@ -7,8 +7,6 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-from zope.interface import implementer
-
 from twisted.python import log
 from twisted.conch.ssh import session
 from twisted.conch.ssh.common import getNS
@@ -31,7 +29,7 @@ class HoneyPotSSHSession(session.SSHSession):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg(eventid='cowrie.client.var', format='request_env: %(name)s=%(value)s',
+        log.msg(eventid='cowrie.client.var', format="request_env: %(name)s=%(value)s",
                 name=name, value=value)
         # FIXME: This only works for shell, not for exec command
         if self.session:
@@ -42,14 +40,14 @@ class HoneyPotSSHSession(session.SSHSession):
     def request_agent(self, data):
         """
         """
-        log.msg('request_agent: %s' % (repr(data),))
+        log.msg("request_agent: {}".format(repr(data)))
         return 0
 
 
     def request_x11_req(self, data):
         """
         """
-        log.msg('request_x11: %s' % (repr(data),))
+        log.msg("request_x11: {}".format(repr(data)))
         return 0
 
 
@@ -89,4 +87,3 @@ class HoneyPotSSHSession(session.SSHSession):
         """
         """
         log.msg("Called channelClosed in SSHSession")
-
