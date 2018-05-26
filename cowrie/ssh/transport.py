@@ -2,7 +2,9 @@
 # See the COPYRIGHT file for more information
 
 """
-This module contains ...
+The lowest level SSH protocol. This handles the key negotiation, the
+encryption and the compression. The transport layer is described in
+RFC 4253.
 """
 
 from __future__ import division, absolute_import
@@ -13,7 +15,6 @@ import struct
 import uuid
 import zlib
 
-import twisted
 from twisted.conch.ssh import transport
 from twisted.python import log, randbytes
 from twisted.conch.ssh.common import getNS
@@ -25,14 +26,25 @@ from twisted.python.compat import _bytesChr as chr
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     """
+    logintime = None
+    gotVersion = False
+    transportId = uuid.uuid4().hex[:12]
+
+    def __repr__(self):
+        """
+        Return a pretty representation of this object.
+
+        @return Pretty representation of this object as a string
+        @rtype: L{str}
+        """
+        return "Cowrie SSH Transport to {}".format(self.transport.getPeer().host)
+
 
     def connectionMade(self):
         """
         Called when the connection is made from the other side.
         We send our version, but wait with sending KEXINIT
         """
-        self.transportId = uuid.uuid4().hex[:12]
-
         src_ip = self.transport.getPeer().host
         ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
         ipv4_search = ipv4rex.search(src_ip)
@@ -40,7 +52,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             src_ip = ipv4_search.group(1)
 
         log.msg(eventid='cowrie.session.connect',
-           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
+           format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
            src_ip=src_ip, src_port=self.transport.getPeer().port,
            dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
            session=self.transportId, sessionno='S'+str(self.transport.sessionno), protocol='ssh')
@@ -86,7 +98,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self.sendKexInit()
             else:
                 self.transport.write(b'Protocol mismatch.\n')
-                log.msg('Bad protocol version identification: %s' % (self.otherVersionString,))
+                log.msg("Bad protocol version identification: {}".format(self.otherVersionString))
                 self.transport.loseConnection()
                 return
         packet = self.getPacket()
@@ -135,12 +147,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         """
         k = getNS(packet[16:], 10)
-        strings, rest = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, encSC, macCS, macSC, compCS, compSC, langCS,
-            langSC) = [s.split(b',') for s in strings]
+        strings, _ = k[:-1], k[-1]
+        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,
+            _) = [s.split(b',') for s in strings]
         log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
-            compCS=compCS, format='Remote SSH version: %(version)s')
+            compCS=compCS, langCS=langCS, format="Remote SSH version: %(version)s")
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
@@ -160,12 +172,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
 
         # Reset timeout. Not everyone opens shell so need timeout here also
-        if service.name == "ssh-connection":
+        if service.name == 'ssh-connection':
             self.setTimeout(300)
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
-        if service.name == "ssh-connection":
+        if service.name == 'ssh-connection':
             if self.outgoingCompressionType == 'zlib@openssh.com':
                 self.outgoingCompression = zlib.compressobj(6)
             if self.incomingCompressionType == 'zlib@openssh.com':
@@ -184,7 +196,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport = None
         duration = time.time() - self.logintime
         log.msg(eventid='cowrie.session.closed',
-            format='Connection lost after %(duration)d seconds',
+            format="Connection lost after %(duration)d seconds",
             duration=duration)
 
 
@@ -203,6 +215,5 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write('Packet corrupt\n')
-            log.msg('[SERVER] - Disconnecting with error, code %s\nreason: %s'
-                % (reason, desc))
+            log.msg("[SERVER] - Disconnecting with error, code {}\nreason: {}".format(reason, desc))
             self.transport.loseConnection()
