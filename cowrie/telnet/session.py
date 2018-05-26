@@ -14,14 +14,13 @@ from zope.interface import implementer
 from twisted.internet import interfaces, protocol
 from twisted.python import log
 from twisted.conch.ssh import session
-from twisted.conch.telnet import ECHO, StatefulTelnetProtocol, SGA, \
+from twisted.conch.telnet import ECHO, SGA, \
                                  TelnetBootstrapProtocol
 
 from cowrie.shell import pwd
 from cowrie.shell import protocol as cproto
 from cowrie.insults import insults
 
-from cowrie.core.config import CONFIG
 
 class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     """
@@ -152,10 +151,11 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
 
 
     def processEnded(self, reason=None):
+        """
         # here SSH is doing signal handling, I don't think telnet supports that so
         # I'm simply going to bail out
-        # TODO: log reason maybe?
-        log.msg("Process ended. Telnet Session disconnected")
+        """
+        log.msg("Process ended. Telnet Session disconnected: {}".format(reason))
         self.session.loseConnection()
 
 

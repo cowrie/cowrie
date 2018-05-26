@@ -10,18 +10,15 @@ from __future__ import division, absolute_import
 import struct
 import time
 import uuid
-import inspect
-import random
 
 from twisted.python import log
 from twisted.internet import protocol
-from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, TRAPSIG, \
-                                 ITelnetProtocol, ProtocolTransportMixin, \
-                                 SGA, NAWS, MODE, LINEMODE, TelnetTransport, AlreadyNegotiating
+from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, \
+                                 ITelnetProtocol, \
+                                 SGA, NAWS, LINEMODE, TelnetTransport, AlreadyNegotiating
 from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
-
 from cowrie.core.config import CONFIG
 
 class HoneyPotTelnetFactory(protocol.ServerFactory):
@@ -222,10 +219,12 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
     """
+    transportId = uuid.uuid4().hex[:12]
+    startTime = None
+
     def connectionMade(self):
         """
         """
-        self.transportId = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(300)
