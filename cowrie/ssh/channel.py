@@ -8,10 +8,7 @@ and session size limiting
 
 from __future__ import division, absolute_import
 
-import os
 import time
-
-from zope.interface import implementer
 
 from twisted.python import log
 from twisted.conch.ssh import channel
@@ -30,6 +27,18 @@ class CowrieSSHChannel(channel.SSHChannel):
     bytesReceivedLimit = 0
     bytesWritten = 0
     name = b'cowrie-ssh-channel'
+    startTime = None
+
+
+    def __repr__(self):
+        """
+        Return a pretty representation of this object.
+
+        @return Pretty representation of this object as a string
+        @rtype: L{str}
+        """
+        return "Cowrie SSH Channel {}".format(name)
+
 
     def __init__(self, *args, **kw):
         """
@@ -60,7 +69,7 @@ class CowrieSSHChannel(channel.SSHChannel):
             self.conn.transport.transportId, self.id)
         log.msg(eventid='cowrie.log.open',
             ttylog=self.ttylogFile,
-            format='Opening TTY Log: %(ttylog)s')
+            format="Opening TTY Log: %(ttylog)s")
         ttylog.ttylog_open(self.ttylogFile, time.time())
         channel.SSHChannel.channelOpen(self, specificData)
 
@@ -69,7 +78,7 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         """
         log.msg(eventid='cowrie.log.closed',
-            format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
+            format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
             ttylog=self.ttylogFile,
             size=self.bytesReceived+self.bytesWritten,
             duration=time.time()-self.startTime)
@@ -87,7 +96,7 @@ class CowrieSSHChannel(channel.SSHChannel):
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit \
           and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg('Data upload limit reached for channel {}'.format(self.id))
+            log.msg("Data upload limit reached for channel {}".format(self.id))
             self.eofReceived()
             return
 
@@ -111,4 +120,3 @@ class CowrieSSHChannel(channel.SSHChannel):
             self.bytesWritten += len(data)
 
         channel.SSHChannel.write(self, data)
-
