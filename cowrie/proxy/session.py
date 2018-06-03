@@ -11,6 +11,7 @@ from twisted.internet import reactor, protocol
 from twisted.python import log
 from twisted.conch.ssh import common, keys, session
 from twisted.conch.client.knownhosts import KnownHostsFile
+from twisted.conch.ssh.common import getNS
 #from twisted.conch import endpoints
 
 from cowrie.core.config import CONFIG
