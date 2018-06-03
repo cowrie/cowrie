@@ -53,7 +53,7 @@ class FTP(object, ftplib.FTP):
                 if resp[0] == '2':
                     resp = self.getresp()
                 if resp[0] != '1':
-                    raise ftplib.error_reply, resp
+                    raise ftplib.error_reply(resp)
             except:
                 conn.close()
                 raise
