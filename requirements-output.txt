@@ -8,6 +8,9 @@ requests
 elasticsearch
 
 # hpfeeds
+hpfeeds
+
+# hpfeeds3
 hpfeeds3
 
 # mysql
