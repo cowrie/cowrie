@@ -7,6 +7,9 @@ requests
 # elasticsearch
 elasticsearch
 
+# hpfeeds
+hpfeeds3
+
 # mysql
 # If this fails, see documentation /home/cowrie/cowrie/doc/sql/README.md
 #
