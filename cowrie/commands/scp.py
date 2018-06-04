@@ -142,7 +142,8 @@ class command_scp(HoneyPotCommand):
                     filename=os.path.basename(fname),
                     url=fname,
                     outfile=shasum,
-                    shasum=shasum)
+                    shasum=shasum,
+                    destfile=fname)
 
             # Link friendly name to hash
             # os.symlink(hash_path, self.safeoutfile)

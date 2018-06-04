@@ -19,6 +19,10 @@ import cowrie.core.output
 
 from cowrie.core.config import CONFIG
 
+try:
+    buffer         # Python 2
+except NameError:  # Python 3
+    buffer = memoryview
 
 """
 From https://github.com/threatstream/kippo/blob/master/kippo/dblog/hpfeeds.py
@@ -42,6 +46,7 @@ SIZES = {
 }
 
 COWRIECHAN = 'cowrie.sessions'
+
 
 class BadClient(Exception):
     pass

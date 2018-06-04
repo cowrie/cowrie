@@ -53,7 +53,7 @@ class FTP(object, ftplib.FTP):
                 if resp[0] == '2':
                     resp = self.getresp()
                 if resp[0] != '1':
-                    raise ftplib.error_reply, resp
+                    raise ftplib.error_reply(resp)
             except:
                 conn.close()
                 raise
@@ -66,7 +66,7 @@ class FTP(object, ftplib.FTP):
                 if resp[0] == '2':
                     resp = self.getresp()
                 if resp[0] != '1':
-                    raise ftplib.error_reply, resp
+                    raise ftplib.error_reply(resp)
                 conn, sockaddr = sock.accept()
                 if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
                     conn.settimeout(self.timeout)
@@ -184,7 +184,8 @@ Download a file via FTP
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url_log,
                                   outfile=self.artifactFile.shasumFilename,
-                                  shasum=self.artifactFile.shasum)
+                                  shasum=self.artifactFile.shasum,
+                                  destfile=self.local_file)
 
         # Update the honeyfs to point to downloaded file
         self.fs.mkfile(fakeoutfile, 0, 0, os.path.getsize(self.artifactFile.shasumFilename), 33188)
@@ -195,7 +196,7 @@ Download a file via FTP
 
     def ftp_download(self):
 
-        out_addr = None
+        out_addr = ('', 0)
         if CONFIG.has_option('honeypot', 'out_addr'):
             out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
 

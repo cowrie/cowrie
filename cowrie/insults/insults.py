@@ -170,7 +170,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
                         url='stdin',
                         outfile=shasumfile,
-                        shasum=shasum)
+                        shasum=shasum,
+                        destfile='')
             except IOError as e:
                 pass
             finally:
@@ -207,7 +208,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
                             url=url,
                             outfile=shasumfile,
-                            shasum=shasum)
+                            shasum=shasum,
+                            destfile=url)
                 except IOError:
                     pass
             self.redirFiles.clear()
