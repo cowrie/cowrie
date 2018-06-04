@@ -65,7 +65,7 @@ Maybe. See [FAQ](https://github.com/micheloosterhof/cowrie/wiki/Frequently-Asked
 
 ## I have some questions!
 
-Please visit https://github.com/micheloosterhof/cowrie/issues
+Please visit https://cowrie.slack.com/ and join the #questions channel
 
 ## I'd like to install with Docker
 
