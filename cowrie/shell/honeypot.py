@@ -146,7 +146,7 @@ class HoneyPotCommand(object):
             # The session could be disconnected already, when his happens .transport is gone
             try:
                 self.protocol.terminal.transport.processEnded(ret)
-            except exceptions.AttributeError:
+            except AttributeError:
                 pass
 
 

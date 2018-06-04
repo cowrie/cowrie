@@ -132,7 +132,7 @@ class DBLogger(object):
     def ttylog(self, session):
         ttylog = None
         if session in self.ttylogs:
-            f = file(self.ttylogs[session])
+            f = open(self.ttylogs[session])
             ttylog = f.read(10485760)
             f.close()
         return ttylog

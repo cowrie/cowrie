@@ -386,7 +386,7 @@ class HoneyPotFilesystem(object):
         """
         """
         # this should not be called, we intercept at readChunk
-        raise notImplementedError
+        raise NotImplementedError
 
 
     def write(self, fd, string):
@@ -512,7 +512,7 @@ class HoneyPotFilesystem(object):
     def symlink(self, targetPath, linkPath):
         """
         """
-        raise notImplementedError
+        raise NotImplementedError
 
 
     def rename(self, oldpath, newpath):
