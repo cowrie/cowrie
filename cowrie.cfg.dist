@@ -688,6 +688,12 @@ logfile = log/cowrie.json
 #database_name = cowrie
 #retention_policy_duration = 12w
 
+[output_kafka]
+enabled = false
+host = 127.0.0.1
+port = 9092
+topic = cowrie
+
 
 #[output_redis]
 #enabled = false
