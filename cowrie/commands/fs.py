@@ -18,51 +18,6 @@ from cowrie.core.config import CONFIG
 
 commands = {}
 
-
-class command_cat(HoneyPotCommand):
-    """
-    cat command
-    """
-    def start(self):
-        if not self.args or self.args[0] == '>':
-            return
-        if self.input_data:
-            self.write(self.input_data)
-        else:
-            for arg in self.args:
-                pname = self.fs.resolve_path(arg, self.protocol.cwd)
-
-                if self.fs.isdir(pname):
-                    self.errorWrite('cat: {}: Is a directory\n'.format(arg))
-                    continue
-
-                try:
-                    contents = self.fs.file_contents(pname)
-                    if contents:
-                        self.write(contents)
-                    else:
-                        raise FileNotFound
-                except FileNotFound:
-                    self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
-        self.exit()
-
-
-    def lineReceived(self, line):
-        log.msg(eventid='cowrie.session.input',
-                realm='cat',
-                input=line,
-                format='INPUT (%(realm)s): %(input)s')
-
-        self.write(line)
-
-
-    def handle_CTRL_D(self):
-        self.exit()
-
-
-commands['/bin/cat'] = command_cat
-
-
 class command_grep(HoneyPotCommand):
     """
     grep command
