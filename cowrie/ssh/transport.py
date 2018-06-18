@@ -98,7 +98,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self.sendKexInit()
             else:
                 self.transport.write(b'Protocol mismatch.\n')
-                log.msg("Bad protocol version identification: {}".format(self.otherVersionString))
+                log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
                 self.transport.loseConnection()
                 return
         packet = self.getPacket()
