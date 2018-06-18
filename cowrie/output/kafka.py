@@ -40,6 +40,7 @@ import string
 import sys
 
 from twisted.internet import defer, task
+from twisted.python import log
 
 from afkak.client import KafkaClient
 from afkak.producer import Producer
@@ -49,8 +50,6 @@ import cowrie.core.output
 import cowrie.python.logfile
 
 from cowrie.core.config import CONFIG
-
-#log = logging.getLogger('producer_example')
 
 #def random_string(l, charset=string.letters.encode()):
 #    return b"".join(random.choice(charset) for i in range(l))
