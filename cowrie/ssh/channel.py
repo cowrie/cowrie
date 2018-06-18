@@ -37,7 +37,7 @@ class CowrieSSHChannel(channel.SSHChannel):
         @return Pretty representation of this object as a string
         @rtype: L{str}
         """
-        return "Cowrie SSH Channel {}".format(name)
+        return "Cowrie SSH Channel {}".format(self.name)
 
 
     def __init__(self, *args, **kw):
