@@ -7,6 +7,7 @@ __all__ = [
     'base',
     'base64',
     'busybox',
+    'cat',
     'curl',
     'dd',
     'env',

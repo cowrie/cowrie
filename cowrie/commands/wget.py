@@ -226,7 +226,7 @@ class command_wget(HoneyPotCommand):
             errorMessage = error.getErrorMessage()
             self.errorWrite(errorMessage + '\n')
             # Real wget also adds this:
-        if hasattr(error, 'webStatus') and hasattr(error, 'webMessage'):  # exceptions
+        if hasattr(error, 'webStatus') and error.webStatus and hasattr(error, 'webMessage'):  # exceptions
             self.errorWrite('{} ERROR {}: {}\n'.format(time.strftime('%Y-%m-%d %T'), error.webStatus.decode(),
                                                        error.webMessage.decode()))
         else:
