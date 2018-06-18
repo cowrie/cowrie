@@ -27,6 +27,8 @@ class command_cat(HoneyPotCommand):
     linenumber = 1
 
     def start(self):
+        """
+        """
         try:
             optlist, args = getopt.gnu_getopt(self.args, 'AbeEnstTuv', ['help', 'number', 'version'])
         except getopt.GetoptError as err:
@@ -68,7 +70,7 @@ class command_cat(HoneyPotCommand):
         This is the cat output, with optional line numbering
         """
         lines = input.split('\n')
-        if lines[-1] == "": 
+        if lines[-1] == "":
             lines.pop()
         for line in lines:
             if self.number:
@@ -97,6 +99,8 @@ class command_cat(HoneyPotCommand):
 
 
     def help(self):
+        """
+        """
         self.write(
 """Usage: cat [OPTION]... [FILE]...
 Concatenate FILE(s) to standard output.
@@ -126,5 +130,3 @@ or available locally via: info '(coreutils) cat invocation'
 """)
 
 commands['/bin/cat'] = command_cat
-
-# vim: set sw=4 et:
