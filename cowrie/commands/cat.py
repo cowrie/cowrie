@@ -27,23 +27,20 @@ class command_cat(HoneyPotCommand):
     linenumber = 1
 
     def start(self):
-        if not self.args or self.args[0] == '>':
+        try:
+            optlist, args = getopt.gnu_getopt(self.args, 'AbeEnstTuv', ['help', 'number', 'version'])
+        except getopt.GetoptError as err:
+            self.errorWrite("cat: invalid option -- '{}'\nTry 'cat --help' for more information.\n".format(err.opt))
+            self.exit()
             return
-        else:
-            try:
-                optlist, args = getopt.gnu_getopt(self.args, 'AbeEnstTuv', ['help', 'number', 'version'])
-            except getopt.GetoptError as err:
-                self.errorWrite("cat: invalid option -- '{}'\nTry 'cat --help' for more information.\n".format(err.opt))
+
+        for o, a in optlist:
+            if o in ('--help'):
+                self.help()
                 self.exit()
                 return
-
-            for o, a in optlist:
-                if o in ('--help'):
-                    self.help()
-                    self.exit()
-                    return
-                elif o in ('-n', '--number'):
-                    self.number = True
+            elif o in ('-n', '--number'):
+                self.number = True
 
         if self.input_data:
             self.output(self.input_data)
