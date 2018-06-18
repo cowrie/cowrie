@@ -48,7 +48,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cwd = avatar.avatar.home
         else:
             self.cwd = '/'
-        self.input_data = None
         self.data = None
         self.commands = {}
         import cowrie.commands
@@ -62,7 +61,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type,exc_value,exc_traceback))))
         self.password_input = False
         self.cmdstack = []
-        
+
 
     def getProtoTransport(self):
         """
@@ -245,6 +244,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     """
     """
+    # input_data is static buffer for stdin received from remote client
+    input_data = ""
 
     def __init__(self, avatar, execcmd):
         self.execcmd = execcmd
@@ -258,6 +259,10 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.setTimeout(60)
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         self.cmdstack[0].lineReceived(self.execcmd)
+
+
+    def keystrokeReceived(self, keyID, modifier):
+        self.input_data += keyID
 
 
     def eofReceived(self):
