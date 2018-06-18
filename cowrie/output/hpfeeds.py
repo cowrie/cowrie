@@ -233,9 +233,10 @@ class hpclient(object):
     def sendfile(self, filepath):
         # does not read complete binary into memory, read and send chunks
         if not self.filehandle:
-            self.sendfileheader(i.file)
+            self.sendfileheader(filepath)
             self.sendfiledata()
-        else: self.sendfiles.append(filepath)
+        else:
+            self.sendfiles.append(filepath)
 
 
     def sendfileheader(self, filepath):
