@@ -11,6 +11,7 @@ import struct
 
 from twisted.python import log
 from twisted.python.compat import _bytesChr as chr
+from twisted.python.failure import Failure
 from twisted.internet import defer
 
 from twisted.conch.interfaces import IConchUser
@@ -177,7 +178,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 raise error.ConchError(
                     "{:d} bytes of extra data".format(len(packet)))
         except:
-            d.errback(failure.Failure())
+            d.errback(Failure())
         else:
             d.callback(resp)
 
