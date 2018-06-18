@@ -125,10 +125,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(self.ttylogFile, len(data),
                 ttylog.TYPE_INPUT, time.time(), data)
 
-        # TODO: this may need to happen inside the shell rather than here to preserve bytes for redirection
-        #if isinstance(data, bytes):
-        #    data = data.decode("utf-8")
-
         # prevent crash if something like this was passed:
         # echo cmd ; exit; \n\n
         if self.terminalProtocol:
