@@ -28,7 +28,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     logintime = None
     gotVersion = False
-    transportId = uuid.uuid4().hex[:12]
 
     def __repr__(self):
         """
@@ -45,6 +44,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Called when the connection is made from the other side.
         We send our version, but wait with sending KEXINIT
         """
+        self.transportId = uuid.uuid4().hex[:12]
         src_ip = self.transport.getPeer().host
         ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
         ipv4_search = ipv4rex.search(src_ip)

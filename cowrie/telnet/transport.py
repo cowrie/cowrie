@@ -219,12 +219,11 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
     """
-    transportId = uuid.uuid4().hex[:12]
-    startTime = None
 
     def connectionMade(self):
         """
         """
+        self.transportId = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(300)
