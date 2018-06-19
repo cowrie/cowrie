@@ -329,7 +329,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   url=self.url,
                                   outfile=hashPath,
                                   shasum=shasum,
-                                  destfile=self.fakeoutfile)
+                                  destfile=self.safeoutfile)
 
         # Link friendly name to hash
         # os.symlink(shasum, self.safeoutfile)
