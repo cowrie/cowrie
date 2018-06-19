@@ -28,13 +28,14 @@ commands = {}
 
 
 class command_curl(HoneyPotCommand):
-
+    """
+    """
     def start(self):
         """
         """
         try:
             optlist, args = getopt.getopt(self.args, 'sho:O',
-                [ 'help', 'manual', 'silent' ] )
+                ['help', 'manual', 'silent'])
         except getopt.GetoptError as err:
             # TODO: should be 'unknown' instead of 'not recognized'
             self.write("curl: {}\n".format(err))
@@ -58,7 +59,7 @@ class command_curl(HoneyPotCommand):
             return
 
         if '://' not in url:
-            url = 'http://'+ url
+            url = 'http://' + url
         urldata = compat.urllib_parse.urlparse(url)
 
         outfile = None
@@ -291,7 +292,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()
             contextFactory.method = SSL.SSLv23_METHOD
-            reactor.connectSSL(host, port, factory, contextFactory)
+            reactor.connectSSL(host, port, factory, contextFactory, bindAddress=out_addr)
         else: # Can only be http
             self.connection = reactor.connectTCP(
                 host, port, factory, bindAddress=out_addr)
@@ -455,7 +456,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         if self.fakeoutfile:
             self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d\n" % \
-                (self.currentlength, self.currentlength  , 63673, 65181)
+                (self.currentlength, self.currentlength, 63673, 65181)
             )
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
