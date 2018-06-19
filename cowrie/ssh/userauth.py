@@ -11,11 +11,13 @@ import struct
 
 from twisted.python import log
 from twisted.python.compat import _bytesChr as chr
+from twisted.python.failure import Failure
 from twisted.internet import defer
 
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
+from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.conch import error
 
 from cowrie.core import credentials
@@ -110,7 +112,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         """
         if self._pamDeferred is not None:
             self.transport.sendDisconnect(
-                    transport.DISCONNECT_PROTOCOL_ERROR,
+                    DISCONNECT_PROTOCOL_ERROR,
                     "only one keyboard interactive attempt at a time")
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
@@ -176,7 +178,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 raise error.ConchError(
                     "{:d} bytes of extra data".format(len(packet)))
         except:
-            d.errback(failure.Failure())
+            d.errback(Failure())
         else:
             d.callback(resp)
 

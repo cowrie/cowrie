@@ -44,10 +44,20 @@ T_LINK, \
     T_SOCK, \
     T_FIFO = list(range(0, 7))
 
+
+
 class TooManyLevels(Exception):
     """
     62 ELOOP Too many levels of symbolic links.  A path name lookup involved more than 8 symbolic links.
     raise OSError(errno.ELOOP, os.strerror(errno.ENOENT))
+    """
+    pass
+
+
+
+class IsADirectoryError(Exception):
+    """
+    Something is a directory where the user was expecting a file
     """
     pass
 
@@ -97,6 +107,7 @@ class HoneyPotFilesystem(object):
                 f = self.getfile(virtual_path, follow_symlinks=False)
                 if f and f[A_TYPE] == T_FILE:
                     self.update_realfile(f, realfile_path)
+
 
     def resolve_path(self, path, cwd):
         """
@@ -258,7 +269,6 @@ class HoneyPotFilesystem(object):
             return ''
         elif f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return open(CONFIG.get('honeypot', 'data_path') + '/arch/' + self.arch, 'rb').read()
-
 
 
     def mkfile(self, path, uid, gid, size, mode, ctime=None):
@@ -450,7 +460,7 @@ class HoneyPotFilesystem(object):
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
         if len(self.get_path(path))>0:
             raise OSError(errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), path)
-        pdir = self.get_path(parent,follow_symlinks=True)
+        pdir = self.get_path(parent, follow_symlinks=True)
         for i in pdir[:]:
             if i[A_NAME] == name:
                 pdir.remove(i)
@@ -556,7 +566,7 @@ class HoneyPotFilesystem(object):
         if (p == False):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
 
-        return _statobj( p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE],
+        return _statobj(p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE],
             p[A_CTIME], p[A_CTIME], p[A_CTIME])
 
 
@@ -593,4 +603,3 @@ class _statobj(object):
         self.st_atime = st_atime
         self.st_mtime = st_mtime
         self.st_ctime = st_ctime
-
