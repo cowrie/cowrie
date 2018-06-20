@@ -27,7 +27,7 @@
 # SUCH DAMAGE.
 
 """
-Docstring
+Work in progress Kafka output. Not functional yet
 """
 
 from __future__ import division, absolute_import
@@ -51,15 +51,15 @@ import cowrie.python.logfile
 
 from cowrie.core.config import CONFIG
 
-#def random_string(l, charset=string.letters.encode()):
-#    return b"".join(random.choice(charset) for i in range(l))
+def random_string(l, charset=string.letters.encode()):
+    return b"".join(random.choice(charset) for i in range(l))
 
 
-#def make_messages():
-#    key = random_string(8)
-#    messages = [random_string(random.randint(20, 40))
-#                for i in range(random.randint(2, 25))]
-#    return key, messages
+def make_messages():
+    key = random_string(8)
+    messages = [random_string(random.randint(20, 40))
+                for i in range(random.randint(2, 25))]
+    return key, messages
 
 
 @defer.inlineCallbacks
