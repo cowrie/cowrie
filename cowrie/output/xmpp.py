@@ -102,7 +102,7 @@ class Output(cowrie.core.output.Output):
         msgJson = json.dumps(logentry,indent=5)
 
         self.muc.groupChat(self.muc.jrooms, msgJson)
-   
+
     def stop(self):
         self.xmppclient.stopService()
 
