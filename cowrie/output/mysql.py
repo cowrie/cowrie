@@ -163,7 +163,7 @@ class Output(cowrie.core.output.Output):
                 ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
                 (entry["session"], entry["time"],
                 entry['url'], entry['outfile'], entry['shasum']))
-	
+
         elif entry["eventid"] == 'cowrie.session.file_download.failed':
             self.simpleQuery('INSERT INTO `downloads`' + \
                 ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \

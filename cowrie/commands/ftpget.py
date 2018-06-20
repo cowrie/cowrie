@@ -87,11 +87,11 @@ Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
 
 Download a file via FTP
 
-    -c	Continue previous transfer
-    -v	Verbose
-    -u USER	Username
-    -p PASS	Password
-    -P NUM	Port\n\n""")
+    -c Continue previous transfer
+    -v Verbose
+    -u USER     Username
+    -p PASS     Password
+    -P NUM      Port\n\n""")
 
     def start(self):
         try:
