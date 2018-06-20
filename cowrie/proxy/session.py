@@ -80,7 +80,7 @@ class InBetween(protocol.Protocol):
         if not self.transport:
             self.buf += bytes
             return
-        log.msg( "IB: write: "+repr(bytes)+" to transport "+repr(self.transport))
+        log.msg("IB: write: "+repr(bytes)+" to transport "+repr(self.transport))
         self.transport.write(bytes)
 
 
@@ -88,7 +88,7 @@ class InBetween(protocol.Protocol):
         """
         This is data going from the back-end to the end-user
         """
-        log.msg( "IB: dataReceived: "+repr(data))
+        log.msg("IB: dataReceived: "+repr(data))
         self.client.write(data)
 
 
@@ -154,7 +154,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
 
         knownHostsPath = CONFIG.get('proxy', 'known_hosts')
         self.knownHosts = KnownHostsFile.fromPath(knownHostsPath)
-        log.msg( "knownHosts = "+repr(self.knownHosts))
+        log.msg("knownHosts = "+repr(self.knownHosts))
 
         self.host = CONFIG.get('proxy', 'host')
         self.port = CONFIG.getint('proxy', 'port')
@@ -164,9 +164,9 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         except:
             self.password = None
 
-        log.msg( "host = "+self.host)
-        log.msg( "port = "+str(self.port))
-        log.msg( "user = "+self.user)
+        log.msg("host = "+self.host)
+        log.msg("port = "+str(self.port))
+        log.msg("user = "+self.user)
 
         self.client = ProxyClient(self)
 
@@ -180,11 +180,11 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg("channelOpen")
         helper = endpoints._NewConnectionHelper(reactor, self.host, self.port,
             self.user, self.keys, self.password, None, self.knownHosts, None)
-        log.msg( "helper = "+repr(helper))
+        log.msg("helper = "+repr(helper))
         d = helper.secureConnection()
         d.addCallback(self._cbConnect)
         d.addErrback(self._ebConnect)
-        log.msg( "d = "+repr(d))
+        log.msg("d = "+repr(d))
         return d
 
 

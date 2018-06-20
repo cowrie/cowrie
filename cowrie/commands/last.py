@@ -28,7 +28,7 @@ class command_last(HoneyPotCommand):
 
         self.write('%-8s %-12s %-16s %s   still logged in\n' % \
             (self.protocol.user.username, "pts/0", self.protocol.clientIP,
-             time.strftime('%a %b %d %H:%M', time.localtime(self.protocol.logintime)) ))
+             time.strftime('%a %b %d %H:%M', time.localtime(self.protocol.logintime))))
 
         self.write("\n")
         self.write("wtmp begins %s\n" % \

@@ -82,7 +82,7 @@ class command_tar(HoneyPotCommand):
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
             else:
-                log.msg( 'tar: skipping [%s]' % f.name )
+                log.msg("tar: skipping [%s]".format(f.name))
 
 commands['/bin/tar'] = command_tar
 

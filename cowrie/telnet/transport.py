@@ -21,6 +21,7 @@ from twisted.protocols.policies import TimeoutMixin
 from cowrie.core.credentials import UsernamePasswordIP
 from cowrie.core.config import CONFIG
 
+
 class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances

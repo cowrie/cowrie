@@ -161,7 +161,7 @@ class Output(object):
             ev['time'] = time.time()
         ev['timestamp'] = datetime.datetime.utcfromtimestamp(ev['time']).isoformat() + 'Z'
 
-        if 'format' in ev and (not 'message' in ev or ev['message'] == () ):
+        if 'format' in ev and (not 'message' in ev or ev['message'] == ()):
             try:
                 ev['message'] = ev['format'] % ev
                 del ev['format']

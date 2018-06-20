@@ -24,7 +24,7 @@ def getRSAKeys():
         log.msg("Generating new RSA keypair...")
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.asymmetric import rsa
-        rsaKey = rsa.generate_private_key( public_exponent=65537, key_size=2048, backend=default_backend())
+        rsaKey = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
         publicKeyString = keys.Key(rsaKey).public().toString('openssh')
         privateKeyString = keys.Key(rsaKey).toString('openssh')
         with open(publicKeyFile, 'w+b') as f:
@@ -49,7 +49,7 @@ def getDSAKeys():
         log.msg("Generating new DSA keypair...")
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.asymmetric import dsa
-        dsaKey = dsa.generate_private_key( key_size=1024, backend=default_backend())
+        dsaKey = dsa.generate_private_key(key_size=1024, backend=default_backend())
         publicKeyString = keys.Key(dsaKey).public().toString('openssh')
         privateKeyString = keys.Key(dsaKey).toString('openssh')
         with open(publicKeyFile, 'w+b') as f:

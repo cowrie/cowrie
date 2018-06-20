@@ -28,7 +28,7 @@ class command_sleep(HoneyPotCommand):
         """
         """
         if len(self.args) == 1:
-            _time = int( self.args[0] )
+            _time = int(self.args[0])
             self.scheduled = reactor.callLater(_time, self.done)
         else:
             self.write('usage: sleep seconds\n')

@@ -136,8 +136,8 @@ class command_gcc(HoneyPotCommand):
 
     def no_files(self):
         """ Notify user there are no input files, and exit """
-        self.write( """gcc: fatal error: no input files
-compilation terminated.\n""" )
+        self.write("""gcc: fatal error: no input files
+compilation terminated.\n""")
         self.exit()
 
 
@@ -149,12 +149,12 @@ compilation terminated.\n""" )
         version_short = '.'.join([ str(v) for v in command_gcc.APP_VERSION[:2] ])
 
         if short:
-            data = ( """%s (Debian %s-8) %s
+            data = ("""%s (Debian %s-8) %s
 Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""", (command_gcc.APP_NAME, version, version) )
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""", (command_gcc.APP_NAME, version, version))
         else:
-            data = ( """Using built-in specs.
+            data = ("""Using built-in specs.
 COLLECT_GCC=gcc
 COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/4.7/lto-wrapper
 Target: x86_64-linux-gnu
@@ -216,7 +216,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
 
         version = '.'.join([ str(v) for v in command_gcc.APP_VERSION[:2] ])
 
-        self.write( """Usage: gcc [options] file...
+        self.write("""Usage: gcc [options] file...
 Options:
   -pass-exit-codes         Exit with highest error code from a phase
   --help                   Display this information

@@ -131,7 +131,7 @@ class Output(cowrie.core.output.Output):
 
         def processResult(result):
             j = json.loads(result)
-            log.msg( "SplunkHEC response: {}".format(j["text"]))
+            log.msg("SplunkHEC response: {}".format(j["text"]))
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)

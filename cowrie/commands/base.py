@@ -651,7 +651,7 @@ class command_php(HoneyPotCommand):
         log.msg(eventid='cowrie.command.success',
                 realm='php',
                 input=line,
-                format='INPUT (%(realm)s): %(input)s' )
+                format='INPUT (%(realm)s): %(input)s')
 
 
     def handle_CTRL_D(self):

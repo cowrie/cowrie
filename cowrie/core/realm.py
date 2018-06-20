@@ -66,11 +66,11 @@ class HoneyPotRealm(object):
         """
 
         # if mind in self.servers:
-        #    log.msg( "Using existing server for mind %s" % mind )
+        #    log.msg( "Using existing server for mind %s" % mind)
         #    for i in self.servers[mind].avatars:
-        #    log.msg( "attached avatar: %s" % repr(i) )
+        #    log.msg( "attached avatar: %s" % repr(i))
         #else:
-        #    log.msg( "Starting new server for mind %s" % mind )
+        #    log.msg( "Starting new server for mind %s" % mind)
         #    self.servers[mind] = server.CowrieServer(self.cfg)
 
         # for i in list(self.servers.keys()):
