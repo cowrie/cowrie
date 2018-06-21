@@ -19,7 +19,7 @@ DEFAULT_VIRTUAL_ENV=cowrie-env
 
 first_time_use() {
     echo
-    echo "Join the Cowrie community at https://cowrie.slack.com/"
+    echo "Join the Cowrie community at: http://bit.ly/2lmcAL3"
     echo
 }
 
