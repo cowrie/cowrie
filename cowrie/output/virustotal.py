@@ -243,7 +243,7 @@ class Output(cowrie.core.output.Output):
             j = json.loads(result)
             # This is always a new resource, since we did the scan before
             # so always create the comment
-            log.msg( "response=0: posting comment")
+            log.msg("response=0: posting comment")
             if self.comment == True:
                 return self.postcomment(j["resource"])
             else:

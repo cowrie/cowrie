@@ -58,7 +58,7 @@ class HoneyPotRealm(object):
 
     def __init__(self):
         pass
-	    # self.servers = {}
+        # self.servers = {}
 
 
     def requestAvatar(self, avatarId, mind, *interfaces):
@@ -66,16 +66,16 @@ class HoneyPotRealm(object):
         """
 
         # if mind in self.servers:
-	#    log.msg( "Using existing server for mind %s" % mind )
+        #    log.msg( "Using existing server for mind %s" % mind)
         #    for i in self.servers[mind].avatars:
-	#	log.msg( "attached avatar: %s" % repr(i) )
-	#else:
-	#    log.msg( "Starting new server for mind %s" % mind )
-	#    self.servers[mind] = server.CowrieServer(self.cfg)
+        #    log.msg( "attached avatar: %s" % repr(i))
+        #else:
+        #    log.msg( "Starting new server for mind %s" % mind)
+        #    self.servers[mind] = server.CowrieServer(self.cfg)
 
-	# for i in list(self.servers.keys()):
+        # for i in list(self.servers.keys()):
         #    log.msg( "REFCOUNT: key: %s, refcount %d" % ( i, sys.getrefcount(self.servers[i])))
-	#    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
+        #    log.msg( "Refer: %s" % repr( gc.get_referrers(self.servers[i])))
 
         try:
             backend = CONFIG.get('honeypot', 'backend')

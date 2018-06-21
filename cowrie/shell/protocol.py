@@ -90,7 +90,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = pt.transport.getPeer().port
         self.clientVersion = self.getClientVersion()
         self.logintime = time.time()
-        
+
         log.msg(eventid='cowrie.session.params', arch=self.user.server.arch)
 
         try:
@@ -326,7 +326,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         this logs out when connection times out
         """
-        self.terminal.write( b'timed out waiting for input: auto-logout\n' )
+        self.terminal.write(b'timed out waiting for input: auto-logout\n')
         HoneyPotBaseProtocol.timeoutConnection(self)
 
 

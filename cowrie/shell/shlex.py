@@ -320,7 +320,7 @@ def split(s, comments=False, posix=True):
 
 #_find_unsafe = re.compile(r'[^\w@%+=:,./-]', re.ASCII).search
 # No ASCII in P2.x
-_find_unsafe = re.compile(r'[^\w@%+=:,./-]' ).search
+_find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
 
 def quote(s):
     """Return a shell-escaped version of the string *s*."""

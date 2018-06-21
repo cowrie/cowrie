@@ -15,7 +15,7 @@ Example:
 or:
 
     g = Artifact("testme2")
-    g.write( "def" )
+    g.write("def")
     g.close()
 
 """

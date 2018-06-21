@@ -139,7 +139,7 @@ class Output(cowrie.core.output.Output):
                 ' VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
                 (entry["session"], 0, entry['username'], entry['password'],
                 entry["time"]))
-                
+
         elif entry["eventid"] == 'cowrie.session.params':
             self.simpleQuery('INSERT INTO `params` (`session`, `arch`)' + \
                 ' VALUES (%s, %s)',
@@ -163,7 +163,7 @@ class Output(cowrie.core.output.Output):
                 ' VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
                 (entry["session"], entry["time"],
                 entry['url'], entry['outfile'], entry['shasum']))
-	
+
         elif entry["eventid"] == 'cowrie.session.file_download.failed':
             self.simpleQuery('INSERT INTO `downloads`' + \
                 ' (`session`, `timestamp`, `url`, `outfile`, `shasum`)' + \

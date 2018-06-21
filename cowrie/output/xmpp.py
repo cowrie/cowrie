@@ -31,16 +31,16 @@ class XMPPLoggerProtocol(muc.MUCClient):
         self.join(self.jrooms, self.nick);
 
     def joinedRoom(self, room):
-        log.msg( 'Joined room %s' % room.name )
+        log.msg('Joined room {}'.format(room.name))
 
     def connectionMade(self):
-        log.msg( 'Connected!' )
+        log.msg('Connected!')
 
         # send initial presence
         self.send(AvailablePresence())
 
     def connectionLost(self, reason):
-        log.msg( 'Disconnected!' )
+        log.msg('Disconnected!')
 
     def onMessage(self, msg):
         pass
@@ -102,7 +102,7 @@ class Output(cowrie.core.output.Output):
         msgJson = json.dumps(logentry,indent=5)
 
         self.muc.groupChat(self.muc.jrooms, msgJson)
-   
+
     def stop(self):
         self.xmppclient.stopService()
 

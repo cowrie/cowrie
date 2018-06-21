@@ -17,6 +17,12 @@ DAEMONIZE=""
 # COWRIE_VIRTUAL_ENV you can override this
 DEFAULT_VIRTUAL_ENV=cowrie-env
 
+first_time_use() {
+    echo
+    echo "Join the Cowrie community at https://cowrie.slack.com/"
+    echo
+}
+
 find_cowrie_directory() {
     # Determine Cowrie directory
     if [[ "$0" = /* ]]
@@ -149,6 +155,11 @@ cd ${COWRIEDIR}
 export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
 PIDFILE=var/run/cowrie.pid
 set -e
+
+if [ ! -f ${COWRIEDIR}/log/cowrie.log ]
+then
+    first_time_use
+fi
 
 key=$1
 shift 1
