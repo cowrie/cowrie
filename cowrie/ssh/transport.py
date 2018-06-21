@@ -13,6 +13,7 @@ import re
 import time
 import struct
 import uuid
+from hashlib import md5
 import zlib
 
 from twisted.conch.ssh import transport
@@ -150,6 +151,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         strings, _ = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,
             _) = [s.split(b',') for s in strings]
+
+        client_fingerprint = md5(packet[16:]).hexdigest()
+        log.msg(eventid='cowrie.client.fingerprint',
+                format="Remote SSH client fingerprint: %(client_fingerprint)s",
+                client_fingerprint=client_fingerprint)
         log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
             kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
             compCS=compCS, langCS=langCS, format="Remote SSH version: %(version)s")
