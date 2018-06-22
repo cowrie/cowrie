@@ -44,7 +44,7 @@ Docker versions are available.
 
 Software required:
 
-* Python 2.7+, (Python 3 not yet supported due to Twisted dependencies)
+* Python 2.7+, (Limited Python 3 support available for SSH only)
 * python-virtualenv
 
 For Python dependencies, see requirements.txt
