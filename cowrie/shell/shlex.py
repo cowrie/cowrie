@@ -26,7 +26,7 @@ class shlex:
                  punctuation_chars=False):
         if isinstance(instream, str):
             instream = StringIO(instream)
-        elif isinstance(instream, basestring):
+        elif isinstance(instream, unicode):
             instream = StringIO(instream)
         if instream is not None:
             self.instream = instream
