@@ -194,12 +194,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def lineReceived(self, line):
         """
-        Line Received
+        IMPORTANT
+        Before this, all data is 'bytes'. Here it converts to 'string' and
+        commands work with string rather than bytes.
         """
-        # Turn idle timeout into time-based timout by commenting out reset
-        #self.resetTimeout()
+        line = line.decode('utf8')
+
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
+        else:
+            log.msg("discarding input {}".format(line))
 
 
     def call_command(self, pp, cmd, *args):
@@ -248,7 +252,12 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     input_data = ""
 
     def __init__(self, avatar, execcmd):
-        self.execcmd = execcmd
+        """
+        IMPORTANT
+        Before this, execcmd is 'bytes'. Here it converts to 'string' and
+        commands work with string rather than bytes.
+        """
+        self.execcmd = execcmd.decode('utf8')
         HoneyPotBaseProtocol.__init__(self, avatar)
 
 

@@ -163,8 +163,7 @@ class HoneyPotCommand(object):
         """
         log.msg('QUEUED INPUT: {}'.format(line))
         # FIXME: naive command parsing, see lineReceived below
-        line = b"".join(line)
-        line = line.decode("utf-8")
+        line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=False))
 
 
@@ -209,7 +208,6 @@ class HoneyPotShell(object):
         """
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
         #line = b"".join(line)
-        line = line.decode("utf-8")
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []
         while True:
