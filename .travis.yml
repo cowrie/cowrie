@@ -13,7 +13,8 @@ before_script:
     # stop the build if there are Python syntax errors or undefined names
     - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
     # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-    - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    # ignore E3xx errors, Twisted has different empty line convention
+    - flake8 . --count --ignore=E3 --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 #    - twistedchecker --pep8=y -d W9001,W9002 cowrie twisted.plugins
 #   Twistedchecker has some version issues, disable for now
 script: PYTHONPATH=${TRAVIS_BUILD_DIR} trial cowrie
