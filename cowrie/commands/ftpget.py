@@ -18,7 +18,7 @@ from cowrie.shell.honeypot import HoneyPotCommand
 commands = {}
 
 
-class FTP(object, ftplib.FTP):
+class FTP(ftplib.FTP):
 
     def __init__(self, *args, **kwargs):
         self.source_address = kwargs.pop("source_address", None)
