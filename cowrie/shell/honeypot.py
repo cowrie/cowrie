@@ -321,7 +321,7 @@ class HoneyPotShell(object):
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
-        cmd_array = [ ]
+        cmd_array = []
         cmd = {}
         while len(cmdAndArgs):
             piece = cmdAndArgs.pop(0)

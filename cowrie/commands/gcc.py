@@ -145,8 +145,8 @@ compilation terminated.\n""")
         """ Print long or short version, and exit """
 
         # Generate version number
-        version = '.'.join([ str(v) for v in command_gcc.APP_VERSION[:3] ])
-        version_short = '.'.join([ str(v) for v in command_gcc.APP_VERSION[:2] ])
+        version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:3]])
+        version_short = '.'.join([str(v) for v in command_gcc.APP_VERSION[:2]])
 
         if short:
             data = ("""%s (Debian %s-8) %s
@@ -214,7 +214,7 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
     def help(self):
         """ Print help info, and exit """
 
-        version = '.'.join([ str(v) for v in command_gcc.APP_VERSION[:2] ])
+        version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:2]])
 
         self.write("""Usage: gcc [options] file...
 Options:
@@ -281,4 +281,4 @@ For bug reporting instructions, please see:
 
 # Definitions
 commands['/usr/bin/gcc'] = command_gcc
-commands['/usr/bin/gcc-%s' % ('.'.join([ str(v) for v in command_gcc.APP_VERSION[:2] ]))] = command_gcc
+commands['/usr/bin/gcc-%s' % ('.'.join([str(v) for v in command_gcc.APP_VERSION[:2]]))] = command_gcc
