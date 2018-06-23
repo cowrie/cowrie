@@ -1,3 +1,4 @@
+* 2018-06-23 fingerprint log message now holds KEX attributes and a unique fingerprint for the client
 * 2018-04-27 Output plugins now require the mandatory config entry 'enabled'.
 * 2018-02-06 cowrie.log now uses same rotation mechanism as cowrie.json. One file per day, rather than the default 1MB per file.
 * 2017-12-13 Default umask for logs is now 0007. This means group members can access.
