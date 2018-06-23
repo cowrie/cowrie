@@ -166,7 +166,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 format="Remote SSH client fingerprint: %(client_fingerprint)s",
                 client_fingerprint=client_fingerprint,
                 kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
-                compCS=compCS, langCS=langCS
+                compCS=compCS, langCS=langCS)
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
