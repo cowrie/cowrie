@@ -73,6 +73,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             return
         transport.SSHServerTransport.sendKexInit(self)
 
+    def _unsupportedVersionReceived(self, remoteVersion):
+        """
+        Change message to be like OpenSSH
+        """
+        self.transport.write(b'Protocol major versions differ.\n')
+        self.transport.loseConnection()
+
 
     def dataReceived(self, data):
         """
@@ -88,6 +95,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 return
             #self.otherVersionString = self.buf.split(b'\n')[0].strip().encode('string-escape')
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
+            log.msg("Protocol version identification: {}".format(repr(self.otherVersionString)))
             if self.buf.startswith(b'SSH-'):
                 self.gotVersion = True
                 remoteVersion = self.buf.split(b'-')[1]
