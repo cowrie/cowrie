@@ -95,7 +95,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 return
             #self.otherVersionString = self.buf.split(b'\n')[0].strip().encode('string-escape')
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
-            log.msg("Protocol version identification: {}".format(repr(self.otherVersionString)))
+            log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
+                    format="Remote SSH version: %(version)s")
             if self.buf.startswith(b'SSH-'):
                 self.gotVersion = True
                 remoteVersion = self.buf.split(b'-')[1]
@@ -163,10 +164,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         client_fingerprint = md5(packet[16:]).hexdigest()
         log.msg(eventid='cowrie.client.fingerprint',
                 format="Remote SSH client fingerprint: %(client_fingerprint)s",
-                client_fingerprint=client_fingerprint)
-        log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
-            kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
-            compCS=compCS, langCS=langCS, format="Remote SSH version: %(version)s")
+                client_fingerprint=client_fingerprint,
+                kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
+                compCS=compCS, langCS=langCS
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
