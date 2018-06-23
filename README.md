@@ -56,6 +56,8 @@ For Python dependencies, see requirements.txt
 * `data/userdb.txt` - credentials allowed or disallowed to access the honeypot
 * `dl/` - files transferred from the attacker to the honeypot are stored here
 * `honeyfs/` - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
+* `honeyfs/etc/issue.net` - pre-login banner
+* `honeyfs/etc/motd` - post-login banner
 * `log/cowrie.json` - transaction output in JSON format
 * `log/cowrie.log` - log/debug output
 * `log/tty/*.log` - session logs

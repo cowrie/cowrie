@@ -217,3 +217,7 @@ pip install --upgrade -r requirements.txt
 bin/cowrie start
 ```
 
+# Modifying Cowrie
+
+The pre-login banner can be set by creating the file `honeyfs/etc/issue.net`.
+The post-login banner can be customized by editing `honeyfs/etc/motd`.
