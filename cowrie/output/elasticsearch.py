@@ -21,6 +21,7 @@ class Output(cowrie.core.output.Output):
         self.port = CONFIG.get('output_elasticsearch', 'port')
         self.index =CONFIG.get('output_elasticsearch', 'index')
         self.type = CONFIG.get('output_elasticsearch', 'type')
+        self.pipeline = CONFIG.get('output_elasticsearch', 'pipeline')
         cowrie.core.output.Output.__init__(self)
 
 
@@ -44,4 +45,4 @@ class Output(cowrie.core.output.Output):
             if i.startswith('log_'):
                 del logentry[i]
 
-        self.es.index(index=self.index, doc_type=self.type, body=logentry)
+        self.es.index(index=self.index, doc_type=self.type, body=logentry, pipeline=self.pipeline)

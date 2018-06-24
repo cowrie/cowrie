@@ -488,6 +488,7 @@ logfile = log/cowrie.json
 #port = 9200
 #index = cowrie
 #type = cowrie
+#pipeline = geoip
 
 
 # Send login attemp information to SANS DShield
