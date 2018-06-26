@@ -65,12 +65,11 @@ class Options(usage.Options):
     This defines commandline options and flags
     """
     # The '-c' parameters is currently ignored
-    optParameters = [
-        ]
+    optParameters = []
 
     optFlags = [
         ['help', 'h', 'Display this help and exit.']
-        ]
+    ]
 
 
 
@@ -186,7 +185,7 @@ Makes a Cowrie SSH/Telnet honeypot.
                 core.checkers.HoneypotPasswordChecker())
 
             if CONFIG.has_option('honeypot', 'auth_none_enabled') and \
-                     CONFIG.getboolean('honeypot', 'auth_none_enabled') is True:
+                    CONFIG.getboolean('honeypot', 'auth_none_enabled') is True:
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 
