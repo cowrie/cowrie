@@ -178,8 +178,8 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         channel.CowrieSSHChannel.channelOpen(self, specificData)
         return
         log.msg("channelOpen")
-        helper = endpoints._NewConnectionHelper(reactor, self.host, self.port,
-            self.user, self.keys, self.password, None, self.knownHosts, None)
+        helper = endpoints._NewConnectionHelper(reactor, self.host, self.port, self.user, self.keys,
+                                                self.password, None, self.knownHosts, None)
         log.msg("helper = "+repr(helper))
         d = helper.secureConnection()
         d.addCallback(self._cbConnect)
@@ -209,8 +209,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg(eventid='cowrie.client.var', format='request_env: %(name)s=%(value)s',
-            name=name, value=value)
+        log.msg(eventid='cowrie.client.var', format='request_env: %(name)s=%(value)s', name=name, value=value)
         # FIXME: This only works for shell, not for exec command
         if self.session:
             self.session.environ[name] = value
@@ -247,8 +246,8 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg('request_exec "{}"'.format(cmd))
         pf = _ProtocolFactory(self.client.transport)
         #ep = endpoints.SSHCommandClientEndpoint.existingConnection(self.conn, cmd).connect(pf)
-        ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd,
-            self.user, self.host, port=self.port, password=self.password).connect(pf)
+        ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd, self.user, self.host,
+                                                              port=self.port, password=self.password).connect(pf)
         return 1
 
 
@@ -257,9 +256,8 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         """
         log.msg('request_shell')
         pf = _ProtocolFactory(self.client.transport)
-        ep = endpoints.SSHShellClientEndpoint.newConnection(reactor,
-            self.user, self.host, port=self.port,
-            password=self.password).connect(pf)
+        ep = endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
+                                                            port=self.port, password=self.password).connect(pf)
         return 1
 
 
