@@ -43,8 +43,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.redirFiles = set()
 
         try:
-            self.bytesReceivedLimit = CONFIG.getint('honeypot',
-                'download_limit_size')
+            self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
         except:
             self.bytesReceivedLimit = 0
 
@@ -71,17 +70,16 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.ttylogEnabled:
             self.ttylogFile = '%s/%s-%s-%s%s.log' % \
                 (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-                transportId, channelId, self.type)
+                 transportId, channelId, self.type)
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
             log.msg(eventid='cowrie.log.open',
-                ttylog=self.ttylogFile,
-                format='Opening TTY Log: %(ttylog)s')
+                    ttylog=self.ttylogFile,
+                    format='Opening TTY Log: %(ttylog)s')
 
         self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
-            (self.downloadPath,
-            time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
+            (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
 
         if self.type == 'e':
             self.stdinlogOpen = True
@@ -101,8 +99,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             data = data.encode("utf-8")
 
         if self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(self.ttylogFile, len(data),
-                ttylog.TYPE_OUTPUT, time.time(), data)
+            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data)
             self.ttylogSize += len(data)
 
         insults.ServerProtocol.write(self, data)
@@ -113,8 +110,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         Input received from user
         """
         self.bytesReceived += len(data)
-        if self.bytesReceivedLimit \
-          and self.bytesReceived > self.bytesReceivedLimit:
+        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             log.msg(format='Data upload limit reached')
             #self.loseConnection()
             self.eofReceived()
@@ -124,8 +120,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             with open(self.stdinlogFile, 'ab') as f:
                 f.write(data)
         elif self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(self.ttylogFile, len(data),
-                ttylog.TYPE_INPUT, time.time(), data)
+            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data)
 
         # prevent crash if something like this was passed:
         # echo cmd ; exit; \n\n
