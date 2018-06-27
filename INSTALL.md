@@ -25,6 +25,8 @@
     * [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
 
+**Note**: All commands are run as root
+
 ## Step 0: Change existing sshd listening port
 
 Cowrie is an SSH honeypot. It is likely you will want it to accept
@@ -63,13 +65,12 @@ On Debian based systems:
 ## Install without systemd support
 This section explains how to install Cowrie on a system without systemd.
 
-**Note**: All commands are run as root
 
 ### Step 3: Create a user account
 It's strongly recommended to run with a dedicated non-root user id:
 
 ```
-# useradd -r -s /bin/bash -U -M cowrie
+# useradd -r -s /bin/bash -U -d /opt/cowrie cowrie
 ```
 
 ### Step 4: Setup Virtual Environment
@@ -177,13 +178,12 @@ Supported systems are:
 - Debian 9 alias Stretch and higher
 - Ubuntu 18.04 alias Bionic Beaver and higher
 
-**Note**: All commands are run as root.
 
 ### Step 3: Create a user account
 It's strongly recommended to run with a dedicated non-root user id:
 
 ```
-# useradd -r -s /bin/false -U -M cowrie
+# useradd -r -s /bin/false -U -d /opt/cowrie cowrie
 ```
 
 ### Step 4: Setup Virtual Environment
