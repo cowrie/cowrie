@@ -24,7 +24,7 @@ from twisted.python import log
 
 from cowrie.core.config import CONFIG
 
-PICKLE = pickle.load(open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
+PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
 
 A_NAME, \
     A_TYPE, \
