@@ -31,7 +31,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     services = {
         b'ssh-userauth': userauth.HoneyPotSSHUserAuthServer,
         b'ssh-connection': connection.CowrieSSHConnection,
-        }
+    }
     starttime = None
     privateKeys = None
     publicKeys = None
@@ -59,11 +59,13 @@ class CowrieSSHFactory(factory.SSHFactory):
         rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys()
         dsaPubKeyString, dsaPrivKeyString = cowriekeys.getDSAKeys()
         self.publicKeys = {
-          b'ssh-rsa': keys.Key.fromString(data=rsaPubKeyString),
-          b'ssh-dss': keys.Key.fromString(data=dsaPubKeyString)}
+            b'ssh-rsa': keys.Key.fromString(data=rsaPubKeyString),
+            b'ssh-dss': keys.Key.fromString(data=dsaPubKeyString)
+        }
         self.privateKeys = {
-          b'ssh-rsa': keys.Key.fromString(data=rsaPrivKeyString),
-          b'ssh-dss': keys.Key.fromString(data=dsaPrivKeyString)}
+            b'ssh-rsa': keys.Key.fromString(data=rsaPrivKeyString),
+            b'ssh-dss': keys.Key.fromString(data=dsaPrivKeyString)
+        }
 
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
@@ -115,9 +117,17 @@ class CowrieSSHFactory(factory.SSHFactory):
             t.supportedKeyExchanges = ske
 
         # Reorder supported ciphers to resemble current openssh more
-        t.supportedCiphers = [b'aes128-ctr', b'aes192-ctr', b'aes256-ctr',
-            b'aes128-cbc', b'3des-cbc', b'blowfish-cbc', b'cast128-cbc',
-            b'aes192-cbc', b'aes256-cbc']
+        t.supportedCiphers = [
+            b'aes128-ctr',
+            b'aes192-ctr',
+            b'aes256-ctr',
+            b'aes128-cbc',
+            b'3des-cbc',
+            b'blowfish-cbc',
+            b'cast128-cbc',
+            b'aes192-cbc',
+            b'aes256-cbc'
+        ]
         t.supportedPublicKeys = [b'ssh-rsa', b'ssh-dss']
         t.supportedMACs = [b'hmac-md5', b'hmac-sha1']
         t.supportedCompressions = [b'zlib@openssh.com', b'zlib', b'none']
