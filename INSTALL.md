@@ -49,7 +49,7 @@ This may disconnect your ssh session. Reconnect using the new port number.
 ## Step 1: Install dependencies
 
 Install system-wide support for Python virtual environments
-and other dependencies. Actual Python packages are installed later.
+and other dependencies. Python packages are installed later.
 
 On Debian based systems:
 
@@ -122,11 +122,9 @@ Cowrie runs with its own user but we still need to be able
 to read/write into some directories
 
 ```
-# chown -R cowrie:cowrie /opt/cowrie/var
-# chown -R cowrie:cowrie /opt/cowrie/log
-# chown cowrie:cowrie /opt/cowrie/dl
-# chown root:cowrie /opt/cowrie/data
-# chmod 775 /opt/cowrie/data
+# chgrp -R cowrie /opt/cowrie
+# chmod -R ug+rX /opt/cowrie
+# chmod -R g+w /opt/cowrie/var /opt/cowrie/log /opt/cowrie/dl /opt/cowrie/data
 ```
 
 _Note_: You will need to update permissions after you upgrade Cowrie from git.
