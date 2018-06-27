@@ -59,7 +59,7 @@ class InBetween(protocol.Protocol):
 
     transport = None # Transport is the back-end the ssh-server
     client = None # Client is the front-end, the ssh-client
-    buf = "" # buffer to send to back-end
+    buf = b"" # buffer to send to back-end
 
     def makeConnection(self, transport):
         protocol.Protocol.makeConnection(self, transport)
@@ -133,8 +133,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
     for forwarding incoming requests to the backend.
     """
     name = b'proxy-frontend-session'
-    buf = b''
-
+    buf = b""
     keys = []
     host = ""
     port = 22
@@ -146,6 +145,9 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         channel.CowrieSSHChannel.__init__(self, *args, **kw)
         #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
+        keyPath = CONFIG.get('proxy', 'private_key')
+        self.keys.append(keys.Key.fromFile(keyPath))
+
         try:
             keyPath = CONFIG.get('proxy', 'private_key')
             self.keys.append(keys.Key.fromFile(keyPath))
@@ -154,7 +156,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
 
         knownHostsPath = CONFIG.get('proxy', 'known_hosts')
         self.knownHosts = KnownHostsFile.fromPath(knownHostsPath)
-        log.msg("knownHosts = "+repr(self.knownHosts))
 
         self.host = CONFIG.get('proxy', 'host')
         self.port = CONFIG.getint('proxy', 'port')
@@ -164,6 +165,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         except:
             self.password = None
 
+        log.msg("knownHosts = "+repr(self.knownHosts))
         log.msg("host = "+self.host)
         log.msg("port = "+str(self.port))
         log.msg("user = "+self.user)
@@ -212,8 +214,8 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg(eventid='cowrie.client.var', format='request_env: %(name)s=%(value)s',
             name=name, value=value)
         # FIXME: This only works for shell, not for exec command
-        if self.session:
-            self.session.environ[name] = value
+        # if self.session:
+        #     self.session.environ[name] = value
         return 0
 
 
