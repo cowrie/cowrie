@@ -265,7 +265,7 @@ class HoneyPotFilesystem(object):
             # but it's likely better to return nothing than suspiciously fail.)
             return ''
         elif f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
-            return open(CONFIG.get('honeypot', 'data_path') + '/arch/' + self.arch, 'rb').read()
+            return open(CONFIG.get('honeypot', 'share_path') + '/arch/' + self.arch, 'rb').read()
 
 
     def mkfile(self, path, uid, gid, size, mode, ctime=None):

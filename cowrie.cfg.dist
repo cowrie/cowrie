@@ -47,6 +47,12 @@ download_path = dl
 data_path = data
 
 
+# Directory for static data files
+#
+# (default: share/cowrie)
+share_path = share/cowrie
+
+
 # Directory where virtual file contents are kept in.
 #
 # This is only used by commands like 'cat' to display the contents of files.
