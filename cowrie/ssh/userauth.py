@@ -98,8 +98,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         password = getNS(packet[1:])[0]
         srcIp = self.transport.transport.getPeer().host
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
-        return self.portal.login(c, srcIp,
-            IConchUser).addErrback(self._ebPassword)
+        return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
 
     def auth_keyboard_interactive(self, packet):
@@ -111,15 +110,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         Overridden to pass src_ip to credentials.PluggableAuthenticationModulesIP
         """
         if self._pamDeferred is not None:
-            self.transport.sendDisconnect(
-                    DISCONNECT_PROTOCOL_ERROR,
-                    "only one keyboard interactive attempt at a time")
+            self.transport.sendDisconnect(DISCONNECT_PROTOCOL_ERROR, "only one keyboard interactive attempt at a time")
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
-        c = credentials.PluggableAuthenticationModulesIP(self.user,
-            self._pamConv, src_ip)
-        return self.portal.login(c, src_ip,
-            IConchUser).addErrback(self._ebPassword)
+        c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
+        return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
 
 
     def _pamConv(self, items):
