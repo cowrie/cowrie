@@ -2,8 +2,8 @@
 # Installing Cowrie in nine steps.
 
 * [Step 0: Change sshd listening port](#step-0-change-sshd-listening-port)
+* [Step 1: Install dependencies](#step-1-install-dependencies)
 * [Install without systemd support](#install-without-systemd-support)
-	* [Step 1: Install dependencies](#step-1-install-dependencies)
 	* [Step 2: Create a user account](#step-2-create-a-user-account)
 	* [Step 3: Checkout the code](#step-3-checkout-the-code)
 	* [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
@@ -13,7 +13,6 @@
 	* [Step 8: Starting Cowrie](#step-8-turning-on-cowrie)
 	* [Step 9: Port redirection](#step-9-port-redirection)
 * [Install with systemd support](#install-with-systemd-support)
-	* [Step 1: Install dependencies](#step-1-install-dependencies)
 	* [Step 2: Create a user account](#step-2-create-a-user-account)
 	* [Step 3: Checkout the code](#step-3-checkout-the-code)
 	* [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
@@ -27,38 +26,40 @@
 	* [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
 
-
-## Step 0: Change sshd listening port
+## Step 0: Change exiseting sshd listening port
 
 Cowrie is an SSH honeypot. It is likely you will want it to accept
 connections on the normal SSH port (22).  However, this is the same
-port you are likely using for administration. As the first step
-modify the SSH listening port for your system.
+port you are likely using for administration. To start modify the
+SSH listening port for your system.
 
-As root, modify `/etc/ssh/sshd_config` and set the `Port` variable to a port you like.
+As root, edit `/etc/ssh/sshd_config` and set the `Port` variable
+to your preferred port.
+
+_If you use a host firewall (iptables), you must open up this new
+port number in your host firewall._
 
 ```
 # systemctl daemon-reload
 # systemctl restart ssh.service
 ```
-This will likely disconnect your ssh session. Reconnect using the new port number.
+This may disconnect your ssh session. Reconnect using the new port number.
 
-Cowrie can be installed using `systemd` on modern Linux systems or it can function without.
+## Step 1: Install dependencies
+
+Install system-wide support for Python virtual environments
+and other dependencies. Actual Python packages are installed later.
+
+On Debian based systems:
+
+```
+# apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal
+```
 
 ## Install without systemd support
 This section explains how to install Cowrie on a system without systemd.
 
 **Note**: All commands are run as root
-
-### Step 1: Install dependencies
-Install system-wide support for Python virtual environments
-and other dependencies. Actual Python packages are installed later.
-
-On Debian based systems (last verified on Debian 9, 2017-07-25):
-
-```
-# apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal
-```
 
 ### Step 2: Create a user account
 It's strongly recommended to run with a dedicated non-root user id:
@@ -178,15 +179,6 @@ Supported systems are:
 - Ubuntu 18.04 alias Bionic Beaver and higher
 
 **Note**: All commands are run as root.
-
-### Step 1: Install dependencies
-Install system-wide support for Python virtual environments and other dependencies.
-Actual Python packages are installed later.
-
-On Debian based systems:
-```
-# apt install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal
-```
 
 ### Step 2: Create a user account
 It's strongly recommended to run with a dedicated non-root user id:
