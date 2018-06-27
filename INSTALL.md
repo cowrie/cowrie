@@ -1,7 +1,7 @@
 
 # Installing Cowrie in nine steps.
 
-* [Step 0: Change sshd listening port]
+* [Step 0: Change sshd listening port](#step-0-change-sshd-listening-port)
 * [Install without systemd support](#install-without-systemd-support)
 	* [Step 1: Install dependencies](#step-1-install-dependencies)
 	* [Step 2: Create a user account](#step-2-create-a-user-account)
@@ -35,9 +35,7 @@ connections on the normal SSH port (22).  However, this is the same
 port you are likely using for administration. As the first step
 modify the SSH listening port for your system.
 
-As root:
-
-Modify `/etc/ssh/sshd_config` and set the `Port` variable to a port you like.
+As root, modify `/etc/ssh/sshd_config` and set the `Port` variable to a port you like.
 
 ```
 # systemctl daemon-reload
@@ -45,15 +43,15 @@ Modify `/etc/ssh/sshd_config` and set the `Port` variable to a port you like.
 ```
 This will likely disconnect your ssh session. Reconnect using the new port number.
 
-Cowrie can be installed using `systemd` on modern Linux systems or can function without.
+Cowrie can be installed using `systemd` on modern Linux systems or it can function without.
 
 ## Install without systemd support
-This chapter explains how to install Cowrie on systems where you don't have systemd support.
+This section explains how to install Cowrie on a system without systemd.
 
 **Note**: All commands are run as root
 
 ### Step 1: Install dependencies
-First install system-wide support for Python virtual environments
+Install system-wide support for Python virtual environments
 and other dependencies. Actual Python packages are installed later.
 
 On Debian based systems (last verified on Debian 9, 2017-07-25):
@@ -67,7 +65,6 @@ It's strongly recommended to run with a dedicated non-root user id:
 
 ```
 # useradd -r -s /bin/bash -U -M cowrie
-
 ```
 
 ### Step 3: Checkout the code
@@ -85,7 +82,7 @@ Next create a virtual environment:
 Alternatively, create a Python3 virtual environment (under development)
 
 ```
-# virtualenv --python=python3 /opt/cowrie-env
+# virtualenv --python=python3 /opt/cowrie/cowrie-env
 ```
 
 Activate the virtual environment and install packages
@@ -103,7 +100,7 @@ The configuration for Cowrie is stored in `cowrie.cfg.dist` and
 cowrie.cfg take precedence. The .dist file can be overwritten by
 upgrades, cowrie.cfg will not be touched. To run with a standard
 configuration, there is no need to change anything. To enable telnet,
-for example, create cowrie.cfg and input only the following:
+create cowrie.cfg and input only the following:
 
 ```
 [telnet]
@@ -131,7 +128,7 @@ to read/write into some directories
 # chmod 775 /opt/cowrie/data
 ```
 
-_Note_: You will need to fix this permissions after you upgrade Cowrie from git.
+_Note_: You will need to update permissions after you upgrade Cowrie from git.
 
 ### Step 8: Starting Cowrie
 Start Cowrie with the `bin/cowrie` command. You can add the cowrie/bin
@@ -145,9 +142,8 @@ the environment called "cowrie-env"
 
 ### Step 9: Port redirection
 
-Cowrie runs by default on port 2222. This can be modified in the
-configuration file. The following firewall rule will forward incoming
-traffic on port 22 to port 2222.
+Cowrie runs by default on port 2222. The following firewall rule
+will forward incoming traffic on port 22 to port 2222.
 
 ```
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
@@ -174,7 +170,7 @@ Edit `bin/cowrie` and modify the `AUTHBIND_ENABLED` setting
 Change `listen_port` to `22` in `cowrie.cfg`
 
 ## Install with systemd support
-This chapter explains how to install Cowrie to your system when you can and should use systemd.
+This chapter explains how to install Cowrie to your system using systemd.
 
 Supported systems are:
 
@@ -184,7 +180,7 @@ Supported systems are:
 **Note**: All commands are run as root.
 
 ### Step 1: Install dependencies
-First install system-wide support for Python virtual environments and other dependencies.
+Install system-wide support for Python virtual environments and other dependencies.
 Actual Python packages are installed later.
 
 On Debian based systems:
@@ -196,43 +192,43 @@ On Debian based systems:
 It's strongly recommended to run with a dedicated non-root user id:
 
 ```
-$ useradd -r -s /bin/false -U -M cowrie
+# useradd -r -s /bin/false -U -M cowrie
 ```
 
 ### Step 3: Checkout the code
 ```
-$ git clone http://github.com/micheloosterhof/cowrie /opt/cowrie
+# git clone http://github.com/micheloosterhof/cowrie /opt/cowrie
 ```
 
 ### Step 4: Setup Virtual Environment
 Next create your virtual environment:
 
 ```
-$ virtualenv /opt/cowrie-env
+# virtualenv /opt/cowrie-env
 ```
 
 Alternatively, create a Python3 virtual environment (under development)
 
 ```
-$ virtualenv --python=python3 /opt/cowrie-env
+# virtualenv --python=python3 /opt/cowrie-env
 ```
 
 Activate the virtual environment and install packages
 
 ```
-$ source /opt/cowrie-env/bin/activate
-(cowrie-env) $ pip install --upgrade pip
-(cowrie-env) $ pip install --upgrade -r /opt/cowrie/requirements.txt
-(cowrie-env) $ deactivate
+# source /opt/cowrie-env/bin/activate
+(cowrie-env) # pip install --upgrade pip
+(cowrie-env) # pip install --upgrade -r /opt/cowrie/requirements.txt
+(cowrie-env) # deactivate
 ```
 
 ### Step 5: Create folders and fix permissions
 
 ```
-$ chown root:cowrie /opt/cowrie/data
-$ chmod 0775 /opt/cowrie/data
-$ mkdir -p /var/lib/cowrie/{downloads,tty}
-$ chmod -R cowrie:cowrie /var/lib/cowrie
+# chown root:cowrie /opt/cowrie/data
+# chmod 0775 /opt/cowrie/data
+# mkdir -p /var/lib/cowrie/{downloads,tty}
+# chmod -R cowrie:cowrie /var/lib/cowrie
 ```
 
 ### Step 6: Install systemd, rsyslog and logrotate configurations
@@ -240,9 +236,9 @@ This will prepare your system to run Cowrie with systemd, collect all
 logs to /var/log/cowrie and having logrotate taking care of it.
 
 ```
-$ cp /opt/cowrie/doc/systemd/etc/logrotate.d/cowrie /etc/logrotate.d
-$ cp /opt/cowrie/doc/systemd/etc/rsyslog.d/cowrie.conf /etc/rsyslog.d
-$ cp /opt/cowrie/doc/systemd/etc/systemd/system/* /etc/systemd/system
+# cp /opt/cowrie/doc/systemd/etc/logrotate.d/cowrie /etc/logrotate.d
+# cp /opt/cowrie/doc/systemd/etc/rsyslog.d/cowrie.conf /etc/rsyslog.d
+# cp /opt/cowrie/doc/systemd/etc/systemd/system/* /etc/systemd/system
 ```
 
 ### Step 7: Install Cowrie configurations file
@@ -254,7 +250,7 @@ configuration, there is no need to change anything. The version below
 is prepared to run with systemd:
 
 ```
-$ cp /opt/cowrie/doc/systemd/cowrie.cfg /opt/cowrie
+# cp /opt/cowrie/doc/systemd/cowrie.cfg /opt/cowrie
 ```
 
 To enable Telnet modify `/opt/cowrie/cowrie.cfg`
@@ -273,17 +269,17 @@ First we need to reload some other services. This is only needed when
 something in the config files changed.
 
 ```
-$ systemctl enable cowrie.socket
-$ systemctl enable cowrie.service
-$ systemctl daemon-reload
-$ systemctl restart rsyslog.service
-$ systemctl restart logrotate.service
+# systemctl enable cowrie.socket
+# systemctl enable cowrie.service
+# systemctl daemon-reload
+# systemctl restart rsyslog.service
+# systemctl restart logrotate.service
 ```
 
-And start Cowrie:
+Start Cowrie:
 
 ```
-$ systemctl start cowrie.service
+# systemctl start cowrie.service
 ```
 
 ### Step 9: Accept connections
@@ -311,11 +307,6 @@ All port redirection commands are system-wide and need to be executed as root.
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222.
-
-**Note**: Before setting this rule you will need to reconfigure your ssh
-daemon to listen on another port or to allow in iptables that your IP
-can bypass this rule. If not you will not be able to login into your
-machine without rebooting it!
 
 ```
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
