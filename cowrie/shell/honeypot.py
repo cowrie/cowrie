@@ -485,8 +485,7 @@ class HoneyPotShell(object):
 
         newbuf = ''
         if len(files) == 1:
-            newbuf = ' '.join(l.split()[:-1] + \
-                ['%s%s' % (basedir, files[0][fs.A_NAME])])
+            newbuf = ' '.join(l.split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
