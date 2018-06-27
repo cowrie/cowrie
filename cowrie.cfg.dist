@@ -42,7 +42,7 @@ download_path = dl
 
 
 # Directory for miscellaneous data files, such as the password database.
-#
+# (DEPRECATED: will be removed in near future)
 # (default: data)
 data_path = data
 
@@ -51,6 +51,12 @@ data_path = data
 #
 # (default: share/cowrie)
 share_path = share/cowrie
+
+
+# Directory for config files
+#
+# (default: share/cowrie)
+etc_path = etc
 
 
 # Directory where virtual file contents are kept in.
