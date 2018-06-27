@@ -101,13 +101,13 @@ def formatCef(logentry):
     cefExtension = ' '.join(cefList)
 
     cefString = "CEF:0|" + \
-      cefVendor + "|" + \
-      cefProduct + "|" + \
-      cefVersion + "|" + \
-      cefSignature + "|" + \
-      cefName + "|" + \
-      cefSeverity + "|" + \
-      cefExtension
+                cefVendor + "|" + \
+                cefProduct + "|" + \
+                cefVersion + "|" + \
+                cefSignature + "|" + \
+                cefName + "|" + \
+                cefSeverity + "|" + \
+                cefExtension
 
     return cefString
 

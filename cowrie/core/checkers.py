@@ -68,8 +68,7 @@ class HoneypotPasswordChecker(object):
     Checker that accepts "keyboard-interactive" and "password"
     """
 
-    credentialInterfaces = (credentials.IUsernamePasswordIP,
-        credentials.IPluggableAuthenticationModulesIP)
+    credentialInterfaces = (credentials.IUsernamePasswordIP, credentials.IPluggableAuthenticationModulesIP)
 
     def requestAvatarId(self, credentials):
         """
@@ -117,23 +116,20 @@ class HoneypotPasswordChecker(object):
             if hasattr(modules[authmodule], authclass):
                 authname = getattr(modules[authmodule], authclass)
             else:
-                log.msg('auth_class: %s not found in %s' %
-                    (authclass, authmodule))
+                log.msg('auth_class: %s not found in %s' % (authclass, authmodule))
 
         theauth = authname()
 
         if theauth.checklogin(theusername, thepassword, ip):
             log.msg(eventid='cowrie.login.success',
                     format='login attempt [%(username)s/%(password)s] succeeded',
-                    username=theusername, password=thepassword)
-                    #username=theusername.encode('string-escape'),
-                    #password=thepassword.encode('string-escape'))
+                    username=theusername,
+                    password=thepassword)
             return True
         else:
             log.msg(eventid='cowrie.login.failed',
                     format='login attempt [%(username)s/%(password)s] failed',
-                    username=theusername, password=thepassword)
-                    #username=theusername.encode('string-escape'),
-                    #password=thepassword.encode('string-escape'))
+                    username=theusername,
+                    password=thepassword)
             return False
 

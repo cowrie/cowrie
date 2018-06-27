@@ -13,9 +13,8 @@ import uuid
 
 from twisted.python import log
 from twisted.internet import protocol
-from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, \
-                                 ITelnetProtocol, \
-                                 SGA, NAWS, LINEMODE, TelnetTransport, AlreadyNegotiating
+from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, ITelnetProtocol,\
+    SGA, NAWS, LINEMODE, TelnetTransport, AlreadyNegotiating
 from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.credentials import UsernamePasswordIP
@@ -55,8 +54,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.starttime = time.time()
 
         # hook protocol
-        self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol,
-                                         self.portal)
+        self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol, self.portal)
         protocol.ServerFactory.startFactory(self)
         log.msg("Ready to accept Telnet connections")
 
@@ -230,10 +228,14 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self.setTimeout(300)
 
         log.msg(eventid='cowrie.session.connect',
-           format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
-           src_ip=self.transport.getPeer().host, src_port=self.transport.getPeer().port,
-           dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           session=self.transportId, sessionno='T'+str(sessionno), protocol='telnet')
+                format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
+                src_ip=self.transport.getPeer().host,
+                src_port=self.transport.getPeer().port,
+                dst_ip=self.transport.getHost().host,
+                dst_port=self.transport.getHost().port,
+                session=self.transportId,
+                sessionno='T'+str(sessionno),
+                protocol='telnet')
         TelnetTransport.connectionMade(self)
 
 
@@ -257,8 +259,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         TelnetTransport.connectionLost(self, reason)
         duration = time.time() - self.startTime
         log.msg(eventid='cowrie.session.closed',
-            format='Connection lost after %(duration)d seconds',
-            duration=duration)
+                format='Connection lost after %(duration)d seconds',
+                duration=duration)
 
 
     def willChain(self, option):

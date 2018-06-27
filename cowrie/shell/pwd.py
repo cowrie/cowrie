@@ -45,8 +45,7 @@ class Passwd(object):
     """
 
     def __init__(self):
-        self.passwd_file = '%s/etc/passwd' % (CONFIG.get('honeypot',
-            'contents_path'),)
+        self.passwd_file = '%s/etc/passwd' % (CONFIG.get('honeypot', 'contents_path'),)
         self.load()
 
 
@@ -128,8 +127,7 @@ class Group(object):
     """
 
     def __init__(self):
-        self.group_file = '%s/etc/group' % (CONFIG.get('honeypot',
-            'contents_path'),)
+        self.group_file = '%s/etc/group' % (CONFIG.get('honeypot', 'contents_path'),)
         self.load()
 
 

@@ -58,7 +58,7 @@ class command_adduser(HoneyPotCommand):
             (O_O, 'Deleting group `%(username)s\' (1001) ...\n'),
             (O_O, 'Deleting home directory `/home/%(username)s\' ...\n'),
             (O_Q, 'Try again? [Y/n] '),
-            ]
+        ]
         self.do_output()
 
 

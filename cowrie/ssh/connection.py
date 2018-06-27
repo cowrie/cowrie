@@ -56,8 +56,11 @@ class CowrieSSHConnection(connection.SSHConnection):
             wantReply = 0
             self.transport.sendPacket(MSG_CHANNEL_SUCCESS, struct.pack('>L', self.localToRemoteChannel[localChannel]))
 
-        d = defer.maybeDeferred(log.callWithLogger, channel,
-                channel.requestReceived, requestType, rest[1:])
+        d = defer.maybeDeferred(log.callWithLogger,
+                                channel,
+                                channel.requestReceived,
+                                requestType,
+                                rest[1:])
         if wantReply:
             d.addCallback(self._cbChannelRequest, localChannel)
             d.addErrback(self._ebChannelRequest, localChannel)

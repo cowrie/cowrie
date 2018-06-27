@@ -195,12 +195,16 @@ class hpclient(object):
         self.unpacker.feed(d)
         try:
             for opcode, data in self.unpacker:
-                if self.debug: log.msg('hpclient msg opcode {0:x} data {1}'.format(opcode,
-                    ''.join('{:02x}'.format(x) for x in data)))
+                if self.debug: log.msg('hpclient msg opcode {0:x} data {1}'.format(
+                    opcode,
+                    ''.join('{:02x}'.format(x) for x in data))
+                )
                 if opcode == OP_INFO:
                     name, rand = strunpack8(data)
-                    if self.debug: log.msg('hpclient server name {0} rand {1}'.format(name,
-                    ''.join('{:02x}'.format(x) for x in rand)))
+                    if self.debug: log.msg('hpclient server name {0} rand {1}'.format(
+                        name,
+                        ''.join('{:02x}'.format(x) for x in rand))
+                    )
                     self.send(msgauth(rand, self.ident, self.secret))
                     self.state = 'GOTINFO'
 
@@ -208,11 +212,9 @@ class hpclient(object):
                     ident, data = strunpack8(data)
                     chan, data = strunpack8(data)
                     if self.debug:
-                        log.msg('publish to {0} by {1}: {2}'.format(chan, ident,
-                                 ''.join('{:02x}'.format(x) for x in data)))
+                        log.msg('publish to {0} by {1}: {2}'.format(chan, ident, ''.join('{:02x}'.format(x) for x in data)))
                 elif opcode == OP_ERROR:
-                    log.err('errormessage from server: {0}'.format(
-                                 ''.join('{:02x}'.format(x) for x in data)))
+                    log.err('errormessage from server: {0}'.format(''.join('{:02x}'.format(x) for x in data)))
                 else:
                     log.err('unknown opcode message: {0:x}'.format(opcode))
         except BadClient:
@@ -294,13 +296,24 @@ class Output(cowrie.core.output.Output):
         """
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
-            self.meta[session] = {'session':session,
-                'startTime': entry["timestamp"], 'endTime':'',
-                'peerIP': entry["src_ip"], 'peerPort': entry["src_port"],
-                'hostIP': entry["dst_ip"], 'hostPort': entry["dst_port"],
-                'loggedin': None, 'credentials':[], 'commands':[],
-                'unknownCommands':[], 'urls':[], 'version': None,
-                'ttylog': None, 'hashes': set(), 'protocol': entry['protocol']}
+            self.meta[session] = {
+                'session':session,
+                'startTime': entry["timestamp"],
+                'endTime':'',
+                'peerIP': entry["src_ip"],
+                'peerPort': entry["src_port"],
+                'hostIP': entry["dst_ip"],
+                'hostPort': entry["dst_port"],
+                'loggedin': None,
+                'credentials':[],
+                'commands':[],
+                'unknownCommands':[],
+                'urls':[],
+                'version': None,
+                'ttylog': None,
+                'hashes': set(),
+                'protocol': entry['protocol']
+            }
 
         elif entry["eventid"] == 'cowrie.login.success':
             u, p = entry['username'], entry['password']

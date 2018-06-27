@@ -64,8 +64,12 @@ class SSHSessionForCowrieUser(object):
         """
         """
         self.environ['TERM'] = terminal
-        log.msg(eventid='cowrie.client.size', width=windowSize[0], height=windowSize[1],
-            format='Terminal Size: %(width)s %(height)s')
+        log.msg(
+            eventid='cowrie.client.size',
+            width=windowSize[0],
+            height=windowSize[1],
+            format='Terminal Size: %(width)s %(height)s'
+        )
         self.windowSize = windowSize
         return None
 

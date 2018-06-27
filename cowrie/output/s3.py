@@ -28,11 +28,11 @@ class Output(cowrie.core.output.Output):
         self.session = get_session()
 
         try:
-          if CONFIG.get("output_s3", "access_key_id") and CONFIG.get("output_s3", "secret_access_key"):
-            self.session.set_credentials(
-                CONFIG.get("output_s3", "access_key_id"),
-                CONFIG.get("output_s3", "secret_access_key"),
-            )
+            if CONFIG.get("output_s3", "access_key_id") and CONFIG.get("output_s3", "secret_access_key"):
+                self.session.set_credentials(
+                    CONFIG.get("output_s3", "access_key_id"),
+                    CONFIG.get("output_s3", "secret_access_key"),
+                )
         except NoOptionError:
             log.msg("No AWS credentials found in config - using botocore global settings.")
 

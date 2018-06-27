@@ -79,10 +79,11 @@ class command_sudo(HoneyPotCommand):
         """
         """
         self.errorWrite(
-'''Sudo version 1.8.5p2
-Sudoers policy plugin version 1.8.5p2
-Sudoers file grammar version 41
-Sudoers I/O plugin version 1.8.5p2\n''')
+            '''Sudo version 1.8.5p2
+            Sudoers policy plugin version 1.8.5p2
+            Sudoers file grammar version 41
+            Sudoers I/O plugin version 1.8.5p2\n'''
+        )
         self.exit()
 
 
@@ -118,8 +119,7 @@ Sudoers I/O plugin version 1.8.5p2\n''')
         if len(parsed_arguments) > 0:
             line = ' '.join(parsed_arguments)
             cmd = parsed_arguments[0]
-            cmdclass = self.protocol.getCommand(cmd,
-                self.environ['PATH'].split(':'))
+            cmdclass = self.protocol.getCommand(cmd, self.environ['PATH'].split(':'))
 
             if cmdclass:
                 #log.msg(eventid='cowrie.command.success',

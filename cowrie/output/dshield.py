@@ -80,27 +80,40 @@ class Output(cowrie.core.output.Output):
 
         log_output = ''
         for attempt in self.batch:
-            log_output += '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(attempt['date'],
-                attempt['time'], attempt['timezone'], attempt['source_ip'],
-                attempt['user'], attempt['password'])
+            log_output += '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(
+                attempt['date'],
+                attempt['time'],
+                attempt['timezone'],
+                attempt['source_ip'],
+                attempt['user'],
+                attempt['password']
+            )
 
         nonce = base64.b64decode(_nonceb64)
-        digest = base64.b64encode(hmac.new('{0}{1}'.format(nonce, self.userid),
-            base64.b64decode(self.auth_key), hashlib.sha256).digest())
+        digest = base64.b64encode(
+            hmac.new(
+                '{0}{1}'.format(nonce, self.userid),
+                base64.b64decode(self.auth_key),
+                hashlib.sha256).digest()
+        )
         auth_header = 'credentials={0} nonce={1} userid={2}'.format(digest, _nonceb64, self.userid)
-        headers = {'X-ISC-Authorization': auth_header,
-                  'Content-Type':'text/plain'}
+        headers = {
+            'X-ISC-Authorization': auth_header,
+            'Content-Type':'text/plain'
+        }
         #log.msg(headers)
 
         if self.debug:
             log.msg('dshield: posting: {}'.format(log_output))
 
-        req = threads.deferToThread(requests.request,
-                                method ='PUT',
-                                url = 'https://secure.dshield.org/api/file/sshlog',
-                                headers = headers,
-                                timeout = 10,
-                                data = log_output)
+        req = threads.deferToThread(
+            requests.request,
+            method ='PUT',
+            url = 'https://secure.dshield.org/api/file/sshlog',
+            headers = headers,
+            timeout = 10,
+            data = log_output
+        )
 
 
         def check_response(resp):

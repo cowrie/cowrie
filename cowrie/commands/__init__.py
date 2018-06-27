@@ -38,4 +38,4 @@ __all__ = [
     'uptime',
     'python',
     'tftp'
-    ]
+]

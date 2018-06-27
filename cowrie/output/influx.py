@@ -142,12 +142,12 @@ class Output(cowrie.core.output.Output):
                 'shasum': entry.get('shasum'),
                 'url': entry.get('url'),
                 'outfile': entry.get('outfile')
-                })
+            })
 
         elif eventid == 'cowrie.session.file_download.failed':
             m['fields'].update({
                 'url': entry.get('url')
-                })
+            })
 
         elif eventid == 'cowrie.session.file_upload':
             m['fields'].update({
