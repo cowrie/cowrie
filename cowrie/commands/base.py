@@ -93,13 +93,13 @@ class command_w(HoneyPotCommand):
     def call(self):
         """
         """
-        self.write(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00\n' % \
-            (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
+        self.write(' %s up %s,  1 user,  load average: 0.00, 0.00, 0.00\n' %
+                   (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
         self.write('USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n')
-        self.write('%-8s pts/0    %s %s    0.00s  0.00s  0.00s w\n' % \
-            (self.protocol.user.username,
-            self.protocol.clientIP[:17].ljust(17),
-            time.strftime('%H:%M', time.localtime(self.protocol.logintime))))
+        self.write('%-8s pts/0    %s %s    0.00s  0.00s  0.00s w\n' %
+                   (self.protocol.user.username,
+                    self.protocol.clientIP[:17].ljust(17),
+                    time.strftime('%H:%M', time.localtime(self.protocol.logintime))))
 commands['/usr/bin/w'] = command_w
 
 
@@ -110,11 +110,11 @@ class command_who(HoneyPotCommand):
     def call(self):
         """
         """
-        self.write('%-8s pts/0        %s %s (%s)\n' % \
-            (self.protocol.user.username,
-            time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime)),
-            time.strftime('%H:%M', time.localtime(self.protocol.logintime)),
-            self.protocol.clientIP))
+        self.write('%-8s pts/0        %s %s (%s)\n' %
+                   (self.protocol.user.username,
+                    time.strftime('%Y-%m-%d',time.localtime(self.protocol.logintime)),
+                    time.strftime('%H:%M', time.localtime(self.protocol.logintime)),
+                    self.protocol.clientIP))
 commands['/usr/bin/who'] = command_who
 
 
@@ -294,7 +294,7 @@ class command_ps(HoneyPotCommand):
             ('root      ', '4969', '  0.0', '  0.1', '   5416', '  1024', ' ?        ', 'Ss   ', 'Nov08', '   0:00 ', '/usr/sbin/sshd: %s@pts/0' % user,),
             ('%s'.ljust(8) % user, '5673', '  0.0', '  0.2', '   2924', '  1540', ' pts/0    ', 'Ss   ', '04:30', '   0:00 ', '-bash',),
             ('%s'.ljust(8) % user, '5679', '  0.0', '  0.1', '   2432', '   928', ' pts/0    ', 'R+   ', '04:32', '   0:00 ', 'ps %s' % ' '.join(self.args),)
-            )
+        )
         for i in range(len(output)):
             if i != 0:
                 if 'a' not in args and output[i][_user].strip() != user:
@@ -306,8 +306,7 @@ class command_ps(HoneyPotCommand):
             if 'a' in args or 'x' in args:
                 l = [_pid, _tty, _stat, _time, _command]
             if 'u' in args:
-                l = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat,
-                    _start, _time, _command]
+                l = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, _start, _time, _command]
             s = ''.join([output[i][x] for x in l])
             if 'w' not in args:
                 s = s[:80]
@@ -323,8 +322,7 @@ class command_id(HoneyPotCommand):
         """
         """
         u = self.protocol.user
-        self.write('uid=%d(%s) gid=%d(%s) groups=%d(%s)\n' % \
-            (u.uid, u.username, u.gid, u.username, u.gid, u.username))
+        self.write('uid=%d(%s) gid=%d(%s) groups=%d(%s)\n' % (u.uid, u.username, u.gid, u.username, u.gid, u.username))
 commands['/usr/bin/id'] = command_id
 
 
@@ -399,7 +397,7 @@ class command_shutdown(HoneyPotCommand):
                 "-c:      cancel a running shutdown. ",
                 "-t secs: delay between warning and kill signal. ",
                 "** the \"time\" argument is mandatory! (try \"now\") **",
-                )
+            )
             for l in output:
                 self.write(l+'\n')
             self.exit()

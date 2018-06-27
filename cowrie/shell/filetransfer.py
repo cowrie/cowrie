@@ -188,8 +188,7 @@ class SFTPServerForCowrieUser(object):
         """
         """
         home = self.avatar.home
-        return os.path.abspath(os.path.join(nativeString(home),
-          nativeString(path)))
+        return os.path.abspath(os.path.join(nativeString(home), nativeString(path)))
 
 
     def _setAttrs(self, path, attrs):

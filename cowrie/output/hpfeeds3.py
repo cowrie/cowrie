@@ -64,13 +64,24 @@ class Output(cowrie.core.output.Output):
         """
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
-            self.meta[session] = {'session':session,
-                'startTime': entry["timestamp"], 'endTime':'',
-                'peerIP': entry["src_ip"], 'peerPort': entry["src_port"],
-                'hostIP': entry["dst_ip"], 'hostPort': entry["dst_port"],
-                'loggedin': None, 'credentials':[], 'commands':[],
-                'unknownCommands':[], 'urls':[], 'version': None,
-                'ttylog': None, 'hashes': set(), 'protocol': entry['protocol']}
+            self.meta[session] = {
+                'session':session,
+                'startTime': entry["timestamp"],
+                'endTime':'',
+                'peerIP': entry["src_ip"],
+                'peerPort': entry["src_port"],
+                'hostIP': entry["dst_ip"],
+                'hostPort': entry["dst_port"],
+                'loggedin': None,
+                'credentials':[],
+                'commands':[],
+                'unknownCommands':[],
+                'urls':[],
+                'version': None,
+                'ttylog': None,
+                'hashes': set(),
+                'protocol': entry['protocol']
+            }
 
         elif entry["eventid"] == 'cowrie.login.success':
             u, p = entry['username'], entry['password']

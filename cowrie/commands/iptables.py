@@ -384,32 +384,30 @@ Options:
 
     def no_permission(self):
         self.write("""%s %s: can\'t initialize iptables table \'filter\': Permission denied (you must be root)
-Perhaps iptables or your kernel needs to be upgraded.\n"""
-            % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
         self.exit()
 
     def no_command(self):
         """ Print no command message and exit """
 
         self.write("""%s %s: no command specified'
-Try `iptables -h\' or \'iptables --help\' for more information.\n"""
-            % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+Try `iptables -h\' or \'iptables --help\' for more information.\n""" %
+                   (command_iptables.APP_NAME, command_iptables.APP_VERSION))
         self.exit()
 
     def unknown_option(self, option):
         """ Print unknown option message and exit """
 
         self.write("""%s %s: unknown option \'%s\''
-Try `iptables -h\' or \'iptables --help\' for more information.\n"""
-            % (command_iptables.APP_NAME, command_iptables.APP_VERSION, option))
+Try `iptables -h\' or \'iptables --help\' for more information.\n""" %
+                   (command_iptables.APP_NAME, command_iptables.APP_VERSION, option))
         self.exit()
 
     def bad_argument(self, argument):
         """ Print bad argument and exit """
 
         self.write("""Bad argument \'%s\'
-Try `iptables -h\' or \'iptables --help\' for more information.\n"""
-            % argument)
+Try `iptables -h\' or \'iptables --help\' for more information.\n""" % argument)
         self.exit()
 
 # Definition

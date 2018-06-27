@@ -53,10 +53,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             src_ip = ipv4_search.group(1)
 
         log.msg(eventid='cowrie.session.connect',
-           format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-           src_ip=src_ip, src_port=self.transport.getPeer().port,
-           dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-           session=self.transportId, sessionno='S'+str(self.transport.sessionno), protocol='ssh')
+                format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
+                src_ip=src_ip, src_port=self.transport.getPeer().port,
+                dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
+                session=self.transportId, sessionno='S'+str(self.transport.sessionno), protocol='ssh')
 
         self.transport.write(b''+self.ourVersionString+b'\r\n')
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
@@ -210,8 +210,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport = None
         duration = time.time() - self.logintime
         log.msg(eventid='cowrie.session.closed',
-            format="Connection lost after %(duration)d seconds",
-            duration=duration)
+                format="Connection lost after %(duration)d seconds",
+                duration=duration)
 
 
     def sendDisconnect(self, reason, desc):

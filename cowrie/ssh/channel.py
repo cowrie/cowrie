@@ -52,8 +52,7 @@ class CowrieSSHChannel(channel.SSHChannel):
             self.ttylogEnabled = True
 
         try:
-            self.bytesReceivedLimit = CONFIG.getint('honeypot',
-                'download_limit_size')
+            self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
         except:
             self.bytesReceivedLimit = 0
 
@@ -64,12 +63,11 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         """
         self.startTime = time.time()
-        self.ttylogFile = '%s/tty/%s-%s-%s.log' % \
-            (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-            self.conn.transport.transportId, self.id)
+        self.ttylogFile = '%s/tty/%s-%s-%s.log' % (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
+                                                   self.conn.transport.transportId, self.id)
         log.msg(eventid='cowrie.log.open',
-            ttylog=self.ttylogFile,
-            format="Opening TTY Log: %(ttylog)s")
+                ttylog=self.ttylogFile,
+                format="Opening TTY Log: %(ttylog)s")
         ttylog.ttylog_open(self.ttylogFile, time.time())
         channel.SSHChannel.channelOpen(self, specificData)
 
@@ -78,10 +76,10 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         """
         log.msg(eventid='cowrie.log.closed',
-            format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
-            ttylog=self.ttylogFile,
-            size=self.bytesReceived+self.bytesWritten,
-            duration=time.time()-self.startTime)
+                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                ttylog=self.ttylogFile,
+                size=self.bytesReceived+self.bytesWritten,
+                duration=time.time()-self.startTime)
         ttylog.ttylog_close(self.ttylogFile, time.time())
         channel.SSHChannel.closed(self)
 
@@ -94,15 +92,17 @@ class CowrieSSHChannel(channel.SSHChannel):
         @param data: Data sent to the server from the client
         """
         self.bytesReceived += len(data)
-        if self.bytesReceivedLimit \
-          and self.bytesReceived > self.bytesReceivedLimit:
+        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             log.msg("Data upload limit reached for channel {}".format(self.id))
             self.eofReceived()
             return
 
         if self.ttylogEnabled:
-            ttylog.ttylog_write(self.ttylogFile, len(data),
-                ttylog.TYPE_INPUT, time.time(), data)
+            ttylog.ttylog_write(self.ttylogFile,
+                                len(data),
+                                ttylog.TYPE_INPUT,
+                                time.time(),
+                                data)
 
         channel.SSHChannel.dataReceived(self, data)
 
@@ -115,8 +115,11 @@ class CowrieSSHChannel(channel.SSHChannel):
         @param data: Data sent to the client from the server
         """
         if self.ttylogEnabled:
-            ttylog.ttylog_write(self.ttylogFile, len(data),
-                ttylog.TYPE_OUTPUT, time.time(), data)
+            ttylog.ttylog_write(self.ttylogFile,
+                                len(data),
+                                ttylog.TYPE_OUTPUT,
+                                time.time(),
+                                data)
             self.bytesWritten += len(data)
 
         channel.SSHChannel.write(self, data)

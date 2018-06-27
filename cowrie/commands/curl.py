@@ -34,8 +34,7 @@ class command_curl(HoneyPotCommand):
         """
         """
         try:
-            optlist, args = getopt.getopt(self.args, 'sho:O',
-                ['help', 'manual', 'silent'])
+            optlist, args = getopt.getopt(self.args, 'sho:O', ['help', 'manual', 'silent'])
         except getopt.GetoptError as err:
             # TODO: should be 'unknown' instead of 'not recognized'
             self.write("curl: {}\n".format(err))
@@ -79,8 +78,7 @@ class command_curl(HoneyPotCommand):
             if not path or \
                     not self.fs.exists(path) or \
                     not self.fs.isdir(path):
-                self.write('curl: %s: Cannot open: No such file or directory\n' % \
-                    (outfile,))
+                self.write('curl: %s: Cannot open: No such file or directory\n' % outfile)
                 self.exit()
                 return
 
@@ -373,8 +371,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def __init__(self, curl, fakeoutfile, url, outfile, headers=None):
         """
         """
-        client.HTTPDownloader.__init__(self, url, outfile, headers=headers,
-            agent=b'curl/7.38.0')
+        client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent=b'curl/7.38.0')
         self.status = None
         self.curl = curl
         self.fakeoutfile = fakeoutfile
@@ -408,8 +405,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if self.curl.limit_size > 0 and \
                     self.totallength > self.curl.limit_size:
-                log.msg('Not saving URL (%s) due to file size limit' % \
-                    (self.curl.url,))
+                log.msg('Not saving URL (%s) due to file size limit' % self.curl.url)
                 self.fileName = os.path.devnull
                 self.nomore = True
 
@@ -456,8 +452,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         if self.fakeoutfile:
             self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d\n" % \
-                (self.currentlength, self.currentlength, 63673, 65181)
-            )
+                            (self.currentlength, self.currentlength, 63673, 65181)
+                            )
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
             self.curl.fs.update_realfile(

@@ -179,12 +179,12 @@ class command_ls(HoneyPotCommand):
 
             l = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
-                self.uid2name(file[A_UID]),
-                self.gid2name(file[A_GID]),
-                str(file[A_SIZE]).rjust(len(str(largest))),
-                time.strftime('%Y-%m-%d %H:%M', ctime),
-                file[A_NAME],
-                linktarget)
+                 self.uid2name(file[A_UID]),
+                 self.gid2name(file[A_GID]),
+                 str(file[A_SIZE]).rjust(len(str(largest))),
+                 time.strftime('%Y-%m-%d %H:%M', ctime),
+                 file[A_NAME],
+                 linktarget)
 
             self.write(l+'\n')
 commands['/bin/ls'] = command_ls

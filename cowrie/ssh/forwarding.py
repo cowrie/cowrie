@@ -20,9 +20,9 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     remoteHP, origHP = forwarding.unpackOpen_direct_tcpip(data)
 
     log.msg(eventid='cowrie.direct-tcpip.request',
-        format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s',
-        dst_ip=remoteHP[0], dst_port=remoteHP[1],
-        src_ip=origHP[0], src_port=origHP[1])
+            format='direct-tcp connection request to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s',
+            dst_ip=remoteHP[0], dst_port=remoteHP[1],
+            src_ip=origHP[0], src_port=origHP[1])
 
     # Forward redirect
     try:
@@ -44,12 +44,12 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         if remoteHP[1] in redirects:
             remoteHPNew = redirects[remoteHP[1]]
             log.msg(eventid='cowrie.direct-tcpip.redirect',
-                format='redirected direct-tcp connection request from %(src_ip)s:%(src_port)d to %(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
+                    format='redirected direct-tcp connection request from %(src_ip)s:%(src_port)' + \
+                           'd to %(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
                     new_ip=remoteHPNew[0], new_port=remoteHPNew[1],
                     dst_ip=remoteHP[0], dst_port=remoteHP[1],
                     src_ip=origHP[0], src_port=origHP[1])
-            return SSHConnectForwardingChannel(remoteHPNew,
-                remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
+            return SSHConnectForwardingChannel(remoteHPNew, remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
     # TCP tunnel
     try:
@@ -71,15 +71,17 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         if remoteHP[1] in tunnels:
             remoteHPNew = tunnels[remoteHP[1]]
             log.msg(eventid='cowrie.direct-tcpip.tunnel',
-                format='tunneled direct-tcp connection request %(src_ip)s:%(src_port)d->%(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
+                    format='tunneled direct-tcp connection request %(src_ip)s:%(src_port)' + \
+                           'd->%(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
                     new_ip=remoteHPNew[0], new_port=remoteHPNew[1],
                     dst_ip=remoteHP[0], dst_port=remoteHP[1],
                     src_ip=origHP[0], src_port=origHP[1])
-            return TCPTunnelForwardingChannel(remoteHPNew, remoteHP,
-                remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
+            return TCPTunnelForwardingChannel(remoteHPNew,
+                                              remoteHP,
+                                              remoteWindow=remoteWindow,
+                                              remoteMaxPacket=remoteMaxPacket)
 
-    return FakeForwardingChannel(remoteHP,
-           remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
+    return FakeForwardingChannel(remoteHP, remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
 
 
@@ -111,8 +113,8 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
         """
         """
         log.msg(eventid='cowrie.direct-tcpip.data',
-            format='discarded direct-tcp forward request to %(dst_ip)s:%(dst_port)s with data %(data)s',
-            dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
+                ormat='discarded direct-tcp forward request to %(dst_ip)s:%(dst_port)s with data %(data)s',
+                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
         self._close("Connection refused")
 
 
@@ -146,7 +148,8 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         """
         """
         log.msg(eventid='cowrie.tunnelproxy-tcpip.data',
-            format='sending via tunnel proxy %(data)s', data=repr(data))
+                format='sending via tunnel proxy %(data)s',
+                data=repr(data))
         forwarding.SSHConnectForwardingChannel.dataReceived(self, data)
 
 

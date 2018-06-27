@@ -119,12 +119,12 @@ pages for more information and options.
         packages = {}
         for y in [re.sub('[^A-Za-z0-9]', '', x) for x in self.args[1:]]:
             packages[y] = {
-                'version':      '%d.%d-%d' % \
-                    (random.choice((0, 1)),
-                    random.randint(1, 40),
-                    random.randint(1, 10)),
+                'version':      '%d.%d-%d' %
+                                (random.choice((0, 1)),
+                                 random.randint(1, 40),
+                                 random.randint(1, 10)),
                 'size':         random.randint(100, 900)
-                }
+            }
         totalsize = sum([packages[x]['size'] for x in packages])
 
         self.write('Reading package lists... Done\n')
@@ -132,15 +132,13 @@ pages for more information and options.
         self.write('Reading state information... Done\n')
         self.write('The following NEW packages will be installed:\n')
         self.write('  %s ' % ' '.join(packages) + '\n')
-        self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % \
-            len(packages))
+        self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % len(packages))
         self.write('Need to get %s.2kB of archives.\n' % (totalsize))
-        self.write('After this operation, %skB of additional disk space will be used.\n' % \
-            (totalsize * 2.2,))
+        self.write('After this operation, %skB of additional disk space will be used.\n' % (totalsize * 2.2,))
         i = 1
         for p in packages:
-            self.write('Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]\n' % \
-                (i, p, packages[p]['version'], packages[p]['size']))
+            self.write('Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]\n' %
+                       (i, p, packages[p]['version'], packages[p]['size']))
             i += 1
             yield self.sleep(1, 2)
         self.write('Fetched %s.2kB in 1s (4493B/s)\n' % (totalsize))
@@ -150,16 +148,13 @@ pages for more information and options.
         self.write('(Reading database ... 177887 files and directories currently installed.)\n')
         yield self.sleep(1, 2)
         for p in packages:
-            self.write('Unpacking %s (from .../archives/%s_%s_i386.deb) ...\n' % \
-                (p, p, packages[p]['version']))
+            self.write('Unpacking %s (from .../archives/%s_%s_i386.deb) ...\n' % (p, p, packages[p]['version']))
             yield self.sleep(1, 2)
         self.write('Processing triggers for man-db ...\n')
         yield self.sleep(2)
         for p in packages:
-            self.write('Setting up %s (%s) ...\n' % \
-                (p, packages[p]['version']))
-            self.fs.mkfile('/usr/bin/%s' % p,
-                0, 0, random.randint(10000, 90000), 33188)
+            self.write('Setting up %s (%s) ...\n' % (p, packages[p]['version']))
+            self.fs.mkfile('/usr/bin/%s' % p, 0, 0, random.randint(10000, 90000), 33188)
             self.protocol.commands['/usr/bin/%s' % p] = \
                 command_faked_package_class_factory.getCommand(p)
             yield self.sleep(2)

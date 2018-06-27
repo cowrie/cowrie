@@ -93,7 +93,8 @@ class Output(cowrie.core.output.Output):
         """
         if self.enabled:
             try:
-                res = requests.post("https://malshare.com/api.php?mode=cli",
+                res = requests.post(
+                    "https://malshare.com/api.php?mode=cli",
                     files={fileName: open(artifact, "rb")},
                     verify=False
                 )

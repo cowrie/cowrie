@@ -14,8 +14,7 @@ from zope.interface import implementer
 from twisted.internet import interfaces, protocol
 from twisted.python import log
 from twisted.conch.ssh import session
-from twisted.conch.telnet import ECHO, SGA, \
-                                 TelnetBootstrapProtocol
+from twisted.conch.telnet import ECHO, SGA, TelnetBootstrapProtocol
 
 from cowrie.shell import pwd
 from cowrie.shell import protocol as cproto

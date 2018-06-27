@@ -336,8 +336,7 @@ class command_cp(HoneyPotCommand):
             isdir = False
             parent = os.path.dirname(resolv(dest))
             if not self.fs.exists(parent):
-                self.errorWrite("cp: cannot create regular file " + \
-                           "`{}': No such file or directory\n".format(dest))
+                self.errorWrite("cp: cannot create regular file " + "`{}': No such file or directory\n".format(dest))
                 return
 
         for src in sources:
@@ -392,8 +391,7 @@ class command_mv(HoneyPotCommand):
             self.errorWrite("mv: target `{}' is not a directory\n".format(dest))
             return
 
-        if dest[-1] == '/' and not self.fs.exists(resolv(dest)) and \
-                        len(sources) != 1:
+        if dest[-1] == '/' and not self.fs.exists(resolv(dest)) and len(sources) != 1:
             self.errorWrite(
                 "mv: cannot create regular file `{}': Is a directory\n".format(dest))
             return
@@ -404,8 +402,7 @@ class command_mv(HoneyPotCommand):
             isdir = False
             parent = os.path.dirname(resolv(dest))
             if not self.fs.exists(parent):
-                self.errorWrite("mv: cannot create regular file " + \
-                           "`{}': No such file or directory\n".format(dest))
+                self.errorWrite("mv: cannot create regular file " + "`{}': No such file or directory\n".format(dest))
                 return
 
         for src in sources:

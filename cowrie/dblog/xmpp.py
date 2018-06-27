@@ -75,8 +75,7 @@ class DBLogger(dblog.DBLogger):
                 channels[x] = []
             channels[x].append(i)
 
-        resource = ''.join([choice(string.ascii_letters)
-            for i in range(8)])
+        resource = ''.join([choice(string.ascii_letters) for i in range(8)])
         jid = user + '/' + resource
         application = service.Application('honeypot')
         self.run(application, jid, password, JID(None,[muc,server,None]), channels)
@@ -101,8 +100,7 @@ class DBLogger(dblog.DBLogger):
 
     def broadcast(self, msgtype, msg):
         if msgtype in self.signals:
-            self.report(msgtype, '%s@%s' %
-                (self.signals[msgtype], self.muc.server) , msg)
+            self.report(msgtype, '%s@%s' % (self.signals[msgtype], self.muc.server) , msg)
 
     def report(self, msgtype, to, xmsg):
         msg = {}
