@@ -53,8 +53,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         import cowrie.commands
         for c in cowrie.commands.__all__:
             try:
-                module = __import__('cowrie.commands.%s' % (c,),
-                    globals(), locals(), ['commands'])
+                module = __import__(
+                    'cowrie.commands.%s' % (c,),
+                    globals(), locals(), ['commands']
+                )
                 self.commands.update(module.commands)
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -175,14 +177,15 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             if not self.fs.exists(path):
                 return None
         else:
-            for i in ['%s/%s' % (self.fs.resolve_path(x, self.cwd), cmd) \
-                    for x in paths]:
+            for i in [
+                '%s/%s' % (self.fs.resolve_path(x, self.cwd), cmd)
+                for x in paths
+            ]:
                 if self.fs.exists(i):
                     path = i
                     break
 
-        txt = os.path.normpath('%s/%s' % \
-            (CONFIG.get('honeypot', 'txtcmds_path'), path))
+        txt = os.path.normpath('%s/%s' % (CONFIG.get('honeypot', 'txtcmds_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
 
@@ -318,7 +321,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             b'\x15':     self.handle_CTRL_U,	# CTRL-U
             b'\x16':     self.handle_CTRL_V,	# CTRL-V
             b'\x1b':     self.handle_ESC,	# ESC
-            })
+        })
 
 
     def displayMOTD(self):
