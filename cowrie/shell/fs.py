@@ -173,8 +173,7 @@ class HoneyPotFilesystem(object):
             for c in cwd[A_CONTENTS]:
                 if c[A_NAME] == part:
                     if c[A_TYPE] == T_LINK:
-                        cwd = self.getfile(c[A_TARGET],
-                            follow_symlinks=follow_symlinks)
+                        cwd = self.getfile(c[A_TARGET], follow_symlinks=follow_symlinks)
                     else:
                         cwd = c
                     ok = True
@@ -232,12 +231,10 @@ class HoneyPotFilesystem(object):
                     elif x[A_TYPE] == T_LINK:
                         if x[A_TARGET][0] == '/':
                             # Absolute link
-                            p = self.getfile(x[A_TARGET],
-                                follow_symlinks=follow_symlinks)
+                            p = self.getfile(x[A_TARGET], follow_symlinks=follow_symlinks)
                         else:
                             # Relative link
-                            p = self.getfile('/'.join((cwd, x[A_TARGET])),
-                                follow_symlinks=follow_symlinks)
+                            p = self.getfile('/'.join((cwd, x[A_TARGET])), follow_symlinks=follow_symlinks)
                         if p == False:
                             # Broken link
                             return False
@@ -282,8 +279,7 @@ class HoneyPotFilesystem(object):
         outfile = os.path.basename(path)
         if outfile in [x[A_NAME] for x in dir]:
             dir.remove([x for x in dir if x[A_NAME] == outfile][0])
-        dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [],
-            None, None])
+        dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None])
         self.newcount += 1
         return True
 
@@ -302,8 +298,7 @@ class HoneyPotFilesystem(object):
         except IndexError:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
             return False
-        dir.append([os.path.basename(path), T_DIR, uid, gid, size, mode,
-            ctime, [], None, None])
+        dir.append([os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None])
         self.newcount += 1
 
 
@@ -374,10 +369,11 @@ class HoneyPotFilesystem(object):
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
             hostmode = mode & ~(111)
-            hostfile = '%s/%s_sftp_%s' % \
-                       (CONFIG.get('honeypot', 'download_path'),
-                    time.strftime('%Y%m%d-%H%M%S'),
-                    re.sub('[^A-Za-z0-9]', '_', filename))
+            hostfile = '%s/%s_sftp_%s' % (
+                CONFIG.get('honeypot', 'download_path'),
+                time.strftime('%Y%m%d-%H%M%S'),
+                re.sub('[^A-Za-z0-9]', '_', filename)
+            )
             #log.msg("fs.open file for writing, saving to %s" % safeoutfile)
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(hostfile, openFlags, hostmode)
@@ -558,16 +554,21 @@ class HoneyPotFilesystem(object):
         """
         """
         if (path == "/"):
-            p = {A_TYPE:T_DIR, A_UID:0, A_GID:0, A_SIZE:4096, A_MODE:16877,
-                A_CTIME:time.time()}
+            p = {
+                A_TYPE:T_DIR,
+                A_UID:0,
+                A_GID:0,
+                A_SIZE:4096,
+                A_MODE:16877,
+                A_CTIME:time.time()
+            }
         else:
             p = self.getfile(path, follow_symlinks=follow_symlinks)
 
         if (p == False):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
 
-        return _statobj(p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE],
-            p[A_CTIME], p[A_CTIME], p[A_CTIME])
+        return _statobj(p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE], p[A_CTIME], p[A_CTIME], p[A_CTIME])
 
 
     def realpath(self, path):
