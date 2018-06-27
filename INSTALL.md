@@ -1,32 +1,31 @@
 
 # Installing Cowrie in nine steps.
 
-* [Step 0: Change sshd listening port](#step-0-change-sshd-listening-port)
+* [Step 0: Change existing sshd listening port](#step-0-change-existing-sshd-listening-port)
 * [Step 1: Install dependencies](#step-1-install-dependencies)
+* [Step 2: Checkout the code](#step-2-checkout-the-code)
 * [Install without systemd support](#install-without-systemd-support)
-	* [Step 2: Create a user account](#step-2-create-a-user-account)
-	* [Step 3: Checkout the code](#step-3-checkout-the-code)
-	* [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
-	* [Step 5: Install configuration file](#step-5-install-configuration-file)
-	* [Step 6: Generate a DSA key (OPTIONAL)](#step-6-generate-a-dsa-key)
-	* [Step 7: Fixing permissions](#step-7-fixing-permissions)
-	* [Step 8: Starting Cowrie](#step-8-turning-on-cowrie)
-	* [Step 9: Port redirection](#step-9-port-redirection)
+    * [Step 3: Create a user account](#step-3-create-a-user-account)
+    * [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
+    * [Step 5: Install configuration file](#step-5-install-configuration-file)
+    * [Step 6: Generate a DSA key (OPTIONAL)](#step-6-generate-a-dsa-key)
+    * [Step 7: Fixing permissions](#step-7-fixing-permissions)
+    * [Step 8: Starting Cowrie](#step-8-turning-on-cowrie)
+    * [Step 9: Port redirection](#step-9-port-redirection)
 * [Install with systemd support](#install-with-systemd-support)
-	* [Step 2: Create a user account](#step-2-create-a-user-account)
-	* [Step 3: Checkout the code](#step-3-checkout-the-code)
-	* [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
-	* [Step 5: Create folders and fix permissions](#step-5-create-folders-and-fix-permissions)
-	* [Step 6: Install systemd, rsyslog and logrotate configurations](#Install-systemd-rsyslog-and-logrotate-configurations)
-	* [Step 7: Install cowrie configuration file](#step-5-install-cowrie-configuration-file)
-	* [Step 8: Starting Cowrie](#step-7-starting-cowrie)
-	* [Step 9: Capture traffic](#step-8-capture-traffic)
+    * [Step 3: Create a user account](#step-3-create-a-user-account)
+    * [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
+    * [Step 5: Create folders and fix permissions](#step-5-create-folders-and-fix-permissions)
+    * [Step 6: Install systemd, rsyslog and logrotate configurations](#Install-systemd-rsyslog-and-logrotate-configurations)
+    * [Step 7: Install cowrie configuration file](#step-5-install-cowrie-configuration-file)
+    * [Step 8: Starting Cowrie](#step-7-starting-cowrie)
+    * [Step 9: Capture traffic](#step-8-capture-traffic)
 * [Optional settings](#optinal-settings)
-	* [Running within supervisord (OPTIONAL)](#running-using-supervisord)
-	* [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
+    * [Running within supervisord (OPTIONAL)](#running-using-supervisord)
+    * [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
 
-## Step 0: Change exiseting sshd listening port
+## Step 0: Change existing sshd listening port
 
 Cowrie is an SSH honeypot. It is likely you will want it to accept
 connections on the normal SSH port (22).  However, this is the same
@@ -56,21 +55,21 @@ On Debian based systems:
 # apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal
 ```
 
+## Step 2: Checkout the code
+```
+# git clone http://github.com/micheloosterhof/cowrie /opt/cowrie
+```
+
 ## Install without systemd support
 This section explains how to install Cowrie on a system without systemd.
 
 **Note**: All commands are run as root
 
-### Step 2: Create a user account
+### Step 3: Create a user account
 It's strongly recommended to run with a dedicated non-root user id:
 
 ```
 # useradd -r -s /bin/bash -U -M cowrie
-```
-
-### Step 3: Checkout the code
-```
-# git clone http://github.com/micheloosterhof/cowrie /opt/cowrie
 ```
 
 ### Step 4: Setup Virtual Environment
@@ -90,9 +89,9 @@ Activate the virtual environment and install packages
 
 ```
 # source /opt/cowrie/cowrie-env/bin/activate
-(cowrie-env) $ pip install --upgrade pip
-(cowrie-env) $ pip install --upgrade -r /opt/cowrie/requirements.txt
-(cowrie-env) $ deactivate
+(cowrie-env) # pip install --upgrade pip
+(cowrie-env) # pip install --upgrade -r /opt/cowrie/requirements.txt
+(cowrie-env) # deactivate
 ```
 
 ### Step 5: Install configuration file
@@ -180,16 +179,11 @@ Supported systems are:
 
 **Note**: All commands are run as root.
 
-### Step 2: Create a user account
+### Step 3: Create a user account
 It's strongly recommended to run with a dedicated non-root user id:
 
 ```
 # useradd -r -s /bin/false -U -M cowrie
-```
-
-### Step 3: Checkout the code
-```
-# git clone http://github.com/micheloosterhof/cowrie /opt/cowrie
 ```
 
 ### Step 4: Setup Virtual Environment
