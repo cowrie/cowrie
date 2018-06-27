@@ -1,0 +1,22 @@
+/var/log/cowrie/*.log {
+  weekly
+  missingok
+  notifempty
+  rotate 4
+  compress
+  create 640 cowrie cowrie
+  postrotate
+    invoke-rc.d rsyslog rotate > /dev/null
+  endscript
+}
+
+/var/log/cowrie/*.json {
+  weekly
+  missingok
+  notifempty
+  rotate 4
+  compress
+  copytruncate
+  create 640 cowrie cowrie
+  endscript
+}
