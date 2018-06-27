@@ -109,7 +109,7 @@ ttylog = true
 
 # Default directory for TTY logs.
 # (default: ttylog_path = %(log_path)s/tty)
-ttylog_path = %(log_path)s/tty
+ttylog_path = ${honeypot:log_path}/tty
 
 # Interactive timeout determines when logged in sessions are
 # terminated for being idle. In seconds.
@@ -304,10 +304,10 @@ enabled = true
 
 # Public and private SSH key files. If these don't exist, they are created
 # automatically.
-rsa_public_key = etc/ssh_host_rsa_key.pub
-rsa_private_key = etc/ssh_host_rsa_key
-dsa_public_key = etc/ssh_host_dsa_key.pub
-dsa_private_key = etc/ssh_host_dsa_key
+rsa_public_key = ${honeypot:etc_path}/ssh_host_rsa_key.pub
+rsa_private_key = ${honeypot:etc_path}/ssh_host_rsa_key
+dsa_public_key = ${honeypot:etc_path}/ssh_host_dsa_key.pub
+dsa_private_key = ${honeypot:etc_path}/ssh_host_dsa_key
 
 
 # SSH Version String

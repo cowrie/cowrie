@@ -36,8 +36,9 @@ def readConfigFile(cfgfile):
     @param cfgfile: filename or array of filenames
     @return: ConfigParser object
     """
-    parser = EnvironmentConfigParser()
+    parser = EnvironmentConfigParser(interpolation=configparser.ExtendedInterpolation())
     parser.read(cfgfile)
     return parser
+
 
 CONFIG = readConfigFile(("cowrie.cfg.dist", "etc/cowrie.cfg", "cowrie.cfg"))
