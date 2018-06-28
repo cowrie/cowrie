@@ -185,7 +185,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     path = i
                     break
 
-        txt = os.path.normpath('%s/%s' % (CONFIG.get('honeypot', 'txtcmds_path'), path))
+        txt = os.path.normpath('{}/txtcmds/{}'.format(CONFIG.get('honeypot', 'share_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
 
