@@ -53,6 +53,12 @@ data_path = data
 share_path = share/cowrie
 
 
+# Directory for variable state files
+#
+# (default: var/lib/cowrie)
+state_path = var/lib/cowrie
+
+
 # Directory for config files
 #
 # (default: etc)

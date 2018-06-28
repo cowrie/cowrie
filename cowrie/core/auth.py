@@ -23,7 +23,7 @@ class UserDB(object):
 
     def __init__(self):
         self.userdb = {}
-        self.userdb_file = '%s/userdb.txt' % CONFIG.get('honeypot', 'data_path')
+        self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))
         self.load()
 
 
@@ -112,9 +112,9 @@ class AuthRandom(object):
 
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
-            log.msg('maxtry < mintry, adjusting maxtry to: %d' % (self.maxtry,))
+            log.msg("maxtry < mintry, adjusting maxtry to: {}".format(self.maxtry))
         self.uservar = {}
-        self.uservar_file = '%s/uservar.json' % CONFIG.get('honeypot', 'data_path')
+        self.uservar_file = '{}/auth_random.json'.format(CONFIG.get('honeypot', 'state_path'))
         self.loadvars()
 
 
@@ -164,7 +164,7 @@ class AuthRandom(object):
             ipinfo = self.uservar[src_ip]
             ipinfo['try'] = 0
             if userpass in cache:
-                log.msg('first time for %s, found cached: %s' % (src_ip, userpass))
+                log.msg("first time for {}, found cached: {}".format(src_ip, userpass))
                 ipinfo['max'] = 1
                 ipinfo['user'] = thelogin
                 ipinfo['pw'] = thepasswd
@@ -173,7 +173,7 @@ class AuthRandom(object):
                 return auth
             else:
                 ipinfo['max'] = randint(self.mintry, self.maxtry)
-                log.msg('first time for %s, need: %d' % (src_ip, ipinfo['max']))
+                log.msg("first time for {}, need: {}".format(src_ip, ipinfo['max']))
 
         ipinfo = self.uservar[src_ip]
 
@@ -194,7 +194,7 @@ class AuthRandom(object):
         ipinfo['try'] += 1
         attempts = ipinfo['try']
         need = ipinfo['max']
-        log.msg('login attempt: %d' % (attempts,))
+        log.msg("login attempt: {}".format(attempts))
 
         # Check if enough login attempts are tried
         if attempts < need:
@@ -213,7 +213,7 @@ class AuthRandom(object):
                 ipinfo['tried'].append(userpass)
                 ipinfo['try'] = 1
             else:
-                log.msg('login return, expect: [%s/%s]' % (ipinfo['user'], ipinfo['pw']))
+                log.msg("login return, expect: [{}/{}]".format(ipinfo['user'], ipinfo['pw']))
                 if thelogin == ipinfo['user'] and thepasswd == ipinfo['pw']:
                     auth = True
         self.savevars()
