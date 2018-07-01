@@ -70,7 +70,7 @@ class Output(cowrie.core.output.Output):
         """
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith('log_') or i == 'time' or i =='system':
+            if i.startswith('log_') or i == 'time' or i == 'system':
                 del logentry[i]
         json.dump(logentry, self.outfile)
         self.outfile.write('\n')
