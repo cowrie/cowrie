@@ -78,8 +78,8 @@ class CowrieSSHChannel(channel.SSHChannel):
         log.msg(eventid='cowrie.log.closed',
                 format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
                 ttylog=self.ttylogFile,
-                size=self.bytesReceived+self.bytesWritten,
-                duration=time.time()-self.startTime)
+                size=self.bytesReceived + self.bytesWritten,
+                duration=time.time() - self.startTime)
         ttylog.ttylog_close(self.ttylogFile, time.time())
         channel.SSHChannel.closed(self)
 
