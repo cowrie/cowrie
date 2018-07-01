@@ -33,6 +33,8 @@ class CowrieUser(avatar.ConchUser):
 
         self.channelLookup[b'session'] = proxysession.ProxySSHSession
 
+        # TODO: Is SFTP still supported? Check git commit 30949e0 for cleaned up code
+
         # SSH forwarding disabled only when option is explicitly set
         self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
         try:
