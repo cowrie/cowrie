@@ -90,10 +90,7 @@ class Output(cowrie.core.output.Output):
         """
         """
         if entry["eventid"] == 'cowrie.session.file_download':
-            #TODO: RENABLE
-            #log.msg("Sending url to VT")
-            #self.scanurl(entry["url"])
-
+            # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
             log.msg("Checking scan report at VT")
             self.scanfile(entry)
 
@@ -101,16 +98,12 @@ class Output(cowrie.core.output.Output):
             log.msg("Checking scan report at VT")
             self.scanfile(entry["shasum"])
 
-            #log.msg("Sending file to VT")
-            #self.postfile(entry["outfile"], entry["filename"])
-
-
     def scanfile(self, entry):
         """
         Check file scan report for a hash
         Argument is full event so we can access full file later on
         """
-        vtUrl = VTAPI_URL+b'file/report'
+        vtUrl = b'{0}file/report'.format(VTAPI_URL)
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': entry["shasum"]}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -123,7 +116,6 @@ class Output(cowrie.core.output.Output):
             if response.code == 200:
                 d = client.readBody(response)
                 d.addCallback(cbBody)
-                #d.addErrback(cbPartial)
                 return d
             else:
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
@@ -177,7 +169,6 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT: {}/{} bad; permalink: {}".format(j["positives"], j["total"], j["permalink"]))
             elif j["response_code"] == -2:
                 log.msg("VT: response=-2: this has been queued for analysis already")
-                #log.msg("VT: permalink: {}".format(j["permalink"]))
             else:
                 log.msg("VT: unexpected response code".format(j["response_code"]))
 
@@ -190,11 +181,11 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to VirusTotal
         """
-        vtUrl = VTAPI_URL+b'file/scan'
+        vtUrl = b'{0}file/scan'.format(VTAPI_URL)
         fields = {('apikey', self.apiKey)}
         files = {('file', fileName, open(artifact, 'rb'))}
         if self.debug:
-            log.msg("submitting to VT: "+repr(files))
+            log.msg("submitting to VT: {0}".format(repr(files)))
         contentType, body = encode_multipart_formdata(fields, files)
         producer = StringProducer(body)
         headers = http_headers.Headers({
@@ -258,7 +249,7 @@ class Output(cowrie.core.output.Output):
         """
         Check url scan report for a hash
         """
-        vtUrl = VTAPI_URL+b'url/report'
+        vtUrl = b'{0}url/report'.format(VTAPI_URL)
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': url, 'scan': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -271,7 +262,6 @@ class Output(cowrie.core.output.Output):
             if response.code == 200:
                 d = client.readBody(response)
                 d.addCallback(cbBody)
-                #d.addErrback(cbPartial)
                 return d
             else:
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
@@ -326,10 +316,12 @@ class Output(cowrie.core.output.Output):
         """
         Send a comment to VirusTotal with Twisted
         """
-        vtUrl = VTAPI_URL+b'comments/put'
-        parameters = { "resource": resource,
-                       "comment": self.commenttext,
-                       "apikey": self.apiKey}
+        vtUrl = b'{0}comments/put'.format(VTAPI_URL)
+        parameters = {
+            "resource": resource,
+            "comment": self.commenttext,
+            "apikey": self.apiKey
+        }
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         body = StringProducer(urlencode(parameters).encode("utf-8"))
         d = self.agent.request(b'POST', vtUrl, headers, body)
