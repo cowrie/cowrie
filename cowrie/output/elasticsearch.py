@@ -19,7 +19,7 @@ class Output(cowrie.core.output.Output):
         """
         self.host = CONFIG.get('output_elasticsearch', 'host')
         self.port = CONFIG.get('output_elasticsearch', 'port')
-        self.index =CONFIG.get('output_elasticsearch', 'index')
+        self.index = CONFIG.get('output_elasticsearch', 'index')
         self.type = CONFIG.get('output_elasticsearch', 'type')
         self.pipeline = CONFIG.get('output_elasticsearch', 'pipeline')
         cowrie.core.output.Output.__init__(self)
