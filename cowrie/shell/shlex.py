@@ -67,7 +67,7 @@ class shlex:
             self._pushback_chars = deque()
             # these chars added because allowed in file names, args, wildcards
             self.wordchars += '@%{}~-./*?=$:+^'
-            #remove any punctuation chars from wordchars
+            # remove any punctuation chars from wordchars
             self.wordchars = ''.join(c for c in self.wordchars if c not in
                                      self.punctuation_chars)
             for c in punctuation_chars:
@@ -318,7 +318,7 @@ def split(s, comments=False, posix=True):
     return list(lex)
 
 
-#_find_unsafe = re.compile(r'[^\w@%+=:,./-]', re.ASCII).search
+
 # No ASCII in P2.x
 _find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
 
