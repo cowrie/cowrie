@@ -130,9 +130,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         """
         resp = []
         for message, kind in items:
-            if kind == 1: # Password
+            if kind == 1:  # Password
                 resp.append((message, 0))
-            elif kind == 2: # Text
+            elif kind == 2:  # Text
                 resp.append((message, 1))
             elif kind in (3, 4):
                 return defer.fail(error.ConchError(
