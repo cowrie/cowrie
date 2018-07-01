@@ -82,7 +82,7 @@ class command_curl(HoneyPotCommand):
                 self.exit()
                 return
 
-        url=url.encode('ascii')
+        url = url.encode('ascii')
         self.url = url
         self.limit_size = 0
         if CONFIG.has_option('honeypot', 'download_limit_size'):
@@ -291,7 +291,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             contextFactory = ssl.ClientContextFactory()
             contextFactory.method = SSL.SSLv23_METHOD
             reactor.connectSSL(host, port, factory, contextFactory, bindAddress=out_addr)
-        else: # Can only be http
+        else:  # Can only be http
             self.connection = reactor.connectTCP(
                 host, port, factory, bindAddress=out_addr)
 
@@ -346,12 +346,9 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
     def error(self, error, url):
         """
         """
-        if hasattr(error, 'getErrorMessage'): # Exceptions
+        if hasattr(error, 'getErrorMessage'):  # Exceptions
             error = error.getErrorMessage()
-        self.write(error+'\n')
-        # Real curl also adds this:
-        # self.write('%s ERROR 404: Not Found.\n' % \
-        #    time.strftime('%Y-%m-%d %T'))
+        self.write('{0}\n'.format(error))
         self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
                                   format='Attempt to download file(s) from URL (%(url)s) failed',
                                   url=self.url)
@@ -380,8 +377,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.nomore = False
 
 
-    def noPage(self, reason): # Called for non-200 responses
+    def noPage(self, reason):
         """
+        Called for non-200 responses
         """
         if self.status == '304':
             client.HTTPDownloader.page(self, '')
@@ -434,10 +432,10 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             if (time.time() - self.lastupdate) < 0.5:
                 return client.HTTPDownloader.pagePart(self, data)
             if self.totallength:
-                percent = (self.currentlength/self.totallength)*100
-                spercent = "%i%%" % (percent,)
+                percent = (self.currentlength / self.totallength) * 100
+                spercent = "{0}%%".format(percent)
             else:
-                spercent = '%dK' % (self.currentlength/1000)
+                spercent = '{0}K'.format(self.currentlength / 1000)
                 percent = 0
             self.speed = self.currentlength / (time.time() - self.started)
             self.lastupdate = time.time()
@@ -461,7 +459,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.curl.safeoutfile)
         else:
             with open(self.curl.safeoutfile, 'r') as f:
-                self.curl.write(f.read()+'\n')
+                self.curl.write('{0}\n'.format(f.read()))
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
