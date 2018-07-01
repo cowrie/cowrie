@@ -11,7 +11,6 @@ from zope.interface import implementer
 
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
-#from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.python import log, components
 
 from cowrie.ssh import session as sshsession
@@ -34,13 +33,6 @@ class CowrieUser(avatar.ConchUser):
 
         self.channelLookup[b'session'] = proxysession.ProxySSHSession
 
-        # SFTP support enabled only when option is explicitly set
-        #try:
-        #    if CONFIG.getboolean('ssh', 'sftp_enabled') == True:
-        #        self.subsystemLookup[b'sftp'] = conchfiletransfer.FileTransferServer
-        #except ValueError as e:
-        #    pass
-
         # SSH forwarding disabled only when option is explicitly set
         self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
         try:
@@ -55,7 +47,5 @@ class CowrieUser(avatar.ConchUser):
         """
         log.msg('avatar {} logging out'.format(self.username))
 
-
-#components.registerAdapter(filetransfer.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
 components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)
 
