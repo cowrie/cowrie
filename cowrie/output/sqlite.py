@@ -33,7 +33,7 @@ class Output(cowrie.core.output.Output):
         try:
             self.db = adbapi.ConnectionPool(
                 'sqlite3',
-                database = sqliteFilename,
+                database=sqliteFilename,
                 check_same_thread=False
             )
         except sqlite3.OperationalError as e:
@@ -83,7 +83,7 @@ class Output(cowrie.core.output.Output):
                 sensorid = int(r[0][0])
             self.simpleQuery(
                 "INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`)"
-                +  " VALUES (?, ?, ?, ?)",
+                + " VALUES (?, ?, ?, ?)",
                 (entry["session"], entry["timestamp"],
                  sensorid, entry["src_ip"]))
 
