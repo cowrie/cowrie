@@ -66,13 +66,13 @@ class command_iptables(HoneyPotCommand):
 
         # Utils
         def optional_arg(arg_default):
-            def func(option,opt_str,value,parser):
+            def func(option, opt_str, value, parser):
                 if parser.rargs and not parser.rargs[0].startswith('-'):
-                    val=parser.rargs[0]
+                    val = parser.rargs[0]
                     parser.rargs.pop(0)
                 else:
-                    val=arg_default
-                setattr(parser.values,option.dest,val)
+                    val = arg_default
+                setattr(parser.values, option.dest, val)
             return func
 
         # Initialize options
@@ -317,7 +317,7 @@ Options:
                 output.append("-P %s ACCEPT" % chain)
 
             # Done
-            self.write("\n".join(output)+'\n')
+            self.write('{0}\n'.format('\n'.join(output)))
             self.exit()
         else:
             self.no_permission()
@@ -356,7 +356,7 @@ Options:
                 output.append("\n".join(chain_output))
 
             # Done
-            self.write("\n\n".join(output)+'\n')
+            self.write("{0}\n".format('\n\n'.join(output)))
             self.exit()
         else:
             self.no_permission()
