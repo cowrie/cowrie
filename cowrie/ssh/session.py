@@ -19,8 +19,6 @@ class HoneyPotSSHSession(session.SSHSession):
 
     def __init__(self, *args, **kw):
         session.SSHSession.__init__(self, *args, **kw)
-        #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
-
 
     def request_env(self, data):
         """
