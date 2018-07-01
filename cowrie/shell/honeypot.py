@@ -207,7 +207,6 @@ class HoneyPotShell(object):
         """
         """
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
-        #line = b"".join(line)
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         tokens = []
         while True:
@@ -344,7 +343,7 @@ class HoneyPotShell(object):
 
         for index, pipe_indice in enumerate(pipe_indices):
             multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
-            start = pipe_indice+1
+            start = pipe_indice + 1
 
         cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
         cmd_array.append(cmd)
@@ -362,8 +361,8 @@ class HoneyPotShell(object):
             cmdclass = self.protocol.getCommand(cmd['command'], environ['PATH'].split(':'))
             if cmdclass:
                 log.msg(input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
-                if index == len(cmd_array)-1:
-                    lastpp =  StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None)
+                if index == len(cmd_array) - 1:
+                    lastpp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None)
                     pp = lastpp
                 else:
                     pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, lastpp)
@@ -394,24 +393,19 @@ class HoneyPotShell(object):
         homelen = len(self.protocol.user.avatar.home)
         if cwd == self.protocol.user.avatar.home:
             cwd = '~'
-        elif len(cwd) > (homelen+1) and \
-                cwd[:(homelen+1)] == self.protocol.user.avatar.home + '/':
+        elif len(cwd) > (homelen + 1) and \
+                cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
             cwd = '~' + cwd[homelen:]
-        # Uncomment the three lines below for a 'better' CentOS look.
-        # Rather than '[root@svr03 /var/log]#' is shows '[root@svr03 log]#'.
-        #cwd = cwd.rsplit('/', 1)[-1]
-        #if not cwd:
-        #    cwd = '/'
 
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
         # Example: root@svr03:~#     (More of a "Debian" feel)
-        prompt = self.protocol.user.username+'@'+self.protocol.hostname+':'+cwd
+        promt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.pr.hostname, cwd)
         if not self.protocol.user.uid:
             prompt += '# '    # "Root" user
         else:
             prompt += '$ '    # "Non-Root" user
         self.protocol.terminal.write(prompt)
-        self.protocol.ps = (prompt , '> ')
+        self.protocol.ps = (prompt, '> ')
 
 
     def eofReceived(self):
@@ -437,7 +431,7 @@ class HoneyPotShell(object):
         """
         log.msg('Received CTRL-D, exiting..')
 
-        cmdclass =  self.protocol.commands['exit']
+        cmdclass = self.protocol.commands['exit']
         pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
         self.protocol.call_command(pp, self.protocol.commands['exit'])
 
