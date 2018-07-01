@@ -26,7 +26,7 @@ class command_whoami(HoneyPotCommand):
     def call(self):
         """
         """
-        self.write(self.protocol.user.username+'\n')
+        self.write('{0}\n'.format(self.protocol.user.username))
 commands['/usr/bin/whoami'] = command_whoami
 commands['/usr/bin/users'] = command_whoami
 
@@ -112,7 +112,7 @@ class command_who(HoneyPotCommand):
         """
         self.write('%-8s pts/0        %s %s (%s)\n' %
                    (self.protocol.user.username,
-                    time.strftime('%Y-%m-%d',time.localtime(self.protocol.logintime)),
+                    time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime)),
                     time.strftime('%H:%M', time.localtime(self.protocol.logintime)),
                     self.protocol.clientIP))
 commands['/usr/bin/who'] = command_who
@@ -243,7 +243,7 @@ class command_hostname(HoneyPotCommand):
             else:
                 self.write("hostname: you must be root to change the host name\n")
         else:
-            self.write(self.protocol.hostname+'\n')
+            self.write('{0}\n'.format(self.protocol.hostname))
 commands['/bin/hostname'] = command_hostname
 
 
@@ -310,7 +310,7 @@ class command_ps(HoneyPotCommand):
             s = ''.join([output[i][x] for x in l])
             if 'w' not in args:
                 s = s[:80]
-            self.write(s+'\n')
+            self.write('{0}\n'.format(s))
 commands['/bin/ps'] = command_ps
 
 
@@ -399,7 +399,7 @@ class command_shutdown(HoneyPotCommand):
                 "** the \"time\" argument is mandatory! (try \"now\") **",
             )
             for l in output:
-                self.write(l+'\n')
+                self.write('{0}\n'.format(l))
             self.exit()
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
@@ -492,7 +492,7 @@ class command_date(HoneyPotCommand):
         """
         """
         time = datetime.datetime.utcnow()
-        self.write(time.strftime("%a %b %d %H:%M:%S UTC %Y")+'\n')
+        self.write('{0}\n'.format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
 commands['/bin/date'] = command_date
 
 class command_yes(HoneyPotCommand):
@@ -508,7 +508,7 @@ class command_yes(HoneyPotCommand):
         """
         """
         if len(self.args):
-            self.write(' '.join(self.args)+'\n')
+            self.write("{0}{1}".format(' '.join(self.args, '\n')))
         else:
             self.write('y\n')
         self.scheduled = reactor.callLater(0.01, self.y)
@@ -593,7 +593,7 @@ class command_php(HoneyPotCommand):
                 'Copyright (c) 1997-2010 The PHP Group'
             )
             for l in output:
-                self.write(l+'\n')
+                self.write('{0}\n'.format(l))
             self.exit()
         elif self.args[0] == '-h':
             output = (
@@ -637,7 +637,7 @@ class command_php(HoneyPotCommand):
                 ''
             )
             for l in output:
-                self.write(l+'\n')
+                self.write('{0}\n'.format(l))
             self.exit()
         else:
             self.exit()
