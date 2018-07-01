@@ -36,13 +36,13 @@ class CowrieSSHFactory(factory.SSHFactory):
     privateKeys = None
     publicKeys = None
     primes = None
-    tac = None # gets set later
+    tac = None  # gets set later
 
     def logDispatch(self, *msg, **args):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'S'+str(args['sessionno'])
+        args['sessionno'] = 'S{0}'.format(args['sessionno'])
         for dblog in self.tac.dbloggers:
             dblog.logDispatch(*msg, **args)
         for output in self.tac.output_plugins:
