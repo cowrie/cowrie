@@ -23,8 +23,6 @@ class DBLogger(object):
         self.sessions = {}
         self.ttylogs = {}
         # FIXME figure out what needs to be done here regarding
-        #       HoneyPotTransport renamed to HoneyPotSSHTransport
-        #:* Handles ipv6
         self.re_sessionlog = re.compile(
             r'.*HoneyPotSSHTransport,([0-9]+),[:a-f0-9.]+$')
 
