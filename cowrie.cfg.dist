@@ -319,6 +319,8 @@ dsa_private_key = ${honeypot:etc_path}/ssh_host_dsa_key
 # SSH Version String
 #
 # Use these to disguise your honeypot from a simple SSH version scan
+# You can connect to the SSH port using netcat to get the version string
+# nmap will not show the actual value
 # Examples:
 # SSH-2.0-OpenSSH_5.1p1 Debian-5
 # SSH-1.99-OpenSSH_4.3
