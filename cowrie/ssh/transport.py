@@ -162,7 +162,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             _) = [s.split(b',') for s in strings]
 
         client_fingerprint = md5(packet[16:]).hexdigest()
-        log.msg(eventid='cowrie.client.fingerprint',
+        log.msg(eventid='cowrie.client.kex',
                 format="Remote SSH client fingerprint: %(client_fingerprint)s",
                 client_fingerprint=client_fingerprint,
                 kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
