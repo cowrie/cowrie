@@ -226,7 +226,7 @@ class HoneyPotFilesystem(object):
                 return False
             for x in p[A_CONTENTS]:
                 if x[A_NAME] == piece:
-                    if piece == pieces[-1] and follow_symlinks==False:
+                    if piece == pieces[-1] and follow_symlinks == False:
                         p = x
                     elif x[A_TYPE] == T_LINK:
                         if x[A_TARGET][0] == '/':
@@ -374,7 +374,6 @@ class HoneyPotFilesystem(object):
                 time.strftime('%Y%m%d-%H%M%S'),
                 re.sub('[^A-Za-z0-9]', '_', filename)
             )
-            #log.msg("fs.open file for writing, saving to %s" % safeoutfile)
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(hostfile, openFlags, hostmode)
             self.update_realfile(self.getfile(filename), hostfile)
@@ -413,7 +412,6 @@ class HoneyPotFilesystem(object):
                 os.remove(self.tempfiles[fd])
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
-            #os.symlink(shasum, self.tempfiles[fd])
             self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
             log.msg(format='SFTP Uploaded file \"%(filename)s\" to %(outfile)s',
                     eventid='cowrie.session.file_upload',
@@ -454,7 +452,7 @@ class HoneyPotFilesystem(object):
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         if dir[A_TYPE] != T_DIR:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
-        if len(self.get_path(path))>0:
+        if len(self.get_path(path)) > 0:
             raise OSError(errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), path)
         pdir = self.get_path(parent, follow_symlinks=True)
         for i in pdir[:]:
@@ -555,12 +553,12 @@ class HoneyPotFilesystem(object):
         """
         if (path == "/"):
             p = {
-                A_TYPE:T_DIR,
-                A_UID:0,
-                A_GID:0,
-                A_SIZE:4096,
-                A_MODE:16877,
-                A_CTIME:time.time()
+                A_TYPE: T_DIR,
+                A_UID: 0,
+                A_GID: 0,
+                A_SIZE: 4096,
+                A_MODE: 16877,
+                A_CTIME: time.time()
             }
         else:
             p = self.getfile(path, follow_symlinks=follow_symlinks)

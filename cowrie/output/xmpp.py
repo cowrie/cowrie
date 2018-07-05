@@ -16,13 +16,13 @@ class XMPPLoggerProtocol(muc.MUCClient):
 
     def __init__(self, rooms, server, nick):
         muc.MUCClient.__init__(self)
-        self.server   = rooms.host
+        self.server = rooms.host
         self.jrooms = rooms
         self._roomOccupantMap = {}
         log.msg(rooms.user)
         log.msg(rooms.host)
-        self.nick     = nick
-        self.last     = {}
+        self.nick = nick
+        self.last = {}
         self.activity = None
 
     def connectionInitialized(self):
@@ -68,22 +68,22 @@ class Output(cowrie.core.output.Output):
         from random import choice
         import string
 
-        server      = CONFIG.get('output_xmpp', 'server')
-        user       =  CONFIG.get('output_xmpp', 'user')
-        password    = CONFIG.get('output_xmpp', 'password')
-        muc         = CONFIG.get('output_xmpp', 'muc')
+        server = CONFIG.get('output_xmpp', 'server')
+        user = CONFIG.get('output_xmpp', 'user')
+        password = CONFIG.get('output_xmpp', 'password')
+        muc = CONFIG.get('output_xmpp', 'muc')
         resource = ''.join([choice(string.ascii_letters)
                             for i in range(8)])
         jid = user + '/' + resource
         application = service.Application('honeypot')
-        self.run(application, jid, password,JID(None,[muc,server,None]), server)
+        self.run(application, jid, password, JID(None, [muc, server, None]), server)
 
     def run(self, application, jidstr, password, muc, server):
 
         self.xmppclient = XMPPClient(JID(jidstr), password)
         if CONFIG.has_option('output_xmpp', 'debug') and \
                 CONFIG.getboolean('output_xmpp', 'debug') == True:
-            self.xmppclient.logTraffic = True # DEBUG HERE
+            self.xmppclient.logTraffic = True  # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
             muc, server, user + '-' + resource)
@@ -99,7 +99,7 @@ class Output(cowrie.core.output.Output):
                 del logentry[i]
             elif i == "time":
                 del logentry[i]
-        msgJson = json.dumps(logentry,indent=5)
+        msgJson = json.dumps(logentry, indent=5)
 
         self.muc.groupChat(self.muc.jrooms, msgJson)
 

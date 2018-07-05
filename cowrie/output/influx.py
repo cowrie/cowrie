@@ -106,7 +106,7 @@ class Output(cowrie.core.output.Output):
 
         # measurement init
         m = {
-            'measurement': eventid.replace('.','_'),
+            'measurement': eventid.replace('.', '_'),
             'tags': {
                 'session': entry['session'],
                 'src_ip': entry['src_ip']

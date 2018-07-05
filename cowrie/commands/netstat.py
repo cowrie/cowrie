@@ -72,8 +72,8 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % \
             ('{:<16}'.format(destination),
              '{:<16}'.format(lgateway))
-        self.write(l1+'\n')
-        self.write(l2+'\n')
+        self.write('{0}\n'.format(l1))
+        self.write('{0}\n'.format(l2))
 
     def do_netstat_normal(self):
         self.write("""Active Internet connections (w/o servers)
@@ -94,10 +94,10 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
             self.write("tcp        0      0 *:ssh                   *:*                     LISTEN\n")
         if not self.show_listen or self.show_all:
             l = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
-                (s_name, s_port, " "*(24-len(s_name+s_port)-1),
-                 c_name, c_port, " "*(24-len(c_name+c_port)-1),
+                (s_name, s_port, " " * (24 - len(s_name + s_port) - 1),
+                 c_name, c_port, " " * (24 - len(c_name + c_port) - 1),
                  "ESTABLISHED")
-            self.write(l+'\n')
+            self.write('{0}\n'.format(l))
         if self.show_listen or self.show_all:
             self.write("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN\n")
         self.write("""Active UNIX domain sockets (only servers)

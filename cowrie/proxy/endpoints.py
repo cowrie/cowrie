@@ -211,7 +211,7 @@ class _CommandChannel(SSHChannel):
         @param ignored: The (ignored) result of the execute request
         """
 
-        log.msg("command = "+self._command)
+        log.msg("command = {0}".format(self._command))
 
         self._protocol = self._protocolFactory.buildProtocol(
             SSHCommandAddress(
@@ -230,7 +230,7 @@ class _CommandChannel(SSHChannel):
         @param data: The bytes from the command's stdout.
         @type data: L{bytes}
         """
-        log.msg("command output received"+repr(data))
+        log.msg("command output received{0}".format(repr(data)))
         self._protocol.dataReceived(data)
 
 
@@ -320,7 +320,7 @@ class _ShellChannel(SSHSession):
     def ttyRequest(self, something):
         log.msg("tty-request")
         term = "vt100"
-        winSize = (25,80,0,0) # struct.unpack('4H', winsz)
+        winSize = (25, 80, 0, 0)  # struct.unpack('4H', winsz)
         ptyReqData = packRequest_pty_req(term, winSize, '')
         req = self.conn.sendRequest(self, b'pty-req', ptyReqData, wantReply=True)
         req.addCallback(self.shellRequest)
@@ -343,7 +343,7 @@ class _ShellChannel(SSHSession):
         @param reason: The cause of the shell opening failure.
         @type reason: L{Failure}
         """
-        log.msg("failed to connect to proxy backend: "+reason)
+        log.msg("failed to connect to proxy backend: {0}".format(reason))
         self._shellConnected.errback(reason)
 
 
@@ -377,7 +377,7 @@ class _ShellChannel(SSHSession):
         @param data: The bytes from the command's stdout.
         @type data: L{bytes}
         """
-        log.msg("client-session dataReceived: "+repr(data))
+        log.msg("client-session dataReceived: {0}".format(repr(data)))
         self._protocol.dataReceived(data)
 
 
@@ -821,7 +821,7 @@ class SSHShellClientEndpoint(object):
         def disconnectOnFailure(passthrough):
             # Close the connection immediately in case of cancellation, since
             # that implies user wants it gone immediately (e.g. a timeout):
-            immediate =  passthrough.check(CancelledError)
+            immediate = passthrough.check(CancelledError)
             self._creator.cleanupConnection(connection, immediate)
             return passthrough
         shellConnected.addErrback(disconnectOnFailure)
@@ -989,7 +989,7 @@ class SSHCommandClientEndpoint(object):
         def disconnectOnFailure(passthrough):
             # Close the connection immediately in case of cancellation, since
             # that implies user wants it gone immediately (e.g. a timeout):
-            immediate =  passthrough.check(CancelledError)
+            immediate = passthrough.check(CancelledError)
             self._creator.cleanupConnection(connection, immediate)
             return passthrough
         commandConnected.addErrback(disconnectOnFailure)

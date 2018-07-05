@@ -18,7 +18,7 @@ commands = {}
 
 class command_gcc(HoneyPotCommand):
     # Name of program. Under OSX, you might consider i686-apple-darwin11-llvm-gcc-X.X
-    APP_NAME    = "gcc"
+    APP_NAME = "gcc"
 
     # GCC verson, used in help, version and the commandline name gcc-X.X
     APP_VERSION = (4, 7, 2)
@@ -163,7 +163,7 @@ Thread model: posix
 gcc version %s (Debian %s-5)""" % (version, version_short, version_short, version_short, version, version))
 
         # Write
-        self.write(data+'\n')
+        self.write('{0}\n'.format(data))
         self.exit()
 
     def generate_file(self, outfile):

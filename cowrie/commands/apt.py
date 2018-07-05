@@ -39,7 +39,7 @@ class command_aptget(HoneyPotCommand):
         else:
             self.do_locked()
 
-    def sleep(self, time, time2 = None):
+    def sleep(self, time, time2=None):
         d = defer.Deferred()
         if time2:
             time = random.randint(time * 100, time2 * 100) / 100.0
@@ -110,20 +110,18 @@ pages for more information and options.
         return
 
     @inlineCallbacks
-    def do_install(self,*args):
+    def do_install(self, *args):
         if len(self.args) <= 1:
-            self.write('0 upgraded, 0 newly installed, 0 to remove and %s not upgraded.\n' % random.randint(200,300))
+            msg = '0 upgraded, 0 newly installed, 0 to remove and {0} not upgraded.\n'
+            self.write(msg.format(random.randint(200, 300)))
             self.exit()
             return
 
         packages = {}
         for y in [re.sub('[^A-Za-z0-9]', '', x) for x in self.args[1:]]:
             packages[y] = {
-                'version':      '%d.%d-%d' %
-                                (random.choice((0, 1)),
-                                 random.randint(1, 40),
-                                 random.randint(1, 10)),
-                'size':         random.randint(100, 900)
+                'version': '{0}.{1}-{2}'.format(random.choice(0, 1), random.randint(1, 40), random.randint(1, 10)),
+                'size': random.randint(100, 900)
             }
         totalsize = sum([packages[x]['size'] for x in packages])
 

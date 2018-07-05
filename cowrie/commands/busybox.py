@@ -3,12 +3,12 @@
 
 from __future__ import division, absolute_import
 
-from cowrie.shell.honeypot import HoneyPotCommand,StdOutStdErrEmulationProtocol
+from cowrie.shell.honeypot import HoneyPotCommand, StdOutStdErrEmulationProtocol
 from twisted.python import log
 
 commands = {}
 
-busybox_help=('''
+busybox_help = ('''
 BusyBox v1.20.2 (Debian 1:1.20.0-7) multi-call binary.
 Copyright (C) 1998-2011 Erik Andersen, Rob Landley, Denys Vlasenko
 and others. Licensed under GPLv2.
@@ -59,7 +59,7 @@ class command_busybox(HoneyPotCommand):
         """
         """
         for ln in busybox_help:
-            self.errorWrite(ln+'\n')
+            self.errorWrite('{0}\n'.format(ln))
 
 
     def call(self):

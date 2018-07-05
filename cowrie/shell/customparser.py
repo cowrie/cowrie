@@ -53,7 +53,7 @@ class CustomParser(argparse.ArgumentParser):
 
 
     def _print_message(self, message, file=None):
-        super(CustomParser,self)._print_message(message, self.protocol)
+        super(CustomParser, self)._print_message(message, self.protocol)
 
     def error(self, message):
         self.print_usage(self.protocol)

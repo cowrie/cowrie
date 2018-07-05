@@ -13,17 +13,17 @@ from cowrie.shell.honeypot import HoneyPotCommand
 
 commands = {}
 
-FREE_BYTES="""             total       used       free     shared    buffers     cached
+FREE_BYTES = """             total       used       free     shared    buffers     cached
 Mem:       8069256    7872920     196336          0     410340    5295748
 -/+ buffers/cache:    2166832    5902424
 Swap:      3764220     133080    3631140"""
 
-FREE_MEGA="""             total       used       free     shared    buffers     cached
+FREE_MEGA = """             total       used       free     shared    buffers     cached
 Mem:          7880       7690        189          0        400       5171
 -/+ buffers/cache:       2118       5761
 Swap:         3675        129       3546"""
 
-FREE_HUMAN="""             total       used       free     shared    buffers     cached
+FREE_HUMAN = """             total       used       free     shared    buffers     cached
 Mem:          7.7G       7.5G       189M         0B       400M       5.1G
 -/+ buffers/cache:       2.1G       5.6G
 Swap:         3.6G       129M       3.5G"""
@@ -57,12 +57,12 @@ class command_free(HoneyPotCommand):
         """
         print free statistics
         """
-        if fmt=='bytes':
-            self.write(FREE_BYTES+'\n')
-        elif fmt=='megabytes':
-            self.write(FREE_MEGA+'\n')
-        elif fmt=='human':
-            self.write(FREE_HUMAN+'\n')
+        if fmt == 'bytes':
+            self.write('{0}\n'.format(FREE_BYTES))
+        elif fmt == 'megabytes':
+            self.write('{0}\n'.format(FREE_MEGA))
+        elif fmt == 'human':
+            self.write('{0}\n'.format(FREE_HUMAN))
 
 commands['/usr/bin/free'] = command_free
 
