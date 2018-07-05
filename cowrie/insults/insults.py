@@ -48,9 +48,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.bytesReceivedLimit = 0
 
         if prot is protocol.HoneyPotExecProtocol:
-            self.type = 'e' # Execcmd
+            self.type = 'e'  # Execcmd
         else:
-            self.type = 'i' # Interactive
+            self.type = 'i'  # Interactive
 
 
     def getSessionId(self):
@@ -83,7 +83,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.type == 'e':
             self.stdinlogOpen = True
-        else: #i
+        else:
             self.stdinlogOpen = False
 
         insults.ServerProtocol.connectionMade(self)
@@ -112,7 +112,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             log.msg(format='Data upload limit reached')
-            #self.loseConnection()
             self.eofReceived()
             return
 
@@ -178,7 +177,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 if rp[1]:
                     url = rp[1]
                 else:
-                    url = rf[rf.find('redir_')+len('redir_'):]
+                    url = rf[rf.find('redir_') + len('redir_'):]
 
                 try:
                     if not os.path.exists(rf):
@@ -212,7 +211,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
                     ttylog=self.ttylogFile,
                     size=self.ttylogSize,
-                    duration=time.time()-self.startTime)
+                    duration=time.time() - self.startTime)
             ttylog.ttylog_close(self.ttylogFile, time.time())
             self.ttylogOpen = False
 

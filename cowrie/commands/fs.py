@@ -33,7 +33,7 @@ class command_grep(HoneyPotCommand):
 
     def grep_application(self, contents, match):
         match = path.basename(match)
-        match = match.replace("\"","")
+        match = match.replace("\"", "")
         contentsplit = contents.split('\n')
         matches = re.compile(".*" + match + ".*")
         for line in contentsplit:
@@ -42,10 +42,10 @@ class command_grep(HoneyPotCommand):
 
 
     def help(self):
-        self.write( 'usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n')
-        self.write( '\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n')
-        self.write( '\t[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
-        self.write( '\t[--null] [pattern] [file ...]\n')
+        self.write('usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n')
+        self.write('\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n')
+        self.write('\t[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
+        self.write('\t[--null] [pattern] [file ...]\n')
 
 
     def start(self):

@@ -72,7 +72,7 @@ class command_tar(HoneyPotCommand):
         for f in t:
             dest = self.fs.resolve_path(f.name.strip('/'), self.protocol.cwd)
             if verbose:
-                self.write(f.name+'\n')
+                self.write('{0}\n'.format(f.name))
             if not extract or not len(dest):
                 continue
             if f.isdir():

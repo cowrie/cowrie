@@ -30,19 +30,19 @@ From https://github.com/threatstream/kippo/blob/master/kippo/dblog/hpfeeds.py
 
 BUFSIZ = 16384
 
-OP_ERROR        = 0
-OP_INFO         = 1
-OP_AUTH         = 2
-OP_PUBLISH      = 3
-OP_SUBSCRIBE    = 4
+OP_ERROR = 0
+OP_INFO = 1
+OP_AUTH = 2
+OP_PUBLISH = 3
+OP_SUBSCRIBE = 4
 
-MAXBUF = 1024**2
+MAXBUF = 1024 ** 2
 SIZES = {
-    OP_ERROR: 5+MAXBUF,
-    OP_INFO: 5+256+20,
-    OP_AUTH: 5+256+20,
-    OP_PUBLISH: 5+MAXBUF,
-    OP_SUBSCRIBE: 5+256*2,
+    OP_ERROR: 5 + MAXBUF,
+    OP_INFO: 5 + 256 + 20,
+    OP_AUTH: 5 + 256 + 20,
+    OP_PUBLISH: 5 + MAXBUF,
+    OP_SUBSCRIBE: 5 + 256 * 2,
 }
 
 COWRIECHAN = 'cowrie.sessions'
@@ -70,12 +70,12 @@ def strpack8(x):
 # unpacks a string with 1 byte length field
 def strunpack8(x):
     l = x[0]
-    return x[1:1+l], x[1+l:]
+    return x[1:1 + l], x[1 + l:]
 
 
 
 def msghdr(op, data):
-    return struct.pack('!iB', 5+len(data), op) + data
+    return struct.pack('!iB', 5 + len(data), op) + data
 
 
 
@@ -91,7 +91,7 @@ def msgsubscribe(ident, chan):
 
 
 def msgauth(rand, ident, secret):
-    hash = hashlib.sha1(bytes(rand)+secret).digest()
+    hash = hashlib.sha1(bytes(rand) + secret).digest()
     return msghdr(OP_AUTH, strpack8(ident) + hash)
 
 
@@ -124,7 +124,7 @@ class FeedUnpack(object):
         if len(self.buf) < ml:
             raise StopIteration('No message.')
 
-        data = bytearray(buffer(self.buf, 5, ml-5))
+        data = bytearray(buffer(self.buf, 5, ml - 5))
         del self.buf[:ml]
         return opcode, data
 
@@ -245,7 +245,7 @@ class hpclient(object):
         self.filehandle = open(filepath, 'rb')
         fsize = os.stat(filepath).st_size
         headc = strpack8(self.ident) + strpack8(COWRIECHAN)
-        headh = struct.pack('!iB', 5+len(headc)+fsize, OP_PUBLISH)
+        headh = struct.pack('!iB', 5 + len(headc) + fsize, OP_PUBLISH)
         self.send(headh + headc)
 
 
@@ -297,18 +297,18 @@ class Output(cowrie.core.output.Output):
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
             self.meta[session] = {
-                'session':session,
+                'session': session,
                 'startTime': entry["timestamp"],
-                'endTime':'',
+                'endTime': '',
                 'peerIP': entry["src_ip"],
                 'peerPort': entry["src_port"],
                 'hostIP': entry["dst_ip"],
                 'hostPort': entry["dst_port"],
                 'loggedin': None,
-                'credentials':[],
-                'commands':[],
-                'unknownCommands':[],
-                'urls':[],
+                'credentials': [],
+                'commands': [],
+                'unknownCommands': [],
+                'urls': [],
                 'version': None,
                 'ttylog': None,
                 'hashes': set(),

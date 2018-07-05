@@ -25,7 +25,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     """
     """
 
-    id = 0 # telnet can only have 1 simultaneous session, unlike SSH
+    id = 0  # telnet can only have 1 simultaneous session, unlike SSH
     windowSize = [40, 80]
 
     def __init__(self, username, server):
@@ -111,13 +111,6 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
     def __init__(self, sess):
         self.session = sess
         self.lostOutOrErrFlag = False
-
-    # FIXME probably no such thing such as buffering in Telnet protocol
-    #def connectionMade(self):
-    #    if self.session.buf:
-    #        self.session.write(self.session.buf)
-    #        self.session.buf = None
-
 
     def outReceived(self, data):
         self.session.write(data)

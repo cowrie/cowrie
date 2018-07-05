@@ -12,7 +12,6 @@ from twisted.python import log
 from twisted.conch.ssh import common, keys, session
 from twisted.conch.client.knownhosts import KnownHostsFile
 from twisted.conch.ssh.common import getNS
-#from twisted.conch import endpoints
 
 from cowrie.core.config import CONFIG
 from cowrie.proxy import endpoints
@@ -57,9 +56,9 @@ class InBetween(protocol.Protocol):
     SSH client on the other side
     """
 
-    transport = None # Transport is the back-end the ssh-server
-    client = None # Client is the front-end, the ssh-client
-    buf = b"" # buffer to send to back-end
+    transport = None  # Transport is the back-end the ssh-server
+    client = None  # Client is the front-end, the ssh-client
+    buf = b""  # buffer to send to back-end
 
     def makeConnection(self, transport):
         protocol.Protocol.makeConnection(self, transport)
@@ -68,7 +67,6 @@ class InBetween(protocol.Protocol):
     def connectionMade(self):
         log.msg("IB: connection Made")
         if len(self.buf) and self.transport != None:
-            #self.transport.dataReceived(self.buf)
             self.transport.write(self.buf)
             self.buf = None
 
@@ -80,7 +78,7 @@ class InBetween(protocol.Protocol):
         if not self.transport:
             self.buf += bytes
             return
-        log.msg("IB: write: "+repr(bytes)+" to transport "+repr(self.transport))
+        log.msg("IB: write: {0} to transport {1}".format(repr(bytes), repr(self.transport)))
         self.transport.write(bytes)
 
 
@@ -88,7 +86,7 @@ class InBetween(protocol.Protocol):
         """
         This is data going from the back-end to the end-user
         """
-        log.msg("IB: dataReceived: "+repr(data))
+        log.msg("IB: dataReceived: {0}".format(repr(data)))
         self.client.write(data)
 
 
@@ -143,7 +141,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
 
     def __init__(self, *args, **kw):
         channel.CowrieSSHChannel.__init__(self, *args, **kw)
-        #self.__dict__['request_auth_agent_req@openssh.com'] = self.request_agent
 
         keyPath = CONFIG.get('proxy', 'private_key')
         self.keys.append(keys.Key.fromFile(keyPath))
@@ -165,10 +162,10 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         except:
             self.password = None
 
-        log.msg("knownHosts = "+repr(self.knownHosts))
-        log.msg("host = "+self.host)
-        log.msg("port = "+str(self.port))
-        log.msg("user = "+self.user)
+        log.msg("knownHosts = {0}".format(repr(self.knownHosts)))
+        log.msg("host = {0}".format(self.host))
+        log.msg("port = {0}".format(self.port))
+        log.msg("user = {0}".format(self.user))
 
         self.client = ProxyClient(self)
 
@@ -182,11 +179,11 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg("channelOpen")
         helper = endpoints._NewConnectionHelper(reactor, self.host, self.port, self.user, self.keys,
                                                 self.password, None, self.knownHosts, None)
-        log.msg("helper = "+repr(helper))
+        log.msg("helper = {0}".format(repr(helper)))
         d = helper.secureConnection()
         d.addCallback(self._cbConnect)
         d.addErrback(self._ebConnect)
-        log.msg("d = "+repr(d))
+        log.msg("d = {0}".format(repr(d)))
         return d
 
 
@@ -247,7 +244,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
         pf = _ProtocolFactory(self.client.transport)
-        #ep = endpoints.SSHCommandClientEndpoint.existingConnection(self.conn, cmd).connect(pf)
         ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd, self.user, self.host,
                                                               port=self.port, password=self.password).connect(pf)
         return 1
@@ -319,7 +315,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
 
     def dataReceived(self, data):
         if not self.client:
-            #self.conn.sendClose(self)
             self.buf += data
             return
         self.client.transport.write(data)

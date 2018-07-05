@@ -33,7 +33,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'T'+str(args['sessionno'])
+        args['sessionno'] = 'T{0}'.format(str(args['sessionno']))
         for dblog in self.tac.dbloggers:
             dblog.logDispatch(*msg, **args)
         for output in self.tac.output_plugins:
@@ -105,7 +105,6 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         """
         self.username = line  # .decode()
         # only send ECHO option if we are chatting with a real Telnet client
-        #if self.transport.options: <-- doesn't work
         self.transport.willChain(ECHO)
         # FIXME: this should be configurable or provided via filesystem
         self.transport.write(self.passwordPrompt)
@@ -141,7 +140,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     def telnet_Command(self, command):
         """
         """
-        self.transport.protocol.dataReceived(command+b'\r')
+        self.transport.protocol.dataReceived(command + b'\r')
         return "Command"
 
 
@@ -192,9 +191,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         """
         if opt == ECHO:
             return True
+        # TODO: check if twisted now supports SGA (see git commit c58056b0)
         elif opt == SGA:
             return False
-            #return True
         else:
             return False
 
@@ -202,10 +201,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     def enableRemote(self, opt):
         """
         """
+        # TODO: check if twisted now supports LINEMODE (see git commit c58056b0)
         if opt == LINEMODE:
             return False
-            #self.transport.requestNegotiation(LINEMODE, MODE + chr(TRAPSIG))
-            #return True
         elif opt == NAWS:
             return True
         elif opt == SGA:
@@ -234,7 +232,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                 dst_ip=self.transport.getHost().host,
                 dst_port=self.transport.getHost().port,
                 session=self.transportId,
-                sessionno='T'+str(sessionno),
+                sessionno='T{0}'.format(str(sessionno)),
                 protocol='telnet')
         TelnetTransport.connectionMade(self)
 

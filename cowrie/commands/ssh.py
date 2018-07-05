@@ -55,7 +55,7 @@ class command_ssh(HoneyPotCommand):
                     '           [-R [bind_address:]port:host:hostport] [-S ctl_path]',
                     '           [-w local_tun[:remote_tun]] [user@]hostname [command]',
             ):
-                self.write(l+'\n')
+                self.write('{0}\n'.format(l))
             self.exit()
             return
         user, host = 'root', args[0]

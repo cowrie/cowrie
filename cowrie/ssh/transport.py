@@ -52,13 +52,19 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if ipv4_search != None:
             src_ip = ipv4_search.group(1)
 
-        log.msg(eventid='cowrie.session.connect',
-                format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-                src_ip=src_ip, src_port=self.transport.getPeer().port,
-                dst_ip=self.transport.getHost().host, dst_port=self.transport.getHost().port,
-                session=self.transportId, sessionno='S'+str(self.transport.sessionno), protocol='ssh')
+        log.msg(
+            eventid='cowrie.session.connect',
+            format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
+            src_ip=src_ip,
+            src_port=self.transport.getPeer().port,
+            dst_ip=self.transport.getHost().host,
+            dst_port=self.transport.getHost().port,
+            session=self.transportId,
+            sessionno='S{0}'.format(self.transport.sessionno),
+            protocol='ssh'
+        )
 
-        self.transport.write(b''+self.ourVersionString+b'\r\n')
+        self.transport.write(b'{0}\r\n'.format(self.ourVersionString))
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
         self.setTimeout(120)
@@ -93,7 +99,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if not self.gotVersion:
             if not b'\n' in self.buf:
                 return
-            #self.otherVersionString = self.buf.split(b'\n')[0].strip().encode('string-escape')
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
             log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
                     format="Remote SSH version: %(version)s")
@@ -104,7 +109,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                     self._unsupportedVersionReceived(remoteVersion)
                     return
                 i = self.buf.index(b'\n')
-                self.buf = self.buf[i+1:]
+                self.buf = self.buf[i + 1:]
                 self.sendKexInit()
             else:
                 self.transport.write(b'Protocol mismatch.\n')

@@ -34,7 +34,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
                 self, interaction, *args, **kw)
         except MySQLdb.OperationalError as e:
             if e[0] not in (2003, 2006, 2013):
-                raise log.msg("RCP: got error %s, retrying operation" %(e,))
+                raise log.msg("RCP: got error {0}, retrying operation".format(e))
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             # Try the interaction again
@@ -71,13 +71,13 @@ class Output(cowrie.core.output.Output):
         try:
             self.db = ReconnectingConnectionPool(
                 'MySQLdb',
-                host = CONFIG.get('output_mysql', 'host'),
-                db = CONFIG.get('output_mysql', 'database'),
-                user = CONFIG.get('output_mysql', 'username'),
-                passwd = CONFIG.get('output_mysql', 'password', raw=True),
-                port = port,
-                cp_min = 1,
-                cp_max = 1
+                host=CONFIG.get('output_mysql', 'host'),
+                db=CONFIG.get('output_mysql', 'database'),
+                user=CONFIG.get('output_mysql', 'username'),
+                passwd=CONFIG.get('output_mysql', 'password', raw=True),
+                port=port,
+                cp_min=1,
+                cp_max=1
             )
         except MySQLdb.Error as e:
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
@@ -125,7 +125,7 @@ class Output(cowrie.core.output.Output):
                 sensorid = int(r[0][0])
             self.simpleQuery(
                 "INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`)"
-                +  " VALUES (%s, FROM_UNIXTIME(%s), %s, %s)",
+                + " VALUES (%s, FROM_UNIXTIME(%s), %s, %s)",
                 (entry["session"], entry["time"], sensorid, entry["src_ip"]))
 
         elif entry["eventid"] == 'cowrie.login.success':

@@ -80,7 +80,7 @@ class CowrieSFTPFile(object):
     def readChunk(self, offset, length):
         """
         """
-        return self.contents[offset:offset+length]
+        return self.contents[offset:offset + length]
 
 
     def writeChunk(self, offset, data):
@@ -113,7 +113,7 @@ class CowrieSFTPDirectory(object):
     def __init__(self, server, directory):
         self.server = server
         self.files = server.fs.listdir(directory)
-        self.files = [".", ".."]+self.files
+        self.files = [".", ".."] + self.files
         self.dir = directory
 
 
@@ -306,7 +306,6 @@ class SFTPServerForCowrieUser(object):
     def realPath(self, path):
         """
         """
-        #log.msg("SFTP realPath: {}".format(path))
         return self.fs.realpath(self._absPath(path))
 
 

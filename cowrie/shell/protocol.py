@@ -60,7 +60,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 self.commands.update(module.commands)
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type,exc_value,exc_traceback))))
+                log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
         self.password_input = False
         self.cmdstack = []
 
@@ -136,15 +136,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         self.setTimeout(None)
         insults.TerminalProtocol.connectionLost(self, reason)
-        self.terminal = None # (this should be done by super above)
+        self.terminal = None  # (this should be done by super above)
         self.cmdstack = []
         del self.commands
         self.fs = None
         self.pp = None
         self.user = None
         self.environ = None
-        #log.msg("honeypot terminal protocol connection lost {}".format(reason))
-
 
     def txtcmd(self, txt):
         """
@@ -228,8 +226,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         pt = self.getProtoTransport()
         r = time.time() - pt.factory.starttime
-        #if reset:
-        #    pt.factory.starttime = reset
         return r
 
 
@@ -306,21 +302,21 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.cmdstack = [honeypot.HoneyPotShell(self)]
 
         self.keyHandlers.update({
-            b'\x01':     self.handle_HOME,	# CTRL-A
-            b'\x02':     self.handle_LEFT,	# CTRL-B
-            b'\x03':     self.handle_CTRL_C,	# CTRL-C
-            b'\x04':     self.handle_CTRL_D,	# CTRL-D
-            b'\x05':     self.handle_END,	# CTRL-E
-            b'\x06':     self.handle_RIGHT,	# CTRL-F
-            b'\x08':     self.handle_BACKSPACE,	# CTRL-H
-            b'\x09':     self.handle_TAB,
-            b'\x0b':     self.handle_CTRL_K,	# CTRL-K
-            b'\x0c':     self.handle_CTRL_L,	# CTRL-L
-            b'\x0e':     self.handle_DOWN,	# CTRL-N
-            b'\x10':     self.handle_UP,	# CTRL-P
-            b'\x15':     self.handle_CTRL_U,	# CTRL-U
-            b'\x16':     self.handle_CTRL_V,	# CTRL-V
-            b'\x1b':     self.handle_ESC,	# ESC
+            b'\x01': self.handle_HOME,  # CTRL-A
+            b'\x02': self.handle_LEFT,  # CTRL-B
+            b'\x03': self.handle_CTRL_C,  # CTRL-C
+            b'\x04': self.handle_CTRL_D,  # CTRL-D
+            b'\x05': self.handle_END,  # CTRL-E
+            b'\x06': self.handle_RIGHT,  # CTRL-F
+            b'\x08': self.handle_BACKSPACE,  # CTRL-H
+            b'\x09': self.handle_TAB,
+            b'\x0b': self.handle_CTRL_K,  # CTRL-K
+            b'\x0c': self.handle_CTRL_L,  # CTRL-L
+            b'\x0e': self.handle_DOWN,  # CTRL-N
+            b'\x10': self.handle_UP,  # CTRL-P
+            b'\x15': self.handle_CTRL_U,   # CTRL-U
+            b'\x16': self.handle_CTRL_V,  # CTRL-V
+            b'\x1b': self.handle_ESC,  # ESC
         })
 
 
@@ -328,8 +324,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         """
         try:
-            self.terminal.write(self.fs.file_contents('/etc/motd')+'\n')
-
+            self.terminal.write('{0}\n'.format(self.fs.file_contents('/etc/motd')))
         except:
             pass
 
@@ -372,7 +367,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         if self.mode == 'insert':
             self.lineBuffer.insert(self.lineBufferIndex, ch)
         else:
-            self.lineBuffer[self.lineBufferIndex:self.lineBufferIndex+1] = [ch]
+            self.lineBuffer[self.lineBufferIndex:self.lineBufferIndex + 1] = [ch]
         self.lineBufferIndex += 1
         if not self.password_input:
             self.terminal.write(ch)

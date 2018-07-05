@@ -168,14 +168,6 @@ class Output(object):
             except:
                 pass
 
-        # On disconnect add the tty log
-        #if ev['eventid'] == 'cowrie.log.closed':
-            # FIXME: file is read for each output plugin
-            #f = file(ev['ttylog'])
-            #ev['ttylog'] = f.read(10485760)
-            #f.close()
-            #pass
-
         # Explicit sessionno (from logDispatch) overrides from 'system'
         if 'sessionno' in ev:
             sessionno = ev['sessionno']
@@ -185,11 +177,11 @@ class Output(object):
             sessionno = 0
             telnetmatch = self.telnetRegex.match(ev['system'])
             if telnetmatch:
-                sessionno = 'T'+str(telnetmatch.groups()[0])
+                sessionno = 'T'.format(telnetmatch.groups()[0])
             else:
                 sshmatch = self.sshRegex.match(ev['system'])
                 if sshmatch:
-                    sessionno = 'S'+str(sshmatch.groups()[0])
+                    sessionno = 'S'.format(sshmatch.groups()[0])
             if sessionno == 0:
                 return
 

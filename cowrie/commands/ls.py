@@ -186,7 +186,7 @@ class command_ls(HoneyPotCommand):
                  file[A_NAME],
                  linktarget)
 
-            self.write(l+'\n')
+            self.write('{0}\n'.format(l))
 commands['/bin/ls'] = command_ls
 commands['/bin/dir'] = command_ls
 

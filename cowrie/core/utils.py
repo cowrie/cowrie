@@ -32,16 +32,16 @@ def durationHuman(seconds):
 
     duration = []
     if years > 0:
-        duration.append('{} year'.format(syears) + 's'*(years != 1) + ' ')
+        duration.append('{0} year{1} '.format(syears, 's' * (years != 1)))
     else:
         if days > 0:
-            duration.append('{} day'.format(days) + 's'*(days != 1) + ' ')
+            duration.append('{0} day{1} '.format(days, 's' * (days != 1)))
         if hours > 0:
-            duration.append('{}:'.format(shours))
+            duration.append('{0}:'.format(shours))
         if minutes >= 0:
-            duration.append('{}:'.format(sminutes))
+            duration.append('{0}:'.format(sminutes))
         if seconds >= 0:
-            duration.append('{}'.format(sseconds))
+            duration.append('{0}'.format(sseconds))
 
     return ''.join(duration)
 
@@ -54,9 +54,9 @@ def tail(the_file, lines_2find=20):
     the_file.seek(0, 2)
     bytes_in_file = the_file.tell()
     lines_found, total_bytes_scanned = 0, 0
-    while lines_2find+1 > lines_found and bytes_in_file > total_bytes_scanned:
-        byte_block = min(1024, bytes_in_file-total_bytes_scanned)
-        the_file.seek(-(byte_block+total_bytes_scanned), 2)
+    while lines_2find + 1 > lines_found and bytes_in_file > total_bytes_scanned:
+        byte_block = min(1024, bytes_in_file - total_bytes_scanned)
+        the_file.seek(-(byte_block + total_bytes_scanned), 2)
         total_bytes_scanned += byte_block
         lines_found += the_file.read(1024).count('\n')
     the_file.seek(-total_bytes_scanned, 2)

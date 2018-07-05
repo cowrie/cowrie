@@ -232,7 +232,7 @@ class command_scp(HoneyPotCommand):
                 data = f.read()
                 header = data[:data.find('\n')]
                 if re.match('C0[\d]{3} [\d]+ [^\s]+', header):
-                    data = data[data.find('\n')+1:]
+                    data = data[data.find('\n') + 1:]
                 else:
                     data = ''
 

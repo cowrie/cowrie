@@ -60,10 +60,10 @@ class Output(cowrie.core.output.Output):
         """
         """
         if self.format == 'cef':
-            self.outfile.write(logentry['timestamp']+" ")
-            self.outfile.write(cowrie.core.cef.formatCef(logentry)+'\n')
+            self.outfile.write('{0} '.format(logentry['timestamp']))
+            self.outfile.write('{0}\n'.format(cowrie.core.cef.formatCef(logentry)))
         else:
-            self.outfile.write(logentry['timestamp']+" ")
-            self.outfile.write(logentry['message']+"\n")
+            self.outfile.write('{0} '.format(logentry['timestamp']))
+            self.outfile.write('{0}\n'.format(logentry['message']))
         self.outfile.flush()
 
