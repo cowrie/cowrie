@@ -316,7 +316,9 @@ dsa_public_key = ${honeypot:etc_path}/ssh_host_dsa_key.pub
 dsa_private_key = ${honeypot:etc_path}/ssh_host_dsa_key
 
 
-# SSH Version String
+# SSH version string as present to the client.
+#
+# Version string MUST start with SSH-2.0- or SSH-1.99-
 #
 # Use these to disguise your honeypot from a simple SSH version scan
 # Examples:
