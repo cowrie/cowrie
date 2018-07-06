@@ -9,22 +9,20 @@ import pickle
 import copy
 
 from cowrie.shell import fs
-
+from cowrie.core.config import CONFIG
 
 class FakeServer:
     """
-    @ivar cfg Configuration for honeypot
     @ivar hostname Servers Host Name
     @ivar fs File System for cowrie to use
     """
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self):
         self.arch = 'linux-x64-lsb'
         self.hostname = "unitTest"
 
         self.pckl = pickle.load(
-            open(cfg.get('honeypot', 'filesystem_file'), 'rb'))
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), self.cfg)
+            open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
+        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), 'arch')
 
 
 class FakeAvatar:
@@ -39,7 +37,6 @@ class FakeAvatar:
     def __init__(self, server):
         self.avatar = self
         self.server = server
-        self.cfg = server.cfg
 
         self.uid = 0
         self.gid = 0

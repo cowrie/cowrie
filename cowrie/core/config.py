@@ -16,7 +16,8 @@ def to_environ_key(key):
 
 
 class EnvironmentConfigParser(configparser.ConfigParser):
-
+    """
+    """
     def has_option(self, section, option):
         if to_environ_key('_'.join((section, option))) in os.environ:
             return True

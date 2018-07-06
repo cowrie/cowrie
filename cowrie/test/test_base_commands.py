@@ -4,15 +4,18 @@
 # See LICENSE for details.
 
 from __future__ import division, absolute_import
+import json
+import os
 
 from twisted.trial import unittest
 
 from cowrie.shell import protocol
 from cowrie.core import config
 from cowrie.test import fake_server, fake_transport
-import json
 
-
+os.environ["HONEYPOT_DATA_PATH"] = "../data"
+os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
+from cowrie.core.config import CONFIG
 
 class ShellBaseCommandsTests(unittest.TestCase):
 
@@ -20,8 +23,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
     def setUp(self):
         with open('../cowrie/test/expected_results.json') as data_file:
             self.data = json.load(data_file)
-        self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
-        self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
+        self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
@@ -104,8 +106,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
     def test_history_command(self):
         self.proto.lineReceived("history\n")
         self.proto.lineReceived("history\n")
-        # Not Sure HOW TO TEST THIS!!
-        print(self.tr.value())
+        print("THIS TEST IS INCOMPLETE")
 
 
     def test_date_command(self):
@@ -115,6 +116,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_bash_command(self):
         self.proto.lineReceived('bash\n')
+        print("THIS TEST IS INCOMPLETE")
 
 
     def test_sh_command(self):
@@ -124,8 +126,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_php_command(self):
         self.proto.lineReceived('php -h')
-        print(self.tr.value())
-
+        print("THIS TEST IS INCOMPLETE")
 
 
     def test_chattr_command(self):
@@ -203,71 +204,82 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 class ShellFileCommandsTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
+            fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
 
     def test_cat_output(self):
         self.proto.lineReceived('cat /proc/cpuinfo')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_grep_output(self):
         self.proto.lineReceived('grep cpu /proc/cpuinfo')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_tail_output(self):
         self.proto.lineReceived('tail -n 10 /proc/cpuinfo')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_head_output(self):
         self.proto.lineReceived('head -n 10 /proc/cpuinfo')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_cd_output(self):
         self.proto.lineReceived('cd /usr/bin')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_rm_output(self):
         self.proto.lineReceived('rm /usr/bin/gcc')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_cp_output(self):
         self.proto.lineReceived('cp /usr/bin/gcc /tmp')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_mv_output(self):
         self.proto.lineReceived('mv /usr/bin/gcc /tmp')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_mkdir_output(self):
         self.proto.lineReceived('mkdir /tmp/hello')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_rmdir_output(self):
         self.proto.lineReceived('mkdir /tmp/blah')
         self.proto.lineReceived('rmdir /tmp/blah')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_pwd_output(self):
         self.proto.lineReceived('pwd')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
     def test_touch_output(self):
         self.proto.lineReceived('touch unittests.txt')
+        print("THIS TEST IS INCOMPLETE")
         print(self.tr.value())
 
 
@@ -277,9 +289,8 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 class ShellPipeCommandsTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = config.readConfigFile("../cowrie/test/unittests.cfg")
         self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer(self.cfg)))
+            fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
