@@ -11,6 +11,7 @@ import re
 import json
 from os import path
 from random import randint
+from collections import OrderedDict
 
 from twisted.python import log
 
@@ -22,7 +23,7 @@ class UserDB(object):
     """
 
     def __init__(self):
-        self.userdb = {}
+        self.userdb = OrderedDict()
         self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))
         self.load()
 
