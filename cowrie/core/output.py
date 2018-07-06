@@ -176,11 +176,11 @@ class Output(object):
             sessionno = 0
             telnetmatch = self.telnetRegex.match(ev['system'])
             if telnetmatch:
-                sessionno = 'T'.format(telnetmatch.groups()[0])
+                sessionno = 'T{}'.format(telnetmatch.groups()[0])
             else:
                 sshmatch = self.sshRegex.match(ev['system'])
                 if sshmatch:
-                    sessionno = 'S'.format(sshmatch.groups()[0])
+                    sessionno = 'S{}'.format(sshmatch.groups()[0])
             if sessionno == 0:
                 return
 
