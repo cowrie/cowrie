@@ -134,4 +134,3 @@ class CowrieSSHFactory(factory.SSHFactory):
 
         t.factory = self
         return t
-

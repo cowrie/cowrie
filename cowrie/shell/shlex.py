@@ -346,4 +346,3 @@ if __name__ == '__main__':
             print("Token: " + repr(tt))
         else:
             break
-

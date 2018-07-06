@@ -300,4 +300,3 @@ class ShellPipeCommandsTests(unittest.TestCase):
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
-

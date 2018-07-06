@@ -35,7 +35,6 @@ from __future__ import division, absolute_import
 import abc
 import datetime
 import re
-import copy
 import socket
 import time
 

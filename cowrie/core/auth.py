@@ -219,4 +219,3 @@ class AuthRandom(object):
                     auth = True
         self.savevars()
         return auth
-

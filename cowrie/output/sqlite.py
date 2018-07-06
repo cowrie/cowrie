@@ -193,4 +193,3 @@ class Output(cowrie.core.output.Output):
             self.simpleQuery(
                 'INSERT INTO `keyfingerprints` (`session`, `username`, `fingerprint`) VALUES (?, ?, ?)',
                 (entry["session"], entry["username"], entry["fingerprint"]))
-

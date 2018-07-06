@@ -7,8 +7,6 @@ import time
 import re
 import os
 import getopt
-import hashlib
-import tempfile
 
 from OpenSSL import SSL
 

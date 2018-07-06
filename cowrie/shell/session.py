@@ -7,8 +7,6 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-import os
-
 from zope.interface import implementer
 
 from twisted.python import log
@@ -104,4 +102,3 @@ class SSHSessionForCowrieUser(object):
         """
         """
         self.windowSize = windowSize
-

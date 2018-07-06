@@ -12,7 +12,6 @@ required then
 
 from __future__ import division, absolute_import
 
-import os
 import json
 
 import splunklib.client as client
@@ -68,4 +67,3 @@ class Output(cowrie.core.output.Output):
             source='cowrie-splunk-connector')
         self.mysocket.send(json.dumps(logentry))
         self.mysocket.close()
-

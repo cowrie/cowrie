@@ -32,8 +32,8 @@ Send downloaded/uplaoded files to Cuckoo
 
 from __future__ import division, absolute_import
 
-import json
 import os
+
 try:
     from urllib.parse import urlparse, urljoin
 except ImportError:

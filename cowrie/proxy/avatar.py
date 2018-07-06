@@ -10,10 +10,9 @@ from __future__ import division, absolute_import
 from zope.interface import implementer
 
 from twisted.conch import avatar
-from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
+from twisted.conch.interfaces import IConchUser, ISession
 from twisted.python import log, components
 
-from cowrie.ssh import session as sshsession
 from cowrie.ssh import forwarding
 from cowrie.proxy import session as proxysession
 from cowrie.shell import session as shellsession

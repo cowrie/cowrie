@@ -132,4 +132,3 @@ class HoneypotPasswordChecker(object):
                     username=theusername,
                     password=thepassword)
             return False
-

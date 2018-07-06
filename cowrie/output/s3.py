@@ -3,20 +3,16 @@ Send downloaded/uplaoded files to S3 (or compatible)
 """
 
 from __future__ import division, absolute_import
-
-import os
+from configparser import NoOptionError
 
 from twisted.internet import defer, threads
 from twisted.python import log
-
 
 from botocore.session import get_session
 from botocore.exceptions import ClientError
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
-from configparser import NoOptionError
 
 
 

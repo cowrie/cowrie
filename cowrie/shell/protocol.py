@@ -13,7 +13,6 @@ import sys
 import time
 import socket
 import traceback
-import random
 
 from twisted.python import failure, log
 from twisted.internet import error
@@ -22,7 +21,6 @@ from twisted.conch import recvline
 from twisted.conch.insults import insults
 
 from cowrie.shell import honeypot
-from cowrie.core import utils
 
 from cowrie.core.config import CONFIG
 

@@ -31,8 +31,6 @@ This module contains ...
 """
 from __future__ import division, absolute_import
 
-from twisted.python import log
-
 #  cowrie.client.fingerprint
 #  cowrie.client.size
 #  cowrie.client.var

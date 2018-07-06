@@ -435,5 +435,3 @@ def encode_multipart_formdata(fields, files):
     content_type = b'multipart/form-data; boundary=%s' % BOUNDARY
 
     return content_type, body
-
-

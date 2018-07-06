@@ -96,5 +96,3 @@ class Artifact:
             os.chmod(self.shasumFilename, 0o666 & ~umask)
 
         return self.shasum, self.shasumFilename
-
-

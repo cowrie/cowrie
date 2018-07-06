@@ -7,8 +7,6 @@ dd commands
 
 from __future__ import division, absolute_import
 
-from os import path
-
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
 

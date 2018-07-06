@@ -32,8 +32,6 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-import twisted.python.log as log
-
 from cowrie.core.config import CONFIG
 
 

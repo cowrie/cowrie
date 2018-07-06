@@ -75,4 +75,3 @@ class Output(cowrie.core.output.Output):
         json.dump(logentry, self.outfile)
         self.outfile.write('\n')
         self.outfile.flush()
-

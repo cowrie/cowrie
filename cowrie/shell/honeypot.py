@@ -604,5 +604,3 @@ class StdOutStdErrEmulationProtocol(object):
         """
         """
         log.msg("processEnded for %s, status %d" % (self.cmd, reason.value.exitCode))
-
-

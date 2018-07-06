@@ -3,7 +3,6 @@
 
 from __future__ import division, absolute_import
 
-import random
 import tarfile
 import os
 

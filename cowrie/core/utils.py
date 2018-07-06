@@ -11,7 +11,7 @@ from __future__ import division, absolute_import
 import sys
 
 from twisted.application import internet
-from twisted.internet import endpoints, reactor
+from twisted.internet import endpoints
 
 
 def durationHuman(seconds):

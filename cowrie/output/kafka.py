@@ -33,11 +33,9 @@ Work in progress Kafka output. Not functional yet
 from __future__ import division, absolute_import
 
 import json
-import os
 import logging
 import random
 import string
-import sys
 
 from twisted.internet import defer, task
 from twisted.python import log

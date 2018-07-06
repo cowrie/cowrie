@@ -4,8 +4,6 @@ from __future__ import division, absolute_import
 
 import getopt
 
-from twisted.python import log
-
 from cowrie.shell.honeypot import HoneyPotCommand, StdOutStdErrEmulationProtocol
 
 commands = {}

@@ -156,4 +156,3 @@ class Output(cowrie.core.output.Output):
                 reactor.callFromThread(self.transmission_error, batch)
 
         req.addCallback(check_response)
-

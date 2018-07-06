@@ -101,4 +101,3 @@ class UsernamePasswordIP(object):
         self.username = username
         self.password = password
         self.ip = ip
-

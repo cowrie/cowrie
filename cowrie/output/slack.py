@@ -33,10 +33,8 @@ Docstring
 from __future__ import division, absolute_import
 
 import json
-import os
 import time
 
-import twisted.python.logfile
 from slackclient import SlackClient
 
 import cowrie.core.output
@@ -81,4 +79,3 @@ class Output(cowrie.core.output.Output):
             channel=self.slack_channel,
             text="%s %s" % (time.strftime('%Y-%m-%d %H:%M:%S'), json.dumps(logentry, indent=4, sort_keys=True))
         )
-

@@ -38,7 +38,6 @@ import random
 import twisted.python.log as log
 
 from cowrie.shell import fs
-from cowrie.shell import honeypot
 
 from cowrie.core.config import CONFIG
 

@@ -1,13 +1,11 @@
-import datetime
 import re
-import time
 
 from twisted.python import log
+
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 

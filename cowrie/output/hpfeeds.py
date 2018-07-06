@@ -1,7 +1,6 @@
 
 """
 Output plugin for HPFeeds
-
 """
 
 from __future__ import division, absolute_import
@@ -11,7 +10,6 @@ import struct
 import hashlib
 import json
 import socket
-import uuid
 
 from twisted.python import log
 

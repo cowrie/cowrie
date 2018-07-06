@@ -69,4 +69,3 @@ class CowrieUser(avatar.ConchUser):
 
 components.registerAdapter(filetransfer.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
 components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)
-

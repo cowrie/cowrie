@@ -28,8 +28,6 @@
 
 from __future__ import division, absolute_import
 
-from twisted.python import log
-
 import cowrie.core.output
 import cowrie.core.cef
 from cowrie.core.config import CONFIG
@@ -66,4 +64,3 @@ class Output(cowrie.core.output.Output):
             self.outfile.write('{0} '.format(logentry['timestamp']))
             self.outfile.write('{0}\n'.format(logentry['message']))
         self.outfile.flush()
-

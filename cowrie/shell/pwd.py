@@ -32,8 +32,6 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-from twisted.python import log
-
 from cowrie.core.config import CONFIG
 
 
@@ -191,4 +189,3 @@ class Group(object):
             if uid == _["gr_gid"]:
                 return _
         raise KeyError("getgruid(): uid not found in group file: " + uid)
-
