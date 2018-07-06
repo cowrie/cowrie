@@ -1,15 +1,20 @@
 
 from __future__ import division, absolute_import
 
-import uuid
 import json
 
 from twisted.words.xish import domish
 from twisted.python import log
 from twisted.words.protocols.jabber.jid import JID
-import cowrie.core.output
+from twisted.internet import defer
+from twisted.application import service
+from twisted.words.protocols.jabber import jid
+
 from wokkel.xmppim import AvailablePresence
+from wokkel.client import XMPPClient
 from wokkel import muc
+
+import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 class XMPPLoggerProtocol(muc.MUCClient):
@@ -28,7 +33,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
     def connectionInitialized(self):
         """The bot has connected to the xmpp server, now try to join the room.
         """
-        self.join(self.jrooms, self.nick);
+        self.join(self.jrooms, self.nick)
 
     def joinedRoom(self, room):
         log.msg('Joined room {}'.format(room.name))
@@ -50,14 +55,6 @@ class XMPPLoggerProtocol(muc.MUCClient):
 
     def receivedHistory(self, room, user, body, dely, frm=None):
         pass
-
-from twisted.internet import defer
-from twisted.application import service
-from twisted.words.protocols.jabber import jid
-from wokkel.client import XMPPClient
-from cowrie.core import dblog
-from twisted.words.xish import domish
-
 
 class Output(cowrie.core.output.Output):
 

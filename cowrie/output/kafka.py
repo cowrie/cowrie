@@ -167,4 +167,3 @@ class Output(cowrie.core.output.Output):
             level=logging.INFO,
         )
         task.react(produce, json.dumps(logentry))
-

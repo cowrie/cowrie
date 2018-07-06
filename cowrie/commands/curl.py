@@ -3,9 +3,7 @@
 
 from __future__ import division, absolute_import
 
-import stat
 import time
-import random
 import re
 import os
 import getopt

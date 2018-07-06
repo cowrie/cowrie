@@ -49,4 +49,3 @@ class CowrieUser(avatar.ConchUser):
         log.msg('avatar {} logging out'.format(self.username))
 
 components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)
-

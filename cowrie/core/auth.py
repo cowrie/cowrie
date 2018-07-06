@@ -155,7 +155,7 @@ class AuthRandom(object):
         auth = False
         userpass = thelogin + ':' + thepasswd
 
-        if not 'cache' in self.uservar:
+        if 'cache' not in self.uservar:
             self.uservar['cache'] = []
         cache = self.uservar['cache']
 
@@ -179,11 +179,11 @@ class AuthRandom(object):
         ipinfo = self.uservar[src_ip]
 
         # Fill in missing variables
-        if not 'max' in ipinfo:
+        if 'max' not in ipinfo:
             ipinfo['max'] = randint(self.mintry, self.maxtry)
-        if not 'try' in ipinfo:
+        if 'try' not in ipinfo:
             ipinfo['try'] = 0
-        if not 'tried' in ipinfo:
+        if 'tried' not in ipinfo:
             ipinfo['tried'] = []
 
         # Don't count repeated username/password combinations
@@ -209,7 +209,7 @@ class AuthRandom(object):
             auth = True
         # Returning after successful login
         elif attempts > need:
-            if not 'user' in ipinfo or not 'pw' in ipinfo:
+            if 'user' not in ipinfo or 'pw' not in ipinfo:
                 log.msg('return, but username or password not set!!!')
                 ipinfo['tried'].append(userpass)
                 ipinfo['try'] = 1

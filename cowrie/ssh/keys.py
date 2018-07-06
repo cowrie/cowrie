@@ -62,4 +62,3 @@ def getDSAKeys():
         with open(privateKeyFile, 'r') as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
-

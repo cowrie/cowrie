@@ -9,7 +9,7 @@ import json
 import logging
 
 from hpfeeds.twisted import ClientSessionService
-from twisted.internet import reactor, ssl, protocol, endpoints
+from twisted.internet import reactor, ssl, endpoints
 from twisted.python import log
 
 import cowrie.core.output

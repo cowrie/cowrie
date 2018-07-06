@@ -26,7 +26,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
 
     # Forward redirect
     try:
-        if CONFIG.getboolean('ssh', 'forward_redirect') == True:
+        if CONFIG.getboolean('ssh', 'forward_redirect') is True:
             redirectEnabled = True
         else:
             redirectEnabled = False

@@ -65,4 +65,3 @@ class command_free(HoneyPotCommand):
             self.write('{0}\n'.format(FREE_HUMAN))
 
 commands['/usr/bin/free'] = command_free
-

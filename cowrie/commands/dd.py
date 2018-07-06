@@ -7,6 +7,8 @@ dd commands
 
 from __future__ import division, absolute_import
 
+fromt twisted.python import log
+
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
 
@@ -81,7 +83,7 @@ class command_dd(HoneyPotCommand):
 
 
     def exit(self, success=True):
-        if success == True:
+        if success is True:
             self.write('0+0 records in\n')
             self.write('0+0 records out\n')
             self.write('0 bytes transferred in 0.695821 secs (0 bytes/sec)\n')
@@ -100,4 +102,3 @@ class command_dd(HoneyPotCommand):
 
 
 commands['/bin/dd'] = command_dd
-

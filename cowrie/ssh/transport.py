@@ -97,7 +97,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.buf = self.buf + data
         if not self.gotVersion:
-            if not b'\n' in self.buf:
+            if b'\n' not in self.buf:
                 return
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
             log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
@@ -230,7 +230,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @param desc: a descrption of the reason for the disconnection.
         @type desc: C{str}
         """
-        if not 'bad packet length' in desc:
+        if 'bad packet length' not in desc:
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write('Packet corrupt\n')

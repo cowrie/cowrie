@@ -110,7 +110,7 @@ class command_ping(HoneyPotCommand):
     def handle_CTRL_C(self):
         """
         """
-        if self.running == False:
+        if self.running is False:
             return HoneyPotCommand.handle_CTRL_C(self)
         else:
             self.write('^C\n')

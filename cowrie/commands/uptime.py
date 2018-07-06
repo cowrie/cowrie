@@ -21,4 +21,3 @@ class command_uptime(HoneyPotCommand):
                    (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
 
 commands['/usr/bin/uptime'] = command_uptime
-

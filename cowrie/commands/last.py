@@ -7,8 +7,6 @@ from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
 from cowrie.core import utils
 
-from cowrie.core.config import CONFIG
-
 commands = {}
 
 

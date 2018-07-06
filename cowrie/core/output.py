@@ -149,18 +149,18 @@ class Output(object):
             return
 
         # Ignore anything without eventid
-        if not 'eventid' in event:
+        if 'eventid' not in event:
             return
 
         ev = convert(event)
         ev['sensor'] = self.sensor
 
         # Add ISO timestamp and sensor data
-        if not 'time' in ev:
+        if 'time' not in ev:
             ev['time'] = time.time()
         ev['timestamp'] = datetime.datetime.utcfromtimestamp(ev['time']).isoformat() + 'Z'
 
-        if 'format' in ev and (not 'message' in ev or ev['message'] == ()):
+        if 'format' in ev and ('message' not in ev or ev['message'] == ()):
             try:
                 ev['message'] = ev['format'] % ev
                 del ev['format']

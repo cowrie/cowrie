@@ -200,7 +200,7 @@ class command_iptables(HoneyPotCommand):
     def is_valid_table(self, table):
         if self.user_is_root():
             # Verify table existence
-            if not table in list(self.tables.keys()):
+            if table not in list(self.tables.keys()):
                 self.write("""%s: can\'t initialize iptables table \'%s\': Table does not exist (do you need to insmod?)
 Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, table))
                 self.exit()
@@ -215,7 +215,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
 
     def is_valid_chain(self, chain):
         # Verify chain existence. Requires valid table first
-        if not chain in list(self.current_table.keys()):
+        if chain not in list(self.current_table.keys()):
             self.write("%s: No chain/target/match by that name.\n" % command_iptables.APP_NAME)
             self.exit()
             return False

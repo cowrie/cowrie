@@ -327,4 +327,3 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return
         if self.client:
             self.conn.sendClose(self)
-

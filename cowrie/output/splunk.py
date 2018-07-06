@@ -146,5 +146,3 @@ class WebClientContextFactory(ClientContextFactory):
         """
         """
         return ClientContextFactory.getContext(self)
-
-

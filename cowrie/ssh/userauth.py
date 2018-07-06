@@ -176,4 +176,3 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             d.errback(Failure())
         else:
             d.callback(resp)
-

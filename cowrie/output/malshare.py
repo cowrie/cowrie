@@ -35,11 +35,11 @@ from __future__ import division, absolute_import
 
 import os
 try:
-    from urllib.parse import urlparse, urljoin
+    from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse, urljoin
-
 import requests
+
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
