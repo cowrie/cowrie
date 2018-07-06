@@ -7,7 +7,7 @@ dd commands
 
 from __future__ import division, absolute_import
 
-fromt twisted.python import log
+from twisted.python import log
 
 from cowrie.shell.honeypot import HoneyPotCommand
 from cowrie.shell.fs import *
