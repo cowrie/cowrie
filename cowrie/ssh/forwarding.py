@@ -53,7 +53,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
 
     # TCP tunnel
     try:
-        if CONFIG.getboolean('ssh', 'forward_tunnel') == True:
+        if CONFIG.getboolean('ssh', 'forward_tunnel') is True:
             tunnelEnabled = True
         else:
             tunnelEnabled = False

@@ -26,7 +26,8 @@ class command_ulimit(HoneyPotCommand):
         try:
             opts, args = getopt.getopt(self.args, 'SHacdfilmnpqstuvx')
         except getopt.GetoptError as err:
-            self.usage_ulimit()
+            self.errorWrite("-bash: ulimit: {}\n".format(err))
+            self.write("ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]\n")
             return
 
         # Parse options
@@ -45,8 +46,4 @@ class command_ulimit(HoneyPotCommand):
         """
         pass
 
-    def usage_ulimit(self):
-        self.write("ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]\n")
-
 commands['ulimit'] = command_ulimit
-

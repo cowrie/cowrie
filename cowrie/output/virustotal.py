@@ -160,7 +160,7 @@ class Output(cowrie.core.output.Output):
                         fileName = entry["shasum"]
                     else:
                         fileName = b
-                if self.upload == True:
+                if self.upload is True:
                     return self.postfile(entry["outfile"], fileName)
                 else:
                     return
@@ -235,7 +235,7 @@ class Output(cowrie.core.output.Output):
             # This is always a new resource, since we did the scan before
             # so always create the comment
             log.msg("response=0: posting comment")
-            if self.comment == True:
+            if self.comment is True:
                 return self.postcomment(j["resource"])
             else:
                 return

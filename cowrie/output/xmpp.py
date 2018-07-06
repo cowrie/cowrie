@@ -79,7 +79,7 @@ class Output(cowrie.core.output.Output):
 
         self.xmppclient = XMPPClient(JID(jidstr), password)
         if CONFIG.has_option('output_xmpp', 'debug') and \
-                CONFIG.getboolean('output_xmpp', 'debug') == True:
+                CONFIG.getboolean('output_xmpp', 'debug') is True:
             self.xmppclient.logTraffic = True  # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
