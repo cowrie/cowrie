@@ -159,7 +159,7 @@ class command_echo(HoneyPotCommand):
             if newline is True:
                 s += '\n'
 
-            self.write(escape_fn(s))
+            self.write(escape_fn(s).encode('utf8'))
 
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
@@ -193,7 +193,7 @@ class command_printf(HoneyPotCommand):
                     if s.endswith('\\c'):
                         s = s[:-2]
 
-                    self.write(escape_fn(s))
+                    self.write(escape_fn(s).encode('utf8'))
 
 
 commands['printf'] = command_printf
