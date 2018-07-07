@@ -34,12 +34,13 @@ from __future__ import division, absolute_import
 
 import copy
 import random
+import json
 
 from configparser import NoOptionError
 
 import twisted.python.log as log
 
-from cowrie.shell import fs, process
+from cowrie.shell import fs
 
 from cowrie.core.config import CONFIG
 
@@ -66,15 +67,24 @@ class CowrieServer(object):
             self.arch = 'linux-x64-lsb'
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
+        
 
+    def getCommandOutput(self, file):
+        """
+        Reads process output from JSON file.
+        """
+        with open(file) as f:
+            cmdoutput = json.load(f)
+        return cmdoutput
+        
         
     def initFileSystem(self):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
+        
         try:
-            self.process = process.CommandOutputParser().getCommandOutput(CONFIG.get('process',
-                                                                                     'file'))['command']['ps']
+            self.process = self.getCommandOutput(CONFIG.get('process', 'file'))['command']['ps']
         except NoOptionError:
             self.process = None
