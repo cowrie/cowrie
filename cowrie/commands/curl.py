@@ -15,7 +15,6 @@ from twisted.internet import reactor, ssl
 from twisted.python import log, compat
 
 from cowrie.shell.honeypot import HoneyPotCommand
-from cowrie.shell.fs import *
 
 from cowrie.core.config import CONFIG
 

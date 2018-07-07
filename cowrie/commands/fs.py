@@ -11,7 +11,7 @@ from __future__ import division, absolute_import
 import re
 import getopt
 import copy
-from os import path
+import os.path
 
 from twisted.python import log
 
@@ -34,7 +34,7 @@ class command_grep(HoneyPotCommand):
 
 
     def grep_application(self, contents, match):
-        match = path.basename(match)
+        match = os.path.basename(match)
         match = match.replace("\"", "")
         contentsplit = contents.split('\n')
         matches = re.compile(".*" + match + ".*")
