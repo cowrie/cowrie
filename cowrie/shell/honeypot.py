@@ -241,7 +241,7 @@ class HoneyPotShell(object):
                 elif tok[0] == '$':
                     envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
                     envSearch = envRex.search(tok)
-                    if envSearch != None:
+                    if envSearch is not None:
                         envMatch = envSearch.group(1)
                         if envMatch in list(self.environ.keys()):
                             tok = self.environ[envMatch]
@@ -249,7 +249,7 @@ class HoneyPotShell(object):
                             continue
                     envRex = re.compile(r'^\${([_a-zA-Z0-9]+)}$')
                     envSearch = envRex.search(tok)
-                    if envSearch != None:
+                    if envSearch is not None:
                         envMatch = envSearch.group(1)
                         if envMatch in list(self.environ.keys()):
                             tok = self.environ[envMatch]

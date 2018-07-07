@@ -68,7 +68,7 @@ class InBetween(protocol.Protocol):
 
     def connectionMade(self):
         log.msg("IB: connection Made")
-        if len(self.buf) and self.transport != None:
+        if len(self.buf) and self.transport is not None:
             self.transport.write(self.buf)
             self.buf = None
 
