@@ -46,7 +46,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         if remoteHP[1] in redirects:
             remoteHPNew = redirects[remoteHP[1]]
             log.msg(eventid='cowrie.direct-tcpip.redirect',
-                    format='redirected direct-tcp connection request from %(src_ip)s:%(src_port)' + \
+                    format='redirected direct-tcp connection request from %(src_ip)s:%(src_port)' +
                            'd to %(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
                     new_ip=remoteHPNew[0], new_port=remoteHPNew[1],
                     dst_ip=remoteHP[0], dst_port=remoteHP[1],
@@ -73,7 +73,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         if remoteHP[1] in tunnels:
             remoteHPNew = tunnels[remoteHP[1]]
             log.msg(eventid='cowrie.direct-tcpip.tunnel',
-                    format='tunneled direct-tcp connection request %(src_ip)s:%(src_port)' + \
+                    format='tunneled direct-tcp connection request %(src_ip)s:%(src_port)' +
                            'd->%(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
                     new_ip=remoteHPNew[0], new_port=remoteHPNew[1],
                     dst_ip=remoteHP[0], dst_port=remoteHP[1],
