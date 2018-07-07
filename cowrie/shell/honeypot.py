@@ -543,7 +543,7 @@ class StdOutStdErrEmulationProtocol(object):
         self.data = data
 
         if not self.next_command:
-            if not self.protocol is None and not self.protocol.terminal is None:
+            if self.protocol is not None and self.protocol.terminal is not None:
                 self.protocol.terminal.write(data)
             else:
                 log.msg("Connection was probably lost. Could not write to terminal")
