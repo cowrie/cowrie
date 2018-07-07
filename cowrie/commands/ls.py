@@ -163,7 +163,7 @@ class command_ls(HoneyPotCommand):
                 perms[4] = 'r'
             if file[A_MODE] & stat.S_IWGRP:
                 perms[5] = 'w'
-            if file[A_MODE] & stat.S_IXGRP
+            if file[A_MODE] & stat.S_IXGRP:
                 perms[6] = 'x'
             if file[A_MODE] & stat.S_ISGID:
                 perms[6] = 'S'
