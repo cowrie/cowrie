@@ -3,7 +3,6 @@
 
 from __future__ import division, absolute_import
 
-import sys
 import codecs
 import time
 import datetime
