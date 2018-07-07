@@ -33,6 +33,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.user = avatar
         self.environ = avatar.environ
         self.hostname = avatar.server.hostname
+        self.process =  avatar.server.process
         self.fs = avatar.server.fs
         self.pp = None
         self.logintime = None

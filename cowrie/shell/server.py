@@ -41,6 +41,7 @@ import twisted.python.log as log
 from cowrie.shell import fs
 
 from cowrie.core.config import CONFIG
+from cowrie.core.config import CMD_OUTPUT
 
 class CowrieServer(object):
     """
@@ -57,6 +58,7 @@ class CowrieServer(object):
         self.fs = None
 
         try:
+            self.process = CMD_OUTPUT['command']['ps']
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
             # TODO trim whitespace
         except NoOptionError:

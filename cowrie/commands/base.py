@@ -11,7 +11,6 @@ import re
 import random
 
 from twisted.python import failure, log
-from cowrie.core.config import CMD_OUTPUT
 from twisted.internet import error, reactor
 
 from cowrie.shell.honeypot import HoneyPotCommand, HoneyPotShell, StdOutStdErrEmulationProtocol
@@ -278,8 +277,8 @@ class command_ps(HoneyPotCommand):
           '%s'.ljust(8 - len("TIME")) % "TIME",
           '%s'.ljust(30 - len("COMMAND")) % "COMMAND")
         output_array.append(output)
-        if (CMD_OUTPUT['command']['ps']):
-            for single_ps in CMD_OUTPUT['command']['ps']:
+        if (self.protocol.process):
+            for single_ps in self.protocol.process:
                 output = ('%s'.ljust(15 - len(str(single_ps['USER']))) % str(single_ps['USER']),
                           '%s'.ljust(8  - len(str(single_ps['PID']))) % str(single_ps['PID']),
                           '%s'.ljust(13 - len(str(round(single_ps['CPU'], 2)))) % str(round(single_ps['CPU'], 2)),
