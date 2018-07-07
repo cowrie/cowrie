@@ -8,6 +8,7 @@ Filesystem related commands
 
 from __future__ import division, absolute_import
 
+import re
 import getopt
 import copy
 from os import path
