@@ -3,6 +3,8 @@
 
 from __future__ import division, absolute_import
 
+import sys
+import codecs
 import time
 import datetime
 import functools
@@ -132,7 +134,10 @@ class command_echo(HoneyPotCommand):
             optlist, args = getopt.getopt(self.args, "eEn")
             for opt in optlist:
                 if opt[0] == '-e':
-                    escape_fn = functools.partial(unicode.decode, encoding="string_escape")
+                    if sys.version_info.major < 3:
+                        escape_fn = functools.partial(unicode.decode, encoding="string_escape")
+                    else:
+                        escape_fn = functools.partial(codecs.decode)
                 elif opt[0] == '-E':
                     escape_fn = lambda s: s
                 elif opt[0] == '-n':
