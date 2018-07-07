@@ -52,13 +52,15 @@ class CowrieServer(object):
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
+
     def __init__(self, realm):
         self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')
         self.fs = None
 
         try:
-            self.process = process.CommandOutputParser().getCommandOutput(CONFIG.get('process','file'))['command']['ps']
+            self.process = process.CommandOutputParser().getCommandOutput(CONFIG.get('process', 'file'))['command'][
+                'ps']
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
             # TODO trim whitespace
         except NoOptionError:
