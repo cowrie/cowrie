@@ -64,7 +64,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             protocol='ssh'
         )
 
-        self.transport.write(b'{0}\r\n'.format(self.ourVersionString))
+        self.transport.write('{0}\r\n'.format(self.ourVersionString).encode('ascii'))
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
         self.setTimeout(120)
