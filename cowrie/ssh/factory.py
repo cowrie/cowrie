@@ -8,6 +8,7 @@ This module contains ...
 from __future__ import division, absolute_import
 
 import time
+from configparser import NoOptionError
 
 from twisted.conch.ssh import factory
 from twisted.conch.ssh import keys
@@ -94,7 +95,7 @@ class CowrieSSHFactory(factory.SSHFactory):
 
         try:
             t.ourVersionString = CONFIG.get('ssh', 'version')
-        except:
+        except NoOptionError:
             t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
 
         t.supportedPublicKeys = list(self.privateKeys.keys())
