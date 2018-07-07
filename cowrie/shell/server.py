@@ -62,7 +62,7 @@ class CowrieServer(object):
 
         try:
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
-            # TODO trim whitespace  
+            # TODO trim whitespace
         except NoOptionError:
             self.arch = 'linux-x64-lsb'
 
