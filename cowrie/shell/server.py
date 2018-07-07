@@ -41,7 +41,6 @@ from configparser import NoOptionError
 import twisted.python.log as log
 
 from cowrie.shell import fs
-
 from cowrie.core.config import CONFIG
 
 class CowrieServer(object):
@@ -85,6 +84,6 @@ class CowrieServer(object):
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
         
         try:
-            self.process = self.getCommandOutput(CONFIG.get('process', 'file'))['command']['ps']
+            self.process = self.getCommandOutput(CONFIG.get('shell', 'processes'))['command']['ps']
         except NoOptionError:
             self.process = None

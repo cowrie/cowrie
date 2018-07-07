@@ -214,6 +214,12 @@ auth_class = UserDB
 filesystem = ${honeypot:share_path}/fs.pickle
 
 
+# File that contains output for the `ps` command.
+#
+# (default: share/cowrie/cmdoutput.json)
+processes = share/cowrie/cmdoutput.json
+
+
 # Fake architectures/OS
 # When Cowrie receive a command like /bin/cat XXXX (where XXXX is an executable)
 # it replies with the content of a dummy executable (located in data_path/arch)
