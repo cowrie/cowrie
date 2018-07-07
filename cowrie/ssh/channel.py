@@ -9,6 +9,7 @@ and session size limiting
 from __future__ import division, absolute_import
 
 import time
+from configparser import NoOptionError
 
 from twisted.python import log
 from twisted.conch.ssh import channel
@@ -48,12 +49,12 @@ class CowrieSSHChannel(channel.SSHChannel):
         self.downloadPath = CONFIG.get('honeypot', 'download_path')
         try:
             self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
-        except:
+        except NoOptionError:
             self.ttylogEnabled = True
 
         try:
             self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
-        except:
+        except NoOptionError:
             self.bytesReceivedLimit = 0
 
         channel.SSHChannel.__init__(self, *args, **kw)
