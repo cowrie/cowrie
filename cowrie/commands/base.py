@@ -132,7 +132,7 @@ class command_echo(HoneyPotCommand):
             optlist, args = getopt.getopt(self.args, "eEn")
             for opt in optlist:
                 if opt[0] == '-e':
-                    escape_fn = functools.partial(unicode.decode, encoding="string_escape")
+                    escape_fn = functools.partial(string.decode, encoding="string_escape")
                 elif opt[0] == '-E':
                     escape_fn = lambda s: s
                 elif opt[0] == '-n':
