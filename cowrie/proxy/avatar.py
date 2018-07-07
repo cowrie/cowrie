@@ -8,6 +8,7 @@ This module contains ...
 from __future__ import division, absolute_import
 
 from zope.interface import implementer
+from configparser import NoOptionError
 
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession
@@ -37,9 +38,9 @@ class CowrieUser(avatar.ConchUser):
         # SSH forwarding disabled only when option is explicitly set
         self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
         try:
-            if CONFIG.getboolean('ssh', 'forwarding') == False:
+            if CONFIG.getboolean('ssh', 'forwarding') is False:
                 del self.channelLookup[b'direct-tcpip']
-        except:
+        except NoOptionError:
             pass
 
 

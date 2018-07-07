@@ -7,6 +7,8 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
+from configparser import NoOptionError
+
 from twisted.internet import reactor, protocol
 from twisted.python import log
 from twisted.conch.ssh import common, keys, session
@@ -148,7 +150,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         try:
             keyPath = CONFIG.get('proxy', 'private_key')
             self.keys.append(keys.Key.fromFile(keyPath))
-        except:
+        except NoOptionError:
             self.keys = None
 
         knownHostsPath = CONFIG.get('proxy', 'known_hosts')
@@ -159,7 +161,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         self.user = CONFIG.get('proxy', 'user')
         try:
             self.password = CONFIG.get('proxy', 'password')
-        except:
+        except NoOptionError:
             self.password = None
 
         log.msg("knownHosts = {0}".format(repr(self.knownHosts)))
