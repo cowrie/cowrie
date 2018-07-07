@@ -275,7 +275,7 @@ class command_ps(HoneyPotCommand):
             '%s'.ljust(8 - len("TIME")) % "TIME",
             '%s'.ljust(30 - len("COMMAND")) % "COMMAND")
         output_array.append(output)
-        if (self.protocol.process):
+        if (self.protocol.user.server.process):
             for single_ps in self.protocol.process:
                 output = ('%s'.ljust(15 - len(str(single_ps['USER']))) % str(single_ps['USER']),
                           '%s'.ljust(8 - len(str(single_ps['PID']))) % str(single_ps['PID']),
