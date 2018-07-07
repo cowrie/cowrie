@@ -34,14 +34,14 @@ from __future__ import division, absolute_import
 
 import copy
 import random
+
 from configparser import NoOptionError
 
 import twisted.python.log as log
 
-from cowrie.shell import fs
+from cowrie.shell import fs, process
 
 from cowrie.core.config import CONFIG
-from cowrie.core.config import CMD_OUTPUT
 
 class CowrieServer(object):
     """
@@ -58,11 +58,12 @@ class CowrieServer(object):
         self.fs = None
 
         try:
-            self.process = CMD_OUTPUT['command']['ps']
+            self.process = process.CommandOutputParser().getCommandOutput(CONFIG.get('process','file'))['command']['ps']
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
             # TODO trim whitespace
         except NoOptionError:
             self.arch = 'linux-x64-lsb'
+            self.process = None
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
 
