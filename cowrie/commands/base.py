@@ -7,7 +7,6 @@ import sys
 import codecs
 import time
 import datetime
-import functools
 import getopt
 import re
 
@@ -134,10 +133,7 @@ class command_echo(HoneyPotCommand):
             optlist, args = getopt.getopt(self.args, "eEn")
             for opt in optlist:
                 if opt[0] == '-e':
-                    if sys.version_info.major < 3:
-                        escape_fn = functools.partial(unicode.decode, encoding="string_escape")
-                    else:
-                        escape_fn = functools.partial(codecs.decode)
+                    escape_fn = lambda s: codecs.escape_decode(s)[0]
                 elif opt[0] == '-E':
                     escape_fn = lambda s: s
                 elif opt[0] == '-n':
@@ -163,7 +159,7 @@ class command_echo(HoneyPotCommand):
             if newline is True:
                 s += '\n'
 
-            self.write(escape_fn(s).encode('utf8'))
+            self.write(escape_fn(s))
 
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
@@ -182,7 +178,7 @@ class command_printf(HoneyPotCommand):
         else:
             if '-v' not in self.args:
                 if len(self.args) < 2:
-                    escape_fn = functools.partial(unicode.decode, encoding="string_escape")
+                    escape_fn = lambda s: codecs.escape_decode(s)[0]
 
                     # replace r'\\x' with r'\x'
                     s = ''.join(self.args[0]).replace('\\\\x', '\\x')
