@@ -76,7 +76,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         We subclass to intercept non-dsa/rsa keys, or Conch will crash on ecdsa..
         """
         algName, blob, rest = getNS(packet[1:], 2)
-        if not algName in (b'ssh-rsa', b'ssh-dsa'):
+        if algName not in (b'ssh-rsa', b'ssh-dsa'):
             log.msg("Attempted public key authentication with {} algorithm".format(algName))
             return defer.fail(error.ConchError("Incorrect signature"))
         return userauth.SSHUserAuthServer.auth_publickey(self, packet)

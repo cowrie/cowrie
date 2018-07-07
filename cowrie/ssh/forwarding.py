@@ -7,6 +7,8 @@ This module contains code for handling SSH direct-tcpip connection requests
 
 from __future__ import division, absolute_import
 
+from configparser import NoOptionError
+
 from twisted.python import log
 from twisted.conch.ssh import forwarding
 
@@ -30,7 +32,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             redirectEnabled = True
         else:
             redirectEnabled = False
-    except:
+    except NoOptionError:
         redirectEnabled = False
 
     if redirectEnabled:
@@ -57,7 +59,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             tunnelEnabled = True
         else:
             tunnelEnabled = False
-    except:
+    except NoOptionError:
         tunnelEnabled = False
 
     if tunnelEnabled:

@@ -49,7 +49,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         src_ip = self.transport.getPeer().host
         ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
         ipv4_search = ipv4rex.search(src_ip)
-        if ipv4_search != None:
+        if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
 
         log.msg(
