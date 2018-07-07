@@ -8,6 +8,7 @@ This module contains ...
 from __future__ import division, absolute_import
 
 import os
+from configparser import NoOptionError
 
 from zope.interface import implementer
 
@@ -36,7 +37,7 @@ class CowrieSFTPFile(object):
 
         try:
             self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
-        except:
+        except NoOptionError:
             self.bytesReceivedLimit = 0
 
         openFlags = 0

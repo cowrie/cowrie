@@ -8,6 +8,8 @@ This module contains
 
 from __future__ import division, absolute_import
 
+from configparser import NoOptionError
+
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
 
@@ -34,7 +36,7 @@ def logger():
     """
     try:
         dir = CONFIG.get("honeypot", "log_path")
-    except:
+    except NoOptionError:
         dir = "log"
 
     logfile = CowrieDailyLogFile("cowrie.log", dir)

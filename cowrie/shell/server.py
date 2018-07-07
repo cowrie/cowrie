@@ -34,6 +34,7 @@ from __future__ import division, absolute_import
 
 import copy
 import random
+from configparser import NoOptionError
 
 import twisted.python.log as log
 
@@ -58,7 +59,7 @@ class CowrieServer(object):
         try:
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
             # TODO trim whitespace
-        except:
+        except NoOptionError:
             self.arch = 'linux-x64-lsb'
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
