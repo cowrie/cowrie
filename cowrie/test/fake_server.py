@@ -23,7 +23,7 @@ class FakeServer:
         self.pckl = pickle.load(
             open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), 'arch')
-
+        self.process = None
 
 class FakeAvatar:
     """

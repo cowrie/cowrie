@@ -34,6 +34,8 @@ from __future__ import division, absolute_import
 
 import copy
 import random
+import json
+
 from configparser import NoOptionError
 
 import twisted.python.log as log
@@ -51,10 +53,12 @@ class CowrieServer(object):
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
+    fs = None
+    process = None
+    avatars = []
+    
     def __init__(self, realm):
-        self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')
-        self.fs = None
 
         try:
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
@@ -63,9 +67,24 @@ class CowrieServer(object):
             self.arch = 'linux-x64-lsb'
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
+        
 
+    def getCommandOutput(self, file):
+        """
+        Reads process output from JSON file.
+        """
+        with open(file) as f:
+            cmdoutput = json.load(f)
+        return cmdoutput
+        
+        
     def initFileSystem(self):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
+        
+        try:
+            self.process = self.getCommandOutput(CONFIG.get('process', 'file'))['command']['ps']
+        except NoOptionError:
+            self.process = None
