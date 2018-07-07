@@ -23,7 +23,6 @@ commands = {}
 class command_whoami(HoneyPotCommand):
     """
     """
-
     def call(self):
         """
         """
