@@ -5,7 +5,6 @@ import cowrie.core.output
 from csirtgsdk.indicator import Indicator
 from csirtgsdk.client import Client
 from datetime import datetime
-import logging
 import os
 from twisted.python import log
 
