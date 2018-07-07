@@ -148,23 +148,38 @@ class command_ls(HoneyPotCommand):
                 continue
 
             perms = ['-'] * 10
-            if file[A_MODE] & stat.S_IRUSR: perms[1] = 'r'
-            if file[A_MODE] & stat.S_IWUSR: perms[2] = 'w'
-            if file[A_MODE] & stat.S_IXUSR: perms[3] = 'x'
-            if file[A_MODE] & stat.S_ISUID: perms[3] = 'S'
-            if file[A_MODE] & stat.S_IXUSR and file[A_MODE] & stat.S_ISUID: perms[3] = 's'
+            if file[A_MODE] & stat.S_IRUSR:
+                perms[1] = 'r'
+            if file[A_MODE] & stat.S_IWUSR:
+                perms[2] = 'w'
+            if file[A_MODE] & stat.S_IXUSR:
+                perms[3] = 'x'
+            if file[A_MODE] & stat.S_ISUID:
+                perms[3] = 'S'
+            if file[A_MODE] & stat.S_IXUSR and file[A_MODE] & stat.S_ISUID:
+                perms[3] = 's'
 
-            if file[A_MODE] & stat.S_IRGRP: perms[4] = 'r'
-            if file[A_MODE] & stat.S_IWGRP: perms[5] = 'w'
-            if file[A_MODE] & stat.S_IXGRP: perms[6] = 'x'
-            if file[A_MODE] & stat.S_ISGID: perms[6] = 'S'
-            if file[A_MODE] & stat.S_IXGRP and file[A_MODE] & stat.S_ISGID: perms[6] = 's'
+            if file[A_MODE] & stat.S_IRGRP:
+                perms[4] = 'r'
+            if file[A_MODE] & stat.S_IWGRP:
+                perms[5] = 'w'
+            if file[A_MODE] & stat.S_IXGRP
+                perms[6] = 'x'
+            if file[A_MODE] & stat.S_ISGID:
+                perms[6] = 'S'
+            if file[A_MODE] & stat.S_IXGRP and file[A_MODE] & stat.S_ISGID:
+                perms[6] = 's'
 
-            if file[A_MODE] & stat.S_IROTH: perms[7] = 'r'
-            if file[A_MODE] & stat.S_IWOTH: perms[8] = 'w'
-            if file[A_MODE] & stat.S_IXOTH: perms[9] = 'x'
-            if file[A_MODE] & stat.S_ISVTX: perms[9] = 'T'
-            if file[A_MODE] & stat.S_IXOTH and file[A_MODE] & stat.S_ISVTX: perms[9] = 't'
+            if file[A_MODE] & stat.S_IROTH:
+                perms[7] = 'r'
+            if file[A_MODE] & stat.S_IWOTH:
+                perms[8] = 'w'
+            if file[A_MODE] & stat.S_IXOTH:
+                perms[9] = 'x'
+            if file[A_MODE] & stat.S_ISVTX:
+                perms[9] = 'T'
+            if file[A_MODE] & stat.S_IXOTH and file[A_MODE] & stat.S_ISVTX:
+                perms[9] = 't'
 
             linktarget = ''
 

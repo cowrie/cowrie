@@ -125,7 +125,8 @@ class HoneyPotFilesystem(object):
                 break
             piece = pieces.pop(0)
             if piece == '..':
-                if len(cwd): cwd.pop()
+                if len(cwd):
+                    cwd.pop()
                 continue
             if piece in ('.', ''):
                 continue
