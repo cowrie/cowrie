@@ -10,11 +10,9 @@ TODO: support for '-' (stdin marked as '-')
 from __future__ import division, absolute_import
 
 import getopt
-import copy
-from os import path
 
 from cowrie.shell.honeypot import HoneyPotCommand
-from cowrie.shell.fs import *
+from cowrie.shell.fs import FileNotFound
 
 commands = {}
 
