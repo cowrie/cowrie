@@ -47,4 +47,3 @@ class CowrieServer(object):
     def __init__(self, realm):
         self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')
-

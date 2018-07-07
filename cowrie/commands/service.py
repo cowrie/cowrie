@@ -121,4 +121,3 @@ class command_service(HoneyPotCommand):
 
 
 commands['/usr/sbin/service'] = command_service
-

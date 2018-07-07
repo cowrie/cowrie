@@ -68,4 +68,3 @@ class CowrieServer(object):
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
-

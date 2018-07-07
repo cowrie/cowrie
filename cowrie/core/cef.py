@@ -108,4 +108,3 @@ def formatCef(logentry):
                 cefExtension
 
     return cefString
-

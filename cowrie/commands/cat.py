@@ -106,7 +106,7 @@ class command_cat(HoneyPotCommand):
             Concatenate FILE(s) to standard output.
 
             With no FILE, or when FILE is -, read standard input.
-            
+
               -A, --show-all           equivalent to -vET
               -b, --number-nonblank    number nonempty output lines, overrides -n
               -e                       equivalent to -vE
@@ -119,11 +119,11 @@ class command_cat(HoneyPotCommand):
               -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
                   --help     display this help and exit
                   --version  output version information and exit
-            
+
             Examples:
               cat f - g  Output f's contents, then standard input, then g's contents.
               cat        Copy standard input to standard output.
-            
+
             GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
             Full documentation at: <http://www.gnu.org/software/coreutils/cat>
             or available locally via: info '(coreutils) cat invocation'"""
