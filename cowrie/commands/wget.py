@@ -4,7 +4,6 @@
 from __future__ import division, absolute_import
 
 import time
-import re
 import os
 import getopt
 
@@ -38,9 +37,12 @@ def tdiff(seconds):
     t -= (minutes * 60)
 
     s = '%ds' % (int(t),)
-    if minutes >= 1: s = '%dm %s' % (minutes, s)
-    if hours >= 1: s = '%dh %s' % (hours, s)
-    if days >= 1: s = '%dd %s' % (days, s)
+    if minutes >= 1:
+        s = '%dm %s' % (minutes, s)
+    if hours >= 1:
+        s = '%dh %s' % (hours, s)
+    if days >= 1:
+        s = '%dd %s' % (days, s)
     return s
 
 
