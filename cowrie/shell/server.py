@@ -52,25 +52,29 @@ class CowrieServer(object):
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
-
+    fs = None
+    process = None
+    avatars = []
+    
     def __init__(self, realm):
-        self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')
-        self.fs = None
 
         try:
-            self.process = process.CommandOutputParser().getCommandOutput(CONFIG.get('process', 'file'))['command'][
-                'ps']
             self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
-            # TODO trim whitespace
+            # TODO trim whitespace  
         except NoOptionError:
             self.arch = 'linux-x64-lsb'
-            self.process = None
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
 
+        
     def initFileSystem(self):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
+        try:
+            self.process = process.CommandOutputParser().getCommandOutput(CONFIG.get('process',
+                                                                                     'file'))['command']['ps']
+        except NoOptionError:
+            self.process = None
