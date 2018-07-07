@@ -29,7 +29,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
     def connectionInitialized(self):
         """The bot has connected to the xmpp server, now try to join the room.
         """
-        self.join(self.jrooms, self.nick);
+        self.join(self.jrooms, self.nick)
 
     def joinedRoom(self, room):
         log.msg('Joined room %s' % room.name)
