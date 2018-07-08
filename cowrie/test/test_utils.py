@@ -1,8 +1,8 @@
 from __future__ import division, absolute_import
 
 import configparser
-import io
 import textwrap
+from io import StringIO
 
 from twisted.application.service import MultiService
 from twisted.internet import protocol, reactor
@@ -13,7 +13,7 @@ from cowrie.core.utils import durationHuman, get_endpoints_from_section, create_
 
 def get_config(config_string):
     config = configparser.RawConfigParser()
-    config.readfp(io.StringIO(config_string))
+    config.readfp(StringIO(config_string))
     return config
 
 
@@ -34,32 +34,32 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(something, "4.0 days 05:07:00")
 
     def test_get_endpoints_from_section(self):
-        cfg = get_config("""
+        cfg = get_config(u"""
             [ssh]
             listen_addr = 1.1.1.1
         """)
         self.assertEqual(["tcp:2223:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2223))
 
-        cfg = get_config("""
+        cfg = get_config(u"""
             [ssh]
             listen_addr = 1.1.1.1
         """)
         self.assertEqual(["tcp:2224:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2224))
 
-        cfg = get_config("""
+        cfg = get_config(u"""
             [ssh]
             listen_addr = 1.1.1.1 2.2.2.2
         """)
         self.assertEqual(["tcp:2223:interface=1.1.1.1", "tcp:2223:interface=2.2.2.2"], get_endpoints_from_section(cfg, "ssh", 2223))
 
-        cfg = get_config("""
+        cfg = get_config(u"""
             [ssh]
             listen_addr = 1.1.1.1 2.2.2.2
             listen_port = 23
         """)
         self.assertEqual(["tcp:23:interface=1.1.1.1", "tcp:23:interface=2.2.2.2"], get_endpoints_from_section(cfg, "ssh", 2223))
 
-        cfg = get_config("""
+        cfg = get_config(u"""
             [ssh]
             listen_endpoints = tcp:23:interface=1.1.1.1 tcp:2323:interface=1.1.1.1
         """)
