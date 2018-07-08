@@ -30,7 +30,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         Basic test
         """
         self.proto.lineReceived(b'echo "test"\n')
-        self.assertEquals(self.tr.value(), b'test\n'+PROMPT)
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
     def test_echo_command_2(self):
@@ -38,7 +38,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         argument splitting and recombining
         """
         self.proto.lineReceived(b'echo test  test\n')
-        self.assertEquals(self.tr.value(), b'test test\n'+PROMPT)
+        self.assertEquals(self.tr.value(), b'test test\n' + PROMPT)
 
 
     def test_echo_command_3(self):
@@ -46,7 +46,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         echo -n 
         """
         self.proto.lineReceived(b'echo -n "test  test"\n')
-        self.assertEquals(self.tr.value(), b'test  test'+PROMPT)
+        self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
 
     def test_echo_command_4(self):
@@ -54,7 +54,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         echo -n 
         """
         self.proto.lineReceived(b'echo -n "test  test"\n')
-        self.assertEquals(self.tr.value(), b'test  test'+PROMPT)
+        self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
 
     # def test_echo_command_5(self):
@@ -62,7 +62,7 @@ class ShellEchoCommandTests(unittest.TestCase):
     #     echo -n 
     #     """
     #     self.proto.lineReceived(b'echo \\n\n')
-    #     self.assertEquals(self.tr.value(), b'n\n'+PROMPT)
+    #     self.assertEquals(self.tr.value(), b'n\n' + PROMPT)
 
 
     def test_echo_command_6(self):
@@ -70,7 +70,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         echo -n 
         """
         self.proto.lineReceived(b'echo "\\n"\n')
-        self.assertEquals(self.tr.value(), b'\\n\n'+PROMPT)
+        self.assertEquals(self.tr.value(), b'\\n\n' + PROMPT)
 
 
     # def test_echo_command_7(self):
@@ -78,7 +78,7 @@ class ShellEchoCommandTests(unittest.TestCase):
     #     echo -n 
     #     """
     #     self.proto.lineReceived(b'echo -e "\\n"\n')
-    #     self.assertEquals(self.tr.value(), b'\n\n'+PROMPT)
+    #     self.assertEquals(self.tr.value(), b'\n\n' + PROMPT)
 
 
     def tearDown(self):
