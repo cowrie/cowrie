@@ -38,6 +38,8 @@ import re
 import socket
 import time
 
+from exceptions import StopIteration
+
 from cowrie.core.config import CONFIG
 
 
@@ -187,8 +189,9 @@ class Output(object):
         # Maybe it's passed explicitly
         elif 'session' in ev:
             # reverse engineer sessionno
-            sessionno = next(key for key, value in self.sessions.items() if value == ev['session'])
-            if not sessionno:
+            try:
+                sessionno = next(key for key, value in self.sessions.items() if value == ev['session'])
+            except StopIteration:
                 return
         # Extract session id from the twisted log prefix
         elif 'system' in ev:
