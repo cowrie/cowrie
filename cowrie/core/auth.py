@@ -2,7 +2,7 @@
 # See the COPYRIGHT file for more information
 
 """
-This module contains ...
+This module contains authentication code
 """
 
 from __future__ import division, absolute_import
@@ -23,6 +23,8 @@ class UserDB(object):
     """
 
     def __init__(self):
+        """
+        """
         self.userdb = OrderedDict()
         self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))
         self.load()
@@ -51,6 +53,8 @@ class UserDB(object):
 
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
+        """
+        """
         for credentials, policy in self.userdb.items():
             login, passwd = credentials
 
@@ -62,6 +66,8 @@ class UserDB(object):
 
 
     def match_rule(self, rule, input):
+        """
+        """
         if type(rule) is bytes:
             return rule in [b'*', input]
         else:
@@ -71,6 +77,9 @@ class UserDB(object):
     def re_or_str(self, rule):
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
+
+        @param login: rule
+        @type login: bytes
         """
         res = re.match(br'/(.+)/(i)?$', rule)
         if res:
@@ -80,6 +89,14 @@ class UserDB(object):
 
 
     def adduser(self, login, passwd):
+        """
+        All arguments are bytes
+
+        @param login: user id
+        @type login: bytes
+        @param passwd: password
+        @type passwd: bytes
+        """
         login = self.re_or_str(login)
 
         if passwd[0] == b'!':
@@ -90,6 +107,7 @@ class UserDB(object):
 
         passwd = self.re_or_str(passwd)
         self.userdb[(login, passwd)] = policy
+
 
 
 class AuthRandom(object):
