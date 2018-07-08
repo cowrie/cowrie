@@ -526,9 +526,6 @@ class command_passwd(HoneyPotCommand):
             self.exit()
             return
 
-        userdb = UserDB()
-        userdb.adduser(self.protocol.user.username.encode('utf8'), self.passwd)
-
         self.write('passwd: password updated successfully\n')
         self.exit()
 
