@@ -6,7 +6,7 @@ import socket
 import struct
 import sys
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 
 from cowrie.core.config import CONFIG
 

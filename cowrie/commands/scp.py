@@ -36,7 +36,7 @@ import time
 
 from twisted.python import log
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell import fs
 
 from cowrie.core.config import CONFIG

@@ -4,7 +4,8 @@ from __future__ import division, absolute_import
 
 import getopt
 
-from cowrie.shell.honeypot import HoneyPotCommand, StdOutStdErrEmulationProtocol
+from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.honeypot import StdOutStdErrEmulationProtocol
 
 commands = {}
 

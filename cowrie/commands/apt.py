@@ -9,7 +9,7 @@ import re
 from twisted.internet import reactor, defer
 from twisted.internet.defer import inlineCallbacks
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 

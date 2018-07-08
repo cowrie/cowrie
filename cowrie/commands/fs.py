@@ -15,7 +15,7 @@ import os.path
 
 from twisted.python import log
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import *
 
 commands = {}

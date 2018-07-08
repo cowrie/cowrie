@@ -9,7 +9,7 @@ from __future__ import division, absolute_import
 from configparser import NoOptionError
 
 from cowrie.core.config import CONFIG
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 

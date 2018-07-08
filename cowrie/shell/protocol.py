@@ -21,6 +21,7 @@ from twisted.conch import recvline
 from twisted.conch.insults import insults
 
 from cowrie.shell import honeypot
+from cowrie.shell import command
 
 from cowrie.core.config import CONFIG
 
@@ -145,7 +146,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def txtcmd(self, txt):
         """
         """
-        class command_txtcmd(honeypot.HoneyPotCommand):
+        class command_txtcmd(command.HoneyPotCommand):
             def call(self):
                 log.msg('Reading txtcmd from "{}"'.format(txt))
                 with open(txt, 'r') as f:

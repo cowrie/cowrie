@@ -7,7 +7,7 @@ import stat
 import getopt
 import time
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import *
 from cowrie.shell.pwd import Passwd, Group
 

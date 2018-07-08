@@ -1,7 +1,7 @@
 
 from __future__ import division, absolute_import
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 

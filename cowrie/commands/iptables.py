@@ -4,7 +4,7 @@ from __future__ import division, absolute_import
 
 import optparse
 
-from cowrie.shell.honeypot import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
