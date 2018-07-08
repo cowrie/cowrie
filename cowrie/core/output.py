@@ -143,6 +143,11 @@ class Output(object):
     def emit(self, event):
         """
         This is the main emit() hook that gets called by the the Twisted logging
+
+        To make this work with Cowrie, the event dictionary needs the following keys:
+        - 'eventid'
+        - 'sessionno' or 'session'
+        - 'message' or 'format'
         """
         # Ignore stdout and stderr in output plugins
         if 'printed' in event:
@@ -150,6 +155,14 @@ class Output(object):
 
         # Ignore anything without eventid
         if 'eventid' not in event:
+            return
+
+        # Ignore anything without session information
+        if 'sessionno' not in event and 'session' not in event:
+            return
+
+        # Ignore anything without message
+        if 'message' not in event and 'format' not in event:
             return
 
         ev = convert(event)
@@ -171,6 +184,12 @@ class Output(object):
         if 'sessionno' in ev:
             sessionno = ev['sessionno']
             del ev['sessionno']
+        # Maybe it's passed explicitly
+        elif 'session' in ev:
+            # reverse engineer sessionno
+            sessionno = next(key for key, value in self.sessions.items() if value == ev['session'])
+            if not sessionno:
+                return
         # Extract session id from the twisted log prefix
         elif 'system' in ev:
             sessionno = 0
