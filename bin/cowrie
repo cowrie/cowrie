@@ -73,11 +73,20 @@ cowrie_start() {
         TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger"
     fi
 
+    # 1. Check if any virtual environment is active
+    # 2. Try COWRIE_VIRTUAL_ENV if defined
+    # 3. Try DEFAULT_VIRTUAL_ENV
+    # 4. Try ../DEFAULT_VIRTUAL_ENV
+    # 5. Try without virtual environment
+
     if [ ! -z "$VIRTUAL_ENV" ]; then
         echo 2>&1 "Using activated Python virtual environment \"$VIRTUAL_ENV\""
     elif activate_venv "$COWRIE_VIRTUAL_ENV"; then
         echo 2>&1 "Using custom Python virtual environment \"$VIRTUAL_ENV\""
     elif activate_venv "$DEFAULT_VIRTUAL_ENV"; then
+        echo 2>&1 "Using default Python virtual environment \"$VIRTUAL_ENV\""
+    # Look one directory higher for the virtual env to not pollute the Cowrie dir
+    elif activate_venv "../$DEFAULT_VIRTUAL_ENV"; then
         echo 2>&1 "Using default Python virtual environment \"$VIRTUAL_ENV\""
     else
         echo 2>&1 "Not using Python virtual environment"
