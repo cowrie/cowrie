@@ -38,8 +38,6 @@ import re
 import socket
 import time
 
-from exceptions import StopIteration
-
 from cowrie.core.config import CONFIG
 
 
