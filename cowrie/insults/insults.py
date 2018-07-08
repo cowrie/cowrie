@@ -91,13 +91,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def write(self, data):
         """
-        IMPORTANT
-        This is where internal data in string representation is converted
-        to bytes to be sent back to the user
         """
-        if not isinstance(data, bytes):
-            data = data.encode("utf-8")
-
         if self.ttylogEnabled and self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data)
             self.ttylogSize += len(data)

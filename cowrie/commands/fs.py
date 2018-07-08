@@ -113,13 +113,13 @@ class command_tail(HoneyPotCommand):
 
 
     def tail_application(self, contents):
-        contentsplit = contents.split('\n')
+        contentsplit = contents.split(b'\n')
         lines = int(len(contentsplit))
         if lines < self.n:
             self.n = lines - 1
         i = 0
         for j in range((lines - self.n - 1), lines):
-            self.write(contentsplit[j])
+            self.write(contentsplit[j].decode('utf8'))
             if i < self.n:
                 self.write('\n')
             i += 1

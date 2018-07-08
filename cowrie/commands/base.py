@@ -38,7 +38,7 @@ class command_help(HoneyPotCommand):
     def call(self):
         """
         """
-        self.write(b"""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
+        self.write("""GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
 These shell commands are defined internally.  Type `help' to see this list.
 Type `help name' to find out more about the function `name'.
 Use `info bash' to find out more about the shell in general.
@@ -159,7 +159,7 @@ class command_echo(HoneyPotCommand):
             if newline is True:
                 s += '\n'
 
-            self.write(escape_fn(s).encode('utf8'))
+            self.write(escape_fn(s))
 
         except ValueError as e:
             log.msg("echo command received Python incorrect hex escape")
@@ -193,7 +193,7 @@ class command_printf(HoneyPotCommand):
                     if s.endswith('\\c'):
                         s = s[:-2]
 
-                    self.write(escape_fn(s).encode('utf8'))
+                    self.write(escape_fn(s))
 
 
 commands['printf'] = command_printf
@@ -527,7 +527,7 @@ class command_passwd(HoneyPotCommand):
             return
 
         userdb = UserDB()
-        userdb.adduser(self.protocol.user.username, self.passwd)
+        userdb.adduser(self.protocol.user.username.encode('utf8'), self.passwd)
 
         self.write('passwd: password updated successfully\n')
         self.exit()

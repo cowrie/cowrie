@@ -82,7 +82,7 @@ class UserDB(object):
     def adduser(self, login, passwd):
         login = self.re_or_str(login)
 
-        if passwd.startswith(b'!'):
+        if passwd[0] == b'!':
             policy = False
             passwd = passwd[1:]
         else:
