@@ -24,9 +24,7 @@ class shlex:
     "A lexical analyzer class for simple shell-like syntaxes."
     def __init__(self, instream=None, infile=None, posix=False,
                  punctuation_chars=False):
-        if isinstance(instream, str):
-            instream = StringIO(instream)
-        elif isinstance(instream, unicode):
+        if instream is not None:
             instream = StringIO(instream)
         if instream is not None:
             self.instream = instream

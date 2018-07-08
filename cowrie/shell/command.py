@@ -81,13 +81,13 @@ class HoneyPotCommand(object):
     def write(self, data):
         """
         """
-        return self.writefn(data)
+        return self.writefn(data.encode('utf8'))
        
 
     def errorWrite(self, data):
         """
         """
-        return self.errorWritefn(data)
+        return self.errorWritefn(data.encode('utf8'))
 
 
     def check_arguments(self, application, args):
