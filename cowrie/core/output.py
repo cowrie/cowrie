@@ -158,7 +158,7 @@ class Output(object):
             return
 
         # Ignore anything without session information
-        if 'sessionno' not in event and 'session' not in event:
+        if 'sessionno' not in event and 'session' not in event and 'system' not in event:
             return
 
         # Ignore anything without message
