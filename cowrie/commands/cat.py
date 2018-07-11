@@ -69,14 +69,15 @@ class command_cat(HoneyPotCommand):
         """
         This is the cat output, with optional line numbering
         """
-        lines = input.decode('utf8').split('\n')
-        if lines[-1] == "":
+        log.msg("input = "+str(type(input)))
+        lines = input.split(b'\n')
+        if lines[-1] == b"":
             lines.pop()
         for line in lines:
             if self.number:
                 self.write("{:>6}  ".format(self.linenumber))
                 self.linenumber = self.linenumber + 1
-            self.write("{0}\n".format(line))
+            self.writeBytes(line+b'\n')
 
 
     def lineReceived(self, line):

@@ -82,7 +82,14 @@ class HoneyPotCommand(object):
         """
         """
         return self.writefn(data.encode('utf8'))
+
        
+    def writeBytes(self, data):
+        """
+        Like write() but input is bytes
+        """
+        return self.writefn(data)
+
 
     def errorWrite(self, data):
         """
