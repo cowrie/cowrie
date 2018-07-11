@@ -20,10 +20,10 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.conch import recvline
 from twisted.conch.insults import insults
 
+from cowrie.core.config import CONFIG
 from cowrie.shell import honeypot
 from cowrie.shell import command
-
-from cowrie.core.config import CONFIG
+import cowrie.commands
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
@@ -49,7 +49,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cwd = '/'
         self.data = None
         self.commands = {}
-        import cowrie.commands
         for c in cowrie.commands.__all__:
             try:
                 module = __import__(
