@@ -34,7 +34,8 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
                 self, interaction, *args, **kw)
         except MySQLdb.OperationalError as e:
             if e[0] not in (2003, 2006, 2013):
-                raise log.msg("RCP: got error {0}, retrying operation".format(e))
+                log.msg("RCP: got error {0}, retrying operation".format(e))
+                raise e
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             # Try the interaction again
@@ -208,7 +209,7 @@ class Output(cowrie.core.output.Output):
             self.simpleQuery(
                 'UPDATE `sessions` SET `termsize` = %s WHERE `id` = %s',
                 ('%sx%s' % (entry['width'], entry['height']),
-                    entry["session"]))
+                 entry["session"]))
 
         elif entry["eventid"] == 'cowrie.session.closed':
             self.simpleQuery(
