@@ -869,5 +869,7 @@ commands['/bin/chown'] = command_nop
 commands['/bin/chgrp'] = command_nop
 commands['/usr/bin/chattr'] = command_nop
 commands[':'] = command_nop
+commands['do'] = command_nop
+commands['done'] = command_nop
 
 # vim: set sw=4 et:
