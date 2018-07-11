@@ -69,7 +69,6 @@ class command_cat(HoneyPotCommand):
         """
         This is the cat output, with optional line numbering
         """
-        log.msg("input = "+str(type(input)))
         lines = input.split(b'\n')
         if lines[-1] == b"":
             lines.pop()
