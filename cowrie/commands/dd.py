@@ -10,7 +10,8 @@ from __future__ import division, absolute_import
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.fs import *
+from cowrie.shell.fs import FileNotFound
+import cowrie.shell.fs
 
 commands = {}
 
@@ -66,15 +67,15 @@ class command_dd(HoneyPotCommand):
                     try:
                         contents = self.fs.file_contents(pname)
                         if c == -1:
-                            self.write(contents)
+                            self.writeBytes(contents)
                         else:
                             tsize = block * c
                             data = contents
                             if len(data) > tsize:
-                                self.write(data[:tsize])
+                                self.writeBytes(data[:tsize])
                             else:
-                                self.write(data)
-                    except:
+                                self.writeBytes(data)
+                    except FileNotFound:
                         self.errorWrite('dd: {}: No such file or directory\n'.format(iname))
                         bSuccess = False
 
