@@ -14,7 +14,7 @@ attacker.
 
 ## Slack
 
-You can join the Cowrie community at the following [Slack workspace](https://cowrie.slack.com/join/shared_invite/enQtMzc3NjY3OTYwMjI0LThiY2ViMjkyNDgzOTE2ZjI3NTI0N2QxZmI2Yzg2ZmFkYmFlYTg1NTU4OWZjOWM0MjBlNjQ2MjA1NmUyOWVlNDA)
+You can join the Cowrie community at the following [Slack workspace](http://bit.ly/cowrieslack)
 
 ## Features
 
