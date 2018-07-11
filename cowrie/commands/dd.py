@@ -26,7 +26,7 @@ class command_dd(HoneyPotCommand):
             return
 
         for arg in self.args:
-            if not arg.index('='):
+            if arg.find('=') == -1:
                 self.write('unknown operand: {}'.format(arg))
                 HoneyPotCommand.exit(self)
             operand, value = arg.split('=')
