@@ -374,6 +374,10 @@ version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 # (use systemd: endpoint for systemd activation)
 # listen_endpoints = systemd:domain=INET:index=0
 # For both IPv4 and IPv6: listen_endpoints = tcp6:2222:interface=\:\:
+# Listening on multiple endpoints is supported with a single space seperator
+# e.g listen_endpoints = "tcp:2222:interface=0.0.0.0 tcp:1022:interface=0.0.0.0" will result listening both on ports 2222 and 1022
+# use authbind for port numbers under 1024
+
 listen_endpoints = tcp:2222:interface=0.0.0.0
 
 
@@ -451,6 +455,10 @@ enabled = false
 # (use systemd: endpoint for systemd activation)
 # listen_endpoints = systemd:domain=INET:index=0
 # For IPv4 and IPv6: listen_endpoints = tcp6:2223:interface=\:\: tcp:2223:interface=0.0.0.0
+# Listening on multiple endpoints is supported with a single space seperator
+# e.g "listen_endpoints = tcp:2223:interface=0.0.0.0 tcp:2323:interface=0.0.0.0" will result listening both on ports 2223 and 2323
+# use authbind for port numbers under 1024
+
 listen_endpoints = tcp:2223:interface=0.0.0.0
 
 
