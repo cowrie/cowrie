@@ -183,7 +183,7 @@ class command_ls(HoneyPotCommand):
 
             linktarget = ''
 
-            if file[fs.fs.A_TYPE] == fs.T_DIR:
+            if file[fs.A_TYPE] == fs.T_DIR:
                 perms[0] = 'd'
             elif file[fs.A_TYPE] == fs.T_LINK:
                 perms[0] = 'l'

@@ -17,8 +17,11 @@ os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 class ShellEchoCommandTests(unittest.TestCase):
-
+    """
+    """
     def setUp(self):
+        """
+        """
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
