@@ -16,7 +16,7 @@ import os.path
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.fs import *
+import cowrie.shell.fs as fs
 
 commands = {}
 
@@ -252,7 +252,7 @@ class command_cd(HoneyPotCommand):
         if inode is None or inode is False:
             self.errorWrite('bash: cd: {}: No such file or directory\n'.format(pname))
             return
-        if inode[A_TYPE] != T_DIR:
+        if inode[fs.A_TYPE] != fs.T_DIR:
             self.errorWrite('bash: cd: {}: Not a directory\n'.format(pname))
             return
         self.protocol.cwd = newpath
@@ -282,10 +282,10 @@ class command_rm(HoneyPotCommand):
             basename = pname.split('/')[-1]
             contents = [x for x in dir]
             for i in dir[:]:
-                if i[A_NAME] == basename:
-                    if i[A_TYPE] == T_DIR and not recursive:
+                if i[fs.A_NAME] == basename:
+                    if i[fs.A_TYPE] == fs.T_DIR and not recursive:
                         self.errorWrite(
-                            'rm: cannot remove `{}\': Is a directory\n'.format(i[A_NAME]))
+                            'rm: cannot remove `{}\': Is a directory\n'.format(i[fs.A_NAME]))
                     else:
                         dir.remove(i)
 
@@ -356,9 +356,9 @@ class command_cp(HoneyPotCommand):
             else:
                 dir = self.fs.get_path(os.path.dirname(resolv(dest)))
                 outfile = os.path.basename(dest.rstrip('/'))
-            if outfile in [x[A_NAME] for x in dir]:
-                dir.remove([x for x in dir if x[A_NAME] == outfile][0])
-            s[A_NAME] = outfile
+            if outfile in [x[fs.A_NAME] for x in dir]:
+                dir.remove([x for x in dir if x[fs.A_NAME] == outfile][0])
+            s[fs.A_NAME] = outfile
             dir.append(s)
 
 
@@ -420,12 +420,12 @@ class command_mv(HoneyPotCommand):
                 dir = self.fs.get_path(os.path.dirname(resolv(dest)))
                 outfile = os.path.basename(dest)
             if dir != os.path.dirname(resolv(src)):
-                s[A_NAME] = outfile
+                s[fs.A_NAME] = outfile
                 dir.append(s)
                 sdir = self.fs.get_path(os.path.dirname(resolv(src)))
                 sdir.remove(s)
             else:
-                s[A_NAME] = outfile
+                s[fs.A_NAME] = outfile
 
 
 commands['/bin/mv'] = command_mv
@@ -471,14 +471,14 @@ class command_rmdir(HoneyPotCommand):
             except (IndexError, FileNotFound):
                 dir = None
             fname = os.path.basename(f)
-            if not dir or fname not in [x[A_NAME] for x in dir]:
+            if not dir or fname not in [x[fs.A_NAME] for x in dir]:
                 self.errorWrite(
                     'rmdir: failed to remove `{}\': '.format(f) + \
                     'No such file or directory\n')
                 continue
             for i in dir[:]:
-                if i[A_NAME] == fname:
-                    if i[A_TYPE] != T_DIR:
+                if i[fs.A_NAME] == fname:
+                    if i[fs.A_TYPE] != fs.T_DIR:
                         self.errorWrite("rmdir: failed to remove '{}': Not a directory\n".format(f))
                         return
                     dir.remove(i)

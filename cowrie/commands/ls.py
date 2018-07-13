@@ -8,7 +8,7 @@ import getopt
 import time
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.fs import *
+import cowrie.shell.fs as fs
 from cowrie.shell.pwd import Passwd, Group
 
 commands = {}
@@ -78,14 +78,14 @@ class command_ls(HoneyPotCommand):
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
-                    dot[A_NAME] = '.'
+                    dot[fs.A_NAME] = '.'
                     files.append(dot)
                     # FIXME: should grab dotdot off the parent instead
                     dotdot = self.protocol.fs.getfile(path)[:]
-                    dotdot[A_NAME] = '..'
+                    dotdot[fs.A_NAME] = '..'
                     files.append(dotdot)
                 else:
-                    files = [x for x in files if not x[A_NAME].startswith('.')]
+                    files = [x for x in files if not x[fs.A_NAME].startswith('.')]
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
@@ -94,7 +94,7 @@ class command_ls(HoneyPotCommand):
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
 
-        l = [x[A_NAME] for x in files]
+        l = [x[fs.A_NAME] for x in files]
         if not l:
             return
         count = 0
@@ -123,14 +123,14 @@ class command_ls(HoneyPotCommand):
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
-                    dot[A_NAME] = '.'
+                    dot[fs.A_NAME] = '.'
                     files.append(dot)
                     # FIXME: should grab dotdot off the parent instead
                     dotdot = self.protocol.fs.getfile(path)[:]
-                    dotdot[A_NAME] = '..'
+                    dotdot[fs.A_NAME] = '..'
                     files.append(dotdot)
                 else:
-                    files = [x for x in files if not x[A_NAME].startswith('.')]
+                    files = [x for x in files if not x[fs.A_NAME].startswith('.')]
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
@@ -141,64 +141,64 @@ class command_ls(HoneyPotCommand):
 
         largest = 0
         if len(files):
-            largest = max([x[A_SIZE] for x in files])
+            largest = max([x[fs.A_SIZE] for x in files])
 
         for file in files:
-            if file[A_NAME].startswith('.') and not self.showHidden:
+            if file[fs.A_NAME].startswith('.') and not self.showHidden:
                 continue
 
             perms = ['-'] * 10
-            if file[A_MODE] & stat.S_IRUSR:
+            if file[fs.A_MODE] & stat.S_IRUSR:
                 perms[1] = 'r'
-            if file[A_MODE] & stat.S_IWUSR:
+            if file[fs.A_MODE] & stat.S_IWUSR:
                 perms[2] = 'w'
-            if file[A_MODE] & stat.S_IXUSR:
+            if file[fs.A_MODE] & stat.S_IXUSR:
                 perms[3] = 'x'
-            if file[A_MODE] & stat.S_ISUID:
+            if file[fs.A_MODE] & stat.S_ISUID:
                 perms[3] = 'S'
-            if file[A_MODE] & stat.S_IXUSR and file[A_MODE] & stat.S_ISUID:
+            if file[fs.A_MODE] & stat.S_IXUSR and file[fs.A_MODE] & stat.S_ISUID:
                 perms[3] = 's'
 
-            if file[A_MODE] & stat.S_IRGRP:
+            if file[fs.A_MODE] & stat.S_IRGRP:
                 perms[4] = 'r'
-            if file[A_MODE] & stat.S_IWGRP:
+            if file[fs.A_MODE] & stat.S_IWGRP:
                 perms[5] = 'w'
-            if file[A_MODE] & stat.S_IXGRP:
+            if file[fs.A_MODE] & stat.S_IXGRP:
                 perms[6] = 'x'
-            if file[A_MODE] & stat.S_ISGID:
+            if file[fs.A_MODE] & stat.S_ISGID:
                 perms[6] = 'S'
-            if file[A_MODE] & stat.S_IXGRP and file[A_MODE] & stat.S_ISGID:
+            if file[fs.A_MODE] & stat.S_IXGRP and file[fs.A_MODE] & stat.S_ISGID:
                 perms[6] = 's'
 
-            if file[A_MODE] & stat.S_IROTH:
+            if file[fs.A_MODE] & stat.S_IROTH:
                 perms[7] = 'r'
-            if file[A_MODE] & stat.S_IWOTH:
+            if file[fs.A_MODE] & stat.S_IWOTH:
                 perms[8] = 'w'
-            if file[A_MODE] & stat.S_IXOTH:
+            if file[fs.A_MODE] & stat.S_IXOTH:
                 perms[9] = 'x'
-            if file[A_MODE] & stat.S_ISVTX:
+            if file[fs.A_MODE] & stat.S_ISVTX:
                 perms[9] = 'T'
-            if file[A_MODE] & stat.S_IXOTH and file[A_MODE] & stat.S_ISVTX:
+            if file[fs.A_MODE] & stat.S_IXOTH and file[fs.A_MODE] & stat.S_ISVTX:
                 perms[9] = 't'
 
             linktarget = ''
 
-            if file[A_TYPE] == T_DIR:
+            if file[fs.fs.A_TYPE] == fs.T_DIR:
                 perms[0] = 'd'
-            elif file[A_TYPE] == T_LINK:
+            elif file[fs.A_TYPE] == fs.T_LINK:
                 perms[0] = 'l'
-                linktarget = ' -> %s' % (file[A_TARGET],)
+                linktarget = ' -> %s' % (file[fs.A_TARGET],)
 
             perms = ''.join(perms)
-            ctime = time.localtime(file[A_CTIME])
+            ctime = time.localtime(file[fs.A_CTIME])
 
             l = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
-                 self.uid2name(file[A_UID]),
-                 self.gid2name(file[A_GID]),
-                 str(file[A_SIZE]).rjust(len(str(largest))),
+                 self.uid2name(file[fs.A_UID]),
+                 self.gid2name(file[fs.A_GID]),
+                 str(file[fs.A_SIZE]).rjust(len(str(largest))),
                  time.strftime('%Y-%m-%d %H:%M', ctime),
-                 file[A_NAME],
+                 file[fs.A_NAME],
                  linktarget)
 
             self.write('{0}\n'.format(l))
