@@ -76,7 +76,7 @@ class command_cat(HoneyPotCommand):
             if self.number:
                 self.write("{:>6}  ".format(self.linenumber))
                 self.linenumber = self.linenumber + 1
-            self.writeBytes(line+b'\n')
+            self.writeBytes(line + b'\n')
 
 
     def lineReceived(self, line):
