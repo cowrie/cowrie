@@ -275,7 +275,7 @@ class command_rm(HoneyPotCommand):
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 dir = self.fs.get_path('/'.join(pname.split('/')[:-1]))
-            except (IndexError, FileNotFound):
+            except (IndexError, fs.FileNotFound):
                 self.errorWrite(
                     'rm: cannot remove `{}\': No such file or directory\n'.format(f))
                 continue
@@ -444,7 +444,7 @@ class command_mkdir(HoneyPotCommand):
                 return
             try:
                 self.fs.mkdir(pname, 0, 0, 4096, 16877)
-            except (FileNotFound) as err:
+            except (fs.FileNotFound) as err:
                 self.errorWrite(
                     'mkdir: cannot create directory `{}\': '.format(f) + \
                     'No such file or directory\n')
@@ -468,7 +468,7 @@ class command_rmdir(HoneyPotCommand):
                         'rmdir: failed to remove `{}\': Directory not empty\n'.format(f))
                     continue
                 dir = self.fs.get_path('/'.join(pname.split('/')[:-1]))
-            except (IndexError, FileNotFound):
+            except (IndexError, fs.FileNotFound):
                 dir = None
             fname = os.path.basename(f)
             if not dir or fname not in [x[fs.A_NAME] for x in dir]:
