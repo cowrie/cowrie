@@ -55,7 +55,7 @@ class CowrieServer(object):
     fs = None
     process = None
     avatars = []
-    
+
     def __init__(self, realm):
         self.hostname = CONFIG.get('honeypot', 'hostname')
 
@@ -66,7 +66,7 @@ class CowrieServer(object):
             self.arch = 'linux-x64-lsb'
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
-        
+
 
     def getCommandOutput(self, file):
         """
@@ -75,14 +75,14 @@ class CowrieServer(object):
         with open(file) as f:
             cmdoutput = json.load(f)
         return cmdoutput
-        
-        
+
+
     def initFileSystem(self):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
-        
+
         try:
             self.process = self.getCommandOutput(CONFIG.get('shell', 'processes'))['command']['ps']
         except NoOptionError:
