@@ -188,6 +188,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if path in self.commands:
             return self.commands[path]
 
+        log.msg("Can't find command {}".format(path))
         return None
 
 
