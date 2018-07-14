@@ -103,7 +103,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b'poweroff\n')
 
 
-    #def test_history_command(self):
+    # def test_history_command(self):
     #    self.proto.lineReceived(b"history\n")
     #    self.proto.lineReceived(b"history\n")
     #    print("THIS TEST IS INCOMPLETE")
@@ -114,7 +114,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.assertRegexpMatches(self.tr.value().decode('utf8'), ("\n").join(self.data['results']['date']))
 
 
-    #def test_bash_command(self):
+    # def test_bash_command(self):
     #    self.proto.lineReceived(b'bash\n')
     #    print("THIS TEST IS INCOMPLETE")
 
@@ -124,7 +124,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.assertRegexpMatches(self.tr.value().decode('utf8'), "\n".join(self.data['results']['who']))
 
 
-    #def test_php_command(self):
+    # def test_php_command(self):
     #    self.proto.lineReceived(b'php -h')
     #    print("THIS TEST IS INCOMPLETE")
 
@@ -210,74 +210,74 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
 
 
-    #def test_cat_output(self):
+    # def test_cat_output(self):
     #    self.proto.lineReceived(b'cat /proc/cpuinfo')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_grep_output(self):
+    # def test_grep_output(self):
     #    self.proto.lineReceived(b'grep cpu /proc/cpuinfo')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_tail_output(self):
+    # def test_tail_output(self):
     #    self.proto.lineReceived(b'tail -n 10 /proc/cpuinfo')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_head_output(self):
+    # def test_head_output(self):
     #    self.proto.lineReceived(b'head -n 10 /proc/cpuinfo')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_cd_output(self):
+    # def test_cd_output(self):
     #    self.proto.lineReceived(b'cd /usr/bin')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_rm_output(self):
+    # def test_rm_output(self):
     #    self.proto.lineReceived(b'rm /usr/bin/gcc')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_cp_output(self):
+    # def test_cp_output(self):
     #    self.proto.lineReceived(b'cp /usr/bin/gcc /tmp')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_mv_output(self):
+    # def test_mv_output(self):
     #    self.proto.lineReceived(b'mv /usr/bin/gcc /tmp')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_mkdir_output(self):
+    # def test_mkdir_output(self):
     #    self.proto.lineReceived(b'mkdir /tmp/hello')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_rmdir_output(self):
+    # def test_rmdir_output(self):
     #    self.proto.lineReceived(b'mkdir /tmp/blah')
     #    self.proto.lineReceived(b'rmdir /tmp/blah')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_pwd_output(self):
+    # def test_pwd_output(self):
     #    self.proto.lineReceived(b'pwd')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
 
-    #def test_touch_output(self):
+    # def test_touch_output(self):
     #    self.proto.lineReceived(b'touch unittests.txt')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
