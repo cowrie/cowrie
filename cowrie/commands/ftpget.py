@@ -268,5 +268,5 @@ Download a file via FTP
         return True
 
 
-commands['ftpget'] = command_ftpget
 commands['/usr/bin/ftpget'] = command_ftpget
+commands['ftpget'] = command_ftpget

@@ -172,6 +172,6 @@ pages for more information and options.
         self.errorWrite('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
         self.errorWrite('E: Unable to lock the list directory\n')
         self.exit()
-commands['/usr/bin/apt-get'] = command_aptget
 
-# vim: set sw=4 et tw=0:
+commands['/usr/bin/apt-get'] = command_aptget
+commands['apt-get'] = command_aptget

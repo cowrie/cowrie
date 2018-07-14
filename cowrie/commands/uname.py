@@ -124,4 +124,6 @@ class command_uname(HoneyPotCommand):
         elif self.args[0].strip() in ('-h', '--help'):
             self.write(uname_help())
 
+
 commands['/bin/uname'] = command_uname
+commands['uname'] = command_uname

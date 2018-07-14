@@ -521,8 +521,6 @@ class command_touch(HoneyPotCommand):
             self.fs.mkfile(pname, 0, 0, 0, 33188)
 
 
-commands['/usr/bin/touch'] = command_touch
 commands['/bin/touch'] = command_touch
+commands['touch'] = command_touch
 commands['>'] = command_touch
-
-# vim: set sw=4 et:

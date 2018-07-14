@@ -83,5 +83,4 @@ class command_tar(HoneyPotCommand):
                 log.msg("tar: skipping [%s]".format(f.name))
 
 commands['/bin/tar'] = command_tar
-
-# vim: set sw=4 et:
+commands['tar'] = command_tar

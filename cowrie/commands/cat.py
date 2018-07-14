@@ -129,4 +129,6 @@ class command_cat(HoneyPotCommand):
             or available locally via: info '(coreutils) cat invocation'"""
         )
 
+
 commands['/bin/cat'] = command_cat
+commands['cat'] = command_cat

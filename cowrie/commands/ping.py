@@ -119,3 +119,4 @@ class command_ping(HoneyPotCommand):
             self.exit()
 
 commands['/bin/ping'] = command_ping
+commands['ping'] = command_ping

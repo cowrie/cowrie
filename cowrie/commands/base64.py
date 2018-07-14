@@ -124,3 +124,4 @@ Try 'base64 --help' for more information.
 
 
 commands['/usr/bin/base64'] = command_base64
+commands['base64'] = command_base64

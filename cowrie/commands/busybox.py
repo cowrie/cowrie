@@ -94,5 +94,5 @@ class command_busybox(HoneyPotCommand):
             self.write('{}: applet not found\n'.format(cmd))
 
 
-commands['busybox'] = command_busybox
 commands['/bin/busybox'] = command_busybox
+commands['busybox'] = command_busybox

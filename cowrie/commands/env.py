@@ -40,3 +40,4 @@ class command_env(HoneyPotCommand):
 
 
 commands['/usr/bin/env'] = command_env
+commands['env'] = command_env

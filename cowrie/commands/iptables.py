@@ -410,5 +410,6 @@ Try `iptables -h\' or \'iptables --help\' for more information.\n""" %
 Try `iptables -h\' or \'iptables --help\' for more information.\n""" % argument)
         self.exit()
 
-# Definition
+
 commands['/sbin/iptables'] = command_iptables
+commands['iptables'] = command_iptables

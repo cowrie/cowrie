@@ -168,5 +168,5 @@ unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\
                 func = self.show_version
         func()
 
-# Definitions
 commands['/bin/netstat'] = command_netstat
+commands['netstat'] = command_netstat

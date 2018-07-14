@@ -244,5 +244,4 @@ class command_scp(HoneyPotCommand):
         self.exit()
 
 commands['/usr/bin/scp'] = command_scp
-
-# vim: set sw=4 et:
+commands['scp'] = command_scp

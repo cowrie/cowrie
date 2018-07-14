@@ -350,7 +350,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   format='Attempt to download file(s) from URL (%(url)s) failed',
                                   url=self.url)
         self.exit()
-commands['/usr/bin/curl'] = command_curl
 
 
 
@@ -461,4 +460,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
 
-# vim: set sw=4 et:
+
+commands['/usr/bin/curl'] = command_curl
+commands['curl'] = command_curl

@@ -26,5 +26,5 @@ class command_which(HoneyPotCommand):
                     self.write("%s/%s\n" % (path, f))
                     continue
 
-# Definition
+
 commands['which'] = command_which

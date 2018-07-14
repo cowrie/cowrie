@@ -28,8 +28,11 @@ class command_whoami(HoneyPotCommand):
         """
         """
         self.write('{0}\n'.format(self.protocol.user.username))
+
 commands['/usr/bin/whoami'] = command_whoami
+commands['whoami'] = command_whoami
 commands['/usr/bin/users'] = command_whoami
+commands['users'] = command_whoami
 
 
 class command_help(HoneyPotCommand):
@@ -84,6 +87,7 @@ A star (*) next to a name means that the command is disabled.
  getopts optstring name [arg]                                                                   wait [id]
  hash [-lr] [-p pathname] [-dt] [name ...]                                                      while COMMANDS; do COMMANDS; done
  help [-dms] [pattern ...]                                                                      { COMMANDS ; }\n""")
+
 commands['help'] = command_help
 
 
@@ -101,7 +105,9 @@ class command_w(HoneyPotCommand):
                    (self.protocol.user.username,
                     self.protocol.clientIP[:17].ljust(17),
                     time.strftime('%H:%M', time.localtime(self.protocol.logintime))))
+
 commands['/usr/bin/w'] = command_w
+commands['w'] = command_w
 
 
 
@@ -116,7 +122,9 @@ class command_who(HoneyPotCommand):
                     time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime)),
                     time.strftime('%H:%M', time.localtime(self.protocol.logintime)),
                     self.protocol.clientIP))
+
 commands['/usr/bin/who'] = command_who
+commands['who'] = command_who
 
 
 
@@ -166,6 +174,8 @@ class command_echo(HoneyPotCommand):
 
 
 commands['/bin/echo'] = command_echo
+commands['echo'] = command_echo
+
 
 
 class command_printf(HoneyPotCommand):
@@ -196,8 +206,9 @@ class command_printf(HoneyPotCommand):
                     self.write(escape_fn(s))
 
 
-commands['printf'] = command_printf
 commands['/usr/bin/printf'] = command_printf
+commands['printf'] = command_printf
+
 
 
 class command_exit(HoneyPotCommand):
@@ -215,6 +226,7 @@ class command_exit(HoneyPotCommand):
         """
         """
         pass
+
 commands['exit'] = command_exit
 commands['logout'] = command_exit
 
@@ -227,8 +239,11 @@ class command_clear(HoneyPotCommand):
         """
         """
         self.protocol.terminal.reset()
+
 commands['/usr/bin/clear'] = command_clear
+commands['clear'] = command_clear
 commands['/usr/bin/reset'] = command_clear
+commands['reset'] = command_clear
 
 
 
@@ -245,7 +260,9 @@ class command_hostname(HoneyPotCommand):
                 self.write("hostname: you must be root to change the host name\n")
         else:
             self.write('{0}\n'.format(self.protocol.hostname))
+
 commands['/bin/hostname'] = command_hostname
+commands['hostname'] = command_hostname
 
 
 
@@ -480,8 +497,8 @@ class command_ps(HoneyPotCommand):
                 s = s[:80]
             self.write('{0}\n'.format(s))
 
-
 commands['/bin/ps'] = command_ps
+commands['ps'] = command_ps
 
 
 
@@ -493,7 +510,9 @@ class command_id(HoneyPotCommand):
         """
         u = self.protocol.user
         self.write('uid=%d(%s) gid=%d(%s) groups=%d(%s)\n' % (u.uid, u.username, u.gid, u.username, u.gid, u.username))
+
 commands['/usr/bin/id'] = command_id
+commands['id'] = command_id
 
 
 
@@ -539,7 +558,9 @@ class command_passwd(HoneyPotCommand):
                 format='INPUT (%(realm)s): %(input)s')
         self.password = line.strip()
         self.callbacks.pop(0)(line)
+
 commands['/usr/bin/passwd'] = command_passwd
+commands['passwd'] = command_passwd
 
 
 
@@ -600,8 +621,11 @@ class command_shutdown(HoneyPotCommand):
         return
 
 commands['/sbin/shutdown'] = command_shutdown
+commands['shutdown'] = command_shutdown
 commands['/sbin/poweroff'] = command_shutdown
+commands['poweroff'] = command_shutdown
 commands['/sbin/halt'] = command_shutdown
+commands['halt'] = command_shutdown
 
 
 
@@ -627,6 +651,7 @@ class command_reboot(HoneyPotCommand):
         return
 
 commands['/sbin/reboot'] = command_reboot
+commands['reboot'] = command_reboot
 
 
 
@@ -648,6 +673,7 @@ class command_history(HoneyPotCommand):
         except:
             # Non-interactive shell, do nothing
             pass
+
 commands['history'] = command_history
 
 
@@ -660,7 +686,11 @@ class command_date(HoneyPotCommand):
         """
         time = datetime.datetime.utcnow()
         self.write('{0}\n'.format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
+
 commands['/bin/date'] = command_date
+commands['date'] = command_date
+
+
 
 class command_yes(HoneyPotCommand):
     """
@@ -686,7 +716,9 @@ class command_yes(HoneyPotCommand):
         """
         self.scheduled.cancel()
         self.exit()
+
 commands['/usr/bin/yes'] = command_yes
+commands['yes'] = command_yes
 
 
 
@@ -711,6 +743,7 @@ class command_sh(HoneyPotCommand):
 
         # TODO: handle spawning multiple shells, support other sh flags
 
+
     def execute_commands(self, cmds):
 
         # self.input_data holds commands passed via PIPE
@@ -725,7 +758,10 @@ class command_sh(HoneyPotCommand):
 
 
 commands['/bin/bash'] = command_sh
+commands['bash'] = command_sh
 commands['/bin/sh'] = command_sh
+commands['sh'] = command_sh
+
 
 
 class command_chmod(HoneyPotCommand):
@@ -744,7 +780,11 @@ class command_chmod(HoneyPotCommand):
                 self.write(
                     'chmod: cannot access %s: No such file or directory\n' % \
                     (arg,))
+
 commands['/bin/chmod'] = command_chmod
+commands['chmod'] = command_chmod
+
+
 
 class command_php(HoneyPotCommand):
     """
@@ -825,6 +865,7 @@ class command_php(HoneyPotCommand):
         self.exit()
 
 commands['/usr/bin/php'] = command_php
+commands['php'] = command_php
 
 
 
@@ -843,7 +884,9 @@ class command_chattr(HoneyPotCommand):
         if not self.fs.exists(self.args[1]):
             self.write('chattr: No such file or directory while trying to stat ' + self.args[1] + '\n')
         return
+
 commands['/usr/bin/chattr'] = command_chattr
+commands['chattr'] = command_chattr
 
 
 
@@ -854,6 +897,8 @@ class command_nop(HoneyPotCommand):
         """
         """
         pass
+
+
 commands['umask'] = command_nop
 commands['set'] = command_nop
 commands['unset'] = command_nop
@@ -865,11 +910,13 @@ commands['/bin/pkill'] = command_nop
 commands['/bin/killall'] = command_nop
 commands['/bin/killall5'] = command_nop
 commands['/bin/su'] = command_nop
+commands['su'] = command_nop
 commands['/bin/chown'] = command_nop
+commands['chown'] = command_nop
 commands['/bin/chgrp'] = command_nop
+commands['chgrp'] = command_nop
 commands['/usr/bin/chattr'] = command_nop
+commands['chattr'] = command_nop
 commands[':'] = command_nop
 commands['do'] = command_nop
 commands['done'] = command_nop
-
-# vim: set sw=4 et:

@@ -279,6 +279,7 @@ For bug reporting instructions, please see:
 """)
         self.exit()
 
-# Definitions
+
 commands['/usr/bin/gcc'] = command_gcc
+commands['gcc'] = command_gcc
 commands['/usr/bin/gcc-%s' % ('.'.join([str(v) for v in command_gcc.APP_VERSION[:2]]))] = command_gcc

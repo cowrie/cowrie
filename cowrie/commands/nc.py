@@ -133,3 +133,4 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
 
 commands['/bin/nc'] = command_nc
+commands['nc'] = command_nc

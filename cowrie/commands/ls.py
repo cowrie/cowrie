@@ -204,4 +204,6 @@ class command_ls(HoneyPotCommand):
             self.write('{0}\n'.format(l))
 
 commands['/bin/ls'] = command_ls
+commands['ls'] = command_ls
 commands['/bin/dir'] = command_ls
+commands['dir'] = command_ls

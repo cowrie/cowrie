@@ -125,3 +125,4 @@ class command_perl(HoneyPotCommand):
 
 
 commands['/usr/bin/perl'] = command_perl
+commands['perl'] = command_perl

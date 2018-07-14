@@ -64,4 +64,6 @@ class command_free(HoneyPotCommand):
         elif fmt == 'human':
             self.write('{0}\n'.format(FREE_HUMAN))
 
+
 commands['/usr/bin/free'] = command_free
+commands['free'] = command_free

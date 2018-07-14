@@ -36,5 +36,4 @@ class command_sleep(HoneyPotCommand):
 
 
 commands['/bin/sleep'] = command_sleep
-
-# vim: set sw=4 et tw=0:
+commands['sleep'] = command_sleep

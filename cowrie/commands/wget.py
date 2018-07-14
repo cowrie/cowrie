@@ -242,8 +242,6 @@ class command_wget(HoneyPotCommand):
         self.exit()
 
 
-commands['/usr/bin/wget'] = command_wget
-commands['/usr/bin/dget'] = command_wget
 
 
 # From http://code.activestate.com/recipes/525493/
@@ -360,3 +358,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.wget.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
 
         return client.HTTPDownloader.pageEnd(self)
+
+
+commands['/usr/bin/wget'] = command_wget
+commands['wget'] = command_wget
+commands['/usr/bin/dget'] = command_wget
+commands['dget'] = command_wget

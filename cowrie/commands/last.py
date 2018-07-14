@@ -36,5 +36,4 @@ class command_last(HoneyPotCommand):
 
 
 commands['/usr/bin/last'] = command_last
-
-# vim: set sw=4 et:
+commands['last'] = command_last

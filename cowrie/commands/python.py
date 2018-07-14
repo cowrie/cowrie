@@ -135,5 +135,4 @@ class command_python(HoneyPotCommand):
 
 
 commands['/usr/bin/python'] = command_python
-
-# vim: set sw=4 et tw=0:
+commands['python'] = command_python

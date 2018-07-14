@@ -103,3 +103,4 @@ class command_dd(HoneyPotCommand):
 
 
 commands['/bin/dd'] = command_dd
+commands['dd'] = command_dd
