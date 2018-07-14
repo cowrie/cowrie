@@ -172,7 +172,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
 
 
     def writeSequence(self, seq):
-        self.session.write(''.join(seq))
+        self.session.write(b''.join(seq))
 
 
     def loseConnection(self):
