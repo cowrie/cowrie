@@ -3,6 +3,10 @@
 # Copyright (c) 2018 Michel Oosterhof
 # See LICENSE for details.
 
+"""
+Tests for general shell interaction and echo command
+"""
+
 from __future__ import division, absolute_import
 import os
 
@@ -12,6 +16,7 @@ from cowrie.shell import protocol
 from cowrie.test import fake_server, fake_transport
 
 os.environ["HONEYPOT_DATA_PATH"] = "../data"
+os.environ["HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
 os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
@@ -60,12 +65,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
 
-    # def test_echo_command_5(self):
-    #     """
-    #     echo -n 
-    #     """
-    #     self.proto.lineReceived(b'echo \\n\n')
-    #     self.assertEquals(self.tr.value(), b'n\n' + PROMPT)
+    def test_echo_command_5(self):
+        """
+        echo test >> test; cat test
+        """
+        self.proto.lineReceived(b'echo test >> test; cat test')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
     def test_echo_command_6(self):
@@ -76,12 +81,20 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'\\n\n' + PROMPT)
 
 
-    # def test_echo_command_7(self):
-    #     """
-    #     echo -n 
-    #     """
-    #     self.proto.lineReceived(b'echo -e "\\n"\n')
-    #     self.assertEquals(self.tr.value(), b'\n\n' + PROMPT)
+    def test_echo_command_7(self):
+        """
+        echo test > test; cat test
+        """
+        self.proto.lineReceived(b'echo test >> test; cat test')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+
+
+    def test_echo_command_8(self):
+        """
+        echo test > test; cat test
+        """
+        self.proto.lineReceived(b'echo test > test; echo test >> test; cat test')
+        self.assertEquals(self.tr.value(), b'test\ntest' + PROMPT)
 
 
     def tearDown(self):

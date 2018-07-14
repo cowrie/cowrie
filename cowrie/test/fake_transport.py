@@ -18,6 +18,8 @@ class Container(object):
     @var
     """
     otherVersionString = "1.0"
+    transportId = "test-suite"
+    id = "test-suite"
 
     """
     Fake function for mockup
@@ -40,6 +42,7 @@ class FakeTransport(proto_helpers.StringTransport):
     """
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
+    redirFiles = set()
     width = 80
     height = 24
     void = object()
