@@ -15,6 +15,9 @@ import struct
 import uuid
 from hashlib import md5
 import zlib
+from configparser import NoOptionError
+
+from cowrie.core.config import CONFIG
 
 from twisted.conch.ssh import transport
 from twisted.python import log, randbytes
@@ -67,8 +70,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.write('{0}\r\n'.format(self.ourVersionString).encode('ascii'))
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
-        self.setTimeout(120)
+
         self.logintime = time.time()
+        try:
+            self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout'))
+        except NoOptionError:
+            self.setTimeout(120)
 
 
     def sendKexInit(self):

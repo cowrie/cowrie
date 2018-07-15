@@ -96,12 +96,10 @@ txtcmds_path = txtcmds
 # (default: 0)
 #download_limit_size = 10485760
 
-
 # TTY logging will log a transcript of the complete terminal interaction in UML
 # compatible format.
 # (default: true)
 ttylog = true
-
 
 # Default directory for TTY logs.
 # (default: ttylog_path = %(log_path)s/tty)
@@ -111,6 +109,11 @@ ttylog_path = ${honeypot:log_path}/tty
 # terminated for being idle. In seconds.
 # (default: 180)
 interactive_timeout = 180
+
+# Authentication Timeout
+# The server disconnects after this time if the user has not successfully logged in.  If the value is 0,
+# there is no time limit.  The default is 120 seconds.
+authentication_timeout = 120
 
 # EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
 # a limited implementation is available for proxy, with request_exec functionality only
