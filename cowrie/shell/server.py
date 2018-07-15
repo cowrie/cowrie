@@ -60,8 +60,8 @@ class CowrieServer(object):
         self.hostname = CONFIG.get('honeypot', 'hostname')
 
         try:
-            self.arch = random.choice(CONFIG.get('shell', 'arch').split(','))
-            # TODO trim whitespace
+            arches = [arch.strip() for arch in CONFIG.get('shell', 'arch').split(',')]
+            self.arch = random.choice(arches)
         except NoOptionError:
             self.arch = 'linux-x64-lsb'
 
