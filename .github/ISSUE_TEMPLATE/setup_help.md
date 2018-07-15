@@ -1,8 +1,10 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Setup Assistance
+about: Issues with setting up Cowrie
 
 ---
+
+Please do not attach graphical screenshots, instead coy and paste text output. This makes it searchable.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
