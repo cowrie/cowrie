@@ -59,13 +59,13 @@ class HoneyPotShell(object):
                     continue
 
                 if tok == self.lexer.eof:
-                    if len(tokens):
+                    if tokens:
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
                 # For now, treat && and || same as ;, just execute without checking return code
                 elif tok == '&&' or tok == '||':
-                    if len(tokens):
+                    if tokens:
                         self.cmdpending.append((tokens))
                         tokens = []
                         continue
@@ -74,7 +74,7 @@ class HoneyPotShell(object):
                             '-bash: syntax error near unexpected token `{}\'\n'.format(tok).encode('utf8'))
                         break
                 elif tok == ';':
-                    if len(tokens):
+                    if tokens:
                         self.cmdpending.append((tokens))
                         tokens = []
                         continue
@@ -110,7 +110,7 @@ class HoneyPotShell(object):
                 self.cmdpending = []
                 self.showPrompt()
                 return
-        if len(self.cmdpending):
+        if self.cmdpending:
             self.runCommand()
         else:
             self.showPrompt()
@@ -122,13 +122,15 @@ class HoneyPotShell(object):
         pp = None
 
         def runOrPrompt():
-            if len(self.cmdpending):
+            if self.cmdpending:
                 self.runCommand()
             else:
                 self.showPrompt()
 
 
         def parse_arguments(arguments):
+            """
+            """
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
@@ -150,7 +152,7 @@ class HoneyPotShell(object):
 
             return parsed_arguments
 
-        if not len(self.cmdpending):
+        if not self.cmdpending:
             if self.interactive:
                 self.showPrompt()
             else:
@@ -171,7 +173,7 @@ class HoneyPotShell(object):
         environ = copy.copy(self.environ)
         cmd_array = []
         cmd = {}
-        while len(cmdAndArgs):
+        while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
             if piece.count('='):
                 key, value = piece.split('=', 1)
@@ -266,7 +268,7 @@ class HoneyPotShell(object):
         this should probably not go through ctrl-d, but use processprotocol to close stdin
         """
         log.msg("received eof, sending ctrl-d to command")
-        if len(self.cmdstack):
+        if self.cmdstack:
             self.cmdstack[-1].handle_CTRL_D()
 
 
@@ -292,7 +294,7 @@ class HoneyPotShell(object):
     def handle_TAB(self):
         """
         """
-        if not len(self.protocol.lineBuffer):
+        if not self.protocol.lineBuffer:
             return
         l = ''.join(self.protocol.lineBuffer)
         if l[-1] == ' ':
@@ -303,12 +305,12 @@ class HoneyPotShell(object):
             basedir = os.path.dirname(clue)
         except:
             pass
-        if len(basedir) and basedir[-1] != '/':
+        if basedir and basedir[-1] != '/':
             basedir += '/'
 
         files = []
         tmppath = basedir
-        if not len(basedir):
+        if not basedir:
             tmppath = self.protocol.cwd
         try:
             r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
@@ -322,7 +324,7 @@ class HoneyPotShell(object):
                 continue
             files.append(x)
 
-        if len(files) == 0:
+        if not files:
             return
 
         # Clear early so we can call showPrompt if needed
@@ -338,7 +340,7 @@ class HoneyPotShell(object):
             else:
                 newbuf += ' '
         else:
-            if len(os.path.basename(clue)):
+            if os.path.basename(clue):
                 prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ''

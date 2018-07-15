@@ -295,18 +295,18 @@ class ShellPipeCommandsTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
 
 
-    def test_shell_pipe_with_ls_tail(self):
-        self.proto.lineReceived(b'ls -la | tail -n 2\n')
-        print(self.tr.value())
+    # def test_shell_pipe_with_ls_tail(self):
+    #     self.proto.lineReceived(b'ls -la | tail -n 2\n')
+    #     print(self.tr.value())
 
 
-    def test_shell_pipe_with_cat_head(self):
-        self.proto.lineReceived(b'cat /proc/cpuinfo | head -n 5 \n')
-        print(self.tr.value())
+    # def test_shell_pipe_with_cat_head(self):
+    #     self.proto.lineReceived(b'cat /proc/cpuinfo | head -n 5 \n')
+    #     print(self.tr.value())
 
 
-    def test_shell_busybox_with_cat_and_sudo_grep(self):
-        self.proto.lineReceived(b'busybox cat /proc/cpuinfo | sudo grep cpu \n')
+    # def test_shell_busybox_with_cat_and_sudo_grep(self):
+    #     self.proto.lineReceived(b'busybox cat /proc/cpuinfo | sudo grep cpu \n')
 
 
     def tearDown(self):
