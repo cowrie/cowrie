@@ -33,7 +33,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.tr.clear()
 
 
-    def test_echo_command_1(self):
+    def test_echo_command_001(self):
         """
         Basic test
         """
@@ -41,7 +41,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
-    def test_echo_command_2(self):
+    def test_echo_command_002(self):
         """
         argument splitting and recombining
         """
@@ -49,7 +49,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test test\n' + PROMPT)
 
 
-    def test_echo_command_3(self):
+    def test_echo_command_003(self):
         """
         echo -n 
         """
@@ -57,7 +57,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
 
-    def test_echo_command_4(self):
+    def test_echo_command_004(self):
         """
         echo -n 
         """
@@ -65,7 +65,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
 
-    def test_echo_command_5(self):
+    def test_echo_command_005(self):
         """
         echo test >> test; cat test
         """
@@ -73,7 +73,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
-    def test_echo_command_6(self):
+    def test_echo_command_006(self):
         """
         echo -n 
         """
@@ -81,7 +81,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'\\n\n' + PROMPT)
 
 
-    def test_echo_command_7(self):
+    def test_echo_command_007(self):
         """
         echo test >> test; cat test
         """
@@ -89,7 +89,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
-    def test_echo_command_8(self):
+    def test_echo_command_008(self):
         """
         echo test > test; echo test >> test; cat test
         """
@@ -97,7 +97,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test\ntest\n' + PROMPT)
 
 
-    def test_echo_command_9(self):
+    def test_echo_command_009(self):
         """
         echo test | grep test
         """
@@ -105,7 +105,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
-    def test_echo_command_9(self):
+    def test_echo_command_010(self):
         """
         echo test | grep test
         """
@@ -113,11 +113,19 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), PROMPT)
 
 
-    def test_echo_command_9(self):
+    def test_echo_command_011(self):
         """
-        echo test > test9; cat test9 | grep test
+        echo test > test011; cat test011 | grep test
         """
-        self.proto.lineReceived(b'echo test > test9; cat test9 | grep test')
+        self.proto.lineReceived(b'echo test > test011; cat test011 | grep test')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+
+
+    def test_echo_command_012(self):
+        """
+        echo test > test012; grep test test012
+        """
+        self.proto.lineReceived(b'echo test > test012; grep test test012')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
