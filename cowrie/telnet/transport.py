@@ -49,7 +49,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             issuefile = honeyfs + "/etc/issue.net"
             self.banner = open(issuefile, 'rb').read()
         except IOError:
-            self.banner = ""
+            self.banner = b""
 
         # For use by the uptime command
         self.starttime = time.time()
