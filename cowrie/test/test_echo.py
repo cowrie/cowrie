@@ -112,5 +112,14 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo test | grep test2')
         self.assertEquals(self.tr.value(), PROMPT)
 
+
+    def test_echo_command_9(self):
+        """
+        echo test > test9; cat test9 | grep test
+        """
+        self.proto.lineReceived(b'echo test > test9; cat test9 | grep test')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+
+
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
