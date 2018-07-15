@@ -247,7 +247,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     """
     """
     # input_data is static buffer for stdin received from remote client
-    input_data = ""
+    input_data = b""
 
     def __init__(self, avatar, execcmd):
         """

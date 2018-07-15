@@ -230,9 +230,9 @@ class command_scp(HoneyPotCommand):
                 os.path.exists(self.protocol.terminal.stdinlogFile):
             with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
                 data = f.read()
-                header = data[:data.find('\n')]
-                if re.match('C0[\d]{3} [\d]+ [^\s]+', header):
-                    data = data[data.find('\n') + 1:]
+                header = data[:data.find(b'\n')]
+                if re.match('C0[\d]{3} [\d]+ [^\s]+', header.decode()):
+                    data = data[data.find(b'\n') + 1:]
                 else:
                     data = ''
 
