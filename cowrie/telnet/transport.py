@@ -157,9 +157,11 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         self.transport.write(b'\n')
 
-        # Remove the short timeout of the login prompt. Timeout will be
-        # provided later by the HoneyPotBaseProtocol class.
-        self.transport.setTimeout(None)
+        # Remove the short timeout of the login prompt.
+        try:
+            self.transport.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout'))
+        except NoOptionError:
+            self.transport.setTimeout(300)
 
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
