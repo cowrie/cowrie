@@ -64,7 +64,8 @@ class shlex:
             # _pushback_chars is a push back queue used by lookahead logic
             self._pushback_chars = deque()
             # these chars added because allowed in file names, args, wildcards
-            self.wordchars += '@%{}~-./*?=$:+^'
+            # self.wordchars += '@%{}~-./*?=$:+^'
+            self.wordchars += '~-./*?='
             # remove any punctuation chars from wordchars
             self.wordchars = ''.join(c for c in self.wordchars if c not in
                                      self.punctuation_chars)

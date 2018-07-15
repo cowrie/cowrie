@@ -43,6 +43,8 @@ class HoneyPotShell(object):
         """
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
+        # Add these special characters that are not in the default lexer
+        self.lexer.wordchars += '@%{}=$:+^'
         tokens = []
         while True:
             try:
@@ -61,8 +63,17 @@ class HoneyPotShell(object):
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
-                # For now, execute all after &&
-                elif tok == ';' or tok == '&&' or tok == '||':
+                # For now, treat && and || same as ;, just execute without checking return code
+                elif tok == '&&' or tok == '||':
+                    if len(tokens):
+                        self.cmdpending.append((tokens))
+                        tokens = []
+                        continue
+                    else:
+                        self.protocol.terminal.write(
+                            '-bash: syntax error near unexpected token `{}\'\n'.format(tok).encode('utf8'))
+                        break
+                elif tok == ';':
                     if len(tokens):
                         self.cmdpending.append((tokens))
                         tokens = []
