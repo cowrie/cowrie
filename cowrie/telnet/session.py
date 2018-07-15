@@ -29,7 +29,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     windowSize = [40, 80]
 
     def __init__(self, username, server):
-        self.username = username
+        self.username = username.decode()
         self.server = server
 
         try:
