@@ -116,14 +116,19 @@ class HoneyPotShell(object):
             else:
                 self.showPrompt()
 
-        def parsed_arguments(arguments):
+
+        def parse_arguments(arguments):
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
 
             return parsed_arguments
 
+
         def parse_file_arguments(arguments):
+            """
+            Look up arguments in the file system
+            """
             parsed_arguments = []
             for arg in arguments:
                 matches = self.protocol.fs.resolve_path_wc(arg, self.protocol.cwd)
@@ -180,13 +185,15 @@ class HoneyPotShell(object):
             multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
             start = pipe_indice + 1
 
-        cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
+        cmd['rargs'] = parse_arguments(multipleCmdArgs.pop(0))
+        # parse_file_arguments parses too much. should not parse every argument
+        # cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
         cmd_array.append(cmd)
         cmd = {}
 
         for index, value in enumerate(multipleCmdArgs):
             cmd['command'] = value.pop(0)
-            cmd['rargs'] = parsed_arguments(value)
+            cmd['rargs'] = parse_arguments(value)
             cmd_array.append(cmd)
             cmd = {}
 

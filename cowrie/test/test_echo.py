@@ -69,7 +69,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         """
         echo test >> test; cat test
         """
-        self.proto.lineReceived(b'echo test >> test; cat test')
+        self.proto.lineReceived(b'echo test > test5; cat test5')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
@@ -83,18 +83,18 @@ class ShellEchoCommandTests(unittest.TestCase):
 
     def test_echo_command_7(self):
         """
-        echo test > test; cat test
+        echo test >> test; cat test
         """
-        self.proto.lineReceived(b'echo test >> test; cat test')
+        self.proto.lineReceived(b'echo test >> test7; cat test7')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
 
     def test_echo_command_8(self):
         """
-        echo test > test; cat test
+        echo test > test; echo test >> test; cat test
         """
-        self.proto.lineReceived(b'echo test > test; echo test >> test; cat test')
-        self.assertEquals(self.tr.value(), b'test\ntest' + PROMPT)
+        self.proto.lineReceived(b'echo test > test8; echo test >> test8; cat test8')
+        self.assertEquals(self.tr.value(), b'test\ntest\n' + PROMPT)
 
 
     def tearDown(self):
