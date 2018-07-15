@@ -30,7 +30,7 @@ from twisted.python.compat import _bytesChr as chr
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     """
-    logintime = None
+    startTime = None
     gotVersion = False
 
     def __repr__(self):
@@ -71,7 +71,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
 
-        self.logintime = time.time()
+        self.startTime = time.time()
         try:
             self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout'))
         except NoOptionError:
@@ -85,6 +85,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if not self.gotVersion:
             return
         transport.SSHServerTransport.sendKexInit(self)
+
 
     def _unsupportedVersionReceived(self, remoteVersion):
         """
@@ -196,10 +197,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Remove login grace timeout, set zlib compression after auth
         """
-
-        # Reset timeout. Not everyone opens shell so need timeout here also
-        if service.name == 'ssh-connection':
-            self.setTimeout(300)
+        # Reset timeout. Not everyone opens shell so need timeout at transport level
+        if service.name == b'ssh-connection':
+            try:
+                self.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout'))
+            except NoOptionError:
+                self.setTimeout(300)
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
@@ -220,7 +223,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         transport.SSHServerTransport.connectionLost(self, reason)
         self.transport.connectionLost(reason)
         self.transport = None
-        duration = time.time() - self.logintime
+        duration = time.time() - self.startTime
         log.msg(eventid='cowrie.session.closed',
                 format="Connection lost after %(duration)d seconds",
                 duration=duration)
