@@ -10,6 +10,7 @@ from __future__ import division, absolute_import
 import struct
 import time
 import uuid
+from configparser import NoOptionError
 
 from twisted.python import log
 from twisted.internet import protocol
@@ -222,8 +223,12 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         self.transportId = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
+
         self.startTime = time.time()
-        self.setTimeout(300)
+        try:
+            self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout'))
+        except NoOptionError:
+            self.setTimeout(120)
 
         log.msg(eventid='cowrie.session.connect',
                 format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
