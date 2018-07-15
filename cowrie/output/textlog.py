@@ -62,5 +62,6 @@ class Output(cowrie.core.output.Output):
             self.outfile.write('{0}\n'.format(cowrie.core.cef.formatCef(logentry)))
         else:
             self.outfile.write('{0} '.format(logentry['timestamp']))
+            self.outfile.write('{0} '.format(logentry['session']))
             self.outfile.write('{0}\n'.format(logentry['message']))
         self.outfile.flush()
