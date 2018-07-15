@@ -35,19 +35,19 @@ class command_grep(HoneyPotCommand):
 
     def grep_application(self, contents, match):
         match = os.path.basename(match)
-        match = match.replace("\"", "")
-        contentsplit = contents.split('\n')
-        matches = re.compile(".*" + match + ".*")
+        match = match.replace('\"', '')
+        contentsplit = contents.split(b'\n')
+        matches = re.compile('.*' + match + '.*')
         for line in contentsplit:
-            if matches.match(line):
-                self.write(line + '\n')
+            if matches.match(line.decode()):
+                self.writeBytes(line + b'\n')
 
 
     def help(self):
-        self.write('usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n')
-        self.write('\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n')
-        self.write('\t[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
-        self.write('\t[--null] [pattern] [file ...]\n')
+        self.writeBytes(b'usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n')
+        self.writeBytes(b'\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n')
+        self.writeBytes(b'\t[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
+        self.writeBytes(b'\t[--null] [pattern] [file ...]\n')
 
 
     def start(self):
@@ -73,7 +73,7 @@ class command_grep(HoneyPotCommand):
                     self.help()
 
         if not self.input_data:
-            files = self.check_arguments("grep", args[1:])
+            files = self.check_arguments('grep', args[1:])
             for pname in files:
                 self.grep_get_contents(pname, args[0])
         else:
