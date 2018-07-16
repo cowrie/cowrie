@@ -120,7 +120,7 @@ pages for more information and options.
         packages = {}
         for y in [re.sub('[^A-Za-z0-9]', '', x) for x in self.args[1:]]:
             packages[y] = {
-                'version': '{0}.{1}-{2}'.format(random.choice(0, 1), random.randint(1, 40), random.randint(1, 10)),
+                'version': '{0}.{1}-{2}'.format(random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)),
                 'size': random.randint(100, 900)
             }
         totalsize = sum([packages[x]['size'] for x in packages])
