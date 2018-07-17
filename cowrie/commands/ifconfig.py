@@ -7,8 +7,7 @@ from __future__ import division, absolute_import
 from cowrie.shell.command import HoneyPotCommand
 from random import randint
 
-HWaddr = "%02x:%02x:%02x:%02x:%02x:%02x" % (randint(0, 255), randint(0, 255), randint(0, 255),
-                                   randint(0, 255), randint(0, 255), randint(0, 255))
+HWaddr = "%02x:%02x:%02x:%02x:%02x:%02x" % (randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
 
 commands = {}
 
