@@ -4,7 +4,6 @@
 # See LICENSE for details.
 
 from __future__ import division, absolute_import
-import json
 import os
 
 from twisted.trial import unittest
@@ -17,12 +16,12 @@ os.environ["HONEYPOT_DATA_PATH"] = "../data"
 os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
 from cowrie.core.config import CONFIG
 
+PROMPT = b"root@unitTest:~# "
+
 class ShellBaseCommandsTests(unittest.TestCase):
 
 
     def setUp(self):
-        with open('../cowrie/test/expected_results.json') as data_file:
-            self.data = json.load(data_file)
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
@@ -30,77 +29,59 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 
     def test_whoami_command(self):
-        self.proto.lineReceived(b'whoami \n')
-        self.assertEqual(self.tr.value().decode('utf8'), self.data['results']['whoami'])
+        self.proto.lineReceived(b'whoami\n')
+        self.assertEqual(self.tr.value(),  b'root\n' + PROMPT)
 
 
     def test_users_command(self):
         self.proto.lineReceived(b'users \n')
-        self.assertEqual(self.tr.value().decode('utf8'), self.data['results']['users'])
+        self.assertEqual(self.tr.value(),  b'root\n' + PROMPT)
 
 
-    def test_help_command(self):
-        self.proto.lineReceived(b'help \n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['help']))
-
-    def test_w_command(self):
-        self.proto.lineReceived(b'w \n')
-        self.assertRegexpMatches(self.tr.value().decode('utf8'), ("\n").join(self.data['results']['w']))
+    # def test_exit_command(self):
+    #     self.proto.lineReceived(b'exit \n')
 
 
-    def test_who_command(self):
-        self.proto.lineReceived(b'who \n')
-        self.assertRegexpMatches(self.tr.value().decode('utf8'), "\n".join(self.data['results']['who']))
+    # def test_logout_command(self):
+    #     self.proto.lineReceived(b'logout \n')
 
 
-    def test_echo_command(self):
-        self.proto.lineReceived(b'echo "test worked correctly" \n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['echo']))
-
-
-    def test_exit_command(self):
-        self.proto.lineReceived(b'exit \n')
-
-
-    def test_logout_command(self):
-        self.proto.lineReceived(b'logout \n')
-
-
-    def test_clear_command(self):
-        self.proto.lineReceived(b'clear \n')
+    # def test_clear_command(self):
+    #     self.proto.lineReceived(b'clear \n')
 
 
     def test_hostname_command(self):
         self.proto.lineReceived(b'hostname unitChanged\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['hostname']))
+        self.assertEquals(self.tr.value(), b'root@unitChanged:~# ')
 
 
-    def test_reset_command(self):
-        self.proto.lineReceived(b'reset')
+    # def test_reset_command(self):
+    #     self.proto.lineReceived(b'reset')
 
 
-    def test_ps_command(self):
-        self.proto.lineReceived(b'ps\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
+    # def test_ps_command(self):
+    #     self.proto.lineReceived(b'ps\n')
+    #     self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
+
 
     def test_id_command(self):
         self.proto.lineReceived(b'id\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['id']))
+        self.assertEquals(self.tr.value(), b'uid=0(root) gid=0(root) groups=0(root)\n' + PROMPT)
 
 
     def test_passwd_command(self):
         self.proto.lineReceived(b'passwd\n')
         self.proto.lineReceived(b'changeme\n')
         self.proto.lineReceived(b'changeme\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['passwd']))
+        self.assertEquals(self.tr.value(), b'Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n' + PROMPT)
 
 
-    def test_shutdown_command(self):
-        self.proto.lineReceived(b'shutdown\n')
+    # def test_shutdown_command(self):
+    #    self.proto.lineReceived(b'shutdown\n')
 
 
-    def test_poweroff_command(self):
-        self.proto.lineReceived(b'poweroff\n')
+    # def test_poweroff_command(self):
+    #     self.proto.lineReceived(b'poweroff\n')
 
 
     # def test_history_command(self):
@@ -111,7 +92,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_date_command(self):
         self.proto.lineReceived(b'date\n')
-        self.assertRegexpMatches(self.tr.value().decode('utf8'), ("\n").join(self.data['results']['date']))
+        self.assertRegexpMatches(self.tr.value(), b'[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n' + PROMPT)
 
 
     # def test_bash_command(self):
@@ -120,8 +101,8 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 
     def test_sh_command(self):
-        self.proto.lineReceived(b'sh -c who\n')
-        self.assertRegexpMatches(self.tr.value().decode('utf8'), "\n".join(self.data['results']['who']))
+        self.proto.lineReceived(b'sh -c id\n')
+        self.assertEquals(self.tr.value(), b'uid=0(root) gid=0(root) groups=0(root)\n' + PROMPT)
 
 
     # def test_php_command(self):
@@ -131,71 +112,72 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_chattr_command(self):
         self.proto.lineReceived(b'chattr\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['chattr']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_umask_command(self):
         self.proto.lineReceived(b'umask\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['umask']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_set_command(self):
         self.proto.lineReceived(b'set\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['set']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_unset_command(self):
         self.proto.lineReceived(b'unset\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['unset']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_export_command(self):
         self.proto.lineReceived(b'export\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['export']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_alias_command(self):
         self.proto.lineReceived(b'alias\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['alias']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_jobs_command(self):
         self.proto.lineReceived(b'jobs\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['jobs']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_kill_command(self):
         self.proto.lineReceived(b'/bin/kill\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['kill']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_pkill_command(self):
         self.proto.lineReceived(b'/bin/pkill\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['kill']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_killall_command(self):
         self.proto.lineReceived(b'/bin/killall\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['kill']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_killall5_command(self):
         self.proto.lineReceived(b'/bin/killall5\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['kill']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_su_command(self):
         self.proto.lineReceived(b'su\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\67n".join(self.data['results']['su']))
+        self.assertEquals(self.tr.value(), PROMPT)
+
 
     def test_chown_command(self):
         self.proto.lineReceived(b'chown\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['chown']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def test_chgrp_command(self):
         self.proto.lineReceived(b'chgrp\n')
-        self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['chgrp']))
+        self.assertEquals(self.tr.value(), PROMPT)
 
 
     def tearDown(self):
