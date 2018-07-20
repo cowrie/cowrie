@@ -1,7 +1,7 @@
 Cowrie
 ======
 
-|travis|_
+![Travis CI Status](https://travis-ci.org/cowrie/cowrie.svg?branch=master "Travis CI Status")
 
 # Welcome to the Cowrie GitHub repository
 
