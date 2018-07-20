@@ -567,7 +567,7 @@ logfile = log/cowrie.json
 
 
 # MySQL logging module
-# Database structure for this module is supplied in doc/sql/mysql.sql
+# Database structure for this module is supplied in docs/sql/mysql.sql
 #
 # MySQL logging requires extra software: sudo apt-get install libmysqlclient-dev
 # MySQL logging requires an extra Python module: pip install mysql-python
@@ -595,8 +595,8 @@ logfile = log/cowrie.json
 # SQLite3 logging module
 #
 # Logging to SQLite3 database. To init the database, use the script
-# doc/sql/sqlite3.sql:
-#     sqlite3 <db_file> < doc/sql/sqlite3.sql
+# docs/sql/sqlite3.sql:
+#     sqlite3 <db_file> < docs/sql/sqlite3.sql
 #
 #[output_sqlite]
 #enabled = false
