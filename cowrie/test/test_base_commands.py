@@ -30,12 +30,12 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_whoami_command(self):
         self.proto.lineReceived(b'whoami\n')
-        self.assertEqual(self.tr.value(),  b'root\n' + PROMPT)
+        self.assertEqual(self.tr.value(), b'root\n' + PROMPT)
 
 
     def test_users_command(self):
         self.proto.lineReceived(b'users \n')
-        self.assertEqual(self.tr.value(),  b'root\n' + PROMPT)
+        self.assertEqual(self.tr.value(), b'root\n' + PROMPT)
 
 
     # def test_exit_command(self):
