@@ -9,6 +9,8 @@ from random import randint
 
 HWaddr = "%02x:%02x:%02x:%02x:%02x:%02x" % (randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
 
+inet6 = "fe%02x::%02x:%02xff:fe%02x:%02x01/64" % (randint(0, 255), randrange(111, 888), randint(0, 255), randint(0, 255), randint(0, 255))
+
 commands = {}
 
 class command_ifconfig(HoneyPotCommand):
@@ -16,7 +18,7 @@ class command_ifconfig(HoneyPotCommand):
     def call(self):
         l = """eth0      Link encap:Ethernet  HWaddr %s
           inet addr:%s  Bcast:%s.255  Mask:255.255.255.0
-          inet6 addr: fe80::601:16ff:fedf:2d01/64 Scope:Link
+          inet6 addr: %s Scope:Link
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
           RX packets:139435762 errors:0 dropped:0 overruns:0 frame:0
           TX packets:116082382 errors:0 dropped:0 overruns:0 carrier:0
@@ -33,7 +35,7 @@ lo        Link encap:Local Loopback
           collisions:0 txqueuelen:0
           RX bytes:19932 (19.9 KB)  TX bytes:19932 (19.9 KB)""" % \
             (HWaddr, self.protocol.kippoIP,
-             self.protocol.kippoIP.rsplit('.', 1)[0])
+             self.protocol.kippoIP.rsplit('.', 1)[0], inet6)
         self.write('{0}\n'.format(l))
 
 
