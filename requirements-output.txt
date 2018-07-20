@@ -34,7 +34,6 @@ botocore
 slackclient
 
 # splunklegacy
-# For more info, see documentation /home/cowrie/cowrie/docs/splunk/README.md
 splunk-sdk
 
 # influxdb
