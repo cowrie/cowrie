@@ -54,9 +54,9 @@ FLUSH PRIVILEGES;
 exit
 ```
 
-Next, log into the MySQL database using the cowrie account to verify proper access privileges and load the database schema provided in the doc/sql/ directory:
+Next, log into the MySQL database using the cowrie account to verify proper access privileges and load the database schema provided in the docs/sql/ directory:
 ```
-$ cd ~/cowrie/doc/sql/
+$ cd ~/cowrie/docs/sql/
 $ mysql -u cowrie -p
 USE cowrie;
 source mysql.sql;

@@ -168,6 +168,9 @@ class Output(object):
         ev = convert(event)
         ev['sensor'] = self.sensor
 
+        if 'isError' in ev:
+            del ev['isError']
+
         # Add ISO timestamp and sensor data
         if 'time' not in ev:
             ev['time'] = time.time()

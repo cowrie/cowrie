@@ -33,7 +33,7 @@ next create the database schema:
 cd /opt/cowrie/
 mysql -u cowrie -p
 USE cowrie;
-source ./doc/sql/mysql.sql;
+source ./docs/sql/mysql.sql;
 exit
 ```
 

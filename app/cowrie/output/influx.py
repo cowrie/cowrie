@@ -160,10 +160,14 @@ class Output(cowrie.core.output.Output):
 
         elif eventid == 'cowrie.client.version':
             m['fields'].update({
+                'version': ','.join(entry['version']),
+            })
+
+        elif eventid == 'cowrie.client.kex':
+            m['fields'].update({
                 'maccs': ','.join(entry['macCS']),
                 'kexalgs': ','.join(entry['kexAlgs']),
                 'keyalgs': ','.join(entry['keyAlgs']),
-                'version': ','.join(entry['version']),
                 'compcs': ','.join(entry['compCS']),
                 'enccs': ','.join(entry['encCS'])
             })
