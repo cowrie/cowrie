@@ -161,7 +161,7 @@ fi
 
 find_cowrie_directory $0
 cd ${COWRIEDIR}
-export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
+export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}/src
 PIDFILE=var/run/cowrie.pid
 set -e
 
