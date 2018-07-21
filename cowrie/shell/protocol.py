@@ -13,6 +13,8 @@ import sys
 import time
 import socket
 import traceback
+import random
+from datetime import datetime, timedelta
 
 from twisted.python import failure, log
 from twisted.internet import error
@@ -318,12 +320,16 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             b'\x1b': self.handle_ESC,  # ESC
         })
 
-
     def displayMOTD(self):
         """
         """
         try:
             self.terminal.write(self.fs.file_contents('/etc/motd'))
+            ip = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))
+            date_now = datetime.now() - timedelta(days=random.randrange(1, 15), minutes=random.randrange(0, 60), hours=random.randrange(0, 12))
+            date_last_login = date_now.strftime("%a %b %d %X %Y")
+            last_login = '\nLast login: {1} from {0}\n'.format(ip, date_last_login)
+            self.terminal.write(last_login)
         except:
             pass
 
