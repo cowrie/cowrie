@@ -108,7 +108,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             if b'\n' not in self.buf:
                 return
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
-            log.msg(eventid='cowrie.client.version', version=self.otherVersionString,
+            log.msg(eventid='cowrie.client.version', version=repr(self.otherVersionString),
                     format="Remote SSH version: %(version)s")
             if self.buf.startswith(b'SSH-'):
                 self.gotVersion = True
