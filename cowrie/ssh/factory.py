@@ -68,6 +68,19 @@ class CowrieSSHFactory(factory.SSHFactory):
             b'ssh-dss': keys.Key.fromString(data=dsaPrivKeyString)
         }
 
+        _modulis = '/etc/ssh/moduli', '/private/etc/moduli'
+        for _moduli in _modulis:
+            try:
+                self.primes = primes.parseModuliFile(_moduli)
+                break
+            except IOError as err:
+                pass
+
+        try:
+            self.ourVersionString = CONFIG.get('ssh', 'version')
+        except NoOptionError:
+            self.ourVersionString = 'SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2'
+
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
 
@@ -89,23 +102,11 @@ class CowrieSSHFactory(factory.SSHFactory):
         @return: The built transport.
         """
 
-        _modulis = '/etc/ssh/moduli', '/private/etc/moduli'
 
         t = transport.HoneyPotSSHTransport()
 
-        try:
-            t.ourVersionString = CONFIG.get('ssh', 'version')
-        except NoOptionError:
-            t.ourVersionString = "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
-
+        t.ourVersionString = self.ourVersionString
         t.supportedPublicKeys = list(self.privateKeys.keys())
-
-        for _moduli in _modulis:
-            try:
-                self.primes = primes.parseModuliFile(_moduli)
-                break
-            except IOError as err:
-                pass
 
         if not self.primes:
             ske = t.supportedKeyExchanges[:]
