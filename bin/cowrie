@@ -161,7 +161,15 @@ fi
 
 find_cowrie_directory $0
 cd ${COWRIEDIR}
-export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}
+export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}/src
+
+# This is for the move to src/ on 2018-07-21
+# It deletes old compiled python code
+# Can be removed at some time in the future
+for dir in ${COWRIEDIR}/twisted ${COWRIEDIR}/cowrie; do
+    [ -d ${dir} ] && find ${dir} -name '*pyc' | xargs rm -f
+done
+
 PIDFILE=var/run/cowrie.pid
 set -e
 

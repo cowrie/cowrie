@@ -1,3 +1,4 @@
+* 2018-07-21 source code has move to the src/ directory. Delete old directories twisted/cowrie with compiled code
 * 2018-06-29 txtcmds have been moved to share/cowrie/txtcmds
 * 2018-06-28 filesystem config entry has changed. please verify if you have custom entry or pickle file
 * 2018-06-23 fingerprint log message now holds KEX attributes and a unique fingerprint for the client

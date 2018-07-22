@@ -37,5 +37,6 @@ __all__ = [
     'perl',
     'uptime',
     'python',
-    'tftp'
+    'tftp',
+    'du'
 ]
