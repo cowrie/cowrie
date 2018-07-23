@@ -67,7 +67,7 @@ class command_scp(HoneyPotCommand):
             self.download_path_uniq = CONFIG.get('honeypot', 'download_path')
 
         try:
-            optlist, args = getopt.getopt(self.args, 'tdv:')
+            optlist, args = getopt.getopt(self.args, '12346BCpqrvfstdv:cFiloPS:')
         except getopt.GetoptError as err:
             self.help()
             self.exit()
