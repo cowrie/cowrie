@@ -4,12 +4,12 @@
 
 from __future__ import division, absolute_import
 
-from cowrie.shell.honeypot import HoneyPotCommand
-from cowrie.shell.fs import *
 import os
 
-commands = {}
+from cowrie.shell.shell import HoneyPotCommand
+from cowrie.shell.fs import *
 
+commands = {}
 
 class command_du(HoneyPotCommand):
 
