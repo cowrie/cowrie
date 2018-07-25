@@ -217,6 +217,12 @@ pip install --upgrade -r requirements.txt
 bin/cowrie start
 ```
 
+If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too. 
+
+```
+pip install --upgrade -r requirements-output.txt
+```
+
 # Modifying Cowrie
 
 The pre-login banner can be set by creating the file `honeyfs/etc/issue.net`.
