@@ -16,7 +16,7 @@ COPY etc /src/etc
 COPY --from=builder /root/wheelhouse /root/wheelhouse
 RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse && \
   mkdir /src/dl && \
-  mkdir -p /src/log && \
+  mkdir -p /src/log/tty && \
   mkdir /src/var
 
 FROM post-builder as linter
@@ -27,7 +27,7 @@ RUN pip install flake8 && \
 FROM post-builder as unittest
 ENV PYTHONPATH=/src
 WORKDIR /src
-RUN trial /src/cowrie
+RUN trial cowrie
 
 FROM post-builder
 ENV PYTHONPATH=/src
