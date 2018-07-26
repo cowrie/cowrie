@@ -31,6 +31,7 @@ RUN trial cowrie
 
 FROM post-builder
 ENV PYTHONPATH=/src
+ENV COWRIE_DOCKER=0
 WORKDIR /src
 EXPOSE 2222/tcp
 CMD /usr/local/bin/python /usr/local/bin/twistd -u 65534 -g 65534 --umask 0022 --nodaemon --pidfile= -l - cowrie
