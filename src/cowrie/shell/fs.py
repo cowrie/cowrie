@@ -24,7 +24,14 @@ from twisted.python import log
 
 from cowrie.core.config import CONFIG
 
-PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
+# At the moment this is the first place a config file is used
+# Put extra help here in case it goes wrong
+try:
+    PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
+except:
+    print("ERROR: Config file not found: etc/cowrie.cfg.dist")
+    exit(2)
+
 
 A_NAME, \
     A_TYPE, \
