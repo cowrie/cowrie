@@ -74,9 +74,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
-            log.msg(eventid='cowrie.log.open',
-                    ttylog=self.ttylogFile,
-                    format='Opening TTY Log: %(ttylog)s')
 
         self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
             (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)

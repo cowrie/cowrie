@@ -190,7 +190,7 @@ class Output(cowrie.core.output.Output):
             })
 
             # cowrie.direct-tcpip.data, cowrie.direct-tcpip.request
-            # cowrie.log.closed cowrie.log.open
+            # cowrie.log.closed
             # are not implemented
         else:
             # other events should be handled

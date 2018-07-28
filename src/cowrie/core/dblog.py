@@ -31,7 +31,6 @@ class DBLogger(object):
         self.events = {
             'cowrie.login.success': self.handleLoginSucceeded,
             'cowrie.login.failed': self.handleLoginFailed,
-            'cowrie.log.open': self.handleTTYLogOpened,
             'cowrie.command.success': self.handleCommand,
             'cowrie.command.failed': self.handleUnknownCommand,
             'cowrie.session.file_download': self.handleFileDownload,
@@ -139,10 +138,6 @@ class DBLogger(object):
     @abc.abstractmethod
     def createSession(self, peerIP, peerPort, hostIP, hostPort):
         return 0
-
-    # args has: ttylog
-    def handleTTYLogOpened(self, session, args):
-        self.ttylogs[session] = args['ttylog']
 
     # args has: ttylog
     def handleTTYLogClosed(self, session, args):

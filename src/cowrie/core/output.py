@@ -52,7 +52,6 @@ from cowrie.core.config import CONFIG
 #  cowrie.direct-tcpip.data
 #  cowrie.direct-tcpip.request
 #  cowrie.log.closed
-#  cowrie.log.open
 #  cowrie.login.failed
 #  cowrie.login.success
 #  cowrie.session.closed

@@ -40,7 +40,6 @@ from __future__ import division, absolute_import
 #  cowrie.direct-tcpip.data
 #  cowrie.direct-tcpip.request
 #  cowrie.log.closed
-#  cowrie.log.open
 #  cowrie.login.failed
 #  cowrie.login.success
 #  cowrie.session.closed
