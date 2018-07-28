@@ -240,7 +240,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @param desc: a descrption of the reason for the disconnection.
         @type desc: C{str}
         """
-        if 'bad packet length' not in desc:
+        if b'bad packet length' not in desc:
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write('Packet corrupt\n')
