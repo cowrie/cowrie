@@ -210,12 +210,6 @@ class ShellFileCommandsTests(unittest.TestCase):
     #    print(self.tr.value())
 
 
-    # def test_head_output(self):
-    #    self.proto.lineReceived(b'head -n 10 /proc/cpuinfo')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
-
-
     # def test_cd_output(self):
     #    self.proto.lineReceived(b'cd /usr/bin')
     #    print("THIS TEST IS INCOMPLETE")
@@ -270,21 +264,29 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 
 class ShellPipeCommandsTests(unittest.TestCase):
+    """
+    """
     def setUp(self):
+        """
+        """
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
 
-    # def test_shell_pipe_with_ls_tail(self):
-    #     self.proto.lineReceived(b'ls -la | tail -n 2\n')
-    #     print(self.tr.value())
+    def test_shell_pipe_with_cat_tail(self):
+        """
+        """
+        self.proto.lineReceived(b'echo test | tail -n 1\n')
+        self.assertEquals(self.tr.value(), PROMPT + b'test\n' + PROMPT)
 
 
-    # def test_shell_pipe_with_cat_head(self):
-    #     self.proto.lineReceived(b'cat /proc/cpuinfo | head -n 5 \n')
-    #     print(self.tr.value())
+    def test_shell_pipe_with_cat_head(self):
+        """
+        """
+        self.proto.lineReceived(b'echo test | head -n 1\n')
+        self.assertEquals(self.tr.value(), PROMPT + b'test\n' + PROMPT)
 
 
     # def test_shell_busybox_with_cat_and_sudo_grep(self):
