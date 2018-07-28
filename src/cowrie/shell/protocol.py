@@ -102,6 +102,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         except:
             self.clientIP = self.realClientIP
 
+        # Source IP of server in user visible reports (can be fake or real)
         if CONFIG.has_option('honeypot', 'internet_facing_ip'):
             self.kippoIP = CONFIG.get('honeypot', 'internet_facing_ip')
         else:
@@ -137,6 +138,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.pp = None
         self.user = None
         self.environ = None
+
 
     def txtcmd(self, txt):
         """
