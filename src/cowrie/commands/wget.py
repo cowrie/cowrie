@@ -260,7 +260,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def noPage(self, reason):  # Called for non-200 responses
         """
         """
-        if self.status == '304':
+        if self.status == b'304':
             client.HTTPDownloader.page(self, '')
         else:
             if hasattr(self, 'status'):
@@ -270,10 +270,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             client.HTTPDownloader.noPage(self, reason)
 
+
     def gotHeaders(self, headers):
         """
         """
-        if self.status == '200':
+        if self.status == b'200':
             if not self.quiet:
                 self.wget.errorWrite('200 OK\n')
             if 'content-length' in headers:
@@ -306,10 +307,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
+
     def pagePart(self, data):
         """
         """
-        if self.status == '200':
+        if self.status == b'200':
             self.currentlength += len(data)
 
             # If downloading files of unspecified size, this could happen:
@@ -337,6 +339,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.proglen = len(s)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
+
 
     def pageEnd(self):
         """
