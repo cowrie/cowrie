@@ -387,12 +387,12 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         """
         """
         if self.status == b'200':
-            if 'content-length' in headers:
-                self.totallength = int(headers['content-length'][0])
+            if b'content-length' in headers:
+                self.totallength = int(headers[b'content-length'][0].decode())
             else:
                 self.totallength = 0
-            if 'content-type' in headers:
-                self.contenttype = headers['content-type'][0]
+            if b'content-type' in headers:
+                self.contenttype = headers[b'content-type'][0].decode()
             else:
                 self.contenttype = 'text/whatever'
             self.currentlength = 0.0
