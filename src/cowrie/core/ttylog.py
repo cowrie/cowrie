@@ -10,9 +10,11 @@ Should be compatible with user mode linux
 from __future__ import division, absolute_import
 
 import struct
+import hashlib
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
 TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
+TTYSTRUCT = '<iLiiLL'
 
 
 def ttylog_open(logfile, stamp):
@@ -24,7 +26,7 @@ def ttylog_open(logfile, stamp):
     """
     with open(logfile, 'ab') as f:
         sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
-        f.write(struct.pack('<iLiiLL', 1, 0, 0, 0, sec, usec))
+        f.write(struct.pack(TTYSTRUCT, OP_OPEN, 0, 0, 0, sec, usec))
 
 
 
@@ -40,7 +42,7 @@ def ttylog_write(logfile, length, direction, stamp, data=None):
     """
     with open(logfile, 'ab') as f:
         sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
-        f.write(struct.pack('<iLiiLL', 3, 0, length, direction, sec, usec))
+        f.write(struct.pack(TTYSTRUCT, OP_WRITE, 0, length, direction, sec, usec))
         f.write(data)
 
 
@@ -54,4 +56,31 @@ def ttylog_close(logfile, stamp):
     """
     with open(logfile, 'ab') as f:
         sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
-        f.write(struct.pack('<iLiiLL', 2, 0, 0, 0, sec, usec))
+        f.write(struct.pack(TTYSTRUCT, OP_CLOSE, 0, 0, 0, sec, usec))
+
+
+
+def ttylog_inputhash(logfile):
+    """
+    Create unique hash of the input parts of tty log
+
+    @param logfile: logfile name
+    """
+    ssize = struct.calcsize(TTYSTRUCT)
+    inputbytes = b""
+
+    with open(logfile, 'rb') as fd:
+        while 1:
+            try:
+                (op, _tty, length, direction, _sec, _usec) = \
+                    struct.unpack(TTYSTRUCT, fd.read(ssize))
+                data = fd.read(length)
+            except struct.error:
+                break
+
+            if op is not OP_WRITE and direction is not TYPE_INPUT:
+                continue
+            inputbytes = inputbytes + data
+
+        shasum = hashlib.sha256(inputbytes).hexdigest()
+        return shasum

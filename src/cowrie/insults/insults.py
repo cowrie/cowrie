@@ -201,13 +201,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.redirFiles.clear()
 
         if self.ttylogEnabled and self.ttylogOpen:
+            ttylog.ttylog_close(self.ttylogFile, time.time())
+            self.ttylogOpen = False
+            shasum = ttylog.ttylog_inputhash(self.ttylogFile)
             log.msg(eventid='cowrie.log.closed',
                     format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
                     ttylog=self.ttylogFile,
                     size=self.ttylogSize,
+                    shasum=shasum,
                     duration=time.time() - self.startTime)
-            ttylog.ttylog_close(self.ttylogFile, time.time())
-            self.ttylogOpen = False
 
         insults.ServerProtocol.connectionLost(self, reason)
 
