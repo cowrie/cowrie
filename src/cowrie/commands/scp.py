@@ -145,9 +145,6 @@ class command_scp(HoneyPotCommand):
                     shasum=shasum,
                     destfile=fname)
 
-            # Link friendly name to hash
-            # os.symlink(hash_path, self.safeoutfile)
-
             self.safeoutfile = None
 
             # Update the honeyfs to point to downloaded file
