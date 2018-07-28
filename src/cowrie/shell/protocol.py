@@ -29,6 +29,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
     """
+    commands = {}
+    for c in cowrie.commands.__all__:
+        try:
+            module = __import__( 'cowrie.commands.%s' % (c,),
+                globals(), locals(), ['commands']
+            )
+            commands.update(module.commands)
+        except Exception as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
     def __init__(self, avatar):
         self.user = avatar
@@ -48,17 +58,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         else:
             self.cwd = '/'
         self.data = None
-        self.commands = {}
-        for c in cowrie.commands.__all__:
-            try:
-                module = __import__(
-                    'cowrie.commands.%s' % (c,),
-                    globals(), locals(), ['commands']
-                )
-                self.commands.update(module.commands)
-            except Exception as e:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
         self.password_input = False
         self.cmdstack = []
 
@@ -136,7 +135,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         insults.TerminalProtocol.connectionLost(self, reason)
         self.terminal = None  # (this should be done by super above)
         self.cmdstack = []
-        del self.commands
         self.fs = None
         self.pp = None
         self.user = None
