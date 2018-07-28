@@ -13,9 +13,8 @@ import random
 from twisted.python import failure, log
 from twisted.internet import error, reactor
 
-from cowrie.shell.honeypot import HoneyPotShell, StdOutStdErrEmulationProtocol
+from cowrie.shell.honeypot import HoneyPotShell
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.core.auth import UserDB
 from cowrie.core import utils
 
 commands = {}

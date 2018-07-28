@@ -70,4 +70,3 @@ lo        Link encap:Local Loopback
 
 commands['/sbin/ifconfig'] = command_ifconfig
 commands['ifconfig'] = command_ifconfig
-

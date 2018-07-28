@@ -11,7 +11,6 @@ from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
-import cowrie.shell.fs
 
 commands = {}
 

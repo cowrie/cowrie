@@ -7,7 +7,7 @@ from __future__ import division, absolute_import
 import os
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.fs import *
+from cowrie.shell.fs import A_NAME
 
 commands = {}
 
@@ -94,7 +94,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
 
     def du_show(self, path, all=False):
         try:
-            if self.protocol.fs.isdir(path) and self.showDirectories == False:
+            if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
