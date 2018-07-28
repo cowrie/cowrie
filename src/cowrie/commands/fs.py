@@ -119,7 +119,7 @@ class command_tail(HoneyPotCommand):
             self.n = lines - 1
         i = 0
         for j in range((lines - self.n - 1), lines):
-            self.write(contentsplit[j].decode('utf8'))
+            self.writeBytes(contentsplit[j])
             if i < self.n:
                 self.write('\n')
             i += 1
@@ -175,10 +175,10 @@ class command_head(HoneyPotCommand):
 
     def head_application(self, contents):
         i = 0
-        contentsplit = contents.split("\n")
+        contentsplit = contents.split(b'\n')
         for line in contentsplit:
             if i < self.n:
-                self.write(line + '\n')
+                self.writeBytes(line + b'\n')
             i += 1
 
 
