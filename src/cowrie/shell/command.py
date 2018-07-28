@@ -80,6 +80,7 @@ class HoneyPotCommand(object):
 
     def write(self, data):
         """
+        Write a string to the user on stdout
         """
         return self.writefn(data.encode('utf8'))
 
@@ -93,6 +94,7 @@ class HoneyPotCommand(object):
 
     def errorWrite(self, data):
         """
+        Write errors to the user on stderr
         """
         return self.errorWritefn(data.encode('utf8'))
 
