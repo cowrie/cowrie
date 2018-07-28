@@ -33,8 +33,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     for c in cowrie.commands.__all__:
         try:
             module = __import__('cowrie.commands.%s' % (c,),
-                                globals(), locals(), ['commands']
-            )
+                                globals(), locals(), ['commands'])
             commands.update(module.commands)
         except Exception as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
