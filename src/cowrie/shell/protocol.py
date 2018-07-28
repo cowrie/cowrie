@@ -49,7 +49,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.logintime = None
         self.realClientIP = None
         self.realClientPort = None
-        self.clientVersion = None
         self.kippoIP = None
         self.clientIP = None
 
@@ -87,7 +86,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         self.realClientIP = pt.transport.getPeer().host
         self.realClientPort = pt.transport.getPeer().port
-        self.clientVersion = self.getClientVersion()
         self.logintime = time.time()
 
         log.msg(eventid='cowrie.session.params', arch=self.user.server.arch)
@@ -224,11 +222,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         pt = self.getProtoTransport()
         r = time.time() - pt.factory.starttime
         return r
-
-
-    def getClientVersion(self):
-        pt = self.getProtoTransport()
-        return pt.otherVersionString
 
 
     def eofReceived(self):
@@ -456,6 +449,3 @@ class HoneyPotInteractiveTelnetProtocol(HoneyPotInteractiveProtocol):
         the proper transport to access underlying Telnet information.
         """
         return self.terminal.transport.session.transport
-
-    def getClientVersion(self):
-        return 'Telnet'
