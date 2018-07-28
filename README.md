@@ -42,7 +42,7 @@ Additional functionality over standard kippo:
 
 Docker versions are available.
 * Get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
-* Run from the Docker regstry with: ```docker pull cowrie/cowrie```
+* Run from Docker Hub with: ```docker pull cowrie/cowrie```
 
 ## Requirements
 
@@ -76,14 +76,6 @@ Maybe. See [FAQ](https://github.com/micheloosterhof/cowrie/wiki/Frequently-Asked
 ## I have some questions!
 
 Please visit https://cowrie.slack.com/ and join the #questions channel
-
-## I'd like to install with Docker
-
-Run:
-```docker pull cowrie/cowrie```
-to download images from hub.docker.com
-
-Or look at https://github.com/cowrie/docker-cowrie for the Dockerfile
 
 ## Contributors
 
