@@ -148,10 +148,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     shasumfile = os.path.join(self.downloadPath, shasum)
                     if os.path.exists(shasumfile):
                         os.remove(self.stdinlogFile)
-                        log.msg("Not storing duplicate content " + shasum)
+                        log.msg("Duplicate stdin content {}".format(shasum))
                     else:
                         os.rename(self.stdinlogFile, shasumfile)
-                    # os.symlink(shasum, self.stdinlogFile)
+
                 log.msg(eventid='cowrie.session.file_download',
                         format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
                         url='stdin',
@@ -186,10 +186,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         shasumfile = os.path.join(self.downloadPath, shasum)
                         if os.path.exists(shasumfile):
                             os.remove(rf)
-                            log.msg("Not storing duplicate content " + shasum)
+                            log.msg("Duplicate redir content with hash {}".format(shasum))
                         else:
                             os.rename(rf, shasumfile)
-                        # os.symlink(shasum, rf)
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
                             url=url,
@@ -204,9 +203,20 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_close(self.ttylogFile, time.time())
             self.ttylogOpen = False
             shasum = ttylog.ttylog_inputhash(self.ttylogFile)
+            shasumfile = os.path.join(self.ttylogPath, shasum)
+
+            if os.path.exists(shasumfile):
+                log.msg("Duplicate TTY log with hash {}".format(shasum))
+                os.remove(self.ttylogFile)
+            else:
+                os.rename(self.ttylogFile, shasumfile)
+                umask = os.umask(0)
+                os.umask(umask)
+                os.chmod(shasumfile, 0o666 & ~umask)
+
             log.msg(eventid='cowrie.log.closed',
                     format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
-                    ttylog=self.ttylogFile,
+                    ttylog=shasumfile,
                     size=self.ttylogSize,
                     shasum=shasum,
                     duration=time.time() - self.startTime)
