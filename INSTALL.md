@@ -214,12 +214,16 @@ Updating is an easy process. First stop your honeypot. Then fetch updates from G
 bin/cowrie stop
 git pull
 pip install --upgrade -r requirements.txt
-bin/cowrie start
 ```
 
 If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too. 
 ```
 pip install --upgrade -r requirements-output.txt
+```
+
+And finally, start Cowrie back up after finishing all updates.
+```
+bin/cowrie start
 ```
 
 # Modifying Cowrie
