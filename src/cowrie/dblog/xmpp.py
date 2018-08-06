@@ -7,11 +7,16 @@ import json
 from twisted.words.xish import domish
 from twisted.python import log
 from twisted.words.protocols.jabber.jid import JID
+from twisted.application import service
+from twisted.words.protocols.jabber import jid
 
 from wokkel.xmppim import AvailablePresence
+from wokkel.client import XMPPClient
 from wokkel import muc
 
 from cowrie.core.config import CONFIG
+from cowrie.core import dblog
+
 
 class XMPPLoggerProtocol(muc.MUCClient):
 
@@ -52,11 +57,6 @@ class XMPPLoggerProtocol(muc.MUCClient):
     def receivedHistory(self, room, user, body, dely, frm=None):
         pass
 
-from twisted.application import service
-from twisted.words.protocols.jabber import jid
-from wokkel.client import XMPPClient
-from cowrie.core import dblog
-from twisted.words.xish import domish
 
 class DBLogger(dblog.DBLogger):
     def start(self):
