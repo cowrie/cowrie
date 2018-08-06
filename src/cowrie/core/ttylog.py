@@ -78,7 +78,7 @@ def ttylog_inputhash(logfile):
             except struct.error:
                 break
 
-            if op is not OP_WRITE and direction is not TYPE_INPUT:
+            if op is OP_WRITE and direction is TYPE_OUTPUT:
                 continue
             inputbytes = inputbytes + data
 
