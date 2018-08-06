@@ -63,7 +63,6 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # Do the delayed file system initialization
         self.server.initFileSystem()
 
-
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
 
@@ -82,7 +81,6 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         except Exception as e:
             log.msg(traceback.format_exc())
 
-
     def connectionLost(self, reason):
         """
         """
@@ -91,12 +89,10 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.avatar = None
         self.protocol = None
 
-
     def logout(self):
         """
         """
         log.msg('avatar {} logging out'.format(self.username))
-
 
 
 # Taken and adapted from
@@ -115,12 +111,10 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
     def outReceived(self, data):
         self.session.write(data)
 
-
     def errReceived(self, err):
         log.err("Error received: {}".format(err))
         # EXTENDED_DATA_STDERR is from ssh, no equivalent in telnet?
         # self.session.writeExtended(connection.EXTENDED_DATA_STDERR, err)
-
 
     def outConnectionLost(self):
         """
@@ -131,18 +125,15 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         else:
             self.lostOutOrErrFlag = True
 
-
     def errConnectionLost(self):
         """
         See outConnectionLost().
         """
         self.outConnectionLost()
 
-
     def connectionLost(self, reason=None):
         self.session.loseConnection()
         self.session = None
-
 
     def processEnded(self, reason=None):
         """
@@ -152,13 +143,11 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         log.msg("Process ended. Telnet Session disconnected: {}".format(reason))
         self.session.loseConnection()
 
-
     def getHost(self):
         """
         Return the host from my session's transport.
         """
         return self.session.transport.getHost()
-
 
     def getPeer(self):
         """
@@ -166,14 +155,11 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         """
         return self.session.transport.getPeer()
 
-
     def write(self, data):
         self.session.write(data)
 
-
     def writeSequence(self, seq):
         self.session.write(b''.join(seq))
-
 
     def loseConnection(self):
         self.session.loseConnection()
