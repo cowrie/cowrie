@@ -115,7 +115,7 @@ Makes a Cowrie SSH/Telnet honeypot.
 """)
             sys.exit(1)
 
-        if os.name == 'posix' and os.getuid() == 0 and not os.getenv('COWRIE_DOCKER'):
+        if os.name == 'posix' and os.getuid() == 0:
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
