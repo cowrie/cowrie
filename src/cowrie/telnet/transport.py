@@ -111,7 +111,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         """
         username, password = self.username, line  # .decode()
         del self.username
-        
+
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
             creds = UsernamePasswordIP(username, password, self.src_ip)
