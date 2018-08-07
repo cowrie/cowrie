@@ -92,7 +92,6 @@ class command_tftp(HoneyPotCommand):
             self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.artifactFile.shasumFilename)
             self.fs.chown(self.file_to_get, self.protocol.user.uid, self.protocol.user.gid)
 
-
     def start(self):
         """
         """
