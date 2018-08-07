@@ -13,6 +13,7 @@ from cowrie.shell.pwd import Passwd, Group
 
 commands = {}
 
+
 class command_ls(HoneyPotCommand):
     """
     """
@@ -25,7 +26,6 @@ class command_ls(HoneyPotCommand):
         except:
             return str(uid)
 
-
     def gid2name(self, gid):
         """
         """
@@ -33,7 +33,6 @@ class command_ls(HoneyPotCommand):
             return Group().getgrgid(gid)["gr_name"]
         except:
             return str(gid)
-
 
     def call(self):
         """
@@ -68,7 +67,6 @@ class command_ls(HoneyPotCommand):
         else:
             for path in paths:
                 func(path)
-
 
     def do_ls_normal(self, path):
         """
@@ -113,7 +111,6 @@ class command_ls(HoneyPotCommand):
             self.write(f.ljust(maxlen + 1))
             count += 1
         self.write('\n')
-
 
     def do_ls_l(self, path):
         """
@@ -202,6 +199,7 @@ class command_ls(HoneyPotCommand):
                  linktarget)
 
             self.write('{0}\n'.format(l))
+
 
 commands['/bin/ls'] = command_ls
 commands['ls'] = command_ls
