@@ -9,9 +9,11 @@ from twisted.internet import reactor
 
 from cowrie.shell.command import HoneyPotCommand
 
+
 commands = {}
 
 O_O, O_Q, O_P = 1, 2, 3
+
 
 class command_adduser(HoneyPotCommand):
     """
@@ -61,7 +63,6 @@ class command_adduser(HoneyPotCommand):
         ]
         self.do_output()
 
-
     def do_output(self):
         """
         """
@@ -81,13 +82,11 @@ class command_adduser(HoneyPotCommand):
             self.item += 1
             self.schedule_next()
 
-
     def schedule_next(self):
         """
         """
         self.scheduled = reactor.callLater(
             0.5 + random.random() * 1, self.do_output)
-
 
     def lineReceived(self, line):
         """
@@ -104,6 +103,7 @@ class command_adduser(HoneyPotCommand):
             self.item += 1
         self.schedule_next()
         self.protocol.password_input = False
+
 
 commands['/usr/sbin/adduser'] = command_adduser
 commands['/usr/sbin/useradd'] = command_adduser
