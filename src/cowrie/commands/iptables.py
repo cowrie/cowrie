@@ -8,14 +8,17 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class OptionParsingError(RuntimeError):
     def __init__(self, msg):
         self.msg = msg
+
 
 class OptionParsingExit(Exception):
     def __init__(self, status, msg):
         self.msg = msg
         self.status = status
+
 
 class ModifiedOptionParser(optparse.OptionParser):
     def error(self, msg):
@@ -114,7 +117,6 @@ class command_iptables(HoneyPotCommand):
         parser.add_option("--dport", "--destination-ports", dest="dest_ports", action="store")
         parser.add_option("--ports", dest="ports", action="store")
         parser.add_option("--state", dest="state", action="store")
-
 
         # Parse options or display no files
         try:
