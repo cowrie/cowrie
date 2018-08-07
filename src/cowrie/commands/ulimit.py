@@ -13,6 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_ulimit(HoneyPotCommand):
     """
     ulimit
@@ -39,7 +40,6 @@ class command_ulimit(HoneyPotCommand):
                 self.do_ulimit(key='all')
                 return
         self.do_ulimit()
-
 
     def do_ulimit(self, key='core'):
         """
