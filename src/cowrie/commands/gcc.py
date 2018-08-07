@@ -16,6 +16,7 @@ from cowrie.core.config import CONFIG
 
 commands = {}
 
+
 class command_gcc(HoneyPotCommand):
     # Name of program. Under OSX, you might consider i686-apple-darwin11-llvm-gcc-X.X
     APP_NAME = "gcc"
@@ -139,7 +140,6 @@ class command_gcc(HoneyPotCommand):
         self.write("""gcc: fatal error: no input files
 compilation terminated.\n""")
         self.exit()
-
 
     def version(self, short):
         """ Print long or short version, and exit """
