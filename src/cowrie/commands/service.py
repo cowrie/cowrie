@@ -84,13 +84,11 @@ class command_service(HoneyPotCommand):
         for l in output:
             self.write(l + '\n')
 
-
     def help(self):
         """
         """
         output = 'Usage: service < option > | --status-all | [ service_name [ command | --full-restart ] ]'
         self.write(output + '\n')
-
 
     def call(self):
         """
