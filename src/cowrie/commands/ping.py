@@ -15,6 +15,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_ping(HoneyPotCommand):
     """
     """
@@ -27,7 +28,6 @@ class command_ping(HoneyPotCommand):
             return True
         except:
             return False
-
 
     def start(self):
         """
@@ -81,7 +81,6 @@ class command_ping(HoneyPotCommand):
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
-
     def showreply(self):
         """
         """
@@ -98,14 +97,12 @@ class command_ping(HoneyPotCommand):
         else:
             self.scheduled = reactor.callLater(1, self.showreply)
 
-
     def printstatistics(self):
         """
         """
         self.write('--- %s ping statistics ---\n' % (self.host,))
         self.write('%d packets transmitted, %d received, 0%% packet loss, time 907ms\n' % (self.count, self.count))
         self.write('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n')
-
 
     def handle_CTRL_C(self):
         """
@@ -117,6 +114,7 @@ class command_ping(HoneyPotCommand):
             self.scheduled.cancel()
             self.printstatistics()
             self.exit()
+
 
 commands['/bin/ping'] = command_ping
 commands['ping'] = command_ping
