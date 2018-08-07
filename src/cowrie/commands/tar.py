@@ -27,7 +27,6 @@ class command_tar(HoneyPotCommand):
             if not self.fs.exists('/'.join(d)):
                 self.fs.mkdir('/'.join(d), 0, 0, 4096, f.mode, f.mtime)
 
-
     def call(self):
         """
         """
@@ -81,6 +80,7 @@ class command_tar(HoneyPotCommand):
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
             else:
                 log.msg("tar: skipping [%s]".format(f.name))
+
 
 commands['/bin/tar'] = command_tar
 commands['tar'] = command_tar
