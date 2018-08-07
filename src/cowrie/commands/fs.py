@@ -20,6 +20,7 @@ import cowrie.shell.fs as fs
 
 commands = {}
 
+
 class command_grep(HoneyPotCommand):
     """
     grep command
@@ -32,7 +33,6 @@ class command_grep(HoneyPotCommand):
         except:
             self.errorWrite("grep: {}: No such file or directory\n".format(filename))
 
-
     def grep_application(self, contents, match):
         match = os.path.basename(match)
         match = match.replace('\"', '')
@@ -42,13 +42,11 @@ class command_grep(HoneyPotCommand):
             if matches.match(line.decode()):
                 self.writeBytes(line + b'\n')
 
-
     def help(self):
         self.writeBytes(b'usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n')
         self.writeBytes(b'\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n')
         self.writeBytes(b'\t[--context[=num]] [--directories=action] [--label] [--line-buffered]\n')
         self.writeBytes(b'\t[--null] [pattern] [file ...]\n')
-
 
     def start(self):
         if not self.args:
@@ -81,13 +79,11 @@ class command_grep(HoneyPotCommand):
 
         self.exit()
 
-
     def lineReceived(self, line):
         log.msg(eventid='cowrie.command.input',
                 realm='grep',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
-
 
     def handle_CTRL_D(self):
         self.exit()
@@ -111,7 +107,6 @@ class command_tail(HoneyPotCommand):
         except:
             self.errorWrite("tail: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
-
     def tail_application(self, contents):
         contentsplit = contents.split(b'\n')
         lines = int(len(contentsplit))
@@ -123,7 +118,6 @@ class command_tail(HoneyPotCommand):
             if i < self.n:
                 self.write('\n')
             i += 1
-
 
     def start(self):
         self.n = 10
@@ -152,13 +146,11 @@ class command_tail(HoneyPotCommand):
 
         self.exit()
 
-
     def lineReceived(self, line):
         log.msg(eventid='cowrie.command.input',
                 realm='tail',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
-
 
     def handle_CTRL_D(self):
         self.exit()
@@ -181,14 +173,12 @@ class command_head(HoneyPotCommand):
                 self.writeBytes(line + b'\n')
             i += 1
 
-
     def head_get_file_contents(self, filename):
         try:
             contents = self.fs.file_contents(filename)
             self.head_application(contents)
         except:
             self.errorWrite("head: cannot open `{}' for reading: No such file or directory\n".format(filename))
-
 
     def start(self):
         self.n = 10
@@ -217,11 +207,9 @@ class command_head(HoneyPotCommand):
             self.head_application(self.input_data)
         self.exit()
 
-
     def lineReceived(self, line):
         log.msg(eventid='cowrie.command.input', realm='head', input=line,
                 format='INPUT (%(realm)s): %(input)s')
-
 
     def handle_CTRL_D(self):
         self.exit()
