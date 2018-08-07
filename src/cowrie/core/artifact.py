@@ -53,24 +53,20 @@ class Artifact:
         """
         return self.fp
 
-
     def __exit__(self, exception_type, exception_value, trace):
         """
         """
         self.close()
-
 
     def write(self, bytes):
         """
         """
         self.fp.write(bytes)
 
-
     def fileno(self):
         """
         """
         return self.fp.fileno()
-
 
     def close(self, keepEmpty=False):
         """
