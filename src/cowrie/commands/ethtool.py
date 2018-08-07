@@ -8,6 +8,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_ethtool(HoneyPotCommand):
     """
     """
@@ -25,7 +26,6 @@ class command_ethtool(HoneyPotCommand):
                 func = self.do_ethtool_eth1
         func()
 
-
     def do_ethtool_help(self):
         """
         No real help output.
@@ -33,13 +33,11 @@ class command_ethtool(HoneyPotCommand):
         self.write("""ethtool: bad command line argument(s)
 For more information run ethtool -h\n""")
 
-
     def do_ethtool_lo(self):
         """
         """
         self.write("""Settings for lo:
             Link detected: yes\n""")
-
 
     def do_ethtool_eth0(self):
         """
@@ -72,7 +70,6 @@ Wake-on: g
 Current message level: 0x00000033 (51)
                        drv probe ifdown ifup
 Link detected: yes\n""")
-
 
     def do_ethtool_eth1(self):
         """
