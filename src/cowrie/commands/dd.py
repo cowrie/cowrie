@@ -14,6 +14,7 @@ from cowrie.shell.fs import FileNotFound
 
 commands = {}
 
+
 class command_dd(HoneyPotCommand):
     """
     dd command
@@ -80,8 +81,6 @@ class command_dd(HoneyPotCommand):
 
                 self.exit(success=bSuccess)
 
-
-
     def exit(self, success=True):
         if success is True:
             self.write('0+0 records in\n')
@@ -89,13 +88,11 @@ class command_dd(HoneyPotCommand):
             self.write('0 bytes transferred in 0.695821 secs (0 bytes/sec)\n')
         HoneyPotCommand.exit(self)
 
-
     def lineReceived(self, line):
         log.msg(eventid='cowrie.session.input',
                 realm='dd',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
-
 
     def handle_CTRL_D(self):
         self.exit()
