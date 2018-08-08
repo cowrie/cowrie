@@ -43,6 +43,7 @@ import requests
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
+
 class Output(cowrie.core.output.Output):
     """
     """
@@ -51,20 +52,17 @@ class Output(cowrie.core.output.Output):
         self.enabled = CONFIG.getboolean('output_malshare', 'enabled')
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         Start output plugin
         """
         pass
 
-
     def stop(self):
         """
         Stop output plugin
         """
         pass
-
 
     def write(self, entry):
         """

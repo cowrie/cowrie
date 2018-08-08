@@ -220,7 +220,6 @@ class command_scp(HoneyPotCommand):
 
         self.exit()
 
-
     def handle_CTRL_D(self):
 
         if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \
@@ -237,8 +236,8 @@ class command_scp(HoneyPotCommand):
                 with open(self.protocol.terminal.stdinlogFile, 'wb') as f:
                     f.write(data)
 
-
         self.exit()
+
 
 commands['/usr/bin/scp'] = command_scp
 commands['scp'] = command_scp

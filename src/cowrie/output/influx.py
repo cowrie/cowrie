@@ -9,7 +9,6 @@ import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 
-
 class Output(cowrie.core.output.Output):
 
     def __init__(self):

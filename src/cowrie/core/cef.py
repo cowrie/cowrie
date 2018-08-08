@@ -47,6 +47,7 @@ from __future__ import division, absolute_import
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
 
+
 def formatCef(logentry):
     """
     Take logentry and turn into CEF string

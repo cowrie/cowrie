@@ -13,6 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 def hardware_platform():
     """
     """
@@ -20,7 +21,6 @@ def hardware_platform():
         return CONFIG.get('shell', 'hardware_platform')
     except NoOptionError:
         return 'x86_64'
-
 
 
 def kernel_name():
@@ -32,7 +32,6 @@ def kernel_name():
         return 'Linux'
 
 
-
 def kernel_version():
     """
     """
@@ -40,7 +39,6 @@ def kernel_version():
         return CONFIG.get('shell', 'kernel_version')
     except NoOptionError:
         return '3.2.0-4-amd64'
-
 
 
 def kernel_build_string():
@@ -52,7 +50,6 @@ def kernel_build_string():
         return '#1 SMP Debian 3.2.68-1+deb7u1'
 
 
-
 def operating_system():
     """
     """
@@ -60,7 +57,6 @@ def operating_system():
         return CONFIG.get('shell', 'operating_system')
     except NoOptionError:
         return 'GNU/Linux'
-
 
 
 def uname_help():
@@ -88,7 +84,6 @@ or available locally via: info '(coreutils) uname invocation'\n
 """
 
 
-
 class command_uname(HoneyPotCommand):
     """
     """
@@ -101,7 +96,6 @@ class command_uname(HoneyPotCommand):
                                             kernel_build_string(),
                                             hardware_platform(),
                                             operating_system())
-
 
     def call(self):
         """

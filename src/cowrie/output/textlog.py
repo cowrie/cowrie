@@ -32,6 +32,7 @@ import cowrie.core.output
 import cowrie.core.cef
 from cowrie.core.config import CONFIG
 
+
 class Output(cowrie.core.output.Output):
 
     def __init__(self):
@@ -41,18 +42,15 @@ class Output(cowrie.core.output.Output):
         self.outfile = open(CONFIG.get('output_textlog', 'logfile'), 'a')
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         """
         pass
 
-
     def stop(self):
         """
         """
         pass
-
 
     def write(self, logentry):
         """

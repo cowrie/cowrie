@@ -22,7 +22,6 @@ class Output(cowrie.core.output.Output):
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         Start sqlite3 logging module using Twisted ConnectionPool.
@@ -41,13 +40,11 @@ class Output(cowrie.core.output.Output):
 
         self.db.start()
 
-
     def stop(self):
         """
         Close connection to db
         """
         self.db.close()
-
 
     def sqlerror(self, error):
         """
@@ -56,14 +53,12 @@ class Output(cowrie.core.output.Output):
         log.err('sqlite error')
         error.printTraceback()
 
-
     def simpleQuery(self, sql, args):
         """
         Just run a deferred sql query, only care about errors
         """
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
-
 
     @defer.inlineCallbacks
     def write(self, entry):

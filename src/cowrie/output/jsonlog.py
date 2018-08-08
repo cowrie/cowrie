@@ -40,6 +40,7 @@ import cowrie.python.logfile
 
 from cowrie.core.config import CONFIG
 
+
 class Output(cowrie.core.output.Output):
     """
     Docstring class
@@ -52,18 +53,15 @@ class Output(cowrie.core.output.Output):
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
 
-
     def start(self):
         """
         """
         pass
 
-
     def stop(self):
         """
         """
         self.outfile.flush()
-
 
     def write(self, logentry):
         """

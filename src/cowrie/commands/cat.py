@@ -18,6 +18,7 @@ from cowrie.shell.fs import FileNotFound
 
 commands = {}
 
+
 class command_cat(HoneyPotCommand):
     """
     cat command
@@ -64,7 +65,6 @@ class command_cat(HoneyPotCommand):
                     self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
         self.exit()
 
-
     def output(self, input):
         """
         This is the cat output, with optional line numbering
@@ -78,7 +78,6 @@ class command_cat(HoneyPotCommand):
                 self.linenumber = self.linenumber + 1
             self.writeBytes(line + b'\n')
 
-
     def lineReceived(self, line):
         """
         This function logs standard input from the user send to cat
@@ -90,13 +89,11 @@ class command_cat(HoneyPotCommand):
 
         self.output(line)
 
-
     def handle_CTRL_D(self):
         """
         ctrl-d is end-of-file, time to terminate
         """
         self.exit()
-
 
     def help(self):
         """

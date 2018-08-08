@@ -52,14 +52,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
         else:
             self.type = 'i'  # Interactive
 
-
     def getSessionId(self):
         """
         """
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
         return (transportId, channelId)
-
 
     def connectionMade(self):
         """
@@ -89,7 +87,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             cmd = self.terminalProtocol.execcmd.encode('utf8')
             ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
 
-
     def write(self, data):
         """
         """
@@ -98,7 +95,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.ttylogSize += len(data)
 
         insults.ServerProtocol.write(self, data)
-
 
     def dataReceived(self, data):
         """
@@ -121,7 +117,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.terminalProtocol:
             insults.ServerProtocol.dataReceived(self, data)
 
-
     def eofReceived(self):
         """
         Receive channel close and pass on to terminal
@@ -129,13 +124,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
 
-
     def loseConnection(self):
         """
         Override super to remove the terminal reset on logout
         """
         self.transport.loseConnection()
-
 
     def connectionLost(self, reason):
         """
@@ -223,7 +216,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     duration=time.time() - self.startTime)
 
         insults.ServerProtocol.connectionLost(self, reason)
-
 
 
 class LoggingTelnetServerProtocol(LoggingServerProtocol):

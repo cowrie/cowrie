@@ -43,6 +43,7 @@ import twisted.python.log as log
 from cowrie.shell import fs
 from cowrie.core.config import CONFIG
 
+
 class CowrieServer(object):
     """
     In traditional Kippo each connection gets its own simulated machine.
@@ -67,7 +68,6 @@ class CowrieServer(object):
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
 
-
     def getCommandOutput(self, file):
         """
         Reads process output from JSON file.
@@ -75,7 +75,6 @@ class CowrieServer(object):
         with open(file) as f:
             cmdoutput = json.load(f)
         return cmdoutput
-
 
     def initFileSystem(self):
         """

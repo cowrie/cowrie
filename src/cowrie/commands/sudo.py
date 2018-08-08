@@ -54,6 +54,7 @@ Options:
   --            stop processing command line arguments
 ''').strip().split('\n')
 
+
 class command_sudo(HoneyPotCommand):
     """
     """
@@ -65,14 +66,12 @@ class command_sudo(HoneyPotCommand):
             self.errorWrite('{0}\n'.format(ln))
         self.exit()
 
-
     def long_help(self):
         """
         """
         for ln in sudo_longhelp:
             self.errorWrite('{0}\n'.format(ln))
         self.exit()
-
 
     def version(self):
         """
@@ -84,7 +83,6 @@ class command_sudo(HoneyPotCommand):
             Sudoers I/O plugin version 1.8.5p2\n'''
         )
         self.exit()
-
 
     def start(self):
         """
@@ -131,5 +129,6 @@ class command_sudo(HoneyPotCommand):
                 self.short_help()
         else:
             self.short_help()
+
 
 commands['sudo'] = command_sudo

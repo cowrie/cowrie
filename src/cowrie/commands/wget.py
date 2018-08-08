@@ -242,8 +242,6 @@ class command_wget(HoneyPotCommand):
         self.exit()
 
 
-
-
 # From http://code.activestate.com/recipes/525493/
 class HTTPProgressDownloader(client.HTTPDownloader):
     def __init__(self, wget, fakeoutfile, url, outfile, headers=None):
@@ -269,7 +267,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 reason.webMessage = self.message
 
             client.HTTPDownloader.noPage(self, reason)
-
 
     def gotHeaders(self, headers):
         """
@@ -307,7 +304,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
-
     def pagePart(self, data):
         """
         """
@@ -339,7 +335,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.proglen = len(s)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
-
 
     def pageEnd(self):
         """

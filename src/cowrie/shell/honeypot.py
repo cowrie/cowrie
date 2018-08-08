@@ -24,7 +24,6 @@ else:
     from cowrie.shell import shlex
 
 
-
 class HoneyPotShell(object):
     """
     """
@@ -36,7 +35,6 @@ class HoneyPotShell(object):
         self.environ = protocol.environ
         self.lexer = None
         self.showPrompt()
-
 
     def lineReceived(self, line):
         """
@@ -115,7 +113,6 @@ class HoneyPotShell(object):
         else:
             self.showPrompt()
 
-
     def runCommand(self):
         """
         """
@@ -127,7 +124,6 @@ class HoneyPotShell(object):
             else:
                 self.showPrompt()
 
-
         def parse_arguments(arguments):
             """
             """
@@ -136,7 +132,6 @@ class HoneyPotShell(object):
                 parsed_arguments.append(arg)
 
             return parsed_arguments
-
 
         def parse_file_arguments(arguments):
             """
@@ -229,14 +224,12 @@ class HoneyPotShell(object):
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
 
-
     def resume(self):
         """
         """
         if self.interactive:
             self.protocol.setInsertMode()
         self.runCommand()
-
 
     def showPrompt(self):
         """
@@ -262,7 +255,6 @@ class HoneyPotShell(object):
         self.protocol.terminal.write(prompt.encode('utf8'))
         self.protocol.ps = (prompt, '> ')
 
-
     def eofReceived(self):
         """
         this should probably not go through ctrl-d, but use processprotocol to close stdin
@@ -270,7 +262,6 @@ class HoneyPotShell(object):
         log.msg("received eof, sending ctrl-d to command")
         if self.cmdstack:
             self.cmdstack[-1].handle_CTRL_D()
-
 
     def handle_CTRL_C(self):
         """
@@ -280,7 +271,6 @@ class HoneyPotShell(object):
         self.protocol.terminal.write(b'\n')
         self.showPrompt()
 
-
     def handle_CTRL_D(self):
         """
         """
@@ -289,7 +279,6 @@ class HoneyPotShell(object):
         cmdclass = self.protocol.commands['exit']
         pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
         self.protocol.call_command(pp, self.protocol.commands['exit'])
-
 
     def handle_TAB(self):
         """
@@ -365,7 +354,6 @@ class HoneyPotShell(object):
         self.protocol.terminal.write(newbuf.encode('utf8'))
 
 
-
 class StdOutStdErrEmulationProtocol(object):
     """
     Pipe support written by Dave Germiquet
@@ -382,12 +370,10 @@ class StdOutStdErrEmulationProtocol(object):
         self.err_data = b""
         self.protocol = protocol
 
-
     def connectionMade(self):
         """
         """
         self.input_data = None
-
 
     def outReceived(self, data):
         """
@@ -408,14 +394,12 @@ class StdOutStdErrEmulationProtocol(object):
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
-
     def insert_command(self, command):
         """
         Insert the next command into the list.
         """
         command.next_command = self.next_command
         self.next_command = command
-
 
     def errReceived(self, data):
         """
@@ -424,12 +408,10 @@ class StdOutStdErrEmulationProtocol(object):
             self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
 
-
     def inConnectionLost(self):
         """
         """
         pass
-
 
     def outConnectionLost(self):
         """
@@ -442,18 +424,15 @@ class StdOutStdErrEmulationProtocol(object):
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
-
     def errConnectionLost(self):
         """
         """
         pass
 
-
     def processExited(self, reason):
         """
         """
         log.msg("processExited for %s, status %d" % (self.cmd, reason.value.exitCode))
-
 
     def processEnded(self, reason):
         """

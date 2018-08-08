@@ -37,7 +37,6 @@ class command_perl(HoneyPotCommand):
         for l in output:
             self.write(l + '\n')
 
-
     def help(self):
         output = (
             '',
@@ -75,7 +74,6 @@ class command_perl(HoneyPotCommand):
         for l in output:
             self.write(l + '\n')
 
-
     def start(self):
         """
         """
@@ -108,7 +106,6 @@ class command_perl(HoneyPotCommand):
         if not len(self.args):
             pass
 
-
     def lineReceived(self, line):
         """
         """
@@ -116,7 +113,6 @@ class command_perl(HoneyPotCommand):
                 realm='perl',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
-
 
     def handle_CTRL_D(self):
         """

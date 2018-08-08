@@ -17,6 +17,7 @@ from twisted.python import log
 
 from cowrie.core.config import CONFIG
 
+
 class UserDB(object):
     """
     By Walter de Jong <walter@sara.nl>
@@ -28,7 +29,6 @@ class UserDB(object):
         self.userdb = OrderedDict()
         self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))
         self.load()
-
 
     def load(self):
         """
@@ -51,7 +51,6 @@ class UserDB(object):
                 login, passwd = re.split(br':\w+:', line, 1)
                 self.adduser(login, passwd)
 
-
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
         """
         """
@@ -64,7 +63,6 @@ class UserDB(object):
 
         return False
 
-
     def match_rule(self, rule, input):
         """
         """
@@ -72,7 +70,6 @@ class UserDB(object):
             return rule in [b'*', input]
         else:
             return bool(rule.search(input))
-
 
     def re_or_str(self, rule):
         """
@@ -86,7 +83,6 @@ class UserDB(object):
             return re.compile(res.group(1), re.IGNORECASE if res.group(2) else 0)
 
         return rule
-
 
     def adduser(self, login, passwd):
         """
@@ -107,7 +103,6 @@ class UserDB(object):
 
         passwd = self.re_or_str(passwd)
         self.userdb[(login, passwd)] = policy
-
 
 
 class AuthRandom(object):
@@ -136,7 +131,6 @@ class AuthRandom(object):
         self.uservar_file = '{}/auth_random.json'.format(CONFIG.get('honeypot', 'state_path'))
         self.loadvars()
 
-
     def loadvars(self):
         """
         Load user vars from json file
@@ -148,7 +142,6 @@ class AuthRandom(object):
                 except:
                     self.uservar = {}
 
-
     def savevars(self):
         """
         Save the user vars to json file
@@ -157,7 +150,6 @@ class AuthRandom(object):
         # Note: this is subject to races between cowrie logins
         with open(self.uservar_file, 'wb') as fp:
             json.dump(data, fp)
-
 
     def checklogin(self, thelogin, thepasswd, src_ip):
         """

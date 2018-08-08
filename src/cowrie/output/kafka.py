@@ -49,6 +49,7 @@ import cowrie.python.logfile
 
 from cowrie.core.config import CONFIG
 
+
 def random_string(l, charset=string.letters.encode()):
     return b"".join(random.choice(charset) for i in range(l))
 
@@ -123,7 +124,6 @@ def produce(reactor, hosts='localhost:9092'):
     yield client.close()
 
 
-
 def main():
     log.info("All Done!")
 
@@ -139,18 +139,15 @@ class Output(cowrie.core.output.Output):
         port = CONFIG.get('output_kafka', 'port')
         topic = CONFIG.get('output_kafka', 'topic')
 
-
     def start(self):
         """
         """
         pass
 
-
     def stop(self):
         """
         """
         self.outfile.flush()
-
 
     def write(self, logentry):
         """

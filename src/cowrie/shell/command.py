@@ -26,7 +26,6 @@ else:
     from cowrie.shell import shlex
 
 
-
 class HoneyPotCommand(object):
     """
     This is the super class for all commands in cowrie/commands
@@ -77,13 +76,11 @@ class HoneyPotCommand(object):
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
 
-
     def write(self, data):
         """
         Write a string to the user on stdout
         """
         return self.writefn(data.encode('utf8'))
-
 
     def writeBytes(self, data):
         """
@@ -91,13 +88,11 @@ class HoneyPotCommand(object):
         """
         return self.writefn(data)
 
-
     def errorWrite(self, data):
         """
         Write errors to the user on stderr
         """
         return self.errorWritefn(data.encode('utf8'))
-
 
     def check_arguments(self, application, args):
         """
@@ -111,12 +106,10 @@ class HoneyPotCommand(object):
             files.append(path)
         return files
 
-
     def set_input_data(self, data):
         """
         """
         self.input_data = data
-
 
     def write_to_file(self, data):
         """
@@ -126,12 +119,10 @@ class HoneyPotCommand(object):
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
 
-
     def write_to_failed(self, data):
         """
         """
         pass
-
 
     def start(self):
         """
@@ -140,12 +131,10 @@ class HoneyPotCommand(object):
             self.call()
         self.exit()
 
-
     def call(self):
         """
         """
         self.write(b'Hello World! [%s]\n' % (repr(self.args),))
-
 
     def exit(self):
         """
@@ -169,14 +158,12 @@ class HoneyPotCommand(object):
             except AttributeError:
                 pass
 
-
     def handle_CTRL_C(self):
         """
         """
         log.msg('Received CTRL-C, exiting..')
         self.write('^C\n')
         self.exit()
-
 
     def lineReceived(self, line):
         """
@@ -186,24 +173,20 @@ class HoneyPotCommand(object):
         line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=False))
 
-
     def resume(self):
         """
         """
         pass
-
 
     def handle_TAB(self):
         """
         """
         pass
 
-
     def handle_CTRL_D(self):
         """
         """
         pass
-
 
     def __repr__(self):
         return str(self.__class__.__name__)

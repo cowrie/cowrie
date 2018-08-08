@@ -28,6 +28,7 @@ Mem:          7.7G       7.5G       189M         0B       400M       5.1G
 -/+ buffers/cache:       2.1G       5.6G
 Swap:         3.6G       129M       3.5G"""
 
+
 class command_free(HoneyPotCommand):
     """
     free
@@ -51,7 +52,6 @@ class command_free(HoneyPotCommand):
                 self.do_free(fmt='megabytes')
                 return
         self.do_free()
-
 
     def do_free(self, fmt='bytes'):
         """

@@ -35,7 +35,6 @@ class Output(cowrie.core.output.Output):
         self.port = CONFIG.getint('output_splunklegacy', 'port')
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         """
@@ -46,12 +45,10 @@ class Output(cowrie.core.output.Output):
             password=self.password)
         self.index = self.service.indexes['cowrie']
 
-
     def stop(self):
         """
         """
         pass
-
 
     def write(self, logentry):
         """

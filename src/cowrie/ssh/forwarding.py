@@ -14,6 +14,7 @@ from twisted.conch.ssh import forwarding
 
 from cowrie.core.config import CONFIG
 
+
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     """
     This function will redirect an SSH forward request to another address
@@ -86,17 +87,14 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     return FakeForwardingChannel(remoteHP, remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
 
-
 class SSHConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
     """
     This class modifies the original to close the connection
     """
     name = b'cowrie-forwarded-direct-tcpip'
 
-
     def eofReceived(self):
         self.loseConnection()
-
 
 
 class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
@@ -109,7 +107,6 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
         """
         """
         pass
-
 
     def dataReceived(self, data):
         """
@@ -126,7 +123,6 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
     """
     name = b'cowrie-tunneled-direct-tcpip'
 
-
     def __init__(self, hostport, dstport, *args, **kw):
         """
         Modifies the original to store where the data was originally going to go
@@ -134,7 +130,6 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         forwarding.SSHConnectForwardingChannel.__init__(self, hostport, *args, **kw)
         self.dstport = dstport
         self.tunnel_established = False
-
 
     def channelOpen(self, specificData):
         """
@@ -145,7 +140,6 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         connect_hdr = b'CONNECT ' + dst + b" HTTP/1.1\r\n\r\n"
         forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
 
-
     def dataReceived(self, data):
         """
         """
@@ -153,7 +147,6 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                 format='sending via tunnel proxy %(data)s',
                 data=repr(data))
         forwarding.SSHConnectForwardingChannel.dataReceived(self, data)
-
 
     def write(self, data):
         """
@@ -177,7 +170,6 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             self.tunnel_established = True
 
         forwarding.SSHConnectForwardingChannel.write(self, data)
-
 
     def eofReceived(self):
         self.loseConnection()

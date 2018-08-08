@@ -16,6 +16,7 @@ from cowrie.core.config import CONFIG
 # dblog now operates based on eventids, no longer on regex parsing of the entry.
 # add an eventid using keyword args and it will be picked up by the dblogger
 
+
 class DBLogger(object):
     __metaclass__ = abc.ABCMeta
 

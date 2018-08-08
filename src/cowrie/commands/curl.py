@@ -100,7 +100,6 @@ class command_curl(HoneyPotCommand):
             self.deferred.addCallback(self.success, outfile)
             self.deferred.addErrback(self.error, url)
 
-
     def curl_help(self):
         """
         """
@@ -261,7 +260,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
  -q                 If used as the first parameter disables .curlrc\n""")
         self.exit()
 
-
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
         """
         """
@@ -294,13 +292,11 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
 
         return factory.deferred
 
-
     def handle_CTRL_C(self):
         """
         """
         self.write('^C\n')
         self.connection.transport.loseConnection()
-
 
     def success(self, data, outfile):
         """
@@ -339,7 +335,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
 
         self.exit()
 
-
     def error(self, error, url):
         """
         """
@@ -350,7 +345,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   format='Attempt to download file(s) from URL (%(url)s) failed',
                                   url=self.url)
         self.exit()
-
 
 
 class HTTPProgressDownloader(client.HTTPDownloader):
@@ -372,7 +366,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.proglen = 0
         self.nomore = False
 
-
     def noPage(self, reason):
         """
         Called for non-200 responses
@@ -381,7 +374,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             client.HTTPDownloader.page(self, '')
         else:
             client.HTTPDownloader.noPage(self, reason)
-
 
     def gotHeaders(self, headers):
         """
@@ -409,7 +401,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
-
     def pagePart(self, data):
         """
         """
@@ -436,7 +427,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.speed = self.currentlength / (time.time() - self.started)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
-
 
     def pageEnd(self):
         """

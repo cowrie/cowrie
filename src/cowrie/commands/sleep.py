@@ -13,6 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_sleep(HoneyPotCommand):
     """
     Sleep
@@ -22,7 +23,6 @@ class command_sleep(HoneyPotCommand):
         """
         """
         self.exit()
-
 
     def start(self):
         """

@@ -41,7 +41,6 @@ import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 
-
 class Output(cowrie.core.output.Output):
     """
     Docstring class
@@ -52,18 +51,15 @@ class Output(cowrie.core.output.Output):
         self.slack_token = CONFIG.get('output_slack', 'token')
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         """
         pass
 
-
     def stop(self):
         """
         """
         pass
-
 
     def write(self, logentry):
         """

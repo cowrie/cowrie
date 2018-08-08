@@ -34,14 +34,11 @@ class Output(cowrie.core.output.Output):
 
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         self.batch = []  # This is used to store login attempts in batches
 
-
     def stop(self):
         pass
-
 
     def write(self, entry):
         if entry["eventid"] == 'cowrie.login.success' or entry["eventid"] == 'cowrie.login.failed':
@@ -60,12 +57,10 @@ class Output(cowrie.core.output.Output):
                 self.submit_entries(batch_to_send)
                 self.batch = []
 
-
     def transmission_error(self, batch):
         self.batch.extend(batch)
         if len(self.batch) > self.batch_size * 2:
             self.batch = self.batch[-self.batch_size:]
-
 
     def submit_entries(self, batch):
         """
@@ -113,7 +108,6 @@ class Output(cowrie.core.output.Output):
             timeout=10,
             data=log_output
         )
-
 
         def check_response(resp):
             failed = False

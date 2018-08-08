@@ -58,10 +58,8 @@ import cowrie.telnet.transport
 import cowrie.ssh.factory
 
 
-
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
-
 
 
 class Options(usage.Options):
@@ -74,7 +72,6 @@ class Options(usage.Options):
     optFlags = [
         ['help', 'h', 'Display this help and exit.']
     ]
-
 
 
 @provider(ILogObserver)
@@ -211,8 +208,8 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         return topService
 
+
 # Now construct an object which *provides* the relevant interfaces
 # The name of this variable is irrelevant, as long as there is *some*
 # name bound to a provider of IPlugin and IServiceMaker.
-
 serviceMaker = CowrieServiceMaker()

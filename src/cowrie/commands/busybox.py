@@ -50,6 +50,7 @@ Currently defined functions:
     zcat
 ''').strip().split('\n')
 
+
 class command_busybox(HoneyPotCommand):
     """
     Fixed by Ivan Korolev (@fe7ch)
@@ -61,7 +62,6 @@ class command_busybox(HoneyPotCommand):
         """
         for ln in busybox_help:
             self.errorWrite('{0}\n'.format(ln))
-
 
     def call(self):
         """

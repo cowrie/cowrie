@@ -6,6 +6,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_which(HoneyPotCommand):
     # Do not resolve args
     resolve_args = False

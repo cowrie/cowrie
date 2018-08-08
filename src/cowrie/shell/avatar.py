@@ -60,7 +60,6 @@ class CowrieUser(avatar.ConchUser):
         except:
             pass
 
-
     def logout(self):
         """
         """

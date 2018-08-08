@@ -37,6 +37,7 @@ from zope.interface import implementer
 from twisted.cred.credentials import IUsernamePassword, \
     ICredentials
 
+
 class IUsername(ICredentials):
     """
     Encapsulate username only
@@ -44,7 +45,6 @@ class IUsername(ICredentials):
     @type username: C{str}
     @ivar username: The username associated with these credentials.
     """
-
 
 
 class IUsernamePasswordIP(IUsernamePassword):
@@ -62,12 +62,10 @@ class IUsernamePasswordIP(IUsernamePassword):
     """
 
 
-
 class IPluggableAuthenticationModulesIP(ICredentials):
     """
     Twisted removed IPAM in 15, adding in Cowrie now
     """
-
 
 
 @implementer(IPluggableAuthenticationModulesIP)
@@ -82,14 +80,12 @@ class PluggableAuthenticationModulesIP(object):
         self.ip = ip
 
 
-
 @implementer(IUsername)
 class Username(object):
     """
     """
     def __init__(self, username):
         self.username = username
-
 
 
 @implementer(IUsernamePasswordIP)

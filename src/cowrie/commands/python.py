@@ -15,13 +15,13 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_python(HoneyPotCommand):
     """
     """
     def version(self):
         ver = 'Python 2.7.11+'
         self.write(ver + '\n')
-
 
     def help(self):
         output = (
@@ -73,7 +73,6 @@ class command_python(HoneyPotCommand):
         for l in output:
             self.write(l + '\n')
 
-
     def start(self):
         """
         """
@@ -118,7 +117,6 @@ class command_python(HoneyPotCommand):
         if not len(self.args):
             pass
 
-
     def lineReceived(self, line):
         """
         """
@@ -126,7 +124,6 @@ class command_python(HoneyPotCommand):
                 realm='python',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
-
 
     def handle_CTRL_D(self):
         """

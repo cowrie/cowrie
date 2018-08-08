@@ -24,6 +24,7 @@ from cowrie.core import auth
 
 from cowrie.core.config import CONFIG
 
+
 @implementer(ICredentialsChecker)
 class HoneypotPublicKeyChecker(object):
     """
@@ -46,7 +47,6 @@ class HoneypotPublicKeyChecker(object):
         return failure.Failure(error.ConchError('Incorrect signature'))
 
 
-
 @implementer(ICredentialsChecker)
 class HoneypotNoneChecker(object):
     """
@@ -59,7 +59,6 @@ class HoneypotNoneChecker(object):
         """
         """
         return defer.succeed(credentials.username)
-
 
 
 @implementer(ICredentialsChecker)
@@ -84,13 +83,11 @@ class HoneypotPasswordChecker(object):
                                      credentials.pamConversion, credentials.ip)
         return defer.fail(UnhandledCredentials())
 
-
     def checkPamUser(self, username, pamConversion, ip):
         """
         """
         r = pamConversion((('Password:', 1),))
         return r.addCallback(self.cbCheckPamUser, username, ip)
-
 
     def cbCheckPamUser(self, responses, username, ip):
         """
@@ -99,7 +96,6 @@ class HoneypotPasswordChecker(object):
             if self.checkUserPass(username, response, ip):
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())
-
 
     def checkUserPass(self, theusername, thepassword, ip):
         """

@@ -39,7 +39,6 @@ def getRSAKeys():
     return publicKeyString, privateKeyString
 
 
-
 def getDSAKeys():
     """
     """

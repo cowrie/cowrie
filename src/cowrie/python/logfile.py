@@ -31,6 +31,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
             # try taking a float unixtime
             return '_'.join(map(str, self.toDate(tupledate)))
 
+
 def logger():
     """
     """

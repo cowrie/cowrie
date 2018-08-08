@@ -15,10 +15,10 @@ if sys.version_info > (3,):
 
 commands = {}
 
+
 def makeMask(n):
     """return a mask of n bits as a long integer"""
     return (long(2) << n - 1) - 1
-
 
 
 def dottedQuadToNum(ip):
@@ -26,11 +26,9 @@ def dottedQuadToNum(ip):
     return struct.unpack('I', socket.inet_aton(ip))[0]
 
 
-
 def networkMask(ip, bits):
     """Convert a network address to a long integer"""
     return dottedQuadToNum(ip) & makeMask(bits)
-
 
 
 def addressInNetwork(ip, net):
@@ -52,7 +50,6 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
           [-P proxy_username] [-p source_port] [-q seconds] [-s source]
           [-T toskeyword] [-V rtable] [-w timeout] [-X proxy_protocol]
           [-x proxy_address[:port]] [destination] [port]\n""")
-
 
     def start(self):
         """
@@ -96,7 +93,6 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         self.s.connect((host, int(port)))
         self.recv_data()
 
-
     def recv_data(self):
 
         data = ''
@@ -112,19 +108,16 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         self.s.close()
         self.exit()
 
-
     def lineReceived(self, line):
 
         if hasattr(self, 's'):
             self.s.send(line)
-
 
     def handle_CTRL_C(self):
 
         self.write('^C\n')
         if hasattr(self, 's'):
             self.s.close()
-
 
     def handle_CTRL_D(self):
 

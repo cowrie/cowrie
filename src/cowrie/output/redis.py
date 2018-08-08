@@ -13,6 +13,7 @@ SEND_METHODS = {
     'publish': lambda redis_client, key, message: redis_client.publish(key, message),
 }
 
+
 class Output(cowrie.core.output.Output):
 
     def __init__(self):
@@ -44,7 +45,6 @@ class Output(cowrie.core.output.Output):
             self.send_method = SEND_METHODS[CONFIG.get('output_redis', 'send_method')]
         except (NoOptionError, KeyError):
             self.send_method = SEND_METHODS['lpush']
-
 
     def stop(self):
         pass

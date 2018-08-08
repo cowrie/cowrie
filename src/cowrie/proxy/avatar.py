@@ -43,10 +43,10 @@ class CowrieUser(avatar.ConchUser):
         except NoOptionError:
             pass
 
-
     def logout(self):
         """
         """
         log.msg('avatar {} logging out'.format(self.username))
+
 
 components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)

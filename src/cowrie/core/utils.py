@@ -46,7 +46,6 @@ def durationHuman(seconds):
     return ''.join(duration)
 
 
-
 def tail(the_file, lines_2find=20):
     """
     From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
@@ -64,7 +63,6 @@ def tail(the_file, lines_2find=20):
     return line_list[-lines_2find:]
     # We read at least 21 line breaks from the bottom, block by block for speed
     # 21 to ensure we don't get a half line
-
 
 
 def uptime(total_seconds):

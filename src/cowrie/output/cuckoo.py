@@ -45,6 +45,7 @@ from requests.auth import HTTPBasicAuth
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
+
 class Output(cowrie.core.output.Output):
     """
     """
@@ -56,20 +57,17 @@ class Output(cowrie.core.output.Output):
         self.cuckoo_force = int(CONFIG.getboolean('output_cuckoo', 'force'))
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         Start output plugin
         """
         pass
 
-
     def stop(self):
         """
         Stop output plugin
         """
         pass
-
 
     def write(self, entry):
         """
@@ -93,7 +91,6 @@ class Output(cowrie.core.output.Output):
             if self.cuckoo_force or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False:
                 print("Sending file to Cuckoo")
                 self.postfile(entry["outfile"], entry["filename"])
-
 
     def cuckoo_check_if_dup(self, sha256):
         """
@@ -147,7 +144,6 @@ class Output(cowrie.core.output.Output):
         except Exception as e:
             print("Cuckoo Request failed: {}".format(e))
         return
-
 
     def posturl(self, scanUrl):
         """

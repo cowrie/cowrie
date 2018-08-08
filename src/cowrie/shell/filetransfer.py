@@ -69,7 +69,6 @@ class CowrieSFTPFile(object):
         if flags & FXF_READ == FXF_READ:
             self.contents = self.sftpserver.fs.file_contents(self.filename)
 
-
     def close(self):
         """
         """
@@ -77,12 +76,10 @@ class CowrieSFTPFile(object):
             self.sftpserver.fs.update_size(self.filename, self.bytesReceived)
         return self.sftpserver.fs.close(self.fd)
 
-
     def readChunk(self, offset, length):
         """
         """
         return self.contents[offset:offset + length]
-
 
     def writeChunk(self, offset, data):
         """
@@ -93,19 +90,16 @@ class CowrieSFTPFile(object):
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
         self.sftpserver.fs.write(self.fd, data)
 
-
     def getAttrs(self):
         """
         """
         s = self.sftpserver.fs.stat(self.filename)
         return self.sftpserver.getAttrs(s)
 
-
     def setAttrs(self, attrs):
         """
         """
         raise NotImplementedError
-
 
 
 class CowrieSFTPDirectory(object):
@@ -117,19 +111,16 @@ class CowrieSFTPDirectory(object):
         self.files = [".", ".."] + self.files
         self.dir = directory
 
-
     def __iter__(self):
         """
         """
         return self
-
 
     def next(self):
         """
         Py2 compatibility
         """
         return self.__next__()
-
 
     def __next__(self):
         """
@@ -166,12 +157,10 @@ class CowrieSFTPDirectory(object):
             attrs = self.server._getAttrs(s)
             return (f, longname, attrs)
 
-
     def close(self):
         """
         """
         self.files = []
-
 
 
 @implementer(ISFTPServer)
@@ -184,13 +173,11 @@ class SFTPServerForCowrieUser(object):
         self.avatar.server.initFileSystem()
         self.fs = self.avatar.server.fs
 
-
     def _absPath(self, path):
         """
         """
         home = self.avatar.home
         return os.path.abspath(os.path.join(nativeString(home), nativeString(path)))
-
 
     def _setAttrs(self, path, attrs):
         """
@@ -201,7 +188,6 @@ class SFTPServerForCowrieUser(object):
             self.fs.chmod(path, attrs["permissions"])
         if "atime" in attrs and "mtime" in attrs:
             self.fs.utime(path, attrs["atime"], attrs["mtime"])
-
 
     def _getAttrs(self, s):
         """
@@ -215,12 +201,10 @@ class SFTPServerForCowrieUser(object):
             "mtime": int(s.st_mtime)
         }
 
-
     def gotVersion(self, otherVersion, extData):
         """
         """
         return {}
-
 
     def openFile(self, filename, flags, attrs):
         """
@@ -228,20 +212,17 @@ class SFTPServerForCowrieUser(object):
         log.msg("SFTP openFile: {}".format(filename))
         return CowrieSFTPFile(self, self._absPath(filename), flags, attrs)
 
-
     def removeFile(self, filename):
         """
         """
         log.msg("SFTP removeFile: {}".format(filename))
         return self.fs.remove(self._absPath(filename))
 
-
     def renameFile(self, oldpath, newpath):
         """
         """
         log.msg("SFTP renameFile: {} {}".format(oldpath, newpath))
         return self.fs.rename(self._absPath(oldpath), self._absPath(newpath))
-
 
     def makeDirectory(self, path, attrs):
         """
@@ -252,20 +233,17 @@ class SFTPServerForCowrieUser(object):
         self._setAttrs(path, attrs)
         return
 
-
     def removeDirectory(self, path):
         """
         """
         log.msg("SFTP removeDirectory: {}".format(path))
         return self.fs.rmdir(self._absPath(path))
 
-
     def openDirectory(self, path):
         """
         """
         log.msg("SFTP OpenDirectory: {}".format(path))
         return CowrieSFTPDirectory(self, self._absPath(path))
-
 
     def getAttrs(self, path, followLinks):
         """
@@ -278,7 +256,6 @@ class SFTPServerForCowrieUser(object):
             s = self.fs.lstat(path)
         return self._getAttrs(s)
 
-
     def setAttrs(self, path, attrs):
         """
         """
@@ -286,14 +263,12 @@ class SFTPServerForCowrieUser(object):
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
-
     def readLink(self, path):
         """
         """
         log.msg("SFTP readLink: {}".format(path))
         path = self._absPath(path)
         return self.fs.readlink(path)
-
 
     def makeLink(self, linkPath, targetPath):
         """
@@ -303,12 +278,10 @@ class SFTPServerForCowrieUser(object):
         targetPath = self._absPath(targetPath)
         return self.fs.symlink(targetPath, linkPath)
 
-
     def realPath(self, path):
         """
         """
         return self.fs.realpath(self._absPath(path))
-
 
     def extendedRequest(self, extName, extData):
         """

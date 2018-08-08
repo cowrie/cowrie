@@ -43,7 +43,6 @@ class AuthenticationFailed(Exception):
     """
 
 
-
 # This should be public.  See #6541.
 class ICowrieSSHConnectionCreator(Interface):
     """
@@ -55,7 +54,6 @@ class ICowrieSSHConnectionCreator(Interface):
         L{twisted.conch.ssh.transport.SSHServerTransport} or
         L{twisted.conch.ssh.transport.SSHClientTransport}.
         """
-
 
     def cleanupConnection(connection, immediate):
         """
@@ -72,7 +70,6 @@ class ICowrieSSHConnectionCreator(Interface):
             just close the connection immediately and as aggressively as
             necessary.
         """
-
 
 
 class SSHCommandAddress(object):
@@ -104,7 +101,6 @@ class SSHCommandAddress(object):
         self.command = command
 
 
-
 class SSHShellAddress(object):
     """
     An L{SSHShellAddress} instance represents the address of an SSH server and
@@ -126,7 +122,6 @@ class SSHShellAddress(object):
         """
         self.server = server
         self.username = username
-
 
 
 class _CommandChannel(SSHChannel):
@@ -168,14 +163,12 @@ class _CommandChannel(SSHChannel):
         self._commandConnected = commandConnected
         self._reason = None
 
-
     def openFailed(self, reason):
         """
         When the request to open a new channel to run this command in fails,
         fire the C{commandConnected} deferred with a failure indicating that.
         """
         self._commandConnected.errback(reason)
-
 
     def channelOpen(self, ignored):
         """
@@ -186,7 +179,6 @@ class _CommandChannel(SSHChannel):
             self, b'exec', NS(self._command), wantReply=True)
         command.addCallbacks(self._execSuccess, self._execFailure)
 
-
     def _execFailure(self, reason):
         """
         When the request to execute the command in this channel fails, fire the
@@ -196,7 +188,6 @@ class _CommandChannel(SSHChannel):
         @type reason: L{Failure}
         """
         self._commandConnected.errback(reason)
-
 
     def _execSuccess(self, ignored):
         """
@@ -221,7 +212,6 @@ class _CommandChannel(SSHChannel):
         self._protocol.makeConnection(self)
         self._commandConnected.callback(self._protocol)
 
-
     def dataReceived(self, data):
         """
         When the command's stdout data arrives over the channel, deliver it to
@@ -232,7 +222,6 @@ class _CommandChannel(SSHChannel):
         """
         log.msg("command output received{0}".format(repr(data)))
         self._protocol.dataReceived(data)
-
 
     def request_exit_status(self, data):
         """
@@ -247,7 +236,6 @@ class _CommandChannel(SSHChannel):
         if status != 0:
             self._reason = ProcessTerminated(status, None, None)
 
-
     def request_exit_signal(self, data):
         """
         When the server sends the command's exit status, record it for later
@@ -260,7 +248,6 @@ class _CommandChannel(SSHChannel):
         (signal,) = unpack('>L', data)
         self._reason = ProcessTerminated(None, signal, None)
 
-
     def closed(self):
         """
         When the channel closes, deliver disconnection notification to the
@@ -272,7 +259,6 @@ class _CommandChannel(SSHChannel):
         else:
             reason = self._reason
         self._protocol.connectionLost(Failure(reason))
-
 
 
 class _ShellChannel(SSHSession):
@@ -308,14 +294,12 @@ class _ShellChannel(SSHSession):
         self._shellConnected = shellConnected
         self._reason = None
 
-
     def openFailed(self, reason):
         """
         When the request to open a new channel to open this shell fails,
         fire the C{shellConnected} deferred with a failure indicating that.
         """
         self._shellConnected.errback(reason)
-
 
     def ttyRequest(self, something):
         log.msg("tty-request")
@@ -325,7 +309,6 @@ class _ShellChannel(SSHSession):
         req = self.conn.sendRequest(self, b'pty-req', ptyReqData, wantReply=True)
         req.addCallback(self.shellRequest)
 
-
     def channelOpen(self, ignored):
         """
         When the request to open a new channel in succeeds,
@@ -333,7 +316,6 @@ class _ShellChannel(SSHSession):
         """
         command = self.conn.sendRequest(self, b'shell', b'', wantReply=True)
         command.addCallbacks(self._shellSuccess, self._shellFailure)
-
 
     def _shellFailure(self, reason):
         """
@@ -345,7 +327,6 @@ class _ShellChannel(SSHSession):
         """
         log.msg("failed to connect to proxy backend: {0}".format(reason))
         self._shellConnected.errback(reason)
-
 
     def _shellSuccess(self, ignored):
         """
@@ -368,7 +349,6 @@ class _ShellChannel(SSHSession):
         self._protocol.makeConnection(self)
         self._shellConnected.callback(self._protocol)
 
-
     def dataReceived(self, data):
         """
         When the shell's stdout data arrives over the channel, deliver it to
@@ -379,7 +359,6 @@ class _ShellChannel(SSHSession):
         """
         log.msg("client-session dataReceived: {0}".format(repr(data)))
         self._protocol.dataReceived(data)
-
 
     def request_exit_status(self, data):
         """
@@ -394,7 +373,6 @@ class _ShellChannel(SSHSession):
         if status != 0:
             self._reason = ProcessTerminated(status, None, None)
 
-
     def request_exit_signal(self, data):
         """
         When the server sends the shell's exit status, record it for later
@@ -407,7 +385,6 @@ class _ShellChannel(SSHSession):
         (signal,) = unpack('>L', data)
         self._reason = ProcessTerminated(None, signal, None)
 
-
     def closed(self):
         """
         When the channel closes, deliver disconnection notification to the
@@ -419,7 +396,6 @@ class _ShellChannel(SSHSession):
         else:
             reason = self._reason
         self._protocol.connectionLost(Failure(reason))
-
 
 
 class _ConnectionReady(SSHConnection):
@@ -436,7 +412,6 @@ class _ConnectionReady(SSHConnection):
         SSHConnection.__init__(self)
         self._ready = ready
 
-
     def serviceStarted(self):
         """
         When the SSH I{connection} I{service} this object represents is ready to
@@ -446,7 +421,6 @@ class _ConnectionReady(SSHConnection):
         """
         self._ready.callback(self)
         del self._ready
-
 
 
 class _UserAuth(SSHUserAuthClient):
@@ -481,7 +455,6 @@ class _UserAuth(SSHUserAuthClient):
             self.key = None
         return self.key.public()
 
-
     def signData(self, publicKey, signData):
         """
         Extend the base signing behavior by using an SSH agent to sign the
@@ -495,7 +468,6 @@ class _UserAuth(SSHUserAuthClient):
         else:
             return SSHUserAuthClient.signData(self, publicKey, signData)
 
-
     def getPrivateKey(self):
         """
         Get the private part of a key pair to use for authentication.  The key
@@ -506,7 +478,6 @@ class _UserAuth(SSHUserAuthClient):
         @rtype: L{Deferred}
         """
         return succeed(self.key)
-
 
     def getPassword(self):
         """
@@ -519,7 +490,6 @@ class _UserAuth(SSHUserAuthClient):
             return
         return succeed(self.password)
 
-
     def ssh_USERAUTH_SUCCESS(self, packet):
         """
         Handle user authentication success in the normal way, but also make a
@@ -527,7 +497,6 @@ class _UserAuth(SSHUserAuthClient):
         """
         self.transport._state = b'CHANNELLING'
         return SSHUserAuthClient.ssh_USERAUTH_SUCCESS(self, packet)
-
 
     def connectToAgent(self, endpoint):
         """
@@ -544,12 +513,12 @@ class _UserAuth(SSHUserAuthClient):
         factory = Factory()
         factory.protocol = SSHAgentClient
         d = endpoint.connect(factory)
+
         def connected(agent):
             self.agent = agent
             return agent.getPublicKeys()
         d.addCallback(connected)
         return d
-
 
     def loseAgentConnection(self):
         """
@@ -558,7 +527,6 @@ class _UserAuth(SSHUserAuthClient):
         if self.agent is None:
             return
         self.agent.transport.loseConnection()
-
 
 
 class _CommandTransport(SSHClientTransport):
@@ -581,7 +549,6 @@ class _CommandTransport(SSHClientTransport):
 
     _userauth = None
 
-
     def __init__(self, creator):
         """
         @param creator: The L{_NewConnectionHelper} that created this
@@ -591,6 +558,7 @@ class _CommandTransport(SSHClientTransport):
         """
         self.connectionReady = Deferred(
             lambda d: self.transport.abortConnection())
+
         # Clear the reference to that deferred to help the garbage collector
         # and to signal to other parts of this implementation (in particular
         # connectionLost) that it has already been fired and does not need to
@@ -600,7 +568,6 @@ class _CommandTransport(SSHClientTransport):
             return result
         self.connectionReady.addBoth(readyFired)
         self.creator = creator
-
 
     def verifyHostKey(self, hostKey, fingerprint):
         """
@@ -623,7 +590,6 @@ class _CommandTransport(SSHClientTransport):
         d.addErrback(self._saveHostKeyFailure)
         return d
 
-
     def _saveHostKeyFailure(self, reason):
         """
         When host key verification fails, record the reason for the failure in
@@ -637,7 +603,6 @@ class _CommandTransport(SSHClientTransport):
         """
         self._hostKeyFailure = reason
         return reason
-
 
     def connectionSecure(self):
         """
@@ -661,7 +626,6 @@ class _CommandTransport(SSHClientTransport):
             self.requestService(self._userauth)
         d.addBoth(maybeGotAgent)
 
-
     def connectionLost(self, reason):
         """
         When the underlying connection to the SSH server is lost, if there were
@@ -679,7 +643,6 @@ class _CommandTransport(SSHClientTransport):
             reason = Failure(
                 AuthenticationFailed("Connection lost while authenticating"))
         self.connectionReady.errback(reason)
-
 
 
 @implementer(IStreamClientEndpoint)
@@ -705,7 +668,6 @@ class SSHShellClientEndpoint(object):
         @type creator: L{ICowrieSSHConnectionCreator} provider
         """
         self._creator = creator
-
 
     @classmethod
     def newConnection(cls, reactor, username, hostname, port=None,
@@ -764,7 +726,6 @@ class SSHShellClientEndpoint(object):
             agentEndpoint, knownHosts, ui)
         return cls(helper)
 
-
     @classmethod
     def existingConnection(cls, connection):
         """
@@ -781,7 +742,6 @@ class SSHShellClientEndpoint(object):
         """
         helper = _ExistingConnectionHelper(connection)
         return cls(helper)
-
 
     def connect(self, protocolFactory):
         """
@@ -802,7 +762,6 @@ class SSHShellClientEndpoint(object):
         d.addCallback(self._shellCommand, protocolFactory)
         return d
 
-
     def _shellCommand(self, connection, protocolFactory):
         """
         Given a secured SSH connection, try to execute a command in a new
@@ -818,6 +777,7 @@ class SSHShellClientEndpoint(object):
         @return: See L{SSHCommandClientEndpoint.connect}'s return value.
         """
         shellConnected = Deferred()
+
         def disconnectOnFailure(passthrough):
             # Close the connection immediately in case of cancellation, since
             # that implies user wants it gone immediately (e.g. a timeout):
@@ -829,7 +789,6 @@ class SSHShellClientEndpoint(object):
         channel = _ShellChannel(self._creator, protocolFactory, shellConnected)
         connection.openChannel(channel)
         return shellConnected
-
 
 
 @implementer(IStreamClientEndpoint)
@@ -867,7 +826,6 @@ class SSHCommandClientEndpoint(object):
         """
         self._creator = creator
         self._command = command
-
 
     @classmethod
     def newConnection(cls, reactor, command, username, hostname, port=None,
@@ -928,7 +886,6 @@ class SSHCommandClientEndpoint(object):
             agentEndpoint, knownHosts, ui)
         return cls(helper, command)
 
-
     @classmethod
     def existingConnection(cls, connection, command):
         """
@@ -950,7 +907,6 @@ class SSHCommandClientEndpoint(object):
         helper = _ExistingConnectionHelper(connection)
         return cls(helper, command)
 
-
     def connect(self, protocolFactory):
         """
         Set up an SSH connection, use a channel from that connection to launch
@@ -970,7 +926,6 @@ class SSHCommandClientEndpoint(object):
         d.addCallback(self._executeCommand, protocolFactory)
         return d
 
-
     def _executeCommand(self, connection, protocolFactory):
         """
         Given a secured SSH connection, try to execute a command in a new
@@ -986,6 +941,7 @@ class SSHCommandClientEndpoint(object):
         @return: See L{SSHCommandClientEndpoint.connect}'s return value.
         """
         commandConnected = Deferred()
+
         def disconnectOnFailure(passthrough):
             # Close the connection immediately in case of cancellation, since
             # that implies user wants it gone immediately (e.g. a timeout):
@@ -1000,7 +956,6 @@ class SSHCommandClientEndpoint(object):
         return commandConnected
 
 
-
 class _ReadFile(object):
     """
     A weakly file-like object which can be used with L{KnownHostsFile} to
@@ -1013,14 +968,12 @@ class _ReadFile(object):
         """
         self._contents = contents
 
-
     def write(self, data):
         """
         No-op.
 
         @param data: ignored
         """
-
 
     def readline(self, count=-1):
         """
@@ -1034,12 +987,10 @@ class _ReadFile(object):
         """
         return self._contents
 
-
     def close(self):
         """
         No-op.
         """
-
 
 
 @implementer(ICowrieSSHConnectionCreator)
@@ -1077,7 +1028,6 @@ class _NewConnectionHelper(object):
         self.ui = ui
         self.tty = tty
 
-
     def _opener(self):
         """
         Open the tty if possible, otherwise give back a file-like object from
@@ -1092,7 +1042,6 @@ class _NewConnectionHelper(object):
             # that KnownHostsFile recognizes as rejecting some option (b"no").
             return _ReadFile(b"no")
 
-
     @classmethod
     def _knownHosts(cls):
         """
@@ -1102,7 +1051,6 @@ class _NewConnectionHelper(object):
         @type: L{KnownHostsFile}
         """
         return KnownHostsFile.fromPath(FilePath(expanduser(cls._KNOWN_HOSTS)))
-
 
     def secureConnection(self):
         """
@@ -1123,7 +1071,6 @@ class _NewConnectionHelper(object):
         d.addCallback(lambda ignored: ready)
         return d
 
-
     def cleanupConnection(self, connection, immediate):
         """
         Clean up the connection by closing it.  The command running on the
@@ -1143,7 +1090,6 @@ class _NewConnectionHelper(object):
             connection.transport.loseConnection()
 
 
-
 @implementer(ICowrieSSHConnectionCreator)
 class _ExistingConnectionHelper(object):
     """
@@ -1159,7 +1105,6 @@ class _ExistingConnectionHelper(object):
         """
         self.connection = connection
 
-
     def secureConnection(self):
         """
 
@@ -1167,7 +1112,6 @@ class _ExistingConnectionHelper(object):
             already-established connection object.
         """
         return succeed(self.connection)
-
 
     def cleanupConnection(self, connection, immediate):
         """

@@ -19,6 +19,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_ssh(HoneyPotCommand):
     """
     """
@@ -31,7 +32,6 @@ class command_ssh(HoneyPotCommand):
             return True
         except:
             return False
-
 
     def start(self):
         """
@@ -83,7 +83,6 @@ class command_ssh(HoneyPotCommand):
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 
-
     def yesno(self, line):
         """
         """
@@ -93,12 +92,10 @@ class command_ssh(HoneyPotCommand):
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.protocol.password_input = True
 
-
     def wait(self, line):
         """
         """
         reactor.callLater(2, self.finish, line)
-
 
     def finish(self, line):
         """
@@ -118,7 +115,6 @@ class command_ssh(HoneyPotCommand):
             (self.protocol.hostname,))
         self.write('Last login: %s from 192.168.9.4\n' % (time.ctime(time.time() - 123123),))
         self.exit()
-
 
     def lineReceived(self, line):
         """
