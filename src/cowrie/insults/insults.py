@@ -83,6 +83,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.connectionMade(self)
 
+        if self.type == 'e':
+            cmd = self.terminalProtocol.execcmd.encode('utf8')
+            ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
+
     def write(self, data):
         """
         """
