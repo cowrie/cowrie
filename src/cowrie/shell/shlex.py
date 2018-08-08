@@ -20,6 +20,7 @@ from io import StringIO
 
 __all__ = ["shlex", "split", "quote"]
 
+
 class shlex:
     "A lexical analyzer class for simple shell-like syntaxes."
     def __init__(self, instream=None, infile=None, posix=False,
@@ -302,12 +303,12 @@ class shlex:
     def __iter__(self):
         return self
 
-#    def __next__(self):
     def next(self):
         token = self.get_token()
         if token == self.eof:
             raise StopIteration
         return token
+
 
 def split(s, comments=False, posix=True):
     lex = shlex(s, posix=posix)
@@ -317,9 +318,9 @@ def split(s, comments=False, posix=True):
     return list(lex)
 
 
-
 # No ASCII in P2.x
 _find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
+
 
 def quote(s):
     """Return a shell-escaped version of the string *s*."""
