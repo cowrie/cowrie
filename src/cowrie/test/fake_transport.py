@@ -71,10 +71,10 @@ class FakeTransport(proto_helpers.StringTransport):
     # '\x0E':     self.handle_DOWN,	# CTRL-N
     # '\x10':     self.handle_UP,		# CTRL-P
     # '\x15':     self.handle_CTRL_U,	# CTRL-U
+    
     def setModes(self, modes):
         for m in modes:
             self.modes[m] = True
-
 
     aborting = False
     transport = Container()
@@ -89,10 +89,8 @@ class FakeTransport(proto_helpers.StringTransport):
     factory = Container()
     session = {}
 
-
     def abortConnection(self):
         self.aborting = True
-
 
     def resetModes(self, modes):
         for m in modes:
@@ -100,7 +98,6 @@ class FakeTransport(proto_helpers.StringTransport):
                 del self.modes[m]
             except KeyError:
                 pass
-
 
     def setPrivateModes(self, modes):
         """
@@ -139,10 +136,8 @@ class FakeTransport(proto_helpers.StringTransport):
             insults.G3: insults.CS_ALTERNATE_SPECIAL}
         self.eraseDisplay()
 
-
     def eraseDisplay(self):
         self.lines = [self._emptyLine(self.width) for i in range(self.height)]
-
 
     def _currentFormattingState(self):
         return True
