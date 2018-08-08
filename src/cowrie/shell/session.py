@@ -57,7 +57,6 @@ class SSHSessionForCowrieUser(object):
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
-
     def getPty(self, terminal, windowSize, attrs):
         """
         """
@@ -71,7 +70,6 @@ class SSHSessionForCowrieUser(object):
         self.windowSize = windowSize
         return None
 
-
     def execCommand(self, processprotocol, cmd):
         """
         """
@@ -79,7 +77,6 @@ class SSHSessionForCowrieUser(object):
             protocol.HoneyPotExecProtocol, self, cmd)
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
-
 
     def closed(self):
         """
@@ -90,13 +87,11 @@ class SSHSessionForCowrieUser(object):
             self.protocol.connectionLost("disconnected")
             self.protocol = None
 
-
     def eofReceived(self):
         """
         """
         if self.protocol:
             self.protocol.eofReceived()
-
 
     def windowChanged(self, windowSize):
         """
