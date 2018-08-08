@@ -3,7 +3,7 @@ import docker
 import os
 import time
 from paramiko import SSHClient, client, ssh_exception
-from ddt import ddt, data
+from ddt import ddt
 
 
 @ddt
