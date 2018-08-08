@@ -104,7 +104,6 @@ class Output(object):
 
         self.start()
 
-
     def logDispatch(self, *msg, **kw):
         """
         Use logDispatch when the HoneypotTransport prefix is not available.
@@ -114,14 +113,12 @@ class Output(object):
         ev['message'] = msg
         self.emit(ev)
 
-
     @abc.abstractmethod
     def start(self):
         """
         Abstract method to initialize output plugin
         """
         pass
-
 
     @abc.abstractmethod
     def stop(self):
@@ -130,14 +127,12 @@ class Output(object):
         """
         pass
 
-
     @abc.abstractmethod
     def write(self, event):
         """
         Handle a general event within the output plugin
         """
         pass
-
 
     def emit(self, event):
         """
