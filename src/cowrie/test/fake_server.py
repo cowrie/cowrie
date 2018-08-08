@@ -11,6 +11,7 @@ import copy
 from cowrie.shell import fs
 from cowrie.core.config import CONFIG
 
+
 class FakeServer:
     """
     @ivar hostname Servers Host Name
@@ -24,6 +25,7 @@ class FakeServer:
             open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), 'arch')
         self.process = None
+
 
 class FakeAvatar:
     """
