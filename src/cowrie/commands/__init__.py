@@ -38,5 +38,6 @@ __all__ = [
     'uptime',
     'python',
     'tftp',
-    'du'
+    'du',
+    'yum'
 ]
