@@ -34,13 +34,11 @@ class HoneyPotSSHSession(session.SSHSession):
             self.session.environ[name] = value
         return 0
 
-
     def request_agent(self, data):
         """
         """
         log.msg("request_agent: {}".format(repr(data)))
         return 0
-
 
     def request_x11_req(self, data):
         """
@@ -48,14 +46,12 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg("request_x11: {}".format(repr(data)))
         return 0
 
-
     def closed(self):
         """
         This is reliably called on session close/disconnect and calls the avatar
         """
         session.SSHSession.closed(self)
         self.client = None
-
 
     def eofReceived(self):
         """
@@ -66,20 +62,17 @@ class HoneyPotSSHSession(session.SSHSession):
         else:
             self.loseConnection()
 
-
     def sendEOF(self):
         """
         Utility function to request to send EOF for this session
         """
         self.conn.sendEOF(self)
 
-
     def sendClose(self):
         """
         Utility function to request to send close for this session
         """
         self.conn.sendClose(self)
-
 
     def channelClosed(self):
         """
