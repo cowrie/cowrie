@@ -20,3 +20,4 @@ _trial_temp
 .idea/
 .vscode/
 .venv/
+.pytest_cache/

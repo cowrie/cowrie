@@ -4,6 +4,7 @@ RUN apk add --no-cache libffi && \
   addgroup -S cowrie && \
   adduser -S -s /bin/bash -G cowrie -D -H -h /cowrie cowrie && \
   mkdir -p /cowrie/dl && \
+
   mkdir -p /cowrie/log/tty && \
   chown -R cowrie:cowrie /cowrie && \
   chmod -R 775 /cowrie
@@ -37,5 +38,6 @@ ENV PYTHONPATH=/cowrie
 WORKDIR /cowrie
 EXPOSE 2222/tcp
 EXPOSE 2223/tcp
+RUN chown -R cowrie:cowrie /cowrie
 USER cowrie
 CMD /usr/local/bin/python /usr/local/bin/twistd --umask 0022 --nodaemon --pidfile= -l - cowrie
