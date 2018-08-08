@@ -54,12 +54,10 @@ class Output(cowrie.core.output.Output):
         except Exception as e:
             log.msg('output_mongodb: Error: %s' % str(e))
 
-
     def stop(self):
         """
         """
         self.mongo_client.close()
-
 
     def write(self, entry):
         """
