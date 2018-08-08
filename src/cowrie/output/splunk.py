@@ -53,19 +53,16 @@ class Output(cowrie.core.output.Output):
 
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         """
         contextFactory = WebClientContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 
-
     def stop(self):
         """
         """
         pass
-
 
     def write(self, logentry):
         """
@@ -89,7 +86,6 @@ class Output(cowrie.core.output.Output):
         splunkentry["event"] = logentry
         self.postentry(splunkentry)
 
-
     def postentry(self, entry):
         """
         Send a JSON log entry to Splunk with Twisted
@@ -105,14 +101,12 @@ class Output(cowrie.core.output.Output):
         def cbBody(body):
             return processResult(body)
 
-
         def cbPartial(failure):
             """
             Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
             failure.printTraceback()
             return processResult(failure.value.response)
-
 
         def cbResponse(response):
             if response.code == 200:
@@ -124,10 +118,8 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
 
-
         def cbError(failure):
             failure.printTraceback()
-
 
         def processResult(result):
             j = json.loads(result)
@@ -136,7 +128,6 @@ class Output(cowrie.core.output.Output):
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
-
 
 
 class WebClientContextFactory(ClientContextFactory):
