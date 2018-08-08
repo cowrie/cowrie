@@ -58,7 +58,6 @@ class Output(cowrie.core.output.Output):
         """
         self.client.stopService()
 
-
     def write(self, entry):
         """
         """
