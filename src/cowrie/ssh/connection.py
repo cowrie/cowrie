@@ -40,6 +40,7 @@ from twisted.internet import defer
 
 MSG_CHANNEL_SUCCESS = 99
 
+
 class CowrieSSHConnection(connection.SSHConnection):
     """
     Subclass this for a workaround for the Granados SSH library.
