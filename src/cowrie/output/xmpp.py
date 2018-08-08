@@ -17,6 +17,7 @@ from wokkel import muc
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
+
 class XMPPLoggerProtocol(muc.MUCClient):
 
     def __init__(self, rooms, server, nick):
@@ -55,6 +56,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
 
     def receivedHistory(self, room, user, body, dely, frm=None):
         pass
+
 
 class Output(cowrie.core.output.Output):
 
