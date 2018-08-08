@@ -44,7 +44,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self._pamDeferred = None
         userauth.SSHUserAuthServer.serviceStarted(self)
 
-
     def sendBanner(self):
         """
         This is the pre-login banner. The post-login banner is the MOTD file
@@ -63,13 +62,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.transport.sendPacket(
             userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b'en'))
 
-
     def ssh_USERAUTH_REQUEST(self, packet):
         """
         """
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
-
 
     # def auth_publickey(self, packet):
     #     """
@@ -82,7 +79,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     #         return defer.fail(error.ConchError("Incorrect signature"))
     #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
 
-
     def auth_none(self, packet):
         """
         Allow every login
@@ -90,7 +86,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         c = credentials.Username(self.user)
         srcIp = self.transport.transport.getPeer().host
         return self.portal.login(c, srcIp, IConchUser)
-
 
     def auth_password(self, packet):
         """
@@ -100,7 +95,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         srcIp = self.transport.transport.getPeer().host
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
-
 
     def auth_keyboard_interactive(self, packet):
         """
@@ -116,7 +110,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         src_ip = self.transport.transport.getPeer().host
         c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
         return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
-
 
     def _pamConv(self, items):
         """
@@ -149,7 +142,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
         self._pamDeferred = defer.Deferred()
         return self._pamDeferred
-
 
     def ssh_USERAUTH_INFO_RESPONSE(self, packet):
         """
