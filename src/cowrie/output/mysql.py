@@ -43,7 +43,6 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
                 self, interaction, *args, **kw)
 
 
-
 class Output(cowrie.core.output.Output):
     """
     docstring here
@@ -57,7 +56,6 @@ class Output(cowrie.core.output.Output):
             self.debug = False
 
         cowrie.core.output.Output.__init__(self)
-
 
     def start(self):
         """
@@ -83,20 +81,17 @@ class Output(cowrie.core.output.Output):
         except MySQLdb.Error as e:
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
-
     def stop(self):
         """
         docstring here
         """
         self.db.close()
 
-
     def sqlerror(self, error):
         """
         docstring here
         """
         log.err('output_mysql: MySQL Error: {}'.format(error.value))
-
 
     def simpleQuery(self, sql, args):
         """
@@ -106,7 +101,6 @@ class Output(cowrie.core.output.Output):
             log.msg("output_mysql: MySQL query: {} {}".format(sql, repr(args)))
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
-
 
     @defer.inlineCallbacks
     def write(self, entry):
