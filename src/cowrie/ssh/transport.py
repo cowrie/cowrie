@@ -26,7 +26,6 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python.compat import _bytesChr as chr
 
 
-
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     """
@@ -41,7 +40,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @rtype: L{str}
         """
         return "Cowrie SSH Transport to {}".format(self.transport.getPeer().host)
-
 
     def connectionMade(self):
         """
@@ -77,7 +75,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         except NoOptionError:
             self.setTimeout(120)
 
-
     def sendKexInit(self):
         """
         Don't send key exchange prematurely
@@ -86,14 +83,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             return
         transport.SSHServerTransport.sendKexInit(self)
 
-
     def _unsupportedVersionReceived(self, remoteVersion):
         """
         Change message to be like OpenSSH
         """
         self.transport.write(b'Protocol major versions differ.\n')
         self.transport.loseConnection()
-
 
     def dataReceived(self, data):
         """
@@ -130,7 +125,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
 
-
     def sendPacket(self, messageType, payload):
         """
         Override because OpenSSH pads with 0 on KEXINIT
@@ -165,7 +159,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.write(encPacket)
         self.outgoingPacketSequence += 1
 
-
     def ssh_KEXINIT(self, packet):
         """
         """
@@ -183,7 +176,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
-
     def timeoutConnection(self):
         """
         Make sure all sessions time out eventually.
@@ -191,7 +183,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         log.msg("Timeout reached in HoneyPotSSHTransport")
         self.transport.loseConnection()
-
 
     def setService(self, service):
         """
@@ -214,7 +205,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         transport.SSHServerTransport.setService(self, service)
 
-
     def connectionLost(self, reason):
         """
         This seems to be the only reliable place of catching lost connection
@@ -227,7 +217,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         log.msg(eventid='cowrie.session.closed',
                 format="Connection lost after %(duration)d seconds",
                 duration=duration)
-
 
     def sendDisconnect(self, reason, desc):
         """
