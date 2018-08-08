@@ -9,7 +9,6 @@ import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 
-
 def iso8601_to_timestamp(value):
     return time.mktime(datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())
 
