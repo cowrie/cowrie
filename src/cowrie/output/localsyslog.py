@@ -48,18 +48,15 @@ class Output(cowrie.core.output.Output):
         self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie', facility=self.facility)
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         """
         pass
 
-
     def stop(self):
         """
         """
         pass
-
 
     def write(self, logentry):
         """
