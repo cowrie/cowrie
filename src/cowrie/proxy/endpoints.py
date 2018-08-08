@@ -513,7 +513,7 @@ class _UserAuth(SSHUserAuthClient):
         factory = Factory()
         factory.protocol = SSHAgentClient
         d = endpoint.connect(factory)
-        
+
         def connected(agent):
             self.agent = agent
             return agent.getPublicKeys()
