@@ -30,7 +30,6 @@ class CowrieSSHChannel(channel.SSHChannel):
     name = b'cowrie-ssh-channel'
     startTime = None
 
-
     def __repr__(self):
         """
         Return a pretty representation of this object.
@@ -39,7 +38,6 @@ class CowrieSSHChannel(channel.SSHChannel):
         @rtype: L{str}
         """
         return "Cowrie SSH Channel {}".format(self.name)
-
 
     def __init__(self, *args, **kw):
         """
@@ -59,7 +57,6 @@ class CowrieSSHChannel(channel.SSHChannel):
 
         channel.SSHChannel.__init__(self, *args, **kw)
 
-
     def channelOpen(self, specificData):
         """
         """
@@ -72,7 +69,6 @@ class CowrieSSHChannel(channel.SSHChannel):
         ttylog.ttylog_open(self.ttylogFile, time.time())
         channel.SSHChannel.channelOpen(self, specificData)
 
-
     def closed(self):
         """
         """
@@ -83,7 +79,6 @@ class CowrieSSHChannel(channel.SSHChannel):
                 duration=time.time() - self.startTime)
         ttylog.ttylog_close(self.ttylogFile, time.time())
         channel.SSHChannel.closed(self)
-
 
     def dataReceived(self, data):
         """
@@ -106,7 +101,6 @@ class CowrieSSHChannel(channel.SSHChannel):
                                 data)
 
         channel.SSHChannel.dataReceived(self, data)
-
 
     def write(self, data):
         """
