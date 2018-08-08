@@ -29,7 +29,6 @@ def ttylog_open(logfile, stamp):
         f.write(struct.pack(TTYSTRUCT, OP_OPEN, 0, 0, 0, sec, usec))
 
 
-
 def ttylog_write(logfile, length, direction, stamp, data=None):
     """
     Write to tty log
@@ -46,7 +45,6 @@ def ttylog_write(logfile, length, direction, stamp, data=None):
         f.write(data)
 
 
-
 def ttylog_close(logfile, stamp):
     """
     Close tty log
@@ -57,7 +55,6 @@ def ttylog_close(logfile, stamp):
     with open(logfile, 'ab') as f:
         sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
         f.write(struct.pack(TTYSTRUCT, OP_CLOSE, 0, 0, 0, sec, usec))
-
 
 
 def ttylog_inputhash(logfile):
