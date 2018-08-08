@@ -6,6 +6,7 @@ import socket
 from paramiko import SSHClient, client, ssh_exception
 from ddt import ddt, data
 
+
 @ddt
 class test_DockerContainer(unittest.TestCase):
 
@@ -33,7 +34,7 @@ class test_DockerContainer(unittest.TestCase):
         cls.container.stop()
         super(test_DockerContainer, cls).tearDownClass()
 
-    @data(2222)#, 2223) <- telnet not open yet. activate when the dockerfile supports boths ports
+    @data(2222)  # , 2223) <- telnet not open yet. activate when the dockerfile supports boths ports
     def test_ConnectToPort_ConnectionResultIsNotZero(self, value):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = sock.connect_ex((self.container_ip, value))
@@ -49,4 +50,4 @@ class test_DockerContainer(unittest.TestCase):
         sshClient.set_missing_host_key_policy(client.AutoAddPolicy)
         self.assertRaises(
             ssh_exception.AuthenticationException,
-            lambda : sshClient.connect(self.container_ip, port=2222, username="OtherUser", password="OtherPassword"))
+            lambda: sshClient.connect(self.container_ip, port=2222, username="OtherUser", password="OtherPassword"))
