@@ -49,7 +49,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
-
     def startFactory(self):
         """
         """
@@ -84,12 +83,10 @@ class CowrieSSHFactory(factory.SSHFactory):
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
 
-
     def stopFactory(self):
         """
         """
         factory.SSHFactory.stopFactory(self)
-
 
     def buildProtocol(self, addr):
         """
@@ -101,7 +98,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-
 
         t = transport.HoneyPotSSHTransport()
 
