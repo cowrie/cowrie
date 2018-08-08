@@ -146,7 +146,7 @@ class HoneyPotFilesystem(object):
         else:
             cwd, pieces = [], pieces[1:]
         found = []
-        
+
         def foo(p, cwd):
             if not len(p):
                 found.append('/%s' % ('/'.join(cwd),))
