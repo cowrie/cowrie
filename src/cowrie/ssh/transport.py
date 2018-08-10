@@ -233,6 +233,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if b'bad packet length' not in desc:
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write('Packet corrupt\n')
+            self.transport.write(b'Packet corrupt\n')
             log.msg("[SERVER] - Disconnecting with error, code {}\nreason: {}".format(reason, desc))
             self.transport.loseConnection()
