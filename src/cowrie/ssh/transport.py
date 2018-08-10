@@ -31,6 +31,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     startTime = None
     gotVersion = False
+    supportedVersions = (b'1.99', b'2.0', b'2.2')
 
     def __repr__(self):
         """
