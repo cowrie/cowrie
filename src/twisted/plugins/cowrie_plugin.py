@@ -26,37 +26,29 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-FIXME: This module contains ...
-"""
-
 from __future__ import print_function, division, absolute_import
-
-from zope.interface import implementer, provider
 
 import os
 import sys
-import configparser
 
+import configparser
 from twisted._version import __version__
-from twisted.python import log, usage
-from twisted.plugin import IPlugin
-from twisted.application.service import IServiceMaker
 from twisted.application import service
+from twisted.application.service import IServiceMaker
 from twisted.cred import portal
 from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
+from twisted.plugin import IPlugin
+from twisted.python import log, usage
+from zope.interface import implementer, provider
 
-from cowrie.core.config import CONFIG
-
-from cowrie.core.utils import get_endpoints_from_section, create_endpoint_services
-from cowrie import core
-import cowrie.core.realm
 import cowrie.core.checkers
-
-import cowrie.telnet.transport
+import cowrie.core.realm
 import cowrie.ssh.factory
-
+import cowrie.telnet.transport
+from cowrie import core
+from cowrie.core.config import CONFIG
+from cowrie.core.utils import get_endpoints_from_section, create_endpoint_services
 
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
@@ -76,8 +68,7 @@ class Options(usage.Options):
 
 @provider(ILogObserver)
 def importFailureObserver(event):
-    """
-    """
+
     if 'failure' in event and event['failure'].type is ImportError:
         log.err("ERROR: %s. Please run `pip install -U -r requirements.txt` "
                 "from Cowrie's install directory and virtualenv to install "
@@ -89,9 +80,6 @@ globalLogPublisher.addObserver(importFailureObserver)
 
 @implementer(IServiceMaker, IPlugin)
 class CowrieServiceMaker(object):
-    """
-    FIXME: Docstring
-    """
     tapname = "cowrie"
     description = "She sells sea shells by the sea shore."
     options = Options

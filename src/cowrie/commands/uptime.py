@@ -5,18 +5,15 @@ from __future__ import division, absolute_import
 
 import time
 
-from cowrie.shell.command import HoneyPotCommand
 from cowrie.core import utils
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
 
 class command_uptime(HoneyPotCommand):
-    """
-    """
+
     def call(self):
-        """
-        """
         self.write('%s  up %s,  1 user,  load average: 0.00, 0.00, 0.00\n' %
                    (time.strftime('%H:%M:%S'), utils.uptime(self.protocol.uptime())))
 

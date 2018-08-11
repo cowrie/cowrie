@@ -26,16 +26,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
+from twisted.cred.credentials import IUsernamePassword, ICredentials
 from zope.interface import implementer
-
-from twisted.cred.credentials import IUsernamePassword, \
-    ICredentials
 
 
 class IUsername(ICredentials):
@@ -82,8 +76,7 @@ class PluggableAuthenticationModulesIP(object):
 
 @implementer(IUsername)
 class Username(object):
-    """
-    """
+
     def __init__(self, username):
         self.username = username
 

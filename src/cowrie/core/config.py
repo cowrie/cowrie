@@ -7,8 +7,9 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-import configparser
 import os
+
+import configparser
 
 
 def to_environ_key(key):
@@ -16,8 +17,7 @@ def to_environ_key(key):
 
 
 class EnvironmentConfigParser(configparser.ConfigParser):
-    """
-    """
+
     def has_option(self, section, option):
         if to_environ_key('_'.join((section, option))) in os.environ:
             return True

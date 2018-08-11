@@ -7,9 +7,9 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-from twisted.python import log
 from twisted.conch.ssh import session
 from twisted.conch.ssh.common import getNS
+from twisted.python import log
 
 
 class HoneyPotSSHSession(session.SSHSession):
@@ -21,8 +21,6 @@ class HoneyPotSSHSession(session.SSHSession):
         session.SSHSession.__init__(self, *args, **kw)
 
     def request_env(self, data):
-        """
-        """
         name, rest = getNS(data)
         value, rest = getNS(rest)
         if rest:
@@ -35,14 +33,10 @@ class HoneyPotSSHSession(session.SSHSession):
         return 0
 
     def request_agent(self, data):
-        """
-        """
         log.msg("request_agent: {}".format(repr(data)))
         return 0
 
     def request_x11_req(self, data):
-        """
-        """
         log.msg("request_x11: {}".format(repr(data)))
         return 0
 
@@ -75,6 +69,4 @@ class HoneyPotSSHSession(session.SSHSession):
         self.conn.sendClose(self)
 
     def channelClosed(self):
-        """
-        """
         log.msg("Called channelClosed in SSHSession")

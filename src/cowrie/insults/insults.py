@@ -1,23 +1,18 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
+import hashlib
 import os
 import time
-import hashlib
 
-from twisted.python import log
 from twisted.conch.insults import insults
+from twisted.python import log
 
 from cowrie.core import ttylog
-from cowrie.shell import protocol
-
 from cowrie.core.config import CONFIG
+from cowrie.shell import protocol
 
 
 class LoggingServerProtocol(insults.ServerProtocol):
@@ -53,15 +48,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.type = 'i'  # Interactive
 
     def getSessionId(self):
-        """
-        """
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
         return (transportId, channelId)
 
     def connectionMade(self):
-        """
-        """
         transportId, channelId = self.getSessionId()
         self.startTime = time.time()
 
@@ -88,8 +79,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
             ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
 
     def write(self, data):
-        """
-        """
         if self.ttylogEnabled and self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data)
             self.ttylogSize += len(data)

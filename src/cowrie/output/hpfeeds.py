@@ -5,16 +5,15 @@ Output plugin for HPFeeds
 
 from __future__ import division, absolute_import
 
-import os
-import struct
 import hashlib
 import json
+import os
 import socket
+import struct
 
 from twisted.python import log
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 try:
@@ -58,7 +57,7 @@ def set2json(value):
 
 def strpack8(x):
     """
-    # packs a string with 1 byte length field
+    packs a string with 1 byte length field
     """
     if isinstance(x, str): x = x.encode('latin1')
     return struct.pack('!B', len(x)) + x
@@ -250,8 +249,7 @@ class Output(cowrie.core.output.Output):
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        """
-        """
+
         server = CONFIG.get('output_hpfeeds', 'server')
         port = CONFIG.getint('output_hpfeeds', 'port')
         ident = CONFIG.get('output_hpfeeds', 'identifier')
@@ -261,13 +259,9 @@ class Output(cowrie.core.output.Output):
         self.meta = {}
 
     def stop(self):
-        """
-        """
         pass
 
     def write(self, entry):
-        """
-        """
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
             self.meta[session] = {

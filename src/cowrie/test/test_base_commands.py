@@ -4,17 +4,16 @@
 # See LICENSE for details.
 
 from __future__ import division, absolute_import
+
 import os
 
 from twisted.trial import unittest
 
 from cowrie.shell import protocol
-from cowrie.core import config
 from cowrie.test import fake_server, fake_transport
 
 os.environ["HONEYPOT_DATA_PATH"] = "../data"
 os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
-from cowrie.core.config import CONFIG
 
 PROMPT = b"root@unitTest:~# "
 
@@ -220,25 +219,18 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 
 class ShellPipeCommandsTests(unittest.TestCase):
-    """
-    """
+
     def setUp(self):
-        """
-        """
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
     def test_shell_pipe_with_cat_tail(self):
-        """
-        """
         self.proto.lineReceived(b'echo test | tail -n 1\n')
         self.assertEquals(self.tr.value(), PROMPT + b'test\n' + PROMPT)
 
     def test_shell_pipe_with_cat_head(self):
-        """
-        """
         self.proto.lineReceived(b'echo test | head -n 1\n')
         self.assertEquals(self.tr.value(), PROMPT + b'test\n' + PROMPT)
 

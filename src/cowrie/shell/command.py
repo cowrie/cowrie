@@ -10,14 +10,14 @@ from __future__ import division, absolute_import
 import os
 import re
 import stat
-import time
 import sys
+import time
 
-from twisted.python import log, failure
 from twisted.internet import error
+from twisted.python import log, failure
 
-from cowrie.shell import fs
 from cowrie.core.config import CONFIG
+from cowrie.shell import fs
 
 # From Python3.6 we get the new shlex version
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
@@ -95,8 +95,6 @@ class HoneyPotCommand(object):
         return self.errorWritefn(data.encode('utf8'))
 
     def check_arguments(self, application, args):
-        """
-        """
         files = []
         for arg in args:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
@@ -107,33 +105,23 @@ class HoneyPotCommand(object):
         return files
 
     def set_input_data(self, data):
-        """
-        """
         self.input_data = data
 
     def write_to_file(self, data):
-        """
-        """
         with open(self.safeoutfile, 'ab') as f:
             f.write(data)
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
 
     def write_to_failed(self, data):
-        """
-        """
         pass
 
     def start(self):
-        """
-        """
         if self.write != self.write_to_failed:
             self.call()
         self.exit()
 
     def call(self):
-        """
-        """
         self.write(b'Hello World! [%s]\n' % (repr(self.args),))
 
     def exit(self):
@@ -159,33 +147,23 @@ class HoneyPotCommand(object):
                 pass
 
     def handle_CTRL_C(self):
-        """
-        """
         log.msg('Received CTRL-C, exiting..')
         self.write('^C\n')
         self.exit()
 
     def lineReceived(self, line):
-        """
-        """
         log.msg('QUEUED INPUT: {}'.format(line))
         # FIXME: naive command parsing, see lineReceived below
         line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=False))
 
     def resume(self):
-        """
-        """
         pass
 
     def handle_TAB(self):
-        """
-        """
         pass
 
     def handle_CTRL_D(self):
-        """
-        """
         pass
 
     def __repr__(self):

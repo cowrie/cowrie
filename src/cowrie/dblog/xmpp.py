@@ -1,21 +1,19 @@
 
 from __future__ import division, absolute_import
 
-import uuid
 import json
+import uuid
 
-from twisted.words.xish import domish
-from twisted.python import log
-from twisted.words.protocols.jabber.jid import JID
 from twisted.application import service
+from twisted.python import log
 from twisted.words.protocols.jabber import jid
-
-from wokkel.xmppim import AvailablePresence
-from wokkel.client import XMPPClient
+from twisted.words.protocols.jabber.jid import JID
 from wokkel import muc
+from wokkel.client import XMPPClient
+from wokkel.xmppim import AvailablePresence
 
-from cowrie.core.config import CONFIG
 from cowrie.core import dblog
+from cowrie.core.config import CONFIG
 
 
 class XMPPLoggerProtocol(muc.MUCClient):
@@ -32,7 +30,8 @@ class XMPPLoggerProtocol(muc.MUCClient):
         self.activity = None
 
     def connectionInitialized(self):
-        """The bot has connected to the xmpp server, now try to join the room.
+        """
+        The bot has connected to the xmpp server, now try to join the room.
         """
         self.join(self.jrooms, self.nick)
 
@@ -81,7 +80,6 @@ class DBLogger(dblog.DBLogger):
         self.run(application, jid, password, JID(None, [muc, server, None]), channels)
 
     def run(self, application, jidstr, password, muc, channels, anon=True):
-
         self.xmppclient = XMPPClient(JID(jidstr), password)
         if CONFIG.has_option('database_xmpp', 'debug') and \
                 CONFIG.getboolean('database_xmpp', 'debug') == True:

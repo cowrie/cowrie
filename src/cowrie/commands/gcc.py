@@ -2,17 +2,16 @@
 
 from __future__ import division, absolute_import
 
-import time
-import re
 import getopt
-import random
 import os
+import random
+import re
+import time
 
 from twisted.internet import reactor
 
-from cowrie.shell.command import HoneyPotCommand
-
 from cowrie.core.config import CONFIG
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
@@ -130,19 +129,25 @@ class command_gcc(HoneyPotCommand):
             self.no_files()
 
     def handle_CTRL_C(self):
-        """ Make sure the scheduled call will be canceled """
+        """
+        Make sure the scheduled call will be canceled
+        """
 
         if getattr(self, 'scheduled', False):
             self.scheduled.cancel()
 
     def no_files(self):
-        """ Notify user there are no input files, and exit """
+        """
+        Notify user there are no input files, and exit
+        """
         self.write("""gcc: fatal error: no input files
 compilation terminated.\n""")
         self.exit()
 
     def version(self, short):
-        """ Print long or short version, and exit """
+        """
+        Print long or short version, and exit
+        """
 
         # Generate version number
         version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:3]])
@@ -207,12 +212,16 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
         self.exit()
 
     def arg_missing(self, arg):
-        """ Print missing argument message, and exit """
+        """
+        Print missing argument message, and exit
+        """
         self.write("%s: argument to '%s' is missing\n" % (command_gcc.APP_NAME, arg))
         self.exit()
 
     def help(self):
-        """ Print help info, and exit """
+        """
+        Print help info, and exit
+        """
 
         version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:2]])
 

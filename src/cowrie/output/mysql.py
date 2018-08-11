@@ -6,13 +6,11 @@ MySQL output connector. Writes audit logs to MySQL database
 from __future__ import division, absolute_import
 
 import MySQLdb
-
-from twisted.internet import defer
 from twisted.enterprise import adbapi
+from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 
@@ -44,9 +42,6 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
 
 
 class Output(cowrie.core.output.Output):
-    """
-    docstring here
-    """
     db = None
 
     def __init__(self):
@@ -58,10 +53,6 @@ class Output(cowrie.core.output.Output):
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        """
-        docstring here
-        """
-
         try:
             port = CONFIG.getint('output_mysql', 'port')
         except:
@@ -82,15 +73,9 @@ class Output(cowrie.core.output.Output):
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
     def stop(self):
-        """
-        docstring here
-        """
         self.db.close()
 
     def sqlerror(self, error):
-        """
-        docstring here
-        """
         log.err('output_mysql: MySQL Error: {}'.format(error.value))
 
     def simpleQuery(self, sql, args):
@@ -104,10 +89,6 @@ class Output(cowrie.core.output.Output):
 
     @defer.inlineCallbacks
     def write(self, entry):
-        """
-        docstring here
-        """
-
         if entry["eventid"] == 'cowrie.session.connect':
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `sensors` WHERE `ip` = %s", (self.sensor,))

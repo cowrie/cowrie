@@ -21,18 +21,18 @@ class Container(object):
     transportId = "test-suite"
     id = "test-suite"
 
-    """
-    Fake function for mockup
-    """
     def getPeer(self):
+        """
+        Fake function for mockup
+        """
         self.host = "1.1.1.1"
         self.port = 2222
         return self
 
-    """
-    Fake function for mockup
-    """
     def processEnded(self, reason):
+        """
+        Fake function for mockup
+        """
         pass
 
 

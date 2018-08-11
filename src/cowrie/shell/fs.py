@@ -1,10 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 try:
@@ -75,8 +71,6 @@ class FileNotFound(Exception):
 
 
 class HoneyPotFilesystem(object):
-    """
-    """
 
     def __init__(self, fs, arch):
         self.fs = fs
@@ -202,8 +196,7 @@ class HoneyPotFilesystem(object):
             return True
 
     def update_realfile(self, f, realfile):
-        """
-        """
+
         if not f[A_REALFILE] and os.path.exists(realfile) and \
                 not os.path.islink(realfile) and os.path.isfile(realfile) and \
                 f[A_SIZE] < 25000000:
@@ -264,8 +257,6 @@ class HoneyPotFilesystem(object):
             return open(CONFIG.get('honeypot', 'share_path') + '/arch/' + self.arch, 'rb').read()
 
     def mkfile(self, path, uid, gid, size, mode, ctime=None):
-        """
-        """
         if self.newcount > 10000:
             return False
         if ctime is None:
@@ -279,8 +270,6 @@ class HoneyPotFilesystem(object):
         return True
 
     def mkdir(self, path, uid, gid, size, mode, ctime=None):
-        """
-        """
         if self.newcount > 10000:
             raise OSError(errno.EDQUOT, os.strerror(errno.EDQUOT), path)
         if ctime is None:
@@ -378,19 +367,13 @@ class HoneyPotFilesystem(object):
         return None
 
     def read(self, fd, size):
-        """
-        """
         # this should not be called, we intercept at readChunk
         raise NotImplementedError
 
     def write(self, fd, string):
-        """
-        """
         return os.write(fd, string)
 
     def close(self, fd):
-        """
-        """
         if not fd:
             return True
         if self.tempfiles[fd] is not None:
@@ -411,8 +394,6 @@ class HoneyPotFilesystem(object):
         return os.close(fd)
 
     def lseek(self, fd, offset, whence):
-        """
-        """
         if not fd:
             return True
         return os.lseek(fd, offset, whence)
@@ -427,8 +408,6 @@ class HoneyPotFilesystem(object):
         self.mkdir(path, 0, 0, 4096, 16877)
 
     def rmdir(self, path):
-        """
-        """
         path = path.rstrip('/')
         name = os.path.basename(path)
         parent = os.path.dirname(path)
@@ -447,24 +426,18 @@ class HoneyPotFilesystem(object):
         return False
 
     def utime(self, path, atime, mtime):
-        """
-        """
         p = self.getfile(path)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_CTIME] = mtime
 
     def chmod(self, path, perm):
-        """
-        """
         p = self.getfile(path)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
 
     def chown(self, path, uid, gid):
-        """
-        """
         p = self.getfile(path)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -474,8 +447,6 @@ class HoneyPotFilesystem(object):
             p[A_GID] = gid
 
     def remove(self, path):
-        """
-        """
         p = self.getfile(path, follow_symlinks=False)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -483,8 +454,6 @@ class HoneyPotFilesystem(object):
         return
 
     def readlink(self, path):
-        """
-        """
         p = self.getfile(path, follow_symlinks=False)
         if p == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -493,13 +462,9 @@ class HoneyPotFilesystem(object):
         return p[A_TARGET]
 
     def symlink(self, targetPath, linkPath):
-        """
-        """
         raise NotImplementedError
 
     def rename(self, oldpath, newpath):
-        """
-        """
         old = self.getfile(oldpath)
         if old == False:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -513,19 +478,13 @@ class HoneyPotFilesystem(object):
         return
 
     def listdir(self, path):
-        """
-        """
         names = [x[A_NAME] for x in self.get_path(path)]
         return names
 
     def lstat(self, path):
-        """
-        """
         return self.stat(path, follow_symlinks=False)
 
     def stat(self, path, follow_symlinks=True):
-        """
-        """
         if (path == "/"):
             p = {
                 A_TYPE: T_DIR,
@@ -544,13 +503,9 @@ class HoneyPotFilesystem(object):
         return _statobj(p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE], p[A_CTIME], p[A_CTIME], p[A_CTIME])
 
     def realpath(self, path):
-        """
-        """
         return path
 
     def update_size(self, filename, size):
-        """
-        """
         f = self.getfile(filename)
         if f == False:
             return

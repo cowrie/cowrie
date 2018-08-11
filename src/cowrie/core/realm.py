@@ -26,42 +26,29 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
-
-from zope.interface import implementer
-
-import sys
-import gc
 
 import twisted
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.python import log
-
-from cowrie.shell import server as shellserver
-from cowrie.shell import avatar as shellavatar
-from cowrie.proxy import avatar as proxyavatar
-from cowrie.proxy import server as proxyserver
-from cowrie.telnet import session
+from zope.interface import implementer
 
 from cowrie.core.config import CONFIG
+from cowrie.proxy import avatar as proxyavatar
+from cowrie.proxy import server as proxyserver
+from cowrie.shell import avatar as shellavatar
+from cowrie.shell import server as shellserver
+from cowrie.telnet import session
 
 
 @implementer(twisted.cred.portal.IRealm)
 class HoneyPotRealm(object):
-    """
-    """
 
     def __init__(self):
         pass
 
     def requestAvatar(self, avatarId, mind, *interfaces):
-        """
-        """
         try:
             backend = CONFIG.get('honeypot', 'backend')
         except:

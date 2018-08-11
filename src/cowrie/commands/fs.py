@@ -8,15 +8,15 @@ Filesystem related commands
 
 from __future__ import division, absolute_import
 
-import re
-import getopt
 import copy
+import getopt
 import os.path
+import re
 
 from twisted.python import log
 
-from cowrie.shell.command import HoneyPotCommand
 import cowrie.shell.fs as fs
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
@@ -100,7 +100,6 @@ class command_tail(HoneyPotCommand):
     """
 
     def tail_get_contents(self, filename):
-
         try:
             contents = self.fs.file_contents(filename)
             self.tail_application(contents)

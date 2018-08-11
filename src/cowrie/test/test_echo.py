@@ -8,6 +8,7 @@ Tests for general shell interaction and echo command
 """
 
 from __future__ import division, absolute_import
+
 import os
 
 from twisted.trial import unittest
@@ -23,11 +24,8 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellEchoCommandTests(unittest.TestCase):
-    """
-    """
+
     def setUp(self):
-        """
-        """
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)

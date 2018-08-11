@@ -2,10 +2,10 @@ from __future__ import division, absolute_import
 
 import time
 from datetime import datetime
+
 import rethinkdb as r
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 
@@ -14,14 +14,10 @@ def iso8601_to_timestamp(value):
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     RETHINK_DB_SEGMENT = 'output_rethinkdblog'
 
     def __init__(self):
-        """
-        """
         self.host = CONFIG.get(self.RETHINK_DB_SEGMENT, 'host')
         self.port = CONFIG.getint(self.RETHINK_DB_SEGMENT, 'port')
         self.db = CONFIG.get(self.RETHINK_DB_SEGMENT, 'db')
@@ -31,8 +27,6 @@ class Output(cowrie.core.output.Output):
 
     # noinspection PyAttributeOutsideInit
     def start(self):
-        """
-        """
         self.connection = r.connect(
             host=self.host,
             port=self.port,
@@ -46,13 +40,9 @@ class Output(cowrie.core.output.Output):
             pass
 
     def stop(self):
-        """
-        """
         self.connection.close()
 
     def write(self, logentry):
-        """
-        """
         for i in list(logentry.keys()):
             # remove twisted 15 legacy keys
             if i.startswith('log_'):

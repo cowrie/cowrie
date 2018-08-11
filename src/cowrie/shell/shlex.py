@@ -15,14 +15,16 @@ import os
 import re
 import sys
 from collections import deque
-
 from io import StringIO
+
 
 __all__ = ["shlex", "split", "quote"]
 
 
 class shlex:
-    "A lexical analyzer class for simple shell-like syntaxes."
+    """
+    A lexical analyzer class for simple shell-like syntaxes.
+    """
     def __init__(self, instream=None, infile=None, posix=False,
                  punctuation_chars=False):
         if instream is not None:
@@ -78,7 +80,9 @@ class shlex:
                                                        self.lineno))
 
     def push_token(self, tok):
-        "Push a token onto the stack popped by the get_token method"
+        """
+        Push a token onto the stack popped by the get_token method" \
+        """
         if self.debug >= 1:
             print("shlex: pushing token " + repr(tok))
         self.pushback.appendleft(tok)
@@ -98,7 +102,9 @@ class shlex:
                 print('shlex: pushing to stream %s' % (self.instream,))
 
     def pop_source(self):
-        "Pop the input source stack."
+        """
+        Pop the input source stack.
+        """
         self.instream.close()
         (self.infile, self.instream, self.lineno) = self.filestack.popleft()
         if self.debug:
@@ -107,7 +113,9 @@ class shlex:
         self.state = ' '
 
     def get_token(self):
-        "Get a token from the input stream (or from stack if it's nonempty)"
+        """
+        Get a token from the input stream (or from stack if it's nonempty)
+        """
         if self.pushback:
             tok = self.pushback.popleft()
             if self.debug >= 1:
@@ -323,7 +331,9 @@ _find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
 
 
 def quote(s):
-    """Return a shell-escaped version of the string *s*."""
+    """
+    Return a shell-escaped version of the string *s*.
+    """
     if not s:
         return "''"
     if _find_unsafe(s) is None:

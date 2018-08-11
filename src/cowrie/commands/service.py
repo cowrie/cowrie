@@ -85,14 +85,10 @@ class command_service(HoneyPotCommand):
             self.write(l + '\n')
 
     def help(self):
-        """
-        """
         output = 'Usage: service < option > | --status-all | [ service_name [ command | --full-restart ] ]'
         self.write(output + '\n')
 
     def call(self):
-        """
-        """
         try:
             opts, args = getopt.gnu_getopt(self.args, 'h', ['help', 'status-all', 'full-restart'])
         except getopt.GetoptError as err:

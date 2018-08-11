@@ -47,8 +47,6 @@ from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         self.url_base = CONFIG.get('output_cuckoo', 'url_base').encode('utf-8')
@@ -70,8 +68,6 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        """
-        """
         if entry["eventid"] == "cowrie.session.file_download":
             print("Sending file to Cuckoo")
             p = urlparse(entry["url"]).path
