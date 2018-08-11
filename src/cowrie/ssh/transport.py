@@ -105,7 +105,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
             log.msg(eventid='cowrie.client.version', version=repr(self.otherVersionString),
                     format="Remote SSH version: %(version)s")
-            m = re.match(rb'SSH-(\d+).(\d+)-(.*)', self.otherVersionString)
+            m = re.match(b'SSH-(\d+).(\d+)-(.*)', self.otherVersionString)
             if m is None:
                 log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
                 self.transport.write(b'Protocol mismatch.\n')
@@ -116,7 +116,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 remote_major = m.group(1)
                 remote_minor = m.group(2)
                 remote_version = m.group(3)
-                if remote_major is not b'2' and not (remote_major == b'1' and remote_minor == b'99'):
+                if remote_major != b'2' and not (remote_major == b'1' and remote_minor == b'99'):
                     self._unsupportedVersionReceived(None)
                     return
                 i = self.buf.index(b'\n')
@@ -168,7 +168,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,
-            _) = [s.split(b',') for s in strings]
+         _) = [s.split(b',') for s in strings]
 
         client_fingerprint = md5(packet[16:]).hexdigest()
         log.msg(eventid='cowrie.client.kex',
