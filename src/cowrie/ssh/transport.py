@@ -31,7 +31,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     """
     startTime = None
     gotVersion = False
-    supportedVersions = (b'1.99', b'2.0', b'2.2')
 
     def __repr__(self):
         """
@@ -106,20 +105,23 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
             log.msg(eventid='cowrie.client.version', version=repr(self.otherVersionString),
                     format="Remote SSH version: %(version)s")
-            if self.buf.startswith(b'SSH-'):
+            m = re.match(rb'SSH-(\d+).(\d+)-(.*)', self.otherVersionString)
+            if m is None:
+                log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
+                self.transport.write(b'Protocol mismatch.\n')
+                self.transport.loseConnection()
+                return
+            else:
                 self.gotVersion = True
-                remoteVersion = self.buf.split(b'-')[1]
-                if remoteVersion not in self.supportedVersions:
-                    self._unsupportedVersionReceived(remoteVersion)
+                remote_major = m.group(1)
+                remote_minor = m.group(2)
+                remote_version = m.group(3)
+                if remote_major is not b'2' and not (remote_major == b'1' and remote_minor == b'99'):
+                    self._unsupportedVersionReceived(None)
                     return
                 i = self.buf.index(b'\n')
                 self.buf = self.buf[i + 1:]
                 self.sendKexInit()
-            else:
-                self.transport.write(b'Protocol mismatch.\n')
-                log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
-                self.transport.loseConnection()
-                return
         packet = self.getPacket()
         while packet:
             messageNum = ord(packet[0:1])
