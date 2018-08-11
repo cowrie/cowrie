@@ -512,7 +512,7 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 #
 [output_jsonlog]
 enabled = true
-logfile = log/cowrie.json
+logfile = ${honeypot:log_path}/cowrie.json
 
 
 # Supports logging to Elasticsearch
@@ -562,7 +562,7 @@ logfile = log/cowrie.json
 #
 #[output_textlog]
 #enabled = false
-#logfile = log/audit.log
+#logfile = ${honeypot:log_path}/audit.log
 #format = text
 
 
