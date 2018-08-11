@@ -318,10 +318,10 @@ enabled = true
 
 # Public and private SSH key files. If these don't exist, they are created
 # automatically.
-rsa_public_key = ${honeypot:etc_path}/ssh_host_rsa_key.pub
-rsa_private_key = ${honeypot:etc_path}/ssh_host_rsa_key
-dsa_public_key = ${honeypot:etc_path}/ssh_host_dsa_key.pub
-dsa_private_key = ${honeypot:etc_path}/ssh_host_dsa_key
+rsa_public_key = ${honeypot:state_path}/ssh_host_rsa_key.pub
+rsa_private_key = ${honeypot:state_path}/ssh_host_rsa_key
+dsa_public_key = ${honeypot:state_path}/ssh_host_dsa_key.pub
+dsa_private_key = ${honeypot:state_path}/ssh_host_dsa_key
 
 
 # SSH version string as present to the client.
