@@ -9,8 +9,8 @@ Should be compatible with user mode linux
 
 from __future__ import division, absolute_import
 
-import struct
 import hashlib
+import struct
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
 TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3

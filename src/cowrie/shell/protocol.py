@@ -2,28 +2,24 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import os
-import sys
-import time
 import socket
 import traceback
+import sys
+import time
 
-from twisted.python import failure, log
-from twisted.internet import error
-from twisted.protocols.policies import TimeoutMixin
 from twisted.conch import recvline
 from twisted.conch.insults import insults
+from twisted.internet import error
+from twisted.protocols.policies import TimeoutMixin
+from twisted.python import failure, log
 
-from cowrie.core.config import CONFIG
-from cowrie.shell import honeypot
-from cowrie.shell import command
 import cowrie.commands
+from cowrie.core.config import CONFIG
+from cowrie.shell import command
+from cowrie.shell import honeypot
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -77,8 +73,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         pt.factory.logDispatch(*msg, **args)
 
     def connectionMade(self):
-        """
-        """
         pt = self.getProtoTransport()
 
         self.realClientIP = pt.transport.getPeer().host
@@ -135,8 +129,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.environ = None
 
     def txtcmd(self, txt):
-        """
-        """
         class command_txtcmd(command.HoneyPotCommand):
             def call(self):
                 log.msg('Reading txtcmd from "{}"'.format(txt))
@@ -151,8 +143,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         return True if cmd in self.commands else False
 
     def getCommand(self, cmd, paths):
-        """
-        """
         if not len(cmd.strip()):
             return None
         path = None
@@ -195,8 +185,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             log.msg("discarding input {}".format(line))
 
     def call_command(self, pp, cmd, *args):
-        """
-        """
         self.pp = pp
         obj = cmd(self, *args)
         obj.set_input_data(pp.input_data)
@@ -224,8 +212,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
-    """
-    """
+
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
@@ -239,8 +226,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self):
-        """
-        """
         HoneyPotBaseProtocol.connectionMade(self)
         self.setTimeout(60)
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
@@ -259,16 +244,12 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
-    """
-    """
 
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
         HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self):
-        """
-        """
         self.displayMOTD()
 
         HoneyPotBaseProtocol.connectionMade(self)
@@ -295,8 +276,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         })
 
     def displayMOTD(self):
-        """
-        """
         try:
             self.terminal.write(self.fs.file_contents('/etc/motd'))
         except:
@@ -310,8 +289,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.timeoutConnection(self)
 
     def connectionLost(self, reason):
-        """
-        """
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
         self.keyHandlers = None
@@ -323,8 +300,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.setInsertMode()
 
     def call_command(self, pp, cmd, *args):
-        """
-        """
         self.pp = pp
         self.setTypeoverMode()
         HoneyPotBaseProtocol.call_command(self, pp, cmd, *args)
@@ -342,8 +317,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.terminal.write(ch)
 
     def handle_RETURN(self):
-        """
-        """
         if len(self.cmdstack) == 1:
             if self.lineBuffer:
                 self.historyLines.append(b''.join(self.lineBuffer))
@@ -351,26 +324,18 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         return recvline.RecvLine.handle_RETURN(self)
 
     def handle_CTRL_C(self):
-        """
-        """
         if len(self.cmdstack):
             self.cmdstack[-1].handle_CTRL_C()
 
     def handle_CTRL_D(self):
-        """
-        """
         if len(self.cmdstack):
             self.cmdstack[-1].handle_CTRL_D()
 
     def handle_TAB(self):
-        """
-        """
         if len(self.cmdstack):
             self.cmdstack[-1].handle_TAB()
 
     def handle_CTRL_K(self):
-        """
-        """
         self.terminal.eraseToLineEnd()
         self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
 
@@ -384,8 +349,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.drawInputLine()
 
     def handle_CTRL_U(self):
-        """
-        """
         for _ in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
             self.terminal.deleteCharacter()
@@ -393,13 +356,9 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.lineBufferIndex = 0
 
     def handle_CTRL_V(self):
-        """
-        """
         pass
 
     def handle_ESC(self):
-        """
-        """
         pass
 
 

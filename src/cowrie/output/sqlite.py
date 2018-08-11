@@ -1,23 +1,16 @@
-
-"""
-"""
-
 from __future__ import division, absolute_import
 
 import sqlite3
 
-from twisted.internet import defer
 from twisted.enterprise import adbapi
+from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
@@ -47,9 +40,6 @@ class Output(cowrie.core.output.Output):
         self.db.close()
 
     def sqlerror(self, error):
-        """
-        docstring here
-        """
         log.err('sqlite error')
         error.printTraceback()
 
@@ -62,10 +52,6 @@ class Output(cowrie.core.output.Output):
 
     @defer.inlineCallbacks
     def write(self, entry):
-        """
-        docstring here
-        """
-
         if entry["eventid"] == 'cowrie.session.connect':
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `sensors` WHERE `ip` = ?", (self.sensor,))

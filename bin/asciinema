@@ -14,7 +14,6 @@ COLOR_INPUT = '\033[33m'
 COLOR_RESET = '\033[0m'
 
 def playlog(fd, settings):
-
     thelog = {}
     thelog['version'] = 1
     thelog['width'] = 80
@@ -88,7 +87,6 @@ def playlog(fd, settings):
 
 
 def help(verbose=False):
-
     print(( 'usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' % \
         os.path.basename(sys.argv[0])))
 
@@ -99,7 +97,6 @@ def help(verbose=False):
 
 
 if __name__ == '__main__':
-
     settings = {
         'colorify':     0,
         'output': ""

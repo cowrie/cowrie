@@ -26,10 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import abc
@@ -39,7 +35,6 @@ import socket
 import time
 
 from cowrie.core.config import CONFIG
-
 
 # Events:
 #  cowrie.client.fingerprint

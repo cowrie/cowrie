@@ -1,9 +1,8 @@
 import re
 
-from twisted.python import log
-
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
+from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
@@ -15,8 +14,6 @@ class Output(cowrie.core.output.Output):
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        """
-        """
         try:
             host = CONFIG.get('output_influx', 'host')
         except:

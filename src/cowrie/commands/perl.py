@@ -17,8 +17,7 @@ commands = {}
 
 
 class command_perl(HoneyPotCommand):
-    """
-    """
+
     def version(self):
         output = (
             '',
@@ -75,8 +74,6 @@ class command_perl(HoneyPotCommand):
             self.write(l + '\n')
 
     def start(self):
-        """
-        """
         try:
             opts, args = getopt.gnu_getopt(self.args, 'acfhnpsStTuUvwWXC:D:e:E:F:i:I:l:m:M:V:X:')
         except getopt.GetoptError as err:
@@ -107,16 +104,12 @@ class command_perl(HoneyPotCommand):
             pass
 
     def lineReceived(self, line):
-        """
-        """
         log.msg(eventid='cowrie.command.input',
                 realm='perl',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
 
     def handle_CTRL_D(self):
-        """
-        """
         self.exit()
 
 

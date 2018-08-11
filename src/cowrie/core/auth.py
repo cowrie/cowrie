@@ -7,11 +7,11 @@ This module contains authentication code
 
 from __future__ import division, absolute_import
 
-import re
 import json
+import re
+from collections import OrderedDict
 from os import path
 from random import randint
-from collections import OrderedDict
 
 from twisted.python import log
 
@@ -24,8 +24,6 @@ class UserDB(object):
     """
 
     def __init__(self):
-        """
-        """
         self.userdb = OrderedDict()
         self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))
         self.load()
@@ -34,7 +32,6 @@ class UserDB(object):
         """
         load the user db
         """
-
         with open(self.userdb_file, 'rb') as f:
             while True:
                 rawline = f.readline()
@@ -52,8 +49,6 @@ class UserDB(object):
                 self.adduser(login, passwd)
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
-        """
-        """
         for credentials, policy in self.userdb.items():
             login, passwd = credentials
 
@@ -64,8 +59,6 @@ class UserDB(object):
         return False
 
     def match_rule(self, rule, input):
-        """
-        """
         if type(rule) is bytes:
             return rule in [b'*', input]
         else:

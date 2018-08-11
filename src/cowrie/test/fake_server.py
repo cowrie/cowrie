@@ -5,11 +5,11 @@
 
 from __future__ import division, absolute_import
 
-import pickle
 import copy
+import pickle
 
-from cowrie.shell import fs
 from cowrie.core.config import CONFIG
+from cowrie.shell import fs
 
 
 class FakeServer:

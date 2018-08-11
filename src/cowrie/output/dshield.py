@@ -5,24 +5,23 @@ See https://isc.sans.edu/ssh.html
 
 from __future__ import division, absolute_import
 
-import dateutil.parser
-import time
 import base64
-import hmac
+import dateutil.parser
 import hashlib
-import requests
+import hmac
 import re
+import time
 
-from twisted.python import log
+import requests
 from twisted.internet import threads, reactor
+from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
+
     def __init__(self):
         self.auth_key = CONFIG.get('output_dshield', 'auth_key')
         self.userid = CONFIG.get('output_dshield', 'userid')

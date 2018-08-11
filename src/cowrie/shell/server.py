@@ -26,22 +26,17 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import copy
-import random
 import json
-
-from configparser import NoOptionError
+import random
 
 import twisted.python.log as log
+from configparser import NoOptionError
 
-from cowrie.shell import fs
 from cowrie.core.config import CONFIG
+from cowrie.shell import fs
 
 
 class CowrieServer(object):

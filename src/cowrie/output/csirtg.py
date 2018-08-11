@@ -1,13 +1,13 @@
 from __future__ import division, absolute_import
 
-import cowrie.core.output
-
-from csirtgsdk.indicator import Indicator
-from csirtgsdk.client import Client
-from datetime import datetime
 import os
+from datetime import datetime
+
+from csirtgsdk.client import Client
+from csirtgsdk.indicator import Indicator
 from twisted.python import log
 
+import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 USERNAME = os.environ.get('CSIRTG_USER')

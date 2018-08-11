@@ -3,40 +3,32 @@
 
 from __future__ import division, absolute_import
 
-import stat
 import getopt
+import stat
 import time
 
-from cowrie.shell.command import HoneyPotCommand
 import cowrie.shell.fs as fs
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.pwd import Passwd, Group
 
 commands = {}
 
 
 class command_ls(HoneyPotCommand):
-    """
-    """
 
     def uid2name(self, uid):
-        """
-        """
         try:
             return Passwd().getpwuid(uid)["pw_name"]
         except:
             return str(uid)
 
     def gid2name(self, gid):
-        """
-        """
         try:
             return Group().getgrgid(gid)["gr_name"]
         except:
             return str(gid)
 
     def call(self):
-        """
-        """
         path = self.protocol.cwd
         paths = []
         self.showHidden = False
@@ -69,8 +61,6 @@ class command_ls(HoneyPotCommand):
                 func(path)
 
     def do_ls_normal(self, path):
-        """
-        """
         try:
             if self.protocol.fs.isdir(path) and self.showDirectories == False:
                 files = self.protocol.fs.get_path(path)[:]
@@ -113,8 +103,6 @@ class command_ls(HoneyPotCommand):
         self.write('\n')
 
     def do_ls_l(self, path):
-        """
-        """
         try:
             if self.protocol.fs.isdir(path) and self.showDirectories == False:
                 files = self.protocol.fs.get_path(path)[:]

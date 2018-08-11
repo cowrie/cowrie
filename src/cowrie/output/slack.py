@@ -26,10 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-Docstring
-"""
-
 from __future__ import division, absolute_import
 
 import json
@@ -42,9 +38,6 @@ from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    Docstring class
-    """
 
     def __init__(self):
         self.slack_channel = CONFIG.get('output_slack', 'channel')
@@ -52,18 +45,12 @@ class Output(cowrie.core.output.Output):
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        """
-        """
         pass
 
     def stop(self):
-        """
-        """
         pass
 
     def write(self, logentry):
-        """
-        """
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):

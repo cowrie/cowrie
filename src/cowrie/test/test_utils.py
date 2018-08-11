@@ -1,9 +1,8 @@
 from __future__ import division, absolute_import
 
-import configparser
-import textwrap
 from io import StringIO
 
+import configparser
 from twisted.application.service import MultiService
 from twisted.internet import protocol, reactor
 from twisted.trial import unittest

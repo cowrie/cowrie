@@ -6,6 +6,7 @@ uname command
 """
 
 from __future__ import division, absolute_import
+
 from configparser import NoOptionError
 
 from cowrie.core.config import CONFIG
@@ -15,8 +16,6 @@ commands = {}
 
 
 def hardware_platform():
-    """
-    """
     try:
         return CONFIG.get('shell', 'hardware_platform')
     except NoOptionError:
@@ -24,8 +23,6 @@ def hardware_platform():
 
 
 def kernel_name():
-    """
-    """
     try:
         return CONFIG.get('shell', 'kernel_name')
     except NoOptionError:
@@ -33,8 +30,6 @@ def kernel_name():
 
 
 def kernel_version():
-    """
-    """
     try:
         return CONFIG.get('shell', 'kernel_version')
     except NoOptionError:
@@ -42,8 +37,6 @@ def kernel_version():
 
 
 def kernel_build_string():
-    """
-    """
     try:
         return CONFIG.get('shell', 'kernel_build_string')
     except NoOptionError:
@@ -51,8 +44,6 @@ def kernel_build_string():
 
 
 def operating_system():
-    """
-    """
     try:
         return CONFIG.get('shell', 'operating_system')
     except NoOptionError:
@@ -60,8 +51,6 @@ def operating_system():
 
 
 def uname_help():
-    """
-    """
     return """Usage: uname [OPTION]...
 Print certain system information.  With no OPTION, same as -s.
 
@@ -85,11 +74,8 @@ or available locally via: info '(coreutils) uname invocation'\n
 
 
 class command_uname(HoneyPotCommand):
-    """
-    """
+
     def full_uname(self):
-        """
-        """
         return '{} {} {} {} {} {}\n'.format(kernel_name(),
                                             self.protocol.hostname,
                                             kernel_version(),

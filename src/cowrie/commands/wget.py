@@ -3,30 +3,23 @@
 
 from __future__ import division, absolute_import
 
-import time
-import os
 import getopt
+import os
+import time
 
 from OpenSSL import SSL
-
-from twisted.web import client
 from twisted.internet import reactor, ssl
 from twisted.python import log, compat
-
-from cowrie.shell.command import HoneyPotCommand
+from twisted.web import client
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CONFIG
-
-"""
-"""
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
 
 def tdiff(seconds):
-    """
-    """
     t = seconds
     days = int(t / (24 * 60 * 60))
     t -= (days * 24 * 60 * 60)
@@ -46,8 +39,6 @@ def tdiff(seconds):
 
 
 def sizeof_fmt(num):
-    """
-    """
     for x in ['bytes', 'K', 'M', 'G', 'T']:
         if num < 1024.0:
             return "%d%s" % (num, x)
@@ -56,19 +47,13 @@ def sizeof_fmt(num):
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
 def splitthousands(s, sep=','):
-    """
-    """
     if len(s) <= 3: return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
 
 class command_wget(HoneyPotCommand):
-    """
-    """
 
     def start(self):
-        """
-        """
         try:
             optlist, args = getopt.getopt(self.args, 'cqO:P:', 'header=')
         except getopt.GetoptError as err:
@@ -182,14 +167,10 @@ class command_wget(HoneyPotCommand):
         return factory.deferred
 
     def handle_CTRL_C(self):
-        """
-        """
         self.errorWrite('^C\n')
         self.connection.transport.loseConnection()
 
     def success(self, data, outfile):
-        """
-        """
         if not os.path.isfile(self.artifactFile.shasumFilename):
             log.msg("there's no file " + self.artifactFile.shasumFilename)
             self.exit()
@@ -219,8 +200,6 @@ class command_wget(HoneyPotCommand):
         self.exit()
 
     def error(self, error, url):
-        """
-        """
         if hasattr(error, 'getErrorMessage'):  # exceptions
             errorMessage = error.getErrorMessage()
             self.errorWrite(errorMessage + '\n')
@@ -256,8 +235,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.quiet = self.wget.quiet
 
     def noPage(self, reason):  # Called for non-200 responses
-        """
-        """
         if self.status == b'304':
             client.HTTPDownloader.page(self, '')
         else:
@@ -269,8 +246,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             client.HTTPDownloader.noPage(self, reason)
 
     def gotHeaders(self, headers):
-        """
-        """
         if self.status == b'200':
             if not self.quiet:
                 self.wget.errorWrite('200 OK\n')
@@ -305,8 +280,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.gotHeaders(self, headers)
 
     def pagePart(self, data):
-        """
-        """
         if self.status == b'200':
             self.currentlength += len(data)
 
@@ -337,8 +310,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.pagePart(self, data)
 
     def pageEnd(self):
-        """
-        """
         if self.totallength != 0 and self.currentlength != self.totallength:
             return client.HTTPDownloader.pageEnd(self)
         if not self.quiet:

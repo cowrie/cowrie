@@ -1,17 +1,14 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
+import abc
 import re
 import time
-import abc
 
 from cowrie.core.config import CONFIG
+
 
 # dblog now operates based on eventids, no longer on regex parsing of the entry.
 # add an eventid using keyword args and it will be picked up by the dblogger
@@ -62,7 +59,9 @@ class DBLogger(object):
         self.emit(ev)
 
     def start(self):
-        """Hook that can be used to set up connections in dbloggers"""
+        """
+        Hook that can be used to set up connections in dbloggers
+        """
         pass
 
     def getSensor(self):
@@ -71,7 +70,9 @@ class DBLogger(object):
         return None
 
     def nowUnix(self):
-        """return the current UTC time as an UNIX timestamp"""
+        """
+        return the current UTC time as an UNIX timestamp
+        """
         return int(time.time())
 
     def emit(self, ev):
