@@ -25,7 +25,6 @@ class _ProtocolFactory():
         self.protocol = protocol
 
     def buildProtocol(self, addr):
-
         return self.protocol
 
 
@@ -216,7 +215,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg('weird extended data: {}'.format(dataType))
 
     def request_agent(self, data):
-        log.msg('request_agent: {}'.format(repr(data),))
+        log.msg('request_agent: {}'.format(repr(data), ))
         return 0
 
     def request_x11_req(self, data):
