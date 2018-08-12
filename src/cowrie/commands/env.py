@@ -1,4 +1,3 @@
-
 from __future__ import division, absolute_import
 
 from cowrie.shell.command import HoneyPotCommand
