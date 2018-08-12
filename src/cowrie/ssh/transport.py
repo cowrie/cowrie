@@ -7,16 +7,16 @@ encryption and the compression. The transport layer is described in
 RFC 4253.
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import re
 import struct
-import uuid
 import time
+import uuid
 import zlib
+from configparser import NoOptionError
 from hashlib import md5
 
-from configparser import NoOptionError
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin

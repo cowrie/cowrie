@@ -6,11 +6,11 @@ This module contains a subclass of SSHChannel with additional logging
 and session size limiting
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import time
-
 from configparser import NoOptionError
+
 from twisted.conch.ssh import channel
 from twisted.python import log
 
