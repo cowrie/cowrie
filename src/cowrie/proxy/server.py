@@ -40,6 +40,7 @@ class CowrieServer(object):
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
+
     def __init__(self, realm):
         self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')
