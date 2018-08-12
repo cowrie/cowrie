@@ -3,7 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import copy
 import pickle
