@@ -259,7 +259,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         # We only care about AlreadyNegotiating, everything else can be ignored
         # Possible other types include OptionRefused, AlreadyDisabled, AlreadyEnabled, ConnectionDone, ConnectionLost
         elif f.type is AssertionError:
-            log.err('Client tried to illegally refuse to disable an option; ignoring, but undefined behavior may result')
+            log.err(
+                'Client tried to illegally refuse to disable an option; ignoring, but undefined behavior may result')
             # TODO: Is ignoring this violation of the protocol the proper behavior?
             # Should the connection be terminated instead?
             # The telnetd package on Ubuntu (netkit-telnet) does all negotiation before sending the login prompt,
