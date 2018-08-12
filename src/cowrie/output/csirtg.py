@@ -29,7 +29,7 @@ class Output(cowrie.core.output.Output):
         self.client = Client(token=self.token)
         cowrie.core.output.Output.__init__(self)
 
-    def start(self,):
+    def start(self, ):
         pass
 
     def stop(self):
