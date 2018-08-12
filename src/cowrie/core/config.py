@@ -5,11 +5,10 @@
 This module contains ...
 """
 
-from __future__ import division, absolute_import
-
-import os
+from __future__ import absolute_import, division
 
 import configparser
+import os
 
 
 def to_environ_key(key):
