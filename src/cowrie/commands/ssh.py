@@ -14,7 +14,6 @@ from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 
-
 commands = {}
 
 
@@ -76,9 +75,7 @@ class command_ssh(HoneyPotCommand):
         self.callbacks = [self.yesno, self.wait]
 
     def yesno(self, line):
-        self.write(
-            'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.\n' % \
-            self.host)
+        self.write('Warning: Permanently added \'{}\' (RSA) to the list of known hosts.\n'.format(self.host))
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.protocol.password_input = True
 
@@ -96,9 +93,7 @@ class command_ssh(HoneyPotCommand):
         if not self.fs.exists(self.protocol.cwd):
             self.protocol.cwd = '/'
         self.protocol.password_input = False
-        self.write(
-            'Linux %s 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686\n' % \
-            (self.protocol.hostname,))
+        self.write('Linux {} 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 UTC 2009 i686\n'.format(self.protocol.hostname))
         self.write('Last login: %s from 192.168.9.4\n' % (time.ctime(time.time() - 123123),))
         self.exit()
 
