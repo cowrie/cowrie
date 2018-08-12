@@ -28,24 +28,23 @@ except:
     print("ERROR: Config file not found: etc/cowrie.cfg.dist")
     exit(2)
 
-
 A_NAME, \
-    A_TYPE, \
-    A_UID, \
-    A_GID, \
-    A_SIZE, \
-    A_MODE, \
-    A_CTIME, \
-    A_CONTENTS, \
-    A_TARGET, \
-    A_REALFILE = list(range(0, 10))
+A_TYPE, \
+A_UID, \
+A_GID, \
+A_SIZE, \
+A_MODE, \
+A_CTIME, \
+A_CONTENTS, \
+A_TARGET, \
+A_REALFILE = list(range(0, 10))
 T_LINK, \
-    T_DIR, \
-    T_FILE, \
-    T_BLK, \
-    T_CHR, \
-    T_SOCK, \
-    T_FIFO = list(range(0, 7))
+T_DIR, \
+T_FILE, \
+T_BLK, \
+T_CHR, \
+T_SOCK, \
+T_FIFO = list(range(0, 7))
 
 
 class TooManyLevels(Exception):
@@ -153,6 +152,7 @@ class HoneyPotFilesystem(object):
                 matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
                 for match in matches:
                     foo(p[1:], cwd + [match])
+
         foo(pieces, cwd)
         return found
 
@@ -328,6 +328,7 @@ class HoneyPotFilesystem(object):
     """
     Below additions for SFTP support, try to keep functions here similar to os.*
     """
+
     def open(self, filename, openFlags, mode):
         """
         #log.msg("fs.open %s" % filename)
@@ -518,6 +519,7 @@ class _statobj(object):
     """
     Transform a tuple into a stat object
     """
+
     def __init__(self, st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid, st_size, st_atime, st_mtime, st_ctime):
         self.st_mode = st_mode
         self.st_ino = st_ino
