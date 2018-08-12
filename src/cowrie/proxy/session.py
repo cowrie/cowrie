@@ -1,13 +1,14 @@
 # Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from configparser import NoOptionError
+
 from twisted.conch.client.knownhosts import KnownHostsFile
 from twisted.conch.ssh import common, keys, session
 from twisted.conch.ssh.common import getNS
-from twisted.internet import reactor, protocol
+from twisted.internet import protocol, reactor
 from twisted.python import log
 
 from cowrie.core.config import CONFIG
