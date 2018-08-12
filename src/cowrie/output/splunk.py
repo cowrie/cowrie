@@ -6,7 +6,7 @@ Not ready for production use.
 JSON log file is still recommended way to go
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 from StringIO import StringIO

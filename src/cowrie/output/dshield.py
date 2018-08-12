@@ -3,17 +3,19 @@ Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import base64
-import dateutil.parser
 import hashlib
 import hmac
 import re
 import time
 
+import dateutil.parser
+
 import requests
-from twisted.internet import threads, reactor
+
+from twisted.internet import reactor, threads
 from twisted.python import log
 
 import cowrie.core.output
