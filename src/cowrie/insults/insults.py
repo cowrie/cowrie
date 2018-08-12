@@ -58,14 +58,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.ttylogEnabled:
             self.ttylogFile = '%s/%s-%s-%s%s.log' % \
-                (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-                 transportId, channelId, self.type)
+                              (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
+                               transportId, channelId, self.type)
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
 
         self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
-            (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
+                            (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
 
         if self.type == 'e':
             self.stdinlogOpen = True
