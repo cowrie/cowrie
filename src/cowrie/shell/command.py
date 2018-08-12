@@ -5,7 +5,7 @@
 This module contains code to run a command
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 import re
@@ -14,7 +14,7 @@ import sys
 import time
 
 from twisted.internet import error
-from twisted.python import log, failure
+from twisted.python import failure, log
 
 from cowrie.core.config import CONFIG
 from cowrie.shell import fs

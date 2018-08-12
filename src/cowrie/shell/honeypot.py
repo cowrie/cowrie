@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import copy
 import os
@@ -9,7 +9,7 @@ import re
 import sys
 
 from twisted.internet import error
-from twisted.python import log, failure
+from twisted.python import failure, log
 
 from cowrie.shell import fs
 
