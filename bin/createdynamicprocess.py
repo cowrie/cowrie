@@ -12,7 +12,8 @@ randomStates = ["Ss", "S<", "D<", "Ss+"]
 for proc in psutil.process_iter():
     try:
         info = proc.as_dict(
-            attrs=['pid', 'name', 'cmdline', 'username', 'cpu_percent', 'memory_percent', 'memory_info', 'create_time', 'terminal', 'status', 'cpu_times'])
+            attrs=['pid', 'name', 'cmdline', 'username', 'cpu_percent', 'memory_percent', 'memory_info', 'create_time',
+                   'terminal', 'status', 'cpu_times'])
     except psutil.NoSuchProcess:
         pass
     else:
