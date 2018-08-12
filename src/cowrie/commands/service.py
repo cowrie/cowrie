@@ -18,6 +18,7 @@ class command_service(HoneyPotCommand):
     """
     By Giannis Papaioannou <giannispapcod7@gmail.com>
     """
+
     def status_all(self):
         """
         more services can be added here.
