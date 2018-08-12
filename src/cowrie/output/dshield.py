@@ -126,7 +126,8 @@ class Output(cowrie.core.output.Output):
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output)
                 if sha1_match.group(1) != sha1_local.hexdigest():
-                    log.err('dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
+                    log.err(
+                        'dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
                     failed = True
                 md5_regex = re.compile(r'<md5checksum>([^<]+)<\/md5checksum>')
                 md5_match = md5_regex.search(response)
