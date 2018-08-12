@@ -1,5 +1,3 @@
-#
-
 from __future__ import division, absolute_import
 
 import tftpy
@@ -65,7 +63,6 @@ class command_tftp(HoneyPotCommand):
                 tclient.context.fileobj.close()
 
         if url:
-
             # log to cowrie.log
             log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                     url=url,
