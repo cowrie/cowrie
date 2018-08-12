@@ -2,10 +2,6 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import sys
@@ -97,8 +93,6 @@ def uptime(total_seconds):
 
 
 def get_endpoints_from_section(cfg, section, default_port):
-    """
-    """
     if cfg.has_option(section, 'listen_endpoints'):
         return cfg.get(section, 'listen_endpoints').split()
 
@@ -120,8 +114,6 @@ def get_endpoints_from_section(cfg, section, default_port):
 
 
 def create_endpoint_services(reactor, parent, listen_endpoints, factory):
-    """
-    """
     for listen_endpoint in listen_endpoints:
 
         # work around http://twistedmatrix.com/trac/ticket/8422

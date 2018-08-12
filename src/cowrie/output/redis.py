@@ -1,11 +1,12 @@
 from __future__ import division, absolute_import
 
-import cowrie.core.output
-from cowrie.core.config import CONFIG
+import json
 
 import redis
-import json
 from ConfigParser import NoOptionError
+
+import cowrie.core.output
+from cowrie.core.config import CONFIG
 
 SEND_METHODS = {
     'lpush': lambda redis_client, key, message: redis_client.lpush(key, message),

@@ -8,23 +8,19 @@ from twisted.python import log
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CONFIG
-from cowrie.shell.customparser import CustomParser, OptionNotFound
 from cowrie.shell.command import HoneyPotCommand
-
+from cowrie.shell.customparser import CustomParser, OptionNotFound
 
 commands = {}
 
 
 class Progress(object):
-    """
-    """
+
     def __init__(self, protocol):
         self.progress = 0
         self.out = protocol
 
     def progresshook(self, pkt):
-        """
-        """
         if isinstance(pkt, tftpy.TftpPacketDAT):
             self.progress += len(pkt.data)
             self.out.write("Transferred %d bytes" % self.progress + "\n")
@@ -33,16 +29,11 @@ class Progress(object):
 
 
 class command_tftp(HoneyPotCommand):
-    """
-    """
-
     port = 69
     hostname = None
     file_to_get = None
 
     def makeTftpRetrieval(self):
-        """
-        """
         progresshook = Progress(self).progresshook
 
         if CONFIG.has_option('honeypot', 'download_limit_size'):
@@ -93,8 +84,6 @@ class command_tftp(HoneyPotCommand):
             self.fs.chown(self.file_to_get, self.protocol.user.uid, self.protocol.user.gid)
 
     def start(self):
-        """
-        """
         parser = CustomParser(self)
         parser.prog = "tftp"
         parser.add_argument("hostname", nargs='?', default=None)

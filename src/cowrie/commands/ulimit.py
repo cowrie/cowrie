@@ -21,8 +21,6 @@ class command_ulimit(HoneyPotCommand):
     ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]
     """
     def call(self):
-        """
-        """
         # Parse options or display no files
         try:
             opts, args = getopt.getopt(self.args, 'SHacdfilmnpqstuvx')
@@ -42,8 +40,6 @@ class command_ulimit(HoneyPotCommand):
         self.do_ulimit()
 
     def do_ulimit(self, key='core'):
-        """
-        """
         pass
 
 

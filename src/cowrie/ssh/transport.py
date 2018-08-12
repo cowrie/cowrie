@@ -10,25 +10,24 @@ RFC 4253.
 from __future__ import division, absolute_import
 
 import re
-import time
 import struct
 import uuid
-from hashlib import md5
+import time
 import zlib
+from hashlib import md5
+
 from configparser import NoOptionError
+from twisted.conch.ssh import transport
+from twisted.conch.ssh.common import getNS
+from twisted.protocols.policies import TimeoutMixin
+from twisted.python import log, randbytes
+from twisted.python.compat import _bytesChr as chr
 
 from cowrie.core.config import CONFIG
 
-from twisted.conch.ssh import transport
-from twisted.python import log, randbytes
-from twisted.conch.ssh.common import getNS
-from twisted.protocols.policies import TimeoutMixin
-from twisted.python.compat import _bytesChr as chr
-
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
-    """
-    """
+
     startTime = None
     gotVersion = False
 
@@ -163,8 +162,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.outgoingPacketSequence += 1
 
     def ssh_KEXINIT(self, packet):
-        """
-        """
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,

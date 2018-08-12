@@ -1,19 +1,15 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
+import copy
 import os
 import re
-import copy
 import sys
 
-from twisted.python import log, failure
 from twisted.internet import error
+from twisted.python import log, failure
 
 from cowrie.shell import fs
 
@@ -25,8 +21,6 @@ else:
 
 
 class HoneyPotShell(object):
-    """
-    """
 
     def __init__(self, protocol, interactive=True):
         self.protocol = protocol
@@ -37,8 +31,6 @@ class HoneyPotShell(object):
         self.showPrompt()
 
     def lineReceived(self, line):
-        """
-        """
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
         # Add these special characters that are not in the default lexer
@@ -114,8 +106,6 @@ class HoneyPotShell(object):
             self.showPrompt()
 
     def runCommand(self):
-        """
-        """
         pp = None
 
         def runOrPrompt():
@@ -125,8 +115,6 @@ class HoneyPotShell(object):
                 self.showPrompt()
 
         def parse_arguments(arguments):
-            """
-            """
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
@@ -225,15 +213,11 @@ class HoneyPotShell(object):
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
 
     def resume(self):
-        """
-        """
         if self.interactive:
             self.protocol.setInsertMode()
         self.runCommand()
 
     def showPrompt(self):
-        """
-        """
         if not self.interactive:
             return
 
@@ -264,16 +248,12 @@ class HoneyPotShell(object):
             self.cmdstack[-1].handle_CTRL_D()
 
     def handle_CTRL_C(self):
-        """
-        """
         self.protocol.lineBuffer = []
         self.protocol.lineBufferIndex = 0
         self.protocol.terminal.write(b'\n')
         self.showPrompt()
 
     def handle_CTRL_D(self):
-        """
-        """
         log.msg('Received CTRL-D, exiting..')
 
         cmdclass = self.protocol.commands['exit']
@@ -281,8 +261,6 @@ class HoneyPotShell(object):
         self.protocol.call_command(pp, self.protocol.commands['exit'])
 
     def handle_TAB(self):
-        """
-        """
         if not self.protocol.lineBuffer:
             return
         l = ''.join(self.protocol.lineBuffer)
@@ -371,8 +349,7 @@ class StdOutStdErrEmulationProtocol(object):
         self.protocol = protocol
 
     def connectionMade(self):
-        """
-        """
+
         self.input_data = None
 
     def outReceived(self, data):
@@ -402,15 +379,11 @@ class StdOutStdErrEmulationProtocol(object):
         self.next_command = command
 
     def errReceived(self, data):
-        """
-        """
         if self.protocol and self.protocol.terminal:
             self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
 
     def inConnectionLost(self):
-        """
-        """
         pass
 
     def outConnectionLost(self):
@@ -425,16 +398,10 @@ class StdOutStdErrEmulationProtocol(object):
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
     def errConnectionLost(self):
-        """
-        """
         pass
 
     def processExited(self, reason):
-        """
-        """
         log.msg("processExited for %s, status %d" % (self.cmd, reason.value.exitCode))
 
     def processEnded(self, reason):
-        """
-        """
         log.msg("processEnded for %s, status %d" % (self.cmd, reason.value.exitCode))

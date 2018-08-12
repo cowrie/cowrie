@@ -1,19 +1,14 @@
 # Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 from configparser import NoOptionError
-
+from twisted.conch.client.knownhosts import KnownHostsFile
+from twisted.conch.ssh import common, keys, session
+from twisted.conch.ssh.common import getNS
 from twisted.internet import reactor, protocol
 from twisted.python import log
-from twisted.conch.ssh import common, keys, session
-from twisted.conch.client.knownhosts import KnownHostsFile
-from twisted.conch.ssh.common import getNS
 
 from cowrie.core.config import CONFIG
 from cowrie.proxy import endpoints
@@ -30,8 +25,7 @@ class _ProtocolFactory():
         self.protocol = protocol
 
     def buildProtocol(self, addr):
-        """
-        """
+
         return self.protocol
 
 
@@ -87,13 +81,9 @@ class InBetween(protocol.Protocol):
         self.client.write(data)
 
     def closed(self):
-        """
-        """
         log.msg("IB: closed")
 
     def closeReceived(self):
-        """
-        """
         log.msg("IB: closeRecieved")
 
     def loseConnection(self):
@@ -110,8 +100,6 @@ class InBetween(protocol.Protocol):
         self.client.loseConnection()
 
     def eofReceived(self):
-        """
-        """
         log.msg("IB: eofReceived")
 
 
@@ -177,20 +165,14 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return d
 
     def _ebConnect(self):
-        """
-        """
         log.msg("ERROR CONNECTED TO BACKEND")
         self._state = b'ERROR'
 
     def _cbConnect(self):
-        """
-        """
         log.msg("CONNECTED TO BACKEND")
         self._state = b'CONNECTED'
 
     def request_env(self, data):
-        """
-        """
         name, rest = getNS(data)
         value, rest = getNS(rest)
         if rest:
@@ -202,28 +184,20 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return 0
 
     def request_pty_req(self, data):
-        """
-        """
         term, windowSize, modes = session.parseRequest_pty_req(data)
         log.msg('pty request: %r %r' % (term, windowSize))
         return 1
 
     def request_window_change(self, data):
-        """
-        """
         winSize = session.parseRequest_window_change(data)
         return 1
 
     def request_subsystem(self, data):
-        """
-        """
         subsystem, _ = common.getNS(data)
         log.msg('asking for subsystem "{}"'.format(subsystem))
         return 0
 
     def request_exec(self, data):
-        """
-        """
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
         pf = _ProtocolFactory(self.client.transport)
@@ -232,8 +206,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return 1
 
     def request_shell(self, data):
-        """
-        """
         log.msg('request_shell')
         pf = _ProtocolFactory(self.client.transport)
         ep = endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
@@ -241,19 +213,13 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return 1
 
     def extReceived(self, dataType, data):
-        """
-        """
         log.msg('weird extended data: {}'.format(dataType))
 
     def request_agent(self, data):
-        """
-        """
         log.msg('request_agent: {}'.format(repr(data),))
         return 0
 
     def request_x11_req(self, data):
-        """
-        """
         log.msg('request_x11: %s' % (repr(data),))
         return 0
 
@@ -271,13 +237,9 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         self.client = None
 
     def channelClosed(self):
-        """
-        """
         log.msg("Called channelClosed in SSHSession")
 
     def closeReceived(self):
-        """
-        """
         log.msg("closeReceived")
 
     def sendEOF(self):
@@ -293,8 +255,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         self.client.transport.write(data)
 
     def eofReceived(self):
-        """
-        """
         log.msg("RECEIVED EOF")
         return
         if self.client:

@@ -12,7 +12,9 @@ class command_which(HoneyPotCommand):
     resolve_args = False
 
     def call(self):
-        """ Look up all the arguments on PATH and print each (first) result """
+        """
+        Look up all the arguments on PATH and print each (first) result
+        """
 
         # No arguments, just exit
         if not len(self.args) or 'PATH' not in self.environ:

@@ -3,7 +3,6 @@
 from __future__ import division, absolute_import
 
 import pymongo
-
 from twisted.python import log
 
 import cowrie.core.output
@@ -11,8 +10,6 @@ from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
@@ -32,8 +29,6 @@ class Output(cowrie.core.output.Output):
             log.msg('mongo error - {0}'.format(e))
 
     def start(self):
-        """
-        """
         db_addr = CONFIG.get('output_mongodb', 'connection_string')
         db_name = CONFIG.get('output_mongodb', 'database')
 
@@ -55,13 +50,9 @@ class Output(cowrie.core.output.Output):
             log.msg('output_mongodb: Error: %s' % str(e))
 
     def stop(self):
-        """
-        """
         self.mongo_client.close()
 
     def write(self, entry):
-        """
-        """
         for i in list(entry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):

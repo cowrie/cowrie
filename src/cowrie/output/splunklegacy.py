@@ -21,8 +21,6 @@ from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         """
@@ -36,8 +34,6 @@ class Output(cowrie.core.output.Output):
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        """
-        """
         self.service = client.connect(
             host=self.host,
             port=self.port,
@@ -46,13 +42,9 @@ class Output(cowrie.core.output.Output):
         self.index = self.service.indexes['cowrie']
 
     def stop(self):
-        """
-        """
         pass
 
     def write(self, logentry):
-        """
-        """
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):

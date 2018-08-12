@@ -11,7 +11,6 @@ from twisted.internet.defer import inlineCallbacks
 
 from cowrie.shell.command import HoneyPotCommand
 
-
 commands = {}
 
 

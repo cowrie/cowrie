@@ -1,27 +1,20 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import struct
 
-from twisted.python import log
-from twisted.python.compat import _bytesChr as chr
-from twisted.python.failure import Failure
-from twisted.internet import defer
-
+from twisted.conch import error
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
-from twisted.conch import error
+from twisted.internet import defer
+from twisted.python.compat import _bytesChr as chr
+from twisted.python.failure import Failure
 
 from cowrie.core import credentials
-
 from cowrie.core.config import CONFIG
 
 
@@ -35,8 +28,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
 
     def serviceStarted(self):
-        """
-        """
         self.interfaceToMethod[credentials.IUsername] = b'none'
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b'password'
         self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = b'keyboard-interactive'
@@ -63,8 +54,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b'en'))
 
     def ssh_USERAUTH_REQUEST(self, packet):
-        """
-        """
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 

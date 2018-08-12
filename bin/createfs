@@ -8,9 +8,12 @@
 #
 ##############################################################
 
-import os, pickle, sys, locale, getopt, fnmatch
+import fnmatch
+import getopt
+import os
+import pickle
+import sys
 from stat import *
-
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, \
     A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = range(0, 10)

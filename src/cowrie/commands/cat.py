@@ -28,8 +28,6 @@ class command_cat(HoneyPotCommand):
     linenumber = 1
 
     def start(self):
-        """
-        """
         try:
             optlist, args = getopt.gnu_getopt(self.args, 'AbeEnstTuv', ['help', 'number', 'version'])
         except getopt.GetoptError as err:
@@ -96,8 +94,6 @@ class command_cat(HoneyPotCommand):
         self.exit()
 
     def help(self):
-        """
-        """
         self.write(
             """Usage: cat [OPTION]... [FILE]...
             Concatenate FILE(s) to standard output.

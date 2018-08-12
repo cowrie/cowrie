@@ -3,33 +3,26 @@
 
 from __future__ import division, absolute_import
 
-import time
-import re
-import os
 import getopt
 import hashlib
-from OpenSSL import SSL
+import os
+import re
+import time
 
-from twisted.web import client
+from OpenSSL import SSL
 from twisted.internet import reactor, ssl
 from twisted.python import log, compat
-
-from cowrie.shell.command import HoneyPotCommand
+from twisted.web import client
 
 from cowrie.core.config import CONFIG
-
-"""
-"""
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
 
 class command_curl(HoneyPotCommand):
-    """
-    """
+
     def start(self):
-        """
-        """
         try:
             optlist, args = getopt.getopt(self.args, 'sho:O', ['help', 'manual', 'silent'])
         except getopt.GetoptError as err:
@@ -101,9 +94,6 @@ class command_curl(HoneyPotCommand):
             self.deferred.addErrback(self.error, url)
 
     def curl_help(self):
-        """
-        """
-
         self.write("""Usage: curl [options...] <url>
 Options: (H) means HTTP/HTTPS only, (F) means FTP only
      --anyauth       Pick "any" authentication method (H)
@@ -261,8 +251,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.exit()
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
-        """
-        """
         try:
             parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
@@ -293,14 +281,10 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         return factory.deferred
 
     def handle_CTRL_C(self):
-        """
-        """
         self.write('^C\n')
         self.connection.transport.loseConnection()
 
     def success(self, data, outfile):
-        """
-        """
         if not os.path.isfile(self.safeoutfile):
             log.msg("there's no file " + self.safeoutfile)
             self.exit()
@@ -336,8 +320,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.exit()
 
     def error(self, error, url):
-        """
-        """
+
         if hasattr(error, 'getErrorMessage'):  # Exceptions
             error = error.getErrorMessage()
         self.write('{0}\n'.format(error))
@@ -356,8 +339,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     lastupdate = 0
 
     def __init__(self, curl, fakeoutfile, url, outfile, headers=None):
-        """
-        """
         client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent=b'curl/7.38.0')
         self.status = None
         self.curl = curl
@@ -376,8 +357,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             client.HTTPDownloader.noPage(self, reason)
 
     def gotHeaders(self, headers):
-        """
-        """
         if self.status == b'200':
             if b'content-length' in headers:
                 self.totallength = int(headers[b'content-length'][0].decode())
@@ -402,8 +381,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.gotHeaders(self, headers)
 
     def pagePart(self, data):
-        """
-        """
         if self.status == b'200':
             self.currentlength += len(data)
 
@@ -429,8 +406,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.pagePart(self, data)
 
     def pageEnd(self):
-        """
-        """
         if self.totallength != 0 and self.currentlength != self.totallength:
             return client.HTTPDownloader.pageEnd(self)
 

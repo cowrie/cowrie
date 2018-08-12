@@ -3,13 +3,16 @@
 # Copyright (C) 2003-2011 Upi Tamminen <desaster@dragonlight.fi>
 #
 
-import os, sys, time, struct, string, getopt
+import getopt
+import os
+import struct
+import sys
+import time
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
 TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
 
 def playlog(fd, settings):
-
     ssize = struct.calcsize('<iLiiLL')
     currtty, prevtime, prefdir = 0, 0, 0
 
@@ -67,7 +70,6 @@ def playlog(fd, settings):
             break
 
 def help(brief = 0):
-
     print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
         os.path.basename(sys.argv[0]))
 
