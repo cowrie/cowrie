@@ -46,6 +46,7 @@ class ICowrieSSHConnectionCreator(Interface):
     """
     An L{ICowrieSSHConnectionCreator} knows how to create SSH connections somehow.
     """
+
     def secureConnection():
         """
         Return a new, connected, secured, but not yet authenticated instance of
@@ -80,6 +81,7 @@ class SSHCommandAddress(object):
     @ivar username: See L{__init__}
     @ivar command: See L{__init__}
     """
+
     def __init__(self, server, username, command):
         """
         @param server: The address of the SSH server on which the command is
@@ -107,6 +109,7 @@ class SSHShellAddress(object):
     @ivar server: See L{__init__}
     @ivar username: See L{__init__}
     """
+
     def __init__(self, server, username):
         """
         @param server: The address of the SSH server on which the command is
@@ -402,6 +405,7 @@ class _ConnectionReady(SSHConnection):
     propagates the I{serviceStarted} event to a L{Deferred} to be handled
     elsewhere.
     """
+
     def __init__(self, ready):
         """
         @param ready: A L{Deferred} which should be fired when
@@ -515,6 +519,7 @@ class _UserAuth(SSHUserAuthClient):
         def connected(agent):
             self.agent = agent
             return agent.getPublicKeys()
+
         d.addCallback(connected)
         return d
 
@@ -564,6 +569,7 @@ class _CommandTransport(SSHClientTransport):
         def readyFired(result):
             self.connectionReady = None
             return result
+
         self.connectionReady.addBoth(readyFired)
         self.creator = creator
 
@@ -622,6 +628,7 @@ class _CommandTransport(SSHClientTransport):
 
         def maybeGotAgent(ignored):
             self.requestService(self._userauth)
+
         d.addBoth(maybeGotAgent)
 
     def connectionLost(self, reason):
@@ -782,6 +789,7 @@ class SSHShellClientEndpoint(object):
             immediate = passthrough.check(CancelledError)
             self._creator.cleanupConnection(connection, immediate)
             return passthrough
+
         shellConnected.addErrback(disconnectOnFailure)
 
         channel = _ShellChannel(self._creator, protocolFactory, shellConnected)
@@ -946,6 +954,7 @@ class SSHCommandClientEndpoint(object):
             immediate = passthrough.check(CancelledError)
             self._creator.cleanupConnection(connection, immediate)
             return passthrough
+
         commandConnected.addErrback(disconnectOnFailure)
 
         channel = _CommandChannel(
@@ -959,6 +968,7 @@ class _ReadFile(object):
     A weakly file-like object which can be used with L{KnownHostsFile} to
     respond in the negative to all prompts for decisions.
     """
+
     def __init__(self, contents):
         """
         @param contents: L{bytes} which will be returned from every C{readline}
