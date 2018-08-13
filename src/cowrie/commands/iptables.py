@@ -76,6 +76,7 @@ class command_iptables(HoneyPotCommand):
                 else:
                     val = arg_default
                 setattr(parser.values, option.dest, val)
+
             return func
 
         # Initialize options

@@ -20,6 +20,7 @@ class command_faked_package_class_factory(object):
         class command_faked_installation(HoneyPotCommand):
             def call(self):
                 self.write(b"%s: Segmentation fault\n" % name)
+
         return command_faked_installation
 
 
@@ -29,6 +30,7 @@ class command_aptget(HoneyPotCommand):
     suppports only the 'install PACKAGE' command & 'moo'.
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
+
     def start(self):
         if len(self.args) == 0:
             self.do_help()

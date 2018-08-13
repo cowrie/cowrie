@@ -1,4 +1,3 @@
-
 """
 Output plugin for HPFeeds
 """

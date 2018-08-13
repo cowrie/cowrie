@@ -27,7 +27,6 @@ from cowrie.core.config import CONFIG
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
-
     startTime = None
     gotVersion = False
 
@@ -154,10 +153,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         packet = (struct.pack(b'!LB',
                               totalSize + lenPad - 4, lenPad) +
                   payload + padding)
-        encPacket = (
-            self.currentEncryptions.encrypt(packet) +
-            self.currentEncryptions.makeMAC(
-                self.outgoingPacketSequence, packet))
+        encPacket = (self.currentEncryptions.encrypt(packet) +
+                     self.currentEncryptions.makeMAC(
+                         self.outgoingPacketSequence, packet))
         self.transport.write(encPacket)
         self.outgoingPacketSequence += 1
 

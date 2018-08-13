@@ -86,6 +86,7 @@ class UsernamePasswordIP(object):
     """
     This credential interface also provides an IP address
     """
+
     def __init__(self, username, password, ip):
         self.username = username
         self.password = password
