@@ -1,9 +1,7 @@
 import unittest
-import docker
-import os
-import time
 from paramiko import SSHClient, client, ssh_exception
 from ddt import ddt
+from IntegrationTests.Helpers.DockerHelper import DockerHelper
 
 
 @ddt
@@ -14,15 +12,8 @@ class test_Ssh(unittest.TestCase):
         """
         Create a Container that can be used within the tests.
         """
-        dockerClient = docker.from_env()
-        dockerClient.images.build(
-            path=os.getcwd(), tag="testdockercontainerimage")
-        cls.container = dockerClient.containers.run(
-            image="testdockercontainerimage", name="testdockercontainercontainer",
-            detach=True, remove=True)
-        cls.container.reload()
+        cls.container = DockerHelper.get("cowrie-test-ssh")
         cls.container_ip = cls.container.attrs["NetworkSettings"]["Networks"]["bridge"]["IPAddress"]
-        time.sleep(10)
         super(test_Ssh, cls).setUpClass()
 
     @classmethod
