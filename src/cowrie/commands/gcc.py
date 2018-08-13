@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import os

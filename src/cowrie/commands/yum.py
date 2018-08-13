@@ -4,17 +4,16 @@
 
 # Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch
 
-from __future__ import division, absolute_import
-from datetime import datetime
+from __future__ import absolute_import, division
 
+import hashlib
 import random
 import re
-import hashlib
 
-from twisted.internet import reactor, defer
+from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
-
 from twisted.python import log
+
 from cowrie.shell.command import HoneyPotCommand
 
 arch = 'x86_64'

@@ -1,12 +1,13 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from twisted.conch import avatar
-from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
+from twisted.conch.interfaces import IConchUser, ISFTPServer, ISession
 from twisted.conch.ssh import filetransfer as conchfiletransfer
-from twisted.python import log, components
+from twisted.python import components, log
+
 from zope.interface import implementer
 
 from cowrie.core.config import CONFIG

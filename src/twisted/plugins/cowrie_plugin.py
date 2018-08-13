@@ -26,12 +26,12 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
+import configparser
 import os
 import sys
 
-import configparser
 from twisted._version import __version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
@@ -40,6 +40,7 @@ from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
+
 from zope.interface import implementer, provider
 
 import cowrie.core.checkers
@@ -48,7 +49,7 @@ import cowrie.ssh.factory
 import cowrie.telnet.transport
 from cowrie import core
 from cowrie.core.config import CONFIG
-from cowrie.core.utils import get_endpoints_from_section, create_endpoint_services
+from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")

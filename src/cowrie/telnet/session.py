@@ -5,7 +5,7 @@ Telnet User Session management for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import traceback
 
@@ -13,6 +13,7 @@ from twisted.conch.ssh import session
 from twisted.conch.telnet import ECHO, SGA, TelnetBootstrapProtocol
 from twisted.internet import interfaces, protocol
 from twisted.python import log
+
 from zope.interface import implementer
 
 from cowrie.insults import insults

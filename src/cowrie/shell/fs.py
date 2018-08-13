@@ -1,20 +1,21 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 try:
     import cPickle as pickle
 except:
     import pickle
 
-import os
-import time
+import errno
 import fnmatch
 import hashlib
+import os
 import re
 import stat
-import errno
+import time
+
 
 from twisted.python import log
 

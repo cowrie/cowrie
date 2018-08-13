@@ -2,7 +2,7 @@
 # Copyright (c) 2014 Peter Reuterås <peter@reuteras.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from cowrie.shell.command import HoneyPotCommand
 

@@ -7,7 +7,7 @@
 Tests for general shell interaction and echo command
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 

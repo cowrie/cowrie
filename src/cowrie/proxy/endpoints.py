@@ -22,7 +22,7 @@ from twisted.conch.ssh.keys import Key
 from twisted.conch.ssh.session import SSHSession, packRequest_pty_req
 from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.userauth import SSHUserAuthClient
-from twisted.internet.defer import Deferred, succeed, CancelledError
+from twisted.internet.defer import CancelledError, Deferred, succeed
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.internet.error import ConnectionDone, ProcessTerminated
 from twisted.internet.interfaces import IStreamClientEndpoint
@@ -31,6 +31,7 @@ from twisted.python import log
 from twisted.python.compat import nativeString, networkString
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
+
 from zope.interface import Interface, implementer
 
 

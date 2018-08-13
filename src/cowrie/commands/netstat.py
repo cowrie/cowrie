@@ -1,6 +1,6 @@
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import socket
 

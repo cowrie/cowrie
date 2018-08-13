@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import stat
@@ -9,7 +9,7 @@ import time
 
 import cowrie.shell.fs as fs
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.pwd import Passwd, Group
+from cowrie.shell.pwd import Group, Passwd
 
 commands = {}
 

@@ -3,9 +3,10 @@
 MySQL output connector. Writes audit logs to MySQL database
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import MySQLdb
+
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log

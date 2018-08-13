@@ -30,7 +30,7 @@
 Work in progress Kafka output. Not functional yet
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 import logging
@@ -38,8 +38,9 @@ import random
 import string
 
 from afkak.client import KafkaClient
-from afkak.partitioner import RoundRobinPartitioner, HashedPartitioner
+from afkak.partitioner import HashedPartitioner, RoundRobinPartitioner
 from afkak.producer import Producer
+
 from twisted.internet import defer, task
 from twisted.python import log
 

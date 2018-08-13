@@ -5,12 +5,14 @@
 This module contains ...
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from configparser import NoOptionError
+
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession
-from twisted.python import log, components
+from twisted.python import components, log
+
 from zope.interface import implementer
 
 from cowrie.core.config import CONFIG

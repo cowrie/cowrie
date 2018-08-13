@@ -31,7 +31,7 @@ Send SSH logins to Virustotal
 Work in Progress - not functional yet
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 import os
@@ -42,11 +42,12 @@ except ImportError:
     from urllib import urlencode
     from urlparse import urlparse
 
-from twisted.python import log
-from twisted.web.iweb import IBodyProducer
 from twisted.internet import defer, reactor
-from twisted.web import client, http_headers
 from twisted.internet.ssl import ClientContextFactory
+from twisted.python import log
+from twisted.web import client, http_headers
+from twisted.web.iweb import IBodyProducer
+
 from zope.interface import implementer
 
 import cowrie.core.output

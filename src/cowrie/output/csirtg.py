@@ -1,10 +1,11 @@
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 from datetime import datetime
 
 from csirtgsdk.client import Client
 from csirtgsdk.indicator import Indicator
+
 from twisted.python import log
 
 import cowrie.core.output

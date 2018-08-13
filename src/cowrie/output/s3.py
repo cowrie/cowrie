@@ -2,11 +2,13 @@
 Send downloaded/uplaoded files to S3 (or compatible)
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
+
+from configparser import NoOptionError
 
 from botocore.exceptions import ClientError
 from botocore.session import get_session
-from configparser import NoOptionError
+
 from twisted.internet import defer, threads
 from twisted.python import log
 

@@ -1,13 +1,13 @@
-from __future__ import division, absolute_import
-
-from io import StringIO
+from __future__ import absolute_import, division
 
 import configparser
+from io import StringIO
+
 from twisted.application.service import MultiService
 from twisted.internet import protocol, reactor
 from twisted.trial import unittest
 
-from cowrie.core.utils import durationHuman, get_endpoints_from_section, create_endpoint_services
+from cowrie.core.utils import create_endpoint_services, durationHuman, get_endpoints_from_section
 
 
 def get_config(config_string):

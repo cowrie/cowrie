@@ -5,15 +5,15 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import struct
-import uuid
 import time
-
+import uuid
 from configparser import NoOptionError
-from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, ITelnetProtocol, \
-    SGA, NAWS, LINEMODE, TelnetTransport, AlreadyNegotiating
+
+from twisted.conch.telnet import AlreadyNegotiating, AuthenticatingTelnetProtocol, ITelnetProtocol, TelnetTransport
+from twisted.conch.telnet import ECHO, LINEMODE, NAWS, SGA
 from twisted.internet import protocol
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
