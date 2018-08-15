@@ -1,11 +1,9 @@
 import unittest
 from paramiko import SSHClient, client, ssh_exception
-from ddt import ddt
 from IntegrationTests.Helpers.DockerHelper import DockerHelper
 
 
-@ddt
-class test_Ssh(unittest.TestCase):
+class TestSsh(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -14,7 +12,7 @@ class test_Ssh(unittest.TestCase):
         """
         cls.container = DockerHelper.get("cowrie-test-ssh")
         cls.container_ip = cls.container.attrs["NetworkSettings"]["Networks"]["bridge"]["IPAddress"]
-        super(test_Ssh, cls).setUpClass()
+        super(TestSsh, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
@@ -22,12 +20,12 @@ class test_Ssh(unittest.TestCase):
         Remove our Testcontainerclient.
         """
         cls.container.stop()
-        super(test_Ssh, cls).tearDownClass()
+        super(TestSsh, cls).tearDownClass()
 
     def test_LoginIntoSshWithRoot_LoginWillSucceed(self):
-        sshClient = SSHClient()
-        sshClient.set_missing_host_key_policy(client.AutoAddPolicy)
-        sshClient.connect(self.container_ip, port=2222, username="root", password="foobar")
+        ssh_client = SSHClient()
+        ssh_client.set_missing_host_key_policy(client.AutoAddPolicy)
+        ssh_client.connect(self.container_ip, port=2222, username="root", password="foobar")
 
     def test_LoginIntoSshWithOtherUser_WillRaiseAuthenticationException(self):
         sshClient = SSHClient()

@@ -1,23 +1,24 @@
 import unittest
 import socket
+import IntegrationTests.Helpers.DockerHelper
 from ddt import ddt, data
-from IntegrationTests.Helpers.DockerHelper import DockerHelper
-
 
 @ddt
-class test_DockerContainer(unittest.TestCase):
+class TestDockerContainer(unittest.TestCase):
     """
     The docker build is tested implicit as we need a build image to test it.
     """
+
+    container = None
 
     @classmethod
     def setUpClass(cls):
         """
         Create a Container that can be used within the tests.
         """
-        cls.container = DockerHelper.get("cowrie-test-dockercontainer")
+        cls.container = IntegrationTests.Helpers.DockerHelper.DockerHelper.get("cowrie-test-dockercontainer")
         cls.container_ip = cls.container.attrs["NetworkSettings"]["Networks"]["bridge"]["IPAddress"]
-        super(test_DockerContainer, cls).setUpClass()
+        super(TestDockerContainer, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
@@ -25,9 +26,9 @@ class test_DockerContainer(unittest.TestCase):
         Remove our Testcontainerclient.
         """
         cls.container.stop()
-        super(test_DockerContainer, cls).tearDownClass()
+        super(TestDockerContainer, cls).tearDownClass()
 
-    @data(2222)  # , 2223) <- telnet not open yet. activate when the dockerfile supports boths ports
+    @data(2222)  # , 2223) <- telnet not open yet. activate when the dockerfile supports both ports
     def test_ConnectToPort_ConnectionResultIsNotZero(self, value):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = sock.connect_ex((self.container_ip, value))
