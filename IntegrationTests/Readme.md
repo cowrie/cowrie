@@ -11,7 +11,7 @@ pytest -v IntegrationTests
 
 Just build it
 ```
-docker build -t cowrie/test -f IntegrationTest.Dockerfile .
+docker build -t cowrie/test -f IntegrationTests.Dockerfile .
 ```
 
 And run it
