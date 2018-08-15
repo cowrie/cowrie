@@ -1,6 +1,5 @@
 import os
 import time
-
 import docker
 
 
@@ -10,10 +9,10 @@ class DockerHelper():
         """
         Create a Container that can be used within the tests.
         """
-        dockerClient = docker.from_env()
-        dockerClient.images.build(
+        docker_client = docker.from_env()
+        docker_client.images.build(
             path=os.getcwd(), tag=f"{name}-image")
-        container = dockerClient.containers.run(
+        container = docker_client.containers.run(
             image=f"{name}-image", name=f"{name}-container",
             detach=True, remove=True)
         container.reload()
