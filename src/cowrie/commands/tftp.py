@@ -94,7 +94,6 @@ class command_tftp(HoneyPotCommand):
             args = parser.parse_args(self.args)
             if args.c:
                 if len(args.c) > 1:
-                    command = args.c[0]
                     self.file_to_get = args.c[1]
                     if args.hostname is None:
                         raise OptionNotFound("Hostname is invalid")
