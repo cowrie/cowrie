@@ -58,7 +58,7 @@ class command_wget(HoneyPotCommand):
     def start(self):
         try:
             optlist, args = getopt.getopt(self.args, 'cqO:P:', 'header=')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             self.exit()
             return
@@ -86,7 +86,7 @@ class command_wget(HoneyPotCommand):
             if not outfile:
                 if '-O' in args:
                     outfile = args[args.index('-O') + 1]
-        except:
+        except Exception:
             pass
 
         if '://' not in url:
@@ -137,12 +137,11 @@ class command_wget(HoneyPotCommand):
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == b'https' else 80)
-            path = parsed.path or '/'
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
             if not host:
                 return None
-        except:
+        except Exception:
             self.errorWrite('%s: Unsupported scheme.\n' % (url,))
             return None
 
@@ -217,7 +216,7 @@ class command_wget(HoneyPotCommand):
             self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
                                       format='Attempt to download file(s) from URL (%(url)s) failed',
                                       url=self.url)
-        except:
+        except Exception:
             pass
 
         self.exit()
