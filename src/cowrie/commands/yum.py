@@ -167,7 +167,7 @@ Options:
   --sec-severity=SEVS, --secseverity=SEVS
                         Include security relevant packages matching the
                         severity, in updates
-  --tsflags=TSFLAGS     
+  --tsflags=TSFLAGS
 
   Plugin Options:
     --changelog         Show changelog delta of updated packages
