@@ -257,7 +257,6 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)
-            path = parsed.path or '/'
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
         except Exception:
@@ -396,12 +395,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if (time.time() - self.lastupdate) < 0.5:
                 return client.HTTPDownloader.pagePart(self, data)
-            if self.totallength:
-                percent = (self.currentlength / self.totallength) * 100
-                spercent = "{0}%%".format(percent)
-            else:
-                spercent = '{0}K'.format(self.currentlength / 1000)
-                percent = 0
+
             self.speed = self.currentlength / (time.time() - self.started)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
