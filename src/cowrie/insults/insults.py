@@ -141,7 +141,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         outfile=shasumfile,
                         shasum=shasum,
                         destfile='')
-            except IOError as e:
+            except IOError:
                 pass
             finally:
                 self.stdinlogOpen = False
