@@ -65,12 +65,12 @@ class command_adduser(HoneyPotCommand):
             self.schedule_next()
             return
 
-        l = self.output[self.item]
-        self.write(l[1] % {'username': self.username})
-        if l[0] == O_P:
+        line = self.output[self.item]
+        self.write(line[1] % {'username': self.username})
+        if line[0] == O_P:
             self.protocol.password_input = True
             return
-        if l[0] == O_Q:
+        if line[0] == O_Q:
             return
         else:
             self.item += 1
