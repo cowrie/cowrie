@@ -65,8 +65,8 @@ def strpack8(x):
 
 # unpacks a string with 1 byte length field
 def strunpack8(x):
-    l = x[0]
-    return x[1:1 + l], x[1 + l:]
+    line = x[0]
+    return x[1:1 + line], x[1 + line:]
 
 
 def msghdr(op, data):
