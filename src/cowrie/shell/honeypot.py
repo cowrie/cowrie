@@ -263,8 +263,8 @@ class HoneyPotShell(object):
     def handle_TAB(self):
         if not self.protocol.lineBuffer:
             return
-        l = ''.join(self.protocol.lineBuffer)
-        if l[-1] == ' ':
+        line = ''.join(self.protocol.lineBuffer)
+        if line[-1] == ' ':
             clue = ''
         else:
             clue = ''.join(self.protocol.lineBuffer).split()[-1]
@@ -301,7 +301,7 @@ class HoneyPotShell(object):
 
         newbuf = ''
         if len(files) == 1:
-            newbuf = ' '.join(l.split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
+            newbuf = ' '.join(line.split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
@@ -311,7 +311,7 @@ class HoneyPotShell(object):
                 prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ''
-            first = l.split(' ')[:-1]
+            first = line.split(' ')[:-1]
             newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
             if newbuf == ''.join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b'\n')
