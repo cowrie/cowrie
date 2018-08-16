@@ -131,7 +131,7 @@ class command_echo(HoneyPotCommand):
                     escape_fn = lambda s: s
                 elif opt[0] == '-n':
                     newline = False
-        except:
+        except Exception:
             args = self.args
 
         try:
@@ -154,7 +154,7 @@ class command_echo(HoneyPotCommand):
 
             self.write(escape_fn(s))
 
-        except ValueError as e:
+        except ValueError:
             log.msg("echo command received Python incorrect hex escape")
 
 
@@ -452,12 +452,12 @@ class command_ps(HoneyPotCommand):
                 elif 'a' not in args and 'x' not in args \
                         and output[i][_tty].strip() != 'pts/0':
                     continue
-            l = [_pid, _tty, _time, _command]
+            line = [_pid, _tty, _time, _command]
             if 'a' in args or 'x' in args:
-                l = [_pid, _tty, _stat, _time, _command]
+                line = [_pid, _tty, _stat, _time, _command]
             if 'u' in args:
-                l = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, _start, _time, _command]
-            s = ''.join([output[i][x] for x in l])
+                line = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, _start, _time, _command]
+            s = ''.join([output[i][x] for x in line])
             if 'w' not in args:
                 s = s[:80]
             self.write('{0}\n'.format(s))
@@ -599,7 +599,7 @@ class command_history(HoneyPotCommand):
             for l in self.protocol.historyLines:
                 self.write(' %s  %s\n' % (str(count).rjust(4), l))
                 count += 1
-        except:
+        except Exception:
             # Non-interactive shell, do nothing
             pass
 
