@@ -63,7 +63,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_normal(self, path):
         try:
-            if self.protocol.fs.isdir(path) and self.showDirectories == False:
+            if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
@@ -83,11 +83,11 @@ class command_ls(HoneyPotCommand):
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
 
-        l = [x[fs.A_NAME] for x in files]
-        if not l:
+        line = [x[fs.A_NAME] for x in files]
+        if not line:
             return
         count = 0
-        maxlen = max([len(x) for x in l])
+        maxlen = max([len(x) for x in line])
 
         try:
             wincols = self.protocol.user.windowSize[1]
@@ -95,7 +95,7 @@ class command_ls(HoneyPotCommand):
             wincols = 80
 
         perline = int(wincols / (maxlen + 1))
-        for f in l:
+        for f in line:
             if count == perline:
                 count = 0
                 self.write('\n')
@@ -105,7 +105,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_l(self, path):
         try:
-            if self.protocol.fs.isdir(path) and self.showDirectories == False:
+            if self.protocol.fs.isdir(path) and self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
@@ -178,7 +178,7 @@ class command_ls(HoneyPotCommand):
             perms = ''.join(perms)
             ctime = time.localtime(file[fs.A_CTIME])
 
-            l = '%s 1 %s %s %s %s %s%s' % \
+            line = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
                  self.uid2name(file[fs.A_UID]),
                  self.gid2name(file[fs.A_GID]),
@@ -187,7 +187,7 @@ class command_ls(HoneyPotCommand):
                  file[fs.A_NAME],
                  linktarget)
 
-            self.write('{0}\n'.format(l))
+            self.write('{0}\n'.format(line))
 
 
 commands['/bin/ls'] = command_ls
