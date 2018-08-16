@@ -19,13 +19,13 @@ class command_ls(HoneyPotCommand):
     def uid2name(self, uid):
         try:
             return Passwd().getpwuid(uid)["pw_name"]
-        except:
+        except Exception:
             return str(uid)
 
     def gid2name(self, gid):
         try:
             return Group().getgrgid(gid)["gr_name"]
-        except:
+        except Exception:
             return str(gid)
 
     def call(self):
@@ -78,7 +78,7 @@ class command_ls(HoneyPotCommand):
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
-        except:
+        except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
@@ -120,7 +120,7 @@ class command_ls(HoneyPotCommand):
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
-        except:
+        except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return

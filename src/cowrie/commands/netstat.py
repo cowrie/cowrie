@@ -90,7 +90,7 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
             s_port = "ssh"
             try:
                 c_name = socket.gethostbyaddr(self.protocol.clientIP)[0][:17]
-            except:
+            except Exception:
                 c_name = self.protocol.clientIP
         if self.show_listen or self.show_all:
             self.write("tcp        0      0 *:ssh                   *:*                     LISTEN\n")

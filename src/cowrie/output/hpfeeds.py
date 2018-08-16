@@ -135,7 +135,7 @@ class hpclient(object):
         self.s.settimeout(3)
         try:
             self.s.connect((self.server, self.port))
-        except:
+        except Exception:
             log.msg('hpfeeds client could not connect to broker.')
             self.s = None
         else:

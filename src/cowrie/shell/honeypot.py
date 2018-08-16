@@ -270,7 +270,7 @@ class HoneyPotShell(object):
             clue = ''.join(self.protocol.lineBuffer).split()[-1]
         try:
             basedir = os.path.dirname(clue)
-        except:
+        except Exception:
             pass
         if basedir and basedir[-1] != '/':
             basedir += '/'
@@ -281,7 +281,7 @@ class HoneyPotShell(object):
             tmppath = self.protocol.cwd
         try:
             r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
-        except:
+        except Exception:
             return
         for x in self.protocol.fs.get_path(r):
             if clue == '':

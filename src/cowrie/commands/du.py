@@ -110,7 +110,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
-        except:
+        except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return

@@ -260,7 +260,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             path = parsed.path or '/'
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
-        except:
+        except Exception:
             self.errorWrite('curl: (1) Protocol "{}" not supported or disabled in libcurl\n'.format(scheme))
             self.exit()
             return None

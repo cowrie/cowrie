@@ -30,7 +30,7 @@ class Output(cowrie.core.output.Output):
         self.batch_size = CONFIG.getint('output_dshield', 'batch_size')
         try:
             self.debug = CONFIG.getboolean('output_dshield', 'debug')
-        except:
+        except Exception:
             self.debug = False
 
         cowrie.core.output.Output.__init__(self)

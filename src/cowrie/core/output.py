@@ -94,7 +94,7 @@ class Output(object):
             '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
         try:
             self.sensor = CONFIG.get('honeypot', 'sensor_name')
-        except:
+        except Exception:
             self.sensor = socket.gethostname()
 
         self.start()
@@ -169,7 +169,7 @@ class Output(object):
             try:
                 ev['message'] = ev['format'] % ev
                 del ev['format']
-            except:
+            except Exception:
                 pass
 
         # Explicit sessionno (from logDispatch) overrides from 'system'

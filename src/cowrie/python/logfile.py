@@ -23,7 +23,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
         """
         try:
             return "{:02d}-{:02d}-{:02d}".format(tupledate[0], tupledate[1], tupledate[2])
-        except:
+        except Exception:
             # try taking a float unixtime
             return '_'.join(map(str, self.toDate(tupledate)))
 

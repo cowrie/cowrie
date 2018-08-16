@@ -135,7 +135,7 @@ Makes a Cowrie SSH/Telnet honeypot.
                 log.addObserver(dblogger.emit)
                 self.dbloggers.append(dblogger)
                 log.msg("Loaded dblog engine: {}".format(engine))
-            except:
+            except Exception:
                 log.err()
                 log.msg("Failed to load dblog engine: {}".format(engine))
 

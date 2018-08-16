@@ -30,7 +30,7 @@ class command_grep(HoneyPotCommand):
         try:
             contents = self.fs.file_contents(filename)
             self.grep_application(contents, match)
-        except:
+        except Exception:
             self.errorWrite("grep: {}: No such file or directory\n".format(filename))
 
     def grep_application(self, contents, match):
@@ -103,7 +103,7 @@ class command_tail(HoneyPotCommand):
         try:
             contents = self.fs.file_contents(filename)
             self.tail_application(contents)
-        except:
+        except Exception:
             self.errorWrite("tail: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
     def tail_application(self, contents):
@@ -176,7 +176,7 @@ class command_head(HoneyPotCommand):
         try:
             contents = self.fs.file_contents(filename)
             self.head_application(contents)
-        except:
+        except Exception:
             self.errorWrite("head: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
     def start(self):
@@ -231,7 +231,7 @@ class command_cd(HoneyPotCommand):
         try:
             newpath = self.fs.resolve_path(pname, self.protocol.cwd)
             inode = self.fs.getfile(newpath)
-        except:
+        except Exception:
             newdir = None
         if pname == "-":
             self.errorWrite('bash: cd: OLDPWD not set\n')

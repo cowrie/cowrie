@@ -5,7 +5,7 @@ from __future__ import absolute_import, division
 
 try:
     import cPickle as pickle
-except:
+except Exception:
     import pickle
 
 import errno
@@ -25,7 +25,7 @@ from cowrie.core.config import CONFIG
 # Put extra help here in case it goes wrong
 try:
     PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
-except:
+except Exception:
     print("ERROR: Config file not found: etc/cowrie.cfg.dist")
     exit(2)
 
@@ -277,7 +277,7 @@ class HoneyPotFilesystem(object):
         """
         try:
             f = self.getfile(path)
-        except:
+        except Exception:
             return False
         return f[A_TYPE] == T_FILE
 
@@ -289,7 +289,7 @@ class HoneyPotFilesystem(object):
         """
         try:
             f = self.getfile(path)
-        except:
+        except Exception:
             return False
         return f[A_TYPE] == T_LINK
 
@@ -302,7 +302,7 @@ class HoneyPotFilesystem(object):
             return True
         try:
             dir = self.getfile(path)
-        except:
+        except Exception:
             dir = None
         if dir is None or dir is False:
             return False

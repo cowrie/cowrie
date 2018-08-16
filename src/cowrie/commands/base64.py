@@ -105,7 +105,7 @@ Try 'base64 --help' for more information.
         else:
             try:
                 self.write(s.decode('base64'))
-            except:
+            except Exception:
                 self.errorWrite("base64: invalid input\n")
 
     def lineReceived(self, line):

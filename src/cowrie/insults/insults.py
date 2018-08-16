@@ -32,14 +32,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         try:
             self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
-        except:
+        except Exception:
             self.ttylogEnabled = True
 
         self.redirFiles = set()
 
         try:
             self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
-        except:
+        except Exception:
             self.bytesReceivedLimit = 0
 
         if prot is protocol.HoneyPotExecProtocol:

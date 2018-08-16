@@ -55,7 +55,7 @@ class command_tar(HoneyPotCommand):
 
         try:
             t = tarfile.open(f[A_REALFILE])
-        except:
+        except Exception:
             self.write('tar: this does not look like a tar archive\n')
             self.write('tar: skipping to next header\n')
             self.write('tar: error exit delayed from previous errors\n')

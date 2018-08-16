@@ -52,7 +52,7 @@ class HoneyPotRealm(object):
     def requestAvatar(self, avatarId, mind, *interfaces):
         try:
             backend = CONFIG.get('honeypot', 'backend')
-        except:
+        except Exception:
             backend = 'shell'
 
         if backend == 'shell':

@@ -33,7 +33,7 @@ class CowrieUser(avatar.ConchUser):
             self.uid = pwentry['pw_uid']
             self.gid = pwentry['pw_gid']
             self.home = pwentry['pw_dir']
-        except:
+        except Exception:
             self.uid = 1001
             self.gid = 1001
             self.home = '/home'
@@ -50,7 +50,7 @@ class CowrieUser(avatar.ConchUser):
         try:
             if CONFIG.getboolean('ssh', 'forwarding') == False:
                 del self.channelLookup[b'direct-tcpip']
-        except:
+        except Exception:
             pass
 
     def logout(self):

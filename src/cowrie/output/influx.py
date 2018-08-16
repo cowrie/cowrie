@@ -17,12 +17,12 @@ class Output(cowrie.core.output.Output):
     def start(self):
         try:
             host = CONFIG.get('output_influx', 'host')
-        except:
+        except Exception:
             host = ''
 
         try:
             port = CONFIG.getint('output_influx', 'port')
-        except:
+        except Exception:
             port = 8086
 
         self.client = None
@@ -45,7 +45,7 @@ class Output(cowrie.core.output.Output):
 
         try:
             dbname = CONFIG.get('output_influx', 'database_name')
-        except:
+        except Exception:
             dbname = 'cowrie'
 
         retention_policy_duration_default = '12w'

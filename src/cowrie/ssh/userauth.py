@@ -154,7 +154,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             if packet:
                 raise error.ConchError(
                     "{:d} bytes of extra data".format(len(packet)))
-        except:
+        except Exception:
             d.errback(Failure())
         else:
             d.callback(resp)

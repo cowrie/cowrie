@@ -48,7 +48,7 @@ class Output(cowrie.core.output.Output):
     def __init__(self):
         try:
             self.debug = CONFIG.getboolean('output_mysql', 'debug')
-        except:
+        except Exception:
             self.debug = False
 
         cowrie.core.output.Output.__init__(self)
@@ -56,7 +56,7 @@ class Output(cowrie.core.output.Output):
     def start(self):
         try:
             port = CONFIG.getint('output_mysql', 'port')
-        except:
+        except Exception:
             port = 3306
 
         try:

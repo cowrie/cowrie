@@ -84,14 +84,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         try:
             timeout = CONFIG.getint('honeypot', 'interactive_timeout')
-        except:
+        except Exception:
             timeout = 180
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
         try:
             self.clientIP = CONFIG.get('honeypot', 'fake_addr')
-        except:
+        except Exception:
             self.clientIP = self.realClientIP
 
         # Source IP of server in user visible reports (can be fake or real)
@@ -102,7 +102,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
                 self.kippoIP = s.getsockname()[0]
-            except:
+            except Exception:
                 self.kippoIP = '192.168.0.1'
             finally:
                 s.close()
@@ -279,7 +279,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def displayMOTD(self):
         try:
             self.terminal.write(self.fs.file_contents('/etc/motd'))
-        except:
+        except Exception:
             pass
 
     def timeoutConnection(self):
