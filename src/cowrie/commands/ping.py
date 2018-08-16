@@ -22,7 +22,7 @@ class command_ping(HoneyPotCommand):
         try:
             socket.inet_aton(address)
             return True
-        except:
+        except Exception:
             return False
 
     def start(self):
@@ -41,7 +41,7 @@ class command_ping(HoneyPotCommand):
             if opt[0] == '-c':
                 try:
                     self.max = int(opt[1])
-                except:
+                except Exception:
                     self.max = 0
                 if self.max <= 0:
                     self.write('ping: bad number of packets to transmit.\n')
