@@ -20,7 +20,6 @@ def durationHuman(seconds):
     days, hours = divmod(hours, 24)
     years, days = divmod(days, 365.242199)
 
-    sdays = str(days)
     syears = str(years)
     sseconds = str(seconds).rjust(2, '0')
     sminutes = str(minutes).rjust(2, '0')
