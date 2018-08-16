@@ -46,7 +46,6 @@ from twisted.python import log
 
 import cowrie.core.output
 import cowrie.python.logfile
-from cowrie.core.config import CONFIG
 
 
 def random_string(l, charset=string.letters.encode()):
@@ -131,9 +130,6 @@ class Output(cowrie.core.output.Output):
 
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
-        host = CONFIG.get('output_kafka', 'host')
-        port = CONFIG.get('output_kafka', 'port')
-        topic = CONFIG.get('output_kafka', 'topic')
 
     def start(self):
         pass
