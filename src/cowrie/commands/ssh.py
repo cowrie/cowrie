@@ -23,13 +23,13 @@ class command_ssh(HoneyPotCommand):
         try:
             socket.inet_aton(address)
             return True
-        except:
+        except Exception:
             return False
 
     def start(self):
         try:
             optlist, args = getopt.getopt(self.args, '-1246AaCfgKkMNnqsTtVvXxYb:c:D:e:F:i:L:l:m:O:o:p:R:S:w:')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.write('Unrecognized option\n')
             self.exit()
         for opt in optlist:
