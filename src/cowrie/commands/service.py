@@ -92,7 +92,7 @@ class command_service(HoneyPotCommand):
     def call(self):
         try:
             opts, args = getopt.gnu_getopt(self.args, 'h', ['help', 'status-all', 'full-restart'])
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.help()
             return
 
