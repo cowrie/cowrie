@@ -95,11 +95,11 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
         if self.show_listen or self.show_all:
             self.write("tcp        0      0 *:ssh                   *:*                     LISTEN\n")
         if not self.show_listen or self.show_all:
-            l = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
+            line = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
                 (s_name, s_port, " " * (24 - len(s_name + s_port) - 1),
                  c_name, c_port, " " * (24 - len(c_name + c_port) - 1),
                  "ESTABLISHED")
-            self.write('{0}\n'.format(l))
+            self.write('{0}\n'.format(line))
         if self.show_listen or self.show_all:
             self.write("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN\n")
         self.write("""Active UNIX domain sockets (only servers)
