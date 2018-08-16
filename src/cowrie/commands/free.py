@@ -33,6 +33,7 @@ class command_free(HoneyPotCommand):
     """
     free
     """
+
     def call(self):
         # Parse options or display no files
         try:

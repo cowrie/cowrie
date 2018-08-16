@@ -17,8 +17,9 @@ class command_netstat(HoneyPotCommand):
         self.write('Fred Baumgarten, Alan Cox, Bernd Eckenfels, Phil Blundell, Tuan Hoang and others\n')
         self.write('+NEW_ADDRT +RTF_IRTT +RTF_REJECT +FW_MASQUERADE +I18N\n')
         self.write('AF: (inet) +UNIX +INET +INET6 +IPX +AX25 +NETROM +X25 +ATALK +ECONET +ROSE\n')
-        self.write('HW:  +ETHER +ARC +SLIP +PPP +TUNNEL +TR +AX25 +NETROM +X25 +FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64\n')
-
+        self.write('HW:  +ETHER +ARC +SLIP +PPP +TUNNEL +TR +AX25 +NETROM +X25' +
+                   '+FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64\n')
+        
     def show_help(self):
         self.write("""
 usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
@@ -68,11 +69,11 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         destination = self.protocol.kippoIP.rsplit('.', 1)[0] + ".0"
         gateway = self.protocol.kippoIP.rsplit('.', 1)[0] + ".1"
         l1 = "%s%s0.0.0.0         UG        0 0          0 eth0" % \
-            ('{:<16}'.format(default),
-             '{:<16}'.format(gateway))
+             ('{:<16}'.format(default),
+              '{:<16}'.format(gateway))
         l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % \
-            ('{:<16}'.format(destination),
-             '{:<16}'.format(lgateway))
+             ('{:<16}'.format(destination),
+              '{:<16}'.format(lgateway))
         self.write('{0}\n'.format(l1))
         self.write('{0}\n'.format(l2))
 

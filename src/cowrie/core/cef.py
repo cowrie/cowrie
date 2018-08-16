@@ -28,6 +28,7 @@
 
 from __future__ import absolute_import, division
 
+
 #  cowrie.client.fingerprint
 #  cowrie.client.size
 #  cowrie.client.var
@@ -49,7 +50,8 @@ def formatCef(logentry):
     """
     Take logentry and turn into CEF string
     """
-    #  Jan 18 11:07:53 host CEF:Version|Device Vendor|Device Product|Device Version|Signature ID|Name|Severity|[Extension]
+    # Jan 18 11:07:53 host CEF:Version|Device Vendor|Device Product|
+    # Device Version|Signature ID|Name|Severity|[Extension]
     cefVendor = "Cowrie"
     cefProduct = "Cowrie"
     cefVersion = "1.0"

@@ -34,7 +34,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             commands.update(module.commands)
         except Exception as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
+            log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(
+                traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
     def __init__(self, avatar):
         self.user = avatar
@@ -134,6 +135,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 log.msg('Reading txtcmd from "{}"'.format(txt))
                 with open(txt, 'r') as f:
                     self.write(f.read())
+
         return command_txtcmd
 
     def isCommand(self, cmd):
@@ -212,7 +214,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
-
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
@@ -270,7 +271,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             b'\x0c': self.handle_CTRL_L,  # CTRL-L
             b'\x0e': self.handle_DOWN,  # CTRL-N
             b'\x10': self.handle_UP,  # CTRL-P
-            b'\x15': self.handle_CTRL_U,   # CTRL-U
+            b'\x15': self.handle_CTRL_U,  # CTRL-U
             b'\x16': self.handle_CTRL_V,  # CTRL-V
             b'\x1b': self.handle_ESC,  # ESC
         })

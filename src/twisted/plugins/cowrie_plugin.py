@@ -69,7 +69,6 @@ class Options(usage.Options):
 
 @provider(ILogObserver)
 def importFailureObserver(event):
-
     if 'failure' in event and event['failure'].type is ImportError:
         log.err("ERROR: %s. Please run `pip install -U -r requirements.txt` "
                 "from Cowrie's install directory and virtualenv to install "

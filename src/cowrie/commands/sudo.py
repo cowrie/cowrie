@@ -1,5 +1,3 @@
-
-
 from __future__ import absolute_import, division
 
 import getopt
@@ -16,7 +14,7 @@ usage: sudo -v [-AknS] [-D level] [-g groupname|#gid] [-p prompt] [-u user name|
 usage: sudo -l[l] [-AknS] [-D level] [-g groupname|#gid] [-p prompt] [-U user name] [-u user name|#uid] [-g groupname|#gid] [command]
 usage: sudo [-AbEHknPS] [-r role] [-t type] [-C fd] [-D level] [-g groupname|#gid] [-p prompt] [-u user name|#uid] [-g groupname|#gid] [VAR=value] [-i|-s] [<command>]
 usage: sudo -e [-AknS] [-r role] [-t type] [-C fd] [-D level] [-g groupname|#gid] [-p prompt] [-u user name|#uid] file ...
-''').strip().split('\n')
+''').strip().split('\n')  # noqa: E501
 
 sudo_longhelp = ('''
 sudo - execute a command as another user
@@ -52,7 +50,7 @@ Options:
   -V            display version information and exit
   -v            update user's timestamp without running a command
   --            stop processing command line arguments
-''').strip().split('\n')
+''').strip().split('\n')  # noqa: E501
 
 
 class command_sudo(HoneyPotCommand):

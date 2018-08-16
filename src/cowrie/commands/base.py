@@ -80,7 +80,7 @@ A star (*) next to a name means that the command is disabled.
  function name { COMMANDS ; } or name () { COMMANDS ; }                                         variables - Names and meanings of some shell variables
  getopts optstring name [arg]                                                                   wait [id]
  hash [-lr] [-p pathname] [-dt] [name ...]                                                      while COMMANDS; do COMMANDS; done
- help [-dms] [pattern ...]                                                                      { COMMANDS ; }\n""")
+ help [-dms] [pattern ...]                                                                      { COMMANDS ; }\n""")  # noqa: E501
 
 
 commands['help'] = command_help
@@ -539,18 +539,14 @@ class command_shutdown(HoneyPotCommand):
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
             self.write('\n')
-            self.write(
-                'Broadcast message from root@%s (pts/0) (%s):\n' % \
-                (self.protocol.hostname, time.ctime()))
+            self.write('Broadcast message from root@{} (pts/0) ({}):\n'.format(self.protocol.hostname, time.ctime()))
             self.write('\n')
             self.write('The system is going down for maintenance NOW!\n')
             reactor.callLater(3, self.finish)
         elif len(self.args) > 1 and self.args[0].strip().count('-r') \
                 and self.args[1].strip().count('now'):
             self.write('\n')
-            self.write(
-                'Broadcast message from root@%s (pts/0) (%s):\n' % \
-                (self.protocol.hostname, time.ctime()))
+            self.write('Broadcast message from root@{} (pts/0) ({}):\n'.format(self.protocol.hostname, time.ctime()))
             self.write('\n')
             self.write('The system is going down for reboot NOW!\n')
             reactor.callLater(3, self.finish)
@@ -577,9 +573,7 @@ class command_reboot(HoneyPotCommand):
 
     def start(self):
         self.write('\n')
-        self.write(
-            'Broadcast message from root@%s (pts/0) (%s):\n\n' % \
-            (self.protocol.hostname, time.ctime()))
+        self.write('Broadcast message from root@{} (pts/0) ({}):\n\n'.format(self.protocol.hostname, time.ctime()))
         self.write('The system is going down for reboot NOW!\n')
         reactor.callLater(3, self.finish)
 
@@ -691,9 +685,7 @@ class command_chmod(HoneyPotCommand):
         for arg in self.args[1:]:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if not self.fs.exists(path):
-                self.write(
-                    'chmod: cannot access %s: No such file or directory\n' % \
-                    (arg,))
+                self.write('chmod: cannot access {}: No such file or directory\n'.format(arg))
 
 
 commands['/bin/chmod'] = command_chmod

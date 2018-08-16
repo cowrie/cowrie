@@ -79,8 +79,8 @@ class Output(cowrie.core.output.Output):
             self.postfile(entry["outfile"], fileName)
 
         elif entry["eventid"] == "cowrie.session.file_upload":
-                print("Sending file to MalShare")
-                self.postfile(entry["outfile"], entry["filename"])
+            print("Sending file to MalShare")
+            self.postfile(entry["outfile"], entry["filename"])
 
     def postfile(self, artifact, fileName):
         """

@@ -62,7 +62,9 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b'passwd\n')
         self.proto.lineReceived(b'changeme\n')
         self.proto.lineReceived(b'changeme\n')
-        self.assertEquals(self.tr.value(), b'Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n' + PROMPT)
+        self.assertEquals(
+            self.tr.value(),
+            b'Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n' + PROMPT)
 
     # def test_shutdown_command(self):
     #    self.proto.lineReceived(b'shutdown\n')
@@ -77,7 +79,9 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_date_command(self):
         self.proto.lineReceived(b'date\n')
-        self.assertRegexpMatches(self.tr.value(), b'[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n' + PROMPT)
+        self.assertRegexpMatches(
+            self.tr.value(),
+            b'[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n' + PROMPT)  # noqa: E501
 
     # def test_bash_command(self):
     #    self.proto.lineReceived(b'bash\n')

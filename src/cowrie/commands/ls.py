@@ -37,7 +37,8 @@ class command_ls(HoneyPotCommand):
 
         # Parse options or display no files
         try:
-            opts, args = getopt.gnu_getopt(self.args, '1@ABCFGHLOPRSTUWabcdefghiklmnopqrstuvwx', ['help', 'version', 'param'])
+            opts, args = getopt.gnu_getopt(self.args, '1@ABCFGHLOPRSTUWabcdefghiklmnopqrstuvwx',
+                                           ['help', 'version', 'param'])
         except getopt.GetoptError as err:
             self.write("ls: {}\n".format(err))
             self.write("Try 'ls --help' for more information.\n")

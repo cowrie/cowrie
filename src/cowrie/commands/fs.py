@@ -356,6 +356,7 @@ class command_mv(HoneyPotCommand):
     """
     mv command
     """
+
     def call(self):
         if not len(self.args):
             self.errorWrite("mv: missing file operand\n")
@@ -422,6 +423,7 @@ class command_mkdir(HoneyPotCommand):
     """
     mkdir command
     """
+
     def call(self):
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
@@ -432,9 +434,7 @@ class command_mkdir(HoneyPotCommand):
             try:
                 self.fs.mkdir(pname, 0, 0, 4096, 16877)
             except (fs.FileNotFound) as err:
-                self.errorWrite(
-                    'mkdir: cannot create directory `{}\': '.format(f) + \
-                    'No such file or directory\n')
+                self.errorWrite('mkdir: cannot create directory `{}\': No such file or directory\n'.format(f))
             return
 
 
@@ -460,8 +460,7 @@ class command_rmdir(HoneyPotCommand):
             fname = os.path.basename(f)
             if not dir or fname not in [x[fs.A_NAME] for x in dir]:
                 self.errorWrite(
-                    'rmdir: failed to remove `{}\': '.format(f) + \
-                    'No such file or directory\n')
+                    'rmdir: failed to remove `{}\': No such file or directory\n'.format(f))
                 continue
             for i in dir[:]:
                 if i[fs.A_NAME] == fname:
@@ -491,6 +490,7 @@ class command_touch(HoneyPotCommand):
     """
     touch command
     """
+
     def call(self):
         if not len(self.args):
             self.errorWrite('touch: missing file operand\n')

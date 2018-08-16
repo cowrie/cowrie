@@ -20,6 +20,7 @@ class command_ulimit(HoneyPotCommand):
 
     ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]
     """
+
     def call(self):
         # Parse options or display no files
         try:

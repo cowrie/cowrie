@@ -48,7 +48,8 @@ def sizeof_fmt(num):
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
 def splitthousands(s, sep=','):
-    if len(s) <= 3: return s
+    if len(s) <= 3:
+        return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
 
@@ -262,10 +263,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if self.totallength > 0:
                 if not self.quiet:
-                    self.wget.errorWrite('Length: %d (%s) [%s]\n' % \
-                                         (self.totallength,
-                                          sizeof_fmt(self.totallength),
-                                          self.contenttype))
+                    self.wget.errorWrite('Length: {} ({}) [{}]\n'.format(self.totallength,
+                                                                         sizeof_fmt(self.totallength),
+                                                                         self.contenttype))
             else:
                 if not self.quiet:
                     self.wget.errorWrite('Length: unspecified [{}]\n'.format(self.contenttype))

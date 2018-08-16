@@ -22,7 +22,6 @@ from cowrie.shell import pwd
 
 
 class HoneyPotTelnetSession(TelnetBootstrapProtocol):
-
     id = 0  # telnet can only have 1 simultaneous session, unlike SSH
     windowSize = [40, 80]
 
