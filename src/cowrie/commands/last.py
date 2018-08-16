@@ -13,16 +13,13 @@ commands = {}
 class command_last(HoneyPotCommand):
 
     def call(self):
-        l = list(self.args)
-        numlines = 25
-        while len(l):
-            arg = l.pop(0)
+        line = list(self.args)
+        while len(line):
+            arg = line.pop(0)
             if not arg.startswith('-'):
                 continue
-            elif arg[1:].isdigit():
-                numlines = int(arg[1:])
-            elif arg == '-n' and len(l) and l[0].isdigit():
-                numlines = int(l.pop(0))
+            elif arg == '-n' and len(line) and line[0].isdigit():
+                line.pop(0)
 
         self.write('%-8s %-12s %-16s %s   still logged in\n' %
                    (self.protocol.user.username, "pts/0", self.protocol.clientIP,
