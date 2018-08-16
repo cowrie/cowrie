@@ -64,10 +64,8 @@ class Output(cowrie.core.output.Output):
         if eventid == 'cowrie.session.connect':
             # Check if sensor exists, else add it.
             doc = self.col_sensors.find_one({'sensor': self.sensor})
-            if doc:
-                sensorid = doc['sensor']
-            else:
-                sensorid = self.insert_one(self.col_sensors, entry)
+            if not doc:
+                self.insert_one(self.col_sensors, entry)
 
             # Prep extra elements just to make django happy later on
             entry['starttime'] = entry['timestamp']
