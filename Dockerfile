@@ -25,7 +25,7 @@ COPY src /cowrie
 
 FROM post-builder as linter
 RUN pip install flake8 flake8-import-order && \
-  flake8 --count --select=E1,E2,E3,E5,E701,E901,E999,F401,F811,F821,F822,F823,I,W291,W293 --application-import-names cowrie --max-line-length=120 --statistics /cowrie
+  flake8 --count --application-import-names cowrie --max-line-length=120 --statistics /cowrie
 
 FROM post-builder as unittest
 ENV PYTHONPATH=/cowrie
