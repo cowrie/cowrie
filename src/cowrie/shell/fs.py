@@ -16,7 +16,6 @@ import re
 import stat
 import time
 
-
 from twisted.python import log
 
 from cowrie.core.config import CONFIG
@@ -202,7 +201,7 @@ class HoneyPotFilesystem(object):
                 return False
             for x in p[A_CONTENTS]:
                 if x[A_NAME] == piece:
-                    if piece == pieces[-1] and follow_symlinks == False:
+                    if piece == pieces[-1] and not follow_symlinks:
                         p = x
                     elif x[A_TYPE] == T_LINK:
                         if x[A_TARGET][0] == '/':
@@ -211,7 +210,7 @@ class HoneyPotFilesystem(object):
                         else:
                             # Relative link
                             p = self.getfile('/'.join((cwd, x[A_TARGET])), follow_symlinks=follow_symlinks)
-                        if p == False:
+                        if not p:
                             # Broken link
                             return False
                     else:
@@ -390,7 +389,7 @@ class HoneyPotFilesystem(object):
         FIXME mkdir() name conflicts with existing mkdir
         """
         dir = self.getfile(path)
-        if dir != False:
+        if dir:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         self.mkdir(path, 0, 0, 4096, 16877)
 
@@ -399,7 +398,7 @@ class HoneyPotFilesystem(object):
         name = os.path.basename(path)
         parent = os.path.dirname(path)
         dir = self.getfile(path, follow_symlinks=False)
-        if dir == False:
+        if not dir:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         if dir[A_TYPE] != T_DIR:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
@@ -414,19 +413,19 @@ class HoneyPotFilesystem(object):
 
     def utime(self, path, atime, mtime):
         p = self.getfile(path)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_CTIME] = mtime
 
     def chmod(self, path, perm):
         p = self.getfile(path)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
 
     def chown(self, path, uid, gid):
         p = self.getfile(path)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if (uid != -1):
             p[A_UID] = uid
@@ -435,14 +434,14 @@ class HoneyPotFilesystem(object):
 
     def remove(self, path):
         p = self.getfile(path, follow_symlinks=False)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         self.get_path(os.path.dirname(path)).remove(p)
         return
 
     def readlink(self, path):
         p = self.getfile(path, follow_symlinks=False)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if not (p[A_MODE] & stat.S_IFLNK):
             raise OSError
@@ -453,10 +452,10 @@ class HoneyPotFilesystem(object):
 
     def rename(self, oldpath, newpath):
         old = self.getfile(oldpath)
-        if old == False:
+        if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         new = self.getfile(newpath)
-        if new != False:
+        if new:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST))
 
         self.get_path(os.path.dirname(oldpath)).remove(old)
@@ -484,7 +483,7 @@ class HoneyPotFilesystem(object):
         else:
             p = self.getfile(path, follow_symlinks=follow_symlinks)
 
-        if (p == False):
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
 
         return _statobj(p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE], p[A_CTIME], p[A_CTIME], p[A_CTIME])
@@ -494,7 +493,7 @@ class HoneyPotFilesystem(object):
 
     def update_size(self, filename, size):
         f = self.getfile(filename)
-        if f == False:
+        if not f:
             return
         if f[A_TYPE] != T_FILE:
             return
