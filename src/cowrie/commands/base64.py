@@ -20,7 +20,7 @@ class command_base64(HoneyPotCommand):
 
         try:
             optlist, args = getopt.getopt(self.args, 'diw:', ['version', 'help', 'decode', 'ignore-garbage', 'wrap='])
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             self.exit()
             return
