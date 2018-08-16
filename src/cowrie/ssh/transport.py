@@ -113,7 +113,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self.gotVersion = True
                 remote_major = m.group(1)
                 remote_minor = m.group(2)
-                remote_version = m.group(3)
                 if remote_major != b'2' and not (remote_major == b'1' and remote_minor == b'99'):
                     self._unsupportedVersionReceived(None)
                     return
