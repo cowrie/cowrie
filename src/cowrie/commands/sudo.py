@@ -102,7 +102,6 @@ class command_sudo(HoneyPotCommand):
                 return
 
         if len(parsed_arguments) > 0:
-            line = ' '.join(parsed_arguments)
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(cmd, self.environ['PATH'].split(':'))
 
