@@ -19,7 +19,7 @@ class command_netstat(HoneyPotCommand):
         self.write('AF: (inet) +UNIX +INET +INET6 +IPX +AX25 +NETROM +X25 +ATALK +ECONET +ROSE\n')
         self.write('HW:  +ETHER +ARC +SLIP +PPP +TUNNEL +TR +AX25 +NETROM +X25' +
                    '+FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64\n')
-        
+
     def show_help(self):
         self.write("""
 usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
