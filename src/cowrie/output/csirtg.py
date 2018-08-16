@@ -37,7 +37,6 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, e):
-        sid = e['session']
         peerIP = e['src_ip']
         ts = e['timestamp']
         system = e['system']
