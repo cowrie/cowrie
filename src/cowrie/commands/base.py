@@ -119,16 +119,17 @@ commands['who'] = command_who
 class command_echo(HoneyPotCommand):
 
     def call(self):
-        escape_fn = lambda s: s
+
         newline = True
+        escape_decode = False
 
         try:
             optlist, args = getopt.getopt(self.args, "eEn")
             for opt in optlist:
                 if opt[0] == '-e':
-                    escape_fn = lambda s: codecs.escape_decode(s)[0]
+                    escape_decode = True
                 elif opt[0] == '-E':
-                    escape_fn = lambda s: s
+                    escape_decode = False
                 elif opt[0] == '-n':
                     newline = False
         except Exception:
@@ -136,23 +137,26 @@ class command_echo(HoneyPotCommand):
 
         try:
             # replace r'\\x' with r'\x'
-            s = ' '.join(args).replace('\\\\x', '\\x')
+            string = ' '.join(args).replace('\\\\x', '\\x')
 
             # replace single character escape \x0 with \x00
-            s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+            string = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', string)
 
             # strip single and double quotes
-            s = s.strip('\"\'')
+            string = string.strip('\"\'')
 
             # if the string ends with \c escape, strip it and set newline flag to False
-            if s.endswith('\\c'):
-                s = s[:-2]
+            if string.endswith('\\c'):
+                string = string[:-2]
                 newline = False
 
             if newline is True:
-                s += '\n'
+                string += '\n'
 
-            self.write(escape_fn(s))
+            if escape_decode:
+                string = codecs.escape_decode(string)[0]
+
+            self.write(string)
 
         except ValueError:
             log.msg("echo command received Python incorrect hex escape")
@@ -168,24 +172,21 @@ class command_printf(HoneyPotCommand):
         if not len(self.args):
             self.write('printf: usage: printf [-v var] format [arguments]\n')
         else:
-            if '-v' not in self.args:
-                if len(self.args) < 2:
-                    escape_fn = lambda s: codecs.escape_decode(s)[0]
+            if '-v' not in self.args and len(self.args) < 2:
+                # replace r'\\x' with r'\x'
+                s = ''.join(self.args[0]).replace('\\\\x', '\\x')
 
-                    # replace r'\\x' with r'\x'
-                    s = ''.join(self.args[0]).replace('\\\\x', '\\x')
+                # replace single character escape \x0 with \x00
+                s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
 
-                    # replace single character escape \x0 with \x00
-                    s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+                # strip single and double quotes
+                s = s.strip('\"\'')
 
-                    # strip single and double quotes
-                    s = s.strip('\"\'')
+                # if the string ends with \c escape, strip it
+                if s.endswith('\\c'):
+                    s = s[:-2]
 
-                    # if the string ends with \c escape, strip it
-                    if s.endswith('\\c'):
-                        s = s[:-2]
-
-                    self.write(escape_fn(s))
+                self.write(codecs.escape_devode(s)[0])
 
 
 commands['/usr/bin/printf'] = command_printf
