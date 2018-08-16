@@ -194,23 +194,6 @@ class command_scp(HoneyPotCommand):
                 os.path.exists(self.protocol.terminal.stdinlogFile):
             with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
                 data = f.read()
-                while True:
-
-                    if not data:
-                        break
-
-                    data = self.parse_scp_data(data)
-
-            self.protocol.terminal.stdinlogOpen = False
-            os.remove(self.protocol.terminal.stdinlogFile)
-
-        self.exit()
-
-    def handle_CTRL_D(self):
-        if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \
-                os.path.exists(self.protocol.terminal.stdinlogFile):
-            with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
-                data = f.read()
                 header = data[:data.find(b'\n')]
                 if re.match('C0[\d]{3} [\d]+ [^\s]+', header.decode()):
                     data = data[data.find(b'\n') + 1:]
