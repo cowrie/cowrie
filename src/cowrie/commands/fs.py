@@ -232,7 +232,7 @@ class command_cd(HoneyPotCommand):
             newpath = self.fs.resolve_path(pname, self.protocol.cwd)
             inode = self.fs.getfile(newpath)
         except Exception:
-            newdir = None
+            pass
         if pname == "-":
             self.errorWrite('bash: cd: OLDPWD not set\n')
             return
@@ -267,7 +267,6 @@ class command_rm(HoneyPotCommand):
                     'rm: cannot remove `{}\': No such file or directory\n'.format(f))
                 continue
             basename = pname.split('/')[-1]
-            contents = [x for x in dir]
             for i in dir[:]:
                 if i[fs.A_NAME] == basename:
                     if i[fs.A_TYPE] == fs.T_DIR and not recursive:
@@ -293,7 +292,7 @@ class command_cp(HoneyPotCommand):
         try:
             optlist, args = getopt.gnu_getopt(self.args,
                                               '-abdfiHlLPpRrsStTuvx')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             return
         recursive = False
@@ -365,7 +364,7 @@ class command_mv(HoneyPotCommand):
 
         try:
             optlist, args = getopt.gnu_getopt(self.args, '-bfiStTuv')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             self.exit()
 
@@ -433,7 +432,7 @@ class command_mkdir(HoneyPotCommand):
                 return
             try:
                 self.fs.mkdir(pname, 0, 0, 4096, 16877)
-            except (fs.FileNotFound) as err:
+            except (fs.FileNotFound):
                 self.errorWrite('mkdir: cannot create directory `{}\': No such file or directory\n'.format(f))
             return
 
