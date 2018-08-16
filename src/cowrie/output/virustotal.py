@@ -33,8 +33,6 @@ Work in Progress - not functional yet
 
 from __future__ import division, absolute_import
 
-from zope.interface import implementer
-
 import json
 import os
 
@@ -49,9 +47,9 @@ from twisted.web.iweb import IBodyProducer
 from twisted.internet import defer, reactor
 from twisted.web import client, http_headers
 from twisted.internet.ssl import ClientContextFactory
+from zope.interface import implementer
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 
@@ -59,9 +57,8 @@ COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = b'https://www.virustotal.com/vtapi/v2/'
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/micheloosterhof/cowrie"
 
+
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         self.apiKey = CONFIG.get('output_virustotal', 'api_key')
@@ -71,13 +68,11 @@ class Output(cowrie.core.output.Output):
         self.commenttext = CONFIG.get('output_virustotal', 'commenttext', fallback=COMMENT)
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         """
         Start output plugin
         """
         self.agent = client.Agent(reactor, WebClientContextFactory())
-
 
     def stop(self):
         """
@@ -85,10 +80,7 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-
     def write(self, entry):
-        """
-        """
         if entry["eventid"] == 'cowrie.session.file_download':
             # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
             log.msg("Checking scan report at VT")
@@ -121,13 +113,11 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
-
         def cbBody(body):
             """
             Received body
             """
             return processResult(body)
-
 
         def cbPartial(failure):
             """
@@ -135,11 +125,9 @@ class Output(cowrie.core.output.Output):
             """
             return processResult(failure.value.response)
 
-
         def cbError(failure):
             log.msg("VT: Error in scanfile")
             failure.printTraceback()
-
 
         def processResult(result):
             """
@@ -176,7 +164,6 @@ class Output(cowrie.core.output.Output):
         d.addErrback(cbError)
         return d
 
-
     def postfile(self, artifact, fileName):
         """
         Send a file to VirusTotal
@@ -199,17 +186,13 @@ class Output(cowrie.core.output.Output):
         def cbBody(body):
             return processResult(body)
 
-
         def cbPartial(failure):
             """
             Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
             return processResult(failure.value.response)
 
-
         def cbResponse(response):
-            """
-            """
             if response.code == 200:
                 d = client.readBody(response)
                 d.addCallback(cbBody)
@@ -219,16 +202,10 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
-
         def cbError(failure):
-            """
-            """
             failure.printTraceback()
 
-
         def processResult(result):
-            """
-            """
             if self.debug:
                 log.msg("VT postfile result: {}".format(result))
             j = json.loads(result)
@@ -243,7 +220,6 @@ class Output(cowrie.core.output.Output):
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
-
 
     def scanurl(self, url):
         """
@@ -267,13 +243,11 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
-
         def cbBody(body):
             """
             Received body
             """
             return processResult(body)
-
 
         def cbPartial(failure):
             """
@@ -281,11 +255,9 @@ class Output(cowrie.core.output.Output):
             """
             return processResult(failure.value.response)
 
-
         def cbError(failure):
             log.msg("cbError")
             failure.printTraceback()
-
 
         def processResult(result):
             """
@@ -311,7 +283,6 @@ class Output(cowrie.core.output.Output):
         d.addErrback(cbError)
         return d
 
-
     def postcomment(self, resource):
         """
         Send a comment to VirusTotal with Twisted
@@ -327,10 +298,7 @@ class Output(cowrie.core.output.Output):
         d = self.agent.request(b'POST', vtUrl, headers, body)
 
         def cbBody(body):
-            """
-            """
             return processResult(body)
-
 
         def cbPartial(failure):
             """
@@ -338,10 +306,7 @@ class Output(cowrie.core.output.Output):
             """
             return processResult(failure.value.response)
 
-
         def cbResponse(response):
-            """
-            """
             if response.code == 200:
                 d = client.readBody(response)
                 d.addCallback(cbBody)
@@ -351,16 +316,10 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
                 return
 
-
         def cbError(failure):
-            """
-            """
             failure.printTraceback()
 
-
         def processResult(result):
-            """
-            """
             if self.debug:
                 log.msg("VT postcomment result: {}".format(result))
             j = json.loads(result)
@@ -371,43 +330,29 @@ class Output(cowrie.core.output.Output):
         return d
 
 
-
 class WebClientContextFactory(ClientContextFactory):
-    """
-    """
+
     def getContext(self, hostname, port):
         return ClientContextFactory.getContext(self)
 
 
-
 @implementer(IBodyProducer)
 class StringProducer(object):
-    """
-    """
 
     def __init__(self, body):
         self.body = body
         self.length = len(body)
 
-
     def startProducing(self, consumer):
-        """
-        """
+
         consumer.write(self.body)
         return defer.succeed(None)
 
-
     def pauseProducing(self):
-        """
-        """
         pass
-
 
     def stopProducing(self):
-        """
-        """
         pass
-
 
 
 def encode_multipart_formdata(fields, files):

@@ -35,10 +35,11 @@ from __future__ import division, absolute_import
 import struct
 
 from twisted.conch.ssh import connection, common
-from twisted.python import log
 from twisted.internet import defer
+from twisted.python import log
 
 MSG_CHANNEL_SUCCESS = 99
+
 
 class CowrieSSHConnection(connection.SSHConnection):
     """

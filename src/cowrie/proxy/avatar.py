@@ -7,24 +7,20 @@ This module contains ...
 
 from __future__ import division, absolute_import
 
-from zope.interface import implementer
 from configparser import NoOptionError
-
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession
 from twisted.python import log, components
-
-from cowrie.ssh import forwarding
-from cowrie.proxy import session as proxysession
-from cowrie.shell import session as shellsession
+from zope.interface import implementer
 
 from cowrie.core.config import CONFIG
+from cowrie.proxy import session as proxysession
+from cowrie.shell import session as shellsession
+from cowrie.ssh import forwarding
 
 
 @implementer(IConchUser)
 class CowrieUser(avatar.ConchUser):
-    """
-    """
 
     def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
@@ -43,10 +39,8 @@ class CowrieUser(avatar.ConchUser):
         except NoOptionError:
             pass
 
-
     def logout(self):
-        """
-        """
         log.msg('avatar {} logging out'.format(self.username))
+
 
 components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)

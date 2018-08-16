@@ -2,6 +2,7 @@ from __future__ import division, absolute_import
 
 import argparse
 
+
 class OptionNotFound(Exception):
 
     def __init__(self, value):
@@ -50,7 +51,6 @@ class CustomParser(argparse.ArgumentParser):
 
     def exit(self, status=0, message=None):
         raise ExitException("Exiting...")
-
 
     def _print_message(self, message, file=None):
         super(CustomParser, self)._print_message(message, self.protocol)

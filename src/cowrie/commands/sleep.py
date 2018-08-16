@@ -13,20 +13,16 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_sleep(HoneyPotCommand):
     """
     Sleep
     """
 
     def done(self):
-        """
-        """
         self.exit()
 
-
     def start(self):
-        """
-        """
         if len(self.args) == 1:
             _time = int(self.args[0])
             self.scheduled = reactor.callLater(_time, self.done)

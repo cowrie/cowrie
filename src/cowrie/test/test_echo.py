@@ -8,6 +8,7 @@ Tests for general shell interaction and echo command
 """
 
 from __future__ import division, absolute_import
+
 import os
 
 from twisted.trial import unittest
@@ -21,17 +22,14 @@ os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 
+
 class ShellEchoCommandTests(unittest.TestCase):
-    """
-    """
+
     def setUp(self):
-        """
-        """
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
-
 
     def test_echo_command_001(self):
         """
@@ -40,14 +38,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo "test"\n')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
-
     def test_echo_command_002(self):
         """
         argument splitting and recombining
         """
         self.proto.lineReceived(b'echo test  test\n')
         self.assertEquals(self.tr.value(), b'test test\n' + PROMPT)
-
 
     def test_echo_command_003(self):
         """
@@ -56,14 +52,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo -n "test  test"\n')
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
-
     def test_echo_command_004(self):
         """
         echo -n 
         """
         self.proto.lineReceived(b'echo -n "test  test"\n')
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
-
 
     def test_echo_command_005(self):
         """
@@ -72,14 +66,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo test > test5; cat test5')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
-
     def test_echo_command_006(self):
         """
         echo -n 
         """
         self.proto.lineReceived(b'echo "\\n"\n')
         self.assertEquals(self.tr.value(), b'\\n\n' + PROMPT)
-
 
     def test_echo_command_007(self):
         """
@@ -88,14 +80,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo test >> test7; cat test7')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
-
     def test_echo_command_008(self):
         """
         echo test > test; echo test >> test; cat test
         """
         self.proto.lineReceived(b'echo test > test8; echo test >> test8; cat test8')
         self.assertEquals(self.tr.value(), b'test\ntest\n' + PROMPT)
-
 
     def test_echo_command_009(self):
         """
@@ -104,14 +94,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo test | grep test')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
-
     def test_echo_command_010(self):
         """
         echo test | grep test
         """
         self.proto.lineReceived(b'echo test | grep test2')
         self.assertEquals(self.tr.value(), PROMPT)
-
 
     def test_echo_command_011(self):
         """
@@ -120,14 +108,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo test > test011; cat test011 | grep test')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
-
     def test_echo_command_012(self):
         """
         echo test > test012; grep test test012
         """
         self.proto.lineReceived(b'echo test > test012; grep test test012')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
-
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

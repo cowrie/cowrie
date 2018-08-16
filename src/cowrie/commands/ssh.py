@@ -1,41 +1,33 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-"""
-
 from __future__ import division, absolute_import
 
-import time
-import re
-import hashlib
 import getopt
+import hashlib
+import re
 import socket
+import time
 
-from twisted.python import log
 from twisted.internet import reactor
+from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 
+
 commands = {}
 
+
 class command_ssh(HoneyPotCommand):
-    """
-    """
 
     def valid_ip(self, address):
-        """
-        """
         try:
             socket.inet_aton(address)
             return True
         except:
             return False
 
-
     def start(self):
-        """
-        """
         try:
             optlist, args = getopt.getopt(self.args, '-1246AaCfgKkMNnqsTtVvXxYb:c:D:e:F:i:L:l:m:O:o:p:R:S:w:')
         except getopt.GetoptError as err:
@@ -83,26 +75,17 @@ class command_ssh(HoneyPotCommand):
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 
-
     def yesno(self, line):
-        """
-        """
         self.write(
             'Warning: Permanently added \'%s\' (RSA) to the list of known hosts.\n' % \
             self.host)
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.protocol.password_input = True
 
-
     def wait(self, line):
-        """
-        """
         reactor.callLater(2, self.finish, line)
 
-
     def finish(self, line):
-        """
-        """
         self.pause = False
         rest, host = self.host, 'localhost'
         rest = self.host.strip().split('.')
@@ -119,10 +102,7 @@ class command_ssh(HoneyPotCommand):
         self.write('Last login: %s from 192.168.9.4\n' % (time.ctime(time.time() - 123123),))
         self.exit()
 
-
     def lineReceived(self, line):
-        """
-        """
         log.msg('INPUT (ssh):', line)
         if len(self.callbacks):
             self.callbacks.pop(0)(line)

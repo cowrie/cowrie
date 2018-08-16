@@ -26,10 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-Docstring
-"""
-
 from __future__ import division, absolute_import
 
 import json
@@ -37,13 +33,10 @@ import os
 
 import cowrie.core.output
 import cowrie.python.logfile
-
 from cowrie.core.config import CONFIG
 
+
 class Output(cowrie.core.output.Output):
-    """
-    Docstring class
-    """
 
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
@@ -52,22 +45,13 @@ class Output(cowrie.core.output.Output):
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
 
-
     def start(self):
-        """
-        """
         pass
 
-
     def stop(self):
-        """
-        """
         self.outfile.flush()
 
-
     def write(self, logentry):
-        """
-        """
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_') or i == 'time' or i == 'system':

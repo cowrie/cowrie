@@ -2,20 +2,20 @@
 from __future__ import division, absolute_import
 
 import json
+import string
+from random import choice
 
-from twisted.words.xish import domish
-from twisted.python import log
-from twisted.words.protocols.jabber.jid import JID
-from twisted.internet import defer
 from twisted.application import service
+from twisted.python import log
 from twisted.words.protocols.jabber import jid
-
-from wokkel.xmppim import AvailablePresence
-from wokkel.client import XMPPClient
+from twisted.words.protocols.jabber.jid import JID
 from wokkel import muc
+from wokkel.client import XMPPClient
+from wokkel.xmppim import AvailablePresence
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
+
 
 class XMPPLoggerProtocol(muc.MUCClient):
 
@@ -31,7 +31,8 @@ class XMPPLoggerProtocol(muc.MUCClient):
         self.activity = None
 
     def connectionInitialized(self):
-        """The bot has connected to the xmpp server, now try to join the room.
+        """
+        The bot has connected to the xmpp server, now try to join the room.
         """
         self.join(self.jrooms, self.nick)
 
@@ -56,15 +57,13 @@ class XMPPLoggerProtocol(muc.MUCClient):
     def receivedHistory(self, room, user, body, dely, frm=None):
         pass
 
+
 class Output(cowrie.core.output.Output):
 
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
-        from random import choice
-        import string
-
         server = CONFIG.get('output_xmpp', 'server')
         user = CONFIG.get('output_xmpp', 'user')
         password = CONFIG.get('output_xmpp', 'password')
@@ -76,7 +75,6 @@ class Output(cowrie.core.output.Output):
         self.run(application, jid, password, JID(None, [muc, server, None]), server)
 
     def run(self, application, jidstr, password, muc, server):
-
         self.xmppclient = XMPPClient(JID(jidstr), password)
         if CONFIG.has_option('output_xmpp', 'debug') and \
                 CONFIG.getboolean('output_xmpp', 'debug') is True:

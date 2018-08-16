@@ -11,6 +11,7 @@ from cowrie.shell.fs import A_NAME
 
 commands = {}
 
+
 class command_du(HoneyPotCommand):
 
     def message_help(self):
@@ -128,5 +129,6 @@ or available locally via: info '(coreutils) du invocation'\n"""
                 self.write(filename)
         if all:
             self.write("36      .\n")
+
 
 commands['du'] = command_du

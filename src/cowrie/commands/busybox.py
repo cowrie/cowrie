@@ -1,11 +1,11 @@
-"""
-"""
+
 
 from __future__ import division, absolute_import
 
+from twisted.python import log
+
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import StdOutStdErrEmulationProtocol
-from twisted.python import log
 
 commands = {}
 
@@ -50,6 +50,7 @@ Currently defined functions:
     zcat
 ''').strip().split('\n')
 
+
 class command_busybox(HoneyPotCommand):
     """
     Fixed by Ivan Korolev (@fe7ch)
@@ -57,15 +58,10 @@ class command_busybox(HoneyPotCommand):
     """
 
     def help(self):
-        """
-        """
         for ln in busybox_help:
             self.errorWrite('{0}\n'.format(ln))
 
-
     def call(self):
-        """
-        """
         if len(self.args) == 0:
             self.help()
             return

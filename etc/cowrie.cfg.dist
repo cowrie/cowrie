@@ -318,10 +318,10 @@ enabled = true
 
 # Public and private SSH key files. If these don't exist, they are created
 # automatically.
-rsa_public_key = ${honeypot:etc_path}/ssh_host_rsa_key.pub
-rsa_private_key = ${honeypot:etc_path}/ssh_host_rsa_key
-dsa_public_key = ${honeypot:etc_path}/ssh_host_dsa_key.pub
-dsa_private_key = ${honeypot:etc_path}/ssh_host_dsa_key
+rsa_public_key = ${honeypot:state_path}/ssh_host_rsa_key.pub
+rsa_private_key = ${honeypot:state_path}/ssh_host_rsa_key
+dsa_public_key = ${honeypot:state_path}/ssh_host_dsa_key.pub
+dsa_private_key = ${honeypot:state_path}/ssh_host_dsa_key
 
 
 # SSH version string as present to the client.
@@ -512,7 +512,7 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 #
 [output_jsonlog]
 enabled = true
-logfile = log/cowrie.json
+logfile = ${honeypot:log_path}/cowrie.json
 
 
 # Supports logging to Elasticsearch
@@ -562,7 +562,7 @@ logfile = log/cowrie.json
 #
 #[output_textlog]
 #enabled = false
-#logfile = log/audit.log
+#logfile = ${honeypot:log_path}/audit.log
 #format = text
 
 

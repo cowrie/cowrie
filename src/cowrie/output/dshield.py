@@ -5,24 +5,23 @@ See https://isc.sans.edu/ssh.html
 
 from __future__ import division, absolute_import
 
-import dateutil.parser
-import time
 import base64
-import hmac
+import dateutil.parser
 import hashlib
-import requests
+import hmac
 import re
+import time
 
-from twisted.python import log
+import requests
 from twisted.internet import threads, reactor
+from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
+
     def __init__(self):
         self.auth_key = CONFIG.get('output_dshield', 'auth_key')
         self.userid = CONFIG.get('output_dshield', 'userid')
@@ -34,14 +33,11 @@ class Output(cowrie.core.output.Output):
 
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
         self.batch = []  # This is used to store login attempts in batches
 
-
     def stop(self):
         pass
-
 
     def write(self, entry):
         if entry["eventid"] == 'cowrie.login.success' or entry["eventid"] == 'cowrie.login.failed':
@@ -60,12 +56,10 @@ class Output(cowrie.core.output.Output):
                 self.submit_entries(batch_to_send)
                 self.batch = []
 
-
     def transmission_error(self, batch):
         self.batch.extend(batch)
         if len(self.batch) > self.batch_size * 2:
             self.batch = self.batch[-self.batch_size:]
-
 
     def submit_entries(self, batch):
         """
@@ -113,7 +107,6 @@ class Output(cowrie.core.output.Output):
             timeout=10,
             data=log_output
         )
-
 
         def check_response(resp):
             failed = False

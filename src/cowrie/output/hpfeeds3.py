@@ -1,10 +1,10 @@
 
 """
 Output plugin for HPFeeds
-
 """
 
 from __future__ import division, absolute_import
+
 import json
 import logging
 
@@ -24,8 +24,6 @@ class Output(cowrie.core.output.Output):
     channel = 'cowrie.sessions'
 
     def start(self):
-        """
-        """
         log.msg("WARNING: Beta version of new hpfeeds enabled. This will become hpfeeds in a future release.")
 
         if CONFIG.has_option('output_hpfeeds', 'channel'):
@@ -54,14 +52,9 @@ class Output(cowrie.core.output.Output):
         self.client.startService()
 
     def stop(self):
-        """
-        """
         self.client.stopService()
 
-
     def write(self, entry):
-        """
-        """
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
             self.meta[session] = {

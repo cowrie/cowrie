@@ -1,26 +1,19 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
-from zope.interface import implementer
-
-from twisted.python import log
 from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
+from twisted.python import log
+from zope.interface import implementer
 
-from cowrie.shell import protocol
 from cowrie.insults import insults
+from cowrie.shell import protocol
 
 
 @implementer(ISession)
 class SSHSessionForCowrieUser(object):
-    """
-    """
 
     def __init__(self, avatar, reactor=None):
         """
@@ -50,17 +43,12 @@ class SSHSessionForCowrieUser(object):
         self.server.initFileSystem()
 
     def openShell(self, processprotocol):
-        """
-        """
         self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
-
     def getPty(self, terminal, windowSize, attrs):
-        """
-        """
         self.environ['TERM'] = terminal
         log.msg(
             eventid='cowrie.client.size',
@@ -71,15 +59,11 @@ class SSHSessionForCowrieUser(object):
         self.windowSize = windowSize
         return None
 
-
     def execCommand(self, processprotocol, cmd):
-        """
-        """
         self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd)
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
-
 
     def closed(self):
         """
@@ -90,15 +74,9 @@ class SSHSessionForCowrieUser(object):
             self.protocol.connectionLost("disconnected")
             self.protocol = None
 
-
     def eofReceived(self):
-        """
-        """
         if self.protocol:
             self.protocol.eofReceived()
 
-
     def windowChanged(self, windowSize):
-        """
-        """
         self.windowSize = windowSize

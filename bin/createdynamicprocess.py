@@ -1,7 +1,8 @@
-import psutil
 import json
 import datetime
 import random
+
+import psutil
 
 command = {}
 command['command'] = {}

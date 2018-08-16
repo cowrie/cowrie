@@ -8,24 +8,20 @@ JSON log file is still recommended way to go
 
 from __future__ import division, absolute_import
 
+import json
 from StringIO import StringIO
 
-import json
-
-from twisted.python import log
 from twisted.internet import reactor
+from twisted.internet.ssl import ClientContextFactory
+from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
-from twisted.internet.ssl import ClientContextFactory
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         """
@@ -53,23 +49,14 @@ class Output(cowrie.core.output.Output):
 
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
-        """
-        """
         contextFactory = WebClientContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 
-
     def stop(self):
-        """
-        """
         pass
 
-
     def write(self, logentry):
-        """
-        """
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):
@@ -89,7 +76,6 @@ class Output(cowrie.core.output.Output):
         splunkentry["event"] = logentry
         self.postentry(splunkentry)
 
-
     def postentry(self, entry):
         """
         Send a JSON log entry to Splunk with Twisted
@@ -105,14 +91,12 @@ class Output(cowrie.core.output.Output):
         def cbBody(body):
             return processResult(body)
 
-
         def cbPartial(failure):
             """
             Google HTTP Server does not set Content-Length. Twisted marks it as partial
             """
             failure.printTraceback()
             return processResult(failure.value.response)
-
 
         def cbResponse(response):
             if response.code == 200:
@@ -124,10 +108,8 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
 
-
         def cbError(failure):
             failure.printTraceback()
-
 
         def processResult(result):
             j = json.loads(result)
@@ -138,11 +120,7 @@ class Output(cowrie.core.output.Output):
         return d
 
 
-
 class WebClientContextFactory(ClientContextFactory):
-    """
-    """
+
     def getContext(self, hostname, port):
-        """
-        """
         return ClientContextFactory.getContext(self)

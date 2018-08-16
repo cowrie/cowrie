@@ -3,11 +3,11 @@
 
 from __future__ import division, absolute_import
 
-import re
-import random
-import hashlib
-import socket
 import getopt
+import hashlib
+import random
+import re
+import socket
 
 from twisted.internet import reactor
 
@@ -15,23 +15,17 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_ping(HoneyPotCommand):
-    """
-    """
 
     def valid_ip(self, address):
-        """
-        """
         try:
             socket.inet_aton(address)
             return True
         except:
             return False
 
-
     def start(self):
-        """
-        """
         self.host = None
         self.max = 0
         self.running = False
@@ -81,10 +75,7 @@ class command_ping(HoneyPotCommand):
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
-
     def showreply(self):
-        """
-        """
         ms = 40 + random.random() * 10
         self.write(
             '64 bytes from %s (%s): icmp_seq=%d ttl=50 time=%.1f ms\n' % \
@@ -98,18 +89,12 @@ class command_ping(HoneyPotCommand):
         else:
             self.scheduled = reactor.callLater(1, self.showreply)
 
-
     def printstatistics(self):
-        """
-        """
         self.write('--- %s ping statistics ---\n' % (self.host,))
         self.write('%d packets transmitted, %d received, 0%% packet loss, time 907ms\n' % (self.count, self.count))
         self.write('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n')
 
-
     def handle_CTRL_C(self):
-        """
-        """
         if self.running is False:
             return HoneyPotCommand.handle_CTRL_C(self)
         else:
@@ -117,6 +102,7 @@ class command_ping(HoneyPotCommand):
             self.scheduled.cancel()
             self.printstatistics()
             self.exit()
+
 
 commands['/bin/ping'] = command_ping
 commands['ping'] = command_ping

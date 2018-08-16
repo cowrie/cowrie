@@ -1,23 +1,18 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
+import hashlib
 import os
 import time
-import hashlib
 
-from twisted.python import log
 from twisted.conch.insults import insults
+from twisted.python import log
 
 from cowrie.core import ttylog
-from cowrie.shell import protocol
-
 from cowrie.core.config import CONFIG
+from cowrie.shell import protocol
 
 
 class LoggingServerProtocol(insults.ServerProtocol):
@@ -52,18 +47,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
         else:
             self.type = 'i'  # Interactive
 
-
     def getSessionId(self):
-        """
-        """
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
         return (transportId, channelId)
 
-
     def connectionMade(self):
-        """
-        """
         transportId, channelId = self.getSessionId()
         self.startTime = time.time()
 
@@ -85,16 +74,16 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.connectionMade(self)
 
+        if self.type == 'e':
+            cmd = self.terminalProtocol.execcmd.encode('utf8')
+            ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
 
     def write(self, data):
-        """
-        """
         if self.ttylogEnabled and self.ttylogOpen:
             ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data)
             self.ttylogSize += len(data)
 
         insults.ServerProtocol.write(self, data)
-
 
     def dataReceived(self, data):
         """
@@ -117,7 +106,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.terminalProtocol:
             insults.ServerProtocol.dataReceived(self, data)
 
-
     def eofReceived(self):
         """
         Receive channel close and pass on to terminal
@@ -125,13 +113,11 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
 
-
     def loseConnection(self):
         """
         Override super to remove the terminal reset on logout
         """
         self.transport.loseConnection()
-
 
     def connectionLost(self, reason):
         """
@@ -219,7 +205,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     duration=time.time() - self.startTime)
 
         insults.ServerProtocol.connectionLost(self, reason)
-
 
 
 class LoggingTelnetServerProtocol(LoggingServerProtocol):

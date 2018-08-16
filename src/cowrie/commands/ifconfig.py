@@ -4,8 +4,9 @@
 
 from __future__ import division, absolute_import
 
-from cowrie.shell.command import HoneyPotCommand
 from random import randrange, randint
+
+from cowrie.shell.command import HoneyPotCommand
 
 HWaddr = "%02x:%02x:%02x:%02x:%02x:%02x" % (randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
 

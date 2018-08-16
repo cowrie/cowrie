@@ -34,23 +34,22 @@ More info https://malshare.com/doc.php
 from __future__ import division, absolute_import
 
 import os
+
 try:
     from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse, urljoin
+    from urlparse import urlparse
 import requests
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
 
+
 class Output(cowrie.core.output.Output):
-    """
-    """
 
     def __init__(self):
         self.enabled = CONFIG.getboolean('output_malshare', 'enabled')
         cowrie.core.output.Output.__init__(self)
-
 
     def start(self):
         """
@@ -58,17 +57,13 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-
     def stop(self):
         """
         Stop output plugin
         """
         pass
 
-
     def write(self, entry):
-        """
-        """
         if entry["eventid"] == "cowrie.session.file_download":
             print("Sending file to MalShare")
             p = urlparse(entry["url"]).path

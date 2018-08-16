@@ -2,14 +2,9 @@
 # Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains
-"""
-
 from __future__ import division, absolute_import
 
 from configparser import NoOptionError
-
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
 
@@ -31,9 +26,8 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
             # try taking a float unixtime
             return '_'.join(map(str, self.toDate(tupledate)))
 
+
 def logger():
-    """
-    """
     try:
         dir = CONFIG.get("honeypot", "log_path")
     except NoOptionError:

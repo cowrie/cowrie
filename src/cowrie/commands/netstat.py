@@ -8,6 +8,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_netstat(HoneyPotCommand):
 
     def show_version(self):
@@ -167,6 +168,7 @@ unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\
             if x.startswith('-') and x.count('V'):
                 func = self.show_version
         func()
+
 
 commands['/bin/netstat'] = command_netstat
 commands['netstat'] = command_netstat

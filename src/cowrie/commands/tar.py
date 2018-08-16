@@ -3,8 +3,8 @@
 
 from __future__ import division, absolute_import
 
-import tarfile
 import os
+import tarfile
 
 from twisted.python import log
 
@@ -15,22 +15,15 @@ commands = {}
 
 
 class command_tar(HoneyPotCommand):
-    """
-    """
 
     def mkfullpath(self, path, f):
-        """
-        """
         l, d = path.split('/'), []
         while len(l):
             d.append(l.pop(0))
             if not self.fs.exists('/'.join(d)):
                 self.fs.mkdir('/'.join(d), 0, 0, 4096, f.mode, f.mtime)
 
-
     def call(self):
-        """
-        """
         if len(self.args) < 2:
             self.write('tar: You must specify one of the `-Acdtrux\' options\n')
             self.write('Try `tar --help\' or `tar --usage\' for more information.\n')
@@ -81,6 +74,7 @@ class command_tar(HoneyPotCommand):
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
             else:
                 log.msg("tar: skipping [%s]".format(f.name))
+
 
 commands['/bin/tar'] = command_tar
 commands['tar'] = command_tar

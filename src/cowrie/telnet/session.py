@@ -9,21 +9,18 @@ from __future__ import division, absolute_import
 
 import traceback
 
-from zope.interface import implementer
-
-from twisted.internet import interfaces, protocol
-from twisted.python import log
 from twisted.conch.ssh import session
 from twisted.conch.telnet import ECHO, SGA, TelnetBootstrapProtocol
+from twisted.internet import interfaces, protocol
+from twisted.python import log
+from zope.interface import implementer
 
-from cowrie.shell import pwd
-from cowrie.shell import protocol as cproto
 from cowrie.insults import insults
+from cowrie.shell import protocol as cproto
+from cowrie.shell import pwd
 
 
 class HoneyPotTelnetSession(TelnetBootstrapProtocol):
-    """
-    """
 
     id = 0  # telnet can only have 1 simultaneous session, unlike SSH
     windowSize = [40, 80]
@@ -63,7 +60,6 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # Do the delayed file system initialization
         self.server.initFileSystem()
 
-
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
 
@@ -82,28 +78,22 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         except Exception as e:
             log.msg(traceback.format_exc())
 
-
     def connectionLost(self, reason):
-        """
-        """
         TelnetBootstrapProtocol.connectionLost(self, reason)
         self.server = None
         self.avatar = None
         self.protocol = None
 
-
     def logout(self):
-        """
-        """
         log.msg('avatar {} logging out'.format(self.username))
-
 
 
 # Taken and adapted from
 # https://github.com/twisted/twisted/blob/26ad16ab41db5f0f6d2526a891e81bbd3e260247/twisted/conch/ssh/session.py#L186
 @implementer(interfaces.ITransport)
 class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
-    """I am both an L{IProcessProtocol} and an L{ITransport}.
+    """
+    I am both an L{IProcessProtocol} and an L{ITransport}.
     I am a transport to the remote endpoint and a process protocol to the
     local subsystem.
     """
@@ -115,12 +105,10 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
     def outReceived(self, data):
         self.session.write(data)
 
-
     def errReceived(self, err):
         log.err("Error received: {}".format(err))
         # EXTENDED_DATA_STDERR is from ssh, no equivalent in telnet?
         # self.session.writeExtended(connection.EXTENDED_DATA_STDERR, err)
-
 
     def outConnectionLost(self):
         """
@@ -131,27 +119,23 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         else:
             self.lostOutOrErrFlag = True
 
-
     def errConnectionLost(self):
         """
         See outConnectionLost().
         """
         self.outConnectionLost()
 
-
     def connectionLost(self, reason=None):
         self.session.loseConnection()
         self.session = None
 
-
     def processEnded(self, reason=None):
         """
-        # here SSH is doing signal handling, I don't think telnet supports that so
-        # I'm simply going to bail out
+        here SSH is doing signal handling, I don't think telnet supports that so
+        I'm simply going to bail out
         """
         log.msg("Process ended. Telnet Session disconnected: {}".format(reason))
         self.session.loseConnection()
-
 
     def getHost(self):
         """
@@ -159,21 +143,17 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         """
         return self.session.transport.getHost()
 
-
     def getPeer(self):
         """
         Return the peer from my session's transport.
         """
         return self.session.transport.getPeer()
 
-
     def write(self, data):
         self.session.write(data)
 
-
     def writeSequence(self, seq):
         self.session.write(b''.join(seq))
-
 
     def loseConnection(self):
         self.session.loseConnection()

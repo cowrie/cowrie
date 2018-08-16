@@ -16,8 +16,6 @@ from cowrie.core.config import CONFIG
 
 
 def getRSAKeys():
-    """
-    """
     publicKeyFile = CONFIG.get('ssh', 'rsa_public_key')
     privateKeyFile = CONFIG.get('ssh', 'rsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
@@ -39,10 +37,7 @@ def getRSAKeys():
     return publicKeyString, privateKeyString
 
 
-
 def getDSAKeys():
-    """
-    """
     publicKeyFile = CONFIG.get('ssh', 'dsa_public_key')
     privateKeyFile = CONFIG.get('ssh', 'dsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):

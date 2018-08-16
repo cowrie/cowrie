@@ -13,12 +13,10 @@ commands = {}
 
 O_O, O_Q, O_P = 1, 2, 3
 
+
 class command_adduser(HoneyPotCommand):
-    """
-    """
+
     def start(self):
-        """
-        """
         self.username = None
         self.item = 0
         for arg in self.args:
@@ -61,10 +59,7 @@ class command_adduser(HoneyPotCommand):
         ]
         self.do_output()
 
-
     def do_output(self):
-        """
-        """
         if self.item == len(self.output):
             self.item = 7
             self.schedule_next()
@@ -81,17 +76,11 @@ class command_adduser(HoneyPotCommand):
             self.item += 1
             self.schedule_next()
 
-
     def schedule_next(self):
-        """
-        """
         self.scheduled = reactor.callLater(
             0.5 + random.random() * 1, self.do_output)
 
-
     def lineReceived(self, line):
-        """
-        """
         if self.item + 1 == len(self.output) and line.strip() in ('n', 'no'):
             self.exit()
             return
@@ -104,6 +93,7 @@ class command_adduser(HoneyPotCommand):
             self.item += 1
         self.schedule_next()
         self.protocol.password_input = False
+
 
 commands['/usr/sbin/adduser'] = command_adduser
 commands['/usr/sbin/useradd'] = command_adduser

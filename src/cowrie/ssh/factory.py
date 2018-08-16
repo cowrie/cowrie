@@ -8,19 +8,18 @@ This module contains ...
 from __future__ import division, absolute_import
 
 import time
-from configparser import NoOptionError
 
+from configparser import NoOptionError
+from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory
 from twisted.conch.ssh import keys
 from twisted.python import log
-from twisted.conch.openssh_compat import primes
-
-from cowrie.ssh import connection
-from cowrie.ssh import userauth
-from cowrie.ssh import transport
-from cowrie.ssh import keys as cowriekeys
 
 from cowrie.core.config import CONFIG
+from cowrie.ssh import connection
+from cowrie.ssh import keys as cowriekeys
+from cowrie.ssh import transport
+from cowrie.ssh import userauth
 
 
 class CowrieSSHFactory(factory.SSHFactory):
@@ -49,10 +48,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
-
     def startFactory(self):
-        """
-        """
         # For use by the uptime command
         self.starttime = time.time()
 
@@ -84,12 +80,8 @@ class CowrieSSHFactory(factory.SSHFactory):
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
 
-
     def stopFactory(self):
-        """
-        """
         factory.SSHFactory.stopFactory(self)
-
 
     def buildProtocol(self, addr):
         """
@@ -101,7 +93,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-
 
         t = transport.HoneyPotSSHTransport()
 

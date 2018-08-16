@@ -32,12 +32,8 @@ from cowrie.core.config import CONFIG
 
 
 class Artifact:
-    """
-    """
 
     def __init__(self, label):
-        """
-        """
         self.label = label
         self.artifactDir = CONFIG.get('honeypot', 'download_path')
 
@@ -49,32 +45,18 @@ class Artifact:
         self.shasumFilename = ''
 
     def __enter__(self):
-        """
-        """
         return self.fp
 
-
     def __exit__(self, exception_type, exception_value, trace):
-        """
-        """
         self.close()
 
-
     def write(self, bytes):
-        """
-        """
         self.fp.write(bytes)
 
-
     def fileno(self):
-        """
-        """
         return self.fp.fileno()
 
-
     def close(self, keepEmpty=False):
-        """
-        """
         size = self.fp.tell()
         self.fp.seek(0)
         data = self.fp.read()

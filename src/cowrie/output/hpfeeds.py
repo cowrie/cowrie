@@ -5,16 +5,15 @@ Output plugin for HPFeeds
 
 from __future__ import division, absolute_import
 
-import os
-import struct
 import hashlib
 import json
+import os
 import socket
+import struct
 
 from twisted.python import log
 
 import cowrie.core.output
-
 from cowrie.core.config import CONFIG
 
 try:
@@ -58,11 +57,10 @@ def set2json(value):
 
 def strpack8(x):
     """
-    # packs a string with 1 byte length field
+    packs a string with 1 byte length field
     """
     if isinstance(x, str): x = x.encode('latin1')
     return struct.pack('!B', len(x)) + x
-
 
 
 # unpacks a string with 1 byte length field
@@ -71,15 +69,12 @@ def strunpack8(x):
     return x[1:1 + l], x[1 + l:]
 
 
-
 def msghdr(op, data):
     return struct.pack('!iB', 5 + len(data), op) + data
 
 
-
 def msgpublish(ident, chan, data):
     return msghdr(OP_PUBLISH, strpack8(ident) + strpack8(chan) + data)
-
 
 
 def msgsubscribe(ident, chan):
@@ -87,29 +82,23 @@ def msgsubscribe(ident, chan):
     return msghdr(OP_SUBSCRIBE, strpack8(ident) + chan)
 
 
-
 def msgauth(rand, ident, secret):
     hash = hashlib.sha1(bytes(rand) + secret).digest()
     return msghdr(OP_AUTH, strpack8(ident) + hash)
-
 
 
 class FeedUnpack(object):
     def __init__(self):
         self.buf = bytearray()
 
-
     def __iter__(self):
         return self
-
 
     def next(self):
         return self.unpack()
 
-
     def feed(self, data):
         self.buf.extend(data)
-
 
     def unpack(self):
         if len(self.buf) < 5:
@@ -127,7 +116,6 @@ class FeedUnpack(object):
         return opcode, data
 
 
-
 class hpclient(object):
     def __init__(self, server, port, ident, secret, debug):
         log.msg('hpfeeds client init broker {0}:{1}, identifier {2}'.format(server, port, ident))
@@ -141,7 +129,6 @@ class hpclient(object):
         self.sendfiles = []
         self.filehandle = None
 
-
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.settimeout(3)
@@ -153,7 +140,6 @@ class hpclient(object):
             self.s.settimeout(None)
             self.handle_established()
 
-
     def send(self, data):
         if not self.s:
             self.connect()
@@ -161,11 +147,9 @@ class hpclient(object):
         if not self.s: return
         self.s.send(data)
 
-
     def close(self):
         self.s.close()
         self.s = None
-
 
     def handle_established(self):
         if self.debug:
@@ -177,7 +161,6 @@ class hpclient(object):
         self.s.settimeout(0.5)
         self.read()
         self.s.settimeout(None)
-
 
     def read(self):
         if not self.s: return
@@ -219,7 +202,6 @@ class hpclient(object):
             log.err('unpacker error, disconnecting.')
             self.close()
 
-
     def publish(self, channel, **kwargs):
         try:
             self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
@@ -229,7 +211,6 @@ class hpclient(object):
             self.connect()
             self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
 
-
     def sendfile(self, filepath):
         # does not read complete binary into memory, read and send chunks
         if not self.filehandle:
@@ -238,14 +219,12 @@ class hpclient(object):
         else:
             self.sendfiles.append(filepath)
 
-
     def sendfileheader(self, filepath):
         self.filehandle = open(filepath, 'rb')
         fsize = os.stat(filepath).st_size
         headc = strpack8(self.ident) + strpack8(COWRIECHAN)
         headh = struct.pack('!iB', 5 + len(headc) + fsize, OP_PUBLISH)
         self.send(headh + headc)
-
 
     def sendfiledata(self):
         tmp = self.filehandle.read(BUFSIZ)
@@ -260,7 +239,6 @@ class hpclient(object):
             self.send(tmp)
 
 
-
 class Output(cowrie.core.output.Output):
     """
     Output plugin for HPFeeds
@@ -270,10 +248,8 @@ class Output(cowrie.core.output.Output):
         log.msg("Early version of hpfeeds-output, untested!")
         cowrie.core.output.Output.__init__(self)
 
-
     def start(self):
-        """
-        """
+
         server = CONFIG.get('output_hpfeeds', 'server')
         port = CONFIG.getint('output_hpfeeds', 'port')
         ident = CONFIG.get('output_hpfeeds', 'identifier')
@@ -282,16 +258,10 @@ class Output(cowrie.core.output.Output):
         self.client = hpclient(server, port, ident, secret, debug)
         self.meta = {}
 
-
     def stop(self):
-        """
-        """
         pass
 
-
     def write(self, entry):
-        """
-        """
         session = entry["session"]
         if entry["eventid"] == 'cowrie.session.connect':
             self.meta[session] = {

@@ -9,10 +9,10 @@ and session size limiting
 from __future__ import division, absolute_import
 
 import time
-from configparser import NoOptionError
 
-from twisted.python import log
+from configparser import NoOptionError
 from twisted.conch.ssh import channel
+from twisted.python import log
 
 from cowrie.core import ttylog
 from cowrie.core.config import CONFIG
@@ -30,7 +30,6 @@ class CowrieSSHChannel(channel.SSHChannel):
     name = b'cowrie-ssh-channel'
     startTime = None
 
-
     def __repr__(self):
         """
         Return a pretty representation of this object.
@@ -39,7 +38,6 @@ class CowrieSSHChannel(channel.SSHChannel):
         @rtype: L{str}
         """
         return "Cowrie SSH Channel {}".format(self.name)
-
 
     def __init__(self, *args, **kw):
         """
@@ -59,10 +57,7 @@ class CowrieSSHChannel(channel.SSHChannel):
 
         channel.SSHChannel.__init__(self, *args, **kw)
 
-
     def channelOpen(self, specificData):
-        """
-        """
         self.startTime = time.time()
         self.ttylogFile = '%s/tty/%s-%s-%s.log' % (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
                                                    self.conn.transport.transportId, self.id)
@@ -72,10 +67,7 @@ class CowrieSSHChannel(channel.SSHChannel):
         ttylog.ttylog_open(self.ttylogFile, time.time())
         channel.SSHChannel.channelOpen(self, specificData)
 
-
     def closed(self):
-        """
-        """
         log.msg(eventid='cowrie.log.closed',
                 format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
                 ttylog=self.ttylogFile,
@@ -83,7 +75,6 @@ class CowrieSSHChannel(channel.SSHChannel):
                 duration=time.time() - self.startTime)
         ttylog.ttylog_close(self.ttylogFile, time.time())
         channel.SSHChannel.closed(self)
-
 
     def dataReceived(self, data):
         """
@@ -106,7 +97,6 @@ class CowrieSSHChannel(channel.SSHChannel):
                                 data)
 
         channel.SSHChannel.dataReceived(self, data)
-
 
     def write(self, data):
         """

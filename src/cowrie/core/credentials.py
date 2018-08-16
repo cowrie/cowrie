@@ -26,16 +26,11 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
+from twisted.cred.credentials import IUsernamePassword, ICredentials
 from zope.interface import implementer
 
-from twisted.cred.credentials import IUsernamePassword, \
-    ICredentials
 
 class IUsername(ICredentials):
     """
@@ -44,7 +39,6 @@ class IUsername(ICredentials):
     @type username: C{str}
     @ivar username: The username associated with these credentials.
     """
-
 
 
 class IUsernamePasswordIP(IUsernamePassword):
@@ -62,12 +56,10 @@ class IUsernamePasswordIP(IUsernamePassword):
     """
 
 
-
 class IPluggableAuthenticationModulesIP(ICredentials):
     """
     Twisted removed IPAM in 15, adding in Cowrie now
     """
-
 
 
 @implementer(IPluggableAuthenticationModulesIP)
@@ -82,14 +74,11 @@ class PluggableAuthenticationModulesIP(object):
         self.ip = ip
 
 
-
 @implementer(IUsername)
 class Username(object):
-    """
-    """
+
     def __init__(self, username):
         self.username = username
-
 
 
 @implementer(IUsernamePasswordIP)

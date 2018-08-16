@@ -26,22 +26,18 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import copy
-import random
 import json
-
-from configparser import NoOptionError
+import random
 
 import twisted.python.log as log
+from configparser import NoOptionError
 
-from cowrie.shell import fs
 from cowrie.core.config import CONFIG
+from cowrie.shell import fs
+
 
 class CowrieServer(object):
     """
@@ -67,7 +63,6 @@ class CowrieServer(object):
 
         log.msg("Initialized emulated server as architecture: {}".format(self.arch))
 
-
     def getCommandOutput(self, file):
         """
         Reads process output from JSON file.
@@ -75,7 +70,6 @@ class CowrieServer(object):
         with open(file) as f:
             cmdoutput = json.load(f)
         return cmdoutput
-
 
     def initFileSystem(self):
         """

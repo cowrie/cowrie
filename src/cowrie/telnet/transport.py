@@ -8,18 +8,18 @@ Telnet Transport and Authentication for the Honeypot
 from __future__ import division, absolute_import
 
 import struct
-import time
 import uuid
+import time
+
 from configparser import NoOptionError
-
-from twisted.python import log
-from twisted.internet import protocol
-from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, ITelnetProtocol,\
+from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, ITelnetProtocol, \
     SGA, NAWS, LINEMODE, TelnetTransport, AlreadyNegotiating
+from twisted.internet import protocol
 from twisted.protocols.policies import TimeoutMixin
+from twisted.python import log
 
-from cowrie.core.credentials import UsernamePasswordIP
 from cowrie.core.config import CONFIG
+from cowrie.core.credentials import UsernamePasswordIP
 
 
 class HoneyPotTelnetFactory(protocol.ServerFactory):
@@ -40,10 +40,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
-
     def startFactory(self):
-        """
-        """
         try:
             honeyfs = CONFIG.get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
@@ -59,13 +56,11 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.startFactory(self)
         log.msg("Ready to accept Telnet connections")
 
-
     def stopFactory(self):
         """
         Stop output plugins
         """
         protocol.ServerFactory.stopFactory(self)
-
 
 
 class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
@@ -79,8 +74,6 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     windowSize = [40, 80]
 
     def connectionMade(self):
-        """
-        """
         self.transport.negotiationMap[NAWS] = self.telnet_NAWS
         # Initial option negotation. Want something at least for Mirai
         for opt in (NAWS,):
@@ -91,13 +84,11 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write(self.factory.banner.replace(b'\n', b'\r\r\n'))
         self.transport.write(self.loginPrompt)
 
-
     def connectionLost(self, reason):
         """
         Fires on pre-authentication disconnects
         """
         AuthenticatingTelnetProtocol.connectionLost(self, reason)
-
 
     def telnet_User(self, line):
         """
@@ -111,12 +102,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write(self.passwordPrompt)
         return 'Password'
 
-
     def telnet_Password(self, line):
-        """
-        """
         username, password = self.username, line  # .decode()
         del self.username
+
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
             creds = UsernamePasswordIP(username, password, self.src_ip)
@@ -137,13 +126,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         return 'Discard'
 
-
     def telnet_Command(self, command):
-        """
-        """
         self.transport.protocol.dataReceived(command + b'\r')
         return "Command"
-
 
     def _cbLogin(self, ial):
         """
@@ -167,16 +152,12 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         protocol.makeConnection(self.transport)
         self.transport.protocol = protocol
 
-
     def _ebLogin(self, failure):
-        """
-        """
-    # TODO: provide a way to have user configurable strings for wrong password
+        # TODO: provide a way to have user configurable strings for wrong password
         self.transport.wontChain(ECHO)
         self.transport.write(b"\nLogin incorrect\n")
         self.transport.write(self.loginPrompt)
         self.state = "User"
-
 
     def telnet_NAWS(self, data):
         """
@@ -188,10 +169,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         else:
             log.msg("Wrong number of NAWS bytes")
 
-
     def enableLocal(self, opt):
-        """
-        """
         if opt == ECHO:
             return True
         # TODO: check if twisted now supports SGA (see git commit c58056b0)
@@ -200,10 +178,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         else:
             return False
 
-
     def enableRemote(self, opt):
-        """
-        """
         # TODO: check if twisted now supports LINEMODE (see git commit c58056b0)
         if opt == LINEMODE:
             return False
@@ -215,14 +190,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
             return False
 
 
-
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
-    """
-    """
 
     def connectionMade(self):
-        """
-        """
         self.transportId = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
 
@@ -243,7 +213,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                 protocol='telnet')
         TelnetTransport.connectionMade(self)
 
-
     def write(self, data):
         """
         Because of the presence of two ProtocolTransportMixin in the protocol
@@ -254,7 +223,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         http://stackoverflow.com/questions/35087250/twisted-telnet-server-how-to-avoid-nested-crlf
         """
         self.transport.write(data.replace(b'\r\n', b'\n'))
-
 
     def connectionLost(self, reason):
         """
@@ -267,34 +235,19 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                 format='Connection lost after %(duration)d seconds',
                 duration=duration)
 
-
     def willChain(self, option):
-        """
-        """
         return self._chainNegotiation(None, self.will, option)
 
-
     def wontChain(self, option):
-        """
-        """
         return self._chainNegotiation(None, self.wont, option)
 
-
     def doChain(self, option):
-        """
-        """
         return self._chainNegotiation(None, self.do, option)
 
-
     def dontChain(self, option):
-        """
-        """
         return self._chainNegotiation(None, self.dont, option)
 
-
     def _handleNegotiationError(self, f, func, option):
-        """
-        """
         if f.type is AlreadyNegotiating:
             s = self.getOptionState(option)
             if func in (self.do, self.dont):
@@ -312,7 +265,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             # The telnetd package on Ubuntu (netkit-telnet) does all negotiation before sending the login prompt,
             # but does handle client-initiated negotiation at any time.
         return None  # This Failure has been handled, no need to continue processing errbacks
-
 
     def _chainNegotiation(self, res, func, option):
         return func(option).addErrback(self._handleNegotiationError, func, option)

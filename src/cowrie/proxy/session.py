@@ -1,23 +1,19 @@
 # Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 from configparser import NoOptionError
-
+from twisted.conch.client.knownhosts import KnownHostsFile
+from twisted.conch.ssh import common, keys, session
+from twisted.conch.ssh.common import getNS
 from twisted.internet import reactor, protocol
 from twisted.python import log
-from twisted.conch.ssh import common, keys, session
-from twisted.conch.client.knownhosts import KnownHostsFile
-from twisted.conch.ssh.common import getNS
 
 from cowrie.core.config import CONFIG
 from cowrie.proxy import endpoints
 from cowrie.ssh import channel
+
 
 class _ProtocolFactory():
     """
@@ -28,12 +24,9 @@ class _ProtocolFactory():
     def __init__(self, protocol):
         self.protocol = protocol
 
-
     def buildProtocol(self, addr):
-        """
-        """
-        return self.protocol
 
+        return self.protocol
 
 
 class ProxyClient(object):
@@ -51,7 +44,6 @@ class ProxyClient(object):
         self.transport.client = self.session
 
 
-
 class InBetween(protocol.Protocol):
     """
     This is the glue between the SSH server one one side and the
@@ -65,13 +57,11 @@ class InBetween(protocol.Protocol):
     def makeConnection(self, transport):
         protocol.Protocol.makeConnection(self, transport)
 
-
     def connectionMade(self):
         log.msg("IB: connection Made")
         if len(self.buf) and self.transport is not None:
             self.transport.write(self.buf)
             self.buf = None
-
 
     def write(self, bytes):
         """
@@ -83,7 +73,6 @@ class InBetween(protocol.Protocol):
         log.msg("IB: write: {0} to transport {1}".format(repr(bytes), repr(self.transport)))
         self.transport.write(bytes)
 
-
     def dataReceived(self, data):
         """
         This is data going from the back-end to the end-user
@@ -91,25 +80,17 @@ class InBetween(protocol.Protocol):
         log.msg("IB: dataReceived: {0}".format(repr(data)))
         self.client.write(data)
 
-
     def closed(self):
-        """
-        """
         log.msg("IB: closed")
 
-
     def closeReceived(self):
-        """
-        """
         log.msg("IB: closeRecieved")
-
 
     def loseConnection(self):
         """
         Frontend disconnected
         """
         log.msg("IB: loseConnection")
-
 
     def connectionLost(self, reason):
         """
@@ -118,12 +99,8 @@ class InBetween(protocol.Protocol):
         log.msg("IB: ConnectionLost")
         self.client.loseConnection()
 
-
     def eofReceived(self):
-        """
-        """
         log.msg("IB: eofReceived")
-
 
 
 class ProxySSHSession(channel.CowrieSSHChannel):
@@ -171,7 +148,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
 
         self.client = ProxyClient(self)
 
-
     def channelOpen(self, specificData):
         """
         Once we open the frontend-session, also start connecting to back end
@@ -188,24 +164,15 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg("d = {0}".format(repr(d)))
         return d
 
-
     def _ebConnect(self):
-        """
-        """
         log.msg("ERROR CONNECTED TO BACKEND")
         self._state = b'ERROR'
 
-
     def _cbConnect(self):
-        """
-        """
         log.msg("CONNECTED TO BACKEND")
         self._state = b'CONNECTED'
 
-
     def request_env(self, data):
-        """
-        """
         name, rest = getNS(data)
         value, rest = getNS(rest)
         if rest:
@@ -216,33 +183,21 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         #     self.session.environ[name] = value
         return 0
 
-
     def request_pty_req(self, data):
-        """
-        """
         term, windowSize, modes = session.parseRequest_pty_req(data)
         log.msg('pty request: %r %r' % (term, windowSize))
         return 1
 
-
     def request_window_change(self, data):
-        """
-        """
         winSize = session.parseRequest_window_change(data)
         return 1
 
-
     def request_subsystem(self, data):
-        """
-        """
         subsystem, _ = common.getNS(data)
         log.msg('asking for subsystem "{}"'.format(subsystem))
         return 0
 
-
     def request_exec(self, data):
-        """
-        """
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
         pf = _ProtocolFactory(self.client.transport)
@@ -250,43 +205,29 @@ class ProxySSHSession(channel.CowrieSSHChannel):
                                                               port=self.port, password=self.password).connect(pf)
         return 1
 
-
     def request_shell(self, data):
-        """
-        """
         log.msg('request_shell')
         pf = _ProtocolFactory(self.client.transport)
         ep = endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
                                                             port=self.port, password=self.password).connect(pf)
         return 1
 
-
     def extReceived(self, dataType, data):
-        """
-        """
         log.msg('weird extended data: {}'.format(dataType))
 
-
     def request_agent(self, data):
-        """
-        """
         log.msg('request_agent: {}'.format(repr(data),))
         return 0
 
-
     def request_x11_req(self, data):
-        """
-        """
         log.msg('request_x11: %s' % (repr(data),))
         return 0
-
 
     def sendClose(self):
         """
         Utility function to request to send close for this session
         """
         self.conn.sendClose(self)
-
 
     def closed(self):
         """
@@ -295,18 +236,11 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         channel.CowrieSSHChannel.closed(self)
         self.client = None
 
-
     def channelClosed(self):
-        """
-        """
         log.msg("Called channelClosed in SSHSession")
 
-
     def closeReceived(self):
-        """
-        """
         log.msg("closeReceived")
-
 
     def sendEOF(self):
         """
@@ -314,17 +248,13 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         """
         self.conn.sendEOF(self)
 
-
     def dataReceived(self, data):
         if not self.client:
             self.buf += data
             return
         self.client.transport.write(data)
 
-
     def eofReceived(self):
-        """
-        """
         log.msg("RECEIVED EOF")
         return
         if self.client:

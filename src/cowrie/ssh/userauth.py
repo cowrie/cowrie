@@ -1,27 +1,20 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import struct
 
-from twisted.python import log
-from twisted.python.compat import _bytesChr as chr
-from twisted.python.failure import Failure
-from twisted.internet import defer
-
+from twisted.conch import error
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
-from twisted.conch import error
+from twisted.internet import defer
+from twisted.python.compat import _bytesChr as chr
+from twisted.python.failure import Failure
 
 from cowrie.core import credentials
-
 from cowrie.core.config import CONFIG
 
 
@@ -35,15 +28,12 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
 
     def serviceStarted(self):
-        """
-        """
         self.interfaceToMethod[credentials.IUsername] = b'none'
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b'password'
         self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = b'keyboard-interactive'
         self.bannerSent = False
         self._pamDeferred = None
         userauth.SSHUserAuthServer.serviceStarted(self)
-
 
     def sendBanner(self):
         """
@@ -63,13 +53,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.transport.sendPacket(
             userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b'en'))
 
-
     def ssh_USERAUTH_REQUEST(self, packet):
-        """
-        """
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
-
 
     # def auth_publickey(self, packet):
     #     """
@@ -82,7 +68,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     #         return defer.fail(error.ConchError("Incorrect signature"))
     #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
 
-
     def auth_none(self, packet):
         """
         Allow every login
@@ -90,7 +75,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         c = credentials.Username(self.user)
         srcIp = self.transport.transport.getPeer().host
         return self.portal.login(c, srcIp, IConchUser)
-
 
     def auth_password(self, packet):
         """
@@ -100,7 +84,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         srcIp = self.transport.transport.getPeer().host
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
-
 
     def auth_keyboard_interactive(self, packet):
         """
@@ -116,7 +99,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         src_ip = self.transport.transport.getPeer().host
         c = credentials.PluggableAuthenticationModulesIP(self.user, self._pamConv, src_ip)
         return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
-
 
     def _pamConv(self, items):
         """
@@ -149,7 +131,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
         self._pamDeferred = defer.Deferred()
         return self._pamDeferred
-
 
     def ssh_USERAUTH_INFO_RESPONSE(self, packet):
         """

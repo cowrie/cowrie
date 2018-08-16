@@ -29,36 +29,29 @@
 from __future__ import division, absolute_import
 
 import getopt
+import hashlib
 import os
 import re
-import hashlib
 import time
 
 from twisted.python import log
 
-from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell import fs
-
 from cowrie.core.config import CONFIG
+from cowrie.shell import fs
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
 
 class command_scp(HoneyPotCommand):
-    """
-    """
 
     def help(self):
-        """
-        """
         self.write(
             """usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]
            [-l limit] [-o ssh_option] [-P port] [-S program]
            [[user@]host1:]file1 ... [[user@]host2:]file2\n""")
 
     def start(self):
-        """
-        """
         self.download_path = CONFIG.get('honeypot', 'download_path')
 
         try:
@@ -81,7 +74,6 @@ class command_scp(HoneyPotCommand):
                 break
 
         if self.out_dir:
-
             outdir = self.fs.resolve_path(self.out_dir, self.protocol.cwd)
 
             if not self.fs.exists(outdir):
@@ -100,8 +92,6 @@ class command_scp(HoneyPotCommand):
         self.write('\x00')
 
     def lineReceived(self, line):
-        """
-        """
         log.msg(eventid='cowrie.session.file_download',
                 realm='scp',
                 input=line,
@@ -109,7 +99,6 @@ class command_scp(HoneyPotCommand):
         self.protocol.terminal.write('\x00')
 
     def drop_tmp_file(self, data, name):
-
         tmp_fname = '%s-%s-%s-scp_%s' % \
                     (time.strftime('%Y%m%d-%H%M%S'),
                      self.protocol.getProtoTransport().transportId,
@@ -122,7 +111,6 @@ class command_scp(HoneyPotCommand):
             f.write(data)
 
     def save_file(self, data, fname):
-
         self.drop_tmp_file(data, fname)
 
         if os.path.exists(self.safeoutfile):
@@ -152,7 +140,6 @@ class command_scp(HoneyPotCommand):
             self.fs.chown(fname, self.protocol.user.uid, self.protocol.user.gid)
 
     def parse_scp_data(self, data):
-
         # scp data format:
         # C0XXX filesize filename\nfile_data\x00
         # 0XXX - file permissions
@@ -203,7 +190,6 @@ class command_scp(HoneyPotCommand):
         return data
 
     def handle_CTRL_D(self):
-
         if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \
                 os.path.exists(self.protocol.terminal.stdinlogFile):
             with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
@@ -220,9 +206,7 @@ class command_scp(HoneyPotCommand):
 
         self.exit()
 
-
     def handle_CTRL_D(self):
-
         if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \
                 os.path.exists(self.protocol.terminal.stdinlogFile):
             with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
@@ -237,8 +221,8 @@ class command_scp(HoneyPotCommand):
                 with open(self.protocol.terminal.stdinlogFile, 'wb') as f:
                     f.write(data)
 
-
         self.exit()
+
 
 commands['/usr/bin/scp'] = command_scp
 commands['scp'] = command_scp

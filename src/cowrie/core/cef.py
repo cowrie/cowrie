@@ -26,9 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
 from __future__ import division, absolute_import
 
 #  cowrie.client.fingerprint
@@ -46,6 +43,7 @@ from __future__ import division, absolute_import
 #  cowrie.session.connect
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
+
 
 def formatCef(logentry):
     """

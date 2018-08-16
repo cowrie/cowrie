@@ -26,10 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 from cowrie.core.config import CONFIG
@@ -45,7 +41,6 @@ class Passwd(object):
     def __init__(self):
         self.passwd_file = '%s/etc/passwd' % (CONFIG.get('honeypot', 'contents_path'),)
         self.load()
-
 
     def load(self):
         """
@@ -85,7 +80,6 @@ class Passwd(object):
 
                 self.passwd.append(e)
 
-
     def save(self):
         """
         Save the user db
@@ -96,7 +90,6 @@ class Passwd(object):
 #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-
     def getpwnam(self, name):
         """
         Get passwd entry for username
@@ -105,7 +98,6 @@ class Passwd(object):
             if name == _["pw_name"]:
                 return _
         raise KeyError("getpwnam(): name not found in passwd file: " + name)
-
 
     def getpwuid(self, uid):
         """
@@ -117,7 +109,6 @@ class Passwd(object):
         raise KeyError("getpwuid(): uid not found in passwd file: " + uid)
 
 
-
 class Group(object):
     """
     This class contains code to handle the groups and their properties in
@@ -127,7 +118,6 @@ class Group(object):
     def __init__(self):
         self.group_file = '%s/etc/group' % (CONFIG.get('honeypot', 'contents_path'),)
         self.load()
-
 
     def load(self):
         """
@@ -159,7 +149,6 @@ class Group(object):
 
                 self.group.append(e)
 
-
     def save(self):
         """
         Save the group db
@@ -170,7 +159,6 @@ class Group(object):
 #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-
     def getgrnam(self, name):
         """
         Get group entry for groupname
@@ -179,7 +167,6 @@ class Group(object):
             if name == _["gr_name"]:
                 return _
         raise KeyError("getgrnam(): name not found in group file: " + name)
-
 
     def getgrgid(self, uid):
         """

@@ -8,14 +8,17 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class OptionParsingError(RuntimeError):
     def __init__(self, msg):
         self.msg = msg
+
 
 class OptionParsingExit(Exception):
     def __init__(self, status, msg):
         self.msg = msg
         self.status = status
+
 
 class ModifiedOptionParser(optparse.OptionParser):
     def error(self, msg):
@@ -114,7 +117,6 @@ class command_iptables(HoneyPotCommand):
         parser.add_option("--dport", "--destination-ports", dest="dest_ports", action="store")
         parser.add_option("--ports", dest="ports", action="store")
         parser.add_option("--state", dest="state", action="store")
-
 
         # Parse options or display no files
         try:
@@ -224,12 +226,16 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
         return True
 
     def show_version(self):
-        """ Show version and exit """
+        """
+        Show version and exit
+        """
         self.write('%s %s\n' % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
         self.exit()
 
     def show_help(self):
-        """ Show help and exit """
+        """
+        Show help and exit
+        """
 
         self.write("""%s %s'
 
@@ -297,7 +303,9 @@ Options:
         self.exit()
 
     def list_rules(self, chain):
-        """ List current rules as commands"""
+        """
+        List current rules as commands
+        """
 
         if self.user_is_root():
             if len(chain) > 0:
@@ -362,7 +370,9 @@ Options:
             self.no_permission()
 
     def flush(self, chain):
-        """ Mark rules as flushed """
+        """
+        Mark rules as flushed
+        """
 
         if self.user_is_root():
             if len(chain) > 0:

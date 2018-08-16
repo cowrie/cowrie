@@ -15,9 +15,6 @@ class command_base64(HoneyPotCommand):
     """
 
     def start(self):
-        """
-        """
-
         self.mode = 'e'
         self.ignore = False
 

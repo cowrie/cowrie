@@ -8,6 +8,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_nohup(HoneyPotCommand):
     def call(self):
         if not len(self.args):

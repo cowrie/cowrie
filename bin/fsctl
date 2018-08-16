@@ -18,7 +18,12 @@
 # March 2013
 ################################################################
 
-import os, pickle, sys, locale, time, cmd, copy
+import cmd
+import copy
+import os
+import pickle
+import sys
+import time
 from stat import *
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, \
@@ -51,7 +56,13 @@ def exists(fs, path):
             raise Exception(e)
 
 def is_directory(fs,path):
-    "Returns whether or not the file at 'path' is a directory"
+    """
+    Returns whether or not the file at 'path' is a directory
+
+    :param fs:
+    :param path:
+    :return:
+    """
     file = getpath(fs,path)
     if file[A_TYPE] == T_DIR:
         return True
@@ -59,8 +70,9 @@ def is_directory(fs,path):
         return False
 
 def resolve_reference(pwd, relativeReference):
-    '''Used to resolve a current working directory and a relative
-      reference into an absolute file reference.'''
+    """
+    Used to resolve a current working directory and a relative reference into an absolute file reference.
+    """
 
     tempPath = os.path.join(pwd, relativeReference)
     absoluteReference = os.path.normpath(tempPath)
@@ -103,7 +115,10 @@ class fseditCmd(cmd.Cmd):
             "Type 'help' for help\n"
 
     def save_pickle(self):
-        '''saves the current file system to the pickle'''
+        """
+        saves the current file system to the pickle
+        :return:
+        """
         try:
             pickle.dump(self.fs, open(self.pickle_file_path, 'wb'))
         except Exception as e:
@@ -114,19 +129,25 @@ class fseditCmd(cmd.Cmd):
             sys.exit(1)
 
     def do_exit(self, args):
-        '''Exits the file system editor'''
+        """
+        Exits the file system editor
+        """
         return True
 
     def do_EOF(self, args):
-        '''The escape character ctrl+d exits the session'''
+        """
+        The escape character ctrl+d exits the session
+        """
         #exiting from the do_EOF method does not create a newline automatically
         #so we add it manually
         print()
         return True
 
     def do_ls(self, args):
-        '''Prints the contents of a directory, use ls -l to list in long format
-        Prints the current directory if no arguments are specified'''
+        """
+        Prints the contents of a directory, use ls -l to list in long format
+        Prints the current directory if no arguments are specified
+        """
 
         longls = False
 
@@ -214,7 +235,9 @@ class fseditCmd(cmd.Cmd):
         self.prompt = self.fs_name + ":" + self.pwd + "$ "
 
     def do_cd(self, args):
-        '''Changes the current directory.\nUsage: cd <target directory>'''
+        """
+        Changes the current directory.\nUsage: cd <target directory>
+        """
 
         #count  the number of arguments
         # 1 or more arguments: changes the directory to the first arg
@@ -236,13 +259,20 @@ class fseditCmd(cmd.Cmd):
                 print(("cd: %s: Not a directory" % target_dir))
 
     def do_pwd(self, args):
-        '''Prints the current working directory'''
+        """
+        Prints the current working directory
+
+        :param args:
+        :return:
+        """
         print((self.pwd))
 
     def do_mkdir(self, args):
-        """Add a new directory in the target directory.
+        """
+        Add a new directory in the target directory.
         Handles relative or absolute file paths. \n
-        Usage: mkdir <destination>..."""
+        Usage: mkdir <destination>...
+        """
 
         arg_list=args.split()
         if len(arg_list) < 1:
@@ -252,9 +282,11 @@ class fseditCmd(cmd.Cmd):
                 self.mkfile(arg.split(), T_DIR)
 
     def do_touch(self, args):
-        """Add a new file in the target directory.
+        """
+        Add a new file in the target directory.
         Handles relative or absolute file paths. \n
-        Usage: touch <destination> [<size in bytes>]"""
+        Usage: touch <destination> [<size in bytes>]
+        """
 
         arg_list=args.split()
 
@@ -264,7 +296,9 @@ class fseditCmd(cmd.Cmd):
             self.mkfile(arg_list, T_FILE)
 
     def mkfile(self, args, file_type):
-        '''args must be a list of arguments'''
+        """
+        args must be a list of arguments
+        """
         cwd = self.fs
         path = resolve_reference(self.pwd, args[0])
         pathList = path.split('/')
@@ -304,9 +338,11 @@ class fseditCmd(cmd.Cmd):
         print(("Added '%s'" % path))
 
     def do_rm(self, arguments):
-        '''Remove an object from the file system.
+        """
+        Remove an object from the file system.
         Will not remove a directory unless the -r switch is invoked.\n
-        Usage: rm [-r] <target>'''
+        Usage: rm [-r] <target>
+        """
 
         args = arguments.split()
 
@@ -347,10 +383,12 @@ class fseditCmd(cmd.Cmd):
         print(("Deleted %s" % target_path))
 
     def do_rmdir(self, arguments):
-        '''Remove a file object. Like the unix command,
+        """
+        Remove a file object. Like the unix command,
         this can only delete empty directories.
         Use rm -r to recursively delete full directories.\n
-        Usage: rmdir <target directory>'''
+        Usage: rmdir <target directory>
+        """
         args = arguments.split()
 
         if len(args) != 1:
@@ -390,8 +428,10 @@ class fseditCmd(cmd.Cmd):
         print(("Deleted %s" % target_path))
 
     def do_mv(self, arguments):
-        '''Moves a file/directory from one directory to another.\n
-        Usage: mv <source file> <destination file>'''
+        """
+        Moves a file/directory from one directory to another.\n
+        Usage: mv <source file> <destination file>
+        """
         args = arguments.split()
         if len(args) != 2:
             print('Usage: mv <source> <destination>')
@@ -450,8 +490,10 @@ class fseditCmd(cmd.Cmd):
         print(('File moved from /%s to /%s' % (src, dst)))
 
     def do_cp(self, arguments):
-        '''Copies a file/directory from one directory to another.\n
-        Usage: cp <source file> <destination file>'''
+        """
+        Copies a file/directory from one directory to another.\n
+        Usage: cp <source file> <destination file>
+        """
         args = arguments.split()
         if len(args) != 2:
             print('Usage: cp <source> <destination>')
@@ -504,7 +546,9 @@ class fseditCmd(cmd.Cmd):
         print(('File copied from /%s to /%s/%s' % (src, dstparent, dstname)))
 
     def do_chown(self, args):
-        '''Change file ownership'''
+        """
+        Change file ownership
+        """
         arg_list = args.split()
 
         if len(arg_list) != 2:
@@ -525,7 +569,9 @@ class fseditCmd(cmd.Cmd):
         self.save_pickle()
 
     def do_chgrp(self, args):
-        '''Change file ownership'''
+        """
+        Change file ownership
+        """
         arg_list = args.split()
 
         if len(arg_list) != 2:
@@ -546,8 +592,10 @@ class fseditCmd(cmd.Cmd):
         self.save_pickle()
 
     def do_chmod(self, args):
-        '''Change file permissions
-        only modes between 000 and 777 are implemented'''
+        """
+        Change file permissions
+        only modes between 000 and 777 are implemented
+        """
 
         arg_list = args.split()
 
@@ -583,7 +631,9 @@ class fseditCmd(cmd.Cmd):
         self.save_pickle()
 
     def do_file(self, args):
-        '''Identifies file types.\nUsage: file <file name>'''
+        """
+        Identifies file types.\nUsage: file <file name>
+        """
         arg_list = args.split()
 
         if len(arg_list) != 1:
@@ -620,13 +670,17 @@ class fseditCmd(cmd.Cmd):
         print(target_path+" is a "+msg)
 
     def do_clear(self, args):
-        '''Clears the screen'''
+        """
+        Clears the screen
+        """
         os.system('clear')
 
     def emptyline(self):
-        '''By default the cmd object will repeat the last command
+        """
+        By default the cmd object will repeat the last command
         if a blank line is entered. Since this is different than
-        bash behavior, overriding this method will stop it.'''
+        bash behavior, overriding this method will stop it.
+        """
         pass
 
     def help_help(self):

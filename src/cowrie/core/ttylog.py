@@ -9,8 +9,8 @@ Should be compatible with user mode linux
 
 from __future__ import division, absolute_import
 
-import struct
 import hashlib
+import struct
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
 TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
@@ -29,7 +29,6 @@ def ttylog_open(logfile, stamp):
         f.write(struct.pack(TTYSTRUCT, OP_OPEN, 0, 0, 0, sec, usec))
 
 
-
 def ttylog_write(logfile, length, direction, stamp, data=None):
     """
     Write to tty log
@@ -46,7 +45,6 @@ def ttylog_write(logfile, length, direction, stamp, data=None):
         f.write(data)
 
 
-
 def ttylog_close(logfile, stamp):
     """
     Close tty log
@@ -57,7 +55,6 @@ def ttylog_close(logfile, stamp):
     with open(logfile, 'ab') as f:
         sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
         f.write(struct.pack(TTYSTRUCT, OP_CLOSE, 0, 0, 0, sec, usec))
-
 
 
 def ttylog_inputhash(logfile):

@@ -9,20 +9,19 @@ from __future__ import division, absolute_import
 
 from sys import modules
 
-from zope.interface import implementer
-
+from twisted.conch import error
+from twisted.conch.ssh import keys
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
 from twisted.python import log, failure
-from twisted.conch import error
-from twisted.conch.ssh import keys
+from zope.interface import implementer
 
-from cowrie.core import credentials
 from cowrie.core import auth
-
+from cowrie.core import credentials
 from cowrie.core.config import CONFIG
+
 
 @implementer(ICredentialsChecker)
 class HoneypotPublicKeyChecker(object):
@@ -33,8 +32,6 @@ class HoneypotPublicKeyChecker(object):
     credentialInterfaces = (ISSHPrivateKey,)
 
     def requestAvatarId(self, credentials):
-        """
-        """
         _pubKey = keys.Key.fromString(credentials.blob)
         log.msg(eventid='cowrie.client.fingerprint',
                 format='public key attempt for user %(username)s of type %(type)s with fingerprint %(fingerprint)s',
@@ -46,7 +43,6 @@ class HoneypotPublicKeyChecker(object):
         return failure.Failure(error.ConchError('Incorrect signature'))
 
 
-
 @implementer(ICredentialsChecker)
 class HoneypotNoneChecker(object):
     """
@@ -56,10 +52,7 @@ class HoneypotNoneChecker(object):
     credentialInterfaces = (credentials.IUsername,)
 
     def requestAvatarId(self, credentials):
-        """
-        """
         return defer.succeed(credentials.username)
-
 
 
 @implementer(ICredentialsChecker)
@@ -71,8 +64,6 @@ class HoneypotPasswordChecker(object):
     credentialInterfaces = (credentials.IUsernamePasswordIP, credentials.IPluggableAuthenticationModulesIP)
 
     def requestAvatarId(self, credentials):
-        """
-        """
         if hasattr(credentials, 'password'):
             if self.checkUserPass(credentials.username, credentials.password,
                                   credentials.ip):
@@ -84,26 +75,17 @@ class HoneypotPasswordChecker(object):
                                      credentials.pamConversion, credentials.ip)
         return defer.fail(UnhandledCredentials())
 
-
     def checkPamUser(self, username, pamConversion, ip):
-        """
-        """
         r = pamConversion((('Password:', 1),))
         return r.addCallback(self.cbCheckPamUser, username, ip)
 
-
     def cbCheckPamUser(self, responses, username, ip):
-        """
-        """
         for (response, zero) in responses:
             if self.checkUserPass(username, response, ip):
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())
 
-
     def checkUserPass(self, theusername, thepassword, ip):
-        """
-        """
         # UserDB is the default auth_class
         authname = auth.UserDB
 

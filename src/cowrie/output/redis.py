@@ -1,17 +1,19 @@
 from __future__ import division, absolute_import
 
-import cowrie.core.output
-from cowrie.core.config import CONFIG
+import json
 
 import redis
-import json
 from ConfigParser import NoOptionError
+
+import cowrie.core.output
+from cowrie.core.config import CONFIG
 
 SEND_METHODS = {
     'lpush': lambda redis_client, key, message: redis_client.lpush(key, message),
     'rpush': lambda redis_client, key, message: redis_client.rpush(key, message),
     'publish': lambda redis_client, key, message: redis_client.publish(key, message),
 }
+
 
 class Output(cowrie.core.output.Output):
 
@@ -44,7 +46,6 @@ class Output(cowrie.core.output.Output):
             self.send_method = SEND_METHODS[CONFIG.get('output_redis', 'send_method')]
         except (NoOptionError, KeyError):
             self.send_method = SEND_METHODS['lpush']
-
 
     def stop(self):
         pass

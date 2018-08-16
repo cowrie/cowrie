@@ -2,10 +2,6 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
 
 import sys
@@ -46,7 +42,6 @@ def durationHuman(seconds):
     return ''.join(duration)
 
 
-
 def tail(the_file, lines_2find=20):
     """
     From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
@@ -64,7 +59,6 @@ def tail(the_file, lines_2find=20):
     return line_list[-lines_2find:]
     # We read at least 21 line breaks from the bottom, block by block for speed
     # 21 to ensure we don't get a half line
-
 
 
 def uptime(total_seconds):
@@ -99,8 +93,6 @@ def uptime(total_seconds):
 
 
 def get_endpoints_from_section(cfg, section, default_port):
-    """
-    """
     if cfg.has_option(section, 'listen_endpoints'):
         return cfg.get(section, 'listen_endpoints').split()
 
@@ -122,8 +114,6 @@ def get_endpoints_from_section(cfg, section, default_port):
 
 
 def create_endpoint_services(reactor, parent, listen_endpoints, factory):
-    """
-    """
     for listen_endpoint in listen_endpoints:
 
         # work around http://twistedmatrix.com/trac/ticket/8422

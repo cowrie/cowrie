@@ -37,17 +37,16 @@ import logging
 import random
 import string
 
+from afkak.client import KafkaClient
+from afkak.partitioner import RoundRobinPartitioner, HashedPartitioner
+from afkak.producer import Producer
 from twisted.internet import defer, task
 from twisted.python import log
 
-from afkak.client import KafkaClient
-from afkak.producer import Producer
-from afkak.partitioner import RoundRobinPartitioner, HashedPartitioner
-
 import cowrie.core.output
 import cowrie.python.logfile
-
 from cowrie.core.config import CONFIG
+
 
 def random_string(l, charset=string.letters.encode()):
     return b"".join(random.choice(charset) for i in range(l))
@@ -123,15 +122,11 @@ def produce(reactor, hosts='localhost:9092'):
     yield client.close()
 
 
-
 def main():
     log.info("All Done!")
 
 
 class Output(cowrie.core.output.Output):
-    """
-    Docstring class
-    """
 
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
@@ -139,22 +134,13 @@ class Output(cowrie.core.output.Output):
         port = CONFIG.get('output_kafka', 'port')
         topic = CONFIG.get('output_kafka', 'topic')
 
-
     def start(self):
-        """
-        """
         pass
 
-
     def stop(self):
-        """
-        """
         self.outfile.flush()
 
-
     def write(self, logentry):
-        """
-        """
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_'):

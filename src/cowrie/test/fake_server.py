@@ -5,11 +5,12 @@
 
 from __future__ import division, absolute_import
 
-import pickle
 import copy
+import pickle
 
-from cowrie.shell import fs
 from cowrie.core.config import CONFIG
+from cowrie.shell import fs
+
 
 class FakeServer:
     """
@@ -24,6 +25,7 @@ class FakeServer:
             open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), 'arch')
         self.process = None
+
 
 class FakeAvatar:
     """

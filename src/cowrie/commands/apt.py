@@ -13,6 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_faked_package_class_factory(object):
     @staticmethod
     def getCommand(name):
@@ -20,6 +21,7 @@ class command_faked_package_class_factory(object):
             def call(self):
                 self.write(b"%s: Segmentation fault\n" % name)
         return command_faked_installation
+
 
 class command_aptget(HoneyPotCommand):
     """
@@ -172,6 +174,7 @@ pages for more information and options.
         self.errorWrite('E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n')
         self.errorWrite('E: Unable to lock the list directory\n')
         self.exit()
+
 
 commands['/usr/bin/apt-get'] = command_aptget
 commands['apt-get'] = command_aptget

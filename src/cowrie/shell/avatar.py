@@ -1,32 +1,24 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-"""
-This module contains ...
-"""
-
 from __future__ import division, absolute_import
-
-from zope.interface import implementer
 
 from twisted.conch import avatar
 from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
 from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.python import log, components
-
-from cowrie.ssh import session as sshsession
-from cowrie.ssh import forwarding
-from cowrie.shell import session as shellsession
-from cowrie.shell import pwd
-from cowrie.shell import filetransfer
+from zope.interface import implementer
 
 from cowrie.core.config import CONFIG
+from cowrie.shell import filetransfer
+from cowrie.shell import pwd
+from cowrie.shell import session as shellsession
+from cowrie.ssh import forwarding
+from cowrie.ssh import session as sshsession
 
 
 @implementer(IConchUser)
 class CowrieUser(avatar.ConchUser):
-    """
-    """
 
     def __init__(self, username, server):
         avatar.ConchUser.__init__(self)
@@ -60,10 +52,7 @@ class CowrieUser(avatar.ConchUser):
         except:
             pass
 
-
     def logout(self):
-        """
-        """
         log.msg("avatar {} logging out".format(self.username))
 
 

@@ -6,6 +6,7 @@ uname command
 """
 
 from __future__ import division, absolute_import
+
 from configparser import NoOptionError
 
 from cowrie.core.config import CONFIG
@@ -13,59 +14,43 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 def hardware_platform():
-    """
-    """
     try:
         return CONFIG.get('shell', 'hardware_platform')
     except NoOptionError:
         return 'x86_64'
 
 
-
 def kernel_name():
-    """
-    """
     try:
         return CONFIG.get('shell', 'kernel_name')
     except NoOptionError:
         return 'Linux'
 
 
-
 def kernel_version():
-    """
-    """
     try:
         return CONFIG.get('shell', 'kernel_version')
     except NoOptionError:
         return '3.2.0-4-amd64'
 
 
-
 def kernel_build_string():
-    """
-    """
     try:
         return CONFIG.get('shell', 'kernel_build_string')
     except NoOptionError:
         return '#1 SMP Debian 3.2.68-1+deb7u1'
 
 
-
 def operating_system():
-    """
-    """
     try:
         return CONFIG.get('shell', 'operating_system')
     except NoOptionError:
         return 'GNU/Linux'
 
 
-
 def uname_help():
-    """
-    """
     return """Usage: uname [OPTION]...
 Print certain system information.  With no OPTION, same as -s.
 
@@ -88,20 +73,15 @@ or available locally via: info '(coreutils) uname invocation'\n
 """
 
 
-
 class command_uname(HoneyPotCommand):
-    """
-    """
+
     def full_uname(self):
-        """
-        """
         return '{} {} {} {} {} {}\n'.format(kernel_name(),
                                             self.protocol.hostname,
                                             kernel_version(),
                                             kernel_build_string(),
                                             hardware_platform(),
                                             operating_system())
-
 
     def call(self):
         """

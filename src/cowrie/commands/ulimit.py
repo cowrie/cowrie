@@ -13,6 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_ulimit(HoneyPotCommand):
     """
     ulimit
@@ -20,8 +21,6 @@ class command_ulimit(HoneyPotCommand):
     ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]
     """
     def call(self):
-        """
-        """
         # Parse options or display no files
         try:
             opts, args = getopt.getopt(self.args, 'SHacdfilmnpqstuvx')
@@ -40,10 +39,7 @@ class command_ulimit(HoneyPotCommand):
                 return
         self.do_ulimit()
 
-
     def do_ulimit(self, key='core'):
-        """
-        """
         pass
 
 
