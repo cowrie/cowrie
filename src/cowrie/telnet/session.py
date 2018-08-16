@@ -75,7 +75,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         try:
             self.protocol.makeConnection(processprotocol)
             processprotocol.makeConnection(session.wrapProtocol(self.protocol))
-        except Exception as e:
+        except Exception:
             log.msg(traceback.format_exc())
 
     def connectionLost(self, reason):
