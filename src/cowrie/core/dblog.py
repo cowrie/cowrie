@@ -45,7 +45,7 @@ class DBLogger(object):
 
         self.report_public_ip = False
         if CONFIG.has_option('honeypot', 'report_public_ip'):
-            if CONFIG.getboolean('honeypot', 'report_public_ip') == True:
+            if CONFIG.getboolean('honeypot', 'report_public_ip'):
                 self.report_public_ip = True
                 import urllib
                 self.public_ip = urllib.urlopen('http://myip.threatstream.com').readline()
@@ -81,7 +81,7 @@ class DBLogger(object):
             return
 
         # ignore anything without eventid
-        if not 'eventid' in ev:
+        if 'eventid' not in ev:
             return
 
         # connection event is special. adds to list
