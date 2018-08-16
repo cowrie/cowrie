@@ -69,7 +69,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             try:
                 self.primes = primes.parseModuliFile(_moduli)
                 break
-            except IOError as err:
+            except IOError:
                 pass
 
         try:
