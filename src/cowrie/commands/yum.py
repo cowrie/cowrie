@@ -1,11 +1,4 @@
-# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
-
-
-# Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch
-
 from __future__ import division, absolute_import
-from datetime import datetime
 
 import random
 import re
