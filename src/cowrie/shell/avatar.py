@@ -40,15 +40,15 @@ class CowrieUser(avatar.ConchUser):
 
         # SFTP support enabled only when option is explicitly set
         try:
-            if CONFIG.getboolean('ssh', 'sftp_enabled') == True:
+            if CONFIG.getboolean('ssh', 'sftp_enabled'):
                 self.subsystemLookup[b'sftp'] = conchfiletransfer.FileTransferServer
-        except ValueError as e:
+        except ValueError:
             pass
 
         # SSH forwarding disabled only when option is explicitly set
         self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
         try:
-            if CONFIG.getboolean('ssh', 'forwarding') == False:
+            if not CONFIG.getboolean('ssh', 'forwarding'):
                 del self.channelLookup[b'direct-tcpip']
         except Exception:
             pass
