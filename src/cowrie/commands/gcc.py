@@ -83,7 +83,7 @@ class command_gcc(HoneyPotCommand):
         # Parse options or display no files
         try:
             opts, args = getopt.gnu_getopt(self.args, 'ESchvgo:x:l:I:W:D:X:O:', ['help', 'version', 'param'])
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.no_files()
             return
 
@@ -120,11 +120,10 @@ class command_gcc(HoneyPotCommand):
 
         # To generate, or not
         if input_files > 0 and complete:
-            func = lambda: self.generate_file(output_file if output_file else 'a.out')
             timeout = 0.1 + random.random()
 
             # Schedule call to make it more time consuming and real
-            self.scheduled = reactor.callLater(timeout, func)
+            self.scheduled = reactor.callLater(timeout, self.generate_file(output_file if output_file else 'a.out'))
         else:
             self.no_files()
 
@@ -224,8 +223,6 @@ gcc version %s (Debian {}-5)""".format(version, version_short, version_short, ve
         """
         Print help info, and exit
         """
-
-        version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:2]])
 
         self.write("""Usage: gcc [options] file...
 Options:
