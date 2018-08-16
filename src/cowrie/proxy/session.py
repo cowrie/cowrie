@@ -189,7 +189,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return 1
 
     def request_window_change(self, data):
-        winSize = session.parseRequest_window_change(data)
         return 1
 
     def request_subsystem(self, data):
@@ -201,15 +200,15 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
         pf = _ProtocolFactory(self.client.transport)
-        ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd, self.user, self.host,
-                                                              port=self.port, password=self.password).connect(pf)
+        endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd, self.user, self.host,
+                                                         port=self.port, password=self.password).connect(pf)
         return 1
 
     def request_shell(self, data):
         log.msg('request_shell')
         pf = _ProtocolFactory(self.client.transport)
-        ep = endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
-                                                            port=self.port, password=self.password).connect(pf)
+        endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
+                                                       port=self.port, password=self.password).connect(pf)
         return 1
 
     def extReceived(self, dataType, data):
