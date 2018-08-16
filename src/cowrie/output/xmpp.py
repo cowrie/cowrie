@@ -100,5 +100,3 @@ class Output(cowrie.core.output.Output):
 
     def stop(self):
         self.xmppclient.stopService()
-
-# vim: set sw=4 et:

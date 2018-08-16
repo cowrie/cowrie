@@ -99,5 +99,3 @@ commands['/usr/sbin/adduser'] = command_adduser
 commands['/usr/sbin/useradd'] = command_adduser
 commands['adduser'] = command_adduser
 commands['useradd'] = command_adduser
-
-# vim: set sw=4 et tw=0:

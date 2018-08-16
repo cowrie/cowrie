@@ -128,5 +128,3 @@ if __name__ == '__main__':
     except IOError:
         print("\n\n[!] Couldn't open log file (%s)!" % logfile)
         sys.exit(2)
-
-# vim: set sw=4:

@@ -174,5 +174,3 @@ class DBLogger(dblog.DBLogger):
         ses['session'] = session
         ses['version'] = args['version']
         self.broadcast('clientversion', ses)
-
-# vim: set sw=4 et:
