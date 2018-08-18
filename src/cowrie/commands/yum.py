@@ -4,17 +4,16 @@
 
 # Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch
 
-from __future__ import division, absolute_import
-from datetime import datetime
+from __future__ import absolute_import, division
 
+import hashlib
 import random
 import re
-import hashlib
 
-from twisted.internet import reactor, defer
+from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
-
 from twisted.python import log
+
 from cowrie.shell.command import HoneyPotCommand
 
 arch = 'x86_64'
@@ -27,6 +26,7 @@ class command_faked_package_class_factory(object):
         class command_faked_installation(HoneyPotCommand):
             def call(self):
                 self.write(b"{}: Segmentation fault\n".format(name))
+
         return command_faked_installation
 
 
@@ -167,7 +167,7 @@ Options:
   --sec-severity=SEVS, --secseverity=SEVS
                         Include security relevant packages matching the
                         severity, in updates
-  --tsflags=TSFLAGS     
+  --tsflags=TSFLAGS
 
   Plugin Options:
     --changelog         Show changelog delta of updated packages
@@ -210,24 +210,28 @@ Options:
         self.write('Resolving Dependencies\n')
         self.write('--> Running transaction check\n')
         for p in packages:
-            self.write('---> Package {0}.{1} {2}.{3} will be installed\n'.format(p, packages[p]['version'], arch, packages[p]['release']))
+            self.write('---> Package {0}.{1} {2}.{3} will be installed\n'.format(p, packages[p]['version'], arch,
+                                                                                 packages[p]['release']))
         self.write('--> Finished Dependency Resolution\n')
         self.write('Beginning Kernel Module Plugin\n')
         self.write('Finished Kernel Module Plugin\n\n')
 
         self.write('Dependencies Resolved\n\n')
 
-        self.write('================================================================================================================================================================================\n')
+        # TODO: Is this working on all screens?
+        self.write('{}\n'.format('=' * 176))
         # 195 characters
         self.write(
             ' Package\t\t\tArch\t\t\tVersion\t\t\t\tRepository\t\t\tSize\n')
-        self.write('================================================================================================================================================================================\n')
+        self.write('{}\n'.format('=' * 176))
         self.write('Installing:\n')
         for p in packages:
-            self.write(' {0}\t\t\t\t{1}\t\t\t{2}-{3}\t\t\t{4}\t\t\t\t{5} k\n'.format(p, arch, packages[p]['version'], packages[p]['release'], repository, packages[p]['size']))
+            self.write(' {0}\t\t\t\t{1}\t\t\t{2}-{3}\t\t\t{4}\t\t\t\t{5} k\n'.format(p, arch, packages[p]['version'],
+                                                                                     packages[p]['release'], repository,
+                                                                                     packages[p]['size']))
         self.write('\n')
         self.write('Transaction Summary\n')
-        self.write('================================================================================================================================================================================\n')
+        self.write('{}\n'.format('=' * 176))
         self.write('Install  {0} Packages\n\n'.format(len(packages)))
 
         self.write('Total download size: {0} k\n'.format(totalsize))
@@ -248,18 +252,21 @@ Options:
         self.write('Running transaction\n')
         i = 1
         for p in packages:
-            self.write('  Installing : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format((p, packages[p]['version'], packages[p]['release'], arch, i, len(packages))))
+            self.write('  Installing : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format(
+                (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages))))
             yield self.sleep(0.5, 1)
             i += 1
         i = 1
         for p in packages:
-            self.write('  Verifying : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format((p, packages[p]['version'], packages[p]['release'], arch, i, len(packages))))
+            self.write('  Verifying : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format(
+                (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages))))
             yield self.sleep(0.5, 1)
             i += 1
         self.write('\n')
         self.write('Installed:\n')
         for p in packages:
-            self.write('  {0}.{1} {2}:{3}-{4} \t\t'.format((p, arch, random.randint(0, 2), packages[p]['version'], packages[p]['release'])))
+            self.write('  {0}.{1} {2}:{3}-{4} \t\t'.format(
+                (p, arch, random.randint(0, 2), packages[p]['version'], packages[p]['release'])))
         self.write('\n')
         self.write('Complete!\n')
         self.exit()

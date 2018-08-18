@@ -2,7 +2,7 @@
 # Copyright (c) 2018 Danilo Vargas <danilo.vargas@csiete.org>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 
@@ -110,7 +110,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
-        except:
+        except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return

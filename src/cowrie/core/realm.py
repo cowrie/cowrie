@@ -26,12 +26,13 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import twisted
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.python import log
+
 from zope.interface import implementer
 
 from cowrie.core.config import CONFIG
@@ -51,7 +52,7 @@ class HoneyPotRealm(object):
     def requestAvatar(self, avatarId, mind, *interfaces):
         try:
             backend = CONFIG.get('honeypot', 'backend')
-        except:
+        except Exception:
             backend = 'shell'
 
         if backend == 'shell':

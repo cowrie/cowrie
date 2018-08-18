@@ -1,9 +1,9 @@
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
+from ConfigParser import NoOptionError
 
 import redis
-from ConfigParser import NoOptionError
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG

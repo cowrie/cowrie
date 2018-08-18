@@ -22,7 +22,7 @@ from twisted.conch.ssh.keys import Key
 from twisted.conch.ssh.session import SSHSession, packRequest_pty_req
 from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.userauth import SSHUserAuthClient
-from twisted.internet.defer import Deferred, succeed, CancelledError
+from twisted.internet.defer import CancelledError, Deferred, succeed
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.internet.error import ConnectionDone, ProcessTerminated
 from twisted.internet.interfaces import IStreamClientEndpoint
@@ -31,6 +31,7 @@ from twisted.python import log
 from twisted.python.compat import nativeString, networkString
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
+
 from zope.interface import Interface, implementer
 
 
@@ -46,6 +47,7 @@ class ICowrieSSHConnectionCreator(Interface):
     """
     An L{ICowrieSSHConnectionCreator} knows how to create SSH connections somehow.
     """
+
     def secureConnection():
         """
         Return a new, connected, secured, but not yet authenticated instance of
@@ -80,6 +82,7 @@ class SSHCommandAddress(object):
     @ivar username: See L{__init__}
     @ivar command: See L{__init__}
     """
+
     def __init__(self, server, username, command):
         """
         @param server: The address of the SSH server on which the command is
@@ -107,6 +110,7 @@ class SSHShellAddress(object):
     @ivar server: See L{__init__}
     @ivar username: See L{__init__}
     """
+
     def __init__(self, server, username):
         """
         @param server: The address of the SSH server on which the command is
@@ -402,6 +406,7 @@ class _ConnectionReady(SSHConnection):
     propagates the I{serviceStarted} event to a L{Deferred} to be handled
     elsewhere.
     """
+
     def __init__(self, ready):
         """
         @param ready: A L{Deferred} which should be fired when
@@ -515,6 +520,7 @@ class _UserAuth(SSHUserAuthClient):
         def connected(agent):
             self.agent = agent
             return agent.getPublicKeys()
+
         d.addCallback(connected)
         return d
 
@@ -564,6 +570,7 @@ class _CommandTransport(SSHClientTransport):
         def readyFired(result):
             self.connectionReady = None
             return result
+
         self.connectionReady.addBoth(readyFired)
         self.creator = creator
 
@@ -622,6 +629,7 @@ class _CommandTransport(SSHClientTransport):
 
         def maybeGotAgent(ignored):
             self.requestService(self._userauth)
+
         d.addBoth(maybeGotAgent)
 
     def connectionLost(self, reason):
@@ -782,6 +790,7 @@ class SSHShellClientEndpoint(object):
             immediate = passthrough.check(CancelledError)
             self._creator.cleanupConnection(connection, immediate)
             return passthrough
+
         shellConnected.addErrback(disconnectOnFailure)
 
         channel = _ShellChannel(self._creator, protocolFactory, shellConnected)
@@ -946,6 +955,7 @@ class SSHCommandClientEndpoint(object):
             immediate = passthrough.check(CancelledError)
             self._creator.cleanupConnection(connection, immediate)
             return passthrough
+
         commandConnected.addErrback(disconnectOnFailure)
 
         channel = _CommandChannel(
@@ -959,6 +969,7 @@ class _ReadFile(object):
     A weakly file-like object which can be used with L{KnownHostsFile} to
     respond in the negative to all prompts for decisions.
     """
+
     def __init__(self, contents):
         """
         @param contents: L{bytes} which will be returned from every C{readline}
@@ -1035,7 +1046,7 @@ class _NewConnectionHelper(object):
         """
         try:
             return self.tty.open("rb+")
-        except:
+        except Exception:
             # Give back a file-like object from which can be read a byte string
             # that KnownHostsFile recognizes as rejecting some option (b"no").
             return _ReadFile(b"no")

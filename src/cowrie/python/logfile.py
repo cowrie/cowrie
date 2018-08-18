@@ -2,9 +2,10 @@
 # Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from configparser import NoOptionError
+
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
 
@@ -22,7 +23,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
         """
         try:
             return "{:02d}-{:02d}-{:02d}".format(tupledate[0], tupledate[1], tupledate[2])
-        except:
+        except Exception:
             # try taking a float unixtime
             return '_'.join(map(str, self.toDate(tupledate)))
 

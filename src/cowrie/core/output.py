@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import abc
 import datetime
@@ -94,7 +94,7 @@ class Output(object):
             '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
         try:
             self.sensor = CONFIG.get('honeypot', 'sensor_name')
-        except:
+        except Exception:
             self.sensor = socket.gethostname()
 
         self.start()
@@ -169,7 +169,7 @@ class Output(object):
             try:
                 ev['message'] = ev['format'] % ev
                 del ev['format']
-            except:
+            except Exception:
                 pass
 
         # Explicit sessionno (from logDispatch) overrides from 'system'

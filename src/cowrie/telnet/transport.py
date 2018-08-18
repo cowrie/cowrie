@@ -5,15 +5,15 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import struct
-import uuid
 import time
-
+import uuid
 from configparser import NoOptionError
-from twisted.conch.telnet import AuthenticatingTelnetProtocol, ECHO, ITelnetProtocol, \
-    SGA, NAWS, LINEMODE, TelnetTransport, AlreadyNegotiating
+
+from twisted.conch.telnet import AlreadyNegotiating, AuthenticatingTelnetProtocol, ITelnetProtocol, TelnetTransport
+from twisted.conch.telnet import ECHO, LINEMODE, NAWS, SGA
 from twisted.internet import protocol
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
@@ -259,7 +259,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         # We only care about AlreadyNegotiating, everything else can be ignored
         # Possible other types include OptionRefused, AlreadyDisabled, AlreadyEnabled, ConnectionDone, ConnectionLost
         elif f.type is AssertionError:
-            log.err('Client tried to illegally refuse to disable an option; ignoring, but undefined behavior may result')
+            log.err(
+                'Client tried to illegally refuse to disable an option; ignoring, but undefined behavior may result')
             # TODO: Is ignoring this violation of the protocol the proper behavior?
             # Should the connection be terminated instead?
             # The telnetd package on Ubuntu (netkit-telnet) does all negotiation before sending the login prompt,

@@ -7,7 +7,7 @@
 Tests for general shell interaction and echo command
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 
@@ -47,14 +47,14 @@ class ShellEchoCommandTests(unittest.TestCase):
 
     def test_echo_command_003(self):
         """
-        echo -n 
+        echo -n
         """
         self.proto.lineReceived(b'echo -n "test  test"\n')
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
 
     def test_echo_command_004(self):
         """
-        echo -n 
+        echo -n
         """
         self.proto.lineReceived(b'echo -n "test  test"\n')
         self.assertEquals(self.tr.value(), b'test  test' + PROMPT)
@@ -68,7 +68,7 @@ class ShellEchoCommandTests(unittest.TestCase):
 
     def test_echo_command_006(self):
         """
-        echo -n 
+        echo -n
         """
         self.proto.lineReceived(b'echo "\\n"\n')
         self.assertEquals(self.tr.value(), b'\\n\n' + PROMPT)

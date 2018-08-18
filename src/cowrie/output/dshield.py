@@ -3,17 +3,19 @@ Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import base64
-import dateutil.parser
 import hashlib
 import hmac
 import re
 import time
 
+import dateutil.parser
+
 import requests
-from twisted.internet import threads, reactor
+
+from twisted.internet import reactor, threads
 from twisted.python import log
 
 import cowrie.core.output
@@ -28,7 +30,7 @@ class Output(cowrie.core.output.Output):
         self.batch_size = CONFIG.getint('output_dshield', 'batch_size')
         try:
             self.debug = CONFIG.getboolean('output_dshield', 'debug')
-        except:
+        except Exception:
             self.debug = False
 
         cowrie.core.output.Output.__init__(self)
@@ -126,7 +128,8 @@ class Output(cowrie.core.output.Output):
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output)
                 if sha1_match.group(1) != sha1_local.hexdigest():
-                    log.err('dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
+                    log.err(
+                        'dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
                     failed = True
                 md5_regex = re.compile(r'<md5checksum>([^<]+)<\/md5checksum>')
                 md5_match = md5_regex.search(response)

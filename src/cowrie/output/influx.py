@@ -2,6 +2,7 @@ import re
 
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
+
 from twisted.python import log
 
 import cowrie.core.output
@@ -16,12 +17,12 @@ class Output(cowrie.core.output.Output):
     def start(self):
         try:
             host = CONFIG.get('output_influx', 'host')
-        except:
+        except Exception:
             host = ''
 
         try:
             port = CONFIG.getint('output_influx', 'port')
-        except:
+        except Exception:
             port = 8086
 
         self.client = None
@@ -44,7 +45,7 @@ class Output(cowrie.core.output.Output):
 
         try:
             dbname = CONFIG.get('output_influx', 'database_name')
-        except:
+        except Exception:
             dbname = 'cowrie'
 
         retention_policy_duration_default = '12w'
@@ -57,8 +58,8 @@ class Output(cowrie.core.output.Output):
             match = re.search('^\d+[dhmw]{1}$', retention_policy_duration)
             if not match:
                 log.err(("output_influx: invalid retention policy."
-                        "Using default '{}'..").format(
-                        retention_policy_duration))
+                         "Using default '{}'..").format(
+                    retention_policy_duration))
                 retention_policy_duration = retention_policy_duration_default
         else:
             retention_policy_duration = retention_policy_duration_default

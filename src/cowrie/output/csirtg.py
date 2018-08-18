@@ -1,10 +1,11 @@
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 from datetime import datetime
 
 from csirtgsdk.client import Client
 from csirtgsdk.indicator import Indicator
+
 from twisted.python import log
 
 import cowrie.core.output
@@ -29,14 +30,13 @@ class Output(cowrie.core.output.Output):
         self.client = Client(token=self.token)
         cowrie.core.output.Output.__init__(self)
 
-    def start(self,):
+    def start(self, ):
         pass
 
     def stop(self):
         pass
 
     def write(self, e):
-        sid = e['session']
         peerIP = e['src_ip']
         ts = e['timestamp']
         system = e['system']

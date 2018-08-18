@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 import tarfile
@@ -55,7 +55,7 @@ class command_tar(HoneyPotCommand):
 
         try:
             t = tarfile.open(f[A_REALFILE])
-        except:
+        except Exception:
             self.write('tar: this does not look like a tar archive\n')
             self.write('tar: skipping to next header\n')
             self.write('tar: error exit delayed from previous errors\n')

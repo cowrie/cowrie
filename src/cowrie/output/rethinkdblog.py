@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import time
 from datetime import datetime
@@ -14,7 +14,6 @@ def iso8601_to_timestamp(value):
 
 
 class Output(cowrie.core.output.Output):
-
     RETHINK_DB_SEGMENT = 'output_rethinkdblog'
 
     def __init__(self):

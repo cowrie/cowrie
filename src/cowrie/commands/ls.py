@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import stat
@@ -9,7 +9,7 @@ import time
 
 import cowrie.shell.fs as fs
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.pwd import Passwd, Group
+from cowrie.shell.pwd import Group, Passwd
 
 commands = {}
 
@@ -19,13 +19,13 @@ class command_ls(HoneyPotCommand):
     def uid2name(self, uid):
         try:
             return Passwd().getpwuid(uid)["pw_name"]
-        except:
+        except Exception:
             return str(uid)
 
     def gid2name(self, gid):
         try:
             return Group().getgrgid(gid)["gr_name"]
-        except:
+        except Exception:
             return str(gid)
 
     def call(self):
@@ -37,7 +37,8 @@ class command_ls(HoneyPotCommand):
 
         # Parse options or display no files
         try:
-            opts, args = getopt.gnu_getopt(self.args, '1@ABCFGHLOPRSTUWabcdefghiklmnopqrstuvwx', ['help', 'version', 'param'])
+            opts, args = getopt.gnu_getopt(self.args, '1@ABCFGHLOPRSTUWabcdefghiklmnopqrstuvwx',
+                                           ['help', 'version', 'param'])
         except getopt.GetoptError as err:
             self.write("ls: {}\n".format(err))
             self.write("Try 'ls --help' for more information.\n")
@@ -62,7 +63,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_normal(self, path):
         try:
-            if self.protocol.fs.isdir(path) and self.showDirectories == False:
+            if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
@@ -77,16 +78,16 @@ class command_ls(HoneyPotCommand):
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
-        except:
+        except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
 
-        l = [x[fs.A_NAME] for x in files]
-        if not l:
+        line = [x[fs.A_NAME] for x in files]
+        if not line:
             return
         count = 0
-        maxlen = max([len(x) for x in l])
+        maxlen = max([len(x) for x in line])
 
         try:
             wincols = self.protocol.user.windowSize[1]
@@ -94,7 +95,7 @@ class command_ls(HoneyPotCommand):
             wincols = 80
 
         perline = int(wincols / (maxlen + 1))
-        for f in l:
+        for f in line:
             if count == perline:
                 count = 0
                 self.write('\n')
@@ -104,7 +105,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_l(self, path):
         try:
-            if self.protocol.fs.isdir(path) and self.showDirectories == False:
+            if self.protocol.fs.isdir(path) and self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
@@ -119,7 +120,7 @@ class command_ls(HoneyPotCommand):
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
-        except:
+        except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
             return
@@ -177,7 +178,7 @@ class command_ls(HoneyPotCommand):
             perms = ''.join(perms)
             ctime = time.localtime(file[fs.A_CTIME])
 
-            l = '%s 1 %s %s %s %s %s%s' % \
+            line = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
                  self.uid2name(file[fs.A_UID]),
                  self.gid2name(file[fs.A_GID]),
@@ -186,7 +187,7 @@ class command_ls(HoneyPotCommand):
                  file[fs.A_NAME],
                  linktarget)
 
-            self.write('{0}\n'.format(l))
+            self.write('{0}\n'.format(line))
 
 
 commands['/bin/ls'] = command_ls

@@ -2,7 +2,7 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import sys
 
@@ -20,7 +20,6 @@ def durationHuman(seconds):
     days, hours = divmod(hours, 24)
     years, days = divmod(days, 365.242199)
 
-    sdays = str(days)
     syears = str(years)
     sseconds = str(seconds).rjust(2, '0')
     sminutes = str(minutes).rjust(2, '0')

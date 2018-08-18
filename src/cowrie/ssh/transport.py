@@ -7,16 +7,16 @@ encryption and the compression. The transport layer is described in
 RFC 4253.
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import re
 import struct
-import uuid
 import time
+import uuid
 import zlib
+from configparser import NoOptionError
 from hashlib import md5
 
-from configparser import NoOptionError
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
@@ -27,7 +27,6 @@ from cowrie.core.config import CONFIG
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
-
     startTime = None
     gotVersion = False
 
@@ -114,7 +113,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self.gotVersion = True
                 remote_major = m.group(1)
                 remote_minor = m.group(2)
-                remote_version = m.group(3)
                 if remote_major != b'2' and not (remote_major == b'1' and remote_minor == b'99'):
                     self._unsupportedVersionReceived(None)
                     return
@@ -154,10 +152,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         packet = (struct.pack(b'!LB',
                               totalSize + lenPad - 4, lenPad) +
                   payload + padding)
-        encPacket = (
-            self.currentEncryptions.encrypt(packet) +
-            self.currentEncryptions.makeMAC(
-                self.outgoingPacketSequence, packet))
+        encPacket = (self.currentEncryptions.encrypt(packet) +
+                     self.currentEncryptions.makeMAC(
+                         self.outgoingPacketSequence, packet))
         self.transport.write(encPacket)
         self.outgoingPacketSequence += 1
 

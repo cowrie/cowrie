@@ -5,11 +5,11 @@
 This module contains ...
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import time
-
 from configparser import NoOptionError
+
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory
 from twisted.conch.ssh import keys
@@ -69,7 +69,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             try:
                 self.primes = primes.parseModuliFile(_moduli)
                 break
-            except IOError as err:
+            except IOError:
                 pass
 
         try:

@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import copy
 import os
@@ -9,7 +9,7 @@ import re
 import sys
 
 from twisted.internet import error
-from twisted.python import log, failure
+from twisted.python import failure, log
 
 from cowrie.shell import fs
 
@@ -233,9 +233,9 @@ class HoneyPotShell(object):
         # Example: root@svr03:~#     (More of a "Debian" feel)
         prompt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
         if not self.protocol.user.uid:
-            prompt += '# '    # "Root" user
+            prompt += '# '  # "Root" user
         else:
-            prompt += '$ '    # "Non-Root" user
+            prompt += '$ '  # "Non-Root" user
         self.protocol.terminal.write(prompt.encode('utf8'))
         self.protocol.ps = (prompt, '> ')
 
@@ -263,14 +263,14 @@ class HoneyPotShell(object):
     def handle_TAB(self):
         if not self.protocol.lineBuffer:
             return
-        l = ''.join(self.protocol.lineBuffer)
-        if l[-1] == ' ':
+        line = ''.join(self.protocol.lineBuffer)
+        if line[-1] == ' ':
             clue = ''
         else:
             clue = ''.join(self.protocol.lineBuffer).split()[-1]
         try:
             basedir = os.path.dirname(clue)
-        except:
+        except Exception:
             pass
         if basedir and basedir[-1] != '/':
             basedir += '/'
@@ -281,7 +281,7 @@ class HoneyPotShell(object):
             tmppath = self.protocol.cwd
         try:
             r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
-        except:
+        except Exception:
             return
         for x in self.protocol.fs.get_path(r):
             if clue == '':
@@ -301,7 +301,7 @@ class HoneyPotShell(object):
 
         newbuf = ''
         if len(files) == 1:
-            newbuf = ' '.join(l.split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
+            newbuf = ' '.join(line.split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
@@ -311,7 +311,7 @@ class HoneyPotShell(object):
                 prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ''
-            first = l.split(' ')[:-1]
+            first = line.split(' ')[:-1]
             newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
             if newbuf == ''.join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b'\n')

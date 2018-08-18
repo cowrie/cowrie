@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import hashlib
 import os
@@ -32,14 +32,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         try:
             self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
-        except:
+        except Exception:
             self.ttylogEnabled = True
 
         self.redirFiles = set()
 
         try:
             self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
-        except:
+        except Exception:
             self.bytesReceivedLimit = 0
 
         if prot is protocol.HoneyPotExecProtocol:
@@ -58,14 +58,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.ttylogEnabled:
             self.ttylogFile = '%s/%s-%s-%s%s.log' % \
-                (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-                 transportId, channelId, self.type)
+                              (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
+                               transportId, channelId, self.type)
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
 
         self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
-            (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
+                            (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
 
         if self.type == 'e':
             self.stdinlogOpen = True
@@ -141,7 +141,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         outfile=shasumfile,
                         shasum=shasum,
                         destfile='')
-            except IOError as e:
+            except IOError:
                 pass
             finally:
                 self.stdinlogOpen = False

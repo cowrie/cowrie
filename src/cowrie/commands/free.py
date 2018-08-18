@@ -5,7 +5,7 @@
 This module ...
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 
@@ -33,11 +33,12 @@ class command_free(HoneyPotCommand):
     """
     free
     """
+
     def call(self):
         # Parse options or display no files
         try:
             opts, args = getopt.getopt(self.args, 'mh')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.do_free()
             return
 

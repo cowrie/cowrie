@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import struct
 
@@ -154,7 +154,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             if packet:
                 raise error.ConchError(
                     "{:d} bytes of extra data".format(len(packet)))
-        except:
+        except Exception:
             d.errback(Failure())
         else:
             d.callback(resp)

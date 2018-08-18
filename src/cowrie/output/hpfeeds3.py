@@ -1,15 +1,15 @@
-
 """
 Output plugin for HPFeeds
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 import logging
 
 from hpfeeds.twisted import ClientSessionService
-from twisted.internet import reactor, ssl, endpoints
+
+from twisted.internet import endpoints, reactor, ssl
 from twisted.python import log
 
 import cowrie.core.output

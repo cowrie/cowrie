@@ -30,11 +30,11 @@
 This module contains connection code to work around issues with the
 Granados SSH client library.
 """
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import struct
 
-from twisted.conch.ssh import connection, common
+from twisted.conch.ssh import common, connection
 from twisted.internet import defer
 from twisted.python import log
 

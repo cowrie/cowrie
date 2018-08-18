@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Claud Xiao
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import ftplib
 import getopt
@@ -53,7 +53,7 @@ class FTP(ftplib.FTP):
                     resp = self.getresp()
                 if resp[0] != '1':
                     raise ftplib.error_reply(resp)
-            except:
+            except Exception:
                 conn.close()
                 raise
         else:

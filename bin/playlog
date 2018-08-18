@@ -12,6 +12,7 @@ import time
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
 TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
 
+
 def playlog(fd, settings):
     ssize = struct.calcsize('<iLiiLL')
     currtty, prevtime, prefdir = 0, 0, 0
@@ -69,15 +70,16 @@ def playlog(fd, settings):
         elif str(tty) == str(currtty) and op == OP_CLOSE:
             break
 
-def help(brief = 0):
+
+def help(brief=0):
     print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
-        os.path.basename(sys.argv[0]))
+          os.path.basename(sys.argv[0]))
 
     if not brief:
         print('  -f             keep trying to read the log until it\'s closed')
         print('  -m <seconds>   maximum delay in seconds, to avoid' + \
-            ' boredom or fast-forward\n' + \
-            '                 to the end. (default is 3.0)')
+              ' boredom or fast-forward\n' + \
+              '                 to the end. (default is 3.0)')
         print('  -i             show the input stream instead of output')
         print('  -b             show both input and output streams')
         print('  -c             colorify the output stream based on what streams are being received')
@@ -85,15 +87,16 @@ def help(brief = 0):
 
     sys.exit(1)
 
+
 if __name__ == '__main__':
 
     settings = {
-        'tail':         0,
-        'maxdelay':     3.0,
-        'input_only':   0,
-        'both_dirs':    0,
-        'colorify':     0,
-        }
+        'tail': 0,
+        'maxdelay': 3.0,
+        'input_only': 0,
+        'both_dirs': 0,
+        'colorify': 0,
+    }
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'fhibcm:w:', ['help'])
@@ -102,12 +105,18 @@ if __name__ == '__main__':
         help()
 
     for o, a in optlist:
-        if o == '-f': settings['tail'] = 1
-        elif o == '-m': settings['maxdelay'] = float(a) # takes decimals
-        elif o == '-i': settings['input_only'] = 1
-        elif o == '-b': settings['both_dirs'] = 1
-        elif o in ['-h', '--help']: help()
-        elif o == '-c': settings['colorify'] = 1
+        if o == '-f':
+            settings['tail'] = 1
+        elif o == '-m':
+            settings['maxdelay'] = float(a)  # takes decimals
+        elif o == '-i':
+            settings['input_only'] = 1
+        elif o == '-b':
+            settings['both_dirs'] = 1
+        elif o in ['-h', '--help']:
+            help()
+        elif o == '-c':
+            settings['colorify'] = 1
 
     if len(args) < 1:
         help()
@@ -119,5 +128,3 @@ if __name__ == '__main__':
     except IOError:
         print("\n\n[!] Couldn't open log file (%s)!" % logfile)
         sys.exit(2)
-
-# vim: set sw=4:

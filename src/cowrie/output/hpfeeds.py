@@ -1,9 +1,8 @@
-
 """
 Output plugin for HPFeeds
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import hashlib
 import json
@@ -17,7 +16,7 @@ import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 try:
-    buffer         # Python 2
+    buffer  # Python 2
 except NameError:  # Python 3
     buffer = memoryview
 
@@ -59,14 +58,15 @@ def strpack8(x):
     """
     packs a string with 1 byte length field
     """
-    if isinstance(x, str): x = x.encode('latin1')
+    if isinstance(x, str):
+        x = x.encode('latin1')
     return struct.pack('!B', len(x)) + x
 
 
 # unpacks a string with 1 byte length field
 def strunpack8(x):
-    l = x[0]
-    return x[1:1 + l], x[1 + l:]
+    line = x[0]
+    return x[1:1 + line], x[1 + line:]
 
 
 def msghdr(op, data):
@@ -78,7 +78,8 @@ def msgpublish(ident, chan, data):
 
 
 def msgsubscribe(ident, chan):
-    if isinstance(chan, str): chan = chan.encode('latin1')
+    if isinstance(chan, str):
+        chan = chan.encode('latin1')
     return msghdr(OP_SUBSCRIBE, strpack8(ident) + chan)
 
 
@@ -132,8 +133,9 @@ class hpclient(object):
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.settimeout(3)
-        try: self.s.connect((self.server, self.port))
-        except:
+        try:
+            self.s.connect((self.server, self.port))
+        except Exception:
             log.msg('hpfeeds client could not connect to broker.')
             self.s = None
         else:
@@ -144,7 +146,8 @@ class hpclient(object):
         if not self.s:
             self.connect()
 
-        if not self.s: return
+        if not self.s:
+            return
         self.s.send(data)
 
     def close(self):
@@ -163,29 +166,34 @@ class hpclient(object):
         self.s.settimeout(None)
 
     def read(self):
-        if not self.s: return
-        try: d = self.s.recv(BUFSIZ)
+        if not self.s:
+            return
+        try:
+            d = self.s.recv(BUFSIZ)
         except socket.timeout:
             return
 
         if not d:
-            if self.debug: log.msg('hpclient connection closed?')
+            if self.debug:
+                log.msg('hpclient connection closed?')
             self.close()
             return
 
         self.unpacker.feed(d)
         try:
             for opcode, data in self.unpacker:
-                if self.debug: log.msg('hpclient msg opcode {0:x} data {1}'.format(
-                    opcode,
-                    ''.join('{:02x}'.format(x) for x in data))
-                )
+                if self.debug:
+                    log.msg('hpclient msg opcode {0:x} data {1}'.format(
+                        opcode,
+                        ''.join('{:02x}'.format(x) for x in data))
+                    )
                 if opcode == OP_INFO:
                     name, rand = strunpack8(data)
-                    if self.debug: log.msg('hpclient server name {0} rand {1}'.format(
-                        name,
-                        ''.join('{:02x}'.format(x) for x in rand))
-                    )
+                    if self.debug:
+                        log.msg('hpclient server name {0} rand {1}'.format(
+                            name,
+                            ''.join('{:02x}'.format(x) for x in rand))
+                        )
                     self.send(msgauth(rand, self.ident, self.secret))
                     self.state = 'GOTINFO'
 
@@ -193,7 +201,8 @@ class hpclient(object):
                     ident, data = strunpack8(data)
                     chan, data = strunpack8(data)
                     if self.debug:
-                        log.msg('publish to {0} by {1}: {2}'.format(chan, ident, ''.join('{:02x}'.format(x) for x in data)))
+                        log.msg(
+                            'publish to {0} by {1}: {2}'.format(chan, ident, ''.join('{:02x}'.format(x) for x in data)))
                 elif opcode == OP_ERROR:
                     log.err('errormessage from server: {0}'.format(''.join('{:02x}'.format(x) for x in data)))
                 else:

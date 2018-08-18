@@ -5,7 +5,7 @@
 This module contains code to run a command
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
 import re
@@ -14,7 +14,7 @@ import sys
 import time
 
 from twisted.internet import error
-from twisted.python import log, failure
+from twisted.python import failure, log
 
 from cowrie.core.config import CONFIG
 from cowrie.shell import fs
@@ -30,12 +30,13 @@ class HoneyPotCommand(object):
     """
     This is the super class for all commands in cowrie/commands
     """
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
-        self.data = None        # output data
+        self.data = None  # output data
         self.input_data = None  # used to store STDIN data passed via PIPE
         self.writefn = self.protocol.pp.outReceived
         self.errorWritefn = self.protocol.pp.errReceived

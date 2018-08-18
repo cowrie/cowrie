@@ -6,7 +6,7 @@ Not ready for production use.
 JSON log file is still recommended way to go
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 from StringIO import StringIO
@@ -32,19 +32,19 @@ class Output(cowrie.core.output.Output):
         self.url = bytes(CONFIG.get('output_splunk', 'url'))
         try:
             self.index = CONFIG.get('output_splunk', 'index')
-        except:
+        except Exception:
             self.index = None
         try:
             self.source = CONFIG.get('output_splunk', 'source')
-        except:
+        except Exception:
             self.source = None
         try:
             self.sourcetype = CONFIG.get('output_splunk', 'sourcetype')
-        except:
+        except Exception:
             self.sourcetype = None
         try:
             self.host = CONFIG.get('output_splunk', 'host')
-        except:
+        except Exception:
             self.host = None
 
         cowrie.core.output.Output.__init__(self)

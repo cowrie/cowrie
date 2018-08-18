@@ -1,5 +1,5 @@
-import json
 import datetime
+import json
 import random
 
 import psutil
@@ -12,7 +12,8 @@ randomStates = ["Ss", "S<", "D<", "Ss+"]
 for proc in psutil.process_iter():
     try:
         info = proc.as_dict(
-            attrs=['pid', 'name', 'cmdline', 'username', 'cpu_percent', 'memory_percent', 'memory_info', 'create_time', 'terminal', 'status', 'cpu_times'])
+            attrs=['pid', 'name', 'cmdline', 'username', 'cpu_percent', 'memory_percent', 'memory_info', 'create_time',
+                   'terminal', 'status', 'cpu_times'])
     except psutil.NoSuchProcess:
         pass
     else:
@@ -28,7 +29,7 @@ for proc in psutil.process_iter():
         object['RSS'] = info['memory_info'].rss
         object['VSZ'] = info['memory_info'].vms
         object['START'] = datetime.datetime.fromtimestamp(info['create_time']).strftime("%b%d")
-        if info['terminal'] != None:
+        if info['terminal']:
             object['TTY'] = str(info['terminal']).replace("/dev/", "")
         else:
             object['TTY'] = "?"

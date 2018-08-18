@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import hashlib
@@ -10,8 +10,9 @@ import re
 import time
 
 from OpenSSL import SSL
+
 from twisted.internet import reactor, ssl
-from twisted.python import log, compat
+from twisted.python import compat, log
 from twisted.web import client
 
 from cowrie.core.config import CONFIG
@@ -256,10 +257,9 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == 'https' else 80)
-            path = parsed.path or '/'
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
-        except:
+        except Exception:
             self.errorWrite('curl: (1) Protocol "{}" not supported or disabled in libcurl\n'.format(scheme))
             self.exit()
             return None
@@ -395,12 +395,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if (time.time() - self.lastupdate) < 0.5:
                 return client.HTTPDownloader.pagePart(self, data)
-            if self.totallength:
-                percent = (self.currentlength / self.totallength) * 100
-                spercent = "{0}%%".format(percent)
-            else:
-                spercent = '{0}K'.format(self.currentlength / 1000)
-                percent = 0
+
             self.speed = self.currentlength / (time.time() - self.started)
             self.lastupdate = time.time()
         return client.HTTPDownloader.pagePart(self, data)
@@ -410,9 +405,10 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             return client.HTTPDownloader.pageEnd(self)
 
         if self.fakeoutfile:
-            self.curl.write("\r100  %d  100  %d    0     0  %d      0 --:--:-- --:--:-- --:--:-- %d\n" % \
-                            (self.currentlength, self.currentlength, 63673, 65181)
-                            )
+            self.curl.write(
+                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- %d\n".format(self.currentlength,
+                                                                                                  self.currentlength,
+                                                                                                  63673, 65181))
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
             self.curl.fs.update_realfile(

@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import optparse
 
@@ -76,6 +76,7 @@ class command_iptables(HoneyPotCommand):
                 else:
                     val = arg_default
                 setattr(parser.values, option.dest, val)
+
             return func
 
         # Initialize options
@@ -140,13 +141,13 @@ class command_iptables(HoneyPotCommand):
             self.show_version()
             return
         elif opts.flush:
-            self.flush("" if opts.flush == True else opts.flush)
+            self.flush("" if opts.flush else opts.flush)
             return
         elif opts.list:
-            self.list("" if opts.list == True else opts.list)
+            self.list("" if opts.list else opts.list)
             return
         elif opts.list_rules:
-            self.list_rules("" if opts.list_rules == True else opts.list_rules)
+            self.list_rules("" if opts.list_rules else opts.list_rules)
             return
 
         # Done

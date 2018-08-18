@@ -24,8 +24,8 @@ RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse && 
 COPY src /cowrie
 
 FROM post-builder as linter
-RUN pip install flake8 && \
-  flake8 /cowrie --count --select=E1,E2,E3,E901,E999,F401,F821,F822,F823 --show-source --statistics
+RUN pip install flake8 flake8-import-order && \
+  flake8 --count --application-import-names cowrie --max-line-length=120 --statistics /cowrie
 
 FROM post-builder as unittest
 ENV PYTHONPATH=/cowrie
