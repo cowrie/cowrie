@@ -173,7 +173,7 @@ class fseditCmd(cmd.Cmd):
             return
 
         cwd = getpath(self.fs, path)
-        files = cwd[A_CONTENTS];
+        files = cwd[A_CONTENTS]
         files.sort()
 
         largest = 0
