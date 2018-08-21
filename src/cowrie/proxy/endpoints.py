@@ -18,7 +18,6 @@ from twisted.conch.client.knownhosts import ConsoleUI, KnownHostsFile
 from twisted.conch.ssh.channel import SSHChannel
 from twisted.conch.ssh.common import NS
 from twisted.conch.ssh.connection import SSHConnection
-from twisted.conch.ssh.keys import Key
 from twisted.conch.ssh.session import SSHSession, packRequest_pty_req
 from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.userauth import SSHUserAuthClient
@@ -28,7 +27,7 @@ from twisted.internet.error import ConnectionDone, ProcessTerminated
 from twisted.internet.interfaces import IStreamClientEndpoint
 from twisted.internet.protocol import Factory
 from twisted.python import log
-from twisted.python.compat import nativeString, networkString
+from twisted.python.compat import nativeString
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
 

@@ -88,7 +88,7 @@ class shlex:
         self.pushback.appendleft(tok)
 
     def push_source(self, newstream, newfile=None):
-        "Push an input source onto the lexer's input source stack."
+        """Push an input source onto the lexer's input source stack."""
         if isinstance(newstream, str):
             newstream = StringIO(newstream)
         self.filestack.appendleft((self.infile, self.instream, self.lineno))
@@ -291,7 +291,7 @@ class shlex:
         return result
 
     def sourcehook(self, newfile):
-        "Hook called on a filename to be sourced."
+        """Hook called on a filename to be sourced."""
         if newfile[0] == '"':
             newfile = newfile[1:-1]
         # This implements cpp-like semantics for relative-path inclusion.
@@ -300,7 +300,7 @@ class shlex:
         return newfile, open(newfile, "r")
 
     def error_leader(self, infile=None, lineno=None):
-        "Emit a C-compiler-like, Emacs-friendly error-message leader."
+        """Emit a C-compiler-like, Emacs-friendly error-message leader."""
         if infile is None:
             infile = self.infile
         if lineno is None:
