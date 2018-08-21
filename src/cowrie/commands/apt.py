@@ -114,7 +114,7 @@ pages for more information and options.
         return
 
     @inlineCallbacks
-    def do_install(self, *args):
+    def do_install(self):
         if len(self.args) <= 1:
             msg = '0 upgraded, 0 newly installed, 0 to remove and {0} not upgraded.\n'
             self.write(msg.format(random.randint(200, 300)))

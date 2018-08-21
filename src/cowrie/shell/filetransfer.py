@@ -174,7 +174,7 @@ class SFTPServerForCowrieUser(object):
             "mtime": int(s.st_mtime)
         }
 
-    def gotVersion(self, otherVersion, extData):
+    def gotVersion(self):
         return {}
 
     def openFile(self, filename, flags, attrs):

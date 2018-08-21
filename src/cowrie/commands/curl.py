@@ -284,7 +284,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.write('^C\n')
         self.connection.transport.loseConnection()
 
-    def success(self, data, outfile):
+    def success(self, outfile):
         if not os.path.isfile(self.safeoutfile):
             log.msg("there's no file " + self.safeoutfile)
             self.exit()
@@ -319,7 +319,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
 
         self.exit()
 
-    def error(self, error, url):
+    def error(self, error):
 
         if hasattr(error, 'getErrorMessage'):  # Exceptions
             error = error.getErrorMessage()

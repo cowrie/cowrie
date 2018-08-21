@@ -132,13 +132,13 @@ class fseditCmd(cmd.Cmd):
             print(str(e))
             sys.exit(1)
 
-    def do_exit(self, args):
+    def do_exit(self):
         """
         Exits the file system editor
         """
         return True
 
-    def do_EOF(self, args):
+    def do_EOF(self):
         """
         The escape character ctrl+d exits the session
         """
@@ -262,11 +262,10 @@ class fseditCmd(cmd.Cmd):
             else:
                 print("cd: %s: Not a directory" % target_dir)
 
-    def do_pwd(self, args):
+    def do_pwd(self):
         """
         Prints the current working directory
 
-        :param args:
         :return:
         """
         print(self.pwd)
@@ -673,7 +672,7 @@ class fseditCmd(cmd.Cmd):
 
         print(target_path + " is a " + msg)
 
-    def do_clear(self, args):
+    def do_clear(self):
         """
         Clears the screen
         """

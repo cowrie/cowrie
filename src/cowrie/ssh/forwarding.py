@@ -15,7 +15,7 @@ from twisted.python import log
 from cowrie.core.config import CONFIG
 
 
-def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
+def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data):
     """
     This function will redirect an SSH forward request to another address
     or will log the request and do nothing

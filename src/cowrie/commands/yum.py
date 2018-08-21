@@ -176,7 +176,7 @@ Options:
         self.exit()
 
     @inlineCallbacks
-    def do_install(self, *args):
+    def do_install(self):
         if len(self.args) <= 1:
             yield self.sleep(1, 2)
             self.write(

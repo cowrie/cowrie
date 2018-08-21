@@ -52,7 +52,7 @@ class CowrieServer(object):
     process = None
     avatars = []
 
-    def __init__(self, realm):
+    def __init__(self):
         self.hostname = CONFIG.get('honeypot', 'hostname')
 
         try:

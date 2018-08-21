@@ -16,7 +16,7 @@ from cowrie.shell import protocol
 @implementer(ISession)
 class SSHSessionForCowrieUser(object):
 
-    def __init__(self, avatar, reactor=None):
+    def __init__(self, avatar):
         """
         Construct an C{SSHSessionForCowrieUser}.
 
@@ -49,7 +49,7 @@ class SSHSessionForCowrieUser(object):
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
-    def getPty(self, terminal, windowSize, attrs):
+    def getPty(self, terminal, windowSize):
         self.environ['TERM'] = terminal
         log.msg(
             eventid='cowrie.client.size',

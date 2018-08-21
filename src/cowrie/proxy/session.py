@@ -25,7 +25,7 @@ class _ProtocolFactory:
     def __init__(self, protocol):
         self.protocol = protocol
 
-    def buildProtocol(self, addr):
+    def buildProtocol(self):
         return self.protocol
 
 
@@ -179,7 +179,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         log.msg('pty request: %r %r' % (term, windowSize))
         return 1
 
-    def request_window_change(self, data):
+    def request_window_change(self):
         return 1
 
     def request_subsystem(self, data):
@@ -195,7 +195,7 @@ class ProxySSHSession(channel.CowrieSSHChannel):
                                                          port=self.port, password=self.password).connect(pf)
         return 1
 
-    def request_shell(self, data):
+    def request_shell(self):
         log.msg('request_shell')
         pf = _ProtocolFactory(self.client.transport)
         endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,

@@ -97,7 +97,7 @@ class DBLogger(object):
 
             self.sessions[sessionno] = \
                 self.createSession(
-                    peerIP, peerPort, hostIP, hostPort)
+                )
             return
 
         # use explicit sessionno if coming from dispatch
@@ -138,7 +138,7 @@ class DBLogger(object):
 
     # We have to return a unique ID
     @abc.abstractmethod
-    def createSession(self, peerIP, peerPort, hostIP, hostPort):
+    def createSession(self):
         return 0
 
     # args has: ttylog

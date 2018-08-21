@@ -106,7 +106,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         username, password = self.username, line  # .decode()
         del self.username
 
-        def login(ignored):
+        def login():
             self.src_ip = self.transport.getPeer().host
             creds = UsernamePasswordIP(username, password, self.src_ip)
             d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
@@ -122,7 +122,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
             self.transport.wontChain(ECHO).addBoth(login)
         else:
             # process login
-            login('')
+            login()
 
         return 'Discard'
 
@@ -236,16 +236,16 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                 duration=duration)
 
     def willChain(self, option):
-        return self._chainNegotiation(None, self.will, option)
+        return self._chainNegotiation(self.will, option)
 
     def wontChain(self, option):
-        return self._chainNegotiation(None, self.wont, option)
+        return self._chainNegotiation(self.wont, option)
 
     def doChain(self, option):
-        return self._chainNegotiation(None, self.do, option)
+        return self._chainNegotiation(self.do, option)
 
     def dontChain(self, option):
-        return self._chainNegotiation(None, self.dont, option)
+        return self._chainNegotiation(self.dont, option)
 
     def _handleNegotiationError(self, f, func, option):
         if f.type is AlreadyNegotiating:
@@ -267,5 +267,5 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             # but does handle client-initiated negotiation at any time.
         return None  # This Failure has been handled, no need to continue processing errbacks
 
-    def _chainNegotiation(self, res, func, option):
+    def _chainNegotiation(self, func, option):
         return func(option).addErrback(self._handleNegotiationError, func, option)

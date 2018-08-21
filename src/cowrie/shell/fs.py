@@ -410,7 +410,7 @@ class HoneyPotFilesystem(object):
                 return True
         return False
 
-    def utime(self, path, atime, mtime):
+    def utime(self, path, mtime):
         p = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))

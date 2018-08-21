@@ -74,7 +74,7 @@ class command_ssh(HoneyPotCommand):
         self.write('Are you sure you want to continue connecting (yes/no)? ')
         self.callbacks = [self.yesno, self.wait]
 
-    def yesno(self, line):
+    def yesno(self):
         self.write('Warning: Permanently added \'{}\' (RSA) to the list of known hosts.\n'.format(self.host))
         self.write('%s@%s\'s password: ' % (self.user, self.host))
         self.protocol.password_input = True
@@ -82,7 +82,7 @@ class command_ssh(HoneyPotCommand):
     def wait(self, line):
         reactor.callLater(2, self.finish, line)
 
-    def finish(self, line):
+    def finish(self):
         self.pause = False
         rest, host = self.host, 'localhost'
         rest = self.host.strip().split('.')

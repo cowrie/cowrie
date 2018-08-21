@@ -41,6 +41,6 @@ class CowrieServer(object):
     multiple Cowrie connections
     """
 
-    def __init__(self, realm):
+    def __init__(self):
         self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')

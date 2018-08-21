@@ -191,7 +191,7 @@ class _CommandChannel(SSHChannel):
         """
         self._commandConnected.errback(reason)
 
-    def _execSuccess(self, ignored):
+    def _execSuccess(self):
         """
         When the request to execute the command in this channel succeeds, use
         C{protocolFactory} to build a protocol to handle the command's input and
@@ -303,7 +303,7 @@ class _ShellChannel(SSHSession):
         """
         self._shellConnected.errback(reason)
 
-    def ttyRequest(self, something):
+    def ttyRequest(self):
         log.msg("tty-request")
         term = "vt100"
         winSize = (25, 80, 0, 0)  # struct.unpack('4H', winsz)
@@ -330,7 +330,7 @@ class _ShellChannel(SSHSession):
         log.msg("failed to connect to proxy backend: {0}".format(reason))
         self._shellConnected.errback(reason)
 
-    def _shellSuccess(self, ignored):
+    def _shellSuccess(self):
         """
         When the request to open this shell this channel succeeds, use
         C{protocolFactory} to build a protocol to handle the shell's input and
@@ -618,7 +618,7 @@ class _CommandTransport(SSHClientTransport):
         else:
             d = succeed(None)
 
-        def maybeGotAgent(ignored):
+        def maybeGotAgent():
             self.requestService(self._userauth)
 
         d.addBoth(maybeGotAgent)
@@ -975,7 +975,7 @@ class _ReadFile(object):
         @param data: ignored
         """
 
-    def readline(self, count=-1):
+    def readline(self):
         """
         Always give back the byte string that this L{_ReadFile} was initialized
         with.
