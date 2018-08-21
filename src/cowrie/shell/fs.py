@@ -215,7 +215,6 @@ class HoneyPotFilesystem(object):
                             return False
                     else:
                         p = x
-            # cwd = '/'.join((cwd, piece))
         return p
 
     def file_contents(self, target):
@@ -314,23 +313,6 @@ class HoneyPotFilesystem(object):
     """
 
     def open(self, filename, openFlags, mode):
-        """
-        #log.msg("fs.open %s" % filename)
-
-        #if (openFlags & os.O_APPEND == os.O_APPEND):
-        #    log.msg("fs.open append")
-
-        #if (openFlags & os.O_CREAT == os.O_CREAT):
-        #    log.msg("fs.open creat")
-
-        #if (openFlags & os.O_TRUNC == os.O_TRUNC):
-        #    log.msg("fs.open trunc")
-
-        #if (openFlags & os.O_EXCL == os.O_EXCL):
-        #    log.msg("fs.open excl")
-
-        # treat O_RDWR same as O_WRONLY
-        """
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
             hostmode = mode & ~111

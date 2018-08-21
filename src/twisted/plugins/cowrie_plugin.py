@@ -59,7 +59,6 @@ class Options(usage.Options):
     """
     This defines commandline options and flags
     """
-    # The '-c' parameters is currently ignored
     optParameters = []
 
     optFlags = [
