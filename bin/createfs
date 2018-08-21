@@ -46,7 +46,7 @@ def recurse(localroot, root, tree, maxdepth=100):
 
     localpath = os.path.join(localroot, root[1:])
 
-    logit(' %s\n' % (localpath))
+    logit(' %s\n' % localpath)
 
     if not os.access(localpath, os.R_OK):
         logit(' Cannot access %s\n' % localpath)

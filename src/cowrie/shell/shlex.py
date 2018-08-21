@@ -297,7 +297,7 @@ class shlex:
         # This implements cpp-like semantics for relative-path inclusion.
         if isinstance(self.infile, str) and not os.path.isabs(newfile):
             newfile = os.path.join(os.path.dirname(self.infile), newfile)
-        return (newfile, open(newfile, "r"))
+        return newfile, open(newfile, "r")
 
     def error_leader(self, infile=None, lineno=None):
         "Emit a C-compiler-like, Emacs-friendly error-message leader."

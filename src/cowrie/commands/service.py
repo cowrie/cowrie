@@ -101,10 +101,10 @@ class command_service(HoneyPotCommand):
             return
 
         for o, a in opts:
-            if o in ("--help") or o in ('-h'):
+            if o in "--help" or o in '-h':
                 self.help()
                 return
-            elif o in ('--status-all'):
+            elif o in '--status-all':
                 self.status_all()
         """
         Ubuntu shows no response when stopping, starting

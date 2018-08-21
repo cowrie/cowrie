@@ -334,7 +334,7 @@ class HoneyPotFilesystem(object):
         """
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
-            hostmode = mode & ~(111)
+            hostmode = mode & ~111
             hostfile = '%s/%s_sftp_%s' % (
                 CONFIG.get('honeypot', 'download_path'),
                 time.strftime('%Y%m%d-%H%M%S'),
@@ -365,7 +365,7 @@ class HoneyPotFilesystem(object):
         if self.tempfiles[fd] is not None:
             shasum = hashlib.sha256(open(self.tempfiles[fd], 'rb').read()).hexdigest()
             shasumfile = CONFIG.get('honeypot', 'download_path') + "/" + shasum
-            if (os.path.exists(shasumfile)):
+            if os.path.exists(shasumfile):
                 os.remove(self.tempfiles[fd])
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
@@ -427,9 +427,9 @@ class HoneyPotFilesystem(object):
         p = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        if (uid != -1):
+        if uid != -1:
             p[A_UID] = uid
-        if (gid != -1):
+        if gid != -1:
             p[A_GID] = gid
 
     def remove(self, path):
@@ -471,7 +471,7 @@ class HoneyPotFilesystem(object):
         return self.stat(path, follow_symlinks=False)
 
     def stat(self, path, follow_symlinks=True):
-        if (path == "/"):
+        if path == "/":
             p = {
                 A_TYPE: T_DIR,
                 A_UID: 0,

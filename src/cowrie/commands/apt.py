@@ -143,7 +143,7 @@ pages for more information and options.
                        (i, p, packages[p]['version'], packages[p]['size']))
             i += 1
             yield self.sleep(1, 2)
-        self.write('Fetched %s.2kB in 1s (4493B/s)\n' % (totalsize))
+        self.write('Fetched %s.2kB in 1s (4493B/s)\n' % totalsize)
         self.write('Reading package fields... Done\n')
         yield self.sleep(1, 2)
         self.write('Reading package status... Done\n')

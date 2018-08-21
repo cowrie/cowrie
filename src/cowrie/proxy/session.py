@@ -16,7 +16,7 @@ from cowrie.proxy import endpoints
 from cowrie.ssh import channel
 
 
-class _ProtocolFactory():
+class _ProtocolFactory:
     """
     Factory to return the (existing) ssh session to pass to ssh command endpoint
     It does not actually function as a factory

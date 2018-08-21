@@ -45,11 +45,11 @@ class command_ls(HoneyPotCommand):
             return
 
         for x, a in opts:
-            if x in ('-l'):
+            if x in '-l':
                 func = self.do_ls_l
-            if x in ('-a'):
+            if x in '-a':
                 self.showHidden = True
-            if x in ('-d'):
+            if x in '-d':
                 self.showDirectories = True
 
         for arg in args:
