@@ -48,7 +48,7 @@ class UserDB(object):
                 login, passwd = re.split(br':\w+:', line, 1)
                 self.adduser(login, passwd)
 
-    def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
+    def checklogin(self, thelogin, thepasswd):
         for credentials, policy in self.userdb.items():
             login, passwd = credentials
 

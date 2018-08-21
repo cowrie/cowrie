@@ -114,7 +114,7 @@ pages for more information and options.
         return
 
     @inlineCallbacks
-    def do_install(self, *args):
+    def do_install(self):
         if len(self.args) <= 1:
             msg = '0 upgraded, 0 newly installed, 0 to remove and {0} not upgraded.\n'
             self.write(msg.format(random.randint(200, 300)))
@@ -135,7 +135,7 @@ pages for more information and options.
         self.write('The following NEW packages will be installed:\n')
         self.write('  %s ' % ' '.join(packages) + '\n')
         self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % len(packages))
-        self.write('Need to get %s.2kB of archives.\n' % (totalsize))
+        self.write('Need to get %s.2kB of archives.\n' % totalsize)
         self.write('After this operation, %skB of additional disk space will be used.\n' % (totalsize * 2.2,))
         i = 1
         for p in packages:
@@ -143,7 +143,7 @@ pages for more information and options.
                        (i, p, packages[p]['version'], packages[p]['size']))
             i += 1
             yield self.sleep(1, 2)
-        self.write('Fetched %s.2kB in 1s (4493B/s)\n' % (totalsize))
+        self.write('Fetched %s.2kB in 1s (4493B/s)\n' % totalsize)
         self.write('Reading package fields... Done\n')
         yield self.sleep(1, 2)
         self.write('Reading package status... Done\n')

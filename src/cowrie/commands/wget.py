@@ -171,7 +171,7 @@ class command_wget(HoneyPotCommand):
         self.errorWrite('^C\n')
         self.connection.transport.loseConnection()
 
-    def success(self, data, outfile):
+    def success(self, outfile):
         if not os.path.isfile(self.artifactFile.shasumFilename):
             log.msg("there's no file " + self.artifactFile.shasumFilename)
             self.exit()
@@ -200,7 +200,7 @@ class command_wget(HoneyPotCommand):
 
         self.exit()
 
-    def error(self, error, url):
+    def error(self, error):
         if hasattr(error, 'getErrorMessage'):  # exceptions
             errorMessage = error.getErrorMessage()
             self.errorWrite(errorMessage + '\n')

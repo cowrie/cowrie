@@ -37,7 +37,8 @@ def playlog(fd, settings):
                 continue
             break
 
-        if currtty == 0: currtty = tty
+        if currtty == 0:
+            currtty = tty
 
         if str(tty) == str(currtty) and op == OP_WRITE:
             # the first stream seen is considered 'output'
@@ -46,7 +47,8 @@ def playlog(fd, settings):
                 # use the other direction
                 if settings['input_only']:
                     prefdir = TYPE_INPUT
-                    if dir == TYPE_INPUT: prefdir = TYPE_OUTPUT
+                    if dir == TYPE_INPUT:
+                        prefdir = TYPE_OUTPUT
             if dir == TYPE_INTERACT:
                 color = '\033[36m'
             elif dir == TYPE_INPUT:
@@ -72,13 +74,13 @@ def playlog(fd, settings):
 
 
 def help(brief=0):
-    print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
+    print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' %
           os.path.basename(sys.argv[0]))
 
     if not brief:
         print('  -f             keep trying to read the log until it\'s closed')
-        print('  -m <seconds>   maximum delay in seconds, to avoid' + \
-              ' boredom or fast-forward\n' + \
+        print('  -m <seconds>   maximum delay in seconds, to avoid' +
+              ' boredom or fast-forward\n' +
               '                 to the end. (default is 3.0)')
         print('  -i             show the input stream instead of output')
         print('  -b             show both input and output streams')

@@ -18,7 +18,6 @@ from twisted.conch.client.knownhosts import ConsoleUI, KnownHostsFile
 from twisted.conch.ssh.channel import SSHChannel
 from twisted.conch.ssh.common import NS
 from twisted.conch.ssh.connection import SSHConnection
-from twisted.conch.ssh.keys import Key
 from twisted.conch.ssh.session import SSHSession, packRequest_pty_req
 from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.userauth import SSHUserAuthClient
@@ -28,7 +27,7 @@ from twisted.internet.error import ConnectionDone, ProcessTerminated
 from twisted.internet.interfaces import IStreamClientEndpoint
 from twisted.internet.protocol import Factory
 from twisted.python import log
-from twisted.python.compat import nativeString, networkString
+from twisted.python.compat import nativeString
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
 
@@ -191,7 +190,7 @@ class _CommandChannel(SSHChannel):
         """
         self._commandConnected.errback(reason)
 
-    def _execSuccess(self, ignored):
+    def _execSuccess(self):
         """
         When the request to execute the command in this channel succeeds, use
         C{protocolFactory} to build a protocol to handle the command's input and
@@ -303,7 +302,7 @@ class _ShellChannel(SSHSession):
         """
         self._shellConnected.errback(reason)
 
-    def ttyRequest(self, something):
+    def ttyRequest(self):
         log.msg("tty-request")
         term = "vt100"
         winSize = (25, 80, 0, 0)  # struct.unpack('4H', winsz)
@@ -330,7 +329,7 @@ class _ShellChannel(SSHSession):
         log.msg("failed to connect to proxy backend: {0}".format(reason))
         self._shellConnected.errback(reason)
 
-    def _shellSuccess(self, ignored):
+    def _shellSuccess(self):
         """
         When the request to open this shell this channel succeeds, use
         C{protocolFactory} to build a protocol to handle the shell's input and
@@ -586,15 +585,6 @@ class _CommandTransport(SSHClientTransport):
         self._state = b'SECURING'
         return succeed(None)
 
-        hostname = self.creator.hostname
-        ip = networkString(self.transport.getPeer().host)
-
-        self._state = b'SECURING'
-        d = self.creator.knownHosts.verifyHostKey(
-            self.creator.ui, hostname, ip, Key.fromString(hostKey))
-        d.addErrback(self._saveHostKeyFailure)
-        return d
-
     def _saveHostKeyFailure(self, reason):
         """
         When host key verification fails, record the reason for the failure in
@@ -627,7 +617,7 @@ class _CommandTransport(SSHClientTransport):
         else:
             d = succeed(None)
 
-        def maybeGotAgent(ignored):
+        def maybeGotAgent():
             self.requestService(self._userauth)
 
         d.addBoth(maybeGotAgent)
@@ -984,7 +974,7 @@ class _ReadFile(object):
         @param data: ignored
         """
 
-    def readline(self, count=-1):
+    def readline(self):
         """
         Always give back the byte string that this L{_ReadFile} was initialized
         with.

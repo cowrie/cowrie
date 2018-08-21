@@ -125,7 +125,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         """
         self.outConnectionLost()
 
-    def connectionLost(self, reason=None):
+    def connectionLost(self):
         self.session.loseConnection()
         self.session = None
 

@@ -94,10 +94,10 @@ class command_sudo(HoneyPotCommand):
             return
 
         for o, a in optlist:
-            if o in ("-V"):
+            if o in "-V":
                 self.version()
                 return
-            elif o in ("-h"):
+            elif o in "-h":
                 self.long_help()
                 return
 

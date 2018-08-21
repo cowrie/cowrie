@@ -36,24 +36,6 @@ import time
 
 from cowrie.core.config import CONFIG
 
-# Events:
-#  cowrie.client.fingerprint
-#  cowrie.client.size
-#  cowrie.client.var
-#  cowrie.client.version
-#  cowrie.command.input
-#  cowrie.command.failed
-#  cowrie.command.success (deprecated)
-#  cowrie.direct-tcpip.data
-#  cowrie.direct-tcpip.request
-#  cowrie.log.closed
-#  cowrie.login.failed
-#  cowrie.login.success
-#  cowrie.session.closed
-#  cowrie.session.connect
-#  cowrie.session.file_download
-#  cowrie.session.file_upload
-
 """
 The time is available in two formats in each event, as key 'time'
 in epoch format and in key 'timestamp' as a ISO compliant string

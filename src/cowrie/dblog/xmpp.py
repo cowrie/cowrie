@@ -18,7 +18,7 @@ from cowrie.core.config import CONFIG
 
 class XMPPLoggerProtocol(muc.MUCClient):
 
-    def __init__(self, rooms, server, nick):
+    def __init__(self, rooms, nick):
         muc.MUCClient.__init__(self)
         self.server = rooms.host
         self.jrooms = rooms
@@ -44,7 +44,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
         # send initial presence
         self.send(AvailablePresence())
 
-    def connectionLost(self, reason):
+    def connectionLost(self):
         log.msg('Disconnected!')
 
     def onMessage(self, msg):
@@ -79,13 +79,13 @@ class DBLogger(dblog.DBLogger):
         application = service.Application('honeypot')
         self.run(application, jid, password, JID(None, [muc, server, None]), channels)
 
-    def run(self, application, jidstr, password, muc, channels, anon=True):
+    def run(self, application, jidstr, password, muc, channels):
         self.xmppclient = XMPPClient(JID(jidstr), password)
         if CONFIG.has_option('database_xmpp', 'debug') and CONFIG.getboolean('database_xmpp', 'debug'):
             self.xmppclient.logTraffic = True  # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
-            muc, list(channels.keys()), user + '-' + resource)
+            muc, user + '-' + resource)
         self.muc.setHandlerParent(self.xmppclient)
         self.xmppclient.setServiceParent(application)
         self.signals = {}
@@ -97,9 +97,9 @@ class DBLogger(dblog.DBLogger):
 
     def broadcast(self, msgtype, msg):
         if msgtype in self.signals:
-            self.report(msgtype, '{}@{}'.format(self.signals[msgtype], self.muc.server), msg)
+            self.report(msgtype, msg)
 
-    def report(self, msgtype, to, xmsg):
+    def report(self, msgtype, xmsg):
         msg = {}
         msg['type'] = msgtype
         msg['message'] = xmsg

@@ -89,19 +89,19 @@ class command_gcc(HoneyPotCommand):
 
         # Parse options
         for o, a in opts:
-            if o in ("-v"):
+            if o in "-v":
                 self.version(short=False)
                 return
-            elif o in ("--version"):
+            elif o in "--version":
                 self.version(short=True)
                 return
-            elif o in ("-h"):
+            elif o in "-h":
                 self.arg_missing("-h")
                 return
-            elif o in ("--help"):
+            elif o in "--help":
                 self.help()
                 return
-            elif o in ("-o"):
+            elif o in "-o":
                 if len(a) == 0:
                     self.arg_missing("-o")
                 else:

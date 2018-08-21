@@ -15,8 +15,7 @@ import pickle
 import sys
 from stat import *
 
-A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, \
-A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = range(0, 10)
+A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = range(0, 10)
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = range(0, 7)
 PROC = False
 VERBOSE = False
@@ -42,11 +41,12 @@ def checkblacklist(ftxt):
 
 
 def recurse(localroot, root, tree, maxdepth=100):
-    if maxdepth == 0: return
+    if maxdepth == 0:
+        return
 
     localpath = os.path.join(localroot, root[1:])
 
-    logit(' %s\n' % (localpath))
+    logit(' %s\n' % localpath)
 
     if not os.access(localpath, os.R_OK):
         logit(' Cannot access %s\n' % localpath)
@@ -67,7 +67,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         except OSError:
             continue
 
-        entry = [name, T_FILE, s.st_uid, s.st_gid, s.st_size, s.st_mode, \
+        entry = [name, T_FILE, s.st_uid, s.st_gid, s.st_size, s.st_mode,
                  int(s.st_mtime), [], None, None]
 
         if S_ISLNK(s[ST_MODE]):
@@ -76,8 +76,7 @@ def recurse(localroot, root, tree, maxdepth=100):
                 continue
             realpath = os.path.realpath(path)
             if not realpath.startswith(localroot):
-                logit(' Link "%s" has real path "%s" outside local root "%s"\n' \
-                      % (path, realpath, localroot))
+                logit(' Link "%s" has real path "%s" outside local root "%s"\n' % (path, realpath, localroot))
                 continue
             else:
                 entry[A_TYPE] = T_LINK
@@ -104,7 +103,7 @@ def recurse(localroot, root, tree, maxdepth=100):
 
 
 def help(brief=False):
-    print('Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n' % \
+    print('Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n' %
           os.path.basename(sys.argv[0]))
 
     if not brief:

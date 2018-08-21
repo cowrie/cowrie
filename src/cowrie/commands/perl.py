@@ -82,11 +82,11 @@ class command_perl(HoneyPotCommand):
 
         # Parse options
         for o, a in opts:
-            if o in ("-v"):
+            if o in "-v":
                 self.version()
                 self.exit()
                 return
-            elif o in ("-h"):
+            elif o in "-h":
                 self.help()
                 self.exit()
                 return
@@ -97,7 +97,7 @@ class command_perl(HoneyPotCommand):
             if self.fs.exists(sourcefile):
                 self.exit()
             else:
-                self.write("Can't open perl script \"%s\": No such file or directory\n" % (value))
+                self.write("Can't open perl script \"%s\": No such file or directory\n" % value)
                 self.exit()
 
         if not len(self.args):

@@ -284,7 +284,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.write('^C\n')
         self.connection.transport.loseConnection()
 
-    def success(self, data, outfile):
+    def success(self, outfile):
         if not os.path.isfile(self.safeoutfile):
             log.msg("there's no file " + self.safeoutfile)
             self.exit()
@@ -307,21 +307,15 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   shasum=shasum,
                                   destfile=self.safeoutfile)
 
-        # Link friendly name to hash
-        # os.symlink(shasum, self.safeoutfile)
-
-        # FIXME: is this necessary?
-        # self.safeoutfile = hashPath
-
         # Update the honeyfs to point to downloaded file
         self.fs.update_realfile(self.fs.getfile(outfile), hashPath)
         self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
 
         self.exit()
 
-    def error(self, error, url):
+    def error(self, error):
 
-        if hasattr(error, 'getErrorMessage'):  # Exceptions
+        if hasattr(error, 'getErrorMessage'):
             error = error.getErrorMessage()
         self.write('{0}\n'.format(error))
         self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
@@ -368,8 +362,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.contenttype = 'text/whatever'
             self.currentlength = 0.0
 
-            if self.curl.limit_size > 0 and \
-                    self.totallength > self.curl.limit_size:
+            if 0 < self.curl.limit_size < self.totallength:
                 log.msg('Not saving URL (%s) due to file size limit' % self.curl.url)
                 self.fileName = os.path.devnull
                 self.nomore = True
@@ -385,8 +378,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.currentlength += len(data)
 
             # If downloading files of unspecified size, this could happen:
-            if not self.nomore and self.curl.limit_size > 0 and \
-                    self.currentlength > self.curl.limit_size:
+            if not self.nomore and 0 < self.curl.limit_size < self.currentlength:
                 log.msg('File limit reached, not saving any more data!')
                 self.nomore = True
                 self.file.close()

@@ -87,17 +87,7 @@ class DBLogger(object):
         # connection event is special. adds to list
         if ev['eventid'] == 'cowrie.session.connect':
             sessionno = ev['sessionno']
-            peerIP, peerPort = ev['src_ip'], ev['src_port']
-            hostIP, hostPort = ev['dst_ip'], ev['dst_port']
-
-            if self.reported_ssh_port:
-                hostPort = self.reported_ssh_port
-            if self.report_public_ip:
-                hostIP = self.public_ip
-
-            self.sessions[sessionno] = \
-                self.createSession(
-                    peerIP, peerPort, hostIP, hostPort)
+            self.sessions[sessionno] = self.createSession()
             return
 
         # use explicit sessionno if coming from dispatch
@@ -138,7 +128,7 @@ class DBLogger(object):
 
     # We have to return a unique ID
     @abc.abstractmethod
-    def createSession(self, peerIP, peerPort, hostIP, hostPort):
+    def createSession(self):
         return 0
 
     # args has: ttylog

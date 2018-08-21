@@ -29,23 +29,6 @@
 from __future__ import absolute_import, division
 
 
-#  cowrie.client.fingerprint
-#  cowrie.client.size
-#  cowrie.client.var
-#  cowrie.client.version
-#  cowrie.command.failed
-#  cowrie.command.success
-#  cowrie.direct-tcpip.data
-#  cowrie.direct-tcpip.request
-#  cowrie.log.closed
-#  cowrie.login.failed
-#  cowrie.login.success
-#  cowrie.session.closed
-#  cowrie.session.connect
-#  cowrie.session.file_download
-#  cowrie.session.file_upload
-
-
 def formatCef(logentry):
     """
     Take logentry and turn into CEF string

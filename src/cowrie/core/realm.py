@@ -49,7 +49,7 @@ class HoneyPotRealm(object):
     def __init__(self):
         pass
 
-    def requestAvatar(self, avatarId, mind, *interfaces):
+    def requestAvatar(self, avatarId, *interfaces):
         try:
             backend = CONFIG.get('honeypot', 'backend')
         except Exception:

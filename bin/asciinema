@@ -44,7 +44,8 @@ def playlog(fd, settings):
         except struct.error:
             break
 
-        if currtty == 0: currtty = tty
+        if currtty == 0:
+            currtty = tty
 
         if str(tty) == str(currtty) and op == OP_WRITE:
             # the first stream seen is considered 'output'
@@ -88,7 +89,7 @@ def playlog(fd, settings):
 
 
 def help(verbose=False):
-    print(('usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' % \
+    print(('usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' %
            os.path.basename(sys.argv[0])))
 
     if verbose:
@@ -111,9 +112,12 @@ if __name__ == '__main__':
         sys.exit(1)
 
     for o, a in optlist:
-        if o == '-h': help()
-        if o == '-c': settings['colorify'] = True
-        if o == '-o': settings['output'] = a
+        if o == '-h':
+            help()
+        if o == '-c':
+            settings['colorify'] = True
+        if o == '-o':
+            settings['output'] = a
 
     if len(args) < 1:
         help()

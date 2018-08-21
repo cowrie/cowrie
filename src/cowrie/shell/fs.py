@@ -215,7 +215,6 @@ class HoneyPotFilesystem(object):
                             return False
                     else:
                         p = x
-            # cwd = '/'.join((cwd, piece))
         return p
 
     def file_contents(self, target):
@@ -265,7 +264,6 @@ class HoneyPotFilesystem(object):
             dir = self.get_path(os.path.dirname(path.strip('/')))
         except IndexError:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
-            return False
         dir.append([os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None])
         self.newcount += 1
 
@@ -315,26 +313,9 @@ class HoneyPotFilesystem(object):
     """
 
     def open(self, filename, openFlags, mode):
-        """
-        #log.msg("fs.open %s" % filename)
-
-        #if (openFlags & os.O_APPEND == os.O_APPEND):
-        #    log.msg("fs.open append")
-
-        #if (openFlags & os.O_CREAT == os.O_CREAT):
-        #    log.msg("fs.open creat")
-
-        #if (openFlags & os.O_TRUNC == os.O_TRUNC):
-        #    log.msg("fs.open trunc")
-
-        #if (openFlags & os.O_EXCL == os.O_EXCL):
-        #    log.msg("fs.open excl")
-
-        # treat O_RDWR same as O_WRONLY
-        """
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
-            hostmode = mode & ~(111)
+            hostmode = mode & ~111
             hostfile = '%s/%s_sftp_%s' % (
                 CONFIG.get('honeypot', 'download_path'),
                 time.strftime('%Y%m%d-%H%M%S'),
@@ -365,7 +346,7 @@ class HoneyPotFilesystem(object):
         if self.tempfiles[fd] is not None:
             shasum = hashlib.sha256(open(self.tempfiles[fd], 'rb').read()).hexdigest()
             shasumfile = CONFIG.get('honeypot', 'download_path') + "/" + shasum
-            if (os.path.exists(shasumfile)):
+            if os.path.exists(shasumfile):
                 os.remove(self.tempfiles[fd])
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
@@ -411,7 +392,7 @@ class HoneyPotFilesystem(object):
                 return True
         return False
 
-    def utime(self, path, atime, mtime):
+    def utime(self, path, mtime):
         p = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -427,9 +408,9 @@ class HoneyPotFilesystem(object):
         p = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        if (uid != -1):
+        if uid != -1:
             p[A_UID] = uid
-        if (gid != -1):
+        if gid != -1:
             p[A_GID] = gid
 
     def remove(self, path):
@@ -471,7 +452,7 @@ class HoneyPotFilesystem(object):
         return self.stat(path, follow_symlinks=False)
 
     def stat(self, path, follow_symlinks=True):
-        if (path == "/"):
+        if path == "/":
             p = {
                 A_TYPE: T_DIR,
                 A_UID: 0,

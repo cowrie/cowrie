@@ -19,7 +19,7 @@ from cowrie.core.config import CONFIG
 
 class XMPPLoggerProtocol(muc.MUCClient):
 
-    def __init__(self, rooms, server, nick):
+    def __init__(self, rooms, nick):
         muc.MUCClient.__init__(self)
         self.server = rooms.host
         self.jrooms = rooms
@@ -45,7 +45,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
         # send initial presence
         self.send(AvailablePresence())
 
-    def connectionLost(self, reason):
+    def connectionLost(self):
         log.msg('Disconnected!')
 
     def onMessage(self, msg):
@@ -81,7 +81,7 @@ class Output(cowrie.core.output.Output):
             self.xmppclient.logTraffic = True  # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
-            muc, server, user + '-' + resource)
+            muc, user + '-' + resource)
         self.muc.setHandlerParent(self.xmppclient)
         self.xmppclient.setServiceParent(application)
         self.anonymous = True

@@ -57,18 +57,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 
-    # def auth_publickey(self, packet):
-    #     """
-    #     We subclass to intercept non-dsa/rsa keys, or Conch will crash on ecdsa..
-    #     UPDATE: conch no longer crashes. comment this out
-    #     """
-    #     algName, blob, rest = getNS(packet[1:], 2)
-    #     if algName not in (b'ssh-rsa', b'ssh-dsa'):
-    #         log.msg("Attempted public key authentication with {} algorithm".format(algName))
-    #         return defer.fail(error.ConchError("Incorrect signature"))
-    #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
-
-    def auth_none(self, packet):
+    def auth_none(self):
         """
         Allow every login
         """
@@ -85,7 +74,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
-    def auth_keyboard_interactive(self, packet):
+    def auth_keyboard_interactive(self):
         """
         Keyboard interactive authentication.  No payload.  We create a
         PluggableAuthenticationModules credential and authenticate with our

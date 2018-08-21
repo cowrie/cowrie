@@ -69,7 +69,7 @@ class command_iptables(HoneyPotCommand):
 
         # Utils
         def optional_arg(arg_default):
-            def func(option, opt_str, value, parser):
+            def func(option, parser):
                 if parser.rargs and not parser.rargs[0].startswith('-'):
                     val = parser.rargs[0]
                     parser.rargs.pop(0)
