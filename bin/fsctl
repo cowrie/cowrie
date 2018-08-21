@@ -100,7 +100,7 @@ class fseditCmd(cmd.Cmd):
 
         try:
             self.fs = pickle.load(pickle_file)
-        except:
+        except Exception:
             print((("Unable to load file '%s'. " +
                     "Are you sure it is a valid pickle file?") %
                    (pickle_file_path,)))
@@ -190,17 +190,26 @@ class fseditCmd(cmd.Cmd):
 
             perms = ['-'] * 10
 
-            if file[A_MODE] & S_IRUSR: perms[1] = 'r'
-            if file[A_MODE] & S_IWUSR: perms[2] = 'w'
-            if file[A_MODE] & S_IXUSR: perms[3] = 'x'
+            if file[A_MODE] & S_IRUSR:
+                perms[1] = 'r'
+            if file[A_MODE] & S_IWUSR:
+                perms[2] = 'w'
+            if file[A_MODE] & S_IXUSR:
+                perms[3] = 'x'
 
-            if file[A_MODE] & S_IRGRP: perms[4] = 'r'
-            if file[A_MODE] & S_IWGRP: perms[5] = 'w'
-            if file[A_MODE] & S_IXGRP: perms[6] = 'x'
+            if file[A_MODE] & S_IRGRP:
+                perms[4] = 'r'
+            if file[A_MODE] & S_IWGRP:
+                perms[5] = 'w'
+            if file[A_MODE] & S_IXGRP:
+                perms[6] = 'x'
 
-            if file[A_MODE] & S_IROTH: perms[7] = 'r'
-            if file[A_MODE] & S_IWOTH: perms[8] = 'w'
-            if file[A_MODE] & S_IXOTH: perms[9] = 'x'
+            if file[A_MODE] & S_IROTH:
+                perms[7] = 'r'
+            if file[A_MODE] & S_IWOTH:
+                perms[8] = 'w'
+            if file[A_MODE] & S_IXOTH:
+                perms[9] = 'x'
 
             linktarget = ''
 
@@ -622,7 +631,7 @@ class fseditCmd(cmd.Cmd):
 
         try:
             num = int(mode, 8)
-        except:
+        except Exception:
             print("Incorrect mode: " + mode)
             return
 
