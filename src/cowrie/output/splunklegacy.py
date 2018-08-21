@@ -1,5 +1,3 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-
 """
 Basic Splunk connector.
 Not recommended for production use.

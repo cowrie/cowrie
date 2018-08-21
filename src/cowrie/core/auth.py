@@ -1,6 +1,3 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
-
 """
 This module contains authentication code
 """
@@ -19,10 +16,6 @@ from cowrie.core.config import CONFIG
 
 
 class UserDB(object):
-    """
-    By Walter de Jong <walter@sara.nl>
-    """
-
     def __init__(self):
         self.userdb = OrderedDict()
         self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))

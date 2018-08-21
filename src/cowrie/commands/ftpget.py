@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# Author: Claud Xiao
-
 from __future__ import absolute_import, division
 
 import ftplib

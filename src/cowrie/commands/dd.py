@@ -1,6 +1,3 @@
-# Copyright (c) 2016 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
-
 """
 dd commands
 """

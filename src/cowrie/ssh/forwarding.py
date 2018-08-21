@@ -1,6 +1,3 @@
-# Copyright (c) 2009-2014 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
-
 """
 This module contains code for handling SSH direct-tcpip connection requests
 """

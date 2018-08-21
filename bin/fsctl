@@ -12,10 +12,6 @@
 #
 # Instead it should be used to edit existing file systems
 # such as the default: /opt/cowrie/data/fs.pickle.
-#
-# Donovan Hubbard
-# Douglas Hubbard
-# March 2013
 ################################################################
 
 import cmd

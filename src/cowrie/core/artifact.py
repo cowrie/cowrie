@@ -1,5 +1,3 @@
-# Copyright (c) 2016 Michel Oosterhof <michel@oosterhof.net>
-
 """
 This module contains code to handling saving of honeypot artifacts
 These will typically be files uploaded to the honeypot and files

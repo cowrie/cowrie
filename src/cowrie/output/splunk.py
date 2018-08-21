@@ -1,5 +1,3 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-
 """
 Splunk HTTP Event Collector (HEC) Connector.
 Not ready for production use.

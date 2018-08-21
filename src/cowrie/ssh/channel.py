@@ -1,6 +1,3 @@
-# Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
-
 """
 This module contains a subclass of SSHChannel with additional logging
 and session size limiting

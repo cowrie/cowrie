@@ -1,0 +1,14 @@
+This file contains a list of contributors who helped develop cowrie and his previous forks
+
+Bas Stottelaar
+Claud Xiao
+Dave Germiquet
+Danilo Vargas
+Donovan Hubbard
+Douglas Hubbard
+Fabiola Buschendorf
+Michel Oosterhof
+Peter Reuterås
+Olivier Bilodeau
+Upi Tamminen
+Walter de Jong

@@ -1,6 +1,3 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-# All rights reserved.
-
 """
 This module contains the perl command
 """

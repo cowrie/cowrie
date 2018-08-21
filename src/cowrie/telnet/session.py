@@ -1,8 +1,5 @@
-# Copyright (C) 2015, 2016 GoSecure Inc.
 """
 Telnet User Session management for the Honeypot
-
-@author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
 from __future__ import absolute_import, division

@@ -1,6 +1,3 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
-
 """
 The lowest level SSH protocol. This handles the key negotiation, the
 encryption and the compression. The transport layer is described in

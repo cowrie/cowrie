@@ -1,8 +1,3 @@
-# -*- test-case-name: cowrie.test.utils -*-
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
-
-
 """
 Should be compatible with user mode linux
 """

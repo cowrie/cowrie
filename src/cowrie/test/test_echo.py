@@ -1,8 +1,3 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
-# Copyright (c) 2018 Michel Oosterhof
-# See LICENSE for details.
-
 """
 Tests for general shell interaction and echo command
 """
