@@ -101,8 +101,8 @@ class fseditCmd(cmd.Cmd):
         try:
             self.fs = pickle.load(pickle_file)
         except:
-            print((("Unable to load file '%s'. " + \
-                    "Are you sure it is a valid pickle file?") % \
+            print((("Unable to load file '%s'. " +
+                    "Are you sure it is a valid pickle file?") %
                    (pickle_file_path,)))
             sys.exit(1)
 
@@ -126,8 +126,8 @@ class fseditCmd(cmd.Cmd):
         try:
             pickle.dump(self.fs, open(self.pickle_file_path, 'wb'))
         except Exception as e:
-            print((("Unable to save pickle file '%s'. " + \
-                    "Are you sure you have write access?") % \
+            print((("Unable to save pickle file '%s'. " +
+                    "Are you sure you have write access?") %
                    (self.pickle_file_path,)))
             print(str(e))
             sys.exit(1)
@@ -225,7 +225,7 @@ class fseditCmd(cmd.Cmd):
             else:
                 gid = str(gid).rjust(4)
 
-            print(('%s 1 %s %s %s %s %s%s' % \
+            print(('%s 1 %s %s %s %s %s%s' %
                    (perms,
                     uid,
                     gid,
@@ -310,7 +310,7 @@ class fseditCmd(cmd.Cmd):
         fileName = pathList[len(pathList) - 1]
 
         if not exists(self.fs, parentdir):
-            print(('Parent directory %s doesn\'t exist!' % \
+            print(('Parent directory %s doesn\'t exist!' %
                    (parentdir,)))
             self.mkfile(parentdir.split(), T_DIR)
 
@@ -408,14 +408,14 @@ class fseditCmd(cmd.Cmd):
         target_object = getpath(self.fs, target_path)
 
         if target_object[A_TYPE] != T_DIR:
-            print(("rmdir: failed to remove '%s': Not a directory" % \
+            print(("rmdir: failed to remove '%s': Not a directory" %
                    (target_path,)))
             return
 
         # The unix rmdir command does not delete directories if they are not
         # empty
         if len(target_object[A_CONTENTS]) != 0:
-            print(("rmdir: failed to remove '%s': Directory not empty" % \
+            print(("rmdir: failed to remove '%s': Directory not empty" %
                    (target_path,)))
             return
 
@@ -691,21 +691,21 @@ class fseditCmd(cmd.Cmd):
         print("Type help <topic> to get more information.")
 
     def help_about(self):
-        print("Kippo/Cowrie stores information about its file systems in a " + \
-              "series of nested lists. Once the lists are made, they are " + \
-              "stored in a pickle file on the hard drive. Every time cowrie " + \
-              "gets a new client, it reads from the pickle file and loads " + \
-              "the fake file system into memory. By default this file " + \
-              "is /opt/cowrie/data/fs.pickle. Originally the script " + \
-              "/opt/cowrie/bin/createfs was used to copy the file system " + \
-              "of the existing computer. However, it quite difficult to " + \
-              "edit the pickle file by hand.\n\nThis script strives to be " + \
-              "a bash-like interface that allows users to modify " + \
-              "existing fs pickle files. It supports many of the " + \
-              "common bash commands and even handles relative file " + \
-              "paths. Keep in mind that you need to restart the " + \
-              "cowrie process in order for the new file system to be " + \
-              "reloaded into memory.\n\nDonovan Hubbard, Douglas Hubbard, " + \
+        print("Kippo/Cowrie stores information about its file systems in a " +
+              "series of nested lists. Once the lists are made, they are " +
+              "stored in a pickle file on the hard drive. Every time cowrie " +
+              "gets a new client, it reads from the pickle file and loads " +
+              "the fake file system into memory. By default this file " +
+              "is /opt/cowrie/data/fs.pickle. Originally the script " +
+              "/opt/cowrie/bin/createfs was used to copy the file system " +
+              "of the existing computer. However, it quite difficult to " +
+              "edit the pickle file by hand.\n\nThis script strives to be " +
+              "a bash-like interface that allows users to modify " +
+              "existing fs pickle files. It supports many of the " +
+              "common bash commands and even handles relative file " +
+              "paths. Keep in mind that you need to restart the " +
+              "cowrie process in order for the new file system to be " +
+              "reloaded into memory.\n\nDonovan Hubbard, Douglas Hubbard, " +
               "March 2013\nVersion 1.0")
 
 

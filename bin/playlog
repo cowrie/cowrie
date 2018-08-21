@@ -72,13 +72,13 @@ def playlog(fd, settings):
 
 
 def help(brief=0):
-    print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' % \
+    print('Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n' %
           os.path.basename(sys.argv[0]))
 
     if not brief:
         print('  -f             keep trying to read the log until it\'s closed')
-        print('  -m <seconds>   maximum delay in seconds, to avoid' + \
-              ' boredom or fast-forward\n' + \
+        print('  -m <seconds>   maximum delay in seconds, to avoid' +
+              ' boredom or fast-forward\n' +
               '                 to the end. (default is 3.0)')
         print('  -i             show the input stream instead of output')
         print('  -b             show both input and output streams')

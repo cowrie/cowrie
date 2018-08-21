@@ -67,7 +67,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         except OSError:
             continue
 
-        entry = [name, T_FILE, s.st_uid, s.st_gid, s.st_size, s.st_mode, \
+        entry = [name, T_FILE, s.st_uid, s.st_gid, s.st_size, s.st_mode,
                  int(s.st_mtime), [], None, None]
 
         if S_ISLNK(s[ST_MODE]):
@@ -104,7 +104,7 @@ def recurse(localroot, root, tree, maxdepth=100):
 
 
 def help(brief=False):
-    print('Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n' % \
+    print('Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n' %
           os.path.basename(sys.argv[0]))
 
     if not brief:
