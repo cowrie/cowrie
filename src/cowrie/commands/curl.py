@@ -368,8 +368,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.contenttype = 'text/whatever'
             self.currentlength = 0.0
 
-            if self.curl.limit_size > 0 and \
-                    self.totallength > self.curl.limit_size:
+            if 0 < self.curl.limit_size < self.totallength:
                 log.msg('Not saving URL (%s) due to file size limit' % self.curl.url)
                 self.fileName = os.path.devnull
                 self.nomore = True
@@ -385,8 +384,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.currentlength += len(data)
 
             # If downloading files of unspecified size, this could happen:
-            if not self.nomore and self.curl.limit_size > 0 and \
-                    self.currentlength > self.curl.limit_size:
+            if not self.nomore and 0 < self.curl.limit_size < self.currentlength:
                 log.msg('File limit reached, not saving any more data!')
                 self.nomore = True
                 self.file.close()

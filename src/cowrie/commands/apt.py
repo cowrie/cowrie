@@ -135,7 +135,7 @@ pages for more information and options.
         self.write('The following NEW packages will be installed:\n')
         self.write('  %s ' % ' '.join(packages) + '\n')
         self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % len(packages))
-        self.write('Need to get %s.2kB of archives.\n' % (totalsize))
+        self.write('Need to get %s.2kB of archives.\n' % totalsize)
         self.write('After this operation, %skB of additional disk space will be used.\n' % (totalsize * 2.2,))
         i = 1
         for p in packages:
