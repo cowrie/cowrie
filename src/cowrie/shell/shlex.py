@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """A lexical analyzer class for simple shell-like syntaxes."""
 
 # Module and documentation by Eric S. Raymond, 21 Dec 1998
