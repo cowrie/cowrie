@@ -41,4 +41,4 @@ def readConfigFile(cfgfile):
     return parser
 
 
-CONFIG = readConfigFile(("etc/cowrie.cfg.dist", "etc/cowrie.cfg", "cowrie.cfg"))
+CONFIG = readConfigFile(("etc/cowrie.cfg.dist", "/etc/cowrie/cowrie.cfg", "etc/cowrie.cfg", "cowrie.cfg"))
