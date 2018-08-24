@@ -1,3 +1,4 @@
+* 2018-08-25 Downloads and TTY logs have moved to the var/ directory
 * 2018-08-11 SSH keys now stored in var/lib/cowrie
 * 2018-07-21 source code has move to the src/ directory. Delete old directories twisted/cowrie with compiled code
 * 2018-06-29 txtcmds have been moved to share/cowrie/txtcmds
