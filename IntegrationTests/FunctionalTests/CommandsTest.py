@@ -1,8 +1,8 @@
 import re
 import time
 import unittest
-from os import listdir, path
 
+from os import listdir, path
 from ddt import ddt, idata
 from paramiko import SSHClient, AutoAddPolicy
 

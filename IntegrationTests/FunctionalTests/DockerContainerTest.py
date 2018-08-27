@@ -1,7 +1,10 @@
 import unittest
 import socket
-import IntegrationTests.Helpers.DockerHelper
+
 from ddt import ddt, data
+
+import IntegrationTests.Helpers.DockerHelper
+
 
 @ddt
 class TestDockerContainer(unittest.TestCase):

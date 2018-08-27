@@ -1,4 +1,6 @@
 import unittest
+import time
+
 from paramiko import SSHClient, client, ssh_exception
 from IntegrationTests.Helpers.DockerHelper import DockerHelper
 
@@ -23,13 +25,27 @@ class TestSsh(unittest.TestCase):
         super(TestSsh, cls).tearDownClass()
 
     def test_LoginIntoSshWithRoot_LoginWillSucceed(self):
+        test_start_time = int(time.time())
+
         ssh_client = SSHClient()
         ssh_client.set_missing_host_key_policy(client.AutoAddPolicy)
         ssh_client.connect(self.container_ip, port=2222, username="root", password="foobar")
+        time.sleep(5)
+        log_lines = self.container.logs(since=test_start_time, until=int(time.time()), tail=all).decode()
+
+        self.assertEqual(-1, log_lines.find("Traceback ("))
 
     def test_LoginIntoSshWithOtherUser_WillRaiseAuthenticationException(self):
+        test_start_time = int(time.time())
+
         sshClient = SSHClient()
         sshClient.set_missing_host_key_policy(client.AutoAddPolicy)
         self.assertRaises(
             ssh_exception.AuthenticationException,
             lambda: sshClient.connect(self.container_ip, port=2222, username="OtherUser", password="OtherPassword"))
+
+        time.sleep(5)
+        log_lines = self.container.logs(since=test_start_time, until=int(time.time()), tail=all).decode()
+
+        self.assertEqual(-1, log_lines.find("Traceback ("))
+
