@@ -1,11 +1,11 @@
 FROM python:2-alpine3.8 as python-base
-MAINTAINER Florian Pelgrim <florian.pelgrim@craneworks.de>
+LABEL key="Florian Pelgrim <florian.pelgrim@craneworks.de>"
 RUN apk add --no-cache libffi && \
   addgroup -S cowrie && \
   adduser -S -s /bin/bash -G cowrie -D -H -h /cowrie cowrie && \
-  mkdir -p /cowrie/dl && \
-
-  mkdir -p /cowrie/log/tty && \
+  mkdir -p /cowrie/var/lib/cowrie/downloads && \
+  mkdir -p /cowrie/var/lib/cowrie/tty && \
+  mkdir -p /cowrie/var/log/cowrie/ && \
   chown -R cowrie:cowrie /cowrie && \
   chmod -R 775 /cowrie
 COPY requirements.txt .
@@ -25,8 +25,8 @@ RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse && 
 COPY src /cowrie
 
 FROM post-builder as linter
-RUN pip install flake8 && \
-  flake8 /cowrie --count --select=E1,E2,E3,E901,E999,F401,F821,F822,F823 --show-source --statistics
+RUN pip install flake8 flake8-import-order && \
+  flake8 --count --application-import-names cowrie --max-line-length=120 --statistics /cowrie
 
 FROM post-builder as unittest
 ENV PYTHONPATH=/cowrie
@@ -38,6 +38,5 @@ ENV PYTHONPATH=/cowrie
 WORKDIR /cowrie
 EXPOSE 2222/tcp
 EXPOSE 2223/tcp
-RUN chown -R cowrie:cowrie /cowrie
 USER cowrie
 CMD /usr/local/bin/python /usr/local/bin/twistd --umask 0022 --nodaemon --pidfile= -l - cowrie
