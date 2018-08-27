@@ -1,13 +1,14 @@
 # Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from configparser import NoOptionError
+
 from twisted.conch.client.knownhosts import KnownHostsFile
 from twisted.conch.ssh import common, keys, session
 from twisted.conch.ssh.common import getNS
-from twisted.internet import reactor, protocol
+from twisted.internet import protocol, reactor
 from twisted.python import log
 
 from cowrie.core.config import CONFIG
@@ -25,7 +26,6 @@ class _ProtocolFactory():
         self.protocol = protocol
 
     def buildProtocol(self, addr):
-
         return self.protocol
 
 
@@ -189,7 +189,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         return 1
 
     def request_window_change(self, data):
-        winSize = session.parseRequest_window_change(data)
         return 1
 
     def request_subsystem(self, data):
@@ -201,22 +200,22 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         cmd, data = common.getNS(data)
         log.msg('request_exec "{}"'.format(cmd))
         pf = _ProtocolFactory(self.client.transport)
-        ep = endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd, self.user, self.host,
-                                                              port=self.port, password=self.password).connect(pf)
+        endpoints.SSHCommandClientEndpoint.newConnection(reactor, cmd, self.user, self.host,
+                                                         port=self.port, password=self.password).connect(pf)
         return 1
 
     def request_shell(self, data):
         log.msg('request_shell')
         pf = _ProtocolFactory(self.client.transport)
-        ep = endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
-                                                            port=self.port, password=self.password).connect(pf)
+        endpoints.SSHShellClientEndpoint.newConnection(reactor, self.user, self.host,
+                                                       port=self.port, password=self.password).connect(pf)
         return 1
 
     def extReceived(self, dataType, data):
         log.msg('weird extended data: {}'.format(dataType))
 
     def request_agent(self, data):
-        log.msg('request_agent: {}'.format(repr(data),))
+        log.msg('request_agent: {}'.format(repr(data), ))
         return 0
 
     def request_x11_req(self, data):

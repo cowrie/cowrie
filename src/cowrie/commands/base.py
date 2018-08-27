@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import codecs
 import datetime
@@ -80,7 +80,7 @@ A star (*) next to a name means that the command is disabled.
  function name { COMMANDS ; } or name () { COMMANDS ; }                                         variables - Names and meanings of some shell variables
  getopts optstring name [arg]                                                                   wait [id]
  hash [-lr] [-p pathname] [-dt] [name ...]                                                      while COMMANDS; do COMMANDS; done
- help [-dms] [pattern ...]                                                                      { COMMANDS ; }\n""")
+ help [-dms] [pattern ...]                                                                      { COMMANDS ; }\n""")  # noqa: E501
 
 
 commands['help'] = command_help
@@ -119,42 +119,46 @@ commands['who'] = command_who
 class command_echo(HoneyPotCommand):
 
     def call(self):
-        escape_fn = lambda s: s
+
         newline = True
+        escape_decode = False
 
         try:
             optlist, args = getopt.getopt(self.args, "eEn")
             for opt in optlist:
                 if opt[0] == '-e':
-                    escape_fn = lambda s: codecs.escape_decode(s)[0]
+                    escape_decode = True
                 elif opt[0] == '-E':
-                    escape_fn = lambda s: s
+                    escape_decode = False
                 elif opt[0] == '-n':
                     newline = False
-        except:
+        except Exception:
             args = self.args
 
         try:
             # replace r'\\x' with r'\x'
-            s = ' '.join(args).replace('\\\\x', '\\x')
+            string = ' '.join(args).replace('\\\\x', '\\x')
 
             # replace single character escape \x0 with \x00
-            s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+            string = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', string)
 
             # strip single and double quotes
-            s = s.strip('\"\'')
+            string = string.strip('\"\'')
 
             # if the string ends with \c escape, strip it and set newline flag to False
-            if s.endswith('\\c'):
-                s = s[:-2]
+            if string.endswith('\\c'):
+                string = string[:-2]
                 newline = False
 
             if newline is True:
-                s += '\n'
+                string += '\n'
 
-            self.write(escape_fn(s))
+            if escape_decode:
+                string = codecs.escape_decode(string)[0]
 
-        except ValueError as e:
+            self.write(string)
+
+        except ValueError:
             log.msg("echo command received Python incorrect hex escape")
 
 
@@ -168,24 +172,21 @@ class command_printf(HoneyPotCommand):
         if not len(self.args):
             self.write('printf: usage: printf [-v var] format [arguments]\n')
         else:
-            if '-v' not in self.args:
-                if len(self.args) < 2:
-                    escape_fn = lambda s: codecs.escape_decode(s)[0]
+            if '-v' not in self.args and len(self.args) < 2:
+                # replace r'\\x' with r'\x'
+                s = ''.join(self.args[0]).replace('\\\\x', '\\x')
 
-                    # replace r'\\x' with r'\x'
-                    s = ''.join(self.args[0]).replace('\\\\x', '\\x')
+                # replace single character escape \x0 with \x00
+                s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
 
-                    # replace single character escape \x0 with \x00
-                    s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+                # strip single and double quotes
+                s = s.strip('\"\'')
 
-                    # strip single and double quotes
-                    s = s.strip('\"\'')
+                # if the string ends with \c escape, strip it
+                if s.endswith('\\c'):
+                    s = s[:-2]
 
-                    # if the string ends with \c escape, strip it
-                    if s.endswith('\\c'):
-                        s = s[:-2]
-
-                    self.write(escape_fn(s))
+                self.write(codecs.escape_devode(s)[0])
 
 
 commands['/usr/bin/printf'] = command_printf
@@ -452,12 +453,12 @@ class command_ps(HoneyPotCommand):
                 elif 'a' not in args and 'x' not in args \
                         and output[i][_tty].strip() != 'pts/0':
                     continue
-            l = [_pid, _tty, _time, _command]
+            line = [_pid, _tty, _time, _command]
             if 'a' in args or 'x' in args:
-                l = [_pid, _tty, _stat, _time, _command]
+                line = [_pid, _tty, _stat, _time, _command]
             if 'u' in args:
-                l = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, _start, _time, _command]
-            s = ''.join([output[i][x] for x in l])
+                line = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, _start, _time, _command]
+            s = ''.join([output[i][x] for x in line])
             if 'w' not in args:
                 s = s[:80]
             self.write('{0}\n'.format(s))
@@ -539,18 +540,14 @@ class command_shutdown(HoneyPotCommand):
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
             self.write('\n')
-            self.write(
-                'Broadcast message from root@%s (pts/0) (%s):\n' % \
-                (self.protocol.hostname, time.ctime()))
+            self.write('Broadcast message from root@{} (pts/0) ({}):\n'.format(self.protocol.hostname, time.ctime()))
             self.write('\n')
             self.write('The system is going down for maintenance NOW!\n')
             reactor.callLater(3, self.finish)
         elif len(self.args) > 1 and self.args[0].strip().count('-r') \
                 and self.args[1].strip().count('now'):
             self.write('\n')
-            self.write(
-                'Broadcast message from root@%s (pts/0) (%s):\n' % \
-                (self.protocol.hostname, time.ctime()))
+            self.write('Broadcast message from root@{} (pts/0) ({}):\n'.format(self.protocol.hostname, time.ctime()))
             self.write('\n')
             self.write('The system is going down for reboot NOW!\n')
             reactor.callLater(3, self.finish)
@@ -577,9 +574,7 @@ class command_reboot(HoneyPotCommand):
 
     def start(self):
         self.write('\n')
-        self.write(
-            'Broadcast message from root@%s (pts/0) (%s):\n\n' % \
-            (self.protocol.hostname, time.ctime()))
+        self.write('Broadcast message from root@{} (pts/0) ({}):\n\n'.format(self.protocol.hostname, time.ctime()))
         self.write('The system is going down for reboot NOW!\n')
         reactor.callLater(3, self.finish)
 
@@ -605,7 +600,7 @@ class command_history(HoneyPotCommand):
             for l in self.protocol.historyLines:
                 self.write(' %s  %s\n' % (str(count).rjust(4), l))
                 count += 1
-        except:
+        except Exception:
             # Non-interactive shell, do nothing
             pass
 
@@ -691,9 +686,7 @@ class command_chmod(HoneyPotCommand):
         for arg in self.args[1:]:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if not self.fs.exists(path):
-                self.write(
-                    'chmod: cannot access %s: No such file or directory\n' % \
-                    (arg,))
+                self.write('chmod: cannot access {}: No such file or directory\n'.format(arg))
 
 
 commands['/bin/chmod'] = command_chmod

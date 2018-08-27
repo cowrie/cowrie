@@ -26,14 +26,14 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import copy
 import json
 import random
+from configparser import NoOptionError
 
 import twisted.python.log as log
-from configparser import NoOptionError
 
 from cowrie.core.config import CONFIG
 from cowrie.shell import fs

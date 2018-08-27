@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import os
@@ -83,7 +83,7 @@ class command_gcc(HoneyPotCommand):
         # Parse options or display no files
         try:
             opts, args = getopt.gnu_getopt(self.args, 'ESchvgo:x:l:I:W:D:X:O:', ['help', 'version', 'param'])
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.no_files()
             return
 
@@ -120,11 +120,10 @@ class command_gcc(HoneyPotCommand):
 
         # To generate, or not
         if input_files > 0 and complete:
-            func = lambda: self.generate_file(output_file if output_file else 'a.out')
             timeout = 0.1 + random.random()
 
             # Schedule call to make it more time consuming and real
-            self.scheduled = reactor.callLater(timeout, func)
+            self.scheduled = reactor.callLater(timeout, self.generate_file(output_file if output_file else 'a.out'))
         else:
             self.no_files()
 
@@ -157,15 +156,16 @@ compilation terminated.\n""")
             data = ("""%s (Debian %s-8) %s
 Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""", (command_gcc.APP_NAME, version, version))
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""",
+                    (command_gcc.APP_NAME, version, version))
         else:
             data = ("""Using built-in specs.
 COLLECT_GCC=gcc
 COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/4.7/lto-wrapper
 Target: x86_64-linux-gnu
-Configured with: ../src/configure -v --with-pkgversion=\'Debian %s-5\' --with-bugurl=file:///usr/share/doc/gcc-%s/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-%s --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/%s --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-objc-gc --with-arch-32=i586 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion=\'Debian {}-5\' --with-bugurl=file:///usr/share/doc/gcc-{}/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-{} --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/{} --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-objc-gc --with-arch-32=i586 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
 Thread model: posix
-gcc version %s (Debian %s-5)""" % (version, version_short, version_short, version_short, version, version))
+gcc version %s (Debian {}-5)""".format(version, version_short, version_short, version_short, version, version))  # noqa: E501
 
         # Write
         self.write('{0}\n'.format(data))
@@ -190,7 +190,8 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
                 data = data + command_gcc.RANDOM_DATA
 
         # Write random data
-        with open(safeoutfile, 'wb') as f: f.write(data)
+        with open(safeoutfile, 'wb') as f:
+            f.write(data)
 
         # Output file
         outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
@@ -222,8 +223,6 @@ gcc version %s (Debian %s-5)""" % (version, version_short, version_short, versio
         """
         Print help info, and exit
         """
-
-        version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:2]])
 
         self.write("""Usage: gcc [options] file...
 Options:

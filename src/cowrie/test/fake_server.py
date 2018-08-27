@@ -3,7 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import copy
 import pickle
@@ -17,6 +17,7 @@ class FakeServer:
     @ivar hostname Servers Host Name
     @ivar fs File System for cowrie to use
     """
+
     def __init__(self):
         self.arch = 'linux-x64-lsb'
         self.hostname = "unitTest"
@@ -36,6 +37,7 @@ class FakeAvatar:
     @var uid for user
     @var
     """
+
     def __init__(self, server):
         self.avatar = self
         self.server = server

@@ -5,7 +5,7 @@
 This module contains authentication code
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 import re
@@ -132,7 +132,7 @@ class AuthRandom(object):
             with open(self.uservar_file, 'rb') as fp:
                 try:
                     self.uservar = json.load(fp)
-                except:
+                except Exception:
                     self.uservar = {}
 
     def savevars(self):

@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import hashlib
@@ -56,12 +56,12 @@ class command_scp(HoneyPotCommand):
 
         try:
             self.download_path_uniq = CONFIG.get('honeypot', 'download_path_uniq')
-        except:
+        except Exception:
             self.download_path_uniq = CONFIG.get('honeypot', 'download_path')
 
         try:
             optlist, args = getopt.getopt(self.args, '12346BCpqrvfstdv:cFiloPS:')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.help()
             self.exit()
             return
@@ -114,7 +114,7 @@ class command_scp(HoneyPotCommand):
         self.drop_tmp_file(data, fname)
 
         if os.path.exists(self.safeoutfile):
-            with open(self.safeoutfile, 'rb') as f:
+            with open(self.safeoutfile, 'rb'):
                 shasum = hashlib.sha256(data).hexdigest()
                 hash_path = os.path.join(self.download_path_uniq, shasum)
 
@@ -188,23 +188,6 @@ class command_scp(HoneyPotCommand):
             data = ''
 
         return data
-
-    def handle_CTRL_D(self):
-        if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \
-                os.path.exists(self.protocol.terminal.stdinlogFile):
-            with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
-                data = f.read()
-                while True:
-
-                    if not data:
-                        break
-
-                    data = self.parse_scp_data(data)
-
-            self.protocol.terminal.stdinlogOpen = False
-            os.remove(self.protocol.terminal.stdinlogFile)
-
-        self.exit()
 
     def handle_CTRL_D(self):
         if self.protocol.terminal.stdinlogOpen and self.protocol.terminal.stdinlogFile and \

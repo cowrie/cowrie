@@ -5,18 +5,19 @@
 This module contains ...
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import os
+from configparser import NoOptionError
 
 import twisted
 import twisted.conch.ls
-from configparser import NoOptionError
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
-from twisted.conch.ssh.filetransfer import FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL
+from twisted.conch.ssh.filetransfer import FXF_APPEND, FXF_CREAT, FXF_EXCL, FXF_READ, FXF_TRUNC, FXF_WRITE
 from twisted.python import log
 from twisted.python.compat import nativeString
+
 from zope.interface import implementer
 
 import cowrie.shell.pwd as pwd
@@ -121,7 +122,7 @@ class CowrieSFTPDirectory(object):
             s1.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s1)
             attrs = self.server._getAttrs(s)
-            return(f, longname, attrs)
+            return (f, longname, attrs)
         elif f == ".":
             s1 = self.server.fs.lstat(self.dir)
             s = self.server.fs.lstat(self.dir)
@@ -129,7 +130,7 @@ class CowrieSFTPDirectory(object):
             s1.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s1)
             attrs = self.server._getAttrs(s)
-            return(f, longname, attrs)
+            return (f, longname, attrs)
         else:
             s = self.server.fs.lstat(os.path.join(self.dir, f))
             s2 = self.server.fs.lstat(os.path.join(self.dir, f))

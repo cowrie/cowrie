@@ -5,11 +5,10 @@
 This module contains ...
 """
 
-from __future__ import division, absolute_import
-
-import os
+from __future__ import absolute_import, division
 
 import configparser
+import os
 
 
 def to_environ_key(key):
@@ -42,4 +41,4 @@ def readConfigFile(cfgfile):
     return parser
 
 
-CONFIG = readConfigFile(("etc/cowrie.cfg.dist", "etc/cowrie.cfg", "cowrie.cfg"))
+CONFIG = readConfigFile(("etc/cowrie.cfg.dist", "/etc/cowrie/cowrie.cfg", "etc/cowrie.cfg", "cowrie.cfg"))

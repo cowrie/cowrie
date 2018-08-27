@@ -1,5 +1,4 @@
-
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 import string
@@ -9,6 +8,7 @@ from twisted.application import service
 from twisted.python import log
 from twisted.words.protocols.jabber import jid
 from twisted.words.protocols.jabber.jid import JID
+
 from wokkel import muc
 from wokkel.client import XMPPClient
 from wokkel.xmppim import AvailablePresence
@@ -100,5 +100,3 @@ class Output(cowrie.core.output.Output):
 
     def stop(self):
         self.xmppclient.stopService()
-
-# vim: set sw=4 et:

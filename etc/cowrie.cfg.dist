@@ -32,13 +32,13 @@ hostname = svr04
 # Directory where to save log files in.
 #
 # (default: log)
-log_path = log
+log_path = var/log/cowrie
 
 
 # Directory where to save downloaded artifacts in.
 #
-# (default: dl)
-download_path = dl
+# (default: downloads)
+download_path = ${honeypot:state_path}/downloads
 
 
 # Directory for miscellaneous data files, such as the password database.
@@ -102,8 +102,8 @@ txtcmds_path = txtcmds
 ttylog = true
 
 # Default directory for TTY logs.
-# (default: ttylog_path = %(log_path)s/tty)
-ttylog_path = ${honeypot:log_path}/tty
+# (default: ttylog_path = %(state_path)s/tty)
+ttylog_path = ${honeypot:state_path}/tty
 
 # Interactive timeout determines when logged in sessions are
 # terminated for being idle. In seconds.

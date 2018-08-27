@@ -1,20 +1,20 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 try:
     import cPickle as pickle
-except:
+except Exception:
     import pickle
 
-import os
-import time
+import errno
 import fnmatch
 import hashlib
+import os
 import re
 import stat
-import errno
+import time
 
 from twisted.python import log
 
@@ -24,28 +24,12 @@ from cowrie.core.config import CONFIG
 # Put extra help here in case it goes wrong
 try:
     PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
-except:
+except Exception:
     print("ERROR: Config file not found: etc/cowrie.cfg.dist")
     exit(2)
 
-
-A_NAME, \
-    A_TYPE, \
-    A_UID, \
-    A_GID, \
-    A_SIZE, \
-    A_MODE, \
-    A_CTIME, \
-    A_CONTENTS, \
-    A_TARGET, \
-    A_REALFILE = list(range(0, 10))
-T_LINK, \
-    T_DIR, \
-    T_FILE, \
-    T_BLK, \
-    T_CHR, \
-    T_SOCK, \
-    T_FIFO = list(range(0, 7))
+A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = list(range(0, 10))
+T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 
 class TooManyLevels(Exception):
@@ -153,6 +137,7 @@ class HoneyPotFilesystem(object):
                 matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
                 for match in matches:
                     foo(p[1:], cwd + [match])
+
         foo(pieces, cwd)
         return found
 
@@ -216,7 +201,7 @@ class HoneyPotFilesystem(object):
                 return False
             for x in p[A_CONTENTS]:
                 if x[A_NAME] == piece:
-                    if piece == pieces[-1] and follow_symlinks == False:
+                    if piece == pieces[-1] and not follow_symlinks:
                         p = x
                     elif x[A_TYPE] == T_LINK:
                         if x[A_TARGET][0] == '/':
@@ -225,7 +210,7 @@ class HoneyPotFilesystem(object):
                         else:
                             # Relative link
                             p = self.getfile('/'.join((cwd, x[A_TARGET])), follow_symlinks=follow_symlinks)
-                        if p == False:
+                        if not p:
                             # Broken link
                             return False
                     else:
@@ -291,7 +276,7 @@ class HoneyPotFilesystem(object):
         """
         try:
             f = self.getfile(path)
-        except:
+        except Exception:
             return False
         return f[A_TYPE] == T_FILE
 
@@ -303,7 +288,7 @@ class HoneyPotFilesystem(object):
         """
         try:
             f = self.getfile(path)
-        except:
+        except Exception:
             return False
         return f[A_TYPE] == T_LINK
 
@@ -316,7 +301,7 @@ class HoneyPotFilesystem(object):
             return True
         try:
             dir = self.getfile(path)
-        except:
+        except Exception:
             dir = None
         if dir is None or dir is False:
             return False
@@ -328,6 +313,7 @@ class HoneyPotFilesystem(object):
     """
     Below additions for SFTP support, try to keep functions here similar to os.*
     """
+
     def open(self, filename, openFlags, mode):
         """
         #log.msg("fs.open %s" % filename)
@@ -403,7 +389,7 @@ class HoneyPotFilesystem(object):
         FIXME mkdir() name conflicts with existing mkdir
         """
         dir = self.getfile(path)
-        if dir != False:
+        if dir:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         self.mkdir(path, 0, 0, 4096, 16877)
 
@@ -412,7 +398,7 @@ class HoneyPotFilesystem(object):
         name = os.path.basename(path)
         parent = os.path.dirname(path)
         dir = self.getfile(path, follow_symlinks=False)
-        if dir == False:
+        if not dir:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         if dir[A_TYPE] != T_DIR:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
@@ -427,19 +413,19 @@ class HoneyPotFilesystem(object):
 
     def utime(self, path, atime, mtime):
         p = self.getfile(path)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_CTIME] = mtime
 
     def chmod(self, path, perm):
         p = self.getfile(path)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
 
     def chown(self, path, uid, gid):
         p = self.getfile(path)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if (uid != -1):
             p[A_UID] = uid
@@ -448,14 +434,14 @@ class HoneyPotFilesystem(object):
 
     def remove(self, path):
         p = self.getfile(path, follow_symlinks=False)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         self.get_path(os.path.dirname(path)).remove(p)
         return
 
     def readlink(self, path):
         p = self.getfile(path, follow_symlinks=False)
-        if p == False:
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if not (p[A_MODE] & stat.S_IFLNK):
             raise OSError
@@ -466,10 +452,10 @@ class HoneyPotFilesystem(object):
 
     def rename(self, oldpath, newpath):
         old = self.getfile(oldpath)
-        if old == False:
+        if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         new = self.getfile(newpath)
-        if new != False:
+        if new:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST))
 
         self.get_path(os.path.dirname(oldpath)).remove(old)
@@ -497,7 +483,7 @@ class HoneyPotFilesystem(object):
         else:
             p = self.getfile(path, follow_symlinks=follow_symlinks)
 
-        if (p == False):
+        if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
 
         return _statobj(p[A_MODE], 0, 0, 1, p[A_UID], p[A_GID], p[A_SIZE], p[A_CTIME], p[A_CTIME], p[A_CTIME])
@@ -507,7 +493,7 @@ class HoneyPotFilesystem(object):
 
     def update_size(self, filename, size):
         f = self.getfile(filename)
-        if f == False:
+        if not f:
             return
         if f[A_TYPE] != T_FILE:
             return
@@ -518,6 +504,7 @@ class _statobj(object):
     """
     Transform a tuple into a stat object
     """
+
     def __init__(self, st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid, st_size, st_atime, st_mtime, st_ctime):
         self.st_mode = st_mode
         self.st_ino = st_ino

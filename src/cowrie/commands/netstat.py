@@ -1,6 +1,6 @@
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import socket
 
@@ -17,7 +17,8 @@ class command_netstat(HoneyPotCommand):
         self.write('Fred Baumgarten, Alan Cox, Bernd Eckenfels, Phil Blundell, Tuan Hoang and others\n')
         self.write('+NEW_ADDRT +RTF_IRTT +RTF_REJECT +FW_MASQUERADE +I18N\n')
         self.write('AF: (inet) +UNIX +INET +INET6 +IPX +AX25 +NETROM +X25 +ATALK +ECONET +ROSE\n')
-        self.write('HW:  +ETHER +ARC +SLIP +PPP +TUNNEL +TR +AX25 +NETROM +X25 +FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64\n')
+        self.write('HW:  +ETHER +ARC +SLIP +PPP +TUNNEL +TR +AX25 +NETROM +X25' +
+                   '+FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64\n')
 
     def show_help(self):
         self.write("""
@@ -68,11 +69,11 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         destination = self.protocol.kippoIP.rsplit('.', 1)[0] + ".0"
         gateway = self.protocol.kippoIP.rsplit('.', 1)[0] + ".1"
         l1 = "%s%s0.0.0.0         UG        0 0          0 eth0" % \
-            ('{:<16}'.format(default),
-             '{:<16}'.format(gateway))
+             ('{:<16}'.format(default),
+              '{:<16}'.format(gateway))
         l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % \
-            ('{:<16}'.format(destination),
-             '{:<16}'.format(lgateway))
+             ('{:<16}'.format(destination),
+              '{:<16}'.format(lgateway))
         self.write('{0}\n'.format(l1))
         self.write('{0}\n'.format(l2))
 
@@ -89,16 +90,16 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
             s_port = "ssh"
             try:
                 c_name = socket.gethostbyaddr(self.protocol.clientIP)[0][:17]
-            except:
+            except Exception:
                 c_name = self.protocol.clientIP
         if self.show_listen or self.show_all:
             self.write("tcp        0      0 *:ssh                   *:*                     LISTEN\n")
         if not self.show_listen or self.show_all:
-            l = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
+            line = 'tcp        0    308 %s:%s%s%s:%s%s%s' % \
                 (s_name, s_port, " " * (24 - len(s_name + s_port) - 1),
                  c_name, c_port, " " * (24 - len(c_name + c_port) - 1),
                  "ESTABLISHED")
-            self.write('{0}\n'.format(l))
+            self.write('{0}\n'.format(line))
         if self.show_listen or self.show_all:
             self.write("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN\n")
         self.write("""Active UNIX domain sockets (only servers)

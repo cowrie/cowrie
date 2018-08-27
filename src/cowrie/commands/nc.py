@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import re
@@ -59,7 +59,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
     def start(self):
         try:
             optlist, args = getopt.getopt(self.args, '46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.help()
             self.exit()
             return
@@ -87,7 +87,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         out_addr = None
         try:
             out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
-        except:
+        except Exception:
             out_addr = ('0.0.0.0', 0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

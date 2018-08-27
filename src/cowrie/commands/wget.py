@@ -1,15 +1,16 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import os
 import time
 
 from OpenSSL import SSL
+
 from twisted.internet import reactor, ssl
-from twisted.python import log, compat
+from twisted.python import compat, log
 from twisted.web import client
 
 from cowrie.core.artifact import Artifact
@@ -47,7 +48,8 @@ def sizeof_fmt(num):
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
 def splitthousands(s, sep=','):
-    if len(s) <= 3: return s
+    if len(s) <= 3:
+        return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
 
@@ -56,7 +58,7 @@ class command_wget(HoneyPotCommand):
     def start(self):
         try:
             optlist, args = getopt.getopt(self.args, 'cqO:P:', 'header=')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             self.exit()
             return
@@ -84,7 +86,7 @@ class command_wget(HoneyPotCommand):
             if not outfile:
                 if '-O' in args:
                     outfile = args[args.index('-O') + 1]
-        except:
+        except Exception:
             pass
 
         if '://' not in url:
@@ -135,12 +137,11 @@ class command_wget(HoneyPotCommand):
             scheme = parsed.scheme
             host = parsed.hostname
             port = parsed.port or (443 if scheme == b'https' else 80)
-            path = parsed.path or '/'
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
             if not host:
                 return None
-        except:
+        except Exception:
             self.errorWrite('%s: Unsupported scheme.\n' % (url,))
             return None
 
@@ -215,7 +216,7 @@ class command_wget(HoneyPotCommand):
             self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
                                       format='Attempt to download file(s) from URL (%(url)s) failed',
                                       url=self.url)
-        except:
+        except Exception:
             pass
 
         self.exit()
@@ -261,10 +262,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
             if self.totallength > 0:
                 if not self.quiet:
-                    self.wget.errorWrite('Length: %d (%s) [%s]\n' % \
-                                         (self.totallength,
-                                          sizeof_fmt(self.totallength),
-                                          self.contenttype))
+                    self.wget.errorWrite('Length: {} ({}) [{}]\n'.format(self.totallength,
+                                                                         sizeof_fmt(self.totallength),
+                                                                         self.contenttype))
             else:
                 if not self.quiet:
                     self.wget.errorWrite('Length: unspecified [{}]\n'.format(self.contenttype))

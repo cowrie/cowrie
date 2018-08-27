@@ -184,7 +184,7 @@ Update the bin/cowrie script, change:
 ## Configure Additional Output Plugins (OPTIONAL)
 
 Cowrie automatically outputs event data to text and JSON log files
-in ~/cowrie/log.  Additional output plugins can be configured to
+in `var/log/cowrie`.  Additional output plugins can be configured to
 record the data other ways.  Supported output plugins include:
 
 * Cuckoo
@@ -194,7 +194,7 @@ record the data other ways.  Supported output plugins include:
 * Splunk
 * SQL (MySQL, SQLite3, RethinkDB)
 
-See ~/cowrie/doc/[Output Plugin]/README.md for details.
+See ~/cowrie/docs/[Output Plugin]/README.md for details.
 
 
 ## Troubleshooting

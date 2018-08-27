@@ -1,6 +1,4 @@
-#
-
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import tftpy
 
@@ -65,7 +63,6 @@ class command_tftp(HoneyPotCommand):
                 tclient.context.fileobj.close()
 
         if url:
-
             # log to cowrie.log
             log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                     url=url,
@@ -97,7 +94,6 @@ class command_tftp(HoneyPotCommand):
             args = parser.parse_args(self.args)
             if args.c:
                 if len(args.c) > 1:
-                    command = args.c[0]
                     self.file_to_get = args.c[1]
                     if args.hostname is None:
                         raise OptionNotFound("Hostname is invalid")

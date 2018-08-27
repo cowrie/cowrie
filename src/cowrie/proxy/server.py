@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from cowrie.core.config import CONFIG
 
@@ -40,6 +40,7 @@ class CowrieServer(object):
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
+
     def __init__(self, realm):
         self.avatars = []
         self.hostname = CONFIG.get('honeypot', 'hostname')

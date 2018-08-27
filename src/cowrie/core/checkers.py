@@ -5,7 +5,7 @@
 This module contains ...
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from sys import modules
 
@@ -15,7 +15,8 @@ from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
-from twisted.python import log, failure
+from twisted.python import failure, log
+
 from zope.interface import implementer
 
 from cowrie.core import auth

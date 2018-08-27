@@ -5,7 +5,7 @@
 This module contains the service commnad
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 
@@ -18,6 +18,7 @@ class command_service(HoneyPotCommand):
     """
     By Giannis Papaioannou <giannispapcod7@gmail.com>
     """
+
     def status_all(self):
         """
         more services can be added here.
@@ -91,7 +92,7 @@ class command_service(HoneyPotCommand):
     def call(self):
         try:
             opts, args = getopt.gnu_getopt(self.args, 'h', ['help', 'status-all', 'full-restart'])
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.help()
             return
 

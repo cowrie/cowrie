@@ -1,5 +1,4 @@
-
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import json
 import uuid
@@ -8,6 +7,7 @@ from twisted.application import service
 from twisted.python import log
 from twisted.words.protocols.jabber import jid
 from twisted.words.protocols.jabber.jid import JID
+
 from wokkel import muc
 from wokkel.client import XMPPClient
 from wokkel.xmppim import AvailablePresence
@@ -70,7 +70,7 @@ class DBLogger(dblog.DBLogger):
         for i in ('createsession', 'connectionlost', 'loginfailed',
                   'loginsucceeded', 'command', 'clientversion'):
             x = CONFIG.get('database_xmpp', 'signal_' + i)
-            if not x in channels:
+            if x not in channels:
                 channels[x] = []
             channels[x].append(i)
 
@@ -81,8 +81,7 @@ class DBLogger(dblog.DBLogger):
 
     def run(self, application, jidstr, password, muc, channels, anon=True):
         self.xmppclient = XMPPClient(JID(jidstr), password)
-        if CONFIG.has_option('database_xmpp', 'debug') and \
-                CONFIG.getboolean('database_xmpp', 'debug') == True:
+        if CONFIG.has_option('database_xmpp', 'debug') and CONFIG.getboolean('database_xmpp', 'debug'):
             self.xmppclient.logTraffic = True  # DEBUG HERE
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
@@ -114,7 +113,7 @@ class DBLogger(dblog.DBLogger):
         ses['session'] = session
         ses['remote_host'] = peerIP
         ses['remote_port'] = str(peerPort)
-        if self.anonymous == True:
+        if self.anonymous:
             ses['local_host'] = '127.0.0.1'
         else:
             ses['local_host'] = hostIP
@@ -174,5 +173,3 @@ class DBLogger(dblog.DBLogger):
         ses['session'] = session
         ses['version'] = args['version']
         self.broadcast('clientversion', ses)
-
-# vim: set sw=4 et:

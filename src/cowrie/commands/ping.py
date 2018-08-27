@@ -1,7 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import getopt
 import hashlib
@@ -22,7 +22,7 @@ class command_ping(HoneyPotCommand):
         try:
             socket.inet_aton(address)
             return True
-        except:
+        except Exception:
             return False
 
     def start(self):
@@ -41,7 +41,7 @@ class command_ping(HoneyPotCommand):
             if opt[0] == '-c':
                 try:
                     self.max = int(opt[1])
-                except:
+                except Exception:
                     self.max = 0
                 if self.max <= 0:
                     self.write('ping: bad number of packets to transmit.\n')
@@ -78,8 +78,7 @@ class command_ping(HoneyPotCommand):
     def showreply(self):
         ms = 40 + random.random() * 10
         self.write(
-            '64 bytes from %s (%s): icmp_seq=%d ttl=50 time=%.1f ms\n' % \
-            (self.host, self.ip, self.count + 1, ms))
+            '64 bytes from {} ({}): icmp_seq={} ttl=50 time={:.1f} ms\n'.format(self.host, self.ip, self.count + 1, ms))
         self.count += 1
         if self.count == self.max:
             self.running = False

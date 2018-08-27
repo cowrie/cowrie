@@ -26,9 +26,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
-from twisted.cred.credentials import IUsernamePassword, ICredentials
+from twisted.cred.credentials import ICredentials, IUsernamePassword
+
 from zope.interface import implementer
 
 
@@ -86,6 +87,7 @@ class UsernamePasswordIP(object):
     """
     This credential interface also provides an IP address
     """
+
     def __init__(self, username, password, ip):
         self.username = username
         self.password = password

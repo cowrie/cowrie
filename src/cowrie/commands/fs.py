@@ -6,7 +6,7 @@
 Filesystem related commands
 """
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 import copy
 import getopt
@@ -30,7 +30,7 @@ class command_grep(HoneyPotCommand):
         try:
             contents = self.fs.file_contents(filename)
             self.grep_application(contents, match)
-        except:
+        except Exception:
             self.errorWrite("grep: {}: No such file or directory\n".format(filename))
 
     def grep_application(self, contents, match):
@@ -103,7 +103,7 @@ class command_tail(HoneyPotCommand):
         try:
             contents = self.fs.file_contents(filename)
             self.tail_application(contents)
-        except:
+        except Exception:
             self.errorWrite("tail: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
     def tail_application(self, contents):
@@ -176,7 +176,7 @@ class command_head(HoneyPotCommand):
         try:
             contents = self.fs.file_contents(filename)
             self.head_application(contents)
-        except:
+        except Exception:
             self.errorWrite("head: cannot open `{}' for reading: No such file or directory\n".format(filename))
 
     def start(self):
@@ -231,8 +231,8 @@ class command_cd(HoneyPotCommand):
         try:
             newpath = self.fs.resolve_path(pname, self.protocol.cwd)
             inode = self.fs.getfile(newpath)
-        except:
-            newdir = None
+        except Exception:
+            pass
         if pname == "-":
             self.errorWrite('bash: cd: OLDPWD not set\n')
             return
@@ -267,7 +267,6 @@ class command_rm(HoneyPotCommand):
                     'rm: cannot remove `{}\': No such file or directory\n'.format(f))
                 continue
             basename = pname.split('/')[-1]
-            contents = [x for x in dir]
             for i in dir[:]:
                 if i[fs.A_NAME] == basename:
                     if i[fs.A_TYPE] == fs.T_DIR and not recursive:
@@ -293,7 +292,7 @@ class command_cp(HoneyPotCommand):
         try:
             optlist, args = getopt.gnu_getopt(self.args,
                                               '-abdfiHlLPpRrsStTuvx')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             return
         recursive = False
@@ -356,6 +355,7 @@ class command_mv(HoneyPotCommand):
     """
     mv command
     """
+
     def call(self):
         if not len(self.args):
             self.errorWrite("mv: missing file operand\n")
@@ -364,7 +364,7 @@ class command_mv(HoneyPotCommand):
 
         try:
             optlist, args = getopt.gnu_getopt(self.args, '-bfiStTuv')
-        except getopt.GetoptError as err:
+        except getopt.GetoptError:
             self.errorWrite('Unrecognized option\n')
             self.exit()
 
@@ -422,6 +422,7 @@ class command_mkdir(HoneyPotCommand):
     """
     mkdir command
     """
+
     def call(self):
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
@@ -431,10 +432,8 @@ class command_mkdir(HoneyPotCommand):
                 return
             try:
                 self.fs.mkdir(pname, 0, 0, 4096, 16877)
-            except (fs.FileNotFound) as err:
-                self.errorWrite(
-                    'mkdir: cannot create directory `{}\': '.format(f) + \
-                    'No such file or directory\n')
+            except (fs.FileNotFound):
+                self.errorWrite('mkdir: cannot create directory `{}\': No such file or directory\n'.format(f))
             return
 
 
@@ -460,8 +459,7 @@ class command_rmdir(HoneyPotCommand):
             fname = os.path.basename(f)
             if not dir or fname not in [x[fs.A_NAME] for x in dir]:
                 self.errorWrite(
-                    'rmdir: failed to remove `{}\': '.format(f) + \
-                    'No such file or directory\n')
+                    'rmdir: failed to remove `{}\': No such file or directory\n'.format(f))
                 continue
             for i in dir[:]:
                 if i[fs.A_NAME] == fname:
@@ -491,6 +489,7 @@ class command_touch(HoneyPotCommand):
     """
     touch command
     """
+
     def call(self):
         if not len(self.args):
             self.errorWrite('touch: missing file operand\n')

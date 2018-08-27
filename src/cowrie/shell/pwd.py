@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import division, absolute_import
+from __future__ import absolute_import, division
 
 from cowrie.core.config import CONFIG
 
@@ -61,7 +61,7 @@ class Passwd(object):
                     continue
 
                 (pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir,
-                    pw_shell) = line.split(':')
+                 pw_shell) = line.split(':')
 
                 e = {}
                 e["pw_name"] = pw_name
@@ -85,9 +85,9 @@ class Passwd(object):
         Save the user db
         Note: this is subject to races between cowrie instances, but hey ...
         """
-#        with open(self.passwd_file, 'w') as f:
-#            for (login, uid, passwd) in self.userdb:
-#                f.write('%s:%d:%s\n' % (login, uid, passwd))
+        #        with open(self.passwd_file, 'w') as f:
+        #            for (login, uid, passwd) in self.userdb:
+        #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
     def getpwnam(self, name):
@@ -154,9 +154,9 @@ class Group(object):
         Save the group db
         Note: this is subject to races between cowrie instances, but hey ...
         """
-#        with open(self.group_file, 'w') as f:
-#            for (login, uid, passwd) in self.userdb:
-#                f.write('%s:%d:%s\n' % (login, uid, passwd))
+        #        with open(self.group_file, 'w') as f:
+        #            for (login, uid, passwd) in self.userdb:
+        #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
     def getgrnam(self, name):
