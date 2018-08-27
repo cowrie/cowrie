@@ -67,5 +67,6 @@ class TestCommands(unittest.TestCase):
             f"Failed running command {command} -  Logs: \n {log_lines}")
         self.assertNotEqual(
             -1, log_lines.find(f"Command found: {command}"),
-            f"Failed running command {command} - Logs: \n {log_lines}")
+            f"Failed running command {command} - exit"
+            f"Logs: \n {log_lines}")
 
