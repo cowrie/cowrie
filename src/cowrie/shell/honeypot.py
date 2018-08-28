@@ -94,7 +94,7 @@ class HoneyPotShell(object):
                 tokens.append(tok)
             except Exception as e:
                 self.protocol.terminal.write(
-                    b'bash: syntax error: unexpected end of file\n')
+                    b'-bash: syntax error: unexpected end of file\n')
                 # Could run runCommand here, but i'll just clear the list instead
                 log.msg("exception: {}".format(e))
                 self.cmdpending = []
@@ -207,7 +207,7 @@ class HoneyPotShell(object):
                     lastpp = pp
             else:
                 log.msg(eventid='cowrie.command.failed', input=' '.join(cmd2), format='Command not found: %(input)s')
-                self.protocol.terminal.write('bash: {}: command not found\n'.format(cmd['command']).encode('utf8'))
+                self.protocol.terminal.write('-bash: {}: command not found\n'.format(cmd['command']).encode('utf8'))
                 runOrPrompt()
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
