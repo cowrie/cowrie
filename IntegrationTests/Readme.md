@@ -21,24 +21,17 @@ tests against the same command with a predefined input and the assertion of
 an expected output. These "how is a command supposed to behave"-tests should
 be done in unit-tests.
 
-## Run the tests without docker
-
-To run these tests you have to be outside of this directory. Just `cd ..`.
-Now you can run the tests with:
-
-```bash
-pytest -v IntegrationTests
-```
-
-## Run the tests with docker
+## Run the tests
 
 Just build it
-```
-docker build -t cowrie/test -f IntegrationTests.Dockerfile .
+
+```bash
+docker build -t cowrie/test IntegrationTests/.
 ```
 
 And run it
-```
+
+```bash
 docker run \
     -v $(pwd):/app \
     -v /var/run/docker.sock:/var/run/docker.sock \

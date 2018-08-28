@@ -1,4 +1,0 @@
-ddt
-docker
-paramiko
-pytest
