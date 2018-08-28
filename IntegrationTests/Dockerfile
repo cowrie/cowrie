@@ -8,4 +8,3 @@ RUN pip install paramiko
 RUN pip install pytest
 RUN mkdir /app
 WORKDIR /app
-RUN pip install -r /tmp/requirements-integration-tests.txt
