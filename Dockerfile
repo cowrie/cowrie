@@ -1,5 +1,4 @@
 FROM python:2-alpine3.8 as python-base
-MAINTAINER Florian Pelgrim <florian.pelgrim@craneworks.de>
 RUN apk add --no-cache libffi && \
   addgroup -S cowrie && \
   adduser -S -s /bin/bash -G cowrie -D -H -h /cowrie cowrie && \
@@ -37,6 +36,7 @@ WORKDIR /cowrie
 RUN trial cowrie
 
 FROM post-builder
+LABEL maintainer="Florian Pelgrim <florian.pelgrim@craneworks.de>"
 ENV PYTHONPATH=/cowrie
 WORKDIR /cowrie
 EXPOSE 2222/tcp
