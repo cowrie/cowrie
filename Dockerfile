@@ -9,18 +9,21 @@ RUN apk add --no-cache libffi && \
   chown -R cowrie:cowrie /cowrie && \
   chmod -R 775 /cowrie
 COPY requirements.txt .
+COPY requirements-output.txt .
 COPY data /cowrie/data
 COPY honeyfs /cowrie/honeyfs
 COPY share /cowrie/share
 COPY etc /cowrie/etc
 
 FROM python-base as builder
-RUN apk add --no-cache gcc musl-dev python-dev libffi-dev libressl-dev && \
-  pip wheel --wheel-dir=/root/wheelhouse -r requirements.txt
+RUN apk add --no-cache gcc musl-dev python-dev libffi-dev libressl-dev mariadb-dev g++ snappy-dev && \
+  pip wheel --wheel-dir=/root/wheelhouse -r requirements.txt && \
+  pip wheel --wheel-dir=/root/wheelhouse -r requirements-output.txt
 
 FROM python-base as post-builder
 COPY --from=builder /root/wheelhouse /root/wheelhouse
 RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse && \
+  pip install -r requirements-output.txt --no-index --find-links=/root/wheelhouse && \
   rm -rf /root/wheelhouse
 COPY src /cowrie
 

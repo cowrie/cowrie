@@ -16,7 +16,7 @@ hpfeeds3
 # mysql
 # If this fails, see documentation /home/cowrie/cowrie/docs/sql/README.md
 # There are two options, mysqlclient is newer and provides Python3 support.
-# mysqlclient
+mysqlclient
 # MySQL-python
 
 # mongodb
