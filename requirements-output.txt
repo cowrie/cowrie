@@ -39,7 +39,8 @@ influxdb
 
 # kafka
 afkak
-snappy
+python-snappy
+
 
 # dblog_xmpp
 wokkel==18.0.0rc3
