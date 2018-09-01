@@ -106,7 +106,7 @@ class Passwd(object):
         for _ in self.passwd:
             if uid == _["pw_uid"]:
                 return _
-        raise KeyError("getpwuid(): uid not found in passwd file: " + uid)
+        raise KeyError("getpwuid(): uid not found in passwd file: " + str(uid))
 
 
 class Group(object):
@@ -175,4 +175,4 @@ class Group(object):
         for _ in self.group:
             if uid == _["gr_gid"]:
                 return _
-        raise KeyError("getgruid(): uid not found in group file: " + uid)
+        raise KeyError("getgruid(): uid not found in group file: " + str(uid))
