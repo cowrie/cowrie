@@ -253,20 +253,20 @@ Options:
         i = 1
         for p in packages:
             self.write('  Installing : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format
-                (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
+                       (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
             yield self.sleep(0.5, 1)
             i += 1
         i = 1
         for p in packages:
             self.write('  Verifying : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format
-                (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
+                       (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
             yield self.sleep(0.5, 1)
             i += 1
         self.write('\n')
         self.write('Installed:\n')
         for p in packages:
             self.write('  {0}.{1} {2}:{3}-{4} \t\t'.format
-                (p, arch, random.randint(0, 2), packages[p]['version'], packages[p]['release']))
+                       (p, arch, random.randint(0, 2), packages[p]['version'], packages[p]['release']))
         self.write('\n')
         self.write('Complete!\n')
         self.exit()

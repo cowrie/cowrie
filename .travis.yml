@@ -13,7 +13,7 @@ install: pip install -r requirements.txt
 before_script:
     - pip install flake8 flake8-import-order
     # stop the build if there are Python syntax errors or undefined names
-    - flake8 --count --application-import-names cowrie --max-line-length=120 --statistics /cowrie
+    - flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
 script: PYTHONPATH=${TRAVIS_BUILD_DIR}/src trial cowrie
 notifications:
   email: false
