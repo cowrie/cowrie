@@ -12,7 +12,7 @@ log/
 __pycache__/
 *.py[cod]
 *env/
-twisted/plugins/dropin.cache
+src/twisted/plugins/dropin.cache
 .DS_Store
 _trial_temp
 .project
