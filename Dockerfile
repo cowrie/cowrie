@@ -1,7 +1,7 @@
-FROM python:2-alpine3.8 as python-base
-RUN apk add --no-cache libffi && \
-  addgroup -S cowrie && \
-  adduser -S -s /bin/bash -G cowrie -D -H -h /cowrie cowrie && \
+FROM debian:stable-slim as python-base
+RUN apt-get update && \
+  apt-get install --no-install-recommends -y libffi6 python python-pip  && \
+  adduser --system --shell /bin/bash --group --disabled-password --no-create-home --home /cowrie cowrie && \
   mkdir -p /cowrie/var/lib/cowrie/downloads && \
   mkdir -p /cowrie/var/lib/cowrie/tty && \
   mkdir -p /cowrie/var/log/cowrie/ && \
@@ -15,27 +15,38 @@ COPY share /cowrie/share
 COPY etc /cowrie/etc
 
 FROM python-base as builder
-RUN apk add --no-cache gcc musl-dev python-dev libffi-dev libressl-dev mariadb-dev g++ snappy-dev && \
+RUN apt-get install --no-install-recommends -y python-wheel python-setuptools build-essential libssl-dev libffi-dev python-dev libsnappy-dev default-libmysqlclient-dev && \
   pip wheel --wheel-dir=/root/wheelhouse -r requirements.txt && \
   pip wheel --wheel-dir=/root/wheelhouse -r requirements-output.txt
 
 FROM python-base as post-builder
 COPY --from=builder /root/wheelhouse /root/wheelhouse
 RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse && \
-  pip install -r requirements-output.txt --no-index --find-links=/root/wheelhouse && \
-  rm -rf /root/wheelhouse
+  pip install -r requirements-output.txt --no-index --find-links=/root/wheelhouse
+
+FROM post-builder as pre-devel
+RUN pip install flake8 flake8-import-order pytest
+
+FROM pre-devel as devel
+USER cowrie
+
+FROM pre-devel as tests
 COPY src /cowrie
-
-FROM post-builder as linter
-RUN pip install flake8 flake8-import-order && \
-  flake8 --count --application-import-names cowrie --max-line-length=120 --statistics /cowrie
-
-FROM post-builder as unittest
 ENV PYTHONPATH=/cowrie
 WORKDIR /cowrie
-RUN trial cowrie
+RUN flake8 --count --application-import-names cowrie --max-line-length=120 --statistics . && \
+  trial cowrie
 
-FROM post-builder
+FROM post-builder as pre-release
+RUN apt-get remove -y python-pip && \
+  apt-get autoremove -y && \
+  apt-get autoclean -y && \
+  rm -rf /root/wheelhouse && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/log/*
+COPY src /cowrie
+
+FROM pre-release as release
 LABEL maintainer="Florian Pelgrim <florian.pelgrim@craneworks.de>"
 ENV PYTHONPATH=/cowrie
 WORKDIR /cowrie
