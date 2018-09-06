@@ -6,7 +6,7 @@ RUN apt-get update && \
   mkdir -p /cowrie/var/lib/cowrie/tty && \
   mkdir -p /cowrie/var/log/cowrie/ && \
   chown -R cowrie:cowrie /cowrie && \
-  chmod -R 775 /cowrie
+  chmod -R a+rX /cowrie
 COPY requirements.txt .
 COPY requirements-output.txt .
 COPY data /cowrie/data
