@@ -42,9 +42,10 @@ class UserDB(object):
         """
 
         try:
-            with open('{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path')), 'r') as db:
+            with open('{}/userdb.txt'.format(CONFIG.get('honeypot', 'etc_path')), 'r') as db:
                 userdb = db.readlines()
         except IOError:
+            log.msg("Could not read etc/userdb.txt, default database activated")
             userdb = _USERDB_DEFAULTS
 
         for user in userdb:
