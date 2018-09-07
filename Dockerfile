@@ -45,6 +45,8 @@ RUN apt-get remove -y python-pip && \
   rm -rf /var/lib/apt/lists/* && \
   rm -rf /var/log/*
 COPY src /cowrie
+RUN find /cowrie -type d -exec chmod 755 {} \; && \
+  find /cowrie -type f -exec chmod 744 {} \;
 
 FROM pre-release as release
 LABEL maintainer="Florian Pelgrim <florian.pelgrim@craneworks.de>"
