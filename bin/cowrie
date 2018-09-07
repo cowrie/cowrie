@@ -173,7 +173,7 @@ done
 PIDFILE=var/run/cowrie.pid
 set -e
 
-if [ ! -f ${COWRIEDIR}/log/cowrie.log ]
+if [ ! -f ${COWRIEDIR}/var/log/cowrie/cowrie.log ]
 then
     first_time_use
 fi
