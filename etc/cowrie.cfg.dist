@@ -44,7 +44,7 @@ download_path = ${honeypot:state_path}/downloads
 # Directory for miscellaneous data files, such as the password database.
 # (DEPRECATED: will be removed in near future)
 # (default: data)
-data_path = data
+data_path = etc
 
 
 # Directory for static data files

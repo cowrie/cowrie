@@ -17,6 +17,15 @@ from twisted.python import log
 
 from cowrie.core.config import CONFIG
 
+_USERDB_DEFAULTS = [
+    'root:x:!root',
+    'root:x:!123456',
+    'root:x:!/honeypot/i',
+    'root:x:*',
+    'richard:x:*',
+    'richard:x:fout',
+]
+
 
 class UserDB(object):
     """
@@ -25,28 +34,28 @@ class UserDB(object):
 
     def __init__(self):
         self.userdb = OrderedDict()
-        self.userdb_file = '{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path'))
         self.load()
 
     def load(self):
         """
         load the user db
         """
-        with open(self.userdb_file, 'rb') as f:
-            while True:
-                rawline = f.readline()
-                if not rawline:
-                    break
 
-                line = rawline.strip()
-                if not line:
+        try:
+            with open('{}/userdb.txt'.format(CONFIG.get('honeypot', 'data_path')), 'r') as db:
+                userdb = db.readlines()
+        except IOError:
+            userdb = _USERDB_DEFAULTS
+
+        for user in userdb:
+            if not user.startswith('#'):
+                try:
+                    login = user.split(':')[0].encode('utf8')
+                    password = user.split(':')[2].strip().encode('utf8')
+                except IndexError:
                     continue
-
-                if line.startswith(b'#'):
-                    continue
-
-                login, passwd = re.split(br':\w+:', line, 1)
-                self.adduser(login, passwd)
+                else:
+                    self.adduser(login, password)
 
     def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
         for credentials, policy in self.userdb.items():

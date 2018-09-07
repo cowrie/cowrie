@@ -9,7 +9,6 @@ RUN apt-get update && \
   chmod -R a+rX /cowrie
 COPY requirements.txt .
 COPY requirements-output.txt .
-COPY data /cowrie/data
 COPY honeyfs /cowrie/honeyfs
 COPY share /cowrie/share
 COPY etc /cowrie/etc
