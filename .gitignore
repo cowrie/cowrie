@@ -7,6 +7,7 @@ etc/ssh_host_rsa_key.pub
 var/log/cowrie/*
 cowrie.egg-info/
 dl/
+dist/
 build/
 log/
 __pycache__/
