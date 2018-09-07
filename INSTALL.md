@@ -47,7 +47,7 @@ $ sudo su - cowrie
 ## Step 3: Checkout the code
 
 ```
-$ git clone http://github.com/micheloosterhof/cowrie
+$ git clone http://github.com/cowrie/cowrie
 Cloning into 'cowrie'...
 remote: Counting objects: 2965, done.
 remote: Compressing objects: 100% (1025/1025), done.

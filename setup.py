@@ -9,7 +9,7 @@ setup(
     maintainer="Michel Oosterhof",
     maintainer_email="michel@oosterhof.net",
     keywords="ssh telnet honeypot",
-    url="https://github.com/micheloosterhof/cowrie",
+    url="https://github.com/cowrie/cowrie",
     packages=find_packages(),
     include_package_data=True,
     package_data={'': ['*.md']},

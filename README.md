@@ -14,7 +14,7 @@ Cowrie is a medium interaction SSH and Telnet honeypot designed to
 log brute force attacks and the shell interaction performed by the
 attacker.
 
-[Cowrie](http://github.com/micheloosterhof/cowrie/) is developed by Michel Oosterhof.
+[Cowrie](http://github.com/cowrie/cowrie/) is developed by Michel Oosterhof.
 
 ## Slack
 
