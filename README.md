@@ -65,13 +65,13 @@ For Python dependencies, see requirements.txt
 * `var/log/cowrie/cowrie.log` - log/debug output
 * `var/lib/cowrie/tty/` - session logs, replayable with the `bin/playlog` utility.
 * `var/lib/cowrie/downloads/` - files transferred from the attacker to the honeypot are stored here
-* `txtcmds/` - file contents for the fake commands
+* `share/cowrie/txtcmds/` - file contents for simple fake commands
 * `bin/createfs` - used to create the fake filesystem
 * `bin/playlog` - utility to replay session logs
 
 ## Is it secure?
 
-Maybe. See [FAQ](https://github.com/micheloosterhof/cowrie/wiki/Frequently-Asked-Questions)
+Maybe. See [FAQ](https://github.com/cowrie/cowrie/wiki/Frequently-Asked-Questions)
 
 ## I have some questions!
 
