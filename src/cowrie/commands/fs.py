@@ -432,7 +432,7 @@ class command_mkdir(HoneyPotCommand):
                 return
             try:
                 self.fs.mkdir(pname, 0, 0, 4096, 16877)
-            except (fs.FileNotFound):
+            except fs.FileNotFound:
                 self.errorWrite('mkdir: cannot create directory `{}\': No such file or directory\n'.format(f))
             return
 

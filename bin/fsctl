@@ -269,7 +269,7 @@ class fseditCmd(cmd.Cmd):
         :param args:
         :return:
         """
-        print((self.pwd))
+        print(self.pwd)
 
     def do_mkdir(self, args):
         """
@@ -310,7 +310,7 @@ class fseditCmd(cmd.Cmd):
         fileName = pathList[len(pathList) - 1]
 
         if not exists(self.fs, parentdir):
-            print((('Parent directory %s doesn\'t exist!') %
+            print(('Parent directory %s doesn\'t exist!' %
                    (parentdir,)))
             self.mkfile(parentdir.split(), T_DIR)
 

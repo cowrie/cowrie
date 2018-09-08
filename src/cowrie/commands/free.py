@@ -44,10 +44,10 @@ class command_free(HoneyPotCommand):
 
         # Parse options
         for o, a in opts:
-            if o in ('-h'):
+            if o in '-h':
                 self.do_free(fmt='human')
                 return
-            elif o in ('-m'):
+            elif o in '-m':
                 self.do_free(fmt='megabytes')
                 return
         self.do_free()

@@ -50,7 +50,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     def getSessionId(self):
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
-        return (transportId, channelId)
+        return transportId, channelId
 
     def connectionMade(self):
         transportId, channelId = self.getSessionId()
@@ -215,4 +215,4 @@ class LoggingTelnetServerProtocol(LoggingServerProtocol):
     def getSessionId(self):
         transportId = self.transport.session.transportId
         sn = self.transport.session.transport.transport.sessionno
-        return (transportId, sn)
+        return transportId, sn

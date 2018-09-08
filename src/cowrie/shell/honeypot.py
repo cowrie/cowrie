@@ -50,13 +50,13 @@ class HoneyPotShell(object):
 
                 if tok == self.lexer.eof:
                     if tokens:
-                        self.cmdpending.append((tokens))
+                        self.cmdpending.append(tokens)
                         tokens = []
                     break
                 # For now, treat && and || same as ;, just execute without checking return code
                 elif tok == '&&' or tok == '||':
                     if tokens:
-                        self.cmdpending.append((tokens))
+                        self.cmdpending.append(tokens)
                         tokens = []
                         continue
                     else:
@@ -65,7 +65,7 @@ class HoneyPotShell(object):
                         break
                 elif tok == ';':
                     if tokens:
-                        self.cmdpending.append((tokens))
+                        self.cmdpending.append(tokens)
                         tokens = []
                         continue
                     else:
