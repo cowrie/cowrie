@@ -10,8 +10,9 @@ setup(
     maintainer_email="michel@oosterhof.net",
     keywords="ssh telnet honeypot",
     url="https://github.com/cowrie/cowrie",
-    packages=find_packages(),
+    packages=find_packages('src'),
     include_package_data=True,
+    package_dir={'':'src'},
     package_data={'': ['*.md']},
     scripts=[
         "bin/fsctl",
@@ -28,11 +29,6 @@ setup(
         "pyparsing",
         "packaging",
         "appdirs>=1.4.0",
-        "python-pyasn1",
-        "python-gmpy2",
-        "python-mysqldb",
-        "klein>=15.0.0",
-        "treq>=15.0.0",
         "python-dateutil",
         "service_identity>=14.0.0"
     ],
