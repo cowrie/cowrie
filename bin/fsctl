@@ -101,8 +101,8 @@ class fseditCmd(cmd.Cmd):
         try:
             self.fs = pickle.load(pickle_file)
         except:
-            print((("Unable to load file '%s'. " + \
-                    "Are you sure it is a valid pickle file?") % \
+            print((("Unable to load file '%s'. " +
+                    "Are you sure it is a valid pickle file?") %
                    (pickle_file_path,)))
             sys.exit(1)
 
@@ -126,8 +126,8 @@ class fseditCmd(cmd.Cmd):
         try:
             pickle.dump(self.fs, open(self.pickle_file_path, 'wb'))
         except Exception as e:
-            print((("Unable to save pickle file '%s'. " + \
-                    "Are you sure you have write access?") % \
+            print((("Unable to save pickle file '%s'. " +
+                    "Are you sure you have write access?") %
                    (self.pickle_file_path,)))
             print(str(e))
             sys.exit(1)
@@ -225,7 +225,7 @@ class fseditCmd(cmd.Cmd):
             else:
                 gid = str(gid).rjust(4)
 
-            print(('%s 1 %s %s %s %s %s%s' % \
+            print(('%s 1 %s %s %s %s %s%s' %
                    (perms,
                     uid,
                     gid,
@@ -310,7 +310,7 @@ class fseditCmd(cmd.Cmd):
         fileName = pathList[len(pathList) - 1]
 
         if not exists(self.fs, parentdir):
-            print((('Parent directory %s doesn\'t exist!') % \
+            print((('Parent directory %s doesn\'t exist!') %
                    (parentdir,)))
             self.mkfile(parentdir.split(), T_DIR)
 
@@ -408,14 +408,14 @@ class fseditCmd(cmd.Cmd):
         target_object = getpath(self.fs, target_path)
 
         if target_object[A_TYPE] != T_DIR:
-            print(("rmdir: failed to remove '%s': Not a directory" % \
+            print(("rmdir: failed to remove '%s': Not a directory" %
                    (target_path,)))
             return
 
         # The unix rmdir command does not delete directories if they are not
         # empty
         if len(target_object[A_CONTENTS]) != 0:
-            print(("rmdir: failed to remove '%s': Directory not empty" % \
+            print(("rmdir: failed to remove '%s': Directory not empty" %
                    (target_path,)))
             return
 
