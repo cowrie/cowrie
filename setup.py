@@ -12,7 +12,7 @@ setup(
     url="https://github.com/cowrie/cowrie",
     packages=find_packages('src'),
     include_package_data=True,
-    package_dir={'':'src'},
+    package_dir={'': 'src'},
     package_data={'': ['*.md']},
     use_incremental=True,
     scripts=[
@@ -39,7 +39,7 @@ setup(
         'service_identity>=14.0.0'
     ],
     entry_points={
-        'console_scripts': ['run-the-app = deployme:main']
+        'console_scripts': ['cowrie = cowrie.scripts.cowrie:run']
     },
 
     extras_require={
