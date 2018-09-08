@@ -586,15 +586,6 @@ class _CommandTransport(SSHClientTransport):
         self._state = b'SECURING'
         return succeed(None)
 
-        hostname = self.creator.hostname
-        ip = networkString(self.transport.getPeer().host)
-
-        self._state = b'SECURING'
-        d = self.creator.knownHosts.verifyHostKey(
-            self.creator.ui, hostname, ip, Key.fromString(hostKey))
-        d.addErrback(self._saveHostKeyFailure)
-        return d
-
     def _saveHostKeyFailure(self, reason):
         """
         When host key verification fails, record the reason for the failure in

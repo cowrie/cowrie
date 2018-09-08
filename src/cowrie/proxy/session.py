@@ -154,15 +154,6 @@ class ProxySSHSession(channel.CowrieSSHChannel):
         """
         channel.CowrieSSHChannel.channelOpen(self, specificData)
         return
-        log.msg("channelOpen")
-        helper = endpoints._NewConnectionHelper(reactor, self.host, self.port, self.user, self.keys,
-                                                self.password, None, self.knownHosts, None)
-        log.msg("helper = {0}".format(repr(helper)))
-        d = helper.secureConnection()
-        d.addCallback(self._cbConnect)
-        d.addErrback(self._ebConnect)
-        log.msg("d = {0}".format(repr(d)))
-        return d
 
     def _ebConnect(self):
         log.msg("ERROR CONNECTED TO BACKEND")
@@ -256,5 +247,3 @@ class ProxySSHSession(channel.CowrieSSHChannel):
     def eofReceived(self):
         log.msg("RECEIVED EOF")
         return
-        if self.client:
-            self.conn.sendClose(self)
