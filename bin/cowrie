@@ -23,6 +23,13 @@ first_time_use() {
     echo
 }
 
+migrate_userdb() {
+    if [ -f ${COWRIEDIR}/data/userdb.txt ]; then
+        echo "Migrating ${COWRIEDIR}/data/userdb.txt to ${COWRIEDIR}/etc/userdb.txt"
+        mv -f ${COWRIEDIR}/data/userdb.txt ${COWRIEDIR}/etc/userdb.txt
+    fi
+}
+
 find_cowrie_directory() {
     # Determine Cowrie directory
     if [[ "$0" = /* ]]
@@ -188,6 +195,7 @@ case $key in
         cowrie_force_stop $*
         ;;
     start)
+        migrate_userdb
         cowrie_start $*
         ;;
     restart)
