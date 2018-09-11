@@ -1,6 +1,6 @@
-include cowrie.cfg.dist
 include *.md
-recursive-include twisted *.py
-recursive-include data fs.pickle userdb.txt
-graft honeyfs *
-graft txtcmds *
+include etc/cowrie.cfg.dist
+recursive-include src/twisted *.py
+recursive-include src/cowrie *.py
+graft honeyfs
+graft share/cowrie
