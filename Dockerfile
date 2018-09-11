@@ -1,12 +1,12 @@
 FROM debian:stable-slim as python-base
-RUN apt-get update && \
-  apt-get install --no-install-recommends -y libffi6 python python-pip  && \
-  adduser --system --shell /bin/bash --group --disabled-password --no-create-home --home /cowrie cowrie && \
-  mkdir -p /cowrie/var/lib/cowrie/downloads && \
-  mkdir -p /cowrie/var/lib/cowrie/tty && \
-  mkdir -p /cowrie/var/log/cowrie/ && \
-  chown -R cowrie:cowrie /cowrie && \
-  chmod -R a+rX /cowrie
+RUN apt-get update
+RUN  apt-get install --no-install-recommends -y libffi6 python python-pip
+RUN  adduser --system --shell /bin/bash --group --disabled-password --no-create-home --home /cowrie cowrie
+RUN  mkdir -p /cowrie/var/lib/cowrie/downloads
+RUN  mkdir -p /cowrie/var/lib/cowrie/tty
+RUN  mkdir -p /cowrie/var/log/cowrie/
+RUN  chown -R cowrie:cowrie /cowrie
+RUN  chmod -R a+rX /cowrie
 COPY requirements.txt .
 COPY requirements-output.txt .
 COPY honeyfs /cowrie/honeyfs
@@ -14,14 +14,14 @@ COPY share /cowrie/share
 COPY etc /cowrie/etc
 
 FROM python-base as builder
-RUN apt-get install --no-install-recommends -y python-wheel python-setuptools build-essential libssl-dev libffi-dev python-dev libsnappy-dev default-libmysqlclient-dev && \
-  pip wheel --wheel-dir=/root/wheelhouse -r requirements.txt && \
-  pip wheel --wheel-dir=/root/wheelhouse -r requirements-output.txt
+RUN apt-get install --no-install-recommends -y python-wheel python-setuptools build-essential libssl-dev libffi-dev python-dev libsnappy-dev default-libmysqlclient-dev
+RUN  pip wheel --wheel-dir=/root/wheelhouse -r requirements.txt
+RUN  pip wheel --wheel-dir=/root/wheelhouse -r requirements-output.txt
 
 FROM python-base as post-builder
 COPY --from=builder /root/wheelhouse /root/wheelhouse
-RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse && \
-  pip install -r requirements-output.txt --no-index --find-links=/root/wheelhouse
+RUN pip install -r requirements.txt --no-index --find-links=/root/wheelhouse
+RUN  pip install -r requirements-output.txt --no-index --find-links=/root/wheelhouse
 
 FROM post-builder as pre-devel
 RUN pip install flake8 flake8-import-order pytest
