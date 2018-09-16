@@ -134,7 +134,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         echo "'ls'"
         """
         self.proto.lineReceived(b'echo "'ls'")
-        self.assertEquals(self.tr.value(), b'ls'\n' + PROMPT)
+        self.assertEquals(self.tr.value(), b'\'ls\'\n' + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
