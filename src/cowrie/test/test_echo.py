@@ -123,6 +123,4 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEquals(self.tr.value(), b'lsls\n' + PROMPT)
 
     def tearDown(self):
-
-    def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
