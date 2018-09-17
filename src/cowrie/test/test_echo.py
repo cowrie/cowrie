@@ -129,7 +129,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo \'"ls"\'')
         self.assertEquals(self.tr.value(), b'"ls"\n' + PROMPT)
 
-    def test_echo_command_014(self):
+    def test_echo_command_015(self):
         """
         echo "'ls'"
         """
