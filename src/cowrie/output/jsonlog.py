@@ -31,6 +31,8 @@ from __future__ import absolute_import, division
 import json
 import os
 
+from twisted.python import log
+
 import cowrie.core.output
 import cowrie.python.logfile
 from cowrie.core.config import CONFIG
@@ -41,6 +43,11 @@ class Output(cowrie.core.output.Output):
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
         fn = CONFIG.get('output_jsonlog', 'logfile')
+        if CONFIG.has_option('output_jsonlog', 'timestamp_format'):
+            self.timestamp_format = CONFIG.get('output_jsonlog', 'timestamp_format')
+        else:
+            self.timestamp_format = 'iso'
+        log.msg("Timestamp format is '{}'".format(self.timestamp_format))
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
@@ -52,6 +59,10 @@ class Output(cowrie.core.output.Output):
         self.outfile.flush()
 
     def write(self, logentry):
+        if self.timestamp_format == 'epoch':
+            logentry['timestamp'] = logentry['time']
+        elif self.timestamp_format == 'epoch_msec':
+            logentry['timestamp'] = int(logentry['time'] * 1000000 / 1000)
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith('log_') or i == 'time' or i == 'system':
