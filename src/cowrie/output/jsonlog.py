@@ -31,8 +31,6 @@ from __future__ import absolute_import, division
 import json
 import os
 
-from twisted.python import log
-
 import cowrie.core.output
 import cowrie.python.logfile
 from cowrie.core.config import CONFIG
