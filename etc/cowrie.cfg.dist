@@ -507,9 +507,7 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 [output_jsonlog]
 enabled = true
 logfile = ${honeypot:log_path}/cowrie.json
-#timestamp_format = epoch_msec
-timestamp_format = iso
-
+epoch_timestamp = false
 
 # Supports logging to Elasticsearch
 # This is a simple early release
