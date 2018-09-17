@@ -43,7 +43,7 @@ class Output(cowrie.core.output.Output):
         fn = CONFIG.get('output_jsonlog', 'logfile')
 
         try:
-            self.epoch_timestamp = CONFIG.getboolean('output_json', 'epoch_timestamp')
+            self.epoch_timestamp = CONFIG.getboolean('output_jsonlog', 'epoch_timestamp')
         except Exception:
             self.epoch_timestamp = False
 
