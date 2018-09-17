@@ -126,14 +126,14 @@ class ShellEchoCommandTests(unittest.TestCase):
         """
         echo '"ls"'
         """
-        self.proto.lineReceived(b'echo '"ls"')
-        self.assertEquals(self.tr.value(), b"ls"\n' + PROMPT)
+        self.proto.lineReceived(b'echo \'"ls"\'')
+        self.assertEquals(self.tr.value(), b'"ls"\n' + PROMPT)
 
     def test_echo_command_014(self):
         """
         echo "'ls'"
         """
-        self.proto.lineReceived(b'echo "'ls'")
+        self.proto.lineReceived(b'echo "\'ls\'"')
         self.assertEquals(self.tr.value(), b'\'ls\'\n' + PROMPT)
 
     def tearDown(self):
