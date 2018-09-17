@@ -45,7 +45,7 @@ class Output(cowrie.core.output.Output):
         try:
             self.epoch_timestamp = CONFIG.getboolean('output_json', 'epoch_timestamp')
         except Exception:
-            self.epoch_timestamp = false
+            self.epoch_timestamp = False
 
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
