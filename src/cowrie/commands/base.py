@@ -142,9 +142,6 @@ class command_echo(HoneyPotCommand):
             # replace single character escape \x0 with \x00
             string = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', string)
 
-            # strip single and double quotes
-            string = string.strip('\"\'')
-
             # if the string ends with \c escape, strip it and set newline flag to False
             if string.endswith('\\c'):
                 string = string[:-2]

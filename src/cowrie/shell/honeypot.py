@@ -32,14 +32,20 @@ class HoneyPotShell(object):
 
     def lineReceived(self, line):
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
-        self.lexer = shlex.shlex(instream=line, punctuation_chars=True)
+        self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
-        self.lexer.wordchars += '@%{}=$:+^'
+        self.lexer.wordchars += '@%{}=$:+^,'
         tokens = []
         while True:
             try:
                 tok = self.lexer.get_token()
                 # log.msg("tok: %s" % (repr(tok)))
+
+                if tok == self.lexer.eof:
+                    if tokens:
+                        self.cmdpending.append((tokens))
+                        tokens = []
+                    break
 
                 # Ignore parentheses
                 tok_len = len(tok)
@@ -48,13 +54,8 @@ class HoneyPotShell(object):
                 if len(tok) != tok_len and tok == '':
                     continue
 
-                if tok == self.lexer.eof:
-                    if tokens:
-                        self.cmdpending.append(tokens)
-                        tokens = []
-                    break
                 # For now, treat && and || same as ;, just execute without checking return code
-                elif tok == '&&' or tok == '||':
+                if tok == '&&' or tok == '||':
                     if tokens:
                         self.cmdpending.append(tokens)
                         tokens = []

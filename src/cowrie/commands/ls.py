@@ -105,7 +105,7 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_l(self, path):
         try:
-            if self.protocol.fs.isdir(path) and self.showDirectories:
+            if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]

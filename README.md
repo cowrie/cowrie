@@ -85,5 +85,6 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Dave Germiquet (davegermiquet) for TFTP support, unit tests, new process handling
 * Olivier Bilodeau (obilodeau) for Telnet support
 * Ivan Korolev (fe7ch) for many improvements over the years.
+* Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
 * And many many others.
 
