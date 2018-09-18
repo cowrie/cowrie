@@ -11,6 +11,7 @@ import sys
 from twisted.internet import error
 from twisted.python import failure, log
 
+from cowrie.core.config import CONFIG
 from cowrie.shell import fs
 
 # From Python3.6 we get the new shlex version
@@ -232,7 +233,16 @@ class HoneyPotShell(object):
 
         # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
         # Example: root@svr03:~#     (More of a "Debian" feel)
-        prompt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
+        try:
+            self.flavor = CONFIG.getboolean('honeypot', 'flavor')
+        except Exception:
+            self.flavor = 'Debian'
+
+        if self.flavor == 'Debian':
+            prompt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
+        else:
+            prompt = '[{0}@{1} {2}]'.format(self.protocol.user.username, self.protocol.hostname, cwd)
+
         if not self.protocol.user.uid:
             prompt += '# '  # "Root" user
         else:
