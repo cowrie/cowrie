@@ -53,9 +53,6 @@ setup(
         'python-dateutil',
         'service_identity>=14.0.0'
     ],
-    #entry_points={
-    #    'console_scripts': ['cowrie = cowrie.scripts.cowrie:run']
-    #},
     extras_require={
         'csirtg': ['csirtgsdk>=0.0.0a17'],
         'dshield': ['requests'],
