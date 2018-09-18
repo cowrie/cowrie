@@ -27,7 +27,7 @@ setup(
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
-        'Environment :: No Input/Output (Daemon),
+        'Environment :: No Input/Output (Daemon)',
         'Framework :: Twisted',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
