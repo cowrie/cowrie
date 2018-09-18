@@ -4,7 +4,6 @@ from setuptools import setup
 
 setup(
     name="Cowrie",
-    version="1.0",
     description="Cowrie SSH/Telnet Honeypot.",
     author="Michel Oosterhof",
     author_email="michel@oosterhof.net",
