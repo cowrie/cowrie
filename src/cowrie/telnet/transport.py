@@ -224,6 +224,14 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         self.transport.write(data.replace(b'\r\n', b'\n'))
 
+    def timeoutConnection(self):
+        """
+        Make sure all sessions time out eventually.
+        Timeout is reset when authentication succeeds.
+        """
+        log.msg("Timeout reached in CowrieTelnetTransport")
+        self.transport.loseConnection()
+
     def connectionLost(self, reason):
         """
         Fires on pre-authentication disconnects
