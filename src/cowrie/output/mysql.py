@@ -118,7 +118,7 @@ class Output(cowrie.core.output.Output):
                              (entry["session"], 1, entry['username'], entry['password'], entry["time"]))
 
         elif entry["eventid"] == 'cowrie.login.failed':
-            self.simpleQuery('INSERT INTO `auth` (`session`, `success` `username`, `password`, `timestamp`) '
+            self.simpleQuery('INSERT INTO `auth` (`session`, `success`, `username`, `password`, `timestamp`) '
                              'VALUES (%s, %s, %s, %s, FROM_UNIXTIME(%s))',
                              (entry["session"], 0, entry['username'], entry['password'], entry["time"]))
 
