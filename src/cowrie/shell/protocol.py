@@ -5,11 +5,11 @@
 from __future__ import absolute_import, division
 
 import os
+import random
 import socket
 import sys
 import time
 import traceback
-import random
 from datetime import datetime, timedelta
 
 from twisted.conch import recvline
