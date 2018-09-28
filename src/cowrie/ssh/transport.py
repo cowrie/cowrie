@@ -164,10 +164,23 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,
          _) = [s.split(b',') for s in strings]
 
-        client_fingerprint = md5(packet[16:]).hexdigest()
+        # hassh SSH client fingerprint
+        # https://github.com/salesforce/hassh
+        ckexAlgs = ','.join([alg.decode('utf-8') for alg in kexAlgs])
+        cencCS = ','.join([alg.decode('utf-8') for alg in encCS])
+        cmacCS = ','.join([alg.decode('utf-8') for alg in macCS])
+        ccompCS = ','.join([alg.decode('utf-8') for alg in compCS])
+        hasshAlgorithms = "{kex};{enc};{mac};{cmp}".format(
+            kex=ckexAlgs,
+            enc=cencCS,
+            mac=cmacCS,
+            cmp=ccompCS)
+        hassh = md5(hasshAlgorithms.encode('utf-8')).hexdigest()
+
         log.msg(eventid='cowrie.client.kex',
-                format="Remote SSH client fingerprint: %(client_fingerprint)s",
-                client_fingerprint=client_fingerprint,
+                format="Remote SSH client fingerprint: %(hassh)s",
+                hassh=hassh,
+                hasshAlgorithms=hasshAlgorithms,
                 kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
                 compCS=compCS, langCS=langCS)
 
