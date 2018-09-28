@@ -284,15 +284,15 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
                                               minutes=random.randrange(0, 60),
                                               hours=random.randrange(0, 12))
         date_last_login = date_now.strftime("%a %b %d %X %Y")
-        last_login = '\nLast login: {1} from {0}\n'.format(ip, date_last_login)
+        last_login = '\nLast login: {1} from {0}\n'.format(ip, date_last_login).encode('utf8')
         return last_login
 
     def displayMOTD(self):
         try:
             self.terminal.write(self.fs.file_contents('/etc/motd'))
-            self.terminal.write(self.displayLogin())
         except Exception:
             pass
+        self.terminal.write(self.displayLogin())
 
     def timeoutConnection(self):
         """
