@@ -178,7 +178,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         hassh = md5(hasshAlgorithms.encode('utf-8')).hexdigest()
 
         log.msg(eventid='cowrie.client.kex',
-                format="Remote SSH client fingerprint: %(hassh)s",
+                format="SSH client hassh fingerprint: %(hassh)s",
                 hassh=hassh,
                 hasshAlgorithms=hasshAlgorithms,
                 kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
