@@ -129,16 +129,25 @@ Starting cowrie with extra arguments [] ...
 ## Step 8: Port redirection (OPTIONAL)
 
 All port redirection commands are system-wide and need to be executed as root.
+A firewall redirect can make your existing SSH server unreachable, remember to move the existing
+server to a different port number first.
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
-The following firewall rule will forward incoming traffic on port 22 to port 2222.
+The following firewall rule will forward incoming traffic on port 22 to port 2222 on Linux:
 
 ```
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 ```
 
-Note that you should test this rule only from another host; it doesn't apply to loopback connections. Alternatively you can run
-authbind to listen as non-root on port 22 directly:
+Note that you should test this rule only from another host; it doesn't apply to loopback connections.
+
+On MacOS run:
+
+```
+$ echo "rdr pass inet proto tcp from any to any port 22 -> 127.0.0.1 port 2222" | sudo pfctl -ef -
+```
+
+Alternatively you can run authbind to listen as non-root on port 22 directly:
 
 ```
 $ sudo apt-get install authbind
