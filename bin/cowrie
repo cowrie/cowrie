@@ -60,7 +60,7 @@ cowrie_status() {
             echo "cowrie is running (PID: ${PID})."
         else
             echo "cowrie is not running (PID: ${PID})."
-            echo "Removing stale PID file"
+            echo "Removing stale PID file ${PIDFILE}"
             rm -f ${PIDFILE}
         fi
     else
@@ -71,7 +71,7 @@ cowrie_status() {
 cowrie_start() {
     # Start Cowrie
     COWRIEARGS="$*"
-    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask 0022 --pidfile ${PIDFILE}"
+    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask=0022 --pidfile=${PIDFILE}"
 
     # For Docker log to stdout, for non-Docker log to file
     if [ "$DOCKER" = "yes" ]; then
@@ -102,9 +102,9 @@ cowrie_start() {
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
     if [ "$AUTHBIND_ENABLED" = "no" ]
     then
-        twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
+        exec twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
     else
-        authbind --deep twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
+        exec authbind --deep twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
     fi
 }
 
@@ -116,7 +116,7 @@ cowrie_stop () {
       if kill -TERM $PID; then
           echo -n
       else
-          echo "Removing stale PID file"
+          echo "Removing stale PID file ${PIDFILE}"
           rm -f ${PIDFILE}
       fi
     else
@@ -144,7 +144,7 @@ cowrie_force_stop () {
             kill -KILL $PID
             echo "killed."
         else
-            echo "Removing stale PID file"
+            echo "Removing stale PID file ${PIDFILE}"
             rm -f ${PIDFILE}
         fi
     else
@@ -177,7 +177,12 @@ for dir in ${COWRIEDIR}/twisted ${COWRIEDIR}/cowrie; do
     [ -d ${dir} ] && find ${dir} -name '*pyc' | xargs rm -f
 done
 
-PIDFILE=var/run/cowrie.pid
+# Don't store pidfile on Docker persistent volume
+if [ "$DOCKER" = "yes" ]; then
+        PIDFILE=""
+else
+        PIDFILE=var/run/cowrie.pid
+fi
 set -e
 
 if [ ! -f ${COWRIEDIR}/var/log/cowrie/cowrie.log ]
