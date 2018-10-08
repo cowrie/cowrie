@@ -255,7 +255,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         try:
             parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
-            host = parsed.hostname
+            host = parsed.hostname.decode('utf8')
             port = parsed.port or (443 if scheme == 'https' else 80)
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError

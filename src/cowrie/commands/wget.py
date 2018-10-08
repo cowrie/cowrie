@@ -135,7 +135,7 @@ class command_wget(HoneyPotCommand):
         try:
             parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
-            host = parsed.hostname
+            host = parsed.hostname.decode('utf8')
             port = parsed.port or (443 if scheme == b'https' else 80)
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
@@ -147,7 +147,7 @@ class command_wget(HoneyPotCommand):
 
         if not self.quiet:
             self.errorWrite('--%s--  %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S'), url.decode('utf8')))
-            self.errorWrite('Connecting to %s:%d... connected.\n' % (host.decode('utf8'), port))
+            self.errorWrite('Connecting to %s:%d... connected.\n' % (host, port))
             self.errorWrite('HTTP request sent, awaiting response... ')
 
         factory = HTTPProgressDownloader(self, fakeoutfile, url, outputfile, *args, **kwargs)
