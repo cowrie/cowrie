@@ -28,6 +28,12 @@
 # (default: svr04)
 hostname = svr04
 
+# Flavor to emulate: Debian or RedHat. This will make a difference in 
+# the prompt and the available commands
+#
+# (default: Debian)
+flavor = Debian
+
 
 # Directory where to save log files in.
 #
