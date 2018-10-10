@@ -85,10 +85,11 @@ class Output(cowrie.core.output.Output):
             # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
             log.msg("Checking scan report at VT")
             self.scanfile(entry)
+            self.scanurl(entry['url'])
 
         elif entry["eventid"] == 'cowrie.session.file_upload':
             log.msg("Checking scan report at VT")
-            self.scanfile(entry["shasum"])
+            self.scanfile(entry)
 
     def scanfile(self, entry):
         """
@@ -264,7 +265,8 @@ class Output(cowrie.core.output.Output):
             Extract the information we need from the body
             """
             j = json.loads(result)
-            # log.msg("VT scanurl result: {}".format(repr(j)))
+            if self.debug:
+                log.msg("VT scanurl result: {}".format(result))
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg("VT: response=0: this is a new file")
