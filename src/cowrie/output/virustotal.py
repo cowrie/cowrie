@@ -54,7 +54,7 @@ import cowrie.core.output
 from cowrie.core.config import CONFIG
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
-VTAPI_URL = b'https://www.virustotal.com/vtapi/v2/'
+VTAPI_URL = 'https://www.virustotal.com/vtapi/v2/'
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/cowrie/cowrie"
 
 
@@ -95,7 +95,7 @@ class Output(cowrie.core.output.Output):
         Check file scan report for a hash
         Argument is full event so we can access full file later on
         """
-        vtUrl = b'{0}file/report'.format(VTAPI_URL)
+        vtUrl = '{0}file/report'.format(VTAPI_URL).encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': entry["shasum"]}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -168,7 +168,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to VirusTotal
         """
-        vtUrl = b'{0}file/scan'.format(VTAPI_URL)
+        vtUrl = '{0}file/scan'.format(VTAPI_URL).encode('utf8')
         fields = {('apikey', self.apiKey)}
         files = {('file', fileName, open(artifact, 'rb'))}
         if self.debug:
@@ -225,7 +225,7 @@ class Output(cowrie.core.output.Output):
         """
         Check url scan report for a hash
         """
-        vtUrl = b'{0}url/report'.format(VTAPI_URL)
+        vtUrl = '{0}url/report'.format(VTAPI_URL).encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': url, 'scan': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -287,7 +287,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a comment to VirusTotal with Twisted
         """
-        vtUrl = b'{0}comments/put'.format(VTAPI_URL)
+        vtUrl = '{0}comments/put'.format(VTAPI_URL).encode('utf8')
         parameters = {
             "resource": resource,
             "comment": self.commenttext,
