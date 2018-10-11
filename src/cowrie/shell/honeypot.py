@@ -10,6 +10,7 @@ import sys
 
 from twisted.internet import error
 from twisted.python import failure, log
+from twisted.python.compat import iterbytes
 
 from cowrie.shell import fs
 
@@ -262,13 +263,20 @@ class HoneyPotShell(object):
         self.protocol.call_command(pp, self.protocol.commands['exit'])
 
     def handle_TAB(self):
+        """
+        lineBuffer is an array of bytes
+        """
         if not self.protocol.lineBuffer:
             return
-        line = ''.join(self.protocol.lineBuffer)
-        if line[-1] == ' ':
+
+        line = b''.join(self.protocol.lineBuffer)
+        if line[-1] == b' ':
             clue = ''
         else:
-            clue = ''.join(self.protocol.lineBuffer).split()[-1]
+            clue = line.split()[-1].decode('utf8')
+        # clue now contains the string to complete or is empty.
+        # line contains the buffer as bytes
+
         try:
             basedir = os.path.dirname(clue)
         except Exception:
@@ -302,19 +310,21 @@ class HoneyPotShell(object):
 
         newbuf = ''
         if len(files) == 1:
-            newbuf = ' '.join(line.split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
+            newbuf = ' '.join(line.decode('utf8').split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
                 newbuf += ' '
+            newbuf = newbuf.encode('utf8')
         else:
             if os.path.basename(clue):
                 prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ''
-            first = line.split(' ')[:-1]
+            first = line.decode('utf8').split(' ')[:-1]
             newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
-            if newbuf == ''.join(self.protocol.lineBuffer):
+            newbuf = newbuf.encode('utf8')
+            if newbuf == b''.join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b'\n')
                 maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
@@ -328,9 +338,9 @@ class HoneyPotShell(object):
                 self.protocol.terminal.write(b'\n')
                 self.showPrompt()
 
-        self.protocol.lineBuffer = list(newbuf)
+        self.protocol.lineBuffer = [y for x, y in enumerate(iterbytes(newbuf))]
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
-        self.protocol.terminal.write(newbuf.encode('utf8'))
+        self.protocol.terminal.write(newbuf)
 
 
 class StdOutStdErrEmulationProtocol(object):
