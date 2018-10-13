@@ -1,3 +1,7 @@
+
+Release 1.5.1 release
+
+* 2018-10-13 Fixes VT uploads, tab completion on Python3, Hassh support, setuptools functional. userdb migration
 * 2018-09-07 NOTE! data/userdb.txt has moved to etc/userdb.txt and a default config is no longer provided!
 * 2018-08-25 Downloads and TTY logs have moved to the var/ directory
 * 2018-08-11 SSH keys now stored in var/lib/cowrie
