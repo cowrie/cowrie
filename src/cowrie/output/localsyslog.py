@@ -53,6 +53,9 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, logentry):
+        if 'isError' not in logentry:
+            logentry['isError'] = False
+
         if self.format == 'cef':
             self.syslog.emit({
                 'message': cowrie.core.cef.formatCef(logentry),
