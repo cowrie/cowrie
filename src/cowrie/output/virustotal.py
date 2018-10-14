@@ -139,10 +139,11 @@ class Output(cowrie.core.output.Output):
 
             # Add detailed report to json log
             if j["response_code"] in [1, -2]:
-                scans_summary = {feed.lower():
-                                    {"detected": str(info["detected"]).lower(),
-                                    "result": str(info["result"]).lower()}
-                                for feed, info in j["scans"].items()}
+                scans_summary = {}
+                for feed, info in j["scans"].items():
+                    scans_summary[feed] = {}
+                    scans_summary[feed]["detected"] = str(info["detected"]).lower()
+                    scans_summary[feed]["result"] = str(info["result"]).lower()
                 log.msg(
                             eventid='cowrie.virustotal.scanfile',
                             format='VT: Binary file with sha256 %(sha256)s was found malicious \
@@ -161,7 +162,7 @@ class Output(cowrie.core.output.Output):
                 log.msg(eventid='cowrie.virustotal.scanfile',
                         format='VT: New file %(sha256)s',
                         session=entry['session'],
-                    sha256=j["sha256"])
+                        sha256=j["sha256"])
                 p = urlparse(entry["url"]).path
                 if p == "":
                     fileName = entry["shasum"]
@@ -292,10 +293,11 @@ class Output(cowrie.core.output.Output):
 
             # Add detailed report to json log
             if j["response_code"] in [1, -2]:
-                scans_summary = {feed.lower():
-                                    {"detected": str(info["detected"]).lower(),
-                                    "result": str(info["result"]).lower()}
-                                for feed, info in j["scans"].items()}
+                scans_summary = {}
+                for feed, info in j["scans"].items():
+                    scans_summary[feed] = {}
+                    scans_summary[feed]["detected"] = str(info["detected"]).lower()
+                    scans_summary[feed]["result"] = str(info["result"]).lower()
                 log.msg(
                             eventid='cowrie.virustotal.scanurl',
                             format='VT: URL %(url)s was found malicious by \
