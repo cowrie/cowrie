@@ -137,16 +137,16 @@ class Output(cowrie.core.output.Output):
             result = result.decode('utf8')
             j = json.loads(result)
 
-            #- Add detailed report to json log
+            # Add detailed report to json log
             if j["response_code"] in [1, -2]:
                 scans_summary = {feed.lower():
-					{"detected": str(info["detected"]).lower(),
-					"result": str(info["result"]).lower()}
-				for feed, info in j["scans"].items()}
+                                    {"detected": str(info["detected"]).lower(),
+                                    "result": str(info["result"]).lower()}
+                                for feed, info in j["scans"].items()}
                 log.msg(
                             eventid='cowrie.virustotal.scanfile',
                             format='VT: Binary file with sha256 %(sha256)s was found malicious \
-					 by %(positives)s feeds (scanned on %(scan_date)s)',
+                                      by %(positives)s feeds (scanned on %(scan_date)s)',
                             session=entry['session'],
                             positives=result.count('true'),
                             scan_date=j["scan_date"],
@@ -159,9 +159,9 @@ class Output(cowrie.core.output.Output):
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg(eventid='cowrie.virustotal.scanfile',
-			format='VT: New file %(sha256)s',
-			session=entry['session'],
-			sha256=j["sha256"])
+                        format='VT: New file %(sha256)s',
+                        session=entry['session'],
+                    sha256=j["sha256"])
                 p = urlparse(entry["url"]).path
                 if p == "":
                     fileName = entry["shasum"]
@@ -293,13 +293,13 @@ class Output(cowrie.core.output.Output):
             # Add detailed report to json log
             if j["response_code"] in [1, -2]:
                 scans_summary = {feed.lower():
-					{"detected": str(info["detected"]).lower(),
-					"result": str(info["result"]).lower()}
-				for feed, info in j["scans"].items()}
+                                    {"detected": str(info["detected"]).lower(),
+                                    "result": str(info["result"]).lower()}
+                                for feed, info in j["scans"].items()}
                 log.msg(
                             eventid='cowrie.virustotal.scanurl',
                             format='VT: URL %(url)s was found malicious by \
-					%(positives)s feeds (scanned on %(scan_date)s)',
+                                      %(positives)s feeds (scanned on %(scan_date)s)',
                             session=entry['session'],
                             positives=j['positives'],
                             scan_date=j['scan_date'],
@@ -312,19 +312,20 @@ class Output(cowrie.core.output.Output):
 
             if j["response_code"] == 0:
                 log.msg(eventid='cowrie.virustotal.scanurl',
-			format='VT: New URL %(url)s',
-			session=entry['session'],
-			url=entry['url'])
+                        format='VT: New URL %(url)s',
+                        session=entry['session'],
+                        url=entry['url'])
                 return d
 
             if self.debug:
                 log.msg("VT postcomment result: {}".format(result))
-            
+
             return j["response_code"]
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
+
 
 class WebClientContextFactory(ClientContextFactory):
 
