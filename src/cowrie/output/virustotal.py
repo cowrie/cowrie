@@ -84,8 +84,8 @@ class Output(cowrie.core.output.Output):
         if entry["eventid"] == 'cowrie.session.file_download':
             # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
             log.msg("Checking scan report at VT")
+            self.scanurl(entry)
             self.scanfile(entry)
-            self.scanurl(entry['url'])
 
         elif entry["eventid"] == 'cowrie.session.file_upload':
             log.msg("Checking scan report at VT")
@@ -134,12 +134,27 @@ class Output(cowrie.core.output.Output):
             """
             Extract the information we need from the body
             """
+            result = result.decode('utf8')
+            j = json.loads(result)
+
+	    #- Add detailed report to json log
+            if j["response_code"] in [1,-2]:
+                scans_summary = {feed.lower() : {"detected" : str(info["detected"]).lower(), "result" : str(info["result"]).lower()} for feed, info in  j["scans"].items()}
+                log.msg(
+                            eventid='cowrie.virustotal.scanfile',
+                            format='VT: Binary file with sha256 %(sha256)s was found malicious by %(positives)s feeds (scanned on %(scan_date)s)',
+                            session=entry['session'],
+                            positives=result.count('true'),
+                            scan_date=j["scan_date"],
+                            sha256=j["sha256"],
+                            scans=scans_summary,
+                    )
+
             if self.debug:
                 log.msg("VT scanfile result: {}".format(result))
-            j = json.loads(result)
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
-                log.msg("VT: response=0: this is a new file")
+                log.msg(eventid='cowrie.virustotal.scanfile', format='VT: New file %(sha256)s', session=entry['session'], sha256=j["sha256"])
                 p = urlparse(entry["url"]).path
                 if p == "":
                     fileName = entry["shasum"]
@@ -222,13 +237,13 @@ class Output(cowrie.core.output.Output):
         d.addErrback(cbError)
         return d
 
-    def scanurl(self, url):
+    def scanurl(self, entry):
         """
         Check url scan report for a hash
         """
         vtUrl = '{0}url/report'.format(VTAPI_URL).encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
-        fields = {'apikey': self.apiKey, 'resource': url, 'scan': 1}
+        fields = {'apikey': self.apiKey, 'resource': entry['url'], 'scan': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
         d = self.agent.request(b'POST', vtUrl, headers, body)
 
@@ -264,67 +279,33 @@ class Output(cowrie.core.output.Output):
             """
             Extract the information we need from the body
             """
+            result = result.decode('utf8')
             j = json.loads(result)
+            log.msg("VT scanurl result: {}".format(result))
+
+            #- Add detailed report to json log
+            if j["response_code"] in [1,-2]:
+                scans_summary = {feed.lower() : {"detected" : str(info["detected"]).lower(), "result" : str(info["result"]).lower()} for feed, info in  j["scans"].items()}
+                log.msg(
+                            eventid='cowrie.virustotal.scanurl',
+                            format='VT: URL %(url)s was found malicious by %(positives)s feeds (scanned on %(scan_date)s)',
+                            session=entry['session'],
+                            positives=j['positives'],
+                            scan_date=j['scan_date'],
+                            url=j['url'],
+                            scans=scans_summary,
+                    )
             if self.debug:
                 log.msg("VT scanurl result: {}".format(result))
             log.msg("VT: {}".format(j["verbose_msg"]))
+
             if j["response_code"] == 0:
-                log.msg("VT: response=0: this is a new file")
+                log.msg(eventid='cowrie.virustotal.scanurl', format='VT: New URL %(url)s', session=entry['session'], url=entry['url'])
                 return d
-            elif j["response_code"] == 1:
-                log.msg("VT: response=1: this has been scanned before")
-                log.msg("VT: {}/{} bad".format(j["positives"], j["total"]))
-                log.msg("VT: permalink: {}".format(j["permalink"]))
-            elif j["response_code"] == -2:
-                log.msg("VT: response=1: this has been queued for analysis already")
-                log.msg("VT: permalink: {}".format(j["permalink"]))
-            else:
-                log.msg("VT: unexpected response code".format(j["response_code"]))
 
-        d.addCallback(cbResponse)
-        d.addErrback(cbError)
-        return d
-
-    def postcomment(self, resource):
-        """
-        Send a comment to VirusTotal with Twisted
-        """
-        vtUrl = '{0}comments/put'.format(VTAPI_URL).encode('utf8')
-        parameters = {
-            "resource": resource,
-            "comment": self.commenttext,
-            "apikey": self.apiKey
-        }
-        headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
-        body = StringProducer(urlencode(parameters).encode("utf-8"))
-        d = self.agent.request(b'POST', vtUrl, headers, body)
-
-        def cbBody(body):
-            return processResult(body)
-
-        def cbPartial(failure):
-            """
-            Google HTTP Server does not set Content-Length. Twisted marks it as partial
-            """
-            return processResult(failure.value.response)
-
-        def cbResponse(response):
-            if response.code == 200:
-                d = client.readBody(response)
-                d.addCallback(cbBody)
-                d.addErrback(cbPartial)
-                return d
-            else:
-                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
-                return
-
-        def cbError(failure):
-            failure.printTraceback()
-
-        def processResult(result):
             if self.debug:
                 log.msg("VT postcomment result: {}".format(result))
-            j = json.loads(result)
+            
             return j["response_code"]
 
         d.addCallback(cbResponse)
