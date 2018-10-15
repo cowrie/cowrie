@@ -168,7 +168,7 @@ class Output(cowrie.core.output.Output):
                     scans_summary[feed]["result"] = str(info["result"]).lower()
                 log.msg(
                             eventid='cowrie.virustotal.scanfile',
-                            format='VT: Binary file with sha256 %(sha256)s was found malicious ' \
+                            format='VT: Binary file with sha256 %(sha256)s was found malicious '
                                    'by %(positives)s out of %(total)s feeds (scanned on %(scan_date)s)',
                             session=entry['session'],
                             positives=j["positives"],
@@ -310,7 +310,7 @@ class Output(cowrie.core.output.Output):
                     scans_summary[feed]["result"] = str(info["result"]).lower()
                 log.msg(
                             eventid='cowrie.virustotal.scanurl',
-                            format='VT: URL %(url)s was found malicious by ' \
+                            format='VT: URL %(url)s was found malicious by '
                                    '%(positives)s out of %(total)s feeds (scanned on %(scan_date)s)',
                             session=entry['session'],
                             positives=j['positives'],
@@ -327,11 +327,9 @@ class Output(cowrie.core.output.Output):
             else:
                 log.msg("VT: unexpected response code".format(j["response_code"]))
 
-
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
-
 
     def postcomment(self, resource):
         """
