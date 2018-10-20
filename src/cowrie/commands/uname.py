@@ -136,5 +136,6 @@ class command_uname(HoneyPotCommand):
                 self.write('{} '.format(operating_system()))
             self.write('\n')
             
+
 commands['/bin/uname'] = command_uname
 commands['uname'] = command_uname
