@@ -87,13 +87,13 @@ class command_uname(HoneyPotCommand):
         """
         TODO: getopt style parsing
         """
-        opts={
-            'name':False,
-            'release':False,
-            'version':False,
-            'os':False,
-            'node':False,
-            'machine':False
+        opts = {
+            'name': False,
+            'release': False,
+            'version': False,
+            'os': False,
+            'node': False,
+            'machine': False
             }
         if not self.args:
             # IF no params output default
@@ -101,7 +101,7 @@ class command_uname(HoneyPotCommand):
         else:
             # I have parameter to parse
             for a in self.args:
-                a=a.strip()
+                a = a.strip()
                 if a in ('-h', '--help'):
                     self.write(uname_help())
                     return
@@ -109,33 +109,34 @@ class command_uname(HoneyPotCommand):
                     self.write(self.full_uname())
                     return
                 elif a in ('-s', '--kernel-name'):
-                    opts['name']=True
+                    opts['name'] = True
                 elif a in ('-r', '--kernel-release'):
-                    opts['release']=True
+                    opts['release'] = True
                 elif a in ('-v', '--kernel-version'):
-                    opts['version']=True 
+                    opts['version'] = True
                 elif a in ('-o', '--operating-system'):
-                    opts['os']=True
+                    opts['os'] = True
                 elif a in ('-n', '--nodename'):
-                    opts['node']=True
+                    opts['node'] = True
                 elif a in ('-m', '--machine', '-p', '--processor', '-i', '--hardware-platform'):
-                    opts['machine']=True
-            
-            #I have all the option set
-            if opts['name']:    
+                    opts['machine'] = True
+            '''
+            I have all the option set
+            '''
+            if opts['name']:
                 self.write('{} '.format(kernel_name()))
-            if opts['node']:    
+            if opts['node']:
                 self.write('{} '.format(self.protocol.hostname))
-            if opts['release']:    
-                self.write('{} '.format(kernel_version())) 
-            if opts['version']:    
-                self.write('{} '.format(kernel_build_string())) 
-            if opts['machine']:    
+            if opts['release']:
+                self.write('{} '.format(kernel_version()))
+            if opts['version']:
+                self.write('{} '.format(kernel_build_string()))
+            if opts['machine']:
                 self.write('{} '.format(hardware_platform()))
             if opts['os']:
                 self.write('{} '.format(operating_system()))
             self.write('\n')
-            
+
 
 commands['/bin/uname'] = command_uname
 commands['uname'] = command_uname
