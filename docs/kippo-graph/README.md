@@ -37,6 +37,16 @@ source ./docs/sql/mysql.sql;
 exit
 ```
 
+disable MySQL strict mode:
+```
+vi /etc/mysql/conf.d/disable_strict_mode.cnf
+```
+
+```
+[mysqld]
+sql_mode=IGNORE_SPACE,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+```
+
 ## cowrie configuration
 
 ```
