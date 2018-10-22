@@ -66,13 +66,13 @@ class HoneyPotCommand(object):
                     self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)
                 except fs.FileNotFound:
                     # The outfile locates at a non-existing directory.
-                    self.protocol.pp.outReceived('-bash: %s: No such file or directory\n' % self.outfile)
+                    self.errorWrite('-bash: %s: No such file or directory\n' % self.outfile)
                     self.writefn = self.write_to_failed
                     self.outfile = None
                     self.safeoutfile = None
                 except fs.PermissionDenied:
                     # The outfile locates in a file-system that doesn't allow file creation
-                    self.protocol.pp.outReceived('-bash: %s: Permission denied\n' % self.outfile)
+                    self.errorWrite('-bash: %s: Permission denied\n' % self.outfile)
                     self.writefn = self.write_to_failed
                     self.outfile = None
                     self.safeoutfile = None
