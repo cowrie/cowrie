@@ -58,17 +58,19 @@ class Artifact:
 
     def close(self, keepEmpty=False):
         size = self.fp.tell()
+        if size == 0 and not keepEmpty:
+            os.remove(self.fp.name)
+            return
+
         self.fp.seek(0)
         data = self.fp.read()
         self.fp.close()
         self.closed = True
+
         self.shasum = hashlib.sha256(data).hexdigest()
         self.shasumFilename = os.path.join(self.artifactDir, self.shasum)
 
-        if size == 0 and not keepEmpty:
-            log.msg("Not storing empty file")
-            os.remove(self.fp.name)
-        elif os.path.exists(self.shasumFilename):
+        if os.path.exists(self.shasumFilename):
             log.msg("Not storing duplicate content " + self.shasum)
             os.remove(self.fp.name)
         else:
