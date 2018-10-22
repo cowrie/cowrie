@@ -507,6 +507,12 @@ class command_touch(HoneyPotCommand):
             if self.fs.exists(pname):
                 # FIXME: modify the timestamp here
                 continue
+            # can't touch in special directories
+            if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
+                self.errorWrite(
+                    'touch: cannot touch `{}`: Permission denied\n'.format(pname))
+                return
+
             self.fs.mkfile(pname, 0, 0, 0, 33188)
 
 

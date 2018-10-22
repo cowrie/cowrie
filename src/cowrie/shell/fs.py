@@ -58,10 +58,10 @@ class FileNotFound(Exception):
 
 class PermissionDenied(Exception):
     """
-    Our implementation is naive for now and works only on file redirects
+    Our implementation is rather naive for now
 
-    * TODO: PermissionDenied errors when using touch
-    * TODO: Top-level /proc should return no such file not permission denied
+    * TODO: Top-level /proc should return 'no such file' not 'permission
+            denied'. However this seems to vary based on kernel version.
 
     $ sudo touch /sys/.nippon
     touch: cannot touch '/sys/.nippon': Permission denied
