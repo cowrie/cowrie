@@ -9,10 +9,10 @@ import re
 import socket
 import time
 
-from cowrie.core.config import CONFIG
 from twisted.internet import reactor
 from twisted.python import log
 
+from cowrie.core.config import CONFIG
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
