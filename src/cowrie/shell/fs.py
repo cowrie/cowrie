@@ -34,6 +34,7 @@ T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 SPECIAL_PATHS = ['/sys', '/proc', '/dev/pts']
 
+
 class TooManyLevels(Exception):
     """
     62 ELOOP Too many levels of symbolic links.  A path name lookup involved more than 8 symbolic links.
@@ -279,7 +280,7 @@ class HoneyPotFilesystem(object):
         if outfile in [x[A_NAME] for x in _dir]:
             _dir.remove([x for x in _dir if x[A_NAME] == outfile][0])
         _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [],
-            None, None])
+                     None, None])
         self.newcount += 1
         return True
 
