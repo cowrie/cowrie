@@ -103,7 +103,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b'\n')[0].strip()
             log.msg(eventid='cowrie.client.version', version=repr(self.otherVersionString),
                     format="Remote SSH version: %(version)s")
-            m = re.match(rb'SSH-(\d+).(\d+)-(.*)', self.otherVersionString)
+            m = re.match(br'SSH-(\d+).(\d+)-(.*)', self.otherVersionString)
             if m is None:
                 log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
                 self.transport.write(b'Protocol mismatch.\n')
