@@ -72,17 +72,17 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         host = args[0]
         port = args[1]
 
+        if not re.match(r'\d+', port):
+            self.errorWrite('nc: port number invalid: {}\n'.format(port))
+            self.exit()
+            return
+
         address = dottedQuadToNum(host)
 
         for net in local_networks:
             if addressInNetwork(address, net):
                 self.exit()
                 return
-
-        if not re.match('[\d]+', port):
-            self.errorWrite('nc: port number invalid: {}\n'.format(port))
-            self.exit()
-            return
 
         out_addr = None
         try:

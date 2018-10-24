@@ -151,9 +151,9 @@ class command_scp(HoneyPotCommand):
 
             pos += 1
 
-            if re.match('^C0[\d]{3} [\d]+ [^\s]+$', header):
+            if re.match(r'^C0[\d]{3} [\d]+ [^\s]+$', header):
 
-                r = re.search('C(0[\d]{3}) ([\d]+) ([^\s]+)', header)
+                r = re.search(r'C(0[\d]{3}) ([\d]+) ([^\s]+)', header)
 
                 if r and r.group(1) and r.group(2) and r.group(3):
 
@@ -195,7 +195,7 @@ class command_scp(HoneyPotCommand):
             with open(self.protocol.terminal.stdinlogFile, 'rb') as f:
                 data = f.read()
                 header = data[:data.find(b'\n')]
-                if re.match('C0[\d]{3} [\d]+ [^\s]+', header.decode()):
+                if re.match(r'C0[\d]{3} [\d]+ [^\s]+', header.decode()):
                     data = data[data.find(b'\n') + 1:]
                 else:
                     data = ''
