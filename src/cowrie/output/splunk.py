@@ -55,7 +55,7 @@ class Output(cowrie.core.output.Output):
 
     def start(self):
         contextFactory = WebClientContextFactory()
-        contextFactory.method = TLSv1_METHOD
+        # contextFactory.method = TLSv1_METHOD
         self.agent = client.Agent(reactor, contextFactory)
 
     def stop(self):
