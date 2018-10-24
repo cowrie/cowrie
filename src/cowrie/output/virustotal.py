@@ -163,9 +163,10 @@ class Output(cowrie.core.output.Output):
                 # Add detailed report to json log
                 scans_summary = {}
                 for feed, info in j["scans"].items():
-                    scans_summary[feed] = {}
-                    scans_summary[feed]["detected"] = str(info["detected"]).lower()
-                    scans_summary[feed]["result"] = str(info["result"]).lower()
+                    feed_key = feed.lower()
+                    scans_summary[feed_key] = {}
+                    scans_summary[feed_key]["detected"] = str(info["detected"]).lower()
+                    scans_summary[feed_key]["result"] = str(info["result"]).lower()
                 log.msg(
                             eventid='cowrie.virustotal.scanfile',
                             format='VT: Binary file with sha256 %(sha256)s was found malicious '
@@ -305,9 +306,10 @@ class Output(cowrie.core.output.Output):
                 # Add detailed report to json log
                 scans_summary = {}
                 for feed, info in j["scans"].items():
-                    scans_summary[feed] = {}
-                    scans_summary[feed]["detected"] = str(info["detected"]).lower()
-                    scans_summary[feed]["result"] = str(info["result"]).lower()
+                    feed_key = feed.lower()
+                    scans_summary[feed_key] = {}
+                    scans_summary[feed_key]["detected"] = str(info["detected"]).lower()
+                    scans_summary[feed_key]["result"] = str(info["result"]).lower()
                 log.msg(
                             eventid='cowrie.virustotal.scanurl',
                             format='VT: URL %(url)s was found malicious by '
