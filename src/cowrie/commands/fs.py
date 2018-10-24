@@ -261,7 +261,10 @@ class command_rm(HoneyPotCommand):
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
+                # verify path to file exists
                 dir = self.fs.get_path('/'.join(pname.split('/')[:-1]))
+                # verify that the file itself exists
+                self.fs.get_path(pname)
             except (IndexError, fs.FileNotFound):
                 self.errorWrite(
                     'rm: cannot remove `{}\': No such file or directory\n'.format(f))
@@ -504,6 +507,12 @@ class command_touch(HoneyPotCommand):
             if self.fs.exists(pname):
                 # FIXME: modify the timestamp here
                 continue
+            # can't touch in special directories
+            if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
+                self.errorWrite(
+                    'touch: cannot touch `{}`: Permission denied\n'.format(pname))
+                return
+
             self.fs.mkfile(pname, 0, 0, 0, 33188)
 
 

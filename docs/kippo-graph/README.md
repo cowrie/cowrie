@@ -57,8 +57,8 @@ debug = false
 
 * set read access to tty-files for group www-data (group maybe differ on other distributions)
 ```
-sudo apt-get install act
-sudo setfacl -Rm g:www-data:rx /opt/cowrie/log/tty/
+sudo apt-get install acl
+sudo setfacl -Rm g:www-data:rx /opt/cowrie/var/lib/cowrie/tty/
 ```
 
 ## kippo-graph Configuration
