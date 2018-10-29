@@ -137,7 +137,7 @@ class command_echo(HoneyPotCommand):
 
         try:
             # replace r'\\x' with r'\x'
-            string = ' '.join(args).replace('\\\\x', '\\x')
+            string = ' '.join(args).replace(r'\\x', r'\x')
 
             # replace single character escape \x0 with \x00
             string = re.sub(r'(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)', r'x0\g<1>', string)
@@ -152,8 +152,9 @@ class command_echo(HoneyPotCommand):
 
             if escape_decode:
                 string = codecs.escape_decode(string)[0]
-
-            self.writeBytes(string)
+                self.writeBytes(string)
+            else:
+                self.write(string)
 
         except ValueError:
             log.msg("echo command received Python incorrect hex escape")
