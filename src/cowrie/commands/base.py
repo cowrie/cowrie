@@ -140,7 +140,7 @@ class command_echo(HoneyPotCommand):
             string = ' '.join(args).replace('\\\\x', '\\x')
 
             # replace single character escape \x0 with \x00
-            string = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', string)
+            string = re.sub(r'(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)', r'x0\g<1>', string)
 
             # if the string ends with \c escape, strip it and set newline flag to False
             if string.endswith('\\c'):
@@ -153,7 +153,7 @@ class command_echo(HoneyPotCommand):
             if escape_decode:
                 string = codecs.escape_decode(string)[0]
 
-            self.write(string)
+            self.writeBytes(string)
 
         except ValueError:
             log.msg("echo command received Python incorrect hex escape")
@@ -174,7 +174,7 @@ class command_printf(HoneyPotCommand):
                 s = ''.join(self.args[0]).replace('\\\\x', '\\x')
 
                 # replace single character escape \x0 with \x00
-                s = re.sub('(?<=\\\\)x([0-9a-fA-F])(?=\\\\|\"|\'|\s|$)', 'x0\g<1>', s)
+                s = re.sub(r'(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)', r'x0\g<1>', s)
 
                 # strip single and double quotes
                 s = s.strip('\"\'')
