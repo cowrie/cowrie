@@ -139,7 +139,7 @@ class AuthRandom(object):
         Load user vars from json file
         """
         if path.isfile(self.uservar_file):
-            with open(self.uservar_file, 'rb') as fp:
+            with open(self.uservar_file, 'r') as fp:
                 try:
                     self.uservar = json.load(fp)
                 except Exception:
@@ -151,7 +151,7 @@ class AuthRandom(object):
         """
         data = self.uservar
         # Note: this is subject to races between cowrie logins
-        with open(self.uservar_file, 'wb') as fp:
+        with open(self.uservar_file, 'w') as fp:
             json.dump(data, fp)
 
     def checklogin(self, thelogin, thepasswd, src_ip):
@@ -166,7 +166,7 @@ class AuthRandom(object):
         """
 
         auth = False
-        userpass = thelogin + ':' + thepasswd
+        userpass = str(thelogin) + ':' + str(thepasswd)
 
         if 'cache' not in self.uservar:
             self.uservar['cache'] = []
@@ -180,14 +180,24 @@ class AuthRandom(object):
             if userpass in cache:
                 log.msg("first time for {}, found cached: {}".format(src_ip, userpass))
                 ipinfo['max'] = 1
-                ipinfo['user'] = thelogin
-                ipinfo['pw'] = thepasswd
+                ipinfo['user'] = str(thelogin)
+                ipinfo['pw'] = str(thepasswd)
                 auth = True
                 self.savevars()
                 return auth
             else:
                 ipinfo['max'] = randint(self.mintry, self.maxtry)
                 log.msg("first time for {}, need: {}".format(src_ip, ipinfo['max']))
+        else:
+            if userpass in cache:
+                ipinfo = self.uservar[src_ip]
+                log.msg("Found cached: {}".format(userpass))
+                ipinfo['max'] = 1
+                ipinfo['user'] = str(thelogin)
+                ipinfo['pw'] = str(thepasswd)
+                auth = True
+                self.savevars()
+                return auth
 
         ipinfo = self.uservar[src_ip]
 
@@ -214,8 +224,8 @@ class AuthRandom(object):
         if attempts < need:
             self.uservar[src_ip]['tried'].append(userpass)
         elif attempts == need:
-            ipinfo['user'] = thelogin
-            ipinfo['pw'] = thepasswd
+            ipinfo['user'] = str(thelogin)
+            ipinfo['pw'] = str(thepasswd)
             cache.append(userpass)
             if len(cache) > self.maxcache:
                 cache.pop(0)
@@ -228,7 +238,7 @@ class AuthRandom(object):
                 ipinfo['try'] = 1
             else:
                 log.msg("login return, expect: [{}/{}]".format(ipinfo['user'], ipinfo['pw']))
-                if thelogin == ipinfo['user'] and thepasswd == ipinfo['pw']:
+                if thelogin == ipinfo['user'] and str(thepasswd) == ipinfo['pw']:
                     auth = True
         self.savevars()
         return auth
