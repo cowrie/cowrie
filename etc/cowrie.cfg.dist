@@ -619,7 +619,8 @@ epoch_timestamp = false
 
 
 # Splunk HTTP Event Collector (HEC) output module
-# Sends JSON directly to Splunk over HTTPS
+# Sends JSON directly to Splunk over HTTP or HTTPS
+# Use 'https' if your HEC is encrypted, else 'http'
 # mandatory fields: url, token
 # optional fields: index, source, sourcetype, host
 #
