@@ -104,11 +104,10 @@ class Output(cowrie.core.output.Output):
         is_new = True
         shasumfile = os.path.join(CONFIG.get('honeypot', 'download_path'), shasum)
         if os.path.exists(shasumfile):
-            log.msg("File with shasum '%s' was downloaded before" % (entry["shasum"]))
+            log.msg("File with shasum '%s' was downloaded before" % (shasum))
             is_new = False
 
         return is_new
-
 
     def scanfile(self, entry):
         """
