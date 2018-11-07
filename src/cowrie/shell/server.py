@@ -31,6 +31,12 @@ from __future__ import absolute_import, division
 import copy
 import json
 import random
+
+try:
+    import cPickle as pickle
+except Exception:
+    import pickle
+
 from configparser import NoOptionError
 
 import twisted.python.log as log
@@ -75,7 +81,7 @@ class CowrieServer(object):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
+        self.fs = fs.HoneyPotFilesystem(pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb')), self.arch)
 
         try:
             self.process = self.getCommandOutput(CONFIG.get('shell', 'processes'))['command']['ps']
