@@ -3,11 +3,6 @@
 
 from __future__ import absolute_import, division
 
-try:
-    import cPickle as pickle
-except Exception:
-    import pickle
-
 import errno
 import fnmatch
 import hashlib
@@ -19,14 +14,6 @@ import time
 from twisted.python import log
 
 from cowrie.core.config import CONFIG
-
-# At the moment this is the first place a config file is used
-# Put extra help here in case it goes wrong
-try:
-    PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
-except Exception:
-    print("ERROR: Config file not found: etc/cowrie.cfg.dist")
-    exit(2)
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = list(range(0, 10))
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
