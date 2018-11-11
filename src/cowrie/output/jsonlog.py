@@ -41,12 +41,7 @@ class Output(cowrie.core.output.Output):
     def __init__(self):
         cowrie.core.output.Output.__init__(self)
         fn = CONFIG.get('output_jsonlog', 'logfile')
-
-        try:
-            self.epoch_timestamp = CONFIG.getboolean('output_jsonlog', 'epoch_timestamp')
-        except Exception:
-            self.epoch_timestamp = False
-
+        self.epoch_timestamp = CONFIG.getboolean('output_jsonlog', 'epoch_timestamp', fallback=False)
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)

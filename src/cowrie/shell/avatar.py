@@ -39,19 +39,12 @@ class CowrieUser(avatar.ConchUser):
             self.home = '/home'
 
         # SFTP support enabled only when option is explicitly set
-        try:
-            if CONFIG.getboolean('ssh', 'sftp_enabled'):
-                self.subsystemLookup[b'sftp'] = conchfiletransfer.FileTransferServer
-        except ValueError:
-            pass
+        if CONFIG.getboolean('ssh', 'sftp_enabled', fallback=False):
+            self.subsystemLookup[b'sftp'] = conchfiletransfer.FileTransferServer
 
         # SSH forwarding disabled only when option is explicitly set
-        self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
-        try:
-            if not CONFIG.getboolean('ssh', 'forwarding'):
-                del self.channelLookup[b'direct-tcpip']
-        except Exception:
-            pass
+        if CONFIG.getboolean('ssh', 'forwarding', fallback=True):
+            self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
 
     def logout(self):
         log.msg("avatar {} logging out".format(self.username))

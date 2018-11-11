@@ -37,10 +37,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.redirFiles = set()
 
-        try:
-            self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
-        except Exception:
-            self.bytesReceivedLimit = 0
+        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
         if prot is protocol.HoneyPotExecProtocol:
             self.type = 'e'  # Execcmd

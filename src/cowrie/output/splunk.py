@@ -34,22 +34,10 @@ class Output(cowrie.core.output.Output):
         """
         self.token = CONFIG.get('output_splunk', 'token')
         self.url = CONFIG.get('output_splunk', 'url').encode('utf8')
-        try:
-            self.index = CONFIG.get('output_splunk', 'index')
-        except Exception:
-            self.index = None
-        try:
-            self.source = CONFIG.get('output_splunk', 'source')
-        except Exception:
-            self.source = None
-        try:
-            self.sourcetype = CONFIG.get('output_splunk', 'sourcetype')
-        except Exception:
-            self.sourcetype = None
-        try:
-            self.host = CONFIG.get('output_splunk', 'host')
-        except Exception:
-            self.host = None
+        self.index = CONFIG.get('output_splunk', 'index', fallback=None)
+        self.source = CONFIG.get('output_splunk', 'source', fallback=None)
+        self.sourcetype = CONFIG.get('output_splunk', 'sourcetype', fallback=None)
+        self.host = CONFIG.get('output_splunk', 'host', fallback=None)
 
         cowrie.core.output.Output.__init__(self)
 

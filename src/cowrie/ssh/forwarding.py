@@ -28,14 +28,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             src_ip=origHP[0], src_port=origHP[1])
 
     # Forward redirect
-    try:
-        if CONFIG.getboolean('ssh', 'forward_redirect') is True:
-            redirectEnabled = True
-        else:
-            redirectEnabled = False
-    except NoOptionError:
-        redirectEnabled = False
-
+    redirectEnabled = CONFIG.getboolean('ssh', 'forward_redirect', fallback=False)
     if redirectEnabled:
         redirects = {}
         items = CONFIG.items('ssh')
@@ -55,14 +48,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             return SSHConnectForwardingChannel(remoteHPNew, remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
     # TCP tunnel
-    try:
-        if CONFIG.getboolean('ssh', 'forward_tunnel') is True:
-            tunnelEnabled = True
-        else:
-            tunnelEnabled = False
-    except NoOptionError:
-        tunnelEnabled = False
-
+    tunnelEnabled = CONFIG.getboolean('ssh', 'forward_tunnel', fallback=False)
     if tunnelEnabled:
         tunnels = {}
         items = CONFIG.items('ssh')

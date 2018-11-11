@@ -108,16 +108,9 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
         # ssh is enabled by default
-        try:
-            enableSSH = CONFIG.getboolean('ssh', 'enabled')
-        except (configparser.NoSectionError, configparser.NoOptionError):
-            enableSSH = True
-
+        enableSSH = CONFIG.getboolean('ssh', 'enabled', fallback=True)
         # telnet is disabled by default
-        try:
-            enableTelnet = CONFIG.getboolean('telnet', 'enabled')
-        except (configparser.NoSectionError, configparser.NoOptionError):
-            enableTelnet = False
+        enableTelnet = CONFIG.getboolean('telnet', 'enabled', fallback=False)
 
         if enableTelnet is False and enableSSH is False:
             print('ERROR: You must at least enable SSH or Telnet')

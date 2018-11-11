@@ -45,15 +45,8 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         self.ttylogPath = CONFIG.get('honeypot', 'log_path')
         self.downloadPath = CONFIG.get('honeypot', 'download_path')
-        try:
-            self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
-        except NoOptionError:
-            self.ttylogEnabled = True
-
-        try:
-            self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size')
-        except NoOptionError:
-            self.bytesReceivedLimit = 0
+        self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
+        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
         channel.SSHChannel.__init__(self, *args, **kw)
 
