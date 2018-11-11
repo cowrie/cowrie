@@ -10,7 +10,6 @@ from __future__ import absolute_import, division
 import struct
 import time
 import uuid
-from configparser import NoOptionError
 
 from twisted.conch.telnet import AlreadyNegotiating, AuthenticatingTelnetProtocol, ITelnetProtocol, TelnetTransport
 from twisted.conch.telnet import ECHO, LINEMODE, NAWS, SGA
@@ -143,10 +142,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write(b'\n')
 
         # Remove the short timeout of the login prompt.
-        try:
-            self.transport.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout'))
-        except NoOptionError:
-            self.transport.setTimeout(300)
+        self.transport.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout', fallback=300))
 
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
@@ -197,10 +193,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         sessionno = self.transport.sessionno
 
         self.startTime = time.time()
-        try:
-            self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout'))
-        except NoOptionError:
-            self.setTimeout(120)
+        self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout', fallback=120))
 
         log.msg(eventid='cowrie.session.connect',
                 format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',

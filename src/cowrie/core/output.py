@@ -92,10 +92,7 @@ class Output(object):
             '.*SSHTransport,([0-9]+),[0-9a-f:.]+$')
         self.telnetRegex = re.compile(
             '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
-        try:
-            self.sensor = CONFIG.get('honeypot', 'sensor_name')
-        except Exception:
-            self.sensor = socket.gethostname()
+        self.sensor = CONFIG.get('honeypot', 'sensor_name', fallback=socket.gethostname())
 
         self.start()
 

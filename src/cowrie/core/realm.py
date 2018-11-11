@@ -50,10 +50,7 @@ class HoneyPotRealm(object):
         pass
 
     def requestAvatar(self, avatarId, mind, *interfaces):
-        try:
-            backend = CONFIG.get('honeypot', 'backend')
-        except Exception:
-            backend = 'shell'
+        backend = CONFIG.get('honeypot', 'backend', fallback='shell')
 
         if backend == 'shell':
             if conchinterfaces.IConchUser in interfaces:

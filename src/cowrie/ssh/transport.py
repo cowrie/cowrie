@@ -14,7 +14,6 @@ import struct
 import time
 import uuid
 import zlib
-from configparser import NoOptionError
 from hashlib import md5
 
 from twisted.conch.ssh import transport
@@ -68,10 +67,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
 
         self.startTime = time.time()
-        try:
-            self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout'))
-        except NoOptionError:
-            self.setTimeout(120)
+        self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout', fallback=120))
 
     def sendKexInit(self):
         """
@@ -200,10 +196,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         # Reset timeout. Not everyone opens shell so need timeout at transport level
         if service.name == b'ssh-connection':
-            try:
-                self.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout'))
-            except NoOptionError:
-                self.setTimeout(300)
+            self.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout', fallback=300))
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
