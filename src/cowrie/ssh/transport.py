@@ -14,7 +14,6 @@ import struct
 import time
 import uuid
 import zlib
-from configparser import NoOptionError
 from hashlib import md5
 
 from twisted.conch.ssh import transport

@@ -10,7 +10,6 @@ from __future__ import absolute_import, division
 import struct
 import time
 import uuid
-from configparser import NoOptionError
 
 from twisted.conch.telnet import AlreadyNegotiating, AuthenticatingTelnetProtocol, ITelnetProtocol, TelnetTransport
 from twisted.conch.telnet import ECHO, LINEMODE, NAWS, SGA

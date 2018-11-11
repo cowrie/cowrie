@@ -9,7 +9,6 @@ and session size limiting
 from __future__ import absolute_import, division
 
 import time
-from configparser import NoOptionError
 
 from twisted.conch.ssh import channel
 from twisted.python import log

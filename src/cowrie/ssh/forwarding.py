@@ -7,8 +7,6 @@ This module contains code for handling SSH direct-tcpip connection requests
 
 from __future__ import absolute_import, division
 
-from configparser import NoOptionError
-
 from twisted.conch.ssh import forwarding
 from twisted.python import log
 
