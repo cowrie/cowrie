@@ -34,8 +34,8 @@ Work in Progress - not functional yet
 from __future__ import absolute_import, division
 
 import json
-import os
 import datetime
+import os
 
 try:
     from urllib.parse import urlparse, urlencode
@@ -58,6 +58,7 @@ COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = 'https://www.virustotal.com/vtapi/v2/'
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/cowrie/cowrie"
 TIME_SINCE_FIRST_DOWNLOAD = datetime.timedelta(minutes=1)
+
 
 class Output(cowrie.core.output.Output):
 
