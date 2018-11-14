@@ -30,13 +30,12 @@ from __future__ import absolute_import, division
 
 import json
 import random
+from configparser import NoOptionError
 
 try:
     import cPickle as pickle
 except Exception:
     import pickle
-
-from configparser import NoOptionError
 
 import twisted.python.log as log
 
