@@ -30,6 +30,12 @@ from __future__ import absolute_import, division
 
 import json
 import random
+
+try:
+    import cPickle as pickle
+except Exception:
+    import pickle
+
 from configparser import NoOptionError
 
 try:
