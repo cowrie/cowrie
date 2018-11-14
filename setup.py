@@ -62,7 +62,6 @@ setup(
         'rethinkdblog': ['rethinkdb'],
         's3': ['botocore'],
         'slack': ['slackclient'],
-        'splunklegacy': ['splunk-sdk'],
         'influxdb': ['influxdb']
     }
 )

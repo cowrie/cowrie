@@ -31,9 +31,6 @@ botocore
 # slack
 slackclient
 
-# splunklegacy
-splunk-sdk
-
 # influxdb
 influxdb
 

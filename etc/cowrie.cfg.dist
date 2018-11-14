@@ -606,20 +606,8 @@ epoch_timestamp = false
 #database = dbname
 
 
-# Splunk SDK output module - Legacy. Requires Splunk API installed
-# This sends logs directly to Splunk using the Python REST SDK
-#
-#[output_splunklegacy]
-#enabled = false
-#host = localhost
-#port = 8889
-#username = admin
-#password = password
-#index = cowrie
-
-
 # Splunk HTTP Event Collector (HEC) output module
-# Sends JSON directly to Splunk over HTTP or HTTPS
+# sends JSON directly to Splunk over HTTP or HTTPS
 # Use 'https' if your HEC is encrypted, else 'http'
 # mandatory fields: url, token
 # optional fields: index, source, sourcetype, host
