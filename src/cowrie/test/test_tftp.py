@@ -23,10 +23,11 @@ os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
-class ShellEchoCommandTests(unittest.TestCase):
+class ShellTftpCommandTests(unittest.TestCase):
 
     def setUp(self):
-        self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
+        self.proto = protocol.HoneyPotInteractiveProtocol(
+          fake_server.FakeAvatar(fake_server.FakeServer()))
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
@@ -36,7 +37,10 @@ class ShellEchoCommandTests(unittest.TestCase):
         Basic test
         """
         self.proto.lineReceived(b'tftp\n')
-        self.assertEquals(self.tr.value(), b'usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n' + PROMPT)
+        self.assertEquals(
+          self.tr.value(),
+          b'usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n'
+          + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
