@@ -640,6 +640,8 @@ epoch_timestamp = false
 #api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 #upload = True
 #debug = False
+#scan_file = True
+#scan_url = False
 
 
 # Cuckoo output module

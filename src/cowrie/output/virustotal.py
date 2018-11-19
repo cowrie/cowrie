@@ -33,6 +33,7 @@ Work in Progress - not functional yet
 
 from __future__ import absolute_import, division
 
+import datetime
 import json
 import os
 
@@ -56,6 +57,7 @@ from cowrie.core.config import CONFIG
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = 'https://www.virustotal.com/vtapi/v2/'
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/cowrie/cowrie"
+TIME_SINCE_FIRST_DOWNLOAD = datetime.timedelta(minutes=1)
 
 
 class Output(cowrie.core.output.Output):
@@ -65,6 +67,8 @@ class Output(cowrie.core.output.Output):
         self.debug = CONFIG.getboolean('output_virustotal', 'debug', fallback=False)
         self.upload = CONFIG.getboolean('output_virustotal', 'upload', fallback=True)
         self.comment = CONFIG.getboolean('output_virustotal', 'comment', fallback=True)
+        self.scan_file = CONFIG.getboolean('output_virustotal', 'scan_file', fallback=True)
+        self.scan_url = CONFIG.getboolean('output_virustotal', 'scan_url', fallback=False)
         self.commenttext = CONFIG.get('output_virustotal', 'commenttext', fallback=COMMENT)
         cowrie.core.output.Output.__init__(self)
 
@@ -83,13 +87,34 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if entry["eventid"] == 'cowrie.session.file_download':
             # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
-            log.msg("Checking scan report at VT")
-            self.scanurl(entry)
-            self.scanfile(entry)
+            if self.scan_url:
+                log.msg("Checking url scan report at VT")
+                self.scanurl(entry)
+            if self._is_new_shasum(entry["shasum"]) and self.scan_file:
+                log.msg("Checking file scan report at VT")
+                self.scanfile(entry)
 
         elif entry["eventid"] == 'cowrie.session.file_upload':
-            log.msg("Checking scan report at VT")
-            self.scanfile(entry)
+            if self._is_new_shasum(entry["shasum"]) and self.scan_file:
+                log.msg("Checking file scan report at VT")
+                self.scanfile(entry)
+
+    def _is_new_shasum(self, shasum):
+        # Get the downloaded file's modification time
+        shasumfile = os.path.join(CONFIG.get('honeypot', 'download_path'), shasum)
+        file_modification_time = datetime.datetime.fromtimestamp(os.stat(shasumfile).st_mtime)
+
+        # Assumptions:
+        # 1. A downloaded file that was already downloaded before is not written instead of the first downloaded file
+        # 2. On that stage of the code, the file that needs to be scanned in VT is supposed to be downloaded already
+        #
+        # Check:
+        # If the file was first downloaded more than a "period of time" (e.g 1 min) ago -
+        # it has been apparently scanned before in VT and therefore is not going to be checked again
+        if file_modification_time < datetime.datetime.now()-TIME_SINCE_FIRST_DOWNLOAD:
+            log.msg("File with shasum '%s' was downloaded before" % (shasum, ))
+            return False
+        return True
 
     def scanfile(self, entry):
         """
