@@ -1,5 +1,14 @@
 
-Release 1.5.1 release
+Release 1.5.2 
+
+* 2018-11-19 Fix tftp exception and tftp test
+* 2018-11-14 Remove `dblog` mechanism and `splunk` legacy output plugin.
+* 2018-11-01 Add Python3 support for Splunk output plugin
+* 2018-10-23 Improved free command
+* 2018-10-20 Improved uname command
+* 2018-10-16 Save VT results to JSON log
+
+Release 1.5.1
 
 * 2018-10-13 Fixes VT uploads, tab completion on Python3, Hassh support, setuptools functional. userdb migration
 * 2018-09-07 NOTE! data/userdb.txt has moved to etc/userdb.txt and a default config is no longer provided!
