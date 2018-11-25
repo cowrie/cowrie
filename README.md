@@ -57,7 +57,7 @@ For Python dependencies, see requirements.txt
 
 * `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist`
 * `share/cowrie/fs.pickle` - fake filesystem
-* `data/userdb.txt` - credentials allowed or disallowed to access the honeypot
+* `etc/userdb.txt` - credentials allowed or disallowed to access the honeypot
 * `honeyfs/` - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
 * `honeyfs/etc/issue.net` - pre-login banner
 * `honeyfs/etc/motd` - post-login banner
