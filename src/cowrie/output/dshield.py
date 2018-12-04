@@ -74,9 +74,9 @@ class Output(cowrie.core.output.Output):
         # fixed nonce to mix up the limited userid.
         _nonceb64 = 'ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM='
 
-        log_output = ''
+        log_output = u''
         for attempt in self.batch:
-            log_output += '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(
+            log_output += u'{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(
                 attempt['date'],
                 attempt['time'],
                 attempt['timezone'],
