@@ -3,13 +3,13 @@ Cowrie
 
 ![Travis CI Status](https://travis-ci.org/cowrie/cowrie.svg?branch=master "Travis CI Status")
 
-# Welcome to the Cowrie GitHub repository
+Welcome to the Cowrie GitHub repository
 *****************************************
 
 This is the official repository for the Cowrie SSH and Telnet
 Honeypot effort.
 
-# What is Cowrie
+What is Cowrie
 *****************************************
 
 Cowrie is a medium interaction SSH and Telnet honeypot designed to
@@ -18,12 +18,12 @@ attacker.
 
 [Cowrie](http://github.com/cowrie/cowrie/) is developed by Michel Oosterhof.
 
-## Slack
+Slack
 *****************************************
 
 You can join the Cowrie community at the following [Slack workspace](http://bit.ly/cowrieslack)
 
-## Features
+Features
 *****************************************
 
 Some interesting features:
@@ -42,14 +42,14 @@ Additional functionality over standard kippo:
 * Logging in JSON format for easy processing in log management solutions
 * Many, many additional commands
 
-## Docker
+Docker
 *****************************************
 
 Docker versions are available.
 * Get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
 * Run from Docker Hub with: ``docker pull cowrie/cowrie``
 
-## Requirements
+Requirements
 *****************************************
 
 Software required:
@@ -59,7 +59,7 @@ Software required:
 
 For Python dependencies, see requirements.txt
 
-## Files of interest:
+Files of interest:
 *****************************************
 
 * `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist`
@@ -76,17 +76,17 @@ For Python dependencies, see requirements.txt
 * `bin/createfs` - used to create the fake filesystem
 * `bin/playlog` - utility to replay session logs
 
-## Is it secure?
+Is it secure?
 *****************************************
 
 Maybe. See [FAQ](https://github.com/cowrie/cowrie/wiki/Frequently-Asked-Questions)
 
-## I have some questions!
+I have some questions!
 *****************************************
 
 Please visit https://cowrie.slack.com/ and join the #questions channel
 
-## Contributors
+Contributors
 ***************
 
 Many people have contributed to Cowrie over the years. Special thanks to:
