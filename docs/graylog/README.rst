@@ -11,11 +11,11 @@
 
 * Open the Cowrie configuration file and uncomment these 3 lines.
 
-```
+``
 [output_localsyslog]
 facility = USER
 format = text
-```
+``
 
 * Restart Cowrie
 
@@ -33,23 +33,23 @@ format = text
 
 * Create a rsyslog configuration file in /etc/rsyslog.d
 
-```
+``
 $ sudo nano /etc/rsyslog.d/85-graylog.conf
-```
+``
 
 * Add the following lines to the file
 
-```
+``
 $template GRAYLOGRFC5424,"<%pri%>%protocol-version% %timestamp:::date-rfc3339% %HOSTNAME% %app-name% %procid% %msg%\n"
 *.* @127.0.0.1:8514;GRAYLOGRFC5424
-```
+``
 
 * Save and quit.
 
 * Restart rsyslog
 
-```
+``
 $ sudo service rsyslog restart
-```
+``
 
 
