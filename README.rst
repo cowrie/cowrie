@@ -2,6 +2,7 @@ Cowrie
 ######
 
 |travis|_
+|codecov|_
 
 Welcome to the Cowrie GitHub repository
 *****************************************
@@ -102,3 +103,6 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 
 .. |travis| image:: https://travis-ci.org/cowrie/cowrie.svg?branch=master
 .. _travis: https://travis-ci.org/cowrie/cowrie
+
+.. |codecov| image:: https://codecov.io/gh/cowrie/cowrie/branch/master/graph/badge.svg
+.. _codecov:  https://codecov.io/gh/cowrie/cowrie
