@@ -16,12 +16,12 @@ Cowrie is a medium interaction SSH and Telnet honeypot designed to
 log brute force attacks and the shell interaction performed by the
 attacker.
 
-[Cowrie](http://github.com/cowrie/cowrie/) is developed by Michel Oosterhof.
+`Cowrie <http://github.com/cowrie/cowrie/>` is developed by Michel Oosterhof.
 
 Slack
 *****************************************
 
-You can join the Cowrie community at the following [Slack workspace](http://bit.ly/cowrieslack)
+You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`
 
 Features
 *****************************************
@@ -30,7 +30,7 @@ Some interesting features:
 
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
-* Session logs are stored in an [UML Compatible](http://user-mode-linux.sourceforge.net/)  format for easy replay with original timings with the `bin/playlog` utility.
+* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`  format for easy replay with original timings with the `bin/playlog` utility.
 * Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
 log
 Additional functionality over standard kippo:
@@ -38,7 +38,7 @@ Additional functionality over standard kippo:
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
-* Forward SMTP connections to SMTP Honeypot (e.g. [mailoney](https://github.com/awhitehatter/mailoney))
+* Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`)
 * Logging in JSON format for easy processing in log management solutions
 * Many, many additional commands
 
@@ -46,8 +46,9 @@ Docker
 *****************************************
 
 Docker versions are available.
-* Get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
+
 * Run from Docker Hub with: ``docker pull cowrie/cowrie``
+* Or get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
 
 Requirements
 *****************************************
