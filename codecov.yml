@@ -1,0 +1,15 @@
+#
+# We want 100% coverage for new patches to make sure we are always increasing
+# the coverage.
+#
+coverage:
+  precision: 2
+  round: down
+  status:
+    patch:
+      default:
+        target: 100%
+
+comment:
+  layout: "header, diff, uncovered"
+  behavior: default
