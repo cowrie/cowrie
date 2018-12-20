@@ -1,7 +1,7 @@
 Cowrie
 ######
 
-![Travis CI Status](https://travis-ci.org/cowrie/cowrie.svg?branch=master "Travis CI Status")
+|travis|_
 
 Welcome to the Cowrie GitHub repository
 *****************************************
@@ -98,3 +98,6 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
 * And many many others.
 
+
+.. |travis| image:: https://travis-ci.org/cowrie/cowrie.svg?branch=master
+.. _travis: https://travis-ci.org/cowrie/cowrie
