@@ -37,9 +37,9 @@ It's strongly recommended to run with a dedicated non-root user id:
 
 ``
 $ sudo adduser --disabled-password cowrie
-Adding user `cowrie' ...
-Adding new group `cowrie' (1002) ...
-Adding new user `cowrie' (1002) with group `cowrie' ...
+Adding user 'cowrie' ...
+Adding new group 'cowrie' (1002) ...
+Adding new user 'cowrie' (1002) with group 'cowrie' ...
 Changing the user information for cowrie
 Enter the new value, or press ENTER for the default
 Full Name []:
@@ -69,7 +69,7 @@ $ cd cowrie
 ``
 
 ## Step 4: Setup Virtual Environment
-*****************************
+************************************
 
 Next you need to create your virtual environment:
 
@@ -186,13 +186,14 @@ autorestart=true
 redirect_stderr=true
 ``
 Update the bin/cowrie script, change:
- ``
- DAEMONIZE=""
- ``
- to:
- ``
- DAEMONIZE="-n"
- ``
+
+``
+DAEMONIZE=""
+``
+to:
+``
+DAEMONIZE="-n"
+``
 
 Configure Additional Output Plugins (OPTIONAL)
 **********************************************
@@ -215,9 +216,9 @@ Troubleshooting
 ###############
 
 * If you see `twistd: Unknown command: cowrie` there are two
-possibilities. If there's a Python stack trace, it probably means
-there's a missing or broken dependency. If there's no stack trace,
-double check that your PYTHONPATH is set to the source code directory.
+  possibilities. If there's a Python stack trace, it probably means
+  there's a missing or broken dependency. If there's no stack trace,
+  double check that your PYTHONPATH is set to the source code directory.
 * Default file permissions
 
 To make Cowrie logfiles public readable, change the ``--umask 0077`` option in start.sh into ``--umask 0022``
