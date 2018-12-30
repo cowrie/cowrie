@@ -22,7 +22,7 @@ attacker.
 Slack
 *****************************************
 
-You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`_
+You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`_.
 
 Features
 *****************************************
@@ -81,7 +81,7 @@ Files of interest:
 I have some questions!
 *****************************************
 
-Please visit https://cowrie.slack.com/ and join the #questions channel
+Please visit the `Slack workspace <http://bit.ly/cowrieslack>`_ and join the #questions channel.
 
 Contributors
 ***************
