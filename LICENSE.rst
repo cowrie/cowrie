@@ -1,3 +1,6 @@
+LICENSE
+#######
+
 Copyright (c) 2009 Upi Tamminen
 All rights reserved.
 

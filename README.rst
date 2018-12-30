@@ -32,8 +32,8 @@ Some interesting features:
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
 * Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with original timings with the `bin/playlog` utility.
-* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
-log
+* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection log
+
 Additional functionality over standard kippo:
 
 * SFTP and SCP support for file upload
