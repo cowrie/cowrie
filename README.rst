@@ -17,12 +17,12 @@ Cowrie is a medium interaction SSH and Telnet honeypot designed to
 log brute force attacks and the shell interaction performed by the
 attacker.
 
-`Cowrie <http://github.com/cowrie/cowrie/>` is developed by Michel Oosterhof.
+`Cowrie <http://github.com/cowrie/cowrie/>`_ is developed by Michel Oosterhof.
 
 Slack
 *****************************************
 
-You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`
+You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`_
 
 Features
 *****************************************
@@ -31,7 +31,7 @@ Some interesting features:
 
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
-* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`  format for easy replay with original timings with the `bin/playlog` utility.
+* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with original timings with the `bin/playlog` utility.
 * Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
 log
 Additional functionality over standard kippo:
@@ -39,7 +39,7 @@ Additional functionality over standard kippo:
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
-* Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`)
+* Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`_)
 * Logging in JSON format for easy processing in log management solutions
 * Many, many additional commands
 
@@ -77,11 +77,6 @@ Files of interest:
 * `share/cowrie/txtcmds/` - file contents for simple fake commands
 * `bin/createfs` - used to create the fake filesystem
 * `bin/playlog` - utility to replay session logs
-
-Is it secure?
-*****************************************
-
-Maybe. See [FAQ](https://github.com/cowrie/cowrie/wiki/Frequently-Asked-Questions)
 
 I have some questions!
 *****************************************
