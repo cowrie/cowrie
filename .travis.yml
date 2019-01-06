@@ -14,7 +14,7 @@ before_install:
   - sudo apt-get -qq update
 install: pip install -r requirements.txt
 before_script:
-  - pip install flake8 flake8-import-order
+  - pip install flake8 flake8-import-order Sphinx
   # stop the build if there are Python syntax errors or undefined names
   - flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
   - python setup.py build sdist bdist
