@@ -23,12 +23,17 @@ project = 'cowrie'
 copyright = '2018, Michel Oosterhof'
 author = 'Michel Oosterhof'
 
-# The short X.Y version
-version = '1.5'
-# The full version, including alpha/beta/rc tags
-release = ''
-
 from cowrie import version as cowrie_version_object
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+#
+# The short X.Y version.
+version = "{major}.{minor}".format(major=cowrie_version_object.major,
+                                   minor=cowrie_version_object.minor)
+# The full version, including alpha/beta/rc tags.
+release = cowrie_version_object.short()
+
 
 # -- General configuration ---------------------------------------------------
 
@@ -41,11 +46,12 @@ from cowrie import version as cowrie_version_object
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.doctest',
     'sphinx.ext.githubpages',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
