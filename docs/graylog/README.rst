@@ -1,13 +1,15 @@
-# How to process Cowrie output into Graylog
+How to process Cowrie output into Graylog
 ############################################
 
 
-## Prerequisites
+Prerequisites
+======================
 
 * Working Cowrie installation
 * Working Graylog installation
 
-## Cowrie Configuration
+Cowrie Configuration
+======================
 
 
 * Open the Cowrie configuration file and uncomment these 3 lines.
@@ -20,7 +22,8 @@ format = text
 
 * Restart Cowrie
 
-## Graylog Configuration
+Graylog Configuration
+======================
 
 * Open the Graylog web interface and click on the **System** drop-down in the top menu. From the drop-down menu select **Inputs**. Select **Syslog UDP** from the drop-down menu and click the **Launch new input** button. In the modal dialog enter the following information.
 
@@ -30,7 +33,8 @@ format = text
 
 * Then click **Launch.**
 
-## Syslog Configuration
+Syslog Configuration
+======================
 
 * Create a rsyslog configuration file in /etc/rsyslog.d
 

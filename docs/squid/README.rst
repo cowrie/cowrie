@@ -1,27 +1,31 @@
-# Using TCP tunneling with Squid
+Using TCP tunneling with Squid
 #################################
 
 
-## Prerequisites
+Prerequisites
+=============
 
 * Working Cowrie installation
 * Working Squid installation with CONNECT allowed
 * (optional) Rate limit and black/white lists in Squid
 
 
-## Installation
+Installation
+============
 
 ``
 $ sudo apt-get install squid
 ``
 
 
-## Squid Configuration
+Squid Configuration
+===================
 
 See `squid.conf` for an example configuration.
 
 
-## Cowrie Configuration
+Cowrie Configuration
+====================
 
 Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the SSH section:
 
