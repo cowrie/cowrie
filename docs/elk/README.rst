@@ -33,12 +33,12 @@ Set them to autostart::
     sudo update-rc.d kibana defaults 95 10
 
 ElasticSearch Configuration
-###################################
+=============================
 
 TBD
 
 Kibana Configuration
-###################################
+=============================
 
 Make a folder for logs::
 
@@ -61,7 +61,7 @@ or your map visualizations won't have any background. When this file is created 
 of Kibana, it does _not_ contain such a line, not even in commented out form.
 
 Logstash Configuration
-###################################
+=============================
 
 Download GeoIP data::
 
@@ -97,7 +97,7 @@ If this gives output, your data is correctly loaded into ElasticSearch
 When you successfully configured logstash, remove "file" and "stdout" blocks from output section of logstash configuration.
 
 Distributed setup of sensors or multiple sensors on the same host
-#################################################################################
+================================================================================
 
 If you have multiple sensors, you will need to setup up FileBeat to feed logstash with logs from all sensors
  
@@ -138,7 +138,7 @@ Start filebeat::
     sudo service filebeat start
 
 Tuning ELK stack
-#####################
+==================
 
 Refer to elastic's documentation about proper configuration of the system for the best elasticsearch's performance
 

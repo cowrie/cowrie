@@ -1,14 +1,16 @@
-# How to Send Cowrie Output to a MySQL Database
+How to Send Cowrie Output to a MySQL Database
 ################################################
 
 
-## Prerequisites
+Prerequisites
+=============
 
 * Working Cowrie installation
 * MySQL Server installation
 
 
-## Installation
+Installation
+============
 
 Run::
 
@@ -21,7 +23,8 @@ Previously MySQL-python was used. Only if you run into isses with mysqlclient, t
 
     $ pip install MySQL-python
 
-## MySQL Configuration
+MySQL Configuration
+===================
 
 First create an empty database named 'cowrie'::
 
@@ -52,7 +55,8 @@ Next, log into the MySQL database using the cowrie account to verify proper acce
     source mysql.sql;
     exit
 
-## Cowrie Configuration
+Cowrie Configuration
+====================
 
 Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the Output Plugins section::
 
@@ -64,15 +68,12 @@ Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the Outp
     port = 3306
     debug = false
 
-## Restart Cowrie
+Restart Cowrie::
 
-``
-$ cd ~/cowrie/bin/
-$ ./cowrie restart
-``
+    $ cd ~/cowrie/bin/
+    $ ./cowrie restart
 
-
-## Verify That the MySQL Output Engine Has Been Loaded
+Verify That the MySQL Output Engine Has Been Loaded
 
 Check the end of the ~/cowrie/log/cowrie.log to make sure that the MySQL output engine has loaded successfully::
 

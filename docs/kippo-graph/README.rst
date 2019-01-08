@@ -1,22 +1,25 @@
-# How to process Cowrie output in kippo-graph
+How to process Cowrie output in kippo-graph
 #############################################
 
 * (Note: work in progress, instructions are not verified)
 * Tested on Debian 9.
 
 
-## Prerequisites
+Prerequisites
+****************
 
 * Working Cowrie installation
 * LAMP stack (Linux, Apache, MySQL, PHP)
 
-## Installation
+Installation
+****************
 
 This covers a simple installation, with kippo-graph and Cowrie on the same server.
 Please see here for installation: https://github.com/ikoniaris/kippo-graph
 
 
-## mySQL configuration
+MySQL configuration
+***********************
 
 Configuring Cowrie requires setting up the SQL tables and then telling Cowrie to use them.
 
@@ -44,7 +47,8 @@ disable MySQL strict mode::
     [mysqld]
     sql_mode=IGNORE_SPACE,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
 
-## cowrie configuration
+Cowrie configuration
+************************
 
     ``
     vi /opt/cowrie/cowrie.cfg
@@ -66,7 +70,8 @@ Set read access to tty-files for group www-data (group maybe differ on other dis
     sudo apt-get install acl
     sudo setfacl -Rm g:www-data:rx /opt/cowrie/var/lib/cowrie/tty/
 
-## kippo-graph Configuration
+kippo-graph Configuration
+****************************
 
     ``
     vi /var/www/html/kippo-graph/config.php
@@ -81,7 +86,8 @@ Change db settings::
     define('DB_NAME', 'cowrie');
     define('DB_PORT', '3306');
 
-## Apache2 configuration (optional)
+Apache2 configuration (optional)
+************************************
 
 To secure the installation
 
