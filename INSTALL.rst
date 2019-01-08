@@ -21,82 +21,73 @@ First we install system-wide support for Python virtual environments and other d
 Actual Python packages are installed later.
 
 On Debian based systems (last verified on Debian 9, 2017-07-25):
-For a Python3 based environment:
-``
-$ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
-``
-Or for Python2:
-``
-$ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
-``
+For a Python3 based environment::
+
+    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
+
+Or for Python2::
+
+    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython-dev python2.7-minimal authbind
 
 Step 2: Create a user account
 *****************************
 
-It's strongly recommended to run with a dedicated non-root user id:
+It's strongly recommended to run with a dedicated non-root user id::
 
-``
-$ sudo adduser --disabled-password cowrie
-Adding user 'cowrie' ...
-Adding new group 'cowrie' (1002) ...
-Adding new user 'cowrie' (1002) with group 'cowrie' ...
-Changing the user information for cowrie
-Enter the new value, or press ENTER for the default
-Full Name []:
-Room Number []:
-Work Phone []:
-Home Phone []:
-Other []:
-Is the information correct? [Y/n]
+    $ sudo adduser --disabled-password cowrie
+    Adding user 'cowrie' ...
+    Adding new group 'cowrie' (1002) ...
+    Adding new user 'cowrie' (1002) with group 'cowrie' ...
+    Changing the user information for cowrie
+    Enter the new value, or press ENTER for the default
+    Full Name []:
+    Room Number []:
+    Work Phone []:
+    Home Phone []:
+    Other []:
+    Is the information correct? [Y/n]
 
-$ sudo su - cowrie
-``
+    $ sudo su - cowrie
 
 Step 3: Checkout the code
 *****************************
 
-``
-$ git clone http://github.com/cowrie/cowrie
-Cloning into 'cowrie'...
-remote: Counting objects: 2965, done.
-remote: Compressing objects: 100% (1025/1025), done.
-remote: Total 2965 (delta 1908), reused 2962 (delta 1905), pack-reused 0
-Receiving objects: 100% (2965/2965), 3.41 MiB | 2.57 MiB/s, done.
-Resolving deltas: 100% (1908/1908), done.
-Checking connectivity... done.
+Check out the code::
 
-$ cd cowrie
-``
+    $ git clone http://github.com/cowrie/cowrie
+    Cloning into 'cowrie'...
+    remote: Counting objects: 2965, done.
+    remote: Compressing objects: 100% (1025/1025), done.
+    remote: Total 2965 (delta 1908), reused 2962 (delta 1905), pack-reused 0
+    Receiving objects: 100% (2965/2965), 3.41 MiB | 2.57 MiB/s, done.
+    Resolving deltas: 100% (1908/1908), done.
+    Checking connectivity... done.
+
+    $ cd cowrie
 
 ## Step 4: Setup Virtual Environment
 ************************************
 
-Next you need to create your virtual environment:
+Next you need to create your virtual environment::
 
-``
-$ pwd
-/home/cowrie/cowrie
-$ virtualenv --python=python3 cowrie-env
-New python executable in ./cowrie/cowrie-env/bin/python
-Installing setuptools, pip, wheel...done.
-``
+    $ pwd
+    /home/cowrie/cowrie
+    $ virtualenv --python=python3 cowrie-env
+    New python executable in ./cowrie/cowrie-env/bin/python
+    Installing setuptools, pip, wheel...done.
 
-Alternatively, create a Python2 virtual environment
-``
-$ virtualenv --python=python2 cowrie-env
-New python executable in ./cowrie/cowrie-env/bin/python
-Installing setuptools, pip, wheel...done.
-``
+Alternatively, create a Python2 virtual environment::
 
-Activate the virtual environment and install packages
+    $ virtualenv --python=python2 cowrie-env
+    New python executable in ./cowrie/cowrie-env/bin/python
+    Installing setuptools, pip, wheel...done.
 
-``
-$ source cowrie-env/bin/activate
+Activate the virtual environment and install packages::
 
-(cowrie-env) $ pip install --upgrade pip
 
-(cowrie-env) $ pip install --upgrade -r requirements.txt
-``
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ pip install --upgrade pip
+    (cowrie-env) $ pip install --upgrade -r requirements.txt
 
 Step 5: Install configuration file
 **********************************
@@ -106,27 +97,23 @@ cowrie.cfg. Both files are read on startup, where entries from
 cowrie.cfg take precedence. The .dist file can be overwritten by
 upgrades, cowrie.cfg will not be touched. To run with a standard
 configuration, there is no need to change anything. To enable telnet,
-for example, create cowrie.cfg and input only the following:
+for example, create cowrie.cfg and input only the following::
 
-``
-[telnet]
-enabled = true
-``
+    [telnet]
+    enabled = true
 
 Step 6: Starting Cowrie
 ***********************
 
-
 Start Cowrie with the cowrie command. You can add the cowrie/bin
 directory to your path if desired. An existing virtual environment
 is preserved if activated, otherwise Cowrie will attempt to load
-the environment called "cowrie-env"
+the environment called "cowrie-env"::
 
-``
-$ bin/cowrie start
-Activating virtualenv "cowrie-env"
-Starting cowrie with extra arguments [] ...
-``
+
+    $ bin/cowrie start
+    Activating virtualenv "cowrie-env"
+    Starting cowrie with extra arguments [] ...
 
 Step 7: Port redirection (OPTIONAL)
 ***********************************
@@ -136,64 +123,56 @@ A firewall redirect can make your existing SSH server unreachable, remember to m
 server to a different port number first.
 
 Cowrie runs by default on port 2222. This can be modified in the configuration file.
-The following firewall rule will forward incoming traffic on port 22 to port 2222 on Linux:
+The following firewall rule will forward incoming traffic on port 22 to port 2222 on Linux::
 
-``
-$ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
-``
+    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 
 Note that you should test this rule only from another host; it doesn't apply to loopback connections.
 
-On MacOS run:
+On MacOS run::
 
-``
-$ echo "rdr pass inet proto tcp from any to any port 22 -> 127.0.0.1 port 2222" | sudo pfctl -ef -
-``
+    $ echo "rdr pass inet proto tcp from any to any port 22 -> 127.0.0.1 port 2222" | sudo pfctl -ef -
 
-Alternatively you can run authbind to listen as non-root on port 22 directly:
+Alternatively you can run authbind to listen as non-root on port 22 directly::
 
-``
-$ sudo apt-get install authbind
-$ sudo touch /etc/authbind/byport/22
-$ sudo chown cowrie:cowrie /etc/authbind/byport/22
-$ sudo chmod 770 /etc/authbind/byport/22
-``
+    $ sudo apt-get install authbind
+    $ sudo touch /etc/authbind/byport/22
+    $ sudo chown cowrie:cowrie /etc/authbind/byport/22
+    $ sudo chmod 770 /etc/authbind/byport/22
+
 * Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
 * Change listen_port to 22 in cowrie.cfg
 
-Or for telnet:
-``
-$ sudo iptables -t nat -A PREROUTING -p tcp --dport 23 -j REDIRECT --to-port 2223
-``
-with authbind:
-``
-$ apt-get install authbind
-$ sudo touch /etc/authbind/byport/23
-$ sudo chown cowrie:cowrie /etc/authbind/byport/23
-$ sudo chmod 770 /etc/authbind/byport/23
-``
+Or for telnet::
+
+    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 23 -j REDIRECT --to-port 2223
+
+with authbind::
+
+    $ apt-get install authbind
+    $ sudo touch /etc/authbind/byport/23
+    $ sudo chown cowrie:cowrie /etc/authbind/byport/23
+    $ sudo chmod 770 /etc/authbind/byport/23
 
 Running using Supervisord (OPTIONAL)
 ************************************
 
-On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf
-``
-[program:cowrie]
-command=/home/cowrie/cowrie/bin/cowrie start
-directory=/home/cowrie/cowrie/
-user=cowrie
-autorestart=true
-redirect_stderr=true
-``
-Update the bin/cowrie script, change:
+On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf::
 
-``
-DAEMONIZE=""
-``
-to:
-``
-DAEMONIZE="-n"
-``
+    [program:cowrie]
+    command=/home/cowrie/cowrie/bin/cowrie start
+    directory=/home/cowrie/cowrie/
+    user=cowrie
+    autorestart=true
+    redirect_stderr=true
+
+Update the bin/cowrie script, change::
+
+    DAEMONIZE=""
+
+to::
+
+    DAEMONIZE="-n"
 
 Configure Additional Output Plugins (OPTIONAL)
 **********************************************
@@ -209,7 +188,7 @@ record the data other ways.  Supported output plugins include:
 * Splunk
 * SQL (MySQL, SQLite3, RethinkDB)
 
-See ~/cowrie/docs/[Output Plugin]/README.md for details.
+See ~/cowrie/docs/[Output Plugin]/README.rst for details.
 
 
 Troubleshooting
@@ -226,22 +205,19 @@ To make Cowrie logfiles public readable, change the ``--umask 0077`` option in s
 Updating Cowrie
 #################
 
-Updating is an easy process. First stop your honeypot. Then fetch updates from GitHub, and upgrade your Python dependencies.
-``
-bin/cowrie stop
-git pull
-pip install --upgrade -r requirements.txt
-``
+Updating is an easy process. First stop your honeypot. Then fetch updates from GitHub, and upgrade your Python dependencies::
 
-If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too.
-``
-pip install --upgrade -r requirements-output.txt
-``
+    bin/cowrie stop
+    git pull
+    pip install --upgrade -r requirements.txt
 
-And finally, start Cowrie back up after finishing all updates.
-``
-bin/cowrie start
-``
+If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too::
+
+    pip install --upgrade -r requirements-output.txt
+
+And finally, start Cowrie back up after finishing all updates::
+
+    bin/cowrie start
 
 Modifying Cowrie
 ################
