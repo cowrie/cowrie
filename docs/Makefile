@@ -1,11 +1,15 @@
 # Minimal makefile for Sphinx documentation
 #
 
+# Expand PYTHONPATH so we can import Cowrie version
+#export PYTHONPATH    := $(PYTHONPATH):../src
+
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = PYTHONPATH="../src" sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
+
 
 # Put it first so that "make" without argument is like "make help".
 help:
