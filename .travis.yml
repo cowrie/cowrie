@@ -18,7 +18,7 @@ before_script:
   # stop the build if there are Python syntax errors or undefined names
   - flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
   - python setup.py build sdist bdist
-  - cd docs; make html
+  - make -C docs html
 script:
   -  PYTHONPATH=${TRAVIS_BUILD_DIR}/src trial cowrie
 notifications:
