@@ -22,13 +22,13 @@ Restart Cowrie
 Graylog Configuration
 ======================
 
-* Open the Graylog web interface and click on the **System** drop-down in the top menu. From the drop-down menu select **Inputs**. Select **Syslog UDP** from the drop-down menu and click the **Launch new input** button. In the modal dialog enter the following information.
+Open the Graylog web interface and click on the **System** drop-down in the top menu. From the drop-down menu select **Inputs**. Select **Syslog UDP** from the drop-down menu and click the **Launch new input** button. In the modal dialog enter the following information::
 
-**Title:** Cowrie
-**Port:** 8514
-**Bind address:** 127.0.0.1
+    **Title:** Cowrie
+    **Port:** 8514
+    **Bind address:** 127.0.0.1
 
-* Then click **Launch.**
+Then click **Launch.**
 
 Syslog Configuration
 ======================
