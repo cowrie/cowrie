@@ -1,8 +1,8 @@
 How to process Cowrie output in kippo-graph
 #############################################
 
-* (Note: work in progress, instructions are not verified)
-* Tested on Debian 9.
+(Note: work in progress, instructions are not verified)
+Tested on Debian 9.
 
 
 Prerequisites
@@ -23,14 +23,13 @@ MySQL configuration
 
 Configuring Cowrie requires setting up the SQL tables and then telling Cowrie to use them.
 
-To install the tables and create the Cowrie user account enter the following commands:
-``
-mysql -u root -p
-CREATE DATABASE cowrie;
-GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
-FLUSH PRIVILEGES;
-exit
-``
+To install the tables and create the Cowrie user account enter the following commands::
+
+    mysql -u root -p
+    CREATE DATABASE cowrie;
+    GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
+    FLUSH PRIVILEGES;
+    exit
 
 Next create the database schema::
 
@@ -50,10 +49,9 @@ disable MySQL strict mode::
 Cowrie configuration
 ************************
 
-    ``
-    vi /opt/cowrie/cowrie.cfg
-    ``
+Edit cowrie.cfg::
 
+    vi /opt/cowrie/cowrie.cfg
 
 Activate output to mysql::
 
@@ -73,10 +71,10 @@ Set read access to tty-files for group www-data (group maybe differ on other dis
 kippo-graph Configuration
 ****************************
 
-    ``
-    vi /var/www/html/kippo-graph/config.php
-    ``
 
+Edit config file::
+
+    vi /var/www/html/kippo-graph/config.php
 
 Change db settings::
 
