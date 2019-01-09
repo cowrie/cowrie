@@ -8,6 +8,7 @@ var/log/cowrie/*
 cowrie.egg-info/
 dl/
 dist/
+docs/_build
 build/
 log/
 __pycache__/

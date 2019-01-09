@@ -1,50 +1,58 @@
 Cowrie
-======
+######
 
-![Travis CI Status](https://travis-ci.org/cowrie/cowrie.svg?branch=master "Travis CI Status")
+|travis|_
+|codecov|_
 
-# Welcome to the Cowrie GitHub repository
+Welcome to the Cowrie GitHub repository
+*****************************************
 
 This is the official repository for the Cowrie SSH and Telnet
 Honeypot effort.
 
-# What is Cowrie
+What is Cowrie
+*****************************************
 
 Cowrie is a medium interaction SSH and Telnet honeypot designed to
 log brute force attacks and the shell interaction performed by the
 attacker.
 
-[Cowrie](http://github.com/cowrie/cowrie/) is developed by Michel Oosterhof.
+`Cowrie <http://github.com/cowrie/cowrie/>`_ is developed by Michel Oosterhof.
 
-## Slack
+Slack
+*****************************************
 
-You can join the Cowrie community at the following [Slack workspace](http://bit.ly/cowrieslack)
+You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`_.
 
-## Features
+Features
+*****************************************
 
 Some interesting features:
 
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
-* Session logs are stored in an [UML Compatible](http://user-mode-linux.sourceforge.net/)  format for easy replay with original timings with the `bin/playlog` utility.
-* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
-log
+* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with original timings with the `bin/playlog` utility.
+* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection log
+
 Additional functionality over standard kippo:
 
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
-* Forward SMTP connections to SMTP Honeypot (e.g. [mailoney](https://github.com/awhitehatter/mailoney))
+* Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`_)
 * Logging in JSON format for easy processing in log management solutions
 * Many, many additional commands
 
-## Docker
+Docker
+*****************************************
 
 Docker versions are available.
-* Get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
-* Run from Docker Hub with: ```docker pull cowrie/cowrie```
 
-## Requirements
+* Run from Docker Hub with: ``docker pull cowrie/cowrie``
+* Or get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
+
+Requirements
+*****************************************
 
 Software required:
 
@@ -53,7 +61,8 @@ Software required:
 
 For Python dependencies, see requirements.txt
 
-## Files of interest:
+Files of interest:
+*****************************************
 
 * `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist`
 * `share/cowrie/fs.pickle` - fake filesystem
@@ -69,15 +78,13 @@ For Python dependencies, see requirements.txt
 * `bin/createfs` - used to create the fake filesystem
 * `bin/playlog` - utility to replay session logs
 
-## Is it secure?
+I have some questions!
+*****************************************
 
-Maybe. See [FAQ](https://github.com/cowrie/cowrie/wiki/Frequently-Asked-Questions)
+Please visit the `Slack workspace <http://bit.ly/cowrieslack>`_ and join the #questions channel.
 
-## I have some questions!
-
-Please visit https://cowrie.slack.com/ and join the #questions channel
-
-## Contributors
+Contributors
+***************
 
 Many people have contributed to Cowrie over the years. Special thanks to:
 
@@ -88,3 +95,9 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
 * And many many others.
 
+
+.. |travis| image:: https://travis-ci.org/cowrie/cowrie.svg?branch=master
+.. _travis: https://travis-ci.org/cowrie/cowrie
+
+.. |codecov| image:: https://codecov.io/gh/cowrie/cowrie/branch/master/graph/badge.svg
+.. _codecov:  https://codecov.io/gh/cowrie/cowrie
