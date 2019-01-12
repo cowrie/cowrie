@@ -2,6 +2,7 @@ Cowrie
 ######
 
 |travis|_
+|readthedocs|_
 |codecov|_
 
 Welcome to the Cowrie GitHub repository
@@ -100,4 +101,7 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 .. _travis: https://travis-ci.org/cowrie/cowrie
 
 .. |codecov| image:: https://codecov.io/gh/cowrie/cowrie/branch/master/graph/badge.svg
-.. _codecov:  https://codecov.io/gh/cowrie/cowrie
+.. _codecov: https://codecov.io/gh/cowrie/cowrie
+
+.. |readthedocs| image:: https://cowrie.readthedocs.io/en/latest/?badge=latest
+.. _readthedocs: https://readthedocs.org/projects/cowrie/
