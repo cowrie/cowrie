@@ -48,7 +48,13 @@ Docker
 
 Docker versions are available.
 
-* Run from Docker Hub with: ``docker pull cowrie/cowrie``
+* To get started quickly and give Cowrie a try, run::
+
+    docker run -p 2222:2222 cowrie/cowrie
+    ssh -p 2222 root@localhost
+
+* On Docker Hub: https://hub.docker.com/r/cowrie/cowrie
+
 * Or get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
 
 Requirements
