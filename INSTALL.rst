@@ -115,23 +115,34 @@ the environment called "cowrie-env"::
     Activating virtualenv "cowrie-env"
     Starting cowrie with extra arguments [] ...
 
-Step 7: Port redirection (OPTIONAL)
-***********************************
+Step 7: Listening on port 22 (OPTIONAL)
+***************************************
 
-All port redirection commands are system-wide and need to be executed as root.
+There are three methods to make Cowrie accessible on the default SSH port (22): `iptables`, `authbind` and `setcap`.
+
+Iptables
+========
+
+Port redirection commands are system-wide and need to be executed as root.
 A firewall redirect can make your existing SSH server unreachable, remember to move the existing
 server to a different port number first.
 
-Cowrie runs by default on port 2222. This can be modified in the configuration file.
 The following firewall rule will forward incoming traffic on port 22 to port 2222 on Linux::
 
     $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
+
+Or for telnet::
+
+    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 23 -j REDIRECT --to-port 2223
 
 Note that you should test this rule only from another host; it doesn't apply to loopback connections.
 
 On MacOS run::
 
     $ echo "rdr pass inet proto tcp from any to any port 22 -> 127.0.0.1 port 2222" | sudo pfctl -ef -
+
+Authbind
+========
 
 Alternatively you can run authbind to listen as non-root on port 22 directly::
 
@@ -140,19 +151,34 @@ Alternatively you can run authbind to listen as non-root on port 22 directly::
     $ sudo chown cowrie:cowrie /etc/authbind/byport/22
     $ sudo chmod 770 /etc/authbind/byport/22
 
-* Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
-* Change listen_port to 22 in cowrie.cfg
+Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
+
+Change the listening port to 22 in cowrie.cfg::
+
+    [ssh]
+    listen_endpoints = tcp:22:interface=0.0.0.0
 
 Or for telnet::
-
-    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 23 -j REDIRECT --to-port 2223
-
-with authbind::
 
     $ apt-get install authbind
     $ sudo touch /etc/authbind/byport/23
     $ sudo chown cowrie:cowrie /etc/authbind/byport/23
     $ sudo chmod 770 /etc/authbind/byport/23
+
+Change the listening port to 23 in cowrie.cfg::
+
+    [telnet]
+    listen_endpoints = tcp:2223:interface=0.0.0.0
+
+Setcap
+======
+
+Or use setcap to give permissions to Python to listen on ports<1024:: 
+
+    $ setcap cap_net_bind_service=+ep /usr/bin/python2.7 
+
+And change the listening ports in `cowrie.cfg` as above.
+
 
 Running using Supervisord (OPTIONAL)
 ************************************
@@ -194,11 +220,12 @@ See ~/cowrie/docs/[Output Plugin]/README.rst for details.
 Troubleshooting
 ###############
 
-* If you see `twistd: Unknown command: cowrie` there are two
+If you see `twistd: Unknown command: cowrie` there are two
   possibilities. If there's a Python stack trace, it probably means
   there's a missing or broken dependency. If there's no stack trace,
   double check that your PYTHONPATH is set to the source code directory.
-* Default file permissions
+
+Default file permissions
 
 To make Cowrie logfiles public readable, change the ``--umask 0077`` option in start.sh into ``--umask 0022``
 
