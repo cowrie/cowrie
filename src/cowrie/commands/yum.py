@@ -63,7 +63,7 @@ class command_yum(HoneyPotCommand):
         randhash = hashlib.sha1(b'{}'.format(randnum)).hexdigest()
         randhash2 = hashlib.sha1(b'{}'.format(randnum2)).hexdigest()
         yield self.sleep(1, 2)
-        self.write('Installed: 7/{0}  {1}:{2}\n'.format((arch, random.randint(500, 800), randhash)))
+        self.write('Installed: 7/{0}  {1}:{2}\n'.format(arch, random.randint(500, 800), randhash))
         self.write('Group-Installed: yum 13:{}\n'.format(randhash2))
         self.write('version\n')
         self.exit()
