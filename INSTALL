@@ -1,0 +1,1 @@
+docs/INSTALL.rst
