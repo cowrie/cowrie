@@ -10,6 +10,12 @@ Welcome to Cowrie's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   index.rst
+   README.rst
+   LICENSE.rst
+   INSTALL.rst
+   CHANGELOG.rst
+   CONTRIBUTING.rst
    elk/README.rst
    graylog/README.rst
    kippo-graph/README.rst
