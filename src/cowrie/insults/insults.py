@@ -186,9 +186,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             shasumfile = os.path.join(self.ttylogPath, shasum)
 
             if os.path.exists(shasumfile):
-                log.msg("Duplicate TTY log with hash {}".format(shasum))
+                duplicate = True
                 os.remove(self.ttylogFile)
             else:
+                duplicate = False
                 os.rename(self.ttylogFile, shasumfile)
                 umask = os.umask(0)
                 os.umask(umask)
@@ -199,6 +200,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     ttylog=shasumfile,
                     size=self.ttylogSize,
                     shasum=shasum,
+                    duplicate=duplicate,
                     duration=time.time() - self.startTime)
 
         insults.ServerProtocol.connectionLost(self, reason)
