@@ -296,13 +296,15 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         # If we have content already, delete temp file
         if not os.path.exists(hashPath):
             os.rename(self.safeoutfile, hashPath)
+            duplicate = False
         else:
             os.remove(self.safeoutfile)
-            log.msg("Not storing duplicate content " + shasum)
+            duplicate = True
 
         self.protocol.logDispatch(eventid='cowrie.session.file_download',
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url,
+                                  duplicate=duplicate,
                                   outfile=hashPath,
                                   shasum=shasum,
                                   destfile=self.safeoutfile)

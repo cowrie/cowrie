@@ -128,13 +128,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     shasumfile = os.path.join(self.downloadPath, shasum)
                     if os.path.exists(shasumfile):
                         os.remove(self.stdinlogFile)
-                        log.msg("Duplicate stdin content {}".format(shasum))
+                        duplicate = True
                     else:
                         os.rename(self.stdinlogFile, shasumfile)
+                        duplicate = False
 
                 log.msg(eventid='cowrie.session.file_download',
                         format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
                         url='stdin',
+                        duplicate=duplicate,
                         outfile=shasumfile,
                         shasum=shasum,
                         destfile='')
@@ -166,12 +168,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         shasumfile = os.path.join(self.downloadPath, shasum)
                         if os.path.exists(shasumfile):
                             os.remove(rf)
-                            log.msg("Duplicate redir content with hash {}".format(shasum))
+                            duplicate = True
                         else:
                             os.rename(rf, shasumfile)
+                            duplicate = False
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
                             url=url,
+                            duplicate=duplicate,
                             outfile=shasumfile,
                             shasum=shasum,
                             destfile=url)
@@ -186,9 +190,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             shasumfile = os.path.join(self.ttylogPath, shasum)
 
             if os.path.exists(shasumfile):
-                log.msg("Duplicate TTY log with hash {}".format(shasum))
+                duplicate = True
                 os.remove(self.ttylogFile)
             else:
+                duplicate = False
                 os.rename(self.ttylogFile, shasumfile)
                 umask = os.umask(0)
                 os.umask(umask)
@@ -199,6 +204,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     ttylog=shasumfile,
                     size=self.ttylogSize,
                     shasum=shasum,
+                    duplicate=duplicate,
                     duration=time.time() - self.startTime)
 
         insults.ServerProtocol.connectionLost(self, reason)
