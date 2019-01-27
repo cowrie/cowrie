@@ -57,7 +57,7 @@ class command_free(HoneyPotCommand):
 
         if fmt == 'megabytes':
             # Transform KB to MB
-            for key, value in raw_mem_stats.iteritems():
+            for key, value in raw_mem_stats.items():
                 raw_mem_stats[key] = int(value / 1000)
         elif fmt == 'human':
             magnitude = ["B", "M", "G", "T", "Z"]
