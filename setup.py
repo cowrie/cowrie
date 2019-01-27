@@ -5,11 +5,14 @@ from setuptools import setup
 setup(
     name="Cowrie",
     description="Cowrie SSH/Telnet Honeypot.",
+    long_description="Cowrie SSH/Telnet Honeypot.",
     author="Michel Oosterhof",
     author_email="michel@oosterhof.net",
     maintainer="Michel Oosterhof",
     maintainer_email="michel@oosterhof.net",
     keywords="ssh telnet honeypot",
+    platforms="Unix, Mac OSX",
+    license="BSD",
     url="https://www.cowrie.org/",
     packages=['cowrie', 'twisted'],
     include_package_data=True,
@@ -30,7 +33,7 @@ setup(
         'Framework :: Twisted',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: BSD License'
+        'License :: OSI Approved :: BSD License',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX :: Linux',
         'Operating System :: POSIX',

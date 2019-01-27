@@ -1,4 +1,4 @@
-include *.md
+include *.rst
 include etc/cowrie.cfg.dist
 recursive-include src/twisted *.py
 recursive-include src/cowrie *.py
