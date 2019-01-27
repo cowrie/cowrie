@@ -67,7 +67,7 @@ class command_ping(HoneyPotCommand):
                 self.write('ping: unknown host %s\n' % (self.host,))
                 self.exit()
         else:
-            s = hashlib.md5(self.host).hexdigest()
+            s = hashlib.md5((self.host).encode("utf-8")).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in (s[0:2], s[2:4], s[4:6], s[6:8])])
 
         self.running = True
