@@ -21,7 +21,7 @@ class FTP(ftplib.FTP):
 
     def __init__(self, *args, **kwargs):
         self.source_address = kwargs.pop("source_address", None)
-        super(FTP, self).__init__(*args, **kwargs)
+        ftplib.FTP.__init__(self, *args, **kwargs)
 
     def connect(self, host='', port=0, timeout=-999, source_address=None):
         if host != '':
