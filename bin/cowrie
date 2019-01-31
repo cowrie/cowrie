@@ -9,6 +9,9 @@ AUTHBIND_ENABLED=no
 #Change the below to -n to disable daemonizing (for instance when using supervisor)
 DAEMONIZE=""
 
+# Log to stdout instead of a separate file (same behaviour as Docker)
+STDOUT="yes"
+
 ################################################################################
 ## don't modify below here ##
 ################################################################################
@@ -74,7 +77,7 @@ cowrie_start() {
     TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask=0022 --pidfile=${PIDFILE}"
 
     # For Docker log to stdout, for non-Docker log to file
-    if [ "$DOCKER" = "yes" ]; then
+    if [ "$STDOUT" = "yes" ]; then
         TWISTEDARGS="${TWISTEDARGS} -l -"
     else
         TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger"
@@ -178,7 +181,7 @@ for dir in ${COWRIEDIR}/twisted ${COWRIEDIR}/cowrie; do
 done
 
 # Don't store pidfile on Docker persistent volume
-if [ "$DOCKER" = "yes" ]; then
+if [ "$STDOUT" = "yes" ]; then
         PIDFILE=""
 else
         PIDFILE=var/run/cowrie.pid
