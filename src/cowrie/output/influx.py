@@ -25,9 +25,14 @@ class Output(cowrie.core.output.Output):
         except Exception:
             port = 8086
 
+        try:
+            ssl = CONFIG.getboolean('output_influx', 'ssl')
+        except Exception:
+            ssl = False
+
         self.client = None
         try:
-            self.client = InfluxDBClient(host=host, port=port)
+            self.client = InfluxDBClient(host=host, port=port, ssl=ssl, verify_ssl=ssl)
         except InfluxDBClientError as e:
             log.err("output_influx: I/O error({0}): '{1}'".format(
                 e.errno, e.strerror))
@@ -201,3 +206,4 @@ class Output(cowrie.core.output.Output):
         if not result:
             log.err("output_influx: error when writing '{}' measurement"
                     "in the db.".format(eventid))
+
