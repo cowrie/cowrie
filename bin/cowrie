@@ -10,7 +10,7 @@ AUTHBIND_ENABLED=no
 DAEMONIZE=""
 
 # Log to stdout instead of a separate file (same behaviour as Docker)
-STDOUT="yes"
+# STDOUT="no"
 
 ################################################################################
 ## don't modify below here ##
