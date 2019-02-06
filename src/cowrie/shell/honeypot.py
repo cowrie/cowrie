@@ -238,8 +238,9 @@ class HoneyPotShell(object):
             prompt += '# '  # "Root" user
         else:
             prompt += '$ '  # "Non-Root" user
-        self.protocol.terminal.write(prompt.encode('utf8'))
-        self.protocol.ps = (prompt, '> ')
+
+        self.protocol.terminal.write(prompt.encode('ascii'))
+        self.protocol.ps = (prompt.encode('ascii'), b'> ')
 
     def eofReceived(self):
         """
