@@ -29,7 +29,7 @@ except UnicodeDecodeError:
     with open(CONFIG.get('shell', 'filesystem'), 'rb') as f:
         PICKLE = pickle.load(f, encoding='utf8')
 except Exception as e:
-    print("ERROR: Failed to load filesystem: ", e)
+    log.err(e, "ERROR: Failed to load filesystem")
     exit(2)
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = list(range(0, 10))
