@@ -23,9 +23,13 @@ from cowrie.core.config import CONFIG
 # At the moment this is the first place a config file is used
 # Put extra help here in case it goes wrong
 try:
-    PICKLE = pickle.load(open(CONFIG.get('shell', 'filesystem'), 'rb'))
-except Exception:
-    print("ERROR: Config file not found: etc/cowrie.cfg.dist")
+    with open(CONFIG.get('shell', 'filesystem'), 'rb') as f:
+        PICKLE = pickle.load(f)
+except UnicodeDecodeError:
+    with open(CONFIG.get('shell', 'filesystem'), 'rb') as f:
+        PICKLE = pickle.load(f, encoding='utf8')
+except Exception as e:
+    log.err(e, "ERROR: Failed to load filesystem")
     exit(2)
 
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = list(range(0, 10))
