@@ -7,5 +7,5 @@ Provides cowrie version information.
 
 from incremental import Version
 
-__version__ = Version('cowrie', 1, 5, 2)
+__version__ = Version('cowrie', 1, 5, 3)
 __all__ = ["__version__"]
