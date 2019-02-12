@@ -1,3 +1,10 @@
+Release 1.5.3
+=============
+
+* 2019-01-27 Telnet NAWS negotation removed to stop NMAP cowrie detection
+* 2019-01-27 Various fixes for Python2/3 compatibility
+* 2019-01-09 Documentation converted to ReStructuredText
+* 2018-12-04 Fixes for VT outut plugin to only submit new files
 
 Release 1.5.2 
 =============
