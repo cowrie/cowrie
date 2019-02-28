@@ -79,7 +79,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_date_command(self):
         self.proto.lineReceived(b'date\n')
-        self.assertRegexpMatches(
+        self.assertRegex(
             self.tr.value(),
             b'[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n' + PROMPT)  # noqa: E501
 

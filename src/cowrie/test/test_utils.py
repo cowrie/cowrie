@@ -12,7 +12,7 @@ from cowrie.core.utils import create_endpoint_services, durationHuman, get_endpo
 
 def get_config(config_string):
     config = configparser.RawConfigParser()
-    config.readfp(StringIO(config_string))
+    config.read_file(StringIO(config_string))
     return config
 
 
