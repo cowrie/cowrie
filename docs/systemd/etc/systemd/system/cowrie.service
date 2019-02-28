@@ -11,7 +11,7 @@ Group=cowrie
 Restart=always
 RestartSec=5
 
-Environment=PYTHONPATH=/opt/cowrie
+Environment=PYTHONPATH=/opt/cowrie/src
 WorkingDirectory=/opt/cowrie
 StateDirectory=cowrie
 LogsDirectory=cowrie
