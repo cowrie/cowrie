@@ -10,7 +10,6 @@ Welcome to Cowrie's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   index.rst
    README.rst
    LICENSE.rst
    INSTALL.rst
@@ -23,6 +22,7 @@ Welcome to Cowrie's documentation!
    sql/README.rst
    squid/README.rst
    supervisor/README.rst
+   systemd/README.rst
 
 Indices and tables
 ==================
