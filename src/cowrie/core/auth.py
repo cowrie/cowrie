@@ -98,7 +98,7 @@ class UserDB(object):
         """
         login = self.re_or_str(login)
 
-        if passwd[0] == b'!':
+        if passwd[0] == ord("!"):
             policy = False
             passwd = passwd[1:]
         else:
