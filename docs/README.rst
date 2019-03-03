@@ -19,6 +19,11 @@ attacker.
 
 `Cowrie <http://github.com/cowrie/cowrie/>`_ is developed by Michel Oosterhof.
 
+Documentation
+****************************************
+
+The Documentation can be found `here <https://cowrie.readthedocs.io/en/latest/index.html>`_.
+
 Slack
 *****************************************
 
@@ -65,24 +70,24 @@ Software required:
 * Python 2.7+, (Limited Python 3 support available for SSH only)
 * python-virtualenv
 
-For Python dependencies, see requirements.txt
+For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.
 
 Files of interest:
 *****************************************
 
-* `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist`
-* `share/cowrie/fs.pickle` - fake filesystem
+* `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist <https://github.com/cowrie/cowrie/blob/master/etc/cowrie.cfg.dist>`_.
+* `share/cowrie/fs.pickle <https://github.com/cowrie/cowrie/blob/master/share/cowrie/fs.pickle>`_ - fake filesystem
 * `etc/userdb.txt` - credentials allowed or disallowed to access the honeypot
-* `honeyfs/` - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
+* `honeyfs/ <https://github.com/cowrie/cowrie/tree/master/honeyfs>`_ - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
 * `honeyfs/etc/issue.net` - pre-login banner
-* `honeyfs/etc/motd` - post-login banner
+* `honeyfs/etc/motd <https://github.com/cowrie/cowrie/blob/master/honeyfs/etc/issue>`_ - post-login banner
 * `var/log/cowrie/cowrie.json` - transaction output in JSON format
 * `var/log/cowrie/cowrie.log` - log/debug output
 * `var/lib/cowrie/tty/` - session logs, replayable with the `bin/playlog` utility.
 * `var/lib/cowrie/downloads/` - files transferred from the attacker to the honeypot are stored here
-* `share/cowrie/txtcmds/` - file contents for simple fake commands
-* `bin/createfs` - used to create the fake filesystem
-* `bin/playlog` - utility to replay session logs
+* `share/cowrie/txtcmds/ <https://github.com/cowrie/cowrie/tree/master/share/cowrie/txtcmds>`_ - file contents for simple fake commands
+* `bin/createfs <https://github.com/cowrie/cowrie/blob/master/bin/createfs>`_ - used to create the fake filesystem
+* `bin/playlog <https://github.com/cowrie/cowrie/blob/master/bin/playlog>`_ - utility to replay session logs
 
 I have some questions!
 *****************************************
