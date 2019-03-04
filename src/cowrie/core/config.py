@@ -52,10 +52,11 @@ def get_config_path():
     current_path = abspath(dirname(__file__))
     root = "/".join(current_path.split("/")[:-3])
 
-    for file in config_files:
-        absolute_path = join(root, file)
-        if exists(absolute_path):
-            return absolute_path
+    conf_abs_paths = (join(root, file) for file in config_files)
+    found_confs = [path for path in conf_abs_paths if exists(path)]
+
+    if found_confs:
+        return found_confs
 
     print("Config file not found")
 
