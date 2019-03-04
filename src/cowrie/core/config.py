@@ -54,7 +54,7 @@ def get_config_path():
 
     conf_abs_paths = (join(root, file) for file in config_files)
     found_confs = [path for path in conf_abs_paths if exists(path)]
-    
+
     if found_confs:
         return found_confs
 
