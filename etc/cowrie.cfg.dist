@@ -114,6 +114,13 @@ authentication_timeout = 120
 # (default: shell)
 backend = shell
 
+# Timezone Cowrie uses for logging
+# This can be any valid timezone for the TZ environment variable
+# The special value `system` will let Cowrie use the system time zone
+# `system` is not recommended because you will need to deal with daylight
+# savings time and other special cases yourself when analysing the logs.
+timezone = UTC
+
 
 # ============================================================================
 # Network Specific Options

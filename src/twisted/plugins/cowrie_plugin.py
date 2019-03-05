@@ -102,6 +102,11 @@ Makes a Cowrie SSH/Telnet honeypot.
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
+        tz = CONFIG.get('honeypot', 'timezone', fallback='UTC')
+        # `system` means use the system time zone
+        if tz != 'system':
+            os.environ['TZ'] = tz
+
         log.msg("Python Version {}".format(str(sys.version).replace('\n', '')))
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
