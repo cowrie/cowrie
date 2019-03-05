@@ -98,7 +98,7 @@ class Output(object):
         self.sensor = CONFIG.get('honeypot', 'sensor_name', fallback=socket.gethostname())
 
         # use Z for UTC (Zulu) time, it's shorter.
-        if 'TZ' in environ.keys() and environ['TZ'] == 'UTC':
+        if 'TZ' in environ and environ['TZ'] == 'UTC':
             self.timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
         else:
             self.timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'

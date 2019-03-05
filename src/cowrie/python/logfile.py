@@ -39,7 +39,7 @@ def logger():
     logfile = CowrieDailyLogFile("cowrie.log", dir)
 
     # use Z for UTC (Zulu) time, it's shorter.
-    if 'TZ' in environ.keys() and environ['TZ'] == 'UTC':
+    if 'TZ' in environ and environ['TZ'] == 'UTC':
         timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
     else:
         timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
