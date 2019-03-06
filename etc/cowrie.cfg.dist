@@ -190,6 +190,9 @@ auth_class = UserDB
 # (default: false)
 #auth_none_enabled = false
 
+# Configure keyboard-interactive login
+auth_keyboard_interactive_enabled = false
+
 
 # ============================================================================
 # Historical SSH Specific Options

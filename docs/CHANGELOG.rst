@@ -1,6 +1,7 @@
 
 * 2019-03-07 Output of `ssh -V` now configurable in cowrie.cfg with ssh_version setting
 * 2019-03-07 Multiple timezone support in cowrie.cfg timezone directive. Default timezone is now UTC for both cowrie.log and cowrie.json
+* 2019-03-12 Handle multiple password prompt. Option to enable or disable keyboard interactive prompt.
 
 Release 1.5.3
 =============
@@ -10,7 +11,7 @@ Release 1.5.3
 * 2019-01-09 Documentation converted to ReStructuredText
 * 2018-12-04 Fixes for VT outut plugin to only submit new files
 
-Release 1.5.2 
+Release 1.5.2
 =============
 
 * 2018-11-19 Fix tftp exception and tftp test
