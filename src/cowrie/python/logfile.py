@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division
 
 from configparser import NoOptionError
+from os import environ
 
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
@@ -35,4 +36,11 @@ def logger():
         dir = "log"
 
     logfile = CowrieDailyLogFile("cowrie.log", dir)
-    return textFileLogObserver(logfile, timeFormat='%Y-%m-%dT%H:%M:%S.%f%z')
+
+    # use Z for UTC (Zulu) time, it's shorter.
+    if 'TZ' in environ and environ['TZ'] == 'UTC':
+        timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
+    else:
+        timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
+
+    return textFileLogObserver(logfile, timeFormat=timeFormat)

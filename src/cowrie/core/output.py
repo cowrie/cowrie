@@ -29,10 +29,12 @@
 from __future__ import absolute_import, division
 
 import abc
-import datetime
 import re
 import socket
 import time
+from os import environ
+
+from twisted.logger import formatTime
 
 from cowrie.core.config import CONFIG
 
@@ -93,6 +95,12 @@ class Output(object):
         self.telnetRegex = re.compile(
             '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
         self.sensor = CONFIG.get('honeypot', 'sensor_name', fallback=socket.gethostname())
+
+        # use Z for UTC (Zulu) time, it's shorter.
+        if 'TZ' in environ and environ['TZ'] == 'UTC':
+            self.timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
+        else:
+            self.timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
 
         self.start()
 
@@ -159,8 +167,8 @@ class Output(object):
 
         # Add ISO timestamp and sensor data
         if 'time' not in ev:
-            ev['time'] = time.time()
-        ev['timestamp'] = datetime.datetime.utcfromtimestamp(ev['time']).isoformat() + 'Z'
+            ev['time'] = time.timetz()
+        ev['timestamp'] = formatTime(ev['time'], timeFormat=self.timeFormat)
 
         if 'format' in ev and ('message' not in ev or ev['message'] == ()):
             try:
