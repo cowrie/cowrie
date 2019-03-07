@@ -306,6 +306,9 @@ kernel_build_string = #1 SMP Debian 3.2.68-1+deb7u1
 hardware_platform = x86_64
 operating_system = GNU/Linux
 
+# SSH Version as printed by "ssh -V" in shell emulation
+ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
+
 
 # ============================================================================
 # SSH Specific Options
