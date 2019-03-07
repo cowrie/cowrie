@@ -1,3 +1,7 @@
+
+
+* 2019-03-07 Multiple timezone support in cowrie.cfg timezone directive. Default timezone is now UTC for both cowrie.log and cowrie.json
+
 Release 1.5.3
 =============
 
