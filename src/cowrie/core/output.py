@@ -32,7 +32,6 @@ import abc
 import re
 import socket
 import time
-
 from os import environ
 
 from twisted.logger import formatTime

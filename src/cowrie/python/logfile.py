@@ -4,9 +4,8 @@
 
 from __future__ import absolute_import, division
 
-from os import environ
-
 from configparser import NoOptionError
+from os import environ
 
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
