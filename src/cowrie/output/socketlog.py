@@ -35,10 +35,10 @@ class Output(cowrie.core.output.Output):
         message = json.dumps(logentry) + '\n'
 
         try:
-            self.sock.sendall(message)
+            self.sock.sendall(message.encode())
         except socket.error as ex:
             if ex.errno == 32:  # Broken pipe
                 self.start()
-                self.sock.sendall(message)
+                self.sock.sendall(message.encode())
             else:
                 raise
