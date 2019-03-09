@@ -47,8 +47,8 @@ def readConfigFile(cfgfile):
 def get_config_path():
     """Get absolute path to the config file
     """
-    config_files = ["etc/cowrie/cowrie.cfg", "etc/cowrie.cfg",
-                    "cowrie.cfg", "etc/cowrie.cfg.dist"]
+    config_files = ["etc/cowrie.cfg.dist", "etc/cowrie/cowrie.cfg",
+                    "etc/cowrie.cfg", "cowrie.cfg"]
     current_path = abspath(dirname(__file__))
     root = "/".join(current_path.split("/")[:-3])
 
