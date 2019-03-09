@@ -52,7 +52,7 @@ def get_config_path():
 
     config_files = [join(root, "etc/cowrie.cfg.dist"), "/etc/cowrie/cowrie.cfg",
                     join(root, "etc/cowrie.cfg"), join(root, "cowrie.cfg")]
-    found_confs = [path for path in conf_abs_paths if exists(path)]
+    found_confs = [path for path in config_files if exists(path)]
 
     if found_confs:
         return found_confs
