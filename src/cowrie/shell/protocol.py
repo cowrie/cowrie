@@ -9,6 +9,8 @@ import socket
 import sys
 import time
 import traceback
+import random
+from datetime import datetime, timedelta
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
@@ -279,7 +281,15 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def displayMOTD(self):
         try:
             self.terminal.write(self.fs.file_contents('/etc/motd'))
-        except Exception:
+            # Show last login info after motd (can be fake or real)
+            if CONFIG.has_option('shell', 'show_last_login'):
+                if CONFIG.get('shell', 'show_last_login') == 'true':
+                    ip = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))
+                    date_now = datetime.now() - timedelta(days=random.randrange(1, 15), minutes=random.randrange(0, 60), hours=random.randrange(0, 12))
+                    date_last_login = date_now.strftime("%a %b %d %X %Y")
+                    last_login = '\nLast login: {1} from {0}\n\n'.format(ip, date_last_login)
+                    self.terminal.write(str.encode(last_login))
+        except Exception as ex:
             pass
 
     def timeoutConnection(self):
