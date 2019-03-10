@@ -151,7 +151,7 @@ class HoneyPotShell(object):
                     else:
                         return
             else:
-                pass  # command with pipes
+                log.msg(f"--- Commands with Pipe(s)")
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
