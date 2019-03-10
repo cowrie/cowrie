@@ -12,6 +12,7 @@ import copy
 import getopt
 import os.path
 import re
+
 from twisted.python import log
 
 import cowrie.shell.fs as fs
