@@ -12,7 +12,6 @@ import copy
 import getopt
 import os.path
 import re
-
 from twisted.python import log
 
 import cowrie.shell.fs as fs
@@ -20,10 +19,12 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+
 class command_wc(HoneyPotCommand):
     """
     wc command
     """
+
     def help(self):
         self.writeBytes(b'Usage: wc [OPTION]... [FILE]...\n')
         self.writeBytes(b'Print newline, word, and byte counts for each FILE, and a total line if\n')
@@ -52,12 +53,12 @@ class command_wc(HoneyPotCommand):
         for opt, arg in optlist:
             if opt == "-l":
                 contentsplit = contents.split(b'\n')
-                self.write(f"{len(contentsplit)-1}\n")
+                self.write("{}\n".format(len(contentsplit) - 1))
             elif opt == "-w":
                 contentsplit = contents.split(b' ')
-                self.write(f"{len(contentsplit)-1}\n")
-            elif opt == "-m" or opt =="-c":
-                self.write(f"{len(contents)}\n")
+                self.write("{}\n".format(len(contentsplit) - 1))
+            elif opt == "-m" or opt == "-c":
+                self.write("{}\n".format(len(contents)))
             else:
                 self.help()
 
@@ -85,7 +86,7 @@ class command_wc(HoneyPotCommand):
             for pname in files:
                 self.wc_get_contents(pname, optlist)
         else:
-            self.wc_application(self.input_data,optlist)
+            self.wc_application(self.input_data, optlist)
 
         self.exit()
 
@@ -98,8 +99,10 @@ class command_wc(HoneyPotCommand):
     def handle_CTRL_D(self):
         self.exit()
 
+
 commands['/usr/bin/wc'] = command_wc
 commands['/bin/wc'] = command_wc
+
 
 class command_grep(HoneyPotCommand):
     """
