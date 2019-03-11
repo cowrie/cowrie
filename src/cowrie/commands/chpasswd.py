@@ -37,7 +37,24 @@ class command_chpasswd(HoneyPotCommand):
             self.write(l + '\n')
 
     def chpasswd_application(self, contents):
-        pass
+        c = 1
+        try:
+            for line in contents.split(b'\n'):
+                if len(line):
+                    u, p = line.split(b':')
+                    if not len(p):
+                        self.write('chpasswd: line {}: missing new password\n'.format(c))
+                    else:
+                        """
+                        TODO: 
+                            - update shadow file
+                            - update userDB.txt (???) 
+                            - updte auth_random.json (if in use)
+                        """
+                        pass
+                c += 1
+        except Exception as ex:
+            self.write('chpasswd: line {}: missing new password\n'.format(c))
 
     def start(self):
         try:
@@ -56,7 +73,7 @@ class command_chpasswd(HoneyPotCommand):
                 self.exit()
                 return
             elif o in "-c":
-                if args not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]
+                if args not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]:
                     self.errorWrite("chpasswd: unsupported crypt method: {}\n".format(a))
                     self.help()
                     self.exit()
@@ -73,11 +90,11 @@ class command_chpasswd(HoneyPotCommand):
                 realm='chpasswd',
                 input=line,
                 format='INPUT (%(realm)s): %(input)s')
-        self.chpasswd_application(line)
+        self.chpasswd_application(line.encode())
 
     def handle_CTRL_D(self):
         self.exit()
 
 
-commands['/usr/bin/chpasswd'] = command_crontab
-commands['chpasswd'] = command_crontab
+commands['/usr/sbin/chpasswd'] = command_chpasswd
+commands['chpasswd'] = command_chpasswd
