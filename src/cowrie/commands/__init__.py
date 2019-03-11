@@ -9,6 +9,7 @@ __all__ = [
     'busybox',
     'cat',
     'curl',
+    'crontab',
     'dd',
     'env',
     'ethtool',
