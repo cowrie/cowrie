@@ -236,5 +236,20 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write(b'Packet corrupt\n')
-            log.msg("[SERVER] - Disconnecting with error, code {}\nreason: {}".format(reason, desc))
+            log.msg("[SERVER] - Disconnecting with error, code {} reason: {}".format(reason, desc))
             self.transport.loseConnection()
+
+    def receiveError(self, reasonCode, description):
+        """
+        Called when we receive a disconnect error message from the other
+        side.
+
+        @param reasonCode: the reason for the disconnect, one of the
+                           DISCONNECT_ values.
+        @type reasonCode: L{int}
+        @param description: a human-readable description of the
+                            disconnection.
+        @type description: L{str}
+        """
+        log.msg('Got remote error, code %s reason: %s' % (reasonCode,
+                                                           description))
