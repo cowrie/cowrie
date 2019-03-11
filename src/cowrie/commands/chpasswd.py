@@ -46,27 +46,26 @@ class command_chpasswd(HoneyPotCommand):
                         self.write('chpasswd: line {}: missing new password\n'.format(c))
                     else:
                         """
-                        TODO: 
+                        TODO:
                             - update shadow file
-                            - update userDB.txt (???) 
+                            - update userDB.txt (???)
                             - updte auth_random.json (if in use)
                         """
                         pass
                 c += 1
-        except Exception as ex:
+        except Exception:
             self.write('chpasswd: line {}: missing new password\n'.format(c))
 
     def start(self):
         try:
-            opts, args = getopt.getopt(self.args, 'c:ehmr:s:', ['crypt-method', 'encrypted', 'help', 'md5', 'root', 'sha-rounds'])
-        except getopt.GetoptError as err:
+            opts, args = getopt.getopt(self.args, 'c:ehmr:s:',
+                                       ['crypt-method', 'encrypted', 'help', 'md5', 'root', 'sha-rounds'])
+        except getopt.GetoptError:
             self.help()
             self.exit()
             return
 
         # Parse options
-        user = self.protocol.user.avatar.username
-        opt = ""
         for o, a in opts:
             if o in "-h":
                 self.help()
