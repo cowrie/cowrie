@@ -21,13 +21,13 @@ class command_crontab(HoneyPotCommand):
 
     def help(self):
         output = (
-        'usage:    crontab [-u user] file',
-        '          crontab [-u user] [-i] {-e | -l | -r}',
-        '                  (default operation is replace, per 1003.2)',
-        '          -e      (edit user\'s crontab)',
-        '          -l      (list user\'s crontab)',
-        '          -r      (delete user\'s crontab)',
-        '          -i      (prompt before deleting user\'s crontab)'
+            'usage:    crontab [-u user] file',
+            '          crontab [-u user] [-i] {-e | -l | -r}',
+            '                  (default operation is replace, per 1003.2)',
+            '          -e      (edit user\'s crontab)',
+            '          -l      (list user\'s crontab)',
+            '          -r      (delete user\'s crontab)',
+            '          -i      (prompt before deleting user\'s crontab)'
         )
         for l in output:
             self.write(l + '\n')
@@ -55,7 +55,7 @@ class command_crontab(HoneyPotCommand):
             self.write("must be privileged to use {0}\n".format(opt))
             self.exit()
             return
-        elif opt in["-l","-r","-i"]:
+        elif opt in ["-l", "-r", "-i"]:
             self.write("no crontab for {0}\n".format(user))
             self.exit()
             return
