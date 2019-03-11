@@ -15,7 +15,6 @@ import time
 import uuid
 import zlib
 from hashlib import md5
-
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
@@ -251,5 +250,4 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg('Got remote error, code %s reason: %s' % (reasonCode,
-                                                           description))
+        log.msg('Got remote error, code %s reason: %s' % (reasonCode, description))
