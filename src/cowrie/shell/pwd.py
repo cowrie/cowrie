@@ -27,6 +27,7 @@
 # SUCH DAMAGE.
 
 from __future__ import absolute_import, division
+from random import randint
 
 from cowrie.core.config import CONFIG
 
@@ -107,6 +108,21 @@ class Passwd(object):
             if uid == _["pw_uid"]:
                 return _
         raise KeyError("getpwuid(): uid not found in passwd file: " + str(uid))
+
+    def setpwentry(self, name):
+        """
+        If the user is not in /etc/passwd, creates a new user entry for the session
+        """
+        e = {}
+        e["pw_name"] = name
+        e["pw_passwd"] = "x"
+        e["pw_gecos"] = 0
+        e["pw_dir"] = "/home/" + name
+        e["pw_shell"] = "/bin/bash"
+        e["pw_uid"] = randint(1500, 10000)
+        e["pw_gid"] = e["pw_uid"]
+        self.passwd.append(e)
+        return e
 
 
 class Group(object):

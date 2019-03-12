@@ -30,13 +30,14 @@ class CowrieUser(avatar.ConchUser):
 
         try:
             pwentry = pwd.Passwd().getpwnam(self.username)
-            self.uid = pwentry['pw_uid']
-            self.gid = pwentry['pw_gid']
-            self.home = pwentry['pw_dir']
+            self.temporary = False
         except Exception:
-            self.uid = 1001
-            self.gid = 1001
-            self.home = '/home'
+            pwentry = pwd.Passwd().setpwentry(self.username)
+            self.temporary = True
+
+        self.uid = pwentry['pw_uid']
+        self.gid = pwentry['pw_gid']
+        self.home = pwentry['pw_dir']
 
         # SFTP support enabled only when option is explicitly set
         if CONFIG.getboolean('ssh', 'sftp_enabled', fallback=False):
