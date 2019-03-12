@@ -10,6 +10,7 @@ __all__ = [
     'cat',
     'chpasswd',
     'curl',
+    'crontab',
     'dd',
     'env',
     'ethtool',
