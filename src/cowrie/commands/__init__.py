@@ -8,6 +8,7 @@ __all__ = [
     'base64',
     'busybox',
     'cat',
+    'chpasswd',
     'curl',
     'crontab',
     'dd',
