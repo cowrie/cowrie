@@ -27,8 +27,9 @@
 # SUCH DAMAGE.
 
 from __future__ import absolute_import, division
+
+from binascii import crc32
 from random import randint, seed
-import binascii
 
 from cowrie.core.config import CONFIG
 
@@ -116,7 +117,7 @@ class Passwd(object):
         """
 
         # ensure consistent uid and gid
-        seed_id = binascii.crc32(name)
+        seed_id = crc32(name)
         seed(seed_id)
 
         e = {}
