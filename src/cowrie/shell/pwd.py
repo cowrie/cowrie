@@ -27,7 +27,8 @@
 # SUCH DAMAGE.
 
 from __future__ import absolute_import, division
-from random import randint
+from random import randint, seed
+import binascii
 
 from cowrie.core.config import CONFIG
 
@@ -113,6 +114,11 @@ class Passwd(object):
         """
         If the user is not in /etc/passwd, creates a new user entry for the session
         """
+
+        # ensure consistent uid and gid
+        seed_id = binascii.crc32(name)
+        seed(seed_id)
+
         e = {}
         e["pw_name"] = name
         e["pw_passwd"] = "x"
