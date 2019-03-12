@@ -43,6 +43,9 @@ class SSHSessionForCowrieUser(object):
 
         self.server.initFileSystem()
 
+        if self.avatar.temporary:
+            self.server.fs.mkdir(self.avatar.home, self.uid, self.gid, 4096, 755)
+
     def openShell(self, processprotocol):
         self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self)
