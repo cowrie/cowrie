@@ -3,11 +3,13 @@ Automatically starting Cowrie with systemd
 
 NOTE: untested
 
-* Copy the file `systemd/system/cowrie.socket` to `/etc/systemd/system`
+* Copy the file `docs/systemd/system/cowrie.socket` to `/etc/systemd/system`
 
-* Copy the file `systemd/system/cowrie.service` to `/etc/systemd/system`
+* Copy the file `docs/systemd/system/cowrie.service` to `/etc/systemd/system`
 
-* Modify etc/cowrie.cfg to connect to systemd:
+* Examine `/etc/systemd/system/cowrie.server` and ensure the paths are correct for your installation if you use non-standard file system locations.
+
+* Modify `etc/cowrie.cfg` to listen on ports via systemd:
 
     [ssh]
     listen_endpoints = systemd:domain=INET6:index=0
