@@ -1,6 +1,4 @@
 #!/bin/bash
-#Change the below to yes if you are using authbind to listen to port 22
-AUTHBIND_ENABLED=no
 
 # To override the default virtual enviroment, either set COWRIE_VIRTUAL_ENV or
 # activate it before starting Cowrie
@@ -100,6 +98,14 @@ cowrie_start() {
         echo 2>&1 "Using default Python virtual environment \"$VIRTUAL_ENV\""
     else
         echo 2>&1 "Not using Python virtual environment"
+    fi
+
+    #Automatically check if the authbind is enabled or not
+    authfile="/etc/authbind/byport/22"
+    if [ -x authfile ]; then
+        AUTHBIND_ENABLED=yes
+    else
+        AUTHBIND_ENABLED=no
     fi
 
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
