@@ -14,6 +14,7 @@ from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 
+commands = {}
 
 class command_wc(HoneyPotCommand):
     """
