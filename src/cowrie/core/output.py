@@ -167,7 +167,7 @@ class Output(object):
 
         # Add ISO timestamp and sensor data
         if 'time' not in ev:
-            ev['time'] = time.timetz()
+            ev['time'] = time.time()
         ev['timestamp'] = formatTime(ev['time'], timeFormat=self.timeFormat)
 
         if 'format' in ev and ('message' not in ev or ev['message'] == ()):
