@@ -176,3 +176,15 @@ class Output(cowrie.core.output.Output):
                 'INSERT INTO `keyfingerprints` (`session`, `username`, `fingerprint`) '
                 'VALUES (?, ?, ?)',
                 (entry["session"], entry["username"], entry["fingerprint"]))
+
+        elif entry["eventid"] == 'cowrie.direct-tcpip.request':
+            self.simpleQuery(
+                'INSERT INTO `ipforwards` (`session`, `timestamp`, `dst_ip`, `dst_port`) '
+                'VALUES (?, ?, ?, ?)',
+                (entry["session"], entry["timestamp"], entry["dst_ip"], entry["dst_port"]))
+
+        elif entry["eventid"] == 'cowrie.direct-tcpip.data':
+            self.simpleQuery(
+                'INSERT INTO `ipforwardsdata` (`session`, `timestamp`, `dst_ip`, `dst_port`, `data`) '
+                'VALUES (?, ?, ?, ?, ?)',
+                (entry["session"], entry["timestamp"], entry["dst_ip"], entry["dst_port"], entry["data"]))
