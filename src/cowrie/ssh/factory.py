@@ -147,10 +147,5 @@ class CowrieSSHFactory(factory.SSHFactory):
         # Twisted only supports below two keys 
         t.supportedPublicKeys = [b'ssh-rsa', b'ssh-dss']
 
-        log.msg(t.supportedCiphers)
-        log.msg(t.supportedMACs)
-        log.msg(t.supportedCompressions)
-        log.msg(t.supportedPublicKeys)
-
         t.factory = self
         return t
