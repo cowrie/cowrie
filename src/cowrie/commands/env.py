@@ -29,8 +29,8 @@ For complete documentation, run: info coreutils 'env invocation'
 class command_env(HoneyPotCommand):
 
     def call(self):
-        for i in list(self.environ.keys()):
-            self.write('{0}={1}\n'.format(i, self.environ[i]))
+        for i in list(self.protocol.environ.keys()):
+            self.write('{0}={1}\n'.format(i, self.protocol.environ[i]))
 
 
 commands['/usr/bin/env'] = command_env
