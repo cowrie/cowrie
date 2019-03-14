@@ -72,6 +72,20 @@ Software required:
 
 For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.
 
+Installation for development
+****************************************
+
+* **Make a virtual environment**
+    - For *python2* - ``python2 -m virtualenv venv``
+
+    - For *python3* -  ``python3 -m venv venv``
+
+* **Activating the venv** - ``source venv/bin/activate``
+
+* **Installing the requirements** - ``pip install -r requirements.txt``
+
+If you want to make changes in the output then you'll have to install `requirements-output.txt <https://github.com/cowrie/cowrie/blob/master/requirements-output.txt>`_ in addition to normal requirements
+
 Files of interest:
 *****************************************
 
