@@ -27,7 +27,9 @@ class HoneyPotShell(object):
         self.protocol = protocol
         self.interactive = interactive
         self.cmdpending = []
-        self.environ = protocol.environ
+        self.environ = copy.copy(protocol.environ)
+        self.environ['COLUMNS'] = str(protocol.user.windowSize[1])
+        self.environ['LINES'] = str(protocol.user.windowSize[0])
         self.lexer = None
         self.showPrompt()
 
