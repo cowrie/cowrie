@@ -783,6 +783,18 @@ commands['/usr/bin/chattr'] = command_chattr
 commands['chattr'] = command_chattr
 
 
+class command_set(HoneyPotCommand):
+    # Basic functionaltly (show only), need enhancements
+    # This will show ALL environ vars, not only the local ones
+    # With enhancements it should work like env when -o posix is used
+    def call(self):
+        for i in list(self.environ.keys()):
+            self.write('{0}={1}\n'.format(i, self.environ[i]))
+
+
+commands['set'] = command_set
+
+
 class command_nop(HoneyPotCommand):
 
     def call(self):
@@ -790,7 +802,6 @@ class command_nop(HoneyPotCommand):
 
 
 commands['umask'] = command_nop
-commands['set'] = command_nop
 commands['unset'] = command_nop
 commands['export'] = command_nop
 commands['alias'] = command_nop
