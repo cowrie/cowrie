@@ -39,9 +39,10 @@ class Output(cowrie.core.output.Output):
     def write(self, e):
         peerIP = e['src_ip']
         ts = e['timestamp']
-        system = e['system']
+        system = e.get('system', None)
 
-        if system not in ['cowrie.ssh.factory.CowrieSSHFactory', 'cowrie.telnet.transport.HoneyPotTelnetFactory']:
+        if system not in ['cowrie.ssh.factory.CowrieSSHFactory',
+                          'cowrie.telnet.transport.HoneyPotTelnetFactory']:
             return
 
         today = str(datetime.now().date())
