@@ -458,7 +458,7 @@ class command_ps(HoneyPotCommand):
                 line = [_user, _pid, _cpu, _mem, _vsz, _rss, _tty, _stat, _start, _time, _command]
             s = ''.join([output[i][x] for x in line])
             if 'w' not in args:
-                s = s[:80]
+                s = s[:(int(self.environ['COLUMNS']) if 'COLUMNS' in self.environ else 80)]
             self.write('{0}\n'.format(s))
 
 

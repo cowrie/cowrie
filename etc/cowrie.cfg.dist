@@ -360,6 +360,55 @@ dsa_private_key = ${honeypot:state_path}/ssh_host_dsa_key
 # (default: "SSH-2.0-SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
 version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
+# Cipher encryption algorithms to be used.
+#
+# MUST be supplied as a comma-separated string without
+# any spaces or newlines.
+#
+# Use ciphers to limit to more secure algorithms only
+# any spaces.
+# Supported ciphers:
+#
+# aes128-ctr
+# aes192-ctr
+# aes256-ctr
+# aes256-cbc
+# aes192-cbc
+# aes128-cbc
+# 3des-cbc
+# blowfish-cbc
+# cast128-cbc
+ciphers = aes128-ctr,aes192-ctr,aes256-ctr,aes256-cbc,aes192-cbc,aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc
+
+
+# MAC Algorithm to be used.
+#
+# MUST be supplied as a comma-separated string without
+# any spaces or newlines.
+#
+# hmac-sha1 and hmac-md5 are considered insecure now, and
+# instead MACs with higher number of bits should be used.
+#
+# Supported HMACs: 
+# hmac-sha2-512
+# hmac-sha2-384
+# hmac-sha2-256
+# hmac-sha1
+# hmac-md5
+macs = hmac-sha2-512,hmac-sha2-384,hmac-sha2-56,hmac-sha1,hmac-md5
+
+
+# Compression Method to be used.
+#
+# MUST be supplied as a comma-separated string without
+# any spaces or newlines.
+#
+# Supported Compression Methods: 
+# zlib@openssh.com
+# zlib
+# none
+compression = zlib@openssh.com,zlib,none
+
 
 # IP addresses to listen for incoming SSH connections.
 # (DEPRECATED: use listen_endpoints instead)
