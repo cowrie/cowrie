@@ -49,14 +49,16 @@ class HoneyPotShell(object):
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
-
-                # # Ignore parentheses
-                #tok_len = len(tok)
-                #tok = tok.strip('(')
-                #tok = tok.strip(')')
-                #if len(tok) != tok_len and tok == '':
-                #    continue
-
+                """
+                Why do we ignore parentheses?
+                We cant have this for shell command substitution  to work
+                # Ignore parentheses
+                tok_len = len(tok)
+                tok = tok.strip('(')
+                tok = tok.strip(')')
+                if len(tok) != tok_len and tok == '':
+                    continue
+                """
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == '&&' or tok == '||':
                     if tokens:
@@ -83,9 +85,13 @@ class HoneyPotShell(object):
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
-                        #  tok = self.environ[envMatch]
-                        sh = HoneyPotShell(self.protocol,interactive=True)
-                        sh.lineReceived(envMatch)
+                        self.cmdpending.append(([envMatch]))
+                        data = self.protocol.pp.data if self.protocol.pp is not None else None
+                        self.runCommand()
+                        tok = self.protocol.pp.data[:-1].decode()
+                        if data:
+                            self.protocol.pp.data = data
+                        tokens.append(tok)
                         continue
                     envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
                     envSearch = envRex.search(tok)
