@@ -108,7 +108,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             t.supportedKeyExchanges = ske
 
         try:
-            t.supportedCiphers = [bytearray(i, 'utf-8') for i in CONFIG.get('ssh', 'ciphers').split(',')]
+            t.supportedCiphers = [i.encode('utf-8') for i in CONFIG.get('ssh', 'ciphers').split(',')]
         except NoOptionError:
             # Reorder supported ciphers to resemble current openssh more
             t.supportedCiphers = [
@@ -124,7 +124,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             ]
 
         try:
-            t.supportedMACs = [bytearray(i, 'utf-8') for i in CONFIG.get('ssh', 'macs').split(',')]
+            t.supportedMACs = [i.encode('utf-8') for i in CONFIG.get('ssh', 'macs').split(',')]
         except NoOptionError:
             # SHA1 and MD5 are considered insecure now. Use better algos
             # like SHA-256 and SHA-384
@@ -137,7 +137,7 @@ class CowrieSSHFactory(factory.SSHFactory):
                 ]
 
         try:
-            t.supportedCompressions = [bytearray(i, 'utf-8') for i in CONFIG.get('ssh', 'compression').split(',')]
+            t.supportedCompressions = [i.encode('utf-8') for i in CONFIG.get('ssh', 'compression').split(',')]
         except NoOptionError:
             t.supportedCompressions = [b'zlib@openssh.com', b'zlib', b'none']
 
