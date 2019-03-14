@@ -29,7 +29,7 @@ class HoneyPotSSHSession(session.SSHSession):
                 name=name, value=value)
         # FIXME: This only works for shell, not for exec command
         if self.session:
-            self.session.environ[name.decode("utf-8") ] = value.decode("utf-8")
+            self.session.environ[name.decode("utf-8")] = value.decode("utf-8")
         return 0
 
     def request_agent(self, data):
