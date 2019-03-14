@@ -785,7 +785,7 @@ commands['chattr'] = command_chattr
 
 class command_set(HoneyPotCommand):
     # Basic functionaltly (show only), need enhancements
-    # This will show ALL environ vars, not only the local ones
+    # This will show ALL environ vars, not only the global ones
     # With enhancements it should work like env when -o posix is used
     def call(self):
         for i in list(self.environ.keys()):
