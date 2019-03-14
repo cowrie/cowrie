@@ -53,14 +53,16 @@ class SSHSessionForCowrieUser(object):
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
-        self.environ['TERM'] = terminal
+        self.environ['TERM'] = terminal.decode("utf-8")
         log.msg(
             eventid='cowrie.client.size',
-            width=windowSize[0],
-            height=windowSize[1],
+            width=windowSize[1],
+            height=windowSize[0],
             format='Terminal Size: %(width)s %(height)s'
         )
         self.windowSize = windowSize
+        self.environ['COLUMNS'] = str(windowSize[1])
+        self.environ['LINES'] = str(windowSize[0])
         return None
 
     def execCommand(self, processprotocol, cmd):
