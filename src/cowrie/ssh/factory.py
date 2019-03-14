@@ -106,10 +106,10 @@ class CowrieSSHFactory(factory.SSHFactory):
                 ske.remove(b'diffie-hellman-group-exchange-sha256')
                 log.msg("No moduli, no diffie-hellman-group-exchange-sha256")
             t.supportedKeyExchanges = ske
-        
+
         try:
             t.supportedCiphers = [bytearray(i, 'utf-8') for i in CONFIG.get('ssh', 'ciphers').split(',')]
-        except:
+        except NoOptionError:
             # Reorder supported ciphers to resemble current openssh more
             t.supportedCiphers = [
                 b'aes128-ctr',
@@ -122,10 +122,10 @@ class CowrieSSHFactory(factory.SSHFactory):
                 b'blowfish-cbc',
                 b'cast128-cbc',
             ]
-        
+
         try:
             t.supportedMACs = [bytearray(i, 'utf-8') for i in CONFIG.get('ssh', 'macs').split(',')]
-        except:
+        except NoOptionError:
             # SHA1 and MD5 are considered insecure now. Use better algos
             # like SHA-256 and SHA-384
             t.supportedMACs = [
@@ -138,13 +138,13 @@ class CowrieSSHFactory(factory.SSHFactory):
 
         try:
             t.supportedCompressions = [bytearray(i, 'utf-8') for i in CONFIG.get('ssh', 'compression').split(',')]
-        except:
+        except NoOptionError:
             t.supportedCompressions = [b'zlib@openssh.com', b'zlib', b'none']
 
         # TODO: Newer versions of SSH will use ECDSA keys too as mentioned
         # at https://tools.ietf.org/html/draft-miller-ssh-agent-02#section-4.2.2
-        # 
-        # Twisted only supports below two keys 
+        #
+        # Twisted only supports below two keys
         t.supportedPublicKeys = [b'ssh-rsa', b'ssh-dss']
 
         t.factory = self
