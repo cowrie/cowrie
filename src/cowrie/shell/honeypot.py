@@ -148,17 +148,20 @@ class HoneyPotShell(object):
             return parsed_arguments
 
         if not self.cmdpending:
-            if self.interactive:
-                self.showPrompt()
-            else:
-                # when commands passed to a shell via PIPE, we spawn a HoneyPotShell in none interactive mode
-                # if there are another shells on stack (cmdstack), let's just exit our new shell
-                # else close connection
-                if len(self.protocol.cmdstack) == 1:
-                    ret = failure.Failure(error.ProcessDone(status=""))
-                    self.protocol.terminal.transport.processEnded(ret)
+            if self.protocol.pp.next_command is None:  # command dont have pipe(s)
+                if self.interactive:
+                    self.showPrompt()
                 else:
-                    return
+                    # when commands passed to a shell via PIPE, we spawn a HoneyPotShell in none interactive mode
+                    # if there are another shells on stack (cmdstack), let's just exit our new shell
+                    # else close connection
+                    if len(self.protocol.cmdstack) == 1:
+                        ret = failure.Failure(error.ProcessDone(status=""))
+                        self.protocol.terminal.transport.processEnded(ret)
+                    else:
+                        return
+            else:
+                pass  # command with pipes
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
@@ -221,6 +224,8 @@ class HoneyPotShell(object):
                 log.msg(eventid='cowrie.command.failed', input=' '.join(cmd2), format='Command not found: %(input)s')
                 self.protocol.terminal.write('-bash: {}: command not found\n'.format(cmd['command']).encode('utf8'))
                 runOrPrompt()
+                pp = None  # Got a error. Don't run any piped commands
+                break
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]['rargs'])
 
@@ -388,10 +393,10 @@ class StdOutStdErrEmulationProtocol(object):
             else:
                 log.msg("Connection was probably lost. Could not write to terminal")
         else:
-            self.next_command.input_data = self.data
-            npcmd = self.next_command.cmd
-            npcmdargs = self.next_command.cmdargs
-            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
+            if self.next_command.input_data is None:
+                self.next_command.input_data = self.data
+            else:
+                self.next_command.input_data += self.data
 
     def insert_command(self, command):
         """
@@ -414,7 +419,7 @@ class StdOutStdErrEmulationProtocol(object):
         """
 
         if self.next_command:
-            self.next_command.input_data = self.data
+            # self.next_command.input_data = self.data
             npcmd = self.next_command.cmd
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
