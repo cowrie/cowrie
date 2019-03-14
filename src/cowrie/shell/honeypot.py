@@ -37,7 +37,7 @@ class HoneyPotShell(object):
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
-        self.lexer.wordchars += '@%{}=$:+^,'
+        self.lexer.wordchars += '@%{}=$:+^,()'
         tokens = []
         while True:
             try:
@@ -50,12 +50,12 @@ class HoneyPotShell(object):
                         tokens = []
                     break
 
-                # Ignore parentheses
-                tok_len = len(tok)
-                tok = tok.strip('(')
-                tok = tok.strip(')')
-                if len(tok) != tok_len and tok == '':
-                    continue
+                # # Ignore parentheses
+                #tok_len = len(tok)
+                #tok = tok.strip('(')
+                #tok = tok.strip(')')
+                #if len(tok) != tok_len and tok == '':
+                #    continue
 
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == '&&' or tok == '||':
@@ -79,6 +79,14 @@ class HoneyPotShell(object):
                 elif tok == '$?':
                     tok = "0"
                 elif tok[0] == '$':
+                    envRex = re.compile(r'^\$\(([_a-zA-Z0-9]+)\)$')
+                    envSearch = envRex.search(tok)
+                    if envSearch is not None:
+                        envMatch = envSearch.group(1)
+                        #  tok = self.environ[envMatch]
+                        sh = HoneyPotShell(self.protocol,interactive=True)
+                        sh.lineReceived(envMatch)
+                        continue
                     envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
