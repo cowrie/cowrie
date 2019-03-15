@@ -4,7 +4,7 @@ PartOf=cowrie.service
 
 [Socket]
 ListenStream=2222
-#ListenStream=2223
+ListenStream=2223
 
 [Install]
 WantedBy=sockets.target
