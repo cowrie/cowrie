@@ -57,3 +57,4 @@ class FakeAvatar:
         else:
             self.environ[
                 'PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
+        self.windowSize = [25,80]
