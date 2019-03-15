@@ -108,7 +108,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
         self.assertEquals(
             self.tr.value(),
-            b'LINES=25\nTMOUT=1800\nLOGNAME=root\nUSER=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/root\nCOLUMNS=80\n' + PROMPT)  # noqa: E501
+            b'COLUMNS=182\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root' + PROMPT)  # noqa: E501
 
     def test_unset_command(self):
         self.proto.lineReceived(b'unset\n')

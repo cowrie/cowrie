@@ -788,7 +788,7 @@ class command_set(HoneyPotCommand):
     # This will show ALL environ vars, not only the global ones
     # With enhancements it should work like env when -o posix is used
     def call(self):
-        for i in list(self.environ.keys()):
+        for i in sorted(list(self.environ.keys())):
             self.write('{0}={1}\n'.format(i, self.environ[i]))
 
 
