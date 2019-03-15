@@ -86,7 +86,11 @@ class HoneyPotShell(object):
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
                         self.cmdpending.append(([envMatch]))
-                        data = self.protocol.pp.data if self.protocol.pp is not None else None
+                        if self.protocol.pp:
+                            data = self.protocol.pp.data
+                            self.protocol.pp.data = []
+                        else:
+                            data = None
                         self.runCommand()
                         tok = self.protocol.pp.data[:-1].decode()
                         if data:
