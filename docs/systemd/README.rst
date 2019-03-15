@@ -9,7 +9,7 @@ NOTE: untested
 
 * Examine `/etc/systemd/system/cowrie.server` and ensure the paths are correct for your installation if you use non-standard file system locations.
 
-* Modify `etc/cowrie.cfg` to listen on ports via systemd:
+* Add entries to `etc/cowrie.cfg` to listen on ports via systemd. These must match your cowrie.socket configuration:
 
     [ssh]
     listen_endpoints = systemd:domain=INET6:index=0
@@ -17,9 +17,7 @@ NOTE: untested
     [telnet]
     listen_endpoints = systemd:domain=INET6:index=1
 
-* Modify `bin/cowrie` script like this:
+* Run:
 
-  * Change DAEMONIZE="" line to DAEMONIZE="-n"
-  * Change #STDOUT="no" line to STDOUT="yes"
-
-* Run sudo systemctl start cowrie.socket && sudo systemctl enable cowrie.socket
+    sudo systemctl start cowrie.socket
+    sudo systemctl enable cowrie.socket
