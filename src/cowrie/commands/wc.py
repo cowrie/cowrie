@@ -9,6 +9,7 @@ This module contains the wc commnad
 from __future__ import absolute_import, division
 
 import getopt
+import re
 
 from twisted.python import log
 
@@ -52,8 +53,8 @@ class command_wc(HoneyPotCommand):
                 contentsplit = contents.split(b'\n')
                 self.write("{}\n".format(len(contentsplit) - 1))
             elif opt == "-w":
-                contentsplit = contents.split(b' ')
-                self.write("{}\n".format(len(contentsplit) - 1))
+                contentsplit = re.sub(' +', ' ', contents.decode().strip('\n').strip()).split(' ')
+                self.write("{}\n".format(len(contentsplit)))
             elif opt == "-m" or opt == "-c":
                 self.write("{}\n".format(len(contents)))
             else:

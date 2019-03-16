@@ -23,13 +23,15 @@ else:
 
 class HoneyPotShell(object):
 
-    def __init__(self, protocol, interactive=True):
+    def __init__(self, protocol, interactive=True, redirect=False):
         self.protocol = protocol
         self.interactive = interactive
+        self.redirect = redirect  # to support output redirection
         self.cmdpending = []
         self.environ = copy.copy(protocol.environ)
-        self.environ['COLUMNS'] = str(protocol.user.windowSize[1])
-        self.environ['LINES'] = str(protocol.user.windowSize[0])
+        if hasattr(protocol.user, 'windowSize'):
+            self.environ['COLUMNS'] = str(protocol.user.windowSize[1])
+            self.environ['LINES'] = str(protocol.user.windowSize[0])
         self.lexer = None
         self.showPrompt()
 
@@ -39,10 +41,36 @@ class HoneyPotShell(object):
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += '@%{}=$:+^,()'
         tokens = []
+        parc_tokens = []  # stack of parcial command substitution tokens
+        last_token = False  # control the command substitution tokens processing
         while True:
             try:
-                tok = self.lexer.get_token()
-                # log.msg("tok: %s" % (repr(tok)))
+                if not last_token:
+                    # if we are processing the command substitution dont read token
+                    tok = self.lexer.get_token()
+                    # log.msg("tok: %s" % (repr(tok)))
+
+                if len(parc_tokens):
+                    if tok:
+                        if tok.endswith(')'):
+                            parc_tokens.append(tok[:-1])
+                            last_token = True
+                        else:
+                            parc_tokens.append(tok)
+
+                    if not tok or last_token:
+                        cmds = " ".join(parc_tokens)
+                        # instantiate new shell with redirect output
+                        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
+                        # call lineReceived method that indicates that we have some commands to parse
+                        self.protocol.cmdstack[-1].lineReceived(cmds)
+                        # remove the shell
+                        result = self.protocol.cmdstack.pop()
+                        tokens.append(result.protocol.pp.redirected_data.decode()[:-1])
+                        last_token = False
+                        parc_tokens = []
+
+                    continue
 
                 if tok == self.lexer.eof:
                     if tokens:
@@ -81,21 +109,14 @@ class HoneyPotShell(object):
                 elif tok == '$?':
                     tok = "0"
                 elif tok[0] == '$':
-                    envRex = re.compile(r'^\$\(([_a-zA-Z0-9]+)\)$')
+                    envRex = re.compile(r'^\$\(([_a-zA-Z0-9]+)*')
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
-                        self.cmdpending.append(([envMatch]))
-                        if self.protocol.pp:
-                            data = self.protocol.pp.data
-                            self.protocol.pp.data = []
-                        else:
-                            data = None
-                        self.runCommand()
-                        tok = self.protocol.pp.data[:-1].decode()
-                        if data:
-                            self.protocol.pp.data = data
-                        tokens.append(tok)
+                        parc_tokens.append(envMatch)
+                        if tok[-1] == ')':
+                            last_token = True
+                            tok = None
                         continue
                     envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
                     envSearch = envRex.search(tok)
@@ -225,10 +246,12 @@ class HoneyPotShell(object):
             if cmdclass:
                 log.msg(input=cmd['command'] + " " + ' '.join(cmd['rargs']), format='Command found: %(input)s')
                 if index == len(cmd_array) - 1:
-                    lastpp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None)
+                    lastpp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, None,
+                                                           self.redirect)
                     pp = lastpp
                 else:
-                    pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, lastpp)
+                    pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, cmd['rargs'], None, lastpp,
+                                                       self.redirect)
                     lastpp = pp
             else:
                 log.msg(eventid='cowrie.command.failed', input=' '.join(cmd2), format='Command not found: %(input)s')
@@ -376,14 +399,16 @@ class StdOutStdErrEmulationProtocol(object):
     """
     __author__ = 'davegermiquet'
 
-    def __init__(self, protocol, cmd, cmdargs, input_data, next_command):
+    def __init__(self, protocol, cmd, cmdargs, input_data, next_command, redirect=False):
         self.cmd = cmd
         self.cmdargs = cmdargs
         self.input_data = input_data
         self.next_command = next_command
         self.data = b""
+        self.redirected_data = b""
         self.err_data = b""
         self.protocol = protocol
+        self.redirect = redirect  # dont send to terminal if enabled
 
     def connectionMade(self):
 
@@ -398,10 +423,13 @@ class StdOutStdErrEmulationProtocol(object):
         self.data = data
 
         if not self.next_command:
-            if self.protocol is not None and self.protocol.terminal is not None:
-                self.protocol.terminal.write(data)
+            if not self.redirect:
+                if self.protocol is not None and self.protocol.terminal is not None:
+                    self.protocol.terminal.write(data)
+                else:
+                    log.msg("Connection was probably lost. Could not write to terminal")
             else:
-                log.msg("Connection was probably lost. Could not write to terminal")
+                self.redirected_data += self.data
         else:
             if self.next_command.input_data is None:
                 self.next_command.input_data = self.data
