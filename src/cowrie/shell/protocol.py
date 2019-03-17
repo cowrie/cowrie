@@ -37,11 +37,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(
                 traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
-    def __init__(self, avatar):
-        self.user = avatar
-        self.environ = avatar.environ
-        self.hostname = avatar.server.hostname
-        self.fs = avatar.server.fs
+    def __init__(self, user):
+        self.user = user
+        self.environ = user.environ
+        self.hostname = user.server.hostname
+        self.fs = user.server.fs
         self.pp = None
         self.logintime = None
         self.realClientIP = None
@@ -49,8 +49,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.kippoIP = None
         self.clientIP = None
 
-        if self.fs.exists(avatar.avatar.home):
-            self.cwd = avatar.avatar.home
+        if self.fs.exists(user.avatar.home):
+            self.cwd = user.avatar.home
         else:
             self.cwd = '/'
         self.data = None
