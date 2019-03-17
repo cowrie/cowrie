@@ -389,7 +389,7 @@ ciphers = aes128-ctr,aes192-ctr,aes256-ctr,aes256-cbc,aes192-cbc,aes128-cbc,3des
 # hmac-sha1 and hmac-md5 are considered insecure now, and
 # instead MACs with higher number of bits should be used.
 #
-# Supported HMACs: 
+# Supported HMACs:
 # hmac-sha2-512
 # hmac-sha2-384
 # hmac-sha2-256
@@ -403,7 +403,7 @@ macs = hmac-sha2-512,hmac-sha2-384,hmac-sha2-56,hmac-sha1,hmac-md5
 # MUST be supplied as a comma-separated string without
 # any spaces or newlines.
 #
-# Supported Compression Methods: 
+# Supported Compression Methods:
 # zlib@openssh.com
 # zlib
 # none
@@ -797,3 +797,9 @@ topic = cowrie
 # Method to use when sending data to redis.
 # Can be one of [lpush, rpush, publish]. Defaults to lpush
 #send_method = lpush
+
+
+# Perform Reverse DNS lookup
+#[output_reversedns]
+#enabled = true
+#timeout = 3, 3, 10
