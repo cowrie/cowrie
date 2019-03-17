@@ -61,8 +61,6 @@ class SSHSessionForCowrieUser(object):
             format='Terminal Size: %(width)s %(height)s'
         )
         self.windowSize = windowSize
-        self.environ['COLUMNS'] = str(windowSize[1])
-        self.environ['LINES'] = str(windowSize[0])
         return None
 
     def execCommand(self, processprotocol, cmd):
