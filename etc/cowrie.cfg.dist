@@ -802,4 +802,4 @@ topic = cowrie
 # Perform Reverse DNS lookup
 #[output_reversedns]
 #enabled = true
-#timeout = 3, 3, 10
+#timeout = 3

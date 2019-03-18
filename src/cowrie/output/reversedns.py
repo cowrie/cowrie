@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division
 
-import IPy
-
 from twisted.names import client
 from twisted.python import log
 
@@ -18,9 +16,7 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self):
-        self.enabled = CONFIG.getboolean('output_reversedns', 'enabled')
-        self.timeout = list(
-            map(int, CONFIG.get('output_reversedns', 'timeout').split(", ")))
+        self.timeout = [int((CONFIG.get('output_reversedns', 'timeout', fallback='3')))]
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
@@ -36,9 +32,7 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        if self.enabled:
-            log.msg("Reverse DNS for {}".format(entry['src_ip']))
-            self.reversedns(entry)
+        self.reversedns(entry)
 
     def reversedns(self, entry):
         """Perform a Reverse DNS lookup on the attacker's IP
@@ -47,14 +41,28 @@ class Output(cowrie.core.output.Output):
             entry {list} -- list having all the events
         """
         addr = entry.get('src_ip')
-        ptr = IPy.IP(addr).reverseName()
+        ptr = self.reverseNameFromIPAddress(addr)
         d = client.lookupPointer(ptr, timeout=self.timeout)
+
+        def cbError(failure):
+            log.msg("VT: Error in scanfile")
+            failure.printTraceback()
+
+        def processResult(result):
+            """process the lookup result
+            """
+            RR = result[0][0]
+            log.msg("Reverse DNS record for ip={0}: {1}".format(
+                addr, RR.payload))
+
         d.addCallback(processResult)
+        d.addErrback(cbError)
         return d
 
+    def reverseNameFromIPAddress(self, address):
+        """Reverse the IPv4 address and append in-addr.arpa
 
-def processResult(result):
-    """process the lookup result
-    """
-    RR = result[0][0]
-    log.msg("Reverse DNS record: {}".format(RR.payload))
+        Arguments:
+            address {str} -- IP address that is to be reversed
+        """
+        return '.'.join(reversed(address.split('.'))) + '.in-addr.arpa'
