@@ -8,15 +8,12 @@ from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
-    """one of the output plugins used for
-      reverse DNS lookup
-
-    Extends:
-        cowrie.core.output.Output
+    """
+    Output plugin used for reverse DNS lookup
     """
 
     def __init__(self):
-        self.timeout = [int((CONFIG.get('output_reversedns', 'timeout', fallback='3')))]
+        self.timeout = CONFIG.getint('output_reversedns', 'timeout', fallback=3)
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
@@ -32,24 +29,26 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        self.reversedns(entry)
+        if entry['eventid'] == 'cowrie.session.connect':
+            self.reversedns(entry['src_ip'])
 
-    def reversedns(self, entry):
-        """Perform a Reverse DNS lookup on the attacker's IP
+    def reversedns(self, addr):
+        """
+        Perform a reverse DNS lookup on an IP
 
         Arguments:
-            entry {list} -- list having all the events
+            addr -- IPv4 Address
         """
-        addr = entry.get('src_ip')
         ptr = self.reverseNameFromIPAddress(addr)
         d = client.lookupPointer(ptr, timeout=self.timeout)
 
         def cbError(failure):
-            log.msg("VT: Error in scanfile")
+            log.msg("reversedns: Error in lookup")
             failure.printTraceback()
 
         def processResult(result):
-            """process the lookup result
+            """
+            Process the lookup result
             """
             RR = result[0][0]
             log.msg("Reverse DNS record for ip={0}: {1}".format(
@@ -60,7 +59,8 @@ class Output(cowrie.core.output.Output):
         return d
 
     def reverseNameFromIPAddress(self, address):
-        """Reverse the IPv4 address and append in-addr.arpa
+        """
+        Reverse the IPv4 address and append in-addr.arpa
 
         Arguments:
             address {str} -- IP address that is to be reversed
