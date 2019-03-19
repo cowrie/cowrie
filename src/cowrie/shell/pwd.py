@@ -117,7 +117,7 @@ class Passwd(object):
         """
 
         # ensure consistent uid and gid
-        seed_id = crc32(name)
+        seed_id = crc32(name.encode("utf-8"))
         seed(seed_id)
 
         e = {}
