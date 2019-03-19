@@ -47,6 +47,8 @@ class Output(cowrie.core.output.Output):
             self.col_ttylog = self.mongo_db['ttylog']
             self.col_keyfingerprints = self.mongo_db['keyfingerprints']
             self.col_event = self.mongo_db['event']
+            self.col_ipforwards = self.mongo_db['ipforwards']
+            self.col_ipforwardsdata = self.mongo_db['ipforwardsdata']
         except Exception as e:
             log.msg('output_mongodb: Error: %s' % str(e))
 
@@ -120,6 +122,12 @@ class Output(cowrie.core.output.Output):
 
         elif eventid == 'cowrie.client.fingerprint':
             self.insert_one(self.col_keyfingerprints, entry)
+
+        elif eventid == 'cowrie.direct-tcpip.request':
+            self.insert_one(self.col_ipforwards, entry)
+
+        elif eventid == 'cowrie.direct-tcpip.data':
+            self.insert_one(self.col_ipforwardsdata, entry)
 
         # Catch any other event types
         else:
