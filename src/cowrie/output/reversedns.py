@@ -42,7 +42,8 @@ class Output(cowrie.core.output.Output):
             log.msg(
                 eventid='cowrie.reversedns.connect',
                 session=entry['session'],
-                format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s ttl=%(ttl)i",
+                format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s"
+                       "ttl=%(ttl)i",
                 src_ip=entry['src_ip'],
                 ptr=str(payload.name),
                 ttl=payload.ttl)
@@ -55,7 +56,8 @@ class Output(cowrie.core.output.Output):
             log.msg(
                 eventid='cowrie.reversedns.forward',
                 session=entry['session'],
-                format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s ttl=%(ttl)i",
+                format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s"
+                       "ttl=%(ttl)i",
                 dst_ip=entry['dst_ip'],
                 ptr=str(payload.name),
                 ttl=payload.ttl)
