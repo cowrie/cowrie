@@ -14,7 +14,8 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self):
-        self.timeout = [CONFIG.getint('output_reversedns', 'timeout', fallback=3)]
+        self.timeout = [CONFIG.getint(
+            'output_reversedns', 'timeout', fallback=3)]
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
