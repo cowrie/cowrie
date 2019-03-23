@@ -22,15 +22,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
     stdinlogOpen = False
     ttylogOpen = False
     redirlogOpen = False  # it will be set at core/protocol.py
+    ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
+    downloadPath = CONFIG.get('honeypot', 'download_path')
+    ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
+    bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
         self.bytesReceived = 0
 
-        self.ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
-        self.downloadPath = CONFIG.get('honeypot', 'download_path')
-        self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
-        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
         self.redirFiles = set()
 
         if prot is protocol.HoneyPotExecProtocol:
