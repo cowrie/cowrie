@@ -1,5 +1,8 @@
 from __future__ import absolute_import, division
 
+# `ipaddress` system library only on Python3.4+
+import ipaddress
+
 from twisted.names import client
 from twisted.python import log
 from twisted.internet import defer
@@ -66,7 +69,11 @@ class Output(cowrie.core.output.Output):
             d = self.reversedns(entry['src_ip'])
             d.addCallBack(processConnect)
         elif entry['eventid'] == 'cowrie.direct-tcpip.request':
-            self.reversedns(entry['src_ip'])
+            try:
+                ipaddress.ipaddress(entry['dst_ip'])
+            except:
+                return
+            self.reversedns(entry['dst_ip'])
             d.addCallBack(processForward)
 
     def reversedns(self, addr):
