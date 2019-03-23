@@ -153,8 +153,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             factory.portal.registerChecker(
                 core.checkers.HoneypotPasswordChecker())
 
-            if CONFIG.has_option('honeypot', 'auth_none_enabled') and \
-                    CONFIG.getboolean('honeypot', 'auth_none_enabled') is True:
+            if CONFIG.getboolean('honeypot', 'auth_none_enabled', fallback=False) is True:
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 

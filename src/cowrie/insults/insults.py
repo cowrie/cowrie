@@ -29,15 +29,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
         self.downloadPath = CONFIG.get('honeypot', 'download_path')
-
-        try:
-            self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
-        except Exception:
-            self.ttylogEnabled = True
-
-        self.redirFiles = set()
-
+        self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
         self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
+        self.redirFiles = set()
 
         if prot is protocol.HoneyPotExecProtocol:
             self.type = 'e'  # Execcmd
