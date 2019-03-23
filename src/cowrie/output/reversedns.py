@@ -94,19 +94,8 @@ class Output(cowrie.core.output.Output):
             addr -- IPv4 Address
         """
         try:
-            ipaddress.ip_address(addr)
+            ptr = ipaddress.ip_address(addr).reverse_pointer
         except ValueError:
             return None
-        ptr = self.reverseNameFromIPAddress(addr)
         d = client.lookupPointer(ptr, timeout=self.timeout)
         return d
-
-    @classmethod
-    def reverseNameFromIPAddress(self, address):
-        """
-        Reverse the IPv4 address and append in-addr.arpa
-
-        Arguments:
-            address {str} -- IP address that is to be reversed
-        """
-        return '.'.join(reversed(address.split('.'))) + '.in-addr.arpa'
