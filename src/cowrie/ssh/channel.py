@@ -28,6 +28,10 @@ class CowrieSSHChannel(channel.SSHChannel):
     bytesWritten = 0
     name = b'cowrie-ssh-channel'
     startTime = None
+    ttylogPath = CONFIG.get('honeypot', 'log_path')
+    downloadPath = CONFIG.get('honeypot', 'download_path')
+    ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
+    bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
     def __repr__(self):
         """
@@ -42,11 +46,6 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         Initialize logging
         """
-        self.ttylogPath = CONFIG.get('honeypot', 'log_path')
-        self.downloadPath = CONFIG.get('honeypot', 'download_path')
-        self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
-        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
-
         channel.SSHChannel.__init__(self, *args, **kw)
 
     def channelOpen(self, specificData):

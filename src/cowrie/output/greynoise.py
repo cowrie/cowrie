@@ -4,8 +4,6 @@ Send attackers IP to GreyNoise
 
 from __future__ import absolute_import, division
 
-from http import HTTPStatus
-
 import treq
 
 from twisted.internet import defer
@@ -56,7 +54,7 @@ class Output(cowrie.core.output.Output):
             data=fields,
             headers=headers)
 
-        if response.code != HTTPStatus.OK:
+        if response.code != 200:
             message = yield response.text()
             log.error("greynoise: got error {}".format(message))
             return

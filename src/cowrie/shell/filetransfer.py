@@ -25,13 +25,16 @@ from cowrie.core.config import CONFIG
 
 @implementer(ISFTPFile)
 class CowrieSFTPFile(object):
+    """
+    SFTPTFile
+    """
+    transfer_completed = 0
+    bytesReceived = 0
+    bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
-        self.transfer_completed = 0
-        self.bytesReceived = 0
-        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
         openFlags = 0
         if flags & FXF_READ == FXF_READ and flags & FXF_WRITE == 0:
