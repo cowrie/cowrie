@@ -3,9 +3,9 @@ from __future__ import absolute_import, division
 # `ipaddress` system library only on Python3.4+
 import ipaddress
 
+from twisted.internet import defer
 from twisted.names import client, error
 from twisted.python import log
-from twisted.internet import defer
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
