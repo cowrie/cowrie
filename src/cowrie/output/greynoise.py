@@ -4,7 +4,6 @@ Send attackers IP to GreyNoise
 
 from __future__ import absolute_import, division
 
-import json
 from http import HTTPStatus
 
 from twisted.internet import defer
@@ -48,7 +47,7 @@ class Output(cowrie.core.output.Output):
         """
 
         gnUrl = '{0}query/ip'.format(GNAPI_URL).encode('utf8')
-        headers = ({'User-Agent': [COWRIE_USER_AGENT],)
+        headers = ({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'key': self.apiKey, 'ip': entry['src_ip']}
 
         response = yield treq.post(
@@ -82,4 +81,3 @@ class Output(cowrie.core.output.Output):
                         )
             else:
                 log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))
-
