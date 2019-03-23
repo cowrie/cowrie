@@ -88,7 +88,7 @@ class Output(cowrie.core.output.Output):
         nonce = base64.b64decode(_nonceb64)
         digest = base64.b64encode(
             hmac.new(
-                '{0}{1}'.format(nonce, self.userid),
+                b'{0}{1}'.format(nonce, self.userid),
                 base64.b64decode(self.auth_key),
                 hashlib.sha256).digest()
         )
