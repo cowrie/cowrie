@@ -804,3 +804,13 @@ topic = cowrie
 #enabled = true
 # Timeout in seconds
 #timeout = 3
+
+#[output_greynoise]
+#enabled = true
+# Name of the tags separated by comma, for which the IP has to be scanned for.
+# Example "SHODAN,JBOSS_WORM,CPANEL_SCANNER_LOW"
+# If there isn't any specific tag then just leave it "all"
+#tags = all
+# It's optional to have API key, so if you don't want to but
+# API key then leave this option commented
+#api_key = 1234567890
