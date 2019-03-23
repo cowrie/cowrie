@@ -1,7 +1,11 @@
 from __future__ import absolute_import, division
 
-from twisted.names import client
+# `ipaddress` system library only on Python3.4+
+import ipaddress
+
+from twisted.names import client, error
 from twisted.python import log
+from twisted.internet import defer
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
@@ -13,7 +17,8 @@ class Output(cowrie.core.output.Output):
     """
 
     def __init__(self):
-        self.timeout = [CONFIG.getint('output_reversedns', 'timeout', fallback=3)]
+        self.timeout = [CONFIG.getint(
+            'output_reversedns', 'timeout', fallback=3)]
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
@@ -29,41 +34,74 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        if entry['eventid'] == 'cowrie.session.connect':
-            self.reversedns(entry)
+        """
+        Process log entry
+        """
+        def processConnect(result):
+            """
+            Create log messages for connect events
+            """
+            payload = result[0][0].payload
+            log.msg(
+                eventid='cowrie.reversedns.connect',
+                session=entry['session'],
+                format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s"
+                       " ttl=%(ttl)i",
+                src_ip=entry['src_ip'],
+                ptr=str(payload.name),
+                ttl=payload.ttl)
 
-    def reversedns(self, entry):
+        def processForward(result):
+            """
+            Create log messages for forward events
+            """
+            payload = result[0][0].payload
+            log.msg(
+                eventid='cowrie.reversedns.forward',
+                session=entry['session'],
+                format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s"
+                       " ttl=%(ttl)i",
+                dst_ip=entry['dst_ip'],
+                ptr=str(payload.name),
+                ttl=payload.ttl)
+
+        def cbError(failure):
+            if failure.type == defer.TimeoutError:
+                log.msg("reversedns: Timeout in DNS lookup")
+            elif failure.type == error.DNSNameError:
+                # DNSNameError is the NXDOMAIN response
+                log.msg("reversedns: No PTR record returned")
+            else:
+                log.msg("reversedns: Error in DNS lookup")
+                failure.printTraceback()
+
+        if entry['eventid'] == 'cowrie.session.connect':
+            d = self.reversedns(entry['src_ip'])
+            if d is not None:
+                d.addCallback(processConnect)
+                d.addErrback(cbError)
+        elif entry['eventid'] == 'cowrie.direct-tcpip.request':
+            d = self.reversedns(entry['dst_ip'])
+            if d is not None:
+                d.addCallback(processForward)
+                d.addErrback(cbError)
+
+    def reversedns(self, addr):
         """
         Perform a reverse DNS lookup on an IP
 
         Arguments:
             addr -- IPv4 Address
         """
-        src_ip = entry['src_ip']
-        ptr = self.reverseNameFromIPAddress(src_ip)
+        try:
+            ipaddress.ip_address(addr)
+        except ValueError:
+            return None
+        ptr = self.reverseNameFromIPAddress(addr)
         d = client.lookupPointer(ptr, timeout=self.timeout)
-
-        def cbError(failure):
-            log.msg("reversedns: Error in lookup for {}".format(src_ip))
-            failure.printTraceback()
-
-        def processResult(result):
-            """
-            Process the lookup result
-            """
-            payload = result[0][0].payload
-            log.msg(
-                eventid='cowrie.reversedns.ptr',
-                session=entry['session'],
-                format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s ttl=%(ttl)i",
-                src_ip=src_ip,
-                ptr=str(payload.name).decode('ascii'),
-                ttl=payload.ttl)
-
-        d.addCallback(processResult)
-        d.addErrback(cbError)
         return d
 
+    @classmethod
     def reverseNameFromIPAddress(self, address):
         """
         Reverse the IPv4 address and append in-addr.arpa
