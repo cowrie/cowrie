@@ -19,19 +19,18 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
+    redirlogOpen = False  # it will be set at core/protocol.py
     stdinlogOpen = False
     ttylogOpen = False
-    redirlogOpen = False  # it will be set at core/protocol.py
     ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
     downloadPath = CONFIG.get('honeypot', 'download_path')
     ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
     bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
+    bytesReceived = 0
+    redirFiles = set()
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
-        self.bytesReceived = 0
-
-        self.redirFiles = set()
 
         if prot is protocol.HoneyPotExecProtocol:
             self.type = 'e'  # Execcmd
