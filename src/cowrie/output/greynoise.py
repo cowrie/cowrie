@@ -48,7 +48,7 @@ class Output(cowrie.core.output.Output):
         """
 
         gnUrl = '{0}query/ip'.format(GNAPI_URL).encode('utf8')
-        headers = ({'User-Agent': [COWRIE_USER_AGENT],'Content-Type': [b'application/json']})
+        headers = ({'User-Agent': [COWRIE_USER_AGENT],)
         fields = {'key': self.apiKey, 'ip': entry['src_ip']}
 
         response = yield treq.post(
