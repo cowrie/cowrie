@@ -28,6 +28,7 @@ from cowrie.core.config import CONFIG
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     startTime = None
     gotVersion = False
+    ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
 
     def __repr__(self):
         """
@@ -45,8 +46,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.transportId = uuid.uuid4().hex[:12]
         src_ip = self.transport.getPeer().host
-        ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
-        ipv4_search = ipv4rex.search(src_ip)
+
+        ipv4_search = self.ipv4rex.search(src_ip)
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
 
