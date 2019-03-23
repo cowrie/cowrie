@@ -6,9 +6,10 @@ from __future__ import absolute_import, division
 
 from http import HTTPStatus
 
+import treq
+
 from twisted.internet import defer
 from twisted.python import log
-import treq
 
 import cowrie.core.output
 from cowrie.core.config import CONFIG
