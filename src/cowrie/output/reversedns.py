@@ -3,7 +3,7 @@ from __future__ import absolute_import, division
 # `ipaddress` system library only on Python3.4+
 import ipaddress
 
-from twisted.names import client
+from twisted.names import client, error
 from twisted.python import log
 from twisted.internet import defer
 
@@ -46,7 +46,7 @@ class Output(cowrie.core.output.Output):
                 eventid='cowrie.reversedns.connect',
                 session=entry['session'],
                 format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s"
-                       "ttl=%(ttl)i",
+                       " ttl=%(ttl)i",
                 src_ip=entry['src_ip'],
                 ptr=str(payload.name),
                 ttl=payload.ttl)
@@ -60,21 +60,31 @@ class Output(cowrie.core.output.Output):
                 eventid='cowrie.reversedns.forward',
                 session=entry['session'],
                 format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s"
-                       "ttl=%(ttl)i",
+                       " ttl=%(ttl)i",
                 dst_ip=entry['dst_ip'],
                 ptr=str(payload.name),
                 ttl=payload.ttl)
 
+        def cbError(failure):
+            if failure.type == defer.TimeoutError:
+                log.msg("reversedns: Timeout in DNS lookup")
+            elif failure.type == error.DNSNameError:
+                # DNSNameError is the NXDOMAIN response
+                log.msg("reversedns: No PTR record returned")
+            else:
+                log.msg("reversedns: Error in DNS lookup")
+                failure.printTraceback()
+
         if entry['eventid'] == 'cowrie.session.connect':
             d = self.reversedns(entry['src_ip'])
-            d.addCallBack(processConnect)
+            if d is not None:
+                d.addCallback(processConnect)
+                d.addErrback(cbError)
         elif entry['eventid'] == 'cowrie.direct-tcpip.request':
-            try:
-                ipaddress.ipaddress(entry['dst_ip'])
-            except ValueError:
-                return
-            self.reversedns(entry['dst_ip'])
-            d.addCallBack(processForward)
+            d = self.reversedns(entry['dst_ip'])
+            if d is not None:
+                d.addCallback(processForward)
+                d.addErrback(cbError)
 
     def reversedns(self, addr):
         """
@@ -83,17 +93,12 @@ class Output(cowrie.core.output.Output):
         Arguments:
             addr -- IPv4 Address
         """
+        try:
+            ipaddress.ip_address(addr)
+        except ValueError:
+            return None
         ptr = self.reverseNameFromIPAddress(addr)
         d = client.lookupPointer(ptr, timeout=self.timeout)
-
-        def cbError(failure):
-            if failure.type == defer.TimeoutError:
-                log.msg("reversedns: Timeout in lookup for {}".format(addr))
-            else:
-                log.msg("reversedns: Error in lookup for {}".format(addr))
-                failure.printTraceback()
-
-        d.addErrback(cbError)
         return d
 
     @classmethod
