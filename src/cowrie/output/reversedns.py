@@ -71,7 +71,7 @@ class Output(cowrie.core.output.Output):
         elif entry['eventid'] == 'cowrie.direct-tcpip.request':
             try:
                 ipaddress.ipaddress(entry['dst_ip'])
-            except:
+            except ValueError:
                 return
             self.reversedns(entry['dst_ip'])
             d.addCallBack(processForward)
