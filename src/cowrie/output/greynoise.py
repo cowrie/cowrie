@@ -69,14 +69,17 @@ class Output(cowrie.core.output.Output):
                             message(query)
                 else:
                     for query in j['records']:
-                        log.msg(
-                            eventid='cowrie.greynoise.result',
-                            format='greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
-                            ' along with the following %(meta)s metadata',
-                            IP=entry['src_ip'],
-                            tag=query['name'],
-                            conf=query['confidence'],
-                            meta=query['metadata']
-                        )
+                        message(query)
             else:
                 log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))
+
+        def message(query):
+            log.msg(
+                eventid='cowrie.greynoise.result',
+                format='greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
+                ' along with the following %(meta)s metadata',
+                IP=entry['src_ip'],
+                tag=query['name'],
+                conf=query['confidence'],
+                meta=query['metadata']
+            )
