@@ -161,7 +161,7 @@ class HoneyPotCommand(object):
     def lineReceived(self, line):
         log.msg('QUEUED INPUT: {}'.format(line))
         # FIXME: naive command parsing, see lineReceived below
-        line = "".join(line)
+        # line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=False))
 
     def resume(self):
