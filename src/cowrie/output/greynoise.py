@@ -44,6 +44,16 @@ class Output(cowrie.core.output.Output):
         """
         Scan IP againt Greynoise API
         """
+        def message(query):
+            log.msg(
+                eventid='cowrie.greynoise.result',
+                format='greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
+                ' along with the following %(meta)s metadata',
+                IP=entry['src_ip'],
+                tag=query['name'],
+                conf=query['confidence'],
+                meta=query['metadata']
+            )
 
         gnUrl = '{0}query/ip'.format(GNAPI_URL).encode('utf8')
         headers = ({'User-Agent': [COWRIE_USER_AGENT]})
@@ -55,8 +65,8 @@ class Output(cowrie.core.output.Output):
             headers=headers)
 
         if response.code != 200:
-            message = yield response.text()
-            log.error("greynoise: got error {}".format(message))
+            rsp = yield response.text()
+            log.error("greynoise: got error {}".format(rsp))
             return
 
         j = yield response.json()
@@ -72,14 +82,3 @@ class Output(cowrie.core.output.Output):
                         message(query)
             else:
                 log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))
-
-        def message(query):
-            log.msg(
-                eventid='cowrie.greynoise.result',
-                format='greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
-                ' along with the following %(meta)s metadata',
-                IP=entry['src_ip'],
-                tag=query['name'],
-                conf=query['confidence'],
-                meta=query['metadata']
-            )
