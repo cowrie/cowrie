@@ -1,4 +1,5 @@
 flake8
+flake8-import-order
 setuptools
 sphinx
 sphinx_rtd_theme
