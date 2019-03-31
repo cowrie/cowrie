@@ -1,4 +1,5 @@
 flake8
 setuptools
-tox
+sphinx
 sphinx_rtd_theme
+tox
