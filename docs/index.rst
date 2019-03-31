@@ -11,6 +11,7 @@ Welcome to Cowrie's documentation!
    :caption: Contents:
 
    README.rst
+   FAQ.rst
    LICENSE.rst
    INSTALL.rst
    CHANGELOG.rst
