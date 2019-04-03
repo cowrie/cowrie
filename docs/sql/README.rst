@@ -67,6 +67,7 @@ Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the Outp
     password = PASSWORD HERE
     port = 3306
     debug = false
+    enabled = true
 
 Restart Cowrie::
 
