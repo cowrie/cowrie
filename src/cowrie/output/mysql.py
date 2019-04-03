@@ -68,7 +68,9 @@ class Output(cowrie.core.output.Output):
                 passwd=CONFIG.get('output_mysql', 'password', raw=True),
                 port=port,
                 cp_min=1,
-                cp_max=1
+                cp_max=1,
+                charset='utf8mb4',
+                use_unicode=True
             )
         except MySQLdb.Error as e:
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
