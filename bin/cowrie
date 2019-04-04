@@ -100,6 +100,13 @@ cowrie_start() {
         echo 2>&1 "Not using Python virtual environment"
     fi
 
+    if [[ "$1" = "test" ]]
+    then
+        echo "Running trial tests..."
+        exec trial -l ${COWRIEARGS} cowrie
+        return
+    fi
+
     #Automatically check if the authbind is enabled or not
     authfile="/etc/authbind/byport/22"
     if [ -x "$authfile" ]; then
@@ -162,7 +169,7 @@ cowrie_force_stop () {
 }
 
 cowrie_usage() {
-    echo "usage: $0 <start|stop|force-stop|restart|status>"
+    echo "usage: $0 <start|stop|force-stop|restart|status|test>"
 }
 
 ################################################################################
@@ -218,6 +225,9 @@ case $key in
         ;;
     status)
         cowrie_status $*
+        ;;
+    test)
+        cowrie_start test $*
         ;;
     *)
         cowrie_usage
