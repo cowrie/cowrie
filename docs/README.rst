@@ -67,7 +67,7 @@ Requirements
 
 Software required:
 
-* Python 2.7+, (Limited Python 3 support available for SSH only)
+* Python 3.5+ (Python 2.7 supported for now but we recommend to upgrade)
 * python-virtualenv
 
 For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.
