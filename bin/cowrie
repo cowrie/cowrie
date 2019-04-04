@@ -71,6 +71,18 @@ cowrie_status() {
 
 cowrie_start() {
     # Start Cowrie
+
+    # CHECK ATTACHED
+    # Check if we should run attached to stdout
+    if [[ "$1" = "-a" ]]
+    then
+        echo "Running attached to stdout..."
+        shift 1
+        STDOUT="yes"
+        DAEMONIZE="-n"
+    fi
+
+    # DEFINE RUN ARGUMENTS
     COWRIEARGS="$*"
     TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask=0022 --pidfile=${PIDFILE}"
 
@@ -81,6 +93,7 @@ cowrie_start() {
         TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger"
     fi
 
+    # CHECK AND USE VIRTUAL_ENV
     # 1. Check if any virtual environment is active
     # 2. Try COWRIE_VIRTUAL_ENV if defined
     # 3. Try DEFAULT_VIRTUAL_ENV
@@ -100,6 +113,7 @@ cowrie_start() {
         echo 2>&1 "Not using Python virtual environment"
     fi
 
+    # CHECK IF TESTING ONLY
     if [[ "$1" = "test" ]]
     then
         echo "Running trial tests..."
@@ -107,7 +121,8 @@ cowrie_start() {
         return
     fi
 
-    #Automatically check if the authbind is enabled or not
+    # CHECK AUTHBIND
+    # Automatically check if the authbind is enabled or not
     authfile="/etc/authbind/byport/22"
     if command -v authbind >/dev/null 2>&1 && [ -x "$authfile" ]; then
         AUTHBIND_ENABLED=yes
@@ -115,6 +130,7 @@ cowrie_start() {
         AUTHBIND_ENABLED=no
     fi
 
+    # START COWRIE
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
     if [ "$AUTHBIND_ENABLED" = "no" ]
     then
@@ -169,7 +185,10 @@ cowrie_force_stop () {
 }
 
 cowrie_usage() {
-    echo "usage: $0 <start|stop|force-stop|restart|status|test>"
+    echo "Usage: $0 <start [-a]|stop|force-stop|restart|status|test>"
+    echo
+    echo "Start Options"
+    echo -e "\t-a\tRun attached to terminal and output directly to standard output"
 }
 
 ################################################################################
