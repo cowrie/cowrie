@@ -7,6 +7,8 @@ This module contains code for handling SSH direct-tcpip connection requests
 
 from __future__ import absolute_import, division
 
+import uuid
+
 from twisted.conch.ssh import forwarding
 from twisted.python import log
 
@@ -88,12 +90,13 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
     name = b'cowrie-discarded-direct-tcpip'
 
     def channelOpen(self, specificData):
+        self.id = uuid.uuid4().hex[:12]
         pass
 
     def dataReceived(self, data):
         log.msg(eventid='cowrie.direct-tcpip.data',
-                format='discarded direct-tcp forward request to %(dst_ip)s:%(dst_port)s with data %(data)s',
-                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
+                format='discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s',
+                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data), id=self.id)
         self._close("Connection refused")
 
 
