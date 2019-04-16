@@ -31,6 +31,8 @@ from __future__ import absolute_import, division
 from binascii import crc32
 from random import randint, seed
 
+from twisted.python import log
+
 from cowrie.core.config import CONFIG
 
 
@@ -51,37 +53,30 @@ class Passwd(object):
         """
         self.passwd = []
         with open(self.passwd_file, 'r') as f:
-            while True:
-                rawline = f.readline()
-                if not rawline:
-                    break
+            for index, line in enumerate(f):
+                if not line.startswith("#"):
+                    if len(line.split(":")) == 7:
+                        pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir, pw_shell = line.split(":")
+                        e = {}
+                        e["pw_name"] = pw_name
+                        e["pw_passwd"] = pw_passwd
+                        e["pw_gecos"] = pw_gecos
+                        e["pw_dir"] = pw_dir
+                        e["pw_shell"] = pw_shell
+                        try:
+                            e["pw_uid"] = int(pw_uid)
+                        except ValueError:
+                            e["pw_uid"] = 1001
+                        try:
+                            e["pw_gid"] = int(pw_gid)
+                        except ValueError:
+                            e["pw_gid"] = 1001
 
-                line = rawline.strip()
-                if not line:
+                        self.passwd.append(e)
+                    else:
+                        log.msg("Improper declaration of passwd fields on line: %s" % str(index+1))
+                else:
                     continue
-
-                if line.startswith('#'):
-                    continue
-
-                (pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir,
-                 pw_shell) = line.split(':')
-
-                e = {}
-                e["pw_name"] = pw_name
-                e["pw_passwd"] = pw_passwd
-                e["pw_gecos"] = pw_gecos
-                e["pw_dir"] = pw_dir
-                e["pw_shell"] = pw_shell
-                try:
-                    e["pw_uid"] = int(pw_uid)
-                except ValueError:
-                    e["pw_uid"] = 1001
-                try:
-                    e["pw_gid"] = int(pw_gid)
-                except ValueError:
-                    e["pw_gid"] = 1001
-
-                self.passwd.append(e)
 
     def save(self):
         """
