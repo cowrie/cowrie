@@ -43,6 +43,9 @@ class HoneyPotCommand(object):
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if '>' in self.args or '>>' in self.args:
+            if self.args[-1] in ['>', ">>"]:
+                self.errorWrite("-bash: parse error near '\\n' \n")
+                return
             self.writtenBytes = 0
             self.writefn = self.write_to_file
             if '>>' in self.args:
