@@ -59,10 +59,14 @@ class Output(cowrie.core.output.Output):
         headers = ({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'key': self.apiKey, 'ip': entry['src_ip']}
 
-        response = yield treq.post(
-            url=gnUrl,
-            data=fields,
-            headers=headers)
+        try:
+            response = yield treq.post(
+                url=gnUrl,
+                data=fields,
+                headers=headers,
+                timeout=10)
+        except defer.CancelledError:
+            log.msg("GreyNoise requests timeout")
 
         if response.code != 200:
             rsp = yield response.text()
