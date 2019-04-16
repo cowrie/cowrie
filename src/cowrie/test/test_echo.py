@@ -143,5 +143,12 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'echo -e "\x6b\x61\x6d\x69"')
         self.assertEquals(self.tr.value(), b'kami\n' + PROMPT)
 
+    def test_echo_command_017(self):
+        """
+        echo -e "\x6b\x61\x6d\x69"
+        """
+        self.proto.lineReceived(b'echo echo test | bash')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

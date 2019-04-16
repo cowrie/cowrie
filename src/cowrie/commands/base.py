@@ -652,7 +652,7 @@ class command_sh(HoneyPotCommand):
             self.execute_commands(line)
 
         elif self.input_data:
-            self.execute_commands(self.input_data)
+            self.execute_commands(self.input_data.decode('utf8'))
 
         # TODO: handle spawning multiple shells, support other sh flags
 
