@@ -100,9 +100,9 @@ cowrie_start() {
         echo 2>&1 "Not using Python virtual environment"
     fi
 
-    #Automatically check if the authbind is enabled or not
+    # Automatically check if the authbind is enabled or not
     authfile="/etc/authbind/byport/22"
-    if [ -x "$authfile" ] && which authbind>/dev/null; then
+    if [ -z AUTHBIND_ENABLED ] && [ -x "$authfile" ] && which authbind>/dev/null; then
         AUTHBIND_ENABLED=yes
     else
         AUTHBIND_ENABLED=no
