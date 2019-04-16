@@ -90,13 +90,13 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
     name = b'cowrie-discarded-direct-tcpip'
 
     def channelOpen(self, specificData):
-        self.id = uuid.uuid4().hex[:12]
+        self.fwdid = uuid.uuid4().hex[:12]
         pass
 
     def dataReceived(self, data):
         log.msg(eventid='cowrie.direct-tcpip.data',
                 format='discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s',
-                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data), id=self.id)
+                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data), id=self.fwdid)
         self._close("Connection refused")
 
 
