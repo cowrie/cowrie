@@ -6,7 +6,7 @@ from __future__ import absolute_import, division
 
 import treq
 
-from twisted.internet import defer
+from twisted.internet import defer, error
 from twisted.python import log
 
 import cowrie.core.output
@@ -59,10 +59,15 @@ class Output(cowrie.core.output.Output):
         headers = ({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'key': self.apiKey, 'ip': entry['src_ip']}
 
-        response = yield treq.post(
-            url=gnUrl,
-            data=fields,
-            headers=headers)
+        try:
+            response = yield treq.post(
+                url=gnUrl,
+                data=fields,
+                headers=headers,
+                timeout=10)
+        except (defer.CancelledError, error.ConnectingCancelledError, error.DNSLookupError):
+            log.msg("GreyNoise requests timeout")
+            return
 
         if response.code != 200:
             rsp = yield response.text()
@@ -72,13 +77,14 @@ class Output(cowrie.core.output.Output):
         j = yield response.json()
         if self.debug:
             log.msg("greynoise: debug: "+repr(j))
-            if j['status'] == "ok":
-                if "all" not in self.tags:
-                    for query in j['records']:
-                        if query['name'] in self.tags:
-                            message(query)
-                else:
-                    for query in j['records']:
+
+        if j['status'] == "ok":
+            if "all" not in self.tags:
+                for query in j['records']:
+                    if query['name'] in self.tags:
                         message(query)
             else:
-                log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))
+                for query in j['records']:
+                    message(query)
+        else:
+            log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))

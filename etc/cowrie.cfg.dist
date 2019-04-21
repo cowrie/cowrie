@@ -807,6 +807,7 @@ topic = cowrie
 
 #[output_greynoise]
 #enabled = true
+#debug=False
 # Name of the tags separated by comma, for which the IP has to be scanned for.
 # Example "SHODAN,JBOSS_WORM,CPANEL_SCANNER_LOW"
 # If there isn't any specific tag then just leave it "all"
