@@ -12,6 +12,8 @@ from twisted.python import log
 
 from cowrie.core.config import CONFIG
 
+import netaddr
+
 
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
     """
@@ -29,12 +31,33 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     redirectEnabled = CONFIG.getboolean('ssh', 'forward_redirect', fallback=False)
     if redirectEnabled:
         redirects = {}
+        dst_network_lst = []
         items = CONFIG.items('ssh')
         for i in items:
             if i[0].startswith('forward_redirect_'):
-                destPort = i[0].split('_')[-1]
-                redirectHP = i[1].split(':')
-                redirects[int(destPort)] = (redirectHP[0], int(redirectHP[1]))
+                if i[0].split('_')[-1] == 'ext':
+                    destPort = i[0].split('_')[-2]
+                    redirectParam = i[1].split(':')
+                    dest_targetIPnet = netaddr.IPNetwork(redirectParam[0])
+                    dst_network_lst.append(dest_targetIPnet)
+                    redirects[str(dest_targetIPnet.cidr) + ":" + destPort] = (redirectParam[1], int(redirectParam[2]))
+                else:
+                    destPort = i[0].split('_')[-1]
+                    redirectHP = i[1].split(':')
+                    redirects[int(destPort)] = (redirectHP[0], int(redirectHP[1]))
+
+        remoteAddr = netaddr.IPAddress(remoteHP[0])
+        for dst_network in dst_network_lst:
+            if remoteAddr in dst_network and (str(dst_network.cidr) + ":" + destPort) in redirects:
+                remoteHPNew = redirects[str(dst_network.cidr) + ":" + destPort ]
+                log.msg(eventid='cowrie.direct-tcpip.redirect',
+                        format='redirected direct-tcp connection request from %(src_ip)s:%(src_port)' +
+                           'd to %(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d',
+                        new_ip=remoteHPNew[0], new_port=remoteHPNew[1],
+                        dst_ip=remoteHP[0], dst_port=remoteHP[1],
+                        src_ip=origHP[0], src_port=origHP[1])
+                return SSHConnectForwardingChannel(remoteHPNew, remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
+
         if remoteHP[1] in redirects:
             remoteHPNew = redirects[remoteHP[1]]
             log.msg(eventid='cowrie.direct-tcpip.redirect',
@@ -116,9 +139,9 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         Modifies the original to send a TCP tunnel request via the CONNECT method
         """
         forwarding.SSHConnectForwardingChannel.channelOpen(self, specificData)
-        dst = self.dstport[0] + b':' + str(self.dstport[1])
-        connect_hdr = b'CONNECT ' + dst + b" HTTP/1.1\r\n\r\n"
-        forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
+        dst = self.dstport[0] + ':' + str(self.dstport[1])
+        connect_hdr = 'CONNECT ' + dst + " HTTP/1.1\r\n\r\n"
+        forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr.encode())
 
     def dataReceived(self, data):
         log.msg(eventid='cowrie.tunnelproxy-tcpip.data',
@@ -141,7 +164,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                 log.err('Unexpected response code: {}'.format(res_code))
                 self._close("Connection refused")
             # Strip off rest of packet
-            eop = data.find("\r\n\r\n")
+            eop = data.decode().find("\r\n\r\n")
             if eop > -1:
                 data = data[eop + 4:]
             # This only happens once when the channel is opened
