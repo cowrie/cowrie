@@ -31,7 +31,7 @@ class CowrieUser(avatar.ConchUser):
         try:
             pwentry = pwd.Passwd().getpwnam(self.username)
             self.temporary = False
-        except Exception:
+        except KeyError:
             pwentry = pwd.Passwd().setpwentry(self.username)
             self.temporary = True
 

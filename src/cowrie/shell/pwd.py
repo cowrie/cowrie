@@ -30,9 +30,9 @@ from __future__ import absolute_import, division
 
 from binascii import crc32
 from random import randint, seed
+from twisted.python import log
 
 from cowrie.core.config import CONFIG
-
 
 class Passwd(object):
     """
@@ -61,6 +61,10 @@ class Passwd(object):
                     continue
 
                 if line.startswith('#'):
+                    continue
+
+                if len(line.split(':')) != 7:
+                    log.msg("Error parsing line `"+line+"` in <honeyfs>/etc/passwd")
                     continue
 
                 (pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir,

@@ -36,7 +36,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
             self.uid = pwentry["pw_uid"]
             self.gid = pwentry["pw_gid"]
             self.home = pwentry["pw_dir"]
-        except Exception:
+        except KeyError:
             self.uid = 1001
             self.gid = 1001
             self.home = '/home'
