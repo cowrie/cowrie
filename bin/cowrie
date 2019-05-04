@@ -102,7 +102,7 @@ cowrie_start() {
 
     # Automatically check if the authbind is enabled or not
     authfile="/etc/authbind/byport/22"
-    if [ -z AUTHBIND_ENABLED ] && [ -x "$authfile" ] && which authbind>/dev/null; then
+    if [ -z ${AUTHBIND_ENABLED} ] && [ -x "$authfile" ] && which authbind>/dev/null; then
         AUTHBIND_ENABLED=yes
     else
         AUTHBIND_ENABLED=no
