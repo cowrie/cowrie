@@ -30,9 +30,11 @@ from __future__ import absolute_import, division
 
 from binascii import crc32
 from random import randint, seed
+
 from twisted.python import log
 
 from cowrie.core.config import CONFIG
+
 
 class Passwd(object):
     """
