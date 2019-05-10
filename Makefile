@@ -1,3 +1,4 @@
+# This `Makefile` is intended for Cowrie developers. 
 
 # Dummy target `all`
 all:
