@@ -16,4 +16,10 @@ lint:
 	flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
 
 clean:
-	rm -rf _trial_temp
+	rm -rf _trial_temp build dist
+
+pip-upgrade:
+	pip install --upgrade -r requirements.txt
+
+pip-check:
+	pip check
