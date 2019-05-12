@@ -3,10 +3,8 @@
 # Dummy target `all`
 all:
 
-# Note --aplication-import-names only works on Python3
-
-test: lint
-	PYTHONPATH=src trial cowrie
+test:
+	tox
 
 build:
 	python setup.py build sdist bdist
@@ -15,7 +13,7 @@ docs:
 	make -C docs html
 
 lint:
-	flake8 --count --application-import-names cowrie --max-line-length=120 --statistics --exclude=cowrie-env .
+	tox -e lint
 
 clean:
 	rm -rf _trial_temp build dist
