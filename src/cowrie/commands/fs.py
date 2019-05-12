@@ -314,7 +314,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             return
 
         for o, a in optlist:
-            if o in ('--rescursive', '-r', '-R'):
+            if o in ('--recursive', '-r', '-R'):
                 recursive = True
             elif o in ('--force', '-f'):
                 force = True
