@@ -168,7 +168,7 @@ class Output(cowrie.core.output.Output):
                 log.msg(eventid='cowrie.virustotal.scanfile',
                         format='VT: New file %(sha256)s',
                         session=entry['session'],
-                        sha256=j["sha256"],
+                        sha256=j["resource"],
                         is_new="true")
                 p = urlparse(entry["url"]).path
                 if p == "":
@@ -200,7 +200,7 @@ class Output(cowrie.core.output.Output):
                             positives=j["positives"],
                             total=j["total"],
                             scan_date=j["scan_date"],
-                            sha256=j["sha256"],
+                            sha256=j["resource"],
                             scans=scans_summary,
                             is_new="false",
                     )
