@@ -304,42 +304,27 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             self.errorWrite("rm: missing operand\n")
             self.paramError()
             return
-        for f in self.args:
-            if f.startswith('--'):
-                if f == '--rescursive':
-                    recursive = True
-                elif f == '--force':
-                    force = True
-                elif f == '--verbose':
-                    verbose = True
-                elif f == '--help':
-                    self.help()
-                    return
-                else:
-                    self.errorWrite("rm: invalid option -- '{}'\n".format(f))
-                    self.paramError()
-                    return
-            elif f.startswith('-') and len(f) > 1:
-                for c in f:
-                    if '-' in c:
-                        continue
-                    elif 'r' in c or 'R' in c:
-                        recursive = True
-                    elif 'f' in c:
-                        force = True
-                    elif 'v' in c:
-                        verbose = True
-                    elif 'h' in f:
-                        self.help()
-                        return
-                    else:
-                        self.errorWrite("rm: invalid option -- '{}'\n".format(c))
-                        self.paramError()
-                        return
 
-        for f in self.args:
-            if f.startswith('-') and len(f) > 1:
-                continue
+        try:
+            optlist, args = getopt.gnu_getopt(self.args,'rTfvh', ['help','recursive','force','verbose'])
+        except getopt.GetoptError as err:
+            self.errorWrite("rm: invalid option -- '{}'\n".format(c))
+            self.paramError()
+            self.exit()
+            return
+
+        for o,a in optlist:
+            if o in ('--rescursive','-r','-R'):
+                recursive = True
+            elif o in ('--force','-f'):
+                force = True
+            elif o in ('--verbose','-v'):
+                verbose = True
+            elif o in ('--help','-h'):
+                self.help()
+                return
+
+        for f in args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 # verify path to file exists
