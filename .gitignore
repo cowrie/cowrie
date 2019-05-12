@@ -20,3 +20,4 @@ _trial_temp
 .project
 .pydevproject
 .idea/
+.tox
