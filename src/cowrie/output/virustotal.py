@@ -159,10 +159,10 @@ class Output(cowrie.core.output.Output):
             """
             Extract the information we need from the body
             """
-            result = result.decode('utf8')
-            j = json.loads(result)
             if self.debug:
                 log.msg("VT scanfile result: {}".format(result))
+            result = result.decode('utf8')
+            j = json.loads(result)
             log.msg("VT: {}".format(j["verbose_msg"]))
             if j["response_code"] == 0:
                 log.msg(eventid='cowrie.virustotal.scanfile',
@@ -258,6 +258,7 @@ class Output(cowrie.core.output.Output):
         def processResult(result):
             if self.debug:
                 log.msg("VT postfile result: {}".format(result))
+            result = result.decode('utf8')
             j = json.loads(result)
             # This is always a new resource, since we did the scan before
             # so always create the comment
@@ -313,10 +314,10 @@ class Output(cowrie.core.output.Output):
             """
             Extract the information we need from the body
             """
-            result = result.decode('utf8')
-            j = json.loads(result)
             if self.debug:
                 log.msg("VT scanurl result: {}".format(result))
+            result = result.decode('utf8')
+            j = json.loads(result)
             log.msg("VT: {}".format(j["verbose_msg"]))
 
             if j["response_code"] == 0:
@@ -397,6 +398,7 @@ class Output(cowrie.core.output.Output):
         def processResult(result):
             if self.debug:
                 log.msg("VT postcomment result: {}".format(result))
+            result = result.decode('utf8')
             j = json.loads(result)
             return j["response_code"]
 
