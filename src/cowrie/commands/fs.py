@@ -259,6 +259,8 @@ class command_rm(HoneyPotCommand):
             if f.startswith('-') and 'r' in f:
                 recursive = True
         for f in self.args:
+            if f.startswith('-'):
+                continue
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 # verify path to file exists
