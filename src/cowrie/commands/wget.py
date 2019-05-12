@@ -207,7 +207,7 @@ class command_wget(HoneyPotCommand):
             # Real wget also adds this:
         if hasattr(error, 'webStatus') and error.webStatus and hasattr(error, 'webMessage'):  # exceptions
             self.errorWrite('{} ERROR {}: {}\n'.format(time.strftime('%Y-%m-%d %T'), error.webStatus.decode(),
-                                                       error.webMessage.decode()))
+                                                       error.webMessage.decode('utf8')))
         else:
             self.errorWrite('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
 
