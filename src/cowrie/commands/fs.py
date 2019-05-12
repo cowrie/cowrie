@@ -306,21 +306,21 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             return
 
         try:
-            optlist, args = getopt.gnu_getopt(self.args,'rTfvh', ['help','recursive','force','verbose'])
+            optlist, args = getopt.gnu_getopt(self.args, 'rTfvh', ['help', 'recursive', 'force', 'verbose'])
         except getopt.GetoptError as err:
-            self.errorWrite("rm: invalid option -- '{}'\n".format(c))
+            self.errorWrite("rm: invalid option -- '{}'\n".format(err.opt))
             self.paramError()
             self.exit()
             return
 
-        for o,a in optlist:
-            if o in ('--rescursive','-r','-R'):
+        for o, a in optlist:
+            if o in ('--rescursive', '-r', '-R'):
                 recursive = True
-            elif o in ('--force','-f'):
+            elif o in ('--force', '-f'):
                 force = True
-            elif o in ('--verbose','-v'):
+            elif o in ('--verbose', '-v'):
                 verbose = True
-            elif o in ('--help','-h'):
+            elif o in ('--help', '-h'):
                 self.help()
                 return
 
