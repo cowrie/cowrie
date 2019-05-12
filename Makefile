@@ -4,6 +4,7 @@
 all:
 
 # Note --aplication-import-names only works on Python3
+
 test: lint
 	PYTHONPATH=src trial cowrie
 
@@ -14,7 +15,7 @@ docs:
 	make -C docs html
 
 lint:
-	flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
+	flake8 --count --application-import-names cowrie --max-line-length=120 --statistics --exclude=cowrie-env .
 
 clean:
 	rm -rf _trial_temp build dist
