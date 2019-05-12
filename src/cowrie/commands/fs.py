@@ -293,10 +293,9 @@ Full documentation at: <http://www.gnu.org/software/coreutils/rm>
 or available locally via: info '(coreutils) rm invocation'\n"""
         )
 
-
     def paramError(self):
         self.errorWrite("Try 'rm --help' for more information\n")
-        
+
     def call(self):
         recursive = False
         force = False
@@ -309,7 +308,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             if f.startswith('--'):
                 if f == '--rescursive':
                     recursive = True
-                elif f =='--force':
+                elif f == '--force':
                     force = True
                 elif f == '--verbose':
                     verbose = True
@@ -337,7 +336,6 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                         self.errorWrite("rm: invalid option -- '{}'\n".format(c))
                         self.paramError()
                         return
-
 
         for f in self.args:
             if f.startswith('-') and len(f) > 1:
