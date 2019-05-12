@@ -1,28 +1,16 @@
-sudo: required
 group: stable
 dist: xenial
 os: linux
+sudo: false
 language: python
-services:
-  - docker
 python:
   - '2.7'
   - '3.5'
   - '3.6'
   - '3.7'
   - '3.8-dev'
-before_install:
-  - sudo apt-get -qq update
-install:
-  - pip install -r requirements.txt
-  - pip install -r requirements-dev.txt
-before_script:
-  # stop the build if there are Python syntax errors or undefined names
-  - flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
-  - python setup.py build sdist bdist
-  - make -C docs html
-script:
-  -  PYTHONPATH=${TRAVIS_BUILD_DIR}/src trial cowrie
+install: pip install tox-travis
+script: tox
 notifications:
   email: false
   slack:
