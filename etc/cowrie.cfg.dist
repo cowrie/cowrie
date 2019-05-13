@@ -468,6 +468,12 @@ forward_redirect = false
 # forward_redirect_25 = 127.0.0.1:12525
 # forward_redirect_587 = 127.0.0.1:12525
 
+# To Switching With Destination(Address-Range)
+# e.g 192.168.100.0/24:25 -> localhost:12525
+#     192.168.200.0/24:25 -> localhost:22525
+# forward_redirect_25_ext1 = 192.168.100.0/24:127.0.0.1:12525
+# forward_redirect_25_ext2 = 192.168.200.0/24:127.0.0.1:22525
+
 
 # This enables tunneling forwarding requests to another address
 # Useful for forwarding protocols to a proxy like Squid

@@ -13,6 +13,7 @@ from twisted.python import log
 from cowrie.core.config import CONFIG
 
 import netaddr
+import re
 
 
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
@@ -35,7 +36,7 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
         items = CONFIG.items('ssh')
         for i in items:
             if i[0].startswith('forward_redirect_'):
-                if i[0].split('_')[-1] == 'ext':
+                if re.match('ext\d{1,}', i[0].split('_')[-1]):
                     destPort = i[0].split('_')[-2]
                     redirectParam = i[1].split(':')
                     dest_targetIPnet = netaddr.IPNetwork(redirectParam[0])
