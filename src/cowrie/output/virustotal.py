@@ -28,7 +28,6 @@
 
 """
 Send SSH logins to Virustotal
-Work in Progress - not functional yet
 """
 
 from __future__ import absolute_import, division
@@ -87,7 +86,7 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if entry["eventid"] == 'cowrie.session.file_download':
             # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
-            if self.scan_url:
+            if self.scan_url and 'url' in entry:
                 log.msg("Checking url scan report at VT")
                 self.scanurl(entry)
             if self._is_new_shasum(entry["shasum"]) and self.scan_file:
