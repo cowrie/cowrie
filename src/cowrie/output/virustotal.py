@@ -85,7 +85,6 @@ class Output(cowrie.core.output.Output):
 
     def write(self, entry):
         if entry["eventid"] == 'cowrie.session.file_download':
-            # TODO: RENABLE file upload to virustotal (git commit 6546f1ee)
             if self.scan_url and 'url' in entry:
                 log.msg("Checking url scan report at VT")
                 self.scanurl(entry)
@@ -122,7 +121,7 @@ class Output(cowrie.core.output.Output):
         """
         vtUrl = '{0}file/report'.format(VTAPI_URL).encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
-        fields = {'apikey': self.apiKey, 'resource': entry["shasum"]}
+        fields = {'apikey': self.apiKey, 'resource': entry["shasum"], 'allinfo': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
         d = self.agent.request(b'POST', vtUrl, headers, body)
 
@@ -277,7 +276,7 @@ class Output(cowrie.core.output.Output):
         """
         vtUrl = '{0}url/report'.format(VTAPI_URL).encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
-        fields = {'apikey': self.apiKey, 'resource': entry['url'], 'scan': 1}
+        fields = {'apikey': self.apiKey, 'resource': entry['url'], 'scan': 1, 'allinfo': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
         d = self.agent.request(b'POST', vtUrl, headers, body)
 
