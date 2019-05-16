@@ -17,10 +17,13 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
+    """
+    s3 output
+    """
+    bucket = CowrieConfig().get("output_s3", "bucket")
 
-    def __init__(self):
+    def start(self):
         self.seen = set()
-
         self.session = get_session()
 
         try:
@@ -39,11 +42,6 @@ class Output(cowrie.core.output.Output):
             endpoint_url=CowrieConfig().get("output_s3", "endpoint") or None,
             verify=False if CowrieConfig().get("output_s3", "verify") == "no" else True,
         )
-        self.bucket = CowrieConfig().get("output_s3", "bucket")
-        cowrie.core.output.Output.__init__(self)
-
-    def start(self):
-        pass
 
     def stop(self):
         pass

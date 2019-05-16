@@ -10,15 +10,16 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-    def __init__(self):
+    """
+    socketlog output
+    """
+    timeout = CowrieConfig().getint('output_socketlog', 'timeout')
+
+    def start(self):
         addr = CowrieConfig().get('output_socketlog', 'address')
         self.host = addr.split(':')[0]
         self.port = int(addr.split(':')[1])
 
-        self.timeout = CowrieConfig().getint('output_socketlog', 'timeout')
-        cowrie.core.output.Output.__init__(self)
-
-    def start(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
         self.sock.connect((self.host, self.port))

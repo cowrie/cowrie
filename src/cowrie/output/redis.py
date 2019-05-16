@@ -16,10 +16,9 @@ SEND_METHODS = {
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
+    """
+    redis output
+    """
     def start(self):
         """
         Initialize pymisp module and ObjectWrapper (Abstract event and object creation)
