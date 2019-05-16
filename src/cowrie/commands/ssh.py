@@ -12,7 +12,7 @@ import time
 from twisted.internet import reactor
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -47,9 +47,8 @@ class command_ssh(HoneyPotCommand):
             self.exit()
         for opt in optlist:
             if opt[0] == '-V':
-                self.write(CONFIG.get('shell', 'ssh_version',
-                                      fallback="OpenSSH_7.9p1, \
-                                      OpenSSL 1.1.1a  20 Nov 2018")+"\n")
+                self.write(CowrieConfig().get('shell', 'ssh_version',
+                           fallback="OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018")+"\n")
                 self.exit()
                 return
         if not len(args):

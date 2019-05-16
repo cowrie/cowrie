@@ -17,7 +17,7 @@ from twisted.internet import protocol
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.core.credentials import UsernamePasswordIP
 
 
@@ -39,7 +39,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
 
     def startFactory(self):
         try:
-            honeyfs = CONFIG.get('honeypot', 'contents_path')
+            honeyfs = CowrieConfig().get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
             self.banner = open(issuefile, 'rb').read()
         except IOError:
@@ -140,7 +140,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write(b'\n')
 
         # Remove the short timeout of the login prompt.
-        self.transport.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout', fallback=300))
+        self.transport.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
 
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
@@ -191,7 +191,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         sessionno = self.transport.sessionno
 
         self.startTime = time.time()
-        self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout', fallback=120))
+        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
 
         log.msg(eventid='cowrie.session.connect',
                 format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',

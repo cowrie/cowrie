@@ -51,7 +51,7 @@ from twisted.web.iweb import IBodyProducer
 from zope.interface import implementer
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
 VTAPI_URL = 'https://www.virustotal.com/vtapi/v2/'
@@ -62,13 +62,13 @@ TIME_SINCE_FIRST_DOWNLOAD = datetime.timedelta(minutes=1)
 class Output(cowrie.core.output.Output):
 
     def __init__(self):
-        self.apiKey = CONFIG.get('output_virustotal', 'api_key')
-        self.debug = CONFIG.getboolean('output_virustotal', 'debug', fallback=False)
-        self.upload = CONFIG.getboolean('output_virustotal', 'upload', fallback=True)
-        self.comment = CONFIG.getboolean('output_virustotal', 'comment', fallback=True)
-        self.scan_file = CONFIG.getboolean('output_virustotal', 'scan_file', fallback=True)
-        self.scan_url = CONFIG.getboolean('output_virustotal', 'scan_url', fallback=False)
-        self.commenttext = CONFIG.get('output_virustotal', 'commenttext', fallback=COMMENT)
+        self.apiKey = CowrieConfig().get('output_virustotal', 'api_key')
+        self.debug = CowrieConfig().getboolean('output_virustotal', 'debug', fallback=False)
+        self.upload = CowrieConfig().getboolean('output_virustotal', 'upload', fallback=True)
+        self.comment = CowrieConfig().getboolean('output_virustotal', 'comment', fallback=True)
+        self.scan_file = CowrieConfig().getboolean('output_virustotal', 'scan_file', fallback=True)
+        self.scan_url = CowrieConfig().getboolean('output_virustotal', 'scan_url', fallback=False)
+        self.commenttext = CowrieConfig().get('output_virustotal', 'commenttext', fallback=COMMENT)
         cowrie.core.output.Output.__init__(self)
 
     def start(self):
@@ -100,7 +100,7 @@ class Output(cowrie.core.output.Output):
 
     def _is_new_shasum(self, shasum):
         # Get the downloaded file's modification time
-        shasumfile = os.path.join(CONFIG.get('honeypot', 'download_path'), shasum)
+        shasumfile = os.path.join(CowrieConfig().get('honeypot', 'download_path'), shasum)
         file_modification_time = datetime.datetime.fromtimestamp(os.stat(shasumfile).st_mtime)
 
         # Assumptions:

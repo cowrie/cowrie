@@ -28,7 +28,7 @@
 
 from __future__ import absolute_import, division
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class CowrieServer(object):
@@ -43,4 +43,4 @@ class CowrieServer(object):
 
     def __init__(self, realm):
         self.avatars = []
-        self.hostname = CONFIG.get('honeypot', 'hostname')
+        self.hostname = CowrieConfig().get('honeypot', 'hostname')

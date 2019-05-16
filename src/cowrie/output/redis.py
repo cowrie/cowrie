@@ -6,7 +6,7 @@ from ConfigParser import NoOptionError
 import redis
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 SEND_METHODS = {
     'lpush': lambda redis_client, key, message: redis_client.lpush(key, message),
@@ -24,26 +24,26 @@ class Output(cowrie.core.output.Output):
         """
         Initialize pymisp module and ObjectWrapper (Abstract event and object creation)
         """
-        host = CONFIG.get('output_redis', 'host')
-        port = CONFIG.get('output_redis', 'port')
+        host = CowrieConfig().get('output_redis', 'host')
+        port = CowrieConfig().get('output_redis', 'port')
 
         try:
-            db = CONFIG.get('output_redis', 'db')
+            db = CowrieConfig().get('output_redis', 'db')
         except NoOptionError:
             db = 0
 
         try:
-            password = CONFIG.get('output_redis', 'password')
+            password = CowrieConfig().get('output_redis', 'password')
         except NoOptionError:
             password = None
 
         self.redis = redis.StrictRedis(host=host, port=port, db=db,
                                        password=password)
 
-        self.keyname = CONFIG.get('output_redis', 'keyname')
+        self.keyname = CowrieConfig().get('output_redis', 'keyname')
 
         try:
-            self.send_method = SEND_METHODS[CONFIG.get('output_redis', 'send_method')]
+            self.send_method = SEND_METHODS[CowrieConfig().get('output_redis', 'send_method')]
         except (NoOptionError, KeyError):
             self.send_method = SEND_METHODS['lpush']
 

@@ -35,7 +35,7 @@ from twisted.python import log
 
 from zope.interface import implementer
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.proxy import avatar as proxyavatar
 from cowrie.proxy import server as proxyserver
 from cowrie.shell import avatar as shellavatar
@@ -50,7 +50,7 @@ class HoneyPotRealm(object):
         pass
 
     def requestAvatar(self, avatarId, mind, *interfaces):
-        backend = CONFIG.get('honeypot', 'backend', fallback='shell')
+        backend = CowrieConfig().get('honeypot', 'backend', fallback='shell')
 
         if backend == 'shell':
             if conchinterfaces.IConchUser in interfaces:

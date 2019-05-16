@@ -22,7 +22,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log, randbytes
 from twisted.python.compat import _bytesChr as chr
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
@@ -68,7 +68,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
 
         self.startTime = time.time()
-        self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout', fallback=120))
+        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
 
     def sendKexInit(self):
         """
@@ -196,7 +196,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         # Reset timeout. Not everyone opens shell so need timeout at transport level
         if service.name == b'ssh-connection':
-            self.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout', fallback=300))
+            self.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS

@@ -6,29 +6,17 @@ from influxdb.exceptions import InfluxDBClientError
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
+    """
+    influx output
+    """
     def start(self):
-        try:
-            host = CONFIG.get('output_influx', 'host')
-        except Exception:
-            host = ''
-
-        try:
-            port = CONFIG.getint('output_influx', 'port')
-        except Exception:
-            port = 8086
-
-        try:
-            ssl = CONFIG.getboolean('output_influx', 'ssl')
-        except Exception:
-            ssl = False
+        host = CowrieConfig().get('output_influx', 'host', fallback='')
+        port = CowrieConfig().getint('output_influx', 'port', fallback=8086)
+        ssl = CowrieConfig().getboolean('output_influx', 'ssl', fallback=False)
 
         self.client = None
         try:
@@ -42,22 +30,22 @@ class Output(cowrie.core.output.Output):
             log.err("output_influx: cannot instantiate client!")
             return
 
-        if (CONFIG.has_option('output_influx', 'username') and
-                CONFIG.has_option('output_influx', 'password')):
-            username = CONFIG.get('output_influx', 'username')
-            password = CONFIG.get('output_influx', 'password', raw=True)
+        if (CowrieConfig().has_option('output_influx', 'username') and
+                CowrieConfig().has_option('output_influx', 'password')):
+            username = CowrieConfig().get('output_influx', 'username')
+            password = CowrieConfig().get('output_influx', 'password', raw=True)
             self.client.switch_user(username, password)
 
         try:
-            dbname = CONFIG.get('output_influx', 'database_name')
+            dbname = CowrieConfig().get('output_influx', 'database_name')
         except Exception:
             dbname = 'cowrie'
 
         retention_policy_duration_default = '12w'
         retention_policy_name = dbname + "_retention_policy"
 
-        if CONFIG.has_option('output_influx', 'retention_policy_duration'):
-            retention_policy_duration = CONFIG.get(
+        if CowrieConfig().has_option('output_influx', 'retention_policy_duration'):
+            retention_policy_duration = CowrieConfig().get(
                 'output_influx', 'retention_policy_duration')
 
             match = re.search(r'^\d+[dhmw]{1}$', retention_policy_duration)

@@ -11,7 +11,7 @@ import socket
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -142,7 +142,7 @@ Download a file via FTP
             self.exit()
             return
 
-        self.download_path = CONFIG.get('honeypot', 'download_path')
+        self.download_path = CowrieConfig().get('honeypot', 'download_path')
 
         self.url_log = 'ftp://'
         if self.username:
@@ -194,8 +194,8 @@ Download a file via FTP
 
     def ftp_download(self):
         out_addr = ('', 0)
-        if CONFIG.has_option('honeypot', 'out_addr'):
-            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
+        if CowrieConfig().has_option('honeypot', 'out_addr'):
+            out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         ftp = FTP(source_address=out_addr)
 

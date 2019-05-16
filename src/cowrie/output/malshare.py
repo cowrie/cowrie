@@ -42,15 +42,14 @@ except ImportError:
 import requests
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
 
 
 class Output(cowrie.core.output.Output):
+    """
+    malshare output
 
-    def __init__(self):
-        self.enabled = CONFIG.getboolean('output_malshare', 'enabled')
-        cowrie.core.output.Output.__init__(self)
-
+    TODO: use `treq`
+    """
     def start(self):
         """
         Start output plugin
@@ -86,17 +85,16 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to MalShare
         """
-        if self.enabled:
-            try:
-                res = requests.post(
-                    "https://malshare.com/api.php?mode=cli",
-                    files={fileName: open(artifact, "rb")},
-                    verify=False
-                )
-                if res and res.ok:
-                    print("Submited to MalShare")
-                else:
-                    print("MalShare Request failed: {}".format(res.status_code))
-            except Exception as e:
-                print("MalShare Request failed: {}".format(e))
+        try:
+            res = requests.post(
+                "https://malshare.com/api.php?mode=cli",
+                files={fileName: open(artifact, "rb")},
+                verify=False
+            )
+            if res and res.ok:
+                print("Submited to MalShare")
+            else:
+                print("MalShare Request failed: {}".format(res.status_code))
+        except Exception as e:
+            print("MalShare Request failed: {}".format(e))
         return

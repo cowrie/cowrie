@@ -17,7 +17,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 import cowrie.commands
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import command
 from cowrie.shell import honeypot
 
@@ -82,21 +82,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         log.msg(eventid='cowrie.session.params', arch=self.user.server.arch)
 
-        try:
-            timeout = CONFIG.getint('honeypot', 'interactive_timeout')
-        except Exception:
-            timeout = 180
+        timeout = CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=180)
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
         try:
-            self.clientIP = CONFIG.get('honeypot', 'fake_addr')
+            self.clientIP = CowrieConfig().get('honeypot', 'fake_addr')
         except Exception:
             self.clientIP = self.realClientIP
 
         # Source IP of server in user visible reports (can be fake or real)
-        if CONFIG.has_option('honeypot', 'internet_facing_ip'):
-            self.kippoIP = CONFIG.get('honeypot', 'internet_facing_ip')
+        if CowrieConfig().has_option('honeypot', 'internet_facing_ip'):
+            self.kippoIP = CowrieConfig().get('honeypot', 'internet_facing_ip')
         else:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -163,7 +160,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     path = i
                     break
 
-        txt = os.path.normpath('{}/txtcmds/{}'.format(CONFIG.get('honeypot', 'share_path'), path))
+        txt = os.path.normpath('{}/txtcmds/{}'.format(CowrieConfig().get('honeypot', 'share_path'), path))
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
 

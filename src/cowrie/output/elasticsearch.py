@@ -5,19 +5,18 @@ from __future__ import absolute_import, division
 from elasticsearch import Elasticsearch
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-
-        self.host = CONFIG.get('output_elasticsearch', 'host')
-        self.port = CONFIG.get('output_elasticsearch', 'port')
-        self.index = CONFIG.get('output_elasticsearch', 'index')
-        self.type = CONFIG.get('output_elasticsearch', 'type')
-        self.pipeline = CONFIG.get('output_elasticsearch', 'pipeline')
-        cowrie.core.output.Output.__init__(self)
+    """
+    elasticsearch output
+    """
+    host = CowrieConfig().get('output_elasticsearch', 'host')
+    port = CowrieConfig().get('output_elasticsearch', 'port')
+    index = CowrieConfig().get('output_elasticsearch', 'index')
+    type = CowrieConfig().get('output_elasticsearch', 'type')
+    pipeline = CowrieConfig().get('output_elasticsearch', 'pipeline')
 
     def start(self):
         self.es = Elasticsearch('{0}:{1}'.format(self.host, self.port))

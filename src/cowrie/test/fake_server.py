@@ -8,7 +8,7 @@ from __future__ import absolute_import, division
 import copy
 import pickle
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
 
@@ -23,7 +23,7 @@ class FakeServer:
         self.hostname = "unitTest"
 
         self.pckl = pickle.load(
-            open(CONFIG.get('honeypot', 'filesystem_file'), 'rb'))
+            open(CowrieConfig().get('honeypot', 'filesystem_file'), 'rb'))
         self.fs = fs.HoneyPotFilesystem(copy.deepcopy(self.pckl), 'arch')
         self.process = None
 

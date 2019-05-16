@@ -47,7 +47,7 @@ import cowrie.core.realm
 import cowrie.ssh.factory
 import cowrie.telnet.transport
 from cowrie import core
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 
 if __version__.major < 17:
@@ -102,7 +102,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             print('ERROR: You must not run cowrie as root!')
             sys.exit(1)
 
-        tz = CONFIG.get('honeypot', 'timezone', fallback='UTC')
+        tz = CowrieConfig().get('honeypot', 'timezone', fallback='UTC')
         # `system` means use the system time zone
         if tz != 'system':
             os.environ['TZ'] = tz
@@ -111,9 +111,9 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
         # ssh is enabled by default
-        enableSSH = CONFIG.getboolean('ssh', 'enabled', fallback=True)
+        enableSSH = CowrieConfig().getboolean('ssh', 'enabled', fallback=True)
         # telnet is disabled by default
-        enableTelnet = CONFIG.getboolean('telnet', 'enabled', fallback=False)
+        enableTelnet = CowrieConfig().getboolean('telnet', 'enabled', fallback=False)
 
         if enableTelnet is False and enableSSH is False:
             print('ERROR: You must at least enable SSH or Telnet')
@@ -121,10 +121,10 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         # Load output modules
         self.output_plugins = []
-        for x in CONFIG.sections():
+        for x in CowrieConfig().sections():
             if not x.startswith('output_'):
                 continue
-            if CONFIG.getboolean(x, 'enabled') is False:
+            if CowrieConfig().getboolean(x, 'enabled') is False:
                 continue
             engine = x.split('_')[1]
             try:
@@ -153,14 +153,14 @@ Makes a Cowrie SSH/Telnet honeypot.
             factory.portal.registerChecker(
                 core.checkers.HoneypotPasswordChecker())
 
-            if CONFIG.getboolean('honeypot', 'auth_none_enabled', fallback=False) is True:
+            if CowrieConfig().getboolean('honeypot', 'auth_none_enabled', fallback=False) is True:
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 
-            if CONFIG.has_section('ssh'):
-                listen_endpoints = get_endpoints_from_section(CONFIG, 'ssh', 2222)
+            if CowrieConfig().has_section('ssh'):
+                listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'ssh', 2222)
             else:
-                listen_endpoints = get_endpoints_from_section(CONFIG, 'honeypot', 2222)
+                listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'honeypot', 2222)
 
             create_endpoint_services(reactor, topService, listen_endpoints, factory)
 
@@ -170,7 +170,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             f.portal = portal.Portal(core.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
-            listen_endpoints = get_endpoints_from_section(CONFIG, 'telnet', 2223)
+            listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'telnet', 2223)
             create_endpoint_services(reactor, topService, listen_endpoints, f)
 
         return topService

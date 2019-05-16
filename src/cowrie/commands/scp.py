@@ -36,7 +36,7 @@ import time
 
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
@@ -44,6 +44,11 @@ commands = {}
 
 
 class command_scp(HoneyPotCommand):
+    """
+    scp command
+    """
+    download_path = CowrieConfig().get('honeypot', 'download_path')
+    download_path_uniq = CowrieConfig().get('honeypot', 'download_path_uniq', fallback=download_path)
 
     def help(self):
         self.write(
@@ -52,13 +57,6 @@ class command_scp(HoneyPotCommand):
            [[user@]host1:]file1 ... [[user@]host2:]file2\n""")
 
     def start(self):
-        self.download_path = CONFIG.get('honeypot', 'download_path')
-
-        try:
-            self.download_path_uniq = CONFIG.get('honeypot', 'download_path_uniq')
-        except Exception:
-            self.download_path_uniq = CONFIG.get('honeypot', 'download_path')
-
         try:
             optlist, args = getopt.getopt(self.args, '12346BCpqrvfstdv:cFiloPS:')
         except getopt.GetoptError:

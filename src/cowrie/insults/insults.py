@@ -11,7 +11,7 @@ from twisted.conch.insults import insults
 from twisted.python import log
 
 from cowrie.core import ttylog
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
 
 
@@ -22,10 +22,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
     redirlogOpen = False  # it will be set at core/protocol.py
     stdinlogOpen = False
     ttylogOpen = False
-    ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
-    downloadPath = CONFIG.get('honeypot', 'download_path')
-    ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
-    bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
+    ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
+    downloadPath = CowrieConfig().get('honeypot', 'download_path')
+    ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
+    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
     bytesReceived = 0
     redirFiles = set()
 
