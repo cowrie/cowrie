@@ -26,13 +26,9 @@ class Output(cowrie.core.output.Output):
     token = CowrieConfig().get('output_csirtg', 'token') or TOKEN
     description = CowrieConfig().get('output_csirtg', 'description', fallback=DESCRIPTION)
 
-    def __init__(self):
+    def start(self, ):
         self.context = {}
         self.client = Client(token=self.token)
-        cowrie.core.output.Output.__init__(self)
-
-    def start(self, ):
-        pass
 
     def stop(self):
         pass

@@ -77,6 +77,10 @@ class FTP(ftplib.FTP):
 
 
 class command_ftpget(HoneyPotCommand):
+    """
+    ftpget command
+    """
+    download_path = CowrieConfig().get('honeypot', 'download_path')
 
     def help(self):
         self.write("""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
@@ -141,8 +145,6 @@ Download a file via FTP
             self.write('ftpget: can\'t open \'%s\': No such file or directory' % self.local_file)
             self.exit()
             return
-
-        self.download_path = CowrieConfig().get('honeypot', 'download_path')
 
         self.url_log = 'ftp://'
         if self.username:

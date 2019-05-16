@@ -22,6 +22,11 @@ commands = {}
 
 
 class command_curl(HoneyPotCommand):
+    """
+    curl command
+    """
+    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    download_path = CowrieConfig().get('honeypot', 'download_path')
 
     def start(self):
         try:
@@ -75,9 +80,6 @@ class command_curl(HoneyPotCommand):
 
         url = url.encode('ascii')
         self.url = url
-        self.limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
-
-        self.download_path = CowrieConfig().get('honeypot', 'download_path')
 
         if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s_%s_%s' % \
