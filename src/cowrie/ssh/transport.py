@@ -29,6 +29,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     startTime = None
     gotVersion = False
     ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
+    auth_timeout = CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120)
+    interactive_timeout = CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300)
 
     def __repr__(self):
         """
@@ -68,7 +70,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
 
         self.startTime = time.time()
-        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
+        self.setTimeout(self.auth_timeout)
 
     def sendKexInit(self):
         """
@@ -196,7 +198,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         # Reset timeout. Not everyone opens shell so need timeout at transport level
         if service.name == b'ssh-connection':
-            self.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
+            self.setTimeout(self.interactive_timeout)
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
