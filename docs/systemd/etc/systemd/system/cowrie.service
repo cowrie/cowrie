@@ -13,8 +13,6 @@ RestartSec=5
 
 Environment=PYTHONPATH=/opt/cowrie/src
 WorkingDirectory=/opt/cowrie
-StateDirectory=cowrie
-LogsDirectory=cowrie
 
 ExecStart=/opt/cowrie-env/bin/python /opt/cowrie-env/bin/twistd --umask 0022 --nodaemon --pidfile= -l - cowrie
 
