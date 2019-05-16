@@ -38,7 +38,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     primes = None
     tac = None  # gets set later
     ourVersionString = CowrieConfig().get('ssh', 'version',
-        fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
+                                          fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
 
     def logDispatch(self, *msg, **args):
         """
@@ -71,7 +71,6 @@ class CowrieSSHFactory(factory.SSHFactory):
                 break
             except IOError:
                 pass
-
 
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
