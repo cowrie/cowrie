@@ -19,21 +19,17 @@ from twisted.internet import reactor, threads
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        self.auth_key = CONFIG.get('output_dshield', 'auth_key')
-        self.userid = CONFIG.get('output_dshield', 'userid')
-        self.batch_size = CONFIG.getint('output_dshield', 'batch_size')
-        try:
-            self.debug = CONFIG.getboolean('output_dshield', 'debug')
-        except Exception:
-            self.debug = False
-
-        cowrie.core.output.Output.__init__(self)
+    """
+    dshield output
+    """
+    auth_key = CowrieConfig().get('output_dshield', 'auth_key')
+    userid = CowrieConfig().get('output_dshield', 'userid')
+    batch_size = CowrieConfig().getint('output_dshield', 'batch_size')
+    debug = CowrieConfig().getboolean('output_dshield', 'debug', fallback=False)
 
     def start(self):
         self.batch = []  # This is used to store login attempts in batches

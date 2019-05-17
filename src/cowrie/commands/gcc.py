@@ -10,7 +10,7 @@ import time
 
 from twisted.internet import reactor
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -179,7 +179,7 @@ gcc version %s (Debian {}-5)""".format(version, version_short, version_short, ve
                      self.protocol.getProtoTransport().transportId,
                      self.protocol.terminal.transport.session.id,
                      re.sub('[^A-Za-z0-9]', '_', outfile))
-        safeoutfile = os.path.join(CONFIG.get('honeypot', 'download_path'), tmp_fname)
+        safeoutfile = os.path.join(CowrieConfig().get('honeypot', 'download_path'), tmp_fname)
 
         # Data contains random garbage from an actual file, so when
         # catting the file, you'll see some 'real' compiled data

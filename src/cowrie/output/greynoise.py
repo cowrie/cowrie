@@ -10,19 +10,19 @@ from twisted.internet import defer, error
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot'
 GNAPI_URL = 'http://api.greynoise.io:8888/v1/'
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        self.apiKey = CONFIG.get('output_greynoise', 'api_key', fallback=None)
-        self.tags = CONFIG.get('output_greynoise', 'tags', fallback="all").split(",")
-        self.debug = CONFIG.getboolean('output_greynoise', 'debug', fallback=False)
-        cowrie.core.output.Output.__init__(self)
+    """
+    greynoise output
+    """
+    apiKey = CowrieConfig().get('output_greynoise', 'api_key', fallback=None)
+    tags = CowrieConfig().get('output_greynoise', 'tags', fallback="all").split(",")
+    debug = CowrieConfig().getboolean('output_greynoise', 'debug', fallback=False)
 
     def start(self):
         """

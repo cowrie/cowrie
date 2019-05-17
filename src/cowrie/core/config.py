@@ -16,6 +16,20 @@ def to_environ_key(key):
     return key.upper()
 
 
+class CowrieConfig(object):
+    """
+    Singleton class for configuration data
+    """
+    __instance = None
+
+    def __new__(cls):
+        if CowrieConfig.__instance is None:
+            CowrieConfig.__instance = object.__new__(EnvironmentConfigParser)
+            CowrieConfig.__instance.__init__(interpolation=configparser.ExtendedInterpolation())
+            CowrieConfig.__instance.read(get_config_path())
+        return CowrieConfig.__instance
+
+
 class EnvironmentConfigParser(configparser.ConfigParser):
 
     def has_option(self, section, option):
@@ -58,6 +72,3 @@ def get_config_path():
         return found_confs
 
     print("Config file not found")
-
-
-CONFIG = readConfigFile(get_config_path())

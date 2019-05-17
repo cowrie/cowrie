@@ -7,8 +7,6 @@ methods 'start', 'stop' and 'write'
 
     class Output(cowrie.core.output.Output):
 
-        def __init__(self, cfg):
-
         def start(self):
 
         def stop(self):

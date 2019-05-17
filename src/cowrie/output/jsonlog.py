@@ -33,21 +33,20 @@ import os
 
 import cowrie.core.output
 import cowrie.python.logfile
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
+    """
+    jsonlog output
+    """
+    epoch_timestamp = CowrieConfig().getboolean('output_jsonlog', 'epoch_timestamp', fallback=False)
 
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-        fn = CONFIG.get('output_jsonlog', 'logfile')
-        self.epoch_timestamp = CONFIG.getboolean('output_jsonlog', 'epoch_timestamp', fallback=False)
+    def start(self):
+        fn = CowrieConfig().get('output_jsonlog', 'logfile')
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
-
-    def start(self):
-        pass
 
     def stop(self):
         self.outfile.flush()

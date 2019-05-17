@@ -15,7 +15,7 @@ from twisted.python.compat import _bytesChr as chr
 from twisted.python.failure import Failure
 
 from cowrie.core import credentials
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -30,7 +30,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
         self.interfaceToMethod[credentials.IUsername] = b'none'
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b'password'
-        keyboard = CONFIG.getboolean('ssh', 'auth_keyboard_interactive_enabled', fallback=False)
+        keyboard = CowrieConfig().getboolean('ssh', 'auth_keyboard_interactive_enabled', fallback=False)
 
         if keyboard is True:
             self.interfaceToMethod[credentials.
@@ -49,7 +49,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.bannerSent = True
         try:
-            issuefile = CONFIG.get(
+            issuefile = CowrieConfig().get(
                 'honeypot', 'contents_path') + "/etc/issue.net"
             data = open(issuefile).read()
         except IOError:

@@ -33,7 +33,7 @@ from random import randint, seed
 
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Passwd(object):
@@ -42,9 +42,9 @@ class Passwd(object):
     /etc/passwd. Note that contrary to the name, it does not handle any
     passwords.
     """
+    passwd_file = '%s/etc/passwd' % (CowrieConfig().get('honeypot', 'contents_path'),)
 
     def __init__(self):
-        self.passwd_file = '%s/etc/passwd' % (CONFIG.get('honeypot', 'contents_path'),)
         self.load()
 
     def load(self):
@@ -143,9 +143,9 @@ class Group(object):
     This class contains code to handle the groups and their properties in
     /etc/group.
     """
+    group_file = '%s/etc/group' % (CowrieConfig().get('honeypot', 'contents_path'),)
 
     def __init__(self):
-        self.group_file = '%s/etc/group' % (CONFIG.get('honeypot', 'contents_path'),)
         self.load()
 
     def load(self):

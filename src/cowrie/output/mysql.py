@@ -11,7 +11,7 @@ from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):
@@ -43,29 +43,21 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
 
 
 class Output(cowrie.core.output.Output):
+    """
+    mysql output
+    """
     db = None
-
-    def __init__(self):
-        try:
-            self.debug = CONFIG.getboolean('output_mysql', 'debug')
-        except Exception:
-            self.debug = False
-
-        cowrie.core.output.Output.__init__(self)
+    debug = CowrieConfig().getboolean('output_mysql', 'debug', fallback=False)
 
     def start(self):
-        try:
-            port = CONFIG.getint('output_mysql', 'port')
-        except Exception:
-            port = 3306
-
+        port = CowrieConfig().getint('output_mysql', 'port', fallback=3306)
         try:
             self.db = ReconnectingConnectionPool(
                 'MySQLdb',
-                host=CONFIG.get('output_mysql', 'host'),
-                db=CONFIG.get('output_mysql', 'database'),
-                user=CONFIG.get('output_mysql', 'username'),
-                passwd=CONFIG.get('output_mysql', 'password', raw=True),
+                host=CowrieConfig().get('output_mysql', 'host'),
+                db=CowrieConfig().get('output_mysql', 'database'),
+                user=CowrieConfig().get('output_mysql', 'username'),
+                passwd=CowrieConfig().get('output_mysql', 'password', raw=True),
                 port=port,
                 cp_min=1,
                 cp_max=1,

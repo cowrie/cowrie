@@ -6,7 +6,7 @@ import socket
 import struct
 import sys
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 if sys.version_info > (3,):
@@ -86,7 +86,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
         out_addr = None
         try:
-            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
+            out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
         except Exception:
             out_addr = ('0.0.0.0', 0)
 

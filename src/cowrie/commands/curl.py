@@ -15,13 +15,18 @@ from twisted.internet import reactor, ssl
 from twisted.python import compat, log
 from twisted.web import client
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
 
 class command_curl(HoneyPotCommand):
+    """
+    curl command
+    """
+    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    download_path = CowrieConfig().get('honeypot', 'download_path')
 
     def start(self):
         try:
@@ -75,11 +80,6 @@ class command_curl(HoneyPotCommand):
 
         url = url.encode('ascii')
         self.url = url
-        self.limit_size = 0
-        if CONFIG.has_option('honeypot', 'download_limit_size'):
-            self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
-
-        self.download_path = CONFIG.get('honeypot', 'download_path')
 
         if not hasattr(self, 'safeoutfile'):
             tmp_fname = '%s_%s_%s_%s' % \
@@ -267,8 +267,8 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs)
         out_addr = None
-        if CONFIG.has_option('honeypot', 'out_addr'):
-            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
+        if CowrieConfig().has_option('honeypot', 'out_addr'):
+            out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
             contextFactory = ssl.ClientContextFactory()

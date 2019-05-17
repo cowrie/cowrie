@@ -7,14 +7,13 @@ import pymongo
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
+    """
+    mongodb output
+    """
     def insert_one(self, collection, event):
         try:
             object_id = collection.insert_one(event).inserted_id
@@ -30,8 +29,8 @@ class Output(cowrie.core.output.Output):
             log.msg('mongo error - {0}'.format(e))
 
     def start(self):
-        db_addr = CONFIG.get('output_mongodb', 'connection_string')
-        db_name = CONFIG.get('output_mongodb', 'database')
+        db_addr = CowrieConfig().get('output_mongodb', 'connection_string')
+        db_name = CowrieConfig().get('output_mongodb', 'database')
 
         try:
             self.mongo_client = pymongo.MongoClient(db_addr)

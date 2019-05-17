@@ -14,7 +14,7 @@ from twisted.conch.ssh import channel
 from twisted.python import log
 
 from cowrie.core import ttylog
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class CowrieSSHChannel(channel.SSHChannel):
@@ -28,10 +28,10 @@ class CowrieSSHChannel(channel.SSHChannel):
     bytesWritten = 0
     name = b'cowrie-ssh-channel'
     startTime = None
-    ttylogPath = CONFIG.get('honeypot', 'log_path')
-    downloadPath = CONFIG.get('honeypot', 'download_path')
-    ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog', fallback=True)
-    bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
+    ttylogPath = CowrieConfig().get('honeypot', 'log_path')
+    downloadPath = CowrieConfig().get('honeypot', 'download_path')
+    ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
+    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
 
     def __repr__(self):
         """

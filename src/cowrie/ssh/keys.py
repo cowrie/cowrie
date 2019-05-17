@@ -12,12 +12,12 @@ import os
 from twisted.conch.ssh import keys
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 def getRSAKeys():
-    publicKeyFile = CONFIG.get('ssh', 'rsa_public_key')
-    privateKeyFile = CONFIG.get('ssh', 'rsa_private_key')
+    publicKeyFile = CowrieConfig().get('ssh', 'rsa_public_key')
+    privateKeyFile = CowrieConfig().get('ssh', 'rsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
         log.msg("Generating new RSA keypair...")
         from cryptography.hazmat.backends import default_backend
@@ -38,8 +38,8 @@ def getRSAKeys():
 
 
 def getDSAKeys():
-    publicKeyFile = CONFIG.get('ssh', 'dsa_public_key')
-    privateKeyFile = CONFIG.get('ssh', 'dsa_private_key')
+    publicKeyFile = CowrieConfig().get('ssh', 'dsa_public_key')
+    privateKeyFile = CowrieConfig().get('ssh', 'dsa_private_key')
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
         log.msg("Generating new DSA keypair...")
         from cryptography.hazmat.backends import default_backend

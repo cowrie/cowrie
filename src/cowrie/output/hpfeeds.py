@@ -13,7 +13,7 @@ import struct
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 try:
     buffer  # Python 2
@@ -252,18 +252,13 @@ class Output(cowrie.core.output.Output):
     """
     Output plugin for HPFeeds
     """
-
-    def __init__(self):
-        log.msg("Early version of hpfeeds-output, untested!")
-        cowrie.core.output.Output.__init__(self)
-
     def start(self):
-
-        server = CONFIG.get('output_hpfeeds', 'server')
-        port = CONFIG.getint('output_hpfeeds', 'port')
-        ident = CONFIG.get('output_hpfeeds', 'identifier')
-        secret = CONFIG.get('output_hpfeeds', 'secret')
-        debug = CONFIG.getboolean('output_hpfeeds', 'debug')
+        log.msg("Early version of hpfeeds-output, untested!")
+        server = CowrieConfig().get('output_hpfeeds', 'server')
+        port = CowrieConfig().getint('output_hpfeeds', 'port')
+        ident = CowrieConfig().get('output_hpfeeds', 'identifier')
+        secret = CowrieConfig().get('output_hpfeeds', 'secret')
+        debug = CowrieConfig().getboolean('output_hpfeeds', 'debug')
         self.client = hpclient(server, port, ident, secret, debug)
         self.meta = {}
 

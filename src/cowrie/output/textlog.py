@@ -30,16 +30,15 @@ from __future__ import absolute_import, division
 
 import cowrie.core.cef
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-
-        self.format = CONFIG.get('output_textlog', 'format')
-        self.outfile = open(CONFIG.get('output_textlog', 'logfile'), 'a')
-        cowrie.core.output.Output.__init__(self)
+    """
+    textlog output
+    """
+    format = CowrieConfig().get('output_textlog', 'format')
+    outfile = open(CowrieConfig().get('output_textlog', 'logfile'), 'a')
 
     def start(self):
         pass

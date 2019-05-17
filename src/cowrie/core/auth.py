@@ -15,7 +15,7 @@ from random import randint
 
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 _USERDB_DEFAULTS = [
     'root:x:!root',
@@ -42,7 +42,7 @@ class UserDB(object):
         """
 
         try:
-            with open('{}/userdb.txt'.format(CONFIG.get('honeypot', 'etc_path')), 'r') as db:
+            with open('{}/userdb.txt'.format(CowrieConfig().get('honeypot', 'etc_path')), 'r') as db:
                 userdb = db.readlines()
         except IOError:
             log.msg("Could not read etc/userdb.txt, default database activated")
@@ -119,8 +119,8 @@ class AuthRandom(object):
         self.mintry, self.maxtry, self.maxcache = 2, 5, 10
 
         # Are there auth_class parameters?
-        if CONFIG.has_option('honeypot', 'auth_class_parameters'):
-            parameters = CONFIG.get('honeypot', 'auth_class_parameters')
+        if CowrieConfig().has_option('honeypot', 'auth_class_parameters'):
+            parameters = CowrieConfig().get('honeypot', 'auth_class_parameters')
             parlist = parameters.split(',')
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
@@ -131,7 +131,7 @@ class AuthRandom(object):
             self.maxtry = self.mintry + 1
             log.msg("maxtry < mintry, adjusting maxtry to: {}".format(self.maxtry))
         self.uservar = {}
-        self.uservar_file = '{}/auth_random.json'.format(CONFIG.get('honeypot', 'state_path'))
+        self.uservar_file = '{}/auth_random.json'.format(CowrieConfig().get('honeypot', 'state_path'))
         self.loadvars()
 
     def loadvars(self):

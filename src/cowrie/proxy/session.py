@@ -11,7 +11,7 @@ from twisted.conch.ssh.common import getNS
 from twisted.internet import protocol, reactor
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.proxy import endpoints
 from cowrie.ssh import channel
 
@@ -121,23 +121,23 @@ class ProxySSHSession(channel.CowrieSSHChannel):
     def __init__(self, *args, **kw):
         channel.CowrieSSHChannel.__init__(self, *args, **kw)
 
-        keyPath = CONFIG.get('proxy', 'private_key')
+        keyPath = CowrieConfig().get('proxy', 'private_key')
         self.keys.append(keys.Key.fromFile(keyPath))
 
         try:
-            keyPath = CONFIG.get('proxy', 'private_key')
+            keyPath = CowrieConfig().get('proxy', 'private_key')
             self.keys.append(keys.Key.fromFile(keyPath))
         except NoOptionError:
             self.keys = None
 
-        knownHostsPath = CONFIG.get('proxy', 'known_hosts')
+        knownHostsPath = CowrieConfig().get('proxy', 'known_hosts')
         self.knownHosts = KnownHostsFile.fromPath(knownHostsPath)
 
-        self.host = CONFIG.get('proxy', 'host')
-        self.port = CONFIG.getint('proxy', 'port')
-        self.user = CONFIG.get('proxy', 'user')
+        self.host = CowrieConfig().get('proxy', 'host')
+        self.port = CowrieConfig().getint('proxy', 'port')
+        self.user = CowrieConfig().get('proxy', 'user')
         try:
-            self.password = CONFIG.get('proxy', 'password')
+            self.password = CowrieConfig().get('proxy', 'password')
         except NoOptionError:
             self.password = None
 

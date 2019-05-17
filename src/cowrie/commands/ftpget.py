@@ -11,7 +11,7 @@ import socket
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -77,6 +77,10 @@ class FTP(ftplib.FTP):
 
 
 class command_ftpget(HoneyPotCommand):
+    """
+    ftpget command
+    """
+    download_path = CowrieConfig().get('honeypot', 'download_path')
 
     def help(self):
         self.write("""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
@@ -142,8 +146,6 @@ Download a file via FTP
             self.exit()
             return
 
-        self.download_path = CONFIG.get('honeypot', 'download_path')
-
         self.url_log = 'ftp://'
         if self.username:
             self.url_log = '{}{}'.format(self.url_log, self.username)
@@ -194,8 +196,8 @@ Download a file via FTP
 
     def ftp_download(self):
         out_addr = ('', 0)
-        if CONFIG.has_option('honeypot', 'out_addr'):
-            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
+        if CowrieConfig().has_option('honeypot', 'out_addr'):
+            out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         ftp = FTP(source_address=out_addr)
 
