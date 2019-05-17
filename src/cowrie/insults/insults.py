@@ -128,7 +128,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
                 log.msg(eventid='cowrie.session.file_download',
                         format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
-                        url='stdin',
                         duplicate=duplicate,
                         outfile=shasumfile,
                         shasum=shasum,
@@ -167,7 +166,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
                             duplicate = False
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
-                            url=url,
                             duplicate=duplicate,
                             outfile=shasumfile,
                             shasum=shasum,
