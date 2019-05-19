@@ -20,9 +20,9 @@ class Output(cowrie.core.output.Output):
     """
     s3 output
     """
-    bucket = CowrieConfig().get("output_s3", "bucket")
 
     def start(self):
+        self.bucket = CowrieConfig().get("output_s3", "bucket")
         self.seen = set()
         self.session = get_session()
 

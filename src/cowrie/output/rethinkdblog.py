@@ -17,14 +17,14 @@ RETHINK_DB_SEGMENT = 'output_rethinkdblog'
 
 
 class Output(cowrie.core.output.Output):
-    host = CowrieConfig().get(RETHINK_DB_SEGMENT, 'host')
-    port = CowrieConfig().getint(RETHINK_DB_SEGMENT, 'port')
-    db = CowrieConfig().get(RETHINK_DB_SEGMENT, 'db')
-    table = CowrieConfig().get(RETHINK_DB_SEGMENT, 'table')
-    password = CowrieConfig().get(RETHINK_DB_SEGMENT, 'password', raw=True)
 
     # noinspection PyAttributeOutsideInit
     def start(self):
+        self.host = CowrieConfig().get(RETHINK_DB_SEGMENT, 'host')
+        self.port = CowrieConfig().getint(RETHINK_DB_SEGMENT, 'port')
+        self.db = CowrieConfig().get(RETHINK_DB_SEGMENT, 'db')
+        self.table = CowrieConfig().get(RETHINK_DB_SEGMENT, 'table')
+        self.password = CowrieConfig().get(RETHINK_DB_SEGMENT, 'password', raw=True)
         self.connection = r.connect(
             host=self.host,
             port=self.port,
