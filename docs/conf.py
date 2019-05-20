@@ -189,3 +189,9 @@ epub_exclude_files = ['search.html']
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# -- Options for intersphinx extension ---------------------------------------
+
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+                       'twisted': ('https://twistedmatrix.com/documents/current/api/', None)
+                      }
