@@ -193,5 +193,4 @@ todo_include_todos = True
 # -- Options for intersphinx extension ---------------------------------------
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       'twisted': ('https://twistedmatrix.com/documents/current/api/', None)
-                      }
+                       'twisted': ('https://twistedmatrix.com/documents/current/api/', None)}
