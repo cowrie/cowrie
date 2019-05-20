@@ -20,18 +20,6 @@ from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 
-# At the moment this is the first place a config file is used
-# Put extra help here in case it goes wrong
-try:
-    with open(CowrieConfig().get('shell', 'filesystem'), 'rb') as f:
-        PICKLE = pickle.load(f)
-except UnicodeDecodeError:
-    with open(CowrieConfig().get('shell', 'filesystem'), 'rb') as f:
-        PICKLE = pickle.load(f, encoding='utf8')
-except Exception as e:
-    log.err(e, "ERROR: Failed to load filesystem")
-    exit(2)
-
 A_NAME, A_TYPE, A_UID, A_GID, A_SIZE, A_MODE, A_CTIME, A_CONTENTS, A_TARGET, A_REALFILE = list(range(0, 10))
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
@@ -85,7 +73,16 @@ class PermissionDenied(Exception):
 class HoneyPotFilesystem(object):
 
     def __init__(self, fs, arch):
-        self.fs = fs
+
+        try:
+            with open(CowrieConfig().get('shell', 'filesystem'), 'rb') as f:
+                self.fs = pickle.load(f)
+        except UnicodeDecodeError:
+            with open(CowrieConfig().get('shell', 'filesystem'), 'rb') as f:
+                self.fs = pickle.load(f, encoding='utf8')
+        except Exception as e:
+            log.err(e, "ERROR: Failed to load filesystem")
+            exit(2)
 
         # Keep track of arch so we can return appropriate binary
         self.arch = arch

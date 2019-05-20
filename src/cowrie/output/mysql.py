@@ -47,9 +47,9 @@ class Output(cowrie.core.output.Output):
     mysql output
     """
     db = None
-    debug = CowrieConfig().getboolean('output_mysql', 'debug', fallback=False)
 
     def start(self):
+        self.debug = CowrieConfig().getboolean('output_mysql', 'debug', fallback=False)
         port = CowrieConfig().getint('output_mysql', 'port', fallback=3306)
         try:
             self.db = ReconnectingConnectionPool(

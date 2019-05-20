@@ -21,12 +21,12 @@ class Output(cowrie.core.output.Output):
     """
     csirtg output
     """
-    user = CowrieConfig().get('output_csirtg', 'username') or USERNAME
-    feed = CowrieConfig().get('output_csirtg', 'feed') or FEED
-    token = CowrieConfig().get('output_csirtg', 'token') or TOKEN
-    description = CowrieConfig().get('output_csirtg', 'description', fallback=DESCRIPTION)
 
     def start(self, ):
+        self.user = CowrieConfig().get('output_csirtg', 'username') or USERNAME
+        self.feed = CowrieConfig().get('output_csirtg', 'feed') or FEED
+        self.token = CowrieConfig().get('output_csirtg', 'token') or TOKEN
+        self.description = CowrieConfig().get('output_csirtg', 'description', fallback=DESCRIPTION)
         self.context = {}
         self.client = Client(token=self.token)
 

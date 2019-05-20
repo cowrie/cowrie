@@ -29,14 +29,14 @@ class Output(cowrie.core.output.Output):
     """
     Splunk HEC output
     """
-    token = CowrieConfig().get('output_splunk', 'token')
-    url = CowrieConfig().get('output_splunk', 'url').encode('utf8')
-    index = CowrieConfig().get('output_splunk', 'index', fallback=None)
-    source = CowrieConfig().get('output_splunk', 'source', fallback=None)
-    sourcetype = CowrieConfig().get('output_splunk', 'sourcetype', fallback=None)
-    host = CowrieConfig().get('output_splunk', 'host', fallback=None)
 
     def start(self):
+        self.token = CowrieConfig().get('output_splunk', 'token')
+        self.url = CowrieConfig().get('output_splunk', 'url').encode('utf8')
+        self.index = CowrieConfig().get('output_splunk', 'index', fallback=None)
+        self.source = CowrieConfig().get('output_splunk', 'source', fallback=None)
+        self.sourcetype = CowrieConfig().get('output_splunk', 'sourcetype', fallback=None)
+        self.host = CowrieConfig().get('output_splunk', 'host', fallback=None)
         contextFactory = WebClientContextFactory()
         # contextFactory.method = TLSv1_METHOD
         self.agent = client.Agent(reactor, contextFactory)

@@ -231,7 +231,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @param reason: the reason for the disconnect.  Should be one of the
                        DISCONNECT_* values.
         @type reason: C{int}
-        @param desc: a descrption of the reason for the disconnection.
+        @param desc: a description of the reason for the disconnection.
         @type desc: C{str}
         """
         if b'bad packet length' not in desc:
@@ -243,8 +243,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def receiveError(self, reasonCode, description):
         """
-        Called when we receive a disconnect error message from the other
-        side.
+        Called when we receive a disconnect error message from the other side.
 
         @param reasonCode: the reason for the disconnect, one of the
                            DISCONNECT_ values.

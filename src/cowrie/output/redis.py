@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division
 
 import json
-from ConfigParser import NoOptionError
+from configparser import NoOptionError
 
 import redis
 

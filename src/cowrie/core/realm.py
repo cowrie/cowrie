@@ -28,9 +28,9 @@
 
 from __future__ import absolute_import, division
 
-import twisted
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
+from twisted.cred.portal import IRealm
 from twisted.python import log
 
 from zope.interface import implementer
@@ -43,7 +43,7 @@ from cowrie.shell import server as shellserver
 from cowrie.telnet import session
 
 
-@implementer(twisted.cred.portal.IRealm)
+@implementer(IRealm)
 class HoneyPotRealm(object):
 
     def __init__(self):

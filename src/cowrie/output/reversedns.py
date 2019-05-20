@@ -15,14 +15,13 @@ class Output(cowrie.core.output.Output):
     """
     Output plugin used for reverse DNS lookup
     """
-    timeout = [CowrieConfig().getint(
-            'output_reversedns', 'timeout', fallback=3)]
 
     def start(self):
         """
         Start Output Plugin
         """
-        pass
+        self.timeout = [CowrieConfig().getint(
+            'output_reversedns', 'timeout', fallback=3)]
 
     def stop(self):
         """

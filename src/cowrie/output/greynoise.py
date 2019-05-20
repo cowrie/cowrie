@@ -20,14 +20,14 @@ class Output(cowrie.core.output.Output):
     """
     greynoise output
     """
-    apiKey = CowrieConfig().get('output_greynoise', 'api_key', fallback=None)
-    tags = CowrieConfig().get('output_greynoise', 'tags', fallback="all").split(",")
-    debug = CowrieConfig().getboolean('output_greynoise', 'debug', fallback=False)
 
     def start(self):
         """
         Start output plugin
         """
+        self.apiKey = CowrieConfig().get('output_greynoise', 'api_key', fallback=None)
+        self.tags = CowrieConfig().get('output_greynoise', 'tags', fallback="all").split(",")
+        self.debug = CowrieConfig().getboolean('output_greynoise', 'debug', fallback=False)
 
     def stop(self):
         """

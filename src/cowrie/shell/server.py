@@ -28,7 +28,6 @@
 
 from __future__ import absolute_import, division
 
-import copy
 import json
 import random
 from configparser import NoOptionError
@@ -74,7 +73,7 @@ class CowrieServer(object):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
+        self.fs = fs.HoneyPotFilesystem(None, self.arch)
 
         try:
             self.process = self.getCommandOutput(CowrieConfig().get('shell', 'processes'))['command']['ps']

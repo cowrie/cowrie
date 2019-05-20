@@ -50,16 +50,15 @@ class Output(cowrie.core.output.Output):
     """
     cuckoo output
     """
-    url_base = CowrieConfig().get('output_cuckoo', 'url_base').encode('utf-8')
-    api_user = CowrieConfig().get('output_cuckoo', 'user')
-    api_passwd = CowrieConfig().get('output_cuckoo', 'passwd', raw=True)
-    cuckoo_force = int(CowrieConfig().getboolean('output_cuckoo', 'force'))
 
     def start(self):
         """
         Start output plugin
         """
-        pass
+        self.url_base = CowrieConfig().get('output_cuckoo', 'url_base').encode('utf-8')
+        self.api_user = CowrieConfig().get('output_cuckoo', 'user')
+        self.api_passwd = CowrieConfig().get('output_cuckoo', 'passwd', raw=True)
+        self.cuckoo_force = int(CowrieConfig().getboolean('output_cuckoo', 'force'))
 
     def stop(self):
         """

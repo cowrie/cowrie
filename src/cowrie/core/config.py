@@ -2,7 +2,7 @@
 # See the COPYRIGHT file for more information
 
 """
-This module contains ...
+This module contains code to deal with Cowrie's configuration
 """
 
 from __future__ import absolute_import, division
@@ -31,7 +31,9 @@ class CowrieConfig(object):
 
 
 class EnvironmentConfigParser(configparser.ConfigParser):
-
+    """
+    ConfigParser with additional option to read from environment variables
+    """
     def has_option(self, section, option):
         if to_environ_key('_'.join((section, option))) in environ:
             return True
@@ -41,8 +43,7 @@ class EnvironmentConfigParser(configparser.ConfigParser):
         key = to_environ_key('_'.join((section, option)))
         if key in environ:
             return environ[key]
-        return super(EnvironmentConfigParser, self).get(
-            section, option, **kwargs)
+        return super(EnvironmentConfigParser, self).get(section, option, **kwargs)
 
 
 def readConfigFile(cfgfile):

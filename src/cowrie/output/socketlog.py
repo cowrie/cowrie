@@ -13,9 +13,9 @@ class Output(cowrie.core.output.Output):
     """
     socketlog output
     """
-    timeout = CowrieConfig().getint('output_socketlog', 'timeout')
 
     def start(self):
+        self.timeout = CowrieConfig().getint('output_socketlog', 'timeout')
         addr = CowrieConfig().get('output_socketlog', 'address')
         self.host = addr.split(':')[0]
         self.port = int(addr.split(':')[1])

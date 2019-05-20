@@ -63,18 +63,18 @@ class Output(cowrie.core.output.Output):
     """
     virustotal output
     """
-    apiKey = CowrieConfig().get('output_virustotal', 'api_key')
-    debug = CowrieConfig().getboolean('output_virustotal', 'debug', fallback=False)
-    upload = CowrieConfig().getboolean('output_virustotal', 'upload', fallback=True)
-    comment = CowrieConfig().getboolean('output_virustotal', 'comment', fallback=True)
-    scan_file = CowrieConfig().getboolean('output_virustotal', 'scan_file', fallback=True)
-    scan_url = CowrieConfig().getboolean('output_virustotal', 'scan_url', fallback=False)
-    commenttext = CowrieConfig().get('output_virustotal', 'commenttext', fallback=COMMENT)
 
     def start(self):
         """
         Start output plugin
         """
+        self.apiKey = CowrieConfig().get('output_virustotal', 'api_key')
+        self.debug = CowrieConfig().getboolean('output_virustotal', 'debug', fallback=False)
+        self.upload = CowrieConfig().getboolean('output_virustotal', 'upload', fallback=True)
+        self.comment = CowrieConfig().getboolean('output_virustotal', 'comment', fallback=True)
+        self.scan_file = CowrieConfig().getboolean('output_virustotal', 'scan_file', fallback=True)
+        self.scan_url = CowrieConfig().getboolean('output_virustotal', 'scan_url', fallback=False)
+        self.commenttext = CowrieConfig().get('output_virustotal', 'commenttext', fallback=COMMENT)
         self.agent = client.Agent(reactor, WebClientContextFactory())
 
     def stop(self):

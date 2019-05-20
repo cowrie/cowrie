@@ -40,9 +40,9 @@ class Output(cowrie.core.output.Output):
     """
     jsonlog output
     """
-    epoch_timestamp = CowrieConfig().getboolean('output_jsonlog', 'epoch_timestamp', fallback=False)
 
     def start(self):
+        self.epoch_timestamp = CowrieConfig().getboolean('output_jsonlog', 'epoch_timestamp', fallback=False)
         fn = CowrieConfig().get('output_jsonlog', 'logfile')
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
