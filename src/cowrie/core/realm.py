@@ -28,9 +28,9 @@
 
 from __future__ import absolute_import, division
 
-from twisted.cred.portal import IRealm
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
+from twisted.cred.portal import IRealm
 from twisted.python import log
 
 from zope.interface import implementer
