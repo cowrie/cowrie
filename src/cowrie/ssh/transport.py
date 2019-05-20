@@ -89,7 +89,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def dataReceived(self, data):
         """
-        First, check for the version string (SSH-2.0-\*).  After that has been
+        First, check for the version string (SSH-2.0-*).  After that has been
         received, this method adds data to the buffer, and pulls out any
         packets.
 
