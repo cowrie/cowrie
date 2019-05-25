@@ -4,12 +4,14 @@ jobs:
     steps:
       - checkout
       - run:
-        command: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-        command: | 
-          flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
-          python setup.py build sdist bdist
-          make -C docs html
-        command: | 
-          PYTHONPATH=`pwd`/src trial cowrie
+          command: |
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
+      - run:
+          command: |
+            flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
+            python setup.py build sdist bdist
+            make -C docs html
+      - run:
+          command: |
+            PYTHONPATH=`pwd`/src trial cowrie
