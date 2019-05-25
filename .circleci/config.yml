@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  build:  # required for runs that don't use workflows
+    steps:
+      - checkout
+      - run:
+        command: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+        command: | 
+          flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
+          python setup.py build sdist bdist
+          make -C docs html
+        command: | 
+       -  PYTHONPATH=`pwd`/src trial cowrie
