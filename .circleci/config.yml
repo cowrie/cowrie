@@ -12,4 +12,4 @@ jobs:
           python setup.py build sdist bdist
           make -C docs html
         command: | 
-       -  PYTHONPATH=`pwd`/src trial cowrie
+          PYTHONPATH=`pwd`/src trial cowrie
