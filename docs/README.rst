@@ -107,8 +107,8 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
 * And many many others.
 
-.. |travis| image:: https://travis-ci.org/cowrie/cowrie.svg?branch=master
-.. _travis: https://travis-ci.org/cowrie/cowrie
+.. |travis| image:: https://travis-ci.com/cowrie/cowrie.svg?branch=master
+.. _travis: https://travis-ci.com/cowrie/cowrie
 
 .. |circleci| image:: https://circleci.com/gh/cowrie/cowrie.svg?style=svg
 .. _circleci: https://circleci.com/gh/cowrie/cowrie
