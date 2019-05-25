@@ -7,6 +7,8 @@ jobs:
       - checkout
       - run:
           command: |
+            virtualenv ../cowrie-env
+            ../cowrie-env/bin/activate
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
       - run:
