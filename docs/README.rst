@@ -2,6 +2,7 @@ Cowrie
 ######
 
 |travis|_
+|circleci|_
 |codecov|_
 
 Welcome to the Cowrie GitHub repository
@@ -106,9 +107,11 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
 * And many many others.
 
-
 .. |travis| image:: https://travis-ci.org/cowrie/cowrie.svg?branch=master
 .. _travis: https://travis-ci.org/cowrie/cowrie
 
+.. |circleci| image:: https://circleci.com/gh/cowrie/cowrie.svg?style=svg
+.. _circleci: https://circleci.com/gh/cowrie/cowrie
+
 .. |codecov| image:: https://codecov.io/gh/cowrie/cowrie/branch/master/graph/badge.svg
-.. _codecov:  https://codecov.io/gh/cowrie/cowrie
+.. _codecov: https://codecov.io/gh/cowrie/cowrie
