@@ -107,8 +107,8 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * And many many others.
 
 
-.. |travis| image:: https://travis-ci.org/cowrie/cowrie.svg?branch=master
-.. _travis: https://travis-ci.org/cowrie/cowrie
+.. |travis| image:: https://travis-ci.com/cowrie/cowrie.svg?branch=master
+.. _travis: https://travis-ci.com/cowrie/cowrie
 
 .. |codecov| image:: https://codecov.io/gh/cowrie/cowrie/branch/master/graph/badge.svg
 .. _codecov:  https://codecov.io/gh/cowrie/cowrie
