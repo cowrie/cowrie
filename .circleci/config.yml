@@ -13,9 +13,11 @@ jobs:
             pip install -r requirements-dev.txt
       - run:
           command: |
+            . cowrie-env/bin/activate
             flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
             python setup.py build sdist bdist
             make -C docs html
       - run:
           command: |
+            . cowrie-env/bin/activate
             PYTHONPATH=`pwd`/src trial cowrie
