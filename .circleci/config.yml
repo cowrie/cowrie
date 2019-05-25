@@ -1,6 +1,8 @@
 version: 2
 jobs:
   build:  # required for runs that don't use workflows
+    docker:
+      - image: circleci/python:3.7.2
     steps:
       - checkout
       - run:
