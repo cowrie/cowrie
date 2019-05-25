@@ -14,7 +14,7 @@ jobs:
       - run:
           command: |
             . cowrie-env/bin/activate
-            flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
+            flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
             python setup.py build sdist bdist
             make -C docs html
       - run:
