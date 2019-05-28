@@ -21,6 +21,11 @@ class CowrieOutput():
         self.login_result = None
         self.command_input = None
         self.command_result = None
+        self.url = None
+        self.outfile = None
+        self.shasum = None
+        self.download_result = None
+        self.was_upload = None
 
     def make_tuple(self):
         return (self.session,
@@ -31,7 +36,12 @@ class CowrieOutput():
                 self.password,
                 self.login_result,
                 self.command_input,
-                self.command_result
+                self.command_result,
+                self.url,
+                self.outfile,
+                self.shasum,
+                self.download_result,
+                self.was_upload
                 )
 
 
@@ -75,7 +85,12 @@ class Output(cowrie.core.output.Output):
                 password TEXT ENCODING DICT(32),\
                 login_result TEXT ENCODING DICT(32),\
                 command_input TEXT ENCODING DICT(32),\
-                command_result TEXT ENCODING DICT(32))")
+                command_result TEXT ENCODING DICT(32), \
+                url TEXT ENCODING DICT(32),\
+                outfile TEXT ENCODING DICT(32),\
+                shasum TEXT ENCODING DICT(32),\
+                download_result TEXT ENCODING DICT(32),\
+                was_upload TEXT ENCODING DICT(32))")
 
         except Exception as e:
             log.msg("Failed to create table got error {0}".format(e))
@@ -125,11 +140,20 @@ class Output(cowrie.core.output.Output):
                 cowrie_output.command_result = "0"
                 self.load_data([cowrie_output.make_tuple()])
 
-        elif entry["eventid"] == 'cowrie.session.file_download':
-            pass
-        elif entry["eventid"] == 'cowrie.session.file_download.failed':
-            pass
-        elif entry["eventid"] == 'cowrie.session.file_upload':
-            pass
-        elif entry["eventid"] == 'cowrie.session.input':
-            pass
+        # Handle upload and download events
+
+        elif 'cowrie.session.file' in entry["eventid"]:
+            cowrie_output.url = entry['url']
+            if entry["eventid"] == 'cowrie.session.file_download':
+                cowrie_output.shasum = entry['shasum']
+                cowrie_output.outfile = entry['outfile']
+                cowrie_output.download_result = "1"
+                self.load_data([cowrie_output.make_tuple()])
+            if entry["eventid"] == 'cowrie.session.file_download.failed':
+                cowrie_output.download_result = "0"
+                self.load_data([cowrie_output.make_tuple()])
+            if entry["eventid"] == 'cowrie.session.file_upload':
+                cowrie_output.was_upload = "1"
+                cowrie_output.shasum = entry['shasum']
+                cowrie_output.outfile = entry['outfile']
+                self.load_data([cowrie_output.make_tuple()])
