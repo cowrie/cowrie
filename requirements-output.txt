@@ -42,7 +42,8 @@ python-snappy
 # dblog_xmpp
 wokkel==18.0.0rc5
 
-# pymapd
+# pymapd and geoip2
 pymapd
+geoip2
 
 
