@@ -23,3 +23,13 @@ pip-upgrade:
 
 pip-check:
 	pip check
+
+# This assumes two remotes, one is `origin`, your fork. The second is `cowrie` the main project
+git-remote:
+	git remote add cowrie https://github.com/cowrie/cowrie
+
+dependency-upgrade:
+	git checkout master
+	git checkout -b "dependency-upgrade-`date +%Y-%m-%d`"
+	pur
+	git commit -m "dependency upgrade `date`" requirements.txt
