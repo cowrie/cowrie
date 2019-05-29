@@ -4,3 +4,4 @@ setuptools
 sphinx
 sphinx_rtd_theme
 tox
+pur
