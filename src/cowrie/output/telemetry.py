@@ -55,18 +55,18 @@ class Output(cowrie.core.output.Output):
                 meta=query['metadata']
             )
 
-        gnUrl = '{0}query/ip'.format(GNAPI_URL).encode('utf8')
+        cowrieUrl = '{0}query/ip'.format(COWRIE_URL).encode('utf8')
         headers = ({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'key': self.apiKey, 'ip': entry['src_ip']}
 
         try:
             response = yield treq.post(
-                url=gnUrl,
+                url=cowrieUrl,
                 data=fields,
                 headers=headers,
                 timeout=10)
         except (defer.CancelledError, error.ConnectingCancelledError, error.DNSLookupError):
-            log.msg("telemetry requests timeout")
+            log.error("telemetry request timeout")
             return
 
         if response.code != 200:
