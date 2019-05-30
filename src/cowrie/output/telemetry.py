@@ -42,12 +42,12 @@ class Output(cowrie.core.output.Output):
     @defer.inlineCallbacks
     def scanip(self, entry):
         """
-        Scan IP againt Greynoise API
+        Scan IP againt telemetry API
         """
         def message(query):
             log.msg(
-                eventid='cowrie.greynoise.result',
-                format='greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
+                eventid='cowrie.telemetry.result',
+                format='telemetry: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
                 ' along with the following %(meta)s metadata',
                 IP=entry['src_ip'],
                 tag=query['name'],
@@ -66,17 +66,17 @@ class Output(cowrie.core.output.Output):
                 headers=headers,
                 timeout=10)
         except (defer.CancelledError, error.ConnectingCancelledError, error.DNSLookupError):
-            log.msg("GreyNoise requests timeout")
+            log.msg("telemetry requests timeout")
             return
 
         if response.code != 200:
             rsp = yield response.text()
-            log.error("greynoise: got error {}".format(rsp))
+            log.error("telemetry: got error {}".format(rsp))
             return
 
         j = yield response.json()
         if self.debug:
-            log.msg("greynoise: debug: "+repr(j))
+            log.msg("telemetry: debug: "+repr(j))
 
         if j['status'] == "ok":
             if "all" not in self.tags:
@@ -87,4 +87,4 @@ class Output(cowrie.core.output.Output):
                 for query in j['records']:
                     message(query)
         else:
-            log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))
+            log.msg("telemetry: no results for for IP {0}".format(entry['src_ip']))
