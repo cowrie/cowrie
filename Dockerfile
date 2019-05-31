@@ -1,6 +1,6 @@
 FROM debian:stable-slim as python3-base
 RUN apt-get update
-RUN  apt-get install --no-install-recommends -y libffi6 python3 python3-pip
+RUN  apt-get install --no-install-recommends -y libffi6 python3 python3-pip ca-certificates
 RUN  adduser --system --shell /bin/bash --group --disabled-password --no-create-home --home /cowrie cowrie
 RUN  mkdir -p /cowrie/var/lib/cowrie/downloads
 RUN  mkdir -p /cowrie/var/lib/cowrie/tty
