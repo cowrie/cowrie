@@ -1,5 +1,5 @@
-twisted==19.2.0
-cryptography==2.6.1
+twisted==19.2.1
+cryptography==2.7
 configparser==3.7.4
 pyopenssl==19.0.0
 pyparsing==2.4.0
