@@ -168,15 +168,16 @@ class Output(cowrie.core.output.Output):
                         session=entry['session'],
                         sha256=j['resource'],
                         is_new="true")
-                p = urlparse(entry['url']).path
-                if p == "":
-                    fileName = entry['shasum']
-                else:
-                    b = os.path.basename(p)
+
+                try:
+                    b = os.path.basename(urlparse(entry['url']).path)
                     if b == "":
                         fileName = entry['shasum']
                     else:
                         fileName = b
+                except KeyError:
+                    fileName = entry['shasum']
+
                 if self.upload is True:
                     return self.postfile(entry['outfile'], fileName)
                 else:
