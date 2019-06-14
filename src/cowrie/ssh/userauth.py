@@ -30,7 +30,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
         self.interfaceToMethod[credentials.IUsername] = b'none'
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b'password'
-        keyboard = CowrieConfig().getboolean('ssh', 'auth_keyboard_interactive_enabled', fallback=False)
+        keyboard = CowrieConfig().getboolean('honeypot', 'auth_keyboard_interactive_enabled', fallback=False)
 
         if keyboard is True:
             self.interfaceToMethod[credentials.
