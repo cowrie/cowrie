@@ -409,23 +409,6 @@ macs = hmac-sha2-512,hmac-sha2-384,hmac-sha2-56,hmac-sha1,hmac-md5
 # none
 compression = zlib@openssh.com,zlib,none
 
-
-# IP addresses to listen for incoming SSH connections.
-# (DEPRECATED: use listen_endpoints instead)
-#
-# (default: 0.0.0.0) = any IPv4 address
-#listen_addr = 0.0.0.0
-# (use :: for listen to all IPv6 and IPv4 addresses)
-#listen_addr = ::
-
-
-# Port to listen for incoming SSH connections.
-# (DEPRECATED: use listen_endpoints instead)
-#
-# (default: 2222)
-#listen_port = 2222
-
-
 # Endpoint to listen on for incoming SSH connections.
 # See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
 # (default: listen_endpoints = tcp:2222:interface=0.0.0.0)
@@ -437,7 +420,6 @@ compression = zlib@openssh.com,zlib,none
 # use authbind for port numbers under 1024
 
 listen_endpoints = tcp:2222:interface=0.0.0.0
-
 
 # Enable the SFTP subsystem
 # (default: true)
@@ -490,22 +472,6 @@ forward_tunnel = false
 
 # Enable Telnet support, disabled by default
 enabled = false
-
-# IP addresses to listen for incoming Telnet connections.
-# (DEPRECATED: use listen_endpoints instead)
-#
-# (default: 0.0.0.0) = any IPv4 address
-#listen_addr = 0.0.0.0
-# (use :: for listen to all IPv6 and IPv4 addresses)
-#listen_addr = ::
-
-
-# Port to listen for incoming Telnet connections.
-# (DEPRECATED: use listen_endpoints instead)
-#
-# (default: 2223)
-#listen_port = 2223
-
 
 # Endpoint to listen on for incoming Telnet connections.
 # See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#servers
