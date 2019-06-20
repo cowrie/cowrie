@@ -183,17 +183,6 @@ auth_class = UserDB
 #auth_class_parameters = 2, 5, 10
 
 
-# No authentication checking at all
-# enabling 'auth_none' will enable the ssh2 'auth_none' authentication method
-# this allows the requested user in without any verification at all
-#
-# (default: false)
-#auth_none_enabled = false
-
-# Configure keyboard-interactive login
-auth_keyboard_interactive_enabled = false
-
-
 # ============================================================================
 # Historical SSH Specific Options
 # historical options in [honeypot] that have not yet been moved to [ssh]
@@ -463,6 +452,19 @@ forward_tunnel = false
 # Tunnel http/https
 # forward_tunnel_80 = 127.0.0.1:3128
 # forward_tunnel_443 = 127.0.0.1:3128
+
+
+# No authentication checking at all
+# enabling 'auth_none' will enable the ssh2 'auth_none' authentication method
+# this allows the requested user in without any verification at all
+#
+# (default: false)
+#auth_none_enabled = false
+
+
+# Configure keyboard-interactive login
+auth_keyboard_interactive_enabled = false
+
 
 
 # ============================================================================
