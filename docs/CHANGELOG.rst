@@ -1,3 +1,6 @@
+
+* 2019-06-20 Move `auth_none` and `auth_keyboard_interactive_enabled` to [ssh] config section
+
 Release 1.6.0
 =============
 
