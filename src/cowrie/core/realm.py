@@ -62,17 +62,7 @@ class HoneyPotRealm(object):
             log.msg('No supported interfaces found.')
             raise NotImplementedError("No supported interfaces found.")
         elif backend == 'proxy':
-            # if conchinterfaces.IConchUser in interfaces:
-            #     serv = proxyserver.CowrieServer(self)
-            #     user = proxyavatar.CowrieUser(avatarId, serv)
-            #     return interfaces[0], user, user.logout
-            # elif ITelnetProtocol in interfaces:
-            # if ITelnetProtocol in interfaces:
-            #     serv = shellserver.CowrieServer(self)
-            #     user = session.HoneyPotTelnetSession(avatarId, serv)
-            #     return interfaces[0], user, user.logout
-            #     return interfaces[0], None, None
-            log.msg('No supported interfaces found.')
-            # raise NotImplementedError("No supported interfaces found.")
+            # not used in proxies, as they operate on a lower level
+            pass
         else:
             raise NotImplementedError("No supported backend found.")
