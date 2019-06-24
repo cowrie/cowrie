@@ -18,8 +18,10 @@ from twisted.python import log
 from cowrie.core.config import CowrieConfig
 from cowrie.ssh import connection
 from cowrie.ssh import keys as cowriekeys
-from cowrie.ssh import transport
-from cowrie.ssh import userauth
+from cowrie.ssh import transport as shellTransport
+from cowrie.ssh.userauth import HoneyPotSSHUserAuthServer
+from cowrie.ssh_proxy import serverTransport as proxyTransport
+from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
 class CowrieSSHFactory(factory.SSHFactory):
@@ -29,7 +31,8 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     services = {
-        b'ssh-userauth': userauth.HoneyPotSSHUserAuthServer,
+        b'ssh-userauth': ProxySSHAuthServer if CowrieConfig().get('honeypot', 'backend') == 'proxy'
+        else HoneyPotSSHUserAuthServer,
         b'ssh-connection': connection.CowrieSSHConnection,
     }
     starttime = None
@@ -39,6 +42,10 @@ class CowrieSSHFactory(factory.SSHFactory):
     tac = None  # gets set later
     ourVersionString = CowrieConfig().get('ssh', 'version',
                                           fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
+
+    def __init__(self, pool_handler):
+        self.pool_handler = pool_handler
+        super().__init__()
 
     def logDispatch(self, *msg, **args):
         """
@@ -72,6 +79,11 @@ class CowrieSSHFactory(factory.SSHFactory):
             except IOError:
                 pass
 
+        try:
+            self.ourVersionString = CowrieConfig().get('ssh', 'version')
+        except NoOptionError:
+            self.ourVersionString = 'SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2'  # this can come from backend
+
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
 
@@ -88,8 +100,10 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-
-        t = transport.HoneyPotSSHTransport()
+        if CowrieConfig().get('honeypot', 'backend') == 'proxy':
+            t = proxyTransport.FrontendSSHTransport()
+        else:
+            t = shellTransport.HoneyPotSSHTransport()
 
         t.ourVersionString = self.ourVersionString
         t.supportedPublicKeys = list(self.privateKeys.keys())

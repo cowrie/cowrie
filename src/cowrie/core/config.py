@@ -39,11 +39,11 @@ class EnvironmentConfigParser(configparser.ConfigParser):
             return True
         return super(EnvironmentConfigParser, self).has_option(section, option)
 
-    def get(self, section, option, **kwargs):
+    def get(self, section, option, raw=False, **kwargs):
         key = to_environ_key('_'.join((section, option)))
         if key in environ:
             return environ[key]
-        return super(EnvironmentConfigParser, self).get(section, option, **kwargs)
+        return super(EnvironmentConfigParser, self).get(section, option, raw=raw, **kwargs)
 
 
 def readConfigFile(cfgfile):

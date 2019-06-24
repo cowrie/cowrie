@@ -191,7 +191,13 @@ auth_class = UserDB
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_ssh_port = 22
 
+# ============================================================================
+# Proxy Options
+# ============================================================================
+[proxy]
 
+backend_ip = localhost
+backend_ssh_port = 2022
 
 # ============================================================================
 # Shell Options
