@@ -199,6 +199,9 @@ auth_class = UserDB
 backend_ip = localhost
 backend_ssh_port = 2022
 
+backend_user = root
+backend_pass = root
+
 # ============================================================================
 # Shell Options
 # Options around Cowrie's Shell Emulation
