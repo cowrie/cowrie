@@ -43,10 +43,6 @@ class CowrieSSHFactory(factory.SSHFactory):
     ourVersionString = CowrieConfig().get('ssh', 'version',
                                           fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
 
-    def __init__(self, pool_handler):
-        self.pool_handler = pool_handler
-        super().__init__()
-
     def logDispatch(self, *msg, **args):
         """
         Special delivery to the loggers to avoid scope problems
