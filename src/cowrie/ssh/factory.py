@@ -75,10 +75,8 @@ class CowrieSSHFactory(factory.SSHFactory):
             except IOError:
                 pass
 
-        try:
-            self.ourVersionString = CowrieConfig().get('ssh', 'version')
-        except NoOptionError:
-            self.ourVersionString = 'SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2'  # this can come from backend
+        # this can come from backend in the future, check HonSSH's slim client
+        self.ourVersionString = CowrieConfig().get('ssh', 'version', fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
 
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
@@ -96,7 +94,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-        if CowrieConfig().get('honeypot', 'backend') == 'proxy':
+        if CowrieConfig().get('honeypot', 'backend', fallback='shell') == 'proxy':
             t = proxyTransport.FrontendSSHTransport()
         else:
             t = shellTransport.HoneyPotSSHTransport()

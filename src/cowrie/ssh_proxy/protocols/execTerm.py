@@ -39,7 +39,7 @@ from cowrie.ssh_proxy.protocols import baseProtocol
 class ExecTerm(baseProtocol.BaseProtocol):
     def __init__(self, uuid, channelName, ssh, channelId, command):
         super(ExecTerm, self).__init__(uuid, channelName, ssh)
-        log.msg('executing command "{0}"'.format(command.decode()))
+
         log.msg(eventid='cowrie.command.input',
                 input=command.decode('ascii'),
                 format='CMD: %(input)s')

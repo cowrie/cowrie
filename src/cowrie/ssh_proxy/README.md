@@ -27,10 +27,10 @@ After authentication all SSH transport data is forwarded from attacker to server
 
 
 ## Authentication
-Authentication leverages the same mechanim found in Cowrie's shell: it's set as a service provided by Twisted, and the same configurations apply when using both shell and proxy backends.
+Authentication leverages the same mechanism found in Cowrie's shell: it's set as a service provided by Twisted, and the same configurations apply when using both shell and proxy backends.
 
 ## Managing the VM pool
-The flow to get VMs from the pool might be a little complicated befcause of the amount of back-and-forth needed when using deferreds.
+The flow to get VMs from the pool might be a little complicated because of the amount of back-and-forth needed when using deferreds.
 
 The Pool interface is started in the Cowrie plugin (if enabled by configuration, of course), and the reference to it passed to both SSH and Telnet factories.
 
