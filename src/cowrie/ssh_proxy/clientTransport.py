@@ -39,7 +39,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         self.frontendTriedPassword = None
 
     def connectionMade(self):
-        log.msg('[CLIENT] New client connection from {0}'.format(self.transport.getPeer().host))
+        log.msg('Connected to SSH backend at {0}'.format(self.transport.getPeer().host))
         self.factory.server.client = self
         self.factory.server.sshParse.set_client(self)
         transport.SSHClientTransport.connectionMade(self)

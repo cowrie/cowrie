@@ -196,7 +196,7 @@ auth_class = UserDB
 # ============================================================================
 [proxy]
 
-backend_ip = localhost
+backend_ssh_host = localhost
 backend_ssh_port = 2022
 
 backend_user = root
