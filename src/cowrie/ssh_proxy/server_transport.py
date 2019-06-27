@@ -41,7 +41,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log, randbytes
 
 from cowrie.core.config import CowrieConfig
-from cowrie.ssh_proxy import clientTransport
+from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
 
 
@@ -154,7 +154,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def connect_to_backend(self, ip, port):
         # connection to the backend starts here
-        client_factory = clientTransport.BackendSSHFactory()
+        client_factory = client_transport.BackendSSHFactory()
         client_factory.server = self
 
         point = TCP4ClientEndpoint(reactor, ip, port, timeout=10)

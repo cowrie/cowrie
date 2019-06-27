@@ -31,11 +31,11 @@ import uuid
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
-from cowrie.ssh_proxy.protocols import baseProtocol, execTerm, portForward, sftp, term
+from cowrie.ssh_proxy.protocols import base_protocol, exec_term, port_forward, sftp, term
 from cowrie.ssh_proxy.util import int_to_hex, string_to_hex
 
 
-class SSH(baseProtocol.BaseProtocol):
+class SSH(base_protocol.BaseProtocol):
     packetLayout = {
         1: 'SSH_MSG_DISCONNECT',  # ['uint32', 'reason_code'], ['string', 'reason'], ['string', 'language_tag']
         2: 'SSH_MSG_IGNORE',  # ['string', 'data']
@@ -213,7 +213,7 @@ class SSH(baseProtocol.BaseProtocol):
 
                     channel = self.get_channel(channel_id, other_parent)
                     channel['name'] = the_name
-                    channel['session'] = portForward.PortForward(the_uuid, channel['name'], self)
+                    channel['session'] = port_forward.PortForward(the_uuid, channel['name'], self)
                 else:
                     log.msg('[SSH] Detected Port Forwarding Channel - Disabling!')
                     log.msg(eventid='cowrie.direct-tcpip.data',
@@ -257,7 +257,7 @@ class SSH(baseProtocol.BaseProtocol):
                 channel['name'] = '[EXEC' + str(channel['serverID']) + ']'
                 self.extract_bool()
                 command = self.extract_string()
-                channel['session'] = execTerm.ExecTerm(the_uuid, channel['name'], self, channel['serverID'], command)
+                channel['session'] = exec_term.ExecTerm(the_uuid, channel['name'], self, channel['serverID'], command)
 
             elif channel_type == b'subsystem':
                 self.extract_bool()

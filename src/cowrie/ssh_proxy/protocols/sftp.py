@@ -28,10 +28,10 @@
 
 from twisted.python import log
 
-from cowrie.ssh_proxy.protocols import baseProtocol
+from cowrie.ssh_proxy.protocols import base_protocol
 
 
-class SFTP(baseProtocol.BaseProtocol):
+class SFTP(base_protocol.BaseProtocol):
     prevID = ''
     ID = ''
     handle = ''
@@ -80,8 +80,8 @@ class SFTP(baseProtocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh):
         super(SFTP, self).__init__(uuid, chan_name, ssh)
 
-        self.clientPacket = baseProtocol.BaseProtocol()
-        self.serverPacket = baseProtocol.BaseProtocol()
+        self.clientPacket = base_protocol.BaseProtocol()
+        self.serverPacket = base_protocol.BaseProtocol()
         self.parent = None
         self.parentPacket = None
         self.offset = 0

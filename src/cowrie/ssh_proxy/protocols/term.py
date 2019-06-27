@@ -33,10 +33,10 @@ from twisted.python import log
 
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
-from cowrie.ssh_proxy.protocols import baseProtocol
+from cowrie.ssh_proxy.protocols import base_protocol
 
 
-class Term(baseProtocol.BaseProtocol):
+class Term(base_protocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh, channelId):
         super(Term, self).__init__(uuid, chan_name, ssh)
 

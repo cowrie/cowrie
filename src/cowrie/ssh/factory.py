@@ -20,7 +20,7 @@ from cowrie.ssh import connection
 from cowrie.ssh import keys as cowriekeys
 from cowrie.ssh import transport as shellTransport
 from cowrie.ssh.userauth import HoneyPotSSHUserAuthServer
-from cowrie.ssh_proxy import serverTransport as proxyTransport
+from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
