@@ -18,8 +18,10 @@ from twisted.python import log
 from cowrie.core.config import CowrieConfig
 from cowrie.ssh import connection
 from cowrie.ssh import keys as cowriekeys
-from cowrie.ssh import transport
-from cowrie.ssh import userauth
+from cowrie.ssh import transport as shellTransport
+from cowrie.ssh.userauth import HoneyPotSSHUserAuthServer
+from cowrie.ssh_proxy import server_transport as proxyTransport
+from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
 class CowrieSSHFactory(factory.SSHFactory):
@@ -29,7 +31,8 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     services = {
-        b'ssh-userauth': userauth.HoneyPotSSHUserAuthServer,
+        b'ssh-userauth': ProxySSHAuthServer if CowrieConfig().get('honeypot', 'backend') == 'proxy'
+        else HoneyPotSSHUserAuthServer,
         b'ssh-connection': connection.CowrieSSHConnection,
     }
     starttime = None
@@ -72,6 +75,9 @@ class CowrieSSHFactory(factory.SSHFactory):
             except IOError:
                 pass
 
+        # this can come from backend in the future, check HonSSH's slim client
+        self.ourVersionString = CowrieConfig().get('ssh', 'version', fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
+
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
 
@@ -88,8 +94,10 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-
-        t = transport.HoneyPotSSHTransport()
+        if CowrieConfig().get('honeypot', 'backend', fallback='shell') == 'proxy':
+            t = proxyTransport.FrontendSSHTransport()
+        else:
+            t = shellTransport.HoneyPotSSHTransport()
 
         t.ourVersionString = self.ourVersionString
         t.supportedPublicKeys = list(self.privateKeys.keys())

@@ -123,6 +123,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
 
+    def dispatchMessage(self, message_num, payload):
+        transport.SSHServerTransport.dispatchMessage(self, message_num, payload)
+
     def sendPacket(self, messageType, payload):
         """
         Override because OpenSSH pads with 0 on KEXINIT
