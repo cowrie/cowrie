@@ -199,8 +199,57 @@ auth_class = UserDB
 backend_ssh_host = localhost
 backend_ssh_port = 2022
 
+backend_telnet_host = localhost
+backend_telnet_port = 2023
+
 backend_user = root
 backend_pass = root
+
+# Telnet Spoofing #
+# To spoof telnet authentication we need to capture login and password prompts, and spoof data to the backend in order
+# to successfully authenticate. If disabled, attackers can only use the real user credentials of the backend.
+
+telnet_spoof_authentication = true
+
+# These regex were made using Ubuntu 18.04; you have to adapt these for the prompts
+# from your backend. You can enable raw logging above to analyse data passing through
+# and identify the format of the prompts you need.
+# You should generally include ".*" at the beginning and end of prompts, since Telnet messages can contain
+# more data than the prompt.
+
+# For login it is usually <hostname> login:
+telnet_username_prompt_regex = (\n|^)46438fdf5ebc login: .*
+
+# Password prompt is usually only the word Password
+telnet_password_prompt_regex = .*Password: .*
+
+# This data is sent by clients at the beginning of negotiation (before the password prompt), and contains the username
+# that is trying to log in. We replace that username with the one in "backend_user" to allow the chance of a successful
+# login after the first password prompt. We are only able to check if credentials are allowed after the password is
+# inserted. If they are, then a correct username was already sent and authentication succeeds; if not, we send a fake
+# password to force authentication to fail.
+telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
+
+
+# Other Configs #
+# log raw TCP packets in SSh and Telnet
+log_raw = false
+
+########
+
+#enable_pool = false
+#pool_ip = 192.168.1.40
+#pool_port = 3574
+
+# these are only used when pool disabled
+#backend_ssh_host
+#backend_ssh_port
+
+#backend_telnet_host
+#backend_telnet_port
+
+
+# TODO libvirt must be installed natively
 
 # ============================================================================
 # Shell Options
@@ -473,8 +522,6 @@ forward_tunnel = false
 
 # Configure keyboard-interactive login
 auth_keyboard_interactive_enabled = false
-
-
 
 # ============================================================================
 # Telnet Specific Options
