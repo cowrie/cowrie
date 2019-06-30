@@ -117,7 +117,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             d.addErrback(self.pool_connection_error)
         else:
             # simply a proxy, no pool
-            backend_ip = CowrieConfig().get('proxy', 'backend_ip')
+            backend_ip = CowrieConfig().get('proxy', 'backend_ssh_host')
             backend_port = CowrieConfig().getint('proxy', 'backend_ssh_port')
             self.connect_to_backend(backend_ip, backend_port)
 
