@@ -26,10 +26,6 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     tac = None
 
-    def __init__(self, pool_handler):
-        self.pool_handler = pool_handler
-        super().__init__()
-
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
         """

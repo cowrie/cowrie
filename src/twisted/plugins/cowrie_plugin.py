@@ -45,7 +45,7 @@ from zope.interface import implementer, provider
 import cowrie.core.checkers
 import cowrie.core.realm
 import cowrie.ssh.factory
-import cowrie.telnet.transport
+import cowrie.telnet.factory
 from cowrie import core
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
@@ -165,7 +165,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             create_endpoint_services(reactor, topService, listen_endpoints, factory)
 
         if enableTelnet:
-            f = cowrie.telnet.transport.HoneyPotTelnetFactory()
+            f = cowrie.telnet.factory.HoneyPotTelnetFactory()
             f.tac = self
             f.portal = portal.Portal(core.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
