@@ -235,19 +235,6 @@ telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
 # log raw TCP packets in SSh and Telnet
 log_raw = false
 
-########
-
-#enable_pool = false
-#pool_ip = 192.168.1.40
-#pool_port = 3574
-
-# these are only used when pool disabled
-#backend_ssh_host
-#backend_ssh_port
-
-#backend_telnet_host
-#backend_telnet_port
-
 
 # TODO libvirt must be installed natively
 
