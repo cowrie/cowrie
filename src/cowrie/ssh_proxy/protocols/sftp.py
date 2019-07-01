@@ -82,6 +82,7 @@ class SFTP(base_protocol.BaseProtocol):
 
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()
+
         self.parent = None
         self.parentPacket = None
         self.offset = 0

@@ -49,6 +49,7 @@ import cowrie.telnet.factory
 from cowrie import core
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
+from cowrie.pool_interface.handler import PoolHandler
 
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
@@ -84,6 +85,15 @@ class CowrieServiceMaker(object):
     options = Options
     output_plugins = None
 
+    def __init__(self):
+        self.topService = None
+        self.pool_handler = None
+
+        # ssh is enabled by default
+        self.enableSSH = CowrieConfig().getboolean('ssh', 'enabled', fallback=True)
+        # telnet is disabled by default
+        self.enableTelnet = CowrieConfig().getboolean('telnet', 'enabled', fallback=False)
+
     def makeService(self, options):
         """
         Construct a TCPServer from a factory defined in Cowrie.
@@ -110,12 +120,8 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg("Python Version {}".format(str(sys.version).replace('\n', '')))
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
-        # ssh is enabled by default
-        enableSSH = CowrieConfig().getboolean('ssh', 'enabled', fallback=True)
-        # telnet is disabled by default
-        enableTelnet = CowrieConfig().getboolean('telnet', 'enabled', fallback=False)
-
-        if enableTelnet is False and enableSSH is False:
+        # check configurations
+        if not self.enableTelnet and not self.enableSSH:
             print('ERROR: You must at least enable SSH or Telnet')
             sys.exit(1)
 
@@ -140,12 +146,25 @@ Makes a Cowrie SSH/Telnet honeypot.
                 log.err()
                 log.msg("Failed to load output engine: {}".format(engine))
 
-        topService = service.MultiService()
+        self.topService = service.MultiService()
         application = service.Application('cowrie')
-        topService.setServiceParent(application)
+        self.topService.setServiceParent(application)
 
-        if enableSSH:
-            factory = cowrie.ssh.factory.CowrieSSHFactory()
+        # initialise VM pool handling - only if proxy AND pool set to enabled
+        backend_type = CowrieConfig().get('honeypot', 'backend', fallback='shell')
+        pool_enabled = CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False)
+
+        if backend_type == 'proxy' and pool_enabled:
+            self.pool_handler = PoolHandler(self)
+        else:
+            # we initialise the services directly
+            self.pool_ready()
+
+        return self.topService
+
+    def pool_ready(self):
+        if self.enableSSH:
+            factory = cowrie.ssh.factory.CowrieSSHFactory(self.pool_handler)
             factory.tac = self
             factory.portal = portal.Portal(core.realm.HoneyPotRealm())
             factory.portal.registerChecker(
@@ -162,18 +181,16 @@ Makes a Cowrie SSH/Telnet honeypot.
             else:
                 listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'honeypot', 2222)
 
-            create_endpoint_services(reactor, topService, listen_endpoints, factory)
+            create_endpoint_services(reactor, self.topService, listen_endpoints, factory)
 
-        if enableTelnet:
-            f = cowrie.telnet.factory.HoneyPotTelnetFactory()
+        if self.enableTelnet:
+            f = cowrie.telnet.factory.HoneyPotTelnetFactory(self.pool_handler)
             f.tac = self
             f.portal = portal.Portal(core.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
             listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'telnet', 2223)
-            create_endpoint_services(reactor, topService, listen_endpoints, f)
-
-        return topService
+            create_endpoint_services(reactor, self.topService, listen_endpoints, f)
 
 
 # Now construct an object which *provides* the relevant interfaces
