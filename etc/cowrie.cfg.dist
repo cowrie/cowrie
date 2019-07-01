@@ -236,8 +236,6 @@ telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
 log_raw = false
 
 
-# TODO libvirt must be installed natively
-
 # ============================================================================
 # Shell Options
 # Options around Cowrie's Shell Emulation
