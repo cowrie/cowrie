@@ -196,16 +196,29 @@ auth_class = UserDB
 # ============================================================================
 [proxy]
 
+# Pool Settings #
+enable_pool = true
+
+pool_host = 192.168.1.40
+pool_port = 3574
+
+pool_max_vms = 10
+pool_vm_unused_timeout = 600
+
+# Backend settings #
+
+# the four below are only used when pool is disabled
 backend_ssh_host = localhost
 backend_ssh_port = 2022
 
 backend_telnet_host = localhost
 backend_telnet_port = 2023
 
+# real credentials to log into backend
 backend_user = root
 backend_pass = root
 
-# Telnet Spoofing #
+# Telnet authentication spoofing #
 # To spoof telnet authentication we need to capture login and password prompts, and spoof data to the backend in order
 # to successfully authenticate. If disabled, attackers can only use the real user credentials of the backend.
 
@@ -231,23 +244,9 @@ telnet_password_prompt_regex = .*Password: .*
 telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
 
 
-# Other Configs #
+# Other configs #
 # log raw TCP packets in SSh and Telnet
 log_raw = false
-
-########
-
-#enable_pool = false
-#pool_ip = 192.168.1.40
-#pool_port = 3574
-
-# these are only used when pool disabled
-#backend_ssh_host
-#backend_ssh_port
-
-#backend_telnet_host
-#backend_telnet_port
-
 
 # TODO libvirt must be installed natively
 

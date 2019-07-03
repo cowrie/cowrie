@@ -1,7 +1,12 @@
+# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# See the COPYRIGHT file for more information
+
 import struct
 
 from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.python import log
+
+from cowrie.core.config import CowrieConfig
 
 
 class PoolClient(Protocol):
@@ -20,7 +25,10 @@ class PoolClient(Protocol):
         """
         Used only by the PoolHandler on the first connection, to set the pool up.
         """
-        buf = struct.pack('!cII', b'i', 10, 600)
+        max_vms = CowrieConfig().getint('proxy', 'pool_max_vms')
+        vm_unused_timeout = CowrieConfig().getint('proxy', 'pool_vm_unused_timeout')
+
+        buf = struct.pack('!cII', b'i', max_vms, vm_unused_timeout)
         self.transport.write(buf)
 
     def send_vm_request(self, src_ip):

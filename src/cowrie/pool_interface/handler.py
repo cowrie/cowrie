@@ -1,3 +1,6 @@
+# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# See the COPYRIGHT file for more information
+
 import sys
 
 from twisted.internet import reactor
@@ -23,7 +26,7 @@ class PoolHandler:
         self.cowrie_plugin = cowrie_plugin
 
         # configs
-        self.pool_ip = CowrieConfig().get('proxy', 'pool_ip')
+        self.pool_ip = CowrieConfig().get('proxy', 'pool_host')
         self.pool_port = CowrieConfig().getint('proxy', 'pool_port')
 
         self.pool_ready = False
