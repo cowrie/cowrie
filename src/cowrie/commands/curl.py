@@ -325,7 +325,8 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
 
         if hasattr(error, 'getErrorMessage'):  # Exceptions
             error = error.getErrorMessage()
-        self.write('{0}\n'.format(error))
+        self.write(error)
+        self.write('\n')
         self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
                                   format='Attempt to download file(s) from URL (%(url)s) failed',
                                   url=self.url)
@@ -418,7 +419,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.curl.safeoutfile)
         else:
             with open(self.curl.safeoutfile, 'r') as f:
-                self.curl.write('{0}\n'.format(f.read()))
+                self.curl.write(f.read())
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
