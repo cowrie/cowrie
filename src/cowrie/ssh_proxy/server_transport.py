@@ -122,7 +122,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg('Conenction to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg('Connection to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
@@ -144,7 +144,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason):
-        log.msg('Conenction to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg('Connection to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
