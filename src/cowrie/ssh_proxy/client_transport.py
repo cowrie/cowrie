@@ -125,7 +125,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
     def dispatchMessage(self, message_num, payload):
         if message_num in [6, 52]:
-            return  # TODO consume these in connectionSecure
+            return  # TODO consume these in authenticateBackend
 
         if message_num == 98:
             # looking for RFC 4254 - 6.10. Returning Exit Status

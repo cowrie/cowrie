@@ -136,10 +136,11 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def received_pool_data(self, operation, status, *data):
         if operation == b'r':
-            log.msg('Got backend data from pool')
-
             honey_ip = data[0]
             ssh_port = data[1]
+
+            log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), ssh_port))
+
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason):
