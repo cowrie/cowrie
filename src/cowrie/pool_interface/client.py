@@ -10,6 +10,9 @@ from cowrie.core.config import CowrieConfig
 
 
 class PoolClient(Protocol):
+    """
+    Represents the connection between a protocol instance (SSH or Telnet) and a Qemu pool
+    """
     def __init__(self, factory):
         self.factory = factory
         self.parent = None
@@ -38,8 +41,10 @@ class PoolClient(Protocol):
         self.transport.write(buf)
 
     def send_vm_free(self):
-        buf = struct.pack('!cI', b'f', self.vm_id)
-        self.transport.write(buf)
+        # free the guest, if we had any guest in this connection to begin with
+        if self.vm_id:
+            buf = struct.pack('!cI', b'f', self.vm_id)
+            self.transport.write(buf)
 
     def dataReceived(self, data):
         # only makes sense to process data if we have a parent to send it to
@@ -58,6 +63,11 @@ class PoolClient(Protocol):
             self.parent.initialisation_response(res_code)
 
         elif res_op == b'r':
+            if res_code != 0:
+                print('Error in pool while requesting guest. Losing connection...')
+                self.parent.loseConnection()
+                return
+
             recv = struct.unpack('!IH', data[5:11])
             self.vm_id = recv[0]
             ip_len = recv[1]
