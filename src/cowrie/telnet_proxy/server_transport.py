@@ -12,6 +12,7 @@ import uuid
 
 from twisted.conch.telnet import TelnetTransport
 from twisted.internet import reactor
+from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
@@ -29,12 +30,16 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.local_ip = None
         self.local_port = 0
 
-        self.honey_ip = CowrieConfig().get('proxy', 'backend_telnet_host')
-        self.honey_port = CowrieConfig().getint('proxy', 'backend_telnet_port')
+        self.startTime = None
 
+        self.pool_interface = None
         self.client = None
         self.frontendAuthenticated = False
         self.delayedPacketsToBackend = []
+
+        # only used when simple proxy (no pool) set
+        self.backend_ip = None
+        self.backend_port = None
 
         self.telnetHandler = TelnetHandler(self)
 
@@ -50,14 +55,6 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        # connection to the backend starts here
-        client_factory = client_transport.BackendTelnetFactory()
-        client_factory.server = self
-
-        reactor.connectTCP(self.honey_ip, self.honey_port, client_factory,
-                           bindAddress=('0.0.0.0', 0),
-                           timeout=10)
-
         log.msg(eventid='cowrie.session.connect',
                 format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
                 src_ip=self.transport.getPeer().host,
@@ -67,7 +64,63 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
                 session=self.transportId,
                 sessionno='T{0}'.format(str(sessionno)),
                 protocol='telnet')
+
         TelnetTransport.connectionMade(self)
+
+        # if we have a pool connect to it and later request a backend, else just connect to a simple backend
+        # when pool is set we can just test self.pool_interface to the same effect of getting the config
+        if CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False):
+            # request a backend
+            d = self.factory.pool_handler.request_interface()
+            d.addCallback(self.pool_connection_success)
+            d.addErrback(self.pool_connection_error)
+        else:
+            # simply a proxy, no pool
+            backend_ip = CowrieConfig().get('proxy', 'backend_telnet_host')
+            backend_port = CowrieConfig().getint('proxy', 'backend_telnet_port')
+            self.connect_to_backend(backend_ip, backend_port)
+
+    def pool_connection_error(self, reason):
+        log.msg('Connection to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
+        self.transport.loseConnection()
+
+    def pool_connection_success(self, pool_interface):
+        log.msg("Connected to backend pool")
+
+        self.pool_interface = pool_interface
+        self.pool_interface.set_parent(self)
+
+        # now request a backend
+        self.pool_interface.send_vm_request(self.peer_ip)
+
+    def received_pool_data(self, operation, status, *data):
+        if operation == b'r':
+            honey_ip = data[0]
+            telnet_port = data[2]
+
+            log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), telnet_port))
+
+            self.connect_to_backend(honey_ip, telnet_port)
+
+    def backend_connection_error(self, reason):
+        log.msg('Connection to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
+        self.transport.loseConnection()
+
+    def backend_connection_success(self, backendTransport):
+        log.msg("Connected to honeypot backend")
+
+        self.startTime = time.time()
+        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
+
+    def connect_to_backend(self, ip, port):
+        # connection to the backend starts here
+        client_factory = client_transport.BackendTelnetFactory()
+        client_factory.server = self
+
+        point = TCP4ClientEndpoint(reactor, ip, port, timeout=20)
+        d = point.connect(client_factory)
+        d.addCallback(self.backend_connection_success)
+        d.addErrback(self.backend_connection_error)
 
     def dataReceived(self, data):
         self.telnetHandler.addPacket('frontend', data)
@@ -101,6 +154,10 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
 
         # signal that we're closing to the handler
         self.telnetHandler.close()
+
+        # free connection
+        if self.pool_interface:
+            self.pool_interface.send_vm_free()
 
         duration = time.time() - self.startTime
         log.msg(eventid='cowrie.session.closed',

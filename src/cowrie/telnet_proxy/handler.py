@@ -74,6 +74,9 @@ class TelnetHandler:
         # and the respective frontend response and send it before starting to intercept auth data
         self.prePasswordData = False
 
+        # buffer
+        self.backend_buffer = []
+
         # tty logging
         self.startTime = time.time()
         self.ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
@@ -114,17 +117,23 @@ class TelnetHandler:
                     duration=time.time() - self.startTime)
 
     def sendBackend(self, data):
-        self.client.transport.write(data)
+        self.backend_buffer.append(data)
 
-        # log raw packets if user sets so
-        if CowrieConfig().getboolean('proxy', 'log_raw', fallback=False):
-            log.msg(b'to_backend - ' + data)
+        if not self.client:
+            return
 
-        if self.ttylogEnabled and self.authStarted:
-            cleanData = data.replace(b'\x00', b'\n')  # some frontends send 0xFF instead of newline
+        for packet in self.backend_buffer:
+            self.client.transport.write(packet)
+            # log raw packets if user sets so
+            if CowrieConfig().getboolean('proxy', 'log_raw', fallback=False):
+                log.msg(b'to_backend - ' + data)
 
-            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), cleanData)
-            self.ttylogSize += len(data)
+            if self.ttylogEnabled and self.authStarted:
+                cleanData = data.replace(b'\x00', b'\n')  # some frontends send 0xFF instead of newline
+                ttylog.ttylog_write(self.ttylogFile, len(cleanData), ttylog.TYPE_INPUT, time.time(), cleanData)
+                self.ttylogSize += len(cleanData)
+
+            self.backend_buffer = self.backend_buffer[1:]
 
     def sendFrontend(self, data):
         self.server.transport.write(data)

@@ -231,7 +231,7 @@ telnet_spoof_authentication = true
 # more data than the prompt.
 
 # For login it is usually <hostname> login:
-telnet_username_prompt_regex = (\n|^)a16d74f42409 login: .*
+telnet_username_prompt_regex = (\n|^)ubuntu login: .*
 
 # Password prompt is usually only the word Password
 telnet_password_prompt_regex = .*Password: .*
