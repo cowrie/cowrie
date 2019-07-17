@@ -215,8 +215,8 @@ backend_telnet_host = localhost
 backend_telnet_port = 2023
 
 # real credentials to log into backend
-backend_user = user
-backend_pass = user
+backend_user = root
+backend_pass = root
 
 # Telnet authentication spoofing #
 # To spoof telnet authentication we need to capture login and password prompts, and spoof data to the backend in order
@@ -231,7 +231,7 @@ telnet_spoof_authentication = true
 # more data than the prompt.
 
 # For login it is usually <hostname> login:
-telnet_username_prompt_regex = (\n|^)46438fdf5ebc login: .*
+telnet_username_prompt_regex = (\n|^)a16d74f42409 login: .*
 
 # Password prompt is usually only the word Password
 telnet_password_prompt_regex = .*Password: .*

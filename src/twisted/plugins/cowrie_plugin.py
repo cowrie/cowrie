@@ -32,16 +32,17 @@ import os
 import sys
 
 from twisted._version import __version__
-from twisted.application import service
+from twisted.application import service, internet
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
-from twisted.internet import reactor
+from twisted.internet import reactor, endpoints
+from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
 
 from zope.interface import implementer, provider
-
+import time
 import cowrie.core.checkers
 import cowrie.core.realm
 import cowrie.ssh.factory
@@ -50,6 +51,7 @@ from cowrie import core
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
+from pool.pool_server import PoolServerFactory
 
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
@@ -155,6 +157,9 @@ Makes a Cowrie SSH/Telnet honeypot.
         pool_enabled = CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False)
 
         if backend_type == 'proxy' and pool_enabled:
+            endpoint = TCP4ServerEndpoint(reactor, 3574)
+            endpoint.listen(PoolServerFactory())
+
             self.pool_handler = PoolHandler(self)
         else:
             # we initialise the services directly

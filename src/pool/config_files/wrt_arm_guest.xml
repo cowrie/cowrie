@@ -1,0 +1,40 @@
+<!-- Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com> -->
+<domain type='qemu' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+    <name>{guest_name}</name>
+    <memory unit='KiB'>262144</memory>
+    <os>
+        <type arch='armv7l' machine='virt-2.9'>hvm</type>
+        <boot dev='hd'/>
+        <kernel>/home/gb/Repositories/qemu/wrt/zImage</kernel>
+        <cmdline>root=/dev/vda</cmdline>
+<!--        <ramdisk>/home/gb/Repositories/qemu/wrt/rootfs.cpio</ramdisk>-->
+    </os>
+    <pm>
+         <on_reboot>destroy</on_reboot>
+    </pm>
+    <devices>
+        <emulator>/usr/bin/qemu-system-arm</emulator>
+        <serial type='pty'>
+            <target port='0'/>
+        </serial>
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='qcow2'/>
+            <source file='{disk_image}'/>
+            <target dev='hda' bus='virtio'/>
+        </disk>
+
+        <interface type='network'>
+            <start mode='onboot'/>
+            <mac address='{mac_address}'/>
+            <source network='{network_name}'/>
+            <model type='virtio-net-pci'/>
+            <filterref filter='cowrie-default-filter'/>
+        </interface>
+    </devices>
+    <qemu:commandline>
+        <qemu:arg value='-device'/>
+        <qemu:arg value='virtio-net-pci'/>
+        <qemu:arg value='-netdev'/>
+        <qemu:arg value='user,id=net1'/>
+    </qemu:commandline>
+</domain>
