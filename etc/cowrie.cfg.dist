@@ -248,6 +248,9 @@ telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
 # log raw TCP packets in SSh and Telnet
 log_raw = false
 
+save_snapshots = True
+snapshot_path = ${honeypot:state_path}/snapshots
+
 # TODO libvirt must be installed natively
 
 # ============================================================================

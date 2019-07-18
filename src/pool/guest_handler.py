@@ -1,10 +1,14 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
+from configparser import NoOptionError
 
 import libvirt
+import os
 
 import pool.snapshot_handler
 import pool.util
+
+from cowrie.core.config import CowrieConfig
 
 from twisted.python import log
 
@@ -13,9 +17,19 @@ class QemuGuestError(Exception):
     pass
 
 
-def create_guest(connection, mac_address, guest_unique_id, snapshot_dir, configs):
+def create_guest(connection, mac_address, guest_unique_id, configs):
+    # get a directory to save snapshots, even if temporary
+    try:
+        snapshot_path = CowrieConfig().get('proxy', 'snapshot_path')
+
+        # guest configuration, to be read by qemu, needs an absolute path
+        if not os.path.isabs(snapshot_path):
+            snapshot_path = os.path.join(os.getcwd(), snapshot_path)
+    except NoOptionError:
+        snapshot_path = os.getcwd()
+
     # create a disk snapshot to be used by the guest
-    disk_img = snapshot_dir + 'snapshot-{0}-{1}.qcow2'.format(configs['version_tag'], guest_unique_id)
+    disk_img = os.path.join(snapshot_path, 'snapshot-{0}-{1}.qcow2'.format(configs['version_tag'], guest_unique_id))
 
     if not pool.snapshot_handler.create_disk_snapshot(configs['base_image'], disk_img):
         log.msg(eventid='cowrie.backend_pool.guest_handler',

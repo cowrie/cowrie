@@ -11,6 +11,7 @@ import pool.network_handler
 import pool.util
 
 from twisted.python import log
+from cowrie.core.config import CowrieConfig
 
 
 ubuntu_configs = {
@@ -35,7 +36,7 @@ class QemuService:
         # open connection to libvirt
         self.conn = libvirt.open('qemu:///system')
         if self.conn is None:
-            log.err(eventid='cowrie.backend_pool.qemu',
+            log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Failed to open connection to qemu:///system')
             raise QemuError()
 
@@ -48,8 +49,13 @@ class QemuService:
     def __del__(self):
         log.msg(eventid='cowrie.backend_pool.qemu',
                 format='Doing Qemu clean shutdown...')
-        self.network.destroy()  # destroy transient network
-        self.filter.undefine()  # destroy network filter
+
+        if self.network:
+            self.network.destroy()  # destroy transient network
+
+        if self.filter:
+            self.filter.undefine()  # destroy network filter
+
         self.conn.close()  # close libvirt connection
 
         log.msg(eventid='cowrie.backend_pool.qemu',
@@ -69,17 +75,14 @@ class QemuService:
         """
         Returns an unready domain and its snapshot information
         """
-        # configs
-        snapshot_dir = '/home/gb/Repositories/qemu/'
-
         # generate networking details
         guest_mac, guest_ip = pool.util.generate_mac_ip(guest_id)
         guest_unique_id = uuid.uuid4().hex
 
         # create a single guest
-        dom, snapshot = pool.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id, snapshot_dir, ubuntu_configs)
+        dom, snapshot = pool.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id, ubuntu_configs)
         if dom is None:
-            log.err(eventid='cowrie.backend_pool.qemu',
+            log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Failed to create guest')
             return None
 
@@ -87,8 +90,15 @@ class QemuService:
 
     def destroy_guest(self, domain, snapshot):
         try:
+            # destroy the domain in qemu
             domain.destroy()
-            os.remove(snapshot)  # destroy its disk snapshot
+
+            # we want to remove the snapshot if either:
+            #   - explicitely set save_snapshots to False
+            #   - no snapshot dir was defined (using cowrie's root dir) - should not happen but prevent it
+            if not CowrieConfig().getboolean('proxy', 'save_snapshots', fallback=True) \
+                    or CowrieConfig().get('proxy', 'snapshot_path', fallback=None) is None:
+                os.remove(snapshot)  # destroy its disk snapshot
         except Exception as error:
             log.err(eventid='cowrie.backend_pool.qemu',
                     format='Error destroying guest: %(error)s',
@@ -97,8 +107,7 @@ class QemuService:
     def destroy_all_guests(self):
         domains = self.conn.listDomainsID()
         if not domains:
-            pass
-            log.err(eventid='cowrie.backend_pool.qemu',
+            log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Could not get domain list')
 
         for domain_id in domains:
@@ -109,7 +118,7 @@ class QemuService:
     def destroy_all_networks(self):
         networks = self.conn.listNetworks()
         if not networks:
-            log.err(eventid='cowrie.backend_pool.qemu',
+            log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Could not get network list')
 
         for network in networks:
@@ -120,7 +129,7 @@ class QemuService:
     def destroy_all_network_filters(self):
         network_filters = self.conn.listNWFilters()
         if not network_filters:
-            log.err(eventid='cowrie.backend_pool.qemu',
+            log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Could not get network filters list')
 
         for nw_filter in network_filters:
