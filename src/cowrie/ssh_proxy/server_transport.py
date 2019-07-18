@@ -326,10 +326,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
 
-        try:
+        if self.client:
             self.client.loseConnection()
-        except Exception:
-            pass
+
         transport.SSHServerTransport.connectionLost(self, reason)
 
         self.transport.connectionLost(reason)

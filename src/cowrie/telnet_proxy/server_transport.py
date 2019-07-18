@@ -150,7 +150,8 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         TelnetTransport.connectionLost(self, reason)
 
         # close transport on backend
-        self.client.transport.loseConnection()
+        if self.client:
+            self.client.transport.loseConnection()
 
         # signal that we're closing to the handler
         self.telnetHandler.close()
