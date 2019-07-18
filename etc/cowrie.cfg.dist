@@ -110,7 +110,6 @@ interactive_timeout = 180
 authentication_timeout = 120
 
 # EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
-# a limited implementation is available for proxy, with request_exec functionality only
 # (default: shell)
 backend = shell
 
@@ -248,8 +247,24 @@ telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
 # log raw TCP packets in SSh and Telnet
 log_raw = false
 
+# guest snapshots
 save_snapshots = True
 snapshot_path = ${honeypot:state_path}/snapshots
+
+# pool xml configs
+config_files_path = ${honeypot:share_path}/pool_configs
+
+network_config = default_network.xml
+nw_filter_config = default_filter.xml
+
+# guest type details
+guest_config = default_guest.xml
+guest_tag = ubuntu18.04
+base_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
+
+#guest_config = wrt_arm_guest.xml
+#guest_tag = wrt
+#base_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
 
 # TODO libvirt must be installed natively
 

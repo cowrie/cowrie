@@ -36,6 +36,9 @@ class PoolService:
         self.guest_id = 2
         self.guest_lock = Lock()
 
+        # time in seconds between each loop iteration
+        self.loop_sleep_time = 5
+
         # default configs
         self.max_vm = 2
         self.vm_unused_timeout = 600
@@ -176,7 +179,9 @@ class PoolService:
 
             # check for created VMs that can become available
             self.__producer_mark_available()
-            time.sleep(5)
+
+            # sleep until next iteration
+            time.sleep(self.loop_sleep_time)
 
     # Consumers
     def __consumers_get_guest_ip(self, src_ip):

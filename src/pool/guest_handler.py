@@ -17,27 +17,30 @@ class QemuGuestError(Exception):
     pass
 
 
-def create_guest(connection, mac_address, guest_unique_id, configs):
+def create_guest(connection, mac_address, guest_unique_id):
+    # get guest configurations
+    configuration_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
+                                      CowrieConfig().get('proxy', 'guest_config', fallback='default_guest.xml'))
+    version_tag = CowrieConfig().get('proxy', 'guest_tag', fallback='guest')
+    base_image = CowrieConfig().get('proxy', 'base_image_path')
+
     # get a directory to save snapshots, even if temporary
     try:
-        snapshot_path = CowrieConfig().get('proxy', 'snapshot_path')
-
         # guest configuration, to be read by qemu, needs an absolute path
-        if not os.path.isabs(snapshot_path):
-            snapshot_path = os.path.join(os.getcwd(), snapshot_path)
+        snapshot_path = pool.util.to_absolute_path(CowrieConfig().get('proxy', 'snapshot_path'))
     except NoOptionError:
         snapshot_path = os.getcwd()
 
     # create a disk snapshot to be used by the guest
-    disk_img = os.path.join(snapshot_path, 'snapshot-{0}-{1}.qcow2'.format(configs['version_tag'], guest_unique_id))
+    disk_img = os.path.join(snapshot_path, 'snapshot-{0}-{1}.qcow2'.format(version_tag, guest_unique_id))
 
-    if not pool.snapshot_handler.create_disk_snapshot(configs['base_image'], disk_img):
+    if not pool.snapshot_handler.create_disk_snapshot(base_image, disk_img):
         log.msg(eventid='cowrie.backend_pool.guest_handler',
                 format='There was a problem creating the disk snapshot.')
         raise QemuGuestError()
 
-    guest_xml = pool.util.read_file(configs['config_file'])
-    guest_config = guest_xml.format(guest_name='cowrie-' + configs['version_tag'] + '_' + guest_unique_id,
+    guest_xml = pool.util.read_file(configuration_file)
+    guest_config = guest_xml.format(guest_name='cowrie-' + version_tag + '_' + guest_unique_id,
                                     disk_image=disk_img,
                                     mac_address=mac_address,
                                     network_name='cowrie')

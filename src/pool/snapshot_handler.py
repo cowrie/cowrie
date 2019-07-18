@@ -7,7 +7,7 @@ import subprocess
 
 
 def create_disk_snapshot(source_img, destination_img):
-    # snapshot_xml = util.read_file('../config_files/default_snapshot.xml')
+    # snapshot_xml = util.read_file('../pool_configs/default_snapshot.xml')
     # s = domain.listAllSnapshots()
     # ret = domain.snapshotCreateXML(snapshot_xml, libvirt.VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY)
 

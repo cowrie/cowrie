@@ -1,7 +1,6 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
-import sys
 import libvirt
 import os
 import uuid
@@ -12,19 +11,6 @@ import pool.util
 
 from twisted.python import log
 from cowrie.core.config import CowrieConfig
-
-
-ubuntu_configs = {
-    'version_tag': 'ubuntu18.04',
-    'config_file': '/home/gb/Repositories/qemu/config_files/default_guest.xml',
-    'base_image': '/home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2'
-}
-
-wrt_configs = {
-    'version_tag': 'wrt',
-    'config_file': '/home/gb/Repositories/qemu/config_files/wrt_arm_guest.xml',
-    'base_image': '/home/gb/Repositories/qemu/wrt/root.qcow2'
-}
 
 
 class QemuError(Exception):
@@ -80,7 +66,7 @@ class QemuService:
         guest_unique_id = uuid.uuid4().hex
 
         # create a single guest
-        dom, snapshot = pool.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id, ubuntu_configs)
+        dom, snapshot = pool.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id)
         if dom is None:
             log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Failed to create guest')

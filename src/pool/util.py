@@ -3,6 +3,7 @@
 
 import subprocess
 import time
+import os
 
 
 def ping(guest_ip):
@@ -30,3 +31,14 @@ def generate_mac_ip(guest_id):
 
 def now():
     return time.time()
+
+
+def to_absolute_path(path):
+    """
+    Converts a relative path to absolute, useful when converting cowrie configs (relative) to qemu paths
+    (which must be absolute)
+    """
+    if not os.path.isabs(path):
+        return os.path.join(os.getcwd(), path)
+    else:
+        return path

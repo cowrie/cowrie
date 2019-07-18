@@ -1,16 +1,21 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
-import sys
 import libvirt
+import os
 
 import pool.util
 
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 
 def create_filter(connection):
-    filter_xml = pool.util.read_file('src/pool/config_files/default_filter.xml')
+    filter_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
+                               CowrieConfig().get('proxy', 'nw_filter_config', fallback='default_filter.xml'))
+
+    filter_xml = pool.util.read_file(filter_file)
 
     try:
         return connection.nwfilterDefineXML(filter_xml)
@@ -22,7 +27,10 @@ def create_filter(connection):
 
 
 def create_network(connection):
-    network_xml = pool.util.read_file('src/pool/config_files/default_network.xml')
+    network_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
+                                CowrieConfig().get('proxy', 'network_config', fallback='default_network.xml'))
+
+    network_xml = pool.util.read_file(network_file)
 
     sample_host = '<host mac=\'{mac_address}\' name=\'{name}\' ip=\'{ip_address}\'/>\n'
     hosts = ''
@@ -43,7 +51,7 @@ def create_network(connection):
         # create a transient virtual network
         net = connection.networkCreateXML(network_config)
         if net is None:
-            log.err(eventid='cowrie.backend_pool.network_handler',
+            log.msg(eventid='cowrie.backend_pool.network_handler',
                     format='Failed to define a virtual network')
             exit(1)
 
