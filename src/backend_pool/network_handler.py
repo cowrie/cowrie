@@ -4,7 +4,7 @@
 import libvirt
 import os
 
-import pool.util
+import backend_pool.util
 
 from twisted.python import log
 
@@ -15,7 +15,7 @@ def create_filter(connection):
     filter_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
                                CowrieConfig().get('proxy', 'nw_filter_config', fallback='default_filter.xml'))
 
-    filter_xml = pool.util.read_file(filter_file)
+    filter_xml = backend_pool.util.read_file(filter_file)
 
     try:
         return connection.nwfilterDefineXML(filter_xml)
@@ -30,13 +30,13 @@ def create_network(connection):
     network_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
                                 CowrieConfig().get('proxy', 'network_config', fallback='default_network.xml'))
 
-    network_xml = pool.util.read_file(network_file)
+    network_xml = backend_pool.util.read_file(network_file)
 
     sample_host = '<host mac=\'{mac_address}\' name=\'{name}\' ip=\'{ip_address}\'/>\n'
     hosts = ''
 
     for guest_id in range(2, 255):
-        mac_address, ip_address = pool.util.generate_mac_ip(guest_id)
+        mac_address, ip_address = backend_pool.util.generate_mac_ip(guest_id)
         vm_name = 'vm' + str(guest_id)
         hosts += sample_host.format(mac_address=mac_address, name=vm_name, ip_address=ip_address)
 

@@ -9,7 +9,7 @@ from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.internet import reactor, threads
 from twisted.python import log
 
-from pool.pool_service import NoAvailableVMs, PoolService
+from backend_pool.pool_service import NoAvailableVMs, PoolService
 
 
 class PoolServer(Protocol):

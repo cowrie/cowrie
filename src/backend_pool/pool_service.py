@@ -5,8 +5,8 @@ from threading import Lock
 import os
 import time
 
-import pool.qemu_service
-import pool.util
+import backend_pool.qemu_service
+import backend_pool.util
 
 from twisted.python import log
 
@@ -31,7 +31,7 @@ class PoolService:
     accessed by several consumers and the producer. All other states are accessed only by the single producer.
     """
     def __init__(self):
-        self.qemu = pool.qemu_service.QemuService()
+        self.qemu = backend_pool.qemu_service.QemuService()
         self.guests = []
         self.guest_id = 2
         self.guest_lock = Lock()
@@ -89,7 +89,7 @@ class PoolService:
             # only mark VMs not in use
             used_guests = self.get_guest_states(['used'])
             for guest in used_guests:
-                timed_out = guest['freed_timestamp'] + guest_timeout < pool.util.now()
+                timed_out = guest['freed_timestamp'] + guest_timeout < backend_pool.util.now()
 
                 # only mark guests without clients
                 if timed_out and guest['connected'] == 0:
@@ -132,7 +132,7 @@ class PoolService:
         created_guests = self.get_guest_states(['created'])
         for guest in created_guests:
             # TODO check telnet, in particular if SSH is disabled
-            if pool.util.nmap_ssh(guest['guest_ip']):
+            if backend_pool.util.nmap_ssh(guest['guest_ip']):
                 guest['state'] = 'available'
                 boot_time = int(time.time() - guest['start_timestamp'])
                 log.msg(eventid='cowrie.backend_pool.service',
@@ -253,7 +253,7 @@ class PoolService:
         try:
             for guest in self.guests:
                 if guest['id'] == guest_id:
-                    guest['freed_timestamp'] = pool.util.now()
+                    guest['freed_timestamp'] = backend_pool.util.now()
                     guest['connected'] -= 1
 
                     if guest['connected'] == 0:

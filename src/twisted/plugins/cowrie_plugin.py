@@ -51,7 +51,7 @@ from cowrie import core
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
-from pool.pool_server import PoolServerFactory
+from backend_pool.pool_server import PoolServerFactory
 
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
