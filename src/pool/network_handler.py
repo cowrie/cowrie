@@ -6,21 +6,22 @@ import libvirt
 
 import pool.util
 
-import os
+from twisted.python import log
+
+
 def create_filter(connection):
-    print(os.getcwd())
     filter_xml = pool.util.read_file('src/pool/config_files/default_filter.xml')
 
     try:
         return connection.nwfilterDefineXML(filter_xml)
     except libvirt.libvirtError as e:
-        print(e)
-        print('Filter already exists')
+        log.err(eventid='cowrie.backend_pool.network_handler',
+                format='Filter already exists: %(error)s',
+                error=e)
         return connection.nwfilterLookupByName('cowrie-default-filter')
 
 
 def create_network(connection):
-    print(os.getcwd())
     network_xml = pool.util.read_file('src/pool/config_files/default_network.xml')
 
     sample_host = '<host mac=\'{mac_address}\' name=\'{name}\' ip=\'{ip_address}\'/>\n'
@@ -42,7 +43,8 @@ def create_network(connection):
         # create a transient virtual network
         net = connection.networkCreateXML(network_config)
         if net is None:
-            print('Failed to define a virtual network', file=sys.stderr)
+            log.err(eventid='cowrie.backend_pool.network_handler',
+                    format='Failed to define a virtual network')
             exit(1)
 
         # set the network active
@@ -51,6 +53,7 @@ def create_network(connection):
 
         return net
     except libvirt.libvirtError as e:
-        print(e)
-        print('Network already exists')
+        log.err(eventid='cowrie.backend_pool.network_handler',
+                format='Network already exists: %(error)s',
+                error=e)
         return connection.networkLookupByName('cowrie')

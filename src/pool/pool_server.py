@@ -7,6 +7,7 @@ from twisted.internet.protocol import Protocol
 from twisted.internet.protocol import Factory
 from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.internet import reactor, threads
+from twisted.python import log
 
 from pool.pool_service import NoAvailableVMs, PoolService
 
@@ -38,11 +39,15 @@ class PoolServer(Protocol):
             recv = struct.unpack('!{0}s'.format(ip_len), data[3:])
             attacker_ip = recv[0].decode()
 
-            print('Requesting a VM for attacker @ {0}'.format(attacker_ip))
+            log.msg(eventid='cowrie.backend_pool.server',
+                    format='Requesting a VM for attacker @ %(attacker_ip)s',
+                    attacker_ip=attacker_ip)
 
             try:
                 guest_id, guest_ip = self.factory.pool_service.request_vm(attacker_ip)
-                print('Providing VM id {0}'.format(guest_id))
+                log.msg(eventid='cowrie.backend_pool.server',
+                        format='Providing VM id %(guest_id)s',
+                        guest_id=guest_id)
 
                 ssh_port = 22
                 telnet_port = 23
@@ -51,14 +56,17 @@ class PoolServer(Protocol):
                 response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(), ssh_port, telnet_port)
 
             except NoAvailableVMs as _:
-                print('No VM available, returning error code')
+                log.msg(eventid='cowrie.backend_pool.server',
+                        format='No VM available, returning error code')
                 response = struct.pack('!cI', b'r', 1)
 
         elif res_op == b'f':
             recv = struct.unpack('!I', data[1:])
             vm_id = recv[0]
 
-            print('Freeing VM {0}'.format(vm_id))
+            log.msg(eventid='cowrie.backend_pool.server',
+                    format='Freeing VM %(guest_id)s',
+                    guest_id=vm_id)
 
             # free the vm
             self.factory.pool_service.free_vm(vm_id)
@@ -80,7 +88,10 @@ class PoolServerFactory(Factory):
         threads.deferToThread(self.pool_service.producer_loop)
 
     def buildProtocol(self, addr):
-        print('Received connection from {0}:{1}'.format(addr.host, addr.port))
+        log.msg(eventid='cowrie.backend_pool.server',
+                format='Received connection from %(host)s:%(port)s',
+                host=addr.host,
+                port=addr.port)
         return PoolServer(self)
 
 

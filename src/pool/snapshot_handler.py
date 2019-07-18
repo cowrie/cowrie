@@ -15,7 +15,7 @@ def create_disk_snapshot(source_img, destination_img):
         shutil.chown(source_img, getpass.getuser())
     except PermissionError:
         pass
-        #print('Need root to create snapshot')
+        #log.msg('Need root to create snapshot')
 
     out = subprocess.run(['qemu-img', 'create', '-f', 'qcow2', '-b', source_img, destination_img], capture_output=True)
     return out.returncode == 0

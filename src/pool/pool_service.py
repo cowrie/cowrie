@@ -8,6 +8,8 @@ import time
 import pool.qemu_service
 import pool.util
 
+from twisted.python import log
+
 
 class NoAvailableVMs(Exception):
     pass
@@ -47,7 +49,8 @@ class PoolService:
         self.qemu.initialise_environment()
 
     def __del__(self):
-        print('Trying clean shutdown')
+        log.msg(eventid='cowrie.backend_pool.service',
+                format='Trying clean shutdown')
 
         self.guest_lock.acquire()
         try:
@@ -81,11 +84,14 @@ class PoolService:
         self.guest_lock.acquire()
         try:
             for guest in self.guests:
-                timed_out = guest['freed_timestamp'] + vm_timeout * 1000 < pool.util.now()
+                timed_out = guest['freed_timestamp'] + vm_timeout < pool.util.now()
 
                 # only mark VMs not in use
                 if guest['state'] == 'used' and timed_out and guest['connected'] == 0:
-                    print('Guest {0} ({1}) marked for deletion (timed-out)'.format(guest['id'], guest['guest_ip']))
+                    log.msg(eventid='cowrie.backend_pool.service',
+                            format='Guest %(guest_id)s (%(guest_ip)s) marked for deletion (timed-out)',
+                            guest_id=guest['id'],
+                            guest_ip=guest['guest_ip'])
                     guest['state'] = 'unavailable'
         finally:
             self.guest_lock.release()
@@ -111,8 +117,11 @@ class PoolService:
             if pool.util.nmap_ssh(guest['guest_ip']):
                 guest['state'] = 'available'
                 boot_time = int(time.time() - guest['start_timestamp'])
-                print('Guest {0} ready for SSH connections @ {1}! (boot {2}s)'.format(guest['id'],
-                                                                                      guest['guest_ip'], boot_time))
+                log.msg(eventid='cowrie.backend_pool.service',
+                        format='Guest %(guest_id)s ready for SSH connections @ %(guest_ip)s! (boot %(boot_time)ss)',
+                        guest_id=guest['id'],
+                        guest_ip=guest['guest_ip'],
+                        boot_time=boot_time)
 
     def producer_loop(self):
         while True:
