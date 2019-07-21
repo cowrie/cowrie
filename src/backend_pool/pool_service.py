@@ -1,16 +1,16 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
-from threading import Lock
 import time
-
-import libvirt
+from threading import Lock
 
 import backend_pool.libvirt.backend_service
 import backend_pool.util
 
-from twisted.python import log
+import libvirt
+
 from twisted.internet import reactor
+from twisted.python import log
 
 
 class NoAvailableVMs(Exception):

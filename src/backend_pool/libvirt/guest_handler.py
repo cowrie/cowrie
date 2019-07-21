@@ -1,16 +1,16 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
-from configparser import NoOptionError
-
-import libvirt
 import os
+from configparser import NoOptionError
 
 import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
 
-from cowrie.core.config import CowrieConfig
+import libvirt
 
 from twisted.python import log
+
+from cowrie.core.config import CowrieConfig
 
 
 class QemuGuestError(Exception):

@@ -31,18 +31,19 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 
+from backend_pool.pool_server import PoolServerFactory
+
 from twisted._version import __version__
-from twisted.application import service, internet
+from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
-from twisted.internet import reactor, endpoints
-from twisted.internet.endpoints import TCP4ServerEndpoint
+from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
 
 from zope.interface import implementer, provider
-import time
+
 import cowrie.core.checkers
 import cowrie.core.realm
 import cowrie.ssh.factory
@@ -51,7 +52,7 @@ from cowrie import core
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
-from backend_pool.pool_server import PoolServerFactory
+
 
 if __version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")

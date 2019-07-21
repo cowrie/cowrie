@@ -1,10 +1,10 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
-
-import libvirt
 import os
 
 import backend_pool.util
+
+import libvirt
 
 from twisted.python import log
 

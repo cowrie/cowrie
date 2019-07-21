@@ -3,13 +3,12 @@
 
 import struct
 
-from twisted.internet.protocol import Protocol
-from twisted.internet.protocol import Factory
-from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet import reactor, threads
-from twisted.python import log
-
 from backend_pool.pool_service import NoAvailableVMs, PoolService
+
+from twisted.internet import threads
+from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Protocol
+from twisted.python import log
 
 
 class PoolServer(Protocol):
@@ -55,7 +54,7 @@ class PoolServer(Protocol):
                 fmt = '!cIIH{0}sHH'.format(len(guest_ip))
                 response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(), ssh_port, telnet_port)
 
-            except NoAvailableVMs as _:
+            except NoAvailableVMs:
                 log.msg(eventid='cowrie.backend_pool.server',
                         format='No VM available, returning error code')
                 response = struct.pack('!cI', b'r', 1)
