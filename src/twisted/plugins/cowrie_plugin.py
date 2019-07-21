@@ -167,14 +167,14 @@ Makes a Cowrie SSH/Telnet honeypot.
 
             local_pool = CowrieConfig().getboolean('proxy', 'local_pool', fallback=True)
             pool_host = CowrieConfig().get('proxy', 'pool_host', fallback='127.0.0.1')
-            pool_port = CowrieConfig().getint('proxy', 'pool_port', fallback=3574)
+            pool_port = CowrieConfig().getint('proxy', 'pool_port', fallback=6415)
 
             if local_pool or self.pool_only:
                 # start a pool locally
                 f = PoolServerFactory()
                 f.tac = self
 
-                listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'backend_pool', 3574)
+                listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'backend_pool', 6415)
                 create_endpoint_services(reactor, self.topService, listen_endpoints, f)
 
                 pool_host = '127.0.0.1'  # force use of local interface

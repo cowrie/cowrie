@@ -200,7 +200,7 @@ auth_class = UserDB
 # enable this to solely run the pool, regardless of other configurations
 pool_only = false
 
-listen_endpoints = tcp:3574:interface=0.0.0.0
+listen_endpoints = tcp:6415:interface=0.0.0.0
 
 # guest snapshots
 save_snapshots = false
@@ -273,7 +273,7 @@ local_pool = true
 
 # Remote pool configurations (used with local_pool=false)
 pool_host = 192.168.1.40
-pool_port = 3574
+pool_port = 6415
 
 # =====================================
 # Proxy Configurations
