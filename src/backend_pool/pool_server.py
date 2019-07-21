@@ -29,13 +29,12 @@ class PoolServer(Protocol):
         response = None
 
         if res_op == b'i':
-            recv = struct.unpack('!II', data[1:])
+            recv = struct.unpack('!II?', data[1:])
 
             # set the pool service thread configs
             max_vm = recv[0]
             vm_unused_timeout = recv[1]
-            # TODO MUST come from network
-            share_guests = CowrieConfig().getboolean('proxy', 'pool_share_guests', fallback=True)
+            share_guests = recv[2]
             self.factory.pool_service.set_configs(max_vm, vm_unused_timeout, share_guests)
 
             # respond with ok
@@ -93,7 +92,8 @@ class PoolServer(Protocol):
                     guest_id=guest_id)
 
             # free the NAT
-            self.factory.nat.free_binding(guest_id)
+            if not self.local_pool and self.use_nat or self.pool_only:
+                self.factory.nat.free_binding(guest_id)
 
             # free the vm
             self.factory.pool_service.free_vm(guest_id)
