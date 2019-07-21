@@ -2,12 +2,11 @@
 # See the COPYRIGHT file for more information
 
 from threading import Lock
-import os
 import time
 
 import libvirt
 
-import backend_pool.qemu_service
+import backend_pool.libvirt.backend_service
 import backend_pool.util
 
 from twisted.python import log
@@ -34,7 +33,7 @@ class PoolService:
     accessed by several consumers and the producer. All other states are accessed only by the single producer.
     """
     def __init__(self):
-        self.qemu = backend_pool.qemu_service.QemuService()
+        self.qemu = backend_pool.libvirt.backend_service.LibvirtBackendService()
         self.guests = []
         self.guest_id = 2
         self.guest_lock = Lock()

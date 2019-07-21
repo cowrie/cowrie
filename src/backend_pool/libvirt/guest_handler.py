@@ -5,7 +5,7 @@ from configparser import NoOptionError
 import libvirt
 import os
 
-import backend_pool.snapshot_handler
+import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
 
 from cowrie.core.config import CowrieConfig
@@ -34,7 +34,7 @@ def create_guest(connection, mac_address, guest_unique_id):
     # create a disk snapshot to be used by the guest
     disk_img = os.path.join(snapshot_path, 'snapshot-{0}-{1}.qcow2'.format(version_tag, guest_unique_id))
 
-    if not backend_pool.snapshot_handler.create_disk_snapshot(base_image, disk_img):
+    if not backend_pool.libvirt.snapshot_handler.create_disk_snapshot(base_image, disk_img):
         log.msg(eventid='cowrie.backend_pool.guest_handler',
                 format='There was a problem creating the disk snapshot.')
         raise QemuGuestError()

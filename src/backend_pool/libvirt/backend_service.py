@@ -5,26 +5,26 @@ import libvirt
 import os
 import uuid
 
-import backend_pool.guest_handler
-import backend_pool.network_handler
+import backend_pool.libvirt.guest_handler
+import backend_pool.libvirt.network_handler
 import backend_pool.util
 
 from twisted.python import log
 from cowrie.core.config import CowrieConfig
 
 
-class QemuError(Exception):
+class LibvirtError(Exception):
     pass
 
 
-class QemuService:
+class LibvirtBackendService:
     def __init__(self):
         # open connection to libvirt
         self.conn = libvirt.open('qemu:///system')
         if self.conn is None:
             log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Failed to open connection to qemu:///system')
-            raise QemuError()
+            raise LibvirtError()
 
         self.filter = None
         self.network = None
@@ -53,10 +53,10 @@ class QemuService:
         Initialises Qemu/libvirt environment needed to run guests. Namely starts networks and network filters.
         """
         # create a network filter
-        self.filter = backend_pool.network_handler.create_filter(self.conn)
+        self.filter = backend_pool.libvirt.network_handler.create_filter(self.conn)
 
         # create a NAT for the guests
-        self.network = backend_pool.network_handler.create_network(self.conn)
+        self.network = backend_pool.libvirt.network_handler.create_network(self.conn)
 
         self.ready = True
 
@@ -72,7 +72,7 @@ class QemuService:
         guest_unique_id = uuid.uuid4().hex
 
         # create a single guest
-        dom, snapshot = backend_pool.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id)
+        dom, snapshot = backend_pool.libvirt.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id)
         if dom is None:
             log.msg(eventid='cowrie.backend_pool.qemu',
                     format='Failed to create guest')
