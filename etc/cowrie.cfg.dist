@@ -203,7 +203,7 @@ force_pool = false
 listen_endpoints = tcp:3574:interface=0.0.0.0
 
 # guest snapshots
-save_snapshots = False
+save_snapshots = false
 snapshot_path = ${honeypot:state_path}/snapshots
 
 # pool xml configs
