@@ -99,7 +99,7 @@ class CowrieServiceMaker(object):
         self.enableTelnet = CowrieConfig().getboolean('telnet', 'enabled', fallback=False)
 
         # pool is disabled by default, but need to check this setting in case user only wants to run the pool
-        self.force_pool = CowrieConfig().getboolean('backend_pool', 'local_pool', fallback=False)
+        self.pool_only = CowrieConfig().getboolean('backend_pool', 'pool_only', fallback=False)
 
     def makeService(self, options):
         """
@@ -128,7 +128,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
         # check configurations
-        if not self.enableTelnet and not self.enableSSH and not self.force_pool:
+        if not self.enableTelnet and not self.enableSSH and not self.pool_only:
             print('ERROR: You must at least enable SSH or Telnet, or run the backend pool')
             sys.exit(1)
 
@@ -158,18 +158,18 @@ Makes a Cowrie SSH/Telnet honeypot.
         self.topService.setServiceParent(application)
 
         # initialise VM pool handling - only if proxy AND pool set to enabled, and pool is to be deployed here
-        # or also enabled if force_pool is true
+        # or also enabled if pool_only is true
         backend_type = CowrieConfig().get('honeypot', 'backend', fallback='shell')
         proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
 
-        if (backend_type == 'proxy' and proxy_backend == 'pool') or self.force_pool:
+        if (backend_type == 'proxy' and proxy_backend == 'pool') or self.pool_only:
             # in this case we need to set some kind of pool connection
 
             local_pool = CowrieConfig().getboolean('proxy', 'local_pool', fallback=True)
             pool_host = CowrieConfig().get('proxy', 'pool_host', fallback='127.0.0.1')
             pool_port = CowrieConfig().getint('proxy', 'pool_port', fallback=3574)
 
-            if local_pool or self.force_pool:
+            if local_pool or self.pool_only:
                 # start a pool locally
                 f = PoolServerFactory()
                 f.tac = self
@@ -181,7 +181,7 @@ Makes a Cowrie SSH/Telnet honeypot.
 
             # either way (local or remote) we set up a client to the pool
             # unless this instance has no SSH and Telnet (pool only)
-            if self.enableTelnet or self.enableSSH:
+            if (self.enableTelnet or self.enableSSH) and not self.pool_only:
                 self.pool_handler = PoolHandler(pool_host, pool_port, self)
 
         else:
@@ -191,6 +191,8 @@ Makes a Cowrie SSH/Telnet honeypot.
         return self.topService
 
     def pool_ready(self):
+        # this method is never called if self.pool_only is False,
+        # since we do not start the pool handler that would call it
         if self.enableSSH:
             factory = cowrie.ssh.factory.CowrieSSHFactory(self.pool_handler)
             factory.tac = self

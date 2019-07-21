@@ -24,7 +24,7 @@ def create_guest(connection, mac_address, guest_unique_id):
         CowrieConfig().get('backend_pool', 'guest_config', fallback='default_guest.xml'))
 
     version_tag = CowrieConfig().get('backend_pool', 'guest_tag', fallback='guest')
-    base_image = CowrieConfig().get('backend_pool', 'base_image_path')
+    base_image = CowrieConfig().get('backend_pool', 'guest_image_path')
 
     # get a directory to save snapshots, even if temporary
     try:

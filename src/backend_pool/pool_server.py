@@ -17,6 +17,12 @@ from cowrie.core.config import CowrieConfig
 class PoolServer(Protocol):
     def __init__(self, factory):
         self.factory = factory
+        self.local_pool = CowrieConfig().getboolean('proxy', 'local_pool', fallback=True)
+        self.pool_only = CowrieConfig().getboolean('backend_pool', 'pool_only', fallback=False)
+        self.use_nat = CowrieConfig().getboolean('backend_pool', 'use_nat', fallback=True)
+
+        if self.use_nat:
+            self.nat_public_ip = CowrieConfig().get('backend_pool', 'nat_public_ip')
 
     def dataReceived(self, data):
         res_op = struct.unpack('!c', bytes([data[0]]))[0]  # yes, this needs to be done to extract the op code correctly
@@ -28,7 +34,9 @@ class PoolServer(Protocol):
             # set the pool service thread configs
             max_vm = recv[0]
             vm_unused_timeout = recv[1]
-            self.factory.pool_service.set_configs(max_vm, vm_unused_timeout)
+            # TODO MUST come from network
+            share_guests = CowrieConfig().getboolean('proxy', 'pool_share_guests', fallback=True)
+            self.factory.pool_service.set_configs(max_vm, vm_unused_timeout, share_guests)
 
             # respond with ok
             self.factory.initialised = True
@@ -58,15 +66,18 @@ class PoolServer(Protocol):
                 telnet_port = CowrieConfig().getint('backend_pool', 'guest_telnet_port', fallback=23)
 
                 # after we receive ip and ports, expose ports in the pool's public interface
-                # TODO only if pool is remote / user wants to
-                public_ip = '192.168.1.40'
-                nated_ssh_port, nated_telnet_port = self.factory.nat.request_binding(guest_id, guest_ip, ssh_port, telnet_port)
+                # we use NAT if this pool is being run remotely, and if users choose so
+                if not self.local_pool and self.use_nat or self.pool_only:
+                    nat_ssh_port, nat_telnet_port = self.factory.nat.request_binding(guest_id, guest_ip,
+                                                                                     ssh_port, telnet_port)
 
-                #fmt = '!cIIH{0}sHH'.format(len(guest_ip))
-                #response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(), ssh_port, telnet_port)
-                fmt = '!cIIH{0}sHH'.format(len(public_ip))
-                response = struct.pack(fmt, b'r', 0, guest_id, len(public_ip), public_ip.encode(), nated_ssh_port, nated_telnet_port)
-
+                    fmt = '!cIIH{0}sHH'.format(len(self.nat_public_ip))
+                    response = struct.pack(fmt, b'r', 0, guest_id, len(self.nat_public_ip), self.nat_public_ip.encode(),
+                                           nat_ssh_port, nat_telnet_port)
+                else:
+                    fmt = '!cIIH{0}sHH'.format(len(guest_ip))
+                    response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(),
+                                           ssh_port, telnet_port)
             except NoAvailableVMs:
                 log.msg(eventid='cowrie.backend_pool.server',
                         format='No VM available, returning error code')

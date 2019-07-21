@@ -190,15 +190,15 @@ auth_class = UserDB
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_ssh_port = 22
 
+
 [backend_pool]
 # ============================================================================
 # Backend Pool Configurations
 # only used on the cowrie instance that runs the pool
 # ============================================================================
 
-# enable to run the pool regardless of other configurations
-# (useful when you want to run only the backend pool)
-force_pool = false
+# enable this to solely run the pool, regardless of other configurations
+pool_only = false
 
 listen_endpoints = tcp:3574:interface=0.0.0.0
 
@@ -217,16 +217,24 @@ guest_config = default_guest.xml
 guest_tag = ubuntu18.04
 guest_ssh_port = 22
 guest_telnet_port = 23
-base_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
+guest_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
 
 
 #guest_config = wrt_arm_guest.xml
 #guest_tag = wrt
 #guest_ssh_port = 22
 #guest_telnet_port = 23
-#base_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
+#guest_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
 
 # TODO libvirt must be installed natively
+
+# Use NAT (for remote pool)
+#
+# Guests exist in a local interface created by libvirt; NAT functionality creates a port in the host,
+# exposed to a public interface, and forwards TCP data to and from the libvirt private interface.
+# Cowrie's proxy receives the public information instead of the local IP of guests.
+use_nat = true
+nat_public_ip = 192.168.1.40
 
 
 # ============================================================================
