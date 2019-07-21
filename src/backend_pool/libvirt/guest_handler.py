@@ -19,10 +19,12 @@ class QemuGuestError(Exception):
 
 def create_guest(connection, mac_address, guest_unique_id):
     # get guest configurations
-    configuration_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
-                                      CowrieConfig().get('proxy', 'guest_config', fallback='default_guest.xml'))
-    version_tag = CowrieConfig().get('proxy', 'guest_tag', fallback='guest')
-    base_image = CowrieConfig().get('proxy', 'base_image_path')
+    configuration_file = os.path.join(
+        CowrieConfig().get('backend_pool', 'config_files_path', fallback='share/pool_configs'),
+        CowrieConfig().get('backend_pool', 'guest_config', fallback='default_guest.xml'))
+
+    version_tag = CowrieConfig().get('backend_pool', 'guest_tag', fallback='guest')
+    base_image = CowrieConfig().get('backend_pool', 'base_image_path')
 
     # get a directory to save snapshots, even if temporary
     try:

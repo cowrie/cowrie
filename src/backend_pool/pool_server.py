@@ -10,6 +10,8 @@ from twisted.internet.protocol import Factory
 from twisted.internet.protocol import Protocol
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 
 class PoolServer(Protocol):
     def __init__(self, factory):
@@ -48,8 +50,8 @@ class PoolServer(Protocol):
                         format='Providing VM id %(guest_id)s',
                         guest_id=guest_id)
 
-                ssh_port = 22
-                telnet_port = 23
+                ssh_port = CowrieConfig().getint('backend_pool', 'guest_ssh_port', fallback=22)
+                telnet_port = CowrieConfig().getint('backend_pool', 'guest_telnet_port', fallback=23)
 
                 fmt = '!cIIH{0}sHH'.format(len(guest_ip))
                 response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(), ssh_port, telnet_port)

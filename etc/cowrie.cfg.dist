@@ -190,30 +190,83 @@ auth_class = UserDB
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_ssh_port = 22
 
+[backend_pool]
+# ============================================================================
+# Backend Pool Configurations
+# only used on the cowrie instance that runs the pool
+# ============================================================================
+
+# enable to run the pool regardless of other configurations
+# (useful when you want to run only the backend pool)
+force_pool = false
+
+listen_endpoints = tcp:3574:interface=0.0.0.0
+
+# guest snapshots
+save_snapshots = True
+snapshot_path = ${honeypot:state_path}/snapshots
+
+# pool xml configs
+config_files_path = ${honeypot:share_path}/pool_configs
+
+network_config = default_network.xml
+nw_filter_config = default_filter.xml
+
+# guest type details
+guest_config = default_guest.xml
+guest_tag = ubuntu18.04
+guest_ssh_port = 22
+guest_telnet_port = 23
+base_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
+
+
+#guest_config = wrt_arm_guest.xml
+#guest_tag = wrt
+#guest_ssh_port = 22
+#guest_telnet_port = 23
+#base_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
+
+# TODO libvirt must be installed natively
+
+
 # ============================================================================
 # Proxy Options
 # ============================================================================
 [proxy]
 
-# Pool Settings #
-listen_endpoints = tcp:3574:interface=0.0.0.0
-enable_pool = true
+# type of backend:
+#   - simple: backend machine deployed by you (CAREFUL WITH SECURITY ASPECTS!!), specify host and ports below
+#   - pool: cowrie-managed pool of virtual machines, configure below
+backend = pool
 
-# where to connect to
-pool_host = 192.168.1.40
-pool_port = 3574
-
-pool_max_vms = 2
-pool_vm_unused_timeout = 600
-
-# Backend settings #
-
-# the four below are only used when pool is disabled
+# =====================================
+# Simple Backend Configuration
+# =====================================
 backend_ssh_host = localhost
 backend_ssh_port = 2022
 
 backend_telnet_host = localhost
 backend_telnet_port = 2023
+
+
+# =====================================
+# Pool Backend Configuration
+# =====================================
+
+# generic pool configurations
+pool_max_vms = 2
+pool_vm_unused_timeout = 600
+
+# start pool on the same machine as cowrie
+local_pool = true
+
+# Remote pool configurations (used with local_pool=false)
+pool_host = 192.168.1.40
+pool_port = 3574
+
+# =====================================
+# Proxy Configurations
+# =====================================
 
 # real credentials to log into backend
 backend_user = root
@@ -222,7 +275,6 @@ backend_pass = root
 # Telnet authentication spoofing #
 # To spoof telnet authentication we need to capture login and password prompts, and spoof data to the backend in order
 # to successfully authenticate. If disabled, attackers can only use the real user credentials of the backend.
-
 telnet_spoof_authentication = true
 
 # These regex were made using Ubuntu 18.04; you have to adapt these for the prompts
@@ -244,31 +296,10 @@ telnet_password_prompt_regex = .*Password: .*
 # password to force authentication to fail.
 telnet_username_in_negotiation_regex = (.*\xff\xfa.*USER\x01)(.*?)(\xff.*)
 
-
 # Other configs #
 # log raw TCP packets in SSh and Telnet
 log_raw = false
 
-# guest snapshots
-save_snapshots = True
-snapshot_path = ${honeypot:state_path}/snapshots
-
-# pool xml configs
-config_files_path = ${honeypot:share_path}/pool_configs
-
-network_config = default_network.xml
-nw_filter_config = default_filter.xml
-
-# guest type details
-guest_config = default_guest.xml
-guest_tag = ubuntu18.04
-base_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
-
-#guest_config = wrt_arm_guest.xml
-#guest_tag = wrt
-#base_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
-
-# TODO libvirt must be installed natively
 
 # ============================================================================
 # Shell Options

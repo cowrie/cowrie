@@ -69,7 +69,9 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
 
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
         # when pool is set we can just test self.pool_interface to the same effect of getting the config
-        if CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False):
+        proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
+
+        if proxy_backend == 'pool':
             # request a backend
             d = self.factory.pool_handler.request_interface()
             d.addCallback(self.pool_connection_success)

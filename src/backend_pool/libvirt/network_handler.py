@@ -12,8 +12,8 @@ from cowrie.core.config import CowrieConfig
 
 
 def create_filter(connection):
-    filter_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
-                               CowrieConfig().get('proxy', 'nw_filter_config', fallback='default_filter.xml'))
+    filter_file = os.path.join(CowrieConfig().get('backend_pool', 'config_files_path', fallback='share/pool_configs'),
+                               CowrieConfig().get('backend_pool', 'nw_filter_config', fallback='default_filter.xml'))
 
     filter_xml = backend_pool.util.read_file(filter_file)
 
@@ -27,8 +27,8 @@ def create_filter(connection):
 
 
 def create_network(connection):
-    network_file = os.path.join(CowrieConfig().get('proxy', 'config_files_path', fallback='share/pool_configs'),
-                                CowrieConfig().get('proxy', 'network_config', fallback='default_network.xml'))
+    network_file = os.path.join(CowrieConfig().get('backend_pool', 'config_files_path', fallback='share/pool_configs'),
+                                CowrieConfig().get('backend_pool', 'network_config', fallback='default_network.xml'))
 
     network_xml = backend_pool.util.read_file(network_file)
 

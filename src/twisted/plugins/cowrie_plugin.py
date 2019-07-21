@@ -94,8 +94,12 @@ class CowrieServiceMaker(object):
 
         # ssh is enabled by default
         self.enableSSH = CowrieConfig().getboolean('ssh', 'enabled', fallback=True)
+
         # telnet is disabled by default
         self.enableTelnet = CowrieConfig().getboolean('telnet', 'enabled', fallback=False)
+
+        # pool is disabled by default, but need to check this setting in case user only wants to run the pool
+        self.force_pool = CowrieConfig().getboolean('backend_pool', 'local_pool', fallback=False)
 
     def makeService(self, options):
         """
@@ -124,8 +128,8 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
 
         # check configurations
-        if not self.enableTelnet and not self.enableSSH:
-            print('ERROR: You must at least enable SSH or Telnet')
+        if not self.enableTelnet and not self.enableSSH and not self.force_pool:
+            print('ERROR: You must at least enable SSH or Telnet, or run the backend pool')
             sys.exit(1)
 
         # Load output modules
@@ -153,15 +157,17 @@ Makes a Cowrie SSH/Telnet honeypot.
         application = service.Application('cowrie')
         self.topService.setServiceParent(application)
 
-        # initialise VM pool handling - only if proxy AND pool set to enabled
+        # initialise VM pool handling - only if proxy AND pool set to enabled, and pool is to be deployed here
+        # or also enabled if force_pool is true
         backend_type = CowrieConfig().get('honeypot', 'backend', fallback='shell')
-        pool_enabled = CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False)
+        proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
+        local_pool = CowrieConfig().getboolean('proxy', 'local_pool', fallback=True)
 
-        if backend_type == 'proxy' and pool_enabled:
+        if (backend_type == 'proxy' and proxy_backend == 'pool' and local_pool) or self.force_pool:
             f = PoolServerFactory()
             f.tac = self
 
-            listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'proxy', 3574)
+            listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'backend_pool', 3574)
             create_endpoint_services(reactor, self.topService, listen_endpoints, f)
 
             self.pool_handler = PoolHandler(self)
@@ -181,7 +187,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             factory.portal.registerChecker(
                 core.checkers.HoneypotPasswordChecker())
 
-            if CowrieConfig().getboolean('ssh', 'auth_none_enabled', fallback=False) is True:
+            if CowrieConfig().getboolean('ssh', 'auth_none_enabled', fallback=False):
                 factory.portal.registerChecker(
                     core.checkers.HoneypotNoneChecker())
 

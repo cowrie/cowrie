@@ -92,8 +92,8 @@ class LibvirtBackendService:
             # we want to remove the snapshot if either:
             #   - explicitely set save_snapshots to False
             #   - no snapshot dir was defined (using cowrie's root dir) - should not happen but prevent it
-            if not CowrieConfig().getboolean('proxy', 'save_snapshots', fallback=True) \
-                    or CowrieConfig().get('proxy', 'snapshot_path', fallback=None) is None:
+            if not CowrieConfig().getboolean('backend_pool', 'save_snapshots', fallback=True) \
+                    or CowrieConfig().get('backend_pool', 'snapshot_path', fallback=None) is None:
                 os.remove(snapshot)  # destroy its disk snapshot
         except Exception as error:
             log.err(eventid='cowrie.backend_pool.qemu',
