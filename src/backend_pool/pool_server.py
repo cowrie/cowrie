@@ -87,14 +87,15 @@ class PoolServerFactory(Factory):
         self.pool_service = PoolService()
         threads.deferToThread(self.pool_service.producer_loop)
 
+    def stopFactory(self):
+        log.msg(eventid='cowrie.backend_pool.server',
+                format='Stopping backend pool...')
+
+        self.pool_service.stop()
+
     def buildProtocol(self, addr):
         log.msg(eventid='cowrie.backend_pool.server',
                 format='Received connection from %(host)s:%(port)s',
                 host=addr.host,
                 port=addr.port)
         return PoolServer(self)
-
-
-# endpoint = TCP4ServerEndpoint(reactor, 3574)
-# endpoint.listen(PoolServerFactory())
-# reactor.run()

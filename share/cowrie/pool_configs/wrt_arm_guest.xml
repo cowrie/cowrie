@@ -30,6 +30,10 @@
             <model type='virtio-net-pci'/>
             <filterref filter='cowrie-default-filter'/>
         </interface>
+
+<!--        <rng model='virtio'>-->
+<!--            <backend model='random'>/dev/urandom</backend>-->
+<!--        </rng>-->
     </devices>
     <qemu:commandline>
         <qemu:arg value='-device'/>

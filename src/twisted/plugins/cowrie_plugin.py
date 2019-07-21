@@ -157,8 +157,11 @@ Makes a Cowrie SSH/Telnet honeypot.
         pool_enabled = CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False)
 
         if backend_type == 'proxy' and pool_enabled:
-            endpoint = TCP4ServerEndpoint(reactor, 3574)
-            endpoint.listen(PoolServerFactory())
+            f = PoolServerFactory()
+            f.tac = self
+
+            listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'proxy', 3574)
+            create_endpoint_services(reactor, self.topService, listen_endpoints, f)
 
             self.pool_handler = PoolHandler(self)
         else:

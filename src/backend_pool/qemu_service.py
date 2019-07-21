@@ -29,18 +29,19 @@ class QemuService:
         self.filter = None
         self.network = None
 
+        # signals backend is ready to be operated
+        self.ready = False
+
         log.msg(eventid='cowrie.backend_pool.qemu',
                 format='Connection to Qemu established')
 
-    def __del__(self):
+    def stop(self):
         log.msg(eventid='cowrie.backend_pool.qemu',
                 format='Doing Qemu clean shutdown...')
 
-        if self.network:
-            self.network.destroy()  # destroy transient network
+        self.ready = False
 
-        if self.filter:
-            self.filter.undefine()  # destroy network filter
+        self.destroy_all_cowrie()
 
         self.conn.close()  # close libvirt connection
 
@@ -57,10 +58,15 @@ class QemuService:
         # create a NAT for the guests
         self.network = backend_pool.network_handler.create_network(self.conn)
 
+        self.ready = True
+
     def create_guest(self, guest_id):
         """
         Returns an unready domain and its snapshot information
         """
+        if not self.ready:
+            return
+
         # generate networking details
         guest_mac, guest_ip = backend_pool.util.generate_mac_ip(guest_id)
         guest_unique_id = uuid.uuid4().hex
@@ -75,6 +81,9 @@ class QemuService:
         return dom, snapshot, guest_ip
 
     def destroy_guest(self, domain, snapshot):
+        if not self.ready:
+            return
+
         try:
             # destroy the domain in qemu
             domain.destroy()
@@ -90,7 +99,7 @@ class QemuService:
                     format='Error destroying guest: %(error)s',
                     error=error)
 
-    def destroy_all_guests(self):
+    def __destroy_all_guests(self):
         domains = self.conn.listDomainsID()
         if not domains:
             log.msg(eventid='cowrie.backend_pool.qemu',
@@ -99,9 +108,12 @@ class QemuService:
         for domain_id in domains:
             d = self.conn.lookupByID(domain_id)
             if d.name().startswith('cowrie'):
-                d.destroy()
+                try:
+                    d.destroy()
+                except KeyboardInterrupt:
+                    pass
 
-    def destroy_all_networks(self):
+    def __destroy_all_networks(self):
         networks = self.conn.listNetworks()
         if not networks:
             log.msg(eventid='cowrie.backend_pool.qemu',
@@ -112,7 +124,7 @@ class QemuService:
                 n = self.conn.networkLookupByName(network)
                 n.destroy()
 
-    def destroy_all_network_filters(self):
+    def __destroy_all_network_filters(self):
         network_filters = self.conn.listNWFilters()
         if not network_filters:
             log.msg(eventid='cowrie.backend_pool.qemu',
@@ -122,3 +134,8 @@ class QemuService:
             if nw_filter.startswith('cowrie'):
                 n = self.conn.nwfilterLookupByName(nw_filter)
                 n.undefine()
+
+    def destroy_all_cowrie(self):
+        self.__destroy_all_guests()
+        self.__destroy_all_networks()
+        self.__destroy_all_network_filters()

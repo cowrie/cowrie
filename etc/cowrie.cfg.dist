@@ -196,8 +196,10 @@ auth_class = UserDB
 [proxy]
 
 # Pool Settings #
+listen_endpoints = tcp:3574:interface=0.0.0.0
 enable_pool = true
 
+# where to connect to
 pool_host = 192.168.1.40
 pool_port = 3574
 

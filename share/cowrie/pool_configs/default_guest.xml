@@ -55,5 +55,9 @@
             <listen type='address'/>
             <image compression='off'/>
         </graphics>
+
+<!--        <rng model='virtio'>-->
+<!--            <backend model='random'>/dev/urandom</backend>-->
+<!--        </rng>-->
     </devices>
 </domain>

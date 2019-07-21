@@ -5,10 +5,13 @@ from threading import Lock
 import os
 import time
 
+import libvirt
+
 import backend_pool.qemu_service
 import backend_pool.util
 
 from twisted.python import log
+from twisted.internet import reactor
 
 
 class NoAvailableVMs(Exception):
@@ -38,36 +41,33 @@ class PoolService:
 
         # time in seconds between each loop iteration
         self.loop_sleep_time = 5
+        self.loop_next_call = None
 
         # default configs
         self.max_vm = 2
         self.vm_unused_timeout = 600
 
         # cleanup older qemu objects
-        self.qemu.destroy_all_guests()
-        self.qemu.destroy_all_networks()
-        self.qemu.destroy_all_network_filters()
+        self.qemu.destroy_all_cowrie()
 
         # initialise qemu environment
         self.qemu.initialise_environment()
 
-    def __del__(self):
+    def stop(self):
         log.msg(eventid='cowrie.backend_pool.service',
                 format='Trying clean shutdown')
 
-        self.guest_lock.acquire()
-        try:
-            running_guests = [g for g in self.guests if g['state'] != 'destroyed']
-            for guest in running_guests:
-                self.qemu.destroy_guest(guest['domain'], guest['snapshot'])
-                guest['state'] = 'destroyed'
-        finally:
-            self.guest_lock.release()
+        # stop loop
+        if self.loop_next_call:
+            self.loop_next_call.cancel()
 
         # force destroy remaining stuff
-        self.qemu.destroy_all_guests()
-        self.qemu.destroy_all_networks()
-        self.qemu.destroy_all_network_filters()
+        self.qemu.destroy_all_cowrie()
+
+        try:
+            self.qemu.stop()
+        except libvirt.libvirtError:
+            print('Not connceted to Qemu')
 
     def set_configs(self, max_vm, vm_unused_timeout):
         self.max_vm = max_vm
@@ -142,46 +142,45 @@ class PoolService:
                         boot_time=boot_time)
 
     def producer_loop(self):
-        while True:
-            # delete old VMs, but do not let pool size be 0
-            if self.existing_pool_size() > 1:
-                # mark timed-out VMs for destruction
-                self.__producer_mark_timed_out(self.vm_unused_timeout)
+        # delete old VMs, but do not let pool size be 0
+        if self.existing_pool_size() > 1:
+            # mark timed-out VMs for destruction
+            self.__producer_mark_timed_out(self.vm_unused_timeout)
 
-                # delete timed-out VMs
-                self.__producer_destroy_timed_out()
+            # delete timed-out VMs
+            self.__producer_destroy_timed_out()
 
-            # remove destroyed from list
-            self.__producer_remove_destroyed()
+        # remove destroyed from list
+        self.__producer_remove_destroyed()
 
-            # replenish pool until full
-            create = self.max_vm - self.existing_pool_size()
-            for _ in range(create):
-                dom, snap, guest_ip = self.qemu.create_guest(self.guest_id)
+        # replenish pool until full
+        create = self.max_vm - self.existing_pool_size()
+        for _ in range(create):
+            dom, snap, guest_ip = self.qemu.create_guest(self.guest_id)
 
-                self.guests.append({
-                    'id': self.guest_id,
-                    'state': 'created',
-                    'start_timestamp': time.time(),
-                    'guest_ip': guest_ip,
-                    'connected': 0,
-                    'client_ips': set(),
-                    'freed_timestamp': -1,
-                    'domain': dom,
-                    'snapshot': snap
-                })
+            self.guests.append({
+                'id': self.guest_id,
+                'state': 'created',
+                'start_timestamp': time.time(),
+                'guest_ip': guest_ip,
+                'connected': 0,
+                'client_ips': set(),
+                'freed_timestamp': -1,
+                'domain': dom,
+                'snapshot': snap
+            })
 
-                self.guest_id += 1
+            self.guest_id += 1
 
-                # reset id
-                if self.guest_id == 254:
-                    self.guest_id = 2
+            # reset id
+            if self.guest_id == 254:
+                self.guest_id = 2
 
-            # check for created VMs that can become available
-            self.__producer_mark_available()
+        # check for created VMs that can become available
+        self.__producer_mark_available()
 
-            # sleep until next iteration
-            time.sleep(self.loop_sleep_time)
+        # sleep until next iteration
+        self.loop_next_call = reactor.callLater(self.loop_sleep_time, self.producer_loop)
 
     # Consumers
     def __consumers_get_guest_ip(self, src_ip):
