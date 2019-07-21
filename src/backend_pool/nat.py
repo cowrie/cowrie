@@ -1,6 +1,6 @@
 from threading import Lock
 
-from twisted.internet import reactor, protocol
+from twisted.internet import protocol, reactor
 
 
 class ClientProtocol(protocol.Protocol):
