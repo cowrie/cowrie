@@ -13,7 +13,7 @@ def create_disk_snapshot(source_img, destination_img):
 
     try:
         shutil.chown(source_img, getpass.getuser())
-    except PermissionError:
+    except Exception:  # TODO should be PermissionError under python 3, but python 2 does not have it
         pass
         # log.msg('Need root to create snapshot')
 
