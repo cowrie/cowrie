@@ -257,6 +257,9 @@ backend_telnet_port = 2023
 pool_max_vms = 2
 pool_vm_unused_timeout = 600
 
+# allow sharing guests between different attackers if no new VMs are available
+pool_share_guests = true
+
 # start pool on the same machine as cowrie
 local_pool = true
 

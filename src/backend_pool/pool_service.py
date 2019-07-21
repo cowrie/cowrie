@@ -12,6 +12,8 @@ import libvirt
 from twisted.internet import reactor
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 
 class NoAvailableVMs(Exception):
     pass
@@ -66,7 +68,7 @@ class PoolService:
         try:
             self.qemu.stop()
         except libvirt.libvirtError:
-            print('Not connceted to Qemu')
+            print('Not connected to Qemu')
 
     def set_configs(self, max_vm, vm_unused_timeout):
         self.max_vm = max_vm
@@ -223,7 +225,7 @@ class PoolService:
 
     # Consumer methods to be called concurrently
     def request_vm(self, src_ip):
-        share_guests = True  # TODO config
+        share_guests = CowrieConfig().getboolean('proxy', 'pool_share_guests', fallback=True)
 
         # first check if there is one for the ip
         guest = self.__consumers_get_guest_ip(src_ip)
