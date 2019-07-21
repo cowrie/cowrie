@@ -7,7 +7,6 @@ from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.python import log
 
-from cowrie.core.config import CowrieConfig
 from cowrie.pool_interface.client import PoolClientFactory
 
 
@@ -21,13 +20,13 @@ class PoolHandler:
     successful (initial_pool_connection_success), it issues an initialisation command to the server. Only after this
     command returns (initialisation_response) connections can use the pool.
     """
-    def __init__(self, cowrie_plugin):
+    def __init__(self, pool_host, pool_port, cowrie_plugin):
         # used for initialisation only
         self.cowrie_plugin = cowrie_plugin
 
-        # configs
-        self.pool_ip = CowrieConfig().get('proxy', 'pool_host')
-        self.pool_port = CowrieConfig().getint('proxy', 'pool_port')
+        # connection details
+        self.pool_ip = pool_host
+        self.pool_port = pool_port
 
         self.pool_ready = False
 

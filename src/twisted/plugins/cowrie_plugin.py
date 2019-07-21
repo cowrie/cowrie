@@ -161,16 +161,29 @@ Makes a Cowrie SSH/Telnet honeypot.
         # or also enabled if force_pool is true
         backend_type = CowrieConfig().get('honeypot', 'backend', fallback='shell')
         proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
-        local_pool = CowrieConfig().getboolean('proxy', 'local_pool', fallback=True)
 
-        if (backend_type == 'proxy' and proxy_backend == 'pool' and local_pool) or self.force_pool:
-            f = PoolServerFactory()
-            f.tac = self
+        if (backend_type == 'proxy' and proxy_backend == 'pool') or self.force_pool:
+            # in this case we need to set some kind of pool connection
 
-            listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'backend_pool', 3574)
-            create_endpoint_services(reactor, self.topService, listen_endpoints, f)
+            local_pool = CowrieConfig().getboolean('proxy', 'local_pool', fallback=True)
+            pool_host = CowrieConfig().get('proxy', 'pool_host', fallback='127.0.0.1')
+            pool_port = CowrieConfig().getint('proxy', 'pool_port', fallback=3574)
 
-            self.pool_handler = PoolHandler(self)
+            if local_pool or self.force_pool:
+                # start a pool locally
+                f = PoolServerFactory()
+                f.tac = self
+
+                listen_endpoints = get_endpoints_from_section(CowrieConfig(), 'backend_pool', 3574)
+                create_endpoint_services(reactor, self.topService, listen_endpoints, f)
+
+                pool_host = '127.0.0.1'  # force use of local interface
+
+            # either way (local or remote) we set up a client to the pool
+            # unless this instance has no SSH and Telnet (pool only)
+            if self.enableTelnet or self.enableSSH:
+                self.pool_handler = PoolHandler(pool_host, pool_port, self)
+
         else:
             # we initialise the services directly
             self.pool_ready()
