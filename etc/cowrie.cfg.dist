@@ -225,6 +225,7 @@ guest_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
 #guest_ssh_port = 22
 #guest_telnet_port = 23
 #guest_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
+#guest_kernel_image = /home/gb/Repositories/qemu/wrt/zImage
 
 # TODO libvirt must be installed natively
 

@@ -5,7 +5,7 @@
     <os>
         <type arch='armv7l' machine='virt-2.9'>hvm</type>
         <boot dev='hd'/>
-        <kernel>/home/gb/Repositories/qemu/wrt/zImage</kernel>
+        <kernel>{kernel_image}</kernel>
         <cmdline>root=/dev/vda</cmdline>
 <!--        <ramdisk>/home/gb/Repositories/qemu/wrt/rootfs.cpio</ramdisk>-->
     </os>

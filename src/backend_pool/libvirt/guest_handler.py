@@ -26,6 +26,9 @@ def create_guest(connection, mac_address, guest_unique_id):
     version_tag = CowrieConfig().get('backend_pool', 'guest_tag', fallback='guest')
     base_image = CowrieConfig().get('backend_pool', 'guest_image_path')
 
+    # only in some cases, like wrt
+    kernel_image = CowrieConfig().get('backend_pool', 'guest_kernel_image', fallback='')
+
     # get a directory to save snapshots, even if temporary
     try:
         # guest configuration, to be read by qemu, needs an absolute path
@@ -44,6 +47,7 @@ def create_guest(connection, mac_address, guest_unique_id):
     guest_xml = backend_pool.util.read_file(configuration_file)
     guest_config = guest_xml.format(guest_name='cowrie-' + version_tag + '_' + guest_unique_id,
                                     disk_image=disk_img,
+                                    kernel_image=kernel_image,
                                     mac_address=mac_address,
                                     network_name='cowrie')
 
