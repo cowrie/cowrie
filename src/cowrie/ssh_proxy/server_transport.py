@@ -328,8 +328,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
 
-        if self.client and self.client.transport:
-            self.client.transport.loseConnection()
+        if self.sshParse.client and self.sshParse.client.transport:
+            self.sshParse.client.transport.loseConnection()
 
         transport.SSHServerTransport.connectionLost(self, reason)
 
