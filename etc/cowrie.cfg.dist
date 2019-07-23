@@ -219,13 +219,19 @@ guest_ssh_port = 22
 guest_telnet_port = 23
 guest_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
 
+# in MB
+guest_memory = 512
 
 #guest_config = wrt_arm_guest.xml
 #guest_tag = wrt
 #guest_ssh_port = 22
 #guest_telnet_port = 23
+
+# Configs below are used on default XMLs provided.
+# If you provide your own XML in guest_config you don't need these configs.
 #guest_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
 #guest_kernel_image = /home/gb/Repositories/qemu/wrt/zImage
+#guest_memory = 256
 
 # TODO libvirt must be installed natively
 
