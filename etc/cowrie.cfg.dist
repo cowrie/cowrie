@@ -200,7 +200,8 @@ auth_class = UserDB
 # enable this to solely run the pool, regardless of other configurations
 pool_only = false
 
-listen_endpoints = tcp:6415:interface=0.0.0.0
+# change interface below to allow connections from outside (e.g. remote pool)
+listen_endpoints = tcp:6415:interface=127.0.0.1
 
 # guest snapshots
 save_snapshots = false
