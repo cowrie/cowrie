@@ -213,16 +213,34 @@ config_files_path = ${honeypot:share_path}/pool_configs
 network_config = default_network.xml
 nw_filter_config = default_filter.xml
 
-# guest type details
+# =====================================
+# Guest details (for a generic x86-64 guest, like Ubuntu)
+#
+# Used to provide configuration details to save snapshots, identify
+# running guests, and provide other details to Cowrie.
+# =====================================
 guest_config = default_guest.xml
 guest_tag = ubuntu18.04
 guest_ssh_port = 22
 guest_telnet_port = 23
-guest_image_path = /home/gb/Repositories/qemu/ubuntu18.04-minimal.qcow2
 
-# in MB
+# Configs below are used on default XMLs provided.
+# If you provide your own XML in guest_config you don't need these configs.
+#
+# Memory size is in MB.
+# Guest backend can be qemu or kvm, for example. Recent hardware has KVM,
+# which is more performant than the qemu software-based emulation. Guest arch
+# must match your machine's.
+guest_image_path = /home/gb/cowrie-imgs/ubuntu18.04-minimal.qcow2
+guest_backend = kvm
 guest_memory = 512
 
+# =====================================
+# Guest details (for OpenWRT with ARM architecture)
+#
+# Used to provide configuration details to save snapshots, identify running guests,
+# and provide other details to Cowrie.
+# =====================================
 #guest_config = wrt_arm_guest.xml
 #guest_tag = wrt
 #guest_ssh_port = 22
@@ -230,12 +248,19 @@ guest_memory = 512
 
 # Configs below are used on default XMLs provided.
 # If you provide your own XML in guest_config you don't need these configs.
-#guest_image_path = /home/gb/Repositories/qemu/wrt/root.qcow2
-#guest_kernel_image = /home/gb/Repositories/qemu/wrt/zImage
+#
+# Memory size is in MB.
+# Guest backend can be qemu or kvm, for example. Recent hardware has KVM,
+# which is more performant than the qemu software-based emulation. Guest arch
+# must match your machine's.
+#guest_image_path = /home/gb/cowrie-imgs/root.qcow2
+#guest_backend = qemu
 #guest_memory = 256
+#guest_kernel_image = /home/gb/cowrie-imgs/zImage
 
-# TODO libvirt must be installed natively
-
+# =====================================
+# Other configs
+# =====================================
 # Use NAT (for remote pool)
 #
 # Guests exist in a local interface created by libvirt; NAT functionality creates a port in the host,
@@ -270,7 +295,7 @@ backend_telnet_port = 2023
 # =====================================
 
 # generic pool configurations
-pool_max_vms = 2
+pool_max_vms = 5
 pool_vm_unused_timeout = 600
 
 # allow sharing guests between different attackers if no new VMs are available

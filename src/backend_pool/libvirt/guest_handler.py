@@ -26,6 +26,7 @@ def create_guest(connection, mac_address, guest_unique_id):
 
     version_tag = CowrieConfig().get('backend_pool', 'guest_tag', fallback='guest')
     base_image = CowrieConfig().get('backend_pool', 'guest_image_path')
+    backend = CowrieConfig().get('backend_pool', 'guest_backend', fallback='qemu')
     memory = CowrieConfig().getint('backend_pool', 'guest_memory', fallback=128)
 
     # check if base image exists
@@ -57,6 +58,7 @@ def create_guest(connection, mac_address, guest_unique_id):
     guest_config = guest_xml.format(guest_name='cowrie-' + version_tag + '_' + guest_unique_id,
                                     disk_image=disk_img,
                                     kernel_image=kernel_image,
+                                    backend=backend,
                                     memory=memory,
                                     mac_address=mac_address,
                                     network_name='cowrie')

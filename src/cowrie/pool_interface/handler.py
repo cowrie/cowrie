@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
-import sys
+import os
 
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
@@ -58,7 +58,7 @@ class PoolHandler:
             self.cowrie_plugin.pool_ready()
         else:
             log.err('VM pool could not initialise correctly!')
-            sys.exit(1)
+            os._exit(1)
 
     def request_interface(self, initial_setup=False):
         if not initial_setup and not self.pool_ready:

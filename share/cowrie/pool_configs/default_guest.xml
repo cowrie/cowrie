@@ -1,4 +1,4 @@
-<domain type='qemu'>
+<domain type='{backend}'>
     <name>{guest_name}</name>
     <memory unit='MiB'>{memory}</memory>
     <vcpu placement='static'>2</vcpu>
