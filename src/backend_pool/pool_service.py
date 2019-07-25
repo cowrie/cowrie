@@ -1,6 +1,7 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
+import os
 import time
 from threading import Lock
 
@@ -11,6 +12,8 @@ import libvirt
 
 from twisted.internet import reactor
 from twisted.python import log
+
+from cowrie.core.config import CowrieConfig
 
 
 class NoAvailableVMs(Exception):
@@ -42,10 +45,20 @@ class PoolService:
         self.loop_sleep_time = 5
         self.loop_next_call = None
 
-        # default configs
+        # default configs; custom values will come from the client when they connect to the pool
         self.max_vm = 2
         self.vm_unused_timeout = 600
         self.share_guests = True
+
+        # file configs
+        self.ssh_port = CowrieConfig().getint('backend_pool', 'guest_ssh_port', fallback=-1)
+        self.telnet_port = CowrieConfig().getint('backend_pool', 'guest_telnet_port', fallback=-1)
+
+        # detect invalid config
+        if not self.ssh_port > 0 and not self.telnet_port > 0:
+            log.msg(eventid='cowrie.backend_pool.service',
+                    format='Invalid configuration: one of SSH or Telnet ports must be defined!')
+            os._exit(1)
 
         # cleanup older qemu objects
         self.qemu.destroy_all_cowrie()
@@ -70,6 +83,9 @@ class PoolService:
             print('Not connected to Qemu')
 
     def set_configs(self, max_vm, vm_unused_timeout, share_guests):
+        """
+        Custom configurations sent from the client are set on the pool here.
+        """
         self.max_vm = max_vm
         self.vm_unused_timeout = vm_unused_timeout
         self.share_guests = share_guests
@@ -127,17 +143,22 @@ class PoolService:
 
     def __producer_mark_available(self):
         """
-        Checks recently-booted guests ('created' state), and whether they are accepting SSH connections,
+        Checks recently-booted guests ('created' state), and whether they are accepting SSH or Telnet connections,
         which indicates they are ready to be used ('available' state)
         """
         created_guests = self.get_guest_states(['created'])
         for guest in created_guests:
-            # TODO check telnet, in particular if SSH is disabled
-            if backend_pool.util.nmap_ssh(guest['guest_ip']):
+            # check if either ssh or telnet ports are open
+            ready_ssh = backend_pool.util.nmap_port(guest['guest_ip'], self.ssh_port) \
+                if self.ssh_port > 0 else False  # if no ssh, then it's not ready, aka need to check telnet
+            ready_telnet = backend_pool.util.nmap_port(guest['guest_ip'], self.telnet_port) \
+                if self.telnet_port > 0 and not ready_ssh else True  # telnet check not needed if ssh ready
+
+            if ready_ssh or ready_telnet:
                 guest['state'] = 'available'
                 boot_time = int(time.time() - guest['start_timestamp'])
                 log.msg(eventid='cowrie.backend_pool.service',
-                        format='Guest %(guest_id)s ready for SSH connections @ %(guest_ip)s! (boot %(boot_time)ss)',
+                        format='Guest %(guest_id)s ready for connections @ %(guest_ip)s! (boot %(boot_time)ss)',
                         guest_id=guest['id'],
                         guest_ip=guest['guest_ip'],
                         boot_time=boot_time)
@@ -174,7 +195,7 @@ class PoolService:
             self.guest_id += 1
 
             # reset id
-            if self.guest_id == 254:
+            if self.guest_id == 253:
                 self.guest_id = 2
 
         # check for created VMs that can become available

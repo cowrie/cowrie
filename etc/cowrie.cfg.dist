@@ -218,6 +218,8 @@ nw_filter_config = default_filter.xml
 #
 # Used to provide configuration details to save snapshots, identify
 # running guests, and provide other details to Cowrie.
+#   - SSH and Telnet ports: which ports are listening for these services in the guest OS;
+#     if you're not using one of them omit the config or set to 0
 # =====================================
 guest_config = default_guest.xml
 guest_tag = ubuntu18.04

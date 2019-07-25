@@ -11,8 +11,8 @@ def ping(guest_ip):
     return out.returncode == 0
 
 
-def nmap_ssh(guest_ip):
-    out = subprocess.run(['nmap', guest_ip, '-PN',  '-p ssh'], capture_output=True)
+def nmap_port(guest_ip, port):
+    out = subprocess.run(['nmap', guest_ip, '-PN',  '-p', str(port)], capture_output=True)
     return out.returncode == 0 and b'open' in out.stdout
 
 
