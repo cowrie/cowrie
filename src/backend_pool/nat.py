@@ -60,6 +60,12 @@ class ServerFactory(protocol.Factory):
 
 
 class NATService:
+    """
+    This service provides a NAT-like service when the backend pool is located in a remote machine.
+    Guests are bound to a local IP (e.g., 192.168.150.0/24), and so not accessible from a remote Cowrie.
+    This class provides TCP proxies that associate accessible IPs in the backend pool's machine to the internal
+    IPs used by guests, like a NAT.
+    """
     def __init__(self):
         self.bindings = {}
         self.lock = Lock()  # we need to be thread-safe just in case, this is accessed from multiple clients

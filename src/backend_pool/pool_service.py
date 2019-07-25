@@ -163,23 +163,16 @@ class PoolService:
                         guest_ip=guest['guest_ip'],
                         boot_time=boot_time)
 
-    def producer_loop(self):
-        # delete old VMs, but do not let pool size be 0
-        if self.existing_pool_size() > 1:
-            # mark timed-out VMs for destruction
-            self.__producer_mark_timed_out(self.vm_unused_timeout)
-
-            # delete timed-out VMs
-            self.__producer_destroy_timed_out()
-
-        # remove destroyed from list
-        self.__producer_remove_destroyed()
-
+    def __producer_create_guests(self):
+        """
+        Creates guests until the pool has the allotted amount
+        """
         # replenish pool until full
-        create = self.max_vm - self.existing_pool_size()
-        for _ in range(create):
+        to_create = self.max_vm - self.existing_pool_size()
+        for _ in range(to_create):
             dom, snap, guest_ip = self.qemu.create_guest(self.guest_id)
 
+            # create guest object
             self.guests.append({
                 'id': self.guest_id,
                 'state': 'created',
@@ -198,6 +191,21 @@ class PoolService:
             # reset id
             if self.guest_id == 253:
                 self.guest_id = 2
+
+    def producer_loop(self):
+        # delete old VMs, but do not let pool size be 0
+        if self.existing_pool_size() > 1:
+            # mark timed-out VMs for destruction
+            self.__producer_mark_timed_out(self.vm_unused_timeout)
+
+            # delete timed-out VMs
+            self.__producer_destroy_timed_out()
+
+        # remove destroyed from list
+        self.__producer_remove_destroyed()
+
+        # replenish pool until full
+        self.__producer_create_guests()
 
         # check for created VMs that can become available
         self.__producer_mark_available()
