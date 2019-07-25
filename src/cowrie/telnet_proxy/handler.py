@@ -246,6 +246,7 @@ class TelnetHandler:
             if HoneypotPasswordChecker().checkUserPass(self.usernameState, self.passwordState, src_ip):
                 passwordToSend = self.backendPassword
                 self.authDone = True
+                self.server.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
             else:
                 log.msg('Sending invalid auth to backend')
                 passwordToSend = self.backendPassword + b'fake'

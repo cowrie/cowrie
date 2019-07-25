@@ -51,9 +51,6 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.transportId = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
 
-        self.startTime = time.time()
-        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
-
         self.peer_ip = self.transport.getPeer().host
         self.peer_port = self.transport.getPeer().port + 1
         self.local_ip = self.transport.getHost().host
