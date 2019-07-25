@@ -38,7 +38,7 @@ class PoolService:
     def __init__(self):
         self.qemu = backend_pool.libvirt.backend_service.LibvirtBackendService()
         self.guests = []
-        self.guest_id = 2
+        self.guest_id = 0
         self.guest_lock = Lock()
 
         # time in seconds between each loop iteration
@@ -195,8 +195,8 @@ class PoolService:
             self.guest_id += 1
 
             # reset id
-            if self.guest_id == 253:
-                self.guest_id = 2
+            if self.guest_id == 252:
+                self.guest_id = 0
 
     def producer_loop(self):
         # delete old VMs, but do not let pool size be 0
