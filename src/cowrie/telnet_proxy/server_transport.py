@@ -37,6 +37,10 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.frontendAuthenticated = False
         self.delayedPacketsToBackend = []
 
+        # this indicates whether the client effectively connected to the backend
+        # if they did we recycle the VM, else the VM can be considered "clean"
+        self.client_used_backend = False
+
         # only used when simple proxy (no pool) set
         self.backend_ip = None
         self.backend_port = None
@@ -159,8 +163,8 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.telnetHandler.close()
 
         if self.pool_interface:
-            # free VM from pool
-            self.pool_interface.send_vm_free()
+            # free VM from pool (VM was used if auth was performed successfully)
+            self.pool_interface.send_vm_free(self.telnetHandler.authDone)
 
             # close transport connection to pool
             self.pool_interface.transport.loseConnection()

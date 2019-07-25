@@ -41,10 +41,11 @@ class PoolClient(Protocol):
 
         self.transport.write(buf)
 
-    def send_vm_free(self):
+    def send_vm_free(self, backend_dirty):
         # free the guest, if we had any guest in this connection to begin with
         if self.vm_id:
-            buf = struct.pack('!cI', b'f', self.vm_id)
+            op_code = b'f' if backend_dirty else b'u'
+            buf = struct.pack('!cI', op_code, self.vm_id)
             self.transport.write(buf)
 
     def dataReceived(self, data):

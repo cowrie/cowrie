@@ -98,6 +98,22 @@ class PoolServer(Protocol):
             # free the vm
             self.factory.pool_service.free_vm(guest_id)
 
+        elif res_op == b'u':
+            # receives: guest_id
+            recv = struct.unpack('!I', data[1:])
+            guest_id = recv[0]
+
+            log.msg(eventid='cowrie.backend_pool.server',
+                    format='Re-using VM %(guest_id)s (not used by attacker)',
+                    guest_id=guest_id)
+
+            # free the NAT
+            if not self.local_pool and self.use_nat or self.pool_only:
+                self.factory.nat.free_binding(guest_id)
+
+            # free this connection and allow VM to be re-used
+            self.factory.pool_service.reuse_vm(guest_id)
+
         if response:
             self.transport.write(response)
 

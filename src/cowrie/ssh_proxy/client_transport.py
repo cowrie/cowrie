@@ -33,6 +33,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         self.delayedPackets = []
         self.factory = factory
         self.canAuth = False
+        self.authDone = False
 
         # keep these from when frontend authenticates
         self.frontendTriedUsername = None
@@ -89,6 +90,9 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         for packet in self.factory.server.delayedPackets:
             self.factory.server.sshParse.parse_packet('[SERVER]', packet[0], packet[1])
         self.factory.server.delayedPackets = []
+
+        # backend auth is done, attackers will now be connected to the backend
+        self.authDone = True
 
     def connectionLost(self, reason):
         if self.factory.server.pool_interface:

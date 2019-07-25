@@ -183,6 +183,7 @@ class PoolService:
             self.guests.append({
                 'id': self.guest_id,
                 'state': 'created',
+                'prev_state': None,  # used in case a guest is requested and freed immediately, to revert the state
                 'start_timestamp': time.time(),
                 'guest_ip': guest_ip,
                 'connected': 0,
@@ -261,6 +262,7 @@ class PoolService:
         if not guest:
             raise NoAvailableVMs()
 
+        guest['prev_state'] = guest['state']
         guest['state'] = 'using'
         guest['connected'] += 1
         guest['client_ips'].add(src_ip)
@@ -277,6 +279,21 @@ class PoolService:
 
                     if guest['connected'] == 0:
                         guest['state'] = 'used'
+                    return
+        finally:
+            self.guest_lock.release()
+
+    def reuse_vm(self, guest_id):
+        self.guest_lock.acquire()
+        try:
+            for guest in self.guests:
+                if guest['id'] == guest_id:
+                    guest['connected'] -= 1
+
+                    if guest['connected'] == 0:
+                        # revert machine state to previous
+                        guest['state'] = guest['prev_state']
+                        guest['prev_state'] = None
                     return
         finally:
             self.guest_lock.release()
