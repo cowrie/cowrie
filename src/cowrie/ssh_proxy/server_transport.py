@@ -328,9 +328,6 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
 
-        if self.sshParse.client and self.sshParse.client.transport:
-            self.sshParse.client.transport.loseConnection()
-
         transport.SSHServerTransport.connectionLost(self, reason)
 
         self.transport.connectionLost(reason)
@@ -340,9 +337,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if self.sshParse.client and self.sshParse.client.transport:
             self.sshParse.client.transport.loseConnection()
 
-        # free connection
         if self.pool_interface:
+            # free VM from pool
             self.pool_interface.send_vm_free()
+
+            # close transport connection to pool
+            self.pool_interface.transport.loseConnection()
 
         if self.startTime is not None:  # startTime is not set when auth fails
             duration = time.time() - self.startTime

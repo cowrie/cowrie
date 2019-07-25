@@ -158,9 +158,12 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         # signal that we're closing to the handler
         self.telnetHandler.close()
 
-        # free connection
         if self.pool_interface:
+            # free VM from pool
             self.pool_interface.send_vm_free()
+
+            # close transport connection to pool
+            self.pool_interface.transport.loseConnection()
 
         duration = time.time() - self.startTime
         log.msg(eventid='cowrie.session.closed',
