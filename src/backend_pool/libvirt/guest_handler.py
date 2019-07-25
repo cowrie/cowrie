@@ -1,6 +1,7 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 import os
+
 from configparser import NoOptionError
 
 import backend_pool.libvirt.snapshot_handler
@@ -26,6 +27,13 @@ def create_guest(connection, mac_address, guest_unique_id):
     version_tag = CowrieConfig().get('backend_pool', 'guest_tag', fallback='guest')
     base_image = CowrieConfig().get('backend_pool', 'guest_image_path')
     memory = CowrieConfig().getint('backend_pool', 'guest_memory', fallback=128)
+
+    # check if base image exists
+    if not os.path.isfile(base_image):
+        log.msg(eventid='cowrie.backend_pool.guest_handler',
+                format='Base image provided was not found: %(base_image)s',
+                base_image=base_image)
+        os._exit(1)
 
     # only in some cases, like wrt
     kernel_image = CowrieConfig().get('backend_pool', 'guest_kernel_image', fallback='')
