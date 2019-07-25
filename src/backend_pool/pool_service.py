@@ -96,6 +96,12 @@ class PoolService:
     def existing_pool_size(self):
         return len([g for g in self.guests if g['state'] != 'destroyed'])
 
+    def is_ip_free(self, ip):
+        for guest in self.guests:
+            if guest['guest_ip'] == ip:
+                return False
+        return True
+
     # Producers
     def __producer_mark_timed_out(self, guest_timeout):
         """
@@ -170,7 +176,7 @@ class PoolService:
         # replenish pool until full
         to_create = self.max_vm - self.existing_pool_size()
         for _ in range(to_create):
-            dom, snap, guest_ip = self.qemu.create_guest(self.guest_id)
+            dom, snap, guest_ip = self.qemu.create_guest(self.is_ip_free)
 
             # create guest object
             self.guests.append({

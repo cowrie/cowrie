@@ -1,6 +1,8 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 import os
+import random
+import sys
 import uuid
 
 import backend_pool.libvirt.guest_handler
@@ -33,6 +35,10 @@ class LibvirtBackendService:
         # signals backend is ready to be operated
         self.ready = False
 
+        # table to associate IPs and MACs
+        seed = random.randint(0, sys.maxsize)
+        self.network_table = backend_pool.util.generate_network_table(seed)
+
         log.msg(eventid='cowrie.backend_pool.qemu',
                 format='Connection to Qemu established')
 
@@ -56,23 +62,40 @@ class LibvirtBackendService:
         # create a network filter
         self.filter = backend_pool.libvirt.network_handler.create_filter(self.conn)
 
-        # create a NAT for the guests
-        self.network = backend_pool.libvirt.network_handler.create_network(self.conn)
+        # create a network for the guests (as a NAT)
+        self.network = backend_pool.libvirt.network_handler.create_network(self.conn, self.network_table)
 
+        # service is ready to be used (create guests and use them)
         self.ready = True
 
-    def create_guest(self, guest_id):
+    def get_mac_ip(self, ip_tester):
         """
-        Returns an unready domain and its snapshot information
+        Get a MAC and IP that are not being used by any guest.
+        """
+        # Try to find a free pair 500 times.
+        retries = 0
+        while retries < 500:
+            mac = random.choice(list(self.network_table.keys()))
+            ip = self.network_table[mac]
+            if ip_tester(ip):
+                return mac, ip
+
+            retries += 1
+
+        raise LibvirtError()
+
+    def create_guest(self, ip_tester):
+        """
+        Returns an unready domain and its snapshot information.
+
+        Guarantee that the IP is free with the ip_tester function.
         """
         if not self.ready:
             return
 
-        # generate networking details
-        guest_mac, guest_ip = backend_pool.util.generate_mac_ip(guest_id)
-        guest_unique_id = uuid.uuid4().hex
-
         # create a single guest
+        guest_unique_id = uuid.uuid4().hex
+        guest_mac, guest_ip = self.get_mac_ip(ip_tester)
         dom, snapshot = backend_pool.libvirt.guest_handler.create_guest(self.conn, guest_mac, guest_unique_id)
         if dom is None:
             log.msg(eventid='cowrie.backend_pool.qemu',

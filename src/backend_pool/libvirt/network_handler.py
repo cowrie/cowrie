@@ -26,19 +26,23 @@ def create_filter(connection):
         return connection.nwfilterLookupByName('cowrie-default-filter')
 
 
-def create_network(connection):
+def create_network(connection, network_table):
+    # TODO support more interfaces and therefore more IP space to allow > 253 guests
     network_file = os.path.join(CowrieConfig().get('backend_pool', 'config_files_path', fallback='share/pool_configs'),
                                 CowrieConfig().get('backend_pool', 'network_config', fallback='default_network.xml'))
 
     network_xml = backend_pool.util.read_file(network_file)
 
-    sample_host = '<host mac=\'{mac_address}\' name=\'{name}\' ip=\'{ip_address}\'/>\n'
+    template_host = '<host mac=\'{mac_address}\' name=\'{name}\' ip=\'{ip_address}\'/>\n'
     hosts = ''
 
-    for guest_id in range(2, 255):
-        mac_address, ip_address = backend_pool.util.generate_mac_ip(guest_id)
+    # generate a host entry for every possible guest in this network (253 entries)
+    it = iter(network_table)
+    for guest_id in range(0, 253):
         vm_name = 'vm' + str(guest_id)
-        hosts += sample_host.format(mac_address=mac_address, name=vm_name, ip_address=ip_address)
+
+        key = next(it)
+        hosts += template_host.format(name=vm_name, mac_address=key, ip_address=network_table[key])
 
     network_config = network_xml.format(network_name='cowrie',
                                         iface_name='virbr2',

@@ -2,6 +2,7 @@
 # See the COPYRIGHT file for more information
 
 import os
+import random
 import subprocess
 import time
 
@@ -21,12 +22,33 @@ def read_file(file_name):
         return file.read()
 
 
-def generate_mac_ip(guest_id):
-    # TODO support more
-    hex_id = hex(guest_id)[2:]
-    mac = 'aa:bb:cc:dd:ee:' + hex_id.zfill(2)
-    ip = '192.168.150.' + str(guest_id)
-    return mac, ip
+def to_byte(n):
+    return hex(n)[2:].zfill(2)
+
+
+def generate_network_table(seed=None):
+    """
+    Generates a table associating MAC and IP addressed to be distributed by our virtual network adapter via DHCP.
+    """
+
+    # we use the seed in case we want to generate the same table twice
+    if seed is not None:
+        random.seed(seed)
+
+    # number of IPs per network is 253 (2-254)
+    # generate random MACs, set ensures they are unique
+    macs = set()
+    while len(macs) < 253:
+        macs.add('48:d2:24:bf:' + to_byte(random.randint(0, 255)) + ':' + to_byte(random.randint(0, 255)))
+
+    # associate each MAC with a sequential IP
+    table = {}
+    ip_counter = 2
+    for mac in macs:
+        table[mac] = '192.168.150.' + str(ip_counter)
+        ip_counter += 1
+
+    return table
 
 
 def now():
