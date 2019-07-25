@@ -1,7 +1,6 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 import os
-
 from configparser import NoOptionError
 
 import backend_pool.libvirt.snapshot_handler
@@ -42,7 +41,7 @@ def create_guest(connection, mac_address, guest_unique_id):
     # get a directory to save snapshots, even if temporary
     try:
         # guest configuration, to be read by qemu, needs an absolute path
-        snapshot_path = backend_pool.util.to_absolute_path(CowrieConfig().get('proxy', 'snapshot_path'))
+        snapshot_path = backend_pool.util.to_absolute_path(CowrieConfig().get('backend_pool', 'snapshot_path'))
     except NoOptionError:
         snapshot_path = os.getcwd()
 

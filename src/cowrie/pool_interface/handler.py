@@ -46,7 +46,7 @@ class PoolHandler:
 
     def initial_pool_connection_error(self, reason):
         log.err('Could not connect to VM pool: {0}'.format(reason.value))
-        sys.exit(1)
+        os._exit(1)
 
     def initialisation_response(self, res_code):
         """
