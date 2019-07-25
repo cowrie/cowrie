@@ -49,26 +49,22 @@
         </interface>
 
         <serial type='pty'>
-        <target type='isa-serial' port='0'>
-        <model name='isa-serial'/>
-        </target>
+            <target type='isa-serial' port='0'>
+                <model name='isa-serial'/>
+            </target>
         </serial>
         <console type='pty'>
-        <target type='serial' port='0'/>
+            <target type='serial' port='0'/>
         </console>
-        <input type='tablet' bus='usb'>
-        <address type='usb' bus='0' port='1'/>
+            <input type='tablet' bus='usb'>
+            <address type='usb' bus='0' port='1'/>
         </input>
         <input type='mouse' bus='ps2'/>
         <input type='keyboard' bus='ps2'/>
-        <graphics type='spice' autoport='yes'>
-        <listen type='address'/>
-        <image compression='off'/>
-        </graphics>
 
         <video>
-        <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
-        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+            <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
         </video>
 
     </devices>

@@ -50,11 +50,6 @@
             <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x5'/>
         </controller>
 
-        <graphics type='spice' autoport='yes'>
-            <listen type='address'/>
-            <image compression='off'/>
-        </graphics>
-
 <!--        <rng model='virtio'>-->
 <!--            <backend model='random'>/dev/urandom</backend>-->
 <!--        </rng>-->
