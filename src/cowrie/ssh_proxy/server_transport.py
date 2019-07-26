@@ -301,8 +301,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Timeout is reset when authentication succeeds.
         """
         log.msg('Timeout reached in FrontendSSHTransport')
-        self.transport.loseConnection()
-        self.sshParse.client.transport.loseConnection()
+
+        if self.transport:
+            self.transport.loseConnection()
+
+        if self.sshParse.client and self.sshParse.client.transport:
+            self.sshParse.client.transport.loseConnection()
 
     def setService(self, service):
         """

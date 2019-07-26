@@ -139,8 +139,11 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         log.msg('Timeout reached in FrontendTelnetTransport')
 
         # close transports on both sides
-        self.transport.loseConnection()
-        self.client.transport.loseConnection()
+        if self.transport:
+            self.transport.loseConnection()
+
+        if self.client and self.client.transport:
+            self.client.transport.loseConnection()
 
         # signal that we're closing to the handler
         self.telnetHandler.close()
