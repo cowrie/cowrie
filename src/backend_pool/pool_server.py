@@ -6,7 +6,6 @@ import struct
 from backend_pool.nat import NATService
 from backend_pool.pool_service import NoAvailableVMs, PoolService
 
-from twisted.internet import threads
 from twisted.internet.protocol import Factory
 from twisted.internet.protocol import Protocol
 from twisted.python import log
@@ -131,14 +130,13 @@ class PoolServerFactory(Factory):
     def startFactory(self):
         # start the pool thread with default configs
         self.pool_service = PoolService()
-        self.pool_service.initalise_pool()
-        threads.deferToThread(self.pool_service.producer_loop)
+        self.pool_service.start_pool()
 
     def stopFactory(self):
         log.msg(eventid='cowrie.backend_pool.server',
                 format='Stopping backend pool...')
 
-        self.pool_service.terminate_pool()
+        self.pool_service.shutdown_pool()
 
     def buildProtocol(self, addr):
         log.msg(eventid='cowrie.backend_pool.server',

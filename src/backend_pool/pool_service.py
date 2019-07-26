@@ -10,7 +10,7 @@ import backend_pool.util
 
 import libvirt
 
-from twisted.internet import reactor
+from twisted.internet import reactor, threads
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
@@ -60,16 +60,26 @@ class PoolService:
                     format='Invalid configuration: one of SSH or Telnet ports must be defined!')
             os._exit(1)
 
-    def initalise_pool(self):
+    def start_pool(self):
         # cleanup older qemu objects
         self.qemu.destroy_all_cowrie()
 
-        # initialise qemu environment
-        self.qemu.initialise_environment()
+        # start backend qemu environment
+        self.qemu.start_backend()
 
-    def terminate_pool(self):
+        # cleanup references if restarting
+        self.guests = []
+        self.guest_id = 0
+
+        # start producer
+        threads.deferToThread(self.producer_loop)
+
+        # recycle myself after some time
+        reactor.callLater(180, self.restart_pool)
+
+    def stop_pool(self):
         log.msg(eventid='cowrie.backend_pool.service',
-                format='Trying clean shutdown')
+                format='Trying pool clean termination')
 
         # stop loop
         if self.loop_next_call:
@@ -79,9 +89,21 @@ class PoolService:
         self.qemu.destroy_all_cowrie()
 
         try:
-            self.qemu.terminate_environment()
+            self.qemu.stop_backend()
         except libvirt.libvirtError:
             print('Not connected to Qemu')
+
+    def shutdown_pool(self):
+        self.stop_pool()
+
+        try:
+            self.qemu.shutdown_backend()
+        except libvirt.libvirtError:
+            print('Not connected to Qemu')
+
+    def restart_pool(self):
+        self.stop_pool()
+        self.start_pool()
 
     def set_configs(self, max_vm, vm_unused_timeout, share_guests):
         """
