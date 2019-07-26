@@ -131,13 +131,14 @@ class PoolServerFactory(Factory):
     def startFactory(self):
         # start the pool thread with default configs
         self.pool_service = PoolService()
+        self.pool_service.initalise_pool()
         threads.deferToThread(self.pool_service.producer_loop)
 
     def stopFactory(self):
         log.msg(eventid='cowrie.backend_pool.server',
                 format='Stopping backend pool...')
 
-        self.pool_service.stop()
+        self.pool_service.terminate_pool()
 
     def buildProtocol(self, addr):
         log.msg(eventid='cowrie.backend_pool.server',

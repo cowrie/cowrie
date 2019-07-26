@@ -42,19 +42,6 @@ class LibvirtBackendService:
         log.msg(eventid='cowrie.backend_pool.qemu',
                 format='Connection to Qemu established')
 
-    def stop(self):
-        log.msg(eventid='cowrie.backend_pool.qemu',
-                format='Doing Qemu clean shutdown...')
-
-        self.ready = False
-
-        self.destroy_all_cowrie()
-
-        self.conn.close()  # close libvirt connection
-
-        log.msg(eventid='cowrie.backend_pool.qemu',
-                format='Connection to Qemu closed successfully')
-
     def initialise_environment(self):
         """
         Initialises Qemu/libvirt environment needed to run guests. Namely starts networks and network filters.
@@ -67,6 +54,19 @@ class LibvirtBackendService:
 
         # service is ready to be used (create guests and use them)
         self.ready = True
+
+    def terminate_environment(self):
+        log.msg(eventid='cowrie.backend_pool.qemu',
+                format='Doing Qemu clean shutdown...')
+
+        self.ready = False
+
+        self.destroy_all_cowrie()
+
+        self.conn.close()  # close libvirt connection
+
+        log.msg(eventid='cowrie.backend_pool.qemu',
+                format='Connection to Qemu closed successfully')
 
     def get_mac_ip(self, ip_tester):
         """

@@ -60,13 +60,14 @@ class PoolService:
                     format='Invalid configuration: one of SSH or Telnet ports must be defined!')
             os._exit(1)
 
+    def initalise_pool(self):
         # cleanup older qemu objects
         self.qemu.destroy_all_cowrie()
 
         # initialise qemu environment
         self.qemu.initialise_environment()
 
-    def stop(self):
+    def terminate_pool(self):
         log.msg(eventid='cowrie.backend_pool.service',
                 format='Trying clean shutdown')
 
@@ -78,7 +79,7 @@ class PoolService:
         self.qemu.destroy_all_cowrie()
 
         try:
-            self.qemu.stop()
+            self.qemu.terminate_environment()
         except libvirt.libvirtError:
             print('Not connected to Qemu')
 
