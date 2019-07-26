@@ -79,7 +79,7 @@ class PoolService:
 
     def stop_pool(self):
         log.msg(eventid='cowrie.backend_pool.service',
-                format='Trying pool clean termination')
+                format='Trying pool clean stop')
 
         # stop loop
         if self.loop_next_call:
@@ -102,6 +102,8 @@ class PoolService:
             print('Not connected to Qemu')
 
     def restart_pool(self):
+        log.msg(eventid='cowrie.backend_pool.service',
+                format='Refreshing pool, terminating current instances and rebooting')
         self.stop_pool()
         self.start_pool()
 
