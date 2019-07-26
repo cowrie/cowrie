@@ -38,6 +38,10 @@
             <filterref filter='cowrie-default-filter'/>
         </interface>
 
+        <serial type='pty'>
+            <target port='0'/>
+        </serial>
+
         <controller type='sata' index='0'>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x1f' function='0x2'/>
         </controller>
