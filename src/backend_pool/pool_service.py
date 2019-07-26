@@ -75,7 +75,9 @@ class PoolService:
         threads.deferToThread(self.producer_loop)
 
         # recycle myself after some time
-        reactor.callLater(180, self.restart_pool)
+        recycle_period = CowrieConfig().getint('backend_pool', 'recycle_period', fallback=-1)
+        if recycle_period > 0:
+            reactor.callLater(recycle_period, self.restart_pool)
 
     def stop_pool(self):
         log.msg(eventid='cowrie.backend_pool.service',

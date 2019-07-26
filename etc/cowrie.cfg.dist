@@ -197,8 +197,12 @@ auth_class = UserDB
 # only used on the cowrie instance that runs the pool
 # ============================================================================
 
-# enable this to solely run the pool, regardless of other configurations
+# enable this to solely run the pool, regardless of other configurations (disables SSH and Telnet)
 pool_only = false
+
+# time between full VM recycling (cleans older VMs and boots newer ones) - involves some downtime between cycles
+# -1 to disable
+recycle_period = 180
 
 # change interface below to allow connections from outside (e.g. remote pool)
 listen_endpoints = tcp:6415:interface=127.0.0.1
@@ -296,7 +300,7 @@ backend_telnet_port = 2023
 # Pool Backend Configuration
 # =====================================
 
-# generic pool configurations
+# generic pool configurable settings
 pool_max_vms = 2
 pool_vm_unused_timeout = 600
 
