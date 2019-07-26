@@ -66,7 +66,8 @@ class PoolClient(Protocol):
 
         elif res_op == b'r':
             if res_code != 0:
-                print('Error in pool while requesting guest. Losing connection...')
+                log.msg(eventid='cowrie.pool_client',
+                        format='Error in pool while requesting guest. Losing connection...')
                 self.parent.loseConnection()
                 return
 

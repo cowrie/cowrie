@@ -115,7 +115,8 @@ class PoolService:
                 timed_out = guest['freed_timestamp'] + guest_timeout < backend_pool.util.now()
 
                 # only mark guests without clients
-                if timed_out and guest['connected'] == 0:
+                # (and guest['connected'] == 0) sometimes did not work correctly as some VMs are not signaled as freed
+                if timed_out:
                     log.msg(eventid='cowrie.backend_pool.service',
                             format='Guest %(guest_id)s (%(guest_ip)s) marked for deletion (timed-out)',
                             guest_id=guest['id'],
