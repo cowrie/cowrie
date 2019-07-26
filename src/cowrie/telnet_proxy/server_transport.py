@@ -169,10 +169,11 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
             # close transport connection to pool
             self.pool_interface.transport.loseConnection()
 
-        duration = time.time() - self.startTime
-        log.msg(eventid='cowrie.session.closed',
-                format='Connection lost after %(duration)d seconds',
-                duration=duration)
+        if self.startTime is not None:  # startTime is not set when auth fails
+            duration = time.time() - self.startTime
+            log.msg(eventid='cowrie.session.closed',
+                    format='Connection lost after %(duration)d seconds',
+                    duration=duration)
 
     def packet_buffer(self, payload):
         """
