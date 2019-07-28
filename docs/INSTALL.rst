@@ -185,7 +185,7 @@ Installing Backend Pool dependencies (OPTIONAL)
 
 If you want to use the proxy functionality combined with the automatic
 backend pool, you need to install some dependencies, namely qemu, libvirt,
-and their python interface. In Debian/Ubuntu::
+and their Python interface. In Debian/Ubuntu::
 
     $ sudo apt-get install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
 

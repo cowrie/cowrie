@@ -30,7 +30,6 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.transport = FrontendSSHTransport()
         self.transport.connectionMade()
 
-
     def test_whoami_command(self):
         self.proto.lineReceived(b'whoami\n')
         self.assertEqual(self.tr.value(), b'root\n' + PROMPT)
