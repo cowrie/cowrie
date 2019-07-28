@@ -202,7 +202,7 @@ pool_only = false
 
 # time between full VM recycling (cleans older VMs and boots newer ones) - involves some downtime between cycles
 # -1 to disable
-recycle_period = 180
+recycle_period = 1500
 
 # change interface below to allow connections from outside (e.g. remote pool)
 listen_endpoints = tcp:6415:interface=127.0.0.1
@@ -224,8 +224,11 @@ nw_filter_config = default_filter.xml
 # running guests, and provide other details to Cowrie.
 #   - SSH and Telnet ports: which ports are listening for these services in the guest OS;
 #     if you're not using one of them omit the config or set to 0
+#   - Guest private key: used by the pool to control the guest's state via SSH; guest must
+#     have the corresponding pubkey in root's authorized_keys (not implemented)
 # =====================================
 guest_config = default_guest.xml
+guest_privkey = ${honeypot:state_path}/ubuntu18.04-guest
 guest_tag = ubuntu18.04
 guest_ssh_port = 22
 guest_telnet_port = 23
@@ -301,7 +304,7 @@ backend_telnet_port = 2023
 # =====================================
 
 # generic pool configurable settings
-pool_max_vms = 2
+pool_max_vms = 5
 pool_vm_unused_timeout = 600
 
 # allow sharing guests between different attackers if no new VMs are available
