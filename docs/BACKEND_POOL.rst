@@ -163,3 +163,67 @@ Steps used in Ubuntu, can be useful in other distros
     # printf "service telnet\n{\ndisable = no\nflags = REUSE\nsocket_type = stream\nwait = no\nuser = root\nserver = /usr/sbin/in.telnetd\nlog_on_failure += USERID\n}" > /etc/xinetd.d/telnet
     # printf "pts/0\npts/1\npts/2\npts/3\npts/4\npts/5\npts/6\npts/7\npts/8\npts/9" >> /etc/securetty
     # service xinetd start
+
+Customising XML configs
+=======================
+
+If you want, you can customise libvirt's XML configurations.
+
+The main configuration for a guest is located in `default_guest.xml`. This defines the virtual
+CPU, available memory, and devices available on the guest. Most of these configurations are
+set by Cowrie using the guest configurations; you'll see them in the XML as templates
+("{guest_name}"). The main blocks of XML regard the disk and network interface devices.
+
+You can include these blocks as-is in your custom configuration to allow Cowrie to manage your
+custom guests automatically.
+
+.. code-block:: xml
+
+    <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='{disk_image}'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+    </disk>
+
+.. code-block:: xml
+
+    <interface type='network'>
+        <start mode='onboot'/>
+        <mac address='{mac_address}'/>
+        <source network='{network_name}'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+        <filterref filter='cowrie-default-filter'/>
+    </interface>
+
+The other important configuration file is `default_filter.xml`, which handles how networking
+is restricted in the guest VM (aka to the attackers). This file is composed by a set of rules
+of the form
+
+.. code-block:: xml
+
+    <rule action='accept' direction='in'>
+        <tcp dstportstart='22'/>
+    </rule>
+
+Each rule specifies a type of traffic (TCP, UDP...) and direction, whether to accept or drop
+that traffic, and the destiantion of traffic. The default filter provided allows inbound SSH
+and Telnet connections (without which the VM would be unusable, outbound ICMP traffic (to allow
+pinging) and outbound DNS querying. All other traffic is dropped as per the last rule, thus
+forbidding any download or tunnelling.
+
+**VERY IMPORTANT NOTE:** some attacks consist of downloading malicious software or accessing
+illegal content through insecure machines (such as your honeypot). Our provided filter restricts
+networking and does its best to ensure total isolation, to the best of Qemu/libvirt (and our
+own) capabilities. **Be very careful to protect your network and devices while allowing any
+more traffic!**
+
+References
+**********
+
+* `libvirt guest XML syntax <https://libvirt.org/formatdomain.html>`_
+
+* `libvirt network filter XML syntax <https://libvirt.org/formatnwfilter.html>`_
+
+* `Create a OpenWRT image <https://gist.github.com/extremecoders-re/f2c4433d66c1d0864a157242b6d83f67>`_

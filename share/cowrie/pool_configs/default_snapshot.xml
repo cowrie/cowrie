@@ -1,9 +1,0 @@
-<domainsnapshot>
-    <memory snapshot='no'/>
-    <disks>
-        <disk name='/var/lib/libvirt/images/ubuntu18.04.qcow2'>
-            <driver type='qcow2'/>
-            <source file='/var/lib/libvirt/images/ubuntu18.04snapshot.qcow2'/>
-        </disk>
-    </disks>
-</domainsnapshot>

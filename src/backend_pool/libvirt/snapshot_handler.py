@@ -7,10 +7,6 @@ import subprocess
 
 
 def create_disk_snapshot(source_img, destination_img):
-    # snapshot_xml = util.read_file('default_snapshot.xml')
-    # s = domain.listAllSnapshots()
-    # ret = domain.snapshotCreateXML(snapshot_xml, libvirt.VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY)
-
     try:
         shutil.chown(source_img, getpass.getuser())
     except Exception:  # TODO should be PermissionError under python 3, but python 2 does not have it
