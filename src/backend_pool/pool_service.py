@@ -170,6 +170,24 @@ class PoolService:
         finally:
             self.guest_lock.release()
 
+    def __producer_check_health(self):
+        """
+        Checks all usable guests, and whether they should have connectivity. If they don't, then
+        mark them for deletion.
+        """
+        self.guest_lock.acquire()
+        try:
+            usable_guests = self.get_guest_states(['available', 'using', 'used'])
+            for guest in usable_guests:
+                if not self.has_connectivity(guest['guest_ip']):
+                    log.msg(eventid='cowrie.backend_pool.service',
+                            format='Guest %(guest_id)s @ %(guest_ip)s has no connectivity... Destroying',
+                            guest_id=guest['id'],
+                            guest_ip=guest['guest_ip'])
+                    guest['state'] = 'unavailable'
+        finally:
+            self.guest_lock.release()
+
     def __producer_destroy_timed_out(self):
         """
         Loops over 'unavailable' guests, and invokes qemu to destroy the corresponding domain
@@ -196,7 +214,9 @@ class PoolService:
     def __producer_mark_available(self):
         """
         Checks recently-booted guests ('created' state), and whether they are accepting SSH or Telnet connections,
-        which indicates they are ready to be used ('available' state)
+        which indicates they are ready to be used ('available' state).
+
+        No lock needed since the 'created' state is only accessed by the single-threaded producer
         """
         created_guests = self.get_guest_states(['created'])
         for guest in created_guests:
@@ -247,6 +267,9 @@ class PoolService:
 
             # delete timed-out VMs
             self.__producer_destroy_timed_out()
+
+        # checks for guests without connectivity
+        self.__producer_check_health()
 
         # remove destroyed from list
         self.__producer_remove_destroyed()
