@@ -1,5 +1,5 @@
 <!-- Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com> -->
-<domain type='{backend}' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+<domain type='{hypervisor}' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
     <name>{guest_name}</name>
     <memory unit='MiB'>{memory}</memory>
     <os>

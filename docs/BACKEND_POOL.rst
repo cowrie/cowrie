@@ -98,7 +98,7 @@ A set of guest (VM) parameters can be defined as we explain below:
 
 * **guest_image_path**: the base image upon which all VMs are created from
 
-* **guest_backend**: the emulation tool used; if you have an older machine or the emulated
+* **guest_hypervisor**: the hypervisor used; if you have an older machine or the emulated
   architecture is different from the host one, then use software-based "qemu"; however,
   if you are able to, use "kvm", it's **much** faster.
 
