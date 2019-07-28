@@ -60,6 +60,8 @@ class PoolService:
                     format='Invalid configuration: one of SSH or Telnet ports must be defined!')
             os._exit(1)
 
+        self.any_vm_up = False  # TODO fix for no VM available
+
     def start_pool(self):
         # cleanup older qemu objects
         self.qemu.destroy_all_cowrie()
@@ -70,6 +72,8 @@ class PoolService:
         # cleanup references if restarting
         self.guests = []
         self.guest_id = 0
+
+        self.any_vm_up = False  # TODO fix for no VM available
 
         # start producer
         threads.deferToThread(self.producer_loop)
@@ -189,6 +193,7 @@ class PoolService:
                 if self.telnet_port > 0 and not ready_ssh else True  # telnet check not needed if ssh ready
 
             if ready_ssh or ready_telnet:
+                self.any_vm_up = True  # TODO fix for no VM available
                 guest['state'] = 'available'
                 boot_time = int(time.time() - guest['start_timestamp'])
                 log.msg(eventid='cowrie.backend_pool.service',
@@ -302,6 +307,9 @@ class PoolService:
 
         # raise excaption if a valid VM was not found
         if not guest:
+            # TODO fix for no VM available
+            if self.any_vm_up:
+                self.stop_pool()
             raise NoAvailableVMs()
 
         guest['prev_state'] = guest['state']
