@@ -133,6 +133,20 @@ class PoolService:
                 return False
         return True
 
+    def has_connectivity(self, ip):
+        """
+        This method checks if a guest has either SSH or Telnet connectivity, to know whether it is ready for connections
+        and healthy. It takes into account whether those services are enabled, and if SSH is enabled and available, then
+        no Telnet check needs to be done.
+        """
+        # check SSH connectivity, if enabled in configs, if disabled then we need to check telnet
+        has_ssh = backend_pool.util.nmap_port(ip, self.ssh_port) if self.ssh_port > 0 else False
+
+        # telnet check not needed if has_ssh = True
+        has_telnet = backend_pool.util.nmap_port(ip, self.telnet_port) if self.telnet_port > 0 and not has_ssh else True
+
+        return has_ssh or has_telnet
+
     # Producers
     def __producer_mark_timed_out(self, guest_timeout):
         """
@@ -186,13 +200,7 @@ class PoolService:
         """
         created_guests = self.get_guest_states(['created'])
         for guest in created_guests:
-            # check if either ssh or telnet ports are open
-            ready_ssh = backend_pool.util.nmap_port(guest['guest_ip'], self.ssh_port) \
-                if self.ssh_port > 0 else False  # if no ssh, then it's not ready, aka need to check telnet
-            ready_telnet = backend_pool.util.nmap_port(guest['guest_ip'], self.telnet_port) \
-                if self.telnet_port > 0 and not ready_ssh else True  # telnet check not needed if ssh ready
-
-            if ready_ssh or ready_telnet:
+            if self.has_connectivity(guest['guest_ip']):
                 self.any_vm_up = True  # TODO fix for no VM available
                 guest['state'] = 'available'
                 boot_time = int(time.time() - guest['start_timestamp'])
