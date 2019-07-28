@@ -18,6 +18,7 @@ Welcome to Cowrie's documentation!
    CONTRIBUTING.rst
    PROXY.rst
    BACKEND_POOL.rst
+   SNAPSHOTS.rst
    elk/README.rst
    graylog/README.rst
    kippo-graph/README.rst
