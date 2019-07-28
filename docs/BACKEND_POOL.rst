@@ -16,6 +16,24 @@ and OpenWRT 18.06.4) whose configurations are already set and ready to be deploy
 Further below in this guide we'll discuss how to create your own images and customise
 libvirt's XML configuration files.
 
+Proxy configurations
+********************
+
+When the proxy starts, and regardless whether the backend pool runs on the same machine
+as the proxy or not, some configurations are sent by the proxy to the pool during runtime.
+
+These are:
+
+* **pool_max_vms**: the number of VMs to be kept running in the pool
+
+* **pool_vm_unused_timeout**: how much time (seconds) a used VM is kept running (so that
+  an attacker that reconnects is served the same VM.
+
+* **apool_share_guests**: what to do if no "pristine" VMs are available (i.e., all have
+  been connected to); if set to true we serve a random one from the used, if false we
+  throw an exception.
+
+
 Backend Pool configuration
 **************************
 

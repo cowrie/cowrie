@@ -37,7 +37,9 @@ the `[backend_pool]` section, which we detail in the
 The backend pool can be run in the same machine as Cowrie, or on a remote one (e.g. Cowrie on a
 Raspberry Pi, and the pool in a larger machine). In the former case, set `pool_local` to true;
 in the later, set `pool_local` to false and specify its host and port, matching with the
-`listen_endpoints` of the `[backend_pool]` section.
+`listen_endpoints` of the `[backend_pool]` section. Further configurations sent by the client
+are explained in
+`Backend Pool's own documentation <https://cowrie.readthedocs.io/en/latest/BACKEND_POOL.html>`_.
 
 Authentication
 ==============
