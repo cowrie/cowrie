@@ -309,6 +309,7 @@ class PoolService:
         if not guest:
             # TODO fix for no VM available
             if self.any_vm_up:
+                log.msg('Inconsistent state in pool, restarting...')
                 self.stop_pool()
             raise NoAvailableVMs()
 
