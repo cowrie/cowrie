@@ -311,9 +311,9 @@ pool_vm_unused_timeout = 600
 pool_share_guests = true
 
 # start pool on the same machine as cowrie
-local_pool = true
+pool_local = true
 
-# Remote pool configurations (used with local_pool=false)
+# Remote pool configurations (used with pool_local=false)
 pool_host = 192.168.1.40
 pool_port = 6415
 
