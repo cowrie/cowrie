@@ -298,7 +298,6 @@ backend_ssh_port = 2022
 backend_telnet_host = localhost
 backend_telnet_port = 2023
 
-
 # =====================================
 # Pool Backend Configuration
 # =====================================
@@ -325,9 +324,11 @@ pool_port = 6415
 backend_user = root
 backend_pass = root
 
-# Telnet authentication spoofing #
-# To spoof telnet authentication we need to capture login and password prompts, and spoof data to the backend in order
-# to successfully authenticate. If disabled, attackers can only use the real user credentials of the backend.
+# Telnet prompt detection
+#
+# To detect authentication prompts (and spoof auth details to the ones the backend accepts) we need to capture
+# login and password prompts, and spoof data to the backend in order to successfully authenticate. If disabled,
+# attackers can only use the real user credentials of the backend.
 telnet_spoof_authentication = true
 
 # These regex were made using Ubuntu 18.04; you have to adapt these for the prompts
