@@ -1,4 +1,4 @@
-from twisted.conch.ssh import transport, connection, userauth, channel, common
+from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol, reactor
 
 
