@@ -16,9 +16,10 @@ What is Cowrie
 
 Cowrie is a medium interaction SSH and Telnet honeypot designed to
 log brute force attacks and the shell interaction performed by the
-attacker.
+attacker. Cowrie also functions as an SSH and telnet proxy to observe
+attacker behavior to another system.
 
-`Cowrie <http://github.com/cowrie/cowrie/>`_ is developed by Michel Oosterhof.
+`Cowrie <http://github.com/cowrie/cowrie/>`_ is maintained by Michel Oosterhof.
 
 Documentation
 ****************************************
@@ -33,21 +34,17 @@ You can join the Cowrie community at the following `Slack workspace <http://bit.
 Features
 *****************************************
 
-Some interesting features:
-
 * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
 * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
-* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with original timings with the `bin/playlog` utility.
-* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection log
-
-Additional functionality over standard kippo:
-
+* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `bin/playlog` utility.
+* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
 * Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`_)
-* Logging in JSON format for easy processing in log management solutions
-* Many, many additional commands
+* JSON logging for easy processing in log management solutions
+
+* Full SSH and telnet proxy feature
 
 Docker
 *****************************************
@@ -76,9 +73,9 @@ For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie
 Files of interest:
 *****************************************
 
-* `cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist <https://github.com/cowrie/cowrie/blob/master/etc/cowrie.cfg.dist>`_.
-* `share/cowrie/fs.pickle <https://github.com/cowrie/cowrie/blob/master/share/cowrie/fs.pickle>`_ - fake filesystem
-* `etc/userdb.txt` - credentials allowed or disallowed to access the honeypot
+* `etc/cowrie.cfg` - Cowrie's configuration file. Default values can be found in `etc/cowrie.cfg.dist <https://github.com/cowrie/cowrie/blob/master/etc/cowrie.cfg.dist>`_.
+* `share/cowrie/fs.pickle` - fake filesystem
+* `etc/userdb.txt` - credentials to access the honeypot
 * `honeyfs/ <https://github.com/cowrie/cowrie/tree/master/honeyfs>`_ - file contents for the fake filesystem - feel free to copy a real system here or use `bin/fsctl`
 * `honeyfs/etc/issue.net` - pre-login banner
 * `honeyfs/etc/motd <https://github.com/cowrie/cowrie/blob/master/honeyfs/etc/issue>`_ - post-login banner
@@ -105,6 +102,7 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Olivier Bilodeau (obilodeau) for Telnet support
 * Ivan Korolev (fe7ch) for many improvements over the years.
 * Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
+* Guilherme Borges (sgtpepperpt) for SSH and telnet proxy (GSoC 2019)
 * And many many others.
 
 .. |travis| image:: https://travis-ci.com/cowrie/cowrie.svg?branch=master
