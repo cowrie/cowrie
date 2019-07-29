@@ -34,17 +34,21 @@ You can join the Cowrie community at the following `Slack workspace <http://bit.
 Features
 *****************************************
 
-* Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
-* Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
+* Choose to run as an emulated shell (default):
+   * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
+   * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
+   * Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
+
+* Or proxy SSH and telnet to another system
+
+For both settings:
+
 * Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `bin/playlog` utility.
-* Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
 * Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`_)
 * JSON logging for easy processing in log management solutions
-
-* Full SSH and telnet proxy feature
 
 Docker
 *****************************************
