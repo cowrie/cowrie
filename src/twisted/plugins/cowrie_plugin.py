@@ -191,10 +191,12 @@ Makes a Cowrie SSH/Telnet honeypot.
         return self.topService
 
     def pool_ready(self):
+        backend = CowrieConfig().get('honeypot', 'backend', fallback='shell')
+
         # this method is never called if self.pool_only is False,
         # since we do not start the pool handler that would call it
         if self.enableSSH:
-            factory = cowrie.ssh.factory.CowrieSSHFactory(self.pool_handler)
+            factory = cowrie.ssh.factory.CowrieSSHFactory(backend, self.pool_handler)
             factory.tac = self
             factory.portal = portal.Portal(core.realm.HoneyPotRealm())
             factory.portal.registerChecker(

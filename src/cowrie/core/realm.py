@@ -43,26 +43,15 @@ from cowrie.telnet import session
 
 @implementer(IRealm)
 class HoneyPotRealm(object):
-
     def __init__(self):
         pass
 
     def requestAvatar(self, avatarId, mind, *interfaces):
-        backend = CowrieConfig().get('honeypot', 'backend', fallback='shell')
-
-        if backend == 'shell':
-            if conchinterfaces.IConchUser in interfaces:
-                serv = shellserver.CowrieServer(self)
-                user = shellavatar.CowrieUser(avatarId, serv)
-                return interfaces[0], user, user.logout
-            elif ITelnetProtocol in interfaces:
-                serv = shellserver.CowrieServer(self)
-                user = session.HoneyPotTelnetSession(avatarId, serv)
-                return interfaces[0], user, user.logout
-            log.msg('No supported interfaces found.')
-            raise NotImplementedError("No supported interfaces found.")
-        elif backend == 'proxy':
-            # not used in proxies, as they operate on a lower level
-            pass
-        else:
-            raise NotImplementedError("No supported backend found.")
+        if conchinterfaces.IConchUser in interfaces:
+            serv = shellserver.CowrieServer(self)
+            user = shellavatar.CowrieUser(avatarId, serv)
+            return interfaces[0], user, user.logout
+        elif ITelnetProtocol in interfaces:
+            serv = shellserver.CowrieServer(self)
+            user = session.HoneyPotTelnetSession(avatarId, serv)
+            return interfaces[0], user, user.logout

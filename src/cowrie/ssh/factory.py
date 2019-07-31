@@ -30,11 +30,6 @@ class CowrieSSHFactory(factory.SSHFactory):
     They listen directly to the TCP port
     """
 
-    services = {
-        b'ssh-userauth': ProxySSHAuthServer if CowrieConfig().get('honeypot', 'backend') == 'proxy'
-        else HoneyPotSSHUserAuthServer,
-        b'ssh-connection': connection.CowrieSSHConnection,
-    }
     starttime = None
     privateKeys = None
     publicKeys = None
@@ -43,8 +38,16 @@ class CowrieSSHFactory(factory.SSHFactory):
     ourVersionString = CowrieConfig().get('ssh', 'version',
                                           fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
 
-    def __init__(self, pool_handler):
+    # used to kill server instances of the protocol on tests
+    running = []
+
+    def __init__(self, backend, pool_handler):
         self.pool_handler = pool_handler
+        self.backend = backend
+        self.services = {
+            b'ssh-userauth': ProxySSHAuthServer if self.backend == 'proxy' else HoneyPotSSHUserAuthServer,
+            b'ssh-connection': connection.CowrieSSHConnection,
+        }
         super().__init__()
 
     def logDispatch(self, *msg, **args):
@@ -98,7 +101,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-        if CowrieConfig().get('honeypot', 'backend', fallback='shell') == 'proxy':
+        if self.backend == 'proxy':
             t = proxyTransport.FrontendSSHTransport()
         else:
             t = shellTransport.HoneyPotSSHTransport()
@@ -157,4 +160,8 @@ class CowrieSSHFactory(factory.SSHFactory):
         t.supportedPublicKeys = [b'ssh-rsa', b'ssh-dss']
 
         t.factory = self
+
+        # for testing purposes
+        self.running.append(t)
+
         return t
