@@ -31,11 +31,9 @@ from __future__ import absolute_import, division
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.cred.portal import IRealm
-from twisted.python import log
 
 from zope.interface import implementer
 
-from cowrie.core.config import CowrieConfig
 from cowrie.shell import avatar as shellavatar
 from cowrie.shell import server as shellserver
 from cowrie.telnet import session
