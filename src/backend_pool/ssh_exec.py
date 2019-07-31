@@ -14,11 +14,11 @@ class PasswordAuth(userauth.SSHUserAuthClient):
 class CommandChannel(channel.SSHChannel):
     name = 'session'
 
-    def __init__(self, command, callback, callback_data, *args, **kwargs):
+    def __init__(self, command, deferred, callback, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.command = command
+        self.deferred = deferred
         self.callback = callback
-        self.callback_data = callback_data
 
         self.data = b''
 
@@ -32,49 +32,57 @@ class CommandChannel(channel.SSHChannel):
         self.data += data
 
     def closeReceived(self):
-        if self.callback is not None:
-            self.callback(self.callback_data, self.data)
+        self.conn.transport.loseConnection()
+        self.deferred.callback(self.data)
+
+        # call the request client callback, if any
+        if self.callback:
+            self.callback(self.data)
 
 
 class ClientConnection(connection.SSHConnection):
-    def __init__(self, cmd, callback, callback_data):
+    def __init__(self, cmd, deferred, callback):
         super().__init__()
         self.command = cmd
+        self.deferred = deferred
         self.callback = callback
-        self.callback_data = callback_data
 
     def serviceStarted(self):
-        self.openChannel(CommandChannel(self.command, self.callback, self.callback_data, conn=self))
+        self.openChannel(CommandChannel(self.command, self.deferred, self.callback, conn=self))
 
 
 class ClientCommandTransport(transport.SSHClientTransport):
-    def __init__(self, username, password, command, callback, callback_data):
+    def __init__(self, username, password, command, deferred, callback):
         self.username = username
         self.password = password
         self.command = command
+        self.deferred = deferred
         self.callback = callback
-        self.callback_data = callback_data
 
     def verifyHostKey(self, pub_key, fingerprint):
         return defer.succeed(True)
 
     def connectionSecure(self):
         self.requestService(PasswordAuth(self.username, self.password,
-                                         ClientConnection(self.command, self.callback, self.callback_data)))
+                                         ClientConnection(self.command, self.deferred, self.callback)))
 
 
 class ClientCommandFactory(protocol.ClientFactory):
-    def __init__(self, username, password, command, callback, callback_data):
+    def __init__(self, username, password, command, deferred, callback):
         self.username = username
         self.password = password
         self.command = command
+        self.deferred = deferred
         self.callback = callback
-        self.callback_data = callback_data
 
     def buildProtocol(self, addr):
-        return ClientCommandTransport(self.username, self.password, self.command, self.callback, self.callback_data)
+        return ClientCommandTransport(self.username, self.password, self.command, self.deferred, self.callback)
 
 
-def execute_ssh(host, port, username, password, command, callback=None, callback_data=None):
-    factory = ClientCommandFactory(username, password, command, callback, callback_data)
+def execute_ssh(host, port, username, password, command, callback=None):
+    d = defer.Deferred()
+
+    factory = ClientCommandFactory(username, password, command, d, callback)
     reactor.connectTCP(host, port, factory)
+
+    return d
