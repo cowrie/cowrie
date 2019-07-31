@@ -7,15 +7,14 @@ from __future__ import absolute_import, division
 
 import os
 
-from backend_pool.ssh_exec import execute_ssh
-
 from twisted.cred import portal
 from twisted.internet import defer, reactor
 from twisted.trial import unittest
 
-from cowrie.core.checkers import HoneypotNoneChecker, HoneypotPasswordChecker, HoneypotPublicKeyChecker
+from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
 from cowrie.core.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
+from cowrie.test.proxy_compare import ProxyCommandCompare
 
 # os.environ['HONEYPOT_LOG_PATH'] = '../../../../var/log/cowrie'
 # os.environ['HONEYPOT_DOWNLOAD_PATH'] = '../../../../var/lib/cowrie/downloads'
@@ -42,12 +41,18 @@ def create_ssh_factory(backend):
     factory.portal = portal.Portal(HoneyPotRealm())
     factory.portal.registerChecker(HoneypotPublicKeyChecker())
     factory.portal.registerChecker(HoneypotPasswordChecker())
-    factory.portal.registerChecker(HoneypotNoneChecker())
+    # factory.portal.registerChecker(HoneypotNoneChecker())
 
     return factory
 
 
 class ProxyTests(unittest.TestCase):
+    """
+    How to test the proxy:
+        - setUp runs a 'shell' backend on 4444; then set up a 'proxy' on port 5555 connected to the 'shell' backend
+        - test_ssh_proxy runs an exec command via a client against both proxy and shell; returns a deferred
+        - the deferred resolves if the output from both is the same
+    """
     def setUp(self):
         os.chdir('../../../../')
 
@@ -65,24 +70,9 @@ class ProxyTests(unittest.TestCase):
         self.factory_proxy = create_ssh_factory('proxy')
         self.proxy_server = reactor.listenTCP(5555, self.factory_proxy)
 
-    def test_ssh_proxy(self):
-        expected = \
-            b'drwx------ 1 root root 4096 2013-04-05 13:25 .\r\n' \
-            b'drwx------ 1 root root 4096 2013-04-05 13:25 ..\r\n' \
-            b'drwx------ 1 root root 4096 2013-04-05 12:58 .aptitude\r\n' \
-            b'-rw-r--r-- 1 root root  570 2013-04-05 12:52 .bashrc\r\n' \
-            b'-rw-r--r-- 1 root root  140 2013-04-05 12:52 .profile\r\n' \
-            b'drwx------ 1 root root 4096 2013-04-05 13:05 .ssh\r\n'
-
+    def test_ls(self):
         self.ssh_deferred = defer.Deferred()
-
-        def assertion_callback(data):
-            if data == expected:
-                self.ssh_deferred.callback(True)
-            else:
-                self.ssh_deferred.errback(ValueError())
-
-        execute_ssh('127.0.0.1', 5555, 'root', 'root', 'ls -halt', assertion_callback)
+        ProxyCommandCompare().execute('ls -halt', self.ssh_deferred)
         return self.ssh_deferred
 
     def tearDown(self):
