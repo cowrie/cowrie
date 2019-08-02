@@ -1,12 +1,9 @@
 # Based on https://github.com/fjogstad/twisted-telnet-client
 import re
-import time
 
-from twisted.conch.telnet import TelnetTransport, StatefulTelnetProtocol
+from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer, reactor
-from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.protocol import ClientFactory
-from twisted.python import log
 
 
 class TelnetConnectionError(Exception):
