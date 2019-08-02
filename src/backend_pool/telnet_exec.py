@@ -139,5 +139,5 @@ def execute_telnet(host, port, username, password, command, callback=None):
 
     Returns a deferred that is fired upon receiving the command's output.
     """
-    telnet = TelnetClientCommand(callback, '#', command)
+    telnet = TelnetClientCommand(callback, ':~#', command)
     return telnet.connect(host, port, username, password)
