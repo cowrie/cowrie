@@ -216,7 +216,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             create_endpoint_services(reactor, self.topService, listen_endpoints, factory)
 
         if self.enableTelnet:
-            f = cowrie.telnet.factory.HoneyPotTelnetFactory(self.pool_handler)
+            f = cowrie.telnet.factory.HoneyPotTelnetFactory(backend, self.pool_handler)
             f.tac = self
             f.portal = portal.Portal(core.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())

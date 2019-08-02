@@ -26,7 +26,8 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     tac = None
 
-    def __init__(self, pool_handler):
+    def __init__(self, backend, pool_handler):
+        self.backend = backend
         self.pool_handler = pool_handler
         super().__init__()
 
@@ -51,7 +52,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.starttime = time.time()
 
         # hook protocol
-        if CowrieConfig().get('honeypot', 'backend', fallback='shell') == 'proxy':
+        if self.backend == 'proxy':
             self.protocol = lambda: FrontendTelnetTransport()
         else:
             self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol, self.portal)
