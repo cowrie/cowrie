@@ -48,9 +48,9 @@ def playlog(fd, settings):
                     prefdir = TYPE_INPUT
                     if dir == TYPE_INPUT: prefdir = TYPE_OUTPUT
             if dir == TYPE_INTERACT:
-                color = '\033[36m'
+                color = b'\033[36m'
             elif dir == TYPE_INPUT:
-                color = '\033[33m'
+                color = b'\033[33m'
             if dir == prefdir or settings['both_dirs']:
                 curtime = float(sec) + float(usec) / 1000000
                 if prevtime != 0:
@@ -64,7 +64,7 @@ def playlog(fd, settings):
                     stdout.write(color)
                 stdout.write(data)
                 if settings['colorify'] and color:
-                    stdout.write('\033[0m')
+                    stdout.write(b'\033[0m')
                     color = None
                 sys.stdout.flush()
         elif str(tty) == str(currtty) and op == OP_CLOSE:
