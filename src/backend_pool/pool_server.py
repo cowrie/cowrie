@@ -16,7 +16,7 @@ from cowrie.core.config import CowrieConfig
 class PoolServer(Protocol):
     def __init__(self, factory):
         self.factory = factory
-        self.local_pool = CowrieConfig().getboolean('proxy', 'pool_local', fallback=True)
+        self.local_pool = CowrieConfig().get('proxy', 'pool', fallback='local') == 'local'
         self.pool_only = CowrieConfig().getboolean('backend_pool', 'pool_only', fallback=False)
         self.use_nat = CowrieConfig().getboolean('backend_pool', 'use_nat', fallback=True)
 

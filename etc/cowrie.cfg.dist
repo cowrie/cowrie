@@ -309,10 +309,12 @@ pool_vm_unused_timeout = 600
 # allow sharing guests between different attackers if no new VMs are available
 pool_share_guests = true
 
-# start pool on the same machine as cowrie
-pool_local = true
+# Where to deploy the backend pool (only if backend = pool)
+#   - "local": same machine as the proxy
+#   - "remote": set host and port of the pool below
+pool = local
 
-# Remote pool configurations (used with pool_local=false)
+# Remote pool configurations (used with pool=remote)
 pool_host = 192.168.1.40
 pool_port = 6415
 

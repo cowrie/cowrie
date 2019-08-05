@@ -48,11 +48,11 @@ one. In the former case, you'd be running Cowrie with
     pool_only = false
 
     [proxy]
-    pool_local = true
+    pool = local
 
 If you want to deploy the backend pool in a different machine, then you'll need to
 invert the configuration: the pool machine has `pool_only = true` (SSH and Telnet
-are disabled), and the proxy machine has `pool_local = false`.
+are disabled), and the proxy machine has `pool = remote`.
 
 **Note:** The communication protocol used between the proxy and the backend pool
 is unencrypted. Although no sensitive data should be passed, we recommend you to
@@ -72,7 +72,8 @@ Snapshots
 VMs running in the pool are based on a base image that is kept unchanged. When booting,
 each VM creates a snaphost that keeps track of differences between the base image and
 snapshot. If you want to analyse snapshots and see any changes made in the VMs, set
-`save_snapshots` to true.
+`save_snapshots` to true. If set to true be mindful of space concerns, each new
+VM will take at least ~20MB in storage.
 
 XML configs (advanced)
 ======================
@@ -126,7 +127,7 @@ To create a disk image issue
 
 .. code-block:: bash
 
-    # qemu-img create -f qcow2 image-name.qcow2 8G
+    sudo qemu-img create -f qcow2 image-name.qcow2 8G
 
 (the qcow2 format is needed to ensure create snapshots, thus providing isolation between
 each VM instance; you can specify the size you want for the disk)
@@ -135,19 +136,20 @@ Then you'll have to install an OS into it
 
 .. code-block:: bash
 
-    $ virt-install --name temp-domain --memory 1024 --disk image-name.qcow2 --cdrom os-install-cd.iso --boot cdrom
+    virt-install --name temp-domain --memory 1024 --disk image-name.qcow2 --cdrom os-install-cd.iso --boot cdrom
 
 (to use virt-install you need to install the virtinst package)
 
 After install check that the VM has network connectivity. If you set the pool to use the
-created image and SSHdoes not come up, log into the VM via libvirt (e.g., using virt-manager)
+created image and SSH does not come up, log into the VM via libvirt (e.g., using virt-manager)
 and try the following (might change depending on system)
 
 .. code-block:: bash
 
-    # ip link show
-    # ip link set enp1s0 up
-    # dhclient
+    # run all as root
+    ip link show
+    ip link set enp1s0 up
+    dhclient
 
 In Ubuntu dhclient can be set to run with netplan, for example, to be run on startup.
 
@@ -158,11 +160,12 @@ Steps used in Ubuntu, can be useful in other distros
 
 .. code-block:: bash
 
-    # apt-get -y install telnetd xinetd
-    # touch /etc/xinetd.d/telnet
-    # printf "service telnet\n{\ndisable = no\nflags = REUSE\nsocket_type = stream\nwait = no\nuser = root\nserver = /usr/sbin/in.telnetd\nlog_on_failure += USERID\n}" > /etc/xinetd.d/telnet
-    # printf "pts/0\npts/1\npts/2\npts/3\npts/4\npts/5\npts/6\npts/7\npts/8\npts/9" >> /etc/securetty
-    # service xinetd start
+    # run all as root
+    apt-get -y install telnetd xinetd
+    touch /etc/xinetd.d/telnet
+    printf "service telnet\n{\ndisable = no\nflags = REUSE\nsocket_type = stream\nwait = no\nuser = root\nserver = /usr/sbin/in.telnetd\nlog_on_failure += USERID\n}" > /etc/xinetd.d/telnet
+    printf "pts/0\npts/1\npts/2\npts/3\npts/4\npts/5\npts/6\npts/7\npts/8\npts/9" >> /etc/securetty
+    service xinetd start
 
 Customising XML configs
 =======================
