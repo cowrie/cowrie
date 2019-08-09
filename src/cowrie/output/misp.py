@@ -6,7 +6,7 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-class MISPUploader(cowrie.core.output.Output):
+class Output(cowrie.core.output.Output):
     """
     MISP Upload Plugin for Cowrie.
 
@@ -20,8 +20,8 @@ class MISPUploader(cowrie.core.output.Output):
         """
         misp_url = CowrieConfig().get('output_misp', 'base_url')
         misp_key = CowrieConfig().get('output_misp', 'api_key')
-        misp_verifycert = CowrieConfig().get('output_misp', 'verify_cert')
-        self.misp_api = ExpandedPyMISP(misp_url, misp_key,  misp_verifycert, debug=False)
+        misp_verifycert = ("true" == CowrieConfig().get('output_misp', 'verify_cert').lower())
+        self.misp_api = ExpandedPyMISP(url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False)
 
 
     def stop(self):
