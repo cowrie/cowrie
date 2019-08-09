@@ -38,8 +38,8 @@ influxdb
 afkak
 python-snappy
 
-
 # dblog_xmpp
 wokkel==18.0.0rc5
 
-
+# misp
+pymisp
