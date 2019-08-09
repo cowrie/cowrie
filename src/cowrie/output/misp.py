@@ -75,18 +75,3 @@ class MISPUploader(cowrie.core.output.Output):
         sighting = MISPSighting()
         sighting.source = "{} (Cowrie)".format(entry["sensor"])
         self.misp_api.add_sighting(sighting, attribute)
-
-
-if __name__ == "__main__":
-    dl_event = {}
-    dl_event["eventid"] = "cowrie.session.file_download"
-    dl_event["shasum"] = "CC970D6AF98D94B286952E5C71FC1A9F502926AE0864A917A5A0B225AE0E9943"
-    dl_event["src_ip"] = "1.2.3.4"
-    dl_event["outfile"] = "./CC970D6AF98D94B286952E5C71FC1A9F502926AE0864A917A5A0B225AE0E9943"
-    dl_event["sensor"] = "herpaderp"
-    dl_event["url"] = "http://1.2.3.4/.i"
-
-    mupl = MUploader()
-    mupl.start()
-
-    mupl.write(dl_event)
