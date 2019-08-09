@@ -824,3 +824,11 @@ topic = cowrie
 # It's optional to have API key, so if you don't want to but
 # API key then leave this option commented
 #api_key = 1234567890
+
+# Upload all files to a MISP instance of your liking.
+# The API key can be found under Event Actions -> Automation
+#[output_misp]
+#enabled = true
+#base_url = https://misp.somedomain.com
+#api_key = secret_key
+#verify_cert = true
