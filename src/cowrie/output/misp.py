@@ -97,7 +97,7 @@ class Output(cowrie.core.output.Output):
             entry["outfile"],
             None,
             distribution=1,
-            info="Uploaded by: {} (Cowrie)".format(entry["sensor"]),
+            info="File uploaded to Cowrie ({})".format(entry["sensor"]),
             analysis=0,
             threat_level_id=2
         )
