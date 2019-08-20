@@ -20,10 +20,10 @@ Step 1: Install dependencies
 First we install system-wide support for Python virtual environments and other dependencies.
 Actual Python packages are installed later.
 
-On Debian based systems (last verified on Debian 9, 2017-07-25):
+On Debian based systems (last verified on Debian 10, 2019-08-18):
 For a Python3 based environment::
 
-    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
+    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
 
 Or for Python2::
 
