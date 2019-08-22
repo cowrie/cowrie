@@ -99,9 +99,11 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
     def received_pool_data(self, operation, status, *data):
         if operation == b'r':
             honey_ip = data[0]
-            telnet_port = data[2]
+            snapshot = data[1]
+            telnet_port = data[3]
 
             log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), telnet_port))
+            log.msg('Snapshot file: {0}'.format(snapshot.decode()))
 
             self.connect_to_backend(honey_ip, telnet_port)
 

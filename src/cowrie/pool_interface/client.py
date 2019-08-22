@@ -59,6 +59,9 @@ class PoolClient(Protocol):
         res_op = response[0]
         res_code = response[1]
 
+        # shift data forward
+        data = data[5:]
+
         if res_op == b'i':
             # callback to the handler to signal that pool was initialised successfully,
             # so that SSH and Telnet setup can proceed
@@ -71,16 +74,36 @@ class PoolClient(Protocol):
                 self.parent.loseConnection()
                 return
 
-            recv = struct.unpack('!IH', data[5:11])
+            # extract VM id
+            recv = struct.unpack('!I', data[:4])
             self.vm_id = recv[0]
-            ip_len = recv[1]
+            data = data[4:]
 
-            recv = struct.unpack('!{0}sHH'.format(ip_len), data[11:])
+            # extract IP
+            recv = struct.unpack('!H', data[:2])
+            ip_len = recv[0]
+            data = data[2:]
+
+            recv = struct.unpack('!{0}s'.format(ip_len), data[:ip_len])
             honey_ip = recv[0]
-            ssh_port = recv[1]
-            telnet_port = recv[2]
+            data = data[ip_len:]
 
-            self.parent.received_pool_data(res_op, res_code, honey_ip, ssh_port, telnet_port)
+            # extract ports for SSH and Telnet
+            recv = struct.unpack('!HH', data[:4])
+            ssh_port = recv[0]
+            telnet_port = recv[1]
+            data = data[4:]
+
+            # extract snapshot path
+            recv = struct.unpack('!H', data[:2])
+            snaphsot_len = recv[0]
+            data = data[2:]
+
+            recv = struct.unpack('!{0}s'.format(snaphsot_len), data[:snaphsot_len])
+            snapshot = recv[0]
+            data = data[snaphsot_len:]
+
+            self.parent.received_pool_data(res_op, res_code, honey_ip, snapshot, ssh_port, telnet_port)
 
 
 class PoolClientFactory(ClientFactory):

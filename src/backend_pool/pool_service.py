@@ -91,6 +91,10 @@ class PoolService:
         if self.loop_next_call:
             self.loop_next_call.cancel()
 
+        # try destroying all guests
+        for guest in self.guests:
+            self.qemu.destroy_guest(guest['domain'], guest['snapshot'])
+
         # force destroy remaining stuff
         self.qemu.destroy_all_cowrie()
 
@@ -349,7 +353,7 @@ class PoolService:
         guest['connected'] += 1
         guest['client_ips'].add(src_ip)
 
-        return guest['id'], guest['guest_ip']
+        return guest['id'], guest['guest_ip'], guest['snapshot']
 
     def free_vm(self, guest_id):
         self.guest_lock.acquire()

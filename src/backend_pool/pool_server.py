@@ -55,7 +55,7 @@ class PoolServer(Protocol):
                     attacker_ip=attacker_ip)
 
             try:
-                guest_id, guest_ip = self.factory.pool_service.request_vm(attacker_ip)
+                guest_id, guest_ip, guest_snapshot = self.factory.pool_service.request_vm(attacker_ip)
                 log.msg(eventid='cowrie.backend_pool.server',
                         format='Providing VM id %(guest_id)s',
                         guest_id=guest_id)
@@ -69,13 +69,13 @@ class PoolServer(Protocol):
                     nat_ssh_port, nat_telnet_port = self.factory.nat.request_binding(guest_id, guest_ip,
                                                                                      ssh_port, telnet_port)
 
-                    fmt = '!cIIH{0}sHH'.format(len(self.nat_public_ip))
+                    fmt = '!cIIH{0}sHHH{1}s'.format(len(self.nat_public_ip), len(guest_snapshot))
                     response = struct.pack(fmt, b'r', 0, guest_id, len(self.nat_public_ip), self.nat_public_ip.encode(),
-                                           nat_ssh_port, nat_telnet_port)
+                                           nat_ssh_port, nat_telnet_port, len(guest_snapshot), guest_snapshot.encode())
                 else:
-                    fmt = '!cIIH{0}sHH'.format(len(guest_ip))
+                    fmt = '!cIIH{0}sHHH{1}s'.format(len(guest_ip), len(guest_snapshot))
                     response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(),
-                                           ssh_port, telnet_port)
+                                           ssh_port, telnet_port, len(guest_snapshot), guest_snapshot.encode())
             except NoAvailableVMs:
                 log.msg(eventid='cowrie.backend_pool.server',
                         format='No VM available, returning error code')
