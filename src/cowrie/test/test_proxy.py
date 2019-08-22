@@ -16,22 +16,6 @@ from cowrie.core.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
 from cowrie.test.proxy_compare import ProxyTestCommand
 
-# os.environ['HONEYPOT_LOG_PATH'] = '../../../../var/log/cowrie'
-# os.environ['HONEYPOT_DOWNLOAD_PATH'] = '../../../../var/lib/cowrie/downloads'
-# os.environ['HONEYPOT_SHARE_PATH'] = '../../../../share/cowrie'
-# os.environ['HONEYPOT_STATE_PATH'] = '../../../../var/lib/cowrie'
-# os.environ['HONEYPOT_ETC_PATH'] = '../../../../etc'
-# os.environ['HONEYPOT_CONTENTS_PATH'] = '../../../../honeyfs'
-# os.environ['HONEYPOT_TXTCMDS_PATH'] = '../../../../txtcmds'
-#
-# os.environ['SHELL_FILESYSTEM'] = '../../../../share/cowrie/fs.pickle'
-# os.environ['SHELL_PROCESSES'] = '../../../../share/cowrie/cmdoutput.json'
-
-# os.environ['SSH_RSA_PUBLIC_KEY'] = '../../../../var/lib/cowrie/ssh_host_rsa_key.pub'
-# os.environ['SSH_RSA_PRIVATE_KEY'] = '../../../../var/lib/cowrie/ssh_host_rsa_key'
-# os.environ['SSH_DSA_PUBLIC_KEY'] = '../../../../var/lib/cowrie/ssh_host_dsa_key.pub'
-# os.environ['SSH_DSA_PRIVATE_KEY'] = '../../../../var/lib/cowrie/ssh_host_dsa_key'
-
 os.environ['HONEYPOT_TTYLOG'] = 'false'
 os.environ['OUTPUT_JSONLOG_ENABLED'] = 'false'
 
@@ -76,8 +60,6 @@ class ProxyTests(unittest.TestCase):
     PASSWORD_PROXY = 'example'
 
     def setUp(self):
-        os.chdir('../../../../')
-
         # ################################################# #
         # #################### Backend #################### #
         # ################################################# #
