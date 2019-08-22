@@ -80,6 +80,7 @@ clarity.
 We start by mounting the image in a temporary dir:
 
 .. code-block:: bash
+
     mkdir /tmp/mount_qcow2
     sudo guestmount -a snapshot-ubuntu18.04-a70b9671ad4d44619af2c4a41a28aec0.qcow2 -m /dev/sda1 --ro /tmp/mount_qcow2
 

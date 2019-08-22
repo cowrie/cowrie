@@ -7,8 +7,10 @@ jobs:
       - checkout
       - run:
           command: |
+            sudo apt-get install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
             virtualenv cowrie-env
             . cowrie-env/bin/activate
+            pip install libvirt-python==5.5.0
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
       - run:
