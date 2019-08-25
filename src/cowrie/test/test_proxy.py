@@ -14,7 +14,7 @@ from twisted.trial import unittest
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
 from cowrie.core.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
-from cowrie.test.proxy_compare import ProxyTestCommand
+# from cowrie.test.proxy_compare import ProxyTestCommand
 
 os.environ['HONEYPOT_TTYLOG'] = 'false'
 os.environ['OUTPUT_JSONLOG_ENABLED'] = 'false'
