@@ -81,12 +81,12 @@ class ProxyTests(unittest.TestCase):
         self.factory_proxy_ssh = create_ssh_factory('proxy')
         self.proxy_server_ssh = reactor.listenTCP(self.PORT_PROXY_SSH, self.factory_proxy_ssh)
 
-    def test_ls(self):
-        command_tester = ProxyTestCommand('ssh', self.HOST, self.PORT_BACKEND_SSH, self.PORT_PROXY_SSH,
-                                          self.USERNAME_BACKEND, self.PASSWORD_BACKEND,
-                                          self.USERNAME_PROXY, self.PASSWORD_PROXY)
-
-        return command_tester.execute_both('ls -halt')
+    # def test_ls(self):
+    #     command_tester = ProxyTestCommand('ssh', self.HOST, self.PORT_BACKEND_SSH, self.PORT_PROXY_SSH,
+    #                                       self.USERNAME_BACKEND, self.PASSWORD_BACKEND,
+    #                                       self.USERNAME_PROXY, self.PASSWORD_PROXY)
+    #
+    #     return command_tester.execute_both('ls -halt')
 
     def tearDown(self):
         for client in self.factory_proxy_ssh.running:
