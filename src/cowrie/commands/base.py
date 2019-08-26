@@ -184,7 +184,7 @@ class command_printf(HoneyPotCommand):
                 if s.endswith('\\c'):
                     s = s[:-2]
 
-                self.write(codecs.escape_devode(s)[0])
+                self.write(codecs.escape_decode(s)[0])
 
 
 commands['/usr/bin/printf'] = command_printf
@@ -652,7 +652,7 @@ class command_sh(HoneyPotCommand):
             self.execute_commands(line)
 
         elif self.input_data:
-            self.execute_commands(self.input_data)
+            self.execute_commands(self.input_data.decode('utf8'))
 
         # TODO: handle spawning multiple shells, support other sh flags
 

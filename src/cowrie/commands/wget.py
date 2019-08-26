@@ -14,7 +14,7 @@ from twisted.python import compat, log
 from twisted.web import client
 
 from cowrie.core.artifact import Artifact
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -54,6 +54,11 @@ def splitthousands(s, sep=','):
 
 
 class command_wget(HoneyPotCommand):
+    """
+    wget command
+    """
+    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    downloadPath = CowrieConfig().get('honeypot', 'download_path')
 
     def start(self):
         try:
@@ -111,11 +116,6 @@ class command_wget(HoneyPotCommand):
 
         self.url = url
 
-        self.limit_size = 0
-        if CONFIG.has_option('honeypot', 'download_limit_size'):
-            self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
-        self.downloadPath = CONFIG.get('honeypot', 'download_path')
-
         self.artifactFile = Artifact(outfile)
         # HTTPDownloader will close() the file object so need to preserve the name
 
@@ -153,8 +153,8 @@ class command_wget(HoneyPotCommand):
         factory = HTTPProgressDownloader(self, fakeoutfile, url, outputfile, *args, **kwargs)
 
         out_addr = None
-        if CONFIG.has_option('honeypot', 'out_addr'):
-            out_addr = (CONFIG.get('honeypot', 'out_addr'), 0)
+        if CowrieConfig().has_option('honeypot', 'out_addr'):
+            out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == b'https':
             contextFactory = ssl.ClientContextFactory()
@@ -207,7 +207,7 @@ class command_wget(HoneyPotCommand):
             # Real wget also adds this:
         if hasattr(error, 'webStatus') and error.webStatus and hasattr(error, 'webMessage'):  # exceptions
             self.errorWrite('{} ERROR {}: {}\n'.format(time.strftime('%Y-%m-%d %T'), error.webStatus.decode(),
-                                                       error.webMessage.decode()))
+                                                       error.webMessage.decode('utf8')))
         else:
             self.errorWrite('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
 

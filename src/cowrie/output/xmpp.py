@@ -14,7 +14,7 @@ from wokkel.client import XMPPClient
 from wokkel.xmppim import AvailablePresence
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class XMPPLoggerProtocol(muc.MUCClient):
@@ -59,15 +59,14 @@ class XMPPLoggerProtocol(muc.MUCClient):
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
+    """
+    xmpp output
+    """
     def start(self):
-        server = CONFIG.get('output_xmpp', 'server')
-        user = CONFIG.get('output_xmpp', 'user')
-        password = CONFIG.get('output_xmpp', 'password')
-        muc = CONFIG.get('output_xmpp', 'muc')
+        server = CowrieConfig().get('output_xmpp', 'server')
+        user = CowrieConfig().get('output_xmpp', 'user')
+        password = CowrieConfig().get('output_xmpp', 'password')
+        muc = CowrieConfig().get('output_xmpp', 'muc')
         resource = ''.join([choice(string.ascii_letters)
                             for i in range(8)])
         jid = user + '/' + resource
@@ -76,9 +75,8 @@ class Output(cowrie.core.output.Output):
 
     def run(self, application, jidstr, password, muc, server):
         self.xmppclient = XMPPClient(JID(jidstr), password)
-        if CONFIG.has_option('output_xmpp', 'debug') and \
-                CONFIG.getboolean('output_xmpp', 'debug') is True:
-            self.xmppclient.logTraffic = True  # DEBUG HERE
+        if CowrieConfig().getboolean('output_xmpp', 'debug', fallback=False):
+            self.xmppclient.logTraffic = True
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(
             muc, server, user + '-' + resource)

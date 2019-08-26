@@ -7,181 +7,14 @@ Telnet Transport and Authentication for the Honeypot
 
 from __future__ import absolute_import, division
 
-import struct
 import time
 import uuid
 
-from twisted.conch.telnet import AlreadyNegotiating, AuthenticatingTelnetProtocol, ITelnetProtocol, TelnetTransport
-from twisted.conch.telnet import ECHO, LINEMODE, NAWS, SGA
-from twisted.internet import protocol
+from twisted.conch.telnet import AlreadyNegotiating, TelnetTransport
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
-from cowrie.core.credentials import UsernamePasswordIP
-
-
-class HoneyPotTelnetFactory(protocol.ServerFactory):
-    """
-    This factory creates HoneyPotTelnetAuthProtocol instances
-    They listen directly to the TCP port
-    """
-    tac = None
-
-    # TODO logging clarity can be improved: see what SSH does
-    def logDispatch(self, *msg, **args):
-        """
-        Special delivery to the loggers to avoid scope problems
-        """
-        args['sessionno'] = 'T{0}'.format(str(args['sessionno']))
-        for output in self.tac.output_plugins:
-            output.logDispatch(*msg, **args)
-
-    def startFactory(self):
-        try:
-            honeyfs = CONFIG.get('honeypot', 'contents_path')
-            issuefile = honeyfs + "/etc/issue.net"
-            self.banner = open(issuefile, 'rb').read()
-        except IOError:
-            self.banner = b""
-
-        # For use by the uptime command
-        self.starttime = time.time()
-
-        # hook protocol
-        self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol, self.portal)
-        protocol.ServerFactory.startFactory(self)
-        log.msg("Ready to accept Telnet connections")
-
-    def stopFactory(self):
-        """
-        Stop output plugins
-        """
-        protocol.ServerFactory.stopFactory(self)
-
-
-class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
-    """
-    TelnetAuthProtocol that takes care of Authentication. Once authenticated this
-    protocol is replaced with HoneyPotTelnetSession.
-    """
-
-    loginPrompt = b'login: '
-    passwordPrompt = b'Password: '
-    windowSize = [40, 80]
-
-    def connectionMade(self):
-        # self.transport.negotiationMap[NAWS] = self.telnet_NAWS
-        # Initial option negotation. Want something at least for Mirai
-        # for opt in (NAWS,):
-        #    self.transport.doChain(opt).addErrback(log.err)
-
-        # I need to doubly escape here since my underlying
-        # CowrieTelnetTransport hack would remove it and leave just \n
-        self.transport.write(self.factory.banner.replace(b'\n', b'\r\r\n'))
-        self.transport.write(self.loginPrompt)
-
-    def connectionLost(self, reason):
-        """
-        Fires on pre-authentication disconnects
-        """
-        AuthenticatingTelnetProtocol.connectionLost(self, reason)
-
-    def telnet_User(self, line):
-        """
-        Overridden to conditionally kill 'WILL ECHO' which confuses clients
-        that don't implement a proper Telnet protocol (most malware)
-        """
-        self.username = line  # .decode()
-        # only send ECHO option if we are chatting with a real Telnet client
-        self.transport.willChain(ECHO)
-        # FIXME: this should be configurable or provided via filesystem
-        self.transport.write(self.passwordPrompt)
-        return 'Password'
-
-    def telnet_Password(self, line):
-        username, password = self.username, line  # .decode()
-        del self.username
-
-        def login(ignored):
-            self.src_ip = self.transport.getPeer().host
-            creds = UsernamePasswordIP(username, password, self.src_ip)
-            d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
-            d.addCallback(self._cbLogin)
-            d.addErrback(self._ebLogin)
-
-        # are we dealing with a real Telnet client?
-        if self.transport.options:
-            # stop ECHO
-            # even if ECHO negotiation fails we still want to attempt a login
-            # this allows us to support dumb clients which is common in malware
-            # thus the addBoth: on success and on exception (AlreadyNegotiating)
-            self.transport.wontChain(ECHO).addBoth(login)
-        else:
-            # process login
-            login('')
-
-        return 'Discard'
-
-    def telnet_Command(self, command):
-        self.transport.protocol.dataReceived(command + b'\r')
-        return "Command"
-
-    def _cbLogin(self, ial):
-        """
-        Fired on a successful login
-        """
-        interface, protocol, logout = ial
-        protocol.windowSize = self.windowSize
-        self.protocol = protocol
-        self.logout = logout
-        self.state = 'Command'
-
-        self.transport.write(b'\n')
-
-        # Remove the short timeout of the login prompt.
-        self.transport.setTimeout(CONFIG.getint('honeypot', 'interactive_timeout', fallback=300))
-
-        # replace myself with avatar protocol
-        protocol.makeConnection(self.transport)
-        self.transport.protocol = protocol
-
-    def _ebLogin(self, failure):
-        # TODO: provide a way to have user configurable strings for wrong password
-        self.transport.wontChain(ECHO)
-        self.transport.write(b"\nLogin incorrect\n")
-        self.transport.write(self.loginPrompt)
-        self.state = "User"
-
-    def telnet_NAWS(self, data):
-        """
-        From TelnetBootstrapProtocol in twisted/conch/telnet.py
-        """
-        if len(data) == 4:
-            width, height = struct.unpack('!HH', b''.join(data))
-            self.windowSize = [height, width]
-        else:
-            log.msg("Wrong number of NAWS bytes")
-
-    def enableLocal(self, opt):
-        if opt == ECHO:
-            return True
-        # TODO: check if twisted now supports SGA (see git commit c58056b0)
-        elif opt == SGA:
-            return False
-        else:
-            return False
-
-    def enableRemote(self, opt):
-        # TODO: check if twisted now supports LINEMODE (see git commit c58056b0)
-        if opt == LINEMODE:
-            return False
-        elif opt == NAWS:
-            return True
-        elif opt == SGA:
-            return True
-        else:
-            return False
+from cowrie.core.config import CowrieConfig
 
 
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
@@ -191,7 +24,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         sessionno = self.transport.sessionno
 
         self.startTime = time.time()
-        self.setTimeout(CONFIG.getint('honeypot', 'authentication_timeout', fallback=120))
+        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
 
         log.msg(eventid='cowrie.session.connect',
                 format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',

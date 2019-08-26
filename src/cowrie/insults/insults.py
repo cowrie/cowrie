@@ -11,7 +11,7 @@ from twisted.conch.insults import insults
 from twisted.python import log
 
 from cowrie.core import ttylog
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
 
 
@@ -19,25 +19,18 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
+    redirlogOpen = False  # it will be set at core/protocol.py
     stdinlogOpen = False
     ttylogOpen = False
-    redirlogOpen = False  # it will be set at core/protocol.py
+    ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
+    downloadPath = CowrieConfig().get('honeypot', 'download_path')
+    ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
+    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    bytesReceived = 0
+    redirFiles = set()
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
-        self.bytesReceived = 0
-
-        self.ttylogPath = CONFIG.get('honeypot', 'ttylog_path')
-        self.downloadPath = CONFIG.get('honeypot', 'download_path')
-
-        try:
-            self.ttylogEnabled = CONFIG.getboolean('honeypot', 'ttylog')
-        except Exception:
-            self.ttylogEnabled = True
-
-        self.redirFiles = set()
-
-        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
         if prot is protocol.HoneyPotExecProtocol:
             self.type = 'e'  # Execcmd
@@ -135,7 +128,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
                 log.msg(eventid='cowrie.session.file_download',
                         format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
-                        url='stdin',
                         duplicate=duplicate,
                         outfile=shasumfile,
                         shasum=shasum,
@@ -174,7 +166,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
                             duplicate = False
                     log.msg(eventid='cowrie.session.file_download',
                             format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
-                            url=url,
                             duplicate=duplicate,
                             outfile=shasumfile,
                             shasum=shasum,

@@ -18,7 +18,7 @@ from cowrie.test import fake_server, fake_transport
 
 os.environ["HONEYPOT_DATA_PATH"] = "../data"
 os.environ["HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
-os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
+os.environ["SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 
@@ -142,6 +142,13 @@ class ShellEchoCommandTests(unittest.TestCase):
         """
         self.proto.lineReceived(b'echo -e "\x6b\x61\x6d\x69"')
         self.assertEquals(self.tr.value(), b'kami\n' + PROMPT)
+
+    def test_echo_command_017(self):
+        """
+        echo -e "\x6b\x61\x6d\x69"
+        """
+        self.proto.lineReceived(b'echo echo test | bash')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

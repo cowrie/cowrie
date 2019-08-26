@@ -11,10 +11,14 @@ Welcome to Cowrie's documentation!
    :caption: Contents:
 
    README.rst
+   FAQ.rst
    LICENSE.rst
    INSTALL.rst
    CHANGELOG.rst
    CONTRIBUTING.rst
+   PROXY.rst
+   BACKEND_POOL.rst
+   SNAPSHOTS.rst
    elk/README.rst
    graylog/README.rst
    kippo-graph/README.rst

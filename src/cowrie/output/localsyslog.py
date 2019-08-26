@@ -34,20 +34,19 @@ import twisted.python.syslog
 
 import cowrie.core.cef
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        facilityString = CONFIG.get('output_localsyslog', 'facility')
-        self.format = CONFIG.get('output_localsyslog', 'format')
-        self.facility = vars(syslog)['LOG_' + facilityString]
-        self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie', facility=self.facility)
-        cowrie.core.output.Output.__init__(self)
+    """
+    localsyslog output
+    """
 
     def start(self):
-        pass
+        self.format = CowrieConfig().get('output_localsyslog', 'format')
+        facilityString = CowrieConfig().get('output_localsyslog', 'facility')
+        self.facility = vars(syslog)['LOG_' + facilityString]
+        self.syslog = twisted.python.syslog.SyslogObserver(prefix='cowrie', facility=self.facility)
 
     def stop(self):
         pass

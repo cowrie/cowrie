@@ -6,26 +6,25 @@ from datetime import datetime
 import rethinkdb as r
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 def iso8601_to_timestamp(value):
     return time.mktime(datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())
 
 
-class Output(cowrie.core.output.Output):
-    RETHINK_DB_SEGMENT = 'output_rethinkdblog'
+RETHINK_DB_SEGMENT = 'output_rethinkdblog'
 
-    def __init__(self):
-        self.host = CONFIG.get(self.RETHINK_DB_SEGMENT, 'host')
-        self.port = CONFIG.getint(self.RETHINK_DB_SEGMENT, 'port')
-        self.db = CONFIG.get(self.RETHINK_DB_SEGMENT, 'db')
-        self.table = CONFIG.get(self.RETHINK_DB_SEGMENT, 'table')
-        self.password = CONFIG.get(self.RETHINK_DB_SEGMENT, 'password', raw=True)
-        cowrie.core.output.Output.__init__(self)
+
+class Output(cowrie.core.output.Output):
 
     # noinspection PyAttributeOutsideInit
     def start(self):
+        self.host = CowrieConfig().get(RETHINK_DB_SEGMENT, 'host')
+        self.port = CowrieConfig().getint(RETHINK_DB_SEGMENT, 'port')
+        self.db = CowrieConfig().get(RETHINK_DB_SEGMENT, 'db')
+        self.table = CowrieConfig().get(RETHINK_DB_SEGMENT, 'table')
+        self.password = CowrieConfig().get(RETHINK_DB_SEGMENT, 'password', raw=True)
         self.connection = r.connect(
             host=self.host,
             port=self.port,

@@ -1,4 +1,19 @@
 
+* 2019-06-20 Move `auth_none` and `auth_keyboard_interactive_enabled` to [ssh] config section
+
+Release 1.6.0
+=============
+
+* 2019-03-31 New documentation theme
+* 2019-03-23 Greynoise output plugin (@mzfr)
+* 2019-03-19 direct-tcp forwarding now written to databases (@gborges)
+* 2019-03-19 Reverse DNS output plugin (@mzfr)
+* 2019-03-17 Shell emulation pipe upgrade (@nunonovais)
+* 2019-03-14 Shell emulation environment variables improved (@nunonovais)
+* 2019-03-14 SSH crypto parameters now configurable in config file (@msharma)
+* 2019-03-13 Disable keyboard-interactive authentication by default with option to enable
+* 2019-03-13 Added `wc`, `crontab`, `chpasswd` command (@nunonovais)
+* 2019-
 * 2019-03-07 Output of `ssh -V` now configurable in cowrie.cfg with ssh_version setting
 * 2019-03-07 Multiple timezone support in cowrie.cfg timezone directive. Default timezone is now UTC for both cowrie.log and cowrie.json
 * 2019-03-12 Handle multiple password prompt. Option to enable or disable keyboard interactive prompt.

@@ -2,7 +2,7 @@
 # See the COPYRIGHT file for more information
 
 """
-This module contains ...
+This module contains code to deal with Cowrie's configuration
 """
 
 from __future__ import absolute_import, division
@@ -16,19 +16,34 @@ def to_environ_key(key):
     return key.upper()
 
 
-class EnvironmentConfigParser(configparser.ConfigParser):
+class CowrieConfig(object):
+    """
+    Singleton class for configuration data
+    """
+    __instance = None
 
+    def __new__(cls):
+        if CowrieConfig.__instance is None:
+            CowrieConfig.__instance = object.__new__(EnvironmentConfigParser)
+            CowrieConfig.__instance.__init__(interpolation=configparser.ExtendedInterpolation())
+            CowrieConfig.__instance.read(get_config_path())
+        return CowrieConfig.__instance
+
+
+class EnvironmentConfigParser(configparser.ConfigParser):
+    """
+    ConfigParser with additional option to read from environment variables
+    """
     def has_option(self, section, option):
         if to_environ_key('_'.join((section, option))) in environ:
             return True
         return super(EnvironmentConfigParser, self).has_option(section, option)
 
-    def get(self, section, option, **kwargs):
+    def get(self, section, option, raw=False, **kwargs):
         key = to_environ_key('_'.join((section, option)))
         if key in environ:
             return environ[key]
-        return super(EnvironmentConfigParser, self).get(
-            section, option, **kwargs)
+        return super(EnvironmentConfigParser, self).get(section, option, raw=raw, **kwargs)
 
 
 def readConfigFile(cfgfile):
@@ -58,6 +73,3 @@ def get_config_path():
         return found_confs
 
     print("Config file not found")
-
-
-CONFIG = readConfigFile(get_config_path())

@@ -7,21 +7,20 @@ from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
+    """
+    sqlite output
+    """
     def start(self):
         """
         Start sqlite3 logging module using Twisted ConnectionPool.
         Need to be started with check_same_thread=False. See
         https://twistedmatrix.com/trac/ticket/3629.
         """
-        sqliteFilename = CONFIG.get('output_sqlite', 'db_file')
+        sqliteFilename = CowrieConfig().get('output_sqlite', 'db_file')
         try:
             self.db = adbapi.ConnectionPool(
                 'sqlite3',
@@ -176,3 +175,15 @@ class Output(cowrie.core.output.Output):
                 'INSERT INTO `keyfingerprints` (`session`, `username`, `fingerprint`) '
                 'VALUES (?, ?, ?)',
                 (entry["session"], entry["username"], entry["fingerprint"]))
+
+        elif entry["eventid"] == 'cowrie.direct-tcpip.request':
+            self.simpleQuery(
+                'INSERT INTO `ipforwards` (`session`, `timestamp`, `dst_ip`, `dst_port`) '
+                'VALUES (?, ?, ?, ?)',
+                (entry["session"], entry["timestamp"], entry["dst_ip"], entry["dst_port"]))
+
+        elif entry["eventid"] == 'cowrie.direct-tcpip.data':
+            self.simpleQuery(
+                'INSERT INTO `ipforwardsdata` (`session`, `timestamp`, `dst_ip`, `dst_port`, `data`) '
+                'VALUES (?, ?, ?, ?, ?)',
+                (entry["session"], entry["timestamp"], entry["dst_ip"], entry["dst_port"], entry["data"]))

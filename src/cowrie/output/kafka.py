@@ -128,9 +128,6 @@ def main():
 
 class Output(cowrie.core.output.Output):
 
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
     def start(self):
         pass
 

@@ -7,47 +7,30 @@ uname command
 
 from __future__ import absolute_import, division
 
-from configparser import NoOptionError
-
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
 
 def hardware_platform():
-    try:
-        return CONFIG.get('shell', 'hardware_platform')
-    except NoOptionError:
-        return 'x86_64'
+    return CowrieConfig().get('shell', 'hardware_platform', fallback='x86_64')
 
 
 def kernel_name():
-    try:
-        return CONFIG.get('shell', 'kernel_name')
-    except NoOptionError:
-        return 'Linux'
+    return CowrieConfig().get('shell', 'kernel_name', fallback='Linux')
 
 
 def kernel_version():
-    try:
-        return CONFIG.get('shell', 'kernel_version')
-    except NoOptionError:
-        return '3.2.0-4-amd64'
+    return CowrieConfig().get('shell', 'kernel_version', fallback='3.2.0-4-amd64')
 
 
 def kernel_build_string():
-    try:
-        return CONFIG.get('shell', 'kernel_build_string')
-    except NoOptionError:
-        return '#1 SMP Debian 3.2.68-1+deb7u1'
+    return CowrieConfig().get('shell', 'kernel_build_string', fallback='#1 SMP Debian 3.2.68-1+deb7u1')
 
 
 def operating_system():
-    try:
-        return CONFIG.get('shell', 'operating_system')
-    except NoOptionError:
-        return 'GNU/Linux'
+    return CowrieConfig().get('shell', 'operating_system', fallback='GNU/Linux')
 
 
 def uname_help():

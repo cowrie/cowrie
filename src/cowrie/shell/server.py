@@ -28,14 +28,13 @@
 
 from __future__ import absolute_import, division
 
-import copy
 import json
 import random
 from configparser import NoOptionError
 
 import twisted.python.log as log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
 
@@ -51,12 +50,11 @@ class CowrieServer(object):
     fs = None
     process = None
     avatars = []
+    hostname = CowrieConfig().get('honeypot', 'hostname')
 
     def __init__(self, realm):
-        self.hostname = CONFIG.get('honeypot', 'hostname')
-
         try:
-            arches = [arch.strip() for arch in CONFIG.get('shell', 'arch').split(',')]
+            arches = [arch.strip() for arch in CowrieConfig().get('shell', 'arch').split(',')]
             self.arch = random.choice(arches)
         except NoOptionError:
             self.arch = 'linux-x64-lsb'
@@ -75,9 +73,9 @@ class CowrieServer(object):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(copy.deepcopy(fs.PICKLE), self.arch)
+        self.fs = fs.HoneyPotFilesystem(None, self.arch)
 
         try:
-            self.process = self.getCommandOutput(CONFIG.get('shell', 'processes'))['command']['ps']
+            self.process = self.getCommandOutput(CowrieConfig().get('shell', 'processes'))['command']['ps']
         except NoOptionError:
             self.process = None

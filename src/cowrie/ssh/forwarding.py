@@ -10,7 +10,7 @@ from __future__ import absolute_import, division
 from twisted.conch.ssh import forwarding
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
@@ -26,10 +26,10 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             src_ip=origHP[0], src_port=origHP[1])
 
     # Forward redirect
-    redirectEnabled = CONFIG.getboolean('ssh', 'forward_redirect', fallback=False)
+    redirectEnabled = CowrieConfig().getboolean('ssh', 'forward_redirect', fallback=False)
     if redirectEnabled:
         redirects = {}
-        items = CONFIG.items('ssh')
+        items = CowrieConfig().items('ssh')
         for i in items:
             if i[0].startswith('forward_redirect_'):
                 destPort = i[0].split('_')[-1]
@@ -46,10 +46,10 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             return SSHConnectForwardingChannel(remoteHPNew, remoteWindow=remoteWindow, remoteMaxPacket=remoteMaxPacket)
 
     # TCP tunnel
-    tunnelEnabled = CONFIG.getboolean('ssh', 'forward_tunnel', fallback=False)
+    tunnelEnabled = CowrieConfig().getboolean('ssh', 'forward_tunnel', fallback=False)
     if tunnelEnabled:
         tunnels = {}
-        items = CONFIG.items('ssh')
+        items = CowrieConfig().items('ssh')
         for i in items:
             if i[0].startswith('forward_tunnel_'):
                 destPort = i[0].split('_')[-1]
@@ -92,8 +92,8 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
     def dataReceived(self, data):
         log.msg(eventid='cowrie.direct-tcpip.data',
-                format='discarded direct-tcp forward request to %(dst_ip)s:%(dst_port)s with data %(data)s',
-                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data))
+                format='discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s',
+                dst_ip=self.hostport[0], dst_port=self.hostport[1], data=repr(data), id=self.id)
         self._close("Connection refused")
 
 

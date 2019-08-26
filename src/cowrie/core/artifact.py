@@ -28,14 +28,15 @@ import tempfile
 
 from twisted.python import log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Artifact:
 
+    artifactDir = CowrieConfig().get('honeypot', 'download_path')
+
     def __init__(self, label):
         self.label = label
-        self.artifactDir = CONFIG.get('honeypot', 'download_path')
 
         self.fp = tempfile.NamedTemporaryFile(dir=self.artifactDir, delete=False)
         self.tempFilename = self.fp.name

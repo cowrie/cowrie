@@ -6,19 +6,20 @@ import json
 import socket
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-    def __init__(self):
-        addr = CONFIG.get('output_socketlog', 'address')
+    """
+    socketlog output
+    """
+
+    def start(self):
+        self.timeout = CowrieConfig().getint('output_socketlog', 'timeout')
+        addr = CowrieConfig().get('output_socketlog', 'address')
         self.host = addr.split(':')[0]
         self.port = int(addr.split(':')[1])
 
-        self.timeout = CONFIG.getint('output_socketlog', 'timeout')
-        cowrie.core.output.Output.__init__(self)
-
-    def start(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
         self.sock.connect((self.host, self.port))

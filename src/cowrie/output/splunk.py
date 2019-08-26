@@ -22,26 +22,21 @@ from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        """
-        Required: token, url
-        Optional: index, sourcetype, source, host
-        """
-        self.token = CONFIG.get('output_splunk', 'token')
-        self.url = CONFIG.get('output_splunk', 'url').encode('utf8')
-        self.index = CONFIG.get('output_splunk', 'index', fallback=None)
-        self.source = CONFIG.get('output_splunk', 'source', fallback=None)
-        self.sourcetype = CONFIG.get('output_splunk', 'sourcetype', fallback=None)
-        self.host = CONFIG.get('output_splunk', 'host', fallback=None)
-
-        cowrie.core.output.Output.__init__(self)
+    """
+    Splunk HEC output
+    """
 
     def start(self):
+        self.token = CowrieConfig().get('output_splunk', 'token')
+        self.url = CowrieConfig().get('output_splunk', 'url').encode('utf8')
+        self.index = CowrieConfig().get('output_splunk', 'index', fallback=None)
+        self.source = CowrieConfig().get('output_splunk', 'source', fallback=None)
+        self.sourcetype = CowrieConfig().get('output_splunk', 'sourcetype', fallback=None)
+        self.host = CowrieConfig().get('output_splunk', 'host', fallback=None)
         contextFactory = WebClientContextFactory()
         # contextFactory.method = TLSv1_METHOD
         self.agent = client.Agent(reactor, contextFactory)

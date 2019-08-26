@@ -36,7 +36,7 @@ from os import environ
 
 from twisted.logger import formatTime
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 # Events:
 #  cowrie.client.fingerprint
@@ -94,7 +94,7 @@ class Output(object):
             '.*SSHTransport,([0-9]+),[0-9a-f:.]+$')
         self.telnetRegex = re.compile(
             '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
-        self.sensor = CONFIG.get('honeypot', 'sensor_name', fallback=socket.gethostname())
+        self.sensor = CowrieConfig().get('honeypot', 'sensor_name', fallback=socket.gethostname())
 
         # use Z for UTC (Zulu) time, it's shorter.
         if 'TZ' in environ and environ['TZ'] == 'UTC':

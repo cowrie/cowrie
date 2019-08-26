@@ -5,7 +5,7 @@ import tftpy
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.customparser import CustomParser, OptionNotFound
 
@@ -30,12 +30,10 @@ class command_tftp(HoneyPotCommand):
     port = 69
     hostname = None
     file_to_get = None
+    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
 
     def makeTftpRetrieval(self):
         progresshook = Progress(self).progresshook
-
-        if CONFIG.has_option('honeypot', 'download_limit_size'):
-            self.limit_size = CONFIG.getint('honeypot', 'download_limit_size')
 
         self.artifactFile = Artifact(self.file_to_get)
 

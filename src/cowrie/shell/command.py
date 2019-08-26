@@ -16,7 +16,7 @@ import time
 from twisted.internet import error
 from twisted.python import failure, log
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
 # From Python3.6 we get the new shlex version
@@ -43,6 +43,9 @@ class HoneyPotCommand(object):
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if '>' in self.args or '>>' in self.args:
+            if self.args[-1] in ['>', ">>"]:
+                self.errorWrite("-bash: parse error near '\\n' \n")
+                return
             self.writtenBytes = 0
             self.writefn = self.write_to_file
             if '>>' in self.args:
@@ -60,7 +63,7 @@ class HoneyPotCommand(object):
                              self.protocol.getProtoTransport().transportId,
                              self.protocol.terminal.transport.session.id,
                              re.sub('[^A-Za-z0-9]', '_', self.outfile))
-                self.safeoutfile = os.path.join(CONFIG.get('honeypot', 'download_path'), tmp_fname)
+                self.safeoutfile = os.path.join(CowrieConfig().get('honeypot', 'download_path'), tmp_fname)
                 perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
                 try:
                     self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)
@@ -161,8 +164,8 @@ class HoneyPotCommand(object):
     def lineReceived(self, line):
         log.msg('QUEUED INPUT: {}'.format(line))
         # FIXME: naive command parsing, see lineReceived below
-        line = "".join(line)
-        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=False))
+        # line = "".join(line)
+        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=True))
 
     def resume(self):
         pass

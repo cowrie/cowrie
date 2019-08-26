@@ -68,3 +68,22 @@ CREATE TABLE IF NOT EXISTS `params` (
   `arch` varchar(32) NOT NULL
 ) ;
 CREATE INDEX arch_index ON params(arch);
+
+CREATE TABLE IF NOT EXISTS `ipforwards` (
+  `id` INTEGER PRIMARY KEY,
+  `session` CHAR(32) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `dst_ip` varchar(15) NOT NULL default '',
+  `dst_port` int(5) NOT NULL,
+  FOREIGN KEY(`session`) REFERENCES `sessions`(`id`)
+) ;
+
+CREATE TABLE IF NOT EXISTS `ipforwardsdata` (
+  `id` INTEGER PRIMARY KEY,
+  `session` CHAR(32) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `dst_ip` varchar(15) NOT NULL default '',
+  `dst_port` int(5) NOT NULL,
+  `data` text NOT NULL,
+  FOREIGN KEY(`session`) REFERENCES `sessions`(`id`)
+) ;

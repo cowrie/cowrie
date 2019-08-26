@@ -43,23 +43,22 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        self.url_base = CONFIG.get('output_cuckoo', 'url_base').encode('utf-8')
-        self.api_user = CONFIG.get('output_cuckoo', 'user')
-        self.api_passwd = CONFIG.get('output_cuckoo', 'passwd', raw=True)
-        self.cuckoo_force = int(CONFIG.getboolean('output_cuckoo', 'force'))
-        cowrie.core.output.Output.__init__(self)
+    """
+    cuckoo output
+    """
 
     def start(self):
         """
         Start output plugin
         """
-        pass
+        self.url_base = CowrieConfig().get('output_cuckoo', 'url_base').encode('utf-8')
+        self.api_user = CowrieConfig().get('output_cuckoo', 'user')
+        self.api_passwd = CowrieConfig().get('output_cuckoo', 'passwd', raw=True)
+        self.cuckoo_force = int(CowrieConfig().getboolean('output_cuckoo', 'force'))
 
     def stop(self):
         """

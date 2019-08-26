@@ -4,13 +4,12 @@
 
 from __future__ import absolute_import, division
 
-from configparser import NoOptionError
 from os import environ
 
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
 
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class CowrieDailyLogFile(logfile.DailyLogFile):
@@ -30,11 +29,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
 
 
 def logger():
-    try:
-        dir = CONFIG.get("honeypot", "log_path")
-    except NoOptionError:
-        dir = "log"
-
+    dir = CowrieConfig().get("honeypot", "log_path", fallback="log")
     logfile = CowrieDailyLogFile("cowrie.log", dir)
 
     # use Z for UTC (Zulu) time, it's shorter.

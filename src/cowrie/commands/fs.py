@@ -251,14 +251,80 @@ commands['cd'] = command_cd
 class command_rm(HoneyPotCommand):
     """
     rm command
-    """
+   """
+    def help(self):
+        self.write(
+            """Usage: rm [OPTION]... [FILE]...
+Remove (unlink) the FILE(s).
+
+ -f, --force           ignore nonexistent files and arguments, never prompt
+ -i                    prompt before every removal
+ -I                    prompt once before removing more than three files, or
+                         when removing recursively; less intrusive than -i,
+                         while still giving protection against most mistakes
+      --interactive[=WHEN]  prompt according to WHEN: never, once (-I), or
+                         always (-i); without WHEN, prompt always
+      --one-file-system  when removing a hierarchy recursively, skip any
+                         directory that is on a file system different from
+                         that of the corresponding command line argument
+      --no-preserve-root  do not treat '/' specially
+      --preserve-root   do not remove '/' (default)
+ -r, -R, --recursive   remove directories and their contents recursively
+ -d, --dir             remove empty directories
+ -v, --verbose         explain what is being done
+     --help     display this help and exit
+     --version  output version information and exit
+
+By default, rm does not remove directories.  Use the --recursive (-r or -R)
+option to remove each listed directory, too, along with all of its contents.
+
+To remove a file whose name starts with a '-', for example '-foo',
+use one of these commands:
+ rm -- -foo
+
+ rm ./-foo
+
+Note that if you use rm to remove a file, it might be possible to recover
+some of its contents, given sufficient expertise and/or time.  For greater
+assurance that the contents are truly unrecoverable, consider using shred.
+
+GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+Full documentation at: <http://www.gnu.org/software/coreutils/rm>
+or available locally via: info '(coreutils) rm invocation'\n"""
+        )
+
+    def paramError(self):
+        self.errorWrite("Try 'rm --help' for more information\n")
 
     def call(self):
         recursive = False
-        for f in self.args:
-            if f.startswith('-') and 'r' in f:
+        force = False
+        verbose = False
+        if not self.args:
+            self.errorWrite("rm: missing operand\n")
+            self.paramError()
+            return
+
+        try:
+            optlist, args = getopt.gnu_getopt(self.args, 'rTfvh', ['help', 'recursive', 'force', 'verbose'])
+        except getopt.GetoptError as err:
+            self.errorWrite("rm: invalid option -- '{}'\n".format(err.opt))
+            self.paramError()
+            self.exit()
+            return
+
+        for o, a in optlist:
+            if o in ('--recursive', '-r', '-R'):
                 recursive = True
-        for f in self.args:
+            elif o in ('--force', '-f'):
+                force = True
+            elif o in ('--verbose', '-v'):
+                verbose = True
+            elif o in ('--help', '-h'):
+                self.help()
+                return
+
+        for f in args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 # verify path to file exists
@@ -266,17 +332,22 @@ class command_rm(HoneyPotCommand):
                 # verify that the file itself exists
                 self.fs.get_path(pname)
             except (IndexError, fs.FileNotFound):
-                self.errorWrite(
-                    'rm: cannot remove `{}\': No such file or directory\n'.format(f))
+                if not force:
+                    self.errorWrite(
+                        'rm: cannot remove `{}\': No such file or directory\n'.format(f))
                 continue
             basename = pname.split('/')[-1]
             for i in dir[:]:
                 if i[fs.A_NAME] == basename:
                     if i[fs.A_TYPE] == fs.T_DIR and not recursive:
-                        self.errorWrite(
-                            'rm: cannot remove `{}\': Is a directory\n'.format(i[fs.A_NAME]))
+                        self.errorWrite('rm: cannot remove `{}\': Is a directory\n'.format(i[fs.A_NAME]))
                     else:
                         dir.remove(i)
+                        if verbose:
+                            if i[fs.A_TYPE] == fs.T_DIR:
+                                self.write('removed directory \'{}\'\n'.format(i[fs.A_NAME]))
+                            else:
+                                self.write('removed \'{}\'\n'.format(i[fs.A_NAME]))
 
 
 commands['/bin/rm'] = command_rm

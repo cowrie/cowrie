@@ -13,36 +13,35 @@ from twisted.internet import defer, threads
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
+    """
+    s3 output
+    """
 
-    def __init__(self):
+    def start(self):
+        self.bucket = CowrieConfig().get("output_s3", "bucket")
         self.seen = set()
-
         self.session = get_session()
 
         try:
-            if CONFIG.get("output_s3", "access_key_id") and CONFIG.get("output_s3", "secret_access_key"):
+            if CowrieConfig().get("output_s3", "access_key_id") and \
+               CowrieConfig().get("output_s3", "secret_access_key"):
                 self.session.set_credentials(
-                    CONFIG.get("output_s3", "access_key_id"),
-                    CONFIG.get("output_s3", "secret_access_key"),
+                    CowrieConfig().get("output_s3", "access_key_id"),
+                    CowrieConfig().get("output_s3", "secret_access_key"),
                 )
         except NoOptionError:
             log.msg("No AWS credentials found in config - using botocore global settings.")
 
         self.client = self.session.create_client(
             's3',
-            region_name=CONFIG.get("output_s3", "region"),
-            endpoint_url=CONFIG.get("output_s3", "endpoint") or None,
-            verify=False if CONFIG.get("output_s3", "verify") == "no" else True,
+            region_name=CowrieConfig().get("output_s3", "region"),
+            endpoint_url=CowrieConfig().get("output_s3", "endpoint") or None,
+            verify=False if CowrieConfig().get("output_s3", "verify") == "no" else True,
         )
-        self.bucket = CONFIG.get("output_s3", "bucket")
-        cowrie.core.output.Output.__init__(self)
-
-    def start(self):
-        pass
 
     def stop(self):
         pass

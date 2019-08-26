@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  build:  # required for runs that don't use workflows
+    docker:
+      - image: circleci/python:3.7.2
+    steps:
+      - checkout
+      - run:
+          command: |
+            sudo apt-get -y update
+            sudo apt-get -y install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
+            virtualenv cowrie-env
+            . cowrie-env/bin/activate
+            pip install libvirt-python==5.5.0
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
+      - run:
+          command: |
+            . cowrie-env/bin/activate
+            flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
+            python setup.py build sdist bdist
+            make -C docs html
+      - run:
+          command: |
+            . cowrie-env/bin/activate
+            PYTHONPATH=`pwd`/src trial cowrie

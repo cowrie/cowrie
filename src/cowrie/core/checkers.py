@@ -21,7 +21,7 @@ from zope.interface import implementer
 
 from cowrie.core import auth
 from cowrie.core import credentials
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 @implementer(ICredentialsChecker)
@@ -91,8 +91,8 @@ class HoneypotPasswordChecker(object):
         authname = auth.UserDB
 
         # Is the auth_class defined in the config file?
-        if CONFIG.has_option('honeypot', 'auth_class'):
-            authclass = CONFIG.get('honeypot', 'auth_class')
+        if CowrieConfig().has_option('honeypot', 'auth_class'):
+            authclass = CowrieConfig().get('honeypot', 'auth_class')
             authmodule = "cowrie.core.auth"
 
             # Check if authclass exists in this module

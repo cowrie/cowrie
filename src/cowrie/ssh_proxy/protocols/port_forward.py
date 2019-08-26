@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+# Copyright (c) 2016 Thomas Nicholson <tnnich@googlemail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,21 +26,15 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
+# Inspiration and code snippets used from:
+# http://www.codeproject.com/Tips/612847/Generate-a-quick-and-easy-custom-pcap-file-using-P
 
-from cowrie.core.config import CONFIG
+from cowrie.ssh_proxy.protocols import base_protocol
 
 
-class CowrieServer(object):
-    """
-    In traditional Kippo each connection gets its own simulated machine.
-    This is not always ideal, sometimes two connections come from the same
-    source IP address. we want to give them the same environment as well.
-    So files uploaded through SFTP are visible in the SSH session.
-    This class represents a 'virtual server' that can be shared between
-    multiple Cowrie connections
-    """
+class PortForward(base_protocol.BaseProtocol):
+    def __init__(self, uuid, chan_name, ssh):
+        super(PortForward, self).__init__(uuid, chan_name, ssh)
 
-    def __init__(self, realm):
-        self.avatars = []
-        self.hostname = CONFIG.get('honeypot', 'hostname')
+    def parse_packet(self, parent, payload):
+        pass

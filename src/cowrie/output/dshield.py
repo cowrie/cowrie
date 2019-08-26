@@ -19,23 +19,19 @@ from twisted.internet import reactor, threads
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        self.auth_key = CONFIG.get('output_dshield', 'auth_key')
-        self.userid = CONFIG.get('output_dshield', 'userid')
-        self.batch_size = CONFIG.getint('output_dshield', 'batch_size')
-        try:
-            self.debug = CONFIG.getboolean('output_dshield', 'debug')
-        except Exception:
-            self.debug = False
-
-        cowrie.core.output.Output.__init__(self)
+    """
+    dshield output
+    """
 
     def start(self):
+        self.auth_key = CowrieConfig().get('output_dshield', 'auth_key')
+        self.userid = CowrieConfig().get('output_dshield', 'userid')
+        self.batch_size = CowrieConfig().getint('output_dshield', 'batch_size')
+        self.debug = CowrieConfig().getboolean('output_dshield', 'debug', fallback=False)
         self.batch = []  # This is used to store login attempts in batches
 
     def stop(self):
@@ -88,17 +84,18 @@ class Output(cowrie.core.output.Output):
         nonce = base64.b64decode(_nonceb64)
         digest = base64.b64encode(
             hmac.new(
-                '{0}{1}'.format(nonce, self.userid),
+                nonce+self.userid.encode('ascii'),
                 base64.b64decode(self.auth_key),
                 hashlib.sha256).digest()
         )
-        auth_header = 'credentials={0} nonce={1} userid={2}'.format(digest, _nonceb64, self.userid)
+        auth_header = 'credentials={0} nonce={1} userid={2}'.format(digest.decode('ascii'), _nonceb64, self.userid)
         headers = {
             'X-ISC-Authorization': auth_header,
             'Content-Type': 'text/plain'
         }
 
         if self.debug:
+            log.msg('dshield: posting: {}'.format(repr(headers)))
             log.msg('dshield: posting: {}'.format(log_output))
 
         req = threads.deferToThread(
@@ -112,7 +109,7 @@ class Output(cowrie.core.output.Output):
 
         def check_response(resp):
             failed = False
-            response = resp.content
+            response = resp.content.decode('utf8')
 
             if self.debug:
                 log.msg("dshield: status code {}".format(resp.status_code))
@@ -126,7 +123,7 @@ class Output(cowrie.core.output.Output):
                     log.err('dshield: ERROR: Response: {0}'.format(repr(response)))
                     failed = True
                 sha1_local = hashlib.sha1()
-                sha1_local.update(log_output)
+                sha1_local.update(log_output.encode('utf8'))
                 if sha1_match.group(1) != sha1_local.hexdigest():
                     log.err(
                         'dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
@@ -137,7 +134,7 @@ class Output(cowrie.core.output.Output):
                     log.err('dshield: ERROR: Could not find md5checksum in response')
                     failed = True
                 md5_local = hashlib.md5()
-                md5_local.update(log_output)
+                md5_local.update(log_output.encode('utf8'))
                 if md5_match.group(1) != md5_local.hexdigest():
                     log.err('dshield: ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
                     failed = True

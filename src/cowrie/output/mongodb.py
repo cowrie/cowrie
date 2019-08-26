@@ -7,14 +7,13 @@ import pymongo
 from twisted.python import log
 
 import cowrie.core.output
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
-    def __init__(self):
-        cowrie.core.output.Output.__init__(self)
-
+    """
+    mongodb output
+    """
     def insert_one(self, collection, event):
         try:
             object_id = collection.insert_one(event).inserted_id
@@ -30,8 +29,8 @@ class Output(cowrie.core.output.Output):
             log.msg('mongo error - {0}'.format(e))
 
     def start(self):
-        db_addr = CONFIG.get('output_mongodb', 'connection_string')
-        db_name = CONFIG.get('output_mongodb', 'database')
+        db_addr = CowrieConfig().get('output_mongodb', 'connection_string')
+        db_name = CowrieConfig().get('output_mongodb', 'database')
 
         try:
             self.mongo_client = pymongo.MongoClient(db_addr)
@@ -47,6 +46,8 @@ class Output(cowrie.core.output.Output):
             self.col_ttylog = self.mongo_db['ttylog']
             self.col_keyfingerprints = self.mongo_db['keyfingerprints']
             self.col_event = self.mongo_db['event']
+            self.col_ipforwards = self.mongo_db['ipforwards']
+            self.col_ipforwardsdata = self.mongo_db['ipforwardsdata']
         except Exception as e:
             log.msg('output_mongodb: Error: %s' % str(e))
 
@@ -120,6 +121,12 @@ class Output(cowrie.core.output.Output):
 
         elif eventid == 'cowrie.client.fingerprint':
             self.insert_one(self.col_keyfingerprints, entry)
+
+        elif eventid == 'cowrie.direct-tcpip.request':
+            self.insert_one(self.col_ipforwards, entry)
+
+        elif eventid == 'cowrie.direct-tcpip.data':
+            self.insert_one(self.col_ipforwardsdata, entry)
 
         # Catch any other event types
         else:

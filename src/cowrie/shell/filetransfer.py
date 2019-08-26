@@ -20,18 +20,21 @@ from twisted.python.compat import nativeString
 from zope.interface import implementer
 
 import cowrie.shell.pwd as pwd
-from cowrie.core.config import CONFIG
+from cowrie.core.config import CowrieConfig
 
 
 @implementer(ISFTPFile)
 class CowrieSFTPFile(object):
+    """
+    SFTPTFile
+    """
+    transfer_completed = 0
+    bytesReceived = 0
+    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
 
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
-        self.transfer_completed = 0
-        self.bytesReceived = 0
-        self.bytesReceivedLimit = CONFIG.getint('honeypot', 'download_limit_size', fallback=0)
 
         openFlags = 0
         if flags & FXF_READ == FXF_READ and flags & FXF_WRITE == 0:

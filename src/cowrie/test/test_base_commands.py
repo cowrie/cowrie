@@ -13,7 +13,7 @@ from cowrie.shell import protocol
 from cowrie.test import fake_server, fake_transport
 
 os.environ["HONEYPOT_DATA_PATH"] = "../data"
-os.environ["HONEYPOT_FILESYSTEM_FILE"] = "../share/cowrie/fs.pickle"
+os.environ["SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 
