@@ -17,7 +17,19 @@ Further below in this guide we'll discuss how to create your own images and cust
 libvirt's XML configuration files.
 
 First of all, install the needed dependencies for the pool, as explained in
-`the installation steps <https://cowrie.readthedocs.io/en/latest/INSTALL.html>`_
+`the installation steps <https://cowrie.readthedocs.io/en/latest/INSTALL.html>`_.
+
+Provided images
+***************
+
+To allow for a simple setup, we provide two VM images to use with the backend pool: Ubuntu 18.04
+and OpenWRT. You can download them below, and then edit `cowrie.cfg` to match the path of the images.
+In the case of OpenWRT you will need two different files. Note that a separate set of configs is provided
+for each image in the default configuration. Choose the one you want to use and comment the other as needed.
+
+* `Ubuntu 18.04 <https://drive.google.com/open?id=1ZNE57lzaGWR427XxynqUVJ_2anTKmFmh>`_.
+* `OpenWRT disk image <https://drive.google.com/open?id=1oBAJc3FX82AkrIwv_GV0uO5R0SMl_i9Q>`_.
+* `OpenWRT kernel image <https://drive.google.com/open?id=17-UARwAd0aNB4Ogc4GvO2GsUSOSg0aaD>`_.
 
 Proxy configurations
 ********************
