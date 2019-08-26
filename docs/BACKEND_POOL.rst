@@ -16,6 +16,9 @@ and OpenWRT 18.06.4) whose configurations are already set and ready to be deploy
 Further below in this guide we'll discuss how to create your own images and customise
 libvirt's XML configuration files.
 
+First of all, install the needed dependencies for the pool, as explained in
+`the installation steps <https://cowrie.readthedocs.io/en/latest/INSTALL.html>`_
+
 Proxy configurations
 ********************
 

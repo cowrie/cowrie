@@ -193,6 +193,13 @@ Then install the Python API to run the backend pool::
 
     (cowrie-env) $ pip install libvirt-python==5.5.0
 
+To allow Qemu to use disk images and snapshots, set it to run with the user and group of the user running the pool
+(usually called 'cowrie' too::
+
+    $ sudo vim /etc/libvirt/qemu.conf
+
+Search and set both `user` and `group` to `"cowrie"`, or the username/group you'll be running the backend pool with.
+
 Running using Supervisord (OPTIONAL)
 ************************************
 
