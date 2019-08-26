@@ -6,7 +6,7 @@ in contrast to the emulated shell traditionally provided by Cowrie. With a real
 backend environment where attackers can execute any Unix command, Cowrie becomes a
 high-interaction honeypot.
 
-To use the proxy, start by changing the `backend` option to `shell` in the `[honeypot]` section.
+To use the proxy, start by changing the `backend` option to `proxy` in the `[honeypot]` section.
 In the remainder of this guide we will refer to the `[proxy]` section of the config file.
 
 Choosing a Backend

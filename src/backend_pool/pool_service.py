@@ -8,8 +8,6 @@ from threading import Lock
 import backend_pool.libvirt.backend_service
 import backend_pool.util
 
-import libvirt
-
 from twisted.internet import reactor, threads
 from twisted.python import log
 
@@ -84,6 +82,9 @@ class PoolService:
             reactor.callLater(recycle_period, self.restart_pool)
 
     def stop_pool(self):
+        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        import libvirt
+
         log.msg(eventid='cowrie.backend_pool.service',
                 format='Trying pool clean stop')
 
@@ -104,6 +105,9 @@ class PoolService:
             print('Not connected to Qemu')
 
     def shutdown_pool(self):
+        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        import libvirt
+
         self.stop_pool()
 
         try:

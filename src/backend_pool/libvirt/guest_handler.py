@@ -6,8 +6,6 @@ from configparser import NoOptionError
 import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
 
-import libvirt
-
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
@@ -18,6 +16,9 @@ class QemuGuestError(Exception):
 
 
 def create_guest(connection, mac_address, guest_unique_id):
+    # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+    import libvirt
+
     # get guest configurations
     configuration_file = os.path.join(
         CowrieConfig().get('backend_pool', 'config_files_path', fallback='share/pool_configs'),
