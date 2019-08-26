@@ -74,6 +74,9 @@ class TelnetHandler:
         # and the respective frontend response and send it before starting to intercept auth data
         self.prePasswordData = False
 
+        # buffer
+        self.backend_buffer = []
+
         # tty logging
         self.startTime = time.time()
         self.ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
@@ -114,17 +117,23 @@ class TelnetHandler:
                     duration=time.time() - self.startTime)
 
     def sendBackend(self, data):
-        self.client.transport.write(data)
+        self.backend_buffer.append(data)
 
-        # log raw packets if user sets so
-        if CowrieConfig().getboolean('proxy', 'log_raw', fallback=False):
-            log.msg(b'to_backend - ' + data)
+        if not self.client:
+            return
 
-        if self.ttylogEnabled and self.authStarted:
-            cleanData = data.replace(b'\x00', b'\n')  # some frontends send 0xFF instead of newline
+        for packet in self.backend_buffer:
+            self.client.transport.write(packet)
+            # log raw packets if user sets so
+            if CowrieConfig().getboolean('proxy', 'log_raw', fallback=False):
+                log.msg(b'to_backend - ' + data)
 
-            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), cleanData)
-            self.ttylogSize += len(data)
+            if self.ttylogEnabled and self.authStarted:
+                cleanData = data.replace(b'\x00', b'\n')  # some frontends send 0xFF instead of newline
+                ttylog.ttylog_write(self.ttylogFile, len(cleanData), ttylog.TYPE_INPUT, time.time(), cleanData)
+                self.ttylogSize += len(cleanData)
+
+            self.backend_buffer = self.backend_buffer[1:]
 
     def sendFrontend(self, data):
         self.server.transport.write(data)
@@ -170,7 +179,7 @@ class TelnetHandler:
             # check if a command has terminated
             if b'\r' in data:
                 if len(self.currentCommand) > 0:
-                    log.msg('CMD: {0}'.format(self.currentCommand.decode()))
+                    log.msg('CMD: {0}'.format(self.currentCommand))
                 self.currentCommand = b''
 
         # send data after processing (also check if processing did not reduce it to an empty string)
@@ -237,6 +246,7 @@ class TelnetHandler:
             if HoneypotPasswordChecker().checkUserPass(self.usernameState, self.passwordState, src_ip):
                 passwordToSend = self.backendPassword
                 self.authDone = True
+                self.server.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
             else:
                 log.msg('Sending invalid auth to backend')
                 passwordToSend = self.backendPassword + b'fake'

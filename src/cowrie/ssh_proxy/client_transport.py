@@ -33,6 +33,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         self.delayedPackets = []
         self.factory = factory
         self.canAuth = False
+        self.authDone = False
 
         # keep these from when frontend authenticates
         self.frontendTriedUsername = None
@@ -90,6 +91,9 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
             self.factory.server.sshParse.parse_packet('[SERVER]', packet[0], packet[1])
         self.factory.server.delayedPackets = []
 
+        # backend auth is done, attackers will now be connected to the backend
+        self.authDone = True
+
     def connectionLost(self, reason):
         if self.factory.server.pool_interface:
             log.msg(
@@ -125,7 +129,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
     def dispatchMessage(self, message_num, payload):
         if message_num in [6, 52]:
-            return  # TODO consume these in connectionSecure
+            return  # TODO consume these in authenticateBackend
 
         if message_num == 98:
             # looking for RFC 4254 - 6.10. Returning Exit Status

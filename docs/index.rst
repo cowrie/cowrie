@@ -16,6 +16,9 @@ Welcome to Cowrie's documentation!
    INSTALL.rst
    CHANGELOG.rst
    CONTRIBUTING.rst
+   PROXY.rst
+   BACKEND_POOL.rst
+   SNAPSHOTS.rst
    elk/README.rst
    graylog/README.rst
    kippo-graph/README.rst

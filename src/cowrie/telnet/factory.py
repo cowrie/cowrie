@@ -26,6 +26,14 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     tac = None
 
+    # used to kill server instances of the protocol on tests
+    running = []
+
+    def __init__(self, backend, pool_handler):
+        self.backend = backend
+        self.pool_handler = pool_handler
+        super().__init__()
+
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
         """
@@ -47,7 +55,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.starttime = time.time()
 
         # hook protocol
-        if CowrieConfig().get('honeypot', 'backend', fallback='shell') == 'proxy':
+        if self.backend == 'proxy':
             self.protocol = lambda: FrontendTelnetTransport()
         else:
             self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol, self.portal)
@@ -60,3 +68,15 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         Stop output plugins
         """
         protocol.ServerFactory.stopFactory(self)
+
+    def buildProtocol(self, addr):
+        """
+        Overidden so we can keep a reference to running protocols (which is used for testing)
+        """
+        p = self.protocol()
+        p.factory = self
+
+        # for testing purposes
+        self.running.append(p)
+
+        return p

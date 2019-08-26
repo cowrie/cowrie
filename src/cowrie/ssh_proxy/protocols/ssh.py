@@ -214,6 +214,7 @@ class SSH(base_protocol.BaseProtocol):
                     channel = self.get_channel(channel_id, other_parent)
                     channel['name'] = the_name
                     channel['session'] = port_forward.PortForward(the_uuid, channel['name'], self)
+
                 else:
                     log.msg('[SSH] Detected Port Forwarding Channel - Disabling!')
                     log.msg(eventid='cowrie.direct-tcpip.data',

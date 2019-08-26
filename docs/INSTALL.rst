@@ -180,6 +180,26 @@ Or use setcap to give permissions to Python to listen on ports<1024::
 And change the listening ports in `cowrie.cfg` as above.
 
 
+Installing Backend Pool dependencies (OPTIONAL)
+***********************************************
+
+If you want to use the proxy functionality combined with the automatic
+backend pool, you need to install some dependencies, namely qemu, libvirt,
+and their Python interface. In Debian/Ubuntu::
+
+    $ sudo apt-get install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
+
+Then install the Python API to run the backend pool::
+
+    (cowrie-env) $ pip install libvirt-python==5.5.0
+
+To allow Qemu to use disk images and snapshots, set it to run with the user and group of the user running the pool
+(usually called 'cowrie' too::
+
+    $ sudo vim /etc/libvirt/qemu.conf
+
+Search and set both `user` and `group` to `"cowrie"`, or the username/group you'll be running the backend pool with.
+
 Running using Supervisord (OPTIONAL)
 ************************************
 

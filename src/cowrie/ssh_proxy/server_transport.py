@@ -109,8 +109,10 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
 
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
-        # when pool is set we can just test self.pool_interface to the same effect of getting the config
-        if CowrieConfig().getboolean('proxy', 'enable_pool', fallback=False):
+        # when pool is set we can just test self.pool_interface to the same effect of getting the CowrieConfig
+        proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
+
+        if proxy_backend == 'pool':
             # request a backend
             d = self.factory.pool_handler.request_interface()
             d.addCallback(self.pool_connection_success)
@@ -122,7 +124,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg('Conenction to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg('Connection to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
@@ -136,14 +138,17 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def received_pool_data(self, operation, status, *data):
         if operation == b'r':
-            log.msg('Got backend data from pool')
-
             honey_ip = data[0]
-            ssh_port = data[1]
+            snapshot = data[1]
+            ssh_port = data[2]
+
+            log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), ssh_port))
+            log.msg('Snapshot file: {0}'.format(snapshot.decode()))
+
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason):
-        log.msg('Conenction to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg('Connection to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
@@ -298,8 +303,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Timeout is reset when authentication succeeds.
         """
         log.msg('Timeout reached in FrontendSSHTransport')
-        self.transport.loseConnection()
-        self.sshParse.client.transport.loseConnection()
+
+        if self.transport:
+            self.transport.loseConnection()
+
+        if self.sshParse.client and self.sshParse.client.transport:
+            self.sshParse.client.transport.loseConnection()
 
     def setService(self, service):
         """
@@ -325,10 +334,6 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
 
-        try:
-            self.client.loseConnection()
-        except Exception:
-            pass
         transport.SSHServerTransport.connectionLost(self, reason)
 
         self.transport.connectionLost(reason)
@@ -338,9 +343,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if self.sshParse.client and self.sshParse.client.transport:
             self.sshParse.client.transport.loseConnection()
 
-        # free connection
         if self.pool_interface:
-            self.pool_interface.send_vm_free()
+            # free VM from pool (VM was used if we performed SSH authentication to the backend)
+            vm_dirty = self.sshParse.client.authDone if self.sshParse.client else False
+            self.pool_interface.send_vm_free(vm_dirty)
+
+            # close transport connection to pool
+            self.pool_interface.transport.loseConnection()
 
         if self.startTime is not None:  # startTime is not set when auth fails
             duration = time.time() - self.startTime
