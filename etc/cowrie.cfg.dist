@@ -240,7 +240,7 @@ guest_telnet_port = 23
 # Guest backend can be qemu or kvm, for example. Recent hardware has KVM,
 # which is more performant than the qemu software-based emulation. Guest arch
 # must match your machine's.
-guest_image_path = /home/gb/cowrie-imgs/ubuntu18.04-minimal.qcow2
+guest_image_path = /home/cowrie/cowrie-imgs/ubuntu18.04-minimal.qcow2
 guest_hypervisor = kvm
 guest_memory = 512
 
@@ -262,10 +262,10 @@ guest_memory = 512
 # Guest backend can be qemu or kvm, for example. Recent hardware has KVM,
 # which is more performant than the qemu software-based emulation. Guest arch
 # must match your machine's.
-#guest_image_path = /home/gb/cowrie-imgs/root.qcow2
+#guest_image_path = /home/cowrie/cowrie-imgs/root.qcow2
 #guest_hypervisor = qemu
 #guest_memory = 256
-#guest_kernel_image = /home/gb/cowrie-imgs/zImage
+#guest_kernel_image = /home/cowrie/cowrie-imgs/zImage
 
 # =====================================
 # Other configs
