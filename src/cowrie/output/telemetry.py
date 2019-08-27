@@ -40,6 +40,13 @@ class Output(cowrie.core.output.Output):
             self.scanip(entry)
 
     @defer.inlineCallbacks
+    def crashreport(self, entry):
+        """
+        Crash report
+        """
+
+
+    @defer.inlineCallbacks
     def scanip(self, entry):
         """
         Scan IP againt telemetry API
