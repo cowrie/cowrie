@@ -3,7 +3,7 @@
     <name>{guest_name}</name>
     <memory unit='KiB'>2097152</memory>
     <os>
-        <type arch='x86_64' machine='pc-q35-2.8'>hvm</type>
+        <type arch='x86_64' machine='{qemu_machine}'>hvm</type>
         <boot dev='hd'/>
     </os>
     <features>
