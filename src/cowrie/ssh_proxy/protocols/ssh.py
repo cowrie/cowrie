@@ -148,9 +148,6 @@ class SSH(base_protocol.BaseProtocol):
 
         elif packet == 'SSH_MSG_USERAUTH_SUCCESS':
             self.sendOn = False
-            if len(self.username) > 0 and len(self.password) > 0:
-                # self.server.login_successful(self.username, self.password)
-                pass
 
         elif packet == 'SSH_MSG_USERAUTH_INFO_REQUEST':
             self.sendOn = False
@@ -183,7 +180,11 @@ class SSH(base_protocol.BaseProtocol):
             log.msg('got channel {} request'.format(channel_type))
 
             if channel_type == b'session':
+                # if using an interactive session reset frontend timeout
+                self.server.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
+
                 self.create_channel(parent, channel_id, channel_type)
+
             elif channel_type == b'direct-tcpip' or channel_type == b'forwarded-tcpip':
                 self.extract_int(4)
                 self.extract_int(4)
