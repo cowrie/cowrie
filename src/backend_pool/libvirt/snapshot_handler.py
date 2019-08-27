@@ -5,8 +5,6 @@ import getpass
 import shutil
 import subprocess
 
-from twisted.python import log
-
 
 def create_disk_snapshot(source_img, destination_img):
     try:
