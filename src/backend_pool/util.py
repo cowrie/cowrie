@@ -8,12 +8,14 @@ import time
 
 
 def ping(guest_ip):
-    out = subprocess.run(['ping', '-c 1', guest_ip], capture_output=True)
+    # could use `capture_output=True` instead of `stdout` and `stderr` args
+    out = subprocess.run(['ping', '-c 1', guest_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return out.returncode == 0
 
 
 def nmap_port(guest_ip, port):
-    out = subprocess.run(['nmap', guest_ip, '-PN',  '-p', str(port)], capture_output=True)
+    # could use `capture_output=True` instead of `stdout` and `stderr` args
+    out = subprocess.run(['nmap', guest_ip, '-PN',  '-p', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return out.returncode == 0 and b'open' in out.stdout
 
 
