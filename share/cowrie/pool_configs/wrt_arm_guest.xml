@@ -3,7 +3,7 @@
     <name>{guest_name}</name>
     <memory unit='MiB'>{memory}</memory>
     <os>
-        <type arch='armv7l' machine='virt-2.9'>hvm</type>
+        <type arch='armv7l' machine='{qemu_machine}'>hvm</type>
         <boot dev='hd'/>
         <kernel>{kernel_image}</kernel>
         <cmdline>root=/dev/vda</cmdline>
