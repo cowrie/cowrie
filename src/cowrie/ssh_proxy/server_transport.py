@@ -155,6 +155,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         log.msg("Connected to honeypot backend")
 
         self.startTime = time.time()
+
+        # this timeout is replaced with `interactive_timeout` in ssh.py
         self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
 
     def connect_to_backend(self, ip, port):
@@ -314,10 +316,6 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Remove login grace timeout, set zlib compression after auth
         """
-        # Reset timeout. Not everyone opens shell so need timeout at transport level
-        if service.name == b'ssh-connection':
-            self.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
-
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
         if service.name == 'ssh-connection':
