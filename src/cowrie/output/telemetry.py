@@ -37,14 +37,18 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        if entry['eventid'] == "cowrie.session.connect":
-            self.scanip(entry)
+        if entry['eventid'] == "cowrie.crash":
+            crashreport(entry)
 
     @defer.inlineCallbacks
     def crashreport(self, entry):
         """
         Crash report
         """
+        print('EEK!: '+repr(entry))
+        resp = yield treq.post(COWRIE_URL, data={'crash': repr(entry)})
+        content = yield resp.text()
+        print(content)
 
 
     @defer.inlineCallbacks
