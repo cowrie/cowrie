@@ -38,7 +38,7 @@ from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
 from twisted.internet import reactor
-from twisted.logger import ILogObserver, globalLogPublisher
+from twisted.logger import ILogObserver, globalLogPublisher, LogLevel
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
 
@@ -79,8 +79,8 @@ def importFailureObserver(event):
 
 @provider(ILogObserver)
 def crashObserver(event):
-    if event.get("log_level") == LogLevel.critical:
-        log.err(json.dumps(event), eventid='cowrie.crash')
+    if event.get('log_level') == LogLevel.critical and event.get('eventid') != 'cowrie.crash':
+        log.err(repr(event.get('log_text')), eventid='cowrie.crash')
 
 
 globalLogPublisher.addObserver(importFailureObserver)
