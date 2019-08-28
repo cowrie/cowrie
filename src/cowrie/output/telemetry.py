@@ -15,6 +15,7 @@ from cowrie._version import __version__
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot {}'.format(__version__)
 COWRIE_URL = 'http://api.cowrie.org:8888/v1/'
+COWRIE_URL = 'http://127.0.0.1:8888/v1/'
 
 
 class Output(cowrie.core.output.Output):

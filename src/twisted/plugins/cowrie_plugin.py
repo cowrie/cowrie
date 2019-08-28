@@ -77,8 +77,14 @@ def importFailureObserver(event):
                 "from Cowrie's install directory and virtualenv to install "
                 "the new dependency" % event['failure'].value.message)
 
+@provider(ILogObserver)
+def crashObserver(event):
+    if event.get("log_level") == LogLevel.critical:
+        log.err(json.dumps(event), eventid='cowrie.crash')
+
 
 globalLogPublisher.addObserver(importFailureObserver)
+globalLogPublisher.addObserver(crashObserver)
 
 
 @implementer(IServiceMaker, IPlugin)
