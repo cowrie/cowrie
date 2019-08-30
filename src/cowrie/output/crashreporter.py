@@ -8,19 +8,20 @@ It has its own emit() function and does not use cowrie eventid's to avoid circul
 from __future__ import absolute_import, division
 
 import json
+
 import treq
 
-from twisted.internet import defer, error
-from twisted.python import log
+from twisted.internet import defer
 from twisted.logger._levels import LogLevel
 
 import cowrie.core.output
-from cowrie.core.config import CowrieConfig
 from cowrie._version import __version__
+from cowrie.core.config import CowrieConfig
 
 COWRIE_USER_AGENT = 'Cowrie Honeypot {}'.format(__version__)
 COWRIE_URL = 'https://api.cowrie.org:8888/v1/'
 COWRIE_URL = 'http://127.0.0.1:8888/v1/'
+
 
 class Output(cowrie.core.output.Output):
     """
