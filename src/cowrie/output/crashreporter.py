@@ -18,9 +18,9 @@ import cowrie.core.output
 from cowrie._version import __version__
 from cowrie.core.config import CowrieConfig
 
-COWRIE_USER_AGENT = 'Cowrie Honeypot {}'.format(__version__)
-COWRIE_URL = 'https://api.cowrie.org:8888/v1/'
-COWRIE_URL = 'http://127.0.0.1:8888/v1/'
+COWRIE_USER_AGENT = 'Cowrie Honeypot {}'.format(__version__).encode('ascii')
+COWRIE_URL = 'https://api.cowrie.org:8888/v1/crash'
+COWRIE_URL = 'http://127.0.0.1:8888/v1/crash'
 
 
 class Output(cowrie.core.output.Output):
@@ -60,7 +60,10 @@ class Output(cowrie.core.output.Output):
         Crash report
         """
         try:
-            resp = yield treq.post(COWRIE_URL, data={'crash': json.dumps(repr(entry))})
+            resp = yield treq.post(COWRIE_URL,
+                                   entry.get('log_text').encode('ascii'),
+                                   headers={b'Content-Type': [b'application/json'],
+                                            b'User-Agent': [COWRIE_USER_AGENT]})
             content = yield resp.text()
             if self.debug:
                 print("crashreport: "+content)
