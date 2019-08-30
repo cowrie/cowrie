@@ -1,7 +1,7 @@
 """
 Cowrie Crashreport
 
-This output plugin is not like the others. 
+This output plugin is not like the others.
 It has its own emit() function and does not use cowrie eventid's to avoid circular calls
 """
 
@@ -58,7 +58,10 @@ class Output(cowrie.core.output.Output):
         """
         Crash report
         """
-        resp = yield treq.post(COWRIE_URL, data={'crash': json.dumps(repr(entry))})
-        content = yield resp.text()
-        if self.debug:
-            print("crashreport: "+content)
+        try:
+            resp = yield treq.post(COWRIE_URL, data={'crash': json.dumps(repr(entry))})
+            content = yield resp.text()
+            if self.debug:
+                print("crashreport: "+content)
+        except Exception as e:
+            print("crashreporter failed"+repr(e))
