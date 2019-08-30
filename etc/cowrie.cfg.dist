@@ -236,13 +236,19 @@ guest_telnet_port = 23
 # Configs below are used on default XMLs provided.
 # If you provide your own XML in guest_config you don't need these configs.
 #
-# Memory size is in MB.
-# Guest backend can be qemu or kvm, for example. Recent hardware has KVM,
+# Guest hypervisor can be qemu or kvm, for example. Recent hardware has KVM,
 # which is more performant than the qemu software-based emulation. Guest arch
-# must match your machine's.
-guest_image_path = /home/gb/cowrie-imgs/ubuntu18.04-minimal.qcow2
+# must match your machine's. If it's older or you're unsure, set it to 'qemu'.
+#
+# Memory size is in MB.
+#
+# Advanced: guest_qemu_machine defines which machine Qemu emulates for your VM
+# If you get a "unsupported machine type" exception when VMs are loading, change
+# it to a compatible machine listed by the command: 'qemu-system-x86_64 -machine help'
+guest_image_path = /home/cowrie/cowrie-imgs/ubuntu18.04-minimal.qcow2
 guest_hypervisor = kvm
 guest_memory = 512
+guest_qemu_machine = pc-q35-bionic
 
 # =====================================
 # Guest details (for OpenWRT with ARM architecture)
@@ -258,14 +264,20 @@ guest_memory = 512
 # Configs below are used on default XMLs provided.
 # If you provide your own XML in guest_config you don't need these configs.
 #
-# Memory size is in MB.
-# Guest backend can be qemu or kvm, for example. Recent hardware has KVM,
+# Guest hypervisor can be qemu or kvm, for example. Recent hardware has KVM,
 # which is more performant than the qemu software-based emulation. Guest arch
 # must match your machine's.
-#guest_image_path = /home/gb/cowrie-imgs/root.qcow2
+#
+# Memory size is in MB.
+#
+# Advanced: guest_qemu_machine defines which machine Qemu emulates for your VM
+# If you get a "unsupported machine type" exception when VMs are loading, change
+# it to a compatible machine listed by the command: 'qemu-system-arm -machine help'
+#guest_image_path = /home/cowrie/cowrie-imgs/root.qcow2
 #guest_hypervisor = qemu
 #guest_memory = 256
-#guest_kernel_image = /home/gb/cowrie-imgs/zImage
+#guest_kernel_image = /home/cowrie/cowrie-imgs/zImage
+#guest_qemu_machine = virt-2.9
 
 # =====================================
 # Other configs

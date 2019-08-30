@@ -6,8 +6,6 @@ from configparser import NoOptionError
 import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
 
-import libvirt
-
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
@@ -18,6 +16,9 @@ class QemuGuestError(Exception):
 
 
 def create_guest(connection, mac_address, guest_unique_id):
+    # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+    import libvirt
+
     # get guest configurations
     configuration_file = os.path.join(
         CowrieConfig().get('backend_pool', 'config_files_path', fallback='share/pool_configs'),
@@ -27,6 +28,7 @@ def create_guest(connection, mac_address, guest_unique_id):
     base_image = CowrieConfig().get('backend_pool', 'guest_image_path')
     hypervisor = CowrieConfig().get('backend_pool', 'guest_hypervisor', fallback='qemu')
     memory = CowrieConfig().getint('backend_pool', 'guest_memory', fallback=128)
+    qemu_machine = CowrieConfig().get('backend_pool', 'guest_qemu_machine', fallback='pc-q35-3.1')
 
     # check if base image exists
     if not os.path.isfile(base_image):
@@ -59,6 +61,7 @@ def create_guest(connection, mac_address, guest_unique_id):
                                     kernel_image=kernel_image,
                                     hypervisor=hypervisor,
                                     memory=memory,
+                                    qemu_machine=qemu_machine,
                                     mac_address=mac_address,
                                     network_name='cowrie')
 

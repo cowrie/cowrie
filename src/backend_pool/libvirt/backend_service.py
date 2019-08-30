@@ -9,8 +9,6 @@ import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
 import backend_pool.util
 
-import libvirt
-
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
@@ -22,6 +20,9 @@ class LibvirtError(Exception):
 
 class LibvirtBackendService:
     def __init__(self):
+        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        import libvirt
+
         # open connection to libvirt
         self.conn = libvirt.open('qemu:///system')
         if self.conn is None:

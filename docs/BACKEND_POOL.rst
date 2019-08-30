@@ -31,6 +31,16 @@ for each image in the default configuration. Choose the one you want to use and 
 * `OpenWRT disk image <https://drive.google.com/open?id=1oBAJc3FX82AkrIwv_GV0uO5R0SMl_i9Q>`_.
 * `OpenWRT kernel image <https://drive.google.com/open?id=17-UARwAd0aNB4Ogc4GvO2GsUSOSg0aaD>`_.
 
+Backend Pool initialisation
+***************************
+
+Depending on the machine that will be running the backend pool, initialisation times for VMs can vary greatly.
+If the pool is correctly configured, you will get the `PoolServerFactory starting on 6415` message on your log.
+
+After a while, VMs will start to boot and, when ready to be used, a message of the form
+`Guest 0 ready for connections @ 192.168.150.68! (boot 17s)` will appear for each VM. Before VMs are ready, SSH
+and Telnet connections from attackers will be dropped by Cowrie.
+
 Proxy configurations
 ********************
 
@@ -63,6 +73,7 @@ one. In the former case, you'd be running Cowrie with
     pool_only = false
 
     [proxy]
+    backend = pool
     pool = local
 
 If you want to deploy the backend pool in a different machine, then you'll need to
