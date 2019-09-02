@@ -98,6 +98,9 @@ class FeedUnpack(object):
     def next(self):
         return self.unpack()
 
+    def __next__(self):
+        return self.unpack()
+
     def feed(self, data):
         self.buf.extend(data)
 
