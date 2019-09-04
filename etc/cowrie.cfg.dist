@@ -957,3 +957,8 @@ topic = cowrie
 # It's optional to have API key, so if you don't want to but
 # API key then leave this option commented
 #api_key = 1234567890
+
+# The crashreporter sends data on Python exceptions to cowrie.org
+[output_crashreporter]
+enabled = false
+debug = false

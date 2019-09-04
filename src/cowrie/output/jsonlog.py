@@ -58,6 +58,9 @@ class Output(cowrie.core.output.Output):
             # Remove twisted 15 legacy keys
             if i.startswith('log_') or i == 'time' or i == 'system':
                 del logentry[i]
-        json.dump(logentry, self.outfile, separators=(',', ':'))
-        self.outfile.write('\n')
-        self.outfile.flush()
+        try:
+            json.dump(logentry, self.outfile, separators=(',', ':'))
+            self.outfile.write('\n')
+            self.outfile.flush()
+        except TypeError:
+            print("jsonlog: Can't serialize: '"+repr(logentry)+"'")
