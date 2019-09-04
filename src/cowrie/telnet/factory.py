@@ -32,7 +32,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     def __init__(self, backend, pool_handler):
         self.backend = backend
         self.pool_handler = pool_handler
-        super().__init__()
+        super(HoneyPotTelnetFactory, self).__init__()
 
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):

@@ -48,7 +48,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             b'ssh-userauth': ProxySSHAuthServer if self.backend == 'proxy' else HoneyPotSSHUserAuthServer,
             b'ssh-connection': connection.CowrieSSHConnection,
         }
-        super().__init__()
+        super(CowrieSSHFactory, self).__init__()
 
     def logDispatch(self, *msg, **args):
         """

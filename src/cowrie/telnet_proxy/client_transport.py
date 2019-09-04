@@ -26,7 +26,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
             self.transport.write(packet)
         self.factory.server.delayedPacketsToBackend = []
 
-        super().connectionMade()
+        super(TelnetTransport, self).connectionMade()
         # TODO timeout if no backend available
 
     def connectionLost(self, reason):

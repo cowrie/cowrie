@@ -10,7 +10,7 @@ from cowrie.ssh import userauth
 
 class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer):
     def __init__(self):
-        super().__init__()
+        super(ProxySSHAuthServer, self).__init__()
         self.triedPassword = None
 
     def auth_password(self, packet):
@@ -19,7 +19,7 @@ class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer):
         """
         self.triedPassword = getNS(packet[1:])[0]
 
-        return super().auth_password(packet)
+        return super(ProxySSHAuthServer, self).auth_password(packet)
 
     def _cbFinishedAuth(self, result):
         """

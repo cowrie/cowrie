@@ -23,7 +23,7 @@ from cowrie.telnet_proxy.handler import TelnetHandler
 
 class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
     def __init__(self):
-        super().__init__()
+        super(FrontendTelnetTransport, self).__init__()
 
         self.peer_ip = None
         self.peer_port = 0
