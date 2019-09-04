@@ -94,7 +94,7 @@ class command_tftp(HoneyPotCommand):
                 if len(args.c) > 1:
                     self.file_to_get = args.c[1]
                     if args.hostname is None:
-                        self.write("Hostname is invalid")
+                        #self.write("Hostname is invalid")
                         self.exit()
                     self.hostname = args.hostname
 
@@ -106,7 +106,7 @@ class command_tftp(HoneyPotCommand):
                 self.exit()
 
             if self.hostname is None:
-                self.write("Hostname is invalid")
+                #self.write("Hostname is invalid")
                 self.exit()
 
             if self.hostname.find(':') != -1:
