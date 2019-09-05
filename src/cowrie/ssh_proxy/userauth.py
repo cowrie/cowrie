@@ -8,9 +8,10 @@ from twisted.conch.ssh.common import getNS
 from cowrie.ssh import userauth
 
 
-class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer):
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
+class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer, object):
     def __init__(self):
-        super().__init__()
+        super(ProxySSHAuthServer, self).__init__()
         self.triedPassword = None
 
     def auth_password(self, packet):
@@ -19,7 +20,7 @@ class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer):
         """
         self.triedPassword = getNS(packet[1:])[0]
 
-        return super().auth_password(packet)
+        return super(ProxySSHAuthServer, self).auth_password(packet)
 
     def _cbFinishedAuth(self, result):
         """
