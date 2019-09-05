@@ -19,6 +19,7 @@ from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
 
 
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class HoneyPotTelnetFactory(protocol.ServerFactory, object):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances

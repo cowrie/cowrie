@@ -8,6 +8,7 @@ from twisted.conch.ssh.common import getNS
 from cowrie.ssh import userauth
 
 
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer, object):
     def __init__(self):
         super(ProxySSHAuthServer, self).__init__()

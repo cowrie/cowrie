@@ -2,6 +2,7 @@ from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol, reactor
 
 
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class PasswordAuth(userauth.SSHUserAuthClient, object):
     def __init__(self, user, password, conn):
         super(PasswordAuth, self).__init__(user, conn)

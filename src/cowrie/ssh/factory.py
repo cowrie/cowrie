@@ -24,6 +24,7 @@ from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class CowrieSSHFactory(factory.SSHFactory, object):
     """
     This factory creates HoneyPotSSHTransport instances
