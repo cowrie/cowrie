@@ -7,7 +7,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
 
-class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
+class BackendTelnetTransport(TelnetTransport, TimeoutMixin, object):
     def __init__(self):
         # self.delayedPacketsToFrontend = []
         self.backendConnected = False

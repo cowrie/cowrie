@@ -24,7 +24,7 @@ from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
-class CowrieSSHFactory(factory.SSHFactory):
+class CowrieSSHFactory(factory.SSHFactory, object):
     """
     This factory creates HoneyPotSSHTransport instances
     They listen directly to the TCP port

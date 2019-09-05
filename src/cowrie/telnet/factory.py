@@ -19,7 +19,7 @@ from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
 
 
-class HoneyPotTelnetFactory(protocol.ServerFactory):
+class HoneyPotTelnetFactory(protocol.ServerFactory, object):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
