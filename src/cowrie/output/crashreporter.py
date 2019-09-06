@@ -65,7 +65,6 @@ class Output(cowrie.core.output.Output):
             r = yield treq.post(COWRIE_URL,
                                 json.dumps({'log_text': entry.get('log_text'),
                                             'system': entry.get('system')}).encode('ascii'),
-                                entry.get('log_text').encode('ascii'),
                                 headers={b'Content-Type':
                                          [b'application/json'],
                                          b'User-Agent':
