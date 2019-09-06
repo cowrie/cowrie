@@ -8,6 +8,8 @@ to avoid circular calls
 
 from __future__ import absolute_import, division
 
+import json
+
 import treq
 
 from twisted.internet import defer
@@ -61,6 +63,8 @@ class Output(cowrie.core.output.Output):
         """
         try:
             r = yield treq.post(COWRIE_URL,
+                                json.dumps({'log_text': entry.get('log_text'),
+                                            'system': entry.get('system')}).encode('ascii'),
                                 entry.get('log_text').encode('ascii'),
                                 headers={b'Content-Type':
                                          [b'application/json'],
