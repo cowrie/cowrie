@@ -21,9 +21,10 @@ from cowrie.telnet_proxy import client_transport
 from cowrie.telnet_proxy.handler import TelnetHandler
 
 
-class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
+class FrontendTelnetTransport(TelnetTransport, TimeoutMixin, object):
     def __init__(self):
-        super().__init__()
+        super(FrontendTelnetTransport, self).__init__()
 
         self.peer_ip = None
         self.peer_port = 0

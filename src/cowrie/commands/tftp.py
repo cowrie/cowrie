@@ -7,7 +7,7 @@ from twisted.python import log
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.customparser import CustomParser, OptionNotFound
+from cowrie.shell.customparser import CustomParser
 
 commands = {}
 
@@ -94,7 +94,7 @@ class command_tftp(HoneyPotCommand):
                 if len(args.c) > 1:
                     self.file_to_get = args.c[1]
                     if args.hostname is None:
-                        raise OptionNotFound("Hostname is invalid")
+                        self.exit()
                     self.hostname = args.hostname
 
             elif args.r:
@@ -102,10 +102,10 @@ class command_tftp(HoneyPotCommand):
                 self.hostname = args.g
             else:
                 parser.print_usage()
-                raise OptionNotFound("Missing!!")
+                self.exit()
 
             if self.hostname is None:
-                raise OptionNotFound("Hostname is invalid")
+                self.exit()
 
             if self.hostname.find(':') != -1:
                 host, port = self.hostname.split(':')

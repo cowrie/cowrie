@@ -2,20 +2,21 @@ from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol, reactor
 
 
-class PasswordAuth(userauth.SSHUserAuthClient):
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
+class PasswordAuth(userauth.SSHUserAuthClient, object):
     def __init__(self, user, password, conn):
-        super().__init__(user, conn)
+        super(PasswordAuth, self).__init__(user, conn)
         self.password = password
 
     def getPassword(self, prompt=None):
         return defer.succeed(self.password)
 
 
-class CommandChannel(channel.SSHChannel):
+class CommandChannel(channel.SSHChannel, object):
     name = 'session'
 
     def __init__(self, command, done_deferred, callback, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(CommandChannel, self).__init__(*args, **kwargs)
         self.command = command
         self.done_deferred = done_deferred
         self.callback = callback
@@ -40,9 +41,9 @@ class CommandChannel(channel.SSHChannel):
             self.callback(self.data)
 
 
-class ClientConnection(connection.SSHConnection):
+class ClientConnection(connection.SSHConnection, object):
     def __init__(self, cmd, done_deferred, callback):
-        super().__init__()
+        super(ClientConnection, self).__init__()
         self.command = cmd
         self.done_deferred = done_deferred
         self.callback = callback
