@@ -88,35 +88,32 @@ class command_tftp(HoneyPotCommand):
         parser.add_argument("-p")
         parser.add_argument("-r")
 
-        try:
-            args = parser.parse_args(self.args)
-            if args.c:
-                if len(args.c) > 1:
-                    self.file_to_get = args.c[1]
-                    if args.hostname is None:
-                        self.exit()
-                    self.hostname = args.hostname
+        args = parser.parse_args(self.args)
+        if args.c:
+            if len(args.c) > 1:
+                self.file_to_get = args.c[1]
+                if args.hostname is None:
+                    self.exit()
+                    return
+                self.hostname = args.hostname
+        elif args.r:
+            self.file_to_get = args.r
+            self.hostname = args.g
+        else:
+            parser.print_usage()
+            self.exit()
+            return
 
-            elif args.r:
-                self.file_to_get = args.r
-                self.hostname = args.g
-            else:
-                parser.print_usage()
-                self.exit()
+        if self.hostname is None:
+            self.exit()
+            return
 
-            if self.hostname is None:
-                self.exit()
+        if self.hostname.find(':') != -1:
+            host, port = self.hostname.split(':')
+            self.hostname = host
+            self.port = int(port)
 
-            if self.hostname.find(':') != -1:
-                host, port = self.hostname.split(':')
-                self.hostname = host
-                self.port = int(port)
-
-            self.makeTftpRetrieval()
-
-        except Exception as err:
-            log.err(str(err))
-
+        self.makeTftpRetrieval()
         self.exit()
 
 
