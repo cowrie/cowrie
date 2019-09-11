@@ -91,6 +91,10 @@ Files of interest:
 * `bin/createfs <https://github.com/cowrie/cowrie/blob/master/bin/createfs>`_ - used to create the fake filesystem
 * `bin/playlog <https://github.com/cowrie/cowrie/blob/master/bin/playlog>`_ - utility to replay session logs
 
+Data Sharing
+*****************************************
+Cowrie will by default upload data on crashes and Python exceptions to api.cowrie.org. This information is used to improve the honeypot and is not shared with third parties. It can be disabled by setting `enabled=false` in `[output_crashreporter]`.
+
 I have some questions!
 *****************************************
 
