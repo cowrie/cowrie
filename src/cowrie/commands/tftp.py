@@ -101,11 +101,13 @@ class command_tftp(HoneyPotCommand):
                 self.file_to_get = args.r
                 self.hostname = args.g
             else:
-                parser.print_usage()
+                self.write('usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n')
                 self.exit()
+                return
 
             if self.hostname is None:
                 self.exit()
+                return
 
             if self.hostname.find(':') != -1:
                 host, port = self.hostname.split(':')
