@@ -10,8 +10,11 @@ python:
   - '3.5'
   - '3.6'
   - '3.7'
+  - '3.7-dev'
   - '3.8-dev'
   - 'nightly'
+  - 'pypy'
+  - 'pypy3'
 before_install:
   - sudo apt-get -qq update
 install:
