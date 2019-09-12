@@ -15,8 +15,6 @@ python:
   - 'nightly'
   - 'pypy'
   - 'pypy3'
-before_install:
-  - sudo apt-get -qq update
 install:
   - sudo apt-get -y install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
   - pip install -r requirements.txt
