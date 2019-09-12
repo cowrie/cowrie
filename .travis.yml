@@ -1,6 +1,6 @@
 sudo: required
 group: stable
-dist: xenial
+dist: bionic
 os: linux
 language: python
 services:
@@ -13,12 +13,8 @@ python:
   - '3.7-dev'
   - '3.8-dev'
   - 'nightly'
-  - 'pypy'
-  - 'pypy3'
-before_install:
-  - sudo apt-get -qq update
 install:
-  - sudo apt-get install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
+  - sudo apt-get -y install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
   - pip install libvirt-python==5.5.0
