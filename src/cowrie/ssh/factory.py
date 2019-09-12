@@ -7,9 +7,6 @@ This module contains ...
 
 from __future__ import absolute_import, division
 
-import gc
-import objgraph
-import random
 import time
 from configparser import NoOptionError
 
@@ -102,26 +99,6 @@ class CowrieSSHFactory(factory.SSHFactory, object):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
-        print(gc.get_stats())
-        objgraph.show_most_common_types(limit=100)
-        cfs = objgraph.by_type('HoneyPotSSHTransport')
-        if cfs:
-            me = random.choice(cfs)
-            del cfs
-            objgraph.show_backrefs(me, filename='HoneypotSSHTransport.png')
-        cfs = objgraph.by_type('CowrieSSHConnection')
-        if cfs:
-            objgraph.show_backrefs(random.choice(cfs), filename='CowrieSSHConnection.png')
-        del cfs
-        cfs = objgraph.by_type('CowrieUser')
-        if cfs:
-            objgraph.show_backrefs(random.choice(cfs), filename='CowrieUser.png')
-        del cfs
-        cfs = objgraph.by_type('HoneyPotFilesystem')
-        if cfs:
-            objgraph.show_backrefs(random.choice(cfs), filename='HoneyPotFilesystem.png')
-        del cfs
-
         if self.backend == 'proxy':
             t = proxyTransport.FrontendSSHTransport()
         else:
