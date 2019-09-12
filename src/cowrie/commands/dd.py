@@ -7,6 +7,8 @@ dd commands
 
 from __future__ import absolute_import, division
 
+import re
+
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
@@ -51,7 +53,7 @@ class command_dd(HoneyPotCommand):
 
                 if bSuccess:
                     if 'bs' in self.ddargs:
-                        block = int(self.ddargs['bs'])
+                        block = parse_size(self.ddargs['bs'])
                         if block <= 0:
                             self.errorWrite('dd: invalid number \'{}\'\n'.format(block))
                             bSuccess = False
@@ -96,6 +98,42 @@ class command_dd(HoneyPotCommand):
 
     def handle_CTRL_D(self):
         self.exit()
+
+
+def parse_size(param):
+    """
+    Parse dd arguments that indicate block sizes
+    Return 0 in case of illegal input
+    """
+    pattern = r'^(\d+)(c|w|b|kB|K|MB|M|xM|GB|G|T|TB|P|PB|E|EB|Z|ZB|Y|YB)$'
+    z = re.search(pattern, param)
+    if not z:
+        return 0
+    digits = int(z.group(0))
+    letters = z.group(1)
+
+    if letters == 'c':
+        multiplier = 1
+    elif letters == 'w':
+        multiplier = 2
+    elif letters == 'b':
+        multiplier = 512
+    elif letters == 'kB':
+        multiplier = 1000
+    elif letters == 'K':
+        multiplier = 1024
+    elif letters == 'MB':
+        multiplier = 1000*1000
+    elif letters == 'M' or letters == 'xM':
+        multiplier = 1024*1024
+    elif letters == 'GB':
+        multiplier = 1000*1000*1000
+    elif letters == 'G':
+        multiplier = 1024*1024*1024
+    else:
+        multiplier = 1
+
+    return digits * multiplier
 
 
 commands['/bin/dd'] = command_dd
