@@ -27,9 +27,6 @@ class HoneyPotTelnetFactory(protocol.ServerFactory, object):
     """
     tac = None
 
-    # used to kill server instances of the protocol on tests
-    running = []
-
     def __init__(self, backend, pool_handler):
         self.backend = backend
         self.pool_handler = pool_handler
@@ -76,8 +73,5 @@ class HoneyPotTelnetFactory(protocol.ServerFactory, object):
         """
         p = self.protocol()
         p.factory = self
-
-        # for testing purposes
-        self.running.append(p)
 
         return p

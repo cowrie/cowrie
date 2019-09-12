@@ -39,9 +39,6 @@ class CowrieSSHFactory(factory.SSHFactory, object):
     ourVersionString = CowrieConfig().get('ssh', 'version',
                                           fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
 
-    # used to kill server instances of the protocol on tests
-    running = []
-
     def __init__(self, backend, pool_handler):
         self.pool_handler = pool_handler
         self.backend = backend
@@ -161,8 +158,5 @@ class CowrieSSHFactory(factory.SSHFactory, object):
         t.supportedPublicKeys = [b'ssh-rsa', b'ssh-dss']
 
         t.factory = self
-
-        # for testing purposes
-        self.running.append(t)
 
         return t
