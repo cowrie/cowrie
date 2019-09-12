@@ -7,6 +7,9 @@ This module contains ...
 
 from __future__ import absolute_import, division
 
+import gc
+import objgraph
+import random
 import time
 from configparser import NoOptionError
 
@@ -38,9 +41,6 @@ class CowrieSSHFactory(factory.SSHFactory, object):
     tac = None  # gets set later
     ourVersionString = CowrieConfig().get('ssh', 'version',
                                           fallback='SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2')
-
-    # used to kill server instances of the protocol on tests
-    running = []
 
     def __init__(self, backend, pool_handler):
         self.pool_handler = pool_handler
@@ -102,6 +102,26 @@ class CowrieSSHFactory(factory.SSHFactory, object):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
+        print(gc.get_stats())
+        objgraph.show_most_common_types(limit=100)
+        cfs = objgraph.by_type('HoneyPotSSHTransport')
+        if cfs:
+            me = random.choice(cfs)
+            del cfs
+            objgraph.show_backrefs(me, filename='HoneypotSSHTransport.png')
+        cfs = objgraph.by_type('CowrieSSHConnection')
+        if cfs:
+            objgraph.show_backrefs(random.choice(cfs), filename='CowrieSSHConnection.png')
+        del cfs
+        cfs = objgraph.by_type('CowrieUser')
+        if cfs:
+            objgraph.show_backrefs(random.choice(cfs), filename='CowrieUser.png')
+        del cfs
+        cfs = objgraph.by_type('HoneyPotFilesystem')
+        if cfs:
+            objgraph.show_backrefs(random.choice(cfs), filename='HoneyPotFilesystem.png')
+        del cfs
+
         if self.backend == 'proxy':
             t = proxyTransport.FrontendSSHTransport()
         else:
@@ -161,8 +181,5 @@ class CowrieSSHFactory(factory.SSHFactory, object):
         t.supportedPublicKeys = [b'ssh-rsa', b'ssh-dss']
 
         t.factory = self
-
-        # for testing purposes
-        self.running.append(t)
 
         return t
