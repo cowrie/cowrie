@@ -15,7 +15,12 @@ jobs:
       - run:
           command: |
             sudo apt-get -y update
-            sudo apt-get -y install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
+            sudo apt-get -y install \
+              -o APT::Install-Suggests=false \
+              -o APT::Install-Recommends=false \
+              qemu qemu-system-arm qemu-system-x86 \
+              libvirt-dev libvirt-daemon libvirt-daemon-system \
+              libvirt-clients nmap
             virtualenv cowrie-env
             . cowrie-env/bin/activate
             pip install libvirt-python==5.5.0
