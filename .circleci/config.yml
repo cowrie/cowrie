@@ -38,4 +38,4 @@ jobs:
   test-3.8-rc-buster:
     <<: *test-template
     docker:
-      - image: circleci/python:2.8-rc-buster
+      - image: circleci/python:3.8-rc-buster
