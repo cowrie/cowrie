@@ -1,6 +1,6 @@
 sudo: required
 group: stable
-dist: xenial
+dist: bionic
 os: linux
 language: python
 services:
