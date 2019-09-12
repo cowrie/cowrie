@@ -13,8 +13,8 @@ python:
   - '3.7-dev'
   - '3.8-dev'
   - 'nightly'
-  - 'pypy'
-  - 'pypy3'
+  - 'pypy-dev'
+  - 'pypy3-dev'
 install:
   - sudo apt-get -y install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
   - pip install -r requirements.txt
