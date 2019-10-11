@@ -50,7 +50,7 @@ It's strongly recommended to run with a dedicated non-root user id::
     $ sudo su - cowrie
 
 Step 3: Checkout the code
-*****************************
+*************************
 
 Check out the code::
 
@@ -65,8 +65,8 @@ Check out the code::
 
     $ cd cowrie
 
-## Step 4: Setup Virtual Environment
-************************************
+Step 4: Setup Virtual Environment
+*********************************
 
 Next you need to create your virtual environment::
 
