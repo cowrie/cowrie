@@ -104,6 +104,11 @@ if __name__ == '__main__':
         print('Error: %s\n' % error)
         help()
 
+    options = [x[0] for x in optlist]
+    if '-b' in options and '-i' in options:
+        print("Error: -i and -b cannot be used together. Please select only one flag")
+        sys.exit(1)
+
     for o, a in optlist:
         if o == '-f':
             settings['tail'] = 1
