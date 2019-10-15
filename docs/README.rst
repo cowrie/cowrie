@@ -69,7 +69,7 @@ Requirements
 
 Software required:
 
-* Python 3.5+ (Python 2.7 supported for now but we recommend to upgrade)
+* Python 3.5+ (Python 2.7 support will be deprecated end of 2019)
 * python-virtualenv
 
 For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.
