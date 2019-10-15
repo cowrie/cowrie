@@ -62,6 +62,7 @@ setup(
         'elasticsearch': ['pyes'],
         'mysql': ['mysqlclient'],
         'mongodb': ['pymongo'],
+        'pymapd': ['pymapd'],
         'rethinkdblog': ['rethinkdb'],
         's3': ['botocore'],
         'slack': ['slackclient'],

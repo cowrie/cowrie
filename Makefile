@@ -16,7 +16,7 @@ lint:
 	tox -e lint
 
 clean:
-	rm -rf _trial_temp build dist
+	rm -rf _trial_temp build dist .pytest_cache
 
 pip-upgrade:
 	pip install --upgrade -r requirements.txt
