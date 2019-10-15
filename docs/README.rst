@@ -29,7 +29,7 @@ The Documentation can be found `here <https://cowrie.readthedocs.io/en/latest/in
 Slack
 *****************************************
 
-You can join the Cowrie community at the following `Slack workspace <http://bit.ly/cowrieslack>`_.
+You can join the Cowrie community at the following `Slack workspace <https://cowrie.org/slack/>`_.
 
 Features
 *****************************************
