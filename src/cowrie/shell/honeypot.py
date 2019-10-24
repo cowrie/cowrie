@@ -42,23 +42,40 @@ class HoneyPotShell(object):
         self.lexer.wordchars += '@%{}=$:+^,()'
         tokens = []
         parc_tokens = []  # stack of parcial command substitution tokens
-        last_token = False  # control the command substitution tokens processing
+        subshell_tokens = []  # stack of subshell tokens
+        last_parc_token = False  # control the command substitution tokens processing
+        last_subshell_token = False  # control the subshell token processing
         while True:
             try:
-                if not last_token:
+                if not last_parc_token:
                     # if we are processing the command substitution dont read token
                     tok = self.lexer.get_token()
                     # log.msg("tok: %s" % (repr(tok)))
+
+                if len(subshell_tokens):
+                    if tok:
+                        if tok.endswith(')'):
+                            subshell_tokens.append(tok[:-1])
+                            last_subshell_token = True
+                        else:
+                            subshell_tokens.append(tok)
+
+                    if not tok or last_subshell_token:
+                        cmds = " ".join(subshell_tokens)
+                        self.cmdpending.append((subshell_tokens))
+                        last_subshell_token = False
+                        subshell_tokens = []
+                    continue
 
                 if len(parc_tokens):
                     if tok:
                         if tok.endswith(')'):
                             parc_tokens.append(tok[:-1])
-                            last_token = True
+                            last_parc_token = True
                         else:
                             parc_tokens.append(tok)
 
-                    if not tok or last_token:
+                    if not tok or last_parc_token:
                         cmds = " ".join(parc_tokens)
                         # instantiate new shell with redirect output
                         self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
@@ -67,7 +84,7 @@ class HoneyPotShell(object):
                         # remove the shell
                         result = self.protocol.cmdstack.pop()
                         tokens.append(result.protocol.pp.redirected_data.decode()[:-1])
-                        last_token = False
+                        last_parc_token = False
                         parc_tokens = []
 
                     continue
@@ -108,6 +125,14 @@ class HoneyPotShell(object):
                         break
                 elif tok == '$?':
                     tok = "0"
+
+                elif tok[0] == '(':
+                    subshell_tokens.append(tok[1:])
+                    if tok[-1] == ')':
+                        last_parc_token = True
+                        tok = None
+                    continue
+
                 elif tok[0] == '$':
                     envRex = re.compile(r'^\$\(([_a-zA-Z0-9]+)*')
                     envSearch = envRex.search(tok)
@@ -115,7 +140,7 @@ class HoneyPotShell(object):
                         envMatch = envSearch.group(1)
                         parc_tokens.append(envMatch)
                         if tok[-1] == ')':
-                            last_token = True
+                            last_parc_token = True
                             tok = None
                         continue
                     envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
