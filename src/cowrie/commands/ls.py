@@ -112,9 +112,17 @@ class command_ls(HoneyPotCommand):
     def do_ls_l(self, path):
         files = self.get_dir_files(path)
 
-        largest = 0
+        filesize_str_extent = 0
         if len(files):
-            largest = max([x[fs.A_SIZE] for x in files])
+            filesize_str_extent = max([len(str(x[fs.A_SIZE])) for x in files])
+
+        user_name_str_extent = 0
+        if len(files):
+            user_name_str_extent = max([len(self.uid2name(x[fs.A_UID])) for x in files])
+
+        group_name_str_extent = 0
+        if len(files):
+            group_name_str_extent = max([len(self.gid2name(x[fs.A_GID])) for x in files])
 
         for file in files:
             if file[fs.A_NAME].startswith('.') and not self.showHidden:
@@ -167,9 +175,9 @@ class command_ls(HoneyPotCommand):
 
             line = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
-                 self.uid2name(file[fs.A_UID]),
-                 self.gid2name(file[fs.A_GID]),
-                 str(file[fs.A_SIZE]).rjust(len(str(largest))),
+                 self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent),
+                 self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent),
+                 str(file[fs.A_SIZE]).rjust(filesize_str_extent),
                  time.strftime('%Y-%m-%d %H:%M', ctime),
                  file[fs.A_NAME],
                  linktarget)
