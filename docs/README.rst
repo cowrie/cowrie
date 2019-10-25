@@ -14,10 +14,12 @@ Honeypot effort.
 What is Cowrie
 *****************************************
 
-Cowrie is a medium interaction SSH and Telnet honeypot designed to
-log brute force attacks and the shell interaction performed by the
-attacker. Cowrie also functions as an SSH and telnet proxy to observe
-attacker behavior to another system.
+Cowrie is a medium to high interaction SSH and Telnet honeypot
+designed to log brute force attacks and the shell interaction
+performed by the attacker. In medium interaction mode (shell) it
+emulates a UNIX system in Python, in high interaction mode (proxy)
+it functions as an SSH and telnet proxy to observe attacker behavior
+to another system.
 
 `Cowrie <http://github.com/cowrie/cowrie/>`_ is maintained by Michel Oosterhof.
 
@@ -40,6 +42,8 @@ Features
    * Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
 
 * Or proxy SSH and telnet to another system
+   * Run as a pure telnet and ssh proxy with monitoring
+   * Or let Cowrie manage a pool of Qemu emualted servers to provide the systems to login to
 
 For both settings:
 
