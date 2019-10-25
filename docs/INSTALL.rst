@@ -2,6 +2,9 @@
 Installing Cowrie in seven steps.
 #################################
 
+This guide describes how to install Cowrie in `shell` mode. For `proxy` mode
+read `PROXY.rst`.
+
 * [Step 1: Install dependencies](#step-1-install-dependencies)
 * [Step 2: Create a user account](#step-2-create-a-user-account)
 * [Step 3: Checkout the code](#step-3-checkout-the-code)
