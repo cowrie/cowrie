@@ -31,7 +31,7 @@ from __future__ import absolute_import, division
 import json
 import time
 
-from slackclient import SlackClient
+from slack import SlackClient
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
