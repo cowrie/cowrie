@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division
 
+from datetime import datetime as dt
 import os
 import socket
 import sys
@@ -277,7 +278,10 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
     def displayMOTD(self):
         try:
-            self.terminal.write(self.fs.file_contents('/etc/motd'))
+            motd_contents = self.fs.file_contents('/etc/motd').decode()
+            motd_contents = motd_contents.replace('{{date}}',
+                                                  dt.strftime(dt.now().astimezone(), "%a %b %m %H:%M:%S %Z %Y"))
+            self.terminal.write(motd_contents.encode())
         except Exception:
             pass
 
