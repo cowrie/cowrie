@@ -309,23 +309,22 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   shasum=shasum,
                                   destfile=self.safeoutfile)
 
-        # Link friendly name to hash
-        # os.symlink(shasum, self.safeoutfile)
-
-        # FIXME: is this necessary?
-        # self.safeoutfile = hashPath
-
-        # Update the honeyfs to point to downloaded file
-        self.fs.update_realfile(self.fs.getfile(outfile), hashPath)
-        self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+        # Update the honeyfs to point to downloaded file if output is a file
+        if outfile:
+            self.fs.update_realfile(self.fs.getfile(outfile), hashPath)
+            self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+        else:
+            with open(hashPath, 'rb') as f:
+                self.writeBytes(f.read())
 
         self.exit()
 
     def error(self, error, url):
 
+        log.msg(error.printTraceback())
         if hasattr(error, 'getErrorMessage'):  # Exceptions
-            error = error.getErrorMessage()
-        self.write(error)
+            errormsg = error.getErrorMessage()
+        log.msg(errormsg)
         self.write('\n')
         self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
                                   format='Attempt to download file(s) from URL (%(url)s) failed',
