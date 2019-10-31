@@ -99,11 +99,6 @@ Data Sharing
 *****************************************
 Cowrie will by default upload data on crashes and Python exceptions to api.cowrie.org. This information is used to improve the honeypot and is not shared with third parties. It can be disabled by setting `enabled=false` in `[output_crashreporter]`.
 
-I have some questions!
-*****************************************
-
-Please visit the `Slack workspace <http://bit.ly/cowrieslack>`_ and join the #questions channel.
-
 Contributors
 ***************
 
