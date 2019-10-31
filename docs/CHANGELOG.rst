@@ -1,5 +1,16 @@
 
+
+* 2019-10-31 Fix for exec commands when tty logging is disabled
+* 2019-10-31 Fix for print output to stdout for curl/wget
+* 2019-10-31 Fix for SQL to store full hostname (don't forget to update the database schema)
+* 2019-10-15 Slack link now at https://cowrie.org/slack
+* 2019-10-04 Subshell ((echo test)) evaluation now working
+
+Release 2.0.0
+=============
+
 * 2019-09-06 Crash reporter is enabled by default and will upload data on crashes to api.cowrie.org. This can be disabled in by setting `enabled=false` in `[output_crashreporter]`
+* 2019-09-05 Proxy functionality now active by @sgtpepperpt and GSoC2019
 * 2019-06-20 Move `auth_none` and `auth_keyboard_interactive_enabled` to [ssh] config section
 
 Release 1.6.0
