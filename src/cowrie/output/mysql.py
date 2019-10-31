@@ -62,6 +62,7 @@ class Output(cowrie.core.output.Output):
                 cp_min=1,
                 cp_max=1,
                 charset='utf8mb4',
+                cp_reconnect=True,
                 use_unicode=True
             )
         except MySQLdb.Error as e:
