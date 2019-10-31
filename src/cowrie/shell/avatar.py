@@ -4,8 +4,10 @@
 from __future__ import absolute_import, division
 
 from twisted.conch import avatar
+from twisted.conch.error import ConchError
 from twisted.conch.interfaces import IConchUser, ISFTPServer, ISession
 from twisted.conch.ssh import filetransfer as conchfiletransfer
+from twisted.conch.ssh.connection import OPEN_UNKNOWN_CHANNEL_TYPE
 from twisted.python import components, log
 
 from zope.interface import implementer
@@ -49,6 +51,18 @@ class CowrieUser(avatar.ConchUser):
 
     def logout(self):
         log.msg("avatar {} logging out".format(self.username))
+
+    def lookupChannel(self, channelType, windowSize, maxPacket, data):
+        """
+        Override this to get more info on the unknown channel
+        """
+        klass = self.channelLookup.get(channelType, None)
+        if not klass:
+            raise ConchError(OPEN_UNKNOWN_CHANNEL_TYPE, "unknown channel: {}".format(channelType))
+        else:
+            return klass(remoteWindow=windowSize,
+                         remoteMaxPacket=maxPacket,
+                         data=data, avatar=self)
 
 
 components.registerAdapter(filetransfer.SFTPServerForCowrieUser, CowrieUser, ISFTPServer)
