@@ -416,9 +416,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.curl.fs.update_realfile(
                 self.curl.fs.getfile(self.fakeoutfile),
                 self.curl.safeoutfile)
-        else:
-            with open(self.curl.safeoutfile, 'r') as f:
-                self.curl.write(f.read())
 
         self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)

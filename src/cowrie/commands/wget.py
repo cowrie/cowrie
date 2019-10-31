@@ -196,7 +196,7 @@ class command_wget(HoneyPotCommand):
             self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
         else:
             with open(self.artifactFile.shasumFilename, 'rb') as f:
-                self.write(f.read())
+                self.writeBytes(f.read())
 
         self.exit()
 
