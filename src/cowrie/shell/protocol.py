@@ -4,12 +4,12 @@
 
 from __future__ import absolute_import, division
 
-from datetime import datetime as dt
 import os
 import socket
 import sys
 import time
 import traceback
+from datetime import datetime as dt
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
@@ -19,8 +19,7 @@ from twisted.python import failure, log
 
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import command
-from cowrie.shell import honeypot
+from cowrie.shell import command, honeypot
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
