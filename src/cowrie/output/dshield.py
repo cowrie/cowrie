@@ -119,29 +119,28 @@ class Output(cowrie.core.output.Output):
                 sha1_regex = re.compile(r'<sha1checksum>([^<]+)<\/sha1checksum>')
                 sha1_match = sha1_regex.search(response)
                 if sha1_match is None:
-                    log.err('dshield: ERROR: Could not find sha1checksum in response')
-                    log.err('dshield: ERROR: Response: {0}'.format(repr(response)))
+                    log.msg('dshield: ERROR: Could not find sha1checksum in response: {0}'.format(repr(response)))
                     failed = True
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output.encode('utf8'))
                 if sha1_match.group(1) != sha1_local.hexdigest():
-                    log.err(
+                    log.msg(
                         'dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
                     failed = True
                 md5_regex = re.compile(r'<md5checksum>([^<]+)<\/md5checksum>')
                 md5_match = md5_regex.search(response)
                 if md5_match is None:
-                    log.err('dshield: ERROR: Could not find md5checksum in response')
+                    log.msg('dshield: ERROR: Could not find md5checksum in response')
                     failed = True
                 md5_local = hashlib.md5()
                 md5_local.update(log_output.encode('utf8'))
                 if md5_match.group(1) != md5_local.hexdigest():
-                    log.err('dshield: ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
+                    log.msg('dshield: ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
                     failed = True
                 log.msg('dshield: SUCCESS: Sent {0} bytes worth of data to secure.dshield.org'.format(len(log_output)))
             else:
-                log.err('dshield ERROR: error {0}.'.format(resp.status_code))
-                log.err('dshield response was {0}'.format(response))
+                log.msg('dshield ERROR: error {0}.'.format(resp.status_code))
+                log.msg('dshield response was {0}'.format(response))
                 failed = True
 
             if failed:
