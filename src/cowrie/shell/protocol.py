@@ -234,14 +234,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID
 
-    def eofReceived(self):
-        """
-        Received EOF, run command to finish and then exit
-        """
-        log.msg("received eof, sending ctrl-d to command")
-        if len(self.cmdstack):
-            self.cmdstack[-1].handle_CTRL_D()
-
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
 
