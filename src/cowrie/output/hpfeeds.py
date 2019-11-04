@@ -205,7 +205,8 @@ class hpclient(object):
                     chan, data = strunpack8(data)
                     if self.debug:
                         log.msg(
-                            'hpfeeds: publish to {0} by {1}: {2}'.format(chan, ident, ''.join('{:02x}'.format(x) for x in data)))
+                            'hpfeeds: publish to {0} by {1}: {2}'.format(
+                                chan, ident, ''.join('{:02x}'.format(x) for x in data)))
                 elif opcode == OP_ERROR:
                     log.msg('hpfeeds: errormessage from server: {0}'.format(''.join('{:02x}'.format(x) for x in data)))
                 else:
