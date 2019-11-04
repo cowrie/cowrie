@@ -22,12 +22,12 @@ class Output(cowrie.core.output.Output):
         try:
             self.client = InfluxDBClient(host=host, port=port, ssl=ssl, verify_ssl=ssl)
         except InfluxDBClientError as e:
-            log.err("output_influx: I/O error({0}): '{1}'".format(
+            log.msg("output_influx: I/O error({0}): '{1}'".format(
                 e.errno, e.strerror))
             return
 
         if self.client is None:
-            log.err("output_influx: cannot instantiate client!")
+            log.msg("output_influx: cannot instantiate client!")
             return
 
         if (CowrieConfig().has_option('output_influx', 'username') and
@@ -50,7 +50,7 @@ class Output(cowrie.core.output.Output):
 
             match = re.search(r'^\d+[dhmw]{1}$', retention_policy_duration)
             if not match:
-                log.err(("output_influx: invalid retention policy."
+                log.msg(("output_influx: invalid retention policy."
                          "Using default '{}'..").format(
                     retention_policy_duration))
                 retention_policy_duration = retention_policy_duration_default
@@ -86,7 +86,7 @@ class Output(cowrie.core.output.Output):
 
     def write(self, entry):
         if self.client is None:
-            log.err("output_influx: client object is not instantiated")
+            log.msg("output_influx: client object is not instantiated")
             return
 
         # event id
@@ -184,7 +184,7 @@ class Output(cowrie.core.output.Output):
             # are not implemented
         else:
             # other events should be handled
-            log.err(
+            log.msg(
                 "output_influx: event '{}' not handled. Skipping..".format(
                     eventid))
             return
@@ -192,5 +192,5 @@ class Output(cowrie.core.output.Output):
         result = self.client.write_points([m])
 
         if not result:
-            log.err("output_influx: error when writing '{}' measurement"
+            log.msg("output_influx: error when writing '{}' measurement"
                     "in the db.".format(eventid))
