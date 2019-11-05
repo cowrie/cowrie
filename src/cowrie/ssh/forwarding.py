@@ -116,8 +116,8 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         Modifies the original to send a TCP tunnel request via the CONNECT method
         """
         forwarding.SSHConnectForwardingChannel.channelOpen(self, specificData)
-        dst = self.dstport[0] + b':' + str(self.dstport[1])
-        connect_hdr = b'CONNECT ' + dst + b" HTTP/1.1\r\n\r\n"
+        dst = self.dstport[0] + ':' + str(self.dstport[1])
+        connect_hdr = b'CONNECT ' + dst.encode('ascii') + b' HTTP/1.1\r\n\r\n'
         forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
 
     def dataReceived(self, data):
@@ -128,20 +128,20 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
     def write(self, data):
         """
-        Modifies the original to stip off the TCP tunnel response
+        Modifies the original to strip off the TCP tunnel response
         """
         if not self.tunnel_established and data[:4].lower() == b'http':
             # Check proxy response code
             try:
-                res_code = int(data.split(' ')[1], 10)
+                res_code = int(data.split(b' ')[1], 10)
             except ValueError:
-                log.err('Failed to parse TCP tunnel response code')
+                log.err("Failed to parse TCP tunnel response code")
                 self._close("Connection refused")
             if res_code != 200:
-                log.err('Unexpected response code: {}'.format(res_code))
+                log.err("Unexpected response code: {}".format(res_code))
                 self._close("Connection refused")
             # Strip off rest of packet
-            eop = data.find("\r\n\r\n")
+            eop = data.find(b'\r\n\r\n')
             if eop > -1:
                 data = data[eop + 4:]
             # This only happens once when the channel is opened

@@ -220,7 +220,11 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Before this, execcmd is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        self.execcmd = execcmd.decode('utf8')
+        try:
+            self.execcmd = execcmd.decode('utf8')
+        except UnicodeDecodeError:
+            log.err("Unusual execcmd: {}".format(repr(execcmd)))
+
         HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self):

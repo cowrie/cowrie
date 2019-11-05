@@ -88,6 +88,8 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_normal(self, path):
         files = self.get_dir_files(path)
+        if not files:
+            return
 
         line = [x[fs.A_NAME] for x in files]
         if not line:
@@ -111,6 +113,8 @@ class command_ls(HoneyPotCommand):
 
     def do_ls_l(self, path):
         files = self.get_dir_files(path)
+        if not files:
+            return
 
         filesize_str_extent = 0
         if len(files):
