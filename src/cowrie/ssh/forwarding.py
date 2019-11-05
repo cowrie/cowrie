@@ -116,8 +116,8 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         Modifies the original to send a TCP tunnel request via the CONNECT method
         """
         forwarding.SSHConnectForwardingChannel.channelOpen(self, specificData)
-        dst = self.dstport[0] + b':' + str(self.dstport[1])
-        connect_hdr = b'CONNECT ' + dst + b" HTTP/1.1\r\n\r\n"
+        dst = self.dstport[0] + ':' + str(self.dstport[1])
+        connect_hdr = b'CONNECT ' + dst.encode('ascii') + b' HTTP/1.1\r\n\r\n'
         forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
 
     def dataReceived(self, data):
