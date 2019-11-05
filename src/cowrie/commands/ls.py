@@ -7,7 +7,6 @@ import getopt
 import os.path
 import stat
 import time
-from twisted.python import log
 
 import cowrie.shell.fs as fs
 from cowrie.shell.command import HoneyPotCommand
@@ -36,8 +35,6 @@ class command_ls(HoneyPotCommand):
         self.showHidden = False
         self.showDirectories = False
         func = self.do_ls_normal
-
-        log.err ("ls sample error")
 
         # Parse options or display no files
         try:
