@@ -6,8 +6,6 @@ try:
     from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
 except ImportError:
     from tftpy import TftpPacketDAT, TftpPacketOACK
-finally:
-    raise
 
 from twisted.python import log
 
