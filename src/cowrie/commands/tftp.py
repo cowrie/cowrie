@@ -2,6 +2,11 @@ from __future__ import absolute_import, division
 
 import tftpy
 
+try:
+    from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
+except ImportError:
+    from tftpy import TftpPacketDAT, TftpPacketOACK
+
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact
@@ -19,10 +24,10 @@ class Progress(object):
         self.out = protocol
 
     def progresshook(self, pkt):
-        if isinstance(pkt, tftpy.TftpPacketDAT):
+        if isinstance(pkt, TftpPacketDAT):
             self.progress += len(pkt.data)
             self.out.write("Transferred %d bytes" % self.progress + "\n")
-        elif isinstance(pkt, tftpy.TftpPacketOACK):
+        elif isinstance(pkt, TftpPacketOACK):
             self.out.write("Received OACK, options are: %s" % pkt.options + "\n")
 
 
