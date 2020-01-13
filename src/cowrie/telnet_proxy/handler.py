@@ -179,7 +179,7 @@ class TelnetHandler:
             # check if a command has terminated
             if b'\r' in data:
                 if len(self.currentCommand) > 0:
-                    log.msg('CMD: {0}'.format(self.currentCommand))
+                    log.msg(eventid='cowrie.command.input', input=self.currentCommand, format='CMD: %(input)s')
                 self.currentCommand = b''
 
         # send data after processing (also check if processing did not reduce it to an empty string)

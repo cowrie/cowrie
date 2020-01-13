@@ -522,7 +522,7 @@ dsa_private_key = ${honeypot:state_path}/ssh_host_dsa_key
 # SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 # SSH-2.0-OpenSSH_5.9
 #
-# (default: "SSH-2.0-SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
+# (default: "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
 version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
 
 # Cipher encryption algorithms to be used.
