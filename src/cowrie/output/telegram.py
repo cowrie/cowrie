@@ -2,9 +2,7 @@
 
 from __future__ import absolute_import, division
 
-#import urllib3
 import treq
-#import certifi
 from twisted.internet import defer, error
 from twisted.python import log
 
