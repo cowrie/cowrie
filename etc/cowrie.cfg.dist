@@ -963,3 +963,9 @@ topic = cowrie
 [output_crashreporter]
 enabled = true
 debug = false
+
+
+[output_telegram]
+enabled = true
+bot_id = 123456789:AbCDEfGhiJkLmnOpQRstUVWxYZ
+chat_id = 987654321
