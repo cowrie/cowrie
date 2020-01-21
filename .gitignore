@@ -11,6 +11,7 @@ dist/
 docs/_build
 build/
 log/
+.eggs/
 __pycache__/
 *.py[cod]
 *env/
