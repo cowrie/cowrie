@@ -3,9 +3,9 @@ cryptography==2.8
 configparser==4.0.2
 pyopenssl==19.1.0
 pyparsing==2.4.6
-packaging==19.2
+packaging==20.0
 appdirs==1.4.3
-pyasn1_modules==0.2.7
+pyasn1_modules==0.2.8
 attrs==19.3.0
 service_identity==18.1.0
 python-dateutil==2.8.1
