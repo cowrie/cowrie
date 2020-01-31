@@ -39,8 +39,8 @@ class Output(cowrie.core.output.Output):
         self.client = self.session.create_client(
             's3',
             region_name=CowrieConfig().get("output_s3", "region"),
-            endpoint_url=CowrieConfig().get("output_s3", "endpoint") or None,
-            verify=False if CowrieConfig().get("output_s3", "verify") == "no" else True,
+            endpoint_url=CowrieConfig().get("output_s3", "endpoint", fallback=None),
+            verify=CowrieConfig().getboolean("output_s3", "verify", fallback=True)
         )
 
     def stop(self):
