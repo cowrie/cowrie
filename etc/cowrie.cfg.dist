@@ -961,5 +961,5 @@ topic = cowrie
 # The crashreporter sends data on Python exceptions to api.cowrie.org
 # To disable set `enabled = false` in cowrie.cfg
 [output_crashreporter]
-enabled = true
+enabled = false
 debug = false
