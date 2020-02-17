@@ -825,9 +825,12 @@ epoch_timestamp = false
 #source = cowrie
 
 
-# HPFeeds
+# HPFeeds3
+# This sends data to hpfeeds: https://github.com/hpfeeds/hpfeeds
+# HPFeeds3 is the current Python3 version. There is an older
+# output plugin called `hpfeeds` which is no longer supported.
 #
-#[output_hpfeeds]
+#[output_hpfeeds3]
 #enabled = false
 #server = hpfeeds.mysite.org
 #port = 10000

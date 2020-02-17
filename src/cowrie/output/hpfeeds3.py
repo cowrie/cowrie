@@ -24,8 +24,6 @@ class Output(cowrie.core.output.Output):
     channel = 'cowrie.sessions'
 
     def start(self):
-        log.msg("WARNING: Beta version of new hpfeeds enabled. This will become hpfeeds in a future release.")
-
         if CowrieConfig().has_option('output_hpfeeds', 'channel'):
             self.channel = CowrieConfig().get('output_hpfeeds', 'channel')
 

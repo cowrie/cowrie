@@ -256,7 +256,7 @@ class Output(cowrie.core.output.Output):
     Output plugin for HPFeeds
     """
     def start(self):
-        log.msg("Early version of hpfeeds-output, untested!")
+        log.msg("This version of hpfeeds is no longer supported, use hpfeeds3 instead")
         server = CowrieConfig().get('output_hpfeeds', 'server')
         port = CowrieConfig().getint('output_hpfeeds', 'port')
         ident = CowrieConfig().get('output_hpfeeds', 'identifier')
