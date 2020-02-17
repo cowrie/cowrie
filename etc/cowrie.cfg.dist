@@ -836,6 +836,17 @@ epoch_timestamp = false
 #debug=false
 
 
+# HPFeeds3
+# Python3 implementation of HPFeeds
+#[output_hpfeeds3]
+#enabled = false
+#server = hpfeeds.mysite.org
+#port = 10000
+#identifier = abc123
+#secret = secret
+#debug=false
+
+
 # VirusTotal output module
 # You must signup for an api key.
 #
