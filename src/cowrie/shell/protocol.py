@@ -167,7 +167,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if path in self.commands:
             return self.commands[path]
 
-        log.msg("Can't find command {}".format(path))
+        log.msg("Can't find command {}".format(cmd))
         return None
 
     def lineReceived(self, line):
@@ -220,7 +220,11 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Before this, execcmd is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        self.execcmd = execcmd.decode('utf8')
+        try:
+            self.execcmd = execcmd.decode('utf8')
+        except UnicodeDecodeError:
+            log.err("Unusual execcmd: {}".format(repr(execcmd)))
+
         HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self):
@@ -233,14 +237,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID
-
-    def eofReceived(self):
-        """
-        Received EOF, run command to finish and then exit
-        """
-        log.msg("received eof, sending ctrl-d to command")
-        if len(self.cmdstack):
-            self.cmdstack[-1].handle_CTRL_D()
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):

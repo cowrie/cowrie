@@ -66,7 +66,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.type == 'e':
             cmd = self.terminalProtocol.execcmd.encode('utf8')
-            ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
+            if self.ttylogEnabled:
+                ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
 
     def write(self, data):
         if self.ttylogEnabled and self.ttylogOpen:

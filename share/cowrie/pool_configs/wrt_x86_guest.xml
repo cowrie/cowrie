@@ -1,0 +1,81 @@
+<!-- Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com> -->
+<domain type='qemu' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+    <name>{guest_name}</name>
+    <memory unit='KiB'>2097152</memory>
+    <os>
+        <type arch='x86_64' machine='{qemu_machine}'>hvm</type>
+        <boot dev='hd'/>
+    </os>
+    <features>
+        <acpi/>
+        <apic/>
+        <vmport state='off'/>
+    </features>
+    <clock offset='utc'>
+        <timer name='rtc' tickpolicy='catchup'/>
+        <timer name='pit' tickpolicy='delay'/>
+        <timer name='hpet' present='no'/>
+    </clock>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <pm>
+        <suspend-to-mem enabled='no'/>
+        <suspend-to-disk enabled='no'/>
+    </pm>
+    <devices>
+        <emulator>/usr/bin/qemu-system-x86_64</emulator>
+
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='qcow2'/>
+            <source file='{disk_image}'/>
+            <target dev='hda' bus='virtio'/>
+        </disk>
+
+
+        <interface type='network'>
+            <start mode='onboot'/>
+            <mac address='{mac_address}'/>
+            <source network='{network_name}'/>
+            <model type='virtio-net-pci'/>
+<!--            <filterref filter='cowrie-default-filter'/>-->
+        </interface>
+
+        <interface type='network'>
+            <mac address='52:54:00:74:3c:d1'/>
+            <source network='default'/>
+            <model type='e1000'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+        </interface>
+
+        <serial type='pty'>
+            <target type='isa-serial' port='0'>
+                <model name='isa-serial'/>
+            </target>
+        </serial>
+        <console type='pty'>
+            <target type='serial' port='0'/>
+        </console>
+            <input type='tablet' bus='usb'>
+            <address type='usb' bus='0' port='1'/>
+        </input>
+        <input type='mouse' bus='ps2'/>
+        <input type='keyboard' bus='ps2'/>
+
+        <video>
+            <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+        </video>
+
+    </devices>
+    <qemu:commandline>
+<!--        <qemu:arg value='-netdev'/>-->
+<!--        <qemu:arg value='bridge,br=virbr0,id=hn0'/>-->
+<!--        <qemu:arg value='-device'/>-->
+<!--        <qemu:arg value='e1000,netdev=hn0,id=nic1'/>-->
+        <qemu:arg value='-netdev'/>
+        <qemu:arg value='user,id=hn1'/>
+        <qemu:arg value='-device'/>
+        <qemu:arg value='e1000,netdev=hn1,id=nic2'/>
+    </qemu:commandline>
+</domain>

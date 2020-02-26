@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division
 
 import getopt
+import os.path
 import stat
 import time
 
@@ -61,7 +62,7 @@ class command_ls(HoneyPotCommand):
             for path in paths:
                 func(path)
 
-    def do_ls_normal(self, path):
+    def get_dir_files(self, path):
         try:
             if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
@@ -69,8 +70,9 @@ class command_ls(HoneyPotCommand):
                     dot = self.protocol.fs.getfile(path)[:]
                     dot[fs.A_NAME] = '.'
                     files.append(dot)
-                    # FIXME: should grab dotdot off the parent instead
-                    dotdot = self.protocol.fs.getfile(path)[:]
+                    dotdot = self.protocol.fs.getfile(os.path.split(path)[0])[:]
+                    if not dotdot:
+                        dotdot = self.protocol.fs.getfile(path)[:]
                     dotdot[fs.A_NAME] = '..'
                     files.append(dotdot)
                 else:
@@ -81,6 +83,12 @@ class command_ls(HoneyPotCommand):
         except Exception:
             self.write(
                 'ls: cannot access %s: No such file or directory\n' % (path,))
+            return
+        return files
+
+    def do_ls_normal(self, path):
+        files = self.get_dir_files(path)
+        if not files:
             return
 
         line = [x[fs.A_NAME] for x in files]
@@ -104,30 +112,21 @@ class command_ls(HoneyPotCommand):
         self.write('\n')
 
     def do_ls_l(self, path):
-        try:
-            if self.protocol.fs.isdir(path) and not self.showDirectories:
-                files = self.protocol.fs.get_path(path)[:]
-                if self.showHidden:
-                    dot = self.protocol.fs.getfile(path)[:]
-                    dot[fs.A_NAME] = '.'
-                    files.append(dot)
-                    # FIXME: should grab dotdot off the parent instead
-                    dotdot = self.protocol.fs.getfile(path)[:]
-                    dotdot[fs.A_NAME] = '..'
-                    files.append(dotdot)
-                else:
-                    files = [x for x in files if not x[fs.A_NAME].startswith('.')]
-                files.sort()
-            else:
-                files = (self.protocol.fs.getfile(path)[:],)
-        except Exception:
-            self.write(
-                'ls: cannot access %s: No such file or directory\n' % (path,))
+        files = self.get_dir_files(path)
+        if not files:
             return
 
-        largest = 0
+        filesize_str_extent = 0
         if len(files):
-            largest = max([x[fs.A_SIZE] for x in files])
+            filesize_str_extent = max([len(str(x[fs.A_SIZE])) for x in files])
+
+        user_name_str_extent = 0
+        if len(files):
+            user_name_str_extent = max([len(self.uid2name(x[fs.A_UID])) for x in files])
+
+        group_name_str_extent = 0
+        if len(files):
+            group_name_str_extent = max([len(self.gid2name(x[fs.A_GID])) for x in files])
 
         for file in files:
             if file[fs.A_NAME].startswith('.') and not self.showHidden:
@@ -180,9 +179,9 @@ class command_ls(HoneyPotCommand):
 
             line = '%s 1 %s %s %s %s %s%s' % \
                 (perms,
-                 self.uid2name(file[fs.A_UID]),
-                 self.gid2name(file[fs.A_GID]),
-                 str(file[fs.A_SIZE]).rjust(len(str(largest))),
+                 self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent),
+                 self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent),
+                 str(file[fs.A_SIZE]).rjust(filesize_str_extent),
                  time.strftime('%Y-%m-%d %H:%M', ctime),
                  file[fs.A_NAME],
                  linktarget)

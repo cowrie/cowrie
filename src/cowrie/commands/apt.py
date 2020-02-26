@@ -19,7 +19,7 @@ class command_faked_package_class_factory(object):
     def getCommand(name):
         class command_faked_installation(HoneyPotCommand):
             def call(self):
-                self.write(b"%s: Segmentation fault\n" % name)
+                self.write("{}: Segmentation fault\n".format(name))
 
         return command_faked_installation
 

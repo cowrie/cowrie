@@ -2,12 +2,17 @@ from __future__ import absolute_import, division
 
 import tftpy
 
+try:
+    from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
+except ImportError:
+    from tftpy import TftpPacketDAT, TftpPacketOACK
+
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.customparser import CustomParser, OptionNotFound
+from cowrie.shell.customparser import CustomParser
 
 commands = {}
 
@@ -19,10 +24,10 @@ class Progress(object):
         self.out = protocol
 
     def progresshook(self, pkt):
-        if isinstance(pkt, tftpy.TftpPacketDAT):
+        if isinstance(pkt, TftpPacketDAT):
             self.progress += len(pkt.data)
             self.out.write("Transferred %d bytes" % self.progress + "\n")
-        elif isinstance(pkt, tftpy.TftpPacketOACK):
+        elif isinstance(pkt, TftpPacketOACK):
             self.out.write("Received OACK, options are: %s" % pkt.options + "\n")
 
 
@@ -88,35 +93,32 @@ class command_tftp(HoneyPotCommand):
         parser.add_argument("-p")
         parser.add_argument("-r")
 
-        try:
-            args = parser.parse_args(self.args)
-            if args.c:
-                if len(args.c) > 1:
-                    self.file_to_get = args.c[1]
-                    if args.hostname is None:
-                        raise OptionNotFound("Hostname is invalid")
-                    self.hostname = args.hostname
+        args = parser.parse_args(self.args)
+        if args.c:
+            if len(args.c) > 1:
+                self.file_to_get = args.c[1]
+                if args.hostname is None:
+                    self.exit()
+                    return
+                self.hostname = args.hostname
+        elif args.r:
+            self.file_to_get = args.r
+            self.hostname = args.g
+        else:
+            self.write('usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n')
+            self.exit()
+            return
 
-            elif args.r:
-                self.file_to_get = args.r
-                self.hostname = args.g
-            else:
-                parser.print_usage()
-                raise OptionNotFound("Missing!!")
+        if self.hostname is None:
+            self.exit()
+            return
 
-            if self.hostname is None:
-                raise OptionNotFound("Hostname is invalid")
+        if self.hostname.find(':') != -1:
+            host, port = self.hostname.split(':')
+            self.hostname = host
+            self.port = int(port)
 
-            if self.hostname.find(':') != -1:
-                host, port = self.hostname.split(':')
-                self.hostname = host
-                self.port = int(port)
-
-            self.makeTftpRetrieval()
-
-        except Exception as err:
-            log.err(str(err))
-
+        self.makeTftpRetrieval()
         self.exit()
 
 

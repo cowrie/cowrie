@@ -82,6 +82,7 @@ class SFTP(base_protocol.BaseProtocol):
 
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()
+
         self.parent = None
         self.parentPacket = None
         self.offset = 0
@@ -149,7 +150,7 @@ class SFTP(base_protocol.BaseProtocol):
                 log.msg(parent + '[SFTP] New SFTP pflag detected: %s %s' %
                         (pflags, self.data))
 
-            log.msg(parent + '[SFTP] Entered Command: ' + self.command)
+            log.msg(parent + ' [SFTP] Entered Command: ' + self.command.decode())
 
         elif packet == 'SSH_FXP_READ':
             pass
@@ -157,7 +158,7 @@ class SFTP(base_protocol.BaseProtocol):
         elif packet == 'SSH_FXP_WRITE':
             if self.handle == self.extract_string():
                 self.offset = self.extract_int(8)
-                self.theFile = self.theFile[:self.offset] + self.extract_data()
+                self.theFile = self.theFile[:self.offset].encode() + self.extract_data()
 
         elif packet == 'SSH_FXP_HANDLE':
             if self.ID == self.prevID:
@@ -187,15 +188,15 @@ class SFTP(base_protocol.BaseProtocol):
                         (cmd, self.data))
 
         elif packet == 'SSH_FXP_EXTENDED_REPLY':
-            log.msg(parent + '[SFTP] Entered Command: ' + self.command)
+            log.msg(parent + '[SFTP] Entered Command: ' + self.command.decode())
             # self.out.command_entered(self.uuid, self.command)
 
         elif packet == 'SSH_FXP_CLOSE':
             if self.handle == self.extract_string():
                 if b'get' in self.command:
-                    log.msg(parent + '[SFTP] Finished Downloading: ' + self.path)
+                    log.msg(parent + ' [SFTP] Finished Downloading: ' + self.path.decode())
                 elif b'put' in self.command:
-                    log.msg(parent + '[SFTP] Finished Uploading: ' + self.path)
+                    log.msg(parent + ' [SFTP] Finished Uploading: ' + self.path.decode())
 
                     # if self.out.cfg.getboolean(['download', 'passive']):
                     #     # self.out.make_downloads_folder()
@@ -207,7 +208,7 @@ class SFTP(base_protocol.BaseProtocol):
                     #     #self.out.file_downloaded((self.uuid, True, self.path, outfile, None))
 
         elif packet == 'SSH_FXP_SYMLINK':
-            self.command = b'ln -s ' + self.extract_string() + ' ' + self.extract_string()
+            self.command = b'ln -s ' + self.extract_string() + b' ' + self.extract_string()
 
         elif packet == 'SSH_FXP_MKDIR':
             self.command = b'mkdir ' + self.extract_string()
@@ -223,10 +224,10 @@ class SFTP(base_protocol.BaseProtocol):
                 code = self.extract_int(4)
                 if code in [0, 1]:
                     if b'get' not in self.command and b'put' not in self.command:
-                        log.msg(parent + '[SFTP] Entered Command: ' + self.command.decode())
+                        log.msg(parent + ' [SFTP] Entered Command: ' + self.command.decode())
                 else:
                     message = self.extract_string()
-                    log.msg(parent + '[SFTP] Failed Command: ' + self.command.decode() + ' Reason: ' + message)
+                    log.msg(parent + ' [SFTP] Failed Command: ' + self.command.decode() + ' Reason: ' + message)
 
     def extract_attrs(self):
         cmd = ''

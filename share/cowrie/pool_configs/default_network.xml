@@ -1,0 +1,12 @@
+<!-- Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com> -->
+<network>
+    <name>{network_name}</name>
+    <forward mode='nat'/>
+    <bridge name='{iface_name}' stp='on' delay='0'/>
+    <ip address='{default_gateway}' netmask='255.255.255.0'>
+        <dhcp>
+            <range start='{dhcp_range_start}' end='{dhcp_range_end}'/>
+            {hosts}
+        </dhcp>
+    </ip>
+</network>

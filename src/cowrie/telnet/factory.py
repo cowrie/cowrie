@@ -19,12 +19,18 @@ from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
 
 
-class HoneyPotTelnetFactory(protocol.ServerFactory):
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
+class HoneyPotTelnetFactory(protocol.ServerFactory, object):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
     tac = None
+
+    def __init__(self, backend, pool_handler):
+        self.backend = backend
+        self.pool_handler = pool_handler
+        super(HoneyPotTelnetFactory, self).__init__()
 
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
@@ -47,7 +53,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.starttime = time.time()
 
         # hook protocol
-        if CowrieConfig().get('honeypot', 'backend', fallback='shell') == 'proxy':
+        if self.backend == 'proxy':
             self.protocol = lambda: FrontendTelnetTransport()
         else:
             self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol, self.portal)
@@ -60,3 +66,12 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         Stop output plugins
         """
         protocol.ServerFactory.stopFactory(self)
+
+    def buildProtocol(self, addr):
+        """
+        Overidden so we can keep a reference to running protocols (which is used for testing)
+        """
+        p = self.protocol()
+        p.factory = self
+
+        return p

@@ -7,7 +7,8 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
 
-class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
+class BackendTelnetTransport(TelnetTransport, TimeoutMixin, object):
     def __init__(self):
         # self.delayedPacketsToFrontend = []
         self.backendConnected = False
@@ -26,7 +27,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
             self.transport.write(packet)
         self.factory.server.delayedPacketsToBackend = []
 
-        super().connectionMade()
+        super(TelnetTransport, self).connectionMade()
         # TODO timeout if no backend available
 
     def connectionLost(self, reason):

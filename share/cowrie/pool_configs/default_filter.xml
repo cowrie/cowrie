@@ -1,0 +1,33 @@
+<filter name='cowrie-default-filter'>
+    <!-- reference the clean traffic filter to prevent
+    MAC, IP and ARP spoofing. By not providing
+    and IP address parameter, libvirt will detect the
+    IP address the VM is using. -->
+    <filterref filter='clean-traffic'/>
+
+    <!-- enable TCP port 22 (ssh) -->
+    <rule action='accept' direction='in'>
+        <tcp dstportstart='22'/>
+    </rule>
+
+    <!-- enable TCP port 23 (telnet) -->
+    <rule action='accept' direction='in'>
+        <tcp dstportstart='23'/>
+    </rule>
+
+    <!-- enable general ICMP traffic to be initiated by the VM;
+    this includes ping traffic -->
+    <rule action='accept' direction='inout'>
+        <icmp/>
+    </rule>
+
+    <!-- enable outgoing DNS lookups using UDP -->
+    <rule action='accept' direction='out'>
+        <udp dstportstart='53'/>
+    </rule>
+
+    <!-- drop all other traffic -->
+    <rule action='drop' direction='inout'>
+        <all/>
+    </rule>
+</filter>
