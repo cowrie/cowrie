@@ -46,6 +46,7 @@ class Output(cowrie.core.output.Output):
         self.misp_api = PyMISP(url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False)
         self.is_python2 = sys.version_info[0] < 3
         self.debug = CowrieConfig().getboolean('output_misp', 'debug', fallback=False)
+        self.publish = CowrieConfig().getboolean('output_misp', 'publish_event', fallback=False)
 
 
     def stop(self):
@@ -117,6 +118,8 @@ class Output(cowrie.core.output.Output):
             event.info = "File uploaded to Cowrie ({})".format(entry["sensor"])
             event.attributes = [attribute]
             event.run_expansions()
+            if self.publish:
+                event.publish()
             result = self.misp_api.add_event(event)
             if self.debug:
                 log.msg("Event creation result: \n%s" % result)
