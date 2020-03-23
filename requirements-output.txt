@@ -42,4 +42,6 @@ python-snappy
 wokkel==18.0.0rc5
 
 # misp
-pymisp
+pymisp; python_version >= '3.0'
+pymisp==2.4.119.1; python_version < '3.0'
+pathlib; python_version < '3.0'

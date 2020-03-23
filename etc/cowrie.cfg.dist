@@ -965,6 +965,8 @@ topic = cowrie
 #base_url = https://misp.somedomain.com
 #api_key = secret_key
 #verify_cert = true
+#publish_event = true
+#debug = false
 
 # The crashreporter sends data on Python exceptions to api.cowrie.org
 # To disable set `enabled = false` in cowrie.cfg

@@ -2,7 +2,8 @@ import sys
 import warnings
 from io import BytesIO
 from functools import wraps
-from pymisp import MISPEvent, MISPSighting
+from pathlib import Path
+from pymisp import MISPAttribute, MISPEvent, MISPSighting
 from twisted.python import log
 
 import cowrie.core.output
@@ -44,6 +45,8 @@ class Output(cowrie.core.output.Output):
         misp_verifycert = ("true" == CowrieConfig().get('output_misp', 'verify_cert').lower())
         self.misp_api = PyMISP(url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False)
         self.is_python2 = sys.version_info[0] < 3
+        self.debug = CowrieConfig().getboolean('output_misp', 'debug', fallback=False)
+        self.publish = CowrieConfig().getboolean('output_misp', 'publish_event', fallback=False)
 
 
     def stop(self):
@@ -61,11 +64,13 @@ class Output(cowrie.core.output.Output):
             file_sha_attrib = self.find_attribute("sha256", entry["shasum"])
             if file_sha_attrib:
                 # file is known, add sighting!
-                log.msg("File known, add sighting!")
+                if self.debug:
+                    log.msg("File known, add sighting")
                 self.add_sighting(entry, file_sha_attrib)
             else:
                 # file is unknown, new event with upload
-                log.msg("File unknwon, add new event!")
+                if self.debug:
+                    log.msg("File unknwon, add new event")
                 self.create_new_event(entry)
 
 
@@ -92,15 +97,35 @@ class Output(cowrie.core.output.Output):
 
     @ignore_warnings
     def create_new_event(self, entry):
-        self.misp_api.upload_sample(
-            entry["shasum"],
-            entry["outfile"],
-            None,
-            distribution=1,
-            info="File uploaded to Cowrie ({})".format(entry["sensor"]),
-            analysis=0,
-            threat_level_id=2
-        )
+        if self.is_python2:
+            self.misp_api.upload_sample(
+                entry["shasum"],
+                entry["outfile"],
+                None,
+                distribution=1,
+                info="File uploaded to Cowrie ({})".format(entry["sensor"]),
+                analysis=0,
+                threat_level_id=2
+            )
+        else:
+            attribute = MISPAttribute()
+            attribute.type = "malware-sample"
+            attribute.value = entry["shasum"]
+            attribute.data = Path(entry["outfile"])
+            attribute.comment = "File uploaded to Cowrie ({})".format(entry["sensor"])
+            attribute.expand = "binary"
+            event = MISPEvent()
+            event.info = "File uploaded to Cowrie ({})".format(entry["sensor"])
+            event.attributes = [attribute]
+            event.run_expansions()
+            if self.publish:
+                event.publish()
+            result = self.misp_api.add_event(event)
+            if self.debug:
+                log.msg("Event creation result: \n%s" % result)
+
+
+
 
 
     @ignore_warnings
