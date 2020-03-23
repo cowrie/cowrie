@@ -14,8 +14,7 @@ Prerequisites
 Installation
 ================
 
-
-We'll examine simple installation, when we install ELK stack on the same machine that used for cowrie.
+This is a simple setup for ELK stack, to be done on the same machine that is used for cowrie. We use *Filebeat* to send logs to *Logstash*, and we use *Nginx* as a reverse proxy to access *Kibana*. Note there are many other possible configurations!
 
 Add Elastic's repository and key::
 
@@ -23,19 +22,29 @@ Add Elastic's repository and key::
     echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
     apt-get update
 
-Install logstash, elasticsearch and kibana::
+Install logstash, elasticsearch, kibana and filebeat::
 
-     sudo apt-get install elasticsearch logstash kibana
+     sudo apt -y install apt-transport-https wget default-jre
+     sudo apt install elasticsearch logstash kibana
+     sudo apt install filebeat
+     sudo apt install nginx apache2-utils
 
-Set them to autostart::
+Enable the services::
 
-    sudo update-rc.d elasticsearch defaults 95 10
-    sudo update-rc.d kibana defaults 95 10
+    sudo systemctl enable elasticsearch logstash kibana filebeat nginx
+
 
 ElasticSearch Configuration
 =============================
 
 ElasticSearch configuration file is located in `/etc/elasticsearch/elasticsearch.yml`. The default settings need not be changed.
+
+By default, ElasticSearch listens on port 9200. Test it::
+
+   curl http://localhost:9200
+
+You should get a JSON object in return.
+
 
 Kibana Configuration
 =============================
@@ -59,8 +68,8 @@ Logstash Configuration
 Get GeoIP data from www.maxmind.com (free but requires registration): download the GeoLite2 City GZIP. Unzip it and locate the mmdb file.
 Place it somewhere in your filesystem and make sure that "logstash" user can read it::
 
-    sudo mkdir -p /var/opt/logstash/vendor/geoip/
-    sudo mv GeoLite2-City.mmdb /var/opt/logstash/vendor/geoip
+    sudo mkdir -p /opt/logstash/vendor/geoip/
+    sudo mv GeoLite2-City.mmdb /opt/logstash/vendor/geoip
 
 Configure logstash::
 
@@ -70,47 +79,11 @@ Make sure the configuration file is correct. Check the input section (path), fil
 
     sudo systemctl restart logstash 
 
-By default the logstash is creating debug logs in /tmp.
 
-To test whether logstash is working correctly, check the file in /tmp::
+Filebeat Configuration
+==============================
 
-    tail /tmp/cowrie-logstash.log
-
-To test whether data is loaded into ElasticSearch, run the following query::
-
-    curl 'http://<hostname>:9200/_search?q=cowrie&size=5'
-
-(Replace `<hostname>` with the name or IP address of the machine on which ElasticSearch is running, e.g., `localhost`.)
-
-If this gives output, your data is correctly loaded into ElasticSearch
-
-When you successfully configured logstash, remove "file" and "stdout" blocks from output section of logstash configuration.
-
-Distributed setup of sensors or multiple sensors on the same host
-================================================================================
-
-If you have multiple sensors, you will need to setup up FileBeat to feed logstash with logs from all sensors
- 
-On the logstash server:
- 
-Change "input" section of the logstash to the following::
- 
-    input {
-       beats {
-           port => 5044
-	   type => "cowrie"
-       }
-    }
-
-On the sensor servers:
- 
-Install filebeat::
-
-    sudo apt-get install filebeat
- 
-Enable autorun for it::
-
-    sudo update-rc.d filebeat defaults 95 10
+Filebeat is not mandatory (it is possible to directly read cowrie logs from Logstash) but nice to have, because if Logstash is under pressure, it automatically knows to slow down + it is possible to deal with multiple sensor inputs.
 
 Configure filebeat::
  
@@ -118,8 +91,10 @@ Configure filebeat::
 
 Check the following parameters::
 
-    log input paths - path to cowrie's json logs
-    logstash output hosts - check ip of the logstash host
+    filebeat.inputs: the path must point to cowrie's json logs
+    output.elasticsearch: must be false because we want Filebeat to send to Logstash, not directly to ElasticSearch
+    output.logstash: must be true. The default port for Logstash is 5044, so hosts should be ["localhost:5044"]
+
  
 Start filebeat::
 
@@ -128,7 +103,7 @@ Start filebeat::
 Nginx
 ==================
 
-ELK has been configured on localhost. If you wish to access it remotely, you can setup a reverse proxy.
+ELK has been configured on localhost. If you wish to access it remotely, you can setup a reverse proxy to Kibana's backend server, which runs on port 5601 by default.
 
 Install Nginx::
 
@@ -138,12 +113,12 @@ Create an administrative Kibana user and password::
 
       sudo htpasswd -c /etc/nginx/htpasswd.users admin_kibana
 
-Edit Nginx configuration /etc/nginx/sites-available/default
+Edit Nginx configuration /etc/nginx/sites-available/default. Customize port to what you like, and specify your server's name (or IP address)::
 
       server {
-           listen 80;
+           listen YOURPORT;
 
-           server_name example.com;
+           server_name YOURIPADDRESS;
 
            auth_basic "Restricted Access";
            auth_basic_user_file /etc/nginx/htpasswd.users;
@@ -166,9 +141,19 @@ Start the service::
 Using Kibana
 ==================
 
-Create an index pattern (Management / Index Patterns)::
+You can list indexes with::
 
-     logstash-*
+     curl 'http://localhost:9200/_cat/indices?v'
+
+You should see a cowrie index cowrie-logstash-DATE... Its health is yellow because the number of replicas should be set to 0 (unless you want another configuration)::
+
+     curl -XPUT 'localhost:9200/cowrie-logstash-REPLACEHERE/_settings' -H "Content-Type: application/json" -d '{ "index" : {"number_of_replicas" : 0 } }'
+
+It should answer {"acknowledged":true}
+
+In Kibana's GUI, create an index pattern (Management / Index Patterns) for ::
+
+     cowrie-logstash-*
 
 Use default settings and timestamp.
 
@@ -179,3 +164,11 @@ Tuning ELK stack
 Refer to elastic's documentation about proper configuration of the system for the best elasticsearch's performance
 
 You may avoid installing nginx for restricting access to kibana by installing official elastic's plugin called "X-Pack" (https://www.elastic.co/products/stack)
+
+ELK log files get big: ensure you have enough space in /var, consider setting up LVM or ZFS partitions.
+
+Troubleshooting
+==================
+
+- View service logs with:  sudo journalctl -u service
+- If the date in Kibana is incorrect, check (Advanced Settings / dateFormat)
