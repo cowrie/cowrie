@@ -1,9 +1,10 @@
 import sys
 import warnings
-from io import BytesIO
 from functools import wraps
 from pathlib import Path
+
 from pymisp import MISPAttribute, MISPEvent, MISPSighting
+
 from twisted.python import log
 
 import cowrie.core.output
@@ -19,7 +20,7 @@ except ImportError:
 def ignore_warnings(f):
     @wraps(f)
     def inner(*args, **kwargs):
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("ignore")
             response = f(*args, **kwargs)
         return response
@@ -48,13 +49,11 @@ class Output(cowrie.core.output.Output):
         self.debug = CowrieConfig().getboolean('output_misp', 'debug', fallback=False)
         self.publish = CowrieConfig().getboolean('output_misp', 'publish_event', fallback=False)
 
-
     def stop(self):
         """
         Stop output plugin
         """
         pass
-
 
     def write(self, entry):
         """
@@ -72,7 +71,6 @@ class Output(cowrie.core.output.Output):
                 if self.debug:
                     log.msg("File unknwon, add new event")
                 self.create_new_event(entry)
-
 
     @ignore_warnings
     def find_attribute(self, attribute_type, searchterm):
@@ -93,7 +91,6 @@ class Output(cowrie.core.output.Output):
             return result["Attribute"][0]
         else:
             return None
-
 
     @ignore_warnings
     def create_new_event(self, entry):
@@ -124,16 +121,12 @@ class Output(cowrie.core.output.Output):
             if self.debug:
                 log.msg("Event creation result: \n%s" % result)
 
-
-
-
-
     @ignore_warnings
     def add_sighting(self, entry, attribute):
         if self.is_python2:
             self.misp_api.sighting(
                 uuid=attribute["uuid"],
-                source= "{} (Cowrie)".format(entry["sensor"])
+                source="{} (Cowrie)".format(entry["sensor"])
             )
         else:
             sighting = MISPSighting()
