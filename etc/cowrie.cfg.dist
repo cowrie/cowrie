@@ -120,6 +120,12 @@ backend = shell
 # savings time and other special cases yourself when analysing the logs.
 timezone = UTC
 
+# Custom prompt
+# By default, Cowrie creates a shell prompt like: root@svr03:~#
+# If you want something totally custom, uncomment the option below and set your prompt
+# Beware that the path won't be included in your prompt any longer
+# prompt = hello>
+
 
 # ============================================================================
 # Network Specific Options
