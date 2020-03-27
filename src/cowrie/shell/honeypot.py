@@ -307,7 +307,7 @@ class HoneyPotShell(object):
             if cwd == self.protocol.user.avatar.home:
                 cwd = '~'
             elif len(cwd) > (homelen + 1) and \
-                 cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
+                cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
                 cwd = '~' + cwd[homelen:]
 
             # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
