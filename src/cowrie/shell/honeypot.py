@@ -12,8 +12,8 @@ from twisted.internet import error
 from twisted.python import failure, log
 from twisted.python.compat import iterbytes
 
-from cowrie.shell import fs
 from cowrie.core.config import CowrieConfig
+from cowrie.shell import fs
 
 # From Python3.6 we get the new shlex version
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
@@ -298,17 +298,16 @@ class HoneyPotShell(object):
             return
 
         prompt = ''
-        if CowrieConfig().has_option('honeypot','prompt'):
+        if CowrieConfig().has_option('honeypot', 'prompt'):
             prompt = CowrieConfig().get('honeypot', 'prompt')
             prompt += ' '
-            
         else:
             cwd = self.protocol.cwd
             homelen = len(self.protocol.user.avatar.home)
             if cwd == self.protocol.user.avatar.home:
                 cwd = '~'
             elif len(cwd) > (homelen + 1) and \
-                 cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
+                    cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
                 cwd = '~' + cwd[homelen:]
 
             # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
