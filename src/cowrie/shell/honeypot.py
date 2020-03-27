@@ -13,6 +13,7 @@ from twisted.python import failure, log
 from twisted.python.compat import iterbytes
 
 from cowrie.shell import fs
+from cowrie.core.config import CowrieConfig
 
 # From Python3.6 we get the new shlex version
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
@@ -296,21 +297,27 @@ class HoneyPotShell(object):
         if not self.interactive:
             return
 
-        cwd = self.protocol.cwd
-        homelen = len(self.protocol.user.avatar.home)
-        if cwd == self.protocol.user.avatar.home:
-            cwd = '~'
-        elif len(cwd) > (homelen + 1) and \
-                cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
-            cwd = '~' + cwd[homelen:]
-
-        # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
-        # Example: root@svr03:~#     (More of a "Debian" feel)
-        prompt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
-        if not self.protocol.user.uid:
-            prompt += '# '  # "Root" user
+        prompt = ''
+        if CowrieConfig().has_option('honeypot','prompt'):
+            prompt = CowrieConfig().get('honeypot', 'prompt')
+            prompt += ' '
+            
         else:
-            prompt += '$ '  # "Non-Root" user
+            cwd = self.protocol.cwd
+            homelen = len(self.protocol.user.avatar.home)
+            if cwd == self.protocol.user.avatar.home:
+                cwd = '~'
+            elif len(cwd) > (homelen + 1) and \
+                 cwd[:(homelen + 1)] == self.protocol.user.avatar.home + '/':
+                cwd = '~' + cwd[homelen:]
+
+            # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
+            # Example: root@svr03:~#     (More of a "Debian" feel)
+            prompt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
+            if not self.protocol.user.uid:
+                prompt += '# '  # "Root" user
+            else:
+                prompt += '$ '  # "Non-Root" user
 
         self.protocol.terminal.write(prompt.encode('ascii'))
         self.protocol.ps = (prompt.encode('ascii'), b'> ')
