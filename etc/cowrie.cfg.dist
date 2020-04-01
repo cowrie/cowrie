@@ -833,13 +833,13 @@ epoch_timestamp = false
 
 # HPFeeds
 #
-#[output_hpfeeds]
+#[output_hpfeeds3]
 #enabled = false
 #server = hpfeeds.mysite.org
 #port = 10000
 #identifier = abc123
 #secret = secret
-#debug=false
+#debug = false
 
 
 # VirusTotal output module
