@@ -17,6 +17,7 @@ Welcome to Cowrie's documentation!
    CHANGELOG.rst
    CONTRIBUTING.rst
    PROXY.rst
+   HONEYFS.rst
    BACKEND_POOL.rst
    SNAPSHOTS.rst
    elk/README.rst
