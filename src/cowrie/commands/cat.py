@@ -45,7 +45,7 @@ class command_cat(HoneyPotCommand):
 
         if self.input_data:
             self.output(self.input_data)
-        else:
+        elif len(args) > 0:
             for arg in args:
                 pname = self.fs.resolve_path(arg, self.protocol.cwd)
 
@@ -61,20 +61,23 @@ class command_cat(HoneyPotCommand):
                         raise FileNotFound
                 except FileNotFound:
                     self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
-        self.exit()
+
+            self.exit()
 
     def output(self, input):
         """
         This is the cat output, with optional line numbering
         """
-        lines = input.split(b'\n')
-        if lines[-1] == b"":
+        if 'decode' in dir(input):
+            input = input.decode('UTF-8')
+        lines = input.split('\n')
+        if lines[-1] == "":
             lines.pop()
         for line in lines:
             if self.number:
                 self.write("{:>6}  ".format(self.linenumber))
                 self.linenumber = self.linenumber + 1
-            self.writeBytes(line + b'\n')
+            self.write(line + '\n')
 
     def lineReceived(self, line):
         """
@@ -96,30 +99,31 @@ class command_cat(HoneyPotCommand):
     def help(self):
         self.write(
             """Usage: cat [OPTION]... [FILE]...
-            Concatenate FILE(s) to standard output.
+Concatenate FILE(s) to standard output.
 
-            With no FILE, or when FILE is -, read standard input.
+With no FILE, or when FILE is -, read standard input.
 
-              -A, --show-all           equivalent to -vET
-              -b, --number-nonblank    number nonempty output lines, overrides -n
-              -e                       equivalent to -vE
-              -E, --show-ends          display $ at end of each line
-              -n, --number             number all output lines
-              -s, --squeeze-blank      suppress repeated empty output lines
-              -t                       equivalent to -vT
-              -T, --show-tabs          display TAB characters as ^I
-              -u                       (ignored)
-              -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
-                  --help     display this help and exit
-                  --version  output version information and exit
+    -A, --show-all           equivalent to -vET
+    -b, --number-nonblank    number nonempty output lines, overrides -n
+    -e                       equivalent to -vE
+    -E, --show-ends          display $ at end of each line
+    -n, --number             number all output lines
+    -s, --squeeze-blank      suppress repeated empty output lines
+    -t                       equivalent to -vT
+    -T, --show-tabs          display TAB characters as ^I
+    -u                       (ignored)
+    -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
+        --help     display this help and exit
+        --version  output version information and exit
 
-            Examples:
-              cat f - g  Output f's contents, then standard input, then g's contents.
-              cat        Copy standard input to standard output.
+Examples:
+    cat f - g  Output f's contents, then standard input, then g's contents.
+    cat        Copy standard input to standard output.
 
-            GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
-            Full documentation at: <http://www.gnu.org/software/coreutils/cat>
-            or available locally via: info '(coreutils) cat invocation'"""
+GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+Full documentation at: <http://www.gnu.org/software/coreutils/cat>
+or available locally via: info '(coreutils) cat invocation'
+"""
         )
 
 
