@@ -38,8 +38,9 @@ class Output(cowrie.core.output.Output):
             options["scheme"] = "https"
             options["use_ssl"] = self.use_ssl
             options["ssl_show_warn"] = False
-            options["ca_certs"] = self.ca_certs
             options["verify_certs"] = self.verify_certs
+            if self.verify_certs:
+                options["ca_certs"] = self.ca_certs
 
         # connect
         self.es = Elasticsearch("{0}:{1}".format(self.host, self.port), **options)
