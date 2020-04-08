@@ -729,7 +729,27 @@ epoch_timestamp = false
 #index = cowrie
 #type = cowrie
 #pipeline = geoip
-
+#
+# Authentication. When x-pack.security is enabled
+# in ES, default users have been created and requests
+# must be authenticated.
+#
+# Credentials
+#username = elastic
+#password = 
+#
+# TLS encryption. Communications between the client (cowrie) 
+# and the ES server should naturally be protected by encryption
+# if requests are authenticated (to prevent from man-in-the-middle 
+# attacks). The following options are then paramount
+# if username and password are provided.
+#
+# use ssl/tls
+#ssl = true
+# Path to trusted CA certs on disk
+#ca_certs = /cowrie/cowrie-git/etc/elastic_ca.crt
+# verify SSL certificates
+#verify_certs = true
 
 # Send login attemp information to SANS DShield
 # See https://isc.sans.edu/ssh.html
