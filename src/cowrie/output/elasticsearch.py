@@ -61,8 +61,10 @@ class Output(cowrie.core.output.Output):
         to convert source ip (src_ip) into geo data 
         """
         if self.es.indices.exists(index=self.index):
-            # add mapping (to add geo field -> for geoip)
-            # the new feature is named 'geo'
+            # Add mapping (to add geo field -> for geoip)
+            # The new feature is named 'geo'.
+            # You can put mappings several times, if it exists the
+            # PUT requests will be ignored.
             self.es.indices.put_mapping(
                 index=self.index,
                 body={
