@@ -45,6 +45,16 @@ class Output(cowrie.core.output.Output):
         self.es = Elasticsearch("{0}:{1}".format(self.host, self.port), **options)
         # self.es = Elasticsearch('{0}:{1}'.format(self.host, self.port))
 
+        self.check_index()
+
+    def check_index(self):
+        """
+        This function check whether the index exists.
+        """
+        if not self.es.indices.exists(index=self.index):
+            #  create index
+            self.es.indices.create(index=self.index)
+
     def stop(self):
         pass
 
