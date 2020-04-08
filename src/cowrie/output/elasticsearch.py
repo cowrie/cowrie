@@ -55,6 +55,23 @@ class Output(cowrie.core.output.Output):
             #  create index
             self.es.indices.create(index=self.index)
 
+    def check_geoip_mapping(self):
+        """
+        This function ensures that the right mapping is set up
+        to convert source ip (src_ip) into geo data 
+        """
+        if self.es.indices.exists(index=self.index):
+            # add mapping (to add geo field -> for geoip)
+            # the new feature is named 'geo'
+            self.es.indices.put_mapping(
+                index=self.index,
+                body={
+                    "properties": {
+                        "geo": {"properties": {"location": {"type": "geo_point"}}}
+                    }
+                },
+            )
+
     def stop(self):
         pass
 
