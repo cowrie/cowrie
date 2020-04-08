@@ -46,6 +46,12 @@ class Output(cowrie.core.output.Output):
         # self.es = Elasticsearch('{0}:{1}'.format(self.host, self.port))
 
         self.check_index()
+        # ensure geoip pipeline is well set up
+        if self.pipeline == "geoip":
+            # create a new feature if it does not exist yet
+            self.check_geoip_mapping()
+            # ensure the geoip pipeline is setup
+            self.check_geoip_pipeline()
 
     def check_index(self):
         """
