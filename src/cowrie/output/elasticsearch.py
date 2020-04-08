@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division
 
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -73,6 +73,31 @@ class Output(cowrie.core.output.Output):
                     }
                 },
             )
+
+    def check_geoip_pipeline(self):
+        """
+        This function aims to set at least a geoip pipeline
+        to map IP to geo locations
+        """
+        try:
+            # check if the geoip pipeline exists. An error
+            # is raised if the pipeline does not exist
+            self.es.ingest.get_pipeline(self.pipeline)
+        except NotFoundError:
+            # geoip pipeline
+            body = {
+                "description": "Add geoip info",
+                "processors": [
+                    {
+                        "geoip": {
+                            "field": "src_ip",  # input field of the pipeline (source address)
+                            "target_field": "geo",  # output field of the pipeline (geo data)
+                            "database_file": "GeoLite2-City.mmdb",
+                        }
+                    }
+                ],
+            }
+            self.es.ingest.put_pipeline(id=self.pipeline, body=body)
 
     def stop(self):
         pass
