@@ -727,7 +727,15 @@ epoch_timestamp = false
 #host = localhost
 #port = 9200
 #index = cowrie
-#type = cowrie
+# type has been deprecated since ES 6.0.0
+# use _doc which is the default type. See
+# https://stackoverflow.com/a/53688626 for
+# more information
+#type = _doc
+# set pipeline = geoip to map src_ip to
+# geo location data. You can use a custom
+# pipeline but you must ensure it exists
+# in elasticsearch.
 #pipeline = geoip
 #
 # Authentication. When x-pack.security is enabled
