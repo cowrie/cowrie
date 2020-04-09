@@ -72,7 +72,7 @@ class Output(cowrie.core.output.Output):
     def check_geoip_mapping(self):
         """
         This function ensures that the right mapping is set up
-        to convert source ip (src_ip) into geo data 
+        to convert source ip (src_ip) into geo data.
         """
         if self.es.indices.exists(index=self.index):
             # Add mapping (to add geo field -> for geoip)
