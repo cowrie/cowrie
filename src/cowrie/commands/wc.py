@@ -22,7 +22,7 @@ class command_wc(HoneyPotCommand):
     """
     wc command
     """
-    
+
     def version(self):
         self.writeBytes(b'wc (GNU coreutils) 8.30\n')
         self.writeBytes(b'Copyright (C) 2018 Free Software Foundation, Inc.\n')
