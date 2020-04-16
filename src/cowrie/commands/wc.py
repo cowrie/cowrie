@@ -23,6 +23,15 @@ class command_wc(HoneyPotCommand):
     wc command
     """
 
+    def version(self):
+        self.writeBytes(b'wc (GNU coreutils) 8.30\n')
+        self.writeBytes(b'Copyright (C) 2018 Free Software Foundation, Inc.\n')
+        self.writeBytes(b'License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n')
+        self.writeBytes(b'This is free software: you are free to change and redistribute it.\n')
+        self.writeBytes(b'There is NO WARRANTY, to the extent permitted by law.\n')
+        self.writeBytes(b'\n')
+        self.writeBytes(b'Written by Paul Rubin and David MacKenzie.\n')
+
     def help(self):
         self.writeBytes(b'Usage: wc [OPTION]... [FILE]...\n')
         self.writeBytes(b'Print newline, word, and byte counts for each FILE, and a total line if\n')
@@ -57,6 +66,8 @@ class command_wc(HoneyPotCommand):
                 self.write("{}\n".format(len(contentsplit)))
             elif opt == "-m" or opt == "-c":
                 self.write("{}\n".format(len(contents)))
+            elif opt == '-v':
+                self.version()
             else:
                 self.help()
 
@@ -69,15 +80,21 @@ class command_wc(HoneyPotCommand):
             pass
         else:
             try:
-                optlist, args = getopt.getopt(self.args, 'cmlLw')
+                optlist, args = getopt.getopt(self.args, 'cmlLwhv')
             except getopt.GetoptError as err:
                 self.errorWrite("wc: invalid option -- {}\n".format(err.opt))
                 self.help()
                 self.exit()
                 return
             for opt in optlist:
-                if opt == '-h':
+                if opt[0] == '-v':
+                    self.version()
+                    self.exit()
+                    return
+                if opt[0] == '-h':
                     self.help()
+                    self.exit()
+                    return
 
         if not self.input_data:
             files = self.check_arguments('wc', args[1:])
