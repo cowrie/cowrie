@@ -103,6 +103,9 @@ class Output(object):
         else:
             self.timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
 
+        # Event trigger so that stop() is called by the reactor when stopping
+        reactor.addSystemEventTrigger('before', 'shutdown', self.stop)            
+
         self.start()
 
     def logDispatch(self, *msg, **kw):
