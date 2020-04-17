@@ -34,6 +34,7 @@ import socket
 import time
 from os import environ
 
+from twisted.internet import reactor
 from twisted.logger import formatTime
 
 from cowrie.core.config import CowrieConfig
