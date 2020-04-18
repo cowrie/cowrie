@@ -34,6 +34,7 @@ import socket
 import time
 from os import environ
 
+from twisted.internet import reactor
 from twisted.logger import formatTime
 
 from cowrie.core.config import CowrieConfig
@@ -101,6 +102,9 @@ class Output(object):
             self.timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
         else:
             self.timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
+
+        # Event trigger so that stop() is called by the reactor when stopping
+        reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
 
         self.start()
 
