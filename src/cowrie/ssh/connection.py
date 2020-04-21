@@ -50,6 +50,8 @@ class CowrieSSHConnection(connection.SSHConnection):
     def ssh_CHANNEL_REQUEST(self, packet):
         localChannel = struct.unpack('>L', packet[:4])[0]
         requestType, rest = common.getNS(packet[4:])
+        if len(rest) < 1: 
+            return None
         wantReply = ord(rest[0:1])
         channel = self.channels[localChannel]
 
