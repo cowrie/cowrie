@@ -4,7 +4,6 @@
 """
 cat command
 
-TODO: support for '-' (stdin marked as '-')
 """
 
 from __future__ import absolute_import, division
@@ -43,10 +42,12 @@ class command_cat(HoneyPotCommand):
             elif o in ('-n', '--number'):
                 self.number = True
 
-        if self.input_data:
-            self.output(self.input_data)
-        elif len(args) > 0:
+        if len(args) > 0:
             for arg in args:
+                if arg == '-':
+                    self.output(self.input_data)
+                    continue
+
                 pname = self.fs.resolve_path(arg, self.protocol.cwd)
 
                 if self.fs.isdir(pname):
@@ -70,6 +71,9 @@ class command_cat(HoneyPotCommand):
         """
         if 'decode' in dir(input):
             input = input.decode('UTF-8')
+        if not isinstance(input, str):
+            pass
+
         lines = input.split('\n')
         if lines[-1] == "":
             lines.pop()
