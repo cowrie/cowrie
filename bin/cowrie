@@ -111,7 +111,8 @@ cowrie_start() {
     echo "Starting cowrie: [twistd ${TWISTEDARGS} cowrie ${COWRIEARGS}]..."
     if [ "$AUTHBIND_ENABLED" = "no" ]
     then
-        exec twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
+        echo twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
+        exec firejail twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
     else
         exec authbind --deep twistd ${TWISTEDARGS} ${COWRIEARGS} cowrie
     fi
