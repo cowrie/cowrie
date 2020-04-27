@@ -94,7 +94,6 @@ class command_awk(HoneyPotCommand):
         /regex/ { }
         """
         code = []
-        # print("awk_parser program: {}".format(program))
         re1 = r'\s*(\/(?P<pattern>\S+)\/\s+)?\{\s*(?P<code>[^\}]+)\}\s*'
         matches = re.findall(re1, program)
         for m in matches:
@@ -141,6 +140,8 @@ class command_awk(HoneyPotCommand):
                     if re.match(r'^print\s*', line):
                         # remove `print` at the start
                         line = re.sub(r'^\s*print\s+', '', line)
+                        # remove whitespace at the end
+                        line = re.sub(r'\s*$', '', line)
                         # replace whitespace and comma by single space
                         line = re.sub(r'(,|\s+)', ' ', line)
                         # print("LINE2: {}".format(line))
