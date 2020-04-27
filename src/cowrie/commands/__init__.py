@@ -4,6 +4,7 @@
 __all__ = [
     'adduser',
     'apt',
+    'awk',
     'base',
     'base64',
     'busybox',
