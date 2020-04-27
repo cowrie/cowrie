@@ -141,7 +141,7 @@ class command_awk(HoneyPotCommand):
                         # remove `print` at the start
                         line = re.sub(r'^\s*print\s+', '', line)
                         # remove whitespace at the end
-                        line = re.sub(r'\s*$', '', line)
+                        line = re.sub(r'[;\s]*$', '', line)
                         # replace whitespace and comma by single space
                         line = re.sub(r'(,|\s+)', ' ', line)
                         # print("LINE2: {}".format(line))
