@@ -28,7 +28,6 @@ class command_awk(HoneyPotCommand):
     # code is an array of dictionaries contain the regexes to match and the code to execute
     code = []
 
-
     def start(self):
         try:
             optlist, args = getopt.gnu_getopt(self.args, "Fvf", ["version"])
@@ -61,7 +60,7 @@ class command_awk(HoneyPotCommand):
             self.exit()
             return
 
-        code = self.awk_parser(args.pop(0))
+        self.code = self.awk_parser(args.pop(0))
 
         if len(args) > 0:
             for arg in args:
@@ -88,20 +87,19 @@ class command_awk(HoneyPotCommand):
             self.output(self.input_data)
         self.exit()
 
-
     def awk_parser(self, program):
         """
         search for awk execution patterns, either direct {} code or only executed for a certain regex
         { }
         /regex/ { }
         """
-        print("awk_parser program: {}".format(program))
+        code = []
+        # print("awk_parser program: {}".format(program))
         re1 = r'\s*(\/(?P<pattern>\S+)\/\s+)?\{\s*(?P<code>[^\}]+)\}\s*'
         matches = re.findall(re1, program)
         for m in matches:
-            self.code.append({ 'regex': m[1], 'code': m[2]})
-        print(repr(self.code))
-
+            code.append({'regex': m[1], 'code': m[2]})
+        return code
 
     def awk_print(self, words):
         """
@@ -109,7 +107,6 @@ class command_awk(HoneyPotCommand):
         """
         self.write(words)
         self.write('\n')
-
 
     def output(self, input):
         """
@@ -128,7 +125,7 @@ class command_awk(HoneyPotCommand):
             # split by whitespace and add full line in $0 as awk does.
             # TODO: change here to use custom field separator
             words = inputline.split()
-            words.insert(0,inputline)
+            words.insert(0, inputline)
 
             def repl(m):
                 try:
@@ -140,16 +137,14 @@ class command_awk(HoneyPotCommand):
                 if re.match(c['regex'], inputline):
                     line = c['code']
                     line = re.sub(r'\$(\d+)', repl, line)
-                    print("LINE1: {}".format(line))
-                    if re.match('^print\s*', line):
+                    # print("LINE1: {}".format(line))
+                    if re.match(r'^print\s*', line):
                         # remove `print` at the start
                         line = re.sub(r'^\s*print\s+', '', line)
                         # replace whitespace and comma by single space
                         line = re.sub(r'(,|\s+)', ' ', line)
-                        print("LINE2: {}".format(line))
+                        # print("LINE2: {}".format(line))
                         self.awk_print(line)
-
-
 
     def lineReceived(self, line):
         """
