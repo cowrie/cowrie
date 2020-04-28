@@ -232,6 +232,6 @@ along with this program. If not, see http://www.gnu.org/licenses/.
 """
         )
 
-        
+
 commands["/bin/awk"] = command_awk
 commands["awk"] = command_awk
