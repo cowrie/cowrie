@@ -20,6 +20,7 @@ from cowrie.shell.fs import FileNotFound
 
 commands = {}
 
+
 class command_awk(HoneyPotCommand):
     """
     awk command
@@ -229,7 +230,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see http://www.gnu.org/licenses/.
 """
-    )
+        )
 
+        
 commands["/bin/awk"] = command_awk
 commands["awk"] = command_awk
