@@ -105,14 +105,16 @@ def parse_size(param):
     Parse dd arguments that indicate block sizes
     Return 0 in case of illegal input
     """
-    pattern = r'^(\d+)(c|w|b|kB|K|MB|M|xM|GB|G|T|TB|P|PB|E|EB|Z|ZB|Y|YB)$'
+    pattern = r'^(\d+)(c|w|b|kB|K|MB|M|xM|GB|G|T|TB|P|PB|E|EB|Z|ZB|Y|YB)?$'
     z = re.search(pattern, param)
     if not z:
         return 0
-    digits = int(z.group(0))
-    letters = z.group(1)
+    digits = int(z.group(1))
+    letters = z.group(2)
 
-    if letters == 'c':
+    if not letters:
+        multiplier = 1
+    elif letters == 'c':
         multiplier = 1
     elif letters == 'w':
         multiplier = 2
