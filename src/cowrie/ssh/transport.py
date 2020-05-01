@@ -205,10 +205,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
-        if service.name == 'ssh-connection':
-            if self.outgoingCompressionType == 'zlib@openssh.com':
+        if service.name == b'ssh-connection':
+            if self.outgoingCompressionType == b'zlib@openssh.com':
                 self.outgoingCompression = zlib.compressobj(6)
-            if self.incomingCompressionType == 'zlib@openssh.com':
+            if self.incomingCompressionType == b'zlib@openssh.com':
                 self.incomingCompression = zlib.decompressobj()
 
         transport.SSHServerTransport.setService(self, service)
