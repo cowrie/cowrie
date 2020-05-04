@@ -112,7 +112,7 @@ class Output(output.Output):
         # entries. The cleanup task ends by calling itself in a callLater,
         # thus running every CLEAN_DUMP_SCHED seconds until the end of time.
         self.logbook.cleanup_and_dump_state()
-        
+
         log.msg(
             eventid='cowrie.abuseipdb.started',
             format='AbuseIPDB Plugin version {} started. Currently in beta.'.format(__version__),
