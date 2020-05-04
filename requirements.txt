@@ -1,8 +1,8 @@
 twisted==20.3.0
-cryptography==2.8
-configparser==4.0.2
+cryptography==2.9.2
+configparser==5.0.0
 pyopenssl==19.1.0
-pyparsing==2.4.6
+pyparsing==2.4.7
 packaging==20.3
 appdirs==1.4.3
 pyasn1_modules==0.2.8
