@@ -1035,9 +1035,9 @@ debug = false
 #  is also sent in the report comments.
 #[output_abuseipdb]
 #enabled = true
-#  If you are going to set a custom directory here, create it as the cowrie user
-#  and ensure that permissions are set so that only this user has write/execute
-#  permissions!
+#  If you are going to set a custom directory here, create it as the cowrie
+#  user and ensure that permissions are set so that only this user has
+#  write/execute permissions!
 #dump_path = ${honeypot:state_path}/abuseipdb
 
 #  rereport_after is in hours. Accepts a float (number with decimal places) as
