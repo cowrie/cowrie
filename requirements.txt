@@ -1,6 +1,5 @@
 twisted==20.3.0
 cryptography==2.9.2
-configparser==5.0.0
 pyopenssl==19.1.0
 pyparsing==2.4.7
 packaging==20.3
