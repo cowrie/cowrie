@@ -1019,32 +1019,15 @@ topic = cowrie
 enabled = false
 debug = false
 
-# /--- ABUSEIPDB ---/
-#  Plugin for reporting login attempts via the AbuseIPDB API. Counts attempts
-#  made by an IP address within a sliding window of time and, if the number of
-#  attempts made exceeds the set tolerance for attempts, reports the IP 
-#  address.
-#
-#  For example, with tolerance_window set to 1 and tolerance_attempts set to
-#  2, an IP making a login attempt every 60 seconds will go unreported. If,
-#  however, this IP address made a login attempt less than a minute after a
-#  previous attempt, it would be reported.
-#
-#  Setting tolerance_attempts to 1 or 0 renders the tolerance_window setting
-#  irrelevant and reports an IP immediately. When set like so the username used
-#  is also sent in the report comments.
+# Reports login attempts to AbuseIPDB. A short guide is in the original
+# pull request on GitHub: https://github.com/cowrie/cowrie/pull/1346
 #[output_abuseipdb]
 #enabled = true
-#  If you are going to set a custom directory here, create it as the cowrie
-#  user and ensure that permissions are set so that only this user has
-#  write/execute permissions!
-#dump_path = ${honeypot:state_path}/abuseipdb
-
-#  rereport_after is in hours. Accepts a float (number with decimal places) as
-#  input. There is a hardcoded minimum of 0.25 (15 minutes)
+#api_key =
 #rereport_after = 6
 #tolerance_window is in minutes
 #tolerance_window = 120
 #tolerance_attempts = 10
-#api_key =
-# /--- ABUSEIPDB (END) ---/
+# WARNING: A binary file is read from this directory on start-up. Do not
+# change unless you understand the security implications!
+#dump_path = ${honeypot:state_path}/abuseipdb
