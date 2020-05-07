@@ -22,8 +22,8 @@ _USERDB_DEFAULTS = [
     'root:x:!123456',
     'root:x:!/honeypot/i',
     'root:x:*',
-    'richard:x:*',
-    'richard:x:fout',
+    'John:x:*',
+    'John:x:fout',
 ]
 
 
