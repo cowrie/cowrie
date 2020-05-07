@@ -26,7 +26,7 @@
 # environment
 #
 # (default: svr04)
-hostname = svr04
+hostname = atlanta
 
 
 # Directory where to save log files in.
