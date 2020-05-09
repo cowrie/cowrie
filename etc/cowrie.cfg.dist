@@ -102,7 +102,7 @@ ttylog_path = ${honeypot:state_path}/tty
 # Interactive timeout determines when logged in sessions are
 # terminated for being idle. In seconds.
 # (default: 180)
-interactive_timeout = 180
+interactive_timeout = 300
 
 # Authentication Timeout
 # The server disconnects after this time if the user has not successfully logged in.  If the value is 0,
@@ -885,12 +885,12 @@ epoch_timestamp = false
 # You must signup for an api key.
 #
 #[output_virustotal]
-#enabled = false
-#api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-#upload = True
-#debug = False
-#scan_file = True
-#scan_url = False
+enabled = true
+api_key = f89c87a3197bea9222eb817eeb3c548e848776c73ff0068888021df723f6246f
+upload = true
+debug = false
+scan_file = true
+scan_url = true
 
 
 # Cuckoo output module
