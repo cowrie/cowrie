@@ -851,12 +851,12 @@ epoch_timestamp = false
 # optional fields: index, source, sourcetype, host
 #
 #[output_splunk]
-#enabled = false
-#url = https://localhost:8088/services/collector/event
-#token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
-#index = cowrie
-#sourcetype = cowrie
-#source = cowrie
+enabled = true
+url = https://139.59.89.220:8088/services/collector/event
+token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
+index = cowrie
+sourcetype = cowrie
+source = cowrie
 
 
 # HPFeeds
