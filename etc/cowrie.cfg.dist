@@ -853,10 +853,10 @@ epoch_timestamp = false
 #[output_splunk]
 enabled = true
 url = https://139.59.89.220:8088/services/collector/event
-token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
-index = cowrie
-sourcetype = cowrie
-source = cowrie
+token = f60e2668-9ade-4478-ad91-82dc1d6bfcc1
+#index = cowrie
+#sourcetype = cowrie
+#source = cowrie
 
 
 # HPFeeds
