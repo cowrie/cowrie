@@ -850,7 +850,7 @@ epoch_timestamp = false
 # mandatory fields: url, token
 # optional fields: index, source, sourcetype, host
 #
-#[output_splunk]
+[output_splunk]
 enabled = true
 url = https://139.59.89.220:8088/services/collector/event
 token = f60e2668-9ade-4478-ad91-82dc1d6bfcc1
