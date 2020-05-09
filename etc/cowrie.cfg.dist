@@ -884,7 +884,7 @@ token = f60e2668-9ade-4478-ad91-82dc1d6bfcc1
 # VirusTotal output module
 # You must signup for an api key.
 #
-#[output_virustotal]
+[output_virustotal]
 enabled = true
 api_key = f89c87a3197bea9222eb817eeb3c548e848776c73ff0068888021df723f6246f
 upload = true
