@@ -408,9 +408,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         if self.fakeoutfile:
             self.curl.write(
-                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- %d\n".format(self.currentlength,
-                                                                                                  self.currentlength,
-                                                                                                  63673, 65181))
+                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- {}\n".format(
+                  self.currentlength, self.currentlength, 63673, 65181))
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
             self.curl.fs.update_realfile(
