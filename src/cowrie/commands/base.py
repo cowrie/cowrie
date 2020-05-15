@@ -532,8 +532,8 @@ class command_shutdown(HoneyPotCommand):
                 "-t secs: delay between warning and kill signal. ",
                 "** the \"time\" argument is mandatory! (try \"now\") **",
             )
-            for l in output:
-                self.write('{0}\n'.format(l))
+            for line in output:
+                self.write('{0}\n'.format(line))
             self.exit()
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
@@ -595,8 +595,8 @@ class command_history(HoneyPotCommand):
                 self.protocol.historyPosition = 0
                 return
             count = 1
-            for l in self.protocol.historyLines:
-                self.write(' %s  %s\n' % (str(count).rjust(4), l))
+            for line in self.protocol.historyLines:
+                self.write(' %s  %s\n' % (str(count).rjust(4), line))
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
@@ -701,8 +701,8 @@ class command_php(HoneyPotCommand):
                 'PHP 5.3.5 (cli)',
                 'Copyright (c) 1997-2010 The PHP Group'
             )
-            for l in output:
-                self.write('{0}\n'.format(l))
+            for line in output:
+                self.write('{0}\n'.format(line))
             self.exit()
         elif self.args[0] == '-h':
             output = (
@@ -745,8 +745,8 @@ class command_php(HoneyPotCommand):
                 '  --ri <name>      Show configuration for extension <name>.',
                 ''
             )
-            for l in output:
-                self.write('{0}\n'.format(l))
+            for line in output:
+                self.write('{0}\n'.format(line))
             self.exit()
         else:
             self.exit()

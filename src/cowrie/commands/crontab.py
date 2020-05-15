@@ -29,8 +29,8 @@ class command_crontab(HoneyPotCommand):
             '          -r      (delete user\'s crontab)',
             '          -i      (prompt before deleting user\'s crontab)'
         )
-        for l in output:
-            self.write(l + '\n')
+        for line in output:
+            self.write(line + '\n')
 
     def start(self):
         try:
