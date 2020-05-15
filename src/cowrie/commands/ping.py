@@ -49,13 +49,13 @@ class command_ping(HoneyPotCommand):
                     return
 
         if len(args) == 0:
-            for l in (
+            for line in (
                     'Usage: ping [-LRUbdfnqrvVaA] [-c count] [-i interval] [-w deadline]',
                     '            [-p pattern] [-s packetsize] [-t ttl] [-I interface or address]',
                     '            [-M mtu discovery hint] [-S sndbuf]',
                     '            [ -T timestamp option ] [ -Q tos ] [hop1 ...] destination',
             ):
-                self.write('{0}\n'.format(l))
+                self.write('{0}\n'.format(line))
             self.exit()
             return
         self.host = args[0].strip()
