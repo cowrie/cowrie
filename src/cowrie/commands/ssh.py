@@ -71,7 +71,7 @@ class command_ssh(HoneyPotCommand):
                     Name or service not known\n' % (host,))
                 self.exit()
         else:
-            s = hashlib.md5(host).hexdigest()
+            s = hashlib.md5(host.encode()).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in
                                 (s[0:2], s[2:4], s[4:6], s[6:8])])
 
