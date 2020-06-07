@@ -10,12 +10,14 @@ read `PROXY.rst`.
 * [Step 3: Checkout the code](#step-3-checkout-the-code)
 * [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
 * [Step 5: Install configuration file](#step-5-install-configuration-file)
-* [Step 6: Generate a DSA key (OPTIONAL)](#step-6-generate-a-dsa-key)
-* [Step 7: Starting Cowrie](#step-7-turning-on-cowrie)
-* [Step 8: Port redirection (OPTIONAL)](#step-8-port-redirection-optional)
+* [Step 6: Starting Cowrie](#step-6-starting-cowrie)
+* [Step 8: Listening on port 22 (OPTIONAL)](#step-8-listening-on-port-22-optional)
+* [Installing Backend Pool dependencies (OPTIONAL)](#running-using-supervisord)
 * [Running within supervisord (OPTIONAL)](#running-using-supervisord)
 * [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
 * [Troubleshooting](#troubleshooting)
+* [Updating Cowrie](#updating-cowrie)
+* [Modifying Cowrie](#modifying-cowrie)
 
 Step 1: Install dependencies
 ****************************
