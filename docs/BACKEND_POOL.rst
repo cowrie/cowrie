@@ -23,7 +23,7 @@ Provided images
 ***************
 
 To allow for a simple setup, we provide two VM images to use with the backend pool: Ubuntu 18.04
-and OpenWRT. You can download them below, and then edit `cowrie.cfg` to match the path of the images.
+and OpenWRT. You can download them below, and then edit `cowrie.cfg`'s `guest_image_path` to match the path of the images.
 In the case of OpenWRT you will need two different files. Note that a separate set of configs is provided
 for each image in the default configuration. Choose the one you want to use and comment the other as needed.
 
