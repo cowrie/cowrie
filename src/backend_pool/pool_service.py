@@ -33,8 +33,10 @@ class PoolService:
     A lock is required to manipulate VMs in states [available, using, used], since these are the ones that can be
     accessed by several consumers and the producer. All other states are accessed only by the single producer.
     """
-    def __init__(self):
+    def __init__(self, nat_service):
         self.qemu = backend_pool.libvirt.backend_service.LibvirtBackendService()
+        self.nat_service = nat_service
+
         self.guests = []
         self.guest_id = 0
         self.guest_lock = Lock()
@@ -51,6 +53,10 @@ class PoolService:
         # file configs
         self.ssh_port = CowrieConfig().getint('backend_pool', 'guest_ssh_port', fallback=-1)
         self.telnet_port = CowrieConfig().getint('backend_pool', 'guest_telnet_port', fallback=-1)
+
+        self.local_pool = CowrieConfig().get('proxy', 'pool', fallback='local') == 'local'
+        self.pool_only = CowrieConfig().getboolean('backend_pool', 'pool_only', fallback=False)
+        self.use_nat = CowrieConfig().getboolean('backend_pool', 'use_nat', fallback=True)
 
         # detect invalid config
         if not self.ssh_port > 0 and not self.telnet_port > 0:
@@ -98,6 +104,11 @@ class PoolService:
 
         # force destroy remaining stuff
         self.qemu.destroy_all_cowrie()
+
+        # close any NAT sockets
+        if not self.local_pool and self.use_nat or self.pool_only:
+            log.msg(eventid='cowrie.backend_pool.service', format='Free all NAT bindings')
+            self.nat_service.free_all()
 
         try:
             self.qemu.stop_backend()
