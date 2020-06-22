@@ -185,7 +185,7 @@ and their Python interface. In Debian/Ubuntu::
 
 Then install the Python API to run the backend pool::
 
-    (cowrie-env) $ pip install libvirt-python==5.5.0
+    (cowrie-env) $ pip install libvirt-python==6.4.0
 
 To allow Qemu to use disk images and snapshots, set it to run with the user and group of the user running the pool
 (usually called 'cowrie' too::
