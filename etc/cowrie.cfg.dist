@@ -1018,3 +1018,16 @@ topic = cowrie
 [output_crashreporter]
 enabled = false
 debug = false
+
+# Reports login attempts to AbuseIPDB. A short guide is in the original
+# pull request on GitHub: https://github.com/cowrie/cowrie/pull/1346
+#[output_abuseipdb]
+#enabled = true
+#api_key =
+#rereport_after = 6
+#tolerance_window is in minutes
+#tolerance_window = 120
+#tolerance_attempts = 10
+# WARNING: A binary file is read from this directory on start-up. Do not
+# change unless you understand the security implications!
+#dump_path = ${honeypot:state_path}/abuseipdb
