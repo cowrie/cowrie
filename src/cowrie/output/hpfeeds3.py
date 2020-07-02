@@ -107,7 +107,7 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'cowrie.log.closed':
             # entry["ttylog"]
             with open(entry["ttylog"]) as ttylog:
-                self.meta[session]['ttylog'] = ttylog.read().encode('hex')
+                self.meta[session]['ttylog'] = ttylog.read().hex()
 
         elif entry["eventid"] == 'cowrie.session.closed':
             meta = self.meta.pop(session, None)

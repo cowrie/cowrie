@@ -23,7 +23,7 @@ class Output(cowrie.core.output.Output):
             self.client = InfluxDBClient(host=host, port=port, ssl=ssl, verify_ssl=ssl)
         except InfluxDBClientError as e:
             log.msg("output_influx: I/O error({0}): '{1}'".format(
-                e.errno, e.strerror))
+                e.code, e.message))
             return
 
         if self.client is None:
