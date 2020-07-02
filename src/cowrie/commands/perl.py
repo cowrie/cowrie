@@ -33,8 +33,8 @@ class command_perl(HoneyPotCommand):
             'Internet, point your browser at http://www.perl.org/, the Perl Home Page.',
             ''
         )
-        for l in output:
-            self.write(l + '\n')
+        for line in output:
+            self.write(line + '\n')
 
     def help(self):
         output = (
@@ -70,8 +70,8 @@ class command_perl(HoneyPotCommand):
             '  -X                disable all warnings',
             ''
         )
-        for l in output:
-            self.write(l + '\n')
+        for line in output:
+            self.write(line + '\n')
 
     def start(self):
         try:

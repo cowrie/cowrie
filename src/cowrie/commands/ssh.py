@@ -52,8 +52,8 @@ class command_ssh(HoneyPotCommand):
                 self.exit()
                 return
         if not len(args):
-            for l in OUTPUT:
-                self.write('{0}\n'.format(l))
+            for line in OUTPUT:
+                self.write('{0}\n'.format(line))
             self.exit()
             return
         user, host = 'root', args[0]
@@ -71,7 +71,7 @@ class command_ssh(HoneyPotCommand):
                     Name or service not known\n' % (host,))
                 self.exit()
         else:
-            s = hashlib.md5(host).hexdigest()
+            s = hashlib.md5(host.encode()).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in
                                 (s[0:2], s[2:4], s[4:6], s[6:8])])
 
