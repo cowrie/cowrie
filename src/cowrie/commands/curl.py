@@ -408,7 +408,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         if self.fakeoutfile:
             self.curl.write(
-                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- %d\n".format(self.currentlength,
+                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- {}\n".format(self.currentlength,
                                                                                                   self.currentlength,
                                                                                                   63673, 65181))
 
