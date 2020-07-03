@@ -33,8 +33,8 @@ class command_chpasswd(HoneyPotCommand):
             '  -s, --sha-rounds              number of SHA rounds for the SHA*'
             '                                crypt algorithms'
         )
-        for l in output:
-            self.write(l + '\n')
+        for line in output:
+            self.write(line + '\n')
 
     def chpasswd_application(self, contents):
         c = 1

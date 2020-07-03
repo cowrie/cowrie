@@ -74,16 +74,15 @@ class NATService:
         self.lock.acquire()
         try:
             # see if binding is already created
-            if dst_ip in self.bindings:
+            if guest_id in self.bindings:
                 # increase connected
                 self.bindings[guest_id][0] += 1
 
                 return self.bindings[guest_id][1]._realPortNumber, self.bindings[guest_id][2]._realPortNumber
-
             else:
                 nat_ssh = reactor.listenTCP(0, ServerFactory(dst_ip, ssh_port), interface='0.0.0.0')
                 nat_telnet = reactor.listenTCP(0, ServerFactory(dst_ip, telnet_port), interface='0.0.0.0')
-                self.bindings[guest_id] = [0, nat_ssh, nat_telnet]
+                self.bindings[guest_id] = [1, nat_ssh, nat_telnet]
 
                 return nat_ssh._realPortNumber, nat_telnet._realPortNumber
         finally:
@@ -94,10 +93,20 @@ class NATService:
         try:
             self.bindings[guest_id][0] -= 1
 
-            # stop listening if no-one connected
-            if self.bindings[guest_id][0] == 0:
+            # stop listening if no one is connected
+            if self.bindings[guest_id][0] <= 0:
                 self.bindings[guest_id][1].stopListening()
                 self.bindings[guest_id][2].stopListening()
+                del self.bindings[guest_id]
+        finally:
+            self.lock.release()
 
+    def free_all(self):
+        self.lock.acquire()
+        try:
+
+            for guest_id in self.bindings:
+                self.bindings[guest_id][1].stopListening()
+                self.bindings[guest_id][2].stopListening()
         finally:
             self.lock.release()
