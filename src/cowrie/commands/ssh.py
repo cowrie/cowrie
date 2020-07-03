@@ -52,8 +52,8 @@ class command_ssh(HoneyPotCommand):
                 self.exit()
                 return
         if not len(args):
-            for l in OUTPUT:
-                self.write('{0}\n'.format(l))
+            for line in OUTPUT:
+                self.write('{0}\n'.format(line))
             self.exit()
             return
         user, host = 'root', args[0]

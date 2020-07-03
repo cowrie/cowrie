@@ -69,8 +69,8 @@ class command_python(HoneyPotCommand):
             '   str, bytes and datetime objects.  It can also be set to an integer',
             '   in the range [0,4294967295] to get hash values with a predictable seed.'
         )
-        for l in output:
-            self.write(l + '\n')
+        for line in output:
+            self.write(line + '\n')
 
     def start(self):
         try:
