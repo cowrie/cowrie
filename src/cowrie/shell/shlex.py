@@ -105,7 +105,7 @@ class shlex:
         self.instream.close()
         (self.infile, self.instream, self.lineno) = self.filestack.popleft()
         if self.debug:
-            print('shlex: popping to {}, line %d'.format(self.instream, self.lineno))
+            print('shlex: popping to {}, line {}'.format(self.instream, self.lineno))
         self.state = ' '
 
     def get_token(self):

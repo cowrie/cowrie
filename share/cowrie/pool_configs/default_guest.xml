@@ -25,6 +25,11 @@
         <disk type='file' device='disk'>
             <driver name='qemu' type='qcow2'/>
             <source file='{disk_image}'/>
+            <backingStore type='file'>
+                <format type='qcow2'/>
+                <source file='{base_image}'/>
+                <backingStore/>
+            </backingStore>
             <target dev='vda' bus='virtio'/>
             <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
         </disk>

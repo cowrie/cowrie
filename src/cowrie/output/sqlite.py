@@ -121,13 +121,6 @@ class Output(cowrie.core.output.Output):
                 (entry["session"], entry["timestamp"], entry['url'], 'NULL', 'NULL')
             )
 
-        elif entry["eventid"] == 'cowrie.session.file_download':
-            self.simpleQuery(
-                'INSERT INTO `input` (`session`, `timestamp`, `realm`, `input`) '
-                'VALUES (?, ?, ?, ?)',
-                (entry["session"], entry["timestamp"], entry["realm"], entry["input"])
-            )
-
         elif entry["eventid"] == 'cowrie.client.version':
             r = yield self.db.runQuery(
                 'SELECT `id` FROM `clients` '

@@ -24,6 +24,16 @@ first_time_use() {
     echo
 }
 
+python_version_warning() {
+    echo "version check"
+    if python -V 2>&1 | grep -q  '^Python 2.'; then
+        echo
+        echo "DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020."
+        echo "Please upgrade your Python as Python 2.7 won't be maintained after that date. Cowrie has dropped support for Python 2.7."
+        echo
+    fi
+}
+
 migrate_userdb() {
     if [ -f ${COWRIEDIR}/data/userdb.txt ]; then
         echo "Migrating ${COWRIEDIR}/data/userdb.txt to ${COWRIEDIR}/etc/userdb.txt"
@@ -99,6 +109,8 @@ cowrie_start() {
     else
         echo 2>&1 "Not using Python virtual environment"
     fi
+
+    python_version_warning
 
     # Automatically check if the authbind is enabled or not
     authfile="/etc/authbind/byport/22"

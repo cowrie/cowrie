@@ -1,4 +1,15 @@
 
+Release 2.1.0
+=============
+* Deprecate Python 2.7. Still works but removed from testing suite and fixing 2.7 problems will no longer have priority.
+* Disable crashreporter
+* Updated ELK documentation and output plugin
+* `tee` command added. Updates to `cat`, `dd` and `wc`.
+* Fixed SSH compression issue with AsyncSSH client
+* AbuseIP output plugin.
+
+Release 2.0.1
+=============
 
 * 2019-10-31 Fix for exec commands when tty logging is disabled
 * 2019-10-31 Fix for print output to stdout for curl/wget

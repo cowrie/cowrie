@@ -77,7 +77,13 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
             return
 
-        address = dottedQuadToNum(host)
+        if re.match(r'^\d+$', host):
+            address = int(host)
+        elif re.match(r'^[\d\.]+$', host):
+            address = dottedQuadToNum(host)
+        else:
+            # TODO: should do dns lookup
+            self.exit()
 
         for net in local_networks:
             if addressInNetwork(address, net):
@@ -92,8 +98,11 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(out_addr)
-        self.s.connect((host, int(port)))
-        self.recv_data()
+        try:
+            self.s.connect((host, int(port)))
+            self.recv_data()
+        except Exception:
+            self.exit()
 
     def recv_data(self):
         data = ''
@@ -110,7 +119,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
     def lineReceived(self, line):
         if hasattr(self, 's'):
-            self.s.send(line)
+            self.s.send(line.encode('utf8'))
 
     def handle_CTRL_C(self):
         self.write('^C\n')
