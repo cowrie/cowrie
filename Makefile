@@ -31,5 +31,7 @@ git-remote:
 dependency-upgrade:
 	git checkout master
 	git checkout -b "dependency-upgrade-`date +%Y-%m-%d`"
-	pur
-	git commit -m "dependency upgrade `date`" requirements.txt
+	pur -r requirements.txt
+	pur -r requirements-dev.txt
+	pur -r requirements-output.txt
+	git commit -m "dependency upgrade `date`" requirements*.txt
