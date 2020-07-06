@@ -728,14 +728,14 @@ epoch_timestamp = false
 #port = 9200
 #index = cowrie
 # type has been deprecated since ES 6.0.0
-# use _doc which is the default type. See
+# use _doc which is the default type. See
 # https://stackoverflow.com/a/53688626 for
-# more information
+# more information
 #type = _doc
 # set pipeline = geoip to map src_ip to
-# geo location data. You can use a custom
+# geo location data. You can use a custom
 # pipeline but you must ensure it exists
-# in elasticsearch.
+# in elasticsearch.
 #pipeline = geoip
 #
 # Authentication. When x-pack.security is enabled
@@ -747,7 +747,7 @@ epoch_timestamp = false
 #password = 
 #
 # TLS encryption. Communications between the client (cowrie) 
-# and the ES server should naturally be protected by encryption
+# and the ES server should naturally be protected by encryption
 # if requests are authenticated (to prevent from man-in-the-middle 
 # attacks). The following options are then paramount
 # if username and password are provided.
