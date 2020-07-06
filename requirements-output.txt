@@ -15,7 +15,7 @@ hpfeeds3==0.9.10; python_version >= '3.0'
 # If this fails, see documentation /home/cowrie/cowrie/docs/sql/README.md
 # There are two options, mysqlclient is newer and provides Python3 support.
 mysqlclient==2.0.1; python_version >= '3.0'
-MySQL-python==1.2.5; python_version >= '3.0'
+MySQL-python==1.2.5; python_version < '3.0'
 
 # mongodb
 pymongo==3.10.1
