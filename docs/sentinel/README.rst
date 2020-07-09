@@ -1,10 +1,10 @@
 Azure Sentinel Log Collection
 =============================
 
-Open your Sentinel worksapce and navigate to "Data connectors" >
-"Syslog" > "Open connector page". Expand "Install agent on a non-Azure
-Linux Machine", the select "Download & install agent for non-Azure
-Linux machines". Select the Linux tab and either copy the shell
+Open your Sentinel worksapce and navigate to `Data connectors` >
+`Syslog` > `Open connector page`. Expand `Install agent on a non-Azure
+Linux Machine`, the select `Download & install agent for non-Azure
+Linux machines`. Select the Linux tab and either copy the shell
 script that is presented, or take note of your Workspace ID and
 Primary Key and install the agent on your host by hand::
 
@@ -12,33 +12,27 @@ Primary Key and install the agent on your host by hand::
   chmod +x onboard_agent.sh
   ./onboard_agent.sh -w <workspace ID> -s <key> -d opinsights.azure.com
 
-Once installed, return to the Syslog connector page and select "Open
-your workspace advanced settings configuration". Select "Data" >
-"Custom Logs". Check "Apply below configuration to my linux machines"
-then add a new custom log source: When prompted, upload the cowrie.json
+Once installed, return to the Syslog connector page and select `Open
+your workspace advanced settings configuration`. Select `Data` >
+`Custom Logs`. Check `Apply below configuration to my linux machines`
+then add a new custom log source: When prompted, upload the `cowrie.json`
 file you downloaded.
 
 The default delimeter is correct (newline).  Specify
-/opt/cowrie/var/log/cowrie/cowrie.json as the log collection path.
+`/opt/cowrie/var/log/cowrie/cowrie.json` as the log collection path.
 
-Name the custom log "cowrie_JSON" (without quotes). Sentinel will
-automatically append _CL to this name.
-
-Repeat the above for the Apache access log, setting the log paths
-as /var/log/apache2/access.log and /var/log/webpot/access.log. Name
-the custom log "Apache_Access".
+Name the custom log `cowrie_JSON`. Sentinel will automatically
+append _CL to this name.
 
 It will take a while for this to roll out to the host, but eventually
-you'll be able to run the log analytics queries cowrie_JSON_CL and
-Apache_Access_CL and see data coming in.
+you'll be able to run the log analytics query cowrie_JSON_CL and
+see data coming in.
 
-Take the contents of cowrie.txt from the "cowrie" folder of this
-repo and paste them into a new log analytics query. Run the query,
+Take the contents of `cowrie-parser.txt` from the `docs/sentinel` folder
+and paste them into a new log analytics query. Run the query,
 then save this off as a function with the name, alias and category
-of "Cowrie". Likewise, take the contents of apache.txt from the
-"apache" folder and save them as a function with the name and alias
-of "ApacheAccess" under the category "Apache".
+of `Cowrie`.
 
 Once events are being ingested and parsed by Azure Sentinel,
-linux_workbook.json can be imported to define a custom workbook to
-interact with Cowrie and Apache data.
+`linux_workbook.json` can be imported to define a custom workbook to
+interact with Cowrie data.
