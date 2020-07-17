@@ -15,7 +15,7 @@
             "description": "Selects time range of the drilldown",
             "isRequired": true,
             "value": {
-              "durationMs": 43200000
+              "durationMs": 14400000
             },
             "typeSettings": {
               "selectableValues": [
@@ -113,7 +113,7 @@
         "showAnalytics": true,
         "title": "Failed Logons",
         "timeContext": {
-          "durationMs": 0
+          "durationMs": 14400000
         },
         "timeContextFromParameter": "time_span",
         "showExportToExcel": true,
@@ -121,7 +121,7 @@
         "resourceType": "microsoft.operationalinsights/workspaces",
         "visualization": "piechart"
       },
-      "customWidth": "50",
+      "customWidth": "33",
       "name": "query - 2"
     },
     {
@@ -133,7 +133,7 @@
         "showAnalytics": true,
         "title": "Successful Logons",
         "timeContext": {
-          "durationMs": 0
+          "durationMs": 14400000
         },
         "timeContextFromParameter": "time_span",
         "showExportToExcel": true,
@@ -141,7 +141,7 @@
         "resourceType": "microsoft.operationalinsights/workspaces",
         "visualization": "piechart"
       },
-      "customWidth": "50",
+      "customWidth": "33",
       "name": "query - 2 - Copy"
     },
     {
@@ -153,7 +153,7 @@
         "showAnalytics": true,
         "title": "Commands Executed",
         "timeContext": {
-          "durationMs": 0
+          "durationMs": 14400000
         },
         "timeContextFromParameter": "time_span",
         "showExportToExcel": true,
@@ -161,28 +161,8 @@
         "resourceType": "microsoft.operationalinsights/workspaces",
         "visualization": "piechart"
       },
-      "customWidth": "50",
+      "customWidth": "33",
       "name": "query - 4"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "ApacheAccess\r\n| where Computer in ({sensor_values})\r\n| summarize count() by tostring(SourceIp)",
-        "size": 1,
-        "showAnalytics": true,
-        "title": "Web Requests",
-        "timeContext": {
-          "durationMs": 0
-        },
-        "timeContextFromParameter": "time_span",
-        "showExportToExcel": true,
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces",
-        "visualization": "piechart"
-      },
-      "customWidth": "50",
-      "name": "query - 20"
     },
     {
       "type": 1,
@@ -355,120 +335,6 @@
       },
       "customWidth": "50",
       "name": "query - 13"
-    },
-    {
-      "type": 1,
-      "content": {
-        "json": "# Web Activity\r\n---"
-      },
-      "name": "text - 15"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "ApacheAccess\r\n| where Computer in ({sensor_values})\r\n| summarize count() by RequestPath\r\n| sort by count_ desc\r\n| limit 10",
-        "size": 0,
-        "showAnalytics": true,
-        "title": "Top Request Paths",
-        "timeContext": {
-          "durationMs": 0
-        },
-        "timeContextFromParameter": "time_span",
-        "showExportToExcel": true,
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces",
-        "visualization": "barchart",
-        "gridSettings": {
-          "sortBy": [
-            {
-              "itemKey": "RequestPath",
-              "sortOrder": 1
-            }
-          ]
-        },
-        "sortBy": [
-          {
-            "itemKey": "RequestPath",
-            "sortOrder": 1
-          }
-        ]
-      },
-      "customWidth": "50",
-      "name": "query - 16"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "ApacheAccess\r\n| where Computer in ({sensor_values})\r\n| summarize count() by SourceIp\r\n| sort by count_ desc\r\n| limit 10",
-        "size": 0,
-        "showAnalytics": true,
-        "title": "Top Sources",
-        "timeContext": {
-          "durationMs": 14400000
-        },
-        "timeContextFromParameter": "time_span",
-        "showExportToExcel": true,
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces",
-        "visualization": "barchart"
-      },
-      "customWidth": "50",
-      "name": "query - 17"
-    },
-    {
-      "type": 9,
-      "content": {
-        "version": "KqlParameterItem/1.0",
-        "parameters": [
-          {
-            "id": "aa6a8797-ba56-4a26-adbd-ee8d964161ba",
-            "version": "KqlParameterItem/1.0",
-            "name": "client_values",
-            "label": "Client IPs",
-            "type": 2,
-            "description": "Selects the client IPs to target during drilldown",
-            "isRequired": true,
-            "multiSelect": true,
-            "quote": "'",
-            "delimiter": ",",
-            "query": "ApacheAccess\r\n| where Computer in ({sensor_values})\r\n| summarize by SourceIp",
-            "value": [],
-            "typeSettings": {
-              "additionalResourceOptions": []
-            },
-            "timeContext": {
-              "durationMs": 0
-            },
-            "timeContextFromParameter": "time_span",
-            "queryType": 0,
-            "resourceType": "microsoft.operationalinsights/workspaces"
-          }
-        ],
-        "style": "pills",
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces"
-      },
-      "name": "parameters - 18"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "ApacheAccess\r\n| where SourceIp in ({client_values}) and Computer in ({sensor_values})\r\n| project TimeGenerated, SourceIp, RequestMethod, RequestPath, RequestStatus, UserAgent, Referer",
-        "size": 0,
-        "showAnalytics": true,
-        "title": "Client Requests",
-        "timeContext": {
-          "durationMs": 86400000
-        },
-        "showExportToExcel": true,
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces",
-        "sortBy": []
-      },
-      "name": "query - 19"
     }
   ],
   "fallbackResourceIds": [
