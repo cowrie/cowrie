@@ -62,13 +62,19 @@ class command_cat(HoneyPotCommand):
                         raise FileNotFound
                 except FileNotFound:
                     self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
-
             self.exit()
+        elif self.input_data is not None:
+            self.output(self.input_data)
+            self.exit()
+
 
     def output(self, input):
         """
         This is the cat output, with optional line numbering
         """
+        if input is None:
+            return
+
         if isinstance(input, str):
             input = input.encode('utf8')
         elif isinstance(input, bytes):
