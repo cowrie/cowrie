@@ -67,7 +67,6 @@ class command_cat(HoneyPotCommand):
             self.output(self.input_data)
             self.exit()
 
-
     def output(self, input):
         """
         This is the cat output, with optional line numbering
@@ -80,7 +79,7 @@ class command_cat(HoneyPotCommand):
         elif isinstance(input, bytes):
             pass
         else:
-            log.msg("unusual cat input %s".format(repr(input)))
+            log.msg("unusual cat input {}".format(repr(input)))
 
         lines = input.split(b'\n')
         if lines[-1] == b'':
