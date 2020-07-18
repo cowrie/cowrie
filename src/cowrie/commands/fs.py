@@ -34,12 +34,11 @@ class command_grep(HoneyPotCommand):
             self.errorWrite("grep: {}: No such file or directory\n".format(filename))
 
     def grep_application(self, contents, match):
-        match = os.path.basename(match)
-        match = match.replace('\"', '')
+        match = os.path.basename(match).replace('\"', '').encode('utf8')
+        matches = re.compile(match)
         contentsplit = contents.split(b'\n')
-        matches = re.compile('.*' + match + '.*')
         for line in contentsplit:
-            if matches.match(line.decode()):
+            if matches.search(line):
                 self.writeBytes(line + b'\n')
 
     def help(self):
