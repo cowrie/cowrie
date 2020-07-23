@@ -41,5 +41,5 @@ wokkel==18.0.0
 
 # misp
 pymisp==2.4.128; python_version >= '3.0'
-pymisp==2.4.128; python_version < '3.0'
+pymisp==2.4.121.1; python_version < '3.0'
 pathlib==1.0.1; python_version < '3.0'
