@@ -1,5 +1,5 @@
 # csirtg
-csirtgsdk==0.0.0a22 # TODO: csirtgsdk need to be updated for current API
+csirtgsdk==1.1.5 # TODO: csirtgsdk need to be updated for current API
 
 # dshield
 requests==2.24.0
@@ -24,10 +24,10 @@ pymongo==3.10.1
 rethinkdb==2.4.7
 
 # s3
-botocore==1.17.16
+botocore==1.17.26
 
 # slack
-slackclient==2.7.2
+slackclient==2.7.3
 
 # influxdb
 influxdb==5.3.0
@@ -41,5 +41,5 @@ wokkel==18.0.0
 
 # misp
 pymisp==2.4.128; python_version >= '3.0'
-pymisp==2.4.121.1; python_version < '3.0'
+pymisp==2.4.128; python_version < '3.0'
 pathlib==1.0.1; python_version < '3.0'

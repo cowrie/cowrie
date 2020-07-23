@@ -1,7 +1,7 @@
 flake8==3.8.3
 flake8-import-order==0.18.1
-setuptools==47.3.1
-Sphinx==1.8.5
+setuptools==49.2.0
+Sphinx==3.1.2
 sphinx_rtd_theme==0.5.0
-tox==3.16.1
+tox==3.18.0
 pur==5.3.0
