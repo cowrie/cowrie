@@ -1,8 +1,9 @@
 appdirs==1.4.4
 attrs==19.3.0
 bcrypt==3.1.7
-configparser==4.0.2
-cryptography==2.9.2
+configparser==4.0.2; python_version == '3.5'
+configparser==5.0.0; python_version > '3.5'
+cryptography==3.0
 packaging==20.4
 pyasn1_modules==0.2.8
 pyopenssl==19.1.0

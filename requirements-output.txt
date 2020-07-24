@@ -24,10 +24,10 @@ pymongo==3.10.1
 rethinkdb==2.4.7
 
 # s3
-botocore==1.17.16
+botocore==1.17.26
 
 # slack
-slackclient==2.7.2
+slackclient==2.7.3
 
 # influxdb
 influxdb==5.3.0
