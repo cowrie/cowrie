@@ -157,8 +157,7 @@ class command_wget(HoneyPotCommand):
             out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == b'https':
-            contextFactory = ssl.ClientContextFactory()
-            contextFactory.method = SSL.SSLv23_METHOD
+            contextFactory = ssl.CertificationOptions(method=SSL.SSLv23_METHOD)
             self.connection = reactor.connectSSL(host, port, factory, contextFactory, bindAddress=out_addr)
         elif scheme == b'http':
             self.connection = reactor.connectTCP(host, port, factory, bindAddress=out_addr)

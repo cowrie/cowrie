@@ -265,8 +265,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
-            contextFactory = ssl.ClientContextFactory()
-            contextFactory.method = SSL.SSLv23_METHOD
+            contextFactory = ssl.CertificationOptions(method=SSL.SSLv23_METHOD)
             reactor.connectSSL(host, port, factory, contextFactory, bindAddress=out_addr)
         else:  # Can only be http
             self.connection = reactor.connectTCP(
