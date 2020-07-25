@@ -157,8 +157,7 @@ class command_wget(HoneyPotCommand):
             out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == b'https':
-            contextFactory = ssl.ClientContextFactory()
-            contextFactory.method = SSL.SSLv23_METHOD
+            contextFactory = ssl.CertificationOptions(method=SSL.SSLv23_METHOD)
             self.connection = reactor.connectSSL(host, port, factory, contextFactory, bindAddress=out_addr)
         elif scheme == b'http':
             self.connection = reactor.connectTCP(host, port, factory, bindAddress=out_addr)
@@ -187,8 +186,7 @@ class command_wget(HoneyPotCommand):
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url,
                                   outfile=self.artifactFile.shasumFilename,
-                                  shasum=self.artifactFile.shasum,
-                                  destfile=outfile)
+                                  shasum=self.artifactFile.shasum)
 
         # Update honeyfs to point to downloaded file or write to screen
         if outfile != '-':
