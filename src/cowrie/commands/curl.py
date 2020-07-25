@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division
 
 import getopt
-import hashlib
 import os
 import re
 import time
@@ -393,13 +392,8 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.curl.write(
                 "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- {}\n".format(
                   self.currentlength, self.currentlength, 63673, 65181))
-
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
-           # self.curl.fs.update_realfile(
-           #     self.curl.fs.getfile(self.fakeoutfile),
-           #     self.curl.artifactFile.shasumFilename)
 
-        # self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
 
 
