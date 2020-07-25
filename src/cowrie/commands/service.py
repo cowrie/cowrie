@@ -112,7 +112,6 @@ class command_service(HoneyPotCommand):
         leviathan@ubuntu:~$ sudo service ufw start
         leviathan@ubuntu:~$
         """
-        return
 
 
 commands['/usr/sbin/service'] = command_service

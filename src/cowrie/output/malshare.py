@@ -96,4 +96,3 @@ class Output(cowrie.core.output.Output):
                 print("MalShare Request failed: {}".format(res.status_code))
         except Exception as e:
             print("MalShare Request failed: {}".format(e))
-        return

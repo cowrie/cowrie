@@ -494,10 +494,8 @@ class command_passwd(HoneyPotCommand):
 
         if line != self.passwd or self.passwd == '*':
             self.write('Sorry, passwords do not match\n')
-            self.exit()
-            return
-
-        self.write('passwd: password updated successfully\n')
+        else:
+            self.write('passwd: password updated successfully\n')
         self.exit()
 
     def lineReceived(self, line):
@@ -552,12 +550,10 @@ class command_shutdown(HoneyPotCommand):
         else:
             self.write("Try `shutdown --help' for more information.\n")
             self.exit()
-            return
 
     def finish(self):
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
-        return
 
 
 commands['/sbin/shutdown'] = command_shutdown
@@ -579,7 +575,6 @@ class command_reboot(HoneyPotCommand):
     def finish(self):
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
-        return
 
 
 commands['/sbin/reboot'] = command_reboot
