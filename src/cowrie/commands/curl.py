@@ -15,6 +15,7 @@ from twisted.internet import reactor, ssl
 from twisted.python import compat, log
 from twisted.web import client
 
+from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
@@ -81,15 +82,10 @@ class command_curl(HoneyPotCommand):
         url = url.encode('ascii')
         self.url = url
 
-        if not hasattr(self, 'safeoutfile'):
-            tmp_fname = '%s_%s_%s_%s' % \
-                        (time.strftime('%Y%m%d%H%M%S'),
-                         self.protocol.getProtoTransport().transportId,
-                         self.protocol.terminal.transport.session.id,
-                         re.sub('[^A-Za-z0-9]', '_', url.decode('ascii')))
-            self.safeoutfile = os.path.join(self.download_path, tmp_fname)
+        self.artifactFile = Artifact(outfile)
+        # HTTPDownloader will close() the file object so need to preserve the name
 
-        self.deferred = self.download(url, outfile, self.safeoutfile)
+        self.deferred = self.download(url, outfile, self.artifactFile)
         if self.deferred:
             self.deferred.addCallback(self.success, outfile)
             self.deferred.addErrback(self.error, url)
@@ -285,36 +281,23 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
         self.connection.transport.loseConnection()
 
     def success(self, data, outfile):
-        if not os.path.isfile(self.safeoutfile):
-            log.msg("there's no file " + self.safeoutfile)
+        if not os.path.isfile(self.artifactFile.shasumFilename):
+            log.msg("there's no file " + self.artifactFile.shasumFilename)
             self.exit()
-
-        with open(self.safeoutfile, 'rb') as f:
-            shasum = hashlib.sha256(f.read()).hexdigest()
-            hashPath = os.path.join(self.download_path, shasum)
-
-        # If we have content already, delete temp file
-        if not os.path.exists(hashPath):
-            os.rename(self.safeoutfile, hashPath)
-            duplicate = False
-        else:
-            os.remove(self.safeoutfile)
-            duplicate = True
 
         self.protocol.logDispatch(eventid='cowrie.session.file_download',
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url,
-                                  duplicate=duplicate,
-                                  outfile=hashPath,
-                                  shasum=shasum,
-                                  destfile=self.safeoutfile)
+                                  outfile=self.artifactFile.shasumFilename,
+                                  shasum=self.artifactFile.shasum,
+                                  destfile=self.artifactFile)
 
         # Update the honeyfs to point to downloaded file if output is a file
         if outfile:
-            self.fs.update_realfile(self.fs.getfile(outfile), hashPath)
+            self.fs.update_realfile(self.fs.getfile(outfile), self.artifactFile.shasumFilename)
             self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
         else:
-            with open(hashPath, 'rb') as f:
+            with open(self.artifactFile.shasumFilename, 'rb') as f:
                 self.writeBytes(f.read())
 
         self.exit()
@@ -412,11 +395,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                   self.currentlength, self.currentlength, 63673, 65181))
 
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
-            self.curl.fs.update_realfile(
-                self.curl.fs.getfile(self.fakeoutfile),
-                self.curl.safeoutfile)
+           # self.curl.fs.update_realfile(
+           #     self.curl.fs.getfile(self.fakeoutfile),
+           #     self.curl.artifactFile.shasumFilename)
 
-        self.curl.fileName = self.fileName
+        # self.curl.fileName = self.fileName
         return client.HTTPDownloader.pageEnd(self)
 
 
