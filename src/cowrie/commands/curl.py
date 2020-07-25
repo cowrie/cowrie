@@ -5,7 +5,6 @@ from __future__ import absolute_import, division
 
 import getopt
 import os
-import re
 import time
 
 from OpenSSL import SSL
