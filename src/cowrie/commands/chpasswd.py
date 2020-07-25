@@ -82,7 +82,6 @@ class command_chpasswd(HoneyPotCommand):
         else:
             self.chpasswd_application(self.input_data)
             self.exit()
-            return
 
     def lineReceived(self, line):
         log.msg(eventid='cowrie.command.input',

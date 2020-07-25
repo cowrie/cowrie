@@ -138,7 +138,6 @@ class Output(cowrie.core.output.Output):
                 print("Cuckoo Request failed: {}".format(res.status_code))
         except Exception as e:
             print("Cuckoo Request failed: {}".format(e))
-        return
 
     def posturl(self, scanUrl):
         """
@@ -164,4 +163,3 @@ class Output(cowrie.core.output.Output):
                 print("Cuckoo Request failed: {}".format(res.status_code))
         except Exception as e:
             print("Cuckoo Request failed: {}".format(e))
-        return

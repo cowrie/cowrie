@@ -468,7 +468,6 @@ class HoneyPotFilesystem(object):
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         self.get_path(os.path.dirname(path)).remove(p)
-        return
 
     def readlink(self, path):
         p = self.getfile(path, follow_symlinks=False)
@@ -492,7 +491,6 @@ class HoneyPotFilesystem(object):
         self.get_path(os.path.dirname(oldpath)).remove(old)
         old[A_NAME] = os.path.basename(newpath)
         self.get_path(os.path.dirname(newpath)).append(old)
-        return
 
     def listdir(self, path):
         names = [x[A_NAME] for x in self.get_path(path)]

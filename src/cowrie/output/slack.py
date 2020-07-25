@@ -45,7 +45,6 @@ class Output(cowrie.core.output.Output):
     def start(self):
         self.slack_channel = CowrieConfig().get('output_slack', 'channel')
         self.slack_token = CowrieConfig().get('output_slack', 'token')
-        pass
 
     def stop(self):
         pass
