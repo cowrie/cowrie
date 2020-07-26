@@ -1024,7 +1024,7 @@ debug = false
 #[output_abuseipdb]
 #enabled = true
 #api_key =
-#rereport_after = 6
+#rereport_after = 24
 #tolerance_window is in minutes
 #tolerance_window = 120
 #tolerance_attempts = 10
