@@ -135,7 +135,6 @@ class Output(cowrie.core.output.Output):
                 return d
             else:
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
-                return
 
         def cbBody(body):
             """
@@ -207,7 +206,7 @@ class Output(cowrie.core.output.Output):
             elif j['response_code'] == -2:
                 log.msg("VT: response=-2: this has been queued for analysis already")
             else:
-                log.msg("VT: unexpected response code".format(j['response_code']))
+                log.msg("VT: unexpected response code: {}".format(j['response_code']))
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -249,7 +248,6 @@ class Output(cowrie.core.output.Output):
                 return d
             else:
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
-                return
 
         def cbError(failure):
             failure.printTraceback()
@@ -354,7 +352,7 @@ class Output(cowrie.core.output.Output):
                 log.msg("VT: response=1: this has been queued for analysis already")
                 log.msg("VT: permalink: {}".format(j['permalink']))
             else:
-                log.msg("VT: unexpected response code".format(j['response_code']))
+                log.msg("VT: unexpected response code: {}".format(j['response_code']))
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)

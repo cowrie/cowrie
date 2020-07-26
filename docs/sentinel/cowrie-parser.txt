@@ -1,0 +1,100 @@
+// Cowrie JSON Log Parser
+// By Chris Campbell (@phage_nz)
+// Last Updated Date: June 27,  2020
+let CowrieData = cowrie_JSON_CL
+| project TimeGenerated, Computer, RawData
+| extend EventData = parse_json(RawData)
+| extend EventID = EventData.eventid
+| project-away RawData
+;
+let Cowrie_ClientFingerprint=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.client.fingerprint"
+| extend Fingerprint = EventData.fingerprint, Key = EventData.key, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip, Type = EventData.type, Username = EventData.username
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_ClientKEX=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.client.kex"
+| extend CipherSuites = EventData.encCS, HasshFingerprint = EventData.hassh, HasshAlgorithms = EventData.hasshAlgorithms, KexAlgorithms = EventData.kexAlgs, KeyAlgorithms = EventData.keyAlgs, Languages = EventData.langCS, MAC = EventData.macCS, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_ClientSize=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.client.size"
+| extend Height = EventData.height, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip, Width = EventData.width
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_ClientVersion=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.client.version"
+| extend Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip, Version = EventData.version
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_CommandInput=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.command.input"
+| extend Input = EventData.input, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_LogClosed=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.log.closed"
+| extend Duration = EventData.duration, Sensor = EventData.sensor, Session = EventData.session, ShaSum = EventData.shasum, Size = EventData.size, SourceIp = EventData.src_ip, TtyLog = EventData.ttylog
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_LoginFailed=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.login.failed"
+| extend Password = EventData.password, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip, Username = EventData.username
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_LoginSuccess=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.login.success"
+| extend Password = EventData.password, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip, Username = EventData.username
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_SessionClosed=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.session.closed"
+| extend Duration = EventData.duration, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_SessionConnect=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.session.connect"
+| extend DestinationIp = EventData.dst_ip, DestinationPort = EventData.dst_port, Protocol = EventData.protocol, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip, SourcePort = EventData.src_port
+| project-away EventData
+;
+processEvents;
+};
+let Cowrie_SessionParams=() {
+let processEvents = CowrieData
+| where EventID == "cowrie.session.params"
+| extend Architecture = EventData.arch, Sensor = EventData.sensor, Session = EventData.session, SourceIp = EventData.src_ip
+| project-away EventData
+;
+processEvents;
+};
+(union isfuzzy=true
+Cowrie_ClientFingerprint, Cowrie_ClientKEX, Cowrie_ClientSize, Cowrie_ClientVersion, Cowrie_CommandInput, Cowrie_LogClosed, Cowrie_LoginFailed, Cowrie_LoginSuccess, Cowrie_SessionClosed, Cowrie_SessionConnect, Cowrie_SessionParams)
+| project TimeGenerated, EventID, Computer, Sensor, Session, Fingerprint, Key, SourceIp, SourcePort, DestinationIp, DestinationPort, Protocol, Type, Username, Password, Input, Architecture, Version, Duration, CipherSuites, HasshFingerprint, HasshAlgorithms, KexAlgorithms, KeyAlgorithms, Languages, MAC, Height, Width, ShaSum, Size, TtyLog

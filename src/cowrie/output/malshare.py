@@ -88,8 +88,7 @@ class Output(cowrie.core.output.Output):
         try:
             res = requests.post(
                 "https://malshare.com/api.php?mode=cli",
-                files={fileName: open(artifact, "rb")},
-                verify=False
+                files={fileName: open(artifact, "rb")}
             )
             if res and res.ok:
                 print("Submited to MalShare")
@@ -97,4 +96,3 @@ class Output(cowrie.core.output.Output):
                 print("MalShare Request failed: {}".format(res.status_code))
         except Exception as e:
             print("MalShare Request failed: {}".format(e))
-        return

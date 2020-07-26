@@ -64,7 +64,6 @@ Supported modules:
  Idx: Debian dpkg status file
  Idx: EDSP scenario file\n''')
         self.exit()
-        return
 
     def do_help(self):
         self.write('''apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
@@ -111,7 +110,6 @@ See the apt-get(8), sources.list(5) and apt.conf(5) manual
 pages for more information and options.
                        This APT has Super Cow Powers.\n''')
         self.exit()
-        return
 
     @inlineCallbacks
     def do_install(self, *args):

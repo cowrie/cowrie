@@ -47,12 +47,12 @@ class ShellCatCommandTests(unittest.TestCase):
 
     def test_cat_command_003(self):
         """
-        test ignore stdin when called without '-'
+        test without arguments, read stdin only and quit
         """
-        self.proto.lineReceived(b'echo whatever | cat\n')
-        self.proto.lineReceived(b'test\n')
+        self.proto.lineReceived(b'echo 1 | cat\n')
+        self.proto.lineReceived(b'echo 2\n')
         self.proto.handle_CTRL_D()
-        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+        self.assertEquals(self.tr.value(), b'1\n' + PROMPT + b'2\n' + PROMPT)
 
     def test_cat_command_004(self):
         """

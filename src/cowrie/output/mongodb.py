@@ -116,7 +116,7 @@ class Output(cowrie.core.output.Output):
             # ToDo Compress to opimise the space and if your sending to remote db
             with open(entry["ttylog"]) as ttylog:
                 entry['ttylogpath'] = entry['ttylog']
-                entry['ttylog'] = ttylog.read().encode('hex')
+                entry['ttylog'] = ttylog.read().hex()
             self.insert_one(self.col_ttylog, entry)
 
         elif eventid == 'cowrie.client.fingerprint':

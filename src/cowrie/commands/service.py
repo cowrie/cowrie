@@ -82,8 +82,8 @@ class command_service(HoneyPotCommand):
             '[ - ]  uuidd',
             '[ + ]  whoopsie',
             '[ - ]  x11-common')
-        for l in output:
-            self.write(l + '\n')
+        for line in output:
+            self.write(line + '\n')
 
     def help(self):
         output = 'Usage: service < option > | --status-all | [ service_name [ command | --full-restart ] ]'
@@ -112,7 +112,6 @@ class command_service(HoneyPotCommand):
         leviathan@ubuntu:~$ sudo service ufw start
         leviathan@ubuntu:~$
         """
-        return
 
 
 commands['/usr/sbin/service'] = command_service

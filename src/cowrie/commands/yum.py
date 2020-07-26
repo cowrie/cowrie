@@ -67,7 +67,6 @@ class command_yum(HoneyPotCommand):
         self.write('Group-Installed: yum 13:{}\n'.format(randhash2))
         self.write('version\n')
         self.exit()
-        return
 
     @inlineCallbacks
     def do_help(self):

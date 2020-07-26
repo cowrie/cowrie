@@ -280,7 +280,7 @@ class command_ps(HoneyPotCommand):
                       '%s'.ljust(12 - len('1024')) % '1024',
                       '%s'.ljust(10 - len('?')) % '?',
                       '%s'.ljust(8 - len('Ss')) % 'Ss',
-                      '%s'.ljust(8 - len('June22')) % 'June22',
+                      '%s'.ljust(8 - len('July22')) % 'July22',
                       '%s'.ljust(8 - len('0:00')) % '0:00',
                       '%s'.ljust(30 - len('/usr/sbin/sshd: %s@pts/0')) % '/usr/sbin/sshd: %s@pts/0' % user)
             output_array.append(output)
@@ -494,10 +494,8 @@ class command_passwd(HoneyPotCommand):
 
         if line != self.passwd or self.passwd == '*':
             self.write('Sorry, passwords do not match\n')
-            self.exit()
-            return
-
-        self.write('passwd: password updated successfully\n')
+        else:
+            self.write('passwd: password updated successfully\n')
         self.exit()
 
     def lineReceived(self, line):
@@ -532,8 +530,8 @@ class command_shutdown(HoneyPotCommand):
                 "-t secs: delay between warning and kill signal. ",
                 "** the \"time\" argument is mandatory! (try \"now\") **",
             )
-            for l in output:
-                self.write('{0}\n'.format(l))
+            for line in output:
+                self.write('{0}\n'.format(line))
             self.exit()
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
@@ -552,12 +550,10 @@ class command_shutdown(HoneyPotCommand):
         else:
             self.write("Try `shutdown --help' for more information.\n")
             self.exit()
-            return
 
     def finish(self):
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
-        return
 
 
 commands['/sbin/shutdown'] = command_shutdown
@@ -579,7 +575,6 @@ class command_reboot(HoneyPotCommand):
     def finish(self):
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
-        return
 
 
 commands['/sbin/reboot'] = command_reboot
@@ -595,8 +590,8 @@ class command_history(HoneyPotCommand):
                 self.protocol.historyPosition = 0
                 return
             count = 1
-            for l in self.protocol.historyLines:
-                self.write(' %s  %s\n' % (str(count).rjust(4), l))
+            for line in self.protocol.historyLines:
+                self.write(' %s  %s\n' % (str(count).rjust(4), line))
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
@@ -701,8 +696,8 @@ class command_php(HoneyPotCommand):
                 'PHP 5.3.5 (cli)',
                 'Copyright (c) 1997-2010 The PHP Group'
             )
-            for l in output:
-                self.write('{0}\n'.format(l))
+            for line in output:
+                self.write('{0}\n'.format(line))
             self.exit()
         elif self.args[0] == '-h':
             output = (
@@ -745,8 +740,8 @@ class command_php(HoneyPotCommand):
                 '  --ri <name>      Show configuration for extension <name>.',
                 ''
             )
-            for l in output:
-                self.write('{0}\n'.format(l))
+            for line in output:
+                self.write('{0}\n'.format(line))
             self.exit()
         else:
             self.exit()

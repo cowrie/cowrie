@@ -15,7 +15,7 @@ The tool we'll be using is `virt-diff`, which provides a similar syntax to that 
 
 .. code-block:: bash
 
-    sudo virt-diff -a ~/cowrie-imgs/ubuntu18.04-minimal.qcow2 -A snapshot-ubuntu18.04-a70b9671ad4d44619af2c4a41a28aec0.qcow2
+    $ sudo virt-diff -a ~/cowrie-imgs/ubuntu18.04-minimal.qcow2 -A snapshot-ubuntu18.04-a70b9671ad4d44619af2c4a41a28aec0.qcow2
 
 (the tool might need to be run with sudo due to a permission denied error)
 
@@ -25,7 +25,7 @@ from `virt-diff` is stored in a file diff.txt)
 
 .. code-block:: bash
 
-    grep -aE "^\+ |^- |^= " diff.txt
+    $ grep -aE "^\+ |^- |^= " diff.txt
 
 Here is an example output, in a VM were we created a file called `avirus`::
 
@@ -60,7 +60,7 @@ no good way to eliminate these, but we can use grep to ignore them:
 
 .. code-block:: bash
 
-    grep -aE "^\+ |^- |^= " diff.txt | grep -aEv "/tmp/systemd|/var/log|/var/lib"
+    $ grep -aE "^\+ |^- |^= " diff.txt | grep -aEv "/tmp/systemd|/var/log|/var/lib"
 
 Which now gives us a clearer output::
 
@@ -81,15 +81,15 @@ We start by mounting the image in a temporary dir:
 
 .. code-block:: bash
 
-    mkdir /tmp/mount_qcow2
-    sudo guestmount -a snapshot-ubuntu18.04-a70b9671ad4d44619af2c4a41a28aec0.qcow2 -m /dev/sda1 --ro /tmp/mount_qcow2
+    $ mkdir /tmp/mount_qcow2
+    $ sudo guestmount -a snapshot-ubuntu18.04-a70b9671ad4d44619af2c4a41a28aec0.qcow2 -m /dev/sda1 --ro /tmp/mount_qcow2
 
 If we now search for the file in the mount directory we can see its contents, and then unmount
 the drive:
 
 .. code-block:: bash
 
-    sudo ls -halt /tmp/mount_qcow2/root
+    $ sudo ls -halt /tmp/mount_qcow2/root
     total 32K
     -rw-------  1 root root 1.1K Jul 28 21:45 .bash_history
     drwx------  3 root root 4.0K Jul 28 21:45 .
@@ -100,10 +100,10 @@ the drive:
     -rw-r--r--  1 root root 3.1K Apr  9  2018 .bashrc
     -rw-r--r--  1 root root  148 Aug 17  2015 .profile
 
-    sudo cat /tmp/mount_qcow2/root/avirus
+    $ sudo cat /tmp/mount_qcow2/root/avirus
     virus content
 
-    sudo guestunmount /tmp/mount_qcow2/
+    $ sudo guestunmount /tmp/mount_qcow2/
 
 **Note:** the device to be mounted from the image isn't always `/dev/sda1`. However, if you
 run the command as-is, `guestmount` will check if `/dev/sda1` exists and, if not, it will
