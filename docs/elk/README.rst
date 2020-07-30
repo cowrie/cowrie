@@ -58,7 +58,7 @@ Change the following parameters in `/etc/kibana/kibana.yml` to reflect your serv
 
     "server.host"  - set it to "localhost" if you use nginx for basic authentication or external interface if you use XPack (see below)
     "server.name" - name of the server
-    "elasticsearch.url" - address of the elasticsearch: ["http://localhost:9200"]
+    "elasticsearch.hosts" - address of the elasticsearch: ["http://localhost:9200"]
     "elasticsearch.username", "elasticsearch.password" - needed only if you use XPack (see below)
     "logging.dest" - set path to logs (/var/log/kibana/kibana.log)
 
