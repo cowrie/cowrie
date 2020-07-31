@@ -87,7 +87,7 @@ Step 5: Install configuration file
 **********************************
 
 The configuration for Cowrie is stored in cowrie.cfg.dist and
-cowrie.cfg. Both files are read on startup, where entries from
+cowrie.cfg (Located in cowrie/etc). Both files are read on startup, where entries from
 cowrie.cfg take precedence. The .dist file can be overwritten by
 upgrades, cowrie.cfg will not be touched. To run with a standard
 configuration, there is no need to change anything. To enable telnet,
