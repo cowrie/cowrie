@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import, division
 
-import ftplib
+import ftplib_mod as ftplib
 import getopt
 import os
 import socket
