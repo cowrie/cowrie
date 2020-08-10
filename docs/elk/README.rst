@@ -39,6 +39,10 @@ ElasticSearch Configuration
 
 ElasticSearch configuration file is located in `/etc/elasticsearch/elasticsearch.yml`. The default settings need not be changed.
 
+If you are only operating a single ElasticSearch node, you can add the following configuration item::
+
+   discovery.type: single-node
+
 By default, ElasticSearch listens on port 9200. Test it::
 
    curl http://localhost:9200
@@ -77,7 +81,7 @@ Configure logstash::
 
 Make sure the configuration file is correct. Check the input section (path), filter (geoip databases) and output (elasticsearch hostname)::
 
-    sudo systemctl restart logstash 
+    sudo systemctl restart logstash
 
 
 Filebeat Configuration
@@ -86,7 +90,7 @@ Filebeat Configuration
 Filebeat is not mandatory (it is possible to directly read cowrie logs from Logstash) but nice to have, because if Logstash is under pressure, it automatically knows to slow down + it is possible to deal with multiple sensor inputs.
 
 Configure filebeat::
- 
+
     sudo cp filebeat-cowrie.conf /etc/filebeat/filebeat.yml
 
 Check the following parameters::
@@ -95,7 +99,7 @@ Check the following parameters::
     output.elasticsearch: must be false because we want Filebeat to send to Logstash, not directly to ElasticSearch
     output.logstash: must be true. The default port for Logstash is 5044, so hosts should be ["localhost:5044"]
 
- 
+
 Start filebeat::
 
     sudo systemctl start filebeat
@@ -108,7 +112,7 @@ ELK has been configured on localhost. If you wish to access it remotely, you can
 Install Nginx::
 
      sudo apt install nginx apache2-utils
-     
+
 Create an administrative Kibana user and password::
 
       sudo htpasswd -c /etc/nginx/htpasswd.users admin_kibana
@@ -132,12 +136,12 @@ Edit Nginx configuration /etc/nginx/sites-available/default. Customize port to w
                  proxy_cache_bypass $http_upgrade;
            }
       }
-     
+
 Start the service::
 
      sudo systemctl start nginx
-     
-      
+
+
 Using Kibana
 ==================
 
@@ -157,7 +161,7 @@ In Kibana's GUI, create an index pattern (Management / Index Patterns) for ::
 
 Use default settings and timestamp.
 
-     
+
 Tuning ELK stack
 ==================
 
