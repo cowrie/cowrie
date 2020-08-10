@@ -69,6 +69,7 @@ class Output(cowrie.core.output.Output):
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
     def stop(self):
+        self.db.commit()
         self.db.close()
 
     def sqlerror(self, error):
