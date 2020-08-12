@@ -30,6 +30,10 @@ For a Python3 based environment::
 
     $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
 
+On Ubuntu based systems (last verified on Ubuntu 20.04 2020-0808) for a Python3 based environment:
+    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-pip python3-minimal authbind virtualenv
+    $ sudo pip3 install  virtualenvwrapper
+
 Step 2: Create a user account
 *****************************
 
