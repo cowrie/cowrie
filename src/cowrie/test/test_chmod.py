@@ -121,12 +121,5 @@ class ShellTeeCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"chmod +x ~/.ssh")
         self.assertEquals(self.tr.value(), PROMPT)
 
-    def test_chmod_command_011(self):
-        """
-        Valid directory .ssh recursive
-        """
-        self.proto.lineReceived(b"chmod -R +x .ssh")
-        self.assertEquals(self.tr.value(), PROMPT)
-
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
