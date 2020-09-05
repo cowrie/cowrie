@@ -147,7 +147,7 @@ class SFTPServerForCowrieUser(object):
 
     def __init__(self, avatar):
         self.avatar = avatar
-        self.avatar.server.initFileSystem()
+        self.avatar.server.initFileSystem(self.avatar.home)
         self.fs = self.avatar.server.fs
 
     def _absPath(self, path):
