@@ -69,11 +69,11 @@ class CowrieServer(object):
             cmdoutput = json.load(f)
         return cmdoutput
 
-    def initFileSystem(self):
+    def initFileSystem(self, home):
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(None, self.arch)
+        self.fs = fs.HoneyPotFilesystem(None, self.arch, home)
 
         try:
             self.process = self.getCommandOutput(CowrieConfig().get('shell', 'processes'))['command']['ps']
