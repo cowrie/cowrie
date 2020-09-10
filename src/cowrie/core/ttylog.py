@@ -75,8 +75,6 @@ def ttylog_inputhash(logfile):
             except struct.error:
                 break
 
-            if op is OP_WRITE and direction is TYPE_OUTPUT:
-                continue
             inputbytes = inputbytes + data
 
         shasum = hashlib.sha256(inputbytes).hexdigest()
