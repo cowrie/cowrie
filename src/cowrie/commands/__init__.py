@@ -45,4 +45,5 @@ __all__ = [
     'wget',
     'which',
     'yum',
+    'zmap'
 ]
