@@ -19,6 +19,15 @@ libvirt's XML configuration files.
 First of all, install the needed dependencies for the pool, as explained in
 `the installation steps <https://cowrie.readthedocs.io/en/latest/INSTALL.html>`_.
 
+Authorization
+*************
+
+Add your cowrie user to the libvrit group to ensure you have permission to run the VMs on the backend server::
+
+.. code-block:: bash
+
+    sudo usermod -aG "COWRIE_USER_HERE" libvirt
+
 Provided images
 ***************
 
