@@ -33,6 +33,6 @@ notifications:
 matrix:
   allow_failures:
     - python: '2.7'
-    - python: '3.8-dev'
     - python: '3.9-dev'
+    - python: '3.10-dev'
     - python: 'nightly'
