@@ -71,6 +71,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Send log directly to factory, avoiding normal log dispatch
         """
         args['sessionno'] = self.sessionno
+        pt = self.getProtoTransport()
         pt.factory.logDispatch(*msg, **args)
 
     def connectionMade(self):
