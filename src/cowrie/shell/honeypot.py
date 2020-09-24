@@ -40,8 +40,8 @@ class HoneyPotShell(object):
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
 
         # Before parsing with lexer, process $(...) expressions
-        cmdRegexp = re.compile(r'\$\([^)]+\)')
-        subshell_cmds = cmdRegexp.findall(line)
+        cmd_regexp = re.compile(r'\$\([^)]+\)')
+        subshell_cmds = cmd_regexp.findall(line)
         for cmd in subshell_cmds:
             # instantiate new shell with redirect output
             self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
@@ -50,25 +50,23 @@ class HoneyPotShell(object):
             # remove the shell
             result = self.protocol.cmdstack.pop()
             cmd_result = result.protocol.pp.redirected_data.decode()[:-1]
-            # cmd_result = re.escape(cmd_result)
             line = line.replace(cmd, cmd_result, 1)
 
         # Before parsing with lexer, process ${...} expressions
-        varRegexp = re.compile(r'\$\{[^}]+\}')
-        vars = varRegexp.findall(line)
-        for var in vars:
+        var_regexp = re.compile(r'\$\{[^}]+\}')
+        variables = var_regexp.findall(line)
+        for var in variables:
             var_name = var[2:-1]
             if var_name in list(self.environ.keys()):
                 var_val = self.environ[var_name]
             else:
-                # return an empty string if the variable is not defined
                 var_val = ""
             line = line.replace(var, var_val, 1)
 
         # Before parsing with lexer, process $VAR expressions
-        varRegexp = re.compile(r'\$[^\ $]+')
-        vars = varRegexp.findall(line)
-        for var in vars:
+        var_regexp = re.compile(r'\$[^\ $]+')
+        variables = var_regexp.findall(line)
+        for var in variables:
             var_name = var[1:]
             if var == '$?':
                 var_val = "0"
