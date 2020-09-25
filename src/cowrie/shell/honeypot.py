@@ -38,11 +38,51 @@ class HoneyPotShell(object):
 
     def lineReceived(self, line):
         log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
+
+        # Before parsing with lexer, process $(...) expressions
+        cmd_regexp = re.compile(r'\$\([^)]+\)')
+        subshell_cmds = cmd_regexp.findall(line)
+        for cmd in subshell_cmds:
+            # instantiate new shell with redirect output
+            self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
+            # call lineReceived method that indicates that we have some commands to parse
+            self.protocol.cmdstack[-1].lineReceived(cmd[2:-1])
+            # remove the shell
+            result = self.protocol.cmdstack.pop()
+            cmd_result = result.protocol.pp.redirected_data.decode()[:-1]
+            line = line.replace(cmd, cmd_result, 1)
+
+        # Before parsing with lexer, process ${...} expressions
+        var_regexp = re.compile(r'\$\{[^}]+\}')
+        variables = var_regexp.findall(line)
+        for var in variables:
+            var_name = var[2:-1]
+            if var_name in list(self.environ.keys()):
+                var_val = self.environ[var_name]
+            else:
+                var_val = ""
+            line = line.replace(var, var_val, 1)
+
+        # Before parsing with lexer, process $VAR expressions
+        var_regexp = re.compile(r'\$[^\ $]+')
+        variables = var_regexp.findall(line)
+        for var in variables:
+            var_name = var[1:]
+            if var == '$?':
+                var_val = "0"
+            elif var_name in list(self.environ.keys()):
+                var_val = self.environ[var_name]
+            else:
+                var_val = ""
+            line = line.replace(var, var_val, 1)
+
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
-        self.lexer.wordchars += '@%{}=$:+^,()'
+        self.lexer.wordchars += '@%{}=$:+^,()#'
+        # Do not consider comments
+        self.lexer.commenters = ''
+
         tokens = []
-        parc_tokens = []  # stack of parcial command substitution tokens
         subshell_tokens = []  # stack of subshell tokens
         last_parc_token = False  # control the command substitution tokens processing
         last_subshell_token = False  # control the subshell token processing
@@ -66,27 +106,6 @@ class HoneyPotShell(object):
                         self.cmdpending.append((subshell_tokens))
                         last_subshell_token = False
                         subshell_tokens = []
-                    continue
-
-                if len(parc_tokens):
-                    if tok:
-                        if tok.endswith(')'):
-                            parc_tokens.append(tok[:-1])
-                            last_parc_token = True
-                        else:
-                            parc_tokens.append(tok)
-
-                    if not tok or last_parc_token:
-                        cmds = " ".join(parc_tokens)
-                        # instantiate new shell with redirect output
-                        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
-                        # call lineReceived method that indicates that we have some commands to parse
-                        self.protocol.cmdstack[-1].lineReceived(cmds)
-                        # remove the shell
-                        result = self.protocol.cmdstack.pop()
-                        tokens.append(result.protocol.pp.redirected_data.decode()[:-1])
-                        last_parc_token = False
-                        parc_tokens = []
 
                     continue
 
@@ -95,16 +114,7 @@ class HoneyPotShell(object):
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
-                """
-                Why do we ignore parentheses?
-                We cant have this for shell command substitution  to work
-                # Ignore parentheses
-                tok_len = len(tok)
-                tok = tok.strip('(')
-                tok = tok.strip(')')
-                if len(tok) != tok_len and tok == '':
-                    continue
-                """
+
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == '&&' or tok == '||':
                     if tokens:
@@ -124,42 +134,15 @@ class HoneyPotShell(object):
                         self.protocol.terminal.write(
                             '-bash: syntax error near unexpected token `{}\'\n'.format(tok).encode('utf8'))
                         break
-                elif tok == '$?':
-                    tok = "0"
-
                 elif tok[0] == '(':
-                    subshell_tokens.append(tok[1:])
                     if tok[-1] == ')':
+                        subshell_tokens.append(tok[1:-1])
                         last_parc_token = True
                         tok = None
+                    else:
+                        subshell_tokens.append(tok[1:])
                     continue
 
-                elif tok[0] == '$':
-                    envRex = re.compile(r'^\$\(([_a-zA-Z0-9]+)*')
-                    envSearch = envRex.search(tok)
-                    if envSearch is not None:
-                        envMatch = envSearch.group(1)
-                        parc_tokens.append(envMatch)
-                        if tok[-1] == ')':
-                            last_parc_token = True
-                            tok = None
-                        continue
-                    envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
-                    envSearch = envRex.search(tok)
-                    if envSearch is not None:
-                        envMatch = envSearch.group(1)
-                        if envMatch in list(self.environ.keys()):
-                            tok = self.environ[envMatch]
-                        else:
-                            continue
-                    envRex = re.compile(r'^\${([_a-zA-Z0-9]+)}$')
-                    envSearch = envRex.search(tok)
-                    if envSearch is not None:
-                        envMatch = envSearch.group(1)
-                        if envMatch in list(self.environ.keys()):
-                            tok = self.environ[envMatch]
-                        else:
-                            continue
                 tokens.append(tok)
             except Exception as e:
                 self.protocol.terminal.write(
@@ -169,6 +152,7 @@ class HoneyPotShell(object):
                 self.cmdpending = []
                 self.showPrompt()
                 return
+
         if self.cmdpending:
             self.runCommand()
         else:
