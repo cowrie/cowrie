@@ -42,7 +42,6 @@ class HoneyPotShell(object):
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += '@%{}=$:+^,()'
         tokens = []
-        parc_tokens = []  # stack of parcial command substitution tokens
         subshell_tokens = []  # stack of subshell tokens
         last_parc_token = False  # control the command substitution tokens processing
         last_subshell_token = False  # control the subshell token processing
@@ -66,28 +65,6 @@ class HoneyPotShell(object):
                         self.cmdpending.append((subshell_tokens))
                         last_subshell_token = False
                         subshell_tokens = []
-                    continue
-
-                if len(parc_tokens):
-                    if tok:
-                        if tok.endswith(')'):
-                            parc_tokens.append(tok[:-1])
-                            last_parc_token = True
-                        else:
-                            parc_tokens.append(tok)
-
-                    if not tok or last_parc_token:
-                        cmds = " ".join(parc_tokens)
-                        # instantiate new shell with redirect output
-                        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
-                        # call lineReceived method that indicates that we have some commands to parse
-                        self.protocol.cmdstack[-1].lineReceived(cmds)
-                        # remove the shell
-                        result = self.protocol.cmdstack.pop()
-                        tokens.append(result.protocol.pp.redirected_data.decode()[:-1])
-                        last_parc_token = False
-                        parc_tokens = []
-
                     continue
 
                 if tok == self.lexer.eof:
@@ -133,17 +110,9 @@ class HoneyPotShell(object):
                         last_parc_token = True
                         tok = None
                     continue
-
-                elif tok[0] == '$':
-                    envRex = re.compile(r'^\$\(([_a-zA-Z0-9]+)*')
-                    envSearch = envRex.search(tok)
-                    if envSearch is not None:
-                        envMatch = envSearch.group(1)
-                        parc_tokens.append(envMatch)
-                        if tok[-1] == ')':
-                            last_parc_token = True
-                            tok = None
-                        continue
+                elif '$(' in tok:
+                    tok = self.do_command_substitution(tok)
+                elif tok.startswith('${'):
                     envRex = re.compile(r'^\$([_a-zA-Z0-9]+)$')
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
@@ -152,6 +121,7 @@ class HoneyPotShell(object):
                             tok = self.environ[envMatch]
                         else:
                             continue
+                elif tok.startswith('$'):
                     envRex = re.compile(r'^\${([_a-zA-Z0-9]+)}$')
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
@@ -173,6 +143,36 @@ class HoneyPotShell(object):
             self.runCommand()
         else:
             self.showPrompt()
+
+    def do_command_substitution(self, start_tok):
+        # split the first token to prefix and $(... part
+        dollar_pos = start_tok.index('$(')
+        prefix = start_tok[:dollar_pos]
+        dollar_expr = start_tok[dollar_pos:]
+
+        # collect and append tokens until we have the whole $(...) expression
+        opening_count = dollar_expr.count('$(')
+        closing_count = dollar_expr.count(')')
+        while opening_count > closing_count:
+            tok = self.lexer.get_token()
+            dollar_expr = dollar_expr + ' ' + tok
+            closing_count = dollar_expr.count(')')
+
+        # extract the suffix after last ) if there is any
+        expr_end_idx = dollar_expr.rfind(')')
+        suffix = dollar_expr[expr_end_idx+1:]
+
+        # execute the command in $() and retrieve the output
+        cmd = dollar_expr[2:expr_end_idx]
+        # instantiate new shell with redirect output
+        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
+        # call lineReceived method that indicates that we have some commands to parse
+        self.protocol.cmdstack[-1].lineReceived(cmd)
+        # remove the shell
+        result = self.protocol.cmdstack.pop()
+        result_dec = result.protocol.pp.redirected_data.decode()[:-1]
+
+        return prefix + result_dec + suffix
 
     def runCommand(self):
         pp = None
