@@ -137,10 +137,12 @@ class HoneyPotShell(object):
             elif dollar_expr[pos] == ')':
                 closing_count += 1
                 if opening_count == closing_count:
-                    # execute the command in () or $() and retrieve the output
+
                     if dollar_expr[0] == '(':
+                        # return the command in () without executing it
                         result = dollar_expr[1:pos]
                     else:
+                        # execute the command in $() and retrieve the output
                         cmd = dollar_expr[2:pos]
                         # instantiate new shell with redirect output
                         self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
