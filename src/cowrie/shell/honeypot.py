@@ -41,14 +41,16 @@ class HoneyPotShell(object):
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += '@%{}=$:+^,()'
+
         tokens = []
         subshell_tokens = []  # stack of subshell tokens
         last_parc_token = False  # control the command substitution tokens processing
         last_subshell_token = False  # control the subshell token processing
+
         while True:
             try:
                 if not last_parc_token:
-                    # if we are processing the command substitution dont read token
+                    # if we are processing the command substitution don't read token
                     tok = self.lexer.get_token()
                     # log.msg("tok: %s" % (repr(tok)))
 
@@ -61,7 +63,6 @@ class HoneyPotShell(object):
                             subshell_tokens.append(tok)
 
                     if not tok or last_subshell_token:
-                        cmds = " ".join(subshell_tokens)
                         self.cmdpending.append((subshell_tokens))
                         last_subshell_token = False
                         subshell_tokens = []
@@ -72,16 +73,7 @@ class HoneyPotShell(object):
                         self.cmdpending.append((tokens))
                         tokens = []
                     break
-                """
-                Why do we ignore parentheses?
-                We cant have this for shell command substitution  to work
-                # Ignore parentheses
-                tok_len = len(tok)
-                tok = tok.strip('(')
-                tok = tok.strip(')')
-                if len(tok) != tok_len and tok == '':
-                    continue
-                """
+
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == '&&' or tok == '||':
                     if tokens:
@@ -103,7 +95,6 @@ class HoneyPotShell(object):
                         break
                 elif tok == '$?':
                     tok = "0"
-
                 elif tok[0] == '(':
                     subshell_tokens.append(tok[1:])
                     if tok[-1] == ')':
@@ -130,6 +121,7 @@ class HoneyPotShell(object):
                             tok = self.environ[envMatch]
                         else:
                             continue
+
                 tokens.append(tok)
             except Exception as e:
                 self.protocol.terminal.write(
@@ -139,6 +131,7 @@ class HoneyPotShell(object):
                 self.cmdpending = []
                 self.showPrompt()
                 return
+
         if self.cmdpending:
             self.runCommand()
         else:
