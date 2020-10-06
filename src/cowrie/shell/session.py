@@ -35,7 +35,8 @@ class SSHSessionForCowrieUser(object):
             'SHELL': '/bin/bash',
             'USER': self.username,
             'HOME': self.avatar.home,
-            'TMOUT': '1800'}
+            'TMOUT': '1800',
+            'UID': str(self.uid)}
         if self.uid == 0:
             self.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
         else:
