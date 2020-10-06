@@ -159,6 +159,27 @@ class ShellEchoCommandTests(unittest.TestCase):
 
     def test_echo_command_019(self):
         """
+        echo $(echo $(echo test))
+        """
+        self.proto.lineReceived(b'echo $(echo $(echo test))')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+
+    def test_echo_command_020(self):
+        """
+        echo test_$(echo test)_test
+        """
+        self.proto.lineReceived(b'echo test_$(echo test)_test')
+        self.assertEquals(self.tr.value(), b'test_test_test\n' + PROMPT)
+
+    def test_echo_command_021(self):
+        """
+        echo test_$(echo test)_test_$(echo test)_test
+        """
+        self.proto.lineReceived(b'echo test_$(echo test)_test_$(echo test)_test')
+        self.assertEquals(self.tr.value(), b'test_test_test_test_test\n' + PROMPT)
+
+    def test_echo_command_022(self):
+        """
         (echo test)
         """
         self.proto.lineReceived(b'(echo test)')
