@@ -48,6 +48,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = None
         self.kippoIP = None
         self.clientIP = None
+        self.sessionno = None
 
         if self.fs.exists(user.avatar.home):
             self.cwd = user.avatar.home
@@ -69,13 +70,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Send log directly to factory, avoiding normal log dispatch
         """
+        args['sessionno'] = self.sessionno
         pt = self.getProtoTransport()
-        args['sessionno'] = pt.transport.sessionno
         pt.factory.logDispatch(*msg, **args)
 
     def connectionMade(self):
         pt = self.getProtoTransport()
 
+        self.sessionno = pt.transport.sessionno
         self.realClientIP = pt.transport.getPeer().host
         self.realClientPort = pt.transport.getPeer().port
         self.logintime = time.time()

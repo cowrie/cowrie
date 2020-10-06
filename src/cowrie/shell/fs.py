@@ -72,7 +72,7 @@ class PermissionDenied(Exception):
 
 class HoneyPotFilesystem(object):
 
-    def __init__(self, fs, arch):
+    def __init__(self, fs, arch, home):
 
         try:
             with open(CowrieConfig().get('shell', 'filesystem'), 'rb') as f:
@@ -86,6 +86,7 @@ class HoneyPotFilesystem(object):
 
         # Keep track of arch so we can return appropriate binary
         self.arch = arch
+        self.home = home
 
         # Keep track of open file descriptors
         self.tempfiles = {}
@@ -113,10 +114,17 @@ class HoneyPotFilesystem(object):
                 if f and f[A_TYPE] == T_FILE:
                     self.update_realfile(f, realfile_path)
 
-    def resolve_path(self, path, cwd):
+    def resolve_path(self, pathspec, cwd):
         """
         This function does not need to be in this class, it has no dependencies
         """
+
+        # If a path within home directory is specified, convert it to an absolute path
+        if pathspec.startswith("~/"):
+            path = self.home + pathspec[1:]
+        else:
+            path = pathspec
+
         pieces = path.rstrip('/').split('/')
 
         if path[0] == '/':

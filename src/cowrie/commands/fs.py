@@ -89,6 +89,7 @@ class command_grep(HoneyPotCommand):
 
 
 commands['/bin/grep'] = command_grep
+commands['grep'] = command_grep
 commands['/bin/egrep'] = command_grep
 commands['/bin/fgrep'] = command_grep
 
@@ -156,6 +157,7 @@ class command_tail(HoneyPotCommand):
 
 commands['/bin/tail'] = command_tail
 commands['/usr/bin/tail'] = command_tail
+commands['tail'] = command_tail
 
 
 class command_head(HoneyPotCommand):
@@ -215,6 +217,7 @@ class command_head(HoneyPotCommand):
 
 commands['/bin/head'] = command_head
 commands['/usr/bin/head'] = command_head
+commands['head'] = command_head
 
 
 class command_cd(HoneyPotCommand):
@@ -350,6 +353,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
 
 
 commands['/bin/rm'] = command_rm
+commands['rm'] = command_rm
 
 
 class command_cp(HoneyPotCommand):
@@ -422,6 +426,7 @@ class command_cp(HoneyPotCommand):
 
 
 commands['/bin/cp'] = command_cp
+commands['cp'] = command_cp
 
 
 class command_mv(HoneyPotCommand):
@@ -489,6 +494,7 @@ class command_mv(HoneyPotCommand):
 
 
 commands['/bin/mv'] = command_mv
+commands['mv'] = command_mv
 
 
 class command_mkdir(HoneyPotCommand):
@@ -544,6 +550,7 @@ class command_rmdir(HoneyPotCommand):
 
 
 commands['/bin/rmdir'] = command_rmdir
+commands['rmdir'] = command_rmdir
 
 
 class command_pwd(HoneyPotCommand):
@@ -556,6 +563,7 @@ class command_pwd(HoneyPotCommand):
 
 
 commands['/bin/pwd'] = command_pwd
+commands['pwd'] = command_pwd
 
 
 class command_touch(HoneyPotCommand):

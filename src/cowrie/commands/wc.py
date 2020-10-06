@@ -117,3 +117,4 @@ class command_wc(HoneyPotCommand):
 
 commands['/usr/bin/wc'] = command_wc
 commands['/bin/wc'] = command_wc
+commands['wc'] = command_wc

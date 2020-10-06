@@ -57,7 +57,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.avatar = self
 
         # Do the delayed file system initialization
-        self.server.initFileSystem()
+        self.server.initFileSystem(self.home)
 
     def connectionMade(self):
         processprotocol = TelnetSessionProcessProtocol(self)
