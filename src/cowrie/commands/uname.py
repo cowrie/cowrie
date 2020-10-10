@@ -7,14 +7,13 @@ uname command
 
 from __future__ import absolute_import, division
 
+import getopt
+
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
+
 commands = {}
-
-
-def hardware_platform():
-    return CowrieConfig().get('shell', 'hardware_platform', fallback='x86_64')
 
 
 def kernel_name():
@@ -27,6 +26,10 @@ def kernel_version():
 
 def kernel_build_string():
     return CowrieConfig().get('shell', 'kernel_build_string', fallback='#1 SMP Debian 3.2.68-1+deb7u1')
+
+
+def hardware_platform():
+    return CowrieConfig().get('shell', 'hardware_platform', fallback='x86_64')
 
 
 def operating_system():
@@ -56,69 +59,108 @@ or available locally via: info '(coreutils) uname invocation'\n
 """
 
 
+def uname_version():
+    return """uname (GNU coreutils) 8.25
+Copyright (C) 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written by David MacKenzie.
+"""
+
+
 class command_uname(HoneyPotCommand):
 
     def full_uname(self):
-        return '{} {} {} {} {} {}\n'.format(kernel_name(),
-                                            self.protocol.hostname,
-                                            kernel_version(),
-                                            kernel_build_string(),
-                                            hardware_platform(),
-                                            operating_system())
+        return '{} {} {} {} {} {} {} {}\n'.format(kernel_name(),
+                                                  self.protocol.hostname,
+                                                  kernel_version(),
+                                                  kernel_build_string(),
+                                                  hardware_platform(),
+                                                  hardware_platform(),
+                                                  hardware_platform(),
+                                                  operating_system())
 
     def call(self):
-        """
-        TODO: getopt style parsing
-        """
-        opts = {
-            'name': False,
-            'release': False,
-            'version': False,
-            'os': False,
-            'node': False,
-            'machine': False
-            }
         if not self.args:
-            # IF no params output default
+            # If no params, output default
             self.write('{}\n'.format(kernel_name()))
         else:
-            # I have parameter to parse
-            for a in self.args:
-                a = a.strip()
-                if a in ('-h', '--help'):
-                    self.write(uname_help())
-                    return
-                elif a in ('-a', '--all'):
-                    self.write(self.full_uname())
-                    return
-                elif a in ('-s', '--kernel-name'):
-                    opts['name'] = True
-                elif a in ('-r', '--kernel-release'):
-                    opts['release'] = True
-                elif a in ('-v', '--kernel-version'):
-                    opts['version'] = True
-                elif a in ('-o', '--operating-system'):
-                    opts['os'] = True
-                elif a in ('-n', '--nodename'):
-                    opts['node'] = True
-                elif a in ('-m', '--machine', '-p', '--processor', '-i', '--hardware-platform'):
-                    opts['machine'] = True
-            '''
-            I have all the option set
-            '''
-            if opts['name']:
-                self.write('{} '.format(kernel_name()))
-            if opts['node']:
-                self.write('{} '.format(self.protocol.hostname))
-            if opts['release']:
-                self.write('{} '.format(kernel_version()))
-            if opts['version']:
-                self.write('{} '.format(kernel_build_string()))
-            if opts['machine']:
-                self.write('{} '.format(hardware_platform()))
-            if opts['os']:
-                self.write('{} '.format(operating_system()))
-            self.write('\n')
+            # We have parameters to parse
+            try:
+                opts, args = getopt.getopt(self.args,
+                                           "asnrvmpio",
+                                           ["all", "kernel-name", "nodename", "kernel-release", "kernel-version",
+                                            "machine", "procesor", "hardware-platform", "operating-system", "help",
+                                            "version"])
+            except getopt.GetoptError:
+                uname_help()
+                return
+
+            print_help = False
+            print_version = False
+            print_all = False
+            print_kernel_name = False
+            print_nodename = False
+            print_kernel_release = False
+            print_kernel_version = False
+            print_machine = False
+            print_procesor = False
+            print_hardware_platform = False
+            print_operating_system = False
+
+            # parse the command line options
+            for o, a in opts:
+                if o == "--help":
+                    print_help = True
+                elif o == "--version":
+                    print_version = True
+                elif o in ("-a", "--all"):
+                    print_all = True
+                elif o in ("-s", "--kernel-name"):
+                    print_kernel_name = True
+                elif o in ("-n", "--nodename"):
+                    print_nodename = True
+                elif o in ("-r", "--kernel-release"):
+                    print_kernel_release = True
+                elif o in ("-v", "--kernel-version"):
+                    print_kernel_version = True
+                elif o in ("-m", "--machine"):
+                    print_machine = True
+                elif o in ("-p", "--procesor"):
+                    print_procesor = True
+                elif o in ("-i", "--hardware-platform"):
+                    print_hardware_platform = True
+                elif o in ("-o", "--operating-system"):
+                    print_operating_system = True
+
+            # print out information based on command line options
+            if print_help:
+                self.write(uname_help())
+            elif print_version:
+                self.write(uname_version())
+            elif print_all:
+                self.write(self.full_uname())
+            else:
+                info = []
+                if print_kernel_name:
+                    info.append(kernel_name())
+                if print_nodename:
+                    info.append(self.protocol.hostname)
+                if print_kernel_release:
+                    info.append(kernel_version())
+                if print_kernel_version:
+                    info.append(kernel_build_string())
+                if print_machine:
+                    info.append(hardware_platform())
+                if print_procesor:
+                    info.append(hardware_platform())
+                if print_hardware_platform:
+                    info.append(hardware_platform())
+                if print_operating_system:
+                    info.append(operating_system())
+                self.write('{}\n'.format(' '.join(info)))
 
 
 commands['/bin/uname'] = command_uname
