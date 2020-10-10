@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# The user which is supposed to run cowrie
+COWRIE_USER=cowrie
+
 # To override the default virtual enviroment, either set COWRIE_VIRTUAL_ENV or
 # activate it before starting Cowrie
 #COWRIE_VIRTUAL_ENV=my-env
@@ -80,6 +83,13 @@ cowrie_status() {
 }
 
 cowrie_start() {
+    # Check whether cowrie is already running
+    PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
+    if [ -n "$PID" ]; then
+        echo "cowrie is already running (PID: ${PID})."
+	      return 1
+    fi
+
     # Start Cowrie
     COWRIEARGS="$*"
     TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask=0022 --pidfile=${PIDFILE}"
@@ -180,6 +190,16 @@ cowrie_usage() {
 ################################################################################
 ## Main script
 ################################################################################
+
+if [ -n "${COWRIE_USER}" ]
+then
+  USER=$(whoami)
+  if [ ! "${USER}" = "${COWRIE_USER}" ]
+  then
+    echo "Only the user ${COWRIE_USER} can use this script"
+    exit 1
+  fi
+fi
 
 if [ "$#" = 0 ]
 then
