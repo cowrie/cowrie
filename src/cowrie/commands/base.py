@@ -698,7 +698,7 @@ class command_chmod(HoneyPotCommand):
                 files.append(arg)
 
         # mode has to match this regex
-        mode_regex = '[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=][0-7]+'
+        mode_regex = '^[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=]?[0-7]{,5}$'
         if not re.match(mode_regex, mode):
             # invalid mode was specified
             self.write('chmod: invalid mode: ‘{}’\n'.format(mode))
@@ -707,9 +707,10 @@ class command_chmod(HoneyPotCommand):
 
         # go through the list of files and check whether they exist
         for file in files:
-            path = self.fs.resolve_path(file, self.protocol.cwd)
-            if not self.fs.exists(path):
-                self.write('chmod: cannot access \'{}\': No such file or directory\n'.format(file))
+            if file != '*':
+                path = self.fs.resolve_path(file, self.protocol.cwd)
+                if not self.fs.exists(path):
+                    self.write('chmod: cannot access \'{}\': No such file or directory\n'.format(file))
 
 
 commands['/bin/chmod'] = command_chmod
