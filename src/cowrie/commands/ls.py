@@ -82,7 +82,7 @@ class command_ls(HoneyPotCommand):
                 files = (self.protocol.fs.getfile(path)[:],)
         except Exception:
             self.write(
-                'ls: cannot access %s: No such file or directory\n' % (path,))
+                'ls: cannot access \'%s\': No such file or directory\n' % (path,))
             return
         return files
 
