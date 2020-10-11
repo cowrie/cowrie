@@ -58,8 +58,6 @@ class command_cat(HoneyPotCommand):
                     contents = self.fs.file_contents(pname)
                     if contents:
                         self.output(contents)
-                    else:
-                        raise FileNotFound
                 except FileNotFound:
                     self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
             self.exit()
@@ -86,9 +84,10 @@ class command_cat(HoneyPotCommand):
             lines.pop()
         for line in lines:
             if self.number:
-                self.write('{:>6}  '.format(self.linenumber))
+                self.writeBytes(str.encode('{:>6}  '.format(self.linenumber)) + line + b'\n')
                 self.linenumber = self.linenumber + 1
-            self.writeBytes(line + b'\n')
+            else:
+                self.writeBytes(line + b'\n')
 
     def lineReceived(self, line):
         """
