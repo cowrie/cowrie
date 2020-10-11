@@ -246,6 +246,7 @@ case $key in
         ;;
     restart)
         cowrie_stop $*
+        sleep 1
         cowrie_start $*
         ;;
     status)
