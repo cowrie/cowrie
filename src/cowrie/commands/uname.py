@@ -15,25 +15,13 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
-
-def kernel_name():
-    return CowrieConfig().get('shell', 'kernel_name', fallback='Linux')
-
-
-def kernel_version():
-    return CowrieConfig().get('shell', 'kernel_version', fallback='3.2.0-4-amd64')
-
-
-def kernel_build_string():
-    return CowrieConfig().get('shell', 'kernel_build_string', fallback='#1 SMP Debian 3.2.68-1+deb7u1')
-
-
-def hardware_platform():
-    return CowrieConfig().get('shell', 'hardware_platform', fallback='x86_64')
-
-
-def operating_system():
-    return CowrieConfig().get('shell', 'operating_system', fallback='GNU/Linux')
+uname_info = {
+    "kernel_name": CowrieConfig().get('shell', 'kernel_name', fallback='Linux'),
+    "kernel_version": CowrieConfig().get('shell', 'kernel_version', fallback='3.2.0-4-amd64'),
+    "kernel_build_string": CowrieConfig().get('shell', 'kernel_build_string', fallback='#1 SMP Debian 3.2.68-1+deb7u1'),
+    "hardware_platform": CowrieConfig().get('shell', 'hardware_platform', fallback='x86_64'),
+    "operating_system": CowrieConfig().get('shell', 'operating_system', fallback='GNU/Linux')
+}
 
 
 def uname_help():
@@ -73,26 +61,26 @@ Written by David MacKenzie.
 class command_uname(HoneyPotCommand):
 
     def full_uname(self):
-        return '{} {} {} {} {} {} {} {}\n'.format(kernel_name(),
+        return '{} {} {} {} {} {} {} {}\n'.format(uname_info['kernel_name'],
                                                   self.protocol.hostname,
-                                                  kernel_version(),
-                                                  kernel_build_string(),
-                                                  hardware_platform(),
-                                                  hardware_platform(),
-                                                  hardware_platform(),
-                                                  operating_system())
+                                                  uname_info['kernel_version'],
+                                                  uname_info['kernel_build_string'],
+                                                  uname_info['hardware_platform'],
+                                                  uname_info['hardware_platform'],
+                                                  uname_info['hardware_platform'],
+                                                  uname_info['operating_system'])
 
     def call(self):
         if not self.args:
             # If no params, output default
-            self.write('{}\n'.format(kernel_name()))
+            self.write('{}\n'.format(uname_info['kernel_name']))
         else:
             # We have parameters to parse
             try:
                 opts, args = getopt.getopt(self.args,
                                            "asnrvmpio",
                                            ["all", "kernel-name", "nodename", "kernel-release", "kernel-version",
-                                            "machine", "procesor", "hardware-platform", "operating-system", "help",
+                                            "machine", "processor", "hardware-platform", "operating-system", "help",
                                             "version"])
             except getopt.GetoptError:
                 uname_help()
@@ -145,21 +133,21 @@ class command_uname(HoneyPotCommand):
             else:
                 info = []
                 if print_kernel_name:
-                    info.append(kernel_name())
+                    info.append(uname_info['kernel_name'])
                 if print_nodename:
                     info.append(self.protocol.hostname)
                 if print_kernel_release:
-                    info.append(kernel_version())
+                    info.append(uname_info['kernel_version'])
                 if print_kernel_version:
-                    info.append(kernel_build_string())
+                    info.append(uname_info['kernel_build_string'])
                 if print_machine:
-                    info.append(hardware_platform())
+                    info.append(uname_info['hardware_platform'])
                 if print_procesor:
-                    info.append(hardware_platform())
+                    info.append(uname_info['hardware_platform'])
                 if print_hardware_platform:
-                    info.append(hardware_platform())
+                    info.append(uname_info['hardware_platform'])
                 if print_operating_system:
-                    info.append(operating_system())
+                    info.append(uname_info['operating_system'])
                 self.write('{}\n'.format(' '.join(info)))
 
 

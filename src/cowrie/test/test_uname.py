@@ -44,7 +44,7 @@ class ShellTeeCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"uname")
         self.assertEquals(self.tr.value(), (KERNEL_NAME + "\n" + PROMPT).encode())
 
-    def test_chmod_command_002(self):
+    def test_uname_command_002(self):
         """
         All information
         """
@@ -55,7 +55,7 @@ class ShellTeeCommandTests(unittest.TestCase):
                                                                HARDWARE_PLATFORM, HARDWARE_PLATFORM, OPERATING_SYSTEM,
                                                                PROMPT).encode())
 
-    def test_chmod_command_003(self):
+    def test_uname_command_003(self):
         """
         uname -a -s
         Should return all information because of -a
@@ -67,7 +67,7 @@ class ShellTeeCommandTests(unittest.TestCase):
                                                                HARDWARE_PLATFORM, HARDWARE_PLATFORM, OPERATING_SYSTEM,
                                                                PROMPT).encode())
 
-    def test_chmod_command_004(self):
+    def test_uname_command_004(self):
         """
         uname -s -n -r -v -m -o
         """
@@ -76,7 +76,7 @@ class ShellTeeCommandTests(unittest.TestCase):
                           "{} {} {} {} {} {}\n{}".format(KERNEL_NAME, HOSTNAME, KERNEL_VERSION, KERNEL_BUILD_STRING,
                                                          HARDWARE_PLATFORM, OPERATING_SYSTEM, PROMPT).encode())
 
-    def test_chmod_command_005(self):
+    def test_uname_command_005(self):
         """
         uname -o -m -v -r -n -s
         Should return the same output as the previous test
