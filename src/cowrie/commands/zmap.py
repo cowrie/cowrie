@@ -1,10 +1,12 @@
 # Copyright (c) 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
+# See the COPYRIGHT file for more information
 
 from __future__ import absolute_import, division
 
 import time
 
 from cowrie.shell.command import HoneyPotCommand
+
 
 commands = {}
 
