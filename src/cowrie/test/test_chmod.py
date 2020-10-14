@@ -23,7 +23,7 @@ os.environ["SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
-class ShellTeeCommandTests(unittest.TestCase):
+class ShellChmodCommandTests(unittest.TestCase):
 
     def setUp(self):
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
