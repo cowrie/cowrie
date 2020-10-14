@@ -23,7 +23,7 @@ os.environ["SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
-class ShellTeeCommandTests(unittest.TestCase):
+class ShellChmodCommandTests(unittest.TestCase):
 
     def setUp(self):
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
@@ -119,6 +119,34 @@ class ShellTeeCommandTests(unittest.TestCase):
         Valid directory ~/.ssh
         """
         self.proto.lineReceived(b"chmod +x ~/.ssh")
+        self.assertEquals(self.tr.value(), PROMPT)
+
+    def test_chmod_command_011(self):
+        """
+        chmod a+x
+        """
+        self.proto.lineReceived(b"chmod a+x .ssh")
+        self.assertEquals(self.tr.value(), PROMPT)
+
+    def test_chmod_command_012(self):
+        """
+        chmod ug+x
+        """
+        self.proto.lineReceived(b"chmod ug+x .ssh")
+        self.assertEquals(self.tr.value(), PROMPT)
+
+    def test_chmod_command_013(self):
+        """
+        chmod 777
+        """
+        self.proto.lineReceived(b"chmod 777 .ssh")
+        self.assertEquals(self.tr.value(), PROMPT)
+
+    def test_chmod_command_014(self):
+        """
+        chmod 0775
+        """
+        self.proto.lineReceived(b"chmod 0755 .ssh")
         self.assertEquals(self.tr.value(), PROMPT)
 
     def tearDown(self):
