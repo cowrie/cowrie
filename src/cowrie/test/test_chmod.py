@@ -130,26 +130,19 @@ class ShellTeeCommandTests(unittest.TestCase):
 
     def test_chmod_command_012(self):
         """
-        chmod g+x
-        """
-        self.proto.lineReceived(b"chmod g+x .ssh")
-        self.assertEquals(self.tr.value(), PROMPT)
-
-    def test_chmod_command_013(self):
-        """
         chmod ug+x
         """
         self.proto.lineReceived(b"chmod ug+x .ssh")
         self.assertEquals(self.tr.value(), PROMPT)
 
-    def test_chmod_command_014(self):
+    def test_chmod_command_013(self):
         """
         chmod 777
         """
         self.proto.lineReceived(b"chmod 777 .ssh")
         self.assertEquals(self.tr.value(), PROMPT)
 
-    def test_chmod_command_015(self):
+    def test_chmod_command_014(self):
         """
         chmod 0775
         """
