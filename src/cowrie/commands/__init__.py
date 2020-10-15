@@ -41,6 +41,7 @@ __all__ = [
     'tftp',
     'ulimit',
     'uname',
+    'uniq',
     'uptime',
     'wc',
     'wget',
