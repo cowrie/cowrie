@@ -36,13 +36,13 @@ class SSHSessionForCowrieUser(object):
             'USER': self.username,
             'HOME': self.avatar.home,
             'TMOUT': '1800',
-            'UID': self.uid}
+            'UID': str(self.uid)}
         if self.uid == 0:
             self.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
         else:
             self.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
 
-        self.server.initFileSystem()
+        self.server.initFileSystem(self.avatar.home)
 
         if self.avatar.temporary:
             self.server.fs.mkdir(self.avatar.home, self.uid, self.gid, 4096, 755)
