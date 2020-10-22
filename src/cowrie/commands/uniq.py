@@ -14,38 +14,70 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+UNIQ_HELP = """Usage: uniq [OPTION]... [INPUT [OUTPUT]]
+Filter adjacent matching lines from INPUT (or standard input),
+writing to OUTPUT (or standard output).
+
+With no options, matching lines are merged to the first occurrence.
+
+Mandatory arguments to long options are mandatory for short options too.
+  -c, --count           prefix lines by the number of occurrences
+  -d, --repeated        only print duplicate lines, one for each group
+  -D                    print all duplicate lines
+      --all-repeated[=METHOD]  like -D, but allow separating groups
+                                 with an empty line;
+                                 METHOD={none(default),prepend,separate}
+  -f, --skip-fields=N   avoid comparing the first N fields
+      --group[=METHOD]  show all items, separating groups with an empty line;
+                          METHOD={separate(default),prepend,append,both}
+  -i, --ignore-case     ignore differences in case when comparing
+  -s, --skip-chars=N    avoid comparing the first N characters
+  -u, --unique          only print unique lines
+  -z, --zero-terminated     line delimiter is NUL, not newline
+  -w, --check-chars=N   compare no more than N characters in lines
+      --help     display this help and exit
+      --version  output version information and exit
+
+A field is a run of blanks (usually spaces and/or TABs), then non-blank
+characters.  Fields are skipped before chars.
+
+Note: 'uniq' does not detect repeated lines unless they are adjacent.
+You may want to sort the input first, or use 'sort -u' without 'uniq'.
+Also, comparisons honor the rules specified by 'LC_COLLATE'.
+
+GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
+Full documentation at: <https://www.gnu.org/software/coreutils/uniq>
+or available locally via: info '(coreutils) uniq invocation'
+"""
+
 
 class command_uniq(HoneyPotCommand):
 
-    unique_lines = set()
+    last_line = None
 
     def start(self):
-        if self.input_data:
+        if "--help" in self.args:
+            self.writeBytes(UNIQ_HELP.encode())
+            self.exit()
+        elif self.input_data:
             lines = self.input_data.split(b'\n')
             if not lines[-1]:
                 lines.pop()
-
-            self.unique_lines = set(lines)
-            for line in self.unique_lines:
-                self.writeBytes(line + b'\n')
-
+            for line in lines:
+                self.grep_input(line)
             self.exit()
 
     def lineReceived(self, line):
-        log.msg(eventid='cowrie.command.input',
-                realm='uniq',
-                input=line,
-                format='INPUT (%(realm)s): %(input)s')
-
-        self.grep_input(line)
+        log.msg(eventid='cowrie.command.input', realm='uniq', input=line, format='INPUT (%(realm)s): %(input)s')
+        self.grep_input(line.encode())
 
     def handle_CTRL_D(self):
         self.exit()
 
     def grep_input(self, line):
-        if line not in self.unique_lines:
-            self.writeBytes(line.encode() + b'\n')
-            self.unique_lines.add(line)
+        if not line == self.last_line:
+            self.writeBytes(line + b'\n')
+            self.last_line = line
 
 
 commands['/usr/bin/uniq'] = command_uniq
