@@ -41,6 +41,7 @@ __all__ = [
     'ulimit',
     'uname',
     'uniq',
+	'unzip',
     'uptime',
     'wc',
     'wget',
