@@ -88,7 +88,7 @@ See "unzip -hh" or unzip.txt for more help.  Examples:
   the last disk(s) of this archive.
 """
             )
-            self.write('unzip:  cannot find or open {0}, {0}.zip or {0}.ZIP.\n'.format(filename))
+            self.write('unzip:   cannot find zipfile directory in one of {0}, {0}.zip or {0}.ZIP.\n'.format(filename))
             return
         self.write('Archive:  {}\n'.format(filename))
         for f in t:
