@@ -517,6 +517,7 @@ class command_mkdir(HoneyPotCommand):
 
 
 commands['/bin/mkdir'] = command_mkdir
+commands['mkdir'] = command_mkdir
 
 
 class command_rmdir(HoneyPotCommand):
