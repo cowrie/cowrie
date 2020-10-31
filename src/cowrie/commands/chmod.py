@@ -90,15 +90,13 @@ class command_chmod(HoneyPotCommand):
                     self.write('chmod: cannot access \'{}\': No such file or directory\n'.format(file))
 
     def parse_args(self):
-        opts = []
         mode = None
-        files = []
 
-        # before parsing with getopt, remove the mode spec from self.args
-        # getopt would incorrectly raise an error for arguments like -r, -w, etc
+        # a mode specification starting with '-' would cause the getopt parser to throw an error
+        # therefore, remove the first such argument self.args before parsing with getopt
         args_new = []
         for arg in self.args:
-            if arg.startswith('-') and re.fullmatch(MODE_REGEX, arg):
+            if not mode and arg.startswith('-') and re.fullmatch(MODE_REGEX, arg):
                 mode = arg
             else:
                 args_new.append(arg)
