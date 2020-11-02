@@ -29,7 +29,7 @@ OPERATING_SYSTEM = "GNU/Linux"
 PROMPT = "root@unitTest:~# "
 
 
-class ShellTeeCommandTests(unittest.TestCase):
+class ShellUnameCommandTests(unittest.TestCase):
 
     def setUp(self):
         self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
