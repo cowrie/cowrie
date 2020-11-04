@@ -185,5 +185,33 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b'(echo test)')
         self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
 
+    def test_echo_command_023(self):
+        """
+        echo `echo test`
+        """
+        self.proto.lineReceived(b'echo `echo test`')
+        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+
+    def test_echo_command_024(self):
+        """
+        echo test_`echo test`_test
+        """
+        self.proto.lineReceived(b'echo test_`echo test`_test')
+        self.assertEquals(self.tr.value(), b'test_test_test\n' + PROMPT)
+
+    def test_echo_command_025(self):
+        """
+        echo test_`echo test`_test_`echo test`_test
+        """
+        self.proto.lineReceived(b'echo test_`echo test`_test_`echo test`_test')
+        self.assertEquals(self.tr.value(), b'test_test_test_test_test\n' + PROMPT)
+
+    def test_echo_command_026(self):
+        """
+        echo "TEST1: `echo test1`, TEST2: `echo test2`"
+        """
+        self.proto.lineReceived(b'echo "TEST1: `echo test1`, TEST2: `echo test2`"')
+        self.assertEquals(self.tr.value(), b'TEST1: test1, TEST2: test2\n' + PROMPT)
+
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
