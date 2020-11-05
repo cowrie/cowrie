@@ -180,10 +180,10 @@ class ShellEchoCommandTests(unittest.TestCase):
 
     def test_echo_command_022(self):
         """
-        (echo test)
+        echo test; (echo test)
         """
-        self.proto.lineReceived(b'(echo test)')
-        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+        self.proto.lineReceived(b'echo test; (echo test)')
+        self.assertEquals(self.tr.value(), b'test\ntest\n' + PROMPT)
 
     def test_echo_command_023(self):
         """

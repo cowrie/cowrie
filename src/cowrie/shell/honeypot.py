@@ -127,55 +127,38 @@ class HoneyPotShell(object):
             cmd_expr = start_tok[dollar_pos:]
             pos = 2
         elif '`' in start_tok:
+            # split the first token to prefix and `... part
             backtick_pos = start_tok.index('`')
             result = start_tok[:backtick_pos]
             cmd_expr = start_tok[backtick_pos:]
-            pos = 2
+            pos = 1
         opening_count = 1
         closing_count = 0
 
-        # parse the remaining tokens and execute $(...) parts when found
+        # parse the remaining tokens and execute subshells
         while opening_count > closing_count:
             if cmd_expr[pos] in (')', '`'):
+                # found an end of $(...) or `...`
                 closing_count += 1
                 if opening_count == closing_count:
                     if cmd_expr[0] == '(':
                         # return the command in () without executing it
                         result = cmd_expr[1:pos]
                     else:
-                        # execute the command in $() and retrieve the output
-                        if cmd_expr.startswith("$("):
-                            cmd = cmd_expr[2:pos]
-                        else:
-                            cmd = cmd_expr[1:pos]
-                        # instantiate new shell with redirect output
-                        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
-                        # call lineReceived method that indicates that we have some commands to parse
-                        self.protocol.cmdstack[-1].lineReceived(cmd)
-                        # remove the shell
-                        res = self.protocol.cmdstack.pop()
-                        result += res.protocol.pp.redirected_data.decode()[:-1]
+                        # execute the command in $() or `` or () and return the output
+                        result += self.run_subshell_command(cmd_expr[:pos+1])
 
+                    # check whether there are more command substitutions remaining
                     if pos < len(cmd_expr) - 1:
-                        cmd_expr = cmd_expr[pos + 1:]
-                        if '$(' in cmd_expr:
-                            dollar_pos = cmd_expr.index('$(')
-                            result += cmd_expr[:dollar_pos]
-                            cmd_expr = cmd_expr[dollar_pos:]
-                            opening_count = 1
-                            closing_count = 0
-                            pos = 1
-                        elif '`' in cmd_expr:
-                            backtick_pos = cmd_expr.index('`')
-                            result += cmd_expr[:backtick_pos]
-                            cmd_expr = cmd_expr[backtick_pos:]
-                            opening_count = 1
-                            closing_count = 0
-                            pos = 0
+                        remainder = cmd_expr[pos+1:]
+                        if '$(' in remainder or '`' in remainder:
+                            result = self.do_command_substitution(result + remainder)
                         else:
-                            result += cmd_expr
-                pos += 1
-            elif cmd_expr[pos:pos + 2] == '$(':
+                            result += remainder
+                else:
+                    pos += 1
+            elif cmd_expr[pos:pos+2] == '$(':
+                # found a new $(...) expression
                 opening_count += 1
                 pos += 2
             else:
@@ -187,6 +170,21 @@ class HoneyPotShell(object):
                 pos += 1
 
         return result
+
+    def run_subshell_command(self, cmd_expr):
+        # extract the command from $(...) or `...` or (...) expression
+        if cmd_expr.startswith("$("):
+            cmd = cmd_expr[2:-1]
+        else:
+            cmd = cmd_expr[1:-1]
+
+        # instantiate new shell with redirect output
+        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
+        # call lineReceived method that indicates that we have some commands to parse
+        self.protocol.cmdstack[-1].lineReceived(cmd)
+        # remove the shell
+        res = self.protocol.cmdstack.pop()
+        return res.protocol.pp.redirected_data.decode()[:-1]
 
     def runCommand(self):
         pp = None
