@@ -7,8 +7,6 @@ import getopt
 import os
 import time
 
-from OpenSSL import SSL
-
 from twisted.internet import reactor, ssl
 from twisted.python import compat, log
 from twisted.web import client
@@ -265,7 +263,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
-            contextFactory = ssl.CertificateOptions(method=SSL.TLSv1_2_METHOD)
+            contextFactory = ssl.CertificateOptions()
             reactor.connectSSL(host, port, factory, contextFactory, bindAddress=out_addr)
         else:  # Can only be http
             self.connection = reactor.connectTCP(
