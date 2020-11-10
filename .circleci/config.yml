@@ -32,7 +32,13 @@ jobs:
           command: |
             . cowrie-env/bin/activate
             flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
+      - run:
+          command: |
+            . cowrie-env/bin/activate
             python setup.py build sdist bdist
+      - run:
+          command: |
+            . cowrie-env/bin/activate
             make -C docs html
       - run:
           command: |
