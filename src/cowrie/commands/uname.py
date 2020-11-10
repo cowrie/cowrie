@@ -61,7 +61,7 @@ Written by David MacKenzie.
 class command_uname(HoneyPotCommand):
 
     def full_uname(self):
-        return '{} {} {} {} {} {} {} {}\n'.format(uname_info['kernel_name'],
+        return '{} {} {} {} {} {}\n'.format(uname_info['kernel_name'],
                                                   self.protocol.hostname,
                                                   uname_info['kernel_version'],
                                                   uname_info['kernel_build_string'],
