@@ -66,8 +66,6 @@ class command_uname(HoneyPotCommand):
                                                   uname_info['kernel_version'],
                                                   uname_info['kernel_build_string'],
                                                   uname_info['hardware_platform'],
-                                                  uname_info['hardware_platform'],
-                                                  uname_info['hardware_platform'],
                                                   uname_info['operating_system'])
 
     def call(self):
