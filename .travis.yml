@@ -6,7 +6,6 @@ language: python
 services:
   - docker
 python:
-  - '2.7'
   - '3.5'
   - '3.6'
   - '3.7'
@@ -32,7 +31,6 @@ notifications:
     secure: DiFWUr5A+YPJ5vGbjLCHRdp+TM6dDI7/b3JuyE+bBdV4BVpQsYx2XhH1nVdDXYTf2jaT0jjYnRQuQKTHXJWSrBlklozdVf+WOJmlFFZ3WZmyn6EgwfqE9fuz9vZcD1Yt1M1Fxu14Ffj1iWxiQ+VATxsYtowcOMgAESyYS31qhcMS48jvf/V1TCBh/Bi5nk+xkoZ3ThMg8w+sXSzUp17IP/T8uWUl28Y401lk4diV7GFVNJx66IT6u0CY0i0dOV69qPggHUn43NigIh9zv0QhjE2WLVcVUSDsDte+xVrEyvovJ+xdy08x/X9pa2d/tDycZz2nBEktIZLSxF65p7jBlytCLVwW8lhgRgZZSd142S0FvpRx8vap4CbtgLs7ltzJF3X1Ca0LsUe5vDgoJPd5eYCNCxowJldT8eWqIzmWwo2/PXOsAM5FJg5l7QIWH6gSEaauC/8Nn74or+wpLJsP5j1GqIGwDCRv3qclv/KHJWb8azPoov8csf4ulI270I5ihXeA8+rEZWekpgY2RHfcTwFgllxA1AnBqLsaCECkatYauLHyblYdOSbQJYB2a3ZwWoNoQ5WBt/FSzFxuYJPySPwXyRnXlBCxt0xMK+qTCA3k5RwPG5gbre1tgZPbxMn23AkRLBsITPYdEPZMfz6dRavWr8ZObfbXeblAf3xtBss=
 matrix:
   allow_failures:
-    - python: '2.7'
     - python: '3.5'
     - python: '3.10-dev'
     - python: 'nightly'
