@@ -62,11 +62,11 @@ class command_uname(HoneyPotCommand):
 
     def full_uname(self):
         return '{} {} {} {} {} {}\n'.format(uname_info['kernel_name'],
-                                                  self.protocol.hostname,
-                                                  uname_info['kernel_version'],
-                                                  uname_info['kernel_build_string'],
-                                                  uname_info['hardware_platform'],
-                                                  uname_info['operating_system'])
+                                            self.protocol.hostname,
+                                            uname_info['kernel_version'],
+                                            uname_info['kernel_build_string'],
+                                            uname_info['hardware_platform'],
+                                            uname_info['operating_system'])
 
     def call(self):
         if not self.args:
