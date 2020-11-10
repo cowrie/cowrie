@@ -58,4 +58,4 @@ jobs:
   test-3.10-buster:
     <<: *test-template
     docker:
-      - image: circleci/python:3.9-buster
+      - image: circleci/python:3.10-buster
