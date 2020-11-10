@@ -26,7 +26,7 @@ jobs:
               libvirt-clients nmap
             virtualenv cowrie-env
             . cowrie-env/bin/activate
-            pip install libvirt-python==5.5.0
+            pip install libvirt-python==6.9.0
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
       - run:
