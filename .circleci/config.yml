@@ -15,6 +15,7 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install OS and Python prerequisites
           command: |
             sudo apt-get -y update
             sudo apt-get -y install \
@@ -33,18 +34,22 @@ jobs:
             . cowrie-env/bin/activate
             pip check
       - run:
+          name: Lint
           command: |
             . cowrie-env/bin/activate
             flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
       - run:
+          name: Build Python library
           command: |
             . cowrie-env/bin/activate
             python setup.py build sdist bdist
       - run:
+          name: Build documentation
           command: |
             . cowrie-env/bin/activate
             make -C docs html
       - run:
+          name: Run unit tests
           command: |
             . cowrie-env/bin/activate
             PYTHONPATH=`pwd`/src trial cowrie
