@@ -8,14 +8,12 @@ requests==2.24.0
 elasticsearch==7.8.0
 
 # hpfeeds
-hpfeeds==3.0.0; python_version < '3.0'
-hpfeeds3==0.9.10; python_version >= '3.0'
+hpfeeds3==0.9.10
 
 # mysql
 # If this fails, see documentation /home/cowrie/cowrie/docs/sql/README.md
 # There are two options, mysqlclient is newer and provides Python3 support.
-mysqlclient==2.0.1; python_version >= '3.0'
-MySQL-python==1.2.5; python_version < '3.0'
+mysqlclient==2.0.1
 
 # mongodb
 pymongo==3.10.1
@@ -40,6 +38,4 @@ python-snappy==0.5.4
 wokkel==18.0.0
 
 # misp
-pymisp==2.4.128; python_version >= '3.0'
-pymisp==2.4.121.1; python_version < '3.0'
-pathlib==1.0.1; python_version < '3.0'
+pymisp==2.4.128
