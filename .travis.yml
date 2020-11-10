@@ -11,7 +11,7 @@ python:
   - '3.6'
   - '3.7'
   - '3.8'
-  - '3.9-dev'
+  - '3.9'
   - '3.10-dev'
   - 'nightly'
 install:
@@ -33,6 +33,6 @@ notifications:
 matrix:
   allow_failures:
     - python: '2.7'
-    - python: '3.9-dev'
+    - python: '3.5'
     - python: '3.10-dev'
     - python: 'nightly'
