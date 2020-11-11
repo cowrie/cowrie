@@ -33,7 +33,7 @@ import sys
 
 from backend_pool.pool_server import PoolServerFactory
 
-from twisted._version import __version__
+from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
@@ -49,12 +49,13 @@ import cowrie.core.realm
 import cowrie.ssh.factory
 import cowrie.telnet.factory
 from cowrie import core
+from cowrie._version import __version__ as __cowrie_version__
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
 
 
-if __version__.major < 17:
+if __twisted_version__.major < 17:
     raise ImportError("Your version of Twisted is too old. Please ensure your virtual environment is set up correctly.")
 
 
@@ -125,7 +126,10 @@ Makes a Cowrie SSH/Telnet honeypot.
             os.environ['TZ'] = tz
 
         log.msg("Python Version {}".format(str(sys.version).replace('\n', '')))
-        log.msg("Twisted Version {}.{}.{}".format(__version__.major, __version__.minor, __version__.micro))
+        log.msg("Twisted Version {}.{}.{}".format(__twisted_version__.major,
+                __twisted_version__.minor, __twisted_version__.micro))
+        log.msg("Cowrie Version {}.{}.{}".format(__cowrie_version__.major,
+                __cowrie_version__.minor, __cowrie_version__.micro))
 
         # check configurations
         if not self.enableTelnet and not self.enableSSH and not self.pool_only:
