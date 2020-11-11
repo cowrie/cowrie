@@ -1,4 +1,16 @@
 
+Release 2.2.0
+=============
+* Deprecate Python 2.7 and 3.5
+* Command substitution with backticks
+* Better `chmod` command line parsing
+* Add `uniq` command.
+* Enhanced command substitution functionality.
+* Fix nc hang
+* Rename built-in user `richard` to `phil`, it's used as detection mechanism.
+* Binary suppport for `cat`, `grep` and other commands
+* Azure Sentinel output plugin
+
 Release 2.1.0
 =============
 * Deprecate Python 2.7. Still works but removed from testing suite and fixing 2.7 problems will no longer have priority.
