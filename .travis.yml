@@ -36,3 +36,5 @@ matrix:
     - python: '3.9-dev'
     - python: '3.10-dev'
     - python: 'nightly'
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
