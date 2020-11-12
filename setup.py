@@ -19,7 +19,7 @@ setup(
     package_dir={'': 'src'},
     package_data={'': ['*.md']},
     use_incremental=True,
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4',
     scripts=[
         'bin/fsctl',
         'bin/asciinema',
