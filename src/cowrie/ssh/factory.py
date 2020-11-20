@@ -52,7 +52,7 @@ class CowrieSSHFactory(factory.SSHFactory, object):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'S{0}'.format(args['sessionno'])
+        # args['sessionno'] = 'S{0}'.format(args['sessionno'])
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 

@@ -37,7 +37,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory, object):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'T{0}'.format(str(args['sessionno']))
+        # args['sessionno'] = 'T{0}'.format(str(args['sessionno']))
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 

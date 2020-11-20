@@ -70,6 +70,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def logDispatch(self, *msg, **args):
         """
         Send log directly to factory, avoiding normal log dispatch
+        This is intended for different threads that still need to log as part of a session
         """
         args['session'] = self.transportId
         self.transportFactory.logDispatch(*msg, **args)

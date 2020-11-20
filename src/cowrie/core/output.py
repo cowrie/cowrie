@@ -187,11 +187,11 @@ class Output(object):
             del ev['sessionno']
         # Maybe it's passed explicitly
         elif 'session' in ev:
-            # reverse engineer sessionno
+            # attempt to reverse engineer sessionno, this will fail if session has disconnected
             try:
                 sessionno = next(key for key, value in self.sessions.items() if value == ev['session'])
             except StopIteration:
-                return
+                pass
         # Extract session id from the twisted log prefix
         elif 'system' in ev:
             sessionno = 0
@@ -212,7 +212,7 @@ class Output(object):
         if ev['eventid'] == 'cowrie.session.connect':
             self.sessions[sessionno] = ev['session']
             self.ips[sessionno] = ev['src_ip']
-        else:
+        elif 'session' not in ev:
             ev['session'] = self.sessions[sessionno]
 
         self.write(ev)
