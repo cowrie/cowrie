@@ -205,8 +205,12 @@ class Output(object):
             if sessionno == 0:
                 return
 
-        if sessionno in self.ips:
-            ev['src_ip'] = self.ips[sessionno]
+        try:
+            if sessionno in self.ips:
+                ev['src_ip'] = self.ips[sessionno]
+        except:
+            # no `sessionno` available when session has logged out already
+            pass
 
         # Connection event is special. adds to session list
         if ev['eventid'] == 'cowrie.session.connect':
