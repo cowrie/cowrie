@@ -288,13 +288,17 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
                                   outfile=self.artifactFile.shasumFilename,
                                   shasum=self.artifactFile.shasum)
 
-        # Update the honeyfs to point to downloaded file if output is a file
-        if outfile:
-            self.fs.update_realfile(self.fs.getfile(outfile), self.artifactFile.shasumFilename)
-            self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
-        else:
-            with open(self.artifactFile.shasumFilename, 'rb') as f:
-                self.writeBytes(f.read())
+        # Update the honeyfs to point to downloaded file or dump to stdout
+        try:
+            # Try, since the session may have disconnected at this point.
+            if outfile:
+                self.fs.update_realfile(self.fs.getfile(outfile), self.artifactFile.shasumFilename)
+                self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+            else:
+                with open(self.artifactFile.shasumFilename, 'rb') as f:
+                    self.writeBytes(f.read())
+        except AttributeError:
+            pass
 
         self.exit()
 
