@@ -208,7 +208,7 @@ class Output(object):
         try:
             if sessionno in self.ips:
                 ev['src_ip'] = self.ips[sessionno]
-        except:
+        except UnboundLocalError:
             # no `sessionno` available when session has logged out already
             pass
 
