@@ -189,12 +189,16 @@ class command_wget(HoneyPotCommand):
                                   shasum=self.artifactFile.shasum)
 
         # Update honeyfs to point to downloaded file or write to screen
-        if outfile != '-':
-            self.fs.update_realfile(self.fs.getfile(outfile), self.artifactFile.shasumFilename)
-            self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
-        else:
-            with open(self.artifactFile.shasumFilename, 'rb') as f:
-                self.writeBytes(f.read())
+        try:
+            # The session may already have been disconnected at this point.
+            if outfile != '-':
+                self.fs.update_realfile(self.fs.getfile(outfile), self.artifactFile.shasumFilename)
+                self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+            else:
+                with open(self.artifactFile.shasumFilename, 'rb') as f:
+                    self.writeBytes(f.read())
+        except AttributeError:
+            pass
 
         self.exit()
 
