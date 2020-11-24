@@ -282,6 +282,11 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             log.msg("there's no file " + self.artifactFile.shasumFilename)
             self.exit()
 
+        log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
+                url=self.url,
+                outfile=self.artifactFile.shasumFilename,
+                shasum=self.artifactFile.shasum)
+
         self.protocol.logDispatch(eventid='cowrie.session.file_download',
                                   format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
                                   url=self.url,
