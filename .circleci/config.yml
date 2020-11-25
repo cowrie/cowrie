@@ -3,7 +3,6 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-3.5-buster
       - test-3.6-buster
       - test-3.7-buster
       - test-3.8-buster
@@ -53,10 +52,6 @@ jobs:
           command: |
             . cowrie-env/bin/activate
             PYTHONPATH=`pwd`/src trial cowrie
-  test-3.5-buster:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.5-buster
   test-3.6-buster:
     <<: *test-template
     docker:
