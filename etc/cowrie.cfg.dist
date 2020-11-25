@@ -705,12 +705,12 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 # Output entries need to start with 'output_' and have the 'enabled' entry.
 # ============================================================================
 
-#[output_xmpp]
-#enabled=true
-#server = conference.cowrie.local
-#user = cowrie@cowrie.local
-#password = cowrie
-#muc = hacker_room
+[output_xmpp]
+enabled=false
+server = conference.cowrie.local
+user = cowrie@cowrie.local
+password = cowrie
+muc = hacker_room
 
 # JSON based logging module
 #
@@ -722,11 +722,11 @@ epoch_timestamp = false
 # Supports logging to Elasticsearch
 # This is a simple early release
 #
-#[output_elasticsearch]
-#enabled = false
-#host = localhost
-#port = 9200
-#index = cowrie
+[output_elasticsearch]
+enabled = false
+host = localhost
+port = 9200
+index = cowrie
 # type has been deprecated since ES 6.0.0
 # use _doc which is the default type. See
 # https://stackoverflow.com/a/53688626 for
@@ -744,11 +744,11 @@ epoch_timestamp = false
 #
 # Credentials
 #username = elastic
-#password = 
+#password =
 #
-# TLS encryption. Communications between the client (cowrie) 
+# TLS encryption. Communications between the client (cowrie)
 # and the ES server should naturally be protected by encryption
-# if requests are authenticated (to prevent from man-in-the-middle 
+# if requests are authenticated (to prevent from man-in-the-middle
 # attacks). The following options are then paramount
 # if username and password are provided.
 #
@@ -764,11 +764,11 @@ epoch_timestamp = false
 # You must signup for an api key.
 # Once registered, find your details at: https://isc.sans.edu/myaccount.html
 #
-#[output_dshield]
-#userid = userid_here
-#auth_key = auth_key_here
-#batch_size = 100
-#enabled = false
+[output_dshield]
+enabled = false
+userid = userid_here
+auth_key = auth_key_here
+batch_size = 100
 
 
 # Local Syslog output module
@@ -780,10 +780,10 @@ epoch_timestamp = false
 # Format can be:
 # text, cef
 #
-#[output_localsyslog]
-#enabled = false
-#facility = USER
-#format = text
+[output_localsyslog]
+enabled = false
+facility = USER
+format = text
 
 
 # Text output
@@ -792,10 +792,10 @@ epoch_timestamp = false
 # Format can be:
 # text, cef
 #
-#[output_textlog]
-#enabled = false
-#logfile = ${honeypot:log_path}/audit.log
-#format = text
+[output_textlog]
+enabled = false
+logfile = ${honeypot:log_path}/audit.log
+format = text
 
 
 # MySQL logging module
@@ -804,25 +804,25 @@ epoch_timestamp = false
 # MySQL logging requires extra software: sudo apt-get install libmysqlclient-dev
 # MySQL logging requires an extra Python module: pip install mysql-python
 #
-#[output_mysql]
-#enabled = false
-#host = localhost
-#database = cowrie
-#username = cowrie
-#password = secret
-#port = 3306
-#debug = false
+[output_mysql]
+enabled = false
+host = localhost
+database = cowrie
+username = cowrie
+password = secret
+port = 3306
+debug = false
 
 # Rethinkdb output module
 # Rethinkdb output module requires extra Python module: pip install rethinkdb
 
-#[output_rethinkdblog]
-#enabled = false
-#host = 127.0.0.1
-#port = 28015
-#table = output
-#password =
-#db = cowrie
+[output_rethinkdblog]
+enabled = false
+host = 127.0.0.1
+port = 28015
+table = output
+password =
+db = cowrie
 
 # SQLite3 logging module
 #
@@ -830,18 +830,18 @@ epoch_timestamp = false
 # docs/sql/sqlite3.sql:
 #     sqlite3 <db_file> < docs/sql/sqlite3.sql
 #
-#[output_sqlite]
-#enabled = false
-#db_file = cowrie.db
+[output_sqlite]
+enabled = false
+db_file = cowrie.db
 
 # MongoDB logging module
 #
 # MongoDB logging requires an extra Python module: pip install pymongo
 #
-#[output_mongodb]
-#enabled = false
-#connection_string = mongodb://username:password@host:port/database
-#database = dbname
+[output_mongodb]
+enabled = false
+connection_string = mongodb://username:password@host:port/database
+database = dbname
 
 
 # Splunk HTTP Event Collector (HEC) output module
@@ -850,103 +850,93 @@ epoch_timestamp = false
 # mandatory fields: url, token
 # optional fields: index, source, sourcetype, host
 #
-#[output_splunk]
-#enabled = false
-#url = https://localhost:8088/services/collector/event
-#token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
-#index = cowrie
-#sourcetype = cowrie
-#source = cowrie
-
-
-# HPFeeds
-#
-#[output_hpfeeds3]
-#enabled = false
-#server = hpfeeds.mysite.org
-#port = 10000
-#identifier = abc123
-#secret = secret
-#debug = false
+[output_splunk]
+enabled = false
+url = https://localhost:8088/services/collector/event
+token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
+index = cowrie
+sourcetype = cowrie
+source = cowrie
 
 
 # HPFeeds3
 # Python3 implementation of HPFeeds
-#[output_hpfeeds3]
-#enabled = false
-#server = hpfeeds.mysite.org
-#port = 10000
-#identifier = abc123
-#secret = secret
-#debug=false
+[output_hpfeeds3]
+enabled = false
+server = hpfeeds.mysite.org
+port = 10000
+identifier = abc123
+secret = secret
+debug=false
 
 
 # VirusTotal output module
 # You must signup for an api key.
 #
-#[output_virustotal]
-#enabled = false
-#api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-#upload = True
-#debug = False
-#scan_file = True
-#scan_url = False
+[output_virustotal]
+enabled = false
+api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+upload = True
+debug = False
+scan_file = True
+scan_url = False
 
 
 # Cuckoo output module
-#[output_cuckoo]
-#enabled = false
+[output_cuckoo]
+enabled = false
 # no slash at the end
-#url_base = http://127.0.0.1:8090
-#user = user
-#passwd = passwd
+url_base = http://127.0.0.1:8090
+user = user
+passwd = passwd
 # force will upload duplicated files to cuckoo
-#force = 0
+force = 0
 
 # upload to MalShare
-#[output_malshare]
-#enabled = false
+[output_malshare]
+enabled = false
 
 # This will produce a _lot_ of messages - you have been warned....
-#[output_slack]
-#enabled = false
-#channel = channel_that_events_should_be_posted_in
-#token = slack_token_for_your_bot
-#debug = false
+[output_slack]
+enabled = false
+channel = channel_that_events_should_be_posted_in
+token = slack_token_for_your_bot
+debug = false
 
 
 # https://csirtg.io
 # You must signup for an api key.
 #
-#[output_csirtg]
-#enabled = false
-#username = wes
-#feed = scanners
-#description = random scanning activity
-#token = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+[output_csirtg]
+enabled = false
+username = wes
+feed = scanners
+description = random scanning activity
+token = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
 
-#[output_socketlog]
-#enabled = false
-#address = 127.0.0.1:9000
-#timeout = 5
+[output_socketlog]
+enabled = false
+address = 127.0.0.1:9000
+timeout = 5
 
 # Upload files that cowrie has captured to an S3 (or compatible bucket)
 # Files are stored with a name that is the SHA of their contents
 #
-#[output_s3]
+[output_s3]
+enabled = false
 #
 # The AWS credentials to use.
 # Leave these blank to use botocore's credential discovery e.g .aws/config or ENV variables.
 # As per https://github.com/boto/botocore/blob/develop/botocore/credentials.py#L50-L65
-#access_key_id = AKIDEXAMPLE
-#secret_access_key = wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
+access_key_id = AKIDEXAMPLE
+secret_access_key = wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 #
 # The bucket to store the files in. The bucket must already exist.
-#bucket = my-cowrie-bucket
+bucket = my-cowrie-bucket
 #
 # The region the bucket is in
-#region = eu-west-1
+region = eu-west-1
 #
 # An alternate endpoint URL. If you self host a pithos instance you can set
 # this to its URL (e.g. https://s3.mydomain.com) - can otherwise be blank
@@ -957,12 +947,12 @@ epoch_timestamp = false
 # where you don't yet have real certificates.
 #verify = no
 
-#[output_influx]
-#enabled = false
-#host = 127.0.0.1
-#port = 8086
-#database_name = cowrie
-#retention_policy_duration = 12w
+[output_influx]
+enabled = false
+host = 127.0.0.1
+port = 8086
+database_name = cowrie
+retention_policy_duration = 12w
 
 [output_kafka]
 enabled = false
@@ -971,47 +961,47 @@ port = 9092
 topic = cowrie
 
 
-#[output_redis]
-#enabled = false
-#host = 127.0.0.1
-#port = 6379
+[output_redis]
+enabled = false
+host = 127.0.0.1
+port = 6379
 # DB of the redis server. Defaults to 0
-#db = 0
+db = 0
 # Password of the redis server. Defaults to None
-#password = secret
+# password = secret
 # Name of the list to push to or the channel to publish to. Required
-#keyname = cowrie
+keyname = cowrie
 # Method to use when sending data to redis.
 # Can be one of [lpush, rpush, publish]. Defaults to lpush
-#send_method = lpush
+send_method = lpush
 
 
 # Perform Reverse DNS lookup
-#[output_reversedns]
-#enabled = true
+[output_reversedns]
+enabled = false
 # Timeout in seconds
-#timeout = 3
+timeout = 3
 
-#[output_greynoise]
-#enabled = true
-#debug=False
+[output_greynoise]
+enabled = false
+debug = false
 # Name of the tags separated by comma, for which the IP has to be scanned for.
 # Example "SHODAN,JBOSS_WORM,CPANEL_SCANNER_LOW"
 # If there isn't any specific tag then just leave it "all"
-#tags = all
+tags = all
 # It's optional to have API key, so if you don't want to but
 # API key then leave this option commented
 #api_key = 1234567890
 
 # Upload all files to a MISP instance of your liking.
 # The API key can be found under Event Actions -> Automation
-#[output_misp]
-#enabled = true
-#base_url = https://misp.somedomain.com
-#api_key = secret_key
-#verify_cert = true
-#publish_event = true
-#debug = false
+[output_misp]
+enabled = false
+base_url = https://misp.somedomain.com
+api_key = secret_key
+verify_cert = true
+publish_event = true
+debug = false
 
 # The crashreporter sends data on Python exceptions to api.cowrie.org
 # To disable set `enabled = false` in cowrie.cfg
@@ -1021,8 +1011,8 @@ debug = false
 
 # Reports login attempts to AbuseIPDB. A short guide is in the original
 # pull request on GitHub: https://github.com/cowrie/cowrie/pull/1346
-#[output_abuseipdb]
-#enabled = true
+[output_abuseipdb]
+enabled = false
 #api_key =
 #rereport_after = 24
 #tolerance_window is in minutes
