@@ -25,7 +25,6 @@ first_time_use() {
 }
 
 python_version_warning() {
-    echo "version check"
     if python -V 2>&1 | grep -q  '^Python 2.'; then
         echo
         echo "DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020."
