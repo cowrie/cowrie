@@ -16,8 +16,8 @@ from cowrie.core.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
 # from cowrie.test.proxy_compare import ProxyTestCommand
 
-os.environ['HONEYPOT_TTYLOG'] = 'false'
-os.environ['OUTPUT_JSONLOG_ENABLED'] = 'false'
+os.environ['COWRIE_HONEYPOT_TTYLOG'] = 'false'
+os.environ['COWRIE_OUTPUT_JSONLOG_ENABLED'] = 'false'
 
 
 def create_ssh_factory(backend):
@@ -71,11 +71,11 @@ class ProxyTests(unittest.TestCase):
         # #################### Proxy ###################### #
         # ################################################# #
         # setup proxy environment
-        os.environ['PROXY_BACKEND'] = 'simple'
-        os.environ['PROXY_BACKEND_SSH_HOST'] = self.HOST
-        os.environ['PROXY_BACKEND_SSH_PORT'] = str(self.PORT_BACKEND_SSH)
-        os.environ['PROXY_BACKEND_TELNET_HOST'] = self.HOST
-        os.environ['PROXY_BACKEND_TELNET_PORT'] = str(self.PORT_BACKEND_TELNET)
+        os.environ['COWRIE_PROXY_BACKEND'] = 'simple'
+        os.environ['COWRIE_PROXY_BACKEND_SSH_HOST'] = self.HOST
+        os.environ['COWRIE_PROXY_BACKEND_SSH_PORT'] = str(self.PORT_BACKEND_SSH)
+        os.environ['COWRIE_PROXY_BACKEND_TELNET_HOST'] = self.HOST
+        os.environ['COWRIE_PROXY_BACKEND_TELNET_PORT'] = str(self.PORT_BACKEND_TELNET)
 
         # setup SSH proxy
         self.factory_proxy_ssh = create_ssh_factory('proxy')

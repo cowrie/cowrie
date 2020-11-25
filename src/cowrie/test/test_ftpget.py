@@ -13,9 +13,9 @@ from twisted.trial import unittest
 from cowrie.shell import protocol
 from cowrie.test import fake_server, fake_transport
 
-os.environ["HONEYPOT_DATA_PATH"] = "../data"
-os.environ["HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
-os.environ["SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
+os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "../data"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 
