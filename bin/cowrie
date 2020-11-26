@@ -193,6 +193,13 @@ export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}/src
 
 set -e
 
+# Don't store pidfile on Docker persistent volume
+if [ "${COWRIE_STDOUT}" = "yes" ]; then
+        PIDFILE=""
+else
+        PIDFILE=var/run/cowrie.pid
+fi
+
 if [ ! -f ${COWRIEDIR}/var/log/cowrie/cowrie.log ]
 then
     first_time_use
