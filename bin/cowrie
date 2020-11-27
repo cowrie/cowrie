@@ -1,24 +1,20 @@
 #!/bin/bash
+################################################################################
+# Don't edit this file
+#
+# Environment variables can be passed to change how this script runs.
+#
+# Set `COWRIE_VIRTUAL_ENV=my-env` to use a particular virtual environment.
+# By default Cowrie will look for `cowrie-env` in the current or parent
+# directory.
+#
+# Set `COWRIE_STDOUT=yes` to run in foreground mode and send logs to stdout
+#
+# Pass any other config variable as well, to further setup your environment!
+# For example: `COWRIE_TELNET_ENABLED=yes`
+################################################################################
 
-# The user which is supposed to run cowrie
 COWRIE_USER=cowrie
-
-# To override the default virtual enviroment, either set COWRIE_VIRTUAL_ENV or
-# activate it before starting Cowrie
-#COWRIE_VIRTUAL_ENV=my-env
-
-#Change the below to -n to disable daemonizing (for instance when using supervisor)
-DAEMONIZE=""
-
-# Log to stdout instead of a separate file (same behaviour as Docker)
-# STDOUT="no"
-
-################################################################################
-## don't modify below here ##
-################################################################################
-
-# The default Python virtual environment is "cowrie-env". If you set the variable
-# COWRIE_VIRTUAL_ENV you can override this
 DEFAULT_VIRTUAL_ENV=cowrie-env
 
 first_time_use() {
@@ -28,19 +24,16 @@ first_time_use() {
 }
 
 python_version_warning() {
-    echo "version check"
     if python -V 2>&1 | grep -q  '^Python 2.'; then
         echo
         echo "DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020."
-        echo "Please upgrade your Python as Python 2.7 won't be maintained after that date. Cowrie has dropped support for Python 2.7."
+        echo "Cowrie has dropped support for Python 2.7."
         echo
     fi
-}
-
-migrate_userdb() {
-    if [ -f ${COWRIEDIR}/data/userdb.txt ]; then
-        echo "Migrating ${COWRIEDIR}/data/userdb.txt to ${COWRIEDIR}/etc/userdb.txt"
-        mv -f ${COWRIEDIR}/data/userdb.txt ${COWRIEDIR}/etc/userdb.txt
+    if python -V 2>&1 | grep -q  '^Python 3.5'; then
+        echo
+        echo "DEPRECATION: Python 3.5 is no longer supported by Cowrie."
+        echo
     fi
 }
 
@@ -92,13 +85,13 @@ cowrie_start() {
 
     # Start Cowrie
     COWRIEARGS="$*"
-    TWISTEDARGS="${DAEMONIZE} ${XARGS} --umask=0022 --pidfile=${PIDFILE}"
+    TWISTEDARGS="${XARGS} --umask=0022"
 
-    # For Docker log to stdout, for non-Docker log to file
-    if [ "$STDOUT" = "yes" ]; then
-        TWISTEDARGS="${TWISTEDARGS} -l -"
+    # Run foreground or background. Foreground has no log and no PID file.
+    if [ "$COWRIE_STDOUT" = "yes" ]; then
+        TWISTEDARGS="${TWISTEDARGS} -n -l -"
     else
-        TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger"
+        TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger --pidfile=${PIDFILE}"
     fi
 
     # 1. Check if any virtual environment is active
@@ -115,7 +108,7 @@ cowrie_start() {
         echo 2>&1 "Using default Python virtual environment \"$VIRTUAL_ENV\""
     # Look one directory higher for the virtual env to not pollute the Cowrie dir
     elif activate_venv "../$DEFAULT_VIRTUAL_ENV"; then
-        echo 2>&1 "Using default Python virtual environment \"$VIRTUAL_ENV\""
+        echo 2>&1 "Using default Python virtual environment \"../$VIRTUAL_ENV\""
     else
         echo 2>&1 "Not using Python virtual environment"
     fi
@@ -184,7 +177,12 @@ cowrie_force_stop () {
 }
 
 cowrie_usage() {
-    echo "usage: $0 <start|stop|force-stop|restart|status>"
+    echo "usage: $0 <start|stop|force-stop|restart|status|shell>"
+}
+
+# Mostly for Docker use, to quickly get a shell in the container
+cowrie_shell() {
+    $SHELL
 }
 
 ################################################################################
@@ -211,20 +209,14 @@ find_cowrie_directory $0
 cd ${COWRIEDIR}
 export PYTHONPATH=${PYTHONPATH}:${COWRIEDIR}/src
 
-# This is for the move to src/ on 2018-07-21
-# It deletes old compiled python code
-# Can be removed at some time in the future
-for dir in ${COWRIEDIR}/twisted ${COWRIEDIR}/cowrie; do
-    [ -d ${dir} ] && find ${dir} -name '*pyc' | xargs rm -f
-done
+set -e
 
 # Don't store pidfile on Docker persistent volume
-if [ "$STDOUT" = "yes" ]; then
+if [ "${COWRIE_STDOUT}" = "yes" ]; then
         PIDFILE=""
 else
         PIDFILE=var/run/cowrie.pid
 fi
-set -e
 
 if [ ! -f ${COWRIEDIR}/var/log/cowrie/cowrie.log ]
 then
@@ -241,7 +233,6 @@ case $key in
         cowrie_force_stop $*
         ;;
     start)
-        migrate_userdb
         cowrie_start $*
         ;;
     restart)
@@ -251,6 +242,15 @@ case $key in
         ;;
     status)
         cowrie_status $*
+        ;;
+    bash)
+        cowrie_shell $*
+        ;;
+    sh)
+        cowrie_shell $*
+        ;;
+    shell)
+        cowrie_shell $*
         ;;
     *)
         cowrie_usage

@@ -1,11 +1,12 @@
 # csirtg
 csirtgsdk==0.0.0a22 # TODO: csirtgsdk need to be updated for current API
 
+
 # dshield
-requests==2.24.0
+requests==2.25.0
 
 # elasticsearch
-elasticsearch==7.9.1
+elasticsearch==7.10.0
 
 # hpfeeds
 hpfeeds3==0.9.10
@@ -16,19 +17,19 @@ hpfeeds3==0.9.10
 mysqlclient==2.0.1
 
 # mongodb
-pymongo==3.11.0
+pymongo==3.11.1
 
 # rethinkdblog
 rethinkdb==2.4.7
 
 # s3
-botocore==1.19.14
+botocore==1.19.25
 
 # slack
 slackclient==2.9.3
 
 # influxdb
-influxdb==5.3.0
+influxdb==5.3.1
 
 # kafka
 afkak==20.10.0
@@ -38,5 +39,5 @@ python-snappy==0.5.4
 wokkel==18.0.0
 
 # misp
-pymisp==2.4.134
+pymisp==2.4.135.3
 
