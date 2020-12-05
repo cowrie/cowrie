@@ -33,14 +33,15 @@ class CowrieConfig(object):
 class EnvironmentConfigParser(configparser.ConfigParser):
     """
     ConfigParser with additional option to read from environment variables
+    # TODO: def sections()
     """
     def has_option(self, section, option):
-        if to_environ_key('_'.join((section, option))) in environ:
+        if to_environ_key('_'.join(("cowrie", section, option))) in environ:
             return True
         return super(EnvironmentConfigParser, self).has_option(section, option)
 
     def get(self, section, option, raw=False, **kwargs):
-        key = to_environ_key('_'.join((section, option)))
+        key = to_environ_key('_'.join(("cowrie", section, option)))
         if key in environ:
             return environ[key]
         return super(EnvironmentConfigParser, self).get(section, option, raw=raw, **kwargs)

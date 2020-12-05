@@ -3,10 +3,10 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-3.5-buster
       - test-3.6-buster
       - test-3.7-buster
       - test-3.8-buster
+      - test-3.9-buster
 jobs:
   test-3.7-buster: &test-template
     docker:
@@ -14,6 +14,7 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install OS and Python prerequisites
           command: |
             sudo apt-get -y update
             sudo apt-get -y install \
@@ -24,23 +25,33 @@ jobs:
               libvirt-clients nmap
             virtualenv cowrie-env
             . cowrie-env/bin/activate
-            pip install libvirt-python==5.5.0
+            pip install libvirt-python==6.9.0
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
       - run:
           command: |
             . cowrie-env/bin/activate
+            pip check
+      - run:
+          name: Lint
+          command: |
+            . cowrie-env/bin/activate
             flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
+      - run:
+          name: Build Python library
+          command: |
+            . cowrie-env/bin/activate
             python setup.py build sdist bdist
+      - run:
+          name: Build documentation
+          command: |
+            . cowrie-env/bin/activate
             make -C docs html
       - run:
+          name: Run unit tests
           command: |
             . cowrie-env/bin/activate
             PYTHONPATH=`pwd`/src trial cowrie
-  test-3.5-buster:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.5-buster
   test-3.6-buster:
     <<: *test-template
     docker:
@@ -53,3 +64,7 @@ jobs:
     <<: *test-template
     docker:
       - image: circleci/python:3.9-buster
+  test-3.10-buster:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.10-buster
