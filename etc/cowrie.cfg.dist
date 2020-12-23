@@ -893,7 +893,9 @@ passwd = passwd
 force = 0
 
 # upload to MalShare
+# Register at https://malshare.com/register.php to get your API key
 [output_malshare]
+api_key = 130928309823098
 enabled = false
 
 # This will produce a _lot_ of messages - you have been warned....
