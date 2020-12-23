@@ -41,6 +41,8 @@ except ImportError:
     from urlparse import urlparse
 import requests
 
+from twisted.python import log
+
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
@@ -65,7 +67,6 @@ class Output(cowrie.core.output.Output):
 
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.file_download":
-            print("Sending file to MalShare")
             p = urlparse(entry["url"]).path
             if p == "":
                 fileName = entry["shasum"]
@@ -79,7 +80,6 @@ class Output(cowrie.core.output.Output):
             self.postfile(entry["outfile"], fileName)
 
         elif entry["eventid"] == "cowrie.session.file_upload":
-            print("Sending file to MalShare")
             self.postfile(entry["outfile"], entry["filename"])
 
     def postfile(self, artifact, fileName):
@@ -92,8 +92,8 @@ class Output(cowrie.core.output.Output):
                 files={"upload": open(artifact, "rb")}
             )
             if res and res.ok:
-                print("Submitted to MalShare")
+                log.msg("Submitted to MalShare")
             else:
-                print("MalShare Request failed: {}".format(res.status_code))
+                log.msg("MalShare Request failed: {}".format(res.status_code))
         except Exception as e:
-            print("MalShare Request failed: {}".format(e))
+            log.msg("MalShare Request failed: {}".format(e))
