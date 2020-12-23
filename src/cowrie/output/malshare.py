@@ -42,6 +42,7 @@ except ImportError:
 import requests
 
 import cowrie.core.output
+from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
@@ -88,7 +89,7 @@ class Output(cowrie.core.output.Output):
         try:
             res = requests.post(
                 "https://malshare.com/api.php?api_key="+self.apiKey+"&action=upload",
-                files={upload: open(artifact, "rb")}
+                files={"upload": open(artifact, "rb")}
             )
             if res and res.ok:
                 print("Submitted to MalShare")
