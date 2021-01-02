@@ -105,7 +105,7 @@ class Term(base_protocol.BaseProtocol):
                     self.data = self.data[1:]
                     if self.command != b'':
                         log.msg(eventid='cowrie.command.input',
-                                input=self.command.decode('ascii'),
+                                input=self.command.decode('utf8'),
                                 format='CMD: %(input)s')
 
                     self.command = b''
