@@ -103,10 +103,13 @@ class Term(base_protocol.BaseProtocol):
                         self.command += b'^C'
 
                     self.data = self.data[1:]
-                    if self.command != b'':
-                        log.msg(eventid='cowrie.command.input',
-                                input=self.command.decode('ascii'),
-                                format='CMD: %(input)s')
+                    try:
+                        if self.command != b'':
+                            log.msg(eventid='cowrie.command.input',
+                                    input=self.command.decode('utf8'),
+                                    format='CMD: %(input)s')
+                    except UnicodeDecodeError:
+                        log.err("Unusual execcmd: {}".format(repr(self.command)))
 
                     self.command = b''
                     self.pointer = 0
