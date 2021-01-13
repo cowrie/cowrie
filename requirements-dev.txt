@@ -5,4 +5,4 @@ Sphinx==3.4.3
 sphinx_rtd_theme==0.5.1
 tox==3.21.0
 pur==5.3.0
-importlib_metadata==3.4.0; python_version < '3.8'
+importlib_metadata==2.1.0; python_version < '3.8'
