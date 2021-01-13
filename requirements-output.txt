@@ -1,6 +1,5 @@
 # csirtg
-csirtgsdk==1.1.5 # TODO: csirtgsdk need to be updated for current API
-
+csirtgsdk==0.0.0a22 # TODO: csirtgsdk need to be updated for current API
 
 # dshield
 requests==2.25.1
