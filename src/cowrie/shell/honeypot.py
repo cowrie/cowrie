@@ -36,8 +36,9 @@ class HoneyPotShell(object):
         self.lexer = None
         self.showPrompt()
 
-    def lineReceived(self, line):
-        log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
+    def lineReceived(self, line, log_input=True):
+        if log_input:
+            log.msg(eventid='cowrie.command.input', input=line, format='CMD: %(input)s')
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += '@%{}=$:+^,()`'
@@ -181,7 +182,8 @@ class HoneyPotShell(object):
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False, redirect=True))
         # call lineReceived method that indicates that we have some commands to parse
-        self.protocol.cmdstack[-1].lineReceived(cmd)
+        # the line was already logged as an input event; therefore, do not log the subshell commands
+        self.protocol.cmdstack[-1].lineReceived(cmd, log_input=False)
         # remove the shell
         res = self.protocol.cmdstack.pop()
         return res.protocol.pp.redirected_data.decode()[:-1]
