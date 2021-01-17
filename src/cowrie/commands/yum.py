@@ -280,5 +280,5 @@ Options:
         self.exit()
 
 
-# commands['/usr/bin/yum'] = command_yum
-# commands['yum'] = command_yum
+commands['/usr/bin/yum'] = command_yum
+commands['yum'] = command_yum

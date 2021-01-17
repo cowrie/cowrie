@@ -177,6 +177,4 @@ pages for more information and options.
 
 
 commands['/usr/bin/apt-get'] = command_aptget
-commands['/usr/bin/apt'] = command_aptget
 commands['apt-get'] = command_aptget
-commands['apt'] = command_aptget

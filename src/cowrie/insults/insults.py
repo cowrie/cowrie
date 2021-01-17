@@ -59,17 +59,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.type == 'e':
             self.stdinlogOpen = True
-            # log the command into ttylog
-            if self.ttylogEnabled:
-                (sess, cmd) = self.protocolArgs
-                ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
         else:
             self.stdinlogOpen = False
 
         insults.ServerProtocol.connectionMade(self)
 
         if self.type == 'e':
-            self.terminalProtocol.execcmd.encode('utf8')
+            cmd = self.terminalProtocol.execcmd.encode('utf8')
+            if self.ttylogEnabled:
+                ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
 
     def write(self, data):
         if self.ttylogEnabled and self.ttylogOpen:

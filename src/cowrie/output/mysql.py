@@ -77,9 +77,11 @@ class Output(cowrie.core.output.Output):
         1146, "Table '...' doesn't exist"
         1406, "Data too long for column '...' at row ..."
         """
-        log.msg("output_mysql: MySQL Error: {}".format(error.value))
         if error.value[0] in (1146, 1406):
+            log.msg("output_mysql: MySQL Error: {}".format(error.value))
             log.msg("MySQL schema maybe misconfigured, doublecheck database!")
+        else:
+            log.err("output_mysql: MySQL Error: {}".format(error.value))
 
     def simpleQuery(self, sql, args):
         """
@@ -142,12 +144,12 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'cowrie.session.file_download':
             self.simpleQuery('INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) '
                              'VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
-                             (entry["session"], entry["time"], entry.get("url", ""), entry['outfile'], entry['shasum']))
+                             (entry["session"], entry["time"], entry['url'], entry['outfile'], entry['shasum']))
 
         elif entry["eventid"] == 'cowrie.session.file_download.failed':
             self.simpleQuery('INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) '
                              'VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
-                             (entry["session"], entry["time"], entry.get("url", ""), 'NULL', 'NULL'))
+                             (entry["session"], entry["time"], entry['url'], 'NULL', 'NULL'))
 
         elif entry["eventid"] == 'cowrie.session.file_upload':
             self.simpleQuery('INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) '

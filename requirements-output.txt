@@ -1,11 +1,12 @@
 # csirtg
 csirtgsdk==0.0.0a22 # TODO: csirtgsdk need to be updated for current API
 
+
 # dshield
-requests==2.25.1
+requests==2.25.0
 
 # elasticsearch
-elasticsearch==7.10.1
+elasticsearch==7.10.0
 
 # hpfeeds
 hpfeeds3==0.9.10
@@ -13,16 +14,16 @@ hpfeeds3==0.9.10
 # mysql
 # If this fails, see documentation /home/cowrie/cowrie/docs/sql/README.md
 # There are two options, mysqlclient is newer and provides Python3 support.
-mysqlclient==2.0.3
+mysqlclient==2.0.1
 
 # mongodb
-pymongo==3.11.2
+pymongo==3.11.1
 
 # rethinkdblog
-rethinkdb==2.4.8
+rethinkdb==2.4.7
 
 # s3
-botocore==1.19.52
+botocore==1.19.25
 
 # slack
 slackclient==2.9.3
@@ -32,7 +33,7 @@ influxdb==5.3.1
 
 # kafka
 afkak==20.10.0
-python-snappy==0.6.0
+python-snappy==0.5.4
 
 # dblog_xmpp
 wokkel==18.0.0

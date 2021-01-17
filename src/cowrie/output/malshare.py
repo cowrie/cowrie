@@ -41,10 +41,7 @@ except ImportError:
     from urlparse import urlparse
 import requests
 
-from twisted.python import log
-
 import cowrie.core.output
-from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
@@ -57,7 +54,7 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get('output_malshare', 'api_key')
+        pass
 
     def stop(self):
         """
@@ -67,6 +64,7 @@ class Output(cowrie.core.output.Output):
 
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.file_download":
+            print("Sending file to MalShare")
             p = urlparse(entry["url"]).path
             if p == "":
                 fileName = entry["shasum"]
@@ -80,6 +78,7 @@ class Output(cowrie.core.output.Output):
             self.postfile(entry["outfile"], fileName)
 
         elif entry["eventid"] == "cowrie.session.file_upload":
+            print("Sending file to MalShare")
             self.postfile(entry["outfile"], entry["filename"])
 
     def postfile(self, artifact, fileName):
@@ -88,12 +87,12 @@ class Output(cowrie.core.output.Output):
         """
         try:
             res = requests.post(
-                "https://malshare.com/api.php?api_key="+self.apiKey+"&action=upload",
-                files={"upload": open(artifact, "rb")}
+                "https://malshare.com/api.php?mode=cli",
+                files={fileName: open(artifact, "rb")}
             )
             if res and res.ok:
-                log.msg("Submitted to MalShare")
+                print("Submited to MalShare")
             else:
-                log.msg("MalShare Request failed: {}".format(res.status_code))
+                print("MalShare Request failed: {}".format(res.status_code))
         except Exception as e:
-            log.msg("MalShare Request failed: {}".format(e))
+            print("MalShare Request failed: {}".format(e))

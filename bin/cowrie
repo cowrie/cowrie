@@ -14,7 +14,6 @@
 # For example: `COWRIE_TELNET_ENABLED=yes`
 ################################################################################
 
-COWRIE_USER=cowrie
 DEFAULT_VIRTUAL_ENV=cowrie-env
 
 first_time_use() {
@@ -76,13 +75,6 @@ cowrie_status() {
 }
 
 cowrie_start() {
-    # Check whether cowrie is already running
-    PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
-    if [ -n "$PID" ]; then
-        echo "cowrie is already running (PID: ${PID})."
-	      return 1
-    fi
-
     # Start Cowrie
     COWRIEARGS="$*"
     TWISTEDARGS="${XARGS} --umask=0022"
@@ -189,16 +181,6 @@ cowrie_shell() {
 ## Main script
 ################################################################################
 
-if [ -n "${COWRIE_USER}" ]
-then
-  USER=$(whoami)
-  if [ ! "${USER}" = "${COWRIE_USER}" ]
-  then
-    echo "Only the user ${COWRIE_USER} can use this script"
-    exit 1
-  fi
-fi
-
 if [ "$#" = 0 ]
 then
     cowrie_usage
@@ -237,7 +219,6 @@ case $key in
         ;;
     restart)
         cowrie_stop $*
-        sleep 1
         cowrie_start $*
         ;;
     status)
