@@ -75,20 +75,20 @@ class command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        outfile = None
+        self.outfile = None
         self.quiet = False
         for opt in optlist:
             if opt[0] == '-O':
-                outfile = opt[1]
+                self.outfile = opt[1]
             if opt[0] == '-q':
                 self.quiet = True
 
         # for some reason getopt doesn't recognize "-O -"
         # use try..except for the case if passed command is malformed
         try:
-            if not outfile:
+            if not self.outfile:
                 if '-O' in args:
-                    outfile = args[args.index('-O') + 1]
+                    self.outfile = args[args.index('-O') + 1]
         except Exception:
             pass
 
@@ -97,38 +97,32 @@ class command_wget(HoneyPotCommand):
 
         urldata = compat.urllib_parse.urlparse(url)
 
-        url = url.encode('utf8')
+        self.url = url.encode('utf8')
 
-        if outfile is None:
-            outfile = urldata.path.split('/')[-1]
-            if not len(outfile.strip()) or not urldata.path.count('/'):
-                outfile = 'index.html'
+        if self.outfile is None:
+            self.outfile = urldata.path.split('/')[-1]
+            if not len(self.outfile.strip()) or not urldata.path.count('/'):
+                self.outfile = 'index.html'
 
-        if outfile != '-':
-            outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
-            path = os.path.dirname(outfile)
+        if self.outfile != '-':
+            self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
+            path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
-                self.errorWrite('wget: %s: Cannot open: No such file or directory\n' % outfile)
+                self.errorWrite('wget: %s: Cannot open: No such file or directory\n' % self.outfile)
                 self.exit()
                 return
 
-        self.url = url
-
-        self.artifactFile = Artifact(outfile)
-        # HTTPDownloader will close() the file object so need to preserve the name
-
-        d = self.download(url, outfile, self.artifactFile)
-        if d:
-            d.addCallback(self.success, outfile)
-            d.addErrback(self.error, url)
+        self.deferred = self.download(self.url, self.outfile)
+        if self.deferred:
+            self.deferred.addCallback(self.success)
+            self.deferred.addErrback(self.error, self.url)
         else:
             self.exit()
 
-    def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
+    def download(self, url, fakeoutfile, *args, **kwargs):
         """
         url - URL to download
         fakeoutfile - file in guest's fs that attacker wants content to be downloaded to
-        outputfile - file in host's fs that will hold content of the downloaded file
         """
         try:
             parsed = compat.urllib_parse.urlparse(url)
@@ -143,19 +137,23 @@ class command_wget(HoneyPotCommand):
             self.errorWrite('%s: Unsupported scheme.\n' % (url,))
             return None
 
+        # File in host's fs that will hold content of the downloaded file
+        # HTTPDownloader will close() the file object so need to preserve the name
+        self.artifactFile = Artifact(self.outfile)
+
         if not self.quiet:
             self.errorWrite('--%s--  %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S'), url.decode('utf8')))
             self.errorWrite('Connecting to %s:%d... connected.\n' % (host, port))
             self.errorWrite('HTTP request sent, awaiting response... ')
 
-        factory = HTTPProgressDownloader(self, fakeoutfile, url, outputfile, *args, **kwargs)
+        factory = HTTPProgressDownloader(self, fakeoutfile, url, self.artifactFile, *args, **kwargs)
 
         out_addr = None
         if CowrieConfig().has_option('honeypot', 'out_addr'):
             out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == b'https':
-            context_factory = ssl.CertificateOptions(insecurelyLowerMinimumTo=ssl.TLSVersion.SSLv3)
+            context_factory = ssl.optionsForClientTLS(hostname=host)
             self.connection = reactor.connectSSL(host, port, factory, context_factory, bindAddress=out_addr)
         elif scheme == b'http':
             self.connection = reactor.connectTCP(host, port, factory, bindAddress=out_addr)
@@ -168,7 +166,7 @@ class command_wget(HoneyPotCommand):
         self.errorWrite('^C\n')
         self.connection.transport.loseConnection()
 
-    def success(self, data, outfile):
+    def success(self, data):
         if not os.path.isfile(self.artifactFile.shasumFilename):
             log.msg("there's no file " + self.artifactFile.shasumFilename)
             self.exit()
@@ -187,9 +185,9 @@ class command_wget(HoneyPotCommand):
                                   shasum=self.artifactFile.shasum)
 
         # Update honeyfs to point to downloaded file or write to screen
-        if outfile != '-':
-            self.fs.update_realfile(self.fs.getfile(outfile), self.artifactFile.shasumFilename)
-            self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
+        if self.outfile != '-':
+            self.fs.update_realfile(self.fs.getfile(self.outfile), self.artifactFile.shasumFilename)
+            self.fs.chown(self.outfile, self.protocol.user.uid, self.protocol.user.gid)
         else:
             with open(self.artifactFile.shasumFilename, 'rb') as f:
                 self.writeBytes(f.read())
@@ -197,31 +195,45 @@ class command_wget(HoneyPotCommand):
         self.exit()
 
     def error(self, error, url):
-        if hasattr(error, 'getErrorMessage'):  # exceptions
-            errorMessage = error.getErrorMessage()
-            self.errorWrite(errorMessage + '\n')
-            # Real wget also adds this:
-        if hasattr(error, 'webStatus') and error.webStatus and hasattr(error, 'webMessage'):  # exceptions
-            self.errorWrite('{} ERROR {}: {}\n'.format(time.strftime('%Y-%m-%d %T'), error.webStatus.decode(),
-                                                       error.webMessage.decode('utf8')))
+        # we need to handle 301 redirects separately
+        if hasattr(error, 'webStatus') and error.webStatus.decode() == '301':
+            self.errorWrite('{} {}\n'.format(error.webStatus.decode(), error.webMessage.decode()))
+            https_url = error.getErrorMessage().replace('301 Moved Permanently to ', '')
+            self.errorWrite('Location {} [following]\n'.format(https_url))
+
+            # do the download again with the https URL
+            self.deferred = self.download(https_url.encode('utf8'), self.outfile)
+            if self.deferred:
+                self.deferred.addCallback(self.success)
+                self.deferred.addErrback(self.error, https_url)
+            else:
+                self.exit()
         else:
-            self.errorWrite('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
+            if hasattr(error, 'getErrorMessage'):  # exceptions
+                errorMessage = error.getErrorMessage()
+                self.errorWrite(errorMessage + '\n')
+                # Real wget also adds this:
+            if hasattr(error, 'webStatus') and error.webStatus and hasattr(error, 'webMessage'):  # exceptions
+                self.errorWrite('{} ERROR {}: {}\n'.format(time.strftime('%Y-%m-%d %T'), error.webStatus.decode(),
+                                                           error.webMessage.decode('utf8')))
+            else:
+                self.errorWrite('{} ERROR 404: Not Found.\n'.format(time.strftime('%Y-%m-%d %T')))
 
-        # prevent cowrie from crashing if the terminal have been already destroyed
-        try:
-            self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
-                                      format='Attempt to download file(s) from URL (%(url)s) failed',
-                                      url=self.url)
-        except Exception:
-            pass
+            # prevent cowrie from crashing if the terminal have been already destroyed
+            try:
+                self.protocol.logDispatch(eventid='cowrie.session.file_download.failed',
+                                          format='Attempt to download file(s) from URL (%(url)s) failed',
+                                          url=self.url)
+            except Exception:
+                pass
 
-        self.exit()
+            self.exit()
 
 
 # From http://code.activestate.com/recipes/525493/
 class HTTPProgressDownloader(client.HTTPDownloader):
     def __init__(self, wget, fakeoutfile, url, outfile, headers=None):
-        client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent=b'Wget/1.11.4')
+        client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent=b'Wget/1.11.4', followRedirect=False)
         self.status = None
         self.wget = wget
         self.fakeoutfile = fakeoutfile

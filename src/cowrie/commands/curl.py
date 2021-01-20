@@ -17,77 +17,7 @@ from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
-
-class command_curl(HoneyPotCommand):
-    """
-    curl command
-    """
-    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
-    download_path = CowrieConfig().get('honeypot', 'download_path')
-
-    def start(self):
-        try:
-            optlist, args = getopt.getopt(self.args, 'sho:O', ['help', 'manual', 'silent'])
-        except getopt.GetoptError as err:
-            # TODO: should be 'unknown' instead of 'not recognized'
-            self.write("curl: {}\n".format(err))
-            self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
-            self.exit()
-            return
-
-        for opt in optlist:
-            if opt[0] == '-h' or opt[0] == '--help':
-                self.curl_help()
-                return
-            elif opt[0] == '-s' or opt[0] == '--silent':
-                self.silent = True
-
-        if len(args):
-            if args[0] is not None:
-                url = str(args[0]).strip()
-        else:
-            self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
-            self.exit()
-            return
-
-        if '://' not in url:
-            url = 'http://' + url
-        urldata = compat.urllib_parse.urlparse(url)
-
-        outfile = None
-        for opt in optlist:
-            if opt[0] == '-o':
-                outfile = opt[1]
-            if opt[0] == '-O':
-                outfile = urldata.path.split('/')[-1]
-                if outfile is None or not len(outfile.strip()) or not urldata.path.count('/'):
-                    self.write('curl: Remote file name has no length!\n')
-                    self.exit()
-                    return
-
-        if outfile:
-            outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
-            path = os.path.dirname(outfile)
-            if not path or \
-                    not self.fs.exists(path) or \
-                    not self.fs.isdir(path):
-                self.write('curl: %s: Cannot open: No such file or directory\n' % outfile)
-                self.exit()
-                return
-
-        url = url.encode('ascii')
-        self.url = url
-
-        self.artifactFile = Artifact(outfile)
-        # HTTPDownloader will close() the file object so need to preserve the name
-
-        self.deferred = self.download(url, outfile, self.artifactFile)
-        if self.deferred:
-            self.deferred.addCallback(self.success, outfile)
-            self.deferred.addErrback(self.error, url)
-
-    def curl_help(self):
-        self.write("""Usage: curl [options...] <url>
+CURL_HELP = """Usage: curl [options...] <url>
 Options: (H) means HTTP/HTTPS only, (F) means FTP only
      --anyauth       Pick "any" authentication method (H)
  -a, --append        Append to target file when uploading (F/SFTP)
@@ -240,8 +170,78 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
  -V, --version       Show version number and quit
  -w, --write-out FORMAT  What to output after completion
      --xattr        Store metadata in extended file attributes
- -q                 If used as the first parameter disables .curlrc\n""")
-        self.exit()
+ -q                 If used as the first parameter disables .curlrc
+ """
+
+
+class command_curl(HoneyPotCommand):
+    """
+    curl command
+    """
+    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    download_path = CowrieConfig().get('honeypot', 'download_path')
+
+    def start(self):
+        try:
+            optlist, args = getopt.getopt(self.args, 'sho:O', ['help', 'manual', 'silent'])
+        except getopt.GetoptError as err:
+            # TODO: should be 'unknown' instead of 'not recognized'
+            self.write("curl: {}\n".format(err))
+            self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
+            self.exit()
+            return
+
+        for opt in optlist:
+            if opt[0] == '-h' or opt[0] == '--help':
+                self.write(CURL_HELP)
+                self.exit()
+                return
+            elif opt[0] == '-s' or opt[0] == '--silent':
+                self.silent = True
+
+        if len(args):
+            if args[0] is not None:
+                url = str(args[0]).strip()
+        else:
+            self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
+            self.exit()
+            return
+
+        if '://' not in url:
+            url = 'http://' + url
+        urldata = compat.urllib_parse.urlparse(url)
+
+        outfile = None
+        for opt in optlist:
+            if opt[0] == '-o':
+                outfile = opt[1]
+            if opt[0] == '-O':
+                outfile = urldata.path.split('/')[-1]
+                if outfile is None or not len(outfile.strip()) or not urldata.path.count('/'):
+                    self.write('curl: Remote file name has no length!\n')
+                    self.exit()
+                    return
+
+        if outfile:
+            outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
+            path = os.path.dirname(outfile)
+            if not path or \
+                    not self.fs.exists(path) or \
+                    not self.fs.isdir(path):
+                self.write('curl: %s: Cannot open: No such file or directory\n' % outfile)
+                self.exit()
+                return
+
+        url = url.encode('ascii')
+        self.url = url
+
+        self.artifactFile = Artifact(outfile)
+        # HTTPDownloader will close() the file object so need to preserve the name
+
+        self.deferred = self.download(url, outfile, self.artifactFile)
+        if self.deferred:
+            self.deferred.addCallback(self.success, outfile)
+            self.deferred.addErrback(self.error, url)
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
         try:
@@ -263,11 +263,10 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
             out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
 
         if scheme == 'https':
-            context_factory = ssl.CertificateOptions(insecurelyLowerMinimumTo=ssl.TLSVersion.SSLv3)
-            reactor.connectSSL(host, port, factory, context_factory, bindAddress=out_addr)
+            context_factory = ssl.optionsForClientTLS(hostname=host)
+            self.connection = reactor.connectSSL(host, port, factory, context_factory, bindAddress=out_addr)
         else:  # Can only be http
-            self.connection = reactor.connectTCP(
-                host, port, factory, bindAddress=out_addr)
+            self.connection = reactor.connectTCP(host, port, factory, bindAddress=out_addr)
 
         return factory.deferred
 
@@ -318,7 +317,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     lastupdate = 0
 
     def __init__(self, curl, fakeoutfile, url, outfile, headers=None):
-        client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent=b'curl/7.38.0')
+        client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent=b'curl/7.38.0', followRedirect=False)
         self.status = None
         self.curl = curl
         self.fakeoutfile = fakeoutfile
