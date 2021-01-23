@@ -65,7 +65,7 @@ class Output(cowrie.core.output.Output):
                 cp_reconnect=True,
                 use_unicode=True
             )
-        except (MySQLdb.Error, MySQLdb._exceptons.Error) as e:
+        except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
     def stop(self):
