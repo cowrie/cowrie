@@ -155,6 +155,7 @@ class command_wget(HoneyPotCommand):
         if scheme == b'https':
             context_factory = ssl.optionsForClientTLS(hostname=host)
             self.connection = reactor.connectSSL(host, port, factory, context_factory, bindAddress=out_addr)
+
         elif scheme == b'http':
             self.connection = reactor.connectTCP(host, port, factory, bindAddress=out_addr)
         else:
