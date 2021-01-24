@@ -65,7 +65,7 @@ class Output(cowrie.core.output.Output):
                 cp_reconnect=True,
                 use_unicode=True
             )
-        except (MySQLdb.Error, MySQLdb._exceptons.Error) as e:
+        except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
             log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
 
     def stop(self):
@@ -144,12 +144,12 @@ class Output(cowrie.core.output.Output):
         elif entry["eventid"] == 'cowrie.session.file_download':
             self.simpleQuery('INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) '
                              'VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
-                             (entry["session"], entry["time"], entry['url'], entry['outfile'], entry['shasum']))
+                             (entry["session"], entry["time"], entry.get("url", ""), entry['outfile'], entry['shasum']))
 
         elif entry["eventid"] == 'cowrie.session.file_download.failed':
             self.simpleQuery('INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) '
                              'VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)',
-                             (entry["session"], entry["time"], entry['url'], 'NULL', 'NULL'))
+                             (entry["session"], entry["time"], entry.get("url", ""), 'NULL', 'NULL'))
 
         elif entry["eventid"] == 'cowrie.session.file_upload':
             self.simpleQuery('INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) '
