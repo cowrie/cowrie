@@ -27,7 +27,6 @@ class command_which(HoneyPotCommand):
 
                 if self.fs.exists(resolved):
                     self.write("%s/%s\n" % (path, f))
-                    continue
 
 
 commands['which'] = command_which
