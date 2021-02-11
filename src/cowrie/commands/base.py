@@ -198,7 +198,6 @@ class command_exit(HoneyPotCommand):
     def call(self):
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
-        return
 
     def exit(self):
         pass
@@ -756,7 +755,6 @@ class command_chattr(HoneyPotCommand):
             return
         if not self.fs.exists(self.args[1]):
             self.write('chattr: No such file or directory while trying to stat ' + self.args[1] + '\n')
-        return
 
 
 commands['/usr/bin/chattr'] = command_chattr

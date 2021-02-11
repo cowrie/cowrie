@@ -289,7 +289,6 @@ class Output(cowrie.core.output.Output):
                 return d
             else:
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
-                return
 
         def cbBody(body):
             """
@@ -389,7 +388,6 @@ class Output(cowrie.core.output.Output):
                 return d
             else:
                 log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
-                return
 
         def cbError(failure):
             failure.printTraceback()
