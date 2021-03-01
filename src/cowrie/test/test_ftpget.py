@@ -4,8 +4,6 @@
 # See LICENSE for details.
 
 
-from __future__ import absolute_import, division
-
 import os
 
 from twisted.trial import unittest

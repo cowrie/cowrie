@@ -5,7 +5,6 @@
 This module contains ...
 """
 
-from __future__ import absolute_import, division
 
 import time
 from configparser import NoOptionError
@@ -25,7 +24,7 @@ from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
-class CowrieSSHFactory(factory.SSHFactory, object):
+class CowrieSSHFactory(factory.SSHFactory):
     """
     This factory creates HoneyPotSSHTransport instances
     They listen directly to the TCP port
@@ -46,13 +45,13 @@ class CowrieSSHFactory(factory.SSHFactory, object):
             b'ssh-userauth': ProxySSHAuthServer if self.backend == 'proxy' else HoneyPotSSHUserAuthServer,
             b'ssh-connection': connection.CowrieSSHConnection,
         }
-        super(CowrieSSHFactory, self).__init__()
+        super().__init__()
 
     def logDispatch(self, *msg, **args):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'S{0}'.format(args['sessionno'])
+        args['sessionno'] = 'S{}'.format(args['sessionno'])
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
@@ -77,7 +76,7 @@ class CowrieSSHFactory(factory.SSHFactory, object):
             try:
                 self.primes = primes.parseModuliFile(_moduli)
                 break
-            except IOError:
+            except OSError:
                 pass
 
         # this can come from backend in the future, check HonSSH's slim client

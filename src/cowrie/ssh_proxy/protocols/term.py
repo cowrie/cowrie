@@ -38,7 +38,7 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 class Term(base_protocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh, channelId):
-        super(Term, self).__init__(uuid, chan_name, ssh)
+        super().__init__(uuid, chan_name, ssh)
 
         self.command = b''
         self.pointer = 0
@@ -55,7 +55,7 @@ class Term(base_protocol.BaseProtocol):
 
         if self.ttylogEnabled:
             self.ttylogFile = \
-                '{0}/{1}-{2}-{3}i.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'), uuid, self.channelId)
+                '{}/{}-{}-{}i.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'), uuid, self.channelId)
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def channel_closed(self):

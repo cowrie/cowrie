@@ -5,7 +5,6 @@
 This module contains code to run a command
 """
 
-from __future__ import absolute_import, division
 
 import os
 import re
@@ -26,7 +25,7 @@ else:
     from cowrie.shell import shlex
 
 
-class HoneyPotCommand(object):
+class HoneyPotCommand:
     """
     This is the super class for all commands in cowrie/commands
     """
@@ -109,7 +108,7 @@ class HoneyPotCommand(object):
         for arg in args:
             path = self.fs.resolve_path(arg, self.protocol.cwd)
             if self.fs.isdir(path):
-                self.errorWrite("{}: error reading `{}': Is a directory\n".format(application, arg))
+                self.errorWrite(f"{application}: error reading `{arg}': Is a directory\n")
                 continue
             files.append(path)
         return files
@@ -162,7 +161,7 @@ class HoneyPotCommand(object):
         self.exit()
 
     def lineReceived(self, line):
-        log.msg('QUEUED INPUT: {}'.format(line))
+        log.msg(f'QUEUED INPUT: {line}')
         # FIXME: naive command parsing, see lineReceived below
         # line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=True))

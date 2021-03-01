@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 # `ipaddress` system library only on Python3.4+
 import ipaddress
 

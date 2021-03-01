@@ -5,7 +5,6 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import absolute_import, division
 
 import time
 import uuid
@@ -22,9 +21,9 @@ from cowrie.telnet_proxy.handler import TelnetHandler
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
-class FrontendTelnetTransport(TelnetTransport, TimeoutMixin, object):
+class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
     def __init__(self):
-        super(FrontendTelnetTransport, self).__init__()
+        super().__init__()
 
         self.peer_ip = None
         self.peer_port = 0
@@ -64,7 +63,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin, object):
                 dst_ip=self.transport.getHost().host,
                 dst_port=self.transport.getHost().port,
                 session=self.transportId,
-                sessionno='T{0}'.format(str(sessionno)),
+                sessionno='T{}'.format(str(sessionno)),
                 protocol='telnet')
 
         TelnetTransport.connectionMade(self)
@@ -85,7 +84,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin, object):
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg('Connection to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg(f'Connection to backend pool refused: {reason.value}. Disconnecting frontend...')
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
@@ -103,13 +102,13 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin, object):
             snapshot = data[1]
             telnet_port = data[3]
 
-            log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), telnet_port))
-            log.msg('Snapshot file: {0}'.format(snapshot.decode()))
+            log.msg(f'Got backend data from pool: {honey_ip.decode()}:{telnet_port}')
+            log.msg(f'Snapshot file: {snapshot.decode()}')
 
             self.connect_to_backend(honey_ip, telnet_port)
 
     def backend_connection_error(self, reason):
-        log.msg('Connection to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg(f'Connection to honeypot backend refused: {reason.value}. Disconnecting frontend...')
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):

@@ -5,7 +5,6 @@
 This module contains the service commnad
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 

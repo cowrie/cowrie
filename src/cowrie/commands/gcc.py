@@ -1,6 +1,5 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
-from __future__ import absolute_import, division
 
 import getopt
 import os
@@ -115,7 +114,7 @@ class command_gcc(HoneyPotCommand):
                 if self.fs.exists(sourcefile):
                     input_files = input_files + 1
                 else:
-                    self.write("%s: %s: No such file or directory\n" % (command_gcc.APP_NAME, value))
+                    self.write(f"{command_gcc.APP_NAME}: {value}: No such file or directory\n")
                     complete = False
 
         # To generate, or not
@@ -168,7 +167,7 @@ Thread model: posix
 gcc version {} (Debian {}-5)""".format(version, version_short, version_short, version_short, version, version))  # noqa: E501
 
         # Write
-        self.write('{0}\n'.format(data))
+        self.write(f'{data}\n')
         self.exit()
 
     def generate_file(self, outfile):
@@ -216,7 +215,7 @@ gcc version {} (Debian {}-5)""".format(version, version_short, version_short, ve
         """
         Print missing argument message, and exit
         """
-        self.write("%s: argument to '%s' is missing\n" % (command_gcc.APP_NAME, arg))
+        self.write(f"{command_gcc.APP_NAME}: argument to '{arg}' is missing\n")
         self.exit()
 
     def help(self):

@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import hashlib
 import os
@@ -135,7 +134,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         outfile=shasumfile,
                         shasum=shasum,
                         destfile='')
-            except IOError:
+            except OSError:
                 pass
             finally:
                 self.stdinlogOpen = False
@@ -173,7 +172,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                             outfile=shasumfile,
                             shasum=shasum,
                             destfile=url)
-                except IOError:
+                except OSError:
                     pass
             self.redirFiles.clear()
 

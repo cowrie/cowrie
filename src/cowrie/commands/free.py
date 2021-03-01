@@ -5,7 +5,6 @@
 This module ...
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 
@@ -81,7 +80,7 @@ class command_free(HoneyPotCommand):
         """
         needed_keys = ["Buffers", "Cached", "MemTotal", "MemFree", "SwapTotal", "SwapFree", "Shmem", "MemAvailable"]
         mem_info_map = {}
-        with open('/proc/meminfo', 'r') as proc_file:
+        with open('/proc/meminfo') as proc_file:
             for line in proc_file:
                 tokens = line.split(':')
 

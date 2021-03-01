@@ -5,7 +5,6 @@
 This module contains code to deal with Cowrie's configuration
 """
 
-from __future__ import absolute_import, division
 
 import configparser
 from os import environ
@@ -16,7 +15,7 @@ def to_environ_key(key):
     return key.upper()
 
 
-class CowrieConfig(object):
+class CowrieConfig:
     """
     Singleton class for configuration data
     """
@@ -38,13 +37,13 @@ class EnvironmentConfigParser(configparser.ConfigParser):
     def has_option(self, section, option):
         if to_environ_key('_'.join(("cowrie", section, option))) in environ:
             return True
-        return super(EnvironmentConfigParser, self).has_option(section, option)
+        return super().has_option(section, option)
 
     def get(self, section, option, raw=False, **kwargs):
         key = to_environ_key('_'.join(("cowrie", section, option)))
         if key in environ:
             return environ[key]
-        return super(EnvironmentConfigParser, self).get(section, option, raw=raw, **kwargs)
+        return super().get(section, option, raw=raw, **kwargs)
 
 
 def readConfigFile(cfgfile):

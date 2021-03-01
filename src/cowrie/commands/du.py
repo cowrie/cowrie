@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2018 Danilo Vargas <danilo.vargas@csiete.org>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -112,7 +110,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
                 files = (self.protocol.fs.getfile(path)[:],)
         except Exception:
             self.write(
-                'ls: cannot access %s: No such file or directory\n' % (path,))
+                f'ls: cannot access {path}: No such file or directory\n')
             return
 
         filenames = [x[A_NAME] for x in files]
@@ -122,10 +120,10 @@ or available locally via: info '(coreutils) du invocation'\n"""
             if all:
                 isdir = self.protocol.fs.isdir(os.path.join(path, filename))
                 if isdir:
-                    filename = "4       ./{0}\n".format(filename)
+                    filename = f"4       ./{filename}\n"
                     self.write(filename)
             else:
-                filename = "4       {0}\n".format(filename)
+                filename = f"4       {filename}\n"
                 self.write(filename)
         if all:
             self.write("36      .\n")

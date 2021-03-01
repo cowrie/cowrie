@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-from __future__ import absolute_import, division
-
 import json
 import socket
 
@@ -37,7 +33,7 @@ class Output(cowrie.core.output.Output):
 
         try:
             self.sock.sendall(message.encode())
-        except socket.error as ex:
+        except OSError as ex:
             if ex.errno == 32:  # Broken pipe
                 self.start()
                 self.sock.sendall(message.encode())

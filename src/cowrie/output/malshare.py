@@ -31,7 +31,6 @@ Send files to https://malshare.com/
 More info https://malshare.com/doc.php
 """
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -94,6 +93,6 @@ class Output(cowrie.core.output.Output):
             if res and res.ok:
                 log.msg("Submitted to MalShare")
             else:
-                log.msg("MalShare Request failed: {}".format(res.status_code))
+                log.msg(f"MalShare Request failed: {res.status_code}")
         except Exception as e:
-            log.msg("MalShare Request failed: {}".format(e))
+            log.msg(f"MalShare Request failed: {e}")

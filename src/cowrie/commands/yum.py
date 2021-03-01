@@ -4,7 +4,6 @@
 
 # Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch
 
-from __future__ import absolute_import, division
 
 import hashlib
 import random
@@ -20,7 +19,7 @@ arch = 'x86_64'
 commands = {}
 
 
-class command_faked_package_class_factory(object):
+class command_faked_package_class_factory:
     @staticmethod
     def getCommand(name):
         class command_faked_installation(HoneyPotCommand):
@@ -63,8 +62,8 @@ class command_yum(HoneyPotCommand):
         randhash = hashlib.sha1(b'{}'.format(randnum)).hexdigest()
         randhash2 = hashlib.sha1(b'{}'.format(randnum2)).hexdigest()
         yield self.sleep(1, 2)
-        self.write('Installed: 7/{0}  {1}:{2}\n'.format(arch, random.randint(500, 800), randhash))
-        self.write('Group-Installed: yum 13:{}\n'.format(randhash2))
+        self.write('Installed: 7/{}  {}:{}\n'.format(arch, random.randint(500, 800), randhash))
+        self.write(f'Group-Installed: yum 13:{randhash2}\n')
         self.write('version\n')
         self.exit()
 
@@ -193,9 +192,9 @@ Options:
         packages = {}
         for y in [re.sub('[^A-Za-z0-9]', '', x) for x in self.args[1:]]:
             packages[y] = {
-                'version': '{0}.{1}-{2}'.format(random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)),
+                'version': '{}.{}-{}'.format(random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)),
                 'size': random.randint(100, 900),
-                'release': '{0}.el7'.format(random.randint(1, 15))
+                'release': '{}.el7'.format(random.randint(1, 15))
             }
         totalsize = sum([packages[x]['size'] for x in packages])
         repository = 'base'
@@ -209,8 +208,8 @@ Options:
         self.write('Resolving Dependencies\n')
         self.write('--> Running transaction check\n')
         for p in packages:
-            self.write('---> Package {0}.{1} {2}.{3} will be installed\n'.format(p, packages[p]['version'], arch,
-                                                                                 packages[p]['release']))
+            self.write('---> Package {}.{} {}.{} will be installed\n'.format(p, packages[p]['version'], arch,
+                       packages[p]['release']))
         self.write('--> Finished Dependency Resolution\n')
         self.write('Beginning Kernel Module Plugin\n')
         self.write('Finished Kernel Module Plugin\n\n')
@@ -225,16 +224,15 @@ Options:
         self.write('{}\n'.format('=' * 176))
         self.write('Installing:\n')
         for p in packages:
-            self.write(' {0}\t\t\t\t{1}\t\t\t{2}-{3}\t\t\t{4}\t\t\t\t{5} k\n'.format(p, arch, packages[p]['version'],
-                                                                                     packages[p]['release'], repository,
-                                                                                     packages[p]['size']))
+            self.write(' {}\t\t\t\t{}\t\t\t{}-{}\t\t\t{}\t\t\t\t{} k\n'.format(p, arch, packages[p]['version'],
+                       packages[p]['release'], repository, packages[p]['size']))
         self.write('\n')
         self.write('Transaction Summary\n')
         self.write('{}\n'.format('=' * 176))
-        self.write('Install  {0} Packages\n\n'.format(len(packages)))
+        self.write('Install  {} Packages\n\n'.format(len(packages)))
 
-        self.write('Total download size: {0} k\n'.format(totalsize))
-        self.write('Installed size: {:.1f} M\n'.format((totalsize * 0.0032)))
+        self.write(f'Total download size: {totalsize} k\n')
+        self.write('Installed size: {:.1f} M\n'.format(totalsize * 0.0032))
         self.write('Is this ok [y/d/N]: ')
         # Assume 'yes'
 
@@ -251,20 +249,20 @@ Options:
         self.write('Running transaction\n')
         i = 1
         for p in packages:
-            self.write('  Installing : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format
+            self.write('  Installing : {}-{}-{}.{} \t\t\t\t {}/{} \n'.format
                        (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
             yield self.sleep(0.5, 1)
             i += 1
         i = 1
         for p in packages:
-            self.write('  Verifying : {0}-{1}-{2}.{3} \t\t\t\t {4}/{5} \n'.format
+            self.write('  Verifying : {}-{}-{}.{} \t\t\t\t {}/{} \n'.format
                        (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
             yield self.sleep(0.5, 1)
             i += 1
         self.write('\n')
         self.write('Installed:\n')
         for p in packages:
-            self.write('  {0}.{1} {2}:{3}-{4} \t\t'.format
+            self.write('  {}.{} {}:{}-{} \t\t'.format
                        (p, arch, random.randint(0, 2), packages[p]['version'], packages[p]['release']))
         self.write('\n')
         self.write('Complete!\n')

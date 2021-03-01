@@ -2,7 +2,6 @@
 # Based on code made by Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import os
 import zipfile
@@ -90,11 +89,11 @@ class command_unzip(HoneyPotCommand):
             self.write(
                 'unzip:   cannot find zipfile directory in one of {0}, {0}.zip or {0}.ZIP.\n'.format(filename))
             return
-        self.write('Archive:  {}\n'.format(filename))
+        self.write(f'Archive:  {filename}\n')
         for f in t:
             dest = self.fs.resolve_path(
                 f.filename.strip('/'), self.protocol.cwd)
-            self.write('  inflating: {0}\n'.format(f.filename))
+            self.write(f'  inflating: {f.filename}\n')
             if not len(dest):
                 continue
             if f.is_dir():
@@ -103,7 +102,7 @@ class command_unzip(HoneyPotCommand):
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.file_size, 33188)
             else:
-                log.msg("  skipping: {}\n".format(f.name))
+                log.msg(f"  skipping: {f.name}\n")
 
 
 commands['/bin/unzip'] = command_unzip

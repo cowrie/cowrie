@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
 
 from twisted.cred.credentials import ICredentials, IUsernamePassword
 
@@ -64,7 +63,7 @@ class IPluggableAuthenticationModulesIP(ICredentials):
 
 
 @implementer(IPluggableAuthenticationModulesIP)
-class PluggableAuthenticationModulesIP(object):
+class PluggableAuthenticationModulesIP:
     """
     Twisted removed IPAM in 15, adding in Cowrie now
     """
@@ -76,14 +75,14 @@ class PluggableAuthenticationModulesIP(object):
 
 
 @implementer(IUsername)
-class Username(object):
+class Username:
 
     def __init__(self, username):
         self.username = username
 
 
 @implementer(IUsernamePasswordIP)
-class UsernamePasswordIP(object):
+class UsernamePasswordIP:
     """
     This credential interface also provides an IP address
     """

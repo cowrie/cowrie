@@ -5,7 +5,6 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import absolute_import, division
 
 import time
 import uuid
@@ -33,7 +32,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                 dst_ip=self.transport.getHost().host,
                 dst_port=self.transport.getHost().port,
                 session=self.transportId,
-                sessionno='T{0}'.format(str(sessionno)),
+                sessionno='T{}'.format(str(sessionno)),
                 protocol='telnet')
         TelnetTransport.connectionMade(self)
 

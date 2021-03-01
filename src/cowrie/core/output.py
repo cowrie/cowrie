@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
 
 import abc
 import re
@@ -78,7 +77,7 @@ def convert(input):
         return input
 
 
-class Output(object):
+class Output:
     """
     This is the abstract base class intended to be inherited by
     cowrie output plugins. Plugins require the mandatory

@@ -2,7 +2,6 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import sys
 
@@ -27,16 +26,16 @@ def durationHuman(seconds):
 
     duration = []
     if years > 0:
-        duration.append('{0} year{1} '.format(syears, 's' * (years != 1)))
+        duration.append('{} year{} '.format(syears, 's' * (years != 1)))
     else:
         if days > 0:
-            duration.append('{0} day{1} '.format(days, 's' * (days != 1)))
+            duration.append('{} day{} '.format(days, 's' * (days != 1)))
         if hours > 0:
-            duration.append('{0}:'.format(shours))
+            duration.append(f'{shours}:')
         if minutes >= 0:
-            duration.append('{0}:'.format(sminutes))
+            duration.append(f'{sminutes}:')
         if seconds >= 0:
-            duration.append('{0}'.format(sseconds))
+            duration.append(f'{sseconds}')
 
     return ''.join(duration)
 
@@ -85,7 +84,7 @@ def uptime(total_seconds):
     if days > 0:
         s += str(days) + " " + (days == 1 and "day" or "days") + ", "
     if len(s) > 0 or hours > 0:
-        s += '%s:%s' % (str(hours).rjust(2), str(minutes).rjust(2, '0'))
+        s += '{}:{}'.format(str(hours).rjust(2), str(minutes).rjust(2, '0'))
     else:
         s += '{} min'.format(str(minutes))
     return s
@@ -107,7 +106,7 @@ def get_endpoints_from_section(cfg, section, default_port):
 
     listen_endpoints = []
     for i in listen_addr.split():
-        listen_endpoints.append('tcp:{}:interface={}'.format(listen_port, i))
+        listen_endpoints.append(f'tcp:{listen_port}:interface={i}')
 
     return listen_endpoints
 

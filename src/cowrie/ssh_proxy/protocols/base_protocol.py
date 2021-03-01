@@ -27,7 +27,7 @@
 # SUCH DAMAGE.
 
 
-class BaseProtocol(object):
+class BaseProtocol:
     data = ''
     packetSize = 0
     name = ''

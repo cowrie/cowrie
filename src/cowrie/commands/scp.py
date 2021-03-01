@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
 
 import getopt
 import hashlib
@@ -75,7 +74,7 @@ class command_scp(HoneyPotCommand):
             outdir = self.fs.resolve_path(self.out_dir, self.protocol.cwd)
 
             if not self.fs.exists(outdir):
-                self.errorWrite('-scp: {}: No such file or directory\n'.format(self.out_dir))
+                self.errorWrite(f'-scp: {self.out_dir}: No such file or directory\n')
                 self.exit()
 
         self.write('\x00')
@@ -175,7 +174,7 @@ class command_scp(HoneyPotCommand):
                         self.fs.mkfile(outfile, 0, 0, r.group(2), r.group(1))
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.
-                        self.errorWrite('-scp: {}: No such file or directory\n'.format(outfile))
+                        self.errorWrite(f'-scp: {outfile}: No such file or directory\n')
                         self.safeoutfile = None
                         return ''
 

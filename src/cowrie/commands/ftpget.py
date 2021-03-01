@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # Author: Claud Xiao
 
-from __future__ import absolute_import, division
 
 import ftplib
 import getopt
@@ -148,14 +146,14 @@ Download a file via FTP
 
         self.url_log = 'ftp://'
         if self.username:
-            self.url_log = '{}{}'.format(self.url_log, self.username)
+            self.url_log = f'{self.url_log}{self.username}'
             if self.password:
-                self.url_log = '{}:{}'.format(self.url_log, self.password)
-            self.url_log = '{}@'.format(self.url_log)
-        self.url_log = '{}{}'.format(self.url_log, self.host)
+                self.url_log = f'{self.url_log}:{self.password}'
+            self.url_log = f'{self.url_log}@'
+        self.url_log = f'{self.url_log}{self.host}'
         if self.port != 21:
-            self.url_log = '{}:{}'.format(self.url_log, self.port)
-        self.url_log = '{}/{}'.format(self.url_log, self.remote_path)
+            self.url_log = f'{self.url_log}:{self.port}'
+        self.url_log = f'{self.url_log}/{self.remote_path}'
 
         self.artifactFile = Artifact(self.local_file)
 
@@ -208,7 +206,7 @@ Download a file via FTP
         try:
             ftp.connect(host=self.host, port=self.port, timeout=30)
         except Exception as e:
-            log.msg('FTP connect failed: host=%s, port=%s, err=%s' % (self.host, self.port, str(e)))
+            log.msg('FTP connect failed: host={}, port={}, err={}'.format(self.host, self.port, str(e)))
             self.write('ftpget: can\'t connect to remote host: Connection refused\n')
             return False
 
@@ -227,7 +225,7 @@ Download a file via FTP
         try:
             ftp.login(user=self.username, passwd=self.password)
         except Exception as e:
-            log.msg('FTP login failed: user=%s, passwd=%s, err=%s' % (self.username, self.password, str(e)))
+            log.msg('FTP login failed: user={}, passwd={}, err={}'.format(self.username, self.password, str(e)))
             self.write('ftpget: unexpected server response to USER: %s\n' % str(e))
             try:
                 ftp.quit()

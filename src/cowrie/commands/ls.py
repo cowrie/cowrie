@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import getopt
 import os.path
@@ -41,7 +40,7 @@ class command_ls(HoneyPotCommand):
             opts, args = getopt.gnu_getopt(self.args, '1@ABCFGHLOPRSTUWabcdefghiklmnopqrstuvwx',
                                            ['help', 'version', 'param'])
         except getopt.GetoptError as err:
-            self.write("ls: {}\n".format(err))
+            self.write(f"ls: {err}\n")
             self.write("Try 'ls --help' for more information.\n")
             return
 
@@ -82,7 +81,7 @@ class command_ls(HoneyPotCommand):
                 files = (self.protocol.fs.getfile(path)[:],)
         except Exception:
             self.write(
-                'ls: cannot access %s: No such file or directory\n' % (path,))
+                f'ls: cannot access {path}: No such file or directory\n')
             return
         return files
 
@@ -172,7 +171,7 @@ class command_ls(HoneyPotCommand):
                 perms[0] = 'd'
             elif file[fs.A_TYPE] == fs.T_LINK:
                 perms[0] = 'l'
-                linktarget = ' -> %s' % (file[fs.A_TARGET],)
+                linktarget = ' -> {}'.format(file[fs.A_TARGET])
 
             perms = ''.join(perms)
             ctime = time.localtime(file[fs.A_CTIME])
@@ -186,7 +185,7 @@ class command_ls(HoneyPotCommand):
                  file[fs.A_NAME],
                  linktarget)
 
-            self.write('{0}\n'.format(line))
+            self.write(f'{line}\n')
 
 
 commands['/bin/ls'] = command_ls

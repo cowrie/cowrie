@@ -3,20 +3,20 @@ from twisted.internet import defer, protocol, reactor
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
-class PasswordAuth(userauth.SSHUserAuthClient, object):
+class PasswordAuth(userauth.SSHUserAuthClient):
     def __init__(self, user, password, conn):
-        super(PasswordAuth, self).__init__(user, conn)
+        super().__init__(user, conn)
         self.password = password
 
     def getPassword(self, prompt=None):
         return defer.succeed(self.password)
 
 
-class CommandChannel(channel.SSHChannel, object):
+class CommandChannel(channel.SSHChannel):
     name = 'session'
 
     def __init__(self, command, done_deferred, callback, *args, **kwargs):
-        super(CommandChannel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.command = command
         self.done_deferred = done_deferred
         self.callback = callback
@@ -41,9 +41,9 @@ class CommandChannel(channel.SSHChannel, object):
             self.callback(self.data)
 
 
-class ClientConnection(connection.SSHConnection, object):
+class ClientConnection(connection.SSHConnection):
     def __init__(self, cmd, done_deferred, callback):
-        super(ClientConnection, self).__init__()
+        super().__init__()
         self.command = cmd
         self.done_deferred = done_deferred
         self.callback = callback

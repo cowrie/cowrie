@@ -36,7 +36,7 @@ class PoolClient(Protocol):
         self.transport.write(buf)
 
     def send_vm_request(self, src_ip):
-        fmt = '!cH{0}s'.format(len(src_ip))
+        fmt = '!cH{}s'.format(len(src_ip))
         buf = struct.pack(fmt, b'r', len(src_ip), src_ip.encode())
 
         self.transport.write(buf)
@@ -84,7 +84,7 @@ class PoolClient(Protocol):
             ip_len = recv[0]
             data = data[2:]
 
-            recv = struct.unpack('!{0}s'.format(ip_len), data[:ip_len])
+            recv = struct.unpack(f'!{ip_len}s', data[:ip_len])
             honey_ip = recv[0]
             data = data[ip_len:]
 
@@ -99,7 +99,7 @@ class PoolClient(Protocol):
             snaphsot_len = recv[0]
             data = data[2:]
 
-            recv = struct.unpack('!{0}s'.format(snaphsot_len), data[:snaphsot_len])
+            recv = struct.unpack(f'!{snaphsot_len}s', data[:snaphsot_len])
             snapshot = recv[0]
             data = data[snaphsot_len:]
 

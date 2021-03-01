@@ -1,6 +1,5 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
-from __future__ import absolute_import, division
 
 import optparse
 
@@ -204,8 +203,8 @@ class command_iptables(HoneyPotCommand):
         if self.user_is_root():
             # Verify table existence
             if table not in list(self.tables.keys()):
-                self.write("""%s: can\'t initialize iptables table \'%s\': Table does not exist (do you need to insmod?)
-Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, table))
+                self.write("""{}: can\'t initialize iptables table \'{}\': Table does not exist (do you need to insmod?)
+Perhaps iptables or your kernel needs to be upgraded.\n""".format(command_iptables.APP_NAME, table))
                 self.exit()
             else:
                 # Exists
@@ -230,7 +229,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
         """
         Show version and exit
         """
-        self.write('%s %s\n' % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+        self.write(f'{command_iptables.APP_NAME} {command_iptables.APP_VERSION}\n')
         self.exit()
 
     def show_help(self):
@@ -238,7 +237,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
         Show help and exit
         """
 
-        self.write("""%s %s'
+        self.write("""{} {}'
 
 Usage: iptables -[AD] chain rule-specification [options]
        iptables -I chain [rulenum] rule-specification [options]
@@ -300,7 +299,7 @@ Options:
 [!] --fragment -f      match second or further fragments only
   --modprobe=<command>     try to insert modules using this command
   --set-counters PKTS BYTES    set the counter during insert/append
-[!] --version  -V      print package version.\n""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+[!] --version  -V      print package version.\n""".format(command_iptables.APP_NAME, command_iptables.APP_VERSION))
         self.exit()
 
     def list_rules(self, chain):
@@ -326,7 +325,7 @@ Options:
                 output.append("-P %s ACCEPT" % chain)
 
             # Done
-            self.write('{0}\n'.format('\n'.join(output)))
+            self.write('{}\n'.format('\n'.join(output)))
             self.exit()
         else:
             self.no_permission()
@@ -365,7 +364,7 @@ Options:
                 output.append("\n".join(chain_output))
 
             # Done
-            self.write("{0}\n".format('\n\n'.join(output)))
+            self.write("{}\n".format('\n\n'.join(output)))
             self.exit()
         else:
             self.no_permission()
@@ -394,8 +393,10 @@ Options:
             self.no_permission()
 
     def no_permission(self):
-        self.write("""%s %s: can\'t initialize iptables table \'filter\': Permission denied (you must be root)
-Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+        self.write("{} {}: ".format(command_iptables.APP_NAME, command_iptables.APP_VERSION) +
+                   "can\'t initialize iptables table \'filter\': " +
+                   "Permission denied (you must be root)\n" +
+                   "Perhaps iptables or your kernel needs to be upgraded.\n")
         self.exit()
 
     def no_command(self):
