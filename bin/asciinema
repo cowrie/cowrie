@@ -88,8 +88,8 @@ def playlog(fd, settings):
 
 
 def help(verbose=False):
-    print(('usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' % \
-           os.path.basename(sys.argv[0])))
+    print('usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>...' % \
+           os.path.basename(sys.argv[0]))
 
     if verbose:
         print('  -c             colorify the output based on what streams are being received')
@@ -123,5 +123,5 @@ if __name__ == '__main__':
         try:
             logfd = open(logfile, 'rb')
             playlog(logfd, settings)
-        except IOError as e:
+        except OSError as e:
             sys.stderr.write("{}: {}\n".format(sys.argv[0], e))
