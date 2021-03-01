@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 import json
 import string
 from random import choice
@@ -37,7 +35,7 @@ class XMPPLoggerProtocol(muc.MUCClient):
         self.join(self.jrooms, self.nick)
 
     def joinedRoom(self, room):
-        log.msg('Joined room {}'.format(room.name))
+        log.msg(f'Joined room {room.name}')
 
     def connectionMade(self):
         log.msg('Connected!')

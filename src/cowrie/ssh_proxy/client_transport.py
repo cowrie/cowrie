@@ -40,7 +40,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         self.frontendTriedPassword = None
 
     def connectionMade(self):
-        log.msg('Connected to SSH backend at {0}'.format(self.transport.getPeer().host))
+        log.msg(f'Connected to SSH backend at {self.transport.getPeer().host}')
         self.factory.server.client = self
         self.factory.server.sshParse.set_client(self)
         transport.SSHClientTransport.connectionMade(self)
@@ -75,7 +75,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         username = CowrieConfig().get('proxy', 'backend_user').encode()
         password = CowrieConfig().get('proxy', 'backend_pass').encode()
 
-        log.msg('Will auth with backend: {0}/{1}'.format(username, password))
+        log.msg(f'Will auth with backend: {username}/{password}')
         self.sendPacket(5, bin_string_to_hex(b'ssh-userauth'))
         payload = bin_string_to_hex(username) + \
             string_to_hex('ssh-connection') + \
@@ -139,7 +139,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
             if message == b'exit-status':
                 pointer += leng + 1  # also boolean ignored
                 exit_status = get_int(payload[pointer:])
-                log.msg('exitCode: {0}'.format(exit_status))
+                log.msg(f'exitCode: {exit_status}')
 
         if transport.SSHClientTransport.isEncrypted(self, "both"):
             self.packet_buffer(message_num, payload)

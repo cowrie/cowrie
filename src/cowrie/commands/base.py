@@ -3,7 +3,6 @@
 
 # coding=utf-8
 
-from __future__ import absolute_import, division
 
 import codecs
 import datetime
@@ -25,7 +24,7 @@ commands = {}
 class command_whoami(HoneyPotCommand):
 
     def call(self):
-        self.write('{0}\n'.format(self.protocol.user.username))
+        self.write(f'{self.protocol.user.username}\n')
 
 
 commands['/usr/bin/whoami'] = command_whoami
@@ -228,7 +227,7 @@ class command_hostname(HoneyPotCommand):
             else:
                 self.write("hostname: you must be root to change the host name\n")
         else:
-            self.write('{0}\n'.format(self.protocol.hostname))
+            self.write(f'{self.protocol.hostname}\n')
 
 
 commands['/bin/hostname'] = command_hostname
@@ -460,7 +459,7 @@ class command_ps(HoneyPotCommand):
             s = ''.join([output[i][x] for x in line])
             if 'w' not in args:
                 s = s[:(int(self.environ['COLUMNS']) if 'COLUMNS' in self.environ else 80)]
-            self.write('{0}\n'.format(s))
+            self.write(f'{s}\n')
 
 
 commands['/bin/ps'] = command_ps
@@ -532,19 +531,19 @@ class command_shutdown(HoneyPotCommand):
                 "** the \"time\" argument is mandatory! (try \"now\") **",
             )
             for line in output:
-                self.write('{0}\n'.format(line))
+                self.write(f'{line}\n')
             self.exit()
         elif len(self.args) > 1 and self.args[0].strip().count('-h') \
                 and self.args[1].strip().count('now'):
             self.write('\n')
-            self.write('Broadcast message from root@{} (pts/0) ({}):\n'.format(self.protocol.hostname, time.ctime()))
+            self.write(f'Broadcast message from root@{self.protocol.hostname} (pts/0) ({time.ctime()}):\n')
             self.write('\n')
             self.write('The system is going down for maintenance NOW!\n')
             reactor.callLater(3, self.finish)
         elif len(self.args) > 1 and self.args[0].strip().count('-r') \
                 and self.args[1].strip().count('now'):
             self.write('\n')
-            self.write('Broadcast message from root@{} (pts/0) ({}):\n'.format(self.protocol.hostname, time.ctime()))
+            self.write(f'Broadcast message from root@{self.protocol.hostname} (pts/0) ({time.ctime()}):\n')
             self.write('\n')
             self.write('The system is going down for reboot NOW!\n')
             reactor.callLater(3, self.finish)
@@ -569,7 +568,7 @@ class command_reboot(HoneyPotCommand):
 
     def start(self):
         self.write('\n')
-        self.write('Broadcast message from root@{} (pts/0) ({}):\n\n'.format(self.protocol.hostname, time.ctime()))
+        self.write(f'Broadcast message from root@{self.protocol.hostname} (pts/0) ({time.ctime()}):\n\n')
         self.write('The system is going down for reboot NOW!\n')
         reactor.callLater(3, self.finish)
 
@@ -592,7 +591,7 @@ class command_history(HoneyPotCommand):
                 return
             count = 1
             for line in self.protocol.historyLines:
-                self.write(' %s  %s\n' % (str(count).rjust(4), line))
+                self.write(' {}  {}\n'.format(str(count).rjust(4), line))
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
@@ -606,7 +605,7 @@ class command_date(HoneyPotCommand):
 
     def call(self):
         time = datetime.datetime.utcnow()
-        self.write('{0}\n'.format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
+        self.write('{}\n'.format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
 
 
 commands['/bin/date'] = command_date
@@ -620,7 +619,7 @@ class command_yes(HoneyPotCommand):
 
     def y(self):
         if len(self.args):
-            self.write("{0}\n".format(' '.join(self.args, '\n')))
+            self.write("{}\n".format(' '.join(self.args, '\n')))
         else:
             self.write('y\n')
         self.scheduled = reactor.callLater(0.01, self.y)
@@ -681,7 +680,7 @@ class command_php(HoneyPotCommand):
                 'Copyright (c) 1997-2010 The PHP Group'
             )
             for line in output:
-                self.write('{0}\n'.format(line))
+                self.write(f'{line}\n')
             self.exit()
         elif self.args[0] == '-h':
             output = (
@@ -725,7 +724,7 @@ class command_php(HoneyPotCommand):
                 ''
             )
             for line in output:
-                self.write('{0}\n'.format(line))
+                self.write(f'{line}\n')
             self.exit()
         else:
             self.exit()
@@ -767,7 +766,7 @@ class command_set(HoneyPotCommand):
     # With enhancements it should work like env when -o posix is used
     def call(self):
         for i in sorted(list(self.environ.keys())):
-            self.write('{0}={1}\n'.format(i, self.environ[i]))
+            self.write('{}={}\n'.format(i, self.environ[i]))
 
 
 commands['set'] = command_set

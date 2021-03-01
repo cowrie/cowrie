@@ -84,7 +84,7 @@ class TelnetHandler:
         self.ttylogSize = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = '{0}/telnet-{1}.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'))
+            self.ttylogFile = '{}/telnet-{}.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'))
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def setClient(self, client):
@@ -208,7 +208,7 @@ class TelnetHandler:
             # cleanup
             self.usernameState = process_backspaces(self.usernameState)
 
-            log.msg('User input login: {0}'.format(self.usernameState))
+            log.msg(f'User input login: {self.usernameState}')
             self.inputingLogin = False
 
             # actually send to backend
@@ -236,7 +236,7 @@ class TelnetHandler:
             # cleanup
             self.passwordState = process_backspaces(self.passwordState)
 
-            log.msg('User input password: {0}'.format(self.passwordState))
+            log.msg(f'User input password: {self.passwordState}')
             self.inputingPassword = False
 
             # having the password (and the username, either empy or set before), we can check the login
@@ -286,7 +286,7 @@ class TelnetHandler:
         hasNegotiationLogin = negotiationLoginPattern.search(self.currentData)
         if hasNegotiationLogin:
             self.usernameState = hasNegotiationLogin.group(2)
-            log.msg('Detected username {0} in negotiation, spoofing for backend...'.format(self.usernameState.decode()))
+            log.msg(f'Detected username {self.usernameState.decode()} in negotiation, spoofing for backend...')
 
             # spoof username in data sent
             # username is always sent correct, password is the one sent wrong if we don't want to authenticate

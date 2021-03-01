@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import getopt
 import hashlib
@@ -33,7 +32,7 @@ class command_ping(HoneyPotCommand):
         try:
             optlist, args = getopt.gnu_getopt(self.args, "c:")
         except getopt.GetoptError as err:
-            self.write('ping: %s\n' % (err,))
+            self.write(f'ping: {err}\n')
             self.exit()
             return
 
@@ -55,7 +54,7 @@ class command_ping(HoneyPotCommand):
                     '            [-M mtu discovery hint] [-S sndbuf]',
                     '            [ -T timestamp option ] [ -Q tos ] [hop1 ...] destination',
             ):
-                self.write('{0}\n'.format(line))
+                self.write(f'{line}\n')
             self.exit()
             return
         self.host = args[0].strip()
@@ -64,14 +63,14 @@ class command_ping(HoneyPotCommand):
             if self.valid_ip(self.host):
                 self.ip = self.host
             else:
-                self.write('ping: unknown host %s\n' % (self.host,))
+                self.write(f'ping: unknown host {self.host}\n')
                 self.exit()
         else:
             s = hashlib.md5((self.host).encode("utf-8")).hexdigest()
             self.ip = '.'.join([str(int(x, 16)) for x in (s[0:2], s[2:4], s[4:6], s[6:8])])
 
         self.running = True
-        self.write('PING %s (%s) 56(84) bytes of data.\n' % (self.host, self.ip))
+        self.write(f'PING {self.host} ({self.ip}) 56(84) bytes of data.\n')
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
@@ -89,7 +88,7 @@ class command_ping(HoneyPotCommand):
             self.scheduled = reactor.callLater(1, self.showreply)
 
     def printstatistics(self):
-        self.write('--- %s ping statistics ---\n' % (self.host,))
+        self.write(f'--- {self.host} ping statistics ---\n')
         self.write('%d packets transmitted, %d received, 0%% packet loss, time 907ms\n' % (self.count, self.count))
         self.write('rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n')
 

@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import getopt
 import os
@@ -134,7 +133,7 @@ class command_wget(HoneyPotCommand):
             if not host:
                 return None
         except Exception:
-            self.errorWrite('%s: Unsupported scheme.\n' % (url,))
+            self.errorWrite(f'{url}: Unsupported scheme.\n')
             return None
 
         # File in host's fs that will hold content of the downloaded file
@@ -142,7 +141,7 @@ class command_wget(HoneyPotCommand):
         self.artifactFile = Artifact(self.outfile)
 
         if not self.quiet:
-            self.errorWrite('--%s--  %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S'), url.decode('utf8')))
+            self.errorWrite('--{}--  {}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S'), url.decode('utf8')))
             self.errorWrite('Connecting to %s:%d... connected.\n' % (host, port))
             self.errorWrite('HTTP request sent, awaiting response... ')
 
@@ -198,9 +197,9 @@ class command_wget(HoneyPotCommand):
     def error(self, error, url):
         # we need to handle 301 redirects separately
         if hasattr(error, 'webStatus') and error.webStatus.decode() == '301':
-            self.errorWrite('{} {}\n'.format(error.webStatus.decode(), error.webMessage.decode()))
+            self.errorWrite(f'{error.webStatus.decode()} {error.webMessage.decode()}\n')
             https_url = error.getErrorMessage().replace('301 Moved Permanently to ', '')
-            self.errorWrite('Location {} [following]\n'.format(https_url))
+            self.errorWrite(f'Location {https_url} [following]\n')
 
             # do the download again with the https URL
             self.deferred = self.download(https_url.encode('utf8'), self.outfile)
@@ -276,15 +275,15 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                                                                          self.contenttype))
             else:
                 if not self.quiet:
-                    self.wget.errorWrite('Length: unspecified [{}]\n'.format(self.contenttype))
+                    self.wget.errorWrite(f'Length: unspecified [{self.contenttype}]\n')
             if 0 < self.wget.limit_size < self.totallength:
-                log.msg('Not saving URL ({}) due to file size limit'.format(self.wget.url))
+                log.msg(f'Not saving URL ({self.wget.url}) due to file size limit')
                 self.nomore = True
             if not self.quiet:
                 if self.fakeoutfile == '-':
                     self.wget.errorWrite('Saving to: `STDOUT\'\n\n')
                 else:
-                    self.wget.errorWrite('Saving to: `{}\'\n\n'.format(self.fakeoutfile))
+                    self.wget.errorWrite(f'Saving to: `{self.fakeoutfile}\'\n\n')
 
         return client.HTTPDownloader.gotHeaders(self, headers)
 
@@ -300,7 +299,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 return client.HTTPDownloader.pagePart(self, data)
             if self.totallength:
                 percent = int(self.currentlength / self.totallength * 100)
-                spercent = "{}%".format(percent)
+                spercent = f"{percent}%"
             else:
                 spercent = '%dK' % (self.currentlength / 1000)
                 percent = 0

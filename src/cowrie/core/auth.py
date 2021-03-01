@@ -5,7 +5,6 @@
 This module contains authentication code
 """
 
-from __future__ import absolute_import, division
 
 import json
 import re
@@ -27,7 +26,7 @@ _USERDB_DEFAULTS = [
 ]
 
 
-class UserDB(object):
+class UserDB:
     """
     By Walter de Jong <walter@sara.nl>
     """
@@ -42,9 +41,9 @@ class UserDB(object):
         """
 
         try:
-            with open('{}/userdb.txt'.format(CowrieConfig().get('honeypot', 'etc_path')), 'r') as db:
+            with open('{}/userdb.txt'.format(CowrieConfig().get('honeypot', 'etc_path'))) as db:
                 userdb = db.readlines()
-        except IOError:
+        except OSError:
             log.msg("Could not read etc/userdb.txt, default database activated")
             userdb = _USERDB_DEFAULTS
 
@@ -108,7 +107,7 @@ class UserDB(object):
         self.userdb[(login, passwd)] = policy
 
 
-class AuthRandom(object):
+class AuthRandom:
     """
     Alternative class that defines the checklogin() method.
     Users will be authenticated after a random number of attempts.
@@ -129,7 +128,7 @@ class AuthRandom(object):
 
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
-            log.msg("maxtry < mintry, adjusting maxtry to: {}".format(self.maxtry))
+            log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
         self.uservar = {}
         self.uservar_file = '{}/auth_random.json'.format(CowrieConfig().get('honeypot', 'state_path'))
         self.loadvars()
@@ -139,7 +138,7 @@ class AuthRandom(object):
         Load user vars from json file
         """
         if path.isfile(self.uservar_file):
-            with open(self.uservar_file, 'r') as fp:
+            with open(self.uservar_file) as fp:
                 try:
                     self.uservar = json.load(fp)
                 except Exception:
@@ -178,7 +177,7 @@ class AuthRandom(object):
             ipinfo = self.uservar[src_ip]
             ipinfo['try'] = 0
             if userpass in cache:
-                log.msg("first time for {}, found cached: {}".format(src_ip, userpass))
+                log.msg(f"first time for {src_ip}, found cached: {userpass}")
                 ipinfo['max'] = 1
                 ipinfo['user'] = str(thelogin)
                 ipinfo['pw'] = str(thepasswd)
@@ -191,7 +190,7 @@ class AuthRandom(object):
         else:
             if userpass in cache:
                 ipinfo = self.uservar[src_ip]
-                log.msg("Found cached: {}".format(userpass))
+                log.msg(f"Found cached: {userpass}")
                 ipinfo['max'] = 1
                 ipinfo['user'] = str(thelogin)
                 ipinfo['pw'] = str(thepasswd)
@@ -218,7 +217,7 @@ class AuthRandom(object):
         ipinfo['try'] += 1
         attempts = ipinfo['try']
         need = ipinfo['max']
-        log.msg("login attempt: {}".format(attempts))
+        log.msg(f"login attempt: {attempts}")
 
         # Check if enough login attempts are tried
         if attempts < need:

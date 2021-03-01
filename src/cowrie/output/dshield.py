@@ -3,7 +3,6 @@ Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html
 """
 
-from __future__ import absolute_import, division
 
 import base64
 import hashlib
@@ -70,9 +69,9 @@ class Output(cowrie.core.output.Output):
         # fixed nonce to mix up the limited userid.
         _nonceb64 = 'ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM='
 
-        log_output = u''
+        log_output = ''
         for attempt in self.batch:
-            log_output += u'{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(
+            log_output += '{}\t{}\t{}\t{}\t{}\t{}\n'.format(
                 attempt['date'],
                 attempt['time'],
                 attempt['timezone'],
@@ -88,7 +87,7 @@ class Output(cowrie.core.output.Output):
                 base64.b64decode(self.auth_key),
                 hashlib.sha256).digest()
         )
-        auth_header = 'credentials={0} nonce={1} userid={2}'.format(digest.decode('ascii'), _nonceb64, self.userid)
+        auth_header = 'credentials={} nonce={} userid={}'.format(digest.decode('ascii'), _nonceb64, self.userid)
         headers = {
             'X-ISC-Authorization': auth_header,
             'Content-Type': 'text/plain'
@@ -96,7 +95,7 @@ class Output(cowrie.core.output.Output):
 
         if self.debug:
             log.msg('dshield: posting: {}'.format(repr(headers)))
-            log.msg('dshield: posting: {}'.format(log_output))
+            log.msg(f'dshield: posting: {log_output}')
 
         req = threads.deferToThread(
             requests.request,
@@ -112,20 +111,20 @@ class Output(cowrie.core.output.Output):
             response = resp.content.decode('utf8')
 
             if self.debug:
-                log.msg("dshield: status code {}".format(resp.status_code))
-                log.msg("dshield: response {}".format(resp.content))
+                log.msg(f"dshield: status code {resp.status_code}")
+                log.msg(f"dshield: response {resp.content}")
 
             if resp.status_code == requests.codes.ok:
                 sha1_regex = re.compile(r'<sha1checksum>([^<]+)<\/sha1checksum>')
                 sha1_match = sha1_regex.search(response)
                 if sha1_match is None:
-                    log.msg('dshield: ERROR: Could not find sha1checksum in response: {0}'.format(repr(response)))
+                    log.msg('dshield: ERROR: Could not find sha1checksum in response: {}'.format(repr(response)))
                     failed = True
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output.encode('utf8'))
                 if sha1_match.group(1) != sha1_local.hexdigest():
                     log.msg(
-                        'dshield: ERROR: SHA1 Mismatch {0} {1} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
+                        'dshield: ERROR: SHA1 Mismatch {} {} .'.format(sha1_match.group(1), sha1_local.hexdigest()))
                     failed = True
                 md5_regex = re.compile(r'<md5checksum>([^<]+)<\/md5checksum>')
                 md5_match = md5_regex.search(response)
@@ -135,12 +134,12 @@ class Output(cowrie.core.output.Output):
                 md5_local = hashlib.md5()
                 md5_local.update(log_output.encode('utf8'))
                 if md5_match.group(1) != md5_local.hexdigest():
-                    log.msg('dshield: ERROR: MD5 Mismatch {0} {1} .'.format(md5_match.group(1), md5_local.hexdigest()))
+                    log.msg('dshield: ERROR: MD5 Mismatch {} {} .'.format(md5_match.group(1), md5_local.hexdigest()))
                     failed = True
-                log.msg('dshield: SUCCESS: Sent {0} bytes worth of data to secure.dshield.org'.format(len(log_output)))
+                log.msg('dshield: SUCCESS: Sent {} bytes worth of data to secure.dshield.org'.format(len(log_output)))
             else:
-                log.msg('dshield ERROR: error {0}.'.format(resp.status_code))
-                log.msg('dshield response was {0}'.format(response))
+                log.msg(f'dshield ERROR: error {resp.status_code}.')
+                log.msg(f'dshield response was {response}')
                 failed = True
 
             if failed:

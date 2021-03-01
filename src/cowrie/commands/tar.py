@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import os
 import tarfile
@@ -64,7 +63,7 @@ class command_tar(HoneyPotCommand):
         for f in t:
             dest = self.fs.resolve_path(f.name.strip('/'), self.protocol.cwd)
             if verbose:
-                self.write('{0}\n'.format(f.name))
+                self.write(f'{f.name}\n')
             if not extract or not len(dest):
                 continue
             if f.isdir():
@@ -73,7 +72,7 @@ class command_tar(HoneyPotCommand):
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
             else:
-                log.msg("tar: skipping [{}]".format(f.name))
+                log.msg(f"tar: skipping [{f.name}]")
 
 
 commands['/bin/tar'] = command_tar

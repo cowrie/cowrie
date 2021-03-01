@@ -1,7 +1,6 @@
 # Copyright (c) 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import getopt
 import re
@@ -69,12 +68,12 @@ class command_chmod(HoneyPotCommand):
             self.write('chmod: missing operand\n' + TRY_CHMOD_HELP_MSG)
             return
         if mode and not files:
-            self.write('chmod: missing operand after ‘{}’\n'.format(mode) + TRY_CHMOD_HELP_MSG)
+            self.write(f'chmod: missing operand after ‘{mode}’\n' + TRY_CHMOD_HELP_MSG)
             return
 
         # mode has to match the regex
         if not re.fullmatch(MODE_REGEX, mode):
-            self.write('chmod: invalid mode: ‘{}’\n'.format(mode) + TRY_CHMOD_HELP_MSG)
+            self.write(f'chmod: invalid mode: ‘{mode}’\n' + TRY_CHMOD_HELP_MSG)
             return
 
         # go through the list of files and check whether they exist
@@ -87,7 +86,7 @@ class command_chmod(HoneyPotCommand):
             else:
                 path = self.fs.resolve_path(file, self.protocol.cwd)
                 if not self.fs.exists(path):
-                    self.write('chmod: cannot access \'{}\': No such file or directory\n'.format(file))
+                    self.write(f'chmod: cannot access \'{file}\': No such file or directory\n')
 
     def parse_args(self):
         mode = None
@@ -109,9 +108,9 @@ class command_chmod(HoneyPotCommand):
         except getopt.GetoptError as err:
             failed_opt = err.msg.split(' ')[1]
             if failed_opt.startswith("--"):
-                self.errorWrite("chmod: unrecognized option '--{}'\n".format(err.opt) + TRY_CHMOD_HELP_MSG)
+                self.errorWrite(f"chmod: unrecognized option '--{err.opt}'\n" + TRY_CHMOD_HELP_MSG)
             else:
-                self.errorWrite("chmod: invalid option -- '{}'\n".format(err.opt) + TRY_CHMOD_HELP_MSG)
+                self.errorWrite(f"chmod: invalid option -- '{err.opt}'\n" + TRY_CHMOD_HELP_MSG)
             return [], None, [], True
 
         # if mode was not found before, use the first arg as mode

@@ -6,7 +6,6 @@
 This module contains the chpasswd commnad
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 
@@ -43,7 +42,7 @@ class command_chpasswd(HoneyPotCommand):
                 if len(line):
                     u, p = line.split(b':')
                     if not len(p):
-                        self.write('chpasswd: line {}: missing new password\n'.format(c))
+                        self.write(f'chpasswd: line {c}: missing new password\n')
                     else:
                         """
                         TODO:
@@ -54,7 +53,7 @@ class command_chpasswd(HoneyPotCommand):
                         pass
                 c += 1
         except Exception:
-            self.write('chpasswd: line {}: missing new password\n'.format(c))
+            self.write(f'chpasswd: line {c}: missing new password\n')
 
     def start(self):
         try:
@@ -73,7 +72,7 @@ class command_chpasswd(HoneyPotCommand):
                 return
             elif o in "-c":
                 if args not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]:
-                    self.errorWrite("chpasswd: unsupported crypt method: {}\n".format(a))
+                    self.errorWrite(f"chpasswd: unsupported crypt method: {a}\n")
                     self.help()
                     self.exit()
 

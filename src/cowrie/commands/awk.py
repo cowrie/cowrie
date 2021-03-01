@@ -8,7 +8,6 @@ awk command
 limited implementation that only supports `print` command.
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 import re
@@ -72,7 +71,7 @@ class command_awk(HoneyPotCommand):
                 pname = self.fs.resolve_path(arg, self.protocol.cwd)
 
                 if self.fs.isdir(pname):
-                    self.errorWrite("awk: {}: Is a directory\n".format(arg))
+                    self.errorWrite(f"awk: {arg}: Is a directory\n")
                     continue
 
                 try:
@@ -82,7 +81,7 @@ class command_awk(HoneyPotCommand):
                     else:
                         raise FileNotFound
                 except FileNotFound:
-                    self.errorWrite("awk: {}: No such file or directory\n".format(arg))
+                    self.errorWrite(f"awk: {arg}: No such file or directory\n")
 
         else:
             self.output(self.input_data)

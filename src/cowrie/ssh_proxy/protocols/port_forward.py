@@ -34,7 +34,7 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 class PortForward(base_protocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh):
-        super(PortForward, self).__init__(uuid, chan_name, ssh)
+        super().__init__(uuid, chan_name, ssh)
 
     def parse_packet(self, parent, payload):
         pass

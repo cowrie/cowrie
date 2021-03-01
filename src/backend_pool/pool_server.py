@@ -47,7 +47,7 @@ class PoolServer(Protocol):
             recv = struct.unpack('!H', data[1:3])
             ip_len = recv[0]
 
-            recv = struct.unpack('!{0}s'.format(ip_len), data[3:])
+            recv = struct.unpack(f'!{ip_len}s', data[3:])
             attacker_ip = recv[0].decode()
 
             log.msg(eventid='cowrie.backend_pool.server',
@@ -69,11 +69,11 @@ class PoolServer(Protocol):
                     nat_ssh_port, nat_telnet_port = self.factory.nat.request_binding(guest_id, guest_ip,
                                                                                      ssh_port, telnet_port)
 
-                    fmt = '!cIIH{0}sHHH{1}s'.format(len(self.nat_public_ip), len(guest_snapshot))
+                    fmt = '!cIIH{}sHHH{}s'.format(len(self.nat_public_ip), len(guest_snapshot))
                     response = struct.pack(fmt, b'r', 0, guest_id, len(self.nat_public_ip), self.nat_public_ip.encode(),
                                            nat_ssh_port, nat_telnet_port, len(guest_snapshot), guest_snapshot.encode())
                 else:
-                    fmt = '!cIIH{0}sHHH{1}s'.format(len(guest_ip), len(guest_snapshot))
+                    fmt = '!cIIH{}sHHH{}s'.format(len(guest_ip), len(guest_snapshot))
                     response = struct.pack(fmt, b'r', 0, guest_id, len(guest_ip), guest_ip.encode(),
                                            ssh_port, telnet_port, len(guest_snapshot), guest_snapshot.encode())
             except NoAvailableVMs:

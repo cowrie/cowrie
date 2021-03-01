@@ -5,7 +5,6 @@
 This module contains ...
 """
 
-from __future__ import absolute_import, division
 
 from twisted.conch.ssh import session
 from twisted.conch.ssh.common import getNS

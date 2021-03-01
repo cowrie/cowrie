@@ -5,7 +5,6 @@
 This module contains ...
 """
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -24,7 +23,7 @@ from cowrie.core.config import CowrieConfig
 
 
 @implementer(ISFTPFile)
-class CowrieSFTPFile(object):
+class CowrieSFTPFile:
     """
     SFTPTFile
     """
@@ -88,7 +87,7 @@ class CowrieSFTPFile(object):
         raise NotImplementedError
 
 
-class CowrieSFTPDirectory(object):
+class CowrieSFTPDirectory:
 
     def __init__(self, server, directory):
         self.server = server
@@ -143,7 +142,7 @@ class CowrieSFTPDirectory(object):
 
 
 @implementer(ISFTPServer)
-class SFTPServerForCowrieUser(object):
+class SFTPServerForCowrieUser:
 
     def __init__(self, avatar):
         self.avatar = avatar
@@ -176,33 +175,33 @@ class SFTPServerForCowrieUser(object):
         return {}
 
     def openFile(self, filename, flags, attrs):
-        log.msg("SFTP openFile: {}".format(filename))
+        log.msg(f"SFTP openFile: {filename}")
         return CowrieSFTPFile(self, self._absPath(filename), flags, attrs)
 
     def removeFile(self, filename):
-        log.msg("SFTP removeFile: {}".format(filename))
+        log.msg(f"SFTP removeFile: {filename}")
         return self.fs.remove(self._absPath(filename))
 
     def renameFile(self, oldpath, newpath):
-        log.msg("SFTP renameFile: {} {}".format(oldpath, newpath))
+        log.msg(f"SFTP renameFile: {oldpath} {newpath}")
         return self.fs.rename(self._absPath(oldpath), self._absPath(newpath))
 
     def makeDirectory(self, path, attrs):
-        log.msg("SFTP makeDirectory: {}".format(path))
+        log.msg(f"SFTP makeDirectory: {path}")
         path = self._absPath(path)
         self.fs.mkdir2(path)
         self._setAttrs(path, attrs)
 
     def removeDirectory(self, path):
-        log.msg("SFTP removeDirectory: {}".format(path))
+        log.msg(f"SFTP removeDirectory: {path}")
         return self.fs.rmdir(self._absPath(path))
 
     def openDirectory(self, path):
-        log.msg("SFTP OpenDirectory: {}".format(path))
+        log.msg(f"SFTP OpenDirectory: {path}")
         return CowrieSFTPDirectory(self, self._absPath(path))
 
     def getAttrs(self, path, followLinks):
-        log.msg("SFTP getAttrs: {}".format(path))
+        log.msg(f"SFTP getAttrs: {path}")
         path = self._absPath(path)
         if followLinks:
             s = self.fs.stat(path)
@@ -211,17 +210,17 @@ class SFTPServerForCowrieUser(object):
         return self._getAttrs(s)
 
     def setAttrs(self, path, attrs):
-        log.msg("SFTP setAttrs: {}".format(path))
+        log.msg(f"SFTP setAttrs: {path}")
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
     def readLink(self, path):
-        log.msg("SFTP readLink: {}".format(path))
+        log.msg(f"SFTP readLink: {path}")
         path = self._absPath(path)
         return self.fs.readlink(path)
 
     def makeLink(self, linkPath, targetPath):
-        log.msg("SFTP makeLink: {} {}".format(linkPath, targetPath))
+        log.msg(f"SFTP makeLink: {linkPath} {targetPath}")
         linkPath = self._absPath(linkPath)
         targetPath = self._absPath(targetPath)
         return self.fs.symlink(targetPath, linkPath)

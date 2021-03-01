@@ -5,7 +5,6 @@
 This module ...
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 
@@ -26,7 +25,7 @@ class command_ulimit(HoneyPotCommand):
         try:
             opts, args = getopt.getopt(self.args, 'SHacdfilmnpqstuvx')
         except getopt.GetoptError as err:
-            self.errorWrite("-bash: ulimit: {}\n".format(err))
+            self.errorWrite(f"-bash: ulimit: {err}\n")
             self.write("ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]\n")
             return
 

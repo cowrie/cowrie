@@ -91,7 +91,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        self.transport.write('{0}\r\n'.format(self.ourVersionString).encode())
+        self.transport.write(f'{self.ourVersionString}\r\n'.encode())
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
         self.otherVersionString = 'Unknown'
@@ -104,7 +104,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             dst_ip=self.local_ip,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno='S{0}'.format(self.transport.sessionno),
+            sessionno=f'S{self.transport.sessionno}',
             protocol='ssh'
         )
 
@@ -124,7 +124,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg('Connection to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg(f'Connection to backend pool refused: {reason.value}. Disconnecting frontend...')
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
@@ -142,13 +142,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             snapshot = data[1]
             ssh_port = data[2]
 
-            log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), ssh_port))
-            log.msg('Snapshot file: {0}'.format(snapshot.decode()))
+            log.msg(f'Got backend data from pool: {honey_ip.decode()}:{ssh_port}')
+            log.msg(f'Snapshot file: {snapshot.decode()}')
 
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason):
-        log.msg('Connection to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg(f'Connection to honeypot backend refused: {reason.value}. Disconnecting frontend...')
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
@@ -371,7 +371,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write(b'Packet corrupt\n')
-            log.msg('Disconnecting with error, code {0}\nreason: {1}'.format(reason, desc))
+            log.msg(f'Disconnecting with error, code {reason}\nreason: {desc}')
             self.transport.loseConnection()
 
     def receiveError(self, reasonCode, description):
@@ -386,7 +386,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg('Got remote error, code {0} reason: {1}'.format(reasonCode, description))
+        log.msg(f'Got remote error, code {reasonCode} reason: {description}')
 
     def packet_buffer(self, message_num, payload):
         """

@@ -5,7 +5,6 @@
 This module contains ...
 """
 
-from __future__ import absolute_import, division
 
 from sys import modules
 
@@ -25,7 +24,7 @@ from cowrie.core.config import CowrieConfig
 
 
 @implementer(ICredentialsChecker)
-class HoneypotPublicKeyChecker(object):
+class HoneypotPublicKeyChecker:
     """
     Checker that accepts, logs and denies public key authentication attempts
     """
@@ -45,7 +44,7 @@ class HoneypotPublicKeyChecker(object):
 
 
 @implementer(ICredentialsChecker)
-class HoneypotNoneChecker(object):
+class HoneypotNoneChecker:
     """
     Checker that does no authentication check
     """
@@ -57,7 +56,7 @@ class HoneypotNoneChecker(object):
 
 
 @implementer(ICredentialsChecker)
-class HoneypotPasswordChecker(object):
+class HoneypotPasswordChecker:
     """
     Checker that accepts "keyboard-interactive" and "password"
     """
@@ -99,7 +98,7 @@ class HoneypotPasswordChecker(object):
             if hasattr(modules[authmodule], authclass):
                 authname = getattr(modules[authmodule], authclass)
             else:
-                log.msg('auth_class: %s not found in %s' % (authclass, authmodule))
+                log.msg(f'auth_class: {authclass} not found in {authmodule}')
 
         theauth = authname()
 

@@ -2,7 +2,6 @@
 MySQL output connector. Writes audit logs to MySQL database
 """
 
-from __future__ import absolute_import, division
 
 import MySQLdb
 
@@ -34,7 +33,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
         except (MySQLdb.OperationalError, MySQLdb._exceptions.OperationalError) as e:
             if e.args[0] not in (2003, 2006, 2013):
                 raise e
-            log.msg("RCP: got error {0}, retrying operation".format(e))
+            log.msg(f"RCP: got error {e}, retrying operation")
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             # Try the interaction again
@@ -78,10 +77,10 @@ class Output(cowrie.core.output.Output):
         1406, "Data too long for column '...' at row ..."
         """
         if error.value[0] in (1146, 1406):
-            log.msg("output_mysql: MySQL Error: {}".format(error.value))
+            log.msg(f"output_mysql: MySQL Error: {error.value}")
             log.msg("MySQL schema maybe misconfigured, doublecheck database!")
         else:
-            log.err("output_mysql: MySQL Error: {}".format(error.value))
+            log.err(f"output_mysql: MySQL Error: {error.value}")
 
     def simpleQuery(self, sql, args):
         """
@@ -188,7 +187,7 @@ class Output(cowrie.core.output.Output):
                 'UPDATE `sessions` '
                 'SET `termsize` = %s '
                 'WHERE `id` = %s',
-                ('%sx%s' % (entry['width'], entry['height']), entry["session"]))
+                ('{}x{}'.format(entry['width'], entry['height']), entry["session"]))
 
         elif entry["eventid"] == 'cowrie.session.closed':
             self.simpleQuery(

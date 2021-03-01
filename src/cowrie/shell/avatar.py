@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 from twisted.conch import avatar
 from twisted.conch.error import ConchError
@@ -50,7 +49,7 @@ class CowrieUser(avatar.ConchUser):
             self.channelLookup[b'direct-tcpip'] = forwarding.cowrieOpenConnectForwardingClient
 
     def logout(self):
-        log.msg("avatar {} logging out".format(self.username))
+        log.msg(f"avatar {self.username} logging out")
 
     def lookupChannel(self, channelType, windowSize, maxPacket, data):
         """
@@ -58,7 +57,7 @@ class CowrieUser(avatar.ConchUser):
         """
         klass = self.channelLookup.get(channelType, None)
         if not klass:
-            raise ConchError(OPEN_UNKNOWN_CHANNEL_TYPE, "unknown channel: {}".format(channelType))
+            raise ConchError(OPEN_UNKNOWN_CHANNEL_TYPE, f"unknown channel: {channelType}")
         else:
             return klass(remoteWindow=windowSize,
                          remoteMaxPacket=maxPacket,

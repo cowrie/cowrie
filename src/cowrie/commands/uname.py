@@ -5,7 +5,6 @@
 uname command
 """
 
-from __future__ import absolute_import, division
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
@@ -80,7 +79,7 @@ class command_uname(HoneyPotCommand):
             }
         if not self.args:
             # IF no params output default
-            self.write('{}\n'.format(kernel_name()))
+            self.write(f'{kernel_name()}\n')
         else:
             # I have parameter to parse
             for a in self.args:
@@ -107,17 +106,17 @@ class command_uname(HoneyPotCommand):
             I have all the option set
             '''
             if opts['name']:
-                self.write('{} '.format(kernel_name()))
+                self.write(f'{kernel_name()} ')
             if opts['node']:
-                self.write('{} '.format(self.protocol.hostname))
+                self.write(f'{self.protocol.hostname} ')
             if opts['release']:
-                self.write('{} '.format(kernel_version()))
+                self.write(f'{kernel_version()} ')
             if opts['version']:
-                self.write('{} '.format(kernel_build_string()))
+                self.write(f'{kernel_build_string()} ')
             if opts['machine']:
-                self.write('{} '.format(hardware_platform()))
+                self.write(f'{hardware_platform()} ')
             if opts['os']:
-                self.write('{} '.format(operating_system()))
+                self.write(f'{operating_system()} ')
             self.write('\n')
 
 

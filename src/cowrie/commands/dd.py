@@ -5,7 +5,6 @@
 dd commands
 """
 
-from __future__ import absolute_import, division
 
 import re
 
@@ -30,11 +29,11 @@ class command_dd(HoneyPotCommand):
 
         for arg in self.args:
             if arg.find('=') == -1:
-                self.write('unknown operand: {}'.format(arg))
+                self.write(f'unknown operand: {arg}')
                 HoneyPotCommand.exit(self)
             operand, value = arg.split('=')
             if operand not in ('if', 'bs', 'of', 'count'):
-                self.write('unknown operand: {}'.format(operand))
+                self.write(f'unknown operand: {operand}')
                 self.exit(success=False)
             self.ddargs[operand] = value
 
@@ -48,21 +47,21 @@ class command_dd(HoneyPotCommand):
                 iname = self.ddargs['if']
                 pname = self.fs.resolve_path(iname, self.protocol.cwd)
                 if self.fs.isdir(pname):
-                    self.errorWrite('dd: {}: Is a directory\n'.format(iname))
+                    self.errorWrite(f'dd: {iname}: Is a directory\n')
                     bSuccess = False
 
                 if bSuccess:
                     if 'bs' in self.ddargs:
                         block = parse_size(self.ddargs['bs'])
                         if block <= 0:
-                            self.errorWrite('dd: invalid number \'{}\'\n'.format(block))
+                            self.errorWrite(f'dd: invalid number \'{block}\'\n')
                             bSuccess = False
 
                 if bSuccess:
                     if 'count' in self.ddargs:
                         c = int(self.ddargs['count'])
                         if c < 0:
-                            self.errorWrite('dd: invalid number \'{}\'\n'.format(c))
+                            self.errorWrite(f'dd: invalid number \'{c}\'\n')
                             bSuccess = False
 
                 if bSuccess:
@@ -78,7 +77,7 @@ class command_dd(HoneyPotCommand):
                             else:
                                 self.writeBytes(data)
                     except FileNotFound:
-                        self.errorWrite('dd: {}: No such file or directory\n'.format(iname))
+                        self.errorWrite(f'dd: {iname}: No such file or directory\n')
                         bSuccess = False
 
                 self.exit(success=bSuccess)

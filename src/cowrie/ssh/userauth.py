@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import struct
 
@@ -52,7 +51,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             issuefile = CowrieConfig().get(
                 'honeypot', 'contents_path') + "/etc/issue.net"
             data = open(issuefile).read()
-        except IOError:
+        except OSError:
             return
         if not data or not len(data.strip()):
             return

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 import sqlite3
 
 from twisted.enterprise import adbapi
@@ -148,7 +146,7 @@ class Output(cowrie.core.output.Output):
                 'UPDATE `sessions` '
                 'SET `termsize` = ? '
                 'WHERE `id` = ?',
-                ('%sx%s' % (entry['width'], entry['height']), entry["session"]))
+                ('{}x{}'.format(entry['width'], entry['height']), entry["session"]))
 
         elif entry["eventid"] == 'cowrie.session.closed':
             self.simpleQuery(

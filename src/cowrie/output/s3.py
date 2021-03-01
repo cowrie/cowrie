@@ -2,7 +2,6 @@
 Send downloaded/uplaoded files to S3 (or compatible)
 """
 
-from __future__ import absolute_import, division
 
 from configparser import NoOptionError
 
@@ -71,16 +70,16 @@ class Output(cowrie.core.output.Output):
     @defer.inlineCallbacks
     def upload(self, shasum, filename):
         if shasum in self.seen:
-            print("Already uploaded file with sha {} to S3".format(shasum))
+            print(f"Already uploaded file with sha {shasum} to S3")
             return
 
         exists = yield self._object_exists_remote(shasum)
         if exists:
-            print("Somebody else already uploaded file with sha {} to S3".format(shasum))
+            print(f"Somebody else already uploaded file with sha {shasum} to S3")
             self.seen.add(shasum)
             return
 
-        print("Uploading file with sha {} ({}) to S3".format(shasum, filename))
+        print(f"Uploading file with sha {shasum} ({filename}) to S3")
         with open(filename, 'rb') as fp:
             yield threads.deferToThread(
                 self.client.put_object,

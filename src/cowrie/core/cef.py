@@ -26,8 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
-
 
 #  cowrie.client.fingerprint
 #  cowrie.client.size
@@ -44,7 +42,6 @@ from __future__ import absolute_import, division
 #  cowrie.session.connect
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
-
 
 def formatCef(logentry):
     """
@@ -93,7 +90,7 @@ def formatCef(logentry):
     cefList = []
     for key in list(cefExtensions.keys()):
         value = str(cefExtensions[key])
-        cefList.append('{}={}'.format(key, value))
+        cefList.append(f'{key}={value}')
 
     cefExtension = ' '.join(cefList)
 

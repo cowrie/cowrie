@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import copy
 import os
@@ -22,7 +21,7 @@ else:
     from cowrie.shell import shlex
 
 
-class HoneyPotShell(object):
+class HoneyPotShell:
 
     def __init__(self, protocol, interactive=True, redirect=False):
         self.protocol = protocol
@@ -51,27 +50,27 @@ class HoneyPotShell(object):
 
                 if tok == self.lexer.eof:
                     if tokens:
-                        self.cmdpending.append((tokens))
+                        self.cmdpending.append(tokens)
                     break
 
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == '&&' or tok == '||':
                     if tokens:
-                        self.cmdpending.append((tokens))
+                        self.cmdpending.append(tokens)
                         tokens = []
                         continue
                     else:
                         self.protocol.terminal.write(
-                            '-bash: syntax error near unexpected token `{}\'\n'.format(tok).encode('utf8'))
+                            f'-bash: syntax error near unexpected token `{tok}\'\n'.encode('utf8'))
                         break
                 elif tok == ';':
                     if tokens:
-                        self.cmdpending.append((tokens))
+                        self.cmdpending.append(tokens)
                         tokens = []
                         continue
                     else:
                         self.protocol.terminal.write(
-                            '-bash: syntax error near unexpected token `{}\'\n'.format(tok).encode('utf8'))
+                            f'-bash: syntax error near unexpected token `{tok}\'\n'.encode('utf8'))
                         break
                 elif tok == '$?':
                     tok = "0"
@@ -105,7 +104,7 @@ class HoneyPotShell(object):
                 self.protocol.terminal.write(
                     b'-bash: syntax error: unexpected end of file\n')
                 # Could run runCommand here, but i'll just clear the list instead
-                log.msg("exception: {}".format(e))
+                log.msg(f"exception: {e}")
                 self.cmdpending = []
                 self.showPrompt()
                 return
@@ -324,7 +323,7 @@ class HoneyPotShell(object):
 
             # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
             # Example: root@svr03:~#     (More of a "Debian" feel)
-            prompt = '{0}@{1}:{2}'.format(self.protocol.user.username, self.protocol.hostname, cwd)
+            prompt = f'{self.protocol.user.username}@{self.protocol.hostname}:{cwd}'
             if not self.protocol.user.uid:
                 prompt += '# '  # "Root" user
             else:
@@ -402,7 +401,7 @@ class HoneyPotShell(object):
 
         newbuf = ''
         if len(files) == 1:
-            newbuf = ' '.join(line.decode('utf8').split()[:-1] + ['%s%s' % (basedir, files[0][fs.A_NAME])])
+            newbuf = ' '.join(line.decode('utf8').split()[:-1] + ['{}{}'.format(basedir, files[0][fs.A_NAME])])
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += '/'
             else:
@@ -414,7 +413,7 @@ class HoneyPotShell(object):
             else:
                 prefix = ''
             first = line.decode('utf8').split(' ')[:-1]
-            newbuf = ' '.join(first + ['%s%s' % (basedir, prefix)])
+            newbuf = ' '.join(first + [f'{basedir}{prefix}'])
             newbuf = newbuf.encode('utf8')
             if newbuf == b''.join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b'\n')
@@ -435,7 +434,7 @@ class HoneyPotShell(object):
         self.protocol.terminal.write(newbuf)
 
 
-class StdOutStdErrEmulationProtocol(object):
+class StdOutStdErrEmulationProtocol:
     """
     Pipe support written by Dave Germiquet
     Support for commands chaining added by Ivan Korolev (@fe7ch)

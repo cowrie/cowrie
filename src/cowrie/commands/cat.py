@@ -6,7 +6,6 @@ cat command
 
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 
@@ -30,7 +29,7 @@ class command_cat(HoneyPotCommand):
         try:
             optlist, args = getopt.gnu_getopt(self.args, 'AbeEnstTuv', ['help', 'number', 'version'])
         except getopt.GetoptError as err:
-            self.errorWrite("cat: invalid option -- '{}'\nTry 'cat --help' for more information.\n".format(err.opt))
+            self.errorWrite(f"cat: invalid option -- '{err.opt}'\nTry 'cat --help' for more information.\n")
             self.exit()
             return
 
@@ -51,7 +50,7 @@ class command_cat(HoneyPotCommand):
                 pname = self.fs.resolve_path(arg, self.protocol.cwd)
 
                 if self.fs.isdir(pname):
-                    self.errorWrite('cat: {}: Is a directory\n'.format(arg))
+                    self.errorWrite(f'cat: {arg}: Is a directory\n')
                     continue
 
                 try:
@@ -61,7 +60,7 @@ class command_cat(HoneyPotCommand):
                     else:
                         raise FileNotFound
                 except FileNotFound:
-                    self.errorWrite('cat: {}: No such file or directory\n'.format(arg))
+                    self.errorWrite(f'cat: {arg}: No such file or directory\n')
             self.exit()
         elif self.input_data is not None:
             self.output(self.input_data)
@@ -86,7 +85,7 @@ class command_cat(HoneyPotCommand):
             lines.pop()
         for line in lines:
             if self.number:
-                self.write('{:>6}  '.format(self.linenumber))
+                self.write(f'{self.linenumber:>6}  ')
                 self.linenumber = self.linenumber + 1
             self.writeBytes(line + b'\n')
 

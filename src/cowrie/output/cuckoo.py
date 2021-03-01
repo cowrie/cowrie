@@ -30,7 +30,6 @@
 Send downloaded/uplaoded files to Cuckoo
 """
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -93,11 +92,11 @@ class Output(cowrie.core.output.Output):
         """
         res = None
         try:
-            print("Looking for tasks for: {}".format(sha256))
+            print(f"Looking for tasks for: {sha256}")
             res = requests.get(
                 urljoin(
                     self.url_base,
-                    "/files/view/sha256/{}".format(sha256)
+                    f"/files/view/sha256/{sha256}"
                 ),
                 verify=False,
                 auth=HTTPBasicAuth(
@@ -135,9 +134,9 @@ class Output(cowrie.core.output.Output):
             if res and res.ok:
                 print("Cuckoo Request: {}, Task created with ID: {}".format(res.status_code, res.json()["task_id"]))
             else:
-                print("Cuckoo Request failed: {}".format(res.status_code))
+                print(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
-            print("Cuckoo Request failed: {}".format(e))
+            print(f"Cuckoo Request failed: {e}")
 
     def posturl(self, scanUrl):
         """
@@ -160,6 +159,6 @@ class Output(cowrie.core.output.Output):
             if res and res.ok:
                 print("Cuckoo Request: {}, Task created with ID: {}".format(res.status_code, res.json()["task_id"]))
             else:
-                print("Cuckoo Request failed: {}".format(res.status_code))
+                print(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
-            print("Cuckoo Request failed: {}".format(e))
+            print(f"Cuckoo Request failed: {e}")

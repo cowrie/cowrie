@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division, print_function
 
 import os
 import sys
@@ -83,7 +82,7 @@ globalLogPublisher.addObserver(importFailureObserver)
 
 
 @implementer(IServiceMaker, IPlugin)
-class CowrieServiceMaker(object):
+class CowrieServiceMaker:
     tapname = "cowrie"
     description = "She sells sea shells by the sea shore."
     options = Options
@@ -145,17 +144,17 @@ Makes a Cowrie SSH/Telnet honeypot.
                 continue
             engine = x.split('_')[1]
             try:
-                output = __import__('cowrie.output.{}'.format(engine),
+                output = __import__(f'cowrie.output.{engine}',
                                     globals(), locals(), ['output']).Output()
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
-                log.msg("Loaded output engine: {}".format(engine))
+                log.msg(f"Loaded output engine: {engine}")
             except ImportError as e:
-                log.err("Failed to load output engine: {} due to ImportError: {}".format(engine, e))
-                log.msg("Please install the dependencies for {} listed in requirements-output.txt".format(engine))
+                log.err(f"Failed to load output engine: {engine} due to ImportError: {e}")
+                log.msg(f"Please install the dependencies for {engine} listed in requirements-output.txt")
             except Exception:
                 log.err()
-                log.msg("Failed to load output engine: {}".format(engine))
+                log.msg(f"Failed to load output engine: {engine}")
 
         self.topService = service.MultiService()
         application = service.Application('cowrie')
