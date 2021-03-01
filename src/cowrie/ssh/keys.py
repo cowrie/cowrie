@@ -5,7 +5,6 @@
 This module contains ...
 """
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -52,8 +51,8 @@ def getDSAKeys():
         with open(privateKeyFile, 'w+b') as f:
             f.write(privateKeyString)
     else:
-        with open(publicKeyFile, 'r') as f:
+        with open(publicKeyFile) as f:
             publicKeyString = f.read()
-        with open(privateKeyFile, 'r') as f:
+        with open(privateKeyFile) as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString

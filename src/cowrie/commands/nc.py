@@ -1,16 +1,12 @@
-from __future__ import absolute_import, division
-
 import getopt
 import re
 import socket
 import struct
-import sys
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
-if sys.version_info > (3,):
-    long = int
+long = int
 
 commands = {}
 
@@ -74,7 +70,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         port = args[1]
 
         if not re.match(r'^\d+$', port):
-            self.errorWrite('nc: port number invalid: {}\n'.format(port))
+            self.errorWrite(f'nc: port number invalid: {port}\n')
             self.exit()
             return
 

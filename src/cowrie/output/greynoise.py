@@ -2,7 +2,6 @@
 Send attackers IP to GreyNoise
 """
 
-from __future__ import absolute_import, division
 
 import treq
 
@@ -55,7 +54,7 @@ class Output(cowrie.core.output.Output):
                 meta=query['metadata']
             )
 
-        gnUrl = '{0}query/ip'.format(GNAPI_URL).encode('utf8')
+        gnUrl = f'{GNAPI_URL}query/ip'.encode('utf8')
         headers = ({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'key': self.apiKey, 'ip': entry['src_ip']}
 
@@ -71,7 +70,7 @@ class Output(cowrie.core.output.Output):
 
         if response.code != 200:
             rsp = yield response.text()
-            log.error("greynoise: got error {}".format(rsp))
+            log.error(f"greynoise: got error {rsp}")
             return
 
         j = yield response.json()
@@ -87,4 +86,4 @@ class Output(cowrie.core.output.Output):
                 for query in j['records']:
                     message(query)
         else:
-            log.msg("greynoise: no results for for IP {0}".format(entry['src_ip']))
+            log.msg("greynoise: no results for for IP {}".format(entry['src_ip']))

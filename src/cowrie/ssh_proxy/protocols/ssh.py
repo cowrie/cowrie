@@ -75,7 +75,7 @@ class SSH(base_protocol.BaseProtocol):
     }
 
     def __init__(self, server):
-        super(SSH, self).__init__()
+        super().__init__()
 
         self.channels = []
         self.username = ''
@@ -99,7 +99,7 @@ class SSH(base_protocol.BaseProtocol):
         if message_num in self.packetLayout:
             packet = self.packetLayout[message_num]
         else:
-            packet = 'UNKNOWN_{0}'.format(message_num)
+            packet = f'UNKNOWN_{message_num}'
 
         if parent == '[SERVER]':
             direction = 'PROXY -> BACKEND'
@@ -177,7 +177,7 @@ class SSH(base_protocol.BaseProtocol):
             channel_type = self.extract_string()
             channel_id = self.extract_int(4)
 
-            log.msg('got channel {} request'.format(channel_type))
+            log.msg(f'got channel {channel_type} request')
 
             if channel_type == b'session':
                 # if using an interactive session reset frontend timeout
@@ -228,7 +228,7 @@ class SSH(base_protocol.BaseProtocol):
             else:
                 # UNKNOWN CHANNEL TYPE
                 if channel_type not in [b'exit-status']:
-                    log.msg('[SSH Unknown Channel Type Detected - {0}'.format(channel_type))
+                    log.msg(f'[SSH Unknown Channel Type Detected - {channel_type}')
 
         elif packet == 'SSH_MSG_CHANNEL_OPEN_CONFIRMATION':
             channel = self.get_channel(self.extract_int(4), parent)
@@ -280,7 +280,7 @@ class SSH(base_protocol.BaseProtocol):
             else:
                 # UNKNOWN CHANNEL REQUEST TYPE
                 if channel_type not in [b'window-change', b'env', b'pty-req', b'exit-status', b'exit-signal']:
-                    log.msg('[SSH] Unknown Channel Request Type Detected - {0}'.format(channel_type.decode()))
+                    log.msg(f'[SSH] Unknown Channel Request Type Detected - {channel_type.decode()}')
 
         elif packet == 'SSH_MSG_CHANNEL_FAILURE':
             pass

@@ -7,7 +7,6 @@
 Tests for general shell interaction and cat command
 """
 
-from __future__ import absolute_import, division
 
 import os
 

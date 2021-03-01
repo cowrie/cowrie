@@ -5,7 +5,6 @@ tee command
 
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 import os
@@ -32,7 +31,7 @@ class command_tee(HoneyPotCommand):
         try:
             optlist, args = getopt.gnu_getopt(self.args, 'aip', ['help', 'append', 'version'])
         except getopt.GetoptError as err:
-            self.errorWrite("tee: invalid option -- '{}'\nTry 'tee --help' for more information.\n".format(err.opt))
+            self.errorWrite(f"tee: invalid option -- '{err.opt}'\nTry 'tee --help' for more information.\n")
             self.exit()
             return
 
@@ -50,7 +49,7 @@ class command_tee(HoneyPotCommand):
             pname = self.fs.resolve_path(arg, self.protocol.cwd)
 
             if self.fs.isdir(pname):
-                self.errorWrite('tee: {}: Is a directory\n'.format(arg))
+                self.errorWrite(f'tee: {arg}: Is a directory\n')
                 continue
 
             try:
@@ -65,7 +64,7 @@ class command_tee(HoneyPotCommand):
                 self.fs.mkfile(pname, 0, 0, 0, 0o644)
 
             except FileNotFound:
-                self.errorWrite('tee: {}: No such file or directory\n'.format(arg))
+                self.errorWrite(f'tee: {arg}: No such file or directory\n')
 
         if self.input_data:
             self.output(self.input_data)

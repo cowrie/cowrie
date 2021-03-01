@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2014 Peter Reuterås <peter@reuteras.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 from random import randint, randrange
 
 from cowrie.shell.command import HoneyPotCommand
 
-HWaddr = "%02x:%02x:%02x:%02x:%02x:%02x" % (
+HWaddr = "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(
     randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
 
-inet6 = "fe%02x::%02x:%02xff:fe%02x:%02x01/64" % (
+inet6 = "fe{:02x}::{:02x}:{:02x}ff:fe{:02x}:{:02x}01/64".format(
     randint(0, 255), randrange(111, 888), randint(0, 255), randint(0, 255), randint(0, 255))
 
 commands = {}
@@ -26,7 +24,7 @@ class command_ifconfig(HoneyPotCommand):
     @staticmethod
     def convert_bytes_to_mx(bytes_eth0):
         mb = float(bytes_eth0) / 1000 / 1000
-        return "{0:.1f}".format(mb)
+        return f"{mb:.1f}"
 
     def calculate_rx(self):
         rx_bytes = randrange(111111111, 555555555)
@@ -68,7 +66,7 @@ lo        Link encap:Local Loopback
                   self.protocol.kippoIP.rsplit('.', 1)[0], inet6, rx_packets,
                   tx_packets, rx_bytes_eth0, rx_mb_eth0, tx_bytes_eth0, tx_mb_eth0,
                   lo_bytes, lo_mb, lo_bytes, lo_mb)
-        self.write('{0}\n'.format(result))
+        self.write(f'{result}\n')
 
 
 commands['/sbin/ifconfig'] = command_ifconfig

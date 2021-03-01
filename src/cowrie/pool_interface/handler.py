@@ -45,7 +45,7 @@ class PoolHandler:
         client.send_initialisation()
 
     def initial_pool_connection_error(self, reason):
-        log.err('Could not connect to VM pool: {0}'.format(reason.value))
+        log.err(f'Could not connect to VM pool: {reason.value}')
         os._exit(1)
 
     def initialisation_response(self, res_code):

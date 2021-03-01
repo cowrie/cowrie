@@ -6,7 +6,6 @@
 This module contains the wc commnad
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 import re
@@ -54,7 +53,7 @@ class command_wc(HoneyPotCommand):
             contents = self.fs.file_contents(filename)
             self.wc_application(contents, optlist)
         except Exception:
-            self.errorWrite("wc: {}: No such file or directory\n".format(filename))
+            self.errorWrite(f"wc: {filename}: No such file or directory\n")
 
     def wc_application(self, contents, optlist):
         for opt, arg in optlist:
@@ -82,7 +81,7 @@ class command_wc(HoneyPotCommand):
             try:
                 optlist, args = getopt.getopt(self.args, 'cmlLwhv')
             except getopt.GetoptError as err:
-                self.errorWrite("wc: invalid option -- {}\n".format(err.opt))
+                self.errorWrite(f"wc: invalid option -- {err.opt}\n")
                 self.help()
                 self.exit()
                 return

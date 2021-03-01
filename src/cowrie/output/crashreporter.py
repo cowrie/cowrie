@@ -6,7 +6,6 @@ It has its own emit() function and does not use cowrie eventid's
 to avoid circular calls
 """
 
-from __future__ import absolute_import, division
 
 import json
 
@@ -19,7 +18,7 @@ import cowrie.core.output
 from cowrie._version import __version__
 from cowrie.core.config import CowrieConfig
 
-COWRIE_USER_AGENT = 'Cowrie Honeypot {}'.format(__version__).encode('ascii')
+COWRIE_USER_AGENT = f'Cowrie Honeypot {__version__}'.encode('ascii')
 COWRIE_URL = 'https://api.cowrie.org/v1/crash'
 
 

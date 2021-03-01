@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import getopt
 import hashlib
@@ -53,7 +52,7 @@ class command_ssh(HoneyPotCommand):
                 return
         if not len(args):
             for line in OUTPUT:
-                self.write('{0}\n'.format(line))
+                self.write(f'{line}\n')
             self.exit()
             return
         user, host = 'root', args[0]
@@ -67,8 +66,8 @@ class command_ssh(HoneyPotCommand):
             if self.valid_ip(host):
                 self.ip = host
             else:
-                self.write('ssh: Could not resolve hostname %s: \
-                    Name or service not known\n' % (host,))
+                self.write('ssh: Could not resolve hostname {}: \
+                    Name or service not known\n'.format(host))
                 self.exit()
         else:
             s = hashlib.md5(host.encode()).hexdigest()
@@ -78,8 +77,8 @@ class command_ssh(HoneyPotCommand):
         self.host = host
         self.user = user
 
-        self.write('The authenticity of host \'%s (%s)\' \
-            can\'t be established.\n' % (self.host, self.ip))
+        self.write('The authenticity of host \'{} ({})\' \
+            can\'t be established.\n'.format(self.host, self.ip))
         self.write('RSA key fingerprint is \
             9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.\n')
         self.write('Are you sure you want to continue connecting (yes/no)? ')
@@ -88,7 +87,7 @@ class command_ssh(HoneyPotCommand):
     def yesno(self, line):
         self.write('Warning: Permanently added \'{}\' (RSA) to the \
             list of known hosts.\n'.format(self.host))
-        self.write('%s@%s\'s password: ' % (self.user, self.host))
+        self.write(f'{self.user}@{self.host}\'s password: ')
         self.protocol.password_input = True
 
     def wait(self, line):

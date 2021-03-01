@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
@@ -57,7 +55,7 @@ class command_busybox(HoneyPotCommand):
 
     def help(self):
         for ln in busybox_help:
-            self.errorWrite('{0}\n'.format(ln))
+            self.errorWrite(f'{ln}\n')
 
     def call(self):
         if len(self.args) == 0:
@@ -85,7 +83,7 @@ class command_busybox(HoneyPotCommand):
             if self.input_data:
                 self.write(self.input_data)
         else:
-            self.write('{}: applet not found\n'.format(cmd))
+            self.write(f'{cmd}: applet not found\n')
 
 
 commands['/bin/busybox'] = command_busybox

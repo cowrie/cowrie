@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import getopt
 import os
@@ -186,7 +185,7 @@ class command_curl(HoneyPotCommand):
             optlist, args = getopt.getopt(self.args, 'sho:O', ['help', 'manual', 'silent'])
         except getopt.GetoptError as err:
             # TODO: should be 'unknown' instead of 'not recognized'
-            self.write("curl: {}\n".format(err))
+            self.write(f"curl: {err}\n")
             self.write("curl: try 'curl --help' or 'curl --manual' for more information\n")
             self.exit()
             return
@@ -252,7 +251,7 @@ class command_curl(HoneyPotCommand):
             if scheme != b'http' and scheme != b'https':
                 raise NotImplementedError
         except Exception:
-            self.errorWrite('curl: (1) Protocol "{}" not supported or disabled in libcurl\n'.format(scheme))
+            self.errorWrite(f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n')
             self.exit()
             return None
 

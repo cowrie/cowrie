@@ -5,7 +5,6 @@
 This module contains the python commnad
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 
@@ -76,7 +75,7 @@ class command_python(HoneyPotCommand):
         try:
             opts, args = getopt.gnu_getopt(self.args, 'BdEhiORsStuvVx3c:m:Q:W:', ['help', 'version'])
         except getopt.GetoptError as err:
-            self.write("Unknown option: -{0}\n".format(err.opt))
+            self.write(f"Unknown option: -{err.opt}\n")
             self.write("usage: python [option] ... [-c cmd | -m mod | file | -] [arg] ... \n")
             self.write("Try `python -h' for more information.\n")
             self.exit()

@@ -1,6 +1,5 @@
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
-from __future__ import absolute_import, division
 
 import socket
 
@@ -69,13 +68,13 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         destination = self.protocol.kippoIP.rsplit('.', 1)[0] + ".0"
         gateway = self.protocol.kippoIP.rsplit('.', 1)[0] + ".1"
         l1 = "%s%s0.0.0.0         UG        0 0          0 eth0" % \
-             ('{:<16}'.format(default),
-              '{:<16}'.format(gateway))
+             (f'{default:<16}',
+              f'{gateway:<16}')
         l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % \
-             ('{:<16}'.format(destination),
-              '{:<16}'.format(lgateway))
-        self.write('{0}\n'.format(l1))
-        self.write('{0}\n'.format(l2))
+             (f'{destination:<16}',
+              f'{lgateway:<16}')
+        self.write(f'{l1}\n')
+        self.write(f'{l2}\n')
 
     def do_netstat_normal(self):
         self.write("""Active Internet connections (w/o servers)
@@ -99,7 +98,7 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
                 (s_name, s_port, " " * (24 - len(s_name + s_port) - 1),
                  c_name, c_port, " " * (24 - len(c_name + c_port) - 1),
                  "ESTABLISHED")
-            self.write('{0}\n'.format(line))
+            self.write(f'{line}\n')
         if self.show_listen or self.show_all:
             self.write("tcp6       0      0 [::]:ssh                [::]:*                  LISTEN\n")
         self.write("""Active UNIX domain sockets (only servers)

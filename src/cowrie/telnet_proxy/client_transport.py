@@ -8,15 +8,15 @@ from twisted.python import log
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
-class BackendTelnetTransport(TelnetTransport, TimeoutMixin, object):
+class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
     def __init__(self):
         # self.delayedPacketsToFrontend = []
         self.backendConnected = False
         self.telnetHandler = None
-        super(BackendTelnetTransport, self).__init__()
+        super().__init__()
 
     def connectionMade(self):
-        log.msg('Connected to Telnet backend at {0}'.format(self.transport.getPeer().host))
+        log.msg(f'Connected to Telnet backend at {self.transport.getPeer().host}')
         self.telnetHandler = self.factory.server.telnetHandler
         self.telnetHandler.setClient(self)
 

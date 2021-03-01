@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 try:
     import cPickle as pickle
@@ -70,7 +69,7 @@ class PermissionDenied(Exception):
     pass
 
 
-class HoneyPotFilesystem(object):
+class HoneyPotFilesystem:
 
     def __init__(self, fs, arch, home):
 
@@ -144,7 +143,7 @@ class HoneyPotFilesystem(object):
                 continue
             cwd.append(piece)
 
-        return '/%s' % ('/'.join(cwd),)
+        return '/{}'.format('/'.join(cwd))
 
     def resolve_path_wc(self, path, cwd):
         """
@@ -160,7 +159,7 @@ class HoneyPotFilesystem(object):
 
         def foo(p, cwd):
             if not len(p):
-                found.append('/%s' % ('/'.join(cwd),))
+                found.append('/{}'.format('/'.join(cwd)))
             elif p[0] == '.':
                 foo(p[1:], cwd)
             elif p[0] == '..':
@@ -374,7 +373,7 @@ class HoneyPotFilesystem(object):
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
             hostmode = mode & ~(111)
-            hostfile = '%s/%s_sftp_%s' % (
+            hostfile = '{}/{}_sftp_{}'.format(
                 CowrieConfig().get('honeypot', 'download_path'),
                 time.strftime('%Y%m%d-%H%M%S'),
                 re.sub('[^A-Za-z0-9]', '_', filename)
@@ -537,7 +536,7 @@ class HoneyPotFilesystem(object):
         f[A_SIZE] = size
 
 
-class _statobj(object):
+class _statobj:
     """
     Transform a tuple into a stat object
     """

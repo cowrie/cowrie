@@ -128,7 +128,7 @@ class Output(output.Output):
 
         log.msg(
             eventid='cowrie.abuseipdb.started',
-            format='AbuseIPDB Plugin version {} started. Currently in beta.'.format(__version__),
+            format=f'AbuseIPDB Plugin version {__version__} started. Currently in beta.',
         )
 
     def stop(self):

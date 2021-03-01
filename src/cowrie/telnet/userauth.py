@@ -5,7 +5,6 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import absolute_import, division
 
 import struct
 

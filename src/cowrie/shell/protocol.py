@@ -2,7 +2,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import os
 import socket
@@ -29,7 +28,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     commands = {}
     for c in cowrie.commands.__all__:
         try:
-            module = __import__('cowrie.commands.%s' % (c,),
+            module = __import__(f'cowrie.commands.{c}',
                                 globals(), locals(), ['commands'])
             commands.update(module.commands)
         except Exception as e:
@@ -131,8 +130,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def txtcmd(self, txt):
         class command_txtcmd(command.HoneyPotCommand):
             def call(self):
-                log.msg('Reading txtcmd from "{}"'.format(txt))
-                with open(txt, 'r') as f:
+                log.msg(f'Reading txtcmd from "{txt}"')
+                with open(txt) as f:
                     self.write(f.read())
 
         return command_txtcmd
@@ -155,7 +154,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 return None
         else:
             for i in [
-                '%s/%s' % (self.fs.resolve_path(x, self.cwd), cmd)
+                '{}/{}'.format(self.fs.resolve_path(x, self.cwd), cmd)
                 for x in paths
             ]:
                 if self.fs.exists(i):
@@ -169,7 +168,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if path in self.commands:
             return self.commands[path]
 
-        log.msg("Can't find command {}".format(cmd))
+        log.msg(f"Can't find command {cmd}")
         return None
 
     def lineReceived(self, line):
@@ -183,7 +182,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
         else:
-            log.msg("discarding input {}".format(line))
+            log.msg(f"discarding input {line}")
 
     def call_command(self, pp, cmd, *args):
         self.pp = pp

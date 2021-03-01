@@ -6,7 +6,6 @@ Not ready for production use.
 JSON log file is still recommended way to go
 """
 
-from __future__ import absolute_import, division
 
 import json
 
@@ -90,7 +89,7 @@ class Output(cowrie.core.output.Output):
             if response.code == 200:
                 return
             else:
-                log.msg("SplunkHEC response: {} {}".format(response.code, response.phrase))
+                log.msg(f"SplunkHEC response: {response.code} {response.phrase}")
                 d = client.readBody(response)
                 d.addCallback(cbBody)
                 d.addErrback(cbPartial)

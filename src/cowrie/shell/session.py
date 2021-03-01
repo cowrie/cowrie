@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
@@ -14,7 +13,7 @@ from cowrie.shell import protocol
 
 
 @implementer(ISession)
-class SSHSessionForCowrieUser(object):
+class SSHSessionForCowrieUser:
 
     def __init__(self, avatar, reactor=None):
         """

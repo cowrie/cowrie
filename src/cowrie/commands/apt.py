@@ -1,7 +1,6 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import random
 import re
@@ -14,12 +13,12 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_faked_package_class_factory(object):
+class command_faked_package_class_factory:
     @staticmethod
     def getCommand(name):
         class command_faked_installation(HoneyPotCommand):
             def call(self):
-                self.write("{}: Segmentation fault\n".format(name))
+                self.write(f"{name}: Segmentation fault\n")
 
         return command_faked_installation
 
@@ -122,7 +121,7 @@ pages for more information and options.
         packages = {}
         for y in [re.sub('[^A-Za-z0-9]', '', x) for x in self.args[1:]]:
             packages[y] = {
-                'version': '{0}.{1}-{2}'.format(random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)),
+                'version': '{}.{}-{}'.format(random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)),
                 'size': random.randint(100, 900)
             }
         totalsize = sum([packages[x]['size'] for x in packages])
@@ -134,7 +133,7 @@ pages for more information and options.
         self.write('  %s ' % ' '.join(packages) + '\n')
         self.write('0 upgraded, %d newly installed, 0 to remove and 259 not upgraded.\n' % len(packages))
         self.write('Need to get %s.2kB of archives.\n' % (totalsize))
-        self.write('After this operation, %skB of additional disk space will be used.\n' % (totalsize * 2.2,))
+        self.write('After this operation, {}kB of additional disk space will be used.\n'.format(totalsize * 2.2))
         i = 1
         for p in packages:
             self.write('Get:%d http://ftp.debian.org stable/main %s %s [%s.2kB]\n' %
@@ -148,12 +147,12 @@ pages for more information and options.
         self.write('(Reading database ... 177887 files and directories currently installed.)\n')
         yield self.sleep(1, 2)
         for p in packages:
-            self.write('Unpacking %s (from .../archives/%s_%s_i386.deb) ...\n' % (p, p, packages[p]['version']))
+            self.write('Unpacking {} (from .../archives/{}_{}_i386.deb) ...\n'.format(p, p, packages[p]['version']))
             yield self.sleep(1, 2)
         self.write('Processing triggers for man-db ...\n')
         yield self.sleep(2)
         for p in packages:
-            self.write('Setting up %s (%s) ...\n' % (p, packages[p]['version']))
+            self.write('Setting up {} ({}) ...\n'.format(p, packages[p]['version']))
             self.fs.mkfile('/usr/bin/%s' % p, 0, 0, random.randint(10000, 90000), 33188)
             self.protocol.commands['/usr/bin/%s' % p] = \
                 command_faked_package_class_factory.getCommand(p)

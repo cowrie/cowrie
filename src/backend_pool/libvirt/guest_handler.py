@@ -48,7 +48,7 @@ def create_guest(connection, mac_address, guest_unique_id):
         snapshot_path = os.getcwd()
 
     # create a disk snapshot to be used by the guest
-    disk_img = os.path.join(snapshot_path, 'snapshot-{0}-{1}.qcow2'.format(version_tag, guest_unique_id))
+    disk_img = os.path.join(snapshot_path, f'snapshot-{version_tag}-{guest_unique_id}.qcow2')
 
     if not backend_pool.libvirt.snapshot_handler.create_disk_snapshot(base_image, disk_img):
         log.msg(eventid='cowrie.backend_pool.guest_handler',

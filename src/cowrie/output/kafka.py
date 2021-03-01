@@ -30,7 +30,6 @@
 Work in progress Kafka output. Not functional yet
 """
 
-from __future__ import absolute_import, division
 
 import json
 import logging

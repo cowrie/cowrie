@@ -1,6 +1,5 @@
 # Simple elasticsearch logger
 
-from __future__ import absolute_import, division
 
 from elasticsearch import Elasticsearch, NotFoundError
 
@@ -49,7 +48,7 @@ class Output(cowrie.core.output.Output):
                 options["ca_certs"] = self.ca_certs
 
         # connect
-        self.es = Elasticsearch("{0}:{1}".format(self.host, self.port), **options)
+        self.es = Elasticsearch(f"{self.host}:{self.port}", **options)
         # self.es = Elasticsearch('{0}:{1}'.format(self.host, self.port))
 
         self.check_index()

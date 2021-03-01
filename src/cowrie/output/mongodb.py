@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division
-
 import pymongo
 
 from twisted.python import log
@@ -19,14 +15,14 @@ class Output(cowrie.core.output.Output):
             object_id = collection.insert_one(event).inserted_id
             return object_id
         except Exception as e:
-            log.msg('mongo error - {0}'.format(e))
+            log.msg(f'mongo error - {e}')
 
     def update_one(self, collection, session, doc):
         try:
             object_id = collection.update({'session': session}, doc)
             return object_id
         except Exception as e:
-            log.msg('mongo error - {0}'.format(e))
+            log.msg(f'mongo error - {e}')
 
     def start(self):
         db_addr = CowrieConfig().get('output_mongodb', 'connection_string')
@@ -99,7 +95,7 @@ class Output(cowrie.core.output.Output):
         elif eventid == 'cowrie.client.size':
             doc = self.col_sessions.find_one({'session': entry['session']})
             if doc:
-                doc['termsize'] = '{0}x{1}'.format(entry['width'], entry['height'])
+                doc['termsize'] = '{}x{}'.format(entry['width'], entry['height'])
                 self.update_one(self.col_sessions, entry['session'], doc)
             else:
                 pass

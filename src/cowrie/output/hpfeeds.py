@@ -2,7 +2,6 @@
 Output plugin for HPFeeds
 """
 
-from __future__ import absolute_import, division
 
 import hashlib
 import json
@@ -88,7 +87,7 @@ def msgauth(rand, ident, secret):
     return msghdr(OP_AUTH, strpack8(ident) + hash)
 
 
-class FeedUnpack(object):
+class FeedUnpack:
     def __init__(self):
         self.buf = bytearray()
 
@@ -120,9 +119,9 @@ class FeedUnpack(object):
         return opcode, data
 
 
-class hpclient(object):
+class hpclient:
     def __init__(self, server, port, ident, secret, debug):
-        log.msg('hpfeeds client init broker {0}:{1}, identifier {2}'.format(server, port, ident))
+        log.msg(f'hpfeeds client init broker {server}:{port}, identifier {ident}')
         self.server, self.port = server, int(port)
         self.ident, self.secret = ident.encode('latin1'), secret.encode('latin1')
         self.debug = debug
@@ -186,16 +185,16 @@ class hpclient(object):
         try:
             for opcode, data in self.unpacker:
                 if self.debug:
-                    log.msg('hpfeeds: msg opcode {0:x} data {1}'.format(
+                    log.msg('hpfeeds: msg opcode {:x} data {}'.format(
                         opcode,
-                        ''.join('{:02x}'.format(x) for x in data))
+                        ''.join(f'{x:02x}' for x in data))
                     )
                 if opcode == OP_INFO:
                     name, rand = strunpack8(data)
                     if self.debug:
-                        log.msg('hpfeeds: server name {0} rand {1}'.format(
+                        log.msg('hpfeeds: server name {} rand {}'.format(
                             name,
-                            ''.join('{:02x}'.format(x) for x in rand))
+                            ''.join(f'{x:02x}' for x in rand))
                         )
                     self.send(msgauth(rand, self.ident, self.secret))
                     self.state = 'GOTINFO'
@@ -205,12 +204,12 @@ class hpclient(object):
                     chan, data = strunpack8(data)
                     if self.debug:
                         log.msg(
-                            'hpfeeds: publish to {0} by {1}: {2}'.format(
-                                chan, ident, ''.join('{:02x}'.format(x) for x in data)))
+                            'hpfeeds: publish to {} by {}: {}'.format(
+                                chan, ident, ''.join(f'{x:02x}' for x in data)))
                 elif opcode == OP_ERROR:
-                    log.msg('hpfeeds: errormessage from server: {0}'.format(''.join('{:02x}'.format(x) for x in data)))
+                    log.msg('hpfeeds: errormessage from server: {}'.format(''.join(f'{x:02x}' for x in data)))
                 else:
-                    log.msg('hpfeeds: unknown opcode message: {0:x}'.format(opcode))
+                    log.msg(f'hpfeeds: unknown opcode message: {opcode:x}')
         except BadClient:
             log.msg('hpfeeds: unpacker error, disconnecting.')
             self.close()
@@ -219,7 +218,7 @@ class hpclient(object):
         try:
             self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
         except Exception as e:
-            log.msg('hpfeeds: connection to hpfriends lost: {0}, reconnecting'.format(e))
+            log.msg(f'hpfeeds: connection to hpfriends lost: {e}, reconnecting')
             self.connect()
             self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
 

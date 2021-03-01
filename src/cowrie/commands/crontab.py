@@ -6,7 +6,6 @@
 This module contains the crontab commnad
 """
 
-from __future__ import absolute_import, division
 
 import getopt
 
@@ -36,7 +35,7 @@ class command_crontab(HoneyPotCommand):
         try:
             opts, args = getopt.getopt(self.args, 'u:elri')
         except getopt.GetoptError as err:
-            self.write("crontab: invalid option -- \'{0}\'\n".format(err.opt))
+            self.write(f"crontab: invalid option -- \'{err.opt}\'\n")
             self.write("crontab: usage error: unrecognized option\n")
             self.help()
             self.exit()
@@ -52,11 +51,11 @@ class command_crontab(HoneyPotCommand):
                 opt = o
 
         if opt == "-e":
-            self.write("must be privileged to use {0}\n".format(opt))
+            self.write(f"must be privileged to use {opt}\n")
             self.exit()
             return
         elif opt in ["-l", "-r", "-i"]:
-            self.write("no crontab for {0}\n".format(user))
+            self.write(f"no crontab for {user}\n")
             self.exit()
             return
 

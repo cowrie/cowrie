@@ -38,7 +38,7 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 class ExecTerm(base_protocol.BaseProtocol):
     def __init__(self, uuid, channelName, ssh, channelId, command):
-        super(ExecTerm, self).__init__(uuid, channelName, ssh)
+        super().__init__(uuid, channelName, ssh)
 
         log.msg(eventid='cowrie.command.input',
                 input=command.decode('ascii'),
@@ -53,7 +53,7 @@ class ExecTerm(base_protocol.BaseProtocol):
         self.ttylogSize = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = '{0}/{1}-{2}-{3}e.log'.format(
+            self.ttylogFile = '{}/{}-{}-{}e.log'.format(
                 self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'), self.transportId, self.channelId)
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 

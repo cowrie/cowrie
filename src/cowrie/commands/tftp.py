@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 import tftpy
 
 try:
@@ -17,7 +15,7 @@ from cowrie.shell.customparser import CustomParser
 commands = {}
 
 
-class Progress(object):
+class Progress:
 
     def __init__(self, protocol):
         self.progress = 0
@@ -52,7 +50,7 @@ class command_tftp(HoneyPotCommand):
             # so we have to convert unicode type to str type
             tclient.download(str(self.file_to_get), self.artifactFile, progresshook)
 
-            url = 'tftp://%s/%s' % (self.hostname, self.file_to_get.strip('/'))
+            url = 'tftp://{}/{}'.format(self.hostname, self.file_to_get.strip('/'))
 
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
 

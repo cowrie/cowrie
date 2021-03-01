@@ -7,7 +7,6 @@ encryption and the compression. The transport layer is described in
 RFC 4253.
 """
 
-from __future__ import absolute_import, division
 
 import re
 import struct
@@ -39,7 +38,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @return Pretty representation of this object as a string
         @rtype: L{str}
         """
-        return "Cowrie SSH Transport to {}".format(self.transport.getPeer().host)
+        return f"Cowrie SSH Transport to {self.transport.getPeer().host}"
 
     def connectionMade(self):
         """
@@ -61,11 +60,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             dst_ip=self.transport.getHost().host,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno='S{0}'.format(self.transport.sessionno),
+            sessionno=f'S{self.transport.sessionno}',
             protocol='ssh'
         )
 
-        self.transport.write('{0}\r\n'.format(self.ourVersionString).encode('ascii'))
+        self.transport.write(f'{self.ourVersionString}\r\n'.encode('ascii'))
         self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
         self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
 
@@ -241,7 +240,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write(b'Packet corrupt\n')
-            log.msg("[SERVER] - Disconnecting with error, code {} reason: {}".format(reason, desc))
+            log.msg(f"[SERVER] - Disconnecting with error, code {reason} reason: {desc}")
             self.transport.loseConnection()
 
     def receiveError(self, reasonCode, description):
@@ -255,4 +254,4 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg('Got remote error, code %s reason: %s' % (reasonCode, description))
+        log.msg(f'Got remote error, code {reasonCode} reason: {description}')

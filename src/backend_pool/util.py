@@ -20,7 +20,7 @@ def nmap_port(guest_ip, port):
 
 
 def read_file(file_name):
-    with open(file_name, 'r') as file:
+    with open(file_name) as file:
         return file.read()
 
 

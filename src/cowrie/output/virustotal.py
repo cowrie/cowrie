@@ -30,7 +30,6 @@
 Send SSH logins to Virustotal
 """
 
-from __future__ import absolute_import, division
 
 import datetime
 import json
@@ -110,7 +109,7 @@ class Output(cowrie.core.output.Output):
         # If the file was first downloaded more than a "period of time" (e.g 1 min) ago -
         # it has been apparently scanned before in VT and therefore is not going to be checked again
         if file_modification_time < datetime.datetime.now()-TIME_SINCE_FIRST_DOWNLOAD:
-            log.msg("File with shasum '%s' was downloaded before" % (shasum, ))
+            log.msg(f"File with shasum '{shasum}' was downloaded before")
             return False
         return True
 
@@ -119,7 +118,7 @@ class Output(cowrie.core.output.Output):
         Check file scan report for a hash
         Argument is full event so we can access full file later on
         """
-        vtUrl = '{0}file/report'.format(VTAPI_URL).encode('utf8')
+        vtUrl = f'{VTAPI_URL}file/report'.encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': entry['shasum'], 'allinfo': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -134,7 +133,7 @@ class Output(cowrie.core.output.Output):
                 d.addCallback(cbBody)
                 return d
             else:
-                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
+                log.msg(f"VT Request failed: {response.code} {response.phrase}")
 
         def cbBody(body):
             """
@@ -157,7 +156,7 @@ class Output(cowrie.core.output.Output):
             Extract the information we need from the body
             """
             if self.debug:
-                log.msg("VT scanfile result: {}".format(result))
+                log.msg(f"VT scanfile result: {result}")
             result = result.decode('utf8')
             j = json.loads(result)
             log.msg("VT: {}".format(j['verbose_msg']))
@@ -216,11 +215,11 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to VirusTotal
         """
-        vtUrl = '{0}file/scan'.format(VTAPI_URL).encode('utf8')
+        vtUrl = f'{VTAPI_URL}file/scan'.encode('utf8')
         fields = {('apikey', self.apiKey)}
         files = {('file', fileName, open(artifact, 'rb'))}
         if self.debug:
-            log.msg("submitting to VT: {0}".format(repr(files)))
+            log.msg("submitting to VT: {}".format(repr(files)))
         contentType, body = encode_multipart_formdata(fields, files)
         producer = StringProducer(body)
         headers = http_headers.Headers({
@@ -247,14 +246,14 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
+                log.msg(f"VT Request failed: {response.code} {response.phrase}")
 
         def cbError(failure):
             failure.printTraceback()
 
         def processResult(result):
             if self.debug:
-                log.msg("VT postfile result: {}".format(result))
+                log.msg(f"VT postfile result: {result}")
             result = result.decode('utf8')
             j = json.loads(result)
             # This is always a new resource, since we did the scan before
@@ -273,7 +272,7 @@ class Output(cowrie.core.output.Output):
         """
         Check url scan report for a hash
         """
-        vtUrl = '{0}url/report'.format(VTAPI_URL).encode('utf8')
+        vtUrl = f'{VTAPI_URL}url/report'.encode('utf8')
         headers = http_headers.Headers({'User-Agent': [COWRIE_USER_AGENT]})
         fields = {'apikey': self.apiKey, 'resource': entry['url'], 'scan': 1, 'allinfo': 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -288,7 +287,7 @@ class Output(cowrie.core.output.Output):
                 d.addCallback(cbBody)
                 return d
             else:
-                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
+                log.msg(f"VT Request failed: {response.code} {response.phrase}")
 
         def cbBody(body):
             """
@@ -311,7 +310,7 @@ class Output(cowrie.core.output.Output):
             Extract the information we need from the body
             """
             if self.debug:
-                log.msg("VT scanurl result: {}".format(result))
+                log.msg(f"VT scanurl result: {result}")
             result = result.decode('utf8')
             j = json.loads(result)
             log.msg("VT: {}".format(j['verbose_msg']))
@@ -361,7 +360,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a comment to VirusTotal with Twisted
         """
-        vtUrl = '{0}comments/put'.format(VTAPI_URL).encode('utf8')
+        vtUrl = f'{VTAPI_URL}comments/put'.encode('utf8')
         parameters = {
             "resource": resource,
             "comment": self.commenttext,
@@ -387,14 +386,14 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg("VT Request failed: {} {}".format(response.code, response.phrase))
+                log.msg(f"VT Request failed: {response.code} {response.phrase}")
 
         def cbError(failure):
             failure.printTraceback()
 
         def processResult(result):
             if self.debug:
-                log.msg("VT postcomment result: {}".format(result))
+                log.msg(f"VT postcomment result: {result}")
             result = result.decode('utf8')
             j = json.loads(result)
             return j['response_code']
@@ -411,7 +410,7 @@ class WebClientContextFactory(ClientContextFactory):
 
 
 @implementer(IBodyProducer)
-class StringProducer(object):
+class StringProducer:
 
     def __init__(self, body):
         self.body = body

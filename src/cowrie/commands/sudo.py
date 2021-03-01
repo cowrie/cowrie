@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 import getopt
 
 from cowrie.shell.command import HoneyPotCommand
@@ -57,12 +55,12 @@ class command_sudo(HoneyPotCommand):
 
     def short_help(self):
         for ln in sudo_shorthelp:
-            self.errorWrite('{0}\n'.format(ln))
+            self.errorWrite(f'{ln}\n')
         self.exit()
 
     def long_help(self):
         for ln in sudo_longhelp:
-            self.errorWrite('{0}\n'.format(ln))
+            self.errorWrite(f'{ln}\n')
         self.exit()
 
     def version(self):

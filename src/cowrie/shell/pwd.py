@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
 
 from binascii import crc32
 from random import randint, seed
@@ -36,13 +35,13 @@ from twisted.python import log
 from cowrie.core.config import CowrieConfig
 
 
-class Passwd(object):
+class Passwd:
     """
     This class contains code to handle the users and their properties in
     /etc/passwd. Note that contrary to the name, it does not handle any
     passwords.
     """
-    passwd_file = '%s/etc/passwd' % (CowrieConfig().get('honeypot', 'contents_path'),)
+    passwd_file = '{}/etc/passwd'.format(CowrieConfig().get('honeypot', 'contents_path'))
 
     def __init__(self):
         self.load()
@@ -52,7 +51,7 @@ class Passwd(object):
         Load /etc/passwd
         """
         self.passwd = []
-        with open(self.passwd_file, 'r') as f:
+        with open(self.passwd_file) as f:
             while True:
                 rawline = f.readline()
                 if not rawline:
@@ -138,12 +137,12 @@ class Passwd(object):
         return e
 
 
-class Group(object):
+class Group:
     """
     This class contains code to handle the groups and their properties in
     /etc/group.
     """
-    group_file = '%s/etc/group' % (CowrieConfig().get('honeypot', 'contents_path'),)
+    group_file = '{}/etc/group'.format(CowrieConfig().get('honeypot', 'contents_path'))
 
     def __init__(self):
         self.load()
@@ -153,7 +152,7 @@ class Group(object):
         Load /etc/group
         """
         self.group = []
-        with open(self.group_file, 'r') as f:
+        with open(self.group_file) as f:
             while True:
                 rawline = f.readline()
                 if not rawline:

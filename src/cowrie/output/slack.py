@@ -26,7 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
 
 import json
 import time
@@ -59,5 +58,5 @@ class Output(cowrie.core.output.Output):
         self.sc.api_call(
             "chat.postMessage",
             channel=self.slack_channel,
-            text="%s %s" % (time.strftime('%Y-%m-%d %H:%M:%S'), json.dumps(logentry, indent=4, sort_keys=True))
+            text="{} {}".format(time.strftime('%Y-%m-%d %H:%M:%S'), json.dumps(logentry, indent=4, sort_keys=True))
         )

@@ -3,13 +3,12 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
 
 
-class Container(object):
+class Container:
     """
     This class is placeholder for creating a fake interface
     @var host Client fake infomration
@@ -52,7 +51,7 @@ class FakeTransport(proto_helpers.StringTransport):
                   'HOME', 'INSERT', 'DELETE', 'END', 'PGUP', 'PGDN',
                   'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9',
                   'F10', 'F11', 'F12'):
-        exec('%s = object()' % (keyID,))
+        exec(f'{keyID} = object()')
 
     TAB = '\x09'
     BACKSPACE = '\x08'

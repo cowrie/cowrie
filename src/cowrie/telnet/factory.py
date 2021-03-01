@@ -5,7 +5,6 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
-from __future__ import absolute_import, division
 
 import time
 
@@ -20,7 +19,7 @@ from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
-class HoneyPotTelnetFactory(protocol.ServerFactory, object):
+class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
@@ -30,14 +29,14 @@ class HoneyPotTelnetFactory(protocol.ServerFactory, object):
     def __init__(self, backend, pool_handler):
         self.backend = backend
         self.pool_handler = pool_handler
-        super(HoneyPotTelnetFactory, self).__init__()
+        super().__init__()
 
     # TODO logging clarity can be improved: see what SSH does
     def logDispatch(self, *msg, **args):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'T{0}'.format(str(args['sessionno']))
+        args['sessionno'] = 'T{}'.format(str(args['sessionno']))
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
@@ -46,7 +45,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory, object):
             honeyfs = CowrieConfig().get('honeypot', 'contents_path')
             issuefile = honeyfs + "/etc/issue.net"
             self.banner = open(issuefile, 'rb').read()
-        except IOError:
+        except OSError:
             self.banner = b""
 
         # For use by the uptime command

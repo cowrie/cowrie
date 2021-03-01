@@ -6,7 +6,6 @@ This module contains a subclass of SSHChannel with additional logging
 and session size limiting
 """
 
-from __future__ import absolute_import, division
 
 import time
 
@@ -40,7 +39,7 @@ class CowrieSSHChannel(channel.SSHChannel):
         @return Pretty representation of this object as a string
         @rtype: L{str}
         """
-        return "Cowrie SSH Channel {}".format(self.name)
+        return f"Cowrie SSH Channel {self.name}"
 
     def __init__(self, *args, **kw):
         """
@@ -50,8 +49,8 @@ class CowrieSSHChannel(channel.SSHChannel):
 
     def channelOpen(self, specificData):
         self.startTime = time.time()
-        self.ttylogFile = '%s/tty/%s-%s-%s.log' % (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-                                                   self.conn.transport.transportId, self.id)
+        self.ttylogFile = '{}/tty/{}-{}-{}.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
+                                                       self.conn.transport.transportId, self.id)
         log.msg(eventid='cowrie.log.open',
                 ttylog=self.ttylogFile,
                 format="Opening TTY Log: %(ttylog)s")
@@ -76,7 +75,7 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg("Data upload limit reached for channel {}".format(self.id))
+            log.msg(f"Data upload limit reached for channel {self.id}")
             self.eofReceived()
             return
 
