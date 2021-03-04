@@ -28,7 +28,7 @@ Actual Python packages are installed later.
 On Debian based systems (last verified on Debian 10, 2019-08-18):
 For a Python3 based environment::
 
-    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
+    $ sudo apt-get install git libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind python3-venv
 
 Step 2: Create a user account
 *****************************
@@ -73,7 +73,7 @@ Next you need to create your virtual environment::
 
     $ pwd
     /home/cowrie/cowrie
-    $ virtualenv --python=python3 cowrie-env
+    $ python3 -m venv cowrie-env
     New python executable in ./cowrie/cowrie-env/bin/python
     Installing setuptools, pip, wheel...done.
 
