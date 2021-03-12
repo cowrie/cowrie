@@ -19,7 +19,6 @@ from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log, randbytes
-from twisted.python.compat import _bytesChr as chr
 
 from cowrie.core.config import CowrieConfig
 
@@ -134,7 +133,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self._blockedByKeyExchange.append((messageType, payload))
                 return
 
-        payload = chr(messageType) + payload
+        payload = bytes((messageType,)) + payload
         if self.outgoingCompression:
             payload = (self.outgoingCompression.compress(payload)
                        + self.outgoingCompression.flush(2))

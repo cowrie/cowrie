@@ -10,7 +10,6 @@ from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.internet import defer
-from twisted.python.compat import _bytesChr as chr
 from twisted.python.failure import Failure
 
 from cowrie.core import credentials
@@ -140,7 +139,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         packet += struct.pack('>L', len(resp))
         for prompt, echo in resp:
             packet += NS(prompt)
-            packet += chr(echo)
+            packet += bytes((echo,))
         self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
         self._pamDeferred = defer.Deferred()
         return self._pamDeferred
