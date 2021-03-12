@@ -22,7 +22,7 @@ pymongo==3.11.3
 rethinkdb==2.4.8
 
 # s3
-botocore==1.20.25
+botocore==1.20.8
 
 # slack
 slackclient==2.9.3
@@ -38,5 +38,6 @@ python-snappy==0.6.0
 wokkel==18.0.0
 
 # misp
-pymisp==2.4.140
+pymisp==2.4.138
 
+pyyaml>=4.2b1 # not directly required, pinned by Snyk to avoid a vulnerability
