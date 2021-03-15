@@ -99,7 +99,7 @@ class fseditCmd(cmd.Cmd):
             sys.exit(1)
 
         try:
-            self.fs = pickle.load(pickle_file)
+            self.fs = pickle.load(pickle_file, encoding="utf-8")
         except:
             print(("Unable to load file '%s'. " + \
                     "Are you sure it is a valid pickle file?") % \
