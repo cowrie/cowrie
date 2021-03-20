@@ -280,7 +280,7 @@ class command_ps(HoneyPotCommand):
                       '%s'.ljust(12 - len('1024')) % '1024',
                       '%s'.ljust(10 - len('?')) % '?',
                       '%s'.ljust(8 - len('Ss')) % 'Ss',
-                      '%s'.ljust(8 - len('July22')) % 'July22',
+                      '%s'.ljust(8 - len('Jul22')) % 'Jul22',
                       '%s'.ljust(8 - len('0:00')) % '0:00',
                       '%s'.ljust(30 - len('/usr/sbin/sshd: %s@pts/0')) % '/usr/sbin/sshd: %s@pts/0' % user)
             output_array.append(output)
