@@ -1,5 +1,5 @@
 # csirtg
-csirtgsdk==0.0.0a22 # TODO: csirtgsdk need to be updated for current API
+csirtgsdk==1.1.5 # TODO: csirtgsdk need to be updated for current API
 
 # dshield
 requests==2.25.1
@@ -22,7 +22,7 @@ pymongo==3.11.3
 rethinkdb==2.4.8
 
 # s3
-botocore==1.20.25
+botocore==1.20.33
 
 # slack
 slackclient==2.9.3
