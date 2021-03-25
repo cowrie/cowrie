@@ -41,7 +41,10 @@ class Passwd:
     /etc/passwd. Note that contrary to the name, it does not handle any
     passwords.
     """
-    passwd_file = '{}/etc/passwd'.format(CowrieConfig().get('honeypot', 'contents_path'))
+
+    passwd_file = "{}/etc/passwd".format(
+        CowrieConfig().get("honeypot", "contents_path")
+    )
 
     def __init__(self):
         self.load()
@@ -61,15 +64,22 @@ class Passwd:
                 if not line:
                     continue
 
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
 
-                if len(line.split(':')) != 7:
-                    log.msg("Error parsing line `"+line+"` in <honeyfs>/etc/passwd")
+                if len(line.split(":")) != 7:
+                    log.msg("Error parsing line `" + line + "` in <honeyfs>/etc/passwd")
                     continue
 
-                (pw_name, pw_passwd, pw_uid, pw_gid, pw_gecos, pw_dir,
-                 pw_shell) = line.split(':')
+                (
+                    pw_name,
+                    pw_passwd,
+                    pw_uid,
+                    pw_gid,
+                    pw_gecos,
+                    pw_dir,
+                    pw_shell,
+                ) = line.split(":")
 
                 e = {}
                 e["pw_name"] = pw_name
@@ -142,7 +152,8 @@ class Group:
     This class contains code to handle the groups and their properties in
     /etc/group.
     """
-    group_file = '{}/etc/group'.format(CowrieConfig().get('honeypot', 'contents_path'))
+
+    group_file = "{}/etc/group".format(CowrieConfig().get("honeypot", "contents_path"))
 
     def __init__(self):
         self.load()
@@ -162,10 +173,10 @@ class Group:
                 if not line:
                     continue
 
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
 
-                (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(':')
+                (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(":")
 
                 e = {}
                 e["gr_name"] = gr_name

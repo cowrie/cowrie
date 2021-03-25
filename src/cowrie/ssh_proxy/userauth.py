@@ -26,9 +26,11 @@ class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer):
         We only want to return a success to the user, no service needs to be set.
         Those will be proxied back to the backend.
         """
-        self.transport.sendPacket(52, b'')
+        self.transport.sendPacket(52, b"")
         self.transport.frontendAuthenticated = True
 
         # TODO store this somewhere else, and do not call from here
         if self.transport.sshParse.client:
-            self.transport.sshParse.client.authenticateBackend(self.user, self.triedPassword)
+            self.transport.sshParse.client.authenticateBackend(
+                self.user, self.triedPassword
+            )

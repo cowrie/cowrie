@@ -8,15 +8,14 @@ commands = {}
 
 
 class command_ethtool(HoneyPotCommand):
-
     def call(self):
         func = self.do_ethtool_help
         for x in self.args:
-            if x.startswith('lo'):
+            if x.startswith("lo"):
                 func = self.do_ethtool_lo
-            if x.startswith('eth0'):
+            if x.startswith("eth0"):
                 func = self.do_ethtool_eth0
-            if x.startswith('eth1'):
+            if x.startswith("eth1"):
                 func = self.do_ethtool_eth1
         func()
 
@@ -24,16 +23,21 @@ class command_ethtool(HoneyPotCommand):
         """
         No real help output.
         """
-        self.write("""ethtool: bad command line argument(s)
-For more information run ethtool -h\n""")
+        self.write(
+            """ethtool: bad command line argument(s)
+For more information run ethtool -h\n"""
+        )
 
     def do_ethtool_lo(self):
 
-        self.write("""Settings for lo:
-            Link detected: yes\n""")
+        self.write(
+            """Settings for lo:
+            Link detected: yes\n"""
+        )
 
     def do_ethtool_eth0(self):
-        self.write("""Settings for eth0:
+        self.write(
+            """Settings for eth0:
 Supported ports: [ TP MII ]
 Supported link modes:   10baseT/Half 10baseT/Full
                         100baseT/Half 100baseT/Full
@@ -60,16 +64,19 @@ Supports Wake-on: pumbg
 Wake-on: g
 Current message level: 0x00000033 (51)
                        drv probe ifdown ifup
-Link detected: yes\n""")
+Link detected: yes\n"""
+        )
 
     def do_ethtool_eth1(self):
-        self.write("""Settings for eth1:
+        self.write(
+            """Settings for eth1:
 Cannot get device settings: No such device
 Cannot get wake-on-lan settings: No such device
 Cannot get message level: No such device
 Cannot get link status: No such device
-No data available\n""")
+No data available\n"""
+        )
 
 
-commands['/sbin/ethtool'] = command_ethtool
-commands['ethtool'] = command_ethtool
+commands["/sbin/ethtool"] = command_ethtool
+commands["ethtool"] = command_ethtool

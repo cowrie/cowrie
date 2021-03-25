@@ -24,8 +24,12 @@ class HoneyPotSSHSession(session.SSHSession):
         value, rest = getNS(rest)
         if rest:
             raise ValueError("Bad data given in env request")
-        log.msg(eventid='cowrie.client.var', format="request_env: %(name)s=%(value)s",
-                name=name, value=value)
+        log.msg(
+            eventid="cowrie.client.var",
+            format="request_env: %(name)s=%(value)s",
+            name=name,
+            value=value,
+        )
         # FIXME: This only works for shell, not for exec command
         if self.session:
             self.session.environ[name.decode("utf-8")] = value.decode("utf-8")

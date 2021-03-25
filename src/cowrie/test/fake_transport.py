@@ -16,6 +16,7 @@ class Container:
     @var otherVersionString version
     @var
     """
+
     otherVersionString = "1.0"
     transportId = "test-suite"
     id = "test-suite"
@@ -39,6 +40,7 @@ class FakeTransport(proto_helpers.StringTransport):
     """
     Fake transport with abortConnection() method.
     """
+
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
     redirFiles = set()
@@ -47,14 +49,34 @@ class FakeTransport(proto_helpers.StringTransport):
     void = object()
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 
-    for keyID in ('UP_ARROW', 'DOWN_ARROW', 'RIGHT_ARROW', 'LEFT_ARROW',
-                  'HOME', 'INSERT', 'DELETE', 'END', 'PGUP', 'PGDN',
-                  'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9',
-                  'F10', 'F11', 'F12'):
-        exec(f'{keyID} = object()')
+    for keyID in (
+        "UP_ARROW",
+        "DOWN_ARROW",
+        "RIGHT_ARROW",
+        "LEFT_ARROW",
+        "HOME",
+        "INSERT",
+        "DELETE",
+        "END",
+        "PGUP",
+        "PGDN",
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F9",
+        "F10",
+        "F11",
+        "F12",
+    ):
+        exec(f"{keyID} = object()")
 
-    TAB = '\x09'
-    BACKSPACE = '\x08'
+    TAB = "\x09"
+    BACKSPACE = "\x08"
 
     modes = {}
 
@@ -118,22 +140,25 @@ class FakeTransport(proto_helpers.StringTransport):
         self.x = self.y = 0
         self.modes = {}
         self.privateModes = {}
-        self.setPrivateModes([insults.privateModes.AUTO_WRAP,
-                              insults.privateModes.CURSOR_MODE])
-        self.numericKeypad = 'app'
+        self.setPrivateModes(
+            [insults.privateModes.AUTO_WRAP, insults.privateModes.CURSOR_MODE]
+        )
+        self.numericKeypad = "app"
         self.activeCharset = insults.G0
         self.graphicRendition = {
-            'bold': False,
-            'underline': False,
-            'blink': False,
-            'reverseVideo': False,
-            'foreground': self.WHITE,
-            'background': self.BLACK}
+            "bold": False,
+            "underline": False,
+            "blink": False,
+            "reverseVideo": False,
+            "foreground": self.WHITE,
+            "background": self.BLACK,
+        }
         self.charsets = {
             insults.G0: insults.CS_US,
             insults.G1: insults.CS_US,
             insults.G2: insults.CS_ALTERNATE,
-            insults.G3: insults.CS_ALTERNATE_SPECIAL}
+            insults.G3: insults.CS_ALTERNATE_SPECIAL,
+        }
         self.eraseDisplay()
 
     def eraseDisplay(self):
@@ -146,5 +171,4 @@ class FakeTransport(proto_helpers.StringTransport):
         return True
 
     def _emptyLine(self, width):
-        return [(self.void, self._currentFormattingState())
-                for i in range(width)]
+        return [(self.void, self._currentFormattingState()) for i in range(width)]

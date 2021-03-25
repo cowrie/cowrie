@@ -18,8 +18,9 @@ class Output(cowrie.core.output.Output):
         """
         Start Output Plugin
         """
-        self.timeout = [CowrieConfig().getint(
-            'output_reversedns', 'timeout', fallback=3)]
+        self.timeout = [
+            CowrieConfig().getint("output_reversedns", "timeout", fallback=3)
+        ]
 
     def stop(self):
         """
@@ -31,19 +32,21 @@ class Output(cowrie.core.output.Output):
         """
         Process log entry
         """
+
         def processConnect(result):
             """
             Create log messages for connect events
             """
             payload = result[0][0].payload
             log.msg(
-                eventid='cowrie.reversedns.connect',
-                session=entry['session'],
+                eventid="cowrie.reversedns.connect",
+                session=entry["session"],
                 format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s"
-                       " ttl=%(ttl)i",
-                src_ip=entry['src_ip'],
+                " ttl=%(ttl)i",
+                src_ip=entry["src_ip"],
                 ptr=str(payload.name),
-                ttl=payload.ttl)
+                ttl=payload.ttl,
+            )
 
         def processForward(result):
             """
@@ -51,13 +54,14 @@ class Output(cowrie.core.output.Output):
             """
             payload = result[0][0].payload
             log.msg(
-                eventid='cowrie.reversedns.forward',
-                session=entry['session'],
+                eventid="cowrie.reversedns.forward",
+                session=entry["session"],
                 format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s"
-                       " ttl=%(ttl)i",
-                dst_ip=entry['dst_ip'],
+                " ttl=%(ttl)i",
+                dst_ip=entry["dst_ip"],
                 ptr=str(payload.name),
-                ttl=payload.ttl)
+                ttl=payload.ttl,
+            )
 
         def cbError(failure):
             if failure.type == defer.TimeoutError:
@@ -69,13 +73,13 @@ class Output(cowrie.core.output.Output):
                 log.msg("reversedns: Error in DNS lookup")
                 failure.printTraceback()
 
-        if entry['eventid'] == 'cowrie.session.connect':
-            d = self.reversedns(entry['src_ip'])
+        if entry["eventid"] == "cowrie.session.connect":
+            d = self.reversedns(entry["src_ip"])
             if d is not None:
                 d.addCallback(processConnect)
                 d.addErrback(cbError)
-        elif entry['eventid'] == 'cowrie.direct-tcpip.request':
-            d = self.reversedns(entry['dst_ip'])
+        elif entry["eventid"] == "cowrie.direct-tcpip.request":
+            d = self.reversedns(entry["dst_ip"])
             if d is not None:
                 d.addCallback(processForward)
                 d.addErrback(cbError)

@@ -15,7 +15,7 @@ from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 
-arch = 'x86_64'
+arch = "x86_64"
 commands = {}
 
 
@@ -39,9 +39,9 @@ class command_yum(HoneyPotCommand):
     def start(self):
         if len(self.args) == 0:
             self.do_help()
-        elif len(self.args) > 0 and self.args[0] == 'version':
+        elif len(self.args) > 0 and self.args[0] == "version":
             self.do_version()
-        elif len(self.args) > 0 and self.args[0] == 'install':
+        elif len(self.args) > 0 and self.args[0] == "install":
             self.do_install()
         else:
             self.do_locked()
@@ -56,21 +56,25 @@ class command_yum(HoneyPotCommand):
     @inlineCallbacks
     def do_version(self):
         self.write(
-            'Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n')
+            "Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n"
+        )
         randnum = random.randint(100, 900)
         randnum2 = random.randint(100, 900)
-        randhash = hashlib.sha1(b'{}'.format(randnum)).hexdigest()
-        randhash2 = hashlib.sha1(b'{}'.format(randnum2)).hexdigest()
+        randhash = hashlib.sha1(b"{}".format(randnum)).hexdigest()
+        randhash2 = hashlib.sha1(b"{}".format(randnum2)).hexdigest()
         yield self.sleep(1, 2)
-        self.write('Installed: 7/{}  {}:{}\n'.format(arch, random.randint(500, 800), randhash))
-        self.write(f'Group-Installed: yum 13:{randhash2}\n')
-        self.write('version\n')
+        self.write(
+            "Installed: 7/{}  {}:{}\n".format(arch, random.randint(500, 800), randhash)
+        )
+        self.write(f"Group-Installed: yum 13:{randhash2}\n")
+        self.write("version\n")
         self.exit()
 
     @inlineCallbacks
     def do_help(self):
         yield self.sleep(1, 2)
-        self.write('''Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock
+        self.write(
+            """Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock
 You need to give some command
 Usage: yum [options] COMMAND
 
@@ -170,7 +174,8 @@ Options:
   Plugin Options:
     --changelog         Show changelog delta of updated packages
     --samearch-priorities
-                        Priority-exclude packages based on name + arch\n''')
+                        Priority-exclude packages based on name + arch\n"""
+        )
         self.exit()
 
     @inlineCallbacks
@@ -178,105 +183,146 @@ Options:
         if len(self.args) <= 1:
             yield self.sleep(1, 2)
             self.write(
-                'Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n')
+                "Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n"
+            )
             yield self.sleep(1, 2)
-            self.write('Error: Need to pass a list of pkgs to install\n')
-            self.write(' Mini usage:\n')
-            self.write('install PACKAGE...\n')
-            self.write('Install a package or packages on your system\n')
-            self.write('aliases: install-n, install-na, install-nevra\n')
+            self.write("Error: Need to pass a list of pkgs to install\n")
+            self.write(" Mini usage:\n")
+            self.write("install PACKAGE...\n")
+            self.write("Install a package or packages on your system\n")
+            self.write("aliases: install-n, install-na, install-nevra\n")
             self.exit()
             return
 
         global packages
         packages = {}
-        for y in [re.sub('[^A-Za-z0-9]', '', x) for x in self.args[1:]]:
+        for y in [re.sub("[^A-Za-z0-9]", "", x) for x in self.args[1:]]:
             packages[y] = {
-                'version': '{}.{}-{}'.format(random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)),
-                'size': random.randint(100, 900),
-                'release': '{}.el7'.format(random.randint(1, 15))
+                "version": "{}.{}-{}".format(
+                    random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)
+                ),
+                "size": random.randint(100, 900),
+                "release": "{}.el7".format(random.randint(1, 15)),
             }
-        totalsize = sum([packages[x]['size'] for x in packages])
-        repository = 'base'
+        totalsize = sum([packages[x]["size"] for x in packages])
+        repository = "base"
 
         yield self.sleep(1)
         self.write(
-            'Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n')
+            "Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n"
+        )
         yield self.sleep(2.2)
-        self.write('{} packages excluded due to repository priority protections\n'.format(random.randint(200, 300)))
+        self.write(
+            "{} packages excluded due to repository priority protections\n".format(
+                random.randint(200, 300)
+            )
+        )
         yield self.sleep(0.9)
-        self.write('Resolving Dependencies\n')
-        self.write('--> Running transaction check\n')
+        self.write("Resolving Dependencies\n")
+        self.write("--> Running transaction check\n")
         for p in packages:
-            self.write('---> Package {}.{} {}.{} will be installed\n'.format(p, packages[p]['version'], arch,
-                       packages[p]['release']))
-        self.write('--> Finished Dependency Resolution\n')
-        self.write('Beginning Kernel Module Plugin\n')
-        self.write('Finished Kernel Module Plugin\n\n')
+            self.write(
+                "---> Package {}.{} {}.{} will be installed\n".format(
+                    p, packages[p]["version"], arch, packages[p]["release"]
+                )
+            )
+        self.write("--> Finished Dependency Resolution\n")
+        self.write("Beginning Kernel Module Plugin\n")
+        self.write("Finished Kernel Module Plugin\n\n")
 
-        self.write('Dependencies Resolved\n\n')
+        self.write("Dependencies Resolved\n\n")
 
         # TODO: Is this working on all screens?
-        self.write('{}\n'.format('=' * 176))
+        self.write("{}\n".format("=" * 176))
         # 195 characters
-        self.write(
-            ' Package\t\t\tArch\t\t\tVersion\t\t\t\tRepository\t\t\tSize\n')
-        self.write('{}\n'.format('=' * 176))
-        self.write('Installing:\n')
+        self.write(" Package\t\t\tArch\t\t\tVersion\t\t\t\tRepository\t\t\tSize\n")
+        self.write("{}\n".format("=" * 176))
+        self.write("Installing:\n")
         for p in packages:
-            self.write(' {}\t\t\t\t{}\t\t\t{}-{}\t\t\t{}\t\t\t\t{} k\n'.format(p, arch, packages[p]['version'],
-                       packages[p]['release'], repository, packages[p]['size']))
-        self.write('\n')
-        self.write('Transaction Summary\n')
-        self.write('{}\n'.format('=' * 176))
-        self.write('Install  {} Packages\n\n'.format(len(packages)))
+            self.write(
+                " {}\t\t\t\t{}\t\t\t{}-{}\t\t\t{}\t\t\t\t{} k\n".format(
+                    p,
+                    arch,
+                    packages[p]["version"],
+                    packages[p]["release"],
+                    repository,
+                    packages[p]["size"],
+                )
+            )
+        self.write("\n")
+        self.write("Transaction Summary\n")
+        self.write("{}\n".format("=" * 176))
+        self.write("Install  {} Packages\n\n".format(len(packages)))
 
-        self.write(f'Total download size: {totalsize} k\n')
-        self.write('Installed size: {:.1f} M\n'.format(totalsize * 0.0032))
-        self.write('Is this ok [y/d/N]: ')
+        self.write(f"Total download size: {totalsize} k\n")
+        self.write("Installed size: {:.1f} M\n".format(totalsize * 0.0032))
+        self.write("Is this ok [y/d/N]: ")
         # Assume 'yes'
 
     @inlineCallbacks
     def lineReceived(self, line):
-        log.msg('INPUT (yum):', line)
+        log.msg("INPUT (yum):", line)
 
-        self.write('Downloading packages:\n')
+        self.write("Downloading packages:\n")
         yield self.sleep(0.5, 1)
-        self.write('Running transaction check\n')
+        self.write("Running transaction check\n")
         yield self.sleep(0.5, 1)
-        self.write('Running transaction test\n')
-        self.write('Transaction test succeeded\n')
-        self.write('Running transaction\n')
+        self.write("Running transaction test\n")
+        self.write("Transaction test succeeded\n")
+        self.write("Running transaction\n")
         i = 1
         for p in packages:
-            self.write('  Installing : {}-{}-{}.{} \t\t\t\t {}/{} \n'.format
-                       (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
+            self.write(
+                "  Installing : {}-{}-{}.{} \t\t\t\t {}/{} \n".format(
+                    p,
+                    packages[p]["version"],
+                    packages[p]["release"],
+                    arch,
+                    i,
+                    len(packages),
+                )
+            )
             yield self.sleep(0.5, 1)
             i += 1
         i = 1
         for p in packages:
-            self.write('  Verifying : {}-{}-{}.{} \t\t\t\t {}/{} \n'.format
-                       (p, packages[p]['version'], packages[p]['release'], arch, i, len(packages)))
+            self.write(
+                "  Verifying : {}-{}-{}.{} \t\t\t\t {}/{} \n".format(
+                    p,
+                    packages[p]["version"],
+                    packages[p]["release"],
+                    arch,
+                    i,
+                    len(packages),
+                )
+            )
             yield self.sleep(0.5, 1)
             i += 1
-        self.write('\n')
-        self.write('Installed:\n')
+        self.write("\n")
+        self.write("Installed:\n")
         for p in packages:
-            self.write('  {}.{} {}:{}-{} \t\t'.format
-                       (p, arch, random.randint(0, 2), packages[p]['version'], packages[p]['release']))
-        self.write('\n')
-        self.write('Complete!\n')
+            self.write(
+                "  {}.{} {}:{}-{} \t\t".format(
+                    p,
+                    arch,
+                    random.randint(0, 2),
+                    packages[p]["version"],
+                    packages[p]["release"],
+                )
+            )
+        self.write("\n")
+        self.write("Complete!\n")
         self.exit()
 
     def do_locked(self):
         self.errorWrite(
-            'Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n')
-        self.errorWrite('ovl: Error while doing RPMdb copy-up:\n')
-        self.errorWrite(
-            '[Errno 13] Permission denied: \'/var/lib/rpm/.dbenv.lock\' \n')
-        self.errorWrite('You need to be root to perform this command.\n')
+            "Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n"
+        )
+        self.errorWrite("ovl: Error while doing RPMdb copy-up:\n")
+        self.errorWrite("[Errno 13] Permission denied: '/var/lib/rpm/.dbenv.lock' \n")
+        self.errorWrite("You need to be root to perform this command.\n")
         self.exit()
 
 
-commands['/usr/bin/yum'] = command_yum
-commands['yum'] = command_yum
+commands["/usr/bin/yum"] = command_yum
+commands["yum"] = command_yum

@@ -24,28 +24,30 @@ class command_gcc(HoneyPotCommand):
 
     # Random binary data, which looks awesome. You could change this to whatever you want, but this
     # data will be put in the actual file and thus exposed to our hacker when he\she cats the file.
-    RANDOM_DATA = "\x6a\x00\x48\x89\xe5\x48\x83\xe4\xf0\x48\x8b\x7d\x08\x48\x8d\x75\x10\x89\xfa" \
-                  "\x83\xc2\x01\xc1\xe2\x03\x48\x01\xf2\x48\x89\xd1\xeb\x04\x48\x83\xc1\x08\x48" \
-                  "\x83\x39\x00\x75\xf6\x48\x83\xc1\x08\xe8\x0c\x00\x00\x00\x89\xc7\xe8\xb9\x00" \
-                  "\x00\x00\xf4\x90\x90\x90\x90\x55\x48\x89\xe5\x48\x83\xec\x40\x89\x7d\xfc\x48" \
-                  "\x89\x75\xf0\x48\x8b\x45\xf0\x48\x8b\x00\x48\x83\xf8\x00\x75\x0c\xb8\x00\x00" \
-                  "\x00\x00\x89\xc7\xe8\x8c\x00\x00\x00\x48\x8b\x45\xf0\x48\x8b\x40\x08\x30\xc9" \
-                  "\x48\x89\xc7\x88\xc8\xe8\x7e\x00\x00\x00\x89\xc1\x89\x4d\xdc\x48\x8d\x0d\xd8" \
-                  "\x01\x00\x00\x48\x89\xcf\x48\x89\x4d\xd0\xe8\x72\x00\x00\x00\x8b\x4d\xdc\x30" \
-                  "\xd2\x48\x8d\x3d\xa4\x00\x00\x00\x89\xce\x88\x55\xcf\x48\x89\xc2\x8a\x45\xcf" \
-                  "\xe8\x53\x00\x00\x00\x8b\x45\xdc\x88\x05\xc3\x01\x00\x00\x8b\x45\xdc\xc1\xe8" \
-                  "\x08\x88\x05\xb8\x01\x00\x00\x8b\x45\xdc\xc1\xe8\x10\x88\x05\xad\x01\x00\x00" \
-                  "\x8b\x45\xdc\xc1\xe8\x18\x88\x05\xa2\x01\x00\x00\x48\x8b\x45\xd0\x48\x89\x45" \
-                  "\xe0\x48\x8b\x45\xe0\xff\xd0\x8b\x45\xec\x48\x83\xc4\x40\x5d\xc3\xff\x25\x3e" \
-                  "\x01\x00\x00\xff\x25\x40\x01\x00\x00\xff\x25\x42\x01\x00\x00\xff\x25\x44\x01" \
-                  "\x00\x00\x4c\x8d\x1d\x1d\x01\x00\x00\x41\x53\xff\x25\x0d\x01\x00\x00\x90\x68" \
-                  "\x00\x00\x00\x00\xe9\xe6\xff\xff\xff\x68\x0c\x00\x00\x00\xe9\xdc\xff\xff\xff" \
-                  "\x68\x1d\x00\x00\x00\xe9\xd2\xff\xff\xff\x68\x2b\x00\x00\x00\xe9\xc8\xff\xff" \
-                  "\xff\x01\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00" \
-                  "\x00\x00\x1c\x00\x00\x00\x02\x00\x00\x00\x00\x0e\x00\x00\x34\x00\x00\x00\x34" \
-                  "\x00\x00\x00\xf5\x0e\x00\x00\x00\x00\x00\x00\x34\x00\x00\x00\x03\x00\x00\x00" \
-                  "\x0c\x00\x02\x00\x14\x00\x02\x00\x00\x00\x00\x01\x40\x00\x00\x00\x00\x00\x00" \
-                  "\x01\x00\x00\x00"
+    RANDOM_DATA = (
+        "\x6a\x00\x48\x89\xe5\x48\x83\xe4\xf0\x48\x8b\x7d\x08\x48\x8d\x75\x10\x89\xfa"
+        "\x83\xc2\x01\xc1\xe2\x03\x48\x01\xf2\x48\x89\xd1\xeb\x04\x48\x83\xc1\x08\x48"
+        "\x83\x39\x00\x75\xf6\x48\x83\xc1\x08\xe8\x0c\x00\x00\x00\x89\xc7\xe8\xb9\x00"
+        "\x00\x00\xf4\x90\x90\x90\x90\x55\x48\x89\xe5\x48\x83\xec\x40\x89\x7d\xfc\x48"
+        "\x89\x75\xf0\x48\x8b\x45\xf0\x48\x8b\x00\x48\x83\xf8\x00\x75\x0c\xb8\x00\x00"
+        "\x00\x00\x89\xc7\xe8\x8c\x00\x00\x00\x48\x8b\x45\xf0\x48\x8b\x40\x08\x30\xc9"
+        "\x48\x89\xc7\x88\xc8\xe8\x7e\x00\x00\x00\x89\xc1\x89\x4d\xdc\x48\x8d\x0d\xd8"
+        "\x01\x00\x00\x48\x89\xcf\x48\x89\x4d\xd0\xe8\x72\x00\x00\x00\x8b\x4d\xdc\x30"
+        "\xd2\x48\x8d\x3d\xa4\x00\x00\x00\x89\xce\x88\x55\xcf\x48\x89\xc2\x8a\x45\xcf"
+        "\xe8\x53\x00\x00\x00\x8b\x45\xdc\x88\x05\xc3\x01\x00\x00\x8b\x45\xdc\xc1\xe8"
+        "\x08\x88\x05\xb8\x01\x00\x00\x8b\x45\xdc\xc1\xe8\x10\x88\x05\xad\x01\x00\x00"
+        "\x8b\x45\xdc\xc1\xe8\x18\x88\x05\xa2\x01\x00\x00\x48\x8b\x45\xd0\x48\x89\x45"
+        "\xe0\x48\x8b\x45\xe0\xff\xd0\x8b\x45\xec\x48\x83\xc4\x40\x5d\xc3\xff\x25\x3e"
+        "\x01\x00\x00\xff\x25\x40\x01\x00\x00\xff\x25\x42\x01\x00\x00\xff\x25\x44\x01"
+        "\x00\x00\x4c\x8d\x1d\x1d\x01\x00\x00\x41\x53\xff\x25\x0d\x01\x00\x00\x90\x68"
+        "\x00\x00\x00\x00\xe9\xe6\xff\xff\xff\x68\x0c\x00\x00\x00\xe9\xdc\xff\xff\xff"
+        "\x68\x1d\x00\x00\x00\xe9\xd2\xff\xff\xff\x68\x2b\x00\x00\x00\xe9\xc8\xff\xff"
+        "\xff\x01\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00"
+        "\x00\x00\x1c\x00\x00\x00\x02\x00\x00\x00\x00\x0e\x00\x00\x34\x00\x00\x00\x34"
+        "\x00\x00\x00\xf5\x0e\x00\x00\x00\x00\x00\x00\x34\x00\x00\x00\x03\x00\x00\x00"
+        "\x0c\x00\x02\x00\x14\x00\x02\x00\x00\x00\x00\x01\x40\x00\x00\x00\x00\x00\x00"
+        "\x01\x00\x00\x00"
+    )
 
     def start(self):
         """
@@ -81,7 +83,9 @@ class command_gcc(HoneyPotCommand):
 
         # Parse options or display no files
         try:
-            opts, args = getopt.gnu_getopt(self.args, 'ESchvgo:x:l:I:W:D:X:O:', ['help', 'version', 'param'])
+            opts, args = getopt.gnu_getopt(
+                self.args, "ESchvgo:x:l:I:W:D:X:O:", ["help", "version", "param"]
+            )
         except getopt.GetoptError:
             self.no_files()
             return
@@ -108,13 +112,15 @@ class command_gcc(HoneyPotCommand):
 
         # Check for *.c or *.cpp files
         for value in args:
-            if '.c' in value.lower():
+            if ".c" in value.lower():
                 sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
 
                 if self.fs.exists(sourcefile):
                     input_files = input_files + 1
                 else:
-                    self.write(f"{command_gcc.APP_NAME}: {value}: No such file or directory\n")
+                    self.write(
+                        f"{command_gcc.APP_NAME}: {value}: No such file or directory\n"
+                    )
                     complete = False
 
         # To generate, or not
@@ -122,7 +128,9 @@ class command_gcc(HoneyPotCommand):
             timeout = 0.1 + random.random()
 
             # Schedule call to make it more time consuming and real
-            self.scheduled = reactor.callLater(timeout, self.generate_file(output_file if output_file else 'a.out'))
+            self.scheduled = reactor.callLater(
+                timeout, self.generate_file(output_file if output_file else "a.out")
+            )
         else:
             self.no_files()
 
@@ -131,15 +139,17 @@ class command_gcc(HoneyPotCommand):
         Make sure the scheduled call will be canceled
         """
 
-        if getattr(self, 'scheduled', False):
+        if getattr(self, "scheduled", False):
             self.scheduled.cancel()
 
     def no_files(self):
         """
         Notify user there are no input files, and exit
         """
-        self.write("""gcc: fatal error: no input files
-compilation terminated.\n""")
+        self.write(
+            """gcc: fatal error: no input files
+compilation terminated.\n"""
+        )
         self.exit()
 
     def version(self, short):
@@ -148,37 +158,44 @@ compilation terminated.\n""")
         """
 
         # Generate version number
-        version = '.'.join([str(v) for v in command_gcc.APP_VERSION[:3]])
-        version_short = '.'.join([str(v) for v in command_gcc.APP_VERSION[:2]])
+        version = ".".join([str(v) for v in command_gcc.APP_VERSION[:3]])
+        version_short = ".".join([str(v) for v in command_gcc.APP_VERSION[:2]])
 
         if short:
-            data = ("""%s (Debian %s-8) %s
+            data = (
+                """%s (Debian %s-8) %s
 Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""",
-                    (command_gcc.APP_NAME, version, version))
+                (command_gcc.APP_NAME, version, version),
+            )
         else:
-            data = ("""Using built-in specs.
+            data = """Using built-in specs.
 COLLECT_GCC=gcc
 COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/4.7/lto-wrapper
 Target: x86_64-linux-gnu
 Configured with: ../src/configure -v --with-pkgversion=\'Debian {}-5\' --with-bugurl=file:///usr/share/doc/gcc-{}/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-{} --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/{} --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-objc-gc --with-arch-32=i586 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
 Thread model: posix
-gcc version {} (Debian {}-5)""".format(version, version_short, version_short, version_short, version, version))  # noqa: E501
+gcc version {} (Debian {}-5)""".format(
+                version, version_short, version_short, version_short, version, version
+            )  # noqa: E501
 
         # Write
-        self.write(f'{data}\n')
+        self.write(f"{data}\n")
         self.exit()
 
     def generate_file(self, outfile):
         data = ""
         # TODO: make sure it is written to temp file, not downloads
-        tmp_fname = '%s_%s_%s_%s' % \
-                    (time.strftime('%Y%m%d%H%M%S'),
-                     self.protocol.getProtoTransport().transportId,
-                     self.protocol.terminal.transport.session.id,
-                     re.sub('[^A-Za-z0-9]', '_', outfile))
-        safeoutfile = os.path.join(CowrieConfig().get('honeypot', 'download_path'), tmp_fname)
+        tmp_fname = "%s_%s_%s_%s" % (
+            time.strftime("%Y%m%d%H%M%S"),
+            self.protocol.getProtoTransport().transportId,
+            self.protocol.terminal.transport.session.id,
+            re.sub("[^A-Za-z0-9]", "_", outfile),
+        )
+        safeoutfile = os.path.join(
+            CowrieConfig().get("honeypot", "download_path"), tmp_fname
+        )
 
         # Data contains random garbage from an actual file, so when
         # catting the file, you'll see some 'real' compiled data
@@ -189,7 +206,7 @@ gcc version {} (Debian {}-5)""".format(version, version_short, version_short, ve
                 data = data + command_gcc.RANDOM_DATA
 
         # Write random data
-        with open(safeoutfile, 'wb') as f:
+        with open(safeoutfile, "wb") as f:
             f.write(data)
 
         # Output file
@@ -223,7 +240,8 @@ gcc version {} (Debian {}-5)""".format(version, version_short, version_short, ve
         Print help info, and exit
         """
 
-        self.write("""Usage: gcc [options] file...
+        self.write(
+            """Usage: gcc [options] file...
 Options:
   -pass-exit-codes         Exit with highest error code from a phase
   --help                   Display this information
@@ -283,10 +301,13 @@ Options starting with -g, -f, -m, -O, -W, or --param are automatically
 
 For bug reporting instructions, please see:
 <file:///usr/share/doc/gcc-4.7/README.Bugs>.
-""")
+"""
+        )
         self.exit()
 
 
-commands['/usr/bin/gcc'] = command_gcc
-commands['gcc'] = command_gcc
-commands['/usr/bin/gcc-%s' % ('.'.join([str(v) for v in command_gcc.APP_VERSION[:2]]))] = command_gcc
+commands["/usr/bin/gcc"] = command_gcc
+commands["gcc"] = command_gcc
+commands[
+    "/usr/bin/gcc-%s" % (".".join([str(v) for v in command_gcc.APP_VERSION[:2]]))
+] = command_gcc

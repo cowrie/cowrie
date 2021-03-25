@@ -24,6 +24,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
+
     tac = None
 
     def __init__(self, backend, pool_handler):
@@ -36,15 +37,15 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args['sessionno'] = 'T{}'.format(str(args['sessionno']))
+        args["sessionno"] = "T{}".format(str(args["sessionno"]))
         for output in self.tac.output_plugins:
             output.logDispatch(*msg, **args)
 
     def startFactory(self):
         try:
-            honeyfs = CowrieConfig().get('honeypot', 'contents_path')
+            honeyfs = CowrieConfig().get("honeypot", "contents_path")
             issuefile = honeyfs + "/etc/issue.net"
-            self.banner = open(issuefile, 'rb').read()
+            self.banner = open(issuefile, "rb").read()
         except OSError:
             self.banner = b""
 
@@ -52,10 +53,12 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.starttime = time.time()
 
         # hook protocol
-        if self.backend == 'proxy':
+        if self.backend == "proxy":
             self.protocol = lambda: FrontendTelnetTransport()
         else:
-            self.protocol = lambda: CowrieTelnetTransport(HoneyPotTelnetAuthProtocol, self.portal)
+            self.protocol = lambda: CowrieTelnetTransport(
+                HoneyPotTelnetAuthProtocol, self.portal
+            )
 
         protocol.ServerFactory.startFactory(self)
         log.msg("Ready to accept Telnet connections")

@@ -76,7 +76,6 @@ class PluggableAuthenticationModulesIP:
 
 @implementer(IUsername)
 class Username:
-
     def __init__(self, username):
         self.username = username
 
