@@ -21,10 +21,12 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
         Return the suffix given a (year, month, day) tuple or unixtime
         """
         try:
-            return "{:02d}-{:02d}-{:02d}".format(tupledate[0], tupledate[1], tupledate[2])
+            return "{:02d}-{:02d}-{:02d}".format(
+                tupledate[0], tupledate[1], tupledate[2]
+            )
         except Exception:
             # try taking a float unixtime
-            return '_'.join(map(str, self.toDate(tupledate)))
+            return "_".join(map(str, self.toDate(tupledate)))
 
 
 def logger():
@@ -32,9 +34,9 @@ def logger():
     logfile = CowrieDailyLogFile("cowrie.log", dir)
 
     # use Z for UTC (Zulu) time, it's shorter.
-    if 'TZ' in environ and environ['TZ'] == 'UTC':
-        timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
+    if "TZ" in environ and environ["TZ"] == "UTC":
+        timeFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
     else:
-        timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
+        timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
     return textFileLogObserver(logfile, timeFormat=timeFormat)

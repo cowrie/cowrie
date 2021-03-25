@@ -42,8 +42,8 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.slack_channel = CowrieConfig().get('output_slack', 'channel')
-        self.slack_token = CowrieConfig().get('output_slack', 'token')
+        self.slack_channel = CowrieConfig().get("output_slack", "channel")
+        self.slack_token = CowrieConfig().get("output_slack", "token")
 
     def stop(self):
         pass
@@ -51,12 +51,15 @@ class Output(cowrie.core.output.Output):
     def write(self, logentry):
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith('log_'):
+            if i.startswith("log_"):
                 del logentry[i]
 
         self.sc = SlackClient(self.slack_token)
         self.sc.api_call(
             "chat.postMessage",
             channel=self.slack_channel,
-            text="{} {}".format(time.strftime('%Y-%m-%d %H:%M:%S'), json.dumps(logentry, indent=4, sort_keys=True))
+            text="{} {}".format(
+                time.strftime("%Y-%m-%d %H:%M:%S"),
+                json.dumps(logentry, indent=4, sort_keys=True),
+            ),
         )

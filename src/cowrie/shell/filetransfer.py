@@ -12,7 +12,14 @@ import twisted
 import twisted.conch.ls
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
-from twisted.conch.ssh.filetransfer import FXF_APPEND, FXF_CREAT, FXF_EXCL, FXF_READ, FXF_TRUNC, FXF_WRITE
+from twisted.conch.ssh.filetransfer import (
+    FXF_APPEND,
+    FXF_CREAT,
+    FXF_EXCL,
+    FXF_READ,
+    FXF_TRUNC,
+    FXF_WRITE,
+)
 from twisted.python import log
 from twisted.python.compat import nativeString
 
@@ -27,9 +34,12 @@ class CowrieSFTPFile:
     """
     SFTPTFile
     """
+
     transfer_completed = 0
     bytesReceived = 0
-    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    bytesReceivedLimit = CowrieConfig().getint(
+        "honeypot", "download_limit_size", fallback=0
+    )
 
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
@@ -70,7 +80,7 @@ class CowrieSFTPFile:
         return self.sftpserver.fs.close(self.fd)
 
     def readChunk(self, offset, length):
-        return self.contents[offset:offset + length]
+        return self.contents[offset : offset + length]
 
     def writeChunk(self, offset, data):
         self.bytesReceived += len(data)
@@ -88,7 +98,6 @@ class CowrieSFTPFile:
 
 
 class CowrieSFTPDirectory:
-
     def __init__(self, server, directory):
         self.server = server
         self.files = server.fs.listdir(directory)
@@ -143,7 +152,6 @@ class CowrieSFTPDirectory:
 
 @implementer(ISFTPServer)
 class SFTPServerForCowrieUser:
-
     def __init__(self, avatar):
         self.avatar = avatar
         self.avatar.server.initFileSystem(self.avatar.home)
@@ -168,7 +176,7 @@ class SFTPServerForCowrieUser:
             "gid": s.st_gid,
             "permissions": s.st_mode,
             "atime": int(s.st_atime),
-            "mtime": int(s.st_mtime)
+            "mtime": int(s.st_mtime),
         }
 
     def gotVersion(self, otherVersion, extData):

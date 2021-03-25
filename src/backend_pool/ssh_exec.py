@@ -13,7 +13,7 @@ class PasswordAuth(userauth.SSHUserAuthClient):
 
 
 class CommandChannel(channel.SSHChannel):
-    name = 'session'
+    name = "session"
 
     def __init__(self, command, done_deferred, callback, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,10 +21,10 @@ class CommandChannel(channel.SSHChannel):
         self.done_deferred = done_deferred
         self.callback = callback
 
-        self.data = b''
+        self.data = b""
 
     def channelOpen(self, data):
-        self.conn.sendRequest(self, 'exec', common.NS(self.command), wantReply=True)
+        self.conn.sendRequest(self, "exec", common.NS(self.command), wantReply=True)
 
     def dataReceived(self, data):
         self.data += data
@@ -49,7 +49,9 @@ class ClientConnection(connection.SSHConnection):
         self.callback = callback
 
     def serviceStarted(self):
-        self.openChannel(CommandChannel(self.command, self.done_deferred, self.callback, conn=self))
+        self.openChannel(
+            CommandChannel(self.command, self.done_deferred, self.callback, conn=self)
+        )
 
 
 class ClientCommandTransport(transport.SSHClientTransport):
@@ -64,8 +66,13 @@ class ClientCommandTransport(transport.SSHClientTransport):
         return defer.succeed(True)
 
     def connectionSecure(self):
-        self.requestService(PasswordAuth(self.username, self.password,
-                                         ClientConnection(self.command, self.done_deferred, self.callback)))
+        self.requestService(
+            PasswordAuth(
+                self.username,
+                self.password,
+                ClientConnection(self.command, self.done_deferred, self.callback),
+            )
+        )
 
 
 class ClientCommandFactory(protocol.ClientFactory):
@@ -77,7 +84,13 @@ class ClientCommandFactory(protocol.ClientFactory):
         self.callback = callback
 
     def buildProtocol(self, addr):
-        return ClientCommandTransport(self.username, self.password, self.command, self.done_deferred, self.callback)
+        return ClientCommandTransport(
+            self.username,
+            self.password,
+            self.command,
+            self.done_deferred,
+            self.callback,
+        )
 
 
 def execute_ssh(host, port, username, password, command, callback=None):

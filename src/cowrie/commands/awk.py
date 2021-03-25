@@ -94,10 +94,10 @@ class command_awk(HoneyPotCommand):
         /regex/ { }
         """
         code = []
-        re1 = r'\s*(\/(?P<pattern>\S+)\/\s+)?\{\s*(?P<code>[^\}]+)\}\s*'
+        re1 = r"\s*(\/(?P<pattern>\S+)\/\s+)?\{\s*(?P<code>[^\}]+)\}\s*"
         matches = re.findall(re1, program)
         for m in matches:
-            code.append({'regex': m[1], 'code': m[2]})
+            code.append({"regex": m[1], "code": m[2]})
         return code
 
     def awk_print(self, words):
@@ -105,18 +105,18 @@ class command_awk(HoneyPotCommand):
         This is the awk `print` command that operates on a single line only
         """
         self.write(words)
-        self.write('\n')
+        self.write("\n")
 
     def output(self, input):
         """
         This is the awk output.
         """
         if "decode" in dir(input):
-            input = input.decode('utf-8')
+            input = input.decode("utf-8")
         if not isinstance(input, str):
             pass
 
-        inputlines = input.split('\n')
+        inputlines = input.split("\n")
         if inputlines[-1] == "":
             inputlines.pop()
         for inputline in inputlines:
@@ -133,17 +133,17 @@ class command_awk(HoneyPotCommand):
                     return ""
 
             for c in self.code:
-                if re.match(c['regex'], inputline):
-                    line = c['code']
-                    line = re.sub(r'\$(\d+)', repl, line)
+                if re.match(c["regex"], inputline):
+                    line = c["code"]
+                    line = re.sub(r"\$(\d+)", repl, line)
                     # print("LINE1: {}".format(line))
-                    if re.match(r'^print\s*', line):
+                    if re.match(r"^print\s*", line):
                         # remove `print` at the start
-                        line = re.sub(r'^\s*print\s+', '', line)
+                        line = re.sub(r"^\s*print\s+", "", line)
                         # remove whitespace at the end
-                        line = re.sub(r'[;\s]*$', '', line)
+                        line = re.sub(r"[;\s]*$", "", line)
                         # replace whitespace and comma by single space
-                        line = re.sub(r'(,|\s+)', ' ', line)
+                        line = re.sub(r"(,|\s+)", " ", line)
                         # print("LINE2: {}".format(line))
                         self.awk_print(line)
 

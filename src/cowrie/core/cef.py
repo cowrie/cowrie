@@ -43,6 +43,7 @@
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
 
+
 def formatCef(logentry):
     """
     Take logentry and turn into CEF string
@@ -57,50 +58,58 @@ def formatCef(logentry):
     cefSeverity = "5"
 
     cefExtensions = {
-        'app': 'SSHv2',
-        'destinationServicename': 'sshd',
-        'deviceExternalId': logentry['sensor'],
-        'msg': logentry['message'],
-        'src': logentry['src_ip'],
-        'proto': 'tcp'
+        "app": "SSHv2",
+        "destinationServicename": "sshd",
+        "deviceExternalId": logentry["sensor"],
+        "msg": logentry["message"],
+        "src": logentry["src_ip"],
+        "proto": "tcp",
     }
 
-    if logentry['eventid'] == 'cowrie.session.connect':
-        cefExtensions['spt'] = logentry['src_port']
-        cefExtensions['dpt'] = logentry['dst_port']
-        cefExtensions['src'] = logentry['src_ip']
-        cefExtensions['dst'] = logentry['dst_ip']
-    elif logentry['eventid'] == 'cowrie.login.success':
-        cefExtensions['duser'] = logentry['username']
-        cefExtensions['outcome'] = 'success'
-    elif logentry['eventid'] == 'cowrie.login.failed':
-        cefExtensions['duser'] = logentry['username']
-        cefExtensions['outcome'] = 'failed'
-    elif logentry['eventid'] == 'cowrie.file.file_download':
-        cefExtensions['filehash'] = logentry['filehash']
-        cefExtensions['filePath'] = logentry['filename']
-        cefExtensions['fsize'] = logentry['size']
-    elif logentry['eventid'] == 'cowrie.file.file_upload':
-        cefExtensions['filehash'] = logentry['filehash']
-        cefExtensions['filePath'] = logentry['filename']
-        cefExtensions['fsize'] = logentry['size']
+    if logentry["eventid"] == "cowrie.session.connect":
+        cefExtensions["spt"] = logentry["src_port"]
+        cefExtensions["dpt"] = logentry["dst_port"]
+        cefExtensions["src"] = logentry["src_ip"]
+        cefExtensions["dst"] = logentry["dst_ip"]
+    elif logentry["eventid"] == "cowrie.login.success":
+        cefExtensions["duser"] = logentry["username"]
+        cefExtensions["outcome"] = "success"
+    elif logentry["eventid"] == "cowrie.login.failed":
+        cefExtensions["duser"] = logentry["username"]
+        cefExtensions["outcome"] = "failed"
+    elif logentry["eventid"] == "cowrie.file.file_download":
+        cefExtensions["filehash"] = logentry["filehash"]
+        cefExtensions["filePath"] = logentry["filename"]
+        cefExtensions["fsize"] = logentry["size"]
+    elif logentry["eventid"] == "cowrie.file.file_upload":
+        cefExtensions["filehash"] = logentry["filehash"]
+        cefExtensions["filePath"] = logentry["filename"]
+        cefExtensions["fsize"] = logentry["size"]
 
     # 'out' 'outcome'  request, rt
 
     cefList = []
     for key in list(cefExtensions.keys()):
         value = str(cefExtensions[key])
-        cefList.append(f'{key}={value}')
+        cefList.append(f"{key}={value}")
 
-    cefExtension = ' '.join(cefList)
+    cefExtension = " ".join(cefList)
 
-    cefString = "CEF:0|" + \
-                cefVendor + "|" + \
-                cefProduct + "|" + \
-                cefVersion + "|" + \
-                cefSignature + "|" + \
-                cefName + "|" + \
-                cefSeverity + "|" + \
-                cefExtension
+    cefString = (
+        "CEF:0|"
+        + cefVendor
+        + "|"
+        + cefProduct
+        + "|"
+        + cefVersion
+        + "|"
+        + cefSignature
+        + "|"
+        + cefName
+        + "|"
+        + cefSeverity
+        + "|"
+        + cefExtension
+    )
 
     return cefString

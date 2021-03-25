@@ -56,35 +56,39 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        log.msg(eventid='cowrie.session.connect',
-                format='New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]',
-                src_ip=self.transport.getPeer().host,
-                src_port=self.transport.getPeer().port,
-                dst_ip=self.transport.getHost().host,
-                dst_port=self.transport.getHost().port,
-                session=self.transportId,
-                sessionno='T{}'.format(str(sessionno)),
-                protocol='telnet')
+        log.msg(
+            eventid="cowrie.session.connect",
+            format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
+            src_ip=self.transport.getPeer().host,
+            src_port=self.transport.getPeer().port,
+            dst_ip=self.transport.getHost().host,
+            dst_port=self.transport.getHost().port,
+            session=self.transportId,
+            sessionno="T{}".format(str(sessionno)),
+            protocol="telnet",
+        )
 
         TelnetTransport.connectionMade(self)
 
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
         # when pool is set we can just test self.pool_interface to the same effect of getting the config
-        proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
+        proxy_backend = CowrieConfig().get("proxy", "backend", fallback="simple")
 
-        if proxy_backend == 'pool':
+        if proxy_backend == "pool":
             # request a backend
             d = self.factory.pool_handler.request_interface()
             d.addCallback(self.pool_connection_success)
             d.addErrback(self.pool_connection_error)
         else:
             # simply a proxy, no pool
-            backend_ip = CowrieConfig().get('proxy', 'backend_telnet_host')
-            backend_port = CowrieConfig().getint('proxy', 'backend_telnet_port')
+            backend_ip = CowrieConfig().get("proxy", "backend_telnet_host")
+            backend_port = CowrieConfig().getint("proxy", "backend_telnet_port")
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg(f'Connection to backend pool refused: {reason.value}. Disconnecting frontend...')
+        log.msg(
+            f"Connection to backend pool refused: {reason.value}. Disconnecting frontend..."
+        )
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
@@ -97,25 +101,29 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.pool_interface.send_vm_request(self.peer_ip)
 
     def received_pool_data(self, operation, status, *data):
-        if operation == b'r':
+        if operation == b"r":
             honey_ip = data[0]
             snapshot = data[1]
             telnet_port = data[3]
 
-            log.msg(f'Got backend data from pool: {honey_ip.decode()}:{telnet_port}')
-            log.msg(f'Snapshot file: {snapshot.decode()}')
+            log.msg(f"Got backend data from pool: {honey_ip.decode()}:{telnet_port}")
+            log.msg(f"Snapshot file: {snapshot.decode()}")
 
             self.connect_to_backend(honey_ip, telnet_port)
 
     def backend_connection_error(self, reason):
-        log.msg(f'Connection to honeypot backend refused: {reason.value}. Disconnecting frontend...')
+        log.msg(
+            f"Connection to honeypot backend refused: {reason.value}. Disconnecting frontend..."
+        )
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
         log.msg("Connected to honeypot backend")
 
         self.startTime = time.time()
-        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
+        self.setTimeout(
+            CowrieConfig().getint("honeypot", "authentication_timeout", fallback=120)
+        )
 
     def connect_to_backend(self, ip, port):
         # connection to the backend starts here
@@ -128,7 +136,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         d.addErrback(self.backend_connection_error)
 
     def dataReceived(self, data):
-        self.telnetHandler.addPacket('frontend', data)
+        self.telnetHandler.addPacket("frontend", data)
 
     def write(self, data):
         self.transport.write(data)
@@ -138,7 +146,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg('Timeout reached in FrontendTelnetTransport')
+        log.msg("Timeout reached in FrontendTelnetTransport")
 
         # close transports on both sides
         if self.transport:
@@ -173,9 +181,11 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
 
         if self.startTime is not None:  # startTime is not set when auth fails
             duration = time.time() - self.startTime
-            log.msg(eventid='cowrie.session.closed',
-                    format='Connection lost after %(duration)d seconds',
-                    duration=duration)
+            log.msg(
+                eventid="cowrie.session.closed",
+                format="Connection lost after %(duration)d seconds",
+                duration=duration,
+            )
 
     def packet_buffer(self, payload):
         """
@@ -184,7 +194,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         if not self.client.backendConnected:
             # wait till backend connects to send packets to them
-            log.msg('Connection to backend not ready, buffering packet from frontend')
+            log.msg("Connection to backend not ready, buffering packet from frontend")
             self.delayedPacketsToBackend.append(payload)
         else:
             if len(self.delayedPacketsToBackend) > 0:

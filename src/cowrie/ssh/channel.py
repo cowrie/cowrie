@@ -20,17 +20,20 @@ class CowrieSSHChannel(channel.SSHChannel):
     """
     This is an SSH channel with built-in logging
     """
+
     ttylogEnabled = True
     ttylogFile = ""
     bytesReceived = 0
     bytesReceivedLimit = 0
     bytesWritten = 0
-    name = b'cowrie-ssh-channel'
+    name = b"cowrie-ssh-channel"
     startTime = None
-    ttylogPath = CowrieConfig().get('honeypot', 'log_path')
-    downloadPath = CowrieConfig().get('honeypot', 'download_path')
-    ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
-    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    ttylogPath = CowrieConfig().get("honeypot", "log_path")
+    downloadPath = CowrieConfig().get("honeypot", "download_path")
+    ttylogEnabled = CowrieConfig().getboolean("honeypot", "ttylog", fallback=True)
+    bytesReceivedLimit = CowrieConfig().getint(
+        "honeypot", "download_limit_size", fallback=0
+    )
 
     def __repr__(self):
         """
@@ -49,20 +52,28 @@ class CowrieSSHChannel(channel.SSHChannel):
 
     def channelOpen(self, specificData):
         self.startTime = time.time()
-        self.ttylogFile = '{}/tty/{}-{}-{}.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-                                                       self.conn.transport.transportId, self.id)
-        log.msg(eventid='cowrie.log.open',
-                ttylog=self.ttylogFile,
-                format="Opening TTY Log: %(ttylog)s")
+        self.ttylogFile = "{}/tty/{}-{}-{}.log".format(
+            self.ttylogPath,
+            time.strftime("%Y%m%d-%H%M%S"),
+            self.conn.transport.transportId,
+            self.id,
+        )
+        log.msg(
+            eventid="cowrie.log.open",
+            ttylog=self.ttylogFile,
+            format="Opening TTY Log: %(ttylog)s",
+        )
         ttylog.ttylog_open(self.ttylogFile, time.time())
         channel.SSHChannel.channelOpen(self, specificData)
 
     def closed(self):
-        log.msg(eventid='cowrie.log.closed',
-                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
-                ttylog=self.ttylogFile,
-                size=self.bytesReceived + self.bytesWritten,
-                duration=time.time() - self.startTime)
+        log.msg(
+            eventid="cowrie.log.closed",
+            format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+            ttylog=self.ttylogFile,
+            size=self.bytesReceived + self.bytesWritten,
+            duration=time.time() - self.startTime,
+        )
         ttylog.ttylog_close(self.ttylogFile, time.time())
         channel.SSHChannel.closed(self)
 
@@ -80,11 +91,9 @@ class CowrieSSHChannel(channel.SSHChannel):
             return
 
         if self.ttylogEnabled:
-            ttylog.ttylog_write(self.ttylogFile,
-                                len(data),
-                                ttylog.TYPE_INPUT,
-                                time.time(),
-                                data)
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data
+            )
 
         channel.SSHChannel.dataReceived(self, data)
 
@@ -96,11 +105,9 @@ class CowrieSSHChannel(channel.SSHChannel):
         @param data: Data sent to the client from the server
         """
         if self.ttylogEnabled:
-            ttylog.ttylog_write(self.ttylogFile,
-                                len(data),
-                                ttylog.TYPE_OUTPUT,
-                                time.time(),
-                                data)
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
+            )
             self.bytesWritten += len(data)
 
         channel.SSHChannel.write(self, data)
