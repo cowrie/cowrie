@@ -20,6 +20,8 @@ install:
 before_script:
   # stop the build if there are Python syntax errors or undefined names
   - flake8 --count --application-import-names cowrie --max-line-length=120 --statistics .
+  - twistedchecker src || true
+  - mypy src || true
   - python setup.py build sdist bdist
   - make -C docs html
 script:
