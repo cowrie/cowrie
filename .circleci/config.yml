@@ -7,6 +7,7 @@ workflows:
       - test-3.7-buster
       - test-3.8-buster
       - test-3.9-buster
+      - test-3.10-buster
 jobs:
   test-3.7-buster: &test-template
     docker:
@@ -37,6 +38,16 @@ jobs:
           command: |
             . cowrie-env/bin/activate
             flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
+      - run:
+          name: Twistedchecker
+          command: |
+            . cowrie-env/bin/activate
+            twistedchecker src || true
+      - run:
+          name: Mypy
+          command: |
+            . cowrie-env/bin/activate
+            mypy src || true
       - run:
           name: Build Python library
           command: |
