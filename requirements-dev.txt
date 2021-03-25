@@ -1,9 +1,11 @@
-flake8==3.9.0
-flake8-import-order==0.18.1
-setuptools==54.1.2
 Sphinx==3.5.2
-sphinx_rtd_theme==0.5.1
-tox==3.23.0
-pur==5.3.0
+black==20.8b1
+flake8-import-order==0.18.1
+flake8==3.9.0
 importlib_metadata==3.7.2; python_version < '3.8'
 pipdeptree==2.0.0
+pur==5.3.0
+pyupgrade==2.11.0
+setuptools==54.1.2
+sphinx_rtd_theme==0.5.1
+tox==3.23.0
