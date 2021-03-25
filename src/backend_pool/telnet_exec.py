@@ -13,7 +13,7 @@ class TelnetConnectionError(Exception):
 class TelnetClient(StatefulTelnetProtocol):
     def __init__(self):
         # output from server
-        self.response = b''
+        self.response = b""
 
         # callLater instance to wait until we have stop getting output for some time
         self.done_callback = None
@@ -33,14 +33,14 @@ class TelnetClient(StatefulTelnetProtocol):
         when we detect the shell prompt.
         TODO: Need to handle authentication failure
         """
-        if self.factory.prompt.strip() == br'#':
-            self.re_prompt = re.compile(br'#')
+        if self.factory.prompt.strip() == br"#":
+            self.re_prompt = re.compile(br"#")
         else:
             self.re_prompt = re.compile(self.factory.prompt.encode())
 
-        if re.search(br'([Ll]ogin:\s+$)', bytes):
+        if re.search(br"([Ll]ogin:\s+$)", bytes):
             self.sendLine(self.factory.username.encode())
-        elif re.search(br'([Pp]assword:\s+$)', bytes):
+        elif re.search(br"([Pp]assword:\s+$)", bytes):
             self.sendLine(self.factory.password.encode())
         elif self.re_prompt.search(bytes):
             self.setLineMode()
@@ -55,10 +55,10 @@ class TelnetClient(StatefulTelnetProtocol):
             return
 
         # trim control characters
-        if line.startswith(b'\x1b'):
+        if line.startswith(b"\x1b"):
             line = line[4:]
 
-        self.response += line + b'\r\n'
+        self.response += line + b"\r\n"
 
         # start countdown to command done (when reached, consider the output was completely received and close)
         if not self.done_callback:
@@ -78,7 +78,7 @@ class TelnetClient(StatefulTelnetProtocol):
         Sends exit to the Telnet server and closes connection.
         Fires the deferred with the command's output.
         """
-        self.sendLine(b'exit')
+        self.sendLine(b"exit")
         self.transport.loseConnection()
 
         # deferred to signal command's output was fully received
@@ -106,7 +106,7 @@ class TelnetFactory(ClientFactory):
         return transport
 
     def clientConnectionFailed(self, connector, reason):
-        print('Telnet connection failed. Reason:%s ' % reason)
+        print("Telnet connection failed. Reason:%s " % reason)
 
 
 class TelnetClientCommand:
@@ -122,7 +122,9 @@ class TelnetClientCommand:
         done_deferred = defer.Deferred()
 
         # start connection to the Telnet server
-        factory = TelnetFactory(username, password, self.prompt, self.command, done_deferred, self.callback)
+        factory = TelnetFactory(
+            username, password, self.prompt, self.command, done_deferred, self.callback
+        )
         reactor.connectTCP(host, port, factory)
 
         return done_deferred
@@ -136,5 +138,5 @@ def execute_telnet(host, port, username, password, command, callback=None):
 
     Returns a deferred that is fired upon receiving the command's output.
     """
-    telnet = TelnetClientCommand(callback, ':~#', command)
+    telnet = TelnetClientCommand(callback, ":~#", command)
     return telnet.connect(host, port, username, password)

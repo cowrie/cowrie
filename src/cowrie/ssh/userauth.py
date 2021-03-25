@@ -26,14 +26,16 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
 
     def serviceStarted(self):
-        self.interfaceToMethod[credentials.IUsername] = b'none'
-        self.interfaceToMethod[credentials.IUsernamePasswordIP] = b'password'
-        keyboard = CowrieConfig().getboolean('ssh', 'auth_keyboard_interactive_enabled', fallback=False)
+        self.interfaceToMethod[credentials.IUsername] = b"none"
+        self.interfaceToMethod[credentials.IUsernamePasswordIP] = b"password"
+        keyboard = CowrieConfig().getboolean(
+            "ssh", "auth_keyboard_interactive_enabled", fallback=False
+        )
 
         if keyboard is True:
-            self.interfaceToMethod[credentials.
-                                   IPluggableAuthenticationModulesIP] = (
-                b'keyboard-interactive')
+            self.interfaceToMethod[
+                credentials.IPluggableAuthenticationModulesIP
+            ] = b"keyboard-interactive"
         self.bannerSent = False
         self._pamDeferred = None
         userauth.SSHUserAuthServer.serviceStarted(self)
@@ -47,15 +49,15 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.bannerSent = True
         try:
-            issuefile = CowrieConfig().get(
-                'honeypot', 'contents_path') + "/etc/issue.net"
+            issuefile = (
+                CowrieConfig().get("honeypot", "contents_path") + "/etc/issue.net"
+            )
             data = open(issuefile).read()
         except OSError:
             return
         if not data or not len(data.strip()):
             return
-        self.transport.sendPacket(
-            userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b'en'))
+        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b"en"))
 
     def ssh_USERAUTH_REQUEST(self, packet):
         self.sendBanner()
@@ -89,8 +91,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         password = getNS(packet[1:])[0]
         srcIp = self.transport.transport.getPeer().host
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
-        return self.portal.login(c, srcIp,
-                                 IConchUser).addErrback(self._ebPassword)
+        return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
     def auth_keyboard_interactive(self, packet):
         """
@@ -104,13 +105,14 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         if self._pamDeferred is not None:
             self.transport.sendDisconnect(
                 DISCONNECT_PROTOCOL_ERROR,
-                "only one keyboard interactive attempt at a time")
+                "only one keyboard interactive attempt at a time",
+            )
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host
         c = credentials.PluggableAuthenticationModulesIP(
-            self.user, self._pamConv, src_ip)
-        return self.portal.login(c, src_ip,
-                                 IConchUser).addErrback(self._ebPassword)
+            self.user, self._pamConv, src_ip
+        )
+        return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
 
     def _pamConv(self, items):
         """
@@ -130,13 +132,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             elif kind == 2:  # Text
                 resp.append((message, 1))
             elif kind in (3, 4):
-                return defer.fail(error.ConchError(
-                    'cannot handle PAM 3 or 4 messages'))
+                return defer.fail(error.ConchError("cannot handle PAM 3 or 4 messages"))
             else:
-                return defer.fail(error.ConchError(
-                    'bad PAM auth kind %i' % (kind,)))
-        packet = NS(b'') + NS(b'') + NS(b'')
-        packet += struct.pack('>L', len(resp))
+                return defer.fail(error.ConchError("bad PAM auth kind %i" % (kind,)))
+        packet = NS(b"") + NS(b"") + NS(b"")
+        packet += struct.pack(">L", len(resp))
         for prompt, echo in resp:
             packet += NS(prompt)
             packet += bytes((echo,))
@@ -158,14 +158,13 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
         try:
             resp = []
-            numResps = struct.unpack('>L', packet[:4])[0]
+            numResps = struct.unpack(">L", packet[:4])[0]
             packet = packet[4:]
             while len(resp) < numResps:
                 response, packet = getNS(packet)
                 resp.append((response, 0))
             if packet:
-                raise error.ConchError(
-                    "{:d} bytes of extra data".format(len(packet)))
+                raise error.ConchError("{:d} bytes of extra data".format(len(packet)))
         except Exception:
             d.errback(Failure())
         else:

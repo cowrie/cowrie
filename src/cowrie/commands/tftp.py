@@ -16,7 +16,6 @@ commands = {}
 
 
 class Progress:
-
     def __init__(self, protocol):
         self.progress = 0
         self.out = protocol
@@ -33,7 +32,7 @@ class command_tftp(HoneyPotCommand):
     port = 69
     hostname = None
     file_to_get = None
-    limit_size = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
+    limit_size = CowrieConfig().getint("honeypot", "download_limit_size", fallback=0)
 
     def makeTftpRetrieval(self):
         progresshook = Progress(self).progresshook
@@ -41,7 +40,7 @@ class command_tftp(HoneyPotCommand):
         self.artifactFile = Artifact(self.file_to_get)
 
         tclient = None
-        url = ''
+        url = ""
 
         try:
             tclient = tftpy.TftpClient(self.hostname, int(self.port))
@@ -50,12 +49,14 @@ class command_tftp(HoneyPotCommand):
             # so we have to convert unicode type to str type
             tclient.download(str(self.file_to_get), self.artifactFile, progresshook)
 
-            url = 'tftp://{}/{}'.format(self.hostname, self.file_to_get.strip('/'))
+            url = "tftp://{}/{}".format(self.hostname, self.file_to_get.strip("/"))
 
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
 
-            if hasattr(tclient.context, 'metrics'):
-                self.fs.mkfile(self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188)
+            if hasattr(tclient.context, "metrics"):
+                self.fs.mkfile(
+                    self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188
+                )
             else:
                 self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
 
@@ -65,26 +66,34 @@ class command_tftp(HoneyPotCommand):
 
         if url:
             # log to cowrie.log
-            log.msg(format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                    url=url,
-                    outfile=self.artifactFile.shasumFilename,
-                    shasum=self.artifactFile.shasum)
+            log.msg(
+                format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+                url=url,
+                outfile=self.artifactFile.shasumFilename,
+                shasum=self.artifactFile.shasum,
+            )
 
-            self.protocol.logDispatch(eventid='cowrie.session.file_download',
-                                      format='Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s',
-                                      url=url,
-                                      outfile=self.artifactFile.shasumFilename,
-                                      shasum=self.artifactFile.shasum,
-                                      destfile=self.file_to_get)
+            self.protocol.logDispatch(
+                eventid="cowrie.session.file_download",
+                format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+                url=url,
+                outfile=self.artifactFile.shasumFilename,
+                shasum=self.artifactFile.shasum,
+                destfile=self.file_to_get,
+            )
 
             # Update the honeyfs to point to downloaded file
-            self.fs.update_realfile(self.fs.getfile(self.file_to_get), self.artifactFile.shasumFilename)
-            self.fs.chown(self.file_to_get, self.protocol.user.uid, self.protocol.user.gid)
+            self.fs.update_realfile(
+                self.fs.getfile(self.file_to_get), self.artifactFile.shasumFilename
+            )
+            self.fs.chown(
+                self.file_to_get, self.protocol.user.uid, self.protocol.user.gid
+            )
 
     def start(self):
         parser = CustomParser(self)
         parser.prog = "tftp"
-        parser.add_argument("hostname", nargs='?', default=None)
+        parser.add_argument("hostname", nargs="?", default=None)
         parser.add_argument("-c", nargs=2)
         parser.add_argument("-l")
         parser.add_argument("-g")
@@ -103,7 +112,9 @@ class command_tftp(HoneyPotCommand):
             self.file_to_get = args.r
             self.hostname = args.g
         else:
-            self.write('usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n')
+            self.write(
+                "usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n"
+            )
             self.exit()
             return
 
@@ -111,8 +122,8 @@ class command_tftp(HoneyPotCommand):
             self.exit()
             return
 
-        if self.hostname.find(':') != -1:
-            host, port = self.hostname.split(':')
+        if self.hostname.find(":") != -1:
+            host, port = self.hostname.split(":")
             self.hostname = host
             self.port = int(port)
 
@@ -120,5 +131,5 @@ class command_tftp(HoneyPotCommand):
         self.exit()
 
 
-commands['/usr/bin/tftp'] = command_tftp
-commands['tftp'] = command_tftp
+commands["/usr/bin/tftp"] = command_tftp
+commands["tftp"] = command_tftp

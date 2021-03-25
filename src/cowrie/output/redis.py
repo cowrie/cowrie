@@ -7,9 +7,9 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 SEND_METHODS = {
-    'lpush': lambda redis_client, key, message: redis_client.lpush(key, message),
-    'rpush': lambda redis_client, key, message: redis_client.rpush(key, message),
-    'publish': lambda redis_client, key, message: redis_client.publish(key, message),
+    "lpush": lambda redis_client, key, message: redis_client.lpush(key, message),
+    "rpush": lambda redis_client, key, message: redis_client.rpush(key, message),
+    "publish": lambda redis_client, key, message: redis_client.publish(key, message),
 }
 
 
@@ -17,32 +17,34 @@ class Output(cowrie.core.output.Output):
     """
     redis output
     """
+
     def start(self):
         """
         Initialize pymisp module and ObjectWrapper (Abstract event and object creation)
         """
-        host = CowrieConfig().get('output_redis', 'host')
-        port = CowrieConfig().get('output_redis', 'port')
+        host = CowrieConfig().get("output_redis", "host")
+        port = CowrieConfig().get("output_redis", "port")
 
         try:
-            db = CowrieConfig().get('output_redis', 'db')
+            db = CowrieConfig().get("output_redis", "db")
         except NoOptionError:
             db = 0
 
         try:
-            password = CowrieConfig().get('output_redis', 'password')
+            password = CowrieConfig().get("output_redis", "password")
         except NoOptionError:
             password = None
 
-        self.redis = redis.StrictRedis(host=host, port=port, db=db,
-                                       password=password)
+        self.redis = redis.StrictRedis(host=host, port=port, db=db, password=password)
 
-        self.keyname = CowrieConfig().get('output_redis', 'keyname')
+        self.keyname = CowrieConfig().get("output_redis", "keyname")
 
         try:
-            self.send_method = SEND_METHODS[CowrieConfig().get('output_redis', 'send_method')]
+            self.send_method = SEND_METHODS[
+                CowrieConfig().get("output_redis", "send_method")
+            ]
         except (NoOptionError, KeyError):
-            self.send_method = SEND_METHODS['lpush']
+            self.send_method = SEND_METHODS["lpush"]
 
     def stop(self):
         pass
@@ -54,6 +56,6 @@ class Output(cowrie.core.output.Output):
         # Add the entry to redis
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith('log_'):
+            if i.startswith("log_"):
                 del logentry[i]
         self.send_method(self.redis, self.keyname, json.dumps(logentry))

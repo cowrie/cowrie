@@ -7,16 +7,26 @@ from random import randint, randrange
 from cowrie.shell.command import HoneyPotCommand
 
 HWaddr = "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(
-    randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+)
 
 inet6 = "fe{:02x}::{:02x}:{:02x}ff:fe{:02x}:{:02x}01/64".format(
-    randint(0, 255), randrange(111, 888), randint(0, 255), randint(0, 255), randint(0, 255))
+    randint(0, 255),
+    randrange(111, 888),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+)
 
 commands = {}
 
 
 class command_ifconfig(HoneyPotCommand):
-
     @staticmethod
     def generate_packets():
         return randrange(222222, 555555)
@@ -61,13 +71,24 @@ lo        Link encap:Local Loopback
           RX packets:110 errors:0 dropped:0 overruns:0 frame:0
           TX packets:110 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:0
-          RX bytes:%s (%s MB)  TX bytes:%s (%s MB)""" % \
-                 (HWaddr, self.protocol.kippoIP,
-                  self.protocol.kippoIP.rsplit('.', 1)[0], inet6, rx_packets,
-                  tx_packets, rx_bytes_eth0, rx_mb_eth0, tx_bytes_eth0, tx_mb_eth0,
-                  lo_bytes, lo_mb, lo_bytes, lo_mb)
-        self.write(f'{result}\n')
+          RX bytes:%s (%s MB)  TX bytes:%s (%s MB)""" % (
+            HWaddr,
+            self.protocol.kippoIP,
+            self.protocol.kippoIP.rsplit(".", 1)[0],
+            inet6,
+            rx_packets,
+            tx_packets,
+            rx_bytes_eth0,
+            rx_mb_eth0,
+            tx_bytes_eth0,
+            tx_mb_eth0,
+            lo_bytes,
+            lo_mb,
+            lo_bytes,
+            lo_mb,
+        )
+        self.write(f"{result}\n")
 
 
-commands['/sbin/ifconfig'] = command_ifconfig
-commands['ifconfig'] = command_ifconfig
+commands["/sbin/ifconfig"] = command_ifconfig
+commands["ifconfig"] = command_ifconfig

@@ -9,14 +9,20 @@ import time
 
 def ping(guest_ip):
     # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
-    out = subprocess.run(['ping', '-c 1', guest_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = subprocess.run(
+        ["ping", "-c 1", guest_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     return out.returncode == 0
 
 
 def nmap_port(guest_ip, port):
     # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
-    out = subprocess.run(['nmap', guest_ip, '-PN',  '-p', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return out.returncode == 0 and b'open' in out.stdout
+    out = subprocess.run(
+        ["nmap", guest_ip, "-PN", "-p", str(port)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return out.returncode == 0 and b"open" in out.stdout
 
 
 def read_file(file_name):
@@ -41,13 +47,18 @@ def generate_network_table(seed=None):
     # generate random MACs, set ensures they are unique
     macs = set()
     while len(macs) < 253:
-        macs.add('48:d2:24:bf:' + to_byte(random.randint(0, 255)) + ':' + to_byte(random.randint(0, 255)))
+        macs.add(
+            "48:d2:24:bf:"
+            + to_byte(random.randint(0, 255))
+            + ":"
+            + to_byte(random.randint(0, 255))
+        )
 
     # associate each MAC with a sequential IP
     table = {}
     ip_counter = 2
     for mac in macs:
-        table[mac] = '192.168.150.' + str(ip_counter)
+        table[mac] = "192.168.150." + str(ip_counter)
         ip_counter += 1
 
     return table

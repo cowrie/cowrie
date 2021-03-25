@@ -32,7 +32,7 @@ from cowrie.core.config import CowrieConfig
 
 class Artifact:
 
-    artifactDir = CowrieConfig().get('honeypot', 'download_path')
+    artifactDir = CowrieConfig().get("honeypot", "download_path")
 
     def __init__(self, label):
         self.label = label
@@ -41,8 +41,8 @@ class Artifact:
         self.tempFilename = self.fp.name
         self.closed = False
 
-        self.shasum = ''
-        self.shasumFilename = ''
+        self.shasum = ""
+        self.shasumFilename = ""
 
     def __enter__(self):
         return self.fp

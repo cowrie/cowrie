@@ -16,16 +16,16 @@ class command_which(HoneyPotCommand):
         """
 
         # No arguments, just exit
-        if not len(self.args) or 'PATH' not in self.environ:
+        if not len(self.args) or "PATH" not in self.environ:
             return
 
         # Look up each file
         for f in self.args:
-            for path in self.environ['PATH'].split(':'):
+            for path in self.environ["PATH"].split(":"):
                 resolved = self.fs.resolve_path(f, path)
 
                 if self.fs.exists(resolved):
                     self.write(f"{path}/{f}\n")
 
 
-commands['which'] = command_which
+commands["which"] = command_which

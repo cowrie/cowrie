@@ -23,7 +23,7 @@ class command_ulimit(HoneyPotCommand):
     def call(self):
         # Parse options or display no files
         try:
-            opts, args = getopt.getopt(self.args, 'SHacdfilmnpqstuvx')
+            opts, args = getopt.getopt(self.args, "SHacdfilmnpqstuvx")
         except getopt.GetoptError as err:
             self.errorWrite(f"-bash: ulimit: {err}\n")
             self.write("ulimit: usage: ulimit [-SHacdfilmnpqstuvx] [limit]\n")
@@ -31,16 +31,16 @@ class command_ulimit(HoneyPotCommand):
 
         # Parse options
         for o, a in opts:
-            if o in ('-c'):
-                self.do_ulimit(key='core', value=a)
+            if o in ("-c"):
+                self.do_ulimit(key="core", value=a)
                 return
-            elif o in ('-a'):
-                self.do_ulimit(key='all')
+            elif o in ("-a"):
+                self.do_ulimit(key="all")
                 return
         self.do_ulimit()
 
-    def do_ulimit(self, key='core'):
+    def do_ulimit(self, key="core"):
         pass
 
 
-commands['ulimit'] = command_ulimit
+commands["ulimit"] = command_ulimit
