@@ -41,25 +41,29 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.epoch_timestamp = CowrieConfig().getboolean('output_jsonlog', 'epoch_timestamp', fallback=False)
-        fn = CowrieConfig().get('output_jsonlog', 'logfile')
+        self.epoch_timestamp = CowrieConfig().getboolean(
+            "output_jsonlog", "epoch_timestamp", fallback=False
+        )
+        fn = CowrieConfig().get("output_jsonlog", "logfile")
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
-        self.outfile = cowrie.python.logfile.CowrieDailyLogFile(base, dirs, defaultMode=0o664)
+        self.outfile = cowrie.python.logfile.CowrieDailyLogFile(
+            base, dirs, defaultMode=0o664
+        )
 
     def stop(self):
         self.outfile.flush()
 
     def write(self, logentry):
         if self.epoch_timestamp:
-            logentry['epoch'] = int(logentry['time'] * 1000000 / 1000)
+            logentry["epoch"] = int(logentry["time"] * 1000000 / 1000)
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith('log_') or i == 'time' or i == 'system':
+            if i.startswith("log_") or i == "time" or i == "system":
                 del logentry[i]
         try:
-            json.dump(logentry, self.outfile, separators=(',', ':'))
-            self.outfile.write('\n')
+            json.dump(logentry, self.outfile, separators=(",", ":"))
+            self.outfile.write("\n")
             self.outfile.flush()
         except TypeError:
-            print("jsonlog: Can't serialize: '"+repr(logentry)+"'")
+            print("jsonlog: Can't serialize: '" + repr(logentry) + "'")

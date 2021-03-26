@@ -23,8 +23,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     protocol is replaced with HoneyPotTelnetSession.
     """
 
-    loginPrompt = b'login: '
-    passwordPrompt = b'Password: '
+    loginPrompt = b"login: "
+    passwordPrompt = b"Password: "
     windowSize = [40, 80]
 
     def connectionMade(self):
@@ -35,7 +35,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         # I need to doubly escape here since my underlying
         # CowrieTelnetTransport hack would remove it and leave just \n
-        self.transport.write(self.factory.banner.replace(b'\n', b'\r\r\n'))
+        self.transport.write(self.factory.banner.replace(b"\n", b"\r\r\n"))
         self.transport.write(self.loginPrompt)
 
     def connectionLost(self, reason):
@@ -54,7 +54,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.willChain(ECHO)
         # FIXME: this should be configurable or provided via filesystem
         self.transport.write(self.passwordPrompt)
-        return 'Password'
+        return "Password"
 
     def telnet_Password(self, line):
         username, password = self.username, line  # .decode()
@@ -76,12 +76,12 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
             self.transport.wontChain(ECHO).addBoth(login)
         else:
             # process login
-            login('')
+            login("")
 
-        return 'Discard'
+        return "Discard"
 
     def telnet_Command(self, command):
-        self.transport.protocol.dataReceived(command + b'\r')
+        self.transport.protocol.dataReceived(command + b"\r")
         return "Command"
 
     def _cbLogin(self, ial):
@@ -92,12 +92,14 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         protocol.windowSize = self.windowSize
         self.protocol = protocol
         self.logout = logout
-        self.state = 'Command'
+        self.state = "Command"
 
-        self.transport.write(b'\n')
+        self.transport.write(b"\n")
 
         # Remove the short timeout of the login prompt.
-        self.transport.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
+        self.transport.setTimeout(
+            CowrieConfig().getint("honeypot", "interactive_timeout", fallback=300)
+        )
 
         # replace myself with avatar protocol
         protocol.makeConnection(self.transport)
@@ -115,7 +117,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         From TelnetBootstrapProtocol in twisted/conch/telnet.py
         """
         if len(data) == 4:
-            width, height = struct.unpack('!HH', b''.join(data))
+            width, height = struct.unpack("!HH", b"".join(data))
             self.windowSize = [height, width]
         else:
             log.msg("Wrong number of NAWS bytes")

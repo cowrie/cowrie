@@ -40,7 +40,7 @@ class Term(base_protocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh, channelId):
         super().__init__(uuid, chan_name, ssh)
 
-        self.command = b''
+        self.command = b""
         self.pointer = 0
         self.tabPress = False
         self.upArrow = False
@@ -49,13 +49,16 @@ class Term(base_protocol.BaseProtocol):
         self.channelId = channelId
 
         self.startTime = time.time()
-        self.ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
-        self.ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
+        self.ttylogPath = CowrieConfig().get("honeypot", "ttylog_path")
+        self.ttylogEnabled = CowrieConfig().getboolean(
+            "honeypot", "ttylog", fallback=True
+        )
         self.ttylogSize = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = \
-                '{}/{}-{}-{}i.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'), uuid, self.channelId)
+            self.ttylogFile = "{}/{}-{}-{}i.log".format(
+                self.ttylogPath, time.strftime("%Y%m%d-%H%M%S"), uuid, self.channelId
+            )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def channel_closed(self):
@@ -74,103 +77,130 @@ class Term(base_protocol.BaseProtocol):
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            log.msg(eventid='cowrie.log.closed',
-                    format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
-                    ttylog=shasumfile,
-                    size=self.ttylogSize,
-                    shasum=shasum,
-                    duplicate=duplicate,
-                    duration=time.time() - self.startTime)
+            log.msg(
+                eventid="cowrie.log.closed",
+                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                ttylog=shasumfile,
+                size=self.ttylogSize,
+                shasum=shasum,
+                duplicate=duplicate,
+                duration=time.time() - self.startTime,
+            )
 
     def parse_packet(self, parent, payload):
         self.data = payload
 
-        if parent == '[SERVER]':
+        if parent == "[SERVER]":
             while len(self.data) > 0:
                 # If Tab Pressed
-                if self.data[:1] == b'\x09':
+                if self.data[:1] == b"\x09":
                     self.tabPress = True
                     self.data = self.data[1:]
                 # If Backspace Pressed
-                elif self.data[:1] == b'\x7f' or self.data[:1] == b'\x08':
+                elif self.data[:1] == b"\x7f" or self.data[:1] == b"\x08":
                     if self.pointer > 0:
-                        self.command = self.command[:self.pointer - 1] + self.command[self.pointer:]
+                        self.command = (
+                            self.command[: self.pointer - 1]
+                            + self.command[self.pointer :]
+                        )
                         self.pointer -= 1
                     self.data = self.data[1:]
                 # If enter or ctrl+c or newline
-                elif self.data[:1] == b'\x0d' or self.data[:1] == b'\x03' or self.data[:1] == b'\x0a':
-                    if self.data[:1] == b'\x03':
-                        self.command += b'^C'
+                elif (
+                    self.data[:1] == b"\x0d"
+                    or self.data[:1] == b"\x03"
+                    or self.data[:1] == b"\x0a"
+                ):
+                    if self.data[:1] == b"\x03":
+                        self.command += b"^C"
 
                     self.data = self.data[1:]
-                    if self.command != b'':
-                        log.msg(eventid='cowrie.command.input',
-                                input=self.command.decode('ascii'),
-                                format='CMD: %(input)s')
+                    if self.command != b"":
+                        log.msg(
+                            eventid="cowrie.command.input",
+                            input=self.command.decode("ascii"),
+                            format="CMD: %(input)s",
+                        )
 
-                    self.command = b''
+                    self.command = b""
                     self.pointer = 0
                 # If Home Pressed
-                elif self.data[:3] == b'\x1b\x4f\x48':
+                elif self.data[:3] == b"\x1b\x4f\x48":
                     self.pointer = 0
                     self.data = self.data[3:]
                 # If End Pressed
-                elif self.data[:3] == b'\x1b\x4f\x46':
+                elif self.data[:3] == b"\x1b\x4f\x46":
                     self.pointer = len(self.command)
                     self.data = self.data[3:]
                 # If Right Pressed
-                elif self.data[:3] == b'\x1b\x5b\x43':
+                elif self.data[:3] == b"\x1b\x5b\x43":
                     if self.pointer != len(self.command):
                         self.pointer += 1
                     self.data = self.data[3:]
                 # If Left Pressed
-                elif self.data[:3] == b'\x1b\x5b\x44':
+                elif self.data[:3] == b"\x1b\x5b\x44":
                     if self.pointer != 0:
                         self.pointer -= 1
                     self.data = self.data[3:]
                 # If up or down arrow
-                elif self.data[:3] == b'\x1b\x5b\x41' or self.data[:3] == b'\x1b\x5b\x42':
+                elif (
+                    self.data[:3] == b"\x1b\x5b\x41" or self.data[:3] == b"\x1b\x5b\x42"
+                ):
                     self.upArrow = True
                     self.data = self.data[3:]
                 else:
-                    self.command = self.command[:self.pointer] + self.data[:1] + self.command[self.pointer:]
+                    self.command = (
+                        self.command[: self.pointer]
+                        + self.data[:1]
+                        + self.command[self.pointer :]
+                    )
                     self.pointer += 1
                     self.data = self.data[1:]
 
             if self.ttylogEnabled:
                 self.ttylogSize += len(payload)
-                ttylog.ttylog_write(self.ttylogFile, len(payload), ttylog.TYPE_OUTPUT, time.time(), payload)
+                ttylog.ttylog_write(
+                    self.ttylogFile,
+                    len(payload),
+                    ttylog.TYPE_OUTPUT,
+                    time.time(),
+                    payload,
+                )
 
-        elif parent == '[CLIENT]':
+        elif parent == "[CLIENT]":
             if self.tabPress:
-                if not self.data.startswith(b'\x0d'):
-                    if self.data != b'\x07':
+                if not self.data.startswith(b"\x0d"):
+                    if self.data != b"\x07":
                         self.command = self.command + self.data
                 self.tabPress = False
 
             if self.upArrow:
                 while len(self.data) != 0:
                     # Backspace
-                    if self.data[:1] == b'\x08':
+                    if self.data[:1] == b"\x08":
                         self.command = self.command[:-1]
                         self.pointer -= 1
                         self.data = self.data[1:]
                     # ESC[K - Clear Line
-                    elif self.data[:3] == b'\x1b\x5b\x4b':
-                        self.command = self.command[:self.pointer]
+                    elif self.data[:3] == b"\x1b\x5b\x4b":
+                        self.command = self.command[: self.pointer]
                         self.data = self.data[3:]
-                    elif self.data[:1] == b'\x0d':
+                    elif self.data[:1] == b"\x0d":
                         self.pointer = 0
                         self.data = self.data[1:]
                     # Right Arrow
-                    elif self.data[:3] == b'\x1b\x5b\x43':
+                    elif self.data[:3] == b"\x1b\x5b\x43":
                         self.pointer += 1
                         self.data = self.data[3:]
-                    elif self.data[:2] == b'\x1b\x5b' and self.data[3] == b'\x50':
+                    elif self.data[:2] == b"\x1b\x5b" and self.data[3] == b"\x50":
                         self.data = self.data[4:]
                     # Needed?!
-                    elif self.data[:1] != b'\x07' and self.data[:1] != b'\x0d':
-                        self.command = self.command[:self.pointer] + self.data[:1] + self.command[self.pointer:]
+                    elif self.data[:1] != b"\x07" and self.data[:1] != b"\x0d":
+                        self.command = (
+                            self.command[: self.pointer]
+                            + self.data[:1]
+                            + self.command[self.pointer :]
+                        )
                         self.pointer += 1
                         self.data = self.data[1:]
                     else:
@@ -181,4 +211,10 @@ class Term(base_protocol.BaseProtocol):
 
             if self.ttylogEnabled:
                 self.ttylogSize += len(payload)
-                ttylog.ttylog_write(self.ttylogFile, len(payload), ttylog.TYPE_INPUT, time.time(), payload)
+                ttylog.ttylog_write(
+                    self.ttylogFile,
+                    len(payload),
+                    ttylog.TYPE_INPUT,
+                    time.time(),
+                    payload,
+                )

@@ -52,11 +52,12 @@ class Output(cowrie.core.output.Output):
 
     TODO: use `treq`
     """
+
     def start(self):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get('output_malshare', 'api_key')
+        self.apiKey = CowrieConfig().get("output_malshare", "api_key")
 
     def stop(self):
         """
@@ -87,8 +88,10 @@ class Output(cowrie.core.output.Output):
         """
         try:
             res = requests.post(
-                "https://malshare.com/api.php?api_key="+self.apiKey+"&action=upload",
-                files={"upload": open(artifact, "rb")}
+                "https://malshare.com/api.php?api_key="
+                + self.apiKey
+                + "&action=upload",
+                files={"upload": open(artifact, "rb")},
             )
             if res and res.ok:
                 log.msg("Submitted to MalShare")

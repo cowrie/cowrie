@@ -20,24 +20,24 @@ def durationHuman(seconds):
     years, days = divmod(days, 365.242199)
 
     syears = str(years)
-    sseconds = str(seconds).rjust(2, '0')
-    sminutes = str(minutes).rjust(2, '0')
-    shours = str(hours).rjust(2, '0')
+    sseconds = str(seconds).rjust(2, "0")
+    sminutes = str(minutes).rjust(2, "0")
+    shours = str(hours).rjust(2, "0")
 
     duration = []
     if years > 0:
-        duration.append('{} year{} '.format(syears, 's' * (years != 1)))
+        duration.append("{} year{} ".format(syears, "s" * (years != 1)))
     else:
         if days > 0:
-            duration.append('{} day{} '.format(days, 's' * (days != 1)))
+            duration.append("{} day{} ".format(days, "s" * (days != 1)))
         if hours > 0:
-            duration.append(f'{shours}:')
+            duration.append(f"{shours}:")
         if minutes >= 0:
-            duration.append(f'{sminutes}:')
+            duration.append(f"{sminutes}:")
         if seconds >= 0:
-            duration.append(f'{sseconds}')
+            duration.append(f"{sseconds}")
 
-    return ''.join(duration)
+    return "".join(duration)
 
 
 def tail(the_file, lines_2find=20):
@@ -51,7 +51,7 @@ def tail(the_file, lines_2find=20):
         byte_block = min(1024, bytes_in_file - total_bytes_scanned)
         the_file.seek(-(byte_block + total_bytes_scanned), 2)
         total_bytes_scanned += byte_block
-        lines_found += the_file.read(1024).count('\n')
+        lines_found += the_file.read(1024).count("\n")
     the_file.seek(-total_bytes_scanned, 2)
     line_list = list(the_file.readlines())
     return line_list[-lines_2find:]
@@ -80,33 +80,33 @@ def uptime(total_seconds):
     # 14 days,  3:53
     # 11 min
 
-    s = ''
+    s = ""
     if days > 0:
         s += str(days) + " " + (days == 1 and "day" or "days") + ", "
     if len(s) > 0 or hours > 0:
-        s += '{}:{}'.format(str(hours).rjust(2), str(minutes).rjust(2, '0'))
+        s += "{}:{}".format(str(hours).rjust(2), str(minutes).rjust(2, "0"))
     else:
-        s += '{} min'.format(str(minutes))
+        s += "{} min".format(str(minutes))
     return s
 
 
 def get_endpoints_from_section(cfg, section, default_port):
-    if cfg.has_option(section, 'listen_endpoints'):
-        return cfg.get(section, 'listen_endpoints').split()
+    if cfg.has_option(section, "listen_endpoints"):
+        return cfg.get(section, "listen_endpoints").split()
 
-    if cfg.has_option(section, 'listen_addr'):
-        listen_addr = cfg.get(section, 'listen_addr')
+    if cfg.has_option(section, "listen_addr"):
+        listen_addr = cfg.get(section, "listen_addr")
     else:
-        listen_addr = '0.0.0.0'
+        listen_addr = "0.0.0.0"
 
-    if cfg.has_option(section, 'listen_port'):
-        listen_port = cfg.getint(section, 'listen_port')
+    if cfg.has_option(section, "listen_port"):
+        listen_port = cfg.getint(section, "listen_port")
     else:
         listen_port = default_port
 
     listen_endpoints = []
     for i in listen_addr.split():
-        listen_endpoints.append(f'tcp:{listen_port}:interface={i}')
+        listen_endpoints.append(f"tcp:{listen_port}:interface={i}")
 
     return listen_endpoints
 
@@ -116,7 +116,9 @@ def create_endpoint_services(reactor, parent, listen_endpoints, factory):
 
         # work around http://twistedmatrix.com/trac/ticket/8422
         if sys.version_info.major < 3:
-            endpoint = endpoints.serverFromString(reactor, listen_endpoint.encode('utf-8'))
+            endpoint = endpoints.serverFromString(
+                reactor, listen_endpoint.encode("utf-8")
+            )
         else:
             endpoint = endpoints.serverFromString(reactor, listen_endpoint)
 

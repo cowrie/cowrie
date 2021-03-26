@@ -24,9 +24,10 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellChmodCommandTests(unittest.TestCase):
-
     def setUp(self):
-        self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
+        self.proto = protocol.HoneyPotInteractiveProtocol(
+            fake_server.FakeAvatar(fake_server.FakeServer())
+        )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
@@ -37,8 +38,7 @@ class ShellChmodCommandTests(unittest.TestCase):
         """
         self.proto.lineReceived(b"chmod")
         self.assertEquals(
-            self.tr.value(),
-            b"chmod: missing operand\n" + TRY_CHMOD_HELP_MSG + PROMPT
+            self.tr.value(), b"chmod: missing operand\n" + TRY_CHMOD_HELP_MSG + PROMPT
         )
 
     def test_chmod_command_002(self):
@@ -47,8 +47,7 @@ class ShellChmodCommandTests(unittest.TestCase):
         """
         self.proto.lineReceived(b"chmod -x")
         self.assertEquals(
-            self.tr.value(),
-            b"chmod: missing operand\n" + TRY_CHMOD_HELP_MSG + PROMPT
+            self.tr.value(), b"chmod: missing operand\n" + TRY_CHMOD_HELP_MSG + PROMPT
         )
 
     def test_chmod_command_003(self):
@@ -58,7 +57,9 @@ class ShellChmodCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"chmod +x")
         self.assertEquals(
             self.tr.value(),
-            b"chmod: missing operand after \xe2\x80\x98+x\xe2\x80\x99\n" + TRY_CHMOD_HELP_MSG + PROMPT
+            b"chmod: missing operand after \xe2\x80\x98+x\xe2\x80\x99\n"
+            + TRY_CHMOD_HELP_MSG
+            + PROMPT,
         )
 
     def test_chmod_command_004(self):
@@ -68,7 +69,7 @@ class ShellChmodCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"chmod -A")
         self.assertEquals(
             self.tr.value(),
-            b"chmod: invalid option -- 'A'\n" + TRY_CHMOD_HELP_MSG + PROMPT
+            b"chmod: invalid option -- 'A'\n" + TRY_CHMOD_HELP_MSG + PROMPT,
         )
 
     def test_chmod_command_005(self):
@@ -78,7 +79,7 @@ class ShellChmodCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"chmod --A")
         self.assertEquals(
             self.tr.value(),
-            b"chmod: unrecognized option '--A'\n" + TRY_CHMOD_HELP_MSG + PROMPT
+            b"chmod: unrecognized option '--A'\n" + TRY_CHMOD_HELP_MSG + PROMPT,
         )
 
     def test_chmod_command_006(self):
@@ -86,7 +87,10 @@ class ShellChmodCommandTests(unittest.TestCase):
         No such file or directory
         """
         self.proto.lineReceived(b"chmod -x abcd")
-        self.assertEquals(self.tr.value(), b"chmod: cannot access 'abcd': No such file or directory\n" + PROMPT)
+        self.assertEquals(
+            self.tr.value(),
+            b"chmod: cannot access 'abcd': No such file or directory\n" + PROMPT,
+        )
 
     def test_chmod_command_007(self):
         """
@@ -95,7 +99,9 @@ class ShellChmodCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"chmod abcd efgh")
         self.assertEquals(
             self.tr.value(),
-            b"chmod: invalid mode: \xe2\x80\x98abcd\xe2\x80\x99\n" + TRY_CHMOD_HELP_MSG + PROMPT
+            b"chmod: invalid mode: \xe2\x80\x98abcd\xe2\x80\x99\n"
+            + TRY_CHMOD_HELP_MSG
+            + PROMPT,
         )
 
     def test_chmod_command_008(self):

@@ -16,7 +16,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
         super().__init__()
 
     def connectionMade(self):
-        log.msg(f'Connected to Telnet backend at {self.transport.getPeer().host}')
+        log.msg(f"Connected to Telnet backend at {self.transport.getPeer().host}")
         self.telnetHandler = self.factory.server.telnetHandler
         self.telnetHandler.setClient(self)
 
@@ -42,7 +42,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg('Timeout reached in BackendTelnetTransport')
+        log.msg("Timeout reached in BackendTelnetTransport")
 
         # close transports on both sides
         self.transport.loseConnection()
@@ -52,7 +52,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.telnetHandler.close()
 
     def dataReceived(self, data):
-        self.telnetHandler.addPacket('backend', data)
+        self.telnetHandler.addPacket("backend", data)
 
     def write(self, data):
         self.transport.write(data)

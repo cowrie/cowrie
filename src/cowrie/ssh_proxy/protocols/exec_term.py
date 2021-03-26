@@ -40,26 +40,36 @@ class ExecTerm(base_protocol.BaseProtocol):
     def __init__(self, uuid, channelName, ssh, channelId, command):
         super().__init__(uuid, channelName, ssh)
 
-        log.msg(eventid='cowrie.command.input',
-                input=command.decode('ascii'),
-                format='CMD: %(input)s')
+        log.msg(
+            eventid="cowrie.command.input",
+            input=command.decode("ascii"),
+            format="CMD: %(input)s",
+        )
 
         self.transportId = ssh.server.transportId
         self.channelId = channelId
 
         self.startTime = time.time()
-        self.ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
-        self.ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
+        self.ttylogPath = CowrieConfig().get("honeypot", "ttylog_path")
+        self.ttylogEnabled = CowrieConfig().getboolean(
+            "honeypot", "ttylog", fallback=True
+        )
         self.ttylogSize = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = '{}/{}-{}-{}e.log'.format(
-                self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'), self.transportId, self.channelId)
+            self.ttylogFile = "{}/{}-{}-{}e.log".format(
+                self.ttylogPath,
+                time.strftime("%Y%m%d-%H%M%S"),
+                self.transportId,
+                self.channelId,
+            )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def parse_packet(self, parent, payload):
         if self.ttylogEnabled:
-            ttylog.ttylog_write(self.ttylogFile, len(payload), ttylog.TYPE_OUTPUT, time.time(), payload)
+            ttylog.ttylog_write(
+                self.ttylogFile, len(payload), ttylog.TYPE_OUTPUT, time.time(), payload
+            )
             self.ttylogSize += len(payload)
 
     def channel_closed(self):
@@ -78,10 +88,12 @@ class ExecTerm(base_protocol.BaseProtocol):
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            log.msg(eventid='cowrie.log.closed',
-                    format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
-                    ttylog=shasumfile,
-                    size=self.ttylogSize,
-                    shasum=shasum,
-                    duplicate=duplicate,
-                    duration=time.time() - self.startTime)
+            log.msg(
+                eventid="cowrie.log.closed",
+                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                ttylog=shasumfile,
+                size=self.ttylogSize,
+                shasum=shasum,
+                duplicate=duplicate,
+                duration=time.time() - self.startTime,
+            )

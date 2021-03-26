@@ -46,17 +46,20 @@ class CowrieServer:
     This class represents a 'virtual server' that can be shared between
     multiple Cowrie connections
     """
+
     fs = None
     process = None
     avatars = []
-    hostname = CowrieConfig().get('honeypot', 'hostname')
+    hostname = CowrieConfig().get("honeypot", "hostname")
 
     def __init__(self, realm):
         try:
-            arches = [arch.strip() for arch in CowrieConfig().get('shell', 'arch').split(',')]
+            arches = [
+                arch.strip() for arch in CowrieConfig().get("shell", "arch").split(",")
+            ]
             self.arch = random.choice(arches)
         except NoOptionError:
-            self.arch = 'linux-x64-lsb'
+            self.arch = "linux-x64-lsb"
 
         log.msg(f"Initialized emulated server as architecture: {self.arch}")
 
@@ -75,6 +78,8 @@ class CowrieServer:
         self.fs = fs.HoneyPotFilesystem(None, self.arch, home)
 
         try:
-            self.process = self.getCommandOutput(CowrieConfig().get('shell', 'processes'))['command']['ps']
+            self.process = self.getCommandOutput(
+                CowrieConfig().get("shell", "processes")
+            )["command"]["ps"]
         except NoOptionError:
             self.process = None

@@ -29,27 +29,31 @@ class command_tee(HoneyPotCommand):
 
     def start(self):
         try:
-            optlist, args = getopt.gnu_getopt(self.args, 'aip', ['help', 'append', 'version'])
+            optlist, args = getopt.gnu_getopt(
+                self.args, "aip", ["help", "append", "version"]
+            )
         except getopt.GetoptError as err:
-            self.errorWrite(f"tee: invalid option -- '{err.opt}'\nTry 'tee --help' for more information.\n")
+            self.errorWrite(
+                f"tee: invalid option -- '{err.opt}'\nTry 'tee --help' for more information.\n"
+            )
             self.exit()
             return
 
         for o, a in optlist:
-            if o in ('--help'):
+            if o in ("--help"):
                 self.help()
                 self.exit()
                 return
-            elif o in ('-a', '--append'):
+            elif o in ("-a", "--append"):
                 self.append = True
-            elif o in ('-a', '--ignore-interrupts'):
+            elif o in ("-a", "--ignore-interrupts"):
                 self.ignoreInterupts = True
 
         for arg in args:
             pname = self.fs.resolve_path(arg, self.protocol.cwd)
 
             if self.fs.isdir(pname):
-                self.errorWrite(f'tee: {arg}: Is a directory\n')
+                self.errorWrite(f"tee: {arg}: Is a directory\n")
                 continue
 
             try:
@@ -64,7 +68,7 @@ class command_tee(HoneyPotCommand):
                 self.fs.mkfile(pname, 0, 0, 0, 0o644)
 
             except FileNotFound:
-                self.errorWrite(f'tee: {arg}: No such file or directory\n')
+                self.errorWrite(f"tee: {arg}: No such file or directory\n")
 
         if self.input_data:
             self.output(self.input_data)
@@ -79,33 +83,35 @@ class command_tee(HoneyPotCommand):
         """
         This is the tee output, if no file supplied
         """
-        if 'decode' in dir(input):
-            input = input.decode('UTF-8')
+        if "decode" in dir(input):
+            input = input.decode("UTF-8")
         if not isinstance(input, str):
             pass
 
-        lines = input.split('\n')
+        lines = input.split("\n")
         if lines[-1] == "":
             lines.pop()
         for line in lines:
-            self.write(line + '\n')
-            self.write_to_file(line + '\n')
+            self.write(line + "\n")
+            self.write_to_file(line + "\n")
 
     def lineReceived(self, line):
         """
         This function logs standard input from the user send to tee
         """
-        log.msg(eventid='cowrie.session.input',
-                realm='tee',
-                input=line,
-                format='INPUT (%(realm)s): %(input)s')
+        log.msg(
+            eventid="cowrie.session.input",
+            realm="tee",
+            input=line,
+            format="INPUT (%(realm)s): %(input)s",
+        )
 
         self.output(line)
 
     def handle_CTRL_C(self):
         if not self.ignoreInterupts:
-            log.msg('Received CTRL-C, exiting..')
-            self.write('^C\n')
+            log.msg("Received CTRL-C, exiting..")
+            self.write("^C\n")
             self.exit()
 
     def handle_CTRL_D(self):
@@ -143,5 +149,5 @@ or available locally via: info '(coreutils) tee invocation'
         )
 
 
-commands['/bin/tee'] = command_tee
-commands['tee'] = command_tee
+commands["/bin/tee"] = command_tee
+commands["tee"] = command_tee

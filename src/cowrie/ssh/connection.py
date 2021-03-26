@@ -47,20 +47,21 @@ class CowrieSSHConnection(connection.SSHConnection):
     """
 
     def ssh_CHANNEL_REQUEST(self, packet):
-        localChannel = struct.unpack('>L', packet[:4])[0]
+        localChannel = struct.unpack(">L", packet[:4])[0]
         requestType, rest = common.getNS(packet[4:])
         wantReply = ord(rest[0:1])
         channel = self.channels[localChannel]
 
-        if requestType == b'shell':
+        if requestType == b"shell":
             wantReply = 0
-            self.transport.sendPacket(MSG_CHANNEL_SUCCESS, struct.pack('>L', self.localToRemoteChannel[localChannel]))
+            self.transport.sendPacket(
+                MSG_CHANNEL_SUCCESS,
+                struct.pack(">L", self.localToRemoteChannel[localChannel]),
+            )
 
-        d = defer.maybeDeferred(log.callWithLogger,
-                                channel,
-                                channel.requestReceived,
-                                requestType,
-                                rest[1:])
+        d = defer.maybeDeferred(
+            log.callWithLogger, channel, channel.requestReceived, requestType, rest[1:]
+        )
         if wantReply:
             d.addCallback(self._cbChannelRequest, localChannel)
             d.addErrback(self._ebChannelRequest, localChannel)

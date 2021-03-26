@@ -19,7 +19,6 @@ from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log, randbytes
-from twisted.python.compat import _bytesChr as chr
 
 from cowrie.core.config import CowrieConfig
 
@@ -27,9 +26,13 @@ from cowrie.core.config import CowrieConfig
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     startTime = None
     gotVersion = False
-    ipv4rex = re.compile(r'^::ffff:(\d+\.\d+\.\d+\.\d+)$')
-    auth_timeout = CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120)
-    interactive_timeout = CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300)
+    ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
+    auth_timeout = CowrieConfig().getint(
+        "honeypot", "authentication_timeout", fallback=120
+    )
+    interactive_timeout = CowrieConfig().getint(
+        "honeypot", "interactive_timeout", fallback=300
+    )
 
     def __repr__(self):
         """
@@ -53,20 +56,22 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             src_ip = ipv4_search.group(1)
 
         log.msg(
-            eventid='cowrie.session.connect',
+            eventid="cowrie.session.connect",
             format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
             src_ip=src_ip,
             src_port=self.transport.getPeer().port,
             dst_ip=self.transport.getHost().host,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno=f'S{self.transport.sessionno}',
-            protocol='ssh'
+            sessionno=f"S{self.transport.sessionno}",
+            protocol="ssh",
         )
 
-        self.transport.write(f'{self.ourVersionString}\r\n'.encode('ascii'))
-        self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
-        self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
+        self.transport.write(f"{self.ourVersionString}\r\n".encode("ascii"))
+        self.currentEncryptions = transport.SSHCiphers(
+            b"none", b"none", b"none", b"none"
+        )
+        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
 
         self.startTime = time.time()
         self.setTimeout(self.auth_timeout)
@@ -83,7 +88,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Change message to be like OpenSSH
         """
-        self.transport.write(b'Protocol major versions differ.\n')
+        self.transport.write(b"Protocol major versions differ.\n")
         self.transport.loseConnection()
 
     def dataReceived(self, data):
@@ -96,15 +101,22 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.buf = self.buf + data
         if not self.gotVersion:
-            if b'\n' not in self.buf:
+            if b"\n" not in self.buf:
                 return
-            self.otherVersionString = self.buf.split(b'\n')[0].strip()
-            log.msg(eventid='cowrie.client.version', version=repr(self.otherVersionString),
-                    format="Remote SSH version: %(version)s")
-            m = re.match(br'SSH-(\d+.\d+)-(.*)', self.otherVersionString)
+            self.otherVersionString = self.buf.split(b"\n")[0].strip()
+            log.msg(
+                eventid="cowrie.client.version",
+                version=repr(self.otherVersionString),
+                format="Remote SSH version: %(version)s",
+            )
+            m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
-                log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
-                self.transport.write(b'Protocol mismatch.\n')
+                log.msg(
+                    "Bad protocol version identification: {}".format(
+                        repr(self.otherVersionString)
+                    )
+                )
+                self.transport.write(b"Protocol mismatch.\n")
                 self.transport.loseConnection()
                 return
             else:
@@ -113,8 +125,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 if remote_version not in self.supportedVersions:
                     self._unsupportedVersionReceived(None)
                     return
-                i = self.buf.index(b'\n')
-                self.buf = self.buf[i + 1:]
+                i = self.buf.index(b"\n")
+                self.buf = self.buf[i + 1 :]
                 self.sendKexInit()
         packet = self.getPacket()
         while packet:
@@ -134,10 +146,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self._blockedByKeyExchange.append((messageType, payload))
                 return
 
-        payload = chr(messageType) + payload
+        payload = bytes((messageType,)) + payload
         if self.outgoingCompression:
-            payload = (self.outgoingCompression.compress(payload)
-                       + self.outgoingCompression.flush(2))
+            payload = self.outgoingCompression.compress(
+                payload
+            ) + self.outgoingCompression.flush(2)
         bs = self.currentEncryptions.encBlockSize
         # 4 for the packet length and 1 for the padding length
         totalSize = 5 + len(payload)
@@ -145,44 +158,47 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if lenPad < 4:
             lenPad = lenPad + bs
         if messageType == transport.MSG_KEXINIT:
-            padding = b'\0' * lenPad
+            padding = b"\0" * lenPad
         else:
             padding = randbytes.secureRandom(lenPad)
 
-        packet = (struct.pack(b'!LB',
-                              totalSize + lenPad - 4, lenPad) +
-                  payload + padding)
-        encPacket = (self.currentEncryptions.encrypt(packet) +
-                     self.currentEncryptions.makeMAC(
-                         self.outgoingPacketSequence, packet))
+        packet = struct.pack(b"!LB", totalSize + lenPad - 4, lenPad) + payload + padding
+        encPacket = self.currentEncryptions.encrypt(
+            packet
+        ) + self.currentEncryptions.makeMAC(self.outgoingPacketSequence, packet)
         self.transport.write(encPacket)
         self.outgoingPacketSequence += 1
 
     def ssh_KEXINIT(self, packet):
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,
-         _) = [s.split(b',') for s in strings]
+        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = [
+            s.split(b",") for s in strings
+        ]
 
         # hassh SSH client fingerprint
         # https://github.com/salesforce/hassh
-        ckexAlgs = ','.join([alg.decode('utf-8') for alg in kexAlgs])
-        cencCS = ','.join([alg.decode('utf-8') for alg in encCS])
-        cmacCS = ','.join([alg.decode('utf-8') for alg in macCS])
-        ccompCS = ','.join([alg.decode('utf-8') for alg in compCS])
+        ckexAlgs = ",".join([alg.decode("utf-8") for alg in kexAlgs])
+        cencCS = ",".join([alg.decode("utf-8") for alg in encCS])
+        cmacCS = ",".join([alg.decode("utf-8") for alg in macCS])
+        ccompCS = ",".join([alg.decode("utf-8") for alg in compCS])
         hasshAlgorithms = "{kex};{enc};{mac};{cmp}".format(
-            kex=ckexAlgs,
-            enc=cencCS,
-            mac=cmacCS,
-            cmp=ccompCS)
-        hassh = md5(hasshAlgorithms.encode('utf-8')).hexdigest()
+            kex=ckexAlgs, enc=cencCS, mac=cmacCS, cmp=ccompCS
+        )
+        hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 
-        log.msg(eventid='cowrie.client.kex',
-                format="SSH client hassh fingerprint: %(hassh)s",
-                hassh=hassh,
-                hasshAlgorithms=hasshAlgorithms,
-                kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
-                compCS=compCS, langCS=langCS)
+        log.msg(
+            eventid="cowrie.client.kex",
+            format="SSH client hassh fingerprint: %(hassh)s",
+            hassh=hassh,
+            hasshAlgorithms=hasshAlgorithms,
+            kexAlgs=kexAlgs,
+            keyAlgs=keyAlgs,
+            encCS=encCS,
+            macCS=macCS,
+            compCS=compCS,
+            langCS=langCS,
+        )
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
@@ -199,15 +215,15 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Remove login grace timeout, set zlib compression after auth
         """
         # Reset timeout. Not everyone opens shell so need timeout at transport level
-        if service.name == b'ssh-connection':
+        if service.name == b"ssh-connection":
             self.setTimeout(self.interactive_timeout)
 
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
-        if service.name == b'ssh-connection':
-            if self.outgoingCompressionType == b'zlib@openssh.com':
+        if service.name == b"ssh-connection":
+            if self.outgoingCompressionType == b"zlib@openssh.com":
                 self.outgoingCompression = zlib.compressobj(6)
-            if self.incomingCompressionType == b'zlib@openssh.com':
+            if self.incomingCompressionType == b"zlib@openssh.com":
                 self.incomingCompression = zlib.decompressobj()
 
         transport.SSHServerTransport.setService(self, service)
@@ -221,9 +237,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.connectionLost(reason)
         self.transport = None
         duration = time.time() - self.startTime
-        log.msg(eventid='cowrie.session.closed',
-                format="Connection lost after %(duration)d seconds",
-                duration=duration)
+        log.msg(
+            eventid="cowrie.session.closed",
+            format="Connection lost after %(duration)d seconds",
+            duration=duration,
+        )
 
     def sendDisconnect(self, reason, desc):
         """
@@ -236,11 +254,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @param desc: a description of the reason for the disconnection.
         @type desc: C{str}
         """
-        if b'bad packet length' not in desc:
+        if b"bad packet length" not in desc:
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write(b'Packet corrupt\n')
-            log.msg(f"[SERVER] - Disconnecting with error, code {reason} reason: {desc}")
+            self.transport.write(b"Packet corrupt\n")
+            log.msg(
+                f"[SERVER] - Disconnecting with error, code {reason} reason: {desc}"
+            )
             self.transport.loseConnection()
 
     def receiveError(self, reasonCode, description):
@@ -254,4 +274,4 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg(f'Got remote error, code {reasonCode} reason: {description}')
+        log.msg(f"Got remote error, code {reasonCode} reason: {description}")

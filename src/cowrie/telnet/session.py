@@ -38,19 +38,24 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         except KeyError:
             self.uid = 1001
             self.gid = 1001
-            self.home = '/home'
+            self.home = "/home"
 
         self.environ = {
-            'LOGNAME': self.username,
-            'USER': self.username,
-            'SHELL': '/bin/bash',
-            'HOME': self.home,
-            'TMOUT': '1800'}
+            "LOGNAME": self.username,
+            "USER": self.username,
+            "SHELL": "/bin/bash",
+            "HOME": self.home,
+            "TMOUT": "1800",
+        }
 
         if self.uid == 0:
-            self.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+            self.environ[
+                "PATH"
+            ] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         else:
-            self.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
+            self.environ[
+                "PATH"
+            ] = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 
         # required because HoneyPotBaseProtocol relies on avatar.avatar.home
         self.avatar = self
@@ -67,7 +72,8 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
             self.transport.willChain(ECHO)
 
         self.protocol = insults.LoggingTelnetServerProtocol(
-            cproto.HoneyPotInteractiveTelnetProtocol, self)
+            cproto.HoneyPotInteractiveTelnetProtocol, self
+        )
 
         # somewhere in Twisted this exception gets lost. Log explicitly here
         try:
@@ -83,7 +89,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.protocol = None
 
     def logout(self):
-        log.msg(f'avatar {self.username} logging out')
+        log.msg(f"avatar {self.username} logging out")
 
 
 # Taken and adapted from
@@ -151,7 +157,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         self.session.write(data)
 
     def writeSequence(self, seq):
-        self.session.write(b''.join(seq))
+        self.session.write(b"".join(seq))
 
     def loseConnection(self):
         self.session.loseConnection()

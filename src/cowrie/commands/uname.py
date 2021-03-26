@@ -13,23 +13,25 @@ commands = {}
 
 
 def hardware_platform():
-    return CowrieConfig().get('shell', 'hardware_platform', fallback='x86_64')
+    return CowrieConfig().get("shell", "hardware_platform", fallback="x86_64")
 
 
 def kernel_name():
-    return CowrieConfig().get('shell', 'kernel_name', fallback='Linux')
+    return CowrieConfig().get("shell", "kernel_name", fallback="Linux")
 
 
 def kernel_version():
-    return CowrieConfig().get('shell', 'kernel_version', fallback='3.2.0-4-amd64')
+    return CowrieConfig().get("shell", "kernel_version", fallback="3.2.0-4-amd64")
 
 
 def kernel_build_string():
-    return CowrieConfig().get('shell', 'kernel_build_string', fallback='#1 SMP Debian 3.2.68-1+deb7u1')
+    return CowrieConfig().get(
+        "shell", "kernel_build_string", fallback="#1 SMP Debian 3.2.68-1+deb7u1"
+    )
 
 
 def operating_system():
-    return CowrieConfig().get('shell', 'operating_system', fallback='GNU/Linux')
+    return CowrieConfig().get("shell", "operating_system", fallback="GNU/Linux")
 
 
 def uname_help():
@@ -55,70 +57,133 @@ or available locally via: info '(coreutils) uname invocation'\n
 """
 
 
-class command_uname(HoneyPotCommand):
+def uname_get_some_help():
+    return "Try 'uname --help' for more information."
 
+
+def uname_fail_long(arg):
+    return f"uname: unrecognized option '{arg}'\n{uname_get_some_help()}\n"
+
+
+def uname_fail_short(arg):
+    return f"uname: invalid option -- '{arg}'\n{uname_get_some_help()}\n"
+
+
+def uname_fail_extra(arg):
+    # Note: These are apostrophes, not single quotation marks.
+    return f"uname: extra operand ‘{arg}’\n{uname_get_some_help()}\n"
+
+
+class command_uname(HoneyPotCommand):
     def full_uname(self):
-        return '{} {} {} {} {} {}\n'.format(kernel_name(),
-                                            self.protocol.hostname,
-                                            kernel_version(),
-                                            kernel_build_string(),
-                                            hardware_platform(),
-                                            operating_system())
+        return "{} {} {} {} {} {}\n".format(
+            kernel_name(),
+            self.protocol.hostname,
+            kernel_version(),
+            kernel_build_string(),
+            hardware_platform(),
+            operating_system(),
+        )
 
     def call(self):
-        """
-        TODO: getopt style parsing
-        """
         opts = {
-            'name': False,
-            'release': False,
-            'version': False,
-            'os': False,
-            'node': False,
-            'machine': False
-            }
+            "name": False,
+            "release": False,
+            "version": False,
+            "os": False,
+            "node": False,
+            "machine": False,
+        }
+
+        flags = [
+            (["a", "all"], "__ALL__"),
+            (["s", "kernel-name"], "name"),
+            (["r", "kernel-release"], "release"),
+            (["v", "kernel-version"], "version"),
+            (["o", "operating-system"], "os"),
+            (["n", "nodename"], "node"),
+            (["m", "machine", "p", "processor", "i", "hardware-platform"], "machine"),
+        ]
+
         if not self.args:
             # IF no params output default
-            self.write(f'{kernel_name()}\n')
-        else:
-            # I have parameter to parse
-            for a in self.args:
-                a = a.strip()
-                if a in ('-h', '--help'):
-                    self.write(uname_help())
+            self.write(f"{kernel_name()}\n")
+            return
+
+        # getopt-style parsing
+        for a in self.args:
+            a = a.strip()
+            arg_block = []
+            was_long = False
+
+            if a == "--help":
+                # Help overrides invalid args following --help
+                # There's no -h, invalid args before --help still fail.
+                self.write(uname_help())
+                return
+            elif a.startswith("--"):
+                # arg name w/o --
+                was_long = True
+                arg_block.append(a[2:])
+            elif a.startswith("-"):
+                # letter by letter
+                a = a[1:]
+                if len(a) == 0:
+                    self.write(uname_fail_extra("-"))
                     return
-                elif a in ('-a', '--all'):
-                    self.write(self.full_uname())
+
+                for split_arg in a:
+                    arg_block.append(split_arg)
+            else:
+                self.write(uname_fail_extra(a))
+                return
+
+            for arg in arg_block:
+                arg_parsed = False
+
+                # Find a possible flag for each arg.
+                for possible_args, target_opt in flags:
+                    if arg not in possible_args:
+                        continue
+
+                    arg_parsed = True  # Got a hit!
+
+                    # Set all opts for -a/--all, single opt otherwise:
+                    if target_opt == "__ALL__":
+                        for key, value in opts.items():
+                            opts[key] = True
+                    else:
+                        opts[target_opt] = True
+
+                    break  # Next arg please
+
+                if not arg_parsed:
+                    self.write(
+                        uname_fail_long(a) if was_long else uname_fail_short(arg)
+                    )
                     return
-                elif a in ('-s', '--kernel-name'):
-                    opts['name'] = True
-                elif a in ('-r', '--kernel-release'):
-                    opts['release'] = True
-                elif a in ('-v', '--kernel-version'):
-                    opts['version'] = True
-                elif a in ('-o', '--operating-system'):
-                    opts['os'] = True
-                elif a in ('-n', '--nodename'):
-                    opts['node'] = True
-                elif a in ('-m', '--machine', '-p', '--processor', '-i', '--hardware-platform'):
-                    opts['machine'] = True
-            '''
-            I have all the option set
-            '''
-            if opts['name']:
-                self.write(f'{kernel_name()} ')
-            if opts['node']:
-                self.write(f'{self.protocol.hostname} ')
-            if opts['release']:
-                self.write(f'{kernel_version()} ')
-            if opts['version']:
-                self.write(f'{kernel_build_string()} ')
-            if opts['machine']:
-                self.write(f'{hardware_platform()} ')
-            if opts['os']:
-                self.write(f'{operating_system()} ')
-            self.write('\n')
+
+        # All the options set, let's get the output
+        output = []
+
+        if opts["name"]:
+            output.append(kernel_name())
+        if opts["node"]:
+            output.append(self.protocol.hostname)
+        if opts["release"]:
+            output.append(kernel_version())
+        if opts["version"]:
+            output.append(kernel_build_string())
+        if opts["machine"]:
+            output.append(hardware_platform())
+        if opts["os"]:
+            output.append(operating_system())
+
+        if len(output) < 1:
+            output.append(kernel_name())
+
+        self.write(" ".join(output) + "\n")
 
 
-commands['/bin/uname'] = command_uname
-commands['uname'] = command_uname
+commands["/bin/uname"] = command_uname
+commands["uname"] = command_uname

@@ -11,8 +11,8 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-COWRIE_USER_AGENT = 'Cowrie Honeypot'
-GNAPI_URL = 'http://api.greynoise.io:8888/v1/'
+COWRIE_USER_AGENT = "Cowrie Honeypot"
+GNAPI_URL = "http://api.greynoise.io:8888/v1/"
 
 
 class Output(cowrie.core.output.Output):
@@ -24,9 +24,13 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get('output_greynoise', 'api_key', fallback=None)
-        self.tags = CowrieConfig().get('output_greynoise', 'tags', fallback="all").split(",")
-        self.debug = CowrieConfig().getboolean('output_greynoise', 'debug', fallback=False)
+        self.apiKey = CowrieConfig().get("output_greynoise", "api_key", fallback=None)
+        self.tags = (
+            CowrieConfig().get("output_greynoise", "tags", fallback="all").split(",")
+        )
+        self.debug = CowrieConfig().getboolean(
+            "output_greynoise", "debug", fallback=False
+        )
 
     def stop(self):
         """
@@ -35,7 +39,7 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        if entry['eventid'] == "cowrie.session.connect":
+        if entry["eventid"] == "cowrie.session.connect":
             self.scanip(entry)
 
     @defer.inlineCallbacks
@@ -43,28 +47,31 @@ class Output(cowrie.core.output.Output):
         """
         Scan IP againt Greynoise API
         """
+
         def message(query):
             log.msg(
-                eventid='cowrie.greynoise.result',
-                format='greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence'
-                ' along with the following %(meta)s metadata',
-                IP=entry['src_ip'],
-                tag=query['name'],
-                conf=query['confidence'],
-                meta=query['metadata']
+                eventid="cowrie.greynoise.result",
+                format="greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence"
+                " along with the following %(meta)s metadata",
+                IP=entry["src_ip"],
+                tag=query["name"],
+                conf=query["confidence"],
+                meta=query["metadata"],
             )
 
-        gnUrl = f'{GNAPI_URL}query/ip'.encode('utf8')
-        headers = ({'User-Agent': [COWRIE_USER_AGENT]})
-        fields = {'key': self.apiKey, 'ip': entry['src_ip']}
+        gnUrl = f"{GNAPI_URL}query/ip".encode("utf8")
+        headers = {"User-Agent": [COWRIE_USER_AGENT]}
+        fields = {"key": self.apiKey, "ip": entry["src_ip"]}
 
         try:
             response = yield treq.post(
-                url=gnUrl,
-                data=fields,
-                headers=headers,
-                timeout=10)
-        except (defer.CancelledError, error.ConnectingCancelledError, error.DNSLookupError):
+                url=gnUrl, data=fields, headers=headers, timeout=10
+            )
+        except (
+            defer.CancelledError,
+            error.ConnectingCancelledError,
+            error.DNSLookupError,
+        ):
             log.msg("GreyNoise requests timeout")
             return
 
@@ -75,15 +82,15 @@ class Output(cowrie.core.output.Output):
 
         j = yield response.json()
         if self.debug:
-            log.msg("greynoise: debug: "+repr(j))
+            log.msg("greynoise: debug: " + repr(j))
 
-        if j['status'] == "ok":
+        if j["status"] == "ok":
             if "all" not in self.tags:
-                for query in j['records']:
-                    if query['name'] in self.tags:
+                for query in j["records"]:
+                    if query["name"] in self.tags:
                         message(query)
             else:
-                for query in j['records']:
+                for query in j["records"]:
                     message(query)
         else:
-            log.msg("greynoise: no results for for IP {}".format(entry['src_ip']))
+            log.msg("greynoise: no results for for IP {}".format(entry["src_ip"]))

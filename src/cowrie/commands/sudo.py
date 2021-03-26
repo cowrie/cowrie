@@ -5,16 +5,24 @@ from cowrie.shell.honeypot import StdOutStdErrEmulationProtocol
 
 commands = {}
 
-sudo_shorthelp = ('''
+sudo_shorthelp = (
+    (
+        """
 sudo: Only one of the -e, -h, -i, -K, -l, -s, -v or -V options may be specified
 usage: sudo [-D level] -h | -K | -k | -V
 usage: sudo -v [-AknS] [-D level] [-g groupname|#gid] [-p prompt] [-u user name|#uid]
 usage: sudo -l[l] [-AknS] [-D level] [-g groupname|#gid] [-p prompt] [-U user name] [-u user name|#uid] [-g groupname|#gid] [command]
 usage: sudo [-AbEHknPS] [-r role] [-t type] [-C fd] [-D level] [-g groupname|#gid] [-p prompt] [-u user name|#uid] [-g groupname|#gid] [VAR=value] [-i|-s] [<command>]
 usage: sudo -e [-AknS] [-r role] [-t type] [-C fd] [-D level] [-g groupname|#gid] [-p prompt] [-u user name|#uid] file ...
-''').strip().split('\n')  # noqa: E501
+"""
+    )
+    .strip()
+    .split("\n")
+)  # noqa: E501
 
-sudo_longhelp = ('''
+sudo_longhelp = (
+    (
+        """
 sudo - execute a command as another user
 
 usage: sudo [-D level] -h | -K | -k | -V
@@ -48,27 +56,30 @@ Options:
   -V            display version information and exit
   -v            update user's timestamp without running a command
   --            stop processing command line arguments
-''').strip().split('\n')  # noqa: E501
+"""
+    )
+    .strip()
+    .split("\n")
+)  # noqa: E501
 
 
 class command_sudo(HoneyPotCommand):
-
     def short_help(self):
         for ln in sudo_shorthelp:
-            self.errorWrite(f'{ln}\n')
+            self.errorWrite(f"{ln}\n")
         self.exit()
 
     def long_help(self):
         for ln in sudo_longhelp:
-            self.errorWrite(f'{ln}\n')
+            self.errorWrite(f"{ln}\n")
         self.exit()
 
     def version(self):
         self.errorWrite(
-            '''Sudo version 1.8.5p2
+            """Sudo version 1.8.5p2
             Sudoers policy plugin version 1.8.5p2
             Sudoers file grammar version 41
-            Sudoers I/O plugin version 1.8.5p2\n'''
+            Sudoers I/O plugin version 1.8.5p2\n"""
         )
         self.exit()
 
@@ -76,7 +87,9 @@ class command_sudo(HoneyPotCommand):
         start_value = None
         parsed_arguments = []
         for count in range(0, len(self.args)):
-            class_found = self.protocol.getCommand(self.args[count], self.environ['PATH'].split(':'))
+            class_found = self.protocol.getCommand(
+                self.args[count], self.environ["PATH"].split(":")
+            )
             if class_found:
                 start_value = count
                 break
@@ -85,9 +98,11 @@ class command_sudo(HoneyPotCommand):
                 parsed_arguments.append(self.args[index_2])
 
         try:
-            optlist, args = getopt.getopt(self.args[0:start_value], 'bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:')
+            optlist, args = getopt.getopt(
+                self.args[0:start_value], "bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:"
+            )
         except getopt.GetoptError as err:
-            self.errorWrite('sudo: illegal option -- ' + err.opt + '\n')
+            self.errorWrite("sudo: illegal option -- " + err.opt + "\n")
             self.short_help()
             return
 
@@ -101,10 +116,12 @@ class command_sudo(HoneyPotCommand):
 
         if len(parsed_arguments) > 0:
             cmd = parsed_arguments[0]
-            cmdclass = self.protocol.getCommand(cmd, self.environ['PATH'].split(':'))
+            cmdclass = self.protocol.getCommand(cmd, self.environ["PATH"].split(":"))
 
             if cmdclass:
-                command = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, parsed_arguments[1:], None, None)
+                command = StdOutStdErrEmulationProtocol(
+                    self.protocol, cmdclass, parsed_arguments[1:], None, None
+                )
                 self.protocol.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....
                 if self.input_data:
@@ -116,4 +133,4 @@ class command_sudo(HoneyPotCommand):
             self.short_help()
 
 
-commands['sudo'] = command_sudo
+commands["sudo"] = command_sudo

@@ -25,16 +25,25 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
     """
+
     commands = {}
     for c in cowrie.commands.__all__:
         try:
-            module = __import__(f'cowrie.commands.{c}',
-                                globals(), locals(), ['commands'])
+            module = __import__(
+                f"cowrie.commands.{c}", globals(), locals(), ["commands"]
+            )
             commands.update(module.commands)
         except Exception as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            log.err("Failed to import command {}: {}: {}".format(c, e, ''.join(
-                traceback.format_exception(exc_type, exc_value, exc_traceback))))
+            log.err(
+                "Failed to import command {}: {}: {}".format(
+                    c,
+                    e,
+                    "".join(
+                        traceback.format_exception(exc_type, exc_value, exc_traceback)
+                    ),
+                )
+            )
 
     def __init__(self, user):
         self.user = user
@@ -52,7 +61,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.fs.exists(user.avatar.home):
             self.cwd = user.avatar.home
         else:
-            self.cwd = '/'
+            self.cwd = "/"
         self.data = None
         self.password_input = False
         self.cmdstack = []
@@ -69,7 +78,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Send log directly to factory, avoiding normal log dispatch
         """
-        args['sessionno'] = self.sessionno
+        args["sessionno"] = self.sessionno
         pt = self.getProtoTransport()
         pt.factory.logDispatch(*msg, **args)
 
@@ -81,27 +90,27 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = pt.transport.getPeer().port
         self.logintime = time.time()
 
-        log.msg(eventid='cowrie.session.params', arch=self.user.server.arch)
+        log.msg(eventid="cowrie.session.params", arch=self.user.server.arch)
 
-        timeout = CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=180)
+        timeout = CowrieConfig().getint("honeypot", "interactive_timeout", fallback=180)
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
         try:
-            self.clientIP = CowrieConfig().get('honeypot', 'fake_addr')
+            self.clientIP = CowrieConfig().get("honeypot", "fake_addr")
         except Exception:
             self.clientIP = self.realClientIP
 
         # Source IP of server in user visible reports (can be fake or real)
-        if CowrieConfig().has_option('honeypot', 'internet_facing_ip'):
-            self.kippoIP = CowrieConfig().get('honeypot', 'internet_facing_ip')
+        if CowrieConfig().has_option("honeypot", "internet_facing_ip"):
+            self.kippoIP = CowrieConfig().get("honeypot", "internet_facing_ip")
         else:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
                 self.kippoIP = s.getsockname()[0]
             except Exception:
-                self.kippoIP = '192.168.0.1'
+                self.kippoIP = "192.168.0.1"
             finally:
                 s.close()
 
@@ -148,20 +157,21 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         path = None
         if cmd in self.commands:
             return self.commands[cmd]
-        if cmd[0] in ('.', '/'):
+        if cmd[0] in (".", "/"):
             path = self.fs.resolve_path(cmd, self.cwd)
             if not self.fs.exists(path):
                 return None
         else:
             for i in [
-                '{}/{}'.format(self.fs.resolve_path(x, self.cwd), cmd)
-                for x in paths
+                "{}/{}".format(self.fs.resolve_path(x, self.cwd), cmd) for x in paths
             ]:
                 if self.fs.exists(i):
                     path = i
                     break
 
-        txt = os.path.normpath('{}/txtcmds/{}'.format(CowrieConfig().get('honeypot', 'share_path'), path))
+        txt = os.path.normpath(
+            "{}/txtcmds/{}".format(CowrieConfig().get("honeypot", "share_path"), path)
+        )
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
 
@@ -177,7 +187,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Before this, all data is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        line = line.decode('utf8')
+        line = line.decode("utf8")
 
         if len(self.cmdstack):
             self.cmdstack[-1].lineReceived(line)
@@ -222,7 +232,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         commands work with string rather than bytes.
         """
         try:
-            self.execcmd = execcmd.decode('utf8')
+            self.execcmd = execcmd.decode("utf8")
         except UnicodeDecodeError:
             log.err("Unusual execcmd: {}".format(repr(execcmd)))
 
@@ -234,14 +244,13 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         # TODO: quick and dirty fix to deal with \n separated commands
         # HoneypotShell() needs a rewrite to better work with pending input
-        self.cmdstack[0].lineReceived("; ".join(self.execcmd.split('\n')))
+        self.cmdstack[0].lineReceived("; ".join(self.execcmd.split("\n")))
 
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
-
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
         HoneyPotBaseProtocol.__init__(self, avatar)
@@ -254,27 +263,29 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
         self.cmdstack = [honeypot.HoneyPotShell(self)]
 
-        self.keyHandlers.update({
-            b'\x01': self.handle_HOME,  # CTRL-A
-            b'\x02': self.handle_LEFT,  # CTRL-B
-            b'\x03': self.handle_CTRL_C,  # CTRL-C
-            b'\x04': self.handle_CTRL_D,  # CTRL-D
-            b'\x05': self.handle_END,  # CTRL-E
-            b'\x06': self.handle_RIGHT,  # CTRL-F
-            b'\x08': self.handle_BACKSPACE,  # CTRL-H
-            b'\x09': self.handle_TAB,
-            b'\x0b': self.handle_CTRL_K,  # CTRL-K
-            b'\x0c': self.handle_CTRL_L,  # CTRL-L
-            b'\x0e': self.handle_DOWN,  # CTRL-N
-            b'\x10': self.handle_UP,  # CTRL-P
-            b'\x15': self.handle_CTRL_U,  # CTRL-U
-            b'\x16': self.handle_CTRL_V,  # CTRL-V
-            b'\x1b': self.handle_ESC,  # ESC
-        })
+        self.keyHandlers.update(
+            {
+                b"\x01": self.handle_HOME,  # CTRL-A
+                b"\x02": self.handle_LEFT,  # CTRL-B
+                b"\x03": self.handle_CTRL_C,  # CTRL-C
+                b"\x04": self.handle_CTRL_D,  # CTRL-D
+                b"\x05": self.handle_END,  # CTRL-E
+                b"\x06": self.handle_RIGHT,  # CTRL-F
+                b"\x08": self.handle_BACKSPACE,  # CTRL-H
+                b"\x09": self.handle_TAB,
+                b"\x0b": self.handle_CTRL_K,  # CTRL-K
+                b"\x0c": self.handle_CTRL_L,  # CTRL-L
+                b"\x0e": self.handle_DOWN,  # CTRL-N
+                b"\x10": self.handle_UP,  # CTRL-P
+                b"\x15": self.handle_CTRL_U,  # CTRL-U
+                b"\x16": self.handle_CTRL_V,  # CTRL-V
+                b"\x1b": self.handle_ESC,  # ESC
+            }
+        )
 
     def displayMOTD(self):
         try:
-            self.terminal.write(self.fs.file_contents('/etc/motd'))
+            self.terminal.write(self.fs.file_contents("/etc/motd"))
         except Exception:
             pass
 
@@ -282,7 +293,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         this logs out when connection times out
         """
-        self.terminal.write(b'timed out waiting for input: auto-logout\n')
+        self.terminal.write(b"timed out waiting for input: auto-logout\n")
         HoneyPotBaseProtocol.timeoutConnection(self)
 
     def connectionLost(self, reason):
@@ -305,10 +316,10 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         Easier way to implement password input?
         """
-        if self.mode == 'insert':
+        if self.mode == "insert":
             self.lineBuffer.insert(self.lineBufferIndex, ch)
         else:
-            self.lineBuffer[self.lineBufferIndex:self.lineBufferIndex + 1] = [ch]
+            self.lineBuffer[self.lineBufferIndex : self.lineBufferIndex + 1] = [ch]
         self.lineBufferIndex += 1
         if not self.password_input:
             self.terminal.write(ch)
@@ -316,7 +327,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def handle_RETURN(self):
         if len(self.cmdstack) == 1:
             if self.lineBuffer:
-                self.historyLines.append(b''.join(self.lineBuffer))
+                self.historyLines.append(b"".join(self.lineBuffer))
             self.historyPosition = len(self.historyLines)
         return recvline.RecvLine.handle_RETURN(self)
 
@@ -334,7 +345,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
     def handle_CTRL_K(self):
         self.terminal.eraseToLineEnd()
-        self.lineBuffer = self.lineBuffer[0:self.lineBufferIndex]
+        self.lineBuffer = self.lineBuffer[0 : self.lineBufferIndex]
 
     def handle_CTRL_L(self):
         """
@@ -349,7 +360,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         for _ in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
             self.terminal.deleteCharacter()
-        self.lineBuffer = self.lineBuffer[self.lineBufferIndex:]
+        self.lineBuffer = self.lineBuffer[self.lineBufferIndex :]
         self.lineBufferIndex = 0
 
     def handle_CTRL_V(self):
