@@ -436,7 +436,7 @@ Options:
 
     def no_permission(self):
         self.write(
-            "{} {}: ".format(command_iptables.APP_NAME, command_iptables.APP_VERSION)
+            f"{command_iptables.APP_NAME} {command_iptables.APP_VERSION}: "
             + "can't initialize iptables table 'filter': "
             + "Permission denied (you must be root)\n"
             + "Perhaps iptables or your kernel needs to be upgraded.\n"

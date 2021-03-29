@@ -187,7 +187,7 @@ gcc version {} (Debian {}-5)""".format(
     def generate_file(self, outfile):
         data = ""
         # TODO: make sure it is written to temp file, not downloads
-        tmp_fname = "%s_%s_%s_%s" % (
+        tmp_fname = "{}_{}_{}_{}".format(
             time.strftime("%Y%m%d%H%M%S"),
             self.protocol.getProtoTransport().transportId,
             self.protocol.terminal.transport.session.id,

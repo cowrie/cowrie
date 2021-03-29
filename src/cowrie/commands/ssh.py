@@ -131,7 +131,7 @@ class command_ssh(HoneyPotCommand):
             )
         )
         self.write(
-            "Last login: %s from 192.168.9.4\n" % (time.ctime(time.time() - 123123),)
+            "Last login: {} from 192.168.9.4\n".format(time.ctime(time.time() - 123123))
         )
         self.exit()
 
