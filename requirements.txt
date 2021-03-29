@@ -2,7 +2,7 @@ appdirs==1.4.4
 attrs==20.3.0
 bcrypt==3.2.0
 configparser==5.0.2
-cryptography==3.4.6
+cryptography==3.4.7
 packaging==20.9
 pyasn1_modules==0.2.8
 pyopenssl==20.0.1
