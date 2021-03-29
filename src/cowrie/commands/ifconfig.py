@@ -54,14 +54,14 @@ class command_ifconfig(HoneyPotCommand):
         lo_bytes, lo_mb = self.calculate_lo()
         rx_packets = self.generate_packets()
         tx_packets = self.generate_packets()
-        result = """eth0      Link encap:Ethernet  HWaddr %s
-          inet addr:%s  Bcast:%s.255  Mask:255.255.255.0
-          inet6 addr: %s Scope:Link
+        result = """eth0      Link encap:Ethernet  HWaddr {}
+          inet addr:{}  Bcast:{}.255  Mask:255.255.255.0
+          inet6 addr: {} Scope:Link
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:%s errors:0 dropped:0 overruns:0 frame:0
-          TX packets:%s errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:{} errors:0 dropped:0 overruns:0 frame:0
+          TX packets:{} errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000
-          RX bytes:%s (%s MB)  TX bytes:%s (%s MB)
+          RX bytes:{} ({} MB)  TX bytes:{} ({} MB)
 
 
 lo        Link encap:Local Loopback
@@ -71,7 +71,7 @@ lo        Link encap:Local Loopback
           RX packets:110 errors:0 dropped:0 overruns:0 frame:0
           TX packets:110 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:0
-          RX bytes:%s (%s MB)  TX bytes:%s (%s MB)""" % (
+          RX bytes:{} ({} MB)  TX bytes:{} ({} MB)""".format(
             HWaddr,
             self.protocol.kippoIP,
             self.protocol.kippoIP.rsplit(".", 1)[0],

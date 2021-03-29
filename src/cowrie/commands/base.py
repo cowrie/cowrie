@@ -34,7 +34,7 @@ commands["users"] = command_whoami
 
 class command_help(HoneyPotCommand):
     def call(self):
-        self.write(  # noqa: E501
+        self.write(
             """GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
 These shell commands are defined internally.  Type `help' to see this list.
 Type `help name' to find out more about the function `name'.

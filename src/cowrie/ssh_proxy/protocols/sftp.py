@@ -150,8 +150,7 @@ class SFTP(base_protocol.BaseProtocol):
             else:
                 # Unknown PFlag
                 log.msg(
-                    parent
-                    + "[SFTP] New SFTP pflag detected: %s %s" % (pflags, self.data)
+                    parent + f"[SFTP] New SFTP pflag detected: {pflags} {self.data}"
                 )
 
             log.msg(parent + " [SFTP] Entered Command: " + self.command.decode())

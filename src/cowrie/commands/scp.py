@@ -102,7 +102,7 @@ class command_scp(HoneyPotCommand):
         self.protocol.terminal.write("\x00")
 
     def drop_tmp_file(self, data, name):
-        tmp_fname = "%s-%s-%s-scp_%s" % (
+        tmp_fname = "{}-{}-{}-scp_{}".format(
             time.strftime("%Y%m%d-%H%M%S"),
             self.protocol.getProtoTransport().transportId,
             self.protocol.terminal.transport.session.id,

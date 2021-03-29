@@ -64,7 +64,7 @@ class HoneyPotCommand:
                 or p[fs.A_REALFILE].startswith("honeyfs")
                 or not b_append
             ):
-                tmp_fname = "%s-%s-%s-redir_%s" % (
+                tmp_fname = "{}-{}-{}-redir_{}".format(
                     time.strftime("%Y%m%d-%H%M%S"),
                     self.protocol.getProtoTransport().transportId,
                     self.protocol.terminal.transport.session.id,

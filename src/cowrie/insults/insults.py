@@ -49,7 +49,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.startTime = time.time()
 
         if self.ttylogEnabled:
-            self.ttylogFile = "%s/%s-%s-%s%s.log" % (
+            self.ttylogFile = "{}/{}-{}-{}{}.log".format(
                 self.ttylogPath,
                 time.strftime("%Y%m%d-%H%M%S"),
                 transportId,
@@ -60,7 +60,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.ttylogOpen = True
             self.ttylogSize = 0
 
-        self.stdinlogFile = "%s/%s-%s-%s-stdin.log" % (
+        self.stdinlogFile = "{}/{}-{}-{}-stdin.log".format(
             self.downloadPath,
             time.strftime("%Y%m%d-%H%M%S"),
             transportId,
