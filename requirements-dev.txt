@@ -1,15 +1,15 @@
-Sphinx==3.5.2
+Sphinx==3.5.3
 flake8-import-order==0.18.1
 flake8==3.9.0
-importlib_metadata==3.7.2; python_version<'3.8'
+importlib_metadata==3.9.1; python_version<'3.8'
 mypy-extensions==0.4.3
 mypy-zope==0.2.13
 mypy==0.812
 pipdeptree==2.0.0
 pre-commit==2.11.1
-pur==5.3.0
+pur==5.4.0
 pyupgrade==2.11.0
-setuptools==54.1.2
+setuptools==54.2.0
 sphinx_rtd_theme==0.5.1
 tox==3.23.0
 twistedchecker==0.7.4
