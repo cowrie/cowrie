@@ -7,6 +7,7 @@ mypy-zope==0.2.13
 mypy==0.812
 pipdeptree==2.0.0
 pur==5.3.0
+pyupgrade==2.11.0
 setuptools==54.1.2
 sphinx_rtd_theme==0.5.1
 tox==3.23.0
