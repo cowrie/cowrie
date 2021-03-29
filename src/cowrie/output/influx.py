@@ -23,7 +23,7 @@ class Output(cowrie.core.output.Output):
         try:
             self.client = InfluxDBClient(host=host, port=port, ssl=ssl, verify_ssl=ssl)
         except InfluxDBClientError as e:
-            log.msg("output_influx: I/O error({}): '{}'".format(e.code, e.message))
+            log.msg(f"output_influx: I/O error({e.code}): '{e.message}'")
             return
 
         if self.client is None:
@@ -207,7 +207,7 @@ class Output(cowrie.core.output.Output):
             # are not implemented
         else:
             # other events should be handled
-            log.msg("output_influx: event '{}' not handled. Skipping..".format(eventid))
+            log.msg(f"output_influx: event '{eventid}' not handled. Skipping..")
             return
 
         result = self.client.write_points([m])

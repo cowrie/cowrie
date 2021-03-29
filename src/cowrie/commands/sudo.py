@@ -18,7 +18,7 @@ usage: sudo -e [-AknS] [-r role] [-t type] [-C fd] [-D level] [-g groupname|#gid
     )
     .strip()
     .split("\n")
-)  # noqa: E501
+)
 
 sudo_longhelp = (
     (
@@ -60,7 +60,7 @@ Options:
     )
     .strip()
     .split("\n")
-)  # noqa: E501
+)
 
 
 class command_sudo(HoneyPotCommand):

@@ -179,7 +179,7 @@ class command_ls(HoneyPotCommand):
             perms = "".join(perms)
             ctime = time.localtime(file[fs.A_CTIME])
 
-            line = "%s 1 %s %s %s %s %s%s" % (
+            line = "{} 1 {} {} {} {} {}{}".format(
                 perms,
                 self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent),
                 self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent),

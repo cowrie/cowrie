@@ -87,7 +87,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
             self.tr.value(),
             b"[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n"
             + PROMPT,
-        )  # noqa: E501
+        )
 
     # def test_bash_command(self):
     #    self.proto.lineReceived(b'bash\n')
@@ -118,7 +118,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
             self.tr.value(),
             b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n"
             + PROMPT,
-        )  # noqa: E501
+        )
 
     def test_unset_command(self):
         self.proto.lineReceived(b"unset\n")
