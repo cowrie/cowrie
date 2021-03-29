@@ -76,11 +76,11 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
             lgateway = "*"
         destination = self.protocol.kippoIP.rsplit(".", 1)[0] + ".0"
         gateway = self.protocol.kippoIP.rsplit(".", 1)[0] + ".1"
-        l1 = "%s%s0.0.0.0         UG        0 0          0 eth0" % (
+        l1 = "{}{}0.0.0.0         UG        0 0          0 eth0".format(
             f"{default:<16}",
             f"{gateway:<16}",
         )
-        l2 = "%s%s255.255.255.0   U         0 0          0 eth0" % (
+        l2 = "{}{}255.255.255.0   U         0 0          0 eth0".format(
             f"{destination:<16}",
             f"{lgateway:<16}",
         )
@@ -109,7 +109,7 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n"""
                 "tcp        0      0 *:ssh                   *:*                     LISTEN\n"
             )
         if not self.show_listen or self.show_all:
-            line = "tcp        0    308 %s:%s%s%s:%s%s%s" % (
+            line = "tcp        0    308 {}:{}{}{}:{}{}{}".format(
                 s_name,
                 s_port,
                 " " * (24 - len(s_name + s_port) - 1),
