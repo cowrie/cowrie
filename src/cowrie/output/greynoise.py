@@ -81,7 +81,7 @@ class Output(cowrie.core.output.Output):
 
         if response.code != 200:
             rsp = yield response.text()
-            log.error(f"greynoise: got error {rsp}")
+            log.err(f"greynoise: got error {rsp}")
             return
 
         j = yield response.json()
