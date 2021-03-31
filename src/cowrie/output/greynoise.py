@@ -79,6 +79,11 @@ class Output(cowrie.core.output.Output):
             log.msg("GreyNoise requests timeout")
             return
 
+        if response.code == 404:
+            rsp = yield response.json()
+            log.err(f"greynoise: {rsp['ip']} - {rsp['message']}")
+            return
+
         if response.code != 200:
             rsp = yield response.text()
             log.err(f"greynoise: got error {rsp}")
