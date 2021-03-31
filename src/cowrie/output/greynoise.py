@@ -94,6 +94,6 @@ class Output(cowrie.core.output.Output):
             log.msg("greynoise: debug: " + repr(j))
 
         if j["message"] == "Success":
-            message(query)
+            message(j)
         else:
             log.msg("greynoise: no results for for IP {}".format(entry["src_ip"]))
