@@ -3,7 +3,6 @@ Send attackers IP to GreyNoise
 """
 
 import treq
-
 from twisted.internet import defer, error
 from twisted.python import log
 
@@ -49,23 +48,20 @@ class Output(cowrie.core.output.Output):
                 log.msg(
                     eventid="cowrie.greynoise.result",
                     format=f"GreyNoise: {query['ip']} has been observed scanning the Internet. GreyNoise "
-                           f"classification is {query['classification']} and the believed owner is {query['name']}",
+                    f"classification is {query['classification']} and the believed owner is {query['name']}",
                 )
             if query["riot"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
                     format=f"GreyNoise: {query['ip']} belongs to a benign service or provider. "
-                           f"The owner is {query['name']}.",
+                    f"The owner is {query['name']}.",
                 )
 
         gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode("utf8")
-        headers = {"User-Agent": [COWRIE_USER_AGENT],
-                   "key": self.apiKey}
+        headers = {"User-Agent": [COWRIE_USER_AGENT], "key": self.apiKey}
 
         try:
-            response = yield treq.get(
-                url=gn_url, headers=headers, timeout=10
-            )
+            response = yield treq.get(url=gn_url, headers=headers, timeout=10)
         except (
             defer.CancelledError,
             error.ConnectingCancelledError,
