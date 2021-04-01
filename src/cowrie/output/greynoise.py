@@ -2,7 +2,6 @@
 Send attackers IP to GreyNoise
 """
 
-
 import treq
 
 from twisted.internet import defer, error
@@ -12,7 +11,7 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 COWRIE_USER_AGENT = "Cowrie Honeypot"
-GNAPI_URL = "http://api.greynoise.io:8888/v1/"
+GNAPI_URL = "https://api.greynoise.io/v3/community/"
 
 
 class Output(cowrie.core.output.Output):
@@ -25,9 +24,6 @@ class Output(cowrie.core.output.Output):
         Start output plugin
         """
         self.apiKey = CowrieConfig().get("output_greynoise", "api_key", fallback=None)
-        self.tags = (
-            CowrieConfig().get("output_greynoise", "tags", fallback="all").split(",")
-        )
         self.debug = CowrieConfig().getboolean(
             "output_greynoise", "debug", fallback=False
         )
@@ -45,28 +41,28 @@ class Output(cowrie.core.output.Output):
     @defer.inlineCallbacks
     def scanip(self, entry):
         """
-        Scan IP againt Greynoise API
+        Scan IP against GreyNoise API
         """
 
         def message(query):
-            log.msg(
-                eventid="cowrie.greynoise.result",
-                format="greynoise: Scan for %(IP)s with %(tag)s have %(conf)s confidence"
-                " along with the following %(meta)s metadata",
-                IP=entry["src_ip"],
-                tag=query["name"],
-                conf=query["confidence"],
-                meta=query["metadata"],
-            )
+            if query["noise"]:
+                log.msg(
+                    eventid="cowrie.greynoise.result",
+                    format=f"GreyNoise: {query['ip']} has been observed scanning the Internet. GreyNoise "
+                    f"classification is {query['classification']} and the believed owner is {query['name']}",
+                )
+            if query["riot"]:
+                log.msg(
+                    eventid="cowrie.greynoise.result",
+                    format=f"GreyNoise: {query['ip']} belongs to a benign service or provider. "
+                    f"The owner is {query['name']}.",
+                )
 
-        gnUrl = f"{GNAPI_URL}query/ip".encode("utf8")
-        headers = {"User-Agent": [COWRIE_USER_AGENT]}
-        fields = {"key": self.apiKey, "ip": entry["src_ip"]}
+        gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode("utf8")
+        headers = {"User-Agent": [COWRIE_USER_AGENT], "key": self.apiKey}
 
         try:
-            response = yield treq.post(
-                url=gnUrl, data=fields, headers=headers, timeout=10
-            )
+            response = yield treq.get(url=gn_url, headers=headers, timeout=10)
         except (
             defer.CancelledError,
             error.ConnectingCancelledError,
@@ -75,22 +71,21 @@ class Output(cowrie.core.output.Output):
             log.msg("GreyNoise requests timeout")
             return
 
+        if response.code == 404:
+            rsp = yield response.json()
+            log.err(f"GreyNoise: {rsp['ip']} - {rsp['message']}")
+            return
+
         if response.code != 200:
             rsp = yield response.text()
-            log.error(f"greynoise: got error {rsp}")
+            log.err(f"GreyNoise: got error {rsp}")
             return
 
         j = yield response.json()
         if self.debug:
-            log.msg("greynoise: debug: " + repr(j))
+            log.msg("GreyNoise: debug: " + repr(j))
 
-        if j["status"] == "ok":
-            if "all" not in self.tags:
-                for query in j["records"]:
-                    if query["name"] in self.tags:
-                        message(query)
-            else:
-                for query in j["records"]:
-                    message(query)
+        if j["message"] == "Success":
+            message(j)
         else:
-            log.msg("greynoise: no results for for IP {}".format(entry["src_ip"]))
+            log.msg("GreyNoise: no results for for IP {}".format(entry["src_ip"]))
