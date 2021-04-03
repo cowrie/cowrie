@@ -46,7 +46,7 @@ class command_ssh(HoneyPotCommand):
         for opt in optlist:
             if opt[0] == "-V":
                 self.write(
-                    CowrieConfig().get(
+                    CowrieConfig.get(
                         "shell",
                         "ssh_version",
                         fallback="OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018",

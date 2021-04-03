@@ -5,6 +5,7 @@
 import hashlib
 import os
 import time
+from typing import List, Set
 
 from twisted.conch.insults import insults
 from twisted.python import log
@@ -22,14 +23,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
     redirlogOpen = False  # it will be set at core/protocol.py
     stdinlogOpen = False
     ttylogOpen = False
-    ttylogPath = CowrieConfig().get("honeypot", "ttylog_path")
-    downloadPath = CowrieConfig().get("honeypot", "download_path")
-    ttylogEnabled = CowrieConfig().getboolean("honeypot", "ttylog", fallback=True)
-    bytesReceivedLimit = CowrieConfig().getint(
+    ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
+    downloadPath = CowrieConfig.get("honeypot", "download_path")
+    ttylogEnabled = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
+    bytesReceivedLimit = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
     bytesReceived = 0
-    redirFiles = set()
+    redirFiles: Set[List[str]] = set()
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)

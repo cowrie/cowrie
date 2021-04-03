@@ -27,12 +27,10 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.auth_key = CowrieConfig().get("output_dshield", "auth_key")
-        self.userid = CowrieConfig().get("output_dshield", "userid")
-        self.batch_size = CowrieConfig().getint("output_dshield", "batch_size")
-        self.debug = CowrieConfig().getboolean(
-            "output_dshield", "debug", fallback=False
-        )
+        self.auth_key = CowrieConfig.get("output_dshield", "auth_key")
+        self.userid = CowrieConfig.get("output_dshield", "userid")
+        self.batch_size = CowrieConfig.getint("output_dshield", "batch_size")
+        self.debug = CowrieConfig.getboolean("output_dshield", "debug", fallback=False)
         self.batch = []  # This is used to store login attempts in batches
 
     def stop(self):

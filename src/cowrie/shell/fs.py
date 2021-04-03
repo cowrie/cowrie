@@ -5,7 +5,7 @@
 try:
     import cPickle as pickle
 except Exception:
-    import pickle
+    import pickle  # type: ignore
 
 import errno
 import fnmatch
@@ -88,10 +88,10 @@ class HoneyPotFilesystem:
     def __init__(self, fs, arch, home):
 
         try:
-            with open(CowrieConfig().get("shell", "filesystem"), "rb") as f:
+            with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
                 self.fs = pickle.load(f)
         except UnicodeDecodeError:
-            with open(CowrieConfig().get("shell", "filesystem"), "rb") as f:
+            with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
                 self.fs = pickle.load(f, encoding="utf8")
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
@@ -110,7 +110,7 @@ class HoneyPotFilesystem:
 
         # Get the honeyfs path from the config file and explore it for file
         # contents:
-        self.init_honeyfs(CowrieConfig().get("honeypot", "contents_path"))
+        self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
 
     def init_honeyfs(self, honeyfs_path):
         """
@@ -295,7 +295,7 @@ class HoneyPotFilesystem:
             return ""
         elif f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return open(
-                CowrieConfig().get("honeypot", "share_path") + "/arch/" + self.arch,
+                CowrieConfig.get("honeypot", "share_path") + "/arch/" + self.arch,
                 "rb",
             ).read()
 
@@ -328,7 +328,6 @@ class HoneyPotFilesystem:
             dir = self.get_path(os.path.dirname(path.strip("/")))
         except IndexError:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
-            return False
         dir.append(
             [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None]
         )
@@ -401,7 +400,7 @@ class HoneyPotFilesystem:
             # strip executable bit
             hostmode = mode & ~(111)
             hostfile = "{}/{}_sftp_{}".format(
-                CowrieConfig().get("honeypot", "download_path"),
+                CowrieConfig.get("honeypot", "download_path"),
                 time.strftime("%Y%m%d-%H%M%S"),
                 re.sub("[^A-Za-z0-9]", "_", filename),
             )
@@ -429,7 +428,7 @@ class HoneyPotFilesystem:
             return True
         if self.tempfiles[fd] is not None:
             shasum = hashlib.sha256(open(self.tempfiles[fd], "rb").read()).hexdigest()
-            shasumfile = CowrieConfig().get("honeypot", "download_path") + "/" + shasum
+            shasumfile = CowrieConfig.get("honeypot", "download_path") + "/" + shasum
             if os.path.exists(shasumfile):
                 os.remove(self.tempfiles[fd])
             else:

@@ -29,12 +29,10 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     )
 
     # Forward redirect
-    redirectEnabled = CowrieConfig().getboolean(
-        "ssh", "forward_redirect", fallback=False
-    )
+    redirectEnabled = CowrieConfig.getboolean("ssh", "forward_redirect", fallback=False)
     if redirectEnabled:
         redirects = {}
-        items = CowrieConfig().items("ssh")
+        items = CowrieConfig.items("ssh")
         for i in items:
             if i[0].startswith("forward_redirect_"):
                 destPort = i[0].split("_")[-1]
@@ -58,10 +56,10 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
             )
 
     # TCP tunnel
-    tunnelEnabled = CowrieConfig().getboolean("ssh", "forward_tunnel", fallback=False)
+    tunnelEnabled = CowrieConfig.getboolean("ssh", "forward_tunnel", fallback=False)
     if tunnelEnabled:
         tunnels = {}
-        items = CowrieConfig().items("ssh")
+        items = CowrieConfig.items("ssh")
         for i in items:
             if i[0].startswith("forward_tunnel_"):
                 destPort = i[0].split("_")[-1]

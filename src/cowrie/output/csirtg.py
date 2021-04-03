@@ -23,10 +23,10 @@ class Output(cowrie.core.output.Output):
     def start(
         self,
     ):
-        self.user = CowrieConfig().get("output_csirtg", "username") or USERNAME
-        self.feed = CowrieConfig().get("output_csirtg", "feed") or FEED
-        self.token = CowrieConfig().get("output_csirtg", "token") or TOKEN
-        self.description = CowrieConfig().get(
+        self.user = CowrieConfig.get("output_csirtg", "username") or USERNAME
+        self.feed = CowrieConfig.get("output_csirtg", "feed") or FEED
+        self.token = CowrieConfig.get("output_csirtg", "token") or TOKEN
+        self.description = CowrieConfig.get(
             "output_csirtg", "description", fallback=DESCRIPTION
         )
         self.context = {}

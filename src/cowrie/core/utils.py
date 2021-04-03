@@ -3,8 +3,6 @@
 # See the COPYRIGHT file for more information
 
 
-import sys
-
 from twisted.application import internet
 from twisted.internet import endpoints
 
@@ -113,14 +111,7 @@ def get_endpoints_from_section(cfg, section, default_port):
 
 def create_endpoint_services(reactor, parent, listen_endpoints, factory):
     for listen_endpoint in listen_endpoints:
-
-        # work around http://twistedmatrix.com/trac/ticket/8422
-        if sys.version_info.major < 3:
-            endpoint = endpoints.serverFromString(
-                reactor, listen_endpoint.encode("utf-8")
-            )
-        else:
-            endpoint = endpoints.serverFromString(reactor, listen_endpoint)
+        endpoint = endpoints.serverFromString(reactor, listen_endpoint)
 
         service = internet.StreamServerEndpointService(endpoint, factory)
         # FIXME: Use addService on parent ?

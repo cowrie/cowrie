@@ -32,7 +32,7 @@ from cowrie.core.config import CowrieConfig
 
 class Artifact:
 
-    artifactDir = CowrieConfig().get("honeypot", "download_path")
+    artifactDir = CowrieConfig.get("honeypot", "download_path")
 
     def __init__(self, label):
         self.label = label

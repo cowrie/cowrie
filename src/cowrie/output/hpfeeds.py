@@ -277,11 +277,11 @@ class Output(cowrie.core.output.Output):
 
     def start(self):
         log.msg("Early version of hpfeeds-output, untested!")
-        server = CowrieConfig().get("output_hpfeeds", "server")
-        port = CowrieConfig().getint("output_hpfeeds", "port")
-        ident = CowrieConfig().get("output_hpfeeds", "identifier")
-        secret = CowrieConfig().get("output_hpfeeds", "secret")
-        debug = CowrieConfig().getboolean("output_hpfeeds", "debug")
+        server = CowrieConfig.get("output_hpfeeds", "server")
+        port = CowrieConfig.getint("output_hpfeeds", "port")
+        ident = CowrieConfig.get("output_hpfeeds", "identifier")
+        secret = CowrieConfig.get("output_hpfeeds", "secret")
+        debug = CowrieConfig.getboolean("output_hpfeeds", "debug")
         self.client = hpclient(server, port, ident, secret, debug)
         self.meta = {}
 

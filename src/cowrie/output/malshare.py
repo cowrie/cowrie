@@ -33,11 +33,8 @@ More info https://malshare.com/doc.php
 
 
 import os
+from urllib.parse import urlparse
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 import requests
 
 from twisted.python import log
@@ -57,7 +54,7 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get("output_malshare", "api_key")
+        self.apiKey = CowrieConfig.get("output_malshare", "api_key")
 
     def stop(self):
         """

@@ -3,6 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
+from typing import Callable, Dict, List, Optional, Set
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
@@ -11,7 +12,7 @@ from twisted.test import proto_helpers
 class Container:
     """
     This class is placeholder for creating a fake interface
-    @var host Client fake infomration
+    @var host Client fake information
     @var port Fake Port for connection
     @var otherVersionString version
     @var
@@ -20,6 +21,13 @@ class Container:
     otherVersionString = "1.0"
     transportId = "test-suite"
     id = "test-suite"
+    sessionno = 1
+    starttime = 0
+    session: Optional["Container"]
+    sessions: Dict[int, str] = {}
+    conn: Optional["Container"]
+    transport: Optional["Container"]
+    factory: Optional["Container"]
 
     def getPeer(self):
         """
@@ -43,7 +51,7 @@ class FakeTransport(proto_helpers.StringTransport):
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
-    redirFiles = set()
+    redirFiles: Set[List[str]] = set()
     width = 80
     height = 24
     void = object()
@@ -78,7 +86,7 @@ class FakeTransport(proto_helpers.StringTransport):
     TAB = "\x09"
     BACKSPACE = "\x08"
 
-    modes = {}
+    modes: Dict[str, Callable] = {}
 
     # '\x01':     self.handle_HOME,	# CTRL-A
     # '\x02':     self.handle_LEFT,	# CTRL-B
@@ -109,7 +117,7 @@ class FakeTransport(proto_helpers.StringTransport):
     transport.session.conn.transport.factory.sessions = {}
     transport.session.conn.transport.factory.starttime = 0
     factory = Container()
-    session = {}
+    session: Dict[str, str] = {}
 
     def abortConnection(self):
         self.aborting = True

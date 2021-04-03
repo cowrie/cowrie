@@ -113,7 +113,7 @@ class SSH(base_protocol.BaseProtocol):
             direction = "BACKEND -> PROXY"
 
         # log raw packets if user sets so
-        if CowrieConfig().getboolean("proxy", "log_raw", fallback=False):
+        if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
             log.msg(
                 eventid="cowrie.proxy.ssh",
                 format="%(direction)s - %(packet)s - %(payload)s",
@@ -188,9 +188,7 @@ class SSH(base_protocol.BaseProtocol):
             if channel_type == b"session":
                 # if using an interactive session reset frontend timeout
                 self.server.setTimeout(
-                    CowrieConfig().getint(
-                        "honeypot", "interactive_timeout", fallback=300
-                    )
+                    CowrieConfig.getint("honeypot", "interactive_timeout", fallback=300)
                 )
 
                 self.create_channel(parent, channel_id, channel_type)
@@ -205,7 +203,7 @@ class SSH(base_protocol.BaseProtocol):
                 src_ip = self.extract_string()
                 src_port = self.extract_int(4)
 
-                if CowrieConfig().getboolean("ssh", "forwarding"):
+                if CowrieConfig.getboolean("ssh", "forwarding"):
                     log.msg(
                         eventid="cowrie.direct-tcpip.request",
                         format="direct-tcp connection request to %(dst_ip)s:%(dst_port)s "
@@ -295,7 +293,7 @@ class SSH(base_protocol.BaseProtocol):
                 subsystem = self.extract_string()
 
                 if subsystem == b"sftp":
-                    if CowrieConfig().getboolean("ssh", "sftp_enabled"):
+                    if CowrieConfig.getboolean("ssh", "sftp_enabled"):
                         channel["name"] = "[SFTP" + str(channel["serverID"]) + "]"
                         # self.out.channel_opened(the_uuid, channel['name'])
                         channel["session"] = sftp.SFTP(the_uuid, channel["name"], self)
@@ -351,7 +349,7 @@ class SSH(base_protocol.BaseProtocol):
         elif packet == "SSH_MSG_GLOBAL_REQUEST":
             channel_type = self.extract_string()
             if channel_type == b"tcpip-forward":
-                if not CowrieConfig().getboolean(["ssh", "forwarding"]):
+                if not CowrieConfig.getboolean(["ssh", "forwarding"]):
                     self.sendOn = False
                     self.send_back(parent, 82, "")
 

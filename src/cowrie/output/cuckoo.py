@@ -32,11 +32,7 @@ Send downloaded/uplaoded files to Cuckoo
 
 
 import os
-
-try:
-    from urllib.parse import urlparse, urljoin
-except ImportError:
-    from urlparse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -54,10 +50,10 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.url_base = CowrieConfig().get("output_cuckoo", "url_base").encode("utf-8")
-        self.api_user = CowrieConfig().get("output_cuckoo", "user")
-        self.api_passwd = CowrieConfig().get("output_cuckoo", "passwd", raw=True)
-        self.cuckoo_force = int(CowrieConfig().getboolean("output_cuckoo", "force"))
+        self.url_base = CowrieConfig.get("output_cuckoo", "url_base").encode("utf-8")
+        self.api_user = CowrieConfig.get("output_cuckoo", "user")
+        self.api_passwd = CowrieConfig.get("output_cuckoo", "passwd", raw=True)
+        self.cuckoo_force = int(CowrieConfig.getboolean("output_cuckoo", "force"))
 
     def stop(self):
         """

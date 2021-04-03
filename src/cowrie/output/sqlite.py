@@ -19,7 +19,7 @@ class Output(cowrie.core.output.Output):
         Need to be started with check_same_thread=False. See
         https://twistedmatrix.com/trac/ticket/3629.
         """
-        sqliteFilename = CowrieConfig().get("output_sqlite", "db_file")
+        sqliteFilename = CowrieConfig.get("output_sqlite", "db_file")
         try:
             self.db = adbapi.ConnectionPool(
                 "sqlite3", database=sqliteFilename, check_same_thread=False

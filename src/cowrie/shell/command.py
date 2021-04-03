@@ -8,8 +8,8 @@ This module contains code to run a command
 
 import os
 import re
+import shlex
 import stat
-import sys
 import time
 
 from twisted.internet import error
@@ -17,12 +17,6 @@ from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-
-# From Python3.6 we get the new shlex version
-if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-    import shlex
-else:
-    from cowrie.shell import shlex
 
 
 class HoneyPotCommand:
@@ -71,7 +65,7 @@ class HoneyPotCommand:
                     re.sub("[^A-Za-z0-9]", "_", self.outfile),
                 )
                 self.safeoutfile = os.path.join(
-                    CowrieConfig().get("honeypot", "download_path"), tmp_fname
+                    CowrieConfig.get("honeypot", "download_path"), tmp_fname
                 )
                 perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
                 try:
