@@ -92,18 +92,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         log.msg(eventid="cowrie.session.params", arch=self.user.server.arch)
 
-        timeout = CowrieConfig().getint("honeypot", "interactive_timeout", fallback=180)
+        timeout = CowrieConfig.getint("honeypot", "interactive_timeout", fallback=180)
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
         try:
-            self.clientIP = CowrieConfig().get("honeypot", "fake_addr")
+            self.clientIP = CowrieConfig.get("honeypot", "fake_addr")
         except Exception:
             self.clientIP = self.realClientIP
 
         # Source IP of server in user visible reports (can be fake or real)
-        if CowrieConfig().has_option("honeypot", "internet_facing_ip"):
-            self.kippoIP = CowrieConfig().get("honeypot", "internet_facing_ip")
+        if CowrieConfig.has_option("honeypot", "internet_facing_ip"):
+            self.kippoIP = CowrieConfig.get("honeypot", "internet_facing_ip")
         else:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -170,7 +170,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     break
 
         txt = os.path.normpath(
-            "{}/txtcmds/{}".format(CowrieConfig().get("honeypot", "share_path"), path)
+            "{}/txtcmds/{}".format(CowrieConfig.get("honeypot", "share_path"), path)
         )
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)

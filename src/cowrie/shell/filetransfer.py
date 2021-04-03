@@ -37,7 +37,7 @@ class CowrieSFTPFile:
 
     transfer_completed = 0
     bytesReceived = 0
-    bytesReceivedLimit = CowrieConfig().getint(
+    bytesReceivedLimit = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
 

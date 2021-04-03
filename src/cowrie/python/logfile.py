@@ -30,7 +30,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
 
 
 def logger():
-    dir = CowrieConfig().get("honeypot", "log_path", fallback="log")
+    dir = CowrieConfig.get("honeypot", "log_path", fallback="log")
     logfile = CowrieDailyLogFile("cowrie.log", dir)
 
     # use Z for UTC (Zulu) time, it's shorter.

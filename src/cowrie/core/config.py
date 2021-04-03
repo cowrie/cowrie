@@ -9,27 +9,11 @@ This module contains code to deal with Cowrie's configuration
 import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
+from typing import Optional
 
 
 def to_environ_key(key):
     return key.upper()
-
-
-class CowrieConfig:
-    """
-    Singleton class for configuration data
-    """
-
-    __instance = None
-
-    def __new__(cls):
-        if CowrieConfig.__instance is None:
-            CowrieConfig.__instance = object.__new__(EnvironmentConfigParser)
-            CowrieConfig.__instance.__init__(
-                interpolation=configparser.ExtendedInterpolation()
-            )
-            CowrieConfig.__instance.read(get_config_path())
-        return CowrieConfig.__instance
 
 
 class EnvironmentConfigParser(configparser.ConfigParser):
@@ -79,3 +63,6 @@ def get_config_path():
         return found_confs
 
     print("Config file not found")
+
+
+CowrieConfig = readConfigFile(get_config_path())

@@ -23,7 +23,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
 
         self.startTime = time.time()
         self.setTimeout(
-            CowrieConfig().getint("honeypot", "authentication_timeout", fallback=120)
+            CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
 
         log.msg(

@@ -21,19 +21,17 @@ def create_guest(connection, mac_address, guest_unique_id):
 
     # get guest configurations
     configuration_file = os.path.join(
-        CowrieConfig().get(
+        CowrieConfig.get(
             "backend_pool", "config_files_path", fallback="share/pool_configs"
         ),
-        CowrieConfig().get(
-            "backend_pool", "guest_config", fallback="default_guest.xml"
-        ),
+        CowrieConfig.get("backend_pool", "guest_config", fallback="default_guest.xml"),
     )
 
-    version_tag = CowrieConfig().get("backend_pool", "guest_tag", fallback="guest")
-    base_image = CowrieConfig().get("backend_pool", "guest_image_path")
-    hypervisor = CowrieConfig().get("backend_pool", "guest_hypervisor", fallback="qemu")
-    memory = CowrieConfig().getint("backend_pool", "guest_memory", fallback=128)
-    qemu_machine = CowrieConfig().get(
+    version_tag = CowrieConfig.get("backend_pool", "guest_tag", fallback="guest")
+    base_image = CowrieConfig.get("backend_pool", "guest_image_path")
+    hypervisor = CowrieConfig.get("backend_pool", "guest_hypervisor", fallback="qemu")
+    memory = CowrieConfig.getint("backend_pool", "guest_memory", fallback=128)
+    qemu_machine = CowrieConfig.get(
         "backend_pool", "guest_qemu_machine", fallback="pc-q35-3.1"
     )
 
@@ -47,13 +45,13 @@ def create_guest(connection, mac_address, guest_unique_id):
         os._exit(1)
 
     # only in some cases, like wrt
-    kernel_image = CowrieConfig().get("backend_pool", "guest_kernel_image", fallback="")
+    kernel_image = CowrieConfig.get("backend_pool", "guest_kernel_image", fallback="")
 
     # get a directory to save snapshots, even if temporary
     try:
         # guest configuration, to be read by qemu, needs an absolute path
         snapshot_path = backend_pool.util.to_absolute_path(
-            CowrieConfig().get("backend_pool", "snapshot_path")
+            CowrieConfig.get("backend_pool", "snapshot_path")
         )
     except NoOptionError:
         snapshot_path = os.getcwd()

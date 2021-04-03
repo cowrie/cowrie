@@ -49,12 +49,12 @@ class CowrieServer:
 
     fs = None
     process = None
-    hostname = CowrieConfig().get("honeypot", "hostname")
+    hostname = CowrieConfig.get("honeypot", "hostname")
 
     def __init__(self, realm):
         try:
             arches = [
-                arch.strip() for arch in CowrieConfig().get("shell", "arch").split(",")
+                arch.strip() for arch in CowrieConfig.get("shell", "arch").split(",")
             ]
             self.arch = random.choice(arches)
         except NoOptionError:
@@ -78,7 +78,7 @@ class CowrieServer:
 
         try:
             self.process = self.getCommandOutput(
-                CowrieConfig().get("shell", "processes")
+                CowrieConfig.get("shell", "processes")
             )["command"]["ps"]
         except NoOptionError:
             self.process = None

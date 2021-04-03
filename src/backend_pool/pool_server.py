@@ -16,18 +16,14 @@ from cowrie.core.config import CowrieConfig
 class PoolServer(Protocol):
     def __init__(self, factory):
         self.factory = factory
-        self.local_pool = (
-            CowrieConfig().get("proxy", "pool", fallback="local") == "local"
-        )
-        self.pool_only = CowrieConfig().getboolean(
+        self.local_pool = CowrieConfig.get("proxy", "pool", fallback="local") == "local"
+        self.pool_only = CowrieConfig.getboolean(
             "backend_pool", "pool_only", fallback=False
         )
-        self.use_nat = CowrieConfig().getboolean(
-            "backend_pool", "use_nat", fallback=True
-        )
+        self.use_nat = CowrieConfig.getboolean("backend_pool", "use_nat", fallback=True)
 
         if self.use_nat:
-            self.nat_public_ip = CowrieConfig().get("backend_pool", "nat_public_ip")
+            self.nat_public_ip = CowrieConfig.get("backend_pool", "nat_public_ip")
 
     def dataReceived(self, data):
         res_op = struct.unpack("!c", bytes([data[0]]))[
@@ -78,10 +74,10 @@ class PoolServer(Protocol):
                     guest_id=guest_id,
                 )
 
-                ssh_port = CowrieConfig().getint(
+                ssh_port = CowrieConfig.getint(
                     "backend_pool", "guest_ssh_port", fallback=22
                 )
-                telnet_port = CowrieConfig().getint(
+                telnet_port = CowrieConfig.getint(
                     "backend_pool", "guest_telnet_port", fallback=23
                 )
 

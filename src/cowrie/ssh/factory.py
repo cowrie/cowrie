@@ -35,7 +35,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     publicKeys = None
     primes = None
     tac = None  # gets set later
-    ourVersionString = CowrieConfig().get(
+    ourVersionString = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
     )
 
@@ -83,7 +83,7 @@ class CowrieSSHFactory(factory.SSHFactory):
                 pass
 
         # this can come from backend in the future, check HonSSH's slim client
-        self.ourVersionString = CowrieConfig().get(
+        self.ourVersionString = CowrieConfig.get(
             "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
         )
 
@@ -123,8 +123,7 @@ class CowrieSSHFactory(factory.SSHFactory):
 
         try:
             t.supportedCiphers = [
-                i.encode("utf-8")
-                for i in CowrieConfig().get("ssh", "ciphers").split(",")
+                i.encode("utf-8") for i in CowrieConfig.get("ssh", "ciphers").split(",")
             ]
         except NoOptionError:
             # Reorder supported ciphers to resemble current openssh more
@@ -142,7 +141,7 @@ class CowrieSSHFactory(factory.SSHFactory):
 
         try:
             t.supportedMACs = [
-                i.encode("utf-8") for i in CowrieConfig().get("ssh", "macs").split(",")
+                i.encode("utf-8") for i in CowrieConfig.get("ssh", "macs").split(",")
             ]
         except NoOptionError:
             # SHA1 and MD5 are considered insecure now. Use better algos
@@ -158,7 +157,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         try:
             t.supportedCompressions = [
                 i.encode("utf-8")
-                for i in CowrieConfig().get("ssh", "compression").split(",")
+                for i in CowrieConfig.get("ssh", "compression").split(",")
             ]
         except NoOptionError:
             t.supportedCompressions = [b"zlib@openssh.com", b"zlib", b"none"]

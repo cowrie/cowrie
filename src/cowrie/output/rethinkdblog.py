@@ -18,11 +18,11 @@ class Output(cowrie.core.output.Output):
 
     # noinspection PyAttributeOutsideInit
     def start(self):
-        self.host = CowrieConfig().get(RETHINK_DB_SEGMENT, "host")
-        self.port = CowrieConfig().getint(RETHINK_DB_SEGMENT, "port")
-        self.db = CowrieConfig().get(RETHINK_DB_SEGMENT, "db")
-        self.table = CowrieConfig().get(RETHINK_DB_SEGMENT, "table")
-        self.password = CowrieConfig().get(RETHINK_DB_SEGMENT, "password", raw=True)
+        self.host = CowrieConfig.get(RETHINK_DB_SEGMENT, "host")
+        self.port = CowrieConfig.getint(RETHINK_DB_SEGMENT, "port")
+        self.db = CowrieConfig.get(RETHINK_DB_SEGMENT, "db")
+        self.table = CowrieConfig.get(RETHINK_DB_SEGMENT, "table")
+        self.password = CowrieConfig.get(RETHINK_DB_SEGMENT, "password", raw=True)
         self.connection = r.connect(
             host=self.host, port=self.port, db=self.db, password=self.password
         )

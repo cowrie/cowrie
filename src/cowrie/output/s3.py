@@ -21,17 +21,17 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.bucket = CowrieConfig().get("output_s3", "bucket")
+        self.bucket = CowrieConfig.get("output_s3", "bucket")
         self.seen = set()
         self.session = get_session()
 
         try:
-            if CowrieConfig().get("output_s3", "access_key_id") and CowrieConfig().get(
+            if CowrieConfig.get("output_s3", "access_key_id") and CowrieConfig.get(
                 "output_s3", "secret_access_key"
             ):
                 self.session.set_credentials(
-                    CowrieConfig().get("output_s3", "access_key_id"),
-                    CowrieConfig().get("output_s3", "secret_access_key"),
+                    CowrieConfig.get("output_s3", "access_key_id"),
+                    CowrieConfig.get("output_s3", "secret_access_key"),
                 )
         except NoOptionError:
             log.msg(
@@ -40,9 +40,9 @@ class Output(cowrie.core.output.Output):
 
         self.client = self.session.create_client(
             "s3",
-            region_name=CowrieConfig().get("output_s3", "region"),
-            endpoint_url=CowrieConfig().get("output_s3", "endpoint", fallback=None),
-            verify=CowrieConfig().getboolean("output_s3", "verify", fallback=True),
+            region_name=CowrieConfig.get("output_s3", "region"),
+            endpoint_url=CowrieConfig.get("output_s3", "endpoint", fallback=None),
+            verify=CowrieConfig.getboolean("output_s3", "verify", fallback=True),
         )
 
     def stop(self):

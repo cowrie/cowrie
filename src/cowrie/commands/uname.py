@@ -13,25 +13,25 @@ commands = {}
 
 
 def hardware_platform():
-    return CowrieConfig().get("shell", "hardware_platform", fallback="x86_64")
+    return CowrieConfig.get("shell", "hardware_platform", fallback="x86_64")
 
 
 def kernel_name():
-    return CowrieConfig().get("shell", "kernel_name", fallback="Linux")
+    return CowrieConfig.get("shell", "kernel_name", fallback="Linux")
 
 
 def kernel_version():
-    return CowrieConfig().get("shell", "kernel_version", fallback="3.2.0-4-amd64")
+    return CowrieConfig.get("shell", "kernel_version", fallback="3.2.0-4-amd64")
 
 
 def kernel_build_string():
-    return CowrieConfig().get(
+    return CowrieConfig.get(
         "shell", "kernel_build_string", fallback="#1 SMP Debian 3.2.68-1+deb7u1"
     )
 
 
 def operating_system():
-    return CowrieConfig().get("shell", "operating_system", fallback="GNU/Linux")
+    return CowrieConfig.get("shell", "operating_system", fallback="GNU/Linux")
 
 
 def uname_help():

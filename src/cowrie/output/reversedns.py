@@ -18,9 +18,7 @@ class Output(cowrie.core.output.Output):
         """
         Start Output Plugin
         """
-        self.timeout = [
-            CowrieConfig().getint("output_reversedns", "timeout", fallback=3)
-        ]
+        self.timeout = [CowrieConfig.getint("output_reversedns", "timeout", fallback=3)]
 
     def stop(self):
         """

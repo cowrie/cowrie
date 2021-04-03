@@ -28,7 +28,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self):
         self.interfaceToMethod[credentials.IUsername] = b"none"
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b"password"
-        keyboard = CowrieConfig().getboolean(
+        keyboard = CowrieConfig.getboolean(
             "ssh", "auth_keyboard_interactive_enabled", fallback=False
         )
 
@@ -49,9 +49,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.bannerSent = True
         try:
-            issuefile = (
-                CowrieConfig().get("honeypot", "contents_path") + "/etc/issue.net"
-            )
+            issuefile = CowrieConfig.get("honeypot", "contents_path") + "/etc/issue.net"
             data = open(issuefile).read()
         except OSError:
             return

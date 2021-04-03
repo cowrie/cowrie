@@ -24,11 +24,11 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get("output_greynoise", "api_key", fallback=None)
-        self.tags = (
-            CowrieConfig().get("output_greynoise", "tags", fallback="all").split(",")
+        self.apiKey = CowrieConfig.get("output_greynoise", "api_key", fallback=None)
+        self.tags = CowrieConfig.get("output_greynoise", "tags", fallback="all").split(
+            ","
         )
-        self.debug = CowrieConfig().getboolean(
+        self.debug = CowrieConfig.getboolean(
             "output_greynoise", "debug", fallback=False
         )
 

@@ -42,7 +42,7 @@ class UserDB:
 
         try:
             with open(
-                "{}/userdb.txt".format(CowrieConfig().get("honeypot", "etc_path"))
+                "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
             ) as db:
                 userdb = db.readlines()
         except OSError:
@@ -120,8 +120,8 @@ class AuthRandom:
         self.mintry, self.maxtry, self.maxcache = 2, 5, 10
 
         # Are there auth_class parameters?
-        if CowrieConfig().has_option("honeypot", "auth_class_parameters"):
-            parameters = CowrieConfig().get("honeypot", "auth_class_parameters")
+        if CowrieConfig.has_option("honeypot", "auth_class_parameters"):
+            parameters = CowrieConfig.get("honeypot", "auth_class_parameters")
             parlist = parameters.split(",")
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
@@ -133,7 +133,7 @@ class AuthRandom:
             log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
         self.uservar = {}
         self.uservar_file = "{}/auth_random.json".format(
-            CowrieConfig().get("honeypot", "state_path")
+            CowrieConfig.get("honeypot", "state_path")
         )
         self.loadvars()
 

@@ -63,23 +63,23 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get("output_virustotal", "api_key")
-        self.debug = CowrieConfig().getboolean(
+        self.apiKey = CowrieConfig.get("output_virustotal", "api_key")
+        self.debug = CowrieConfig.getboolean(
             "output_virustotal", "debug", fallback=False
         )
-        self.upload = CowrieConfig().getboolean(
+        self.upload = CowrieConfig.getboolean(
             "output_virustotal", "upload", fallback=True
         )
-        self.comment = CowrieConfig().getboolean(
+        self.comment = CowrieConfig.getboolean(
             "output_virustotal", "comment", fallback=True
         )
-        self.scan_file = CowrieConfig().getboolean(
+        self.scan_file = CowrieConfig.getboolean(
             "output_virustotal", "scan_file", fallback=True
         )
-        self.scan_url = CowrieConfig().getboolean(
+        self.scan_url = CowrieConfig.getboolean(
             "output_virustotal", "scan_url", fallback=False
         )
-        self.commenttext = CowrieConfig().get(
+        self.commenttext = CowrieConfig.get(
             "output_virustotal", "commenttext", fallback=COMMENT
         )
         self.agent = client.Agent(reactor, WebClientContextFactory())
@@ -106,9 +106,7 @@ class Output(cowrie.core.output.Output):
 
     def _is_new_shasum(self, shasum):
         # Get the downloaded file's modification time
-        shasumfile = os.path.join(
-            CowrieConfig().get("honeypot", "download_path"), shasum
-        )
+        shasumfile = os.path.join(CowrieConfig.get("honeypot", "download_path"), shasum)
         file_modification_time = datetime.datetime.fromtimestamp(
             os.stat(shasumfile).st_mtime
         )

@@ -26,8 +26,8 @@ class Output(cowrie.core.output.Output):
             log.msg(f"mongo error - {e}")
 
     def start(self):
-        db_addr = CowrieConfig().get("output_mongodb", "connection_string")
-        db_name = CowrieConfig().get("output_mongodb", "database")
+        db_addr = CowrieConfig.get("output_mongodb", "connection_string")
+        db_name = CowrieConfig.get("output_mongodb", "database")
 
         try:
             self.mongo_client = pymongo.MongoClient(db_addr)

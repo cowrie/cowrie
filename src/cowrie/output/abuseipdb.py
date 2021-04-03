@@ -63,10 +63,10 @@ REREPORT_MINIMUM = 900
 
 class Output(output.Output):
     def start(self):
-        self.tolerance_attempts = CowrieConfig().getint(
+        self.tolerance_attempts = CowrieConfig.getint(
             "output_abuseipdb", "tolerance_attempts", fallback=10
         )
-        self.state_path = CowrieConfig().get("output_abuseipdb", "dump_path")
+        self.state_path = CowrieConfig.get("output_abuseipdb", "dump_path")
         self.state_path = Path(*(d for d in self.state_path.split("/")))
         self.state_dump = self.state_path / DUMP_FILE
 
@@ -200,10 +200,10 @@ class LogBook(dict):
         self.sleeping = False
         self.sleep_until = 0
         self.tolerance_attempts = tolerance_attempts
-        self.tolerance_window = 60 * CowrieConfig().getint(
+        self.tolerance_window = 60 * CowrieConfig.getint(
             "output_abuseipdb", "tolerance_window", fallback=120
         )
-        self.rereport_after = 3600 * CowrieConfig().getfloat(
+        self.rereport_after = 3600 * CowrieConfig.getfloat(
             "output_abuseipdb", "rereport_after", fallback=24
         )
         if self.rereport_after < REREPORT_MINIMUM:
@@ -344,7 +344,7 @@ class Reporter:
         self.headers = {
             "User-Agent": "Cowrie Honeypot AbuseIPDB plugin",
             "Accept": "application/json",
-            "Key": CowrieConfig().get("output_abuseipdb", "api_key"),
+            "Key": CowrieConfig.get("output_abuseipdb", "api_key"),
         }
 
     def report_ip_single(self, ip, t, uname):
