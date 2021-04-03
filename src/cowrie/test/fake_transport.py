@@ -23,11 +23,11 @@ class Container:
     id = "test-suite"
     sessionno = 1
     starttime = 0
-    session: Optional[Container]
+    session: Optional['Container']
     sessions: Dict[int, str] = {}
-    conn: Optional[Container]
-    transport: Optional[Container]
-    factory: Optional[Container]
+    conn: Optional['Container']
+    transport: Optional['Container']
+    factory: Optional['Container']
 
     def getPeer(self):
         """
