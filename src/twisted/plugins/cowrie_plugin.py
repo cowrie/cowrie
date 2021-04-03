@@ -29,7 +29,7 @@
 
 import os
 import sys
-from typing import List
+from typing import Callable, Dict, List, Union
 
 from backend_pool.pool_server import PoolServerFactory
 
@@ -72,7 +72,7 @@ class Options(usage.Options):
 
 
 @provider(ILogObserver)
-def importFailureObserver(event):
+def importFailureObserver(event: Dict) -> None:
     if "failure" in event and event["failure"].type is ImportError:
         log.err(
             "ERROR: %s. Please run `pip install -U -r requirements.txt` "
@@ -89,10 +89,10 @@ class CowrieServiceMaker:
     tapname = "cowrie"
     description = "She sells sea shells by the sea shore."
     options = Options
-    output_plugins = None
+    output_plugins: List[Callable] = []
 
-    def __init__(self):
-        self.topService = None
+    def __init__(self) -> None:
+        self.topService: Union[None, service.Service] = None
         self.pool_handler = None
 
         # ssh is enabled by default
@@ -106,7 +106,7 @@ class CowrieServiceMaker:
             "backend_pool", "pool_only", fallback=False
         )
 
-    def makeService(self, options):
+    def makeService(self, options: Dict) -> service.Service:
         """
         Construct a TCPServer from a factory defined in Cowrie.
         """
@@ -219,7 +219,7 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         return self.topService
 
-    def pool_ready(self):
+    def pool_ready(self) -> None:
         backend = CowrieConfig.get("honeypot", "backend", fallback="shell")
 
         # this method is never called if self.pool_only is False,
