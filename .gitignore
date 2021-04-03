@@ -12,6 +12,7 @@ docs/_build
 build/
 log/
 .eggs/
+.envrc
 .direnv/
 __pycache__/
 *.py[cod]
