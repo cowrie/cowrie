@@ -9,7 +9,7 @@ import datetime
 import getopt
 import random
 import re
-from Typing import Dict, Callable
+from typing import Dict, Callable
 import time
 
 from twisted.internet import error, reactor

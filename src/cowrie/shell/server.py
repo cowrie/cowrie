@@ -49,7 +49,6 @@ class CowrieServer:
 
     fs = None
     process = None
-    avatars = []
     hostname = CowrieConfig().get("honeypot", "hostname")
 
     def __init__(self, realm):
