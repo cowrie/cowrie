@@ -70,10 +70,6 @@ class Output(output.Output):
         self.state_path = Path(*(d for d in self.state_path.split("/")))
         self.state_dump = self.state_path / DUMP_FILE
 
-        if version_info.minor < 6:
-            # PathLike object not compatible with with open in python < 3.6
-            self.state_dump = str(self.state_dump)
-
         self.logbook = LogBook(self.tolerance_attempts, self.state_dump)
         # Pass our instance of LogBook() to Reporter() so we don't end up
         # working with different records.
