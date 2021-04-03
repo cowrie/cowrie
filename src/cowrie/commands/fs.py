@@ -10,6 +10,7 @@ Filesystem related commands
 import copy
 import getopt
 import os.path
+from typing import Dict, Callable
 import re
 
 from twisted.python import log
@@ -17,7 +18,7 @@ from twisted.python import log
 import cowrie.shell.fs as fs
 from cowrie.shell.command import HoneyPotCommand
 
-commands = {}
+commands: Dict[str, Callable] = {}
 
 
 class command_grep(HoneyPotCommand):
