@@ -79,7 +79,6 @@ class FakeTransport(proto_helpers.StringTransport):
     TAB = "\x09"
     BACKSPACE = "\x08"
 
-    modes = {}
     modes: Dict[str, Callable] = {}
 
     # '\x01':     self.handle_HOME,	# CTRL-A
@@ -111,7 +110,7 @@ class FakeTransport(proto_helpers.StringTransport):
     transport.session.conn.transport.factory.sessions = {}
     transport.session.conn.transport.factory.starttime = 0
     factory = Container()
-    session = {}
+    session: Dict[str, str] = {}
 
     def abortConnection(self):
         self.aborting = True
