@@ -23,10 +23,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
     redirlogOpen = False  # it will be set at core/protocol.py
     stdinlogOpen = False
     ttylogOpen = False
-    ttylogPath = CowrieConfig().get("honeypot", "ttylog_path")
-    downloadPath = CowrieConfig().get("honeypot", "download_path")
-    ttylogEnabled = CowrieConfig().getboolean("honeypot", "ttylog", fallback=True)
-    bytesReceivedLimit = CowrieConfig().getint(
+    ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
+    downloadPath = CowrieConfig.get("honeypot", "download_path")
+    ttylogEnabled = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
+    bytesReceivedLimit = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
     bytesReceived = 0

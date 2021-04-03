@@ -27,10 +27,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     startTime = None
     gotVersion = False
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
-    auth_timeout = CowrieConfig().getint(
+    auth_timeout = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
     )
-    interactive_timeout = CowrieConfig().getint(
+    interactive_timeout = CowrieConfig.getint(
         "honeypot", "interactive_timeout", fallback=300
     )
 

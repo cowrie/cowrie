@@ -42,16 +42,16 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        misp_url = CowrieConfig().get("output_misp", "base_url")
-        misp_key = CowrieConfig().get("output_misp", "api_key")
+        misp_url = CowrieConfig.get("output_misp", "base_url")
+        misp_key = CowrieConfig.get("output_misp", "api_key")
         misp_verifycert = (
-            "true" == CowrieConfig().get("output_misp", "verify_cert").lower()
+            "true" == CowrieConfig.get("output_misp", "verify_cert").lower()
         )
         self.misp_api = PyMISP(
             url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False
         )
-        self.debug = CowrieConfig().getboolean("output_misp", "debug", fallback=False)
-        self.publish = CowrieConfig().getboolean(
+        self.debug = CowrieConfig.getboolean("output_misp", "debug", fallback=False)
+        self.publish = CowrieConfig.getboolean(
             "output_misp", "publish_event", fallback=False
         )
 

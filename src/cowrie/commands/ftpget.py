@@ -80,7 +80,7 @@ class command_ftpget(HoneyPotCommand):
     ftpget command
     """
 
-    download_path = CowrieConfig().get("honeypot", "download_path")
+    download_path = CowrieConfig.get("honeypot", "download_path")
 
     def help(self):
         self.write(
@@ -212,8 +212,8 @@ Download a file via FTP
 
     def ftp_download(self):
         out_addr = ("", 0)
-        if CowrieConfig().has_option("honeypot", "out_addr"):
-            out_addr = (CowrieConfig().get("honeypot", "out_addr"), 0)
+        if CowrieConfig.has_option("honeypot", "out_addr"):
+            out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
         ftp = FTP(source_address=out_addr)
 

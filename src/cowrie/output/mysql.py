@@ -47,15 +47,15 @@ class Output(cowrie.core.output.Output):
     db = None
 
     def start(self):
-        self.debug = CowrieConfig().getboolean("output_mysql", "debug", fallback=False)
-        port = CowrieConfig().getint("output_mysql", "port", fallback=3306)
+        self.debug = CowrieConfig.getboolean("output_mysql", "debug", fallback=False)
+        port = CowrieConfig.getint("output_mysql", "port", fallback=3306)
         try:
             self.db = ReconnectingConnectionPool(
                 "MySQLdb",
-                host=CowrieConfig().get("output_mysql", "host"),
-                db=CowrieConfig().get("output_mysql", "database"),
-                user=CowrieConfig().get("output_mysql", "username"),
-                passwd=CowrieConfig().get("output_mysql", "password", raw=True),
+                host=CowrieConfig.get("output_mysql", "host"),
+                db=CowrieConfig.get("output_mysql", "database"),
+                user=CowrieConfig.get("output_mysql", "username"),
+                passwd=CowrieConfig.get("output_mysql", "password", raw=True),
                 port=port,
                 cp_min=1,
                 cp_max=1,

@@ -43,7 +43,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
 
     def startFactory(self):
         try:
-            honeyfs = CowrieConfig().get("honeypot", "contents_path")
+            honeyfs = CowrieConfig.get("honeypot", "contents_path")
             issuefile = honeyfs + "/etc/issue.net"
             self.banner = open(issuefile, "rb").read()
         except OSError:

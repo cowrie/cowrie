@@ -178,8 +178,8 @@ class command_curl(HoneyPotCommand):
     curl command
     """
 
-    limit_size = CowrieConfig().getint("honeypot", "download_limit_size", fallback=0)
-    download_path = CowrieConfig().get("honeypot", "download_path")
+    limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    download_path = CowrieConfig.get("honeypot", "download_path")
 
     def start(self):
         try:
@@ -272,8 +272,8 @@ class command_curl(HoneyPotCommand):
             self, fakeoutfile, url, outputfile, *args, **kwargs
         )
         out_addr = None
-        if CowrieConfig().has_option("honeypot", "out_addr"):
-            out_addr = (CowrieConfig().get("honeypot", "out_addr"), 0)
+        if CowrieConfig.has_option("honeypot", "out_addr"):
+            out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
         if scheme == "https":
             context_factory = ssl.optionsForClientTLS(hostname=host)

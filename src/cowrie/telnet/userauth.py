@@ -98,7 +98,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         # Remove the short timeout of the login prompt.
         self.transport.setTimeout(
-            CowrieConfig().getint("honeypot", "interactive_timeout", fallback=300)
+            CowrieConfig.getint("honeypot", "interactive_timeout", fallback=300)
         )
 
         # replace myself with avatar protocol

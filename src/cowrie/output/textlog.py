@@ -38,8 +38,8 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.format = CowrieConfig().get("output_textlog", "format")
-        self.outfile = open(CowrieConfig().get("output_textlog", "logfile"), "a")
+        self.format = CowrieConfig.get("output_textlog", "format")
+        self.outfile = open(CowrieConfig.get("output_textlog", "logfile"), "a")
 
     def stop(self):
         pass

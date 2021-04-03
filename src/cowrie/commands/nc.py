@@ -101,7 +101,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
         out_addr = None
         try:
-            out_addr = (CowrieConfig().get("honeypot", "out_addr"), 0)
+            out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
         except Exception:
             out_addr = ("0.0.0.0", 0)
 

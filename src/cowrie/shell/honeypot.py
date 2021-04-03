@@ -332,8 +332,8 @@ class HoneyPotShell:
             return
 
         prompt = ""
-        if CowrieConfig().has_option("honeypot", "prompt"):
-            prompt = CowrieConfig().get("honeypot", "prompt")
+        if CowrieConfig.has_option("honeypot", "prompt"):
+            prompt = CowrieConfig.get("honeypot", "prompt")
             prompt += " "
         else:
             cwd = self.protocol.cwd

@@ -30,14 +30,12 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.token = CowrieConfig().get("output_splunk", "token")
-        self.url = CowrieConfig().get("output_splunk", "url").encode("utf8")
-        self.index = CowrieConfig().get("output_splunk", "index", fallback=None)
-        self.source = CowrieConfig().get("output_splunk", "source", fallback=None)
-        self.sourcetype = CowrieConfig().get(
-            "output_splunk", "sourcetype", fallback=None
-        )
-        self.host = CowrieConfig().get("output_splunk", "host", fallback=None)
+        self.token = CowrieConfig.get("output_splunk", "token")
+        self.url = CowrieConfig.get("output_splunk", "url").encode("utf8")
+        self.index = CowrieConfig.get("output_splunk", "index", fallback=None)
+        self.source = CowrieConfig.get("output_splunk", "source", fallback=None)
+        self.sourcetype = CowrieConfig.get("output_splunk", "sourcetype", fallback=None)
+        self.host = CowrieConfig.get("output_splunk", "host", fallback=None)
         contextFactory = WebClientContextFactory()
         # contextFactory.method = TLSv1_METHOD
         self.agent = client.Agent(reactor, contextFactory)

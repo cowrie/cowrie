@@ -52,22 +52,18 @@ class PoolService:
         self.share_guests = True
 
         # file configs
-        self.ssh_port = CowrieConfig().getint(
+        self.ssh_port = CowrieConfig.getint(
             "backend_pool", "guest_ssh_port", fallback=-1
         )
-        self.telnet_port = CowrieConfig().getint(
+        self.telnet_port = CowrieConfig.getint(
             "backend_pool", "guest_telnet_port", fallback=-1
         )
 
-        self.local_pool = (
-            CowrieConfig().get("proxy", "pool", fallback="local") == "local"
-        )
-        self.pool_only = CowrieConfig().getboolean(
+        self.local_pool = CowrieConfig.get("proxy", "pool", fallback="local") == "local"
+        self.pool_only = CowrieConfig.getboolean(
             "backend_pool", "pool_only", fallback=False
         )
-        self.use_nat = CowrieConfig().getboolean(
-            "backend_pool", "use_nat", fallback=True
-        )
+        self.use_nat = CowrieConfig.getboolean("backend_pool", "use_nat", fallback=True)
 
         # detect invalid config
         if not self.ssh_port > 0 and not self.telnet_port > 0:
@@ -96,7 +92,7 @@ class PoolService:
         threads.deferToThread(self.producer_loop)
 
         # recycle myself after some time
-        recycle_period = CowrieConfig().getint(
+        recycle_period = CowrieConfig.getint(
             "backend_pool", "recycle_period", fallback=-1
         )
         if recycle_period > 0:

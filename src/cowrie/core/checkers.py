@@ -97,8 +97,8 @@ class HoneypotPasswordChecker:
         authname = auth.UserDB
 
         # Is the auth_class defined in the config file?
-        if CowrieConfig().has_option("honeypot", "auth_class"):
-            authclass = CowrieConfig().get("honeypot", "auth_class")
+        if CowrieConfig.has_option("honeypot", "auth_class"):
+            authclass = CowrieConfig.get("honeypot", "auth_class")
             authmodule = "cowrie.core.auth"
 
             # Check if authclass exists in this module

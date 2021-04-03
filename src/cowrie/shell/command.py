@@ -66,7 +66,7 @@ class HoneyPotCommand:
                     re.sub("[^A-Za-z0-9]", "_", self.outfile),
                 )
                 self.safeoutfile = os.path.join(
-                    CowrieConfig().get("honeypot", "download_path"), tmp_fname
+                    CowrieConfig.get("honeypot", "download_path"), tmp_fname
                 )
                 perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
                 try:
