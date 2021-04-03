@@ -29,7 +29,7 @@
 
 import os
 import sys
-from typing import Callable, Dict, List, Union
+from typing import Callable, ClassVar, Dict, List, Union
 
 from backend_pool.pool_server import PoolServerFactory
 
@@ -86,8 +86,8 @@ globalLogPublisher.addObserver(importFailureObserver)
 
 @implementer(IServiceMaker, IPlugin)
 class CowrieServiceMaker:
-    tapname = "cowrie"
-    description = "She sells sea shells by the sea shore."
+    tapname: ClassVar[str] = "cowrie"
+    description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
     output_plugins: List[Callable] = []
 
