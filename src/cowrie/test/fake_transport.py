@@ -3,6 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
+from typing import Set, List, Dict, Callable
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
@@ -43,7 +44,7 @@ class FakeTransport(proto_helpers.StringTransport):
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
-    redirFiles = set()
+    redirFiles: Set[List[str]] = set()
     width = 80
     height = 24
     void = object()
@@ -79,6 +80,7 @@ class FakeTransport(proto_helpers.StringTransport):
     BACKSPACE = "\x08"
 
     modes = {}
+    modes: Dict[str, Callable] = {}
 
     # '\x01':     self.handle_HOME,	# CTRL-A
     # '\x02':     self.handle_LEFT,	# CTRL-B
