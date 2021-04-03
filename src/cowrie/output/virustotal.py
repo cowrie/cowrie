@@ -444,6 +444,9 @@ class StringProducer:
     def pauseProducing(self):
         pass
 
+    def resumeProducing(self):
+        pass
+
     def stopProducing(self):
         pass
 
