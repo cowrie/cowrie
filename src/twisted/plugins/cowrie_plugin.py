@@ -29,6 +29,7 @@
 
 import os
 import sys
+from typing import List
 
 from backend_pool.pool_server import PoolServerFactory
 
@@ -66,8 +67,7 @@ class Options(usage.Options):
     """
 
     # The '-c' parameters is currently ignored
-    optParameters = []
-
+    optParameters: List[str] = []
     optFlags = [["help", "h", "Display this help and exit."]]
 
 
