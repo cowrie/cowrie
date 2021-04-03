@@ -15,9 +15,9 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        host = CowrieConfig().get("output_influx", "host", fallback="")
-        port = CowrieConfig().getint("output_influx", "port", fallback=8086)
-        ssl = CowrieConfig().getboolean("output_influx", "ssl", fallback=False)
+        host = CowrieConfig.get("output_influx", "host", fallback="")
+        port = CowrieConfig.getint("output_influx", "port", fallback=8086)
+        ssl = CowrieConfig.getboolean("output_influx", "ssl", fallback=False)
 
         self.client = None
         try:
@@ -30,23 +30,23 @@ class Output(cowrie.core.output.Output):
             log.msg("output_influx: cannot instantiate client!")
             return
 
-        if CowrieConfig().has_option(
+        if CowrieConfig.has_option(
             "output_influx", "username"
-        ) and CowrieConfig().has_option("output_influx", "password"):
-            username = CowrieConfig().get("output_influx", "username")
-            password = CowrieConfig().get("output_influx", "password", raw=True)
+        ) and CowrieConfig.has_option("output_influx", "password"):
+            username = CowrieConfig.get("output_influx", "username")
+            password = CowrieConfig.get("output_influx", "password", raw=True)
             self.client.switch_user(username, password)
 
         try:
-            dbname = CowrieConfig().get("output_influx", "database_name")
+            dbname = CowrieConfig.get("output_influx", "database_name")
         except Exception:
             dbname = "cowrie"
 
         retention_policy_duration_default = "12w"
         retention_policy_name = dbname + "_retention_policy"
 
-        if CowrieConfig().has_option("output_influx", "retention_policy_duration"):
-            retention_policy_duration = CowrieConfig().get(
+        if CowrieConfig.has_option("output_influx", "retention_policy_duration"):
+            retention_policy_duration = CowrieConfig.get(
                 "output_influx", "retention_policy_duration"
             )
 

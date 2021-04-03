@@ -13,25 +13,25 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        self.host = CowrieConfig().get("output_elasticsearch", "host")
-        self.port = CowrieConfig().get("output_elasticsearch", "port")
-        self.index = CowrieConfig().get("output_elasticsearch", "index")
-        self.type = CowrieConfig().get("output_elasticsearch", "type")
-        self.pipeline = CowrieConfig().get("output_elasticsearch", "pipeline")
+        self.host = CowrieConfig.get("output_elasticsearch", "host")
+        self.port = CowrieConfig.get("output_elasticsearch", "port")
+        self.index = CowrieConfig.get("output_elasticsearch", "index")
+        self.type = CowrieConfig.get("output_elasticsearch", "type")
+        self.pipeline = CowrieConfig.get("output_elasticsearch", "pipeline")
         # new options (creds + https)
-        self.username = CowrieConfig().get(
+        self.username = CowrieConfig.get(
             "output_elasticsearch", "username", fallback=None
         )
-        self.password = CowrieConfig().get(
+        self.password = CowrieConfig.get(
             "output_elasticsearch", "password", fallback=None
         )
-        self.use_ssl = CowrieConfig().getboolean(
+        self.use_ssl = CowrieConfig.getboolean(
             "output_elasticsearch", "ssl", fallback=False
         )
-        self.ca_certs = CowrieConfig().get(
+        self.ca_certs = CowrieConfig.get(
             "output_elasticsearch", "ca_certs", fallback=None
         )
-        self.verify_certs = CowrieConfig().getboolean(
+        self.verify_certs = CowrieConfig.getboolean(
             "output_elasticsearch", "verify_certs", fallback=True
         )
 

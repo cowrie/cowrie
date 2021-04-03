@@ -61,10 +61,10 @@ class Output(cowrie.core.output.Output):
     """
 
     def start(self):
-        server = CowrieConfig().get("output_xmpp", "server")
-        user = CowrieConfig().get("output_xmpp", "user")
-        password = CowrieConfig().get("output_xmpp", "password")
-        muc = CowrieConfig().get("output_xmpp", "muc")
+        server = CowrieConfig.get("output_xmpp", "server")
+        user = CowrieConfig.get("output_xmpp", "user")
+        password = CowrieConfig.get("output_xmpp", "password")
+        muc = CowrieConfig.get("output_xmpp", "muc")
         resource = "".join([choice(string.ascii_letters) for i in range(8)])
         jid = user + "/" + resource
         application = service.Application("honeypot")
@@ -72,7 +72,7 @@ class Output(cowrie.core.output.Output):
 
     def run(self, application, jidstr, password, muc, server):
         self.xmppclient = XMPPClient(JID(jidstr), password)
-        if CowrieConfig().getboolean("output_xmpp", "debug", fallback=False):
+        if CowrieConfig.getboolean("output_xmpp", "debug", fallback=False):
             self.xmppclient.logTraffic = True
         (user, host, resource) = jid.parse(jidstr)
         self.muc = XMPPLoggerProtocol(muc, server, user + "-" + resource)

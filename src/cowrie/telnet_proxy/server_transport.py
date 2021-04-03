@@ -72,7 +72,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
 
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
         # when pool is set we can just test self.pool_interface to the same effect of getting the config
-        proxy_backend = CowrieConfig().get("proxy", "backend", fallback="simple")
+        proxy_backend = CowrieConfig.get("proxy", "backend", fallback="simple")
 
         if proxy_backend == "pool":
             # request a backend
@@ -81,8 +81,8 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
             d.addErrback(self.pool_connection_error)
         else:
             # simply a proxy, no pool
-            backend_ip = CowrieConfig().get("proxy", "backend_telnet_host")
-            backend_port = CowrieConfig().getint("proxy", "backend_telnet_port")
+            backend_ip = CowrieConfig.get("proxy", "backend_telnet_host")
+            backend_port = CowrieConfig.getint("proxy", "backend_telnet_port")
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
@@ -122,7 +122,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
 
         self.startTime = time.time()
         self.setTimeout(
-            CowrieConfig().getint("honeypot", "authentication_timeout", fallback=120)
+            CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
 
     def connect_to_backend(self, ip, port):

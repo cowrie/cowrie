@@ -38,15 +38,15 @@ jobs:
             . cowrie-env/bin/activate
             flake8 --ignore E203,E501,W503 --count --application-import-names cowrie --statistics src
       - run:
+          name: Mypy
+          command: |
+            . cowrie-env/bin/activate
+            mypy src
+      - run:
           name: Twistedchecker
           command: |
             . cowrie-env/bin/activate
             twistedchecker src || true
-      - run:
-          name: Mypy
-          command: |
-            . cowrie-env/bin/activate
-            mypy src || true
       - run:
           name: Build Python library
           command: |

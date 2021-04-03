@@ -11,13 +11,14 @@ import copy
 import getopt
 import os.path
 import re
+from typing import Callable, Dict
 
 from twisted.python import log
 
 import cowrie.shell.fs as fs
 from cowrie.shell.command import HoneyPotCommand
 
-commands = {}
+commands: Dict[str, Callable] = {}
 
 
 class command_grep(HoneyPotCommand):

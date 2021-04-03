@@ -40,11 +40,11 @@ class CowrieUser(avatar.ConchUser):
         self.home = pwentry["pw_dir"]
 
         # SFTP support enabled only when option is explicitly set
-        if CowrieConfig().getboolean("ssh", "sftp_enabled", fallback=False):
+        if CowrieConfig.getboolean("ssh", "sftp_enabled", fallback=False):
             self.subsystemLookup[b"sftp"] = conchfiletransfer.FileTransferServer
 
         # SSH forwarding disabled only when option is explicitly set
-        if CowrieConfig().getboolean("ssh", "forwarding", fallback=True):
+        if CowrieConfig.getboolean("ssh", "forwarding", fallback=True):
             self.channelLookup[
                 b"direct-tcpip"
             ] = forwarding.cowrieOpenConnectForwardingClient

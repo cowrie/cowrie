@@ -73,8 +73,8 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         # we authenticate with the backend using the credentials provided
         # TODO create the account in the backend before (contact the pool of VMs for example)
         # so these credentials from the config may not be needed after all
-        username = CowrieConfig().get("proxy", "backend_user").encode()
-        password = CowrieConfig().get("proxy", "backend_pass").encode()
+        username = CowrieConfig.get("proxy", "backend_user").encode()
+        password = CowrieConfig.get("proxy", "backend_pass").encode()
 
         log.msg(f"Will auth with backend: {username}/{password}")
         self.sendPacket(5, bin_string_to_hex(b"ssh-userauth"))

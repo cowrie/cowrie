@@ -31,8 +31,8 @@ class Output(cowrie.core.output.Output):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get("output_cowrie", "api_key", fallback=None)
-        self.debug = CowrieConfig().getboolean("output_cowrie", "debug", fallback=False)
+        self.apiKey = CowrieConfig.get("output_cowrie", "api_key", fallback=None)
+        self.debug = CowrieConfig.getboolean("output_cowrie", "debug", fallback=False)
 
     def emit(self, event):
         """

@@ -7,6 +7,7 @@ dd commands
 
 
 import re
+from typing import Dict
 
 from twisted.python import log
 
@@ -21,7 +22,7 @@ class command_dd(HoneyPotCommand):
     dd command
     """
 
-    ddargs = {}
+    ddargs: Dict[str, str] = {}
 
     def start(self):
         if not self.args or self.args[0] == ">":

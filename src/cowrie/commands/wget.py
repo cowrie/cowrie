@@ -55,8 +55,8 @@ class command_wget(HoneyPotCommand):
     wget command
     """
 
-    limit_size = CowrieConfig().getint("honeypot", "download_limit_size", fallback=0)
-    downloadPath = CowrieConfig().get("honeypot", "download_path")
+    limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    downloadPath = CowrieConfig.get("honeypot", "download_path")
 
     def start(self):
         try:
@@ -157,8 +157,8 @@ class command_wget(HoneyPotCommand):
         )
 
         out_addr = None
-        if CowrieConfig().has_option("honeypot", "out_addr"):
-            out_addr = (CowrieConfig().get("honeypot", "out_addr"), 0)
+        if CowrieConfig.has_option("honeypot", "out_addr"):
+            out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
         if scheme == b"https":
             context_factory = ssl.optionsForClientTLS(hostname=host)

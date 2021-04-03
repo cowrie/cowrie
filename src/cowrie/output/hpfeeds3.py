@@ -27,25 +27,25 @@ class Output(cowrie.core.output.Output):
             "WARNING: Beta version of new hpfeeds enabled. This will become hpfeeds in a future release."
         )
 
-        if CowrieConfig().has_option("output_hpfeeds3", "channel"):
-            self.channel = CowrieConfig().get("output_hpfeeds3", "channel")
+        if CowrieConfig.has_option("output_hpfeeds3", "channel"):
+            self.channel = CowrieConfig.get("output_hpfeeds3", "channel")
 
-        if CowrieConfig().has_option("output_hpfeeds3", "endpoint"):
-            endpoint = CowrieConfig().get("output_hpfeeds3", "endpoint")
+        if CowrieConfig.has_option("output_hpfeeds3", "endpoint"):
+            endpoint = CowrieConfig.get("output_hpfeeds3", "endpoint")
         else:
-            server = CowrieConfig().get("output_hpfeeds3", "server")
-            port = CowrieConfig().getint("output_hpfeeds3", "port")
+            server = CowrieConfig.get("output_hpfeeds3", "server")
+            port = CowrieConfig.getint("output_hpfeeds3", "port")
 
-            if CowrieConfig().has_option("output_hpfeeds3", "tlscert"):
-                with open(CowrieConfig().get("output_hpfeeds3", "tlscert")) as fp:
+            if CowrieConfig.has_option("output_hpfeeds3", "tlscert"):
+                with open(CowrieConfig.get("output_hpfeeds3", "tlscert")) as fp:
                     authority = ssl.Certificate.loadPEM(fp.read())
                 options = ssl.optionsForClientTLS(server, authority)
                 endpoint = endpoints.SSL4ClientEndpoint(reactor, server, port, options)
             else:
                 endpoint = endpoints.HostnameEndpoint(reactor, server, port)
 
-        ident = CowrieConfig().get("output_hpfeeds3", "identifier")
-        secret = CowrieConfig().get("output_hpfeeds3", "secret")
+        ident = CowrieConfig.get("output_hpfeeds3", "identifier")
+        secret = CowrieConfig.get("output_hpfeeds3", "secret")
 
         self.meta = {}
 

@@ -10,6 +10,7 @@ import getopt
 import random
 import re
 import time
+from typing import Callable, Dict
 
 from twisted.internet import error, reactor
 from twisted.python import failure, log
@@ -18,7 +19,7 @@ from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import HoneyPotShell
 
-commands = {}
+commands: Dict[str, Callable] = {}
 
 
 class command_whoami(HoneyPotCommand):

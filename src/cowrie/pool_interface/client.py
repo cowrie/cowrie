@@ -29,11 +29,11 @@ class PoolClient(Protocol):
         """
         Used only by the PoolHandler on the first connection, to set the pool up.
         """
-        max_vms = CowrieConfig().getint("proxy", "pool_max_vms", fallback=2)
-        vm_unused_timeout = CowrieConfig().getint(
+        max_vms = CowrieConfig.getint("proxy", "pool_max_vms", fallback=2)
+        vm_unused_timeout = CowrieConfig.getint(
             "proxy", "pool_vm_unused_timeout", fallback=600
         )
-        share_guests = CowrieConfig().getboolean(
+        share_guests = CowrieConfig.getboolean(
             "proxy", "pool_share_guests", fallback=True
         )
 

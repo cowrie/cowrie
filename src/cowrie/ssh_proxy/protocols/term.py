@@ -49,8 +49,8 @@ class Term(base_protocol.BaseProtocol):
         self.channelId = channelId
 
         self.startTime = time.time()
-        self.ttylogPath = CowrieConfig().get("honeypot", "ttylog_path")
-        self.ttylogEnabled = CowrieConfig().getboolean(
+        self.ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
+        self.ttylogEnabled = CowrieConfig.getboolean(
             "honeypot", "ttylog", fallback=True
         )
         self.ttylogSize = 0

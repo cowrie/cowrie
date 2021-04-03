@@ -128,12 +128,10 @@ class LibvirtBackendService:
             #   - no snapshot dir was defined (using cowrie's root dir) - should not happen but prevent it
             if (
                 (
-                    not CowrieConfig().getboolean(
+                    not CowrieConfig.getboolean(
                         "backend_pool", "save_snapshots", fallback=True
                     )
-                    or CowrieConfig().get(
-                        "backend_pool", "snapshot_path", fallback=None
-                    )
+                    or CowrieConfig.get("backend_pool", "snapshot_path", fallback=None)
                     is None
                 )
                 and os.path.exists(snapshot)
