@@ -4,6 +4,7 @@
 
 import hashlib
 import os
+from typing import Set, List
 import time
 
 from twisted.conch.insults import insults
@@ -29,7 +30,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         "honeypot", "download_limit_size", fallback=0
     )
     bytesReceived = 0
-    redirFiles = set()
+    redirFiles: Set[List[str]] = set()
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
