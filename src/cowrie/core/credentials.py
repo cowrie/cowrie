@@ -90,3 +90,6 @@ class UsernamePasswordIP:
         self.username = username
         self.password = password
         self.ip = ip
+
+    def checkPassword(self, password):
+        return self.password == password
