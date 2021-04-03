@@ -3,7 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from typing import Set, List, Dict, Callable
+from typing import Set, List, Dict, Callable, Optional
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
@@ -12,7 +12,7 @@ from twisted.test import proto_helpers
 class Container:
     """
     This class is placeholder for creating a fake interface
-    @var host Client fake infomration
+    @var host Client fake information
     @var port Fake Port for connection
     @var otherVersionString version
     @var
@@ -21,6 +21,13 @@ class Container:
     otherVersionString = "1.0"
     transportId = "test-suite"
     id = "test-suite"
+    sessionno = 1
+    starttime = 0
+    session: Optional[Container]
+    sessions: Dict[int, str] = {}
+    conn: Optional[Container]
+    transport: Optional[Container]
+    factory: Optional[Container]
 
     def getPeer(self):
         """
