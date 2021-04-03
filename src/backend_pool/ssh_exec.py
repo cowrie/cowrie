@@ -13,7 +13,7 @@ class PasswordAuth(userauth.SSHUserAuthClient):
 
 
 class CommandChannel(channel.SSHChannel):
-    name = "session"
+    name = b"session"
 
     def __init__(self, command, done_deferred, callback, *args, **kwargs):
         super().__init__(*args, **kwargs)
