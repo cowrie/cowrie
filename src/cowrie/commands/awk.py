@@ -11,6 +11,7 @@ limited implementation that only supports `print` command.
 
 import getopt
 import re
+from typing import List, Dict
 
 from twisted.python import log
 
@@ -26,7 +27,7 @@ class command_awk(HoneyPotCommand):
     """
 
     # code is an array of dictionaries contain the regexes to match and the code to execute
-    code = []
+    code: List[Dict[str, str]] = []
 
     def start(self):
         try:
