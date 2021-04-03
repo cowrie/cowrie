@@ -8,6 +8,7 @@ tee command
 
 import getopt
 import os
+from typing import List
 
 from twisted.python import log
 
@@ -23,7 +24,7 @@ class command_tee(HoneyPotCommand):
     """
 
     append = False
-    teeFiles = []
+    teeFiles: List[str] = []
     writtenBytes = 0
     ignoreInterupts = False
 
