@@ -8,6 +8,7 @@ This module contains code to run a command
 
 import os
 import re
+import shlex
 import stat
 import sys
 import time
@@ -17,12 +18,6 @@ from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-
-# From Python3.6 we get the new shlex version
-if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
-    import shlex
-else:
-    from cowrie.shell import shlex
 
 
 class HoneyPotCommand:
