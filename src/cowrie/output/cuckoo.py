@@ -32,11 +32,7 @@ Send downloaded/uplaoded files to Cuckoo
 
 
 import os
-
-try:
-    from urllib.parse import urlparse, urljoin
-except ImportError:
-    from urlparse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin
 
 import requests
 from requests.auth import HTTPBasicAuth

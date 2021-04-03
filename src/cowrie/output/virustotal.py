@@ -35,11 +35,7 @@ import datetime
 import json
 import os
 
-try:
-    from urllib.parse import urlparse, urlencode
-except ImportError:
-    from urllib import urlencode
-    from urlparse import urlparse
+from urllib.parse import urlparse, urlencode
 
 from twisted.internet import defer, reactor
 from twisted.internet.ssl import ClientContextFactory
