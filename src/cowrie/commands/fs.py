@@ -10,8 +10,8 @@ Filesystem related commands
 import copy
 import getopt
 import os.path
-from typing import Dict, Callable
 import re
+from typing import Callable, Dict
 
 from twisted.python import log
 

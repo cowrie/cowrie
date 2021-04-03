@@ -5,7 +5,6 @@
 import copy
 import os
 import re
-import sys
 import shlex
 
 from twisted.internet import error

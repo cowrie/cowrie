@@ -37,7 +37,6 @@ from collections import deque
 from datetime import datetime
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from sys import version_info
 from time import sleep, time
 
 from treq import post

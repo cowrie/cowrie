@@ -3,8 +3,6 @@
 # See the COPYRIGHT file for more information
 
 
-import sys
-
 from twisted.application import internet
 from twisted.internet import endpoints
 

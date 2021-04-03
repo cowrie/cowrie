@@ -9,7 +9,6 @@ This module contains code to deal with Cowrie's configuration
 import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
-from typing import Optional
 
 
 def to_environ_key(key):

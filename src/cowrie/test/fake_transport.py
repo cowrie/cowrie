@@ -3,7 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from typing import Set, List, Dict, Callable, Optional
+from typing import Callable, Dict, List, Optional, Set
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
@@ -23,11 +23,11 @@ class Container:
     id = "test-suite"
     sessionno = 1
     starttime = 0
-    session: Optional['Container']
+    session: Optional["Container"]
     sessions: Dict[int, str] = {}
-    conn: Optional['Container']
-    transport: Optional['Container']
-    factory: Optional['Container']
+    conn: Optional["Container"]
+    transport: Optional["Container"]
+    factory: Optional["Container"]
 
     def getPeer(self):
         """

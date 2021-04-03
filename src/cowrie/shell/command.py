@@ -10,7 +10,6 @@ import os
 import re
 import shlex
 import stat
-import sys
 import time
 
 from twisted.internet import error

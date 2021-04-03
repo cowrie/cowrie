@@ -4,8 +4,8 @@
 
 import hashlib
 import os
-from typing import Set, List
 import time
+from typing import List, Set
 
 from twisted.conch.insults import insults
 from twisted.python import log

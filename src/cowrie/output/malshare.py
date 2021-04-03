@@ -34,6 +34,7 @@ More info https://malshare.com/doc.php
 
 import os
 from urllib.parse import urlparse
+
 import requests
 
 from twisted.python import log

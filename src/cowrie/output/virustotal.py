@@ -34,8 +34,7 @@ Send SSH logins to Virustotal
 import datetime
 import json
 import os
-
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode, urlparse
 
 from twisted.internet import defer, reactor
 from twisted.internet.ssl import ClientContextFactory

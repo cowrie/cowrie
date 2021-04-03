@@ -9,8 +9,8 @@ import datetime
 import getopt
 import random
 import re
-from typing import Dict, Callable
 import time
+from typing import Callable, Dict
 
 from twisted.internet import error, reactor
 from twisted.python import failure, log

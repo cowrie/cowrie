@@ -11,7 +11,7 @@ limited implementation that only supports `print` command.
 
 import getopt
 import re
-from typing import List, Dict
+from typing import Dict, List
 
 from twisted.python import log
 
