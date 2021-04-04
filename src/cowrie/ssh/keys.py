@@ -55,8 +55,8 @@ def getDSAKeys():
         with open(privateKeyFile, "w+b") as f:
             f.write(privateKeyString)
     else:
-        with open(publicKeyFile) as f:
+        with open(publicKeyFile, "b") as f:
             publicKeyString = f.read()
-        with open(privateKeyFile) as f:
+        with open(privateKeyFile, "b") as f:
             privateKeyString = f.read()
     return publicKeyString, privateKeyString
