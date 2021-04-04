@@ -141,7 +141,7 @@ class HoneyPotCommand:
         self.exit()
 
     def call(self):
-        self.write(b"Hello World! [%s]\n" % (repr(self.args),))
+        self.write("Hello World! [{}]\n".format(repr(self.args)).encode('utf8'))
 
     def exit(self):
         """
