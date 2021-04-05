@@ -43,13 +43,15 @@ def durationHuman(duration: float) -> str:
     return "".join(sduration)
 
 
-def tail(the_file, lines_2find=20):
+def tail(the_file, lines_2find=20) -> List[str]:
     """
     From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     """
+    lines_found: int = 0
+    total_bytes_scanned: int = 0
+
     the_file.seek(0, 2)
-    bytes_in_file = the_file.tell()
-    lines_found, total_bytes_scanned = 0, 0
+    bytes_in_file: int = the_file.tell()
     while lines_2find + 1 > lines_found and bytes_in_file > total_bytes_scanned:
         byte_block = min(1024, bytes_in_file - total_bytes_scanned)
         the_file.seek(-(byte_block + total_bytes_scanned), 2)
@@ -62,7 +64,7 @@ def tail(the_file, lines_2find=20):
     # 21 to ensure we don't get a half line
 
 
-def uptime(total_seconds):
+def uptime(total_seconds: float) -> str:
     """
     Gives a human-readable uptime string
     Thanks to http://thesmithfam.org/blog/2005/11/19/python-uptime-script/
@@ -71,19 +73,19 @@ def uptime(total_seconds):
     total_seconds = float(total_seconds)
 
     # Helper vars:
-    MINUTE = 60
-    HOUR = MINUTE * 60
-    DAY = HOUR * 24
+    MINUTE: int = 60
+    HOUR: int = MINUTE * 60
+    DAY: int = HOUR * 24
 
     # Get the days, hours, etc:
-    days = int(total_seconds / DAY)
-    hours = int((total_seconds % DAY) / HOUR)
-    minutes = int((total_seconds % HOUR) / MINUTE)
+    days: int = int(total_seconds / DAY)
+    hours: int = int((total_seconds % DAY) / HOUR)
+    minutes: int = int((total_seconds % HOUR) / MINUTE)
 
     # 14 days,  3:53
     # 11 min
 
-    s = ""
+    s: str = ""
     if days > 0:
         s += str(days) + " " + (days == 1 and "day" or "days") + ", "
     if len(s) > 0 or hours > 0:
@@ -93,7 +95,11 @@ def uptime(total_seconds):
     return s
 
 
-def get_endpoints_from_section(cfg, section, default_port):
+def get_endpoints_from_section(cfg, section: str, default_port: int) -> List[str]:
+    listen_addr: str
+    listen_port: int
+    listen_endpoints: List[str] = []
+
     if cfg.has_option(section, "listen_endpoints"):
         return cfg.get(section, "listen_endpoints").split()
 
@@ -107,7 +113,6 @@ def get_endpoints_from_section(cfg, section, default_port):
     else:
         listen_port = default_port
 
-    listen_endpoints = []
     for i in listen_addr.split():
         listen_endpoints.append(f"tcp:{listen_port}:interface={i}")
 
