@@ -5,6 +5,7 @@ import os
 import random
 import subprocess
 import time
+from typing import Set
 
 
 def ping(guest_ip):
@@ -45,7 +46,7 @@ def generate_network_table(seed=None):
 
     # number of IPs per network is 253 (2-254)
     # generate random MACs, set ensures they are unique
-    macs = set()
+    macs: Set[str] = set()
     while len(macs) < 253:
         macs.add(
             "48:d2:24:bf:"
