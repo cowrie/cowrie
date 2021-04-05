@@ -16,7 +16,7 @@ TYPE_INPUT, TYPE_OUTPUT, TYPE_INTERACT = 1, 2, 3
 TTYSTRUCT = "<iLiiLL"
 
 
-def ttylog_open(logfile, stamp):
+def ttylog_open(logfile: str, stamp: float) -> None:
     """
     Initialize new tty log
 
@@ -28,7 +28,7 @@ def ttylog_open(logfile, stamp):
         f.write(struct.pack(TTYSTRUCT, OP_OPEN, 0, 0, 0, sec, usec))
 
 
-def ttylog_write(logfile, length, direction, stamp, data=None):
+def ttylog_write(logfile: str, length: int, direction: int, stamp: float, data: bytes) -> None:
     """
     Write to tty log
 
@@ -44,7 +44,7 @@ def ttylog_write(logfile, length, direction, stamp, data=None):
         f.write(data)
 
 
-def ttylog_close(logfile, stamp):
+def ttylog_close(logfile: str, stamp: float) -> None:
     """
     Close tty log
 
@@ -56,22 +56,28 @@ def ttylog_close(logfile, stamp):
         f.write(struct.pack(TTYSTRUCT, OP_CLOSE, 0, 0, 0, sec, usec))
 
 
-def ttylog_inputhash(logfile):
+def ttylog_inputhash(logfile: str) -> str:
     """
     Create unique hash of the input parts of tty log
 
     @param logfile: logfile name
     """
-    ssize = struct.calcsize(TTYSTRUCT)
-    inputbytes = b""
+    ssize: int = struct.calcsize(TTYSTRUCT)
+    inputbytes: bytes = b""
 
     with open(logfile, "rb") as fd:
         while 1:
             try:
-                (op, _tty, length, direction, _sec, _usec) = struct.unpack(
+                op: int
+                _tty: int
+                length: int
+                direction: int
+                _sec: int
+                _usec: int
+                op, _tty, length, direction, _sec, _usec = struct.unpack(
                     TTYSTRUCT, fd.read(ssize)
                 )
-                data = fd.read(length)
+                data: bytes = fd.read(length)
             except struct.error:
                 break
 
@@ -79,5 +85,5 @@ def ttylog_inputhash(logfile):
                 continue
             inputbytes = inputbytes + data
 
-        shasum = hashlib.sha256(inputbytes).hexdigest()
+        shasum: str = hashlib.sha256(inputbytes).hexdigest()
         return shasum
