@@ -27,7 +27,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
 
     tac = None
-    portal: Optional[tp.Portal] = None # gets set by Twisted plugin
+    portal: Optional[tp.Portal] = None  # gets set by Twisted plugin
 
     def __init__(self, backend, pool_handler):
         self.backend = backend
