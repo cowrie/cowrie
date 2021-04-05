@@ -2,40 +2,45 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from typing import List
 
 from twisted.application import internet
 from twisted.internet import endpoints
 
 
-def durationHuman(seconds):
+def durationHuman(duration: float) -> str:
     """
     Turn number of seconds into human readable string
     """
-    seconds = int(round(seconds))
+    seconds: int = int(round(duration))
+    minutes: int
     minutes, seconds = divmod(seconds, 60)
+    hours: int
     hours, minutes = divmod(minutes, 60)
+    days: int
     days, hours = divmod(hours, 24)
+    years: int
     years, days = divmod(days, 365.242199)
 
-    syears = str(years)
-    sseconds = str(seconds).rjust(2, "0")
-    sminutes = str(minutes).rjust(2, "0")
-    shours = str(hours).rjust(2, "0")
+    syears: str = str(years)
+    sseconds: str = str(seconds).rjust(2, "0")
+    sminutes: str = str(minutes).rjust(2, "0")
+    shours: str = str(hours).rjust(2, "0")
 
-    duration = []
+    sduration: List[str] = []
     if years > 0:
-        duration.append("{} year{} ".format(syears, "s" * (years != 1)))
+        sduration.append("{} year{} ".format(syears, "s" * (years != 1)))
     else:
         if days > 0:
-            duration.append("{} day{} ".format(days, "s" * (days != 1)))
+            sduration.append("{} day{} ".format(days, "s" * (days != 1)))
         if hours > 0:
-            duration.append(f"{shours}:")
+            sduration.append(f"{shours}:")
         if minutes >= 0:
-            duration.append(f"{sminutes}:")
+            sduration.append(f"{sminutes}:")
         if seconds >= 0:
-            duration.append(f"{sseconds}")
+            sduration.append(f"{sseconds}")
 
-    return "".join(duration)
+    return "".join(sduration)
 
 
 def tail(the_file, lines_2find=20):
