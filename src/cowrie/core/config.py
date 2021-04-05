@@ -9,9 +9,10 @@ This module contains code to deal with Cowrie's configuration
 import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
+from typing import List, Union
 
 
-def to_environ_key(key):
+def to_environ_key(key: str) -> str:
     return key.upper()
 
 
@@ -21,19 +22,19 @@ class EnvironmentConfigParser(configparser.ConfigParser):
     # TODO: def sections()
     """
 
-    def has_option(self, section, option):
+    def has_option(self, section: str, option: str) -> bool:
         if to_environ_key("_".join(("cowrie", section, option))) in environ:
             return True
         return super().has_option(section, option)
 
-    def get(self, section, option, raw=False, **kwargs):
-        key = to_environ_key("_".join(("cowrie", section, option)))
+    def get(self, section: str, option: str, raw: bool=False, **kwargs):
+        key: str = to_environ_key("_".join(("cowrie", section, option)))
         if key in environ:
             return environ[key]
         return super().get(section, option, raw=raw, **kwargs)
 
 
-def readConfigFile(cfgfile):
+def readConfigFile(cfgfile: Union[str, List[str]]) -> configparser.ConfigParser:
     """
     Read config files and return ConfigParser object
 
@@ -45,7 +46,7 @@ def readConfigFile(cfgfile):
     return parser
 
 
-def get_config_path():
+def get_config_path() -> List[str]:
     """Get absolute path to the config file"""
     current_path = abspath(dirname(__file__))
     root = "/".join(current_path.split("/")[:-3])
@@ -62,6 +63,7 @@ def get_config_path():
         return found_confs
 
     print("Config file not found")
+    return []
 
 
 CowrieConfig = readConfigFile(get_config_path())
