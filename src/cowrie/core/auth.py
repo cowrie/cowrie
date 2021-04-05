@@ -11,12 +11,13 @@ import re
 from collections import OrderedDict
 from os import path
 from random import randint
+from typing import Any, Dict, List, Tuple
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 
-_USERDB_DEFAULTS = [
+_USERDB_DEFAULTS: List[str] = [
     "root:x:!root",
     "root:x:!123456",
     "root:x:!/honeypot/i",
@@ -31,25 +32,26 @@ class UserDB:
     By Walter de Jong <walter@sara.nl>
     """
 
-    def __init__(self):
-        self.userdb = OrderedDict()
+    def __init__(self) -> None:
+        self.userdb: Dict[Tuple[bytes,bytes], bool] = OrderedDict()
         self.load()
 
-    def load(self):
+    def load(self) -> None:
         """
         load the user db
         """
 
+        dblines: List[str]
         try:
             with open(
                 "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
             ) as db:
-                userdb = db.readlines()
+                dblines = db.readlines()
         except OSError:
             log.msg("Could not read etc/userdb.txt, default database activated")
-            userdb = _USERDB_DEFAULTS
+            dblines = _USERDB_DEFAULTS
 
-        for user in userdb:
+        for user in dblines:
             if not user.startswith("#"):
                 try:
                     login = user.split(":")[0].encode("utf8")
@@ -59,8 +61,10 @@ class UserDB:
                 else:
                     self.adduser(login, password)
 
-    def checklogin(self, thelogin, thepasswd, src_ip="0.0.0.0"):
+    def checklogin(self, thelogin: bytes, thepasswd: bytes, src_ip: str="0.0.0.0") -> bool:
         for credentials, policy in self.userdb.items():
+            login: bytes
+            passwd: bytes
             login, passwd = credentials
 
             if self.match_rule(login, thelogin):
@@ -75,7 +79,7 @@ class UserDB:
         else:
             return bool(rule.search(input))
 
-    def re_or_str(self, rule):
+    def re_or_str(self, rule: str):
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
 
@@ -88,7 +92,7 @@ class UserDB:
 
         return rule
 
-    def adduser(self, login, passwd):
+    def adduser(self, login: bytes, passwd: bytes) -> None:
         """
         All arguments are bytes
 
@@ -115,14 +119,16 @@ class AuthRandom:
     Users will be authenticated after a random number of attempts.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Default values
-        self.mintry, self.maxtry, self.maxcache = 2, 5, 10
+        self.mintry: int = 2
+        self.maxtry: int = 5
+        self.maxcache: int = 10
 
         # Are there auth_class parameters?
         if CowrieConfig.has_option("honeypot", "auth_class_parameters"):
-            parameters = CowrieConfig.get("honeypot", "auth_class_parameters")
-            parlist = parameters.split(",")
+            parameters: str = CowrieConfig.get("honeypot", "auth_class_parameters")
+            parlist: List[str] = parameters.split(",")
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
                 self.maxtry = int(parlist[1])
@@ -131,13 +137,14 @@ class AuthRandom:
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
             log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
+
         self.uservar = {}
         self.uservar_file = "{}/auth_random.json".format(
             CowrieConfig.get("honeypot", "state_path")
         )
         self.loadvars()
 
-    def loadvars(self):
+    def loadvars(self) -> None:
         """
         Load user vars from json file
         """
@@ -148,7 +155,7 @@ class AuthRandom:
                 except Exception:
                     self.uservar = {}
 
-    def savevars(self):
+    def savevars(self) -> None:
         """
         Save the user vars to json file
         """
@@ -157,7 +164,7 @@ class AuthRandom:
         with open(self.uservar_file, "w") as fp:
             json.dump(data, fp)
 
-    def checklogin(self, thelogin, thepasswd, src_ip):
+    def checklogin(self, thelogin: bytes, thepasswd: bytes, src_ip: str) -> bool:
         """
         Every new source IP will have to try a random number of times between
         'mintry' and 'maxtry' before succeeding to login.
@@ -168,8 +175,8 @@ class AuthRandom:
         Variables are saved in 'uservar.json' in the data directory.
         """
 
-        auth = False
-        userpass = str(thelogin) + ":" + str(thepasswd)
+        auth: bool = False
+        userpass: str = str(thelogin) + ":" + str(thepasswd)
 
         if "cache" not in self.uservar:
             self.uservar["cache"] = []
@@ -219,8 +226,8 @@ class AuthRandom:
             return auth
 
         ipinfo["try"] += 1
-        attempts = ipinfo["try"]
-        need = ipinfo["max"]
+        attempts: int = ipinfo["try"]
+        need: int = ipinfo["max"]
         log.msg(f"login attempt: {attempts}")
 
         # Check if enough login attempts are tried
