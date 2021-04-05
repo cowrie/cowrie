@@ -64,7 +64,7 @@ class Artifact:
     def fileno(self) -> Any:
         return self.fp.fileno()
 
-    def close(self, keepEmpty: bool=False) -> Optional[Tuple[str, str]]:
+    def close(self, keepEmpty: bool = False) -> Optional[Tuple[str, str]]:
         size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
             os.remove(self.fp.name)
