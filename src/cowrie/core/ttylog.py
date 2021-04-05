@@ -28,7 +28,9 @@ def ttylog_open(logfile: str, stamp: float) -> None:
         f.write(struct.pack(TTYSTRUCT, OP_OPEN, 0, 0, 0, sec, usec))
 
 
-def ttylog_write(logfile: str, length: int, direction: int, stamp: float, data: bytes) -> None:
+def ttylog_write(
+    logfile: str, length: int, direction: int, stamp: float, data: bytes
+) -> None:
     """
     Write to tty log
 
