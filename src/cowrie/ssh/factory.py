@@ -8,7 +8,7 @@ This module contains ...
 
 import time
 from configparser import NoOptionError
-from typing import Union
+from typing import Optional
 
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory
@@ -36,7 +36,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     privateKeys = None
     publicKeys = None
     primes = None
-    portal: Union[None, tp.Portal] = None # gets set by plugin
+    portal: Optional[tp.Portal] = None  # gets set by plugin
     tac = None  # gets set later
     ourVersionString = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
