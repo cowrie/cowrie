@@ -99,7 +99,9 @@ class CowrieServiceMaker:
         self.enableSSH: bool = CowrieConfig.getboolean("ssh", "enabled", fallback=True)
 
         # telnet is disabled by default
-        self.enableTelnet: bool = CowrieConfig.getboolean("telnet", "enabled", fallback=False)
+        self.enableTelnet: bool = CowrieConfig.getboolean(
+            "telnet", "enabled", fallback=False
+        )
 
         # pool is disabled by default, but need to check this setting in case user only wants to run the pool
         self.pool_only: bool = CowrieConfig.getboolean(
@@ -192,8 +194,12 @@ Makes a Cowrie SSH/Telnet honeypot.
         if (backend_type == "proxy" and proxy_backend == "pool") or self.pool_only:
             # in this case we need to set some kind of pool connection
 
-            local_pool: str = CowrieConfig.get("proxy", "pool", fallback="local") == "local"
-            pool_host: str = CowrieConfig.get("proxy", "pool_host", fallback="127.0.0.1")
+            local_pool: str = (
+                CowrieConfig.get("proxy", "pool", fallback="local") == "local"
+            )
+            pool_host: str = CowrieConfig.get(
+                "proxy", "pool_host", fallback="127.0.0.1"
+            )
             pool_port: int = CowrieConfig.getint("proxy", "pool_port", fallback=6415)
 
             if local_pool or self.pool_only:
