@@ -1153,6 +1153,7 @@ commands["unset"] = command_nop
 commands["export"] = command_nop
 commands["alias"] = command_nop
 commands["jobs"] = command_nop
+commands["kill"] = command_nop
 commands["/bin/kill"] = command_nop
 commands["/bin/pkill"] = command_nop
 commands["/bin/killall"] = command_nop
