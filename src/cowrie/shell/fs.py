@@ -15,7 +15,7 @@ import os
 import re
 import stat
 import time
-from typing import Any, BinaryIO, Dict, List, Type
+from typing import Any, BinaryIO, Dict, List, Optional, Type
 
 from twisted.python import log
 
@@ -38,6 +38,35 @@ T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 SPECIAL_PATHS: List[str] = ["/sys", "/proc", "/dev/pts"]
 
+
+class _statobj:
+    """
+    Transform a tuple into a stat object
+    """
+
+    def __init__(
+        self,
+        st_mode: int,
+        st_ino: int,
+        st_dev: int,
+        st_nlink: int,
+        st_uid: int,
+        st_gid: int,
+        st_size: int,
+        st_atime: float,
+        st_mtime: float,
+        st_ctime: float,
+    ) -> None:
+        self.st_mode: int = st_mode
+        self.st_ino: int = st_ino
+        self.st_dev: int = st_dev
+        self.st_nlink: int = st_nlink
+        self.st_uid: int = st_uid
+        self.st_gid: int = st_gid
+        self.st_size: int = st_size
+        self.st_atime: float = st_atime
+        self.st_mtime: float = st_mtime
+        self.st_ctime: float = st_ctime
 
 class TooManyLevels(Exception):
     """
@@ -306,11 +335,11 @@ class HoneyPotFilesystem:
             ).read()
 
     def mkfile(
-        self, path: str, uid: int, gid: int, size: int, mode: int, ctime: float = 0
+        self, path: str, uid: int, gid: int, size: int, mode: int, ctime: Optional[float]  = None
     ) -> bool:
         if self.newcount > 10000:
             return False
-        if ctime is 0.0:
+        if ctime is None:
             ctime = time.time()
         _path: str = os.path.dirname(path)
 
@@ -326,11 +355,11 @@ class HoneyPotFilesystem:
         return True
 
     def mkdir(
-        self, path: str, uid: int, gid: int, size: int, mode: int, ctime: float = 0
+        self, path: str, uid: int, gid: int, size: int, mode: int, ctime: Optional[float] = None
     ) -> None:
         if self.newcount > 10000:
             raise OSError(errno.EDQUOT, os.strerror(errno.EDQUOT), path)
-        if ctime is 0.0:
+        if ctime is None:
             ctime = time.time()
         if not len(path.strip("/")):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
@@ -388,7 +417,7 @@ class HoneyPotFilesystem:
     Below additions for SFTP support, try to keep functions here similar to os.*
     """
 
-    def open(self, filename: str, openFlags: int, mode: int) -> int:
+    def open(self, filename: str, openFlags: int, mode: int) -> Optional[int]:
         """
         #log.msg("fs.open %s" % filename)
 
@@ -591,32 +620,3 @@ class HoneyPotFilesystem:
             return
         f[A_SIZE] = size
 
-
-class _statobj:
-    """
-    Transform a tuple into a stat object
-    """
-
-    def __init__(
-        self,
-        st_mode: int,
-        st_ino: int,
-        st_dev: int,
-        st_nlink: int,
-        st_uid: int,
-        st_gid: int,
-        st_size: int,
-        st_atime: float,
-        st_mtime: float,
-        st_ctime: float,
-    ) -> None:
-        self.st_mode: int = st_mode
-        self.st_ino: int = st_ino
-        self.st_dev: int = st_dev
-        self.st_nlink: int = st_nlink
-        self.st_uid: int = st_uid
-        self.st_gid: int = st_gid
-        self.st_size: int = st_size
-        self.st_atime: float = st_atime
-        self.st_mtime: float = st_mtime
-        self.st_ctime: float = st_ctime
