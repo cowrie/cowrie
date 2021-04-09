@@ -2,7 +2,7 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from typing import List
+from typing import BinaryIO, List
 
 from twisted.application import internet
 from twisted.internet import endpoints
@@ -17,9 +17,9 @@ def durationHuman(duration: float) -> str:
     minutes, seconds = divmod(seconds, 60)
     hours: int
     hours, minutes = divmod(minutes, 60)
-    days: int
+    days: float
     days, hours = divmod(hours, 24)
-    years: int
+    years: float
     years, days = divmod(days, 365.242199)
 
     syears: str = str(years)
@@ -43,7 +43,7 @@ def durationHuman(duration: float) -> str:
     return "".join(sduration)
 
 
-def tail(the_file, lines_2find=20) -> List[str]:
+def tail(the_file: BinaryIO, lines_2find: int=20) -> List[bytes]:
     """
     From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     """
@@ -53,12 +53,12 @@ def tail(the_file, lines_2find=20) -> List[str]:
     the_file.seek(0, 2)
     bytes_in_file: int = the_file.tell()
     while lines_2find + 1 > lines_found and bytes_in_file > total_bytes_scanned:
-        byte_block = min(1024, bytes_in_file - total_bytes_scanned)
+        byte_block: int = min(1024, bytes_in_file - total_bytes_scanned)
         the_file.seek(-(byte_block + total_bytes_scanned), 2)
         total_bytes_scanned += byte_block
-        lines_found += the_file.read(1024).count("\n")
+        lines_found += the_file.read(1024).count(b"\n")
     the_file.seek(-total_bytes_scanned, 2)
-    line_list = list(the_file.readlines())
+    line_list: List[bytes] = list(the_file.readlines())
     return line_list[-lines_2find:]
     # We read at least 21 line breaks from the bottom, block by block for speed
     # 21 to ensure we don't get a half line
