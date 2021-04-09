@@ -2,6 +2,7 @@
 # Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+import configparser
 from typing import BinaryIO, List
 
 from twisted.application import internet
@@ -95,7 +96,7 @@ def uptime(total_seconds: float) -> str:
     return s
 
 
-def get_endpoints_from_section(cfg, section: str, default_port: int) -> List[str]:
+def get_endpoints_from_section(cfg: configparser.ConfigParser, section: str, default_port: int) -> List[str]:
     listen_addr: str
     listen_port: int
     listen_endpoints: List[str] = []
