@@ -378,7 +378,7 @@ class HoneyPotFilesystem:
         links, so both islink() and isfile() can be true for the same path.
         """
         try:
-            f = self.getfile(path)
+            f: Any = self.getfile(path)
         except Exception:
             return False
         return f[A_TYPE] == T_FILE
@@ -390,7 +390,7 @@ class HoneyPotFilesystem:
         runtime.
         """
         try:
-            f = self.getfile(path)
+            f: Any = self.getfile(path)
         except Exception:
             return False
         return f[A_TYPE] == T_LINK
