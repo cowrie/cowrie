@@ -194,7 +194,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         if (backend_type == "proxy" and proxy_backend == "pool") or self.pool_only:
             # in this case we need to set some kind of pool connection
 
-            local_pool: str = (
+            local_pool: bool = (
                 CowrieConfig.get("proxy", "pool", fallback="local") == "local"
             )
             pool_host: str = CowrieConfig.get(
