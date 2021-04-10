@@ -11,6 +11,7 @@ import re
 import shlex
 import stat
 import time
+from typing import Optional
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -23,6 +24,8 @@ class HoneyPotCommand:
     """
     This is the super class for all commands in cowrie/commands
     """
+
+    safeoutfile: str = ""
 
     def __init__(self, protocol, *args):
         self.protocol = protocol
@@ -77,13 +80,13 @@ class HoneyPotCommand:
                     )
                     self.writefn = self.write_to_failed
                     self.outfile = None
-                    self.safeoutfile = None
+                    self.safeoutfile = ""
                 except fs.PermissionDenied:
                     # The outfile locates in a file-system that doesn't allow file creation
                     self.errorWrite("-bash: %s: Permission denied\n" % self.outfile)
                     self.writefn = self.write_to_failed
                     self.outfile = None
-                    self.safeoutfile = None
+                    self.safeoutfile = ""
 
                 else:
                     with open(self.safeoutfile, "ab"):
@@ -141,7 +144,7 @@ class HoneyPotCommand:
         self.exit()
 
     def call(self):
-        self.write("Hello World! [{}]\n".format(repr(self.args)).encode('utf8'))
+        self.write("Hello World! [{}]\n".format(repr(self.args)).encode("utf8"))
 
     def exit(self):
         """
