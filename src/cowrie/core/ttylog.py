@@ -78,7 +78,7 @@ def ttylog_inputhash(logfile: str) -> str:
                 _usec: int
                 op, _tty, length, direction, _sec, _usec = struct.unpack(
                     TTYSTRUCT, fd.read(ssize)
-                ) # type: ignore
+                )
                 data: bytes = fd.read(length)
             except struct.error:
                 break
