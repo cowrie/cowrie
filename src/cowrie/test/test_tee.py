@@ -36,7 +36,7 @@ class ShellTeeCommandTests(unittest.TestCase):
         No such file
         """
         self.proto.lineReceived(b"tee /a/b/c/d\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n"
         )
 
@@ -46,7 +46,7 @@ class ShellTeeCommandTests(unittest.TestCase):
         """
         self.proto.lineReceived(b"tee /a/b/c/d\n")
         self.proto.handle_CTRL_C()
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n^C\n" + PROMPT
         )
 
@@ -57,14 +57,14 @@ class ShellTeeCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"tee a\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_D()
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_tee_command_004(self):
         """
         test handle of stdin
         """
         self.proto.lineReceived(b"echo test | tee\n")
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_tee_command_005(self):
         """
@@ -73,7 +73,7 @@ class ShellTeeCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"tee\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_D()
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

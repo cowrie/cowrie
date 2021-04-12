@@ -45,18 +45,18 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_hostname_command(self):
         self.proto.lineReceived(b"hostname unitChanged\n")
-        self.assertEquals(self.tr.value(), b"root@unitChanged:~# ")
+        self.assertEqual(self.tr.value(), b"root@unitChanged:~# ")
 
     # def test_reset_command(self):
     #     self.proto.lineReceived(b'reset')
 
     # def test_ps_command(self):
     #     self.proto.lineReceived(b'ps\n')
-    #     self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
+    #     self.assertEqual(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
 
     def test_id_command(self):
         self.proto.lineReceived(b"id\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
         )
 
@@ -64,7 +64,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"passwd\n")
         self.proto.lineReceived(b"changeme\n")
         self.proto.lineReceived(b"changeme\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(),
             b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n"
             + PROMPT,
@@ -95,7 +95,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_sh_command(self):
         self.proto.lineReceived(b"sh -c id\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
         )
 
@@ -105,16 +105,16 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_chattr_command(self):
         self.proto.lineReceived(b"chattr\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_umask_command(self):
         self.proto.lineReceived(b"umask\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_set_command(self):
         self.proto.lineReceived(b"set\n")
 
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(),
             b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n"
             + PROMPT,
@@ -122,47 +122,47 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_unset_command(self):
         self.proto.lineReceived(b"unset\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_export_command(self):
         self.proto.lineReceived(b"export\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_alias_command(self):
         self.proto.lineReceived(b"alias\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_jobs_command(self):
         self.proto.lineReceived(b"jobs\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_kill_command(self):
         self.proto.lineReceived(b"/bin/kill\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_pkill_command(self):
         self.proto.lineReceived(b"/bin/pkill\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_killall_command(self):
         self.proto.lineReceived(b"/bin/killall\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_killall5_command(self):
         self.proto.lineReceived(b"/bin/killall5\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_su_command(self):
         self.proto.lineReceived(b"su\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_chown_command(self):
         self.proto.lineReceived(b"chown\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_chgrp_command(self):
         self.proto.lineReceived(b"chgrp\n")
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
@@ -246,11 +246,11 @@ class ShellPipeCommandsTests(unittest.TestCase):
 
     def test_shell_pipe_with_cat_tail(self):
         self.proto.lineReceived(b"echo test | tail -n 1\n")
-        self.assertEquals(self.tr.value(), PROMPT + b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT + b"test\n" + PROMPT)
 
     def test_shell_pipe_with_cat_head(self):
         self.proto.lineReceived(b"echo test | head -n 1\n")
-        self.assertEquals(self.tr.value(), PROMPT + b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), PROMPT + b"test\n" + PROMPT)
 
     # def test_shell_busybox_with_cat_and_sudo_grep(self):
     #     self.proto.lineReceived(b'busybox cat /proc/cpuinfo | sudo grep cpu \n')

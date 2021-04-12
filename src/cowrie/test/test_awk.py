@@ -36,35 +36,35 @@ class ShellEchoCommandTests(unittest.TestCase):
         Test $0, full input line contents
         """
         self.proto.lineReceived(b'echo "test test" | awk "{ print $0 }"\n')
-        self.assertEquals(self.tr.value(), b"test test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_awk_command_002(self):
         """
         Test $1, first agument
         """
         self.proto.lineReceived(b'echo "test" | awk "{ print $1 }"\n')
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_awk_command_003(self):
         """
         Test $1 $2 space separated
         """
         self.proto.lineReceived(b'echo "test test" | awk "{ print $1 $2 }"\n')
-        self.assertEquals(self.tr.value(), b"test test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_awk_command_004(self):
         """
         Test $1,$2 comma separated
         """
         self.proto.lineReceived(b'echo "test test" | awk "{ print $1,$2 }"\n')
-        self.assertEquals(self.tr.value(), b"test test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_awk_command_005(self):
         """
         Test $1$2 not separated
         """
         self.proto.lineReceived(b'echo "test test" | awk "{ print $1$2 }"\n')
-        self.assertEquals(self.tr.value(), b"testtest\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"testtest\n" + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

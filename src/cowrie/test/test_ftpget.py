@@ -32,7 +32,7 @@ class ShellftpgetCommandTests(unittest.TestCase):
         Basic test
         """
         self.proto.lineReceived(b"ftpget\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(),
             b"""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
 
