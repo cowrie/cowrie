@@ -217,7 +217,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             # either way (local or remote) we set up a client to the pool
             # unless this instance has no SSH and Telnet (pool only)
             if (self.enableTelnet or self.enableSSH) and not self.pool_only:
-                self.pool_handler = PoolHandler(pool_host, pool_port, self)
+                self.pool_handler = PoolHandler(pool_host, pool_port, self) # type: ignore
 
         else:
             # we initialise the services directly
