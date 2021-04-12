@@ -29,7 +29,7 @@
 
 import os
 import sys
-from typing import Callable, ClassVar, Dict, List, Union
+from typing import Any, Callable, ClassVar, Dict, List, Union
 
 from backend_pool.pool_server import PoolServerFactory
 
@@ -232,7 +232,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         # since we do not start the pool handler that would call it
         if self.enableSSH:
             factory = cowrie.ssh.factory.CowrieSSHFactory(backend, self.pool_handler)
-            factory.tac = self
+            factory.tac = self  # type: ignore
             factory.portal = portal.Portal(core.realm.HoneyPotRealm())
             factory.portal.registerChecker(core.checkers.HoneypotPublicKeyChecker())
             factory.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
@@ -253,7 +253,7 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         if self.enableTelnet:
             f = cowrie.telnet.factory.HoneyPotTelnetFactory(backend, self.pool_handler)
-            f.tac = self
+            f.tac = self  # type: ignore
             f.portal = portal.Portal(core.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
