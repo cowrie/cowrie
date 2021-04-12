@@ -29,7 +29,7 @@
 
 import os
 import sys
-from typing import Any, Callable, ClassVar, Dict, List, Union
+from typing import Callable, ClassVar, Dict, List, Union
 
 from backend_pool.pool_server import PoolServerFactory
 
