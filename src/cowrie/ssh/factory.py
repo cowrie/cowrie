@@ -53,13 +53,13 @@ class CowrieSSHFactory(factory.SSHFactory):
         }
         super().__init__()
 
-    def logDispatch(self, *msg, **args):
+    def logDispatch(self, **args):
         """
         Special delivery to the loggers to avoid scope problems
         """
         args["sessionno"] = "S{}".format(args["sessionno"])
         for output in self.tac.output_plugins:
-            output.logDispatch(*msg, **args)
+            output.logDispatch(**args)
 
     def startFactory(self):
         # For use by the uptime command

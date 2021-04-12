@@ -48,7 +48,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def __init__(self, user):
         self.user = user
         self.environ = user.environ
-        self.hostname = user.server.hostname
+        self.hostname: str = user.server.hostname
         self.fs = user.server.fs
         self.pp = None
         self.logintime = None
@@ -74,13 +74,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         return self.terminal.transport.session.conn.transport
 
-    def logDispatch(self, *msg, **args):
+    def logDispatch(self, **args):
         """
         Send log directly to factory, avoiding normal log dispatch
         """
         args["sessionno"] = self.sessionno
         pt = self.getProtoTransport()
-        pt.factory.logDispatch(*msg, **args)
+        pt.factory.logDispatch(**args)
 
     def connectionMade(self):
         pt = self.getProtoTransport()

@@ -35,13 +35,13 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         super().__init__()
 
     # TODO logging clarity can be improved: see what SSH does
-    def logDispatch(self, *msg, **args):
+    def logDispatch(self, **args):
         """
         Special delivery to the loggers to avoid scope problems
         """
         args["sessionno"] = "T{}".format(str(args["sessionno"]))
         for output in self.tac.output_plugins:
-            output.logDispatch(*msg, **args)
+            output.logDispatch(**args)
 
     def startFactory(self):
         try:
