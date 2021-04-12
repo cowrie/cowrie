@@ -64,7 +64,7 @@ in UTC.
 """
 
 
-def convert(input: Union[str, list, dict, bytes]) -> Union[str, list, dict, bytes]:
+def convert(input: Union[str, list, dict, bytes]) -> Union[str, list, dict]:
     """
     This converts a nested dictionary with bytes in it to string
     """
@@ -107,17 +107,17 @@ class Output:
             self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         # Event trigger so that stop() is called by the reactor when stopping
-        reactor.addSystemEventTrigger("before", "shutdown", self.stop)
+        reactor.addSystemEventTrigger("before", "shutdown", self.stop)  # type: ignore
 
         self.start()
 
-    def logDispatch(self, *msg, **kw) -> None:
+    def logDispatch(self, **kw: str) -> None:
         """
         Use logDispatch when the HoneypotTransport prefix is not available.
         Here you can explicitly set the sessionIds to tie the sessions together
         """
         ev = kw
-        ev["message"] = msg
+        # ev["message"] = msg
         self.emit(ev)
 
     @abc.abstractmethod
