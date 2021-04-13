@@ -45,6 +45,7 @@
 
 from typing import Dict
 
+
 def formatCef(logentry: Dict[str, str]) -> str:
     """
     Take logentry and turn into CEF string
