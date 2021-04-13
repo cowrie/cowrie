@@ -36,9 +36,7 @@ class ShellTeeCommandTests(unittest.TestCase):
         No such file
         """
         self.proto.lineReceived(b"tee /a/b/c/d\n")
-        self.assertEqual(
-            self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n"
-        )
+        self.assertEqual(self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n")
 
     def test_tee_command_002(self):
         """
