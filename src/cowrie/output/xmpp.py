@@ -15,7 +15,7 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 
-class XMPPLoggerProtocol(muc.MUCClient):
+class XMPPLoggerProtocol(muc.MUCClient): # type: ignore
     def __init__(self, rooms, server, nick):
         muc.MUCClient.__init__(self)
         self.server = rooms.host
