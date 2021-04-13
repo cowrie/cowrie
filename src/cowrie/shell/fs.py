@@ -2,14 +2,10 @@
 # See the COPYRIGHT file for more information
 
 
-try:
-    import cPickle as pickle
-except Exception:
-    import pickle  # type: ignore
-
 import errno
 import fnmatch
 import hashlib
+import pickle
 import os
 import re
 import stat
