@@ -44,7 +44,7 @@ def durationHuman(duration: float) -> str:
     return "".join(sduration)
 
 
-def tail(the_file: BinaryIO, lines_2find: int=20) -> List[bytes]:
+def tail(the_file: BinaryIO, lines_2find: int = 20) -> List[bytes]:
     """
     From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     """
@@ -96,7 +96,9 @@ def uptime(total_seconds: float) -> str:
     return s
 
 
-def get_endpoints_from_section(cfg: configparser.ConfigParser, section: str, default_port: int) -> List[str]:
+def get_endpoints_from_section(
+    cfg: configparser.ConfigParser, section: str, default_port: int
+) -> List[str]:
     listen_addr: str
     listen_port: int
     listen_endpoints: List[str] = []
