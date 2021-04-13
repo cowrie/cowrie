@@ -22,6 +22,8 @@ before_script:
   - flake8 --ignore E203,E501,W503 --count --application-import-names cowrie --statistics .
   - mypy src
   - twistedchecker src || true
+  - pytype || true
+  - pyre check || true
   - python setup.py build sdist bdist
   - make -C docs html
 script:
