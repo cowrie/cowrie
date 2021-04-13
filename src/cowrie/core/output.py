@@ -77,14 +77,12 @@ def convert(input):
         return input
 
 
-class Output:
+class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
     cowrie output plugins. Plugins require the mandatory
     methods: stop, start and write
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.sessions = {}
