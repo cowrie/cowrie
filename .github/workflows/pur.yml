@@ -1,0 +1,56 @@
+---
+name: Automatic Python Dependency Upgrades
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Automatic Python Dependency Upgrades'
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron: '14 3 * * *'
+jobs:
+  Pur-Upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install Python tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel pur
+      - name: pur upgrade
+        run: |
+          pur -r requirements.txt
+      - name: git diff
+        run: |
+          git diff
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Automatic update of dependencies
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: automatic-dependency-upgrades
+          delete-branch: true
+          title: 'Automatic update of Python dependencies'
+          assignees: micheloosterhof
+          reviewers: micheloosterhof
+          team-reviewers: |
+            owners
+      - name: Check outputs
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
