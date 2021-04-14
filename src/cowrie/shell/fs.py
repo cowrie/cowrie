@@ -5,8 +5,8 @@
 import errno
 import fnmatch
 import hashlib
-import pickle
 import os
+import pickle
 import re
 import stat
 import time
