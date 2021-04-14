@@ -1,7 +1,7 @@
-Sphinx==3.5.3
+Sphinx==3.5.4
 flake8-import-order==0.18.1
 flake8==3.9.0
-importlib_metadata==3.10.0; python_version<'3.8'
+importlib_metadata==3.10.1; python_version<'3.8'
 mypy-extensions==0.4.3
 mypy-zope==0.3.0
 mypy==0.812
