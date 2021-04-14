@@ -31,6 +31,8 @@ jobs:
       - name: pur upgrade
         run: |
           pur -r requirements.txt
+          pur -r requirements-dev.txt
+          pur --skip csirtgsdk -r requirements-output.txt
       - name: git diff
         run: |
           git diff
