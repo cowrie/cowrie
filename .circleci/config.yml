@@ -48,6 +48,16 @@ jobs:
             . cowrie-env/bin/activate
             twistedchecker src || true
       - run:
+          name: PyType
+          command: |
+            . cowrie-env/bin/activate
+            pytype src || true
+      - run:
+          name: PyType
+          command: |
+            . cowrie-env/bin/activate
+            pyre analyze || true
+      - run:
           name: Build Python library
           command: |
             . cowrie-env/bin/activate
