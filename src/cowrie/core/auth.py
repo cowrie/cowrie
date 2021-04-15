@@ -107,7 +107,7 @@ class UserDB:
         @param passwd: password
         @type passwd: bytes
         """
-        l = self.re_or_bytes(login)
+        user = self.re_or_bytes(login)
 
         if passwd[0] == ord("!"):
             policy = False
@@ -116,7 +116,7 @@ class UserDB:
             policy = True
 
         p = self.re_or_bytes(passwd)
-        self.userdb[(l, p)] = policy
+        self.userdb[(user, p)] = policy
 
 
 class AuthRandom:

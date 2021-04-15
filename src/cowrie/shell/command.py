@@ -11,7 +11,6 @@ import re
 import shlex
 import stat
 import time
-from typing import Optional
 
 from twisted.internet import error
 from twisted.python import failure, log

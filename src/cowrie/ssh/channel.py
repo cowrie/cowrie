@@ -8,7 +8,6 @@ and session size limiting
 
 
 import time
-from typing import Optional
 
 from twisted.conch.ssh import channel
 from twisted.python import log

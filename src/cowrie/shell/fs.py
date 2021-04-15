@@ -15,7 +15,7 @@ import os
 import re
 import stat
 import time
-from typing import Any, BinaryIO, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from twisted.python import log
 
@@ -301,19 +301,19 @@ class HoneyPotFilesystem:
                     elif x[A_TYPE] == T_LINK:
                         if x[A_TARGET][0] == "/":
                             # Absolute link
-                            l = self.getfile(
+                            fileobj = self.getfile(
                                 x[A_TARGET], follow_symlinks=follow_symlinks
                             )
                         else:
                             # Relative link
-                            l = self.getfile(
+                            fileobj = self.getfile(
                                 "/".join((cwd, x[A_TARGET])),
                                 follow_symlinks=follow_symlinks,
                             )
-                        if not l:
+                        if not fileobj:
                             # Broken link
                             return None
-                        p = l
+                        p = fileobj
                     else:
                         p = x
             # cwd = '/'.join((cwd, piece))
