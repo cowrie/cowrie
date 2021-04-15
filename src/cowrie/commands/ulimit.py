@@ -39,7 +39,7 @@ class command_ulimit(HoneyPotCommand):
                 return
         self.do_ulimit()
 
-    def do_ulimit(self, key="core"):
+    def do_ulimit(self, key: str = "core", value: int = 0) -> None:
         pass
 
 
