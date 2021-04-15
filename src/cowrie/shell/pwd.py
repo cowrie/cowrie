@@ -29,7 +29,7 @@
 
 from binascii import crc32
 from random import randint, seed
-from typing import Dict, Union
+from typing import Any, Dict, List, Union
 
 from twisted.python import log
 
@@ -44,11 +44,12 @@ class Passwd:
     """
 
     passwd_file = "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path"))
+    passwd: List[Dict[str, Any]] = []
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.load()
 
-    def load(self):
+    def load(self) -> None:
         """
         Load /etc/passwd
         """
@@ -107,25 +108,25 @@ class Passwd:
         #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-    def getpwnam(self, name):
+    def getpwnam(self, name: str) -> Dict[str, Any]:
         """
         Get passwd entry for username
         """
-        for _ in self.passwd:
-            if name == _["pw_name"]:
-                return _
+        for e in self.passwd:
+            if e["pw_name"] == name:
+                return e
         raise KeyError("getpwnam(): name not found in passwd file: " + name)
 
-    def getpwuid(self, uid):
+    def getpwuid(self, uid: int) -> Dict[str, Any]:
         """
         Get passwd entry for uid
         """
-        for _ in self.passwd:
-            if uid == _["pw_uid"]:
-                return _
+        for e in self.passwd:
+            if uid == e["pw_uid"]:
+                return e
         raise KeyError("getpwuid(): uid not found in passwd file: " + str(uid))
 
-    def setpwentry(self, name):
+    def setpwentry(self, name: str) -> Dict[str, Any]:
         """
         If the user is not in /etc/passwd, creates a new user entry for the session
         """
@@ -134,7 +135,7 @@ class Passwd:
         seed_id = crc32(name.encode("utf-8"))
         seed(seed_id)
 
-        e = {}
+        e: Dict[str, Any] = {}
         e["pw_name"] = name
         e["pw_passwd"] = "x"
         e["pw_gecos"] = 0
@@ -153,11 +154,12 @@ class Group:
     """
 
     group_file = "{}/etc/group".format(CowrieConfig.get("honeypot", "contents_path"))
+    group: List[Dict[str, Any]]
 
     def __init__(self):
         self.load()
 
-    def load(self):
+    def load(self) -> None:
         """
         Load /etc/group
         """
@@ -187,7 +189,7 @@ class Group:
 
                 self.group.append(e)
 
-    def save(self):
+    def save(self) -> None:
         """
         Save the group db
         Note: this is subject to races between cowrie instances, but hey ...
@@ -197,20 +199,20 @@ class Group:
         #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-    def getgrnam(self, name):
+    def getgrnam(self, name: str) -> Dict[str, Any]:
         """
         Get group entry for groupname
         """
-        for _ in self.group:
-            if name == _["gr_name"]:
-                return _
+        for e in self.group:
+            if name == e["gr_name"]:
+                return e
         raise KeyError("getgrnam(): name not found in group file: " + name)
 
-    def getgrgid(self, uid):
+    def getgrgid(self, uid: int) -> Dict[str, Any]:
         """
         Get group entry for gid
         """
-        for _ in self.group:
-            if uid == _["gr_gid"]:
-                return _
+        for e in self.group:
+            if uid == e["gr_gid"]:
+                return e
         raise KeyError("getgruid(): uid not found in group file: " + str(uid))
