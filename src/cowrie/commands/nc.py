@@ -51,6 +51,7 @@ class command_nc(HoneyPotCommand):
     """
     netcat
     """
+
     s: socket.socket
 
     def help(self):
