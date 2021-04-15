@@ -95,13 +95,13 @@ class HoneyPotCommand:
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
 
-    def write(self, data):
+    def write(self, data: str):
         """
         Write a string to the user on stdout
         """
         return self.writefn(data.encode("utf8"))
 
-    def writeBytes(self, data):
+    def writeBytes(self, data: bytes):
         """
         Like write() but input is bytes
         """
@@ -143,7 +143,7 @@ class HoneyPotCommand:
         self.exit()
 
     def call(self):
-        self.write("Hello World! [{}]\n".format(repr(self.args)).encode("utf8"))
+        self.write("Hello World! [{}]\n".format(repr(self.args)))
 
     def exit(self):
         """

@@ -362,8 +362,8 @@ class HoneyPotShell:
         this should probably not go through ctrl-d, but use processprotocol to close stdin
         """
         log.msg("received eof, sending ctrl-d to command")
-        if self.cmdstack:
-            self.cmdstack[-1].handle_CTRL_D()
+        if self.protocol.cmdstack:
+            self.protocol.cmdstack[-1].handle_CTRL_D()
 
     def handle_CTRL_C(self):
         self.protocol.lineBuffer = []
