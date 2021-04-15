@@ -83,11 +83,13 @@ class command_ftpget(HoneyPotCommand):
     download_path = CowrieConfig.get("honeypot", "download_path")
     verbose: bool
     host: str
+    port: int
     username: str
     password: str
     remote_path: str
     remote_dir: str
     remote_file: str
+    artifactFile: Artifact
 
     def help(self):
         self.write(
