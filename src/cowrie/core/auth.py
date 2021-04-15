@@ -11,7 +11,7 @@ import re
 from collections import OrderedDict
 from os import path
 from random import randint
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Pattern, Tuple, Union
 
 from twisted.python import log
 
@@ -33,7 +33,9 @@ class UserDB:
     """
 
     def __init__(self) -> None:
-        self.userdb: Dict[Tuple[bytes, bytes], bool] = OrderedDict()
+        self.userdb: Dict[
+            Tuple[Union[Pattern, bytes], Union[Pattern, bytes]], bool
+        ] = OrderedDict()
         self.load()
 
     def load(self) -> None:
@@ -65,8 +67,8 @@ class UserDB:
         self, thelogin: bytes, thepasswd: bytes, src_ip: str = "0.0.0.0"
     ) -> bool:
         for credentials, policy in self.userdb.items():
-            login: bytes
-            passwd: bytes
+            login: Union[bytes, Pattern]
+            passwd: Union[bytes, Pattern]
             login, passwd = credentials
 
             if self.match_rule(login, thelogin):
@@ -75,13 +77,15 @@ class UserDB:
 
         return False
 
-    def match_rule(self, rule, input):
-        if type(rule) is bytes:
+    def match_rule(
+        self, rule: Union[bytes, Pattern], input: bytes
+    ) -> Union[bool, bytes]:
+        if isinstance(rule, bytes):
             return rule in [b"*", input]
         else:
             return bool(rule.search(input))
 
-    def re_or_str(self, rule: str):
+    def re_or_bytes(self, rule: bytes) -> Union[Pattern, bytes]:
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
 
@@ -103,7 +107,7 @@ class UserDB:
         @param passwd: password
         @type passwd: bytes
         """
-        login = self.re_or_str(login)
+        l = self.re_or_bytes(login)
 
         if passwd[0] == ord("!"):
             policy = False
@@ -111,8 +115,8 @@ class UserDB:
         else:
             policy = True
 
-        passwd = self.re_or_str(passwd)
-        self.userdb[(login, passwd)] = policy
+        p = self.re_or_bytes(passwd)
+        self.userdb[(l, p)] = policy
 
 
 class AuthRandom:
@@ -140,8 +144,8 @@ class AuthRandom:
             self.maxtry = self.mintry + 1
             log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
 
-        self.uservar = {}
-        self.uservar_file = "{}/auth_random.json".format(
+        self.uservar: Dict[Any, Any] = {}
+        self.uservar_file: str = "{}/auth_random.json".format(
             CowrieConfig.get("honeypot", "state_path")
         )
         self.loadvars()
