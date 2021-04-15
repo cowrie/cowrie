@@ -11,6 +11,7 @@ import re
 import shlex
 import stat
 import time
+from typing import Callable
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -33,7 +34,7 @@ class HoneyPotCommand:
         self.fs = self.protocol.fs
         self.data = None  # output data
         self.input_data = None  # used to store STDIN data passed via PIPE
-        self.writefn = self.protocol.pp.outReceived
+        self.writefn: Callable = self.protocol.pp.outReceived
         self.errorWritefn = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
@@ -95,23 +96,23 @@ class HoneyPotCommand:
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
 
-    def write(self, data: str):
+    def write(self, data: str) -> None:
         """
         Write a string to the user on stdout
         """
-        return self.writefn(data.encode("utf8"))
+        self.writefn(data.encode("utf8"))
 
-    def writeBytes(self, data: bytes):
+    def writeBytes(self, data: bytes) -> None:
         """
         Like write() but input is bytes
         """
-        return self.writefn(data)
+        self.writefn(data)
 
-    def errorWrite(self, data):
+    def errorWrite(self, data: str) -> None:
         """
         Write errors to the user on stderr
         """
-        return self.errorWritefn(data.encode("utf8"))
+        self.errorWritefn(data.encode("utf8"))
 
     def check_arguments(self, application, args):
         files = []
@@ -128,7 +129,7 @@ class HoneyPotCommand:
     def set_input_data(self, data):
         self.input_data = data
 
-    def write_to_file(self, data):
+    def write_to_file(self, data: bytes) -> None:
         with open(self.safeoutfile, "ab") as f:
             f.write(data)
         self.writtenBytes += len(data)
@@ -177,7 +178,7 @@ class HoneyPotCommand:
         self.write("^C\n")
         self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(f"QUEUED INPUT: {line}")
         # FIXME: naive command parsing, see lineReceived below
         # line = "".join(line)
