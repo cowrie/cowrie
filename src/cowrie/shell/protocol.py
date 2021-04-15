@@ -106,13 +106,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.kippoIP = CowrieConfig.get("honeypot", "internet_facing_ip")
         else:
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                self.kippoIP = s.getsockname()[0]
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.connect(("8.8.8.8", 80))
+                    self.kippoIP = s.getsockname()[0]
             except Exception:
                 self.kippoIP = "192.168.0.1"
-            finally:
-                s.close()
 
     def timeoutConnection(self):
         """
