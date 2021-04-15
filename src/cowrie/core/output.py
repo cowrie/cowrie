@@ -173,7 +173,7 @@ class Output:
         if "message" not in event and "format" not in event:
             return
 
-        ev = convert(event)
+        ev = convert(event) # type: ignore
         ev["sensor"] = self.sensor
 
         if "isError" in ev:
