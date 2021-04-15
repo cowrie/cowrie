@@ -20,6 +20,7 @@ class command_ping(HoneyPotCommand):
     """
     ping command
     """
+
     host: str
     ip: str
     count: int
