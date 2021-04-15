@@ -153,7 +153,7 @@ class HoneyPotFilesystem:
                 realfile_path: str = os.path.join(path, filename)
                 virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)
 
-                f = self.getfile(virtual_path, follow_symlinks=False)
+                f: Optional[list] = self.getfile(virtual_path, follow_symlinks=False)
                 if f and f[A_TYPE] == T_FILE:
                     self.update_realfile(f, realfile_path)
 
@@ -250,8 +250,8 @@ class HoneyPotFilesystem:
         Return True if path refers to an existing path.
         Returns False for broken symbolic links.
         """
-        f: Any = self.getfile(path, follow_symlinks=True)
-        if f is not False:
+        f: Optional[list] = self.getfile(path, follow_symlinks=True)
+        if f is not None:
             return True
         return False
 
@@ -260,8 +260,8 @@ class HoneyPotFilesystem:
         Return True if path refers to an existing path.
         Returns True for broken symbolic links.
         """
-        f: Any = self.getfile(path, follow_symlinks=False)
-        if f is not False:
+        f: Optional[list] = self.getfile(path, follow_symlinks=False)
+        if f is not None:
             return True
         return False
 
@@ -399,8 +399,10 @@ class HoneyPotFilesystem:
         links, so both islink() and isfile() can be true for the same path.
         """
         try:
-            f: Any = self.getfile(path)
+            f: Optional[list] = self.getfile(path)
         except Exception:
+            return False
+        if f is None:
             return False
         if f[A_TYPE] == T_FILE:
             return True
@@ -414,8 +416,10 @@ class HoneyPotFilesystem:
         runtime.
         """
         try:
-            f: Any = self.getfile(path)
+            f: Optional[list] = self.getfile(path)
         except Exception:
+            return False
+        if f is None:
             return False
         if f[A_TYPE] == T_LINK:
             return True
@@ -526,7 +530,7 @@ class HoneyPotFilesystem:
         """
         FIXME mkdir() name conflicts with existing mkdir
         """
-        dir: Any = self.getfile(path)
+        dir: Optional[list] = self.getfile(path)
         if dir:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         self.mkdir(path, 0, 0, 4096, 16877)
