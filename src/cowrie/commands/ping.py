@@ -7,6 +7,7 @@ import hashlib
 import random
 import re
 import socket
+from typing import Any
 
 from twisted.internet import reactor
 
@@ -16,6 +17,16 @@ commands = {}
 
 
 class command_ping(HoneyPotCommand):
+    """
+    ping command
+    """
+    host: str
+    ip: str
+    count: int
+    max: int
+    running: bool
+    scheduled: Any
+
     def valid_ip(self, address):
         try:
             socket.inet_aton(address)
@@ -24,7 +35,7 @@ class command_ping(HoneyPotCommand):
             return False
 
     def start(self):
-        self.host = None
+        self.host = ""
         self.max = 0
         self.running = False
 
