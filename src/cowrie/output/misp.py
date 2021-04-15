@@ -36,6 +36,8 @@ class Output(cowrie.core.output.Output):
     The decision is done by searching for the SHA 256 sum in all matching attributes.
     """
 
+    debug: bool
+
     @ignore_warnings
     def start(self):
         """

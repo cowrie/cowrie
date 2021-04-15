@@ -122,7 +122,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             else:
                 data += packet
 
-        self.write(data)
+        self.writeBytes(data)
         self.s.close()
         self.exit()
 

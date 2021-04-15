@@ -46,6 +46,10 @@ class Output(cowrie.core.output.Output):
     cuckoo output
     """
 
+    api_user: str
+    api_passwd: str
+    url_base: bytes
+
     def start(self):
         """
         Start output plugin
