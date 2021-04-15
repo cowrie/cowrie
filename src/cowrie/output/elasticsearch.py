@@ -13,6 +13,7 @@ class Output(cowrie.core.output.Output):
     """
     elasticsearch output
     """
+
     index: str
     es: Elasticsearch
     pipeline: str
@@ -24,18 +25,10 @@ class Output(cowrie.core.output.Output):
         self.type = CowrieConfig.get("output_elasticsearch", "type")
         self.pipeline = CowrieConfig.get("output_elasticsearch", "pipeline")
         # new options (creds + https)
-        username = CowrieConfig.get(
-            "output_elasticsearch", "username", fallback=None
-        )
-        password = CowrieConfig.get(
-            "output_elasticsearch", "password", fallback=None
-        )
-        use_ssl = CowrieConfig.getboolean(
-            "output_elasticsearch", "ssl", fallback=False
-        )
-        ca_certs = CowrieConfig.get(
-            "output_elasticsearch", "ca_certs", fallback=None
-        )
+        username = CowrieConfig.get("output_elasticsearch", "username", fallback=None)
+        password = CowrieConfig.get("output_elasticsearch", "password", fallback=None)
+        use_ssl = CowrieConfig.getboolean("output_elasticsearch", "ssl", fallback=False)
+        ca_certs = CowrieConfig.get("output_elasticsearch", "ca_certs", fallback=None)
         verify_certs = CowrieConfig.getboolean(
             "output_elasticsearch", "verify_certs", fallback=True
         )
