@@ -124,6 +124,7 @@ Try 'base64 --help' for more information.
 
         if self.mode == "e":
             self.writeBytes(base64.b64encode(s))
+            self.writeBytes(b"\n")
         else:
             try:
                 self.writeBytes(base64.b64decode(s))
