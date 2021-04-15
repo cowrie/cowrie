@@ -48,6 +48,11 @@ local_networks = [
 
 
 class command_nc(HoneyPotCommand):
+    """
+    netcat
+    """
+    s: socket.socket
+
     def help(self):
         self.write(
             """This is nc from the netcat-openbsd package. An alternative nc is available
