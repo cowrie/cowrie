@@ -28,7 +28,7 @@
 
 
 class BaseProtocol:
-    data = ""
+    data = b""
     packetSize = 0
     name = ""
     uuid = ""
