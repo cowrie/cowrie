@@ -12,6 +12,9 @@ class command_base64(HoneyPotCommand):
     author: Ivan Korolev (@fe7ch)
     """
 
+    mode: str
+    ignore: bool
+
     def start(self):
         self.mode = "e"
         self.ignore = False
@@ -121,7 +124,7 @@ Try 'base64 --help' for more information.
             self.write(s.encode("base64"))
         else:
             try:
-                self.write(s.decode("base64"))
+                self.write(s.encode("ascii").decode("base64"))
             except Exception:
                 self.errorWrite("base64: invalid input\n")
 
