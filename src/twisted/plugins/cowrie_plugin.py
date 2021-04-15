@@ -90,9 +90,9 @@ class CowrieServiceMaker:
     description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
     output_plugins: List[Callable] = []
+    topService: service.Service
 
     def __init__(self) -> None:
-        self.topService: Union[None, service.Service] = None
         self.pool_handler = None
 
         # ssh is enabled by default
