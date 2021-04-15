@@ -27,7 +27,7 @@ class EnvironmentConfigParser(configparser.ConfigParser):
             return True
         return super().has_option(section, option)
 
-    def get(self, section: str, option: str, raw: bool = False, **kwargs):
+    def get(self, section: str, option: str, *, raw: bool = False, **kwargs) -> str:  # type: ignore
         key: str = to_environ_key("_".join(("cowrie", section, option)))
         if key in environ:
             return environ[key]
