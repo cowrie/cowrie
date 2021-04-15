@@ -1,3 +1,5 @@
+from typing import Any
+
 import sqlite3
 
 from twisted.enterprise import adbapi
@@ -12,6 +14,8 @@ class Output(cowrie.core.output.Output):
     """
     sqlite output
     """
+
+    db: Any
 
     def start(self):
         """
