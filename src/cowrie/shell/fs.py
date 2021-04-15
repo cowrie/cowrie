@@ -113,7 +113,7 @@ class PermissionDenied(Exception):
 
 
 class HoneyPotFilesystem:
-    def __init__(self, fs: str, arch: str, home: str) -> None:
+    def __init__(self, arch: str, home: str) -> None:
 
         self.fs: List
 

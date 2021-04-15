@@ -74,7 +74,7 @@ class CowrieServer:
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
-        self.fs = fs.HoneyPotFilesystem(None, self.arch, home)
+        self.fs = fs.HoneyPotFilesystem(self.arch, home)
 
         try:
             self.process = self.getCommandOutput(

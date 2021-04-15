@@ -138,15 +138,15 @@ class HoneyPotCommand:
     def write_to_failed(self, data):
         pass
 
-    def start(self):
+    def start(self) -> None:
         if self.write != self.write_to_failed:
             self.call()
         self.exit()
 
-    def call(self):
+    def call(self) -> None:
         self.write("Hello World! [{}]\n".format(repr(self.args)))
 
-    def exit(self):
+    def exit(self) -> None:
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
@@ -173,7 +173,7 @@ class HoneyPotCommand:
             except AttributeError:
                 pass
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         log.msg("Received CTRL-C, exiting..")
         self.write("^C\n")
         self.exit()
@@ -184,14 +184,14 @@ class HoneyPotCommand:
         # line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=True))
 
-    def resume(self):
+    def resume(self) -> None:
         pass
 
-    def handle_TAB(self):
+    def handle_TAB(self) -> None:
         pass
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self.__class__.__name__)
