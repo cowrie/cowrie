@@ -235,7 +235,12 @@ class HoneyPotFilesystem:
             for c in cwd[A_CONTENTS]:
                 if c[A_NAME] == part:
                     if c[A_TYPE] == T_LINK:
-                        cwd = self.getfile(c[A_TARGET], follow_symlinks=follow_symlinks)
+                        f = self.getfile(c[A_TARGET], follow_symlinks=follow_symlinks)
+                        if f is None:
+                            ok = False
+                            break
+                        else:
+                            cwd = f
                     else:
                         cwd = c
                     ok = True
