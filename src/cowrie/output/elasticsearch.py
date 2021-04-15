@@ -1,6 +1,8 @@
 # Simple elasticsearch logger
 
 
+from typing import Any, Dict
+
 from elasticsearch import Elasticsearch, NotFoundError
 
 import cowrie.core.output
@@ -35,7 +37,7 @@ class Output(cowrie.core.output.Output):
             "output_elasticsearch", "verify_certs", fallback=True
         )
 
-        options = {}
+        options: Dict[str, Any] = {}
         # connect
         if (self.username is not None) and (self.password is not None):
             options["http_auth"] = (self.username, self.password)
@@ -95,7 +97,7 @@ class Output(cowrie.core.output.Output):
         try:
             # check if the geoip pipeline exists. An error
             # is raised if the pipeline does not exist
-            self.es.ingest.get_pipeline(self.pipeline)
+            self.es.ingest.get_pipeline(id=self.pipeline)
         except NotFoundError:
             # geoip pipeline
             body = {
