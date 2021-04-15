@@ -165,7 +165,7 @@ class command_echo(HoneyPotCommand):
 
             if escape_decode:
                 string = codecs.escape_decode(string)[0]
-                self.writeBytes(string)
+                self.write(string)
             else:
                 self.write(string)
 

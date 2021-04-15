@@ -33,7 +33,7 @@ class FTP(ftplib.FTP):
             (self.host, self.port), self.timeout, self.source_address
         )
         self.af = self.sock.family
-        self.file = self.sock.makefile("rb")
+        self.file = self.sock.makefile(mode="rb")
         self.welcome = self.getresp()
         return self.welcome
 
@@ -81,6 +81,13 @@ class command_ftpget(HoneyPotCommand):
     """
 
     download_path = CowrieConfig.get("honeypot", "download_path")
+    verbose: bool
+    host: str
+    username: str
+    password: str
+    remote_path: str
+    remote_dir: str
+    remote_file: str
 
     def help(self):
         self.write(
