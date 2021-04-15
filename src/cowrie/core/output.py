@@ -78,18 +78,17 @@ def convert(input: Union[str, list, dict, bytes]) -> Union[str, list, dict]:
         return input
 
 
-class Output:
+class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
     cowrie output plugins. Plugins require the mandatory
     methods: stop, start and write
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self) -> None:
         self.sessions: Dict[str, str] = {}
         self.ips: Dict[str, str] = {}
+
         # Need these for each individual transport, or else the session numbers overlap
         self.sshRegex: Pattern = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
         self.telnetRegex: Pattern = re.compile(

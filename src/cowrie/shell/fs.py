@@ -3,15 +3,11 @@
 
 # Todo, use os.stat_result, which contains the stat 10-tuple instead of the custom object.
 
-try:
-    import cPickle as pickle
-except Exception:
-    import pickle  # type: ignore
-
 import errno
 import fnmatch
 import hashlib
 import os
+import pickle
 import re
 import stat
 import time
