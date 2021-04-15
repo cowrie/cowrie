@@ -171,6 +171,8 @@ class PoolServerFactory(Factory):
         # pool handling
         self.pool_service = None
 
+        self.tac = None
+
         # NAT service
         self.nat = NATService()
 

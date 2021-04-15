@@ -36,14 +36,14 @@ class ShellUniqCommandTests(unittest.TestCase):
         echo test | uniq
         """
         self.proto.lineReceived(b"echo test | uniq\n")
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_uniq_command_002(self):
         """
         echo -e "test\ntest\ntest" | uniq
         """
         self.proto.lineReceived(b'echo -e "test\ntest\ntest" | uniq\n')
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_uniq_command_003(self):
         """
@@ -54,7 +54,7 @@ class ShellUniqCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"test\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_D()
-        self.assertEquals(self.tr.value(), b"test\n\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n\n" + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

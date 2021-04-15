@@ -6,6 +6,7 @@ import copy
 import os
 import re
 import shlex
+from typing import List
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -34,7 +35,7 @@ class HoneyPotShell:
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += "@%{}=$:+^,()`"
 
-        tokens = []
+        tokens: List[str] = []
 
         while True:
             try:

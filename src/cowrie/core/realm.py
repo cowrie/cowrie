@@ -40,7 +40,7 @@ from cowrie.telnet import session
 
 @implementer(IRealm)
 class HoneyPotRealm:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def requestAvatar(self, avatarId, mind, *interfaces):

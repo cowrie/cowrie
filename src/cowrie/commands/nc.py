@@ -114,10 +114,10 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
 
     def recv_data(self):
-        data = ""
+        data = b""
         while 1:
             packet = self.s.recv(1024)
-            if packet == "":
+            if packet == b"":
                 break
             else:
                 data += packet

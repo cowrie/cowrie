@@ -36,7 +36,7 @@ class ShellTftpCommandTests(unittest.TestCase):
         Basic test
         """
         self.proto.lineReceived(b"tftp\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(),
             b"usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n"
             + PROMPT,

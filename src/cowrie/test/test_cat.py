@@ -36,7 +36,7 @@ class ShellCatCommandTests(unittest.TestCase):
         No such file
         """
         self.proto.lineReceived(b"cat nonExisting\n")
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(), b"cat: nonExisting: No such file or directory\n" + PROMPT
         )
 
@@ -45,7 +45,7 @@ class ShellCatCommandTests(unittest.TestCase):
         argument - (stdin)
         """
         self.proto.lineReceived(b"echo test | cat -\n")
-        self.assertEquals(self.tr.value(), b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_cat_command_003(self):
         """
@@ -54,7 +54,7 @@ class ShellCatCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo 1 | cat\n")
         self.proto.lineReceived(b"echo 2\n")
         self.proto.handle_CTRL_D()
-        self.assertEquals(self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT)
 
     def test_cat_command_004(self):
         """
@@ -63,7 +63,7 @@ class ShellCatCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"cat\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_C()
-        self.assertEquals(self.tr.value(), b"test\n^C\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n^C\n" + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
