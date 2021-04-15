@@ -349,7 +349,7 @@ class command_ps(HoneyPotCommand):
 
             output_array.append(output)
         else:
-            output_array = (
+            output_array = [
                 (
                     "USER      ",
                     " PID",
@@ -779,17 +779,17 @@ class command_ps(HoneyPotCommand):
                     "   0:00 ",
                     "ps %s" % " ".join(self.args),
                 ),
-            )
+            ]
 
         output = output_array
-        for i in range(len(output)):
+        for i in range(len(output_array)):
             if i != 0:
-                if "a" not in args and output[i][_user].strip() != user:
+                if "a" not in args and output_array[i][_user].strip() != user:
                     continue
                 elif (
                     "a" not in args
                     and "x" not in args
-                    and output[i][_tty].strip() != "pts/0"
+                    and output_array[i][_tty].strip() != "pts/0"
                 ):
                     continue
             line = [_pid, _tty, _time, _command]
@@ -809,7 +809,7 @@ class command_ps(HoneyPotCommand):
                     _time,
                     _command,
                 ]
-            s = "".join([output[i][x] for x in line])
+            s = "".join([output_array[i][x] for x in line])
             if "w" not in args:
                 s = s[
                     : (
@@ -876,7 +876,7 @@ commands["passwd"] = command_passwd
 class command_shutdown(HoneyPotCommand):
     def start(self):
         if len(self.args) and self.args[0].strip().count("--help"):
-            output = (
+            output = [
                 "Usage:     shutdown [-akrhHPfnc] [-t secs] time [warning message]",
                 "-a:      use /etc/shutdown.allow ",
                 "-k:      don't really shutdown, only warn. ",
@@ -890,7 +890,7 @@ class command_shutdown(HoneyPotCommand):
                 "-c:      cancel a running shutdown. ",
                 "-t secs: delay between warning and kill signal. ",
                 '** the "time" argument is mandatory! (try "now") **',
-            )
+            ]
             for line in output:
                 self.write(f"{line}\n")
             self.exit()
@@ -1049,7 +1049,7 @@ class command_php(HoneyPotCommand):
                 self.write(f"{line}\n")
             self.exit()
         elif self.args[0] == "-h":
-            output = (
+            output = [
                 "Usage: php [options] [-f] <file> [--] [args...]",
                 "       php [options] -r <code> [--] [args...]",
                 "       php [options] [-B <begin_code>] -R <code> [-E <end_code>] [--] [args...]",
@@ -1088,7 +1088,7 @@ class command_php(HoneyPotCommand):
                 "  --re <name>      Show information about extension <name>.",
                 "  --ri <name>      Show configuration for extension <name>.",
                 "",
-            )
+            ]
             for line in output:
                 self.write(f"{line}\n")
             self.exit()
@@ -1153,6 +1153,7 @@ commands["unset"] = command_nop
 commands["export"] = command_nop
 commands["alias"] = command_nop
 commands["jobs"] = command_nop
+commands["kill"] = command_nop
 commands["/bin/kill"] = command_nop
 commands["/bin/pkill"] = command_nop
 commands["/bin/killall"] = command_nop

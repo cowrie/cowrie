@@ -24,13 +24,13 @@ from cowrie.core.config import CowrieConfig
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
-    startTime = None
-    gotVersion = False
+    startTime: float = 0.0
+    gotVersion: bool = False
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
-    auth_timeout = CowrieConfig.getint(
+    auth_timeout: int = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
     )
-    interactive_timeout = CowrieConfig.getint(
+    interactive_timeout: int = CowrieConfig.getint(
         "honeypot", "interactive_timeout", fallback=300
     )
 
@@ -48,8 +48,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Called when the connection is made from the other side.
         We send our version, but wait with sending KEXINIT
         """
-        self.transportId = uuid.uuid4().hex[:12]
-        src_ip = self.transport.getPeer().host
+        self.transportId: str = uuid.uuid4().hex[:12]
+        src_ip: str = self.transport.getPeer().host
 
         ipv4_search = self.ipv4rex.search(src_ip)
         if ipv4_search is not None:

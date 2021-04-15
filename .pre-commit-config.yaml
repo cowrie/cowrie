@@ -26,3 +26,8 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
       - id: mixed-line-ending
+
+  - repo: https://github.com/mattseymour/pre-commit-pytype
+    rev: '2021.4.9'
+    hooks:
+    -   id: pytype

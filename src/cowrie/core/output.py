@@ -32,6 +32,7 @@ import re
 import socket
 import time
 from os import environ
+from typing import Dict, Pattern, Union
 
 from twisted.internet import reactor
 from twisted.logger import formatTime
@@ -63,7 +64,7 @@ in UTC.
 """
 
 
-def convert(input):
+def convert(input: Union[str, list, dict, bytes]) -> Union[str, list, dict]:
     """
     This converts a nested dictionary with bytes in it to string
     """
@@ -77,24 +78,26 @@ def convert(input):
         return input
 
 
-class Output:
+class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
     cowrie output plugins. Plugins require the mandatory
     methods: stop, start and write
     """
 
-    __metaclass__ = abc.ABCMeta
+    def __init__(self) -> None:
+        self.sessions: Dict[str, str] = {}
+        self.ips: Dict[str, str] = {}
 
-    def __init__(self):
-        self.sessions = {}
-        self.ips = {}
         # Need these for each individual transport, or else the session numbers overlap
-        self.sshRegex = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
-        self.telnetRegex = re.compile(".*TelnetTransport,([0-9]+),[0-9a-f:.]+$")
-        self.sensor = CowrieConfig.get(
+        self.sshRegex: Pattern = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
+        self.telnetRegex: Pattern = re.compile(
+            ".*TelnetTransport,([0-9]+),[0-9a-f:.]+$"
+        )
+        self.sensor: str = CowrieConfig.get(
             "honeypot", "sensor_name", fallback=socket.gethostname()
         )
+        self.timeFormat: str
 
         # use Z for UTC (Zulu) time, it's shorter.
         if "TZ" in environ and environ["TZ"] == "UTC":
@@ -103,41 +106,41 @@ class Output:
             self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         # Event trigger so that stop() is called by the reactor when stopping
-        reactor.addSystemEventTrigger("before", "shutdown", self.stop)
+        reactor.addSystemEventTrigger("before", "shutdown", self.stop)  # type: ignore
 
         self.start()
 
-    def logDispatch(self, *msg, **kw):
+    def logDispatch(self, **kw: str) -> None:
         """
         Use logDispatch when the HoneypotTransport prefix is not available.
         Here you can explicitly set the sessionIds to tie the sessions together
         """
         ev = kw
-        ev["message"] = msg
+        # ev["message"] = msg
         self.emit(ev)
 
     @abc.abstractmethod
-    def start(self):
+    def start(self) -> None:
         """
         Abstract method to initialize output plugin
         """
         pass
 
     @abc.abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         """
         Abstract method to shut down output plugin
         """
         pass
 
     @abc.abstractmethod
-    def write(self, event):
+    def write(self, event: dict) -> None:
         """
         Handle a general event within the output plugin
         """
         pass
 
-    def emit(self, event):
+    def emit(self, event: dict) -> None:
         """
         This is the main emit() hook that gets called by the the Twisted logging
 
@@ -146,6 +149,9 @@ class Output:
         - 'sessionno' or 'session'
         - 'message' or 'format'
         """
+        sessionno: str
+        ev: dict
+
         # Ignore stdout and stderr in output plugins
         if "printed" in event:
             return
@@ -166,7 +172,7 @@ class Output:
         if "message" not in event and "format" not in event:
             return
 
-        ev = convert(event)
+        ev = convert(event)  # type: ignore
         ev["sensor"] = self.sensor
 
         if "isError" in ev:
@@ -201,7 +207,7 @@ class Output:
                 return
         # Extract session id from the twisted log prefix
         elif "system" in ev:
-            sessionno = 0
+            sessionno = "0"
             telnetmatch = self.telnetRegex.match(ev["system"])
             if telnetmatch:
                 sessionno = "T{}".format(telnetmatch.groups()[0])
@@ -209,7 +215,7 @@ class Output:
                 sshmatch = self.sshRegex.match(ev["system"])
                 if sshmatch:
                     sessionno = "S{}".format(sshmatch.groups()[0])
-            if sessionno == 0:
+            if sessionno == "0":
                 return
 
         if sessionno in self.ips:

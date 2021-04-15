@@ -27,7 +27,7 @@ class CowrieSSHChannel(channel.SSHChannel):
     bytesReceivedLimit = 0
     bytesWritten = 0
     name = b"cowrie-ssh-channel"
-    startTime = None
+    startTime: float = 0.0
     ttylogPath = CowrieConfig.get("honeypot", "log_path")
     downloadPath = CowrieConfig.get("honeypot", "download_path")
     ttylogEnabled = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
@@ -69,7 +69,7 @@ class CowrieSSHChannel(channel.SSHChannel):
     def closed(self):
         log.msg(
             eventid="cowrie.log.closed",
-            format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+            format="Closing TTY Log: %(ttylog)s after %(duration)f seconds",
             ttylog=self.ttylogFile,
             size=self.bytesReceived + self.bytesWritten,
             duration=time.time() - self.startTime,
