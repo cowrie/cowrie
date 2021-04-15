@@ -285,6 +285,8 @@ class HoneyPotFilesystem:
         cwd: str = ""
         p: Optional[List] = self.fs
         for piece in pieces:
+            if not isinstance(p, list):
+                return None
             if piece not in [x[A_NAME] for x in p[A_CONTENTS]]:
                 return None
             for x in p[A_CONTENTS]:
@@ -337,6 +339,8 @@ class HoneyPotFilesystem:
                 CowrieConfig.get("honeypot", "share_path") + "/arch/" + self.arch,
                 "rb",
             ).read()
+        else:
+            return b""
 
     def mkfile(
         self,
