@@ -1,9 +1,5 @@
 import tftpy
-
-try:
-    from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
-except ImportError:
-    from tftpy import TftpPacketDAT, TftpPacketOACK
+from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
 
 from twisted.python import log
 
