@@ -53,10 +53,10 @@ jobs:
             . cowrie-env/bin/activate
             pytype src || true
       - run:
-          name: PyType
+          name: Pyre
           command: |
             . cowrie-env/bin/activate
-            pyre analyze || true
+            pyre --noninteractive analyze || true
       - run:
           name: Build Python library
           command: |
