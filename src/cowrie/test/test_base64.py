@@ -37,18 +37,14 @@ class ShellBase64CommandTests(unittest.TestCase):
         Missing operand
         """
         self.proto.lineReceived(b"echo cowrie | base64")
-        self.assertEqual(
-            self.tr.value(), b"Y293cmllCg==\n" + PROMPT
-        )
+        self.assertEqual(self.tr.value(), b"Y293cmllCg==\n" + PROMPT)
 
     def test_base64_command_002(self):
         """
         Missing operand
         """
         self.proto.lineReceived(b"echo Y293cmllCg== | base64 -d")
-        self.assertEqual(
-            self.tr.value(), b"cowrie\n" + PROMPT
-        )
+        self.assertEqual(self.tr.value(), b"cowrie\n" + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
