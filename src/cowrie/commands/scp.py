@@ -52,6 +52,8 @@ class command_scp(HoneyPotCommand):
         "honeypot", "download_path_uniq", fallback=download_path
     )
 
+    out_dir: str = ""
+
     def help(self):
         self.write(
             """usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]

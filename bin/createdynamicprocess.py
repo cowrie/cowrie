@@ -4,7 +4,7 @@ import random
 
 import psutil
 
-command = {}
+command: dict = {}
 command["command"] = {}
 command["command"]["ps"] = []
 

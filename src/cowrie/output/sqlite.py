@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Any
 
 from twisted.enterprise import adbapi
 from twisted.internet import defer
@@ -12,6 +13,8 @@ class Output(cowrie.core.output.Output):
     """
     sqlite output
     """
+
+    db: Any
 
     def start(self):
         """

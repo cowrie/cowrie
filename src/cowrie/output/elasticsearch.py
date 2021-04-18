@@ -1,6 +1,8 @@
 # Simple elasticsearch logger
 
 
+from typing import Any, Dict
+
 from elasticsearch import Elasticsearch, NotFoundError
 
 import cowrie.core.output
@@ -12,43 +14,38 @@ class Output(cowrie.core.output.Output):
     elasticsearch output
     """
 
+    index: str
+    pipeline: str
+
     def start(self):
-        self.host = CowrieConfig.get("output_elasticsearch", "host")
-        self.port = CowrieConfig.get("output_elasticsearch", "port")
+        host = CowrieConfig.get("output_elasticsearch", "host")
+        port = CowrieConfig.get("output_elasticsearch", "port")
         self.index = CowrieConfig.get("output_elasticsearch", "index")
         self.type = CowrieConfig.get("output_elasticsearch", "type")
         self.pipeline = CowrieConfig.get("output_elasticsearch", "pipeline")
         # new options (creds + https)
-        self.username = CowrieConfig.get(
-            "output_elasticsearch", "username", fallback=None
-        )
-        self.password = CowrieConfig.get(
-            "output_elasticsearch", "password", fallback=None
-        )
-        self.use_ssl = CowrieConfig.getboolean(
-            "output_elasticsearch", "ssl", fallback=False
-        )
-        self.ca_certs = CowrieConfig.get(
-            "output_elasticsearch", "ca_certs", fallback=None
-        )
-        self.verify_certs = CowrieConfig.getboolean(
+        username = CowrieConfig.get("output_elasticsearch", "username", fallback=None)
+        password = CowrieConfig.get("output_elasticsearch", "password", fallback=None)
+        use_ssl = CowrieConfig.getboolean("output_elasticsearch", "ssl", fallback=False)
+        ca_certs = CowrieConfig.get("output_elasticsearch", "ca_certs", fallback=None)
+        verify_certs = CowrieConfig.getboolean(
             "output_elasticsearch", "verify_certs", fallback=True
         )
 
-        options = {}
+        options: Dict[str, Any] = {}
         # connect
-        if (self.username is not None) and (self.password is not None):
-            options["http_auth"] = (self.username, self.password)
-        if self.use_ssl:
+        if (username is not None) and (password is not None):
+            options["http_auth"] = (username, password)
+        if use_ssl:
             options["scheme"] = "https"
-            options["use_ssl"] = self.use_ssl
+            options["use_ssl"] = use_ssl
             options["ssl_show_warn"] = False
-            options["verify_certs"] = self.verify_certs
-            if self.verify_certs:
-                options["ca_certs"] = self.ca_certs
+            options["verify_certs"] = verify_certs
+            if verify_certs:
+                options["ca_certs"] = ca_certs
 
         # connect
-        self.es = Elasticsearch(f"{self.host}:{self.port}", **options)
+        self.es = Elasticsearch(f"{host}:{port}", **options)
         # self.es = Elasticsearch('{0}:{1}'.format(self.host, self.port))
 
         self.check_index()
@@ -95,7 +92,7 @@ class Output(cowrie.core.output.Output):
         try:
             # check if the geoip pipeline exists. An error
             # is raised if the pipeline does not exist
-            self.es.ingest.get_pipeline(self.pipeline)
+            self.es.ingest.get_pipeline(id=self.pipeline)
         except NotFoundError:
             # geoip pipeline
             body = {

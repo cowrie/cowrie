@@ -48,6 +48,12 @@ local_networks = [
 
 
 class command_nc(HoneyPotCommand):
+    """
+    netcat
+    """
+
+    s: socket.socket
+
     def help(self):
         self.write(
             """This is nc from the netcat-openbsd package. An alternative nc is available
@@ -122,7 +128,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             else:
                 data += packet
 
-        self.write(data)
+        self.writeBytes(data)
         self.s.close()
         self.exit()
 

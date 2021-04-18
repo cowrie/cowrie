@@ -23,7 +23,7 @@ before_script:
   - mypy src
   - twistedchecker src || true
   - pytype || true
-  - pyre analyze || true
+  - pyre --noninteractive analyze || true
   - python setup.py build sdist bdist
   - make -C docs html
 script:

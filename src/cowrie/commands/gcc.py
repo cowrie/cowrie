@@ -185,7 +185,7 @@ gcc version {} (Debian {}-5)""".format(
         self.exit()
 
     def generate_file(self, outfile):
-        data = ""
+        data = b""
         # TODO: make sure it is written to temp file, not downloads
         tmp_fname = "{}_{}_{}_{}".format(
             time.strftime("%Y%m%d%H%M%S"),

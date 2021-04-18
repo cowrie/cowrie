@@ -50,6 +50,8 @@ class Output(cowrie.core.output.Output):
     TODO: use `treq`
     """
 
+    apiKey: str
+
     def start(self):
         """
         Start output plugin

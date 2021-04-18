@@ -179,6 +179,8 @@ class command_head(HoneyPotCommand):
     head command
     """
 
+    n: int = 10
+
     def head_application(self, contents):
         i = 0
         contentsplit = contents.split(b"\n")

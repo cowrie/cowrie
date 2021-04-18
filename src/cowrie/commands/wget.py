@@ -55,8 +55,9 @@ class command_wget(HoneyPotCommand):
     wget command
     """
 
-    limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
-    downloadPath = CowrieConfig.get("honeypot", "download_path")
+    limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    downloadPath: str = CowrieConfig.get("honeypot", "download_path")
+    quiet: bool = False
 
     def start(self):
         try:
@@ -67,7 +68,7 @@ class command_wget(HoneyPotCommand):
             return
 
         if len(args):
-            url = args[0].strip()
+            url: str = args[0].strip()
         else:
             self.errorWrite("wget: missing URL\n")
             self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
@@ -75,7 +76,7 @@ class command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        self.outfile = None
+        self.outfile: str = None
         self.quiet = False
         for opt in optlist:
             if opt[0] == "-O":
@@ -215,7 +216,11 @@ class command_wget(HoneyPotCommand):
 
     def error(self, error, url):
         # we need to handle 301 redirects separately
-        if hasattr(error, "webStatus") and error.webStatus.decode() == "301":
+        if (
+            hasattr(error, "webStatus")
+            and error.webStatus
+            and error.webStatus.decode() == "301"
+        ):
             self.errorWrite(f"{error.webStatus.decode()} {error.webMessage.decode()}\n")
             https_url = error.getErrorMessage().replace("301 Moved Permanently to ", "")
             self.errorWrite(f"Location {https_url} [following]\n")

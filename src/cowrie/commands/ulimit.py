@@ -32,14 +32,14 @@ class command_ulimit(HoneyPotCommand):
         # Parse options
         for o, a in opts:
             if o in ("-c"):
-                self.do_ulimit(key="core", value=a)
+                self.do_ulimit(key="core", value=int(a))
                 return
             elif o in ("-a"):
                 self.do_ulimit(key="all")
                 return
         self.do_ulimit()
 
-    def do_ulimit(self, key="core"):
+    def do_ulimit(self, key: str = "core", value: int = 0) -> None:
         pass
 
 

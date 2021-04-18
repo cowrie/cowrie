@@ -46,6 +46,10 @@ class Output(cowrie.core.output.Output):
     cuckoo output
     """
 
+    api_user: str
+    api_passwd: str
+    url_base: bytes
+
     def start(self):
         """
         Start output plugin
@@ -96,7 +100,7 @@ class Output(cowrie.core.output.Output):
         try:
             print(f"Looking for tasks for: {sha256}")
             res = requests.get(
-                urljoin(self.url_base, f"/files/view/sha256/{sha256}"),
+                urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode("utf-8")),
                 verify=False,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
                 timeout=60,
@@ -120,7 +124,7 @@ class Output(cowrie.core.output.Output):
         files = {"file": (fileName, open(artifact, "rb").read())}
         try:
             res = requests.post(
-                urljoin(self.url_base, "tasks/create/file").encode("utf-8"),
+                urljoin(self.url_base, b"tasks/create/file"),
                 files=files,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
                 verify=False,
@@ -143,7 +147,7 @@ class Output(cowrie.core.output.Output):
         data = {"url": scanUrl}
         try:
             res = requests.post(
-                urljoin(self.url_base, "tasks/create/url").encode("utf-8"),
+                urljoin(self.url_base, b"tasks/create/url"),
                 data=data,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
                 verify=False,
