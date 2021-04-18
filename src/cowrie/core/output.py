@@ -32,7 +32,7 @@ import re
 import socket
 import time
 from os import environ
-from typing import Dict, Pattern, Union
+from typing import Any, Dict, Pattern, Union
 
 from twisted.internet import reactor
 from twisted.logger import formatTime
@@ -64,20 +64,6 @@ in UTC.
 """
 
 
-def convert(input: Union[str, list, dict, bytes]) -> Union[str, list, dict]:
-    """
-    This converts a nested dictionary with bytes in it to string
-    """
-    if isinstance(input, dict):
-        return {convert(key): convert(value) for key, value in list(input.items())}
-    elif isinstance(input, list):
-        return [convert(element) for element in input]
-    elif isinstance(input, bytes):
-        return input.decode("utf-8")
-    else:
-        return input
-
-
 class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
@@ -90,8 +76,8 @@ class Output(metaclass=abc.ABCMeta):
         self.ips: Dict[str, str] = {}
 
         # Need these for each individual transport, or else the session numbers overlap
-        self.sshRegex: Pattern = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
-        self.telnetRegex: Pattern = re.compile(
+        self.sshRegex: Pattern[str] = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
+        self.telnetRegex: Pattern[str] = re.compile(
             ".*TelnetTransport,([0-9]+),[0-9a-f:.]+$"
         )
         self.sensor: str = CowrieConfig.get(
@@ -134,7 +120,7 @@ class Output(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def write(self, event: dict) -> None:
+    def write(self, event: Dict[str, Any]) -> None:
         """
         Handle a general event within the output plugin
         """
