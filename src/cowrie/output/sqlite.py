@@ -1,6 +1,6 @@
-from typing import Any
 
 import sqlite3
+from typing import Any
 
 from twisted.enterprise import adbapi
 from twisted.internet import defer

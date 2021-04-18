@@ -7,8 +7,8 @@ JSON log file is still recommended way to go
 """
 
 
-from io import BytesIO
 import json
+from io import BytesIO
 from typing import Any
 
 from twisted.internet import reactor
