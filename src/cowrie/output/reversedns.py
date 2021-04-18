@@ -37,6 +37,8 @@ class Output(cowrie.core.output.Output):
             """
             Create log messages for connect events
             """
+            if not payload:
+                return
             payload = result[0][0].payload
             log.msg(
                 eventid="cowrie.reversedns.connect",
@@ -52,6 +54,8 @@ class Output(cowrie.core.output.Output):
             """
             Create log messages for forward events
             """
+            if not payload:
+                return
             payload = result[0][0].payload
             log.msg(
                 eventid="cowrie.reversedns.forward",
