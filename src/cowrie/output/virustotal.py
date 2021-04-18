@@ -63,6 +63,8 @@ class Output(cowrie.core.output.Output):
     debug: bool = False
     commenttext: str
     agent: Any
+    scan_url: bool
+    scan_file: bool
 
     def start(self):
         """

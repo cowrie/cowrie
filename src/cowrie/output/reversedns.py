@@ -14,7 +14,7 @@ class Output(cowrie.core.output.Output):
     Output plugin used for reverse DNS lookup
     """
 
-    timeout: int
+    timeout: int = 3
 
     def start(self):
         """
@@ -37,7 +37,7 @@ class Output(cowrie.core.output.Output):
             """
             Create log messages for connect events
             """
-            if not payload:
+            if result is None:
                 return
             payload = result[0][0].payload
             log.msg(
@@ -54,7 +54,7 @@ class Output(cowrie.core.output.Output):
             """
             Create log messages for forward events
             """
-            if not payload:
+            if result is None:
                 return
             payload = result[0][0].payload
             log.msg(
