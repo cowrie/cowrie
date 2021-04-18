@@ -7,6 +7,7 @@ import hashlib
 import re
 import socket
 import time
+from typing import Callable, List
 
 from twisted.internet import reactor
 from twisted.python import log
@@ -29,6 +30,13 @@ OUTPUT = [
 
 
 class command_ssh(HoneyPotCommand):
+    """
+    ssh
+    """
+
+    host: str
+    callbacks: List[Callable]
+
     def valid_ip(self, address):
         try:
             socket.inet_aton(address)

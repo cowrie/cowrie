@@ -256,14 +256,14 @@ class command_curl(HoneyPotCommand):
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
         try:
             parsed = compat.urllib_parse.urlparse(url)
-            scheme = parsed.scheme
-            host = parsed.hostname.decode("utf8")
-            port = parsed.port or (443 if scheme == "https" else 80)
+            scheme: bytes = parsed.scheme
+            host: str = parsed.hostname.decode("utf8")
+            port: int = parsed.port or (443 if scheme == "https" else 80)
             if scheme != b"http" and scheme != b"https":
                 raise NotImplementedError
         except Exception:
             self.errorWrite(
-                f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
+                f'curl: (1) Protocol "{scheme.encode("utf8")}" not supported or disabled in libcurl\n'
             )
             self.exit()
             return None

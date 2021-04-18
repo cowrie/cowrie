@@ -57,6 +57,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.kippoIP = None
         self.clientIP = None
         self.sessionno = None
+        self.factory = None
 
         if self.fs.exists(user.avatar.home):
             self.cwd = user.avatar.home
@@ -79,12 +80,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Send log directly to factory, avoiding normal log dispatch
         """
         args["sessionno"] = self.sessionno
-        pt = self.getProtoTransport()
-        pt.factory.logDispatch(**args)
+        self.factory.logDispatch(**args)
 
     def connectionMade(self):
         pt = self.getProtoTransport()
 
+        self.factory = pt.factory
         self.sessionno = pt.transport.sessionno
         self.realClientIP = pt.transport.getPeer().host
         self.realClientPort = pt.transport.getPeer().port
@@ -106,13 +107,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.kippoIP = CowrieConfig.get("honeypot", "internet_facing_ip")
         else:
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                self.kippoIP = s.getsockname()[0]
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.connect(("8.8.8.8", 80))
+                    self.kippoIP = s.getsockname()[0]
             except Exception:
                 self.kippoIP = "192.168.0.1"
-            finally:
-                s.close()
 
     def timeoutConnection(self):
         """

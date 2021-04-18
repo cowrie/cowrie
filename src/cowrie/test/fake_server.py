@@ -17,7 +17,7 @@ class FakeServer:
         self.arch = "linux-x64-lsb"
         self.hostname = "unitTest"
 
-        self.fs = fs.HoneyPotFilesystem(None, "arch", "/root")
+        self.fs = fs.HoneyPotFilesystem("arch", "/root")
         self.process = None
 
 

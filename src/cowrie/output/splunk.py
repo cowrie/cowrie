@@ -8,11 +8,8 @@ JSON log file is still recommended way to go
 
 
 import json
-
-try:
-    from BytesIO import BytesIO
-except ImportError:
-    from io import BytesIO
+from io import BytesIO
+from typing import Any
 
 from twisted.internet import reactor
 from twisted.internet.ssl import ClientContextFactory
@@ -28,6 +25,10 @@ class Output(cowrie.core.output.Output):
     """
     Splunk HEC output
     """
+
+    token: str
+    agent: Any
+    url: bytes
 
     def start(self):
         self.token = CowrieConfig.get("output_splunk", "token")

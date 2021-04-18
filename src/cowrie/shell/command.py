@@ -11,6 +11,7 @@ import re
 import shlex
 import stat
 import time
+from typing import Callable
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -33,7 +34,7 @@ class HoneyPotCommand:
         self.fs = self.protocol.fs
         self.data = None  # output data
         self.input_data = None  # used to store STDIN data passed via PIPE
-        self.writefn = self.protocol.pp.outReceived
+        self.writefn: Callable = self.protocol.pp.outReceived
         self.errorWritefn = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
@@ -95,23 +96,23 @@ class HoneyPotCommand:
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
 
-    def write(self, data):
+    def write(self, data: str) -> None:
         """
         Write a string to the user on stdout
         """
-        return self.writefn(data.encode("utf8"))
+        self.writefn(data.encode("utf8"))
 
-    def writeBytes(self, data):
+    def writeBytes(self, data: bytes) -> None:
         """
         Like write() but input is bytes
         """
-        return self.writefn(data)
+        self.writefn(data)
 
-    def errorWrite(self, data):
+    def errorWrite(self, data: str) -> None:
         """
         Write errors to the user on stderr
         """
-        return self.errorWritefn(data.encode("utf8"))
+        self.errorWritefn(data.encode("utf8"))
 
     def check_arguments(self, application, args):
         files = []
@@ -128,7 +129,7 @@ class HoneyPotCommand:
     def set_input_data(self, data):
         self.input_data = data
 
-    def write_to_file(self, data):
+    def write_to_file(self, data: bytes) -> None:
         with open(self.safeoutfile, "ab") as f:
             f.write(data)
         self.writtenBytes += len(data)
@@ -137,15 +138,15 @@ class HoneyPotCommand:
     def write_to_failed(self, data):
         pass
 
-    def start(self):
+    def start(self) -> None:
         if self.write != self.write_to_failed:
             self.call()
         self.exit()
 
-    def call(self):
-        self.write("Hello World! [{}]\n".format(repr(self.args)).encode("utf8"))
+    def call(self) -> None:
+        self.write("Hello World! [{}]\n".format(repr(self.args)))
 
-    def exit(self):
+    def exit(self) -> None:
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
@@ -172,25 +173,25 @@ class HoneyPotCommand:
             except AttributeError:
                 pass
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         log.msg("Received CTRL-C, exiting..")
         self.write("^C\n")
         self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(f"QUEUED INPUT: {line}")
         # FIXME: naive command parsing, see lineReceived below
         # line = "".join(line)
         self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=True))
 
-    def resume(self):
+    def resume(self) -> None:
         pass
 
-    def handle_TAB(self):
+    def handle_TAB(self) -> None:
         pass
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self.__class__.__name__)

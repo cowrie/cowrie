@@ -22,8 +22,8 @@ class Output(cowrie.core.output.Output):
         """
         Initialize pymisp module and ObjectWrapper (Abstract event and object creation)
         """
-        host = CowrieConfig.get("output_redis", "host")
-        port = CowrieConfig.get("output_redis", "port")
+        host: str = CowrieConfig.get("output_redis", "host")
+        port: int = CowrieConfig.getint("output_redis", "port")
 
         try:
             db = CowrieConfig.get("output_redis", "db")

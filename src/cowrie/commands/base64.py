@@ -1,4 +1,6 @@
+import base64
 import getopt
+import sys
 
 from twisted.python import log
 
@@ -11,6 +13,9 @@ class command_base64(HoneyPotCommand):
     """
     author: Ivan Korolev (@fe7ch)
     """
+
+    mode: str = "e"
+    ignore: bool
 
     def start(self):
         self.mode = "e"
@@ -106,22 +111,23 @@ Try 'base64 --help' for more information.
 
         self.exit()
 
-    def dojob(self, s):
+    def dojob(self, s: bytes) -> None:
         if self.ignore:
-            s = "".join(
+            s = b"".join(
                 [
-                    i
+                    i.to_bytes(1, sys.byteorder)
                     for i in s
                     if i
-                    in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+                    in b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
                 ]
             )
 
         if self.mode == "e":
-            self.write(s.encode("base64"))
+            self.writeBytes(base64.b64encode(s))
+            self.writeBytes(b"\n")
         else:
             try:
-                self.write(s.decode("base64"))
+                self.writeBytes(base64.b64decode(s))
             except Exception:
                 self.errorWrite("base64: invalid input\n")
 
