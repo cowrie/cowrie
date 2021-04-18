@@ -15,7 +15,6 @@ class Output(cowrie.core.output.Output):
     """
 
     index: str
-    es: Elasticsearch
     pipeline: str
 
     def start(self):
