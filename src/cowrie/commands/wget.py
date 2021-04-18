@@ -55,8 +55,9 @@ class command_wget(HoneyPotCommand):
     wget command
     """
 
-    limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
-    downloadPath = CowrieConfig.get("honeypot", "download_path")
+    limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    downloadPath: str = CowrieConfig.get("honeypot", "download_path")
+    quiet: bool = False
 
     def start(self):
         try:
@@ -67,7 +68,7 @@ class command_wget(HoneyPotCommand):
             return
 
         if len(args):
-            url = args[0].strip()
+            url: str = args[0].strip()
         else:
             self.errorWrite("wget: missing URL\n")
             self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
@@ -75,7 +76,7 @@ class command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        self.outfile = None
+        self.outfile: str = None
         self.quiet = False
         for opt in optlist:
             if opt[0] == "-O":
