@@ -14,7 +14,7 @@ class command_base64(HoneyPotCommand):
     author: Ivan Korolev (@fe7ch)
     """
 
-    mode: str
+    mode: str = "e"
     ignore: bool
 
     def start(self):
