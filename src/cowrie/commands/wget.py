@@ -215,7 +215,7 @@ class command_wget(HoneyPotCommand):
 
     def error(self, error, url):
         # we need to handle 301 redirects separately
-        if hasattr(error, "webStatus") and error.webStatus.decode() == "301":
+        if hasattr(error, "webStatus") and error.webStatus and error.webStatus.decode() == "301":
             self.errorWrite(f"{error.webStatus.decode()} {error.webMessage.decode()}\n")
             https_url = error.getErrorMessage().replace("301 Moved Permanently to ", "")
             self.errorWrite(f"Location {https_url} [following]\n")
