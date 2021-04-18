@@ -34,7 +34,7 @@ Send SSH logins to Virustotal
 import datetime
 import json
 import os
-from typing import Any
+from typing import Any, Dict
 from urllib.parse import urlencode, urlparse
 
 from twisted.internet import defer, reactor
@@ -97,7 +97,7 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry: dict) -> None:
+    def write(self, entry: Dict[str, Any]) -> None:
         if entry["eventid"] == "cowrie.session.file_download":
             if self.scan_url and "url" in entry:
                 log.msg("Checking url scan report at VT")
