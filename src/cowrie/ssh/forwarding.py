@@ -97,7 +97,7 @@ class SSHConnectForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
     name = b"cowrie-forwarded-direct-tcpip"
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         self.loseConnection()
 
 
@@ -111,7 +111,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
     def channelOpen(self, specificData):
         pass
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         log.msg(
             eventid="cowrie.direct-tcpip.data",
             format="discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s",
@@ -138,7 +138,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         self.dstport = dstport
         self.tunnel_established = False
 
-    def channelOpen(self, specificData):
+    def channelOpen(self, specificData: bytes) -> None:
         """
         Modifies the original to send a TCP tunnel request via the CONNECT method
         """
@@ -147,7 +147,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         connect_hdr = b"CONNECT " + dst.encode("ascii") + b" HTTP/1.1\r\n\r\n"
         forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         log.msg(
             eventid="cowrie.tunnelproxy-tcpip.data",
             format="sending via tunnel proxy %(data)s",
@@ -155,7 +155,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         )
         forwarding.SSHConnectForwardingChannel.dataReceived(self, data)
 
-    def write(self, data):
+    def write(self, data: bytes) -> None:
         """
         Modifies the original to strip off the TCP tunnel response
         """
@@ -178,5 +178,5 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
         forwarding.SSHConnectForwardingChannel.write(self, data)
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         self.loseConnection()

@@ -16,6 +16,7 @@ class Output(cowrie.core.output.Output):
 
     index: str
     pipeline: str
+    es: Any
 
     def start(self):
         host = CowrieConfig.get("output_elasticsearch", "host")

@@ -2,7 +2,8 @@ import configparser
 from io import StringIO
 
 from twisted.application.service import MultiService
-from twisted.internet import protocol, reactor
+from twisted.internet import protocol
+from twisted.internet import reactor  # type: ignore
 from twisted.trial import unittest
 
 from cowrie.core.utils import (
@@ -13,7 +14,7 @@ from cowrie.core.utils import (
 
 
 def get_config(config_string):
-    config = configparser.RawConfigParser()
+    config = configparser.ConfigParser()
     config.read_file(StringIO(config_string))
     return config
 
