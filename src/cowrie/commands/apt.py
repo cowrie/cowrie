@@ -5,7 +5,7 @@
 import random
 import re
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer, reactor  # type: ignore
 from twisted.internet.defer import inlineCallbacks
 
 from cowrie.shell.command import HoneyPotCommand

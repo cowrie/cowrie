@@ -7,7 +7,7 @@ import random
 import re
 import time
 
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
