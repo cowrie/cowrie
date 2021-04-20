@@ -20,17 +20,18 @@ class LoggingServerProtocol(insults.ServerProtocol):
     Wrapper for ServerProtocol that implements TTY logging
     """
 
-    redirlogOpen = False  # it will be set at core/protocol.py
-    stdinlogOpen = False
-    ttylogOpen = False
-    ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
-    downloadPath = CowrieConfig.get("honeypot", "download_path")
-    ttylogEnabled = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
-    bytesReceivedLimit = CowrieConfig.getint(
+    redirlogOpen: bool = False  # it will be set at core/protocol.py
+    stdinlogOpen: bool = False
+    ttylogOpen: bool = False
+    ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path")
+    downloadPath: str = CowrieConfig.get("honeypot", "download_path")
+    ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
+    bytesReceivedLimit: int = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
-    bytesReceived = 0
+    bytesReceived: int = 0
     redirFiles: Set[List[str]] = set()
+    type: str
 
     def __init__(self, prot=None, *a, **kw):
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
