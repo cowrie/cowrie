@@ -11,6 +11,7 @@ RFC 4253.
 import re
 import struct
 import time
+from typing import Any, List, Optional
 import uuid
 import zlib
 from hashlib import md5
@@ -33,8 +34,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     interactive_timeout: int = CowrieConfig.getint(
         "honeypot", "interactive_timeout", fallback=300
     )
+    transport: Any
+    outgoingCompression: Any
+    _blockedByKeyExchange: Any
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Return a pretty representation of this object.
 
@@ -43,11 +47,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         return f"Cowrie SSH Transport to {self.transport.getPeer().host}"
 
-    def connectionMade(self):
+    def connectionMade(self) -> None:
         """
         Called when the connection is made from the other side.
         We send our version, but wait with sending KEXINIT
         """
+        self.buf = b""
+
         self.transportId: str = uuid.uuid4().hex[:12]
         src_ip: str = self.transport.getPeer().host
 
@@ -73,10 +79,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
         self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
 
-        self.startTime = time.time()
+        self.startTime: float = time.time()
         self.setTimeout(self.auth_timeout)
 
-    def sendKexInit(self):
+    def sendKexInit(self) -> None:
         """
         Don't send key exchange prematurely
         """
@@ -84,14 +90,14 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             return
         transport.SSHServerTransport.sendKexInit(self)
 
-    def _unsupportedVersionReceived(self, remoteVersion):
+    def _unsupportedVersionReceived(self, remoteVersion: bytes) -> None:
         """
         Change message to be like OpenSSH
         """
         self.transport.write(b"Protocol major versions differ.\n")
         self.transport.loseConnection()
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         """
         First, check for the version string (SSH-2.0-*).  After that has been
         received, this method adds data to the buffer, and pulls out any
@@ -99,7 +105,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
-        self.buf = self.buf + data
+        self.buf: bytes = self.buf + data
         if not self.gotVersion:
             if b"\n" not in self.buf:
                 return
@@ -123,7 +129,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self.gotVersion = True
                 remote_version = m.group(1)
                 if remote_version not in self.supportedVersions:
-                    self._unsupportedVersionReceived(None)
+                    self._unsupportedVersionReceived(self.otherVersionString)
                     return
                 i = self.buf.index(b"\n")
                 self.buf = self.buf[i + 1 :]
@@ -134,10 +140,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
 
-    def dispatchMessage(self, message_num, payload):
+    def dispatchMessage(self, message_num: int, payload: bytes) -> None:
         transport.SSHServerTransport.dispatchMessage(self, message_num, payload)
 
-    def sendPacket(self, messageType, payload):
+    def sendPacket(self, messageType: int, payload: bytes) -> None:
         """
         Override because OpenSSH pads with 0 on KEXINIT
         """
@@ -169,7 +175,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.write(encPacket)
         self.outgoingPacketSequence += 1
 
-    def ssh_KEXINIT(self, packet):
+    def ssh_KEXINIT(self, packet: bytes) -> Any:
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
         (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = [
@@ -202,7 +208,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
-    def timeoutConnection(self):
+    def timeoutConnection(self) -> None:
         """
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.

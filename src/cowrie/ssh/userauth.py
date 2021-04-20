@@ -25,7 +25,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * IP based authentication
     """
 
-    def serviceStarted(self):
+    def serviceStarted(self) -> None:
         self.interfaceToMethod[credentials.IUsername] = b"none"
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b"password"
         keyboard = CowrieConfig.getboolean(
@@ -57,7 +57,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b"en"))
 
-    def ssh_USERAUTH_REQUEST(self, packet):
+    def ssh_USERAUTH_REQUEST(self, packet: bytes):
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 
@@ -74,7 +74,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     #         return defer.fail(error.ConchError("Incorrect signature"))
     #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
 
-    def auth_none(self, packet):
+    def auth_none(self, packet: bytes):
         """
         Allow every login
         """
@@ -82,7 +82,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         srcIp = self.transport.transport.getPeer().host
         return self.portal.login(c, srcIp, IConchUser)
 
-    def auth_password(self, packet):
+    def auth_password(self, packet: bytes):
         """
         Overridden to pass src_ip to credentials.UsernamePasswordIP
         """
@@ -91,7 +91,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
-    def auth_keyboard_interactive(self, packet):
+    def auth_keyboard_interactive(self, packet: bytes):
         """
         Keyboard interactive authentication.  No payload.  We create a
         PluggableAuthenticationModules credential and authenticate with our
@@ -142,7 +142,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self._pamDeferred = defer.Deferred()
         return self._pamDeferred
 
-    def ssh_USERAUTH_INFO_RESPONSE(self, packet):
+    def ssh_USERAUTH_INFO_RESPONSE(self, packet: bytes):
         """
         The user has responded with answers to PAMs authentication questions.
         Parse the packet into a PAM response and callback self._pamDeferred.
