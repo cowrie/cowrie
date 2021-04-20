@@ -5,7 +5,7 @@
 import hashlib
 import os
 import time
-from typing import List, Set
+from typing import Any, List, Set
 
 from twisted.conch.insults import insults
 from twisted.python import log
@@ -20,20 +20,24 @@ class LoggingServerProtocol(insults.ServerProtocol):
     Wrapper for ServerProtocol that implements TTY logging
     """
 
-    redirlogOpen: bool = False  # it will be set at core/protocol.py
-    stdinlogOpen: bool = False
-    ttylogOpen: bool = False
     ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path")
     downloadPath: str = CowrieConfig.get("honeypot", "download_path")
     ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
     bytesReceivedLimit: int = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
-    bytesReceived: int = 0
-    redirFiles: Set[List[str]] = set()
-    type: str
 
     def __init__(self, prot=None, *a, **kw):
+        self.type: str
+        self.ttyLogSize: int = 0
+        self.bytesReceived: int = 0
+        self.redirFiles: Set[List[str]] = set()
+        self.redirlogOpen: bool = False  # it will be set at core/protocol.py
+        self.stdinlogOpen: bool = False
+        self.ttylogOpen: bool = False
+        self.terminalProtocol: Any
+        self.transport: Any
+
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
 
         if prot is protocol.HoneyPotExecProtocol:
@@ -46,9 +50,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         channelId = self.transport.session.id
         return (transportId, channelId)
 
-    def connectionMade(self):
+    def connectionMade(self) -> None:
         transportId, channelId = self.getSessionId()
-        self.startTime = time.time()
+        self.startTime: float = time.time()
 
         if self.ttylogEnabled:
             self.ttylogFile = "{}/{}-{}-{}{}.log".format(
@@ -85,7 +89,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.type == "e":
             self.terminalProtocol.execcmd.encode("utf8")
 
-    def write(self, data):
+    def write(self, data: bytes) -> None:
         if self.ttylogEnabled and self.ttylogOpen:
             ttylog.ttylog_write(
                 self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
@@ -94,7 +98,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.write(self, data)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         """
         Input received from user
         """
@@ -117,14 +121,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.terminalProtocol:
             insults.ServerProtocol.dataReceived(self, data)
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         """
         Receive channel close and pass on to terminal
         """
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
 
-    def loseConnection(self):
+    def loseConnection(self) -> None:
         """
         Override super to remove the terminal reset on logout
         """
