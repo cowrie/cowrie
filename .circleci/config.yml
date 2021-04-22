@@ -56,7 +56,7 @@ jobs:
           name: Pyre
           command: |
             . cowrie-env/bin/activate
-            pyre --noninteractive analyze || true
+            pyre analyze || true
       - run:
           name: Build Python library
           command: |
