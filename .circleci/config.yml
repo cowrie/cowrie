@@ -46,7 +46,7 @@ jobs:
           name: Twistedchecker
           command: |
             . cowrie-env/bin/activate
-            twistedchecker src || true
+            twistedchecker -d W9002,W9202,W9204,W9208,W9402,C0301 src || true
       - run:
           name: PyType
           command: |
