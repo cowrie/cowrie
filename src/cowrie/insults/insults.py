@@ -29,7 +29,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def __init__(self, prot=None, *a, **kw):
         self.type: str
-        self.ttyLogSize: int = 0
+        self.ttylogSize: int = 0
         self.bytesReceived: int = 0
         self.redirFiles: Set[List[str]] = set()
         self.redirlogOpen: bool = False  # it will be set at core/protocol.py
