@@ -25,6 +25,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * Keyboard-interactive authentication (PAM)
     * IP based authentication
     """
+
     _pamDeferred: Optional[defer.Deferred]
 
     def serviceStarted(self) -> None:
@@ -84,7 +85,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         Allow every login
         """
         c = credentials.Username(self.user)
-        srcIp: str = self.transport.transport.getPeer().host #  type: ignore
+        srcIp: str = self.transport.transport.getPeer().host  #  type: ignore
         return self.portal.login(c, srcIp, IConchUser)
 
     def auth_password(self, packet: bytes) -> Any:
@@ -117,7 +118,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         )
         return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
 
-    def _pamConv(self, items: List[Tuple[Any,int]]) -> defer.Deferred:
+    def _pamConv(self, items: List[Tuple[Any, int]]) -> defer.Deferred:
         """
         Convert a list of PAM authentication questions into a
         MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
@@ -157,9 +158,13 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             ...
             string response n
         """
-        d, self._pamDeferred = self._pamDeferred, None
-
+        d: Optional[defer.Deferred] = self._pamDeferred
+        self._pamDeferred = None
         resp: List
+
+        if not d:
+            raise Exception("can't find deferred in ssh_USERAUTH_INFO_RESPONSE")
+
         try:
             resp = []
             numResps = struct.unpack(">L", packet[:4])[0]
