@@ -3,6 +3,7 @@
 
 
 import struct
+from typing import Any, List, Optional, Tuple
 
 from twisted.conch import error
 from twisted.conch.interfaces import IConchUser
@@ -24,6 +25,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * Keyboard-interactive authentication (PAM)
     * IP based authentication
     """
+    _pamDeferred: Optional[defer.Deferred]
 
     def serviceStarted(self) -> None:
         self.interfaceToMethod[credentials.IUsername] = b"none"
@@ -57,7 +59,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b"en"))
 
-    def ssh_USERAUTH_REQUEST(self, packet: bytes):
+    def ssh_USERAUTH_REQUEST(self, packet: bytes) -> Any:
+        """
+        This is overriden to send the login banner.
+        """
         self.sendBanner()
         return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
 
@@ -74,24 +79,24 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     #         return defer.fail(error.ConchError("Incorrect signature"))
     #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
 
-    def auth_none(self, packet: bytes):
+    def auth_none(self, packet: bytes) -> Any:
         """
         Allow every login
         """
         c = credentials.Username(self.user)
-        srcIp = self.transport.transport.getPeer().host
+        srcIp: str = self.transport.transport.getPeer().host #  type: ignore
         return self.portal.login(c, srcIp, IConchUser)
 
-    def auth_password(self, packet: bytes):
+    def auth_password(self, packet: bytes) -> Any:
         """
         Overridden to pass src_ip to credentials.UsernamePasswordIP
         """
         password = getNS(packet[1:])[0]
-        srcIp = self.transport.transport.getPeer().host
+        srcIp = self.transport.transport.getPeer().host  # type: ignore
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
-    def auth_keyboard_interactive(self, packet: bytes):
+    def auth_keyboard_interactive(self, packet: bytes) -> Any:
         """
         Keyboard interactive authentication.  No payload.  We create a
         PluggableAuthenticationModules credential and authenticate with our
@@ -101,18 +106,18 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
           credentials.PluggableAuthenticationModulesIP
         """
         if self._pamDeferred is not None:
-            self.transport.sendDisconnect(
+            self.transport.sendDisconnect(  # type: ignore
                 DISCONNECT_PROTOCOL_ERROR,
                 "only one keyboard interactive attempt at a time",
             )
             return defer.fail(error.IgnoreAuthentication())
-        src_ip = self.transport.transport.getPeer().host
+        src_ip = self.transport.transport.getPeer().host  # type: ignore
         c = credentials.PluggableAuthenticationModulesIP(
             self.user, self._pamConv, src_ip
         )
         return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
 
-    def _pamConv(self, items):
+    def _pamConv(self, items: List[Tuple[Any,int]]) -> defer.Deferred:
         """
         Convert a list of PAM authentication questions into a
         MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
@@ -138,11 +143,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         for prompt, echo in resp:
             packet += NS(prompt)
             packet += bytes((echo,))
-        self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)
+        self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)  # type: ignore
         self._pamDeferred = defer.Deferred()
         return self._pamDeferred
 
-    def ssh_USERAUTH_INFO_RESPONSE(self, packet: bytes):
+    def ssh_USERAUTH_INFO_RESPONSE(self, packet: bytes) -> None:
         """
         The user has responded with answers to PAMs authentication questions.
         Parse the packet into a PAM response and callback self._pamDeferred.
@@ -154,6 +159,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         """
         d, self._pamDeferred = self._pamDeferred, None
 
+        resp: List
         try:
             resp = []
             numResps = struct.unpack(">L", packet[:4])[0]

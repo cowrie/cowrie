@@ -11,10 +11,10 @@ RFC 4253.
 import re
 import struct
 import time
-from typing import Any, List, Optional
 import uuid
 import zlib
 from hashlib import md5
+from typing import Any
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
