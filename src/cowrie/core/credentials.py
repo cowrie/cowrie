@@ -26,6 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from typing import Callable
 
 from twisted.cred.credentials import ICredentials, IUsernamePassword
 
@@ -68,9 +69,9 @@ class PluggableAuthenticationModulesIP:
     Twisted removed IPAM in 15, adding in Cowrie now
     """
 
-    def __init__(self, username: str, pamConversion: bool, ip: str) -> None:
+    def __init__(self, username: str, pamConversion: Callable, ip: str) -> None:
         self.username: str = username
-        self.pamConversion: bool = pamConversion
+        self.pamConversion: Callable = pamConversion
         self.ip: str = ip
 
 
