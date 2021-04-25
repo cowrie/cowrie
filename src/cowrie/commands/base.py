@@ -148,7 +148,7 @@ class command_echo(HoneyPotCommand):
 
         try:
             # replace r'\\x' with r'\x'
-            string = "".join(args).replace(r"\\x", r"\x")
+            string = " ".join(args).replace(r"\\x", r"\x")
 
             # replace single character escape \x0 with \x00
             string = re.sub(
