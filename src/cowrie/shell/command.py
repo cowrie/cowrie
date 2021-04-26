@@ -76,14 +76,14 @@ class HoneyPotCommand:
                 except fs.FileNotFound:
                     # The outfile locates at a non-existing directory.
                     self.errorWrite(
-                        "-bash: %s: No such file or directory\n" % self.outfile
+                        f"-bash: {self.outfile}: No such file or directory\n"
                     )
                     self.writefn = self.write_to_failed
                     self.outfile = None
                     self.safeoutfile = ""
                 except fs.PermissionDenied:
                     # The outfile locates in a file-system that doesn't allow file creation
-                    self.errorWrite("-bash: %s: Permission denied\n" % self.outfile)
+                    self.errorWrite(f"-bash: {self.outfile}: Permission denied\n")
                     self.writefn = self.write_to_failed
                     self.outfile = None
                     self.safeoutfile = ""
@@ -144,7 +144,7 @@ class HoneyPotCommand:
         self.exit()
 
     def call(self) -> None:
-        self.write("Hello World! [{}]\n".format(repr(self.args)))
+        self.write(f"Hello World! [{repr(self.args)}]\n")
 
     def exit(self) -> None:
         """

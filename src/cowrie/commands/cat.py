@@ -82,7 +82,7 @@ class command_cat(HoneyPotCommand):
         elif isinstance(input, bytes):
             pass
         else:
-            log.msg("unusual cat input {}".format(repr(input)))
+            log.msg(f"unusual cat input {repr(input)}")
 
         lines = input.split(b"\n")
         if lines[-1] == b"":

@@ -47,7 +47,7 @@ class Output(cowrie.core.output.Output):
     def write(self, logentry):
         if self.format == "cef":
             self.outfile.write("{} ".format(logentry["timestamp"]))
-            self.outfile.write("{}\n".format(cowrie.core.cef.formatCef(logentry)))
+            self.outfile.write(f"{cowrie.core.cef.formatCef(logentry)}\n")
         else:
             self.outfile.write("{} ".format(logentry["timestamp"]))
             self.outfile.write("{} ".format(logentry["session"]))

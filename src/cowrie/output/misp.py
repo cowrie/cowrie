@@ -109,7 +109,7 @@ class Output(cowrie.core.output.Output):
             event.publish()
         result = self.misp_api.add_event(event)
         if self.debug:
-            log.msg("Event creation result: \n%s" % result)
+            log.msg(f"Event creation result: \n{result}")
 
     @ignore_warnings
     def add_sighting(self, entry, attribute):

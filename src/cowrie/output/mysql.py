@@ -87,7 +87,7 @@ class Output(cowrie.core.output.Output):
         Just run a deferred sql query, only care about errors
         """
         if self.debug:
-            log.msg("output_mysql: MySQL query: {} {}".format(sql, repr(args)))
+            log.msg(f"output_mysql: MySQL query: {sql} {repr(args)}")
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
 

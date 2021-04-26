@@ -174,7 +174,7 @@ class command_ls(HoneyPotCommand):
                 perms[0] = "d"
             elif file[fs.A_TYPE] == fs.T_LINK:
                 perms[0] = "l"
-                linktarget = " -> {}".format(file[fs.A_TARGET])
+                linktarget = f" -> {file[fs.A_TARGET]}"
 
             perms = "".join(perms)
             ctime = time.localtime(file[fs.A_CTIME])

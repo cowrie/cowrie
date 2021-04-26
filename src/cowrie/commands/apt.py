@@ -155,7 +155,7 @@ pages for more information and options.
             )
             i += 1
             yield self.sleep(1, 2)
-        self.write("Fetched %s.2kB in 1s (4493B/s)\n" % (totalsize))
+        self.write(f"Fetched {totalsize}.2kB in 1s (4493B/s)\n")
         self.write("Reading package fields... Done\n")
         yield self.sleep(1, 2)
         self.write("Reading package status... Done\n")

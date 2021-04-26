@@ -41,7 +41,7 @@ class PoolClient(Protocol):
         self.transport.write(buf)
 
     def send_vm_request(self, src_ip):
-        fmt = "!cH{}s".format(len(src_ip))
+        fmt = f"!cH{len(src_ip)}s"
         buf = struct.pack(fmt, b"r", len(src_ip), src_ip.encode())
 
         self.transport.write(buf)
