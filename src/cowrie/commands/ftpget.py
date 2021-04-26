@@ -46,7 +46,7 @@ class FTP(ftplib.FTP):
             )
             try:
                 if rest is not None:
-                    self.sendcmd("REST %s" % rest)
+                    self.sendcmd(f"REST {rest}")
                 resp = self.sendcmd(cmd)
                 if resp[0] == "2":
                     resp = self.getresp()
@@ -59,7 +59,7 @@ class FTP(ftplib.FTP):
             sock = self.makeport()
             try:
                 if rest is not None:
-                    self.sendcmd("REST %s" % rest)
+                    self.sendcmd(f"REST {rest}")
                 resp = self.sendcmd(cmd)
                 if resp[0] == "2":
                     resp = self.getresp()
@@ -154,7 +154,9 @@ Download a file via FTP
         path = os.path.dirname(fakeoutfile)
         if not path or not self.fs.exists(path) or not self.fs.isdir(path):
             self.write(
-                "ftpget: can't open '%s': No such file or directory" % self.local_file
+                "ftpget: can't open '{}': No such file or directory".format(
+                    self.local_file
+                )
             )
             self.exit()
             return
@@ -229,7 +231,7 @@ Download a file via FTP
         # connect
         if self.verbose:
             self.write(
-                "Connecting to %s\n" % self.host
+                f"Connecting to {self.host}\n"
             )  # TODO: add its IP address after the host
 
         try:
@@ -247,11 +249,11 @@ Download a file via FTP
         if self.verbose:
             self.write("ftpget: cmd (null) (null)\n")
             if self.username:
-                self.write("ftpget: cmd USER %s\n" % self.username)
+                self.write(f"ftpget: cmd USER {self.username}\n")
             else:
                 self.write("ftpget: cmd USER anonymous\n")
             if self.password:
-                self.write("ftpget: cmd PASS %s\n" % self.password)
+                self.write(f"ftpget: cmd PASS {self.password}\n")
             else:
                 self.write("ftpget: cmd PASS busybox@\n")
 
@@ -263,7 +265,7 @@ Download a file via FTP
                     self.username, self.password, str(e)
                 )
             )
-            self.write("ftpget: unexpected server response to USER: %s\n" % str(e))
+            self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
             try:
                 ftp.quit()
             except socket.timeout:
@@ -274,15 +276,15 @@ Download a file via FTP
         if self.verbose:
             self.write("ftpget: cmd TYPE I (null)\n")
             self.write("ftpget: cmd PASV (null)\n")
-            self.write("ftpget: cmd SIZE %s\n" % self.remote_path)
-            self.write("ftpget: cmd RETR %s\n" % self.remote_path)
+            self.write(f"ftpget: cmd SIZE {self.remote_path}\n")
+            self.write(f"ftpget: cmd RETR {self.remote_path}\n")
 
         try:
             ftp.cwd(self.remote_dir)
-            ftp.retrbinary("RETR %s" % self.remote_file, self.artifactFile.write)
+            ftp.retrbinary(f"RETR {self.remote_file}", self.artifactFile.write)
         except Exception as e:
-            log.msg("FTP retrieval failed: %s" % str(e))
-            self.write("ftpget: unexpected server response to USER: %s\n" % str(e))
+            log.msg(f"FTP retrieval failed: {str(e)}")
+            self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
             try:
                 ftp.quit()
             except socket.timeout:

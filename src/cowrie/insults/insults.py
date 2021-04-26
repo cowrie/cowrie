@@ -29,6 +29,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def __init__(self, prot=None, *a, **kw):
         self.type: str
+        self.ttylogFile: str
         self.ttylogSize: int = 0
         self.bytesReceived: int = 0
         self.redirFiles: Set[List[str]] = set()
@@ -37,6 +38,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogOpen: bool = False
         self.terminalProtocol: Any
         self.transport: Any
+        self.startTime: float
+        self.stdinlogFile: str
 
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
 

@@ -46,7 +46,7 @@ class Output(cowrie.core.output.Output):
             self.col_ipforwards = self.mongo_db["ipforwards"]
             self.col_ipforwardsdata = self.mongo_db["ipforwardsdata"]
         except Exception as e:
-            log.msg("output_mongodb: Error: %s" % str(e))
+            log.msg(f"output_mongodb: Error: {str(e)}")
 
     def stop(self):
         self.mongo_client.close()

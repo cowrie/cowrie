@@ -31,7 +31,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     def serviceStarted(self) -> None:
         self.interfaceToMethod[credentials.IUsername] = b"none"
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b"password"
-        keyboard = CowrieConfig.getboolean(
+        keyboard: bool = CowrieConfig.getboolean(
             "ssh", "auth_keyboard_interactive_enabled", fallback=False
         )
 
@@ -39,8 +39,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             self.interfaceToMethod[
                 credentials.IPluggableAuthenticationModulesIP
             ] = b"keyboard-interactive"
-        self.bannerSent = False
-        self._pamDeferred = None
+        self.bannerSent: bool = False
+        self._pamDeferred: Optional[defer.Deferred] = None
         userauth.SSHUserAuthServer.serviceStarted(self)
 
     def sendBanner(self):
@@ -173,7 +173,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 response, packet = getNS(packet)
                 resp.append((response, 0))
             if packet:
-                raise error.ConchError("{:d} bytes of extra data".format(len(packet)))
+                raise error.ConchError(f"{len(packet):d} bytes of extra data")
         except Exception:
             d.errback(Failure())
         else:

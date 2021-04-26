@@ -74,9 +74,7 @@ class command_free(HoneyPotCommand):
                     current_magnitude += 1
 
                 # Format to string and append value with new magnitude
-                raw_mem_stats[key] = str(
-                    "{:g}{}".format(value, magnitude[current_magnitude])
-                )
+                raw_mem_stats[key] = str(f"{value:g}{magnitude[current_magnitude]}")
 
         # Write the output to screen
         self.write(FREE_OUTPUT.format(**raw_mem_stats))

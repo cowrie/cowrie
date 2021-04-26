@@ -238,7 +238,7 @@ class Output(cowrie.core.output.Output):
         fields = {("apikey", self.apiKey)}
         files = {("file", fileName, open(artifact, "rb"))}
         if self.debug:
-            log.msg("submitting to VT: {}".format(repr(files)))
+            log.msg(f"submitting to VT: {repr(files)}")
         contentType, body = encode_multipart_formdata(fields, files)
         producer = StringProducer(body)
         headers = http_headers.Headers(

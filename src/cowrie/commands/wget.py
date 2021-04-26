@@ -28,18 +28,18 @@ def tdiff(seconds):
 
     s = "%ds" % (int(t),)
     if minutes >= 1:
-        s = "%dm %s" % (minutes, s)
+        s = f"{minutes}m {s}"
     if hours >= 1:
-        s = "%dh %s" % (hours, s)
+        s = f"{hours}h {s}"
     if days >= 1:
-        s = "%dd %s" % (days, s)
+        s = f"{days}d {s}"
     return s
 
 
 def sizeof_fmt(num):
     for x in ["bytes", "K", "M", "G", "T"]:
         if num < 1024.0:
-            return "%d%s" % (num, x)
+            return f"{num}{x}"
         num /= 1024.0
 
 
@@ -95,7 +95,7 @@ class command_wget(HoneyPotCommand):
             pass
 
         if "://" not in url:
-            url = "http://%s" % url
+            url = f"http://{url}"
 
         urldata = compat.urllib_parse.urlparse(url)
 
@@ -111,7 +111,9 @@ class command_wget(HoneyPotCommand):
             path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
-                    "wget: %s: Cannot open: No such file or directory\n" % self.outfile
+                    "wget: {}: Cannot open: No such file or directory\n".format(
+                        self.outfile
+                    )
                 )
                 self.exit()
                 return
@@ -151,7 +153,7 @@ class command_wget(HoneyPotCommand):
                     time.strftime("%Y-%m-%d %H:%M:%S"), url.decode("utf8")
                 )
             )
-            self.errorWrite("Connecting to %s:%d... connected.\n" % (host, port))
+            self.errorWrite(f"Connecting to {host}:{port}... connected.\n")
             self.errorWrite("HTTP request sent, awaiting response... ")
 
         factory = HTTPProgressDownloader(
@@ -350,7 +352,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 percent = int(self.currentlength / self.totallength * 100)
                 spercent = f"{percent}%"
             else:
-                spercent = "%dK" % (self.currentlength / 1000)
+                spercent = f"{self.currentlength / 1000}K"
                 percent = 0
             self.speed = self.currentlength / (time.time() - self.started)
             eta = (self.totallength - self.currentlength) / self.speed
