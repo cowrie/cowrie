@@ -60,6 +60,7 @@ class command_wget(HoneyPotCommand):
     quiet: bool = False
 
     def start(self):
+        url: str
         try:
             optlist, args = getopt.getopt(self.args, "cqO:P:", ["header="])
         except getopt.GetoptError:
@@ -68,7 +69,7 @@ class command_wget(HoneyPotCommand):
             return
 
         if len(args):
-            url: str = args[0].strip()
+            url = args[0].strip()
         else:
             self.errorWrite("wget: missing URL\n")
             self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
@@ -258,7 +259,7 @@ class command_wget(HoneyPotCommand):
             try:
                 self.protocol.logDispatch(
                     eventid="cowrie.session.file_download.failed",
-                    format="Attempt to download file(s) from URL (%(url)s) failed",
+                    format="Attempt to download file(s) from URL (%(self.url)s) failed",
                     url=self.url,
                 )
             except Exception:

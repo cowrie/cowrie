@@ -254,9 +254,10 @@ class command_curl(HoneyPotCommand):
             self.deferred.addErrback(self.error, url)
 
     def download(self, url, fakeoutfile, outputfile, *args, **kwargs):
+        scheme: bytes
         try:
             parsed = compat.urllib_parse.urlparse(url)
-            scheme: bytes = parsed.scheme
+            scheme = parsed.scheme
             host: str = parsed.hostname.decode("utf8")
             port: int = parsed.port or (443 if scheme == "https" else 80)
             if scheme != b"http" and scheme != b"https":

@@ -27,8 +27,8 @@ class HoneyPotSSHSession(session.SSHSession):
         log.msg(
             eventid="cowrie.client.var",
             format="request_env: %(name)s=%(value)s",
-            name=name,
-            value=value,
+            name=name.decode("utf-8"),
+            value=value.decode("utf-8"),
         )
         # FIXME: This only works for shell, not for exec command
         if self.session:

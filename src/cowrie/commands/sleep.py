@@ -8,7 +8,7 @@ This module contains the sleep command
 
 import re
 
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 
 from cowrie.shell.command import HoneyPotCommand
 
