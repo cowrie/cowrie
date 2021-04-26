@@ -7,7 +7,8 @@ import random
 import re
 import time
 
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
+from twisted.internet.defer import Deferred
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
@@ -48,6 +49,8 @@ class command_gcc(HoneyPotCommand):
         b"\x0c\x00\x02\x00\x14\x00\x02\x00\x00\x00\x00\x01\x40\x00\x00\x00\x00\x00\x00"
         b"\x01\x00\x00\x00"
     )
+
+    scheduled: Deferred
 
     def start(self):
         """

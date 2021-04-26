@@ -60,8 +60,8 @@ class command_yum(HoneyPotCommand):
         )
         randnum = random.randint(100, 900)
         randnum2 = random.randint(100, 900)
-        randhash = hashlib.sha1(b"{}".format(randnum)).hexdigest()
-        randhash2 = hashlib.sha1(b"{}".format(randnum2)).hexdigest()
+        randhash = hashlib.sha1("{}".format(randnum).encode()).hexdigest()
+        randhash2 = hashlib.sha1("{}".format(randnum2).encode()).hexdigest()
         yield self.sleep(1, 2)
         self.write(
             "Installed: 7/{}  {}:{}\n".format(arch, random.randint(500, 800), randhash)
