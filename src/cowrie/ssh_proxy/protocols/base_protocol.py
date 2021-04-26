@@ -27,11 +27,11 @@
 # SUCH DAMAGE.
 
 
-class BaseProtocol(object):
-    data = ''
+class BaseProtocol:
+    data = b""
     packetSize = 0
-    name = ''
-    uuid = ''
+    name = ""
+    uuid = ""
     ttylog_file = None
 
     def __init__(self, uuid=None, name=None, ssh=None):
@@ -53,13 +53,13 @@ class BaseProtocol(object):
         pass
 
     def extract_int(self, length):
-        value = int.from_bytes(self.data[:length], byteorder='big')
+        value = int.from_bytes(self.data[:length], byteorder="big")
         self.packetSize = self.packetSize - length
         self.data = self.data[length:]
         return value
 
     def put_int(self, number):
-        return number.to_bytes(4, byteorder='big')
+        return number.to_bytes(4, byteorder="big")
 
     def extract_string(self):
         length = self.extract_int(4)
@@ -77,7 +77,7 @@ class BaseProtocol(object):
         self.packetSize = length
         value = self.data
         self.packetSize -= len(value)
-        self.data = ''
+        self.data = ""
         return value
 
     def __deepcopy__(self, memo):

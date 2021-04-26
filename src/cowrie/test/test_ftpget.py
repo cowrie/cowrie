@@ -4,8 +4,6 @@
 # See LICENSE for details.
 
 
-from __future__ import absolute_import, division
-
 import os
 
 from twisted.trial import unittest
@@ -21,10 +19,10 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellftpgetCommandTests(unittest.TestCase):
-
     def setUp(self):
         self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer()))
+            fake_server.FakeAvatar(fake_server.FakeServer())
+        )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
@@ -33,8 +31,8 @@ class ShellftpgetCommandTests(unittest.TestCase):
         """
         Basic test
         """
-        self.proto.lineReceived(b'ftpget\n')
-        self.assertEquals(
+        self.proto.lineReceived(b"ftpget\n")
+        self.assertEqual(
             self.tr.value(),
             b"""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
 
@@ -47,7 +45,8 @@ Download a file via FTP
     -u USER     Username
     -p PASS     Password
     -P NUM      Port\n\n"""
-            + PROMPT)
+            + PROMPT,
+        )
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

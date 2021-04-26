@@ -1,7 +1,6 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
@@ -14,8 +13,7 @@ from cowrie.shell import protocol
 
 
 @implementer(ISession)
-class SSHSessionForCowrieUser(object):
-
+class SSHSessionForCowrieUser:
     def __init__(self, avatar, reactor=None):
         """
         Construct an C{SSHSessionForCowrieUser}.
@@ -31,16 +29,21 @@ class SSHSessionForCowrieUser(object):
         self.gid = avatar.gid
         self.username = avatar.username
         self.environ = {
-            'LOGNAME': self.username,
-            'SHELL': '/bin/bash',
-            'USER': self.username,
-            'HOME': self.avatar.home,
-            'TMOUT': '1800',
-            'UID': str(self.uid)}
+            "LOGNAME": self.username,
+            "SHELL": "/bin/bash",
+            "USER": self.username,
+            "HOME": self.avatar.home,
+            "TMOUT": "1800",
+            "UID": str(self.uid),
+        }
         if self.uid == 0:
-            self.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+            self.environ[
+                "PATH"
+            ] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         else:
-            self.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games'
+            self.environ[
+                "PATH"
+            ] = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 
         self.server.initFileSystem(self.avatar.home)
 
@@ -49,24 +52,26 @@ class SSHSessionForCowrieUser(object):
 
     def openShell(self, processprotocol):
         self.protocol = insults.LoggingServerProtocol(
-            protocol.HoneyPotInteractiveProtocol, self)
+            protocol.HoneyPotInteractiveProtocol, self
+        )
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
-        self.environ['TERM'] = terminal.decode("utf-8")
+        self.environ["TERM"] = terminal.decode("utf-8")
         log.msg(
-            eventid='cowrie.client.size',
+            eventid="cowrie.client.size",
             width=windowSize[1],
             height=windowSize[0],
-            format='Terminal Size: %(width)s %(height)s'
+            format="Terminal Size: %(width)s %(height)s",
         )
         self.windowSize = windowSize
         return None
 
     def execCommand(self, processprotocol, cmd):
         self.protocol = insults.LoggingServerProtocol(
-            protocol.HoneyPotExecProtocol, self, cmd)
+            protocol.HoneyPotExecProtocol, self, cmd
+        )
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 

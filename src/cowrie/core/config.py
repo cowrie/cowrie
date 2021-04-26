@@ -5,29 +5,15 @@
 This module contains code to deal with Cowrie's configuration
 """
 
-from __future__ import absolute_import, division
 
 import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
+from typing import List, Union
 
 
-def to_environ_key(key):
+def to_environ_key(key: str) -> str:
     return key.upper()
-
-
-class CowrieConfig(object):
-    """
-    Singleton class for configuration data
-    """
-    __instance = None
-
-    def __new__(cls):
-        if CowrieConfig.__instance is None:
-            CowrieConfig.__instance = object.__new__(EnvironmentConfigParser)
-            CowrieConfig.__instance.__init__(interpolation=configparser.ExtendedInterpolation())
-            CowrieConfig.__instance.read(get_config_path())
-        return CowrieConfig.__instance
 
 
 class EnvironmentConfigParser(configparser.ConfigParser):
@@ -35,42 +21,49 @@ class EnvironmentConfigParser(configparser.ConfigParser):
     ConfigParser with additional option to read from environment variables
     # TODO: def sections()
     """
-    def has_option(self, section, option):
-        if to_environ_key('_'.join(("cowrie", section, option))) in environ:
-            return True
-        return super(EnvironmentConfigParser, self).has_option(section, option)
 
-    def get(self, section, option, raw=False, **kwargs):
-        key = to_environ_key('_'.join(("cowrie", section, option)))
+    def has_option(self, section: str, option: str) -> bool:
+        if to_environ_key("_".join(("cowrie", section, option))) in environ:
+            return True
+        return super().has_option(section, option)
+
+    def get(self, section: str, option: str, *, raw: bool = False, **kwargs) -> str:  # type: ignore
+        key: str = to_environ_key("_".join(("cowrie", section, option)))
         if key in environ:
             return environ[key]
-        return super(EnvironmentConfigParser, self).get(section, option, raw=raw, **kwargs)
+        return super().get(section, option, raw=raw, **kwargs)
 
 
-def readConfigFile(cfgfile):
+def readConfigFile(cfgfile: Union[str, List[str]]) -> configparser.ConfigParser:
     """
     Read config files and return ConfigParser object
 
     @param cfgfile: filename or array of filenames
     @return: ConfigParser object
     """
-    parser = EnvironmentConfigParser(
-        interpolation=configparser.ExtendedInterpolation())
+    parser = EnvironmentConfigParser(interpolation=configparser.ExtendedInterpolation())
     parser.read(cfgfile)
     return parser
 
 
-def get_config_path():
-    """Get absolute path to the config file
-    """
+def get_config_path() -> List[str]:
+    """Get absolute path to the config file"""
     current_path = abspath(dirname(__file__))
     root = "/".join(current_path.split("/")[:-3])
 
-    config_files = [join(root, "etc/cowrie.cfg.dist"), "/etc/cowrie/cowrie.cfg",
-                    join(root, "etc/cowrie.cfg"), join(root, "cowrie.cfg")]
+    config_files = [
+        join(root, "etc/cowrie.cfg.dist"),
+        "/etc/cowrie/cowrie.cfg",
+        join(root, "etc/cowrie.cfg"),
+        join(root, "cowrie.cfg"),
+    ]
     found_confs = [path for path in config_files if exists(path)]
 
     if found_confs:
         return found_confs
 
     print("Config file not found")
+    return []
+
+
+CowrieConfig = readConfigFile(get_config_path())

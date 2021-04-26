@@ -12,6 +12,10 @@ docs/_build
 build/
 log/
 .eggs/
+.envrc
+.direnv/
+.pyre/
+.pytype/
 __pycache__/
 *.py[cod]
 *env/

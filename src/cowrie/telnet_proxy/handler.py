@@ -14,10 +14,10 @@ def process_backspaces(s):
     Takes a user-input string that might have backspaces in it (represented as 0x7F),
     and actually performs the 'backspace operation' to return a clean string.
     """
-    n = b''
+    n = b""
     for i in range(len(s)):
         char = chr(s[i]).encode()
-        if char == b'\x7f':
+        if char == b"\x7f":
             n = n[:-1]
         else:
             n += char
@@ -30,7 +30,7 @@ def remove_all(original_string, remove_list):
     """
     n = original_string
     for substring in remove_list:
-        n = n.replace(substring, b'')
+        n = n.replace(substring, b"")
     return n
 
 
@@ -45,27 +45,34 @@ class TelnetHandler:
         self.client = None
 
         # definitions from config
-        self.spoofAuthenticationData = CowrieConfig().getboolean('proxy', 'telnet_spoof_authentication')
+        self.spoofAuthenticationData = CowrieConfig.getboolean(
+            "proxy", "telnet_spoof_authentication"
+        )
 
-        self.backendLogin = CowrieConfig().get('proxy', 'backend_user').encode()
-        self.backendPassword = CowrieConfig().get('proxy', 'backend_pass').encode()
+        self.backendLogin = CowrieConfig.get("proxy", "backend_user").encode()
+        self.backendPassword = CowrieConfig.get("proxy", "backend_pass").encode()
 
-        self.usernameInNegotiationRegex = CowrieConfig().get('proxy', 'telnet_username_in_negotiation_regex',
-                                                             raw=True).encode()
-        self.usernamePromptRegex = CowrieConfig().get('proxy', 'telnet_username_prompt_regex', raw=True).encode()
-        self.passwordPromptRegex = CowrieConfig().get('proxy', 'telnet_password_prompt_regex', raw=True).encode()
+        self.usernameInNegotiationRegex = CowrieConfig.get(
+            "proxy", "telnet_username_in_negotiation_regex", raw=True
+        ).encode()
+        self.usernamePromptRegex = CowrieConfig.get(
+            "proxy", "telnet_username_prompt_regex", raw=True
+        ).encode()
+        self.passwordPromptRegex = CowrieConfig.get(
+            "proxy", "telnet_password_prompt_regex", raw=True
+        ).encode()
 
         # telnet state
-        self.currentCommand = b''
+        self.currentCommand = b""
 
         # auth state
         self.authStarted = False
         self.authDone = False
 
-        self.usernameState = b''  # TODO clear on end
+        self.usernameState = b""  # TODO clear on end
         self.inputingLogin = False
 
-        self.passwordState = b''  # TODO clear on end
+        self.passwordState = b""  # TODO clear on end
         self.inputingPassword = False
 
         self.waitingLoginEcho = False
@@ -79,12 +86,16 @@ class TelnetHandler:
 
         # tty logging
         self.startTime = time.time()
-        self.ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
-        self.ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
+        self.ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
+        self.ttylogEnabled = CowrieConfig.getboolean(
+            "honeypot", "ttylog", fallback=True
+        )
         self.ttylogSize = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = '{0}/telnet-{1}.log'.format(self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'))
+            self.ttylogFile = "{}/telnet-{}.log".format(
+                self.ttylogPath, time.strftime("%Y%m%d-%H%M%S")
+            )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def setClient(self, client):
@@ -106,15 +117,19 @@ class TelnetHandler:
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            self.ttylogEnabled = False  # do not close again if function called after closing
+            self.ttylogEnabled = (
+                False  # do not close again if function called after closing
+            )
 
-            log.msg(eventid='cowrie.log.closed',
-                    format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
-                    ttylog=shasumfile,
-                    size=self.ttylogSize,
-                    shasum=shasum,
-                    duplicate=duplicate,
-                    duration=time.time() - self.startTime)
+            log.msg(
+                eventid="cowrie.log.closed",
+                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                ttylog=shasumfile,
+                size=self.ttylogSize,
+                shasum=shasum,
+                duplicate=duplicate,
+                duration=time.time() - self.startTime,
+            )
 
     def sendBackend(self, data):
         self.backend_buffer.append(data)
@@ -125,12 +140,20 @@ class TelnetHandler:
         for packet in self.backend_buffer:
             self.client.transport.write(packet)
             # log raw packets if user sets so
-            if CowrieConfig().getboolean('proxy', 'log_raw', fallback=False):
-                log.msg(b'to_backend - ' + data)
+            if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
+                log.msg(b"to_backend - " + data)
 
             if self.ttylogEnabled and self.authStarted:
-                cleanData = data.replace(b'\x00', b'\n')  # some frontends send 0xFF instead of newline
-                ttylog.ttylog_write(self.ttylogFile, len(cleanData), ttylog.TYPE_INPUT, time.time(), cleanData)
+                cleanData = data.replace(
+                    b"\x00", b"\n"
+                )  # some frontends send 0xFF instead of newline
+                ttylog.ttylog_write(
+                    self.ttylogFile,
+                    len(cleanData),
+                    ttylog.TYPE_INPUT,
+                    time.time(),
+                    cleanData,
+                )
                 self.ttylogSize += len(cleanData)
 
             self.backend_buffer = self.backend_buffer[1:]
@@ -139,11 +162,13 @@ class TelnetHandler:
         self.server.transport.write(data)
 
         # log raw packets if user sets so
-        if CowrieConfig().getboolean('proxy', 'log_raw', fallback=False):
-            log.msg(b'to_frontend - ' + data)
+        if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
+            log.msg(b"to_frontend - " + data)
 
         if self.ttylogEnabled and self.authStarted:
-            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data)
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
+            )
             # self.ttylogSize += len(data)
 
     def addPacket(self, parent, data):
@@ -152,15 +177,15 @@ class TelnetHandler:
 
         if self.spoofAuthenticationData and not self.authDone:
             # detect prompts from backend
-            if parent == 'backend':
+            if parent == "backend":
                 self.setProcessingStateBackend()
 
             # detect patterns from frontend
-            if parent == 'frontend':
+            if parent == "frontend":
                 self.setProcessingStateFrontend()
 
             # save user inputs from frontend
-            if parent == 'frontend':
+            if parent == "frontend":
                 if self.inputingPassword:
                     self.processPasswordInput()
 
@@ -168,23 +193,29 @@ class TelnetHandler:
                     self.processUsernameInput()
 
             # capture username echo from backend
-            if self.waitingLoginEcho and parent == 'backend':
-                self.currentData = self.currentData.replace(self.backendLogin + b'\r\n', b'')
+            if self.waitingLoginEcho and parent == "backend":
+                self.currentData = self.currentData.replace(
+                    self.backendLogin + b"\r\n", b""
+                )
                 self.waitingLoginEcho = False
 
         # log user commands
-        if parent == 'frontend' and self.authDone:
-            self.currentCommand += data.replace(b'\r\x00', b'').replace(b'\r\n', b'')
+        if parent == "frontend" and self.authDone:
+            self.currentCommand += data.replace(b"\r\x00", b"").replace(b"\r\n", b"")
 
             # check if a command has terminated
-            if b'\r' in data:
+            if b"\r" in data:
                 if len(self.currentCommand) > 0:
-                    log.msg(eventid='cowrie.command.input', input=self.currentCommand, format='CMD: %(input)s')
-                self.currentCommand = b''
+                    log.msg(
+                        eventid="cowrie.command.input",
+                        input=self.currentCommand,
+                        format="CMD: %(input)s",
+                    )
+                self.currentCommand = b""
 
         # send data after processing (also check if processing did not reduce it to an empty string)
         if self.sendData and len(self.currentData):
-            if parent == 'frontend':
+            if parent == "frontend":
                 self.sendBackend(self.currentData)
             else:
                 self.sendFrontend(self.currentData)
@@ -193,26 +224,30 @@ class TelnetHandler:
         self.sendData = False  # withold data until input is complete
 
         # remove control characters
-        control_chars = [b'\r', b'\x00', b'\n']
+        control_chars = [b"\r", b"\x00", b"\n"]
         self.usernameState += remove_all(self.currentData, control_chars)
 
         # backend echoes data back to user to show on terminal prompt
         #     - NULL char is replaced by NEWLINE by backend
         #     - 0x7F (backspace) is replaced by two 0x08 separated by a blankspace
-        self.sendFrontend(self.currentData.replace(b'\x7f', b'\x08 \x08').replace(b'\x00', b'\n'))
+        self.sendFrontend(
+            self.currentData.replace(b"\x7f", b"\x08 \x08").replace(b"\x00", b"\n")
+        )
 
         # check if done inputing
-        if b'\r' in self.currentData:
-            terminatingChar = chr(self.currentData[self.currentData.index(b'\r') + 1]).encode()  # usually \n or \x00
+        if b"\r" in self.currentData:
+            terminatingChar = chr(
+                self.currentData[self.currentData.index(b"\r") + 1]
+            ).encode()  # usually \n or \x00
 
             # cleanup
             self.usernameState = process_backspaces(self.usernameState)
 
-            log.msg('User input login: {0}'.format(self.usernameState))
+            log.msg(f"User input login: {self.usernameState}")
             self.inputingLogin = False
 
             # actually send to backend
-            self.currentData = self.backendLogin + b'\r' + terminatingChar
+            self.currentData = self.backendLogin + b"\r" + terminatingChar
             self.sendData = True
 
             # we now have to ignore the username echo from the backend in the next packet
@@ -226,33 +261,39 @@ class TelnetHandler:
             self.prePasswordData = False
 
         # remove control characters
-        control_chars = [b'\xff', b'\xfd', b'\x01', b'\r', b'\x00', b'\n']
+        control_chars = [b"\xff", b"\xfd", b"\x01", b"\r", b"\x00", b"\n"]
         self.passwordState += remove_all(self.currentData, control_chars)
 
         # check if done inputing
-        if b'\r' in self.currentData:
-            terminatingChar = chr(self.currentData[self.currentData.index(b'\r') + 1]).encode()  # usually \n or \x00
+        if b"\r" in self.currentData:
+            terminatingChar = chr(
+                self.currentData[self.currentData.index(b"\r") + 1]
+            ).encode()  # usually \n or \x00
 
             # cleanup
             self.passwordState = process_backspaces(self.passwordState)
 
-            log.msg('User input password: {0}'.format(self.passwordState))
+            log.msg(f"User input password: {self.passwordState}")
             self.inputingPassword = False
 
             # having the password (and the username, either empy or set before), we can check the login
             # on the database, and if valid authenticate or else, if invalid send a fake password to get
             # the login failed prompt
             src_ip = self.server.transport.getPeer().host
-            if HoneypotPasswordChecker().checkUserPass(self.usernameState, self.passwordState, src_ip):
+            if HoneypotPasswordChecker().checkUserPass(
+                self.usernameState, self.passwordState, src_ip
+            ):
                 passwordToSend = self.backendPassword
                 self.authDone = True
-                self.server.setTimeout(CowrieConfig().getint('honeypot', 'interactive_timeout', fallback=300))
+                self.server.setTimeout(
+                    CowrieConfig.getint("honeypot", "interactive_timeout", fallback=300)
+                )
             else:
-                log.msg('Sending invalid auth to backend')
-                passwordToSend = self.backendPassword + b'fake'
+                log.msg("Sending invalid auth to backend")
+                passwordToSend = self.backendPassword + b"fake"
 
             # actually send to backend
-            self.currentData = passwordToSend + b'\r' + terminatingChar
+            self.currentData = passwordToSend + b"\r" + terminatingChar
             self.sendData = True
 
     def setProcessingStateBackend(self):
@@ -263,19 +304,19 @@ class TelnetHandler:
         """
         hasPassword = re.search(self.passwordPromptRegex, self.currentData)
         if hasPassword:
-            log.msg('Password prompt from backend')
+            log.msg("Password prompt from backend")
             self.authStarted = True
             self.inputingPassword = True
-            self.passwordState = b''
+            self.passwordState = b""
 
         hasLogin = re.search(self.usernamePromptRegex, self.currentData)
         if hasLogin:
-            log.msg('Login prompt from backend')
+            log.msg("Login prompt from backend")
             self.authStarted = True
             self.inputingLogin = True
-            self.usernameState = b''
+            self.usernameState = b""
 
-        self.prePasswordData = b'\xff\xfb\x01' in self.currentData
+        self.prePasswordData = b"\xff\xfb\x01" in self.currentData
 
     def setProcessingStateFrontend(self):
         """
@@ -286,8 +327,12 @@ class TelnetHandler:
         hasNegotiationLogin = negotiationLoginPattern.search(self.currentData)
         if hasNegotiationLogin:
             self.usernameState = hasNegotiationLogin.group(2)
-            log.msg('Detected username {0} in negotiation, spoofing for backend...'.format(self.usernameState.decode()))
+            log.msg(
+                f"Detected username {self.usernameState.decode()} in negotiation, spoofing for backend..."
+            )
 
             # spoof username in data sent
             # username is always sent correct, password is the one sent wrong if we don't want to authenticate
-            self.currentData = negotiationLoginPattern.sub(br'\1' + self.backendLogin + br'\3', self.currentData)
+            self.currentData = negotiationLoginPattern.sub(
+                br"\1" + self.backendLogin + br"\3", self.currentData
+            )

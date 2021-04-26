@@ -8,9 +8,9 @@ workflows:
       - test-3.8-buster
       - test-3.9-buster
 jobs:
-  test-3.7-buster: &test-template
+  test-3.9-buster: &test-template
     docker:
-      - image: circleci/python:3.7-buster
+      - image: circleci/python:3.9-buster
     steps:
       - checkout
       - run:
@@ -25,7 +25,7 @@ jobs:
               libvirt-clients nmap
             virtualenv cowrie-env
             . cowrie-env/bin/activate
-            pip install libvirt-python==6.9.0
+            pip install libvirt-python==7.2.0
             pip install -r requirements.txt
             pip install -r requirements-dev.txt
       - run:
@@ -36,7 +36,27 @@ jobs:
           name: Lint
           command: |
             . cowrie-env/bin/activate
-            flake8 --count --application-import-names cowrie --max-line-length=120 --statistics src
+            flake8 --ignore E203,E501,W503 --count --application-import-names cowrie --statistics src
+      - run:
+          name: Mypy
+          command: |
+            . cowrie-env/bin/activate
+            mypy src
+      - run:
+          name: Twistedchecker
+          command: |
+            . cowrie-env/bin/activate
+            twistedchecker -d W9002,W9202,W9204,W9208,W9402,C0301 src || true
+      - run:
+          name: PyType
+          command: |
+            . cowrie-env/bin/activate
+            pytype src || true
+      - run:
+          name: Pyre
+          command: |
+            . cowrie-env/bin/activate
+            pyre analyze || true
       - run:
           name: Build Python library
           command: |
@@ -60,11 +80,7 @@ jobs:
     <<: *test-template
     docker:
       - image: circleci/python:3.8-buster
-  test-3.9-buster:
+  test-3.7-buster:
     <<: *test-template
     docker:
-      - image: circleci/python:3.9-buster
-  test-3.10-buster:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.10-buster
+      - image: circleci/python:3.7-buster

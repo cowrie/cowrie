@@ -2,7 +2,6 @@
 Output plugin for HPFeeds
 """
 
-from __future__ import absolute_import, division
 
 import hashlib
 import json
@@ -41,7 +40,7 @@ SIZES = {
     OP_SUBSCRIBE: 5 + 256 * 2,
 }
 
-COWRIECHAN = 'cowrie.sessions'
+COWRIECHAN = "cowrie.sessions"
 
 
 class BadClient(Exception):
@@ -59,18 +58,18 @@ def strpack8(x):
     packs a string with 1 byte length field
     """
     if isinstance(x, str):
-        x = x.encode('latin1')
-    return struct.pack('!B', len(x)) + x
+        x = x.encode("latin1")
+    return struct.pack("!B", len(x)) + x
 
 
 # unpacks a string with 1 byte length field
 def strunpack8(x):
     line = x[0]
-    return x[1:1 + line], x[1 + line:]
+    return x[1 : 1 + line], x[1 + line :]
 
 
 def msghdr(op, data):
-    return struct.pack('!iB', 5 + len(data), op) + data
+    return struct.pack("!iB", 5 + len(data), op) + data
 
 
 def msgpublish(ident, chan, data):
@@ -79,7 +78,7 @@ def msgpublish(ident, chan, data):
 
 def msgsubscribe(ident, chan):
     if isinstance(chan, str):
-        chan = chan.encode('latin1')
+        chan = chan.encode("latin1")
     return msghdr(OP_SUBSCRIBE, strpack8(ident) + chan)
 
 
@@ -88,7 +87,7 @@ def msgauth(rand, ident, secret):
     return msghdr(OP_AUTH, strpack8(ident) + hash)
 
 
-class FeedUnpack(object):
+class FeedUnpack:
     def __init__(self):
         self.buf = bytearray()
 
@@ -106,28 +105,28 @@ class FeedUnpack(object):
 
     def unpack(self):
         if len(self.buf) < 5:
-            raise StopIteration('No message.')
+            raise StopIteration("No message.")
 
-        ml, opcode = struct.unpack('!iB', buffer(self.buf, 0, 5))
+        ml, opcode = struct.unpack("!iB", buffer(self.buf, 0, 5))
         if ml > SIZES.get(opcode, MAXBUF):
-            raise BadClient('Not respecting MAXBUF.')
+            raise BadClient("Not respecting MAXBUF.")
 
         if len(self.buf) < ml:
-            raise StopIteration('No message.')
+            raise StopIteration("No message.")
 
         data = bytearray(buffer(self.buf, 5, ml - 5))
         del self.buf[:ml]
         return opcode, data
 
 
-class hpclient(object):
+class hpclient:
     def __init__(self, server, port, ident, secret, debug):
-        log.msg('hpfeeds client init broker {0}:{1}, identifier {2}'.format(server, port, ident))
+        log.msg(f"hpfeeds client init broker {server}:{port}, identifier {ident}")
         self.server, self.port = server, int(port)
-        self.ident, self.secret = ident.encode('latin1'), secret.encode('latin1')
+        self.ident, self.secret = ident.encode("latin1"), secret.encode("latin1")
         self.debug = debug
         self.unpacker = FeedUnpack()
-        self.state = 'INIT'
+        self.state = "INIT"
 
         self.connect()
         self.sendfiles = []
@@ -139,7 +138,7 @@ class hpclient(object):
         try:
             self.s.connect((self.server, self.port))
         except Exception:
-            log.msg('hpfeeds client could not connect to broker.')
+            log.msg("hpfeeds client could not connect to broker.")
             self.s = None
         else:
             self.s.settimeout(None)
@@ -159,8 +158,8 @@ class hpclient(object):
 
     def handle_established(self):
         if self.debug:
-            log.msg('hpfeeds: hpclient established')
-        while self.state != 'GOTINFO':
+            log.msg("hpfeeds: hpclient established")
+        while self.state != "GOTINFO":
             self.read()
 
         # Quickly try to see if there was an error message
@@ -178,7 +177,7 @@ class hpclient(object):
 
         if not d:
             if self.debug:
-                log.msg('hpfeeds: hpclient connection closed?')
+                log.msg("hpfeeds: hpclient connection closed?")
             self.close()
             return
 
@@ -186,42 +185,62 @@ class hpclient(object):
         try:
             for opcode, data in self.unpacker:
                 if self.debug:
-                    log.msg('hpfeeds: msg opcode {0:x} data {1}'.format(
-                        opcode,
-                        ''.join('{:02x}'.format(x) for x in data))
+                    log.msg(
+                        "hpfeeds: msg opcode {:x} data {}".format(
+                            opcode, "".join(f"{x:02x}" for x in data)
+                        )
                     )
                 if opcode == OP_INFO:
                     name, rand = strunpack8(data)
                     if self.debug:
-                        log.msg('hpfeeds: server name {0} rand {1}'.format(
-                            name,
-                            ''.join('{:02x}'.format(x) for x in rand))
+                        log.msg(
+                            "hpfeeds: server name {} rand {}".format(
+                                name, "".join(f"{x:02x}" for x in rand)
+                            )
                         )
                     self.send(msgauth(rand, self.ident, self.secret))
-                    self.state = 'GOTINFO'
+                    self.state = "GOTINFO"
 
                 elif opcode == OP_PUBLISH:
                     ident, data = strunpack8(data)
                     chan, data = strunpack8(data)
                     if self.debug:
                         log.msg(
-                            'hpfeeds: publish to {0} by {1}: {2}'.format(
-                                chan, ident, ''.join('{:02x}'.format(x) for x in data)))
+                            "hpfeeds: publish to {} by {}: {}".format(
+                                chan, ident, "".join(f"{x:02x}" for x in data)
+                            )
+                        )
                 elif opcode == OP_ERROR:
-                    log.msg('hpfeeds: errormessage from server: {0}'.format(''.join('{:02x}'.format(x) for x in data)))
+                    log.msg(
+                        "hpfeeds: errormessage from server: {}".format(
+                            "".join(f"{x:02x}" for x in data)
+                        )
+                    )
                 else:
-                    log.msg('hpfeeds: unknown opcode message: {0:x}'.format(opcode))
+                    log.msg(f"hpfeeds: unknown opcode message: {opcode:x}")
         except BadClient:
-            log.msg('hpfeeds: unpacker error, disconnecting.')
+            log.msg("hpfeeds: unpacker error, disconnecting.")
             self.close()
 
     def publish(self, channel, **kwargs):
         try:
-            self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
+            self.send(
+                msgpublish(
+                    self.ident,
+                    channel,
+                    json.dumps(kwargs, default=set2json).encode("latin1"),
+                )
+            )
         except Exception as e:
-            log.msg('hpfeeds: connection to hpfriends lost: {0}, reconnecting'.format(e))
+            log.msg(f"hpfeeds: connection to hpfriends lost: {e}, reconnecting")
             self.connect()
-            self.send(msgpublish(self.ident, channel, json.dumps(kwargs, default=set2json).encode('latin1')))
+            self.send(
+                msgpublish(
+                    self.ident,
+                    channel,
+                    json.dumps(kwargs, default=set2json).encode("latin1"),
+                )
+            )
 
     def sendfile(self, filepath):
         # does not read complete binary into memory, read and send chunks
@@ -232,10 +251,10 @@ class hpclient(object):
             self.sendfiles.append(filepath)
 
     def sendfileheader(self, filepath):
-        self.filehandle = open(filepath, 'rb')
+        self.filehandle = open(filepath, "rb")
         fsize = os.stat(filepath).st_size
         headc = strpack8(self.ident) + strpack8(COWRIECHAN)
-        headh = struct.pack('!iB', 5 + len(headc) + fsize, OP_PUBLISH)
+        headh = struct.pack("!iB", 5 + len(headc) + fsize, OP_PUBLISH)
         self.send(headh + headc)
 
     def sendfiledata(self):
@@ -246,7 +265,7 @@ class hpclient(object):
                 self.sendfileheader(fp)
             else:
                 self.filehandle = None
-                self.handle_io_in(b'')
+                self.handle_io_in(b"")
         else:
             self.send(tmp)
 
@@ -255,13 +274,14 @@ class Output(cowrie.core.output.Output):
     """
     Output plugin for HPFeeds
     """
+
     def start(self):
         log.msg("Early version of hpfeeds-output, untested!")
-        server = CowrieConfig().get('output_hpfeeds', 'server')
-        port = CowrieConfig().getint('output_hpfeeds', 'port')
-        ident = CowrieConfig().get('output_hpfeeds', 'identifier')
-        secret = CowrieConfig().get('output_hpfeeds', 'secret')
-        debug = CowrieConfig().getboolean('output_hpfeeds', 'debug')
+        server = CowrieConfig.get("output_hpfeeds", "server")
+        port = CowrieConfig.getint("output_hpfeeds", "port")
+        ident = CowrieConfig.get("output_hpfeeds", "identifier")
+        secret = CowrieConfig.get("output_hpfeeds", "secret")
+        debug = CowrieConfig.getboolean("output_hpfeeds", "debug")
         self.client = hpclient(server, port, ident, secret, debug)
         self.meta = {}
 
@@ -270,61 +290,61 @@ class Output(cowrie.core.output.Output):
 
     def write(self, entry):
         session = entry["session"]
-        if entry["eventid"] == 'cowrie.session.connect':
+        if entry["eventid"] == "cowrie.session.connect":
             self.meta[session] = {
-                'session': session,
-                'startTime': entry["timestamp"],
-                'endTime': '',
-                'peerIP': entry["src_ip"],
-                'peerPort': entry["src_port"],
-                'hostIP': entry["dst_ip"],
-                'hostPort': entry["dst_port"],
-                'loggedin': None,
-                'credentials': [],
-                'commands': [],
-                'unknownCommands': [],
-                'urls': [],
-                'version': None,
-                'ttylog': None,
-                'hashes': set(),
-                'protocol': entry['protocol']
+                "session": session,
+                "startTime": entry["timestamp"],
+                "endTime": "",
+                "peerIP": entry["src_ip"],
+                "peerPort": entry["src_port"],
+                "hostIP": entry["dst_ip"],
+                "hostPort": entry["dst_port"],
+                "loggedin": None,
+                "credentials": [],
+                "commands": [],
+                "unknownCommands": [],
+                "urls": [],
+                "version": None,
+                "ttylog": None,
+                "hashes": set(),
+                "protocol": entry["protocol"],
             }
 
-        elif entry["eventid"] == 'cowrie.login.success':
-            u, p = entry['username'], entry['password']
-            self.meta[session]['loggedin'] = (u, p)
+        elif entry["eventid"] == "cowrie.login.success":
+            u, p = entry["username"], entry["password"]
+            self.meta[session]["loggedin"] = (u, p)
 
-        elif entry["eventid"] == 'cowrie.login.failed':
-            u, p = entry['username'], entry['password']
-            self.meta[session]['credentials'].append((u, p))
+        elif entry["eventid"] == "cowrie.login.failed":
+            u, p = entry["username"], entry["password"]
+            self.meta[session]["credentials"].append((u, p))
 
-        elif entry["eventid"] == 'cowrie.command.input':
-            c = entry['input']
-            self.meta[session]['commands'].append(c)
+        elif entry["eventid"] == "cowrie.command.input":
+            c = entry["input"]
+            self.meta[session]["commands"].append(c)
 
-        elif entry["eventid"] == 'cowrie.command.failed':
-            uc = entry['input']
-            self.meta[session]['unknownCommands'].append(uc)
+        elif entry["eventid"] == "cowrie.command.failed":
+            uc = entry["input"]
+            self.meta[session]["unknownCommands"].append(uc)
 
-        elif entry["eventid"] == 'cowrie.session.file_download':
-            url = entry['url']
-            self.meta[session]['urls'].append(url)
-            self.meta[session]['hashes'].add(entry['shasum'])
+        elif entry["eventid"] == "cowrie.session.file_download":
+            url = entry["url"]
+            self.meta[session]["urls"].append(url)
+            self.meta[session]["hashes"].add(entry["shasum"])
 
-        elif entry["eventid"] == 'cowrie.session.file_upload':
-            self.meta[session]['hashes'].add(entry['shasum'])
+        elif entry["eventid"] == "cowrie.session.file_upload":
+            self.meta[session]["hashes"].add(entry["shasum"])
 
-        elif entry["eventid"] == 'cowrie.client.version':
-            v = entry['version']
-            self.meta[session]['version'] = v
+        elif entry["eventid"] == "cowrie.client.version":
+            v = entry["version"]
+            self.meta[session]["version"] = v
 
-        elif entry["eventid"] == 'cowrie.log.closed':
+        elif entry["eventid"] == "cowrie.log.closed":
             # entry["ttylog"]
             with open(entry["ttylog"]) as ttylog:
-                self.meta[session]['ttylog'] = ttylog.read().hex()
+                self.meta[session]["ttylog"] = ttylog.read().hex()
 
-        elif entry["eventid"] == 'cowrie.session.closed':
-            log.msg('publishing metadata to hpfeeds')
+        elif entry["eventid"] == "cowrie.session.closed":
+            log.msg("publishing metadata to hpfeeds")
             meta = self.meta[session]
-            self.meta[session]['endTime'] = entry["timestamp"]
+            self.meta[session]["endTime"] = entry["timestamp"]
             self.client.publish(COWRIECHAN, **meta)

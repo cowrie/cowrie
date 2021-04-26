@@ -1,16 +1,12 @@
-from __future__ import absolute_import, division
-
 import getopt
 import re
 import socket
 import struct
-import sys
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
-if sys.version_info > (3,):
-    long = int
+long = int
 
 commands = {}
 
@@ -27,7 +23,7 @@ def dottedQuadToNum(ip):
     convert decimal dotted quad string to long integer
     this will throw builtins.OSError on failure
     """
-    return struct.unpack('I', socket.inet_aton(ip))[0]
+    return struct.unpack("I", socket.inet_aton(ip))[0]
 
 
 def networkMask(ip, bits):
@@ -44,10 +40,20 @@ def addressInNetwork(ip, net):
     return ip & net == net
 
 
-local_networks = [networkMask('10.0.0.0', 8), networkMask('172.16.0.0', 12), networkMask('192.168.0.0', 16)]
+local_networks = [
+    networkMask("10.0.0.0", 8),
+    networkMask("172.16.0.0", 12),
+    networkMask("192.168.0.0", 16),
+]
 
 
 class command_nc(HoneyPotCommand):
+    """
+    netcat
+    """
+
+    s: socket.socket
+
     def help(self):
         self.write(
             """This is nc from the netcat-openbsd package. An alternative nc is available
@@ -55,11 +61,14 @@ in the netcat-traditional package.
 usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
           [-P proxy_username] [-p source_port] [-q seconds] [-s source]
           [-T toskeyword] [-V rtable] [-w timeout] [-X proxy_protocol]
-          [-x proxy_address[:port]] [destination] [port]\n""")
+          [-x proxy_address[:port]] [destination] [port]\n"""
+        )
 
     def start(self):
         try:
-            optlist, args = getopt.getopt(self.args, '46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:')
+            optlist, args = getopt.getopt(
+                self.args, "46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:"
+            )
         except getopt.GetoptError:
             self.help()
             self.exit()
@@ -73,14 +82,14 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         host = args[0]
         port = args[1]
 
-        if not re.match(r'^\d+$', port):
-            self.errorWrite('nc: port number invalid: {}\n'.format(port))
+        if not re.match(r"^\d+$", port):
+            self.errorWrite(f"nc: port number invalid: {port}\n")
             self.exit()
             return
 
-        if re.match(r'^\d+$', host):
+        if re.match(r"^\d+$", host):
             address = int(host)
-        elif re.match(r'^[\d\.]+$', host):
+        elif re.match(r"^[\d\.]+$", host):
             try:
                 address = dottedQuadToNum(host)
             except OSError:
@@ -98,9 +107,9 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
         out_addr = None
         try:
-            out_addr = (CowrieConfig().get('honeypot', 'out_addr'), 0)
+            out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
         except Exception:
-            out_addr = ('0.0.0.0', 0)
+            out_addr = ("0.0.0.0", 0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(out_addr)
@@ -111,31 +120,31 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
 
     def recv_data(self):
-        data = ''
+        data = b""
         while 1:
             packet = self.s.recv(1024)
-            if packet == '':
+            if packet == b"":
                 break
             else:
                 data += packet
 
-        self.write(data)
+        self.writeBytes(data)
         self.s.close()
         self.exit()
 
     def lineReceived(self, line):
-        if hasattr(self, 's'):
-            self.s.send(line.encode('utf8'))
+        if hasattr(self, "s"):
+            self.s.send(line.encode("utf8"))
 
     def handle_CTRL_C(self):
-        self.write('^C\n')
-        if hasattr(self, 's'):
+        self.write("^C\n")
+        if hasattr(self, "s"):
             self.s.close()
 
     def handle_CTRL_D(self):
-        if hasattr(self, 's'):
+        if hasattr(self, "s"):
             self.s.close()
 
 
-commands['/bin/nc'] = command_nc
-commands['nc'] = command_nc
+commands["/bin/nc"] = command_nc
+commands["nc"] = command_nc

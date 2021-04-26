@@ -20,11 +20,12 @@ or:
 
 """
 
-from __future__ import absolute_import, division
 
 import hashlib
 import os
 import tempfile
+from types import TracebackType
+from typing import Any, Optional, Tuple, Type
 
 from twisted.python import log
 
@@ -33,35 +34,41 @@ from cowrie.core.config import CowrieConfig
 
 class Artifact:
 
-    artifactDir = CowrieConfig().get('honeypot', 'download_path')
+    artifactDir: str = CowrieConfig.get("honeypot", "download_path")
 
-    def __init__(self, label):
-        self.label = label
+    def __init__(self, label: str) -> None:
+        self.label: str = label
 
         self.fp = tempfile.NamedTemporaryFile(dir=self.artifactDir, delete=False)
         self.tempFilename = self.fp.name
-        self.closed = False
+        self.closed: bool = False
 
-        self.shasum = ''
-        self.shasumFilename = ''
+        self.shasum: str = ""
+        self.shasumFilename: str = ""
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         return self.fp
 
-    def __exit__(self, exception_type, exception_value, trace):
+    def __exit__(
+        self,
+        etype: Optional[Type[BaseException]],
+        einst: Optional[BaseException],
+        etrace: Optional[TracebackType],
+    ) -> bool:
         self.close()
+        return True
 
-    def write(self, bytes):
+    def write(self, bytes: bytes) -> None:
         self.fp.write(bytes)
 
-    def fileno(self):
+    def fileno(self) -> Any:
         return self.fp.fileno()
 
-    def close(self, keepEmpty=False):
-        size = self.fp.tell()
+    def close(self, keepEmpty: bool = False) -> Optional[Tuple[str, str]]:
+        size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
             os.remove(self.fp.name)
-            return
+            return None
 
         self.fp.seek(0)
         data = self.fp.read()

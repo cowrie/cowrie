@@ -30,7 +30,6 @@
 Work in progress Kafka output. Not functional yet
 """
 
-from __future__ import absolute_import, division
 
 import json
 import logging
@@ -54,8 +53,9 @@ def random_string(length, charset=string.letters.encode()):
 
 def make_messages():
     key = random_string(8)
-    messages = [random_string(random.randint(20, 40))
-                for i in range(random.randint(2, 25))]
+    messages = [
+        random_string(random.randint(20, 40)) for i in range(random.randint(2, 25))
+    ]
     return key, messages
 
 
@@ -75,15 +75,14 @@ def ready_client(reactor, netloc, topic):
         yield client.load_metadata_for_topics(topic)
         e = client.metadata_error_for_topic(topic)
         if e:
-            log.info("Error getting metadata for topic %r: %s (will retry)",
-                     topic, e)
+            log.info("Error getting metadata for topic %r: %s (will retry)", topic, e)
 
     defer.returnValue(client)
 
 
 @defer.inlineCallbacks
-def produce(reactor, hosts='localhost:9092'):
-    topic = b'example_topic'
+def produce(reactor, hosts="localhost:9092"):
+    topic = b"example_topic"
     stop_time = reactor.seconds() + 60.0  # seconds to run
     client = yield ready_client(reactor, hosts, topic)
 
@@ -127,7 +126,6 @@ def main():
 
 
 class Output(cowrie.core.output.Output):
-
     def start(self):
         pass
 
@@ -137,13 +135,13 @@ class Output(cowrie.core.output.Output):
     def write(self, logentry):
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith('log_'):
+            if i.startswith("log_"):
                 del logentry[i]
             elif i == "time":
                 del logentry[i]
 
         logging.basicConfig(
-            format='%(name)s %(levelname)s %(message)s',
+            format="%(name)s %(levelname)s %(message)s",
             level=logging.INFO,
         )
         task.react(produce, json.dumps(logentry))

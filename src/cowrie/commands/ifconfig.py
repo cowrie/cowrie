@@ -1,24 +1,32 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2014 Peter Reuterås <peter@reuteras.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 from random import randint, randrange
 
 from cowrie.shell.command import HoneyPotCommand
 
-HWaddr = "%02x:%02x:%02x:%02x:%02x:%02x" % (
-    randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
+HWaddr = "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+)
 
-inet6 = "fe%02x::%02x:%02xff:fe%02x:%02x01/64" % (
-    randint(0, 255), randrange(111, 888), randint(0, 255), randint(0, 255), randint(0, 255))
+inet6 = "fe{:02x}::{:02x}:{:02x}ff:fe{:02x}:{:02x}01/64".format(
+    randint(0, 255),
+    randrange(111, 888),
+    randint(0, 255),
+    randint(0, 255),
+    randint(0, 255),
+)
 
 commands = {}
 
 
 class command_ifconfig(HoneyPotCommand):
-
     @staticmethod
     def generate_packets():
         return randrange(222222, 555555)
@@ -26,7 +34,7 @@ class command_ifconfig(HoneyPotCommand):
     @staticmethod
     def convert_bytes_to_mx(bytes_eth0):
         mb = float(bytes_eth0) / 1000 / 1000
-        return "{0:.1f}".format(mb)
+        return f"{mb:.1f}"
 
     def calculate_rx(self):
         rx_bytes = randrange(111111111, 555555555)
@@ -46,14 +54,14 @@ class command_ifconfig(HoneyPotCommand):
         lo_bytes, lo_mb = self.calculate_lo()
         rx_packets = self.generate_packets()
         tx_packets = self.generate_packets()
-        result = """eth0      Link encap:Ethernet  HWaddr %s
-          inet addr:%s  Bcast:%s.255  Mask:255.255.255.0
-          inet6 addr: %s Scope:Link
+        result = """eth0      Link encap:Ethernet  HWaddr {}
+          inet addr:{}  Bcast:{}.255  Mask:255.255.255.0
+          inet6 addr: {} Scope:Link
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:%s errors:0 dropped:0 overruns:0 frame:0
-          TX packets:%s errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:{} errors:0 dropped:0 overruns:0 frame:0
+          TX packets:{} errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000
-          RX bytes:%s (%s MB)  TX bytes:%s (%s MB)
+          RX bytes:{} ({} MB)  TX bytes:{} ({} MB)
 
 
 lo        Link encap:Local Loopback
@@ -63,13 +71,24 @@ lo        Link encap:Local Loopback
           RX packets:110 errors:0 dropped:0 overruns:0 frame:0
           TX packets:110 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:0
-          RX bytes:%s (%s MB)  TX bytes:%s (%s MB)""" % \
-                 (HWaddr, self.protocol.kippoIP,
-                  self.protocol.kippoIP.rsplit('.', 1)[0], inet6, rx_packets,
-                  tx_packets, rx_bytes_eth0, rx_mb_eth0, tx_bytes_eth0, tx_mb_eth0,
-                  lo_bytes, lo_mb, lo_bytes, lo_mb)
-        self.write('{0}\n'.format(result))
+          RX bytes:{} ({} MB)  TX bytes:{} ({} MB)""".format(
+            HWaddr,
+            self.protocol.kippoIP,
+            self.protocol.kippoIP.rsplit(".", 1)[0],
+            inet6,
+            rx_packets,
+            tx_packets,
+            rx_bytes_eth0,
+            rx_mb_eth0,
+            tx_bytes_eth0,
+            tx_mb_eth0,
+            lo_bytes,
+            lo_mb,
+            lo_bytes,
+            lo_mb,
+        )
+        self.write(f"{result}\n")
 
 
-commands['/sbin/ifconfig'] = command_ifconfig
-commands['ifconfig'] = command_ifconfig
+commands["/sbin/ifconfig"] = command_ifconfig
+commands["ifconfig"] = command_ifconfig

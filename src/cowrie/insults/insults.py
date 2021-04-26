@@ -1,11 +1,11 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import hashlib
 import os
 import time
+from typing import Any, List, Set
 
 from twisted.conch.insults import insults
 from twisted.python import log
@@ -19,92 +19,116 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
-    redirlogOpen = False  # it will be set at core/protocol.py
-    stdinlogOpen = False
-    ttylogOpen = False
-    ttylogPath = CowrieConfig().get('honeypot', 'ttylog_path')
-    downloadPath = CowrieConfig().get('honeypot', 'download_path')
-    ttylogEnabled = CowrieConfig().getboolean('honeypot', 'ttylog', fallback=True)
-    bytesReceivedLimit = CowrieConfig().getint('honeypot', 'download_limit_size', fallback=0)
-    bytesReceived = 0
-    redirFiles = set()
+
+    ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path")
+    downloadPath: str = CowrieConfig.get("honeypot", "download_path")
+    ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
+    bytesReceivedLimit: int = CowrieConfig.getint(
+        "honeypot", "download_limit_size", fallback=0
+    )
 
     def __init__(self, prot=None, *a, **kw):
+        self.type: str
+        self.ttylogSize: int = 0
+        self.bytesReceived: int = 0
+        self.redirFiles: Set[List[str]] = set()
+        self.redirlogOpen: bool = False  # it will be set at core/protocol.py
+        self.stdinlogOpen: bool = False
+        self.ttylogOpen: bool = False
+        self.terminalProtocol: Any
+        self.transport: Any
+
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
 
         if prot is protocol.HoneyPotExecProtocol:
-            self.type = 'e'  # Execcmd
+            self.type = "e"  # Execcmd
         else:
-            self.type = 'i'  # Interactive
+            self.type = "i"  # Interactive
 
     def getSessionId(self):
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
         return (transportId, channelId)
 
-    def connectionMade(self):
+    def connectionMade(self) -> None:
         transportId, channelId = self.getSessionId()
-        self.startTime = time.time()
+        self.startTime: float = time.time()
 
         if self.ttylogEnabled:
-            self.ttylogFile = '%s/%s-%s-%s%s.log' % \
-                              (self.ttylogPath, time.strftime('%Y%m%d-%H%M%S'),
-                               transportId, channelId, self.type)
+            self.ttylogFile = "{}/{}-{}-{}{}.log".format(
+                self.ttylogPath,
+                time.strftime("%Y%m%d-%H%M%S"),
+                transportId,
+                channelId,
+                self.type,
+            )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
 
-        self.stdinlogFile = '%s/%s-%s-%s-stdin.log' % \
-                            (self.downloadPath, time.strftime('%Y%m%d-%H%M%S'), transportId, channelId)
+        self.stdinlogFile = "{}/{}-{}-{}-stdin.log".format(
+            self.downloadPath,
+            time.strftime("%Y%m%d-%H%M%S"),
+            transportId,
+            channelId,
+        )
 
-        if self.type == 'e':
+        if self.type == "e":
             self.stdinlogOpen = True
+            # log the command into ttylog
+            if self.ttylogEnabled:
+                (sess, cmd) = self.protocolArgs
+                ttylog.ttylog_write(
+                    self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd
+                )
         else:
             self.stdinlogOpen = False
 
         insults.ServerProtocol.connectionMade(self)
 
-        if self.type == 'e':
-            cmd = self.terminalProtocol.execcmd.encode('utf8')
-            if self.ttylogEnabled:
-                ttylog.ttylog_write(self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd)
+        if self.type == "e":
+            self.terminalProtocol.execcmd.encode("utf8")
 
-    def write(self, data):
+    def write(self, data: bytes) -> None:
         if self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data)
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
+            )
             self.ttylogSize += len(data)
 
         insults.ServerProtocol.write(self, data)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         """
         Input received from user
         """
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg(format='Data upload limit reached')
+            log.msg(format="Data upload limit reached")
             self.eofReceived()
             return
 
         if self.stdinlogOpen:
-            with open(self.stdinlogFile, 'ab') as f:
+            with open(self.stdinlogFile, "ab") as f:
                 f.write(data)
         elif self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data)
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data
+            )
 
         # prevent crash if something like this was passed:
         # echo cmd ; exit; \n\n
         if self.terminalProtocol:
             insults.ServerProtocol.dataReceived(self, data)
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         """
         Receive channel close and pass on to terminal
         """
         if self.terminalProtocol:
             self.terminalProtocol.eofReceived()
 
-    def loseConnection(self):
+    def loseConnection(self) -> None:
         """
         Override super to remove the terminal reset on logout
         """
@@ -117,7 +141,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         if self.stdinlogOpen:
             try:
-                with open(self.stdinlogFile, 'rb') as f:
+                with open(self.stdinlogFile, "rb") as f:
                     shasum = hashlib.sha256(f.read()).hexdigest()
                     shasumfile = os.path.join(self.downloadPath, shasum)
                     if os.path.exists(shasumfile):
@@ -127,13 +151,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         os.rename(self.stdinlogFile, shasumfile)
                         duplicate = False
 
-                log.msg(eventid='cowrie.session.file_download',
-                        format='Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s',
-                        duplicate=duplicate,
-                        outfile=shasumfile,
-                        shasum=shasum,
-                        destfile='')
-            except IOError:
+                log.msg(
+                    eventid="cowrie.session.file_download",
+                    format="Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
+                    duplicate=duplicate,
+                    outfile=shasumfile,
+                    shasum=shasum,
+                    destfile="",
+                )
+            except OSError:
                 pass
             finally:
                 self.stdinlogOpen = False
@@ -146,7 +172,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 if rp[1]:
                     url = rp[1]
                 else:
-                    url = rf[rf.find('redir_') + len('redir_'):]
+                    url = rf[rf.find("redir_") + len("redir_") :]
 
                 try:
                     if not os.path.exists(rf):
@@ -156,7 +182,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         os.remove(rf)
                         continue
 
-                    with open(rf, 'rb') as f:
+                    with open(rf, "rb") as f:
                         shasum = hashlib.sha256(f.read()).hexdigest()
                         shasumfile = os.path.join(self.downloadPath, shasum)
                         if os.path.exists(shasumfile):
@@ -165,13 +191,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         else:
                             os.rename(rf, shasumfile)
                             duplicate = False
-                    log.msg(eventid='cowrie.session.file_download',
-                            format='Saved redir contents with SHA-256 %(shasum)s to %(outfile)s',
-                            duplicate=duplicate,
-                            outfile=shasumfile,
-                            shasum=shasum,
-                            destfile=url)
-                except IOError:
+                    log.msg(
+                        eventid="cowrie.session.file_download",
+                        format="Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
+                        duplicate=duplicate,
+                        outfile=shasumfile,
+                        shasum=shasum,
+                        destfile=url,
+                    )
+                except OSError:
                     pass
             self.redirFiles.clear()
 
@@ -191,13 +219,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            log.msg(eventid='cowrie.log.closed',
-                    format='Closing TTY Log: %(ttylog)s after %(duration)d seconds',
-                    ttylog=shasumfile,
-                    size=self.ttylogSize,
-                    shasum=shasum,
-                    duplicate=duplicate,
-                    duration=time.time() - self.startTime)
+            log.msg(
+                eventid="cowrie.log.closed",
+                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                ttylog=shasumfile,
+                size=self.ttylogSize,
+                shasum=shasum,
+                duplicate=duplicate,
+                duration=time.time() - self.startTime,
+            )
 
         insults.ServerProtocol.connectionLost(self, reason)
 

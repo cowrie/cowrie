@@ -31,14 +31,10 @@ Send files to https://malshare.com/
 More info https://malshare.com/doc.php
 """
 
-from __future__ import absolute_import, division
 
 import os
+from urllib.parse import urlparse
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 import requests
 
 from twisted.python import log
@@ -53,11 +49,14 @@ class Output(cowrie.core.output.Output):
 
     TODO: use `treq`
     """
+
+    apiKey: str
+
     def start(self):
         """
         Start output plugin
         """
-        self.apiKey = CowrieConfig().get('output_malshare', 'api_key')
+        self.apiKey = CowrieConfig.get("output_malshare", "api_key")
 
     def stop(self):
         """
@@ -88,12 +87,14 @@ class Output(cowrie.core.output.Output):
         """
         try:
             res = requests.post(
-                "https://malshare.com/api.php?api_key="+self.apiKey+"&action=upload",
-                files={"upload": open(artifact, "rb")}
+                "https://malshare.com/api.php?api_key="
+                + self.apiKey
+                + "&action=upload",
+                files={"upload": open(artifact, "rb")},
             )
             if res and res.ok:
                 log.msg("Submitted to MalShare")
             else:
-                log.msg("MalShare Request failed: {}".format(res.status_code))
+                log.msg(f"MalShare Request failed: {res.status_code}")
         except Exception as e:
-            log.msg("MalShare Request failed: {}".format(e))
+            log.msg(f"MalShare Request failed: {e}")

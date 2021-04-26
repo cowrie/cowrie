@@ -1,6 +1,5 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
-from __future__ import absolute_import, division
 
 import optparse
 
@@ -42,7 +41,7 @@ class command_iptables(HoneyPotCommand):
     DEFAULT_TABLE = "filter"
 
     def user_is_root(self):
-        return self.protocol.user.username == 'root'
+        return self.protocol.user.username == "root"
 
     def start(self):
         """
@@ -70,7 +69,7 @@ class command_iptables(HoneyPotCommand):
         # Utils
         def optional_arg(arg_default):
             def func(option, opt_str, value, parser):
-                if parser.rargs and not parser.rargs[0].startswith('-'):
+                if parser.rargs and not parser.rargs[0].startswith("-"):
                     val = parser.rargs[0]
                     parser.rargs.pop(0)
                 else:
@@ -89,11 +88,33 @@ class command_iptables(HoneyPotCommand):
         parser.add_option("-n", "--numeric", dest="numeric", action="store_true")
         parser.add_option("--modprobe", dest="modprobe", action="store")
 
-        parser.add_option("-t", "--table", dest="table", action="store", default=command_iptables.DEFAULT_TABLE)
-        parser.add_option("-F", "--flush", dest="flush", action="callback", callback=optional_arg(True))
-        parser.add_option("-Z", "--zero", dest="zero", action="callback", callback=optional_arg(True))
-        parser.add_option("-S", "--list-rules", dest="list_rules", action="callback", callback=optional_arg(True))
-        parser.add_option("-L", "--list", dest="list", action="callback", callback=optional_arg(True))
+        parser.add_option(
+            "-t",
+            "--table",
+            dest="table",
+            action="store",
+            default=command_iptables.DEFAULT_TABLE,
+        )
+        parser.add_option(
+            "-F",
+            "--flush",
+            dest="flush",
+            action="callback",
+            callback=optional_arg(True),
+        )
+        parser.add_option(
+            "-Z", "--zero", dest="zero", action="callback", callback=optional_arg(True)
+        )
+        parser.add_option(
+            "-S",
+            "--list-rules",
+            dest="list_rules",
+            action="callback",
+            callback=optional_arg(True),
+        )
+        parser.add_option(
+            "-L", "--list", dest="list", action="callback", callback=optional_arg(True)
+        )
         parser.add_option("-A", "--append", dest="append", action="store")
         parser.add_option("-D", "--delete", dest="delete", action="store")
         parser.add_option("-I", "--insert", dest="insert", action="store")
@@ -114,8 +135,12 @@ class command_iptables(HoneyPotCommand):
         parser.add_option("-c", "--set-counters", dest="set_counters", action="store")
         parser.add_option("-m", "--match", dest="match", action="store")
 
-        parser.add_option("--sport", "--source-ports", dest="source_ports", action="store")
-        parser.add_option("--dport", "--destination-ports", dest="dest_ports", action="store")
+        parser.add_option(
+            "--sport", "--source-ports", dest="source_ports", action="store"
+        )
+        parser.add_option(
+            "--dport", "--destination-ports", dest="dest_ports", action="store"
+        )
         parser.add_option("--ports", dest="ports", action="store")
         parser.add_option("--state", dest="state", action="store")
 
@@ -160,35 +185,41 @@ class command_iptables(HoneyPotCommand):
         """
 
         # Create fresh tables on start
-        if not hasattr(self.protocol.user.server, 'iptables'):
-            setattr(self.protocol.user.server, 'iptables', {
-                "raw": {
-                    "PREROUTING": [],
-                    "OUTPUT": []
+        if not hasattr(self.protocol.user.server, "iptables"):
+            setattr(
+                self.protocol.user.server,
+                "iptables",
+                {
+                    "raw": {"PREROUTING": [], "OUTPUT": []},
+                    "filter": {
+                        "INPUT": [
+                            (
+                                "ACCEPT",
+                                "tcp",
+                                "--",
+                                "anywhere",
+                                "anywhere",
+                                "tcp",
+                                "dpt:ssh",
+                            ),
+                            ("DROP", "all", "--", "anywhere", "anywhere", "", ""),
+                        ],
+                        "FORWARD": [],
+                        "OUTPUT": [],
+                    },
+                    "mangle": {
+                        "PREROUTING": [],
+                        "INPUT": [],
+                        "FORWARD": [],
+                        "OUTPUT": [],
+                        "POSTROUTING": [],
+                    },
+                    "nat": {"PREROUTING": [], "OUTPUT": []},
                 },
-                "filter": {
-                    "INPUT": [
-                        ('ACCEPT', 'tcp', '--', 'anywhere', 'anywhere', 'tcp', 'dpt:ssh'),
-                        ('DROP', 'all', '--', 'anywhere', 'anywhere', '', '')
-                    ],
-                    "FORWARD": [],
-                    "OUTPUT": []
-                },
-                "mangle": {
-                    "PREROUTING": [],
-                    "INPUT": [],
-                    "FORWARD": [],
-                    "OUTPUT": [],
-                    "POSTROUTING": []
-                },
-                "nat": {
-                    "PREROUTING": [],
-                    "OUTPUT": []
-                }
-            })
+            )
 
         # Get the tables
-        self.tables = getattr(self.protocol.user.server, 'iptables')
+        self.tables = getattr(self.protocol.user.server, "iptables")
 
         # Verify selected table
         if not self.is_valid_table(table):
@@ -204,8 +235,12 @@ class command_iptables(HoneyPotCommand):
         if self.user_is_root():
             # Verify table existence
             if table not in list(self.tables.keys()):
-                self.write("""%s: can\'t initialize iptables table \'%s\': Table does not exist (do you need to insmod?)
-Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, table))
+                self.write(
+                    """{}: can\'t initialize iptables table \'{}\': Table does not exist (do you need to insmod?)
+Perhaps iptables or your kernel needs to be upgraded.\n""".format(
+                        command_iptables.APP_NAME, table
+                    )
+                )
                 self.exit()
             else:
                 # Exists
@@ -219,7 +254,9 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
     def is_valid_chain(self, chain):
         # Verify chain existence. Requires valid table first
         if chain not in list(self.current_table.keys()):
-            self.write("%s: No chain/target/match by that name.\n" % command_iptables.APP_NAME)
+            self.write(
+                "%s: No chain/target/match by that name.\n" % command_iptables.APP_NAME
+            )
             self.exit()
             return False
 
@@ -230,7 +267,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
         """
         Show version and exit
         """
-        self.write('%s %s\n' % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+        self.write(f"{command_iptables.APP_NAME} {command_iptables.APP_VERSION}\n")
         self.exit()
 
     def show_help(self):
@@ -238,7 +275,8 @@ Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.A
         Show help and exit
         """
 
-        self.write("""%s %s'
+        self.write(
+            """{} {}'
 
 Usage: iptables -[AD] chain rule-specification [options]
        iptables -I chain [rulenum] rule-specification [options]
@@ -300,7 +338,10 @@ Options:
 [!] --fragment -f      match second or further fragments only
   --modprobe=<command>     try to insert modules using this command
   --set-counters PKTS BYTES    set the counter during insert/append
-[!] --version  -V      print package version.\n""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+[!] --version  -V      print package version.\n""".format(
+                command_iptables.APP_NAME, command_iptables.APP_VERSION
+            )
+        )
         self.exit()
 
     def list_rules(self, chain):
@@ -326,7 +367,7 @@ Options:
                 output.append("-P %s ACCEPT" % chain)
 
             # Done
-            self.write('{0}\n'.format('\n'.join(output)))
+            self.write("{}\n".format("\n".join(output)))
             self.exit()
         else:
             self.no_permission()
@@ -365,7 +406,7 @@ Options:
                 output.append("\n".join(chain_output))
 
             # Done
-            self.write("{0}\n".format('\n\n'.join(output)))
+            self.write("{}\n".format("\n\n".join(output)))
             self.exit()
         else:
             self.no_permission()
@@ -394,33 +435,44 @@ Options:
             self.no_permission()
 
     def no_permission(self):
-        self.write("""%s %s: can\'t initialize iptables table \'filter\': Permission denied (you must be root)
-Perhaps iptables or your kernel needs to be upgraded.\n""" % (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+        self.write(
+            f"{command_iptables.APP_NAME} {command_iptables.APP_VERSION}: "
+            + "can't initialize iptables table 'filter': "
+            + "Permission denied (you must be root)\n"
+            + "Perhaps iptables or your kernel needs to be upgraded.\n"
+        )
         self.exit()
 
     def no_command(self):
         """ Print no command message and exit """
 
-        self.write("""%s %s: no command specified'
-Try `iptables -h\' or \'iptables --help\' for more information.\n""" %
-                   (command_iptables.APP_NAME, command_iptables.APP_VERSION))
+        self.write(
+            """%s %s: no command specified'
+Try `iptables -h\' or \'iptables --help\' for more information.\n"""
+            % (command_iptables.APP_NAME, command_iptables.APP_VERSION)
+        )
         self.exit()
 
     def unknown_option(self, option):
         """ Print unknown option message and exit """
 
-        self.write("""%s %s: unknown option \'%s\''
-Try `iptables -h\' or \'iptables --help\' for more information.\n""" %
-                   (command_iptables.APP_NAME, command_iptables.APP_VERSION, option))
+        self.write(
+            """%s %s: unknown option \'%s\''
+Try `iptables -h\' or \'iptables --help\' for more information.\n"""
+            % (command_iptables.APP_NAME, command_iptables.APP_VERSION, option)
+        )
         self.exit()
 
     def bad_argument(self, argument):
         """ Print bad argument and exit """
 
-        self.write("""Bad argument \'%s\'
-Try `iptables -h\' or \'iptables --help\' for more information.\n""" % argument)
+        self.write(
+            """Bad argument \'%s\'
+Try `iptables -h\' or \'iptables --help\' for more information.\n"""
+            % argument
+        )
         self.exit()
 
 
-commands['/sbin/iptables'] = command_iptables
-commands['iptables'] = command_iptables
+commands["/sbin/iptables"] = command_iptables
+commands["iptables"] = command_iptables

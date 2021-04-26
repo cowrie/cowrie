@@ -5,61 +5,70 @@
 This module contains authentication code
 """
 
-from __future__ import absolute_import, division
 
 import json
 import re
 from collections import OrderedDict
 from os import path
 from random import randint
+from typing import Any, Dict, List, Pattern, Tuple, Union
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 
-_USERDB_DEFAULTS = [
-    'root:x:!root',
-    'root:x:!123456',
-    'root:x:!/honeypot/i',
-    'root:x:*',
-    'phil:x:*',
-    'phil:x:fout',
+_USERDB_DEFAULTS: List[str] = [
+    "root:x:!root",
+    "root:x:!123456",
+    "root:x:!/honeypot/i",
+    "root:x:*",
+    "phil:x:*",
+    "phil:x:fout",
 ]
 
 
-class UserDB(object):
+class UserDB:
     """
     By Walter de Jong <walter@sara.nl>
     """
 
-    def __init__(self):
-        self.userdb = OrderedDict()
+    def __init__(self) -> None:
+        self.userdb: Dict[
+            Tuple[Union[Pattern[bytes], bytes], Union[Pattern[bytes], bytes]], bool
+        ] = OrderedDict()
         self.load()
 
-    def load(self):
+    def load(self) -> None:
         """
         load the user db
         """
 
+        dblines: List[str]
         try:
-            with open('{}/userdb.txt'.format(CowrieConfig().get('honeypot', 'etc_path')), 'r') as db:
-                userdb = db.readlines()
-        except IOError:
+            with open(
+                "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
+            ) as db:
+                dblines = db.readlines()
+        except OSError:
             log.msg("Could not read etc/userdb.txt, default database activated")
-            userdb = _USERDB_DEFAULTS
+            dblines = _USERDB_DEFAULTS
 
-        for user in userdb:
-            if not user.startswith('#'):
+        for user in dblines:
+            if not user.startswith("#"):
                 try:
-                    login = user.split(':')[0].encode('utf8')
-                    password = user.split(':')[2].strip().encode('utf8')
+                    login = user.split(":")[0].encode("utf8")
+                    password = user.split(":")[2].strip().encode("utf8")
                 except IndexError:
                     continue
                 else:
                     self.adduser(login, password)
 
-    def checklogin(self, thelogin, thepasswd, src_ip='0.0.0.0'):
+    def checklogin(
+        self, thelogin: bytes, thepasswd: bytes, src_ip: str = "0.0.0.0"
+    ) -> bool:
         for credentials, policy in self.userdb.items():
+            login: Union[bytes, Pattern[bytes]]
+            passwd: Union[bytes, Pattern[bytes]]
             login, passwd = credentials
 
             if self.match_rule(login, thelogin):
@@ -68,26 +77,28 @@ class UserDB(object):
 
         return False
 
-    def match_rule(self, rule, input):
-        if type(rule) is bytes:
-            return rule in [b'*', input]
+    def match_rule(
+        self, rule: Union[bytes, Pattern[bytes]], input: bytes
+    ) -> Union[bool, bytes]:
+        if isinstance(rule, bytes):
+            return rule in [b"*", input]
         else:
             return bool(rule.search(input))
 
-    def re_or_str(self, rule):
+    def re_or_bytes(self, rule: bytes) -> Union[Pattern[bytes], bytes]:
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
 
         @param login: rule
         @type login: bytes
         """
-        res = re.match(br'/(.+)/(i)?$', rule)
+        res = re.match(br"/(.+)/(i)?$", rule)
         if res:
             return re.compile(res.group(1), re.IGNORECASE if res.group(2) else 0)
 
         return rule
 
-    def adduser(self, login, passwd):
+    def adduser(self, login: bytes, passwd: bytes) -> None:
         """
         All arguments are bytes
 
@@ -96,7 +107,7 @@ class UserDB(object):
         @param passwd: password
         @type passwd: bytes
         """
-        login = self.re_or_str(login)
+        user = self.re_or_bytes(login)
 
         if passwd[0] == ord("!"):
             policy = False
@@ -104,24 +115,26 @@ class UserDB(object):
         else:
             policy = True
 
-        passwd = self.re_or_str(passwd)
-        self.userdb[(login, passwd)] = policy
+        p = self.re_or_bytes(passwd)
+        self.userdb[(user, p)] = policy
 
 
-class AuthRandom(object):
+class AuthRandom:
     """
     Alternative class that defines the checklogin() method.
     Users will be authenticated after a random number of attempts.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Default values
-        self.mintry, self.maxtry, self.maxcache = 2, 5, 10
+        self.mintry: int = 2
+        self.maxtry: int = 5
+        self.maxcache: int = 10
 
         # Are there auth_class parameters?
-        if CowrieConfig().has_option('honeypot', 'auth_class_parameters'):
-            parameters = CowrieConfig().get('honeypot', 'auth_class_parameters')
-            parlist = parameters.split(',')
+        if CowrieConfig.has_option("honeypot", "auth_class_parameters"):
+            parameters: str = CowrieConfig.get("honeypot", "auth_class_parameters")
+            parlist: List[str] = parameters.split(",")
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
                 self.maxtry = int(parlist[1])
@@ -129,32 +142,35 @@ class AuthRandom(object):
 
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
-            log.msg("maxtry < mintry, adjusting maxtry to: {}".format(self.maxtry))
-        self.uservar = {}
-        self.uservar_file = '{}/auth_random.json'.format(CowrieConfig().get('honeypot', 'state_path'))
+            log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
+
+        self.uservar: Dict[Any, Any] = {}
+        self.uservar_file: str = "{}/auth_random.json".format(
+            CowrieConfig.get("honeypot", "state_path")
+        )
         self.loadvars()
 
-    def loadvars(self):
+    def loadvars(self) -> None:
         """
         Load user vars from json file
         """
         if path.isfile(self.uservar_file):
-            with open(self.uservar_file, 'r') as fp:
+            with open(self.uservar_file) as fp:
                 try:
                     self.uservar = json.load(fp)
                 except Exception:
                     self.uservar = {}
 
-    def savevars(self):
+    def savevars(self) -> None:
         """
         Save the user vars to json file
         """
         data = self.uservar
         # Note: this is subject to races between cowrie logins
-        with open(self.uservar_file, 'w') as fp:
+        with open(self.uservar_file, "w") as fp:
             json.dump(data, fp)
 
-    def checklogin(self, thelogin, thepasswd, src_ip):
+    def checklogin(self, thelogin: bytes, thepasswd: bytes, src_ip: str) -> bool:
         """
         Every new source IP will have to try a random number of times between
         'mintry' and 'maxtry' before succeeding to login.
@@ -165,36 +181,36 @@ class AuthRandom(object):
         Variables are saved in 'uservar.json' in the data directory.
         """
 
-        auth = False
-        userpass = str(thelogin) + ':' + str(thepasswd)
+        auth: bool = False
+        userpass: str = str(thelogin) + ":" + str(thepasswd)
 
-        if 'cache' not in self.uservar:
-            self.uservar['cache'] = []
-        cache = self.uservar['cache']
+        if "cache" not in self.uservar:
+            self.uservar["cache"] = []
+        cache = self.uservar["cache"]
 
         # Check if it is the first visit from src_ip
         if src_ip not in self.uservar:
             self.uservar[src_ip] = {}
             ipinfo = self.uservar[src_ip]
-            ipinfo['try'] = 0
+            ipinfo["try"] = 0
             if userpass in cache:
-                log.msg("first time for {}, found cached: {}".format(src_ip, userpass))
-                ipinfo['max'] = 1
-                ipinfo['user'] = str(thelogin)
-                ipinfo['pw'] = str(thepasswd)
+                log.msg(f"first time for {src_ip}, found cached: {userpass}")
+                ipinfo["max"] = 1
+                ipinfo["user"] = str(thelogin)
+                ipinfo["pw"] = str(thepasswd)
                 auth = True
                 self.savevars()
                 return auth
             else:
-                ipinfo['max'] = randint(self.mintry, self.maxtry)
-                log.msg("first time for {}, need: {}".format(src_ip, ipinfo['max']))
+                ipinfo["max"] = randint(self.mintry, self.maxtry)
+                log.msg("first time for {}, need: {}".format(src_ip, ipinfo["max"]))
         else:
             if userpass in cache:
                 ipinfo = self.uservar[src_ip]
-                log.msg("Found cached: {}".format(userpass))
-                ipinfo['max'] = 1
-                ipinfo['user'] = str(thelogin)
-                ipinfo['pw'] = str(thepasswd)
+                log.msg(f"Found cached: {userpass}")
+                ipinfo["max"] = 1
+                ipinfo["user"] = str(thelogin)
+                ipinfo["pw"] = str(thepasswd)
                 auth = True
                 self.savevars()
                 return auth
@@ -202,43 +218,45 @@ class AuthRandom(object):
         ipinfo = self.uservar[src_ip]
 
         # Fill in missing variables
-        if 'max' not in ipinfo:
-            ipinfo['max'] = randint(self.mintry, self.maxtry)
-        if 'try' not in ipinfo:
-            ipinfo['try'] = 0
-        if 'tried' not in ipinfo:
-            ipinfo['tried'] = []
+        if "max" not in ipinfo:
+            ipinfo["max"] = randint(self.mintry, self.maxtry)
+        if "try" not in ipinfo:
+            ipinfo["try"] = 0
+        if "tried" not in ipinfo:
+            ipinfo["tried"] = []
 
         # Don't count repeated username/password combinations
-        if userpass in ipinfo['tried']:
-            log.msg('already tried this combination')
+        if userpass in ipinfo["tried"]:
+            log.msg("already tried this combination")
             self.savevars()
             return auth
 
-        ipinfo['try'] += 1
-        attempts = ipinfo['try']
-        need = ipinfo['max']
-        log.msg("login attempt: {}".format(attempts))
+        ipinfo["try"] += 1
+        attempts: int = ipinfo["try"]
+        need: int = ipinfo["max"]
+        log.msg(f"login attempt: {attempts}")
 
         # Check if enough login attempts are tried
         if attempts < need:
-            self.uservar[src_ip]['tried'].append(userpass)
+            self.uservar[src_ip]["tried"].append(userpass)
         elif attempts == need:
-            ipinfo['user'] = str(thelogin)
-            ipinfo['pw'] = str(thepasswd)
+            ipinfo["user"] = str(thelogin)
+            ipinfo["pw"] = str(thepasswd)
             cache.append(userpass)
             if len(cache) > self.maxcache:
                 cache.pop(0)
             auth = True
         # Returning after successful login
         elif attempts > need:
-            if 'user' not in ipinfo or 'pw' not in ipinfo:
-                log.msg('return, but username or password not set!!!')
-                ipinfo['tried'].append(userpass)
-                ipinfo['try'] = 1
+            if "user" not in ipinfo or "pw" not in ipinfo:
+                log.msg("return, but username or password not set!!!")
+                ipinfo["tried"].append(userpass)
+                ipinfo["try"] = 1
             else:
-                log.msg("login return, expect: [{}/{}]".format(ipinfo['user'], ipinfo['pw']))
-                if thelogin == ipinfo['user'] and str(thepasswd) == ipinfo['pw']:
+                log.msg(
+                    "login return, expect: [{}/{}]".format(ipinfo["user"], ipinfo["pw"])
+                )
+                if thelogin == ipinfo["user"] and str(thepasswd) == ipinfo["pw"]:
                     auth = True
         self.savevars()
         return auth

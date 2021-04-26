@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 import json
 import string
 from random import choice
@@ -17,8 +15,7 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 
-class XMPPLoggerProtocol(muc.MUCClient):
-
+class XMPPLoggerProtocol(muc.MUCClient):  # type: ignore
     def __init__(self, rooms, server, nick):
         muc.MUCClient.__init__(self)
         self.server = rooms.host
@@ -37,16 +34,16 @@ class XMPPLoggerProtocol(muc.MUCClient):
         self.join(self.jrooms, self.nick)
 
     def joinedRoom(self, room):
-        log.msg('Joined room {}'.format(room.name))
+        log.msg(f"Joined room {room.name}")
 
     def connectionMade(self):
-        log.msg('Connected!')
+        log.msg("Connected!")
 
         # send initial presence
         self.send(AvailablePresence())
 
     def connectionLost(self, reason):
-        log.msg('Disconnected!')
+        log.msg("Disconnected!")
 
     def onMessage(self, msg):
         pass
@@ -62,24 +59,23 @@ class Output(cowrie.core.output.Output):
     """
     xmpp output
     """
+
     def start(self):
-        server = CowrieConfig().get('output_xmpp', 'server')
-        user = CowrieConfig().get('output_xmpp', 'user')
-        password = CowrieConfig().get('output_xmpp', 'password')
-        muc = CowrieConfig().get('output_xmpp', 'muc')
-        resource = ''.join([choice(string.ascii_letters)
-                            for i in range(8)])
-        jid = user + '/' + resource
-        application = service.Application('honeypot')
+        server = CowrieConfig.get("output_xmpp", "server")
+        user = CowrieConfig.get("output_xmpp", "user")
+        password = CowrieConfig.get("output_xmpp", "password")
+        muc = CowrieConfig.get("output_xmpp", "muc")
+        resource = "".join([choice(string.ascii_letters) for i in range(8)])
+        jid = user + "/" + resource
+        application = service.Application("honeypot")
         self.run(application, jid, password, JID(None, [muc, server, None]), server)
 
     def run(self, application, jidstr, password, muc, server):
         self.xmppclient = XMPPClient(JID(jidstr), password)
-        if CowrieConfig().getboolean('output_xmpp', 'debug', fallback=False):
+        if CowrieConfig.getboolean("output_xmpp", "debug", fallback=False):
             self.xmppclient.logTraffic = True
         (user, host, resource) = jid.parse(jidstr)
-        self.muc = XMPPLoggerProtocol(
-            muc, server, user + '-' + resource)
+        self.muc = XMPPLoggerProtocol(muc, server, user + "-" + resource)
         self.muc.setHandlerParent(self.xmppclient)
         self.xmppclient.setServiceParent(application)
         self.anonymous = True
@@ -88,7 +84,7 @@ class Output(cowrie.core.output.Output):
     def write(self, logentry):
         for i in list(logentry.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith('log_'):
+            if i.startswith("log_"):
                 del logentry[i]
             elif i == "time":
                 del logentry[i]

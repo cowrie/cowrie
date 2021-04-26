@@ -28,8 +28,8 @@ spammers, and abusive activity on the internet." <https://www.abuseipdb.com/>
 """
 
 
-__author__ = 'Benjamin Stephens'
-__version__ = '0.3b3'
+__author__ = "Benjamin Stephens"
+__version__ = "0.3b3"
 
 
 import pickle
@@ -37,7 +37,6 @@ from collections import deque
 from datetime import datetime
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from sys import version_info
 from time import sleep, time
 
 from treq import post
@@ -53,9 +52,9 @@ from cowrie.core.config import CowrieConfig
 # How often we clean and dump and our lists/dict...
 CLEAN_DUMP_SCHED = 600
 # ...and the file we dump to.
-DUMP_FILE = 'aipdb.dump'
+DUMP_FILE = "aipdb.dump"
 
-ABUSEIP_URL = 'https://api.abuseipdb.com/api/v2/report'
+ABUSEIP_URL = "https://api.abuseipdb.com/api/v2/report"
 # AbuseIPDB will just 429 us if we report an IP too often; currently 15 minutes
 # (900 seconds); set lower limit here to protect againt bad user input.
 REREPORT_MINIMUM = 900
@@ -63,14 +62,12 @@ REREPORT_MINIMUM = 900
 
 class Output(output.Output):
     def start(self):
-        self.tolerance_attempts = CowrieConfig().getint('output_abuseipdb', 'tolerance_attempts', fallback=10)
-        self.state_path = CowrieConfig().get('output_abuseipdb', 'dump_path')
-        self.state_path = Path(*(d for d in self.state_path.split('/')))
+        self.tolerance_attempts = CowrieConfig.getint(
+            "output_abuseipdb", "tolerance_attempts", fallback=10
+        )
+        self.state_path = CowrieConfig.get("output_abuseipdb", "dump_path")
+        self.state_path = Path(*(d for d in self.state_path.split("/")))
         self.state_dump = self.state_path / DUMP_FILE
-
-        if version_info.minor < 6:
-            # PathLike object not compatible with with open in python < 3.6
-            self.state_dump = str(self.state_dump)
 
         self.logbook = LogBook(self.tolerance_attempts, self.state_dump)
         # Pass our instance of LogBook() to Reporter() so we don't end up
@@ -80,13 +77,13 @@ class Output(output.Output):
         # We store the LogBook state any time a shutdown occurs. The rest of
         # our start-up is just for loading and cleaning the previous state
         try:
-            with open(self.state_dump, 'rb') as f:
+            with open(self.state_dump, "rb") as f:
                 self.logbook.update(pickle.load(f))
 
             # Check to see if we're still asleep after receiving a Retry-After
             # header in a previous response
-            if self.logbook['sleeping']:
-                t_wake = self.logbook['sleep_until']
+            if self.logbook["sleeping"]:
+                t_wake = self.logbook["sleep_until"]
                 t_now = time()
                 if t_wake > t_now:
                     # If we're meant to be asleep, we'll set logbook.sleep to
@@ -97,9 +94,9 @@ class Output(output.Output):
                     # us back out of bed
                     reactor.callLater(t_wake - t_now, self.logbook.wakeup)
 
-            del self.logbook['sleeping']
-            del self.logbook['sleep_until']
-            tolerated = self.logbook.pop('tolerated')
+            del self.logbook["sleeping"]
+            del self.logbook["sleep_until"]
+            tolerated = self.logbook.pop("tolerated")
 
         except (pickle.UnpicklingError, FileNotFoundError, KeyError):
             if self.state_path.exists():
@@ -122,13 +119,15 @@ class Output(output.Output):
             if tolerated != self.tolerance_attempts:
                 for k in self.logbook:
                     if self.logbook[k].__class__() == deque():
-                        self.logbook[k] = deque([*self.logbook[k]], maxlen=self.tolerance_attempts)
+                        self.logbook[k] = deque(
+                            [*self.logbook[k]], maxlen=self.tolerance_attempts
+                        )
         except UnboundLocalError:
             pass
 
         log.msg(
-            eventid='cowrie.abuseipdb.started',
-            format='AbuseIPDB Plugin version {} started. Currently in beta.'.format(__version__),
+            eventid="cowrie.abuseipdb.started",
+            format=f"AbuseIPDB Plugin version {__version__} started. Currently in beta.",
         )
 
     def stop(self):
@@ -138,13 +137,13 @@ class Output(output.Output):
         if self.logbook.sleeping:
             return
 
-        if ev['eventid'].rsplit('.', 1)[0] == 'cowrie.login':
+        if ev["eventid"].rsplit(".", 1)[0] == "cowrie.login":
             # If tolerance_attempts was set to 1 or 0, we don't need to
             # keep logs so our handling of the event is different than if > 1
             if self.tolerance_attempts <= 1:
-                self.intolerant_observer(ev['src_ip'], time(), ev['username'])
+                self.intolerant_observer(ev["src_ip"], time(), ev["username"])
             else:
-                self.tolerant_observer(ev['src_ip'], time())
+                self.tolerant_observer(ev["src_ip"], time())
 
     def intolerant_observer(self, ip, t, uname):
         # Checks if already reported; if yes, checks if we can rereport yet.
@@ -189,18 +188,23 @@ class Output(output.Output):
 
 
 class LogBook(dict):
-    """ Dictionary class with methods for cleaning and dumping its state.
+    """Dictionary class with methods for cleaning and dumping its state.
 
     This class should be treated as global state. For the moment this is
     achieved simply by passing the instance created by Output() directly to
     Reporter(). Sharing is caring.
     """
+
     def __init__(self, tolerance_attempts, state_dump):
         self.sleeping = False
         self.sleep_until = 0
         self.tolerance_attempts = tolerance_attempts
-        self.tolerance_window = 60 * CowrieConfig().getint('output_abuseipdb', 'tolerance_window', fallback=120)
-        self.rereport_after = 3600 * CowrieConfig().getfloat('output_abuseipdb', 'rereport_after', fallback=24)
+        self.tolerance_window = 60 * CowrieConfig.getint(
+            "output_abuseipdb", "tolerance_window", fallback=120
+        )
+        self.rereport_after = 3600 * CowrieConfig.getfloat(
+            "output_abuseipdb", "rereport_after", fallback=24
+        )
         if self.rereport_after < REREPORT_MINIMUM:
             self.rereport_after = REREPORT_MINIMUM
         self.state_dump = state_dump
@@ -216,9 +220,9 @@ class LogBook(dict):
         self.sleep_until = 0
         self.recall = reactor.callLater(CLEAN_DUMP_SCHED, self.cleanup_and_dump_state)
         log.msg(
-            eventid='cowrie.abuseipdb.wakeup',
-            format='AbuseIPDB plugin resuming activity after receiving '
-                   'Retry-After header in previous response.',
+            eventid="cowrie.abuseipdb.wakeup",
+            format="AbuseIPDB plugin resuming activity after receiving "
+            "Retry-After header in previous response.",
         )
 
     def clean_expired_timestamps(self, ip_key, current_time):
@@ -294,14 +298,16 @@ class LogBook(dict):
         self.dump_state()
 
         if mode == 0 and not self.sleeping:
-            self.recall = reactor.callLater(CLEAN_DUMP_SCHED, self.cleanup_and_dump_state)
+            self.recall = reactor.callLater(
+                CLEAN_DUMP_SCHED, self.cleanup_and_dump_state
+            )
 
     def dump_state(self):
         dump = {
-            'sleeping': self.sleeping,
-            'sleep_until': self.sleep_until,
+            "sleeping": self.sleeping,
+            "sleep_until": self.sleep_until,
             # Store current self_tolerance for comparison on next start
-            'tolerated': self.tolerance_attempts,
+            "tolerated": self.tolerance_attempts,
         }
 
         for k, v in self.items():
@@ -321,7 +327,7 @@ class LogBook(dict):
         # Acquire 'lock'
         self._writing = True
 
-        with open(self.state_dump, 'wb') as f:
+        with open(self.state_dump, "wb") as f:
             pickle.dump(dump, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         # Release 'lock'
@@ -329,15 +335,15 @@ class LogBook(dict):
 
 
 class Reporter:
-    """ HTTP client and methods for preparing report paramaters.
-    """
+    """HTTP client and methods for preparing report paramaters."""
+
     def __init__(self, logbook, attempts):
         self.logbook = logbook
         self.attempts = attempts
         self.headers = {
-            'User-Agent': 'Cowrie Honeypot AbuseIPDB plugin',
-            'Accept': 'application/json',
-            'Key': CowrieConfig().get('output_abuseipdb', 'api_key')
+            "User-Agent": "Cowrie Honeypot AbuseIPDB plugin",
+            "Accept": "application/json",
+            "Key": CowrieConfig.get("output_abuseipdb", "api_key"),
         }
 
     def report_ip_single(self, ip, t, uname):
@@ -346,10 +352,10 @@ class Reporter:
         t = self.epoch_to_string_utc(t)
 
         params = {
-            'ip': ip,
-            'categories': '18,22',
-            'comment': 'Cowrie Honeypot: Unauthorised SSH/Telnet login attempt '
-                       'with user "{}" at {}'.format(uname, t)
+            "ip": ip,
+            "categories": "18,22",
+            "comment": "Cowrie Honeypot: Unauthorised SSH/Telnet login attempt "
+            'with user "{}" at {}'.format(uname, t),
         }
 
         self.http_request(params)
@@ -363,10 +369,10 @@ class Reporter:
         t_last = self.epoch_to_string_utc(t_last)
 
         params = {
-            'ip': ip,
-            'categories': '18,22',
-            'comment': 'Cowrie Honeypot: {} unauthorised SSH/Telnet login attempts '
-                       'between {} and {}'.format(self.attempts, t_first, t_last)
+            "ip": ip,
+            "categories": "18,22",
+            "comment": "Cowrie Honeypot: {} unauthorised SSH/Telnet login attempts "
+            "between {} and {}".format(self.attempts, t_first, t_last),
         }
 
         self.http_request(params)
@@ -374,14 +380,14 @@ class Reporter:
     @staticmethod
     def epoch_to_string_utc(t):
         t_utc = datetime.utcfromtimestamp(t)
-        return t_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+        return t_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     @staticmethod
     def log_response_failed(ip, response, reason):
         log.msg(
-            eventid='cowrie.abuseipdb.reportfail',
-            format='AbuseIPDB plugin failed to report IP %(IP)s. Received HTTP '
-                   'status code %(response)s in response. Reason: %(reason)s.',
+            eventid="cowrie.abuseipdb.reportfail",
+            format="AbuseIPDB plugin failed to report IP %(IP)s. Received HTTP "
+            "status code %(response)s in response. Reason: %(reason)s.",
             IP=ip,
             response=response,
             reason=reason,
@@ -394,14 +400,14 @@ class Reporter:
                 url=ABUSEIP_URL,
                 headers=self.headers,
                 params=params,
-                )
+            )
 
         except Exception as e:
             log.msg(
-                eventid='cowrie.abuseipdb.reportfail',
-                format='AbuseIPDB plugin failed to report IP %(IP)s. '
-                       'Exception raised: %(exception)s.',
-                IP=params['ip'],
+                eventid="cowrie.abuseipdb.reportfail",
+                format="AbuseIPDB plugin failed to report IP %(IP)s. "
+                "Exception raised: %(exception)s.",
+                IP=params["ip"],
                 exception=repr(e),
             )
             return
@@ -411,52 +417,52 @@ class Reporter:
                 return self.rate_limit_handler(params, response)
 
             try:
-                reason = http.RESPONSES[response.code].decode('utf-8')
+                reason = http.RESPONSES[response.code].decode("utf-8")
             except Exception:
-                reason = 'Unable to determine.'
+                reason = "Unable to determine."
 
-            self.log_response_failed(params['ip'], response.code, reason)
+            self.log_response_failed(params["ip"], response.code, reason)
 
             return
 
         j = yield response.json()
 
         log.msg(
-            eventid='cowrie.abuseipdb.reportedip',
-            format='AbuseIPDB plugin successfully reported %(IP)s. Current '
-                   'AbuseIPDB confidence score for this IP is %(confidence)s',
-            IP=params['ip'],
-            confidence=j['data']['abuseConfidenceScore']
+            eventid="cowrie.abuseipdb.reportedip",
+            format="AbuseIPDB plugin successfully reported %(IP)s. Current "
+            "AbuseIPDB confidence score for this IP is %(confidence)s",
+            IP=params["ip"],
+            confidence=j["data"]["abuseConfidenceScore"],
         )
 
     @defer.inlineCallbacks
     def rate_limit_handler(self, params, response):
         try:
             j = yield response.json()
-            reason = j['errors'][0]['detail']
+            reason = j["errors"][0]["detail"]
 
         except (KeyError, JSONDecodeError):
-            reason = 'No other information provided or unexpected response'
+            reason = "No other information provided or unexpected response"
 
-        self.log_response_failed(params['ip'], response.code, reason)
+        self.log_response_failed(params["ip"], response.code, reason)
 
         # AbuseIPDB will respond with a 429 and a Retry-After in its response
         # headers if we've exceeded our limits for the day. Here we test for
         # that header and, if it exists, put ourselves to sleep.
-        retry_after = yield response.headers.hasHeader('Retry-After')
+        retry_after = yield response.headers.hasHeader("Retry-After")
 
         if retry_after:
-            retry = yield response.headers.getRawHeaders('Retry-After')
+            retry = yield response.headers.getRawHeaders("Retry-After")
             retry = int(retry.pop())
 
             if retry > 86340:
                 yield threads.deferToThread(self.sleeper_thread)
 
                 log.msg(
-                    eventid='cowrie.abuseipdb.ratelimited',
-                    format='AbuseIPDB plugin received Retry-After header > 86340 '
-                           'seconds in previous response. Possible delayed quota '
-                           'reset on AbuseIPDB servers; retrying request now.',
+                    eventid="cowrie.abuseipdb.ratelimited",
+                    format="AbuseIPDB plugin received Retry-After header > 86340 "
+                    "seconds in previous response. Possible delayed quota "
+                    "reset on AbuseIPDB servers; retrying request now.",
                 )
 
                 return self.http_request(params)
@@ -474,12 +480,12 @@ class Reporter:
 
             self.epoch_to_string_utc(self.logbook.sleep_until)
             log.msg(
-                eventid='cowrie.abuseipdb.ratelimited',
-                format='AbuseIPDB plugin received Retry-After header in '
-                       'response. Reporting activity will resume in '
-                       '%(retry_after)s seconds at %(wake_at)s',
+                eventid="cowrie.abuseipdb.ratelimited",
+                format="AbuseIPDB plugin received Retry-After header in "
+                "response. Reporting activity will resume in "
+                "%(retry_after)s seconds at %(wake_at)s",
                 retry_after=retry,
-                wake_at=self.epoch_to_string_utc(self.logbook.sleep_until)
+                wake_at=self.epoch_to_string_utc(self.logbook.sleep_until),
             )
 
     def sleeper_thread(self):

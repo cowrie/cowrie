@@ -26,13 +26,13 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import absolute_import, division
 
 import abc
 import re
 import socket
 import time
 from os import environ
+from typing import Any, Dict, Pattern
 
 from twisted.internet import reactor
 from twisted.logger import formatTime
@@ -64,81 +64,69 @@ in UTC.
 """
 
 
-def convert(input):
-    """
-    This converts a nested dictionary with bytes in it to string
-    """
-    if isinstance(input, dict):
-        return {convert(key): convert(value) for key, value in list(input.items())}
-    elif isinstance(input, list):
-        return [convert(element) for element in input]
-    elif isinstance(input, bytes):
-        return input.decode('utf-8')
-    else:
-        return input
-
-
-class Output(object):
+class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
     cowrie output plugins. Plugins require the mandatory
     methods: stop, start and write
     """
 
-    __metaclass__ = abc.ABCMeta
+    def __init__(self) -> None:
+        self.sessions: Dict[str, str] = {}
+        self.ips: Dict[str, str] = {}
 
-    def __init__(self):
-        self.sessions = {}
-        self.ips = {}
         # Need these for each individual transport, or else the session numbers overlap
-        self.sshRegex = re.compile(
-            '.*SSHTransport,([0-9]+),[0-9a-f:.]+$')
-        self.telnetRegex = re.compile(
-            '.*TelnetTransport,([0-9]+),[0-9a-f:.]+$')
-        self.sensor = CowrieConfig().get('honeypot', 'sensor_name', fallback=socket.gethostname())
+        self.sshRegex: Pattern[str] = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
+        self.telnetRegex: Pattern[str] = re.compile(
+            ".*TelnetTransport,([0-9]+),[0-9a-f:.]+$"
+        )
+        self.sensor: str = CowrieConfig.get(
+            "honeypot", "sensor_name", fallback=socket.gethostname()
+        )
+        self.timeFormat: str
 
         # use Z for UTC (Zulu) time, it's shorter.
-        if 'TZ' in environ and environ['TZ'] == 'UTC':
-            self.timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
+        if "TZ" in environ and environ["TZ"] == "UTC":
+            self.timeFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
         else:
-            self.timeFormat = '%Y-%m-%dT%H:%M:%S.%f%z'
+            self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         # Event trigger so that stop() is called by the reactor when stopping
-        reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
+        reactor.addSystemEventTrigger("before", "shutdown", self.stop)  # type: ignore
 
         self.start()
 
-    def logDispatch(self, *msg, **kw):
+    def logDispatch(self, **kw: str) -> None:
         """
         Use logDispatch when the HoneypotTransport prefix is not available.
         Here you can explicitly set the sessionIds to tie the sessions together
         """
         ev = kw
-        ev['message'] = msg
+        # ev["message"] = msg
         self.emit(ev)
 
     @abc.abstractmethod
-    def start(self):
+    def start(self) -> None:
         """
         Abstract method to initialize output plugin
         """
         pass
 
     @abc.abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         """
         Abstract method to shut down output plugin
         """
         pass
 
     @abc.abstractmethod
-    def write(self, event):
+    def write(self, event: Dict[str, Any]) -> None:
         """
         Handle a general event within the output plugin
         """
         pass
 
-    def emit(self, event):
+    def emit(self, event: dict) -> None:
         """
         This is the main emit() hook that gets called by the the Twisted logging
 
@@ -147,77 +135,88 @@ class Output(object):
         - 'sessionno' or 'session'
         - 'message' or 'format'
         """
+        sessionno: str
+        ev: dict
+
         # Ignore stdout and stderr in output plugins
-        if 'printed' in event:
+        if "printed" in event:
             return
 
         # Ignore anything without eventid
-        if 'eventid' not in event:
+        if "eventid" not in event:
             return
 
         # Ignore anything without session information
-        if 'sessionno' not in event and 'session' not in event and 'system' not in event:
+        if (
+            "sessionno" not in event
+            and "session" not in event
+            and "system" not in event
+        ):
             return
 
         # Ignore anything without message
-        if 'message' not in event and 'format' not in event:
+        if "message" not in event and "format" not in event:
             return
 
-        ev = convert(event)
-        ev['sensor'] = self.sensor
+        ev: Dict[str, any] = event  # type: ignore
+        ev["sensor"] = self.sensor
 
-        if 'isError' in ev:
-            del ev['isError']
+        if "isError" in ev:
+            del ev["isError"]
 
         # Add ISO timestamp and sensor data
-        if 'time' not in ev:
-            ev['time'] = time.time()
-        ev['timestamp'] = formatTime(ev['time'], timeFormat=self.timeFormat)
+        if "time" not in ev:
+            ev["time"] = time.time()
+        ev["timestamp"] = formatTime(ev["time"], timeFormat=self.timeFormat)
 
-        if 'format' in ev and ('message' not in ev or ev['message'] == ()):
+        if "format" in ev and ("message" not in ev or ev["message"] == ()):
             try:
-                ev['message'] = ev['format'] % ev
-                del ev['format']
+                ev["message"] = ev["format"] % ev
+                del ev["format"]
             except Exception:
                 pass
 
         # Explicit sessionno (from logDispatch) overrides from 'system'
-        if 'sessionno' in ev:
-            sessionno = ev['sessionno']
-            del ev['sessionno']
+        if "sessionno" in ev:
+            sessionno = ev["sessionno"]
+            del ev["sessionno"]
         # Maybe it's passed explicitly
-        elif 'session' in ev:
+        elif "session" in ev:
             # reverse engineer sessionno
             try:
-                sessionno = next(key for key, value in self.sessions.items() if value == ev['session'])
+                sessionno = next(
+                    key
+                    for key, value in self.sessions.items()
+                    if value == ev["session"]
+                )
             except StopIteration:
                 return
         # Extract session id from the twisted log prefix
-        elif 'system' in ev:
-            sessionno = 0
-            telnetmatch = self.telnetRegex.match(ev['system'])
+        elif "system" in ev:
+            sessionno = "0"
+            telnetmatch = self.telnetRegex.match(ev["system"])
             if telnetmatch:
-                sessionno = 'T{}'.format(telnetmatch.groups()[0])
+                sessionno = "T{}".format(telnetmatch.groups()[0])
             else:
-                sshmatch = self.sshRegex.match(ev['system'])
+                sshmatch = self.sshRegex.match(ev["system"])
                 if sshmatch:
-                    sessionno = 'S{}'.format(sshmatch.groups()[0])
-            if sessionno == 0:
+                    sessionno = "S{}".format(sshmatch.groups()[0])
+            if sessionno == "0":
                 return
 
         if sessionno in self.ips:
-            ev['src_ip'] = self.ips[sessionno]
+            ev["src_ip"] = self.ips[sessionno]
 
         # Connection event is special. adds to session list
-        if ev['eventid'] == 'cowrie.session.connect':
-            self.sessions[sessionno] = ev['session']
-            self.ips[sessionno] = ev['src_ip']
+        if ev["eventid"] == "cowrie.session.connect":
+            self.sessions[sessionno] = ev["session"]
+            self.ips[sessionno] = ev["src_ip"]
         else:
-            ev['session'] = self.sessions[sessionno]
+            ev["session"] = self.sessions[sessionno]
 
         self.write(ev)
 
         # Disconnect is special, remove cached data
-        if ev['eventid'] == 'cowrie.session.closed':
+        if ev["eventid"] == "cowrie.session.closed":
             del self.sessions[sessionno]
             del self.ips[sessionno]

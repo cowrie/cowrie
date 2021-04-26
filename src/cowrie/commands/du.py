@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2018 Danilo Vargas <danilo.vargas@csiete.org>
 # See the COPYRIGHT file for more information
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -13,7 +11,6 @@ commands = {}
 
 
 class command_du(HoneyPotCommand):
-
     def message_help(self):
         return """Usage: du [OPTION]... [FILE]...
   or:  du [OPTION]... --files0-from=F
@@ -84,9 +81,9 @@ or available locally via: info '(coreutils) du invocation'\n"""
         path = self.protocol.cwd
         args = self.args
         if args:
-            if '-sh' == args[0]:
-                self.write('28K     .\n')
-            elif '--help' == args[0]:
+            if "-sh" == args[0]:
+                self.write("28K     .\n")
+            elif "--help" == args[0]:
                 self.write(self.message_help())
             else:
                 self.du_show(path)
@@ -99,20 +96,19 @@ or available locally via: info '(coreutils) du invocation'\n"""
                 files = self.protocol.fs.get_path(path)[:]
                 if self.showHidden:
                     dot = self.protocol.fs.getfile(path)[:]
-                    dot[A_NAME] = '.'
+                    dot[A_NAME] = "."
                     files.append(dot)
                     # FIXME: should grab dotdot off the parent instead
                     dotdot = self.protocol.fs.getfile(path)[:]
-                    dotdot[A_NAME] = '..'
+                    dotdot[A_NAME] = ".."
                     files.append(dotdot)
                 else:
-                    files = [x for x in files if not x[A_NAME].startswith('.')]
+                    files = [x for x in files if not x[A_NAME].startswith(".")]
                 files.sort()
             else:
                 files = (self.protocol.fs.getfile(path)[:],)
         except Exception:
-            self.write(
-                'ls: cannot access %s: No such file or directory\n' % (path,))
+            self.write(f"ls: cannot access {path}: No such file or directory\n")
             return
 
         filenames = [x[A_NAME] for x in files]
@@ -122,13 +118,13 @@ or available locally via: info '(coreutils) du invocation'\n"""
             if all:
                 isdir = self.protocol.fs.isdir(os.path.join(path, filename))
                 if isdir:
-                    filename = "4       ./{0}\n".format(filename)
+                    filename = f"4       ./{filename}\n"
                     self.write(filename)
             else:
-                filename = "4       {0}\n".format(filename)
+                filename = f"4       {filename}\n"
                 self.write(filename)
         if all:
             self.write("36      .\n")
 
 
-commands['du'] = command_du
+commands["du"] = command_du

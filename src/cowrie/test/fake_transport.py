@@ -3,23 +3,31 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
+from typing import Callable, Dict, List, Optional, Set
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
 
 
-class Container(object):
+class Container:
     """
     This class is placeholder for creating a fake interface
-    @var host Client fake infomration
+    @var host Client fake information
     @var port Fake Port for connection
     @var otherVersionString version
     @var
     """
+
     otherVersionString = "1.0"
     transportId = "test-suite"
     id = "test-suite"
+    sessionno = 1
+    starttime = 0
+    session: Optional["Container"]
+    sessions: Dict[int, str] = {}
+    conn: Optional["Container"]
+    transport: Optional["Container"]
+    factory: Optional["Container"]
 
     def getPeer(self):
         """
@@ -40,24 +48,45 @@ class FakeTransport(proto_helpers.StringTransport):
     """
     Fake transport with abortConnection() method.
     """
+
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
-    redirFiles = set()
+    redirFiles: Set[List[str]] = set()
     width = 80
     height = 24
     void = object()
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 
-    for keyID in ('UP_ARROW', 'DOWN_ARROW', 'RIGHT_ARROW', 'LEFT_ARROW',
-                  'HOME', 'INSERT', 'DELETE', 'END', 'PGUP', 'PGDN',
-                  'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9',
-                  'F10', 'F11', 'F12'):
-        exec('%s = object()' % (keyID,))
+    for keyID in (
+        "UP_ARROW",
+        "DOWN_ARROW",
+        "RIGHT_ARROW",
+        "LEFT_ARROW",
+        "HOME",
+        "INSERT",
+        "DELETE",
+        "END",
+        "PGUP",
+        "PGDN",
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F9",
+        "F10",
+        "F11",
+        "F12",
+    ):
+        exec(f"{keyID} = object()")
 
-    TAB = '\x09'
-    BACKSPACE = '\x08'
+    TAB = "\x09"
+    BACKSPACE = "\x08"
 
-    modes = {}
+    modes: Dict[str, Callable] = {}
 
     # '\x01':     self.handle_HOME,	# CTRL-A
     # '\x02':     self.handle_LEFT,	# CTRL-B
@@ -88,7 +117,7 @@ class FakeTransport(proto_helpers.StringTransport):
     transport.session.conn.transport.factory.sessions = {}
     transport.session.conn.transport.factory.starttime = 0
     factory = Container()
-    session = {}
+    session: Dict[str, str] = {}
 
     def abortConnection(self):
         self.aborting = True
@@ -119,22 +148,25 @@ class FakeTransport(proto_helpers.StringTransport):
         self.x = self.y = 0
         self.modes = {}
         self.privateModes = {}
-        self.setPrivateModes([insults.privateModes.AUTO_WRAP,
-                              insults.privateModes.CURSOR_MODE])
-        self.numericKeypad = 'app'
+        self.setPrivateModes(
+            [insults.privateModes.AUTO_WRAP, insults.privateModes.CURSOR_MODE]
+        )
+        self.numericKeypad = "app"
         self.activeCharset = insults.G0
         self.graphicRendition = {
-            'bold': False,
-            'underline': False,
-            'blink': False,
-            'reverseVideo': False,
-            'foreground': self.WHITE,
-            'background': self.BLACK}
+            "bold": False,
+            "underline": False,
+            "blink": False,
+            "reverseVideo": False,
+            "foreground": self.WHITE,
+            "background": self.BLACK,
+        }
         self.charsets = {
             insults.G0: insults.CS_US,
             insults.G1: insults.CS_US,
             insults.G2: insults.CS_ALTERNATE,
-            insults.G3: insults.CS_ALTERNATE_SPECIAL}
+            insults.G3: insults.CS_ALTERNATE_SPECIAL,
+        }
         self.eraseDisplay()
 
     def eraseDisplay(self):
@@ -147,5 +179,4 @@ class FakeTransport(proto_helpers.StringTransport):
         return True
 
     def _emptyLine(self, width):
-        return [(self.void, self._currentFormattingState())
-                for i in range(width)]
+        return [(self.void, self._currentFormattingState()) for i in range(width)]

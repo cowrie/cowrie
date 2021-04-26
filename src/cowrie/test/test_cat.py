@@ -7,7 +7,6 @@
 Tests for general shell interaction and cat command
 """
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -24,9 +23,10 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellCatCommandTests(unittest.TestCase):
-
     def setUp(self):
-        self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
+        self.proto = protocol.HoneyPotInteractiveProtocol(
+            fake_server.FakeAvatar(fake_server.FakeServer())
+        )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
@@ -35,33 +35,35 @@ class ShellCatCommandTests(unittest.TestCase):
         """
         No such file
         """
-        self.proto.lineReceived(b'cat nonExisting\n')
-        self.assertEquals(self.tr.value(), b'cat: nonExisting: No such file or directory\n' + PROMPT)
+        self.proto.lineReceived(b"cat nonExisting\n")
+        self.assertEqual(
+            self.tr.value(), b"cat: nonExisting: No such file or directory\n" + PROMPT
+        )
 
     def test_cat_command_002(self):
         """
         argument - (stdin)
         """
-        self.proto.lineReceived(b'echo test | cat -\n')
-        self.assertEquals(self.tr.value(), b'test\n' + PROMPT)
+        self.proto.lineReceived(b"echo test | cat -\n")
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_cat_command_003(self):
         """
         test without arguments, read stdin only and quit
         """
-        self.proto.lineReceived(b'echo 1 | cat\n')
-        self.proto.lineReceived(b'echo 2\n')
+        self.proto.lineReceived(b"echo 1 | cat\n")
+        self.proto.lineReceived(b"echo 2\n")
         self.proto.handle_CTRL_D()
-        self.assertEquals(self.tr.value(), b'1\n' + PROMPT + b'2\n' + PROMPT)
+        self.assertEqual(self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT)
 
     def test_cat_command_004(self):
         """
         test handle of CTRL_C
         """
-        self.proto.lineReceived(b'cat\n')
-        self.proto.lineReceived(b'test\n')
+        self.proto.lineReceived(b"cat\n")
+        self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_C()
-        self.assertEquals(self.tr.value(), b'test\n^C\n' + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n^C\n" + PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")

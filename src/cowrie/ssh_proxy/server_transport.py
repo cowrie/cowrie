@@ -91,40 +91,44 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        self.transport.write('{0}\r\n'.format(self.ourVersionString).encode())
-        self.currentEncryptions = transport.SSHCiphers(b'none', b'none', b'none', b'none')
-        self.currentEncryptions.setKeys(b'', b'', b'', b'', b'', b'')
-        self.otherVersionString = 'Unknown'
+        self.transport.write(f"{self.ourVersionString}\r\n".encode())
+        self.currentEncryptions = transport.SSHCiphers(
+            b"none", b"none", b"none", b"none"
+        )
+        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
+        self.otherVersionString = "Unknown"
 
         log.msg(
-            eventid='cowrie.session.connect',
+            eventid="cowrie.session.connect",
             format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
             src_ip=self.peer_ip,
             src_port=self.transport.getPeer().port,
             dst_ip=self.local_ip,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno='S{0}'.format(self.transport.sessionno),
-            protocol='ssh'
+            sessionno=f"S{self.transport.sessionno}",
+            protocol="ssh",
         )
 
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
         # when pool is set we can just test self.pool_interface to the same effect of getting the CowrieConfig
-        proxy_backend = CowrieConfig().get('proxy', 'backend', fallback='simple')
+        proxy_backend = CowrieConfig.get("proxy", "backend", fallback="simple")
 
-        if proxy_backend == 'pool':
+        if proxy_backend == "pool":
             # request a backend
             d = self.factory.pool_handler.request_interface()
             d.addCallback(self.pool_connection_success)
             d.addErrback(self.pool_connection_error)
         else:
             # simply a proxy, no pool
-            backend_ip = CowrieConfig().get('proxy', 'backend_ssh_host')
-            backend_port = CowrieConfig().getint('proxy', 'backend_ssh_port')
+            backend_ip = CowrieConfig.get("proxy", "backend_ssh_host")
+            backend_port = CowrieConfig.getint("proxy", "backend_ssh_port")
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg('Connection to backend pool refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg(
+            f"Connection to backend pool refused: {reason.value}. Disconnecting frontend..."
+        )
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
@@ -137,18 +141,20 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.pool_interface.send_vm_request(self.peer_ip)
 
     def received_pool_data(self, operation, status, *data):
-        if operation == b'r':
+        if operation == b"r":
             honey_ip = data[0]
             snapshot = data[1]
             ssh_port = data[2]
 
-            log.msg('Got backend data from pool: {0}:{1}'.format(honey_ip.decode(), ssh_port))
-            log.msg('Snapshot file: {0}'.format(snapshot.decode()))
+            log.msg(f"Got backend data from pool: {honey_ip.decode()}:{ssh_port}")
+            log.msg(f"Snapshot file: {snapshot.decode()}")
 
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason):
-        log.msg('Connection to honeypot backend refused: {0}. Disconnecting frontend...'.format(reason.value))
+        log.msg(
+            f"Connection to honeypot backend refused: {reason.value}. Disconnecting frontend..."
+        )
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
@@ -157,7 +163,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.startTime = time.time()
 
         # this timeout is replaced with `interactive_timeout` in ssh.py
-        self.setTimeout(CowrieConfig().getint('honeypot', 'authentication_timeout', fallback=120))
+        self.setTimeout(
+            CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
+        )
 
     def connect_to_backend(self, ip, port):
         # connection to the backend starts here
@@ -181,7 +189,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Change message to be like OpenSSH
         """
-        self.transport.write(b'Protocol major versions differ.\n')
+        self.transport.write(b"Protocol major versions differ.\n")
         self.transport.loseConnection()
 
     def dataReceived(self, data):
@@ -196,15 +204,22 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         # get version from start of communication; check if valid and supported by Twisted
         if not self.gotVersion:
-            if b'\n' not in self.buf:
+            if b"\n" not in self.buf:
                 return
-            self.otherVersionString = self.buf.split(b'\n')[0].strip()
-            log.msg(eventid='cowrie.client.version', version=repr(self.otherVersionString),
-                    format="Remote SSH version: %(version)s")
-            m = re.match(br'SSH-(\d+.\d+)-(.*)', self.otherVersionString)
+            self.otherVersionString = self.buf.split(b"\n")[0].strip()
+            log.msg(
+                eventid="cowrie.client.version",
+                version=repr(self.otherVersionString),
+                format="Remote SSH version: %(version)s",
+            )
+            m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
-                log.msg("Bad protocol version identification: {}".format(repr(self.otherVersionString)))
-                self.transport.write(b'Protocol mismatch.\n')
+                log.msg(
+                    "Bad protocol version identification: {}".format(
+                        repr(self.otherVersionString)
+                    )
+                )
+                self.transport.write(b"Protocol mismatch.\n")
                 self.transport.loseConnection()
                 return
             else:
@@ -213,8 +228,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 if remote_version not in self.supportedVersions:
                     self._unsupportedVersionReceived(None)
                     return
-                i = self.buf.index(b'\n')
-                self.buf = self.buf[i + 1:]
+                i = self.buf.index(b"\n")
+                self.buf = self.buf[i + 1 :]
                 self.sendKexInit()
         packet = self.getPacket()
         while packet:
@@ -229,7 +244,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.ssh_SERVICE_REQUEST(payload)
         elif 50 <= message_num <= 79:  # userauth numbers
             self.frontendAuthenticated = False
-            transport.SSHServerTransport.dispatchMessage(self, message_num, payload)  # let userauth deal with it
+            transport.SSHServerTransport.dispatchMessage(
+                self, message_num, payload
+            )  # let userauth deal with it
 
         # TODO delay userauth until backend is connected?
 
@@ -249,8 +266,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         payload = chr(messageType).encode() + payload
         if self.outgoingCompression:
-            payload = (self.outgoingCompression.compress(payload)
-                       + self.outgoingCompression.flush(2))
+            payload = self.outgoingCompression.compress(
+                payload
+            ) + self.outgoingCompression.flush(2)
         bs = self.currentEncryptions.encBlockSize
         # 4 for the packet length and 1 for the padding length
         totalSize = 5 + len(payload)
@@ -258,44 +276,47 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if lenPad < 4:
             lenPad = lenPad + bs
         if messageType == transport.MSG_KEXINIT:
-            padding = b'\0' * lenPad
+            padding = b"\0" * lenPad
         else:
             padding = randbytes.secureRandom(lenPad)
 
-        packet = (struct.pack(b'!LB',
-                              totalSize + lenPad - 4, lenPad) +
-                  payload + padding)
-        encPacket = (self.currentEncryptions.encrypt(packet) +
-                     self.currentEncryptions.makeMAC(
-                         self.outgoingPacketSequence, packet))
+        packet = struct.pack(b"!LB", totalSize + lenPad - 4, lenPad) + payload + padding
+        encPacket = self.currentEncryptions.encrypt(
+            packet
+        ) + self.currentEncryptions.makeMAC(self.outgoingPacketSequence, packet)
         self.transport.write(encPacket)
         self.outgoingPacketSequence += 1
 
     def ssh_KEXINIT(self, packet):
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS,
-         _) = [s.split(b',') for s in strings]
+        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = [
+            s.split(b",") for s in strings
+        ]
 
         # hassh SSH client fingerprint
         # https://github.com/salesforce/hassh
-        ckexAlgs = ','.join([alg.decode('utf-8') for alg in kexAlgs])
-        cencCS = ','.join([alg.decode('utf-8') for alg in encCS])
-        cmacCS = ','.join([alg.decode('utf-8') for alg in macCS])
-        ccompCS = ','.join([alg.decode('utf-8') for alg in compCS])
+        ckexAlgs = ",".join([alg.decode("utf-8") for alg in kexAlgs])
+        cencCS = ",".join([alg.decode("utf-8") for alg in encCS])
+        cmacCS = ",".join([alg.decode("utf-8") for alg in macCS])
+        ccompCS = ",".join([alg.decode("utf-8") for alg in compCS])
         hasshAlgorithms = "{kex};{enc};{mac};{cmp}".format(
-            kex=ckexAlgs,
-            enc=cencCS,
-            mac=cmacCS,
-            cmp=ccompCS)
-        hassh = md5(hasshAlgorithms.encode('utf-8')).hexdigest()
+            kex=ckexAlgs, enc=cencCS, mac=cmacCS, cmp=ccompCS
+        )
+        hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 
-        log.msg(eventid='cowrie.client.kex',
-                format="SSH client hassh fingerprint: %(hassh)s",
-                hassh=hassh,
-                hasshAlgorithms=hasshAlgorithms,
-                kexAlgs=kexAlgs, keyAlgs=keyAlgs, encCS=encCS, macCS=macCS,
-                compCS=compCS, langCS=langCS)
+        log.msg(
+            eventid="cowrie.client.kex",
+            format="SSH client hassh fingerprint: %(hassh)s",
+            hassh=hassh,
+            hasshAlgorithms=hasshAlgorithms,
+            kexAlgs=kexAlgs,
+            keyAlgs=keyAlgs,
+            encCS=encCS,
+            macCS=macCS,
+            compCS=compCS,
+            langCS=langCS,
+        )
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
@@ -304,7 +325,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg('Timeout reached in FrontendSSHTransport')
+        log.msg("Timeout reached in FrontendSSHTransport")
 
         if self.transport:
             self.transport.loseConnection()
@@ -318,10 +339,10 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         # when auth is successful we enable compression
         # this is called right after MSG_USERAUTH_SUCCESS
-        if service.name == 'ssh-connection':
-            if self.outgoingCompressionType == 'zlib@openssh.com':
+        if service.name == "ssh-connection":
+            if self.outgoingCompressionType == "zlib@openssh.com":
                 self.outgoingCompression = zlib.compressobj(6)
-            if self.incomingCompressionType == 'zlib@openssh.com':
+            if self.incomingCompressionType == "zlib@openssh.com":
                 self.incomingCompression = zlib.decompressobj()
 
         transport.SSHServerTransport.setService(self, service)
@@ -351,9 +372,11 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         if self.startTime is not None:  # startTime is not set when auth fails
             duration = time.time() - self.startTime
-            log.msg(eventid='cowrie.session.closed',
-                    format='Connection lost after %(duration)d seconds',
-                    duration=duration)
+            log.msg(
+                eventid="cowrie.session.closed",
+                format="Connection lost after %(duration)d seconds",
+                duration=duration,
+            )
 
     def sendDisconnect(self, reason, desc):
         """
@@ -366,12 +389,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @param desc: a description of the reason for the disconnection.
         @type desc: C{str}
         """
-        if b'bad packet length' not in desc:
+        if b"bad packet length" not in desc:
             # With python >= 3 we can use super?
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write(b'Packet corrupt\n')
-            log.msg('Disconnecting with error, code {0}\nreason: {1}'.format(reason, desc))
+            self.transport.write(b"Packet corrupt\n")
+            log.msg(f"Disconnecting with error, code {reason}\nreason: {desc}")
             self.transport.loseConnection()
 
     def receiveError(self, reasonCode, description):
@@ -386,7 +409,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg('Got remote error, code {0} reason: {1}'.format(reasonCode, description))
+        log.msg(f"Got remote error, code {reasonCode} reason: {description}")
 
     def packet_buffer(self, message_num, payload):
         """
@@ -395,10 +418,10 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         if not self.backendConnected:
             # wait till backend connects to send packets to them
-            log.msg('Connection to backend not ready, buffering packet from frontend')
+            log.msg("Connection to backend not ready, buffering packet from frontend")
             self.delayedPackets.append([message_num, payload])
         else:
             if len(self.delayedPackets) > 0:
                 self.delayedPackets.append([message_num, payload])
             else:
-                self.sshParse.parse_packet('[SERVER]', message_num, payload)
+                self.sshParse.parse_packet("[SERVER]", message_num, payload)

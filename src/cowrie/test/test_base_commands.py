@@ -3,7 +3,6 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from __future__ import absolute_import, division
 
 import os
 
@@ -19,20 +18,21 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellBaseCommandsTests(unittest.TestCase):
-
     def setUp(self):
-        self.proto = protocol.HoneyPotInteractiveProtocol(fake_server.FakeAvatar(fake_server.FakeServer()))
+        self.proto = protocol.HoneyPotInteractiveProtocol(
+            fake_server.FakeAvatar(fake_server.FakeServer())
+        )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
     def test_whoami_command(self):
-        self.proto.lineReceived(b'whoami\n')
-        self.assertEqual(self.tr.value(), b'root\n' + PROMPT)
+        self.proto.lineReceived(b"whoami\n")
+        self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
 
     def test_users_command(self):
-        self.proto.lineReceived(b'users \n')
-        self.assertEqual(self.tr.value(), b'root\n' + PROMPT)
+        self.proto.lineReceived(b"users \n")
+        self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
 
     # def test_exit_command(self):
     #     self.proto.lineReceived(b'exit \n')
@@ -44,27 +44,31 @@ class ShellBaseCommandsTests(unittest.TestCase):
     #     self.proto.lineReceived(b'clear \n')
 
     def test_hostname_command(self):
-        self.proto.lineReceived(b'hostname unitChanged\n')
-        self.assertEquals(self.tr.value(), b'root@unitChanged:~# ')
+        self.proto.lineReceived(b"hostname unitChanged\n")
+        self.assertEqual(self.tr.value(), b"root@unitChanged:~# ")
 
     # def test_reset_command(self):
     #     self.proto.lineReceived(b'reset')
 
     # def test_ps_command(self):
     #     self.proto.lineReceived(b'ps\n')
-    #     self.assertEquals(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
+    #     self.assertEqual(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
 
     def test_id_command(self):
-        self.proto.lineReceived(b'id\n')
-        self.assertEquals(self.tr.value(), b'uid=0(root) gid=0(root) groups=0(root)\n' + PROMPT)
+        self.proto.lineReceived(b"id\n")
+        self.assertEqual(
+            self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
+        )
 
     def test_passwd_command(self):
-        self.proto.lineReceived(b'passwd\n')
-        self.proto.lineReceived(b'changeme\n')
-        self.proto.lineReceived(b'changeme\n')
-        self.assertEquals(
+        self.proto.lineReceived(b"passwd\n")
+        self.proto.lineReceived(b"changeme\n")
+        self.proto.lineReceived(b"changeme\n")
+        self.assertEqual(
             self.tr.value(),
-            b'Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n' + PROMPT)
+            b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n"
+            + PROMPT,
+        )
 
     # def test_shutdown_command(self):
     #    self.proto.lineReceived(b'shutdown\n')
@@ -78,81 +82,87 @@ class ShellBaseCommandsTests(unittest.TestCase):
     #    print("THIS TEST IS INCOMPLETE")
 
     def test_date_command(self):
-        self.proto.lineReceived(b'date\n')
+        self.proto.lineReceived(b"date\n")
         self.assertRegex(
             self.tr.value(),
-            b'[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n' + PROMPT)  # noqa: E501
+            b"[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n"
+            + PROMPT,
+        )
 
     # def test_bash_command(self):
     #    self.proto.lineReceived(b'bash\n')
     #    print("THIS TEST IS INCOMPLETE")
 
     def test_sh_command(self):
-        self.proto.lineReceived(b'sh -c id\n')
-        self.assertEquals(self.tr.value(), b'uid=0(root) gid=0(root) groups=0(root)\n' + PROMPT)
+        self.proto.lineReceived(b"sh -c id\n")
+        self.assertEqual(
+            self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
+        )
 
     # def test_php_command(self):
     #    self.proto.lineReceived(b'php -h')
     #    print("THIS TEST IS INCOMPLETE")
 
     def test_chattr_command(self):
-        self.proto.lineReceived(b'chattr\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"chattr\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_umask_command(self):
-        self.proto.lineReceived(b'umask\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"umask\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_set_command(self):
-        self.proto.lineReceived(b'set\n')
+        self.proto.lineReceived(b"set\n")
 
-        self.assertEquals(
+        self.assertEqual(
             self.tr.value(),
-            b'COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n' + PROMPT)  # noqa: E501
+            b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n"
+            + PROMPT,
+        )
 
     def test_unset_command(self):
-        self.proto.lineReceived(b'unset\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"unset\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_export_command(self):
-        self.proto.lineReceived(b'export\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"export\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_alias_command(self):
-        self.proto.lineReceived(b'alias\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"alias\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_jobs_command(self):
-        self.proto.lineReceived(b'jobs\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"jobs\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_kill_command(self):
-        self.proto.lineReceived(b'/bin/kill\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"/bin/kill\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_pkill_command(self):
-        self.proto.lineReceived(b'/bin/pkill\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"/bin/pkill\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_killall_command(self):
-        self.proto.lineReceived(b'/bin/killall\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"/bin/killall\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_killall5_command(self):
-        self.proto.lineReceived(b'/bin/killall5\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"/bin/killall5\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_su_command(self):
-        self.proto.lineReceived(b'su\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"su\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_chown_command(self):
-        self.proto.lineReceived(b'chown\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"chown\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_chgrp_command(self):
-        self.proto.lineReceived(b'chgrp\n')
-        self.assertEquals(self.tr.value(), PROMPT)
+        self.proto.lineReceived(b"chgrp\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def tearDown(self):
         self.proto.connectionLost("tearDown From Unit Test")
@@ -161,7 +171,8 @@ class ShellBaseCommandsTests(unittest.TestCase):
 class ShellFileCommandsTests(unittest.TestCase):
     def setUp(self):
         self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer()))
+            fake_server.FakeAvatar(fake_server.FakeServer())
+        )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
@@ -226,20 +237,20 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 
 class ShellPipeCommandsTests(unittest.TestCase):
-
     def setUp(self):
         self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer()))
+            fake_server.FakeAvatar(fake_server.FakeServer())
+        )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
     def test_shell_pipe_with_cat_tail(self):
-        self.proto.lineReceived(b'echo test | tail -n 1\n')
-        self.assertEquals(self.tr.value(), PROMPT + b'test\n' + PROMPT)
+        self.proto.lineReceived(b"echo test | tail -n 1\n")
+        self.assertEqual(self.tr.value(), PROMPT + b"test\n" + PROMPT)
 
     def test_shell_pipe_with_cat_head(self):
-        self.proto.lineReceived(b'echo test | head -n 1\n')
-        self.assertEquals(self.tr.value(), PROMPT + b'test\n' + PROMPT)
+        self.proto.lineReceived(b"echo test | head -n 1\n")
+        self.assertEqual(self.tr.value(), PROMPT + b"test\n" + PROMPT)
 
     # def test_shell_busybox_with_cat_and_sudo_grep(self):
     #     self.proto.lineReceived(b'busybox cat /proc/cpuinfo | sudo grep cpu \n')
