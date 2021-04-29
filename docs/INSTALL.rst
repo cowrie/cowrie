@@ -1,6 +1,5 @@
-
-Installing Cowrie in seven steps.
-#################################
+Installing Cowrie in seven steps
+################################
 
 This guide describes how to install Cowrie in `shell` mode. For `proxy` mode
 read `PROXY.rst`.

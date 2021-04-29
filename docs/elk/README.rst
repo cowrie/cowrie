@@ -1,5 +1,5 @@
-How to process Cowrie output in an ELK stack
-#############################################
+How to send Cowrie output to an ELK stack
+#########################################
 
 (Note: work in progress, instructions are not verified)
 
