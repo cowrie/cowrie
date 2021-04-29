@@ -1,5 +1,5 @@
-How to process Cowrie output into Graylog
-############################################
+How to send Cowrie output to Graylog
+####################################
 
 
 Prerequisites

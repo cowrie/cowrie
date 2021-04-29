@@ -1,13 +1,11 @@
-How to Send Cowrie Output to a MySQL Database
-################################################
-
+How to Send Cowrie output to a MySQL Database
+#############################################
 
 Prerequisites
 =============
 
 * Working Cowrie installation
-* MySQL Server installation
-
+* Working MySQL installation
 
 Installation
 ============
