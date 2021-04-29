@@ -1,9 +1,5 @@
-How to process Cowrie output in kippo-graph
-#############################################
-
-(Note: work in progress, instructions are not verified)
-Tested on Debian 9.
-
+How to send Cowrie output to kippo-graph
+########################################
 
 Prerequisites
 ****************

@@ -1,5 +1,5 @@
-How to process Cowrie output with Splunk
-########################################
+How to send Cowrie output to Splunk
+###################################
 
 Splunk Output Module
 ====================
