@@ -234,19 +234,20 @@ See ~/cowrie/docs/[Output Plugin]/README.rst for details.
 Troubleshooting
 ###############
 
-If you see `twistd: Unknown command: cowrie` there are two
-  possibilities. If there's a Python stack trace, it probably means
-  there's a missing or broken dependency. If there's no stack trace,
-  double check that your PYTHONPATH is set to the source code directory.
+If you see ``twistd: Unknown command: cowrie`` there are two
+possibilities. If there's a Python stack trace, it probably means
+there's a missing or broken dependency. If there's no stack trace,
+double check that your PYTHONPATH is set to the source code directory.
 
 Default file permissions
 
-To make Cowrie logfiles public readable, change the ``--umask 0077`` option in start.sh into ``--umask 0022``
+To make Cowrie logfiles public readable, change the ``--umask 0077``
+option in `bin/cowrie` into ``--umask 0022``
 
 Updating Cowrie
 #################
 
-Updating is an easy process. First stop your honeypot. Then fetch updates from GitHub, and upgrade your Python dependencies::
+First stop your honeypot. Then pull updates from GitHub, and upgrade your Python dependencies::
 
     bin/cowrie stop
     git pull
@@ -256,7 +257,7 @@ If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade you
 
     pip install --upgrade -r requirements-output.txt
 
-And finally, start Cowrie back up after finishing all updates::
+And finally, restart Cowrie after finishing all updates::
 
     bin/cowrie start
 
