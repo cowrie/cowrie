@@ -61,8 +61,8 @@ Docker versions are available.
 
 * To get started quickly and give Cowrie a try, run::
 
-    docker run -p 2222:2222 cowrie/cowrie
-    ssh -p 2222 root@localhost
+    $ docker run -p 2222:2222 cowrie/cowrie
+    $ ssh -p 2222 root@localhost
 
 * On Docker Hub: https://hub.docker.com/r/cowrie/cowrie
 
