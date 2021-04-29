@@ -1,5 +1,5 @@
-Azure Sentinel Log Collection
-=============================
+How to send Cowrie output to Azure Sentinel
+===========================================
 
 Open your Sentinel worksapce and navigate to `Data connectors` >
 `Syslog` > `Open connector page`. Expand `Install agent on a non-Azure
@@ -19,9 +19,9 @@ then add a new custom log source: When prompted, upload the `cowrie.json`
 file you downloaded.
 
 The default delimeter is correct (newline).  Specify
-`/opt/cowrie/var/log/cowrie/cowrie.json` as the log collection path.
+``/opt/cowrie/var/log/cowrie/cowrie.json`` as the log collection path.
 
-Name the custom log `cowrie_JSON`. Sentinel will automatically
+Name the custom log ``cowrie_JSON``. Sentinel will automatically
 append _CL to this name.
 
 It will take a while for this to roll out to the host, but eventually
