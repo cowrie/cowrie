@@ -5,19 +5,19 @@ Installing Cowrie in seven steps.
 This guide describes how to install Cowrie in `shell` mode. For `proxy` mode
 read `PROXY.rst`.
 
-* [Step 1: Install dependencies](#step-1-install-dependencies)
-* [Step 2: Create a user account](#step-2-create-a-user-account)
-* [Step 3: Checkout the code](#step-3-checkout-the-code)
-* [Step 4: Setup Virtual Environment](#step-4-setup-virtual-environment)
-* [Step 5: Install configuration file](#step-5-install-configuration-file)
-* [Step 6: Starting Cowrie](#step-6-starting-cowrie)
-* [Step 8: Listening on port 22 (OPTIONAL)](#step-8-listening-on-port-22-optional)
-* [Installing Backend Pool dependencies (OPTIONAL)](#running-using-supervisord)
-* [Running within supervisord (OPTIONAL)](#running-using-supervisord)
-* [Configure Additional Output Plugins (OPTIONAL)](#configure-additional-output-plugins-optional)
-* [Troubleshooting](#troubleshooting)
-* [Updating Cowrie](#updating-cowrie)
-* [Modifying Cowrie](#modifying-cowrie)
+* :ref:`Step 1: Install dependencies<Step 1: Install dependencies>`
+* :ref:`Step 2: Create a user account<Step 2: Create a user account>`
+* :ref:`Step 3: Checkout the code<Step 3: Checkout the code>`
+* :ref:`Step 4: Setup Virtual Environment<Step 4: Setup Virtual Environment>`
+* :ref:`Step 5: Install configuration file<Step 5: Install configuration file>`
+* :ref:`Step 6: Starting Cowrie<Step 6: Starting Cowrie>`
+* :ref:`Step 7: Listening on port 22 (OPTIONAL)<Step 7: Listening on port 22 (OPTIONAL)>`
+* :ref:`Installing Backend Pool dependencies (OPTIONAL)<Installing Backend Pool dependencies (OPTIONAL)>`
+* :ref:`Running using supervisord (OPTIONAL)<Running using supervisord (OPTIONAL)>`
+* :ref:`Configure Additional Output Plugins (OPTIONAL)<Configure Additional Output Plugins (OPTIONAL)>`
+* :ref:`Troubleshooting<Troubleshooting>`
+* :ref:`Updating Cowrie<Updating Cowrie>`
+* :ref:`Modifying Cowrie<Modifying Cowrie>`
 
 Step 1: Install dependencies
 ****************************
@@ -25,7 +25,7 @@ Step 1: Install dependencies
 First we install system-wide support for Python virtual environments and other dependencies.
 Actual Python packages are installed later.
 
-On Debian based systems (last verified on Debian 10, 2019-08-18):
+On Debian based systems (last verified on Debian 10, 2021-04-29):
 For a Python3 based environment::
 
     $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
