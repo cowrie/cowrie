@@ -12,6 +12,7 @@ pyre-check==0.9.0
 pytype==2021.4.15; platform_python_implementation=='CPython'
 pyupgrade==2.13.0
 setuptools==56.0.0
+sphinx-copybutton==0.3.1
 sphinx_rtd_theme==0.5.2
 tox==3.23.0
 twistedchecker==0.7.4

@@ -43,12 +43,14 @@ release = cowrie_version_object.short()
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -195,3 +197,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "twisted": ("https://twistedmatrix.com/documents/current/api/", None),
 }
+
+# -- Options for sphinx copybutton extension ---------------------------------
+
+copybutton_prompt_text = "$ "
