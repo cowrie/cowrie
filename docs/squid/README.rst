@@ -13,9 +13,10 @@ Prerequisites
 Installation
 ============
 
-``
-$ sudo apt-get install squid
-``
+
+Install Squid:: 
+
+     $ sudo apt-get install squid
 
 
 Squid Configuration
@@ -27,19 +28,14 @@ See `squid.conf` for an example configuration.
 Cowrie Configuration
 ====================
 
-Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the SSH section:
+Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the SSH section::
 
-``
-forward_tunnel = true
-
-forward_tunnel_80 = 127.0.0.1:3128
-forward_tunnel_443 = 127.0.0.1:3128
-``
-
+    forward_tunnel = true
+    forward_tunnel_80 = 127.0.0.1:3128
+    forward_tunnel_443 = 127.0.0.1:3128
 
 ## Restart Cowrie
 
-``
-$ cd ~/cowrie/bin/
-$ ./cowrie restart
-``
+Restart::
+
+    $ bin/cowrie restart
