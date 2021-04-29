@@ -24,7 +24,7 @@ Creating a new pickle file
 Create a directory where you put all files you'd like to be show in your filesystem
 Create the pickle file::
 
-  ./bin/createfs -l YOUR-DIR -d DEPTH -o ./share/cowrie/custom.pickle
+  $ ./bin/createfs -l YOUR-DIR -d DEPTH -o ./share/cowrie/custom.pickle
 
 Make sure your config picks up custom.pickle, or rename it to fs.pickle
 

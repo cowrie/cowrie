@@ -8,9 +8,9 @@ Linux machines`. Select the Linux tab and either copy the shell
 script that is presented, or take note of your Workspace ID and
 Primary Key and install the agent on your host by hand::
 
-  wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh
-  chmod +x onboard_agent.sh
-  ./onboard_agent.sh -w <workspace ID> -s <key> -d opinsights.azure.com
+  $ wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh
+  $ chmod +x onboard_agent.sh
+  $ ./onboard_agent.sh -w <workspace ID> -s <key> -d opinsights.azure.com
 
 Once installed, return to the Syslog connector page and select `Open
 your workspace advanced settings configuration`. Select `Data` >
