@@ -17,7 +17,7 @@ from cowrie import version as cowrie_version_object
 # -- Project information -----------------------------------------------------
 
 project = "cowrie"
-copyright = "2018, Michel Oosterhof"
+copyright = "2014-2021, Michel Oosterhof"
 author = "Michel Oosterhof"
 
 # The version info for the project you're documenting, acts as replacement for
