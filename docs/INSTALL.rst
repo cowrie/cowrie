@@ -4,7 +4,7 @@ Installing Cowrie in seven steps
 This guide describes how to install Cowrie in `shell` mode. For `proxy` mode
 read `PROXY.rst`.
 
-* :ref:`Step 1: Install dependencies<Step 1: Install dependencies>`
+* :ref:`Step 1: Install system dependencies<Step 1: Install system dependencies>`
 * :ref:`Step 2: Create a user account<Step 2: Create a user account>`
 * :ref:`Step 3: Checkout the code<Step 3: Checkout the code>`
 * :ref:`Step 4: Setup Virtual Environment<Step 4: Setup Virtual Environment>`
@@ -18,14 +18,13 @@ read `PROXY.rst`.
 * :ref:`Updating Cowrie<Updating Cowrie>`
 * :ref:`Modifying Cowrie<Modifying Cowrie>`
 
-Step 1: Install dependencies
-****************************
+Step 1: Install system dependencies
+***********************************
 
 First we install system-wide support for Python virtual environments and other dependencies.
 Actual Python packages are installed later.
 
-On Debian based systems (last verified on Debian 10, 2021-04-29):
-For a Python3 based environment::
+On Debian based systems (last verified on Debian 10, 2021-04-29)::
 
     $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
 
