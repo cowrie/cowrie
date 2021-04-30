@@ -259,7 +259,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             # this message is used to detect Cowrie behaviour
-            #self.transport.write(b"Packet corrupt\n")
+            # self.transport.write(b"Packet corrupt\n")
             log.msg(
                 f"[SERVER] - Disconnecting with error, code {reason} reason: {desc}"
             )
