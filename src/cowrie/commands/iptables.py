@@ -373,7 +373,7 @@ Options:
             self.no_permission()
 
     def list(self, chain):
-        """ List current rules """
+        """List current rules"""
 
         if self.user_is_root():
             if len(chain) > 0:
@@ -444,7 +444,7 @@ Options:
         self.exit()
 
     def no_command(self):
-        """ Print no command message and exit """
+        """Print no command message and exit"""
 
         self.write(
             """%s %s: no command specified'
@@ -454,7 +454,7 @@ Try `iptables -h\' or \'iptables --help\' for more information.\n"""
         self.exit()
 
     def unknown_option(self, option):
-        """ Print unknown option message and exit """
+        """Print unknown option message and exit"""
 
         self.write(
             """%s %s: unknown option \'%s\''
@@ -464,7 +464,7 @@ Try `iptables -h\' or \'iptables --help\' for more information.\n"""
         self.exit()
 
     def bad_argument(self, argument):
-        """ Print bad argument and exit """
+        """Print bad argument and exit"""
 
         self.write(
             """Bad argument \'%s\'
