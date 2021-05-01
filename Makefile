@@ -23,6 +23,7 @@ lint:
 .PHONY: clean
 clean:
 	rm -rf _trial_temp build dist
+	make -C docs clean
 
 .PHONY: pre-commit
 pre-commit:
