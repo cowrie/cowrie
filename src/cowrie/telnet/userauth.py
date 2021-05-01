@@ -8,9 +8,14 @@ Telnet Transport and Authentication for the Honeypot
 
 import struct
 
-
-from twisted.conch.telnet import AuthenticatingTelnetProtocol, ITelnetProtocol
-from twisted.conch.telnet import ECHO, LINEMODE, NAWS, SGA
+from twisted.conch.telnet import (
+    ECHO,
+    LINEMODE,
+    NAWS,
+    SGA,
+    AuthenticatingTelnetProtocol,
+    ITelnetProtocol,
+)
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig

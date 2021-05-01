@@ -17,8 +17,7 @@ from twisted.python import failure, log
 
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import command
-from cowrie.shell import honeypot
+from cowrie.shell import command, honeypot
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):

@@ -30,7 +30,6 @@
 from twisted.conch import interfaces as conchinterfaces
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.cred.portal import IRealm
-
 from zope.interface import implementer
 
 from cowrie.shell import avatar as shellavatar

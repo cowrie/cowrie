@@ -11,8 +11,7 @@ from configparser import NoOptionError
 from typing import Optional
 
 from twisted.conch.openssh_compat import primes
-from twisted.conch.ssh import factory
-from twisted.conch.ssh import keys
+from twisted.conch.ssh import factory, keys
 from twisted.cred import portal as tp
 from twisted.python import log
 

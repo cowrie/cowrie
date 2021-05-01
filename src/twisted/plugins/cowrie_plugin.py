@@ -31,8 +31,6 @@ import os
 import sys
 from typing import Callable, ClassVar, Dict, List
 
-from backend_pool.pool_server import PoolServerFactory
-
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
@@ -41,19 +39,18 @@ from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
-
 from zope.interface import implementer, provider
 
 import cowrie.core.checkers
 import cowrie.core.realm
 import cowrie.ssh.factory
 import cowrie.telnet.factory
+from backend_pool.pool_server import PoolServerFactory
 from cowrie import core
 from cowrie._version import __version__ as __cowrie_version__
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
-
 
 if __twisted_version__.major < 20:
     raise ImportError(

@@ -7,7 +7,6 @@ from configparser import NoOptionError
 
 from botocore.exceptions import ClientError
 from botocore.session import get_session
-
 from twisted.internet import defer, threads
 from twisted.python import log
 

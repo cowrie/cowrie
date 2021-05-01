@@ -1,5 +1,4 @@
 import pymongo
-
 from twisted.python import log
 
 import cowrie.core.output
