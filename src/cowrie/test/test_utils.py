@@ -2,8 +2,8 @@ import configparser
 from io import StringIO
 
 from twisted.application.service import MultiService
-from twisted.internet import protocol
 from twisted.internet import reactor  # type: ignore
+from twisted.internet import protocol
 from twisted.trial import unittest
 
 from cowrie.core.utils import (

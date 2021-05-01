@@ -41,14 +41,12 @@ from pathlib import Path
 from time import sleep, time
 
 from treq import post
-
 from twisted.internet import defer, reactor, threads
 from twisted.python import log
 from twisted.web import http
 
 from cowrie.core import output
 from cowrie.core.config import CowrieConfig
-
 
 # How often we clean and dump and our lists/dict...
 CLEAN_DUMP_SCHED = 600

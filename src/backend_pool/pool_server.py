@@ -3,13 +3,11 @@
 
 import struct
 
-from backend_pool.nat import NATService
-from backend_pool.pool_service import NoAvailableVMs, PoolService
-
-from twisted.internet.protocol import Factory
-from twisted.internet.protocol import Protocol
+from twisted.internet.protocol import Factory, Protocol
 from twisted.python import log
 
+from backend_pool.nat import NATService
+from backend_pool.pool_service import NoAvailableVMs, PoolService
 from cowrie.core.config import CowrieConfig
 
 
