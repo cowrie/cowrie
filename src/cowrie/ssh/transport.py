@@ -122,7 +122,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                         repr(self.otherVersionString)
                     )
                 )
-                self.transport.write(b"Protocol mismatch.\n")
+                # OpenSSH sending the same message
+                self.transport.write(b"Invalid SSH identification string.\n")
                 self.transport.loseConnection()
                 return
             else:
@@ -263,7 +264,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if b"bad packet length" not in desc:
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write(b"Packet corrupt\n")
+            # this message is used to detect Cowrie behaviour
+            # self.transport.write(b"Packet corrupt\n")
             log.msg(
                 f"[SERVER] - Disconnecting with error, code {reason} reason: {desc}"
             )
