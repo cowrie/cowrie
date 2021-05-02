@@ -8,7 +8,7 @@ Splunk Output Module
 * Do not enable `Indexer Acknowledgment`
 * Copy the authorization token for later use
 * Modify ``cowrie.cfg`` to enable the ``[output_splunk]`` section
-* Add URL to HTTP Event Collector and add the authorization token
+* Configure the URL for HTTP Event Collector and add the authorization token you copied in the previous step
 * Optionally enable sourcetype, source, host and index settings
 
 File Based
