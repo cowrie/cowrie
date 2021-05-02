@@ -5,13 +5,13 @@ One interesting aspect of Cowrie is the capability to analyse any downloaded mal
 content into the honeypot. The snapshot mechanism can be leveraged to analyse any download
 and any change performed against the base image, to determine which files have been changed.
 
-This guide shows how that can be achieved by leveraging using the `libguestfs-tools` package.
+This guide shows how that can be achieved by leveraging using the ``libguestfs-tools`` package.
 
 Getting the a filesystem diff
 *****************************
 
 The first step is getting the differences between each VM that was used and the base image provided.
-The tool we'll be using is `virt-diff`, which provides a similar syntax to that of Unix's `diff`.
+The tool we'll be using is ``virt-diff``, which provides a similar syntax to that of Unix's ``diff``.
 
 .. code-block:: bash
 
@@ -21,13 +21,13 @@ The tool we'll be using is `virt-diff`, which provides a similar syntax to that 
 
 The output will contain all changed files and their content, which might get long easily. The
 following command outputs the names of changed files, to be easier to read (assuming the output
-from `virt-diff` is stored in a file diff.txt)
+from ``virt-diff`` is stored in a file diff.txt)
 
 .. code-block:: bash
 
     $ grep -aE "^\+ |^- |^= " diff.txt
 
-Here is an example output, in a VM were we created a file called `avirus`::
+Here is an example output, in a VM were we created a file called ``avirus``::
 
     = - 0644       1024 /boot/grub/grubenv
     = - 0600       1036 /root/.bash_history
@@ -105,6 +105,6 @@ the drive:
 
     $ sudo guestunmount /tmp/mount_qcow2/
 
-**Note:** the device to be mounted from the image isn't always `/dev/sda1`. However, if you
-run the command as-is, `guestmount` will check if `/dev/sda1` exists and, if not, it will
+**Note:** the device to be mounted from the image isn't always ``/dev/sda1``. However, if you
+run the command as-is, ``guestmount`` will check if ``/dev/sda1`` exists and, if not, it will
 list available partitions for you.
