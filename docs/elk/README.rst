@@ -37,7 +37,7 @@ Enable the services::
 ElasticSearch Configuration
 =============================
 
-ElasticSearch configuration file is located in `/etc/elasticsearch/elasticsearch.yml`. The default settings need not be changed.
+ElasticSearch configuration file is located in ``/etc/elasticsearch/elasticsearch.yml``. The default settings need not be changed.
 
 If you are only operating a single ElasticSearch node, you can add the following configuration item::
 
@@ -58,7 +58,7 @@ Make a folder for logs::
     $ sudo mkdir /var/log/kibana
     $ sudo chown kibana:kibana /var/log/kibana
 
-Change the following parameters in `/etc/kibana/kibana.yml` to reflect your server setup:
+Change the following parameters in ``/etc/kibana/kibana.yml`` to reflect your server setup:
 
     * ``server.host``  - set it to `localhost` if you use nginx for basic authentication or external interface if you use XPack (see below)
     * ``server.name`` - name of the server

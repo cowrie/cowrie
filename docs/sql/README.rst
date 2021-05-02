@@ -24,7 +24,7 @@ Previously MySQL-python was used. Only if you run into isses with mysqlclient, t
 MySQL Configuration
 ===================
 
-First create an empty database named `cowrie`::
+First create an empty database named ``cowrie``::
 
     $ mysql -u root -p
     CREATE DATABASE cowrie;
