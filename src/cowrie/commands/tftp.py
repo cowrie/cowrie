@@ -1,5 +1,6 @@
 import tftpy
 from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
+
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact

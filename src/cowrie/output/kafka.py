@@ -39,6 +39,7 @@ import string
 from afkak.client import KafkaClient
 from afkak.partitioner import HashedPartitioner, RoundRobinPartitioner
 from afkak.producer import Producer
+
 from twisted.internet import defer, task
 from twisted.python import log
 

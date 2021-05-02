@@ -4,6 +4,7 @@ MySQL output connector. Writes audit logs to MySQL database
 
 
 import MySQLdb
+
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log

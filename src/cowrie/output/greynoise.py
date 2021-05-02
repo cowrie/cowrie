@@ -3,6 +3,7 @@ Send attackers IP to GreyNoise
 """
 
 import treq
+
 from twisted.internet import defer, error
 from twisted.python import log
 
