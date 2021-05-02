@@ -158,7 +158,7 @@ class Output(metaclass=abc.ABCMeta):
         if "message" not in event and "format" not in event:
             return
 
-        ev: Dict[str, any] = event  # type: ignore
+        ev: Dict[str, any] = event.copy()  # type: ignore
         ev["sensor"] = self.sensor
 
         if "isError" in ev:
