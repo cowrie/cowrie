@@ -37,12 +37,13 @@ import os
 from typing import Any, Dict
 from urllib.parse import urlencode, urlparse
 
+from zope.interface import implementer
+
 from twisted.internet import defer, reactor
 from twisted.internet.ssl import ClientContextFactory
 from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.iweb import IBodyProducer
-from zope.interface import implementer
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig

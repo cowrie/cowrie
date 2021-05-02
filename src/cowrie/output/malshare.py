@@ -36,6 +36,7 @@ import os
 from urllib.parse import urlparse
 
 import requests
+
 from twisted.python import log
 
 import cowrie.core.output

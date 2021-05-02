@@ -3,6 +3,7 @@ from datetime import datetime
 
 from csirtgsdk.client import Client
 from csirtgsdk.indicator import Indicator
+
 from twisted.python import log
 
 import cowrie.core.output

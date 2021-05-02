@@ -3,6 +3,7 @@ from functools import wraps
 from pathlib import Path
 
 from pymisp import MISPAttribute, MISPEvent, MISPSighting
+
 from twisted.python import log
 
 import cowrie.core.output

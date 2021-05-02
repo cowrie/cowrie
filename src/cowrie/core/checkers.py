@@ -8,6 +8,8 @@ This module contains ...
 
 from sys import modules
 
+from zope.interface import implementer
+
 from twisted.conch import error
 from twisted.conch.ssh import keys
 from twisted.cred.checkers import ICredentialsChecker
@@ -15,7 +17,6 @@ from twisted.cred.credentials import ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
 from twisted.python import failure, log
-from zope.interface import implementer
 
 from cowrie.core import auth, credentials
 from cowrie.core.config import CowrieConfig

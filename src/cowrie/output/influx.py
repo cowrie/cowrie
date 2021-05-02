@@ -2,6 +2,7 @@ import re
 
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
+
 from twisted.python import log
 
 import cowrie.core.output

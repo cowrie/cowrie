@@ -28,8 +28,9 @@
 
 from typing import Callable
 
-from twisted.cred.credentials import ICredentials, IUsernamePassword
 from zope.interface import implementer
+
+from twisted.cred.credentials import ICredentials, IUsernamePassword
 
 
 class IUsername(ICredentials):

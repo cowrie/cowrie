@@ -31,6 +31,8 @@ import os
 import sys
 from typing import Callable, ClassVar, Dict, List
 
+from zope.interface import implementer, provider
+
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
@@ -39,7 +41,6 @@ from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
-from zope.interface import implementer, provider
 
 import cowrie.core.checkers
 import cowrie.core.realm
