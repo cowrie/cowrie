@@ -32,7 +32,7 @@ Provided images
 ***************
 
 To allow for a simple setup, we provide two VM images to use with the backend pool: Ubuntu 18.04
-and OpenWRT. You can download them below, and then edit `cowrie.cfg`'s `guest_image_path` to match the path of the images.
+and OpenWRT. You can download them below, and then edit ``cowrie.cfg``'s ``guest_image_path`` to match the path of the images.
 In the case of OpenWRT you will need two different files. Note that a separate set of configs is provided
 for each image in the default configuration. Choose the one you want to use and comment the other as needed.
 
@@ -71,7 +71,7 @@ These are:
 Backend Pool configuration
 **************************
 
-In this section we'll discuss the `[backend_pool]` section of the configuration file.
+In this section we'll discuss the ``[backend_pool]`` section of the configuration file.
 
 The backend pool can be run in the same machine as the rest of Cowrie, or in a separate
 one. In the former case, you'd be running Cowrie with
@@ -86,19 +86,19 @@ one. In the former case, you'd be running Cowrie with
     pool = local
 
 If you want to deploy the backend pool in a different machine, then you'll need to
-invert the configuration: the pool machine has `pool_only = true` (SSH and Telnet
-are disabled), and the proxy machine has `pool = remote`.
+invert the configuration: the pool machine has ``pool_only = true`` (SSH and Telnet
+are disabled), and the proxy machine has ``pool = remote``.
 
 **Note:** The communication protocol used between the proxy and the backend pool
 is unencrypted. Although no sensitive data should be passed, we recommend you to
-only use private or local interfaces for listening when setting up `listen_endpoints`.
+only use private or local interfaces for listening when setting up ``listen_endpoints``.
 
 Recycling VMs
 =============
 
 Currently, handling of virtual machines by the pool is not perfect. Sometimes,
 VMs reach an inconsistent state or become unreliable. To counter that, and ensure
-fresh VMs are ready constantly, we use the `recycle_period` to periodically
+fresh VMs are ready constantly, we use the ``recycle_period`` to periodically
 terminate running instances, and boot new ones.
 
 Snapshots
@@ -107,13 +107,13 @@ Snapshots
 VMs running in the pool are based on a base image that is kept unchanged. When booting,
 each VM creates a snaphost that keeps track of differences between the base image and
 snapshot. If you want to analyse snapshots and see any changes made in the VMs, set
-`save_snapshots` to true. If set to true be mindful of space concerns, each new
+``save_snapshots`` to true. If set to true be mindful of space concerns, each new
 VM will take at least ~20MB in storage.
 
 XML configs (advanced)
 ======================
 
-You can change libvirt's XML configs from the default ones in `share/cowrie/pool_configs`.
+You can change libvirt's XML configs from the default ones in ``share/cowrie/pool_configs``.
 However, if you're using one of the default images provided, then you probably don't
 need to.
 
@@ -139,7 +139,7 @@ A set of guest (VM) parameters can be defined as we explain below:
   if you are able to, use "kvm", it's **much** faster.
 
 * **guest_memory**: memory assigned to the guest; choose a value considering the number
-  of guests you'll have running in total (`pool_max_vms`)
+  of guests you'll have running in total (``pool_max_vms``)
 
 
 NATing
@@ -147,7 +147,7 @@ NATing
 
 VMs are assigned an IP in a local network defined by libvirt. If you need to access the VMs
 from a different machine (i.e., running the backend pool remotely), then an external-facing
-IP (as defined in `nat_public_ip`) is needed for the proxy to connect to.
+IP (as defined in ``nat_public_ip``) is needed for the proxy to connect to.
 
 For this purpose, we provide a simple form of NAT that, for each VM request, and if enabled,
 starts a TCP proxy to forward data from a publicly-acessible IP to the internal libvirt interface.
@@ -207,7 +207,7 @@ Customising XML configs
 
 If you want, you can customise libvirt's XML configurations.
 
-The main configuration for a guest is located in `default_guest.xml`. This defines the virtual
+The main configuration for a guest is located in ``default_guest.xml``. This defines the virtual
 CPU, available memory, and devices available on the guest. Most of these configurations are
 set by Cowrie using the guest configurations; you'll see them in the XML as templates
 ("{guest_name}"). The main blocks of XML regard the disk and network interface devices.
@@ -235,7 +235,7 @@ custom guests automatically.
         <filterref filter='cowrie-default-filter'/>
     </interface>
 
-The other important configuration file is `default_filter.xml`, which handles how networking
+The other important configuration file is ``default_filter.xml``, which handles how networking
 is restricted in the guest VM (aka to the attackers). This file is composed by a set of rules
 of the form
 

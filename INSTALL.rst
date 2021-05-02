@@ -1,7 +1,7 @@
 Installing Cowrie in seven steps
 ################################
 
-This guide describes how to install Cowrie in `shell` mode. For `proxy` mode
+This guide describes how to install Cowrie in ``shell`` mode. For ``proxy`` mode
 read `PROXY.rst`.
 
 * :ref:`Step 1: Install system dependencies<Step 1: Install system dependencies>`
@@ -169,7 +169,7 @@ Or use setcap to give permissions to Python to listen on ports<1024::
 
     $ setcap cap_net_bind_service=+ep /usr/bin/python3
 
-And change the listening ports in `cowrie.cfg` as above.
+And change the listening ports in ``cowrie.cfg`` as above.
 
 
 Installing Backend Pool dependencies (OPTIONAL)
@@ -216,7 +216,7 @@ Configure Additional Output Plugins (OPTIONAL)
 **********************************************
 
 Cowrie automatically outputs event data to text and JSON log files
-in `var/log/cowrie`.  Additional output plugins can be configured to
+in ``var/log/cowrie``.  Additional output plugins can be configured to
 record the data other ways.  Supported output plugins include:
 
 * Cuckoo
@@ -240,7 +240,7 @@ double check that your PYTHONPATH is set to the source code directory.
 Default file permissions
 
 To make Cowrie logfiles public readable, change the ``--umask 0077``
-option in `bin/cowrie` into ``--umask 0022``
+option in ``bin/cowrie`` into ``--umask 0022``
 
 Updating Cowrie
 #################
@@ -262,5 +262,5 @@ And finally, restart Cowrie after finishing all updates::
 Modifying Cowrie
 ################
 
-The pre-login banner can be set by creating the file `honeyfs/etc/issue.net`.
-The post-login banner can be customized by editing `honeyfs/etc/motd`.
+The pre-login banner can be set by creating the file ``honeyfs/etc/issue.net``.
+The post-login banner can be customized by editing ``honeyfs/etc/motd``.

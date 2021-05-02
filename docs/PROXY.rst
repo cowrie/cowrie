@@ -6,8 +6,8 @@ in contrast to the emulated shell traditionally provided by Cowrie. With a real
 backend environment where attackers can execute any Unix command, Cowrie becomes a
 high-interaction honeypot.
 
-To use the proxy, start by changing the `backend` option to `proxy` in the `[honeypot]` section.
-In the remainder of this guide we will refer to the `[proxy]` section of the config file.
+To use the proxy, start by changing the ``backend`` option to ``proxy`` in the ``[honeypot]`` section.
+In the remainder of this guide we will refer to the ``[proxy]`` section of the config file.
 
 Choosing a Backend
 ******************
@@ -31,14 +31,14 @@ Backend configs
 ===============
 
 If you choose the simple backend, configure the hosts and ports for your backend. For the
-backend pool, configure the variables starting with `pool\_`. You'll also need to deal with
-the `[backend_pool]` section, which we detail in the
+backend pool, configure the variables starting with ``pool\_``. You'll also need to deal with
+the ``[backend_pool]`` section, which we detail in the
 `Backend Pool's own documentation <https://cowrie.readthedocs.io/en/latest/BACKEND_POOL.html>`_.
 
 The backend pool can be run in the same machine as Cowrie, or on a remote one (e.g. Cowrie on a
-Raspberry Pi, and the pool in a larger machine). In the former case, set `pool` to `local`;
-in the later, set `pool` to `remote` and specify its host and port, matching with the
-`listen_endpoints` of the `[backend_pool]` section. Further configurations sent by the client
+Raspberry Pi, and the pool in a larger machine). In the former case, set ``pool`` to ``local``;
+in the later, set ``pool`` to ``remote`` and specify its host and port, matching with the
+``listen_endpoints`` of the ``[backend_pool]`` section. Further configurations sent by the client
 are explained in
 `Backend Pool's own documentation <https://cowrie.readthedocs.io/en/latest/BACKEND_POOL.html>`_.
 
@@ -49,8 +49,8 @@ Regardless of the used type of backend, Cowrie will need credentials to access t
 These can be of any account on it, as long as it supports password authentication.
 
 Note that these are totally independent of the credentials attackers can use (as set in
-`userdb`). `userdb` credentials are the ones attackers may use to connect to Cowrie, while
-`backend_user` and `backend_pass` are used to connect Cowrie to the backend.
+``userdb``). ``userdb`` credentials are the ones attackers may use to connect to Cowrie, while
+``backend_user`` and ``backend_pass`` are used to connect Cowrie to the backend.
 
 Telnet prompt detection
 =======================
@@ -58,23 +58,23 @@ Telnet prompt detection
 Due to the different implementations of Telnet, there is not a single reliable way of catching
 the authentication phase of the protocol as in SSH. Therefore, we rely on regex expressions
 to detect authentication prompts, allowing us to identify the credentials supplied by the
-attacker and check if they are accepted by `userdb`. If they are, we send the `backend_user`
-and `backend_pass` to the backend (spoofing  the authentication); if not, we send `backend_pass`
-appended with the word `fake` to force a login failed prompt (and fail authentication overall).
+attacker and check if they are accepted by ``userdb``. If they are, we send the ``backend_user``
+and ``backend_pass`` to the backend (spoofing  the authentication); if not, we send ``backend_pass``
+appended with the word ``fake`` to force a login failed prompt (and fail authentication overall).
 
-If you don't want to spoof authentication, set `telnet_spoof_authentication` to false. In this
-mode, only the backend real details will be accepted to authenticate, thus bypassing `userdb`.
+If you don't want to spoof authentication, set ``telnet_spoof_authentication`` to false. In this
+mode, only the backend real details will be accepted to authenticate, thus bypassing ``userdb``.
 
-The expressions to detect authentication prompts are `telnet_username_prompt_regex` and
-`telnet_password_prompt_regex`. A further expression we use is defined in
-`telnet_username_in_negotiation_regex`. Some clients send their username in the first phases of
+The expressions to detect authentication prompts are ``telnet_username_prompt_regex`` and
+``telnet_password_prompt_regex``. A further expression we use is defined in
+``telnet_username_in_negotiation_regex``. Some clients send their username in the first phases of
 the protocol negotiation, which some systems (the backend) use to only show the password prompt
 the first time authentication is tried (thus assuming the client's username as the username
 they'll use to login into the system). Cowrie tries to capture this username and use it when
-comparing the auth details with the `userdb`.
+comparing the auth details with the ``userdb``.
 
 Analysing traffic
 =================
 
 Analysing raw traffic can be interesting when setting up Cowrie, in particular to set-up
-Telnet prompt detection. For this, you can set `log_raw` to true.
+Telnet prompt detection. For this, you can set ``log_raw`` to true.
