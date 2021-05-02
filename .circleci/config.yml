@@ -36,7 +36,7 @@ jobs:
           name: Lint
           command: |
             . cowrie-env/bin/activate
-            flake8 --ignore E203,E501,W503 --count --application-import-names cowrie --statistics src
+            flake8 --ignore E203,E501,W503 --count --statistics src
       - run:
           name: Mypy
           command: |
