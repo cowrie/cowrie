@@ -22,7 +22,7 @@ Install Squid::
 Squid Configuration
 ===================
 
-See `squid.conf` for an example configuration.
+See ``squid.conf`` for an example configuration.
 
 
 Cowrie Configuration
