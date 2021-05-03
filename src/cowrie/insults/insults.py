@@ -55,7 +55,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def connectionMade(self) -> None:
         transportId, channelId = self.getSessionId()
-        self.startTime: float = time.time()
+        self.startTime = time.time()
 
         if self.ttylogEnabled:
             self.ttylogFile = "{}/{}-{}-{}{}.log".format(
