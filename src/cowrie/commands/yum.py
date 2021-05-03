@@ -9,7 +9,7 @@ import hashlib
 import random
 import re
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer, reactor  # noqa: type
 from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 
