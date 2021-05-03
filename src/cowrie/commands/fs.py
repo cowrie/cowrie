@@ -145,7 +145,7 @@ class command_tail(HoneyPotCommand):
             for opt in optlist:
                 if opt[0] == "-n":
                     if not opt[1].isdigit():
-                        self.errorWrite("tail: illegal offset -- {}\n".format(opt[1]))
+                        self.errorWrite(f"tail: illegal offset -- {opt[1]}\n")
                     else:
                         self.n = int(opt[1])
         if not self.input_data:
@@ -213,7 +213,7 @@ class command_head(HoneyPotCommand):
             for opt in optlist:
                 if opt[0] == "-n":
                     if not opt[1].isdigit():
-                        self.errorWrite("head: illegal offset -- {}\n".format(opt[1]))
+                        self.errorWrite(f"head: illegal offset -- {opt[1]}\n")
                     else:
                         self.n = int(opt[1])
 
@@ -377,11 +377,9 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                         dir.remove(i)
                         if verbose:
                             if i[fs.A_TYPE] == fs.T_DIR:
-                                self.write(
-                                    "removed directory '{}'\n".format(i[fs.A_NAME])
-                                )
+                                self.write(f"removed directory '{i[fs.A_NAME]}'\n")
                             else:
-                                self.write("removed '{}'\n".format(i[fs.A_NAME]))
+                                self.write(f"removed '{i[fs.A_NAME]}'\n")
 
 
 commands["/bin/rm"] = command_rm
@@ -413,7 +411,7 @@ class command_cp(HoneyPotCommand):
 
         if len(args) < 2:
             self.errorWrite(
-                "cp: missing destination file operand after `{}'\n".format(self.args[0])
+                f"cp: missing destination file operand after `{self.args[0]}'\n"
             )
             self.errorWrite("Try `cp --help' for more information.\n")
             return
@@ -486,7 +484,7 @@ class command_mv(HoneyPotCommand):
 
         if len(args) < 2:
             self.errorWrite(
-                "mv: missing destination file operand after `{}'\n".format(self.args[0])
+                f"mv: missing destination file operand after `{self.args[0]}'\n"
             )
             self.errorWrite("Try `mv --help' for more information.\n")
             return

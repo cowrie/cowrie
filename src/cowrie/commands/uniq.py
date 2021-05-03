@@ -10,7 +10,6 @@ from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 
-
 commands = {}
 
 UNIQ_HELP = """Usage: uniq [OPTION]... [INPUT [OUTPUT]]

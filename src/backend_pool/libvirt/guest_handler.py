@@ -3,11 +3,10 @@
 import os
 from configparser import NoOptionError
 
-import backend_pool.libvirt.snapshot_handler
-import backend_pool.util
-
 from twisted.python import log
 
+import backend_pool.libvirt.snapshot_handler
+import backend_pool.util
 from cowrie.core.config import CowrieConfig
 
 

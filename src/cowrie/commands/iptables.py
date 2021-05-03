@@ -447,9 +447,9 @@ Options:
         """Print no command message and exit"""
 
         self.write(
-            """%s %s: no command specified'
-Try `iptables -h\' or \'iptables --help\' for more information.\n"""
-            % (command_iptables.APP_NAME, command_iptables.APP_VERSION)
+            "{} {}: no command specified'\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
+                command_iptables.APP_NAME, command_iptables.APP_VERSION
+            )
         )
         self.exit()
 
@@ -457,9 +457,9 @@ Try `iptables -h\' or \'iptables --help\' for more information.\n"""
         """Print unknown option message and exit"""
 
         self.write(
-            """%s %s: unknown option \'%s\''
-Try `iptables -h\' or \'iptables --help\' for more information.\n"""
-            % (command_iptables.APP_NAME, command_iptables.APP_VERSION, option)
+            "{} {}: unknown option '{}''\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
+                command_iptables.APP_NAME, command_iptables.APP_VERSION, option
+            )
         )
         self.exit()
 
@@ -467,9 +467,9 @@ Try `iptables -h\' or \'iptables --help\' for more information.\n"""
         """Print bad argument and exit"""
 
         self.write(
-            """Bad argument \'%s\'
-Try `iptables -h\' or \'iptables --help\' for more information.\n"""
-            % argument
+            "Bad argument '{}'\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
+                argument
+            )
         )
         self.exit()
 

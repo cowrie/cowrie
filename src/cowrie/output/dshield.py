@@ -11,7 +11,6 @@ import re
 import time
 
 import dateutil.parser
-
 import requests
 
 from twisted.internet import reactor, threads
@@ -99,7 +98,7 @@ class Output(cowrie.core.output.Output):
         headers = {"X-ISC-Authorization": auth_header, "Content-Type": "text/plain"}
 
         if self.debug:
-            log.msg("dshield: posting: {}".format(repr(headers)))
+            log.msg(f"dshield: posting: {repr(headers)}")
             log.msg(f"dshield: posting: {log_output}")
 
         req = threads.deferToThread(

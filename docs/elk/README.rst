@@ -1,5 +1,5 @@
-How to process Cowrie output in an ELK stack
-#############################################
+How to send Cowrie output to an ELK stack
+#########################################
 
 (Note: work in progress, instructions are not verified)
 
@@ -18,26 +18,26 @@ This is a simple setup for ELK stack, to be done on the same machine that is use
 
 Add Elastic's repository and key::
 
-    wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-    echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
-    apt-get update
+    $ wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+    $ echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+    $ apt-get update
 
 Install logstash, elasticsearch, kibana and filebeat::
 
-     sudo apt -y install apt-transport-https wget default-jre
-     sudo apt install elasticsearch logstash kibana
-     sudo apt install filebeat
-     sudo apt install nginx apache2-utils
+     $ sudo apt -y install apt-transport-https wget default-jre
+     $ sudo apt install elasticsearch logstash kibana
+     $ sudo apt install filebeat
+     $ sudo apt install nginx apache2-utils
 
 Enable the services::
 
-    sudo systemctl enable elasticsearch logstash kibana filebeat nginx
+     $ sudo systemctl enable elasticsearch logstash kibana filebeat nginx
 
 
 ElasticSearch Configuration
 =============================
 
-ElasticSearch configuration file is located in `/etc/elasticsearch/elasticsearch.yml`. The default settings need not be changed.
+ElasticSearch configuration file is located in ``/etc/elasticsearch/elasticsearch.yml``. The default settings need not be changed.
 
 If you are only operating a single ElasticSearch node, you can add the following configuration item::
 
@@ -55,16 +55,17 @@ Kibana Configuration
 
 Make a folder for logs::
 
-    sudo mkdir /var/log/kibana
-    sudo chown kibana:kibana /var/log/kibana
+    $ sudo mkdir /var/log/kibana
+    $ sudo chown kibana:kibana /var/log/kibana
 
-Change the following parameters in `/etc/kibana/kibana.yml` to reflect your server setup::
+Change the following parameters in ``/etc/kibana/kibana.yml`` to reflect your server setup:
 
-    "server.host"  - set it to "localhost" if you use nginx for basic authentication or external interface if you use XPack (see below)
-    "server.name" - name of the server
-    "elasticsearch.hosts" - address of the elasticsearch: ["http://localhost:9200"]
-    "elasticsearch.username", "elasticsearch.password" - needed only if you use XPack (see below)
-    "logging.dest" - set path to logs (/var/log/kibana/kibana.log)
+    * ``server.host``  - set it to `localhost` if you use nginx for basic authentication or external interface if you use XPack (see below)
+    * ``server.name`` - name of the server
+    * ``elasticsearch.hosts`` - address of the elasticsearch: ["http://localhost:9200"]
+    * ``elasticsearch.username`` - only needed only if you use XPack (see below)
+    * ``elasticsearch.password`` - only needed only if you use XPack (see below)
+    * ``logging.dest`` - set path to logs (`/var/log/kibana/kibana.log`)
 
 Logstash Configuration
 =============================
@@ -72,16 +73,16 @@ Logstash Configuration
 Get GeoIP data from www.maxmind.com (free but requires registration): download the GeoLite2 City GZIP. Unzip it and locate the mmdb file.
 Place it somewhere in your filesystem and make sure that "logstash" user can read it::
 
-    sudo mkdir -p /opt/logstash/vendor/geoip/
-    sudo mv GeoLite2-City.mmdb /opt/logstash/vendor/geoip
+    $ sudo mkdir -p /opt/logstash/vendor/geoip/
+    $ sudo mv GeoLite2-City.mmdb /opt/logstash/vendor/geoip
 
 Configure logstash::
 
-    sudo cp logstash-cowrie.conf /etc/logstash/conf.d
+    $ sudo cp logstash-cowrie.conf /etc/logstash/conf.d
 
 Make sure the configuration file is correct. Check the input section (path), filter (geoip databases) and output (elasticsearch hostname)::
 
-    sudo systemctl restart logstash
+    $ sudo systemctl restart logstash
 
 
 Filebeat Configuration
@@ -91,7 +92,7 @@ Filebeat is not mandatory (it is possible to directly read cowrie logs from Logs
 
 Configure filebeat::
 
-    sudo cp filebeat-cowrie.conf /etc/filebeat/filebeat.yml
+    $ sudo cp filebeat-cowrie.conf /etc/filebeat/filebeat.yml
 
 Check the following parameters::
 
@@ -102,7 +103,7 @@ Check the following parameters::
 
 Start filebeat::
 
-    sudo systemctl start filebeat
+    $ sudo systemctl start filebeat
 
 Nginx
 ==================
@@ -111,11 +112,11 @@ ELK has been configured on localhost. If you wish to access it remotely, you can
 
 Install Nginx::
 
-     sudo apt install nginx apache2-utils
+     $ sudo apt install nginx apache2-utils
 
 Create an administrative Kibana user and password::
 
-      sudo htpasswd -c /etc/nginx/htpasswd.users admin_kibana
+     $ sudo htpasswd -c /etc/nginx/htpasswd.users admin_kibana
 
 Edit Nginx configuration /etc/nginx/sites-available/default. Customize port to what you like, and specify your server's name (or IP address)::
 
@@ -139,7 +140,7 @@ Edit Nginx configuration /etc/nginx/sites-available/default. Customize port to w
 
 Start the service::
 
-     sudo systemctl start nginx
+     $ sudo systemctl start nginx
 
 
 Using Kibana
@@ -147,11 +148,11 @@ Using Kibana
 
 You can list indexes with::
 
-     curl 'http://localhost:9200/_cat/indices?v'
+     $ curl 'http://localhost:9200/_cat/indices?v'
 
 You should see a cowrie index cowrie-logstash-DATE... Its health is yellow because the number of replicas should be set to 0 (unless you want another configuration)::
 
-     curl -XPUT 'localhost:9200/cowrie-logstash-REPLACEHERE/_settings' -H "Content-Type: application/json" -d '{ "index" : {"number_of_replicas" : 0 } }'
+     $ curl -XPUT 'localhost:9200/cowrie-logstash-REPLACEHERE/_settings' -H "Content-Type: application/json" -d '{ "index" : {"number_of_replicas" : 0 } }'
 
 It should answer {"acknowledged":true}
 

@@ -1,5 +1,5 @@
-How to process Cowrie output into Graylog
-############################################
+How to send Cowrie output to Graylog
+####################################
 
 
 Prerequisites
@@ -41,8 +41,6 @@ Add the following lines to the file::
 
     $template GRAYLOGRFC5424,"<%pri%>%protocol-version% %timestamp:::date-rfc3339% %HOSTNAME% %app-name% %procid% %msg%\n"
     *.* @127.0.0.1:8514;GRAYLOGRFC5424
-
-Save and quit.
 
 Restart rsyslog::
 

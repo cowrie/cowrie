@@ -5,12 +5,11 @@ import random
 import sys
 import uuid
 
+from twisted.python import log
+
 import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
 import backend_pool.util
-
-from twisted.python import log
-
 from cowrie.core.config import CowrieConfig
 
 

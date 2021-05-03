@@ -100,8 +100,9 @@ class command_perl(HoneyPotCommand):
                 self.exit()
             else:
                 self.write(
-                    'Can\'t open perl script "%s": No such file or directory\n'
-                    % (value)
+                    'Can\'t open perl script "{}": No such file or directory\n'.format(
+                        value
+                    )
                 )
                 self.exit()
 

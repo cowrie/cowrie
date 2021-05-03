@@ -14,13 +14,13 @@ import os
 import pickle
 import sys
 from stat import (
-    S_ISLNK,
-    S_ISDIR,
-    S_ISREG,
     S_ISBLK,
     S_ISCHR,
-    S_ISSOCK,
+    S_ISDIR,
     S_ISFIFO,
+    S_ISLNK,
+    S_ISREG,
+    S_ISSOCK,
     ST_MODE,
 )
 

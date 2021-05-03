@@ -17,8 +17,7 @@ from twisted.python import failure, log
 
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import command
-from cowrie.shell import honeypot
+from cowrie.shell import command, honeypot
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -161,9 +160,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             if not self.fs.exists(path):
                 return None
         else:
-            for i in [
-                "{}/{}".format(self.fs.resolve_path(x, self.cwd), cmd) for x in paths
-            ]:
+            for i in [f"{self.fs.resolve_path(x, self.cwd)}/{cmd}" for x in paths]:
                 if self.fs.exists(i):
                     path = i
                     break
@@ -233,7 +230,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         try:
             self.execcmd = execcmd.decode("utf8")
         except UnicodeDecodeError:
-            log.err("Unusual execcmd: {}".format(repr(execcmd)))
+            log.err(f"Unusual execcmd: {repr(execcmd)}")
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 

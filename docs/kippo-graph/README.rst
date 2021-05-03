@@ -1,9 +1,5 @@
-How to process Cowrie output in kippo-graph
-#############################################
-
-(Note: work in progress, instructions are not verified)
-Tested on Debian 9.
-
+How to send Cowrie output to kippo-graph
+########################################
 
 Prerequisites
 ****************
@@ -25,7 +21,7 @@ Configuring Cowrie requires setting up the SQL tables and then telling Cowrie to
 
 To install the tables and create the Cowrie user account enter the following commands::
 
-    mysql -u root -p
+    $ mysql -u root -p
     CREATE DATABASE cowrie;
     GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
     FLUSH PRIVILEGES;
@@ -33,15 +29,15 @@ To install the tables and create the Cowrie user account enter the following com
 
 Next create the database schema::
 
-    cd /opt/cowrie/
-    mysql -u cowrie -p
+    $ cd /opt/cowrie/
+    $ mysql -u cowrie -p
     USE cowrie;
     source ./docs/sql/mysql.sql;
     exit
 
 disable MySQL strict mode::
 
-    vi /etc/mysql/conf.d/disable_strict_mode.cnf
+    $ vi /etc/mysql/conf.d/disable_strict_mode.cnf
 
     [mysqld]
     sql_mode=IGNORE_SPACE,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
@@ -51,7 +47,7 @@ Cowrie configuration
 
 Edit cowrie.cfg::
 
-    vi /opt/cowrie/cowrie.cfg
+    $ vi /opt/cowrie/cowrie.cfg
 
 Activate output to mysql::
 
@@ -65,8 +61,8 @@ Activate output to mysql::
 
 Set read access to tty-files for group www-data (group maybe differ on other distributions)::
 
-    sudo apt-get install acl
-    sudo setfacl -Rm g:www-data:rx /opt/cowrie/var/lib/cowrie/tty/
+    $ sudo apt-get install acl
+    $ sudo setfacl -Rm g:www-data:rx /opt/cowrie/var/lib/cowrie/tty/
 
 kippo-graph Configuration
 ****************************
@@ -74,7 +70,7 @@ kippo-graph Configuration
 
 Edit config file::
 
-    vi /var/www/html/kippo-graph/config.php
+    $ vi /var/www/html/kippo-graph/config.php
 
 Change db settings::
 
@@ -91,12 +87,12 @@ To secure the installation
 
 Create password database::
 
-    cd /etc/apache2/
-    htpasswd -c /etc/apache2/cowrie.passwd <username>
-    htpasswd /etc/apache2/cowrie.passwd <username> (second user)
+    $ cd /etc/apache2/
+    $ htpasswd -c /etc/apache2/cowrie.passwd <username>
+    $ htpasswd /etc/apache2/cowrie.passwd <username> (second user)
 
 
-    vi /etc/apache2/sites-enabled/000-default.conf
+    $ vi /etc/apache2/sites-enabled/000-default.conf
 
 Between the <VirtualHost> </VirtualHost> tags, add::
 

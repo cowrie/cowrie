@@ -41,12 +41,13 @@ class ExecTerm(base_protocol.BaseProtocol):
         super().__init__(uuid, channelName, ssh)
 
         try:
-            log.msg(eventid='cowrie.command.input',
-                    input=command.decode('utf8'),
-                    format='CMD: %(input)s')
+            log.msg(
+                eventid="cowrie.command.input",
+                input=command.decode("utf8"),
+                format="CMD: %(input)s",
+            )
         except UnicodeDecodeError:
             log.err("Unusual execcmd: {}".format(repr(command)))
-
 
         self.transportId = ssh.server.transportId
         self.channelId = channelId
