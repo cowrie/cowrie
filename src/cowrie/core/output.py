@@ -64,6 +64,20 @@ in UTC.
 """
 
 
+def convert(input):
+    """
+    This converts a nested dictionary with bytes in it to string
+    """
+    if isinstance(input, dict):
+        return {convert(key): convert(value) for key, value in list(input.items())}
+    elif isinstance(input, list):
+        return [convert(element) for element in input]
+    elif isinstance(input, bytes):
+        return input.decode("utf-8")
+    else:
+        return input
+
+
 class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
@@ -158,7 +172,7 @@ class Output(metaclass=abc.ABCMeta):
         if "message" not in event and "format" not in event:
             return
 
-        ev: Dict[str, any] = event.copy()  # type: ignore
+        ev: Dict[str, any] = convert(event)  # type: ignore
         ev["sensor"] = self.sensor
 
         if "isError" in ev:
