@@ -1,3 +1,4 @@
+---
 # .readthedocs.yaml
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
@@ -9,8 +10,8 @@ version: 2
 sphinx:
    configuration: docs/conf.py
 
-# Optionally set the version of Python and requirements required to build your docs
+# Optionally Python version and requirements required to build your docs
 python:
    version: 3.9
    install:
-   - requirements: docs/requirements.txt
+      - requirements: docs/requirements.txt
