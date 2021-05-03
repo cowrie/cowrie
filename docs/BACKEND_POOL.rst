@@ -22,7 +22,7 @@ First of all, install the needed dependencies for the pool, as explained in
 Authorization
 *************
 
-Add your cowrie user to the libvrit group to ensure you have permission to run the VMs on the backend server::
+Add your cowrie user to the ``libvirt`` group to ensure you have permission to run the VMs on the backend server
 
 .. code-block:: bash
 
