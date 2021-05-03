@@ -26,7 +26,7 @@ Add your cowrie user to the ``libvirt`` group to ensure you have permission to r
 
 .. code-block:: bash
 
-    sudo usermod -aG "COWRIE_USER_HERE" libvirt
+    sudo usermod -aG libvirt "COWRIE_USER_HERE"
 
 Provided images
 ***************
