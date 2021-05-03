@@ -47,7 +47,9 @@ def readConfigFile(cfgfile: Union[str, List[str]]) -> configparser.ConfigParser:
 
 
 def get_config_path() -> List[str]:
-    """Get absolute path to the config file"""
+    """
+    Get absolute path to the config file
+    """
     current_path = abspath(dirname(__file__))
     root = "/".join(current_path.split("/")[:-3])
 

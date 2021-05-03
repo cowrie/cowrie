@@ -19,9 +19,9 @@ class Progress:
     def progresshook(self, pkt):
         if isinstance(pkt, TftpPacketDAT):
             self.progress += len(pkt.data)
-            self.out.write("Transferred %d bytes" % self.progress + "\n")
+            self.out.write(f"Transferred {self.progress} bytes\n")
         elif isinstance(pkt, TftpPacketOACK):
-            self.out.write("Received OACK, options are: %s" % pkt.options + "\n")
+            self.out.write(f"Received OACK, options are: {pkt.options}\n")
 
 
 class command_tftp(HoneyPotCommand):

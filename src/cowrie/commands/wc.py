@@ -71,14 +71,14 @@ class command_wc(HoneyPotCommand):
         for opt, arg in optlist:
             if opt == "-l":
                 contentsplit = contents.split(b"\n")
-                self.write("{}\n".format(len(contentsplit) - 1))
+                self.write(f"{len(contentsplit) - 1}\n")
             elif opt == "-w":
                 contentsplit = re.sub(
                     " +", " ", contents.decode().strip("\n").strip()
                 ).split(" ")
-                self.write("{}\n".format(len(contentsplit)))
+                self.write(f"{len(contentsplit)}\n")
             elif opt == "-m" or opt == "-c":
-                self.write("{}\n".format(len(contents)))
+                self.write(f"{len(contents)}\n")
             elif opt == "-v":
                 self.version()
             else:

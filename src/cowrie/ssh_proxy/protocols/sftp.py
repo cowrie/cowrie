@@ -139,7 +139,7 @@ class SFTP(base_protocol.BaseProtocol):
 
         elif packet == "SSH_FXP_OPEN":
             self.path = self.extract_string()
-            pflags = "{:08b}".format(self.extract_int(4))
+            pflags = f"{self.extract_int(4):08b}"
 
             if pflags[6] == "1":
                 self.command = b"put " + self.path
@@ -253,10 +253,10 @@ class SFTP(base_protocol.BaseProtocol):
 
     def extract_attrs(self):
         cmd = ""
-        flags = "{:08b}".format(self.extract_int(4))
+        flags = f"{self.extract_int(4):08b}"
 
         if flags[5] == "1":
-            perms = "{:09b}".format(self.extract_int(4))
+            perms = f"{self.extract_int(4):09b}"
             # log.msg(log.LPURPLE, self.parent + '[SFTP]', 'PERMS:' + perms)
             chmod = (
                 str(int(perms[:3], 2))

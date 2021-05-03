@@ -1,20 +1,18 @@
-How to Send Cowrie Output to a MySQL Database
-################################################
-
+How to Send Cowrie output to a MySQL Database
+#############################################
 
 Prerequisites
 =============
 
 * Working Cowrie installation
-* MySQL Server installation
-
+* Working MySQL installation
 
 Installation
 ============
 
-Run::
+On your Cowrie server, run::
 
-    $ sudo apt-get install mysql-server libmysqlclient-dev python-mysqldb
+    $ sudo apt-get install libmysqlclient-dev python-mysqldb
     $ su - cowrie
     $ source cowrie/cowrie-env/bin/activate
     $ pip install mysqlclient
@@ -26,7 +24,7 @@ Previously MySQL-python was used. Only if you run into isses with mysqlclient, t
 MySQL Configuration
 ===================
 
-First create an empty database named 'cowrie'::
+First create an empty database named ``cowrie``::
 
     $ mysql -u root -p
     CREATE DATABASE cowrie;
@@ -58,7 +56,7 @@ Next, log into the MySQL database using the cowrie account to verify proper acce
 Cowrie Configuration
 ====================
 
-Uncomment and update the following entries to ~/cowrie/cowrie.cfg under the Output Plugins section::
+Uncomment and update the following entries to ``~/cowrie/cowrie.cfg`` under the Output Plugins section::
 
     [output_mysql]
     host = localhost
@@ -76,9 +74,10 @@ Restart Cowrie::
 
 Verify That the MySQL Output Engine Has Been Loaded
 
-Check the end of the ~/cowrie/log/cowrie.log to make sure that the MySQL output engine has loaded successfully::
+Check the end of the ~/cowrie/var/log/cowrie/cowrie.log to make
+sure that the MySQL output engine has loaded successfully::
 
-    $ cd ~/cowrie/log/
+    $ cd ~/cowrie/var/log/cowrie/
     $ tail cowrie.log
 
 Example expected output::
@@ -89,7 +88,8 @@ Example expected output::
     2017-11-27T22:19:58-0600 [-] Ready to accept SSH connections
 
 ## Confirm That Events are Logged to the MySQL Database
-Wait for a new login attempt to occur.  Use tail like before to quickly check if any activity has 
+
+Wait for a new login attempt to occur. Use tail like before to quickly check if any activity has 
 been recorded in the cowrie.log file.
 
 Once a login event has occurred, log back into the MySQL database and verify that the event was recorded::

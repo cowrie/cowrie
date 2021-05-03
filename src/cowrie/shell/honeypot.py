@@ -427,8 +427,7 @@ class HoneyPotShell:
         newbuf = ""
         if len(files) == 1:
             newbuf = " ".join(
-                line.decode("utf8").split()[:-1]
-                + ["{}{}".format(basedir, files[0][fs.A_NAME])]
+                line.decode("utf8").split()[:-1] + [f"{basedir}{files[0][fs.A_NAME]}"]
             )
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += "/"

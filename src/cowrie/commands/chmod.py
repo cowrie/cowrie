@@ -7,7 +7,6 @@ import re
 
 from cowrie.shell.command import HoneyPotCommand
 
-
 commands = {}
 
 CHMOD_HELP = """Usage: chmod [OPTION]... MODE[,MODE]... FILE...

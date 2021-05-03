@@ -106,7 +106,7 @@ class TelnetFactory(ClientFactory):
         return transport
 
     def clientConnectionFailed(self, connector, reason):
-        print("Telnet connection failed. Reason:%s " % reason)
+        print(f"Telnet connection failed. Reason: {reason}")
 
 
 class TelnetClientCommand:

@@ -91,8 +91,9 @@ commands["help"] = command_help
 class command_w(HoneyPotCommand):
     def call(self):
         self.write(
-            " %s up %s,  1 user,  load average: 0.00, 0.00, 0.00\n"
-            % (time.strftime("%H:%M:%S"), utils.uptime(self.protocol.uptime()))
+            " {} up {},  1 user,  load average: 0.00, 0.00, 0.00\n".format(
+                time.strftime("%H:%M:%S"), utils.uptime(self.protocol.uptime())
+            )
         )
         self.write(
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
@@ -829,8 +830,9 @@ class command_id(HoneyPotCommand):
     def call(self):
         u = self.protocol.user
         self.write(
-            "uid=%d(%s) gid=%d(%s) groups=%d(%s)\n"
-            % (u.uid, u.username, u.gid, u.username, u.gid, u.username)
+            "uid={}({}) gid={}({}) groups={}({})\n".format(
+                u.uid, u.username, u.gid, u.username, u.gid, u.username
+            )
         )
 
 
@@ -962,7 +964,7 @@ class command_history(HoneyPotCommand):
                 return
             count = 1
             for line in self.protocol.historyLines:
-                self.write(" {}  {}\n".format(str(count).rjust(4), line))
+                self.write(f" {str(count).rjust(4)}  {line}\n")
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
@@ -1137,7 +1139,7 @@ class command_set(HoneyPotCommand):
     # With enhancements it should work like env when -o posix is used
     def call(self):
         for i in sorted(list(self.environ.keys())):
-            self.write("{}={}\n".format(i, self.environ[i]))
+            self.write(f"{i}={self.environ[i]}\n")
 
 
 commands["set"] = command_set

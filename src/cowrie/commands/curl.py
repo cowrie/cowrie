@@ -236,9 +236,7 @@ class command_curl(HoneyPotCommand):
             outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
             path = os.path.dirname(outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
-                self.write(
-                    "curl: %s: Cannot open: No such file or directory\n" % outfile
-                )
+                self.write(f"curl: {outfile}: Cannot open: No such file or directory\n")
                 self.exit()
                 return
 
@@ -379,7 +377,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             self.currentlength = 0.0
 
             if self.curl.limit_size > 0 and self.totallength > self.curl.limit_size:
-                log.msg("Not saving URL (%s) due to file size limit" % self.curl.url)
+                log.msg(f"Not saving URL ({self.curl.url}) due to file size limit")
                 self.fileName = os.path.devnull
                 self.nomore = True
 

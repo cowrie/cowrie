@@ -78,4 +78,4 @@ class Output(cowrie.core.output.Output):
         }
 
         ret = Indicator(self.client, i).submit()
-        log.msg("logged to csirtg %s " % ret["location"])
+        log.msg("logged to csirtg {} ".format(ret["location"]))

@@ -64,6 +64,20 @@ in UTC.
 """
 
 
+def convert(input):
+    """
+    This converts a nested dictionary with bytes in it to string
+    """
+    if isinstance(input, dict):
+        return {convert(key): convert(value) for key, value in list(input.items())}
+    elif isinstance(input, list):
+        return [convert(element) for element in input]
+    elif isinstance(input, bytes):
+        return input.decode("utf-8")
+    else:
+        return input
+
+
 class Output(metaclass=abc.ABCMeta):
     """
     This is the abstract base class intended to be inherited by
@@ -158,7 +172,7 @@ class Output(metaclass=abc.ABCMeta):
         if "message" not in event and "format" not in event:
             return
 
-        ev: Dict[str, any] = event.copy()  # type: ignore
+        ev: Dict[str, any] = convert(event)  # type: ignore
         ev["sensor"] = self.sensor
 
         if "isError" in ev:
@@ -196,11 +210,11 @@ class Output(metaclass=abc.ABCMeta):
             sessionno = "0"
             telnetmatch = self.telnetRegex.match(ev["system"])
             if telnetmatch:
-                sessionno = "T{}".format(telnetmatch.groups()[0])
+                sessionno = f"T{telnetmatch.groups()[0]}"
             else:
                 sshmatch = self.sshRegex.match(ev["system"])
                 if sshmatch:
-                    sessionno = "S{}".format(sshmatch.groups()[0])
+                    sessionno = f"S{sshmatch.groups()[0]}"
             if sessionno == "0":
                 return
 

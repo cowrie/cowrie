@@ -9,7 +9,7 @@ import hashlib
 import random
 import re
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer, reactor  # noqa: type
 from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 
@@ -24,7 +24,7 @@ class command_faked_package_class_factory:
     def getCommand(name):
         class command_faked_installation(HoneyPotCommand):
             def call(self):
-                self.write("{}: Segmentation fault\n".format(name))
+                self.write(f"{name}: Segmentation fault\n")
 
         return command_faked_installation
 
@@ -60,12 +60,10 @@ class command_yum(HoneyPotCommand):
         )
         randnum = random.randint(100, 900)
         randnum2 = random.randint(100, 900)
-        randhash = hashlib.sha1("{}".format(randnum).encode()).hexdigest()
-        randhash2 = hashlib.sha1("{}".format(randnum2).encode()).hexdigest()
+        randhash = hashlib.sha1(f"{randnum}".encode()).hexdigest()
+        randhash2 = hashlib.sha1(f"{randnum2}".encode()).hexdigest()
         yield self.sleep(1, 2)
-        self.write(
-            "Installed: 7/{}  {}:{}\n".format(arch, random.randint(500, 800), randhash)
-        )
+        self.write(f"Installed: 7/{arch}  {random.randint(500, 800)}:{randhash}\n")
         self.write(f"Group-Installed: yum 13:{randhash2}\n")
         self.write("version\n")
         self.exit()
@@ -202,7 +200,7 @@ Options:
                     random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)
                 ),
                 "size": random.randint(100, 900),
-                "release": "{}.el7".format(random.randint(1, 15)),
+                "release": f"{random.randint(1, 15)}.el7",
             }
         totalsize = sum([packages[x]["size"] for x in packages])
         repository = "base"
@@ -252,10 +250,10 @@ Options:
         self.write("\n")
         self.write("Transaction Summary\n")
         self.write("{}\n".format("=" * 176))
-        self.write("Install  {} Packages\n\n".format(len(packages)))
+        self.write(f"Install  {len(packages)} Packages\n\n")
 
         self.write(f"Total download size: {totalsize} k\n")
-        self.write("Installed size: {:.1f} M\n".format(totalsize * 0.0032))
+        self.write(f"Installed size: {totalsize * 0.0032:.1f} M\n")
         self.write("Is this ok [y/d/N]: ")
         # Assume 'yes'
 

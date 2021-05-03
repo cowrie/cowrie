@@ -17,7 +17,7 @@ from cowrie import version as cowrie_version_object
 # -- Project information -----------------------------------------------------
 
 project = "cowrie"
-copyright = "2018, Michel Oosterhof"
+copyright = "2014-2021, Michel Oosterhof"
 author = "Michel Oosterhof"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -43,12 +43,14 @@ release = cowrie_version_object.short()
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -195,3 +197,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "twisted": ("https://twistedmatrix.com/documents/current/api/", None),
 }
+
+# -- Options for sphinx copybutton extension ---------------------------------
+
+copybutton_prompt_text = "$ "

@@ -5,12 +5,11 @@ import os
 import time
 from threading import Lock
 
-import backend_pool.libvirt.backend_service
-import backend_pool.util
-
 from twisted.internet import reactor, threads
 from twisted.python import log
 
+import backend_pool.libvirt.backend_service
+import backend_pool.util
 from cowrie.core.config import CowrieConfig
 
 

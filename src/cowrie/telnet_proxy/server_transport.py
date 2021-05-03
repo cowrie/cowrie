@@ -64,7 +64,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
             dst_ip=self.transport.getHost().host,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno="T{}".format(str(sessionno)),
+            sessionno=f"T{str(sessionno)}",
             protocol="telnet",
         )
 
