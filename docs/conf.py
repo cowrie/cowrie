@@ -201,3 +201,8 @@ intersphinx_mapping = {
 # -- Options for sphinx copybutton extension ---------------------------------
 
 copybutton_prompt_text = "$ "
+
+# -- Options for sphinx autosectionlabel extension ---------------------------
+
+# TODO: should probably make all section titles unique
+autosectionlabel_prefix_document = True
