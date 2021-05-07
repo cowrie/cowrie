@@ -11,7 +11,7 @@ import re
 import shlex
 import stat
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -32,10 +32,10 @@ class HoneyPotCommand:
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
-        self.data = None  # output data
-        self.input_data = None  # used to store STDIN data passed via PIPE
-        self.writefn: Callable = self.protocol.pp.outReceived
-        self.errorWritefn = self.protocol.pp.errReceived
+        self.data: bytes = None  # output data
+        self.input_data: Optional[bytes] = None  # used to store STDIN data passed via PIPE
+        self.writefn: Callable[[bytes], None] = self.protocol.pp.outReceived
+        self.errorWritefn: Callable[[bytes], None] = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
         if ">" in self.args or ">>" in self.args:
@@ -126,7 +126,7 @@ class HoneyPotCommand:
             files.append(path)
         return files
 
-    def set_input_data(self, data):
+    def set_input_data(self, data: bytes) -> None:
         self.input_data = data
 
     def write_to_file(self, data: bytes) -> None:
@@ -135,11 +135,11 @@ class HoneyPotCommand:
         self.writtenBytes += len(data)
         self.fs.update_size(self.outfile, self.writtenBytes)
 
-    def write_to_failed(self, data):
+    def write_to_failed(self, data: bytes) -> None:
         pass
 
     def start(self) -> None:
-        if self.write != self.write_to_failed:
+        if self.writefn != self.write_to_failed:
             self.call()
         self.exit()
 

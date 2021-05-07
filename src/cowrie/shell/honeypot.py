@@ -488,7 +488,7 @@ class StdOutStdErrEmulationProtocol:
 
         self.input_data = None
 
-    def outReceived(self, data):
+    def outReceived(self, data: bytes) -> None:
         """
         Invoked when a command in the chain called 'write' method
         If we have a next command, pass the data via input_data field
@@ -517,7 +517,7 @@ class StdOutStdErrEmulationProtocol:
         command.next_command = self.next_command
         self.next_command = command
 
-    def errReceived(self, data):
+    def errReceived(self, data: bytes) -> None:
         if self.protocol and self.protocol.terminal:
             self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
