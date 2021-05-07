@@ -122,7 +122,7 @@ class Command_gcc(HoneyPotCommand):
                     input_files = input_files + 1
                 else:
                     self.write(
-                        f"{command_gcc.APP_NAME}: {value}: No such file or directory\n"
+                        f"{Command_gcc.APP_NAME}: {value}: No such file or directory\n"
                     )
                     complete = False
 
@@ -161,8 +161,8 @@ compilation terminated.\n"""
         """
 
         # Generate version number
-        version = ".".join([str(v) for v in command_gcc.APP_VERSION[:3]])
-        version_short = ".".join([str(v) for v in command_gcc.APP_VERSION[:2]])
+        version = ".".join([str(v) for v in Command_gcc.APP_VERSION[:3]])
+        version_short = ".".join([str(v) for v in Command_gcc.APP_VERSION[:2]])
 
         if short:
             data = (
@@ -170,7 +170,7 @@ compilation terminated.\n"""
 Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""",
-                (command_gcc.APP_NAME, version, version),
+                (Command_gcc.APP_NAME, version, version),
             )
         else:
             data = """Using built-in specs.
@@ -204,9 +204,9 @@ gcc version {} (Debian {}-5)""".format(
         # catting the file, you'll see some 'real' compiled data
         for i in range(random.randint(3, 15)):
             if random.randint(1, 3) == 1:
-                data = data + command_gcc.RANDOM_DATA[::-1]
+                data = data + Command_gcc.RANDOM_DATA[::-1]
             else:
-                data = data + command_gcc.RANDOM_DATA
+                data = data + Command_gcc.RANDOM_DATA
 
         # Write random data
         with open(safeoutfile, "wb") as f:
@@ -235,7 +235,7 @@ gcc version {} (Debian {}-5)""".format(
         """
         Print missing argument message, and exit
         """
-        self.write(f"{command_gcc.APP_NAME}: argument to '{arg}' is missing\n")
+        self.write(f"{Command_gcc.APP_NAME}: argument to '{arg}' is missing\n")
         self.exit()
 
     def help(self):
@@ -312,5 +312,5 @@ For bug reporting instructions, please see:
 commands["/usr/bin/gcc"] = Command_gcc
 commands["gcc"] = Command_gcc
 commands[
-    "/usr/bin/gcc-%s" % (".".join([str(v) for v in command_gcc.APP_VERSION[:2]]))
+    "/usr/bin/gcc-%s" % (".".join([str(v) for v in Command_gcc.APP_VERSION[:2]]))
 ] = Command_gcc

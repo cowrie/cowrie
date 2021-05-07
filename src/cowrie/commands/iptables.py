@@ -93,7 +93,7 @@ class Command_iptables(HoneyPotCommand):
             "--table",
             dest="table",
             action="store",
-            default=command_iptables.DEFAULT_TABLE,
+            default=Command_iptables.DEFAULT_TABLE,
         )
         parser.add_option(
             "-F",
@@ -238,7 +238,7 @@ class Command_iptables(HoneyPotCommand):
                 self.write(
                     """{}: can\'t initialize iptables table \'{}\': Table does not exist (do you need to insmod?)
 Perhaps iptables or your kernel needs to be upgraded.\n""".format(
-                        command_iptables.APP_NAME, table
+                        Command_iptables.APP_NAME, table
                     )
                 )
                 self.exit()
@@ -255,7 +255,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""".format(
         # Verify chain existence. Requires valid table first
         if chain not in list(self.current_table.keys()):
             self.write(
-                "%s: No chain/target/match by that name.\n" % command_iptables.APP_NAME
+                "%s: No chain/target/match by that name.\n" % Command_iptables.APP_NAME
             )
             self.exit()
             return False
@@ -267,7 +267,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""".format(
         """
         Show version and exit
         """
-        self.write(f"{command_iptables.APP_NAME} {command_iptables.APP_VERSION}\n")
+        self.write(f"{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}\n")
         self.exit()
 
     def show_help(self):
@@ -339,7 +339,7 @@ Options:
   --modprobe=<command>     try to insert modules using this command
   --set-counters PKTS BYTES    set the counter during insert/append
 [!] --version  -V      print package version.\n""".format(
-                command_iptables.APP_NAME, command_iptables.APP_VERSION
+                Command_iptables.APP_NAME, Command_iptables.APP_VERSION
             )
         )
         self.exit()
@@ -438,7 +438,7 @@ Options:
 
     def no_permission(self):
         self.write(
-            f"{command_iptables.APP_NAME} {command_iptables.APP_VERSION}: "
+            f"{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}: "
             + "can't initialize iptables table 'filter': "
             + "Permission denied (you must be root)\n"
             + "Perhaps iptables or your kernel needs to be upgraded.\n"
@@ -452,7 +452,7 @@ Options:
 
         self.write(
             "{} {}: no command specified'\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
-                command_iptables.APP_NAME, command_iptables.APP_VERSION
+                Command_iptables.APP_NAME, Command_iptables.APP_VERSION
             )
         )
         self.exit()
@@ -464,7 +464,7 @@ Options:
 
         self.write(
             "{} {}: unknown option '{}''\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
-                command_iptables.APP_NAME, command_iptables.APP_VERSION, option
+                Command_iptables.APP_NAME, Command_iptables.APP_VERSION, option
             )
         )
         self.exit()
