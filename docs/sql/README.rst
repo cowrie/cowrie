@@ -1,14 +1,14 @@
 How to Send Cowrie output to a MySQL Database
 #############################################
 
-Prerequisites
-=============
+MySQL Output Plugin Prerequisites
+=================================
 
 * Working Cowrie installation
 * Working MySQL installation
 
-Installation
-============
+MySQL Installation
+==================
 
 On your Cowrie server, run::
 
@@ -29,13 +29,13 @@ First create an empty database named ``cowrie``::
     $ mysql -u root -p
     CREATE DATABASE cowrie;
 
-Create a cowrie user account for the database and grant all access privileges::
+Create a Cowrie user account for the database and grant all access privileges::
 
     GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
 
 **Restricted Privileges:**
 
-Alternatively you can grant the cowrie account with less privileges. The following command grants the account with the
+Alternatively you can grant the Cowrie account with less privileges. The following command grants the account with the
 bare minimum required for the output logging to function::
 
     GRANT INSERT, SELECT, UPDATE ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
@@ -45,7 +45,7 @@ Apply the privilege settings and exit mysql::
     FLUSH PRIVILEGES;
     exit
 
-Next, log into the MySQL database using the cowrie account to verify proper access privileges and load the database schema provided in the docs/sql/ directory::
+Next, log into the MySQL database using the Cowrie account to verify proper access privileges and load the database schema provided in the docs/sql/ directory::
 
     $ cd ~/cowrie/docs/sql/
     $ mysql -u cowrie -p
@@ -53,10 +53,10 @@ Next, log into the MySQL database using the cowrie account to verify proper acce
     source mysql.sql;
     exit
 
-Cowrie Configuration
-====================
+Cowrie Configuration for MySQL
+==============================
 
-Uncomment and update the following entries to ``~/cowrie/cowrie.cfg`` under the Output Plugins section::
+Uncomment and update the following entries to ``etc/cowrie.cfg`` under the Output Plugins section::
 
     [output_mysql]
     host = localhost
