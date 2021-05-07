@@ -3,6 +3,7 @@
 
 
 import getopt
+import ipaddress
 import os
 import time
 
@@ -265,6 +266,11 @@ class command_curl(HoneyPotCommand):
                 f'curl: (1) Protocol "{scheme.encode("utf8")}" not supported or disabled in libcurl\n'
             )
             self.exit()
+            return None
+
+        # TODO: need to do full name resolution.
+        if ipaddress.ip_address(host).is_private:
+            self.errorWrite("curl: (6) Could not resolve host: {}\n".format(host))
             return None
 
         factory = HTTPProgressDownloader(
