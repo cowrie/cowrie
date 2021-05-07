@@ -6,6 +6,15 @@
 # Required
 version: 2
 
+# Build PDF & ePub
+formats:
+  - epub
+  - pdf
+
+install:
+    - method: pip
+      path: .
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
    configuration: docs/conf.py
