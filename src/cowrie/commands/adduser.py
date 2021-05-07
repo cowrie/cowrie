@@ -3,6 +3,7 @@
 
 
 import random
+from typing import Optional
 
 from twisted.internet import reactor
 
@@ -15,8 +16,8 @@ O_O, O_Q, O_P = 1, 2, 3
 
 class Command_adduser(HoneyPotCommand):
     def start(self):
-        self.username = None
-        self.item = 0
+        self.username: Optional[str] = None
+        self.item: int = 0
         for arg in self.args:
             if arg.startswith("-") or arg.isdigit():
                 continue

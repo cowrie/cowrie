@@ -20,7 +20,7 @@ class Command_faked_package_class_factory:
             def call(self):
                 self.write(f"{name}: Segmentation fault\n")
 
-        return command_faked_installation
+        return Command_faked_installation
 
 
 class Command_aptget(HoneyPotCommand):
