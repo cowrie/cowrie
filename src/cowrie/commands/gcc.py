@@ -16,7 +16,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_gcc(HoneyPotCommand):
+class Command_gcc(HoneyPotCommand):
     # Name of program. Under OSX, you might consider i686-apple-darwin11-llvm-gcc-X.X
     APP_NAME = "gcc"
 
@@ -309,8 +309,8 @@ For bug reporting instructions, please see:
         self.exit()
 
 
-commands["/usr/bin/gcc"] = command_gcc
-commands["gcc"] = command_gcc
+commands["/usr/bin/gcc"] = Command_gcc
+commands["gcc"] = Command_gcc
 commands[
     "/usr/bin/gcc-%s" % (".".join([str(v) for v in command_gcc.APP_VERSION[:2]]))
-] = command_gcc
+] = Command_gcc

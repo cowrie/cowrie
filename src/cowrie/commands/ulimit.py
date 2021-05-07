@@ -13,7 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_ulimit(HoneyPotCommand):
+class Command_ulimit(HoneyPotCommand):
     """
     ulimit
 
@@ -43,4 +43,4 @@ class command_ulimit(HoneyPotCommand):
         pass
 
 
-commands["ulimit"] = command_ulimit
+commands["ulimit"] = Command_ulimit

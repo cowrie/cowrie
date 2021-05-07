@@ -174,7 +174,7 @@ Options: (H) means HTTP/HTTPS only, (F) means FTP only
  """
 
 
-class command_curl(HoneyPotCommand):
+class Command_curl(HoneyPotCommand):
     """
     curl command
     """
@@ -435,5 +435,5 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.pageEnd(self)
 
 
-commands["/usr/bin/curl"] = command_curl
-commands["curl"] = command_curl
+commands["/usr/bin/curl"] = Command_curl
+commands["curl"] = Command_curl

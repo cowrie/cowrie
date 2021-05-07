@@ -13,7 +13,7 @@ from cowrie.shell.fs import A_REALFILE
 commands = {}
 
 
-class command_tar(HoneyPotCommand):
+class Command_tar(HoneyPotCommand):
     def mkfullpath(self, path, f):
         l, d = path.split("/"), []
         while len(l):
@@ -74,5 +74,5 @@ class command_tar(HoneyPotCommand):
                 log.msg(f"tar: skipping [{f.name}]")
 
 
-commands["/bin/tar"] = command_tar
-commands["tar"] = command_tar
+commands["/bin/tar"] = Command_tar
+commands["tar"] = Command_tar

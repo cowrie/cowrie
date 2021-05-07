@@ -7,7 +7,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_nohup(HoneyPotCommand):
+class Command_nohup(HoneyPotCommand):
     def call(self):
         if not len(self.args):
             self.write("nohup: missing operand\n")
@@ -20,5 +20,5 @@ class command_nohup(HoneyPotCommand):
         self.write("nohup: ignoring input and appending output to 'nohup.out'\n")
 
 
-commands["/usr/bin/nohup"] = command_nohup
-commands["nohup"] = command_nohup
+commands["/usr/bin/nohup"] = Command_nohup
+commands["nohup"] = Command_nohup

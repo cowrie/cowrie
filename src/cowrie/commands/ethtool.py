@@ -7,7 +7,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_ethtool(HoneyPotCommand):
+class Command_ethtool(HoneyPotCommand):
     def call(self):
         func = self.do_ethtool_help
         for x in self.args:
@@ -78,5 +78,5 @@ No data available\n"""
         )
 
 
-commands["/sbin/ethtool"] = command_ethtool
-commands["ethtool"] = command_ethtool
+commands["/sbin/ethtool"] = Command_ethtool
+commands["ethtool"] = Command_ethtool

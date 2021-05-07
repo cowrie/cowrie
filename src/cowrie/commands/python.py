@@ -15,7 +15,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_python(HoneyPotCommand):
+class Command_python(HoneyPotCommand):
     def version(self):
         ver = "Python 2.7.11+"
         self.write(ver + "\n")
@@ -131,5 +131,5 @@ class command_python(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/python"] = command_python
-commands["python"] = command_python
+commands["/usr/bin/python"] = Command_python
+commands["python"] = Command_python

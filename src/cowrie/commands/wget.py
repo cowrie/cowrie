@@ -51,7 +51,7 @@ def splitthousands(s, sep=","):
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
 
-class command_wget(HoneyPotCommand):
+class Command_wget(HoneyPotCommand):
     """
     wget command
     """
@@ -409,7 +409,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.pageEnd(self)
 
 
-commands["/usr/bin/wget"] = command_wget
-commands["wget"] = command_wget
-commands["/usr/bin/dget"] = command_wget
-commands["dget"] = command_wget
+commands["/usr/bin/wget"] = Command_wget
+commands["wget"] = Command_wget
+commands["/usr/bin/dget"] = Command_wget
+commands["dget"] = Command_wget

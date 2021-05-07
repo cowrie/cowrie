@@ -19,7 +19,7 @@ Swap:{SwapTotal:>14}{calc_swap_used:>12}{SwapFree:>12}
 """
 
 
-class command_free(HoneyPotCommand):
+class Command_free(HoneyPotCommand):
     """
     free
     """
@@ -106,5 +106,5 @@ class command_free(HoneyPotCommand):
         return mem_info_map
 
 
-commands["/usr/bin/free"] = command_free
-commands["free"] = command_free
+commands["/usr/bin/free"] = Command_free
+commands["free"] = Command_free

@@ -14,7 +14,7 @@ from cowrie.shell.fs import A_REALFILE
 commands = {}
 
 
-class command_unzip(HoneyPotCommand):
+class Command_unzip(HoneyPotCommand):
     def mkfullpath(self, path, f):
         l, d = path.split("/"), []
         while len(l):
@@ -121,5 +121,5 @@ class command_unzip(HoneyPotCommand):
                 log.msg(f"  skipping: {f.name}\n")
 
 
-commands["/bin/unzip"] = command_unzip
-commands["unzip"] = command_unzip
+commands["/bin/unzip"] = Command_unzip
+commands["unzip"] = Command_unzip

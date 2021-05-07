@@ -24,7 +24,7 @@ class Progress:
             self.out.write(f"Received OACK, options are: {pkt.options}\n")
 
 
-class command_tftp(HoneyPotCommand):
+class Command_tftp(HoneyPotCommand):
     port = 69
     hostname = None
     file_to_get = None
@@ -127,5 +127,5 @@ class command_tftp(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/tftp"] = command_tftp
-commands["tftp"] = command_tftp
+commands["/usr/bin/tftp"] = Command_tftp
+commands["tftp"] = Command_tftp

@@ -10,7 +10,7 @@ from cowrie.shell.fs import A_NAME
 commands = {}
 
 
-class command_du(HoneyPotCommand):
+class Command_du(HoneyPotCommand):
     def message_help(self):
         return """Usage: du [OPTION]... [FILE]...
   or:  du [OPTION]... --files0-from=F
@@ -127,4 +127,4 @@ or available locally via: info '(coreutils) du invocation'\n"""
             self.write("36      .\n")
 
 
-commands["du"] = command_du
+commands["du"] = Command_du

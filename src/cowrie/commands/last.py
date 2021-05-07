@@ -9,7 +9,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_last(HoneyPotCommand):
+class Command_last(HoneyPotCommand):
     def call(self):
         line = list(self.args)
         while len(line):
@@ -44,5 +44,5 @@ class command_last(HoneyPotCommand):
         )
 
 
-commands["/usr/bin/last"] = command_last
-commands["last"] = command_last
+commands["/usr/bin/last"] = Command_last
+commands["last"] = Command_last

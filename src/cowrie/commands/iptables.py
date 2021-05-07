@@ -27,7 +27,7 @@ class ModifiedOptionParser(optparse.OptionParser):
         raise OptionParsingExit(status, msg)
 
 
-class command_iptables(HoneyPotCommand):
+class Command_iptables(HoneyPotCommand):
     # Do not resolve args
     resolve_args = False
 
@@ -474,5 +474,5 @@ Options:
         self.exit()
 
 
-commands["/sbin/iptables"] = command_iptables
-commands["iptables"] = command_iptables
+commands["/sbin/iptables"] = Command_iptables
+commands["iptables"] = Command_iptables

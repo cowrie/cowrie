@@ -13,17 +13,17 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_faked_package_class_factory:
+class Command_faked_package_class_factory:
     @staticmethod
     def getCommand(name):
-        class command_faked_installation(HoneyPotCommand):
+        class Command_faked_installation(HoneyPotCommand):
             def call(self):
                 self.write(f"{name}: Segmentation fault\n")
 
         return command_faked_installation
 
 
-class command_aptget(HoneyPotCommand):
+class Command_aptget(HoneyPotCommand):
     """
     apt-get fake
     suppports only the 'install PACKAGE' command & 'moo'.
@@ -177,7 +177,7 @@ pages for more information and options.
             self.fs.mkfile("/usr/bin/%s" % p, 0, 0, random.randint(10000, 90000), 33188)
             self.protocol.commands[
                 "/usr/bin/%s" % p
-            ] = command_faked_package_class_factory.getCommand(p)
+            ] = Command_faked_package_class_factory.getCommand(p)
             yield self.sleep(2)
         self.exit()
 
@@ -199,5 +199,5 @@ pages for more information and options.
         self.exit()
 
 
-commands["/usr/bin/apt-get"] = command_aptget
-commands["apt-get"] = command_aptget
+commands["/usr/bin/apt-get"] = Command_aptget
+commands["apt-get"] = Command_aptget

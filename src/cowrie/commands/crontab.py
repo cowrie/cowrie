@@ -16,7 +16,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_crontab(HoneyPotCommand):
+class Command_crontab(HoneyPotCommand):
     def help(self):
         output = (
             "usage:    crontab [-u user] file",
@@ -73,5 +73,5 @@ class command_crontab(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/crontab"] = command_crontab
-commands["crontab"] = command_crontab
+commands["/usr/bin/crontab"] = Command_crontab
+commands["crontab"] = Command_crontab

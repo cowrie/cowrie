@@ -6,7 +6,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_which(HoneyPotCommand):
+class Command_which(HoneyPotCommand):
     # Do not resolve args
     resolve_args = False
 
@@ -28,4 +28,4 @@ class command_which(HoneyPotCommand):
                     self.write(f"{path}/{f}\n")
 
 
-commands["which"] = command_which
+commands["which"] = Command_which

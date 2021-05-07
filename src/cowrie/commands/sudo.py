@@ -63,7 +63,7 @@ Options:
 )
 
 
-class command_sudo(HoneyPotCommand):
+class Command_sudo(HoneyPotCommand):
     def short_help(self):
         for ln in sudo_shorthelp:
             self.errorWrite(f"{ln}\n")
@@ -133,4 +133,4 @@ class command_sudo(HoneyPotCommand):
             self.short_help()
 
 
-commands["sudo"] = command_sudo
+commands["sudo"] = Command_sudo
