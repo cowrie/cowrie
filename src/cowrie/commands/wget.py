@@ -155,7 +155,11 @@ class command_wget(HoneyPotCommand):
 
         # TODO: need to do full name resolution.
         if ipaddress.ip_address(host).is_private:
-            self.errorWrite("Resolving {} ({})... failed: nodename nor servname provided, or not known.\n".format(host,host))
+            self.errorWrite(
+                "Resolving {} ({})... failed: nodename nor servname provided, or not known.\n".format(
+                    host, host
+                )
+            )
             self.errorWrite("wget: unable to resolve host address ‘{}’\n".format(host))
             return None
 
