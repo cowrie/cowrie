@@ -19,7 +19,7 @@ class HoneyPotSSHSession(session.SSHSession):
     def __init__(self, *args, **kw):
         session.SSHSession.__init__(self, *args, **kw)
 
-    def request_env(self, data):
+    def request_env(self, data: bytes) -> int:
         name, rest = getNS(data)
         value, rest = getNS(rest)
         if rest:
@@ -35,22 +35,22 @@ class HoneyPotSSHSession(session.SSHSession):
             self.session.environ[name.decode("utf-8")] = value.decode("utf-8")
         return 0
 
-    def request_agent(self, data):
+    def request_agent(self, data: bytes) -> int:
         log.msg(f"request_agent: {repr(data)}")
         return 0
 
-    def request_x11_req(self, data):
+    def request_x11_req(self, data: bytes) -> int:
         log.msg(f"request_x11: {repr(data)}")
         return 0
 
-    def closed(self):
+    def closed(self) -> None:
         """
         This is reliably called on session close/disconnect and calls the avatar
         """
         session.SSHSession.closed(self)
         self.client = None
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         """
         Redirect EOF to emulated shell. If shell is gone, then disconnect
         """
@@ -59,17 +59,17 @@ class HoneyPotSSHSession(session.SSHSession):
         else:
             self.loseConnection()
 
-    def sendEOF(self):
+    def sendEOF(self) -> None:
         """
         Utility function to request to send EOF for this session
         """
         self.conn.sendEOF(self)
 
-    def sendClose(self):
+    def sendClose(self) -> None:
         """
         Utility function to request to send close for this session
         """
         self.conn.sendClose(self)
 
-    def channelClosed(self):
+    def channelClosed(self) -> None:
         log.msg("Called channelClosed in SSHSession")

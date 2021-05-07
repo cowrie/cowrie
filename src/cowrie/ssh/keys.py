@@ -15,8 +15,8 @@ from cowrie.core.config import CowrieConfig
 
 
 def getRSAKeys():
-    publicKeyFile = CowrieConfig.get("ssh", "rsa_public_key")
-    privateKeyFile = CowrieConfig.get("ssh", "rsa_private_key")
+    publicKeyFile: str = CowrieConfig.get("ssh", "rsa_public_key")
+    privateKeyFile: str = CowrieConfig.get("ssh", "rsa_private_key")
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
         log.msg("Generating new RSA keypair...")
         from cryptography.hazmat.backends import default_backend
@@ -40,8 +40,8 @@ def getRSAKeys():
 
 
 def getDSAKeys():
-    publicKeyFile = CowrieConfig.get("ssh", "dsa_public_key")
-    privateKeyFile = CowrieConfig.get("ssh", "dsa_private_key")
+    publicKeyFile: str = CowrieConfig.get("ssh", "dsa_public_key")
+    privateKeyFile: str = CowrieConfig.get("ssh", "dsa_private_key")
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
         log.msg("Generating new DSA keypair...")
         from cryptography.hazmat.backends import default_backend
