@@ -3,6 +3,7 @@
 
 
 import getopt
+import ipaddress
 import os
 import time
 
@@ -143,10 +144,6 @@ class command_wget(HoneyPotCommand):
             self.errorWrite(f"{url}: Unsupported scheme.\n")
             return None
 
-        # File in host's fs that will hold content of the downloaded file
-        # HTTPDownloader will close() the file object so need to preserve the name
-        self.artifactFile = Artifact(self.outfile)
-
         if not self.quiet:
             self.errorWrite(
                 "--{}--  {}\n".format(
@@ -155,6 +152,16 @@ class command_wget(HoneyPotCommand):
             )
             self.errorWrite(f"Connecting to {host}:{port}... connected.\n")
             self.errorWrite("HTTP request sent, awaiting response... ")
+
+        # TODO: need to do full name resolution.
+        if ipaddress.ip_address(host).is_private:
+            self.errorWrite("Resolving {} ({})... failed: nodename nor servname provided, or not known.\n".format(host,host))
+            self.errorWrite("wget: unable to resolve host address ‘{}’\n".format(host))
+            return None
+
+        # File in host's fs that will hold content of the downloaded file
+        # HTTPDownloader will close() the file object so need to preserve the name
+        self.artifactFile = Artifact(self.outfile)
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, self.artifactFile, *args, **kwargs
