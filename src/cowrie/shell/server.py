@@ -49,9 +49,9 @@ class CowrieServer:
 
     fs = None
     process = None
-    hostname = CowrieConfig.get("honeypot", "hostname")
+    hostname: str = CowrieConfig.get("honeypot", "hostname")
 
-    def __init__(self, realm):
+    def __init__(self, realm: str) -> None:
         try:
             arches = [
                 arch.strip() for arch in CowrieConfig.get("shell", "arch").split(",")
