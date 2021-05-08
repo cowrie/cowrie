@@ -252,7 +252,7 @@ General approach
 Check the log file in ``var/log/cowrie/cowrie.log``.
 
 Updating Cowrie
-#################
+***************
 
 First stop your honeypot. Then pull updates from GitHub, and upgrade your Python dependencies::
 
@@ -269,7 +269,7 @@ And finally, restart Cowrie after finishing all updates::
     $ bin/cowrie start
 
 Modifying Cowrie
-################
+****************
 
 The pre-login banner can be set by creating the file ``honeyfs/etc/issue.net``.
 The post-login banner can be customized by editing ``honeyfs/etc/motd``.
