@@ -20,6 +20,7 @@ Welcome to Cowrie's documentation!
    HONEYFS.rst
    BACKEND_POOL.rst
    SNAPSHOTS.rst
+   OUTPUT.rst
    docker/README.rst
    elk/README.rst
    graylog/README.rst
