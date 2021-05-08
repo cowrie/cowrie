@@ -22,18 +22,18 @@ from cowrie.shell.honeypot import HoneyPotShell
 commands: Dict[str, Callable] = {}
 
 
-class command_whoami(HoneyPotCommand):
+class Command_whoami(HoneyPotCommand):
     def call(self):
         self.write(f"{self.protocol.user.username}\n")
 
 
-commands["/usr/bin/whoami"] = command_whoami
-commands["whoami"] = command_whoami
-commands["/usr/bin/users"] = command_whoami
-commands["users"] = command_whoami
+commands["/usr/bin/whoami"] = Command_whoami
+commands["whoami"] = Command_whoami
+commands["/usr/bin/users"] = Command_whoami
+commands["users"] = Command_whoami
 
 
-class command_help(HoneyPotCommand):
+class Command_help(HoneyPotCommand):
     def call(self):
         self.write(
             """GNU bash, version 4.2.37(1)-release (x86_64-pc-linux-gnu)
@@ -85,10 +85,10 @@ A star (*) next to a name means that the command is disabled.
         )
 
 
-commands["help"] = command_help
+commands["help"] = Command_help
 
 
-class command_w(HoneyPotCommand):
+class Command_w(HoneyPotCommand):
     def call(self):
         self.write(
             " {} up {},  1 user,  load average: 0.00, 0.00, 0.00\n".format(
@@ -108,11 +108,11 @@ class command_w(HoneyPotCommand):
         )
 
 
-commands["/usr/bin/w"] = command_w
-commands["w"] = command_w
+commands["/usr/bin/w"] = Command_w
+commands["w"] = Command_w
 
 
-class command_who(HoneyPotCommand):
+class Command_who(HoneyPotCommand):
     def call(self):
         self.write(
             "%-8s pts/0        %s %s (%s)\n"
@@ -125,11 +125,11 @@ class command_who(HoneyPotCommand):
         )
 
 
-commands["/usr/bin/who"] = command_who
-commands["who"] = command_who
+commands["/usr/bin/who"] = Command_who
+commands["who"] = Command_who
 
 
-class command_echo(HoneyPotCommand):
+class Command_echo(HoneyPotCommand):
     def call(self):
 
         newline = True
@@ -174,11 +174,11 @@ class command_echo(HoneyPotCommand):
             log.msg("echo command received Python incorrect hex escape")
 
 
-commands["/bin/echo"] = command_echo
-commands["echo"] = command_echo
+commands["/bin/echo"] = Command_echo
+commands["echo"] = Command_echo
 
 
-class command_printf(HoneyPotCommand):
+class Command_printf(HoneyPotCommand):
     def call(self):
         if not len(self.args):
             self.write("printf: usage: printf [-v var] format [arguments]\n")
@@ -200,11 +200,11 @@ class command_printf(HoneyPotCommand):
                 self.write(codecs.escape_decode(s)[0])
 
 
-commands["/usr/bin/printf"] = command_printf
-commands["printf"] = command_printf
+commands["/usr/bin/printf"] = Command_printf
+commands["printf"] = Command_printf
 
 
-class command_exit(HoneyPotCommand):
+class Command_exit(HoneyPotCommand):
     def call(self):
         stat = failure.Failure(error.ProcessDone(status=""))
         self.protocol.terminal.transport.processEnded(stat)
@@ -213,22 +213,22 @@ class command_exit(HoneyPotCommand):
         pass
 
 
-commands["exit"] = command_exit
-commands["logout"] = command_exit
+commands["exit"] = Command_exit
+commands["logout"] = Command_exit
 
 
-class command_clear(HoneyPotCommand):
+class Command_clear(HoneyPotCommand):
     def call(self):
         self.protocol.terminal.reset()
 
 
-commands["/usr/bin/clear"] = command_clear
-commands["clear"] = command_clear
-commands["/usr/bin/reset"] = command_clear
-commands["reset"] = command_clear
+commands["/usr/bin/clear"] = Command_clear
+commands["clear"] = Command_clear
+commands["/usr/bin/reset"] = Command_clear
+commands["reset"] = Command_clear
 
 
-class command_hostname(HoneyPotCommand):
+class Command_hostname(HoneyPotCommand):
     def call(self):
         if len(self.args):
             if self.protocol.user.username == "root":
@@ -239,11 +239,11 @@ class command_hostname(HoneyPotCommand):
             self.write(f"{self.protocol.hostname}\n")
 
 
-commands["/bin/hostname"] = command_hostname
-commands["hostname"] = command_hostname
+commands["/bin/hostname"] = Command_hostname
+commands["hostname"] = Command_hostname
 
 
-class command_ps(HoneyPotCommand):
+class Command_ps(HoneyPotCommand):
     def call(self):
         user = self.protocol.user.username
         args = ""
@@ -822,11 +822,11 @@ class command_ps(HoneyPotCommand):
             self.write(f"{s}\n")
 
 
-commands["/bin/ps"] = command_ps
-commands["ps"] = command_ps
+commands["/bin/ps"] = Command_ps
+commands["ps"] = Command_ps
 
 
-class command_id(HoneyPotCommand):
+class Command_id(HoneyPotCommand):
     def call(self):
         u = self.protocol.user
         self.write(
@@ -836,11 +836,11 @@ class command_id(HoneyPotCommand):
         )
 
 
-commands["/usr/bin/id"] = command_id
-commands["id"] = command_id
+commands["/usr/bin/id"] = Command_id
+commands["id"] = Command_id
 
 
-class command_passwd(HoneyPotCommand):
+class Command_passwd(HoneyPotCommand):
     def start(self):
         self.write("Enter new UNIX password: ")
         self.protocol.password_input = True
@@ -871,11 +871,11 @@ class command_passwd(HoneyPotCommand):
         self.callbacks.pop(0)(line)
 
 
-commands["/usr/bin/passwd"] = command_passwd
-commands["passwd"] = command_passwd
+commands["/usr/bin/passwd"] = Command_passwd
+commands["passwd"] = Command_passwd
 
 
-class command_shutdown(HoneyPotCommand):
+class Command_shutdown(HoneyPotCommand):
     def start(self):
         if len(self.args) and self.args[0].strip().count("--help"):
             output = [
@@ -929,15 +929,15 @@ class command_shutdown(HoneyPotCommand):
         self.protocol.terminal.transport.processEnded(stat)
 
 
-commands["/sbin/shutdown"] = command_shutdown
-commands["shutdown"] = command_shutdown
-commands["/sbin/poweroff"] = command_shutdown
-commands["poweroff"] = command_shutdown
-commands["/sbin/halt"] = command_shutdown
-commands["halt"] = command_shutdown
+commands["/sbin/shutdown"] = Command_shutdown
+commands["shutdown"] = Command_shutdown
+commands["/sbin/poweroff"] = Command_shutdown
+commands["poweroff"] = Command_shutdown
+commands["/sbin/halt"] = Command_shutdown
+commands["halt"] = Command_shutdown
 
 
-class command_reboot(HoneyPotCommand):
+class Command_reboot(HoneyPotCommand):
     def start(self):
         self.write("\n")
         self.write(
@@ -951,11 +951,11 @@ class command_reboot(HoneyPotCommand):
         self.protocol.terminal.transport.processEnded(stat)
 
 
-commands["/sbin/reboot"] = command_reboot
-commands["reboot"] = command_reboot
+commands["/sbin/reboot"] = Command_reboot
+commands["reboot"] = Command_reboot
 
 
-class command_history(HoneyPotCommand):
+class Command_history(HoneyPotCommand):
     def call(self):
         try:
             if len(self.args) and self.args[0] == "-c":
@@ -971,20 +971,20 @@ class command_history(HoneyPotCommand):
             pass
 
 
-commands["history"] = command_history
+commands["history"] = Command_history
 
 
-class command_date(HoneyPotCommand):
+class Command_date(HoneyPotCommand):
     def call(self):
         time = datetime.datetime.utcnow()
         self.write("{}\n".format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
 
 
-commands["/bin/date"] = command_date
-commands["date"] = command_date
+commands["/bin/date"] = Command_date
+commands["date"] = Command_date
 
 
-class command_yes(HoneyPotCommand):
+class Command_yes(HoneyPotCommand):
     def start(self):
         self.y()
 
@@ -1000,11 +1000,11 @@ class command_yes(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/yes"] = command_yes
-commands["yes"] = command_yes
+commands["/usr/bin/yes"] = Command_yes
+commands["yes"] = Command_yes
 
 
-class command_sh(HoneyPotCommand):
+class Command_sh(HoneyPotCommand):
     def call(self):
         if len(self.args) and self.args[0].strip() == "-c":
 
@@ -1035,13 +1035,13 @@ class command_sh(HoneyPotCommand):
         self.protocol.cmdstack.pop()
 
 
-commands["/bin/bash"] = command_sh
-commands["bash"] = command_sh
-commands["/bin/sh"] = command_sh
-commands["sh"] = command_sh
+commands["/bin/bash"] = Command_sh
+commands["bash"] = Command_sh
+commands["/bin/sh"] = Command_sh
+commands["sh"] = Command_sh
 
 
-class command_php(HoneyPotCommand):
+class Command_php(HoneyPotCommand):
     def start(self):
         if not len(self.args):
             pass
@@ -1109,11 +1109,11 @@ class command_php(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/php"] = command_php
-commands["php"] = command_php
+commands["/usr/bin/php"] = Command_php
+commands["php"] = Command_php
 
 
-class command_chattr(HoneyPotCommand):
+class Command_chattr(HoneyPotCommand):
     def call(self):
         if len(self.args) < 1:
             self.write("Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...\n")
@@ -1129,11 +1129,11 @@ class command_chattr(HoneyPotCommand):
             )
 
 
-commands["/usr/bin/chattr"] = command_chattr
-commands["chattr"] = command_chattr
+commands["/usr/bin/chattr"] = Command_chattr
+commands["chattr"] = Command_chattr
 
 
-class command_set(HoneyPotCommand):
+class Command_set(HoneyPotCommand):
     # Basic functionaltly (show only), need enhancements
     # This will show ALL environ vars, not only the global ones
     # With enhancements it should work like env when -o posix is used
@@ -1142,32 +1142,32 @@ class command_set(HoneyPotCommand):
             self.write(f"{i}={self.environ[i]}\n")
 
 
-commands["set"] = command_set
+commands["set"] = Command_set
 
 
-class command_nop(HoneyPotCommand):
+class Command_nop(HoneyPotCommand):
     def call(self):
         pass
 
 
-commands["umask"] = command_nop
-commands["unset"] = command_nop
-commands["export"] = command_nop
-commands["alias"] = command_nop
-commands["jobs"] = command_nop
-commands["kill"] = command_nop
-commands["/bin/kill"] = command_nop
-commands["/bin/pkill"] = command_nop
-commands["/bin/killall"] = command_nop
-commands["/bin/killall5"] = command_nop
-commands["/bin/su"] = command_nop
-commands["su"] = command_nop
-commands["/bin/chown"] = command_nop
-commands["chown"] = command_nop
-commands["/bin/chgrp"] = command_nop
-commands["chgrp"] = command_nop
-commands["/usr/bin/chattr"] = command_nop
-commands["chattr"] = command_nop
-commands[":"] = command_nop
-commands["do"] = command_nop
-commands["done"] = command_nop
+commands["umask"] = Command_nop
+commands["unset"] = Command_nop
+commands["export"] = Command_nop
+commands["alias"] = Command_nop
+commands["jobs"] = Command_nop
+commands["kill"] = Command_nop
+commands["/bin/kill"] = Command_nop
+commands["/bin/pkill"] = Command_nop
+commands["/bin/killall"] = Command_nop
+commands["/bin/killall5"] = Command_nop
+commands["/bin/su"] = Command_nop
+commands["su"] = Command_nop
+commands["/bin/chown"] = Command_nop
+commands["chown"] = Command_nop
+commands["/bin/chgrp"] = Command_nop
+commands["chgrp"] = Command_nop
+commands["/usr/bin/chattr"] = Command_nop
+commands["chattr"] = Command_nop
+commands[":"] = Command_nop
+commands["do"] = Command_nop
+commands["done"] = Command_nop

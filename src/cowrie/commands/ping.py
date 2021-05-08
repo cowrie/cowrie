@@ -16,7 +16,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_ping(HoneyPotCommand):
+class Command_ping(HoneyPotCommand):
     """
     ping command
     """
@@ -121,5 +121,5 @@ class command_ping(HoneyPotCommand):
             self.exit()
 
 
-commands["/bin/ping"] = command_ping
-commands["ping"] = command_ping
+commands["/bin/ping"] = Command_ping
+commands["ping"] = Command_ping

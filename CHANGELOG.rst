@@ -1,6 +1,9 @@
+Release Notes
+#############
 
 Release 2.2.0
-=============
+*************
+
 * Deprecate Python 2.7 and 3.5
 * Command substitution with backticks
 * Better ``chmod`` command line parsing
@@ -12,7 +15,8 @@ Release 2.2.0
 * Azure Sentinel output plugin
 
 Release 2.1.0
-=============
+*************
+
 * Deprecate Python 2.7. Still works but removed from testing suite and fixing 2.7 problems will no longer have priority.
 * Disable crashreporter
 * Updated ELK documentation and output plugin
@@ -21,7 +25,7 @@ Release 2.1.0
 * AbuseIP output plugin.
 
 Release 2.0.1
-=============
+*************
 
 * 2019-10-31 Fix for exec commands when tty logging is disabled
 * 2019-10-31 Fix for print output to stdout for curl/wget
@@ -30,14 +34,14 @@ Release 2.0.1
 * 2019-10-04 Subshell ((echo test)) evaluation now working
 
 Release 2.0.0
-=============
+*************
 
 * 2019-09-06 Crash reporter is enabled by default and will upload data on crashes to api.cowrie.org. This can be disabled in by setting ``enabled=false`` in ``[output_crashreporter]``
 * 2019-09-05 Proxy functionality now active by @sgtpepperpt and GSoC2019
 * 2019-06-20 Move `auth_none` and `auth_keyboard_interactive_enabled` to [ssh] config section
 
 Release 1.6.0
-=============
+*************
 
 * 2019-03-31 New documentation theme
 * 2019-03-23 Greynoise output plugin (@mzfr)
@@ -54,7 +58,7 @@ Release 1.6.0
 * 2019-03-12 Handle multiple password prompt. Option to enable or disable keyboard interactive prompt.
 
 Release 1.5.3
-=============
+*************
 
 * 2019-01-27 Telnet NAWS negotation removed to stop NMAP cowrie detection
 * 2019-01-27 Various fixes for Python2/3 compatibility
@@ -62,7 +66,7 @@ Release 1.5.3
 * 2018-12-04 Fixes for VT outut plugin to only submit new files
 
 Release 1.5.2
-=============
+*************
 
 * 2018-11-19 Fix tftp exception and tftp test
 * 2018-11-14 Remove `dblog` mechanism and `splunk` legacy output plugin.
@@ -72,7 +76,7 @@ Release 1.5.2
 * 2018-10-16 Save VT results to JSON log
 
 Release 1.5.1
-=============
+*************
 
 * 2018-10-13 Fixes VT uploads, tab completion on Python3, Hassh support, setuptools functional. userdb migration
 * 2018-09-07 NOTE! data/userdb.txt has moved to etc/userdb.txt and a default config is no longer provided!

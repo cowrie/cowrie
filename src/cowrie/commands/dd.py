@@ -17,7 +17,7 @@ from cowrie.shell.fs import FileNotFound
 commands = {}
 
 
-class command_dd(HoneyPotCommand):
+class Command_dd(HoneyPotCommand):
     """
     dd command
     """
@@ -140,5 +140,5 @@ def parse_size(param):
     return digits * multiplier
 
 
-commands["/bin/dd"] = command_dd
-commands["dd"] = command_dd
+commands["/bin/dd"] = Command_dd
+commands["dd"] = Command_dd

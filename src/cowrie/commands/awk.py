@@ -21,7 +21,7 @@ from cowrie.shell.fs import FileNotFound
 commands = {}
 
 
-class command_awk(HoneyPotCommand):
+class Command_awk(HoneyPotCommand):
     """
     awk command
     """
@@ -233,5 +233,5 @@ along with this program. If not, see http://www.gnu.org/licenses/.
         )
 
 
-commands["/bin/awk"] = command_awk
-commands["awk"] = command_awk
+commands["/bin/awk"] = Command_awk
+commands["awk"] = Command_awk

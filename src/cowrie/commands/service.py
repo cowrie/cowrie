@@ -13,7 +13,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_service(HoneyPotCommand):
+class Command_service(HoneyPotCommand):
     """
     By Giannis Papaioannou <giannispapcod7@gmail.com>
     """
@@ -116,5 +116,5 @@ class command_service(HoneyPotCommand):
         """
 
 
-commands["/usr/sbin/service"] = command_service
-commands["service"] = command_service
+commands["/usr/sbin/service"] = Command_service
+commands["service"] = Command_service

@@ -21,7 +21,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands: Dict[str, Callable] = {}
 
 
-class command_grep(HoneyPotCommand):
+class Command_grep(HoneyPotCommand):
     """
     grep command
     """
@@ -98,13 +98,13 @@ class command_grep(HoneyPotCommand):
         self.exit()
 
 
-commands["/bin/grep"] = command_grep
-commands["grep"] = command_grep
-commands["/bin/egrep"] = command_grep
-commands["/bin/fgrep"] = command_grep
+commands["/bin/grep"] = Command_grep
+commands["grep"] = Command_grep
+commands["/bin/egrep"] = Command_grep
+commands["/bin/fgrep"] = Command_grep
 
 
-class command_tail(HoneyPotCommand):
+class Command_tail(HoneyPotCommand):
     """
     tail command
     """
@@ -169,12 +169,12 @@ class command_tail(HoneyPotCommand):
         self.exit()
 
 
-commands["/bin/tail"] = command_tail
-commands["/usr/bin/tail"] = command_tail
-commands["tail"] = command_tail
+commands["/bin/tail"] = Command_tail
+commands["/usr/bin/tail"] = Command_tail
+commands["tail"] = Command_tail
 
 
-class command_head(HoneyPotCommand):
+class Command_head(HoneyPotCommand):
     """
     head command
     """
@@ -237,12 +237,12 @@ class command_head(HoneyPotCommand):
         self.exit()
 
 
-commands["/bin/head"] = command_head
-commands["/usr/bin/head"] = command_head
-commands["head"] = command_head
+commands["/bin/head"] = Command_head
+commands["/usr/bin/head"] = Command_head
+commands["head"] = Command_head
 
 
-class command_cd(HoneyPotCommand):
+class Command_cd(HoneyPotCommand):
     """
     cd command
     """
@@ -269,10 +269,10 @@ class command_cd(HoneyPotCommand):
         self.protocol.cwd = newpath
 
 
-commands["cd"] = command_cd
+commands["cd"] = Command_cd
 
 
-class command_rm(HoneyPotCommand):
+class Command_rm(HoneyPotCommand):
     """
     rm command
     """
@@ -382,11 +382,11 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                                 self.write(f"removed '{i[fs.A_NAME]}'\n")
 
 
-commands["/bin/rm"] = command_rm
-commands["rm"] = command_rm
+commands["/bin/rm"] = Command_rm
+commands["rm"] = Command_rm
 
 
-class command_cp(HoneyPotCommand):
+class Command_cp(HoneyPotCommand):
     """
     cp command
     """
@@ -458,11 +458,11 @@ class command_cp(HoneyPotCommand):
             dir.append(s)
 
 
-commands["/bin/cp"] = command_cp
-commands["cp"] = command_cp
+commands["/bin/cp"] = Command_cp
+commands["cp"] = Command_cp
 
 
-class command_mv(HoneyPotCommand):
+class Command_mv(HoneyPotCommand):
     """
     mv command
     """
@@ -531,11 +531,11 @@ class command_mv(HoneyPotCommand):
                 s[fs.A_NAME] = outfile
 
 
-commands["/bin/mv"] = command_mv
-commands["mv"] = command_mv
+commands["/bin/mv"] = Command_mv
+commands["mv"] = Command_mv
 
 
-class command_mkdir(HoneyPotCommand):
+class Command_mkdir(HoneyPotCommand):
     """
     mkdir command
     """
@@ -555,11 +555,11 @@ class command_mkdir(HoneyPotCommand):
             return
 
 
-commands["/bin/mkdir"] = command_mkdir
-commands["mkdir"] = command_mkdir
+commands["/bin/mkdir"] = Command_mkdir
+commands["mkdir"] = Command_mkdir
 
 
-class command_rmdir(HoneyPotCommand):
+class Command_rmdir(HoneyPotCommand):
     """
     rmdir command
     """
@@ -593,11 +593,11 @@ class command_rmdir(HoneyPotCommand):
                     break
 
 
-commands["/bin/rmdir"] = command_rmdir
-commands["rmdir"] = command_rmdir
+commands["/bin/rmdir"] = Command_rmdir
+commands["rmdir"] = Command_rmdir
 
 
-class command_pwd(HoneyPotCommand):
+class Command_pwd(HoneyPotCommand):
     """
     pwd command
     """
@@ -606,11 +606,11 @@ class command_pwd(HoneyPotCommand):
         self.write(self.protocol.cwd + "\n")
 
 
-commands["/bin/pwd"] = command_pwd
-commands["pwd"] = command_pwd
+commands["/bin/pwd"] = Command_pwd
+commands["pwd"] = Command_pwd
 
 
-class command_touch(HoneyPotCommand):
+class Command_touch(HoneyPotCommand):
     """
     touch command
     """
@@ -638,6 +638,6 @@ class command_touch(HoneyPotCommand):
             self.fs.mkfile(pname, 0, 0, 0, 33188)
 
 
-commands["/bin/touch"] = command_touch
-commands["touch"] = command_touch
-commands[">"] = command_touch
+commands["/bin/touch"] = Command_touch
+commands["touch"] = Command_touch
+commands[">"] = Command_touch

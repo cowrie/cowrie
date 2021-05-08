@@ -8,7 +8,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_netstat(HoneyPotCommand):
+class Command_netstat(HoneyPotCommand):
     def show_version(self):
         self.write("net-tools 1.60\n")
         self.write("netstat 1.42 (2001-04-15)\n")
@@ -200,5 +200,5 @@ unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\
         func()
 
 
-commands["/bin/netstat"] = command_netstat
-commands["netstat"] = command_netstat
+commands["/bin/netstat"] = Command_netstat
+commands["netstat"] = Command_netstat

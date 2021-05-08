@@ -29,7 +29,7 @@ OUTPUT = [
 ]
 
 
-class command_ssh(HoneyPotCommand):
+class Command_ssh(HoneyPotCommand):
     """
     ssh
     """
@@ -147,5 +147,5 @@ class command_ssh(HoneyPotCommand):
             self.callbacks.pop(0)(line)
 
 
-commands["/usr/bin/ssh"] = command_ssh
-commands["ssh"] = command_ssh
+commands["/usr/bin/ssh"] = Command_ssh
+commands["ssh"] = Command_ssh

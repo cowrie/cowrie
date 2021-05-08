@@ -1,18 +1,15 @@
 How to send Cowrie output to an ELK stack
 #########################################
 
-(Note: work in progress, instructions are not verified)
-
-
-Prerequisites
-================
+ElasticSearch Prerequisites
+===========================
 
 * Working Cowrie installation
-* Cowrie JSON log file (enable database json in cowrie.cfg)
+* Cowrie JSON log file (enable ``output_json`` in ``cowrie.cfg``)
 * Java 8
 
-Installation
-================
+ElasticSearch Installation
+==========================
 
 This is a simple setup for ELK stack, to be done on the same machine that is used for cowrie. We use *Filebeat* to send logs to *Logstash*, and we use *Nginx* as a reverse proxy to access *Kibana*. Note there are many other possible configurations!
 
@@ -35,7 +32,7 @@ Enable the services::
 
 
 ElasticSearch Configuration
-=============================
+===========================
 
 ElasticSearch configuration file is located in ``/etc/elasticsearch/elasticsearch.yml``. The default settings need not be changed.
 
@@ -51,7 +48,7 @@ You should get a JSON object in return.
 
 
 Kibana Configuration
-=============================
+====================
 
 Make a folder for logs::
 
@@ -68,7 +65,7 @@ Change the following parameters in ``/etc/kibana/kibana.yml`` to reflect your se
     * ``logging.dest`` - set path to logs (`/var/log/kibana/kibana.log`)
 
 Logstash Configuration
-=============================
+======================
 
 Get GeoIP data from www.maxmind.com (free but requires registration): download the GeoLite2 City GZIP. Unzip it and locate the mmdb file.
 Place it somewhere in your filesystem and make sure that "logstash" user can read it::
@@ -85,10 +82,10 @@ Make sure the configuration file is correct. Check the input section (path), fil
     $ sudo systemctl restart logstash
 
 
-Filebeat Configuration
-==============================
+FileBeat Configuration
+======================
 
-Filebeat is not mandatory (it is possible to directly read cowrie logs from Logstash) but nice to have, because if Logstash is under pressure, it automatically knows to slow down + it is possible to deal with multiple sensor inputs.
+FileBeat is not mandatory (it is possible to directly read Cowrie logs from Logstash) but nice to have, because if Logstash is under pressure, it automatically knows to slow down + it is possible to deal with multiple sensor inputs.
 
 Configure filebeat::
 
@@ -150,7 +147,7 @@ You can list indexes with::
 
      $ curl 'http://localhost:9200/_cat/indices?v'
 
-You should see a cowrie index cowrie-logstash-DATE... Its health is yellow because the number of replicas should be set to 0 (unless you want another configuration)::
+You should see a Cowrie index cowrie-logstash-DATE... Its health is yellow because the number of replicas should be set to 0 (unless you want another configuration)::
 
      $ curl -XPUT 'localhost:9200/cowrie-logstash-REPLACEHERE/_settings' -H "Content-Type: application/json" -d '{ "index" : {"number_of_replicas" : 0 } }'
 
@@ -166,14 +163,14 @@ Use default settings and timestamp.
 Tuning ELK stack
 ==================
 
-Refer to elastic's documentation about proper configuration of the system for the best elasticsearch's performance
+Refer to Elastic's documentation about proper configuration of the system for the best ElasticSearch's performance
 
-You may avoid installing nginx for restricting access to kibana by installing official elastic's plugin called "X-Pack" (https://www.elastic.co/products/stack)
+You may avoid installing nginx for restricting access to Kibana by installing official Elastic's plugin called "X-Pack" (https://www.elastic.co/products/stack)
 
 ELK log files get big: ensure you have enough space in /var, consider setting up LVM or ZFS partitions.
 
-Troubleshooting
-==================
+ElasticSearch Troubleshooting
+=============================
 
-- View service logs with:  sudo journalctl -u service
+- View service logs with:  ``sudo journalctl -u service``
 - If the date in Kibana is incorrect, check (Advanced Settings / dateFormat)

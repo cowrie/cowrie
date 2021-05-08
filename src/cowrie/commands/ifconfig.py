@@ -26,7 +26,7 @@ inet6 = "fe{:02x}::{:02x}:{:02x}ff:fe{:02x}:{:02x}01/64".format(
 commands = {}
 
 
-class command_ifconfig(HoneyPotCommand):
+class Command_ifconfig(HoneyPotCommand):
     @staticmethod
     def generate_packets():
         return randrange(222222, 555555)
@@ -90,5 +90,5 @@ lo        Link encap:Local Loopback
         self.write(f"{result}\n")
 
 
-commands["/sbin/ifconfig"] = command_ifconfig
-commands["ifconfig"] = command_ifconfig
+commands["/sbin/ifconfig"] = Command_ifconfig
+commands["ifconfig"] = Command_ifconfig

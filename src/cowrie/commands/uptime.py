@@ -10,7 +10,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_uptime(HoneyPotCommand):
+class Command_uptime(HoneyPotCommand):
     def call(self):
         self.write(
             "%s  up %s,  1 user,  load average: 0.00, 0.00, 0.00\n"
@@ -18,5 +18,5 @@ class command_uptime(HoneyPotCommand):
         )
 
 
-commands["/usr/bin/uptime"] = command_uptime
-commands["uptime"] = command_uptime
+commands["/usr/bin/uptime"] = Command_uptime
+commands["uptime"] = Command_uptime

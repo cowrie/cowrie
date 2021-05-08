@@ -6,7 +6,7 @@ import copy
 import os
 import re
 import shlex
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -17,19 +17,21 @@ from cowrie.shell import fs
 
 
 class HoneyPotShell:
-    def __init__(self, protocol, interactive=True, redirect=False):
+    def __init__(
+        self, protocol: Any, interactive: bool = True, redirect: bool = False
+    ) -> None:
         self.protocol = protocol
-        self.interactive = interactive
-        self.redirect = redirect  # to support output redirection
-        self.cmdpending = []
-        self.environ = copy.copy(protocol.environ)
+        self.interactive: bool = interactive
+        self.redirect: bool = redirect  # to support output redirection
+        self.cmdpending: List[List[str]] = []
+        self.environ: Dict[str, str] = copy.copy(protocol.environ)
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
-        self.lexer = None
+        self.lexer: Optional[shlex.shlex] = None
         self.showPrompt()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
@@ -39,7 +41,7 @@ class HoneyPotShell:
 
         while True:
             try:
-                tok = self.lexer.get_token()
+                tok: str = self.lexer.get_token()
                 # log.msg("tok: %s" % (repr(tok)))
 
                 if tok == self.lexer.eof:
@@ -357,7 +359,7 @@ class HoneyPotShell:
         self.protocol.terminal.write(prompt.encode("ascii"))
         self.protocol.ps = (prompt.encode("ascii"), b"> ")
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         """
         this should probably not go through ctrl-d, but use processprotocol to close stdin
         """
@@ -365,28 +367,28 @@ class HoneyPotShell:
         if self.protocol.cmdstack:
             self.protocol.cmdstack[-1].handle_CTRL_D()
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []
         self.protocol.lineBufferIndex = 0
         self.protocol.terminal.write(b"\n")
         self.showPrompt()
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         log.msg("Received CTRL-D, exiting..")
 
         cmdclass = self.protocol.commands["exit"]
         pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
         self.protocol.call_command(pp, self.protocol.commands["exit"])
 
-    def handle_TAB(self):
+    def handle_TAB(self) -> None:
         """
         lineBuffer is an array of bytes
         """
         if not self.protocol.lineBuffer:
             return
 
-        line = b"".join(self.protocol.lineBuffer)
-        if line[-1] == b" ":
+        line: bytes = b"".join(self.protocol.lineBuffer)
+        if line[-1:] == b" ":
             clue = ""
         else:
             clue = line.split()[-1].decode("utf8")
@@ -433,7 +435,7 @@ class HoneyPotShell:
                 newbuf += "/"
             else:
                 newbuf += " "
-            newbuf = newbuf.encode("utf8")
+            newbyt = newbuf.encode("utf8")
         else:
             if os.path.basename(clue):
                 prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
@@ -441,8 +443,8 @@ class HoneyPotShell:
                 prefix = ""
             first = line.decode("utf8").split(" ")[:-1]
             newbuf = " ".join(first + [f"{basedir}{prefix}"])
-            newbuf = newbuf.encode("utf8")
-            if newbuf == b"".join(self.protocol.lineBuffer):
+            newbyt = newbuf.encode("utf8")
+            if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
                 maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
@@ -458,9 +460,9 @@ class HoneyPotShell:
                 self.protocol.terminal.write(b"\n")
                 self.showPrompt()
 
-        self.protocol.lineBuffer = [y for x, y in enumerate(iterbytes(newbuf))]
+        self.protocol.lineBuffer = [y for x, y in enumerate(iterbytes(newbyt))]
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
-        self.protocol.terminal.write(newbuf)
+        self.protocol.terminal.write(newbyt)
 
 
 class StdOutStdErrEmulationProtocol:
@@ -478,17 +480,17 @@ class StdOutStdErrEmulationProtocol:
         self.cmdargs = cmdargs
         self.input_data = input_data
         self.next_command = next_command
-        self.data = b""
-        self.redirected_data = b""
-        self.err_data = b""
+        self.data: bytes = b""
+        self.redirected_data: bytes = b""
+        self.err_data: bytes = b""
         self.protocol = protocol
         self.redirect = redirect  # dont send to terminal if enabled
 
     def connectionMade(self):
 
-        self.input_data = None
+        self.input_data: bytes = None
 
-    def outReceived(self, data):
+    def outReceived(self, data: bytes) -> None:
         """
         Invoked when a command in the chain called 'write' method
         If we have a next command, pass the data via input_data field
@@ -517,7 +519,7 @@ class StdOutStdErrEmulationProtocol:
         command.next_command = self.next_command
         self.next_command = command
 
-    def errReceived(self, data):
+    def errReceived(self, data: bytes) -> None:
         if self.protocol and self.protocol.terminal:
             self.protocol.terminal.write(data)
         self.err_data = self.err_data + data

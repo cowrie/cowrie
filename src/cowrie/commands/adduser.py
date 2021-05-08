@@ -3,6 +3,7 @@
 
 
 import random
+from typing import Optional
 
 from twisted.internet import reactor
 
@@ -13,10 +14,10 @@ commands = {}
 O_O, O_Q, O_P = 1, 2, 3
 
 
-class command_adduser(HoneyPotCommand):
+class Command_adduser(HoneyPotCommand):
     def start(self):
-        self.username = None
-        self.item = 0
+        self.username: Optional[str] = None
+        self.item: int = 0
         for arg in self.args:
             if arg.startswith("-") or arg.isdigit():
                 continue
@@ -95,7 +96,7 @@ class command_adduser(HoneyPotCommand):
         self.protocol.password_input = False
 
 
-commands["/usr/sbin/adduser"] = command_adduser
-commands["/usr/sbin/useradd"] = command_adduser
-commands["adduser"] = command_adduser
-commands["useradd"] = command_adduser
+commands["/usr/sbin/adduser"] = Command_adduser
+commands["/usr/sbin/useradd"] = Command_adduser
+commands["adduser"] = Command_adduser
+commands["useradd"] = Command_adduser

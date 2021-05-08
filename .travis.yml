@@ -21,7 +21,7 @@ before_script:
   # stop the build if there are Python syntax errors or undefined names
   - flake8 --ignore E203,E501,W503 --count --statistics .
   - mypy src
-  - twistedchecker -d W9002,W9202,W9204,W9208,W9402,C0301 || true
+  - twistedchecker -d W9002,W9202,W9204,W9208,W9402,C0301,C0103,W9001,C9302,W9401 src || true
   - pytype || true
   - pyre --noninteractive analyze || true
   - python setup.py build sdist bdist

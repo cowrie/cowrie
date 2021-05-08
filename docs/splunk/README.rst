@@ -14,7 +14,7 @@ Splunk Output Module
 File Based
 ==========
 
-* Collect ``/var/log/cowrie/cowrie.json`` output file using Splunk
+* Collect ``var/log/cowrie/cowrie.json`` output file using Splunk
 
 Reporting
 =========
