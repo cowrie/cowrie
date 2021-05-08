@@ -230,7 +230,10 @@ See ~/cowrie/docs/[Output Plugin]/README.rst for details.
 
 
 Troubleshooting
-###############
+***************
+
+twistd: unknown command: cowrie
+===============================
 
 If you see ``twistd: Unknown command: cowrie`` there are two
 possibilities. If there's a Python stack trace, it probably means
@@ -238,9 +241,15 @@ there's a missing or broken dependency. If there's no stack trace,
 double check that your PYTHONPATH is set to the source code directory.
 
 Default file permissions
+========================
 
 To make Cowrie logfiles public readable, change the ``--umask 0077``
 option in ``bin/cowrie`` into ``--umask 0022``
+
+General approach
+================
+
+Check the log file in ``var/log/cowrie/cowrie.log``.
 
 Updating Cowrie
 #################

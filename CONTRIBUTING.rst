@@ -7,9 +7,9 @@ documentation, we greatly value feedback and contributions from our community.
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
 information to effectively respond to your bug report or contribution.
 
-
 Reporting Bugs/Feature Requests
-###############################
+*******************************
+
 We welcome you to use the GitHub issue tracker to report bugs or suggest features.
 
 When filing an issue, please check `existing open <https://github.com/cowrie/cowrie>`_, or `recently closed <https://github.com/cowrie/cowrie/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aclosed%20>`_, issues to make sure somebody else hasn't already
@@ -22,7 +22,8 @@ reported the issue. Please try to include as much information as you can. Detail
 
 
 Contributing via Pull Requests
-##############################
+******************************
+
 Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
 
 1. You are working against the latest source on the *master* branch.
@@ -41,13 +42,13 @@ To send us a pull request, please:
 GitHub provides additional document on `forking a repository <https://help.github.com/articles/fork-a-repo/>`_ and
 `creating a pull request <https://help.github.com/articles/creating-a-pull-request/>`_.
 
-
 Finding contributions to work on
-################################
+********************************
+
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any `help wanted <https://github.com/cowrie/cowrie/labels/help%20wanted>`_ issues is a great place to start.
 
-
 Licensing
-#########
+*********
+
 See the `LICENSE <https://github.com/cowrie/cowrie/blob/master/LICENSE.rst>`_ file for our project's licensing. We will ask you confirm the licensing of your contribution.
 

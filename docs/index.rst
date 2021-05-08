@@ -11,11 +11,11 @@ Welcome to Cowrie's documentation!
    :caption: Contents:
 
    README.rst
-   FAQ.rst
+   CONTRIBUTING.rst
    LICENSE.rst
+   FAQ.rst
    INSTALL.rst
    CHANGELOG.rst
-   CONTRIBUTING.rst
    PROXY.rst
    HONEYFS.rst
    BACKEND_POOL.rst
