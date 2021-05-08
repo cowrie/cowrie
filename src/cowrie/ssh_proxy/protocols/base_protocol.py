@@ -28,10 +28,10 @@
 
 
 class BaseProtocol:
-    data = b""
-    packetSize = 0
-    name = ""
-    uuid = ""
+    data: bytes = b""
+    packetSize: int = 0
+    name: str = ""
+    uuid: str = ""
     ttylog_file = None
 
     def __init__(self, uuid=None, name=None, ssh=None):
@@ -52,32 +52,32 @@ class BaseProtocol:
     def channel_closed(self):
         pass
 
-    def extract_int(self, length):
+    def extract_int(self, length: int) -> int:
         value = int.from_bytes(self.data[:length], byteorder="big")
         self.packetSize = self.packetSize - length
         self.data = self.data[length:]
         return value
 
-    def put_int(self, number):
+    def put_int(self, number: int) -> bytes:
         return number.to_bytes(4, byteorder="big")
 
-    def extract_string(self):
+    def extract_string(self) -> bytes:
         length = self.extract_int(4)
         value = self.data[:length]
         self.packetSize -= length
         self.data = self.data[length:]
         return value
 
-    def extract_bool(self):
+    def extract_bool(self) -> bool:
         value = self.extract_int(1)
         return bool(value)
 
-    def extract_data(self):
+    def extract_data(self) -> bytes:
         length = self.extract_int(4)
         self.packetSize = length
         value = self.data
         self.packetSize -= len(value)
-        self.data = ""
+        self.data = b""
         return value
 
     def __deepcopy__(self, memo):
