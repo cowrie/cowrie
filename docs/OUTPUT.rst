@@ -15,19 +15,21 @@ Attributes:
 
     * `message`: human readable message
     * `sensor`: name of the sensor, by default the hostname
-    * `timestamp`: timestamp in ISO8601 format
+    * `timestamp`: timestamp in ISO8601 format in UTC time zone
     * `src_ip`: attacker IP address
     * `session`: unique session identifier
 
 cowrie.client.fingerprint
 =========================
 
+If the attacker attemps to log in with an SSH public key this is logged here
+
 Attributes:
 
-    * username
-    * fingerprint
-    * key
-    * type
+    * `username`: username
+    * `fingerprint`: the key fingerprint
+    * `key`: the key
+    * `type`: type of key, typically ssh-rsa or ssh-dsa
 
 cowrie.login.success
 ====================
@@ -142,11 +144,11 @@ TTY Log closed
 
 Attributes:
 
-    * duration
-    * ttylog
-    * size
-    * shasum
-    * duplicate
+    * `duration`: duration of session in seconds
+    * `ttylog`: filename of session log that can be replayed with ``bin/playlog``
+    * `size`: size in bytes
+    * `shasum`: SHA256 checksum of the attacker input only (honeypot generated output is not included)
+    * `duplicate`: whether this is the first time this attack has been seen
 
 cowrie.direct-tcpip.request
 ===========================
