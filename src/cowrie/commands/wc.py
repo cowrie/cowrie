@@ -17,7 +17,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_wc(HoneyPotCommand):
+class Command_wc(HoneyPotCommand):
     """
     wc command
     """
@@ -130,6 +130,6 @@ class command_wc(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/wc"] = command_wc
-commands["/bin/wc"] = command_wc
-commands["wc"] = command_wc
+commands["/usr/bin/wc"] = Command_wc
+commands["/bin/wc"] = Command_wc
+commands["wc"] = Command_wc

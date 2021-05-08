@@ -31,19 +31,19 @@ class CowrieSSHFactory(factory.SSHFactory):
     They listen directly to the TCP port
     """
 
-    starttime = None
+    starttime: Optional[float] = None
     privateKeys = None
     publicKeys = None
     primes = None
     portal: Optional[tp.Portal] = None  # gets set by plugin
     tac = None  # gets set later
-    ourVersionString = CowrieConfig.get(
+    ourVersionString: str = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
     )
 
     def __init__(self, backend, pool_handler):
         self.pool_handler = pool_handler
-        self.backend = backend
+        self.backend: str = backend
         self.services = {
             b"ssh-userauth": ProxySSHAuthServer
             if self.backend == "proxy"

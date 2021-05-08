@@ -53,7 +53,7 @@ Currently defined functions:
 )
 
 
-class command_busybox(HoneyPotCommand):
+class Command_busybox(HoneyPotCommand):
     """
     Fixed by Ivan Korolev (@fe7ch)
     The command should never call self.exit(), cause it will corrupt cmdstack
@@ -101,5 +101,5 @@ class command_busybox(HoneyPotCommand):
             self.write(f"{cmd}: applet not found\n")
 
 
-commands["/bin/busybox"] = command_busybox
-commands["busybox"] = command_busybox
+commands["/bin/busybox"] = Command_busybox
+commands["busybox"] = Command_busybox

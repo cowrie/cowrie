@@ -135,13 +135,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.environ = None
 
     def txtcmd(self, txt):
-        class command_txtcmd(command.HoneyPotCommand):
+        class Command_txtcmd(command.HoneyPotCommand):
             def call(self):
                 log.msg(f'Reading txtcmd from "{txt}"')
                 with open(txt) as f:
                     self.write(f.read())
 
-        return command_txtcmd
+        return Command_txtcmd
 
     def isCommand(self, cmd):
         """

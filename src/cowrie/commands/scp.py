@@ -42,7 +42,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_scp(HoneyPotCommand):
+class Command_scp(HoneyPotCommand):
     """
     scp command
     """
@@ -220,5 +220,5 @@ class command_scp(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/bin/scp"] = command_scp
-commands["scp"] = command_scp
+commands["/usr/bin/scp"] = Command_scp
+commands["scp"] = Command_scp

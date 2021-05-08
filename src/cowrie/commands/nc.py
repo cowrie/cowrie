@@ -41,7 +41,7 @@ def addressInNetwork(ip, net):
     return ip & net == net
 
 
-class command_nc(HoneyPotCommand):
+class Command_nc(HoneyPotCommand):
     """
     netcat
     """
@@ -139,5 +139,5 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.s.close()
 
 
-commands["/bin/nc"] = command_nc
-commands["nc"] = command_nc
+commands["/bin/nc"] = Command_nc
+commands["nc"] = Command_nc

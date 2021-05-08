@@ -106,15 +106,15 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         self.session = sess
         self.lostOutOrErrFlag = False
 
-    def outReceived(self, data):
+    def outReceived(self, data: bytes) -> None:
         self.session.write(data)
 
-    def errReceived(self, err):
-        log.msg(f"Error received: {err}")
+    def errReceived(self, err: bytes) -> None:
+        log.msg(f"Error received: {err.decode()}")
         # EXTENDED_DATA_STDERR is from ssh, no equivalent in telnet?
         # self.session.writeExtended(connection.EXTENDED_DATA_STDERR, err)
 
-    def outConnectionLost(self):
+    def outConnectionLost(self) -> None:
         """
         EOF should only be sent when both STDOUT and STDERR have been closed.
         """
@@ -123,7 +123,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         else:
             self.lostOutOrErrFlag = True
 
-    def errConnectionLost(self):
+    def errConnectionLost(self) -> None:
         """
         See outConnectionLost().
         """

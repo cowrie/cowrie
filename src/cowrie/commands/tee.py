@@ -18,7 +18,7 @@ from cowrie.shell.fs import FileNotFound
 commands = {}
 
 
-class command_tee(HoneyPotCommand):
+class Command_tee(HoneyPotCommand):
     """
     tee command
     """
@@ -150,5 +150,5 @@ or available locally via: info '(coreutils) tee invocation'
         )
 
 
-commands["/bin/tee"] = command_tee
-commands["tee"] = command_tee
+commands["/bin/tee"] = Command_tee
+commands["tee"] = Command_tee

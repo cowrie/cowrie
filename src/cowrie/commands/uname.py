@@ -74,7 +74,7 @@ def uname_fail_extra(arg):
     return f"uname: extra operand ‘{arg}’\n{uname_get_some_help()}\n"
 
 
-class command_uname(HoneyPotCommand):
+class Command_uname(HoneyPotCommand):
     def full_uname(self):
         return "{} {} {} {} {} {}\n".format(
             kernel_name(),
@@ -185,5 +185,5 @@ class command_uname(HoneyPotCommand):
         self.write(" ".join(output) + "\n")
 
 
-commands["/bin/uname"] = command_uname
-commands["uname"] = command_uname
+commands["/bin/uname"] = Command_uname
+commands["uname"] = Command_uname

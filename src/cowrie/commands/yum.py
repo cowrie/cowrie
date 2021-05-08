@@ -19,17 +19,17 @@ arch = "x86_64"
 commands = {}
 
 
-class command_faked_package_class_factory:
+class Command_faked_package_class_factory:
     @staticmethod
     def getCommand(name):
-        class command_faked_installation(HoneyPotCommand):
+        class Command_faked_installation(HoneyPotCommand):
             def call(self):
                 self.write(f"{name}: Segmentation fault\n")
 
-        return command_faked_installation
+        return Command_faked_installation
 
 
-class command_yum(HoneyPotCommand):
+class Command_yum(HoneyPotCommand):
     """
     yum fake
     suppports only the 'install PACKAGE' command & 'moo'.
@@ -322,5 +322,5 @@ Options:
         self.exit()
 
 
-commands["/usr/bin/yum"] = command_yum
-commands["yum"] = command_yum
+commands["/usr/bin/yum"] = Command_yum
+commands["yum"] = Command_yum

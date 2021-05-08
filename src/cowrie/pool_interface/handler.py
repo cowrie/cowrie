@@ -26,10 +26,10 @@ class PoolHandler:
         self.cowrie_plugin = cowrie_plugin
 
         # connection details
-        self.pool_ip = pool_host
-        self.pool_port = pool_port
+        self.pool_ip: str = pool_host
+        self.pool_port: int = pool_port
 
-        self.pool_ready = False
+        self.pool_ready: bool = False
 
         self.client_factory = PoolClientFactory(self)
 

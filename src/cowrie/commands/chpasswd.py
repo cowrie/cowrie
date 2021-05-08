@@ -16,7 +16,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class command_chpasswd(HoneyPotCommand):
+class Command_chpasswd(HoneyPotCommand):
     def help(self):
         output = (
             "Usage: chpasswd [options]",
@@ -97,5 +97,5 @@ class command_chpasswd(HoneyPotCommand):
         self.exit()
 
 
-commands["/usr/sbin/chpasswd"] = command_chpasswd
-commands["chpasswd"] = command_chpasswd
+commands["/usr/sbin/chpasswd"] = Command_chpasswd
+commands["chpasswd"] = Command_chpasswd

@@ -75,7 +75,7 @@ class FTP(ftplib.FTP):
         return conn, size
 
 
-class command_ftpget(HoneyPotCommand):
+class Command_ftpget(HoneyPotCommand):
     """
     ftpget command
     """
@@ -304,5 +304,5 @@ Download a file via FTP
         return True
 
 
-commands["/usr/bin/ftpget"] = command_ftpget
-commands["ftpget"] = command_ftpget
+commands["/usr/bin/ftpget"] = Command_ftpget
+commands["ftpget"] = Command_ftpget
