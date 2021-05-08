@@ -12,7 +12,7 @@ def create_filter(connection):
     # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
     import libvirt
 
-    filter_file = os.path.join(
+    filter_file: str = os.path.join(
         CowrieConfig.get(
             "backend_pool", "config_files_path", fallback="share/pool_configs"
         ),
@@ -39,7 +39,7 @@ def create_network(connection, network_table):
     import libvirt
 
     # TODO support more interfaces and therefore more IP space to allow > 253 guests
-    network_file = os.path.join(
+    network_file: str = os.path.join(
         CowrieConfig.get(
             "backend_pool", "config_files_path", fallback="share/pool_configs"
         ),
@@ -50,8 +50,8 @@ def create_network(connection, network_table):
 
     network_xml = backend_pool.util.read_file(network_file)
 
-    template_host = "<host mac='{mac_address}' name='{name}' ip='{ip_address}'/>\n"
-    hosts = ""
+    template_host: str = "<host mac='{mac_address}' name='{name}' ip='{ip_address}'/>\n"
+    hosts: str = ""
 
     # generate a host entry for every possible guest in this network (253 entries)
     it = iter(network_table)
