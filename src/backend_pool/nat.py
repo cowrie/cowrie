@@ -51,9 +51,9 @@ class ServerProtocol(protocol.Protocol):
 
 
 class ServerFactory(protocol.Factory):
-    def __init__(self, dst_ip, dst_port):
-        self.dst_ip = dst_ip
-        self.dst_port = dst_port
+    def __init__(self, dst_ip: str, dst_port: int) -> None:
+        self.dst_ip: str = dst_ip
+        self.dst_port: int = dst_port
 
     def buildProtocol(self, addr):
         return ServerProtocol(self.dst_ip, self.dst_port)

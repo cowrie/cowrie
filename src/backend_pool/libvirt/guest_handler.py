@@ -28,7 +28,9 @@ def create_guest(connection, mac_address, guest_unique_id):
 
     version_tag: str = CowrieConfig.get("backend_pool", "guest_tag", fallback="guest")
     base_image: str = CowrieConfig.get("backend_pool", "guest_image_path")
-    hypervisor: str = CowrieConfig.get("backend_pool", "guest_hypervisor", fallback="qemu")
+    hypervisor: str = CowrieConfig.get(
+        "backend_pool", "guest_hypervisor", fallback="qemu"
+    )
     memory: int = CowrieConfig.getint("backend_pool", "guest_memory", fallback=128)
     qemu_machine: str = CowrieConfig.get(
         "backend_pool", "guest_qemu_machine", fallback="pc-q35-3.1"
@@ -44,7 +46,9 @@ def create_guest(connection, mac_address, guest_unique_id):
         os._exit(1)
 
     # only in some cases, like wrt
-    kernel_image: str = CowrieConfig.get("backend_pool", "guest_kernel_image", fallback="")
+    kernel_image: str = CowrieConfig.get(
+        "backend_pool", "guest_kernel_image", fallback=""
+    )
 
     # get a directory to save snapshots, even if temporary
     try:
