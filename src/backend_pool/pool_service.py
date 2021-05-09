@@ -22,7 +22,7 @@ class PoolService:
     VM States:
         created -> available -> using -> used -> unavailable -> destroyed
 
-        created:     initialised but not fully booted by Qemu
+        created:     initialised but not fully booted by QEMU
         available:   can be requested
         using:       a client is connected, can be served for other clients from same ip
         used:        client disconnectec, but can still be served for its ip
@@ -128,7 +128,7 @@ class PoolService:
         try:
             self.qemu.stop_backend()
         except libvirt.libvirtError:
-            print("Not connected to Qemu")
+            print("Not connected to QEMU")
 
     def shutdown_pool(self):
         # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
@@ -139,7 +139,7 @@ class PoolService:
         try:
             self.qemu.shutdown_backend()
         except libvirt.libvirtError:
-            print("Not connected to Qemu")
+            print("Not connected to QEMU")
 
     def restart_pool(self):
         log.msg(

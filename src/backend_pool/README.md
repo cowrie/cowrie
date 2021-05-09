@@ -1,4 +1,4 @@
-qemu/libvirt Python examples to handle a guest
+QEMU/libvirt Python examples to handle a guest
 
 # Developer Guide
 We'll start by looking at the classes that compose the Backend Pool, from "outermost" to the inner, specific classes.
@@ -16,7 +16,7 @@ destroys VMs that are no longer needed.
 
 **Consumer** methods are called by server request, and basically involve requesting and freeing VMs. All operations on 
 shared data in the producer-consumer are guarded by a lock, since there may be concurrent requests. The lock protects 
-the _guests_ list, which contains references for each VM backend (in our case libvirt/qemu instances). 
+the _guests_ list, which contains references for each VM backend (in our case libvirt/QEMU instances). 
 
 Since we won't be dealing with a very large number of VMs (never more than 100, we find that a single simple lock is 
 enough.
@@ -27,7 +27,7 @@ environment (stop_backend), and shutdown it permanently for the current executio
 * A method to create a new guest (create_guest)
 * A method to destroy a guest (destroy_guest)
 
-Currently the service supports a libvirt/qemu backend. However, by splitting the logic from generic guest handling / 
+Currently the service supports a libvirt/QEMU backend. However, by splitting the logic from generic guest handling / 
 interaction with main Cowrie, from the logic to create guests in a low-level perspective, we hope to ease development 
 of different kinds of backends in the future.
 
