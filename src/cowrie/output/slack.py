@@ -30,7 +30,7 @@
 import json
 import time
 
-from slack import SlackClient
+from slack import WebClient
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -54,9 +54,8 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_"):
                 del logentry[i]
 
-        self.sc = SlackClient(self.slack_token)
-        self.sc.api_call(
-            "chat.postMessage",
+        self.sc = WebClient(self.slack_token)
+        self.sc.chat_postMessage(
             channel=self.slack_channel,
             text="{} {}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S"),
