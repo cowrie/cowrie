@@ -55,7 +55,7 @@ class Output(cowrie.core.output.Output):
                 del logentry[i]
 
         self.sc = WebClient(self.slack_token)
-        self.sc.api_call(
+        self.sc.chat_postMessage(
             channel=self.slack_channel,
             text="{} {}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S"),
