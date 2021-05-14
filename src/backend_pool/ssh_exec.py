@@ -26,7 +26,7 @@ class CommandChannel(channel.SSHChannel):
     def channelOpen(self, data):
         self.conn.sendRequest(self, "exec", common.NS(self.command), wantReply=True)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         self.data += data
 
     def extReceived(self, dataType, data):

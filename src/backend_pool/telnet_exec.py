@@ -13,20 +13,21 @@ class TelnetConnectionError(Exception):
 class TelnetClient(StatefulTelnetProtocol):
     def __init__(self):
         # output from server
-        self.response = b""
+        self.response: bytes = b""
 
         # callLater instance to wait until we have stop getting output for some time
         self.done_callback = None
 
-    def connectionMade(self):
+        self.command: bytes
 
+    def connectionMade(self):
         """
         Set rawMode since we do not receive the login and password prompt in line mode.
         We return to default line mode when we detect the prompt in the received data stream.
         """
         self.setRawMode()
 
-    def rawDataReceived(self, bytes):
+    def rawDataReceived(self, data):
         """
         The login and password prompt on some systems are not received in lineMode.
         Therefore we do the authentication in raw mode and switch back to line mode
@@ -38,17 +39,17 @@ class TelnetClient(StatefulTelnetProtocol):
         else:
             self.re_prompt = re.compile(self.factory.prompt.encode())
 
-        if re.search(br"([Ll]ogin:\s+$)", bytes):
+        if re.search(br"([Ll]ogin:\s+$)", data):
             self.sendLine(self.factory.username.encode())
-        elif re.search(br"([Pp]assword:\s+$)", bytes):
+        elif re.search(br"([Pp]assword:\s+$)", data):
             self.sendLine(self.factory.password.encode())
-        elif self.re_prompt.search(bytes):
+        elif self.re_prompt.search(data):
             self.setLineMode()
 
             # auth is done, send command to server
             self.send_command(self.transport.factory.command)
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: bytes) -> None:
         # ignore data sent by server before command is sent
         # ignore command echo from server
         if not self.command or line == self.command:
@@ -62,11 +63,11 @@ class TelnetClient(StatefulTelnetProtocol):
 
         # start countdown to command done (when reached, consider the output was completely received and close)
         if not self.done_callback:
-            self.done_callback = reactor.callLater(0.5, self.close)
+            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore
         else:
             self.done_callback.reset(0.5)
 
-    def send_command(self, command):
+    def send_command(self, command: str) -> None:
         """
         Sends a command via Telnet using line mode
         """
@@ -113,13 +114,12 @@ class TelnetClientCommand:
     def __init__(self, callback, prompt, command):
         # callback to be called when execution is done
         self.callback = callback
-
         self.prompt = prompt
         self.command = command
 
     def connect(self, host, port, username, password):
         # deferred to signal command and its output is done
-        done_deferred = defer.Deferred()
+        done_deferred: defer.Deferred = defer.Deferred()
 
         # start connection to the Telnet server
         factory = TelnetFactory(

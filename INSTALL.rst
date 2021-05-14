@@ -176,7 +176,7 @@ Installing Backend Pool dependencies (OPTIONAL)
 ***********************************************
 
 If you want to use the proxy functionality combined with the automatic
-backend pool, you need to install some dependencies, namely qemu, libvirt,
+backend pool, you need to install some dependencies, namely QEMU, libvirt,
 and their Python interface. In Debian/Ubuntu::
 
     $ sudo apt-get install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
@@ -185,7 +185,7 @@ Then install the Python API to run the backend pool::
 
     (cowrie-env) $ pip install libvirt-python==6.4.0
 
-To allow Qemu to use disk images and snapshots, set it to run with the user and group of the user running the pool
+To allow QEMU to use disk images and snapshots, set it to run with the user and group of the user running the pool
 (usually called 'cowrie' too::
 
     $ sudo vim /etc/libvirt/qemu.conf

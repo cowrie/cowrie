@@ -43,7 +43,7 @@ Features
 
 * Or proxy SSH and telnet to another system
    * Run as a pure telnet and ssh proxy with monitoring
-   * Or let Cowrie manage a pool of Qemu emualted servers to provide the systems to login to
+   * Or let Cowrie manage a pool of QEMU emulated servers to provide the systems to login to
 
 For both settings:
 
