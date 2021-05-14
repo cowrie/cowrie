@@ -79,7 +79,7 @@ def convert(input):
     elif isinstance(input, bytes):
         try:
             string = input.decode("utf-8")
-        except UnicodeDecodeError
+        except UnicodeDecodeError:
             string = repr(input)
         return string
     else:
