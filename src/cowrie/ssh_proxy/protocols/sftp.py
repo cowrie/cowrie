@@ -26,20 +26,22 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from typing import Optional
+
 from twisted.python import log
 
 from cowrie.ssh_proxy.protocols import base_protocol
 
 
 class SFTP(base_protocol.BaseProtocol):
-    prevID = ""
-    ID = ""
-    handle = ""
-    path = ""
-    command = ""
-    payloadSize = 0
-    payloadOffset = 0
-    theFile = ""
+    prevID: str = ""
+    ID: str = ""
+    handle: str = ""
+    path: str = ""
+    command: str = ""
+    payloadSize: int = 0
+    payloadOffset: int = 0
+    theFile: str = ""
 
     packetLayout = {
         1: "SSH_FXP_INIT",
@@ -83,11 +85,11 @@ class SFTP(base_protocol.BaseProtocol):
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()
 
-        self.parent = None
+        self.parent: Optional[str] = None
         self.parentPacket = None
-        self.offset = 0
+        self.offset: int = 0
 
-    def parse_packet(self, parent, payload):
+    def parse_packet(self, parent: str, payload: bytes) -> None:
         self.parent = parent
 
         if parent == "[SERVER]":
@@ -99,7 +101,7 @@ class SFTP(base_protocol.BaseProtocol):
             self.parentPacket.packetSize = int(payload[:4].hex(), 16) - len(payload[4:])
             payload = payload[4:]
             self.parentPacket.data = payload
-            payload = ""
+            payload = b""
 
         else:
             if len(payload) > self.parentPacket.packetSize:
@@ -111,7 +113,7 @@ class SFTP(base_protocol.BaseProtocol):
             else:
                 self.parentPacket.packetSize -= len(payload)
                 self.parentPacket.data = self.parentPacket.data + payload
-                payload = ""
+                payload = b""
 
         if self.parentPacket.packetSize == 0:
             self.handle_packet(parent)
@@ -120,11 +122,12 @@ class SFTP(base_protocol.BaseProtocol):
             self.parse_packet(parent, payload)
 
     def handle_packet(self, parent):
-        self.packetSize = self.parentPacket.packetSize
-        self.data = self.parentPacket.data
+        self.packetSize: int = self.parentPacket.packetSize
+        self.data: bytes = self.parentPacket.data
+        self.command: bytes
 
-        sftp_num = self.extract_int(1)
-        packet = self.packetLayout[sftp_num]
+        sftp_num: int = self.extract_int(1)
+        packet: str = self.packetLayout[sftp_num]
 
         self.prevID = self.ID
         self.ID = self.extract_int(4)
@@ -252,8 +255,8 @@ class SFTP(base_protocol.BaseProtocol):
                     )
 
     def extract_attrs(self):
-        cmd = ""
-        flags = f"{self.extract_int(4):08b}"
+        cmd: bytes = ""
+        flags: str = f"{self.extract_int(4):08b}"
 
         if flags[5] == "1":
             perms = f"{self.extract_int(4):09b}"

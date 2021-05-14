@@ -52,12 +52,12 @@ class ExecTerm(base_protocol.BaseProtocol):
         self.transportId = ssh.server.transportId
         self.channelId = channelId
 
-        self.startTime = time.time()
-        self.ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
-        self.ttylogEnabled = CowrieConfig.getboolean(
+        self.startTime: float = time.time()
+        self.ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path")
+        self.ttylogEnabled: bool = CowrieConfig.getboolean(
             "honeypot", "ttylog", fallback=True
         )
-        self.ttylogSize = 0
+        self.ttylogSize: bool = 0
 
         if self.ttylogEnabled:
             self.ttylogFile = "{}/{}-{}-{}e.log".format(

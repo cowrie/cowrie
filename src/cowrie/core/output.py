@@ -68,12 +68,20 @@ def convert(input):
     """
     This converts a nested dictionary with bytes in it to string
     """
+    if isinstance(input, str):
+        return input
+    if isinstance(input, dict):
+        return {convert(key): convert(value) for key, value in list(input.items())}
     if isinstance(input, dict):
         return {convert(key): convert(value) for key, value in list(input.items())}
     elif isinstance(input, list):
         return [convert(element) for element in input]
     elif isinstance(input, bytes):
-        return input.decode("utf-8")
+        try:
+            string = input.decode("utf-8")
+        except UnicodeDecodeError:
+            string = repr(input)
+        return string
     else:
         return input
 

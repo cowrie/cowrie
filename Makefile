@@ -22,7 +22,7 @@ lint:
 
 .PHONY: clean
 clean:
-	rm -rf _trial_temp build dist
+	rm -rf _trial_temp build dist src/_trial_temp src/Cowrie.egg-info
 	make -C docs clean
 
 .PHONY: pre-commit

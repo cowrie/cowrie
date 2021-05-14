@@ -1,6 +1,8 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # All rights reserved.
 
+from typing import Any
+
 from twisted.conch.ssh import transport
 from twisted.internet import defer, protocol
 from twisted.protocols.policies import TimeoutMixin
@@ -173,5 +175,8 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
 
 class BackendSSHFactory(protocol.ClientFactory):
+
+    server: Any
+
     def buildProtocol(self, addr):
         return BackendSSHTransport(self)

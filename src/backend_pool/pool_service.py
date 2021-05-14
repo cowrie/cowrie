@@ -22,7 +22,7 @@ class PoolService:
     VM States:
         created -> available -> using -> used -> unavailable -> destroyed
 
-        created:     initialised but not fully booted by Qemu
+        created:     initialised but not fully booted by QEMU
         available:   can be requested
         using:       a client is connected, can be served for other clients from same ip
         used:        client disconnectec, but can still be served for its ip
@@ -38,31 +38,35 @@ class PoolService:
         self.nat_service = nat_service
 
         self.guests = []
-        self.guest_id = 0
+        self.guest_id: int = 0
         self.guest_lock = Lock()
 
         # time in seconds between each loop iteration
-        self.loop_sleep_time = 5
+        self.loop_sleep_time: int = 5
         self.loop_next_call = None
 
         # default configs; custom values will come from the client when they connect to the pool
-        self.max_vm = 2
-        self.vm_unused_timeout = 600
-        self.share_guests = True
+        self.max_vm: int = 2
+        self.vm_unused_timeout: int = 600
+        self.share_guests: bool = True
 
         # file configs
-        self.ssh_port = CowrieConfig.getint(
+        self.ssh_port: int = CowrieConfig.getint(
             "backend_pool", "guest_ssh_port", fallback=-1
         )
-        self.telnet_port = CowrieConfig.getint(
+        self.telnet_port: int = CowrieConfig.getint(
             "backend_pool", "guest_telnet_port", fallback=-1
         )
 
-        self.local_pool = CowrieConfig.get("proxy", "pool", fallback="local") == "local"
-        self.pool_only = CowrieConfig.getboolean(
+        self.local_pool: str = (
+            CowrieConfig.get("proxy", "pool", fallback="local") == "local"
+        )
+        self.pool_only: bool = CowrieConfig.getboolean(
             "backend_pool", "pool_only", fallback=False
         )
-        self.use_nat = CowrieConfig.getboolean("backend_pool", "use_nat", fallback=True)
+        self.use_nat: bool = CowrieConfig.getboolean(
+            "backend_pool", "use_nat", fallback=True
+        )
 
         # detect invalid config
         if not self.ssh_port > 0 and not self.telnet_port > 0:
@@ -72,7 +76,7 @@ class PoolService:
             )
             os._exit(1)
 
-        self.any_vm_up = False  # TODO fix for no VM available
+        self.any_vm_up: bool = False  # TODO fix for no VM available
 
     def start_pool(self):
         # cleanup older qemu objects
@@ -124,7 +128,7 @@ class PoolService:
         try:
             self.qemu.stop_backend()
         except libvirt.libvirtError:
-            print("Not connected to Qemu")
+            print("Not connected to QEMU")
 
     def shutdown_pool(self):
         # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
@@ -135,7 +139,7 @@ class PoolService:
         try:
             self.qemu.shutdown_backend()
         except libvirt.libvirtError:
-            print("Not connected to Qemu")
+            print("Not connected to QEMU")
 
     def restart_pool(self):
         log.msg(
@@ -188,7 +192,7 @@ class PoolService:
         return has_ssh or has_telnet
 
     # Producers
-    def __producer_mark_timed_out(self, guest_timeout):
+    def __producer_mark_timed_out(self, guest_timeout: int) -> None:
         """
         Checks timed-out VMs and acquires lock to safely mark for deletion
         """

@@ -135,8 +135,8 @@ A set of guest (VM) parameters can be defined as we explain below:
 * **guest_image_path**: the base image upon which all VMs are created from
 
 * **guest_hypervisor**: the hypervisor used; if you have an older machine or the emulated
-  architecture is different from the host one, then use software-based "qemu"; however,
-  if you are able to, use "kvm", it's **much** faster.
+  architecture is different from the host one, then use software-based "QEMU"; however,
+  if you are able to, use "KVM", it's **much** faster.
 
 * **guest_memory**: memory assigned to the guest; choose a value considering the number
   of guests you'll have running in total (``pool_max_vms``)
