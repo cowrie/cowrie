@@ -177,5 +177,6 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 class BackendSSHFactory(protocol.ClientFactory):
 
     server: Any
+
     def buildProtocol(self, addr):
         return BackendSSHTransport(self)

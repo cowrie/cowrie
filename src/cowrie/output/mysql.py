@@ -65,7 +65,7 @@ class Output(cowrie.core.output.Output):
                 use_unicode=True,
             )
         except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
-            log.msg("output_mysql: Error %d: %s" % (e.args[0], e.args[1]))
+            log.msg(f"output_mysql: Error {e.args[0]}: {e.args[1]}")
 
     def stop(self):
         self.db.commit()
@@ -80,14 +80,14 @@ class Output(cowrie.core.output.Output):
             log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
             log.msg("MySQL schema maybe misconfigured, doublecheck database!")
         else:
-            log.msg(f"output_mysql: MySQL Error: {error.value.args}")
+            log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
 
     def simpleQuery(self, sql, args):
         """
         Just run a deferred sql query, only care about errors
         """
         if self.debug:
-            log.msg(f"output_mysql: MySQL query: {sql} {repr(args)}")
+            log.msg(f"output_mysql: MySQL query: {sql} {args!r}")
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
 
@@ -95,14 +95,14 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.connect":
             r = yield self.db.runQuery(
-                "SELECT `id`" "FROM `sensors`" "WHERE `ip` = %s", (self.sensor,)
+                f"SELECT `id`" "FROM `sensors`" "WHERE `ip` = {self.sensor}"
             )
 
             if r:
                 sensorid = r[0][0]
             else:
                 yield self.db.runQuery(
-                    "INSERT INTO `sensors` (`ip`) " "VALUES (%s)", (self.sensor,)
+                    f"INSERT INTO `sensors` (`ip`) " "VALUES ({self.sensor})"
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ID()")
