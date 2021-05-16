@@ -143,7 +143,7 @@ pages for more information and options.
         )
         self.write("Need to get %s.2kB of archives.\n" % (totalsize))
         self.write(
-            "After this operation, {}kB of additional disk space will be used.\n".format(
+                "After this operation, {:.1f}kB of additional disk space will be used.\n".format(
                 totalsize * 2.2
             )
         )
