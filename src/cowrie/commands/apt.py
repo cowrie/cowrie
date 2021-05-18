@@ -142,10 +142,8 @@ pages for more information and options.
             % len(packages)
         )
         self.write("Need to get %s.2kB of archives.\n" % (totalsize))
-        self.write(
-            "After this operation, {}kB of additional disk space will be used.\n".format(
-                totalsize * 2.2
-            )
+        self.write("After this operation, {:.1f}kB of additional disk space will be used.\n".format(
+            totalsize * 2.2)
         )
         i = 1
         for p in packages:
