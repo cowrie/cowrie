@@ -95,14 +95,14 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.connect":
             r = yield self.db.runQuery(
-                f"SELECT `id`\" \"FROM `sensors`\" \"WHERE `ip` = {self.sensor}"
+                "SELECT `id`" "FROM `sensors`" f"WHERE `ip` = {self.sensor}"
             )
 
             if r:
                 sensorid = r[0][0]
             else:
                 yield self.db.runQuery(
-                    f"INSERT INTO `sensors` (`ip`) \" \"VALUES ({self.sensor})"
+                    "INSERT INTO `sensors` (`ip`) " f"VALUES ({self.sensor})"
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ID()")
