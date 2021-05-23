@@ -1,36 +1,34 @@
 import os
 from datetime import datetime
 
-from csirtgsdk.client import Client
-from csirtgsdk.indicator import Indicator
-
 from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-USERNAME = os.environ.get("CSIRTG_USER")
-FEED = os.environ.get("CSIRTG_FEED")
-TOKEN = os.environ.get("CSIRG_TOKEN")
-DESCRIPTION = os.environ.get("CSIRTG_DESCRIPTION", "random scanning activity")
-
-
 class Output(cowrie.core.output.Output):
     """
-    csirtg output
+    CSIRTG output
     """
+    def start(self):
+        """
+        Start the output module.
+        Note that csirtsdk is imported here because it reads CSIRTG_TOKEN on import
+        Cowrie sets this environment variable.
+        """
+        self.user = CowrieConfig.get("output_csirtg", "username")
+        self.feed = CowrieConfig.get("output_csirtg", "feed")
+        self.debug = CowrieConfig.get("output_csirtg", "debug")
+        self.description = CowrieConfig.get("output_csirtg", "description")
+        token = CowrieConfig.get("output_csirtg", "token")
+        if token is None:
+            log.msg("output_csirtgsdk: token not found in configuration file")
 
-    def start(
-        self,
-    ):
-        self.user = CowrieConfig.get("output_csirtg", "username") or USERNAME
-        self.feed = CowrieConfig.get("output_csirtg", "feed") or FEED
-        self.token = CowrieConfig.get("output_csirtg", "token") or TOKEN
-        self.description = CowrieConfig.get(
-            "output_csirtg", "description", fallback=DESCRIPTION
-        )
+        os.environ["CSIRTG_TOKEN"] = token
         self.context = {}
-        self.client = Client(token=self.token)
+
+        import csirtgsdk
+        self.client = csirtgsdk.client.Client()
 
     def stop(self):
         pass
@@ -77,5 +75,8 @@ class Output(cowrie.core.output.Output):
             "description": self.description,
         }
 
-        ret = Indicator(self.client, i).submit()
+        if self.debug is True:
+            log.msg(f"Submitting {i.r!} to CSIRTG")
+
+        ret = csirtgsdk.indicator.Indicator(self.client, i).submit()
         log.msg("logged to csirtg {} ".format(ret["location"]))
