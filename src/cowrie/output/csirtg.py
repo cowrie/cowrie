@@ -6,7 +6,10 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-os.environ["CSIRTG_TOKEN"] = CowrieConfig.get("output_csirtg", "token")
+token = CowrieConfig.get("output_csirtg", "token")
+if token is None:
+    log.msg("output_csirtg: token not found in configuration file")
+os.environ["CSIRTG_TOKEN"] = token
 import csirtgsdk  # noqa: E402
 
 
@@ -14,6 +17,7 @@ class Output(cowrie.core.output.Output):
     """
     CSIRTG output
     """
+
     def start(self):
         """
         Start the output module.
@@ -22,11 +26,8 @@ class Output(cowrie.core.output.Output):
         """
         self.user = CowrieConfig.get("output_csirtg", "username")
         self.feed = CowrieConfig.get("output_csirtg", "feed")
-        self.debug = CowrieConfig.get("output_csirtg", "debug", fallback=False)
+        self.debug = CowrieConfig.getboolean("output_csirtg", "debug", fallback=False)
         self.description = CowrieConfig.get("output_csirtg", "description")
-        # token = CowrieConfig.get("output_csirtg", "token")
-        # if token is None:
-        #    log.msg("output_csirtg: token not found in configuration file")
 
         self.context = {}
         # self.client = csirtgsdk.client.Client()
@@ -35,6 +36,13 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, e):
+        """
+        Only pass on connection events
+        """
+        if e["eventid"] == "cowrie.session.connect":
+            self.submitIp(e)
+
+    def submitIp(self, e):
         peerIP = e["src_ip"]
         ts = e["timestamp"]
         system = e.get("system", None)
@@ -79,10 +87,9 @@ class Output(cowrie.core.output.Output):
         if self.debug is True:
             log.msg(f"Submitting {i!r} to CSIRTG")
 
-        # ret = csirtgsdk.indicator.Indicator(f"{self.user}/{self.feed}", i).submit()
-        ret = csirtgsdk.indicator.Indicator(i).submit()
+        ind = csirtgsdk.indicator.Indicator(i).submit()
 
         if self.debug is True:
-            log.msg(f"Submitted {ret!r} to CSIRTG")
+            log.msg(f"Submitted {ind!r} to CSIRTG")
 
-        log.msg("output_csirtg: logged to csirtg {} ".format(ret["location"]))
+        log.msg("output_csirtg: logged to csirtg at {} ".format(ind["location"]))
