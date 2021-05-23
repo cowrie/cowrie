@@ -6,9 +6,11 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-token = CowrieConfig.get("output_csirtg", "token")
-if token is None:
+token = CowrieConfig.get("output_csirtg", "token", fallback="a1b2c3d4")
+if token == "a1b2c3d4":
     log.msg("output_csirtg: token not found in configuration file")
+    exit(1)
+
 os.environ["CSIRTG_TOKEN"] = token
 import csirtgsdk  # noqa: E402
 
