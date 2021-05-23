@@ -85,11 +85,11 @@ class Output(cowrie.core.output.Output):
         }
 
         if self.debug is True:
-            log.msg(f"Submitting {i!r} to CSIRTG")
+            log.msg(f"output_csirtg: Submitting {i!r} to CSIRTG")
 
         ind = csirtgsdk.indicator.Indicator(i).submit()
 
         if self.debug is True:
-            log.msg(f"Submitted {ind!r} to CSIRTG")
+            log.msg(f"output_csirtg: Submitted {ind!r} to CSIRTG")
 
-        log.msg("output_csirtg: logged to csirtg at {} ".format(ind["location"]))
+        log.msg("output_csirtg: submitted to csirtg at {} ".format(ind["location"]))
