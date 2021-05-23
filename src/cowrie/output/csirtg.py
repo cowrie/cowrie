@@ -6,6 +6,10 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
+os.environ["CSIRTG_TOKEN"] = CowrieConfig.get("output_csirtg", "token")
+import csirtgsdk  # noqa: E402
+
+
 class Output(cowrie.core.output.Output):
     """
     CSIRTG output
@@ -18,17 +22,14 @@ class Output(cowrie.core.output.Output):
         """
         self.user = CowrieConfig.get("output_csirtg", "username")
         self.feed = CowrieConfig.get("output_csirtg", "feed")
-        self.debug = CowrieConfig.get("output_csirtg", "debug")
+        self.debug = CowrieConfig.get("output_csirtg", "debug", fallback=False)
         self.description = CowrieConfig.get("output_csirtg", "description")
-        token = CowrieConfig.get("output_csirtg", "token")
-        if token is None:
-            log.msg("output_csirtgsdk: token not found in configuration file")
+        # token = CowrieConfig.get("output_csirtg", "token")
+        # if token is None:
+        #    log.msg("output_csirtg: token not found in configuration file")
 
-        os.environ["CSIRTG_TOKEN"] = token
         self.context = {}
-
-        import csirtgsdk
-        self.client = csirtgsdk.client.Client()
+        # self.client = csirtgsdk.client.Client()
 
     def stop(self):
         pass
@@ -76,7 +77,12 @@ class Output(cowrie.core.output.Output):
         }
 
         if self.debug is True:
-            log.msg(f"Submitting {i.r!} to CSIRTG")
+            log.msg(f"Submitting {i!r} to CSIRTG")
 
-        ret = csirtgsdk.indicator.Indicator(self.client, i).submit()
-        log.msg("logged to csirtg {} ".format(ret["location"]))
+        # ret = csirtgsdk.indicator.Indicator(f"{self.user}/{self.feed}", i).submit()
+        ret = csirtgsdk.indicator.Indicator(i).submit()
+
+        if self.debug is True:
+            log.msg(f"Submitted {ret!r} to CSIRTG")
+
+        log.msg("output_csirtg: logged to csirtg {} ".format(ret["location"]))
