@@ -102,7 +102,7 @@ class Output(cowrie.core.output.Output):
                 sensorid = r[0][0]
             else:
                 yield self.db.runQuery(
-                    f"INSERT INTO `sensors` (`ip`) " f"VALUES ({self.sensor})"
+                    "INSERT INTO `sensors` (`ip`) " f"VALUES ({self.sensor})"
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ID()")
