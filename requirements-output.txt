@@ -1,5 +1,6 @@
-# csirtg
-csirtgsdk==0.0.0a22 # TODO: csirtgsdk need to be updated for current API
+# csirtg. it has an implicit dependency on geoip2
+csirtgsdk==1.1.5
+geoip2
 
 # dshield
 requests==2.25.1

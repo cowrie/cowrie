@@ -36,7 +36,7 @@ setup(
     ],
     setup_requires=["incremental", "click"],
     install_requires=[
-        "twisted>=17.1.0",
+        "twisted==21.2.0",
         "cryptography>=0.9.1",
         "configparser",
         "pyopenssl",
@@ -48,7 +48,7 @@ setup(
         "service_identity>=14.0.0",
     ],
     extras_require={
-        "csirtg": ["csirtgsdk>=0.0.0a17"],
+        "csirtg": ["csirtgsdk==1.1.5"],
         "dshield": ["requests"],
         "elasticsearch": ["pyes"],
         "mysql": ["mysqlclient"],
