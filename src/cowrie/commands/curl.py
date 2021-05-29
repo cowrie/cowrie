@@ -268,10 +268,13 @@ class Command_curl(HoneyPotCommand):
             self.exit()
             return None
 
-        # TODO: need to do full name resolution.
-        if ipaddress.ip_address(host).is_private:
-            self.errorWrite("curl: (6) Could not resolve host: {}\n".format(host))
-            return None
+        # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
+        try:
+            if ipaddress.ip_address(host).is_private:
+                self.errorWrite("curl: (6) Could not resolve host: {}\n".format(host))
+                return None
+        except ValueError:
+            pass
 
         factory = HTTPProgressDownloader(
             self, fakeoutfile, url, outputfile, *args, **kwargs
