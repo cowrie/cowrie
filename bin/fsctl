@@ -371,7 +371,7 @@ class fseditCmd(cmd.Cmd):
         if len(args) == 1:
             size = 4096
         else:
-            size = args[1]
+            size = int(args[1])
 
         # set the last update time stamp to now
         ctime = time.time()
