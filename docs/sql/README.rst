@@ -12,14 +12,9 @@ MySQL Installation
 
 On your Cowrie server, run::
 
-    $ sudo apt-get install libmysqlclient-dev python-mysqldb
     $ su - cowrie
     $ source cowrie/cowrie-env/bin/activate
-    $ pip install mysqlclient
-
-Previously MySQL-python was used. Only if you run into isses with mysqlclient, try this instead::
-
-    $ pip install MySQL-python
+    $ pip install mysql-connector-python
 
 MySQL Configuration
 ===================
