@@ -10,7 +10,7 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 # For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
-import mysql.connector
+# import mysql.connector
 
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):
