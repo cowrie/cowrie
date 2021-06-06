@@ -2,15 +2,15 @@
 MySQL output connector. Writes audit logs to MySQL database
 """
 
-
-import MySQLdb
-
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
+
+# For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
+import mysql.connector
 
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):
@@ -22,6 +22,10 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
     by checking exceptions by error code and only disconnecting the current
     connection instead of all of them.
 
+    (2006: MySQL server has gone away
+     2013: Lost connection to MySQL server
+     1213: Deadlock found when trying to get lock)
+
     Also see:
     http://twistedmatrix.com/pipermail/twisted-python/2009-July/020007.html
     """
@@ -29,7 +33,8 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
     def _runInteraction(self, interaction, *args, **kw):
         try:
             return adbapi.ConnectionPool._runInteraction(self, interaction, *args, **kw)
-        except (MySQLdb.OperationalError, MySQLdb._exceptions.OperationalError) as e:
+        except Exception as e:
+            # except (MySQLdb.OperationalError, MySQLdb._exceptions.OperationalError) as e:
             if e.args[0] not in (2003, 2006, 2013):
                 raise e
             log.msg(f"RCP: got error {e}, retrying operation")
@@ -52,7 +57,7 @@ class Output(cowrie.core.output.Output):
         port = CowrieConfig.getint("output_mysql", "port", fallback=3306)
         try:
             self.db = ReconnectingConnectionPool(
-                "MySQLdb",
+                "mysql.connector",
                 host=CowrieConfig.get("output_mysql", "host"),
                 db=CowrieConfig.get("output_mysql", "database"),
                 user=CowrieConfig.get("output_mysql", "username"),
@@ -64,11 +69,11 @@ class Output(cowrie.core.output.Output):
                 cp_reconnect=True,
                 use_unicode=True,
             )
-        except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
+        # except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
+        except Exception as e:
             log.msg(f"output_mysql: Error {e.args[0]}: {e.args[1]}")
 
     def stop(self):
-        self.db.commit()
         self.db.close()
 
     def sqlerror(self, error):
@@ -94,15 +99,19 @@ class Output(cowrie.core.output.Output):
     @defer.inlineCallbacks
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.connect":
+            if self.debug:
+                log.msg(f"SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'")
             r = yield self.db.runQuery(
-                "SELECT `id`" "FROM `sensors`" f"WHERE `ip` = {self.sensor}"
+                f"SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
             )
 
             if r:
                 sensorid = r[0][0]
             else:
+                if self.debug:
+                    log.msg(f"INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')")
                 yield self.db.runQuery(
-                    "INSERT INTO `sensors` (`ip`) " f"VALUES ({self.sensor})"
+                    f"INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ID()")
