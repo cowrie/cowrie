@@ -10,7 +10,7 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 # For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
-# import mysql.connector
+import mysql.connector
 
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):
@@ -22,9 +22,10 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
     by checking exceptions by error code and only disconnecting the current
     connection instead of all of them.
 
-    (2006: MySQL server has gone away
-     2013: Lost connection to MySQL server
-     1213: Deadlock found when trying to get lock)
+     CR_CONN_HOST_ERROR: 2003: Cant connect to MySQL server on server (10061)
+     CR_SERVER_GONE_ERROR: 2006: MySQL server has gone away
+     CR_SERVER_LOST 2013: Lost connection to MySQL server
+     ER_LOCK_DEADLOCK 1213: Deadlock found when trying to get lock)
 
     Also see:
     http://twistedmatrix.com/pipermail/twisted-python/2009-July/020007.html
@@ -33,11 +34,17 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
     def _runInteraction(self, interaction, *args, **kw):
         try:
             return adbapi.ConnectionPool._runInteraction(self, interaction, *args, **kw)
-        except Exception as e:
+        except mysql.connector.Error as e:
             # except (MySQLdb.OperationalError, MySQLdb._exceptions.OperationalError) as e:
-            if e.args[0] not in (2003, 2006, 2013):
+            if e.errno not in (
+                mysql.connector.errors.CR_CONN_HOST_ERROR,
+                mysql.connector.errors.CR_SERVER_GONE_ERROR,
+                mysql.connector.errors.CR_SERVER_LOST,
+                mysql.connector.errors.ER_LOCK_DEADLOCK,
+            ):
                 raise e
-            log.msg(f"RCP: got error {e}, retrying operation")
+
+            log.msg(f"output_mysql: got error {e!r}, retrying operation")
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             # Try the interaction again
@@ -46,7 +53,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
 
 class Output(cowrie.core.output.Output):
     """
-    mysql output
+    MySQL output
     """
 
     db = None
@@ -83,7 +90,7 @@ class Output(cowrie.core.output.Output):
         """
         if error.value.args[0] in (1146, 1406):
             log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
-            log.msg("MySQL schema maybe misconfigured, doublecheck database!")
+            log.msg("output_mysql: MySQL schema maybe misconfigured, doublecheck database!")
         else:
             log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
 
@@ -100,7 +107,7 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.connect":
             if self.debug:
-                log.msg(f"SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'")
+                log.msg(f"output_mysql: SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'")
             r = yield self.db.runQuery(
                 f"SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
             )
@@ -109,7 +116,7 @@ class Output(cowrie.core.output.Output):
                 sensorid = r[0][0]
             else:
                 if self.debug:
-                    log.msg(f"INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')")
+                    log.msg(f"output_mysql: INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')")
                 yield self.db.runQuery(
                     f"INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
                 )
