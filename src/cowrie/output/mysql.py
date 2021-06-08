@@ -37,10 +37,10 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
         except mysql.connector.Error as e:
             # except (MySQLdb.OperationalError, MySQLdb._exceptions.OperationalError) as e:
             if e.errno not in (
-                mysql.connector.errors.CR_CONN_HOST_ERROR,
-                mysql.connector.errors.CR_SERVER_GONE_ERROR,
-                mysql.connector.errors.CR_SERVER_LOST,
-                mysql.connector.errors.ER_LOCK_DEADLOCK,
+                mysql.connector.errorcode.CR_CONN_HOST_ERROR,
+                mysql.connector.errorcode.CR_SERVER_GONE_ERROR,
+                mysql.connector.errorcode.CR_SERVER_LOST,
+                mysql.connector.errorcode.ER_LOCK_DEADLOCK,
             ):
                 raise e
 
