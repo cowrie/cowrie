@@ -6,7 +6,7 @@ geoip2
 requests==2.25.1
 
 # elasticsearch
-elasticsearch==7.12.0
+elasticsearch==7.13.1
 
 # hpfeeds
 hpfeeds3==0.9.10
@@ -15,13 +15,13 @@ hpfeeds3==0.9.10
 mysql-connector-python==8.0.25
 
 # mongodb
-pymongo==3.11.3
+pymongo==3.11.4
 
 # rethinkdblog
 rethinkdb==2.4.8
 
 # s3
-botocore==1.20.57
+botocore==1.20.90
 
 # slack
 slackclient==2.9.3
@@ -30,12 +30,12 @@ slackclient==2.9.3
 influxdb==5.3.1
 
 # kafka
-afkak==20.10.0
+afkak==21.5.0.post0
 python-snappy==0.6.0
 
 # dblog_xmpp
 wokkel==18.0.0
 
 # misp
-pymisp==2.4.141.1
+pymisp==2.4.144
 
