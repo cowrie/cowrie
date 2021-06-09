@@ -3,7 +3,7 @@ flake8==3.9.2
 importlib_metadata==4.5.0; python_version<'3.8'
 mypy-extensions==0.4.3; platform_python_implementation=='CPython'
 mypy-zope==0.3.0; platform_python_implementation=='CPython'
-mypy==0.901; platform_python_implementation=='CPython'
+mypy==0.812; platform_python_implementation=='CPython'
 pathspec==0.8.1
 pipdeptree==2.0.0
 pre-commit==2.13.0
