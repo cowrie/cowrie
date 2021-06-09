@@ -13,12 +13,12 @@ formats:
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-   configuration: docs/conf.py
+  configuration: docs/conf.py
 
 # Optionally Python version and requirements required to build your docs
 python:
-   version: 3.8
-   install:
-      - requirements: docs/requirements.txt
-      - method: pip
-        path: .
+  version: 3.8
+  install:
+    - requirements: docs/requirements.txt
+    - method: pip
+      path: .
