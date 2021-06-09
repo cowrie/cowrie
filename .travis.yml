@@ -1,3 +1,4 @@
+---
 sudo: required
 group: stable
 dist: bionic
@@ -27,7 +28,7 @@ before_script:
   - python setup.py build sdist bdist
   - make -C docs html
 script:
-  -  PYTHONPATH=${TRAVIS_BUILD_DIR}/src trial cowrie
+  - PYTHONPATH=${TRAVIS_BUILD_DIR}/src trial cowrie
 notifications:
   email: false
   slack:

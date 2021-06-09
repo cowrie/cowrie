@@ -1,0 +1,10 @@
+---
+extends:
+    default
+
+rules:
+    line-length: disable
+
+ignore: |
+    .direnv
+    .tox
