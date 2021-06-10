@@ -14,7 +14,7 @@ on:  # yamllint disable-line rule:truthy
     - cron: '14 3 * * *'
 jobs:
   Pur-Upgrade:
-    if: ${{ github.repository == "cowrie/cowrie" }}
+    if: ${{ github.repository == 'cowrie/cowrie' }}
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
