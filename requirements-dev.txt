@@ -2,18 +2,18 @@ Sphinx==4.0.2
 flake8==3.9.2
 importlib_metadata==4.5.0; python_version<'3.8'
 mypy-extensions==0.4.3; platform_python_implementation=='CPython'
-mypy-zope==0.3.0; platform_python_implementation=='CPython'
-mypy==0.812; platform_python_implementation=='CPython'
+mypy-zope==0.3.1; platform_python_implementation=='CPython'
+mypy==0.902; platform_python_implementation=='CPython'
 pathspec==0.8.1
 pipdeptree==2.0.0
 pre-commit==2.13.0
 pur==5.4.1
 pyre-check==0.9.3
 pytype==2021.5.25; platform_python_implementation=='CPython'
-pyupgrade==2.19.1
+pyupgrade==2.19.4
 pyyaml==5.4.1
 setuptools==57.0.0
-sphinx-copybutton==0.3.1
+sphinx-copybutton==0.3.3
 sphinx_rtd_theme==0.5.2
 tox==3.23.1
 twistedchecker==0.7.4
