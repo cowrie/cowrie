@@ -94,8 +94,9 @@ class Output(cowrie.core.output.Output):
             self.meta[session]["unknownCommands"].append(uc)
 
         elif entry["eventid"] == "cowrie.session.file_download":
-            url = entry["url"]
-            self.meta[session]["urls"].append(url)
+            if "url" in entry:
+                url = entry["url"]
+                self.meta[session]["urls"].append(url)
             self.meta[session]["hashes"].add(entry["shasum"])
 
         elif entry["eventid"] == "cowrie.session.file_upload":
