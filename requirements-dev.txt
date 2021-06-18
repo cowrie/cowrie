@@ -9,7 +9,7 @@ pipdeptree==2.0.0
 pre-commit==2.13.0
 pur==5.4.1
 pyre-check==0.9.3
-pytype==2021.5.25; platform_python_implementation=='CPython'
+pytype==2021.6.17; platform_python_implementation=='CPython'
 pyupgrade==2.19.4
 pyyaml==5.4.1
 setuptools==57.0.0
@@ -17,7 +17,7 @@ sphinx-copybutton==0.3.3
 sphinx_rtd_theme==0.5.2
 tox==3.23.1
 twistedchecker==0.7.4
-types-python-dateutil==0.1.3
-types-redis==3.5.1
-types-requests==0.1.11
+types-python-dateutil==0.1.4
+types-redis==3.5.2
+types-requests==0.1.12
 yamllint==1.26.1
