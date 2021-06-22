@@ -18,6 +18,6 @@ sphinx_rtd_theme==0.5.2
 tox==3.23.1
 twistedchecker==0.7.4
 types-python-dateutil==0.1.4
-types-redis==3.5.2
-types-requests==0.1.12
+types-redis==3.5.4
+types-requests==2.25.0
 yamllint==1.26.1
