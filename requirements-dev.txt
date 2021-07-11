@@ -10,7 +10,7 @@ pre-commit==2.13.0
 pur==5.4.2
 pyre-check==0.9.3
 pytype==2021.6.17; platform_python_implementation=='CPython'
-pyupgrade==2.20.0
+pyupgrade==2.21.0
 pyyaml==5.4.1
 setuptools==57.1.0
 sphinx-copybutton==0.4.0
