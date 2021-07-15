@@ -1,4 +1,4 @@
-Sphinx==4.1.0
+Sphinx==4.1.1
 flake8==3.9.2
 importlib_metadata==4.6.1; python_version<'3.8'
 mypy-extensions==0.4.3; platform_python_implementation=='CPython'
@@ -12,10 +12,10 @@ pyre-check==0.9.3
 pytype==2021.6.17; platform_python_implementation=='CPython'
 pyupgrade==2.21.0
 pyyaml==5.4.1
-setuptools==57.1.0
+setuptools==57.2.0
 sphinx-copybutton==0.4.0
 sphinx_rtd_theme==0.5.2
-tox==3.23.1
+tox==3.24.0
 twistedchecker==0.7.4
 types-python-dateutil==0.1.4
 types-redis==3.5.4
