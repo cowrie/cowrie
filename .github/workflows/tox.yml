@@ -1,9 +1,7 @@
 ---
 name: Tox
 
-on:  # yamllint disable-line rule:truthy
-  - push
-  - pull_request
+on: [push, pull_request]  # yamllint disable-line rule:truthy
 
 jobs:
   build:
