@@ -65,6 +65,7 @@ class Output(cowrie.core.output.Output):
     agent: Any
     scan_url: bool
     scan_file: bool
+    url_cache: Dict[str, float] = {}  # url and last time succesfully submitted
 
     def start(self):
         """
@@ -293,6 +294,10 @@ class Output(cowrie.core.output.Output):
         """
         Check url scan report for a hash
         """
+        if entry["url"] in self.url_cache:
+            log.msg("output_virustotal: url {} was already successfully submitted".format(entry["url"]))
+            return
+
         vtUrl = f"{VTAPI_URL}url/report".encode("utf8")
         headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
         fields = {
@@ -341,13 +346,16 @@ class Output(cowrie.core.output.Output):
             j = json.loads(result)
             log.msg("VT: {}".format(j["verbose_msg"]))
 
+            # we got a status=200 assume it was successfully submitted
+            self.url_cache[entry["url"]] = datetime.datetime.now()
+
             if j["response_code"] == 0:
                 log.msg(
                     eventid="cowrie.virustotal.scanurl",
                     format="VT: New URL %(url)s",
                     session=entry["session"],
                     url=entry["url"],
-                    is_new="true",
+                    is_new="true"
                 )
                 return d
             elif j["response_code"] == 1 and "scans" not in j:
@@ -377,7 +385,7 @@ class Output(cowrie.core.output.Output):
                 )
                 log.msg("VT: permalink: {}".format(j["permalink"]))
             elif j["response_code"] == -2:
-                log.msg("VT: response=1: this has been queued for analysis already")
+                log.msg("VT: response=-2: this has been queued for analysis already")
                 log.msg("VT: permalink: {}".format(j["permalink"]))
             else:
                 log.msg("VT: unexpected response code: {}".format(j["response_code"]))
