@@ -8,7 +8,7 @@
 # Field #1 contains the username
 # Field #2 is currently unused
 # Field #3 contains the password 
-# '*' for password allows any password
+# '*' for any username or password
 # '!' at the start of a password will not grant this password access
 # '/' can be used to write a regular expression 
 #
@@ -18,3 +18,5 @@ root:x:!/honeypot/i
 root:x:*
 tomcat:x:*
 oracle:x:*
+*:x:somepassword
+*:x:*
