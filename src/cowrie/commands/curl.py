@@ -241,7 +241,7 @@ class Command_curl(HoneyPotCommand):
                 self.exit()
                 return
 
-        if CowrieConfig.getbool("shell", "allow_networking", fallback=True) == False:
+        if CowrieConfig.getboolean("shell", "allow_networking", fallback=True) == False:
             self.errorWrite("Unrecognized option\n")
             self.exit()
             return
