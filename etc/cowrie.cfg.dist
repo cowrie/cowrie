@@ -392,6 +392,11 @@ log_raw = false
 filesystem = ${honeypot:share_path}/fs.pickle
 
 
+# This allows network access in commands such as `curl` and `wget`.
+# (default: true)
+allow_networking = true
+
+
 # File that contains output for the `ps` command.
 #
 # (default: share/cowrie/cmdoutput.json)
