@@ -119,7 +119,7 @@ class Command_wget(HoneyPotCommand):
                 self.exit()
                 return
 
-        if CowrieConfig.getboolean("shell", "allow_networking", fallback=True) == False:
+        if CowrieConfig.getboolean("shell", "allow_networking", fallback=True) is False:
             self.errorWrite("Unrecognized option\n")
             self.exit()
             return
