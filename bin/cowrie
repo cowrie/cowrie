@@ -77,13 +77,13 @@ cowrie_status() {
 cowrie_start() {
     # Start Cowrie
     COWRIEARGS="$*"
-    TWISTEDARGS="${XARGS} --umask=0022"
+    TWISTEDARGS="${XARGS} --umask=0022 --pidfile=${PIDFILE}"
 
-    # Run foreground or background. Foreground has no log and no PID file.
+    # Run foreground or background. Foreground has no file log.
     if [ "$COWRIE_STDOUT" = "yes" ]; then
         TWISTEDARGS="${TWISTEDARGS} -n -l -"
     else
-        TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger --pidfile=${PIDFILE}"
+        TWISTEDARGS="${TWISTEDARGS} --logger cowrie.python.logfile.logger"
     fi
 
     # 1. Check if any virtual environment is active
