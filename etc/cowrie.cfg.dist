@@ -500,7 +500,13 @@ rsa_public_key = ${honeypot:state_path}/ssh_host_rsa_key.pub
 rsa_private_key = ${honeypot:state_path}/ssh_host_rsa_key
 dsa_public_key = ${honeypot:state_path}/ssh_host_dsa_key.pub
 dsa_private_key = ${honeypot:state_path}/ssh_host_dsa_key
+ecdsa_public_key = ${honeypot:state_path}/ssh_host_ecdsa_key.pub
+ecdsa_private_key = ${honeypot:state_path}/ssh_host_ecdsa_key
+ed25519_public_key = ${honeypot:state_path}/ssh_host_ed25519_key.pub
+ed25519_private_key = ${honeypot:state_path}/ssh_host_ed25519_key
 
+# Public keys supported are: ssh-rsa, ssh-dss, ecdsa-sha2-nistp256, ssh-ed25519
+public_key_auth = ssh-rsa,ecdsa-sha2-nistp256,ssh-ed25519
 
 # SSH version string as present to the client.
 #
