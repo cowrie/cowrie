@@ -101,9 +101,25 @@ class Output(cowrie.core.output.Output):
         attribute.data = Path(entry["outfile"])
         attribute.comment = "File uploaded to Cowrie ({})".format(entry["sensor"])
         attribute.expand = "binary"
+        if "url" in entry:
+            attributeURL = MISPAttribute()
+            attributeURL.type = "url"
+            attributeURL.value = entry["url"]
+            attributeURL.to_ids = True
+        else:
+            attributeURL = MISPAttribute()
+            attributeURL.type = "text"
+            attributeURL.value = "External upload"
+        attributeIP = MISPAttribute()
+        attributeIP.type = "ip-src"
+        attributeIP.value = entry["src_ip"]
+        attributeDT = MISPAttribute()
+        attributeDT.type = "datetime"
+        attributeDT.value = entry["timestamp"]
         event = MISPEvent()
         event.info = "File uploaded to Cowrie ({})".format(entry["sensor"])
-        event.attributes = [attribute]
+        event.add_tag("tlp:white")
+        event.attributes = [attribute, attributeURL, attributeIP, attributeDT]
         event.run_expansions()
         if self.publish:
             event.publish()
