@@ -39,3 +39,5 @@ wokkel==18.0.0
 # misp
 pymisp==2.4.148.1
 
+# redis
+redis==3.5.3
