@@ -34,14 +34,14 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 
 class SFTP(base_protocol.BaseProtocol):
-    prevID: str = ""
-    ID: str = ""
-    handle: str = ""
-    path: str = ""
-    command: str = ""
+    prevID: int = 0
+    ID: int = 0
+    handle: bytes = b""
+    path: bytes = b""
+    command: bytes = b""
     payloadSize: int = 0
     payloadOffset: int = 0
-    theFile: str = ""
+    theFile: bytes = b""
 
     packetLayout = {
         1: "SSH_FXP_INIT",
@@ -121,7 +121,7 @@ class SFTP(base_protocol.BaseProtocol):
         if len(payload) != 0:
             self.parse_packet(parent, payload)
 
-    def handle_packet(self, parent):
+    def handle_packet(self, parent: str) -> None:
         self.packetSize: int = self.parentPacket.packetSize
         self.data: bytes = self.parentPacket.data
         self.command: bytes
@@ -129,8 +129,10 @@ class SFTP(base_protocol.BaseProtocol):
         sftp_num: int = self.extract_int(1)
         packet: str = self.packetLayout[sftp_num]
 
-        self.prevID = self.ID
-        self.ID = self.extract_int(4)
+        self.prevID: str = self.ID
+        self.ID: int = self.extract_int(4)
+    
+        self.path: bytes = b""
 
         if packet == "SSH_FXP_OPENDIR":
             self.path = self.extract_string()
@@ -146,14 +148,14 @@ class SFTP(base_protocol.BaseProtocol):
 
             if pflags[6] == "1":
                 self.command = b"put " + self.path
-                self.theFile = ""
+                self.theFile = b""
                 # self.out.download_started(self.uuid, self.path)
             elif pflags[7] == "1":
                 self.command = b"get " + self.path
             else:
                 # Unknown PFlag
                 log.msg(
-                    parent + f"[SFTP] New SFTP pflag detected: {pflags} {self.data}"
+                    parent + f"[SFTP] New SFTP pflag detected: {pflags!r} {self.data!r}"
                 )
 
             log.msg(parent + " [SFTP] Entered Command: " + self.command.decode())
@@ -165,7 +167,7 @@ class SFTP(base_protocol.BaseProtocol):
             if self.handle == self.extract_string():
                 self.offset = self.extract_int(8)
                 self.theFile = (
-                    self.theFile[: self.offset].encode() + self.extract_data()
+                    self.theFile[: self.offset] + self.extract_data()
                 )
 
         elif packet == "SSH_FXP_HANDLE":
@@ -178,24 +180,23 @@ class SFTP(base_protocol.BaseProtocol):
 
         elif packet == "SSH_FXP_SETSTAT":
             self.path = self.extract_string()
-            self.command = self.extract_attrs() + " " + self.path
+            self.command = self.extract_attrs() + b" " + self.path
 
         elif packet == "SSH_FXP_EXTENDED":
             cmd = self.extract_string()
             self.path = self.extract_string()
 
-            if cmd == "statvfs@openssh.com":
+            if cmd == b"statvfs@openssh.com":
                 self.command = b"df " + self.path
-            elif cmd == "hardlink@openssh.com":
+            elif cmd == b"hardlink@openssh.com":
                 self.command = b"ln " + self.path + b" " + self.extract_string()
-            elif cmd == "posix-rename@openssh.com":
+            elif cmd == b"posix-rename@openssh.com":
                 self.command = b"mv " + self.path + b" " + self.extract_string()
             else:
                 # UNKNOWN COMMAND
                 log.msg(
                     parent
-                    + "[SFTP] New SFTP Extended Command detected: %s %s"
-                    % (cmd, self.data)
+                    + f"[SFTP] New SFTP Extended Command detected: {cmd!r} {self.data!r}"
                 )
 
         elif packet == "SSH_FXP_EXTENDED_REPLY":
@@ -251,11 +252,11 @@ class SFTP(base_protocol.BaseProtocol):
                         + " [SFTP] Failed Command: "
                         + self.command.decode()
                         + " Reason: "
-                        + message
+                        + message.decode()
                     )
 
-    def extract_attrs(self):
-        cmd: bytes = ""
+    def extract_attrs(self) -> bytes:
+        cmd: str = ""
         flags: str = f"{self.extract_int(4):08b}"
 
         if flags[5] == "1":
@@ -277,7 +278,7 @@ class SFTP(base_protocol.BaseProtocol):
             # log.msg(log.LRED, self.parent + '[SFTP]',
             #         'New SFTP Attribute detected - Please raise a HonSSH issue on github with the details: %s %s' %
             #         (flags, self.data))
-        return cmd
+        return cmd.encode()
 
 
 """
