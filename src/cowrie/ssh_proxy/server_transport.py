@@ -295,9 +295,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def ssh_KEXINIT(self, packet):
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = [
+        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = (
             s.split(b",") for s in strings
-        ]
+        )
 
         # hassh SSH client fingerprint
         # https://github.com/salesforce/hassh

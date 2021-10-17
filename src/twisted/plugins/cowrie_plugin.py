@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Callable, ClassVar, Dict, List
+from typing import Callable, ClassVar
 
 from zope.interface import implementer, provider
 
@@ -66,12 +66,12 @@ class Options(usage.Options):
     """
 
     # The '-c' parameters is currently ignored
-    optParameters: List[str] = []
-    optFlags: List[List[str]] = [["help", "h", "Display this help and exit."]]
+    optParameters: list[str] = []
+    optFlags: list[list[str]] = [["help", "h", "Display this help and exit."]]
 
 
 @provider(ILogObserver)
-def importFailureObserver(event: Dict) -> None:
+def importFailureObserver(event: dict) -> None:
     if "failure" in event and event["failure"].type is ImportError:
         log.err(
             "ERROR: %s. Please run `pip install -U -r requirements.txt` "
@@ -88,7 +88,7 @@ class CowrieServiceMaker:
     tapname: ClassVar[str] = "cowrie"
     description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
-    output_plugins: List[Callable] = []
+    output_plugins: list[Callable] = []
     topService: service.Service
 
     def __init__(self) -> None:
@@ -107,7 +107,7 @@ class CowrieServiceMaker:
             "backend_pool", "pool_only", fallback=False
         )
 
-    def makeService(self, options: Dict) -> service.Service:
+    def makeService(self, options: dict) -> service.Service:
         """
         Construct a TCPServer from a factory defined in Cowrie.
         """

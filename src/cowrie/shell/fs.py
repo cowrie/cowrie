@@ -13,7 +13,7 @@ import pickle
 import re
 import stat
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from twisted.python import log
 
@@ -34,7 +34,7 @@ from cowrie.core.config import CowrieConfig
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 
-SPECIAL_PATHS: List[str] = ["/sys", "/proc", "/dev/pts"]
+SPECIAL_PATHS: list[str] = ["/sys", "/proc", "/dev/pts"]
 
 
 class _statobj:
@@ -117,7 +117,7 @@ class PermissionDenied(Exception):
 class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
 
-        self.fs: List[Any]
+        self.fs: list[Any]
 
         try:
             with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
@@ -134,8 +134,8 @@ class HoneyPotFilesystem:
         self.home: str = home
 
         # Keep track of open file descriptors
-        self.tempfiles: Dict[int, str] = {}
-        self.filenames: Dict[int, str] = {}
+        self.tempfiles: dict[int, str] = {}
+        self.filenames: dict[int, str] = {}
 
         # Keep count of new files, so we can have an artificial limit
         self.newcount: int = 0
@@ -155,9 +155,7 @@ class HoneyPotFilesystem:
                 realfile_path: str = os.path.join(path, filename)
                 virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)
 
-                f: Optional[List[Any]] = self.getfile(
-                    virtual_path, follow_symlinks=False
-                )
+                f: list[Any] | None = self.getfile(virtual_path, follow_symlinks=False)
                 if f and f[A_TYPE] == T_FILE:
                     self.update_realfile(f, realfile_path)
 
@@ -165,7 +163,7 @@ class HoneyPotFilesystem:
         """
         This function does not need to be in this class, it has no dependencies
         """
-        cwdpieces: List[str] = []
+        cwdpieces: list[str] = []
 
         # If a path within home directory is specified, convert it to an absolute path
         if pathspec.startswith("~/"):
@@ -194,18 +192,18 @@ class HoneyPotFilesystem:
 
         return "/{}".format("/".join(cwdpieces))
 
-    def resolve_path_wc(self, path: str, cwd: str) -> List[str]:
+    def resolve_path_wc(self, path: str, cwd: str) -> list[str]:
         """
         Resolve_path with wildcard support (globbing)
         """
-        pieces: List[str] = path.rstrip("/").split("/")
-        cwdpieces: List[str]
+        pieces: list[str] = path.rstrip("/").split("/")
+        cwdpieces: list[str]
         if len(pieces[0]):
             cwdpieces = [x for x in cwd.split("/") if len(x) and x is not None]
             path = path[1:]
         else:
             cwdpieces, pieces = [], pieces[1:]
-        found: List[str] = []
+        found: list[str] = []
 
         def foo(p, cwd):
             if not len(p):
@@ -227,7 +225,7 @@ class HoneyPotFilesystem:
         """
         This returns the Cowrie file system objects for a directory
         """
-        cwd: List[Any] = self.fs
+        cwd: list[Any] = self.fs
         for part in path.split("/"):
             if not len(part):
                 continue
@@ -254,7 +252,7 @@ class HoneyPotFilesystem:
         Return True if path refers to an existing path.
         Returns False for broken symbolic links.
         """
-        f: Optional[List[Any]] = self.getfile(path, follow_symlinks=True)
+        f: list[Any] | None = self.getfile(path, follow_symlinks=True)
         if f is not None:
             return True
         return False
@@ -264,7 +262,7 @@ class HoneyPotFilesystem:
         Return True if path refers to an existing path.
         Returns True for broken symbolic links.
         """
-        f: Optional[List[Any]] = self.getfile(path, follow_symlinks=False)
+        f: list[Any] | None = self.getfile(path, follow_symlinks=False)
         if f is not None:
             return True
         return False
@@ -280,15 +278,15 @@ class HoneyPotFilesystem:
         ):
             f[A_REALFILE] = realfile
 
-    def getfile(self, path: str, follow_symlinks: bool = True) -> Optional[List[Any]]:
+    def getfile(self, path: str, follow_symlinks: bool = True) -> list[Any] | None:
         """
         This returns the Cowrie file system object for a path
         """
         if path == "/":
             return self.fs
-        pieces: List[str] = path.strip("/").split("/")
+        pieces: list[str] = path.strip("/").split("/")
         cwd: str = ""
-        p: Optional[List[Any]] = self.fs
+        p: list[Any] | None = self.fs
         for piece in pieces:
             if not isinstance(p, list):
                 return None
@@ -354,7 +352,7 @@ class HoneyPotFilesystem:
         gid: int,
         size: int,
         mode: int,
-        ctime: Optional[float] = None,
+        ctime: float | None = None,
     ) -> bool:
         if self.newcount > 10000:
             return False
@@ -380,7 +378,7 @@ class HoneyPotFilesystem:
         gid: int,
         size: int,
         mode: int,
-        ctime: Optional[float] = None,
+        ctime: float | None = None,
     ) -> None:
         if self.newcount > 10000:
             raise OSError(errno.EDQUOT, os.strerror(errno.EDQUOT), path)
@@ -403,7 +401,7 @@ class HoneyPotFilesystem:
         links, so both islink() and isfile() can be true for the same path.
         """
         try:
-            f: Optional[List[Any]] = self.getfile(path)
+            f: list[Any] | None = self.getfile(path)
         except Exception:
             return False
         if f is None:
@@ -420,7 +418,7 @@ class HoneyPotFilesystem:
         runtime.
         """
         try:
-            f: Optional[List[Any]] = self.getfile(path)
+            f: list[Any] | None = self.getfile(path)
         except Exception:
             return False
         if f is None:
@@ -452,7 +450,7 @@ class HoneyPotFilesystem:
     Below additions for SFTP support, try to keep functions here similar to os.*
     """
 
-    def open(self, filename: str, openFlags: int, mode: int) -> Optional[int]:
+    def open(self, filename: str, openFlags: int, mode: int) -> int | None:
         """
         #log.msg("fs.open %s" % filename)
 
@@ -534,7 +532,7 @@ class HoneyPotFilesystem:
         """
         FIXME mkdir() name conflicts with existing mkdir
         """
-        dir: Optional[List[Any]] = self.getfile(path)
+        dir: list[Any] | None = self.getfile(path)
         if dir:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         self.mkdir(path, 0, 0, 4096, 16877)
@@ -558,19 +556,19 @@ class HoneyPotFilesystem:
         return False
 
     def utime(self, path: str, atime: float, mtime: float) -> None:
-        p: Optional[List[Any]] = self.getfile(path)
+        p: list[Any] | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_CTIME] = mtime
 
     def chmod(self, path: str, perm: int) -> None:
-        p: Optional[List[Any]] = self.getfile(path)
+        p: list[Any] | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
 
     def chown(self, path: str, uid: int, gid: int) -> None:
-        p: Optional[List[Any]] = self.getfile(path)
+        p: list[Any] | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if uid != -1:
@@ -579,13 +577,13 @@ class HoneyPotFilesystem:
             p[A_GID] = gid
 
     def remove(self, path: str) -> None:
-        p: Optional[List[Any]] = self.getfile(path, follow_symlinks=False)
+        p: list[Any] | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         self.get_path(os.path.dirname(path)).remove(p)
 
     def readlink(self, path: str) -> str:
-        p: Optional[List[Any]] = self.getfile(path, follow_symlinks=False)
+        p: list[Any] | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if not (p[A_MODE] & stat.S_IFLNK):
@@ -596,7 +594,7 @@ class HoneyPotFilesystem:
         raise NotImplementedError
 
     def rename(self, oldpath: str, newpath: str) -> None:
-        old: Optional[List[Any]] = self.getfile(oldpath)
+        old: list[Any] | None = self.getfile(oldpath)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         new = self.getfile(newpath)
@@ -607,15 +605,15 @@ class HoneyPotFilesystem:
         old[A_NAME] = os.path.basename(newpath)
         self.get_path(os.path.dirname(newpath)).append(old)
 
-    def listdir(self, path: str) -> List[str]:
-        names: List[str] = [x[A_NAME] for x in self.get_path(path)]
+    def listdir(self, path: str) -> list[str]:
+        names: list[str] = [x[A_NAME] for x in self.get_path(path)]
         return names
 
     def lstat(self, path: str) -> _statobj:
         return self.stat(path, follow_symlinks=False)
 
     def stat(self, path: str, follow_symlinks: bool = True) -> _statobj:
-        p: Optional[List[Any]]
+        p: list[Any] | None
         if path == "/":
             # TODO: shouldn't this be a list?
             p = []
@@ -648,7 +646,7 @@ class HoneyPotFilesystem:
         return path
 
     def update_size(self, filename: str, size: int) -> None:
-        f: Optional[List[Any]] = self.getfile(filename)
+        f: list[Any] | None = self.getfile(filename)
         if not f:
             return
         if f[A_TYPE] != T_FILE:

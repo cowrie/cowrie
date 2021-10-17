@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import ipaddress
 
-from typing import List
-
 from twisted.internet import defer
 from twisted.names import client, error
 from twisted.python import log
@@ -17,7 +15,7 @@ class Output(cowrie.core.output.Output):
     Output plugin used for reverse DNS lookup
     """
 
-    timeout: List[int] = [3]
+    timeout: list[int] = [3]
 
     def start(self):
         """

@@ -35,7 +35,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode, urlparse
 
 from zope.interface import implementer
@@ -67,7 +67,7 @@ class Output(cowrie.core.output.Output):
     agent: Any
     scan_url: bool
     scan_file: bool
-    url_cache: Dict[
+    url_cache: dict[
         str, datetime.datetime
     ] = {}  # url and last time succesfully submitted
 
@@ -102,7 +102,7 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry: Dict[str, Any]) -> None:
+    def write(self, entry: dict[str, Any]) -> None:
         if entry["eventid"] == "cowrie.session.file_download":
             if self.scan_url and "url" in entry:
                 log.msg("Checking url scan report at VT")
@@ -140,7 +140,7 @@ class Output(cowrie.core.output.Output):
         Check file scan report for a hash
         Argument is full event so we can access full file later on
         """
-        vtUrl = f"{VTAPI_URL}file/report".encode("utf8")
+        vtUrl = f"{VTAPI_URL}file/report".encode()
         headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
         fields = {"apikey": self.apiKey, "resource": entry["shasum"], "allinfo": 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -239,7 +239,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to VirusTotal
         """
-        vtUrl = f"{VTAPI_URL}file/scan".encode("utf8")
+        vtUrl = f"{VTAPI_URL}file/scan".encode()
         fields = {("apikey", self.apiKey)}
         files = {("file", fileName, open(artifact, "rb"))}
         if self.debug:
@@ -306,7 +306,7 @@ class Output(cowrie.core.output.Output):
             )
             return
 
-        vtUrl = f"{VTAPI_URL}url/report".encode("utf8")
+        vtUrl = f"{VTAPI_URL}url/report".encode()
         headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
         fields = {
             "apikey": self.apiKey,
@@ -406,7 +406,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a comment to VirusTotal with Twisted
         """
-        vtUrl = f"{VTAPI_URL}comments/put".encode("utf8")
+        vtUrl = f"{VTAPI_URL}comments/put".encode()
         parameters = {
             "resource": resource,
             "comment": self.commenttext,

@@ -7,9 +7,7 @@ Provides cowrie version information.
 
 from __future__ import annotations
 
-from typing import List
-
 from incremental import Version
 
 __version__ = Version("cowrie", 2, 2, 0)
-__all__: List[str] = ["__version__"]
+__all__: list[str] = ["__version__"]

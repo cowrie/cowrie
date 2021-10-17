@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import optparse
 
-from typing import Any, Dict, List
+from typing import Any
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -45,9 +45,9 @@ class Command_iptables(HoneyPotCommand):
 
     table: str = DEFAULT_TABLE
 
-    tables: Dict[str, Dict[str, List[Any]]]
+    tables: dict[str, dict[str, list[Any]]]
 
-    current_table: Dict[str, List[Any]]
+    current_table: dict[str, list[Any]]
 
     def user_is_root(self):
         return self.protocol.user.username == "root"
@@ -228,7 +228,7 @@ class Command_iptables(HoneyPotCommand):
             )
 
         # Get the tables
-        self.tables: Dict[str, Dict[str, List[any]]] = getattr(
+        self.tables: dict[str, dict[str, list[any]]] = getattr(
             self.protocol.user.server, "iptables"
         )
 

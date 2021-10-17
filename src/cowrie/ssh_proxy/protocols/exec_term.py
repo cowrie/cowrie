@@ -49,7 +49,7 @@ class ExecTerm(base_protocol.BaseProtocol):
                 format="CMD: %(input)s",
             )
         except UnicodeDecodeError:
-            log.err("Unusual execcmd: {}".format(repr(command)))
+            log.err(f"Unusual execcmd: {repr(command)}")
 
         self.transportId = ssh.server.transportId
         self.channelId = channelId

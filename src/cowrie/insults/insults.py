@@ -6,7 +6,7 @@ from __future__ import annotations
 import hashlib
 import os
 import time
-from typing import Any, List, Set
+from typing import Any
 
 from twisted.conch.insults import insults
 from twisted.python import log
@@ -33,7 +33,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogFile: str
         self.ttylogSize: int = 0
         self.bytesReceived: int = 0
-        self.redirFiles: Set[List[str]] = set()
+        self.redirFiles: set[list[str]] = set()
         self.redirlogOpen: bool = False  # it will be set at core/protocol.py
         self.stdinlogOpen: bool = False
         self.ttylogOpen: bool = False

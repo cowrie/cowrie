@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Tuple
+from typing import Any
 
 from twisted.conch.ssh import transport
 from twisted.internet import defer, protocol
@@ -22,7 +22,7 @@ def get_bool(data: bytes) -> bool:
     return bool(get_int(data, length=1))
 
 
-def get_string(data: bytes) -> Tuple[int, bytes]:
+def get_string(data: bytes) -> tuple[int, bytes]:
     length = get_int(data, 4)
     value = data[4 : length + 4]
     return length + 4, value
@@ -43,7 +43,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
     """
 
     def __init__(self, factory: BackendSSHFactory):
-        self.delayedPackets: List[Tuple[int, bytes]] = []
+        self.delayedPackets: list[tuple[int, bytes]] = []
         self.factory: BackendSSHFactory = factory
         self.canAuth: bool = False
         self.authDone: bool = False

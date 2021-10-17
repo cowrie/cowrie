@@ -8,7 +8,7 @@ import copy
 import os
 import re
 import shlex
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -25,12 +25,12 @@ class HoneyPotShell:
         self.protocol = protocol
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
-        self.cmdpending: List[List[str]] = []
-        self.environ: Dict[str, str] = copy.copy(protocol.environ)
+        self.cmdpending: list[list[str]] = []
+        self.environ: dict[str, str] = copy.copy(protocol.environ)
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
-        self.lexer: Optional[shlex.shlex] = None
+        self.lexer: shlex.shlex | None = None
         self.showPrompt()
 
     def lineReceived(self, line: str) -> None:
@@ -39,7 +39,7 @@ class HoneyPotShell:
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += "@%{}=$:+^,()`"
 
-        tokens: List[str] = []
+        tokens: list[str] = []
 
         while True:
             try:
@@ -59,9 +59,7 @@ class HoneyPotShell:
                         continue
                     else:
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode(
-                                "utf8"
-                            )
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
                         )
                         break
                 elif tok == ";":
@@ -71,9 +69,7 @@ class HoneyPotShell:
                         continue
                     else:
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode(
-                                "utf8"
-                            )
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
                         )
                         break
                 elif tok == "$?":
@@ -202,14 +198,14 @@ class HoneyPotShell:
             else:
                 self.showPrompt()
 
-        def parse_arguments(arguments: str) -> List[str]:
+        def parse_arguments(arguments: str) -> list[str]:
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
 
             return parsed_arguments
 
-        def parse_file_arguments(arguments: str) -> List[str]:
+        def parse_file_arguments(arguments: str) -> list[str]:
             """
             Look up arguments in the file system
             """
@@ -449,7 +445,7 @@ class HoneyPotShell:
             newbyt = newbuf.encode("utf8")
             if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
-                maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
+                maxlen = max(len(x[fs.A_NAME]) for x in files) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
                 count = 0
                 for file in files:

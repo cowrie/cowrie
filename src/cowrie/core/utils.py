@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import configparser
-from typing import BinaryIO, List
+from typing import BinaryIO
 
 from twisted.application import internet
 from twisted.internet import endpoints
@@ -30,7 +30,7 @@ def durationHuman(duration: float) -> str:
     sminutes: str = str(minutes).rjust(2, "0")
     shours: str = str(hours).rjust(2, "0")
 
-    sduration: List[str] = []
+    sduration: list[str] = []
     if years > 0:
         sduration.append("{} year{} ".format(syears, "s" * (years != 1)))
     else:
@@ -46,7 +46,7 @@ def durationHuman(duration: float) -> str:
     return "".join(sduration)
 
 
-def tail(the_file: BinaryIO, lines_2find: int = 20) -> List[bytes]:
+def tail(the_file: BinaryIO, lines_2find: int = 20) -> list[bytes]:
     """
     From http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     """
@@ -61,7 +61,7 @@ def tail(the_file: BinaryIO, lines_2find: int = 20) -> List[bytes]:
         total_bytes_scanned += byte_block
         lines_found += the_file.read(1024).count(b"\n")
     the_file.seek(-total_bytes_scanned, 2)
-    line_list: List[bytes] = list(the_file.readlines())
+    line_list: list[bytes] = list(the_file.readlines())
     return line_list[-lines_2find:]
     # We read at least 21 line breaks from the bottom, block by block for speed
     # 21 to ensure we don't get a half line
@@ -100,10 +100,10 @@ def uptime(total_seconds: float) -> str:
 
 def get_endpoints_from_section(
     cfg: configparser.ConfigParser, section: str, default_port: int
-) -> List[str]:
+) -> list[str]:
     listen_addr: str
     listen_port: int
-    listen_endpoints: List[str] = []
+    listen_endpoints: list[str] = []
 
     if cfg.has_option(section, "listen_endpoints"):
         return cfg.get(section, "listen_endpoints").split()

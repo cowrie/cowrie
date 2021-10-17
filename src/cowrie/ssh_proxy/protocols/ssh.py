@@ -28,7 +28,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 import uuid
 
@@ -87,7 +87,7 @@ class SSH(base_protocol.BaseProtocol):
     def __init__(self, server):
         super().__init__()
 
-        self.channels: List[Dict[str, Any]] = []
+        self.channels: list[dict[str, Any]] = []
         self.username = ""
         self.password = ""
         self.auth_type = ""
@@ -394,7 +394,7 @@ class SSH(base_protocol.BaseProtocol):
                 {"clientID": channel_id, "type": channel_type, "session": session}
             )
 
-    def get_channel(self, channel_num: int, parent: str) -> Dict[str, Any]:
+    def get_channel(self, channel_num: int, parent: str) -> dict[str, Any]:
         the_channel = None
         for channel in self.channels:
             if parent == "[CLIENT]":

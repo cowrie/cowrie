@@ -273,7 +273,7 @@ class Command_curl(HoneyPotCommand):
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:
             if ipaddress.ip_address(host).is_private:
-                self.errorWrite("curl: (6) Could not resolve host: {}\n".format(host))
+                self.errorWrite(f"curl: (6) Could not resolve host: {host}\n")
                 return None
         except ValueError:
             pass

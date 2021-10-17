@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import struct
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from twisted.conch import error
 from twisted.conch.interfaces import IConchUser
@@ -28,7 +28,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * IP based authentication
     """
 
-    _pamDeferred: Optional[defer.Deferred]
+    _pamDeferred: defer.Deferred | None
 
     def serviceStarted(self) -> None:
         self.interfaceToMethod[credentials.IUsername] = b"none"
@@ -42,7 +42,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 credentials.IPluggableAuthenticationModulesIP
             ] = b"keyboard-interactive"
         self.bannerSent: bool = False
-        self._pamDeferred: Optional[defer.Deferred] = None
+        self._pamDeferred: defer.Deferred | None = None
         userauth.SSHUserAuthServer.serviceStarted(self)
 
     def sendBanner(self):
@@ -120,7 +120,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         )
         return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
 
-    def _pamConv(self, items: List[Tuple[Any, int]]) -> defer.Deferred:
+    def _pamConv(self, items: list[tuple[Any, int]]) -> defer.Deferred:
         """
         Convert a list of PAM authentication questions into a
         MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
@@ -160,9 +160,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             ...
             string response n
         """
-        d: Optional[defer.Deferred] = self._pamDeferred
+        d: defer.Deferred | None = self._pamDeferred
         self._pamDeferred = None
-        resp: List
+        resp: list
 
         if not d:
             raise Exception("can't find deferred in ssh_USERAUTH_INFO_RESPONSE")

@@ -132,7 +132,7 @@ pages for more information and options.
                 ),
                 "size": random.randint(100, 900),
             }
-        totalsize = sum([packages[x]["size"] for x in packages])
+        totalsize = sum(packages[x]["size"] for x in packages)
 
         self.write("Reading package lists... Done\n")
         self.write("Building dependency tree\n")

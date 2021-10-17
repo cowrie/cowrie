@@ -45,10 +45,8 @@
 
 from __future__ import annotations
 
-from typing import Dict
 
-
-def formatCef(logentry: Dict[str, str]) -> str:
+def formatCef(logentry: dict[str, str]) -> str:
     """
     Take logentry and turn into CEF string
     """

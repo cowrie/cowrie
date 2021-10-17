@@ -12,13 +12,13 @@ import re
 from collections import OrderedDict
 from os import path
 from random import randint
-from typing import Any, Dict, List, Pattern, Tuple, Union
+from typing import Any, Pattern
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 
-_USERDB_DEFAULTS: List[str] = [
+_USERDB_DEFAULTS: list[str] = [
     "root:x:!root",
     "root:x:!123456",
     "root:x:!/honeypot/i",
@@ -34,8 +34,8 @@ class UserDB:
     """
 
     def __init__(self) -> None:
-        self.userdb: Dict[
-            Tuple[Union[Pattern[bytes], bytes], Union[Pattern[bytes], bytes]], bool
+        self.userdb: dict[
+            tuple[Pattern[bytes] | bytes, Pattern[bytes] | bytes], bool
         ] = OrderedDict()
         self.load()
 
@@ -44,7 +44,7 @@ class UserDB:
         load the user db
         """
 
-        dblines: List[str]
+        dblines: list[str]
         try:
             with open(
                 "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
@@ -68,8 +68,8 @@ class UserDB:
         self, thelogin: bytes, thepasswd: bytes, src_ip: str = "0.0.0.0"
     ) -> bool:
         for credentials, policy in self.userdb.items():
-            login: Union[bytes, Pattern[bytes]]
-            passwd: Union[bytes, Pattern[bytes]]
+            login: bytes | Pattern[bytes]
+            passwd: bytes | Pattern[bytes]
             login, passwd = credentials
 
             if self.match_rule(login, thelogin):
@@ -78,15 +78,13 @@ class UserDB:
 
         return False
 
-    def match_rule(
-        self, rule: Union[bytes, Pattern[bytes]], input: bytes
-    ) -> Union[bool, bytes]:
+    def match_rule(self, rule: bytes | Pattern[bytes], input: bytes) -> bool | bytes:
         if isinstance(rule, bytes):
             return rule in [b"*", input]
         else:
             return bool(rule.search(input))
 
-    def re_or_bytes(self, rule: bytes) -> Union[Pattern[bytes], bytes]:
+    def re_or_bytes(self, rule: bytes) -> Pattern[bytes] | bytes:
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
 
@@ -135,7 +133,7 @@ class AuthRandom:
         # Are there auth_class parameters?
         if CowrieConfig.has_option("honeypot", "auth_class_parameters"):
             parameters: str = CowrieConfig.get("honeypot", "auth_class_parameters")
-            parlist: List[str] = parameters.split(",")
+            parlist: list[str] = parameters.split(",")
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
                 self.maxtry = int(parlist[1])
@@ -145,7 +143,7 @@ class AuthRandom:
             self.maxtry = self.mintry + 1
             log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
 
-        self.uservar: Dict[Any, Any] = {}
+        self.uservar: dict[Any, Any] = {}
         self.uservar_file: str = "{}/auth_random.json".format(
             CowrieConfig.get("honeypot", "state_path")
         )

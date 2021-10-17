@@ -10,7 +10,8 @@ from __future__ import annotations
 import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
-from typing import List, Union
+
+from typing import Union
 
 
 def to_environ_key(key: str) -> str:
@@ -35,11 +36,11 @@ class EnvironmentConfigParser(configparser.ConfigParser):
         return super().get(section, option, raw=raw, **kwargs)
 
 
-def readConfigFile(cfgfile: Union[str, List[str]]) -> configparser.ConfigParser:
+def readConfigFile(cfgfile: Union[list[str], str]) -> configparser.ConfigParser:
     """
     Read config files and return ConfigParser object
 
-    @param cfgfile: filename or array of filenames
+    @param cfgfile: filename or list of filenames
     @return: ConfigParser object
     """
     parser = EnvironmentConfigParser(interpolation=configparser.ExtendedInterpolation())
@@ -47,7 +48,7 @@ def readConfigFile(cfgfile: Union[str, List[str]]) -> configparser.ConfigParser:
     return parser
 
 
-def get_config_path() -> List[str]:
+def get_config_path() -> list[str]:
     """
     Get absolute path to the config file
     """

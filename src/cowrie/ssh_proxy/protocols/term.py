@@ -126,7 +126,7 @@ class Term(base_protocol.BaseProtocol):
                                 format="CMD: %(input)s",
                             )
                     except UnicodeDecodeError:
-                        log.err("Unusual execcmd: {}".format(repr(self.command)))
+                        log.err(f"Unusual execcmd: {repr(self.command)}")
 
                     self.command = b""
                     self.pointer = 0

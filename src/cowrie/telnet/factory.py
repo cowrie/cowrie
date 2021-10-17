@@ -8,7 +8,6 @@ Telnet Transport and Authentication for the Honeypot
 from __future__ import annotations
 
 import time
-from typing import Optional
 
 from twisted.cred import portal as tp
 from twisted.internet import protocol
@@ -27,7 +26,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
 
     tac = None
-    portal: Optional[tp.Portal] = None  # gets set by Twisted plugin
+    portal: tp.Portal | None = None  # gets set by Twisted plugin
 
     def __init__(self, backend, pool_handler):
         self.backend: str = backend

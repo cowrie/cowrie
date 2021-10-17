@@ -96,7 +96,7 @@ class Command_ls(HoneyPotCommand):
         if not line:
             return
         count = 0
-        maxlen = max([len(x) for x in line])
+        maxlen = max(len(x) for x in line)
 
         try:
             wincols = self.protocol.user.windowSize[1]
@@ -119,17 +119,15 @@ class Command_ls(HoneyPotCommand):
 
         filesize_str_extent = 0
         if len(files):
-            filesize_str_extent = max([len(str(x[fs.A_SIZE])) for x in files])
+            filesize_str_extent = max(len(str(x[fs.A_SIZE])) for x in files)
 
         user_name_str_extent = 0
         if len(files):
-            user_name_str_extent = max([len(self.uid2name(x[fs.A_UID])) for x in files])
+            user_name_str_extent = max(len(self.uid2name(x[fs.A_UID])) for x in files)
 
         group_name_str_extent = 0
         if len(files):
-            group_name_str_extent = max(
-                [len(self.gid2name(x[fs.A_GID])) for x in files]
-            )
+            group_name_str_extent = max(len(self.gid2name(x[fs.A_GID])) for x in files)
 
         for file in files:
             if file[fs.A_NAME].startswith(".") and not self.showHidden:

@@ -204,7 +204,7 @@ Options:
                 "size": random.randint(100, 900),
                 "release": f"{random.randint(1, 15)}.el7",
             }
-        totalsize = sum([packages[x]["size"] for x in packages])
+        totalsize = sum(packages[x]["size"] for x in packages)
         repository = "base"
 
         yield self.sleep(1)
