@@ -28,6 +28,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict, List
+
 import uuid
 
 from twisted.python import log
@@ -85,7 +87,7 @@ class SSH(base_protocol.BaseProtocol):
     def __init__(self, server):
         super().__init__()
 
-        self.channels = []
+        self.channels: List[Dict[str, Any]] = []
         self.username = ""
         self.password = ""
         self.auth_type = ""
@@ -93,7 +95,6 @@ class SSH(base_protocol.BaseProtocol):
         self.sendOn = False
         self.expect_password = 0
         self.server = server
-        self.channels = []
         self.client = None
 
     def set_client(self, client):
@@ -393,7 +394,7 @@ class SSH(base_protocol.BaseProtocol):
                 {"clientID": channel_id, "type": channel_type, "session": session}
             )
 
-    def get_channel(self, channel_num, parent):
+    def get_channel(self, channel_num: int, parent: str) -> Dict[str, Any]:
         the_channel = None
         for channel in self.channels:
             if parent == "[CLIENT]":
@@ -404,4 +405,7 @@ class SSH(base_protocol.BaseProtocol):
             if channel[search] == channel_num:
                 the_channel = channel
                 break
-        return the_channel
+        if the_channel is None:
+            raise KeyError 
+        else:         
+            return the_channel
