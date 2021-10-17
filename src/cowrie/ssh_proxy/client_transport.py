@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # All rights reserved.
 
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 
 from twisted.conch.ssh import transport
 from twisted.internet import defer, protocol
@@ -32,11 +32,11 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
     authentication to that server, and sending messages it gets to the handler.
     """
 
-    def __init__(self, factory):
-        self.delayedPackets = []
-        self.factory = factory
-        self.canAuth = False
-        self.authDone = False
+    def __init__(self, factory: BackendSSHFactory):
+        self.delayedPackets: List[Tuple[int, bytes]] = []
+        self.factory: BackendSSHFactory = factory
+        self.canAuth: bool = False
+        self.authDone: bool = False
 
         # keep these from when frontend authenticates
         self.frontendTriedUsername = None
@@ -159,10 +159,10 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         if not self.factory.server.frontendAuthenticated:
             # wait till frontend connects and authenticates to send packets to them
             log.msg("Connection to client not ready, buffering packet from backend")
-            self.delayedPackets.append([message_num, payload])
+            self.delayedPackets.append((message_num, payload))
         else:
             if len(self.delayedPackets) > 0:
-                self.delayedPackets.append([message_num, payload])
+                self.delayedPackets.append((message_num, payload))
                 for packet in self.delayedPackets:
                     self.factory.server.sshParse.parse_num_packet(
                         "[CLIENT]", packet[0], packet[1]

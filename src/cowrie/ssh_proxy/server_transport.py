@@ -219,8 +219,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                         repr(self.otherVersionString)
                     )
                 )
-                self.transport.write(b"Protocol mismatch.\n")
-                self.transport.loseConnection()
+                if self.transport:
+                    self.transport.write(b"Protocol mismatch.\n")
+                    self.transport.loseConnection()
                 return
             else:
                 self.gotVersion = True
