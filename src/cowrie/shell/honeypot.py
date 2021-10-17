@@ -119,7 +119,7 @@ class HoneyPotShell:
         else:
             self.showPrompt()
 
-    def do_command_substitution(self, start_tok):
+    def do_command_substitution(self, start_tok: str) -> str:
         if start_tok[0] == "(":
             # start parsing the (...) expression
             cmd_expr = start_tok
@@ -167,8 +167,9 @@ class HoneyPotShell:
                 pos += 2
             else:
                 if opening_count > closing_count and pos == len(cmd_expr) - 1:
-                    tok = self.lexer.get_token()
-                    cmd_expr = cmd_expr + " " + tok
+                    if self.lexer:
+                        tok = self.lexer.get_token()
+                        cmd_expr = cmd_expr + " " + tok
                 elif opening_count == closing_count:
                     result += cmd_expr[pos]
                 pos += 1
@@ -195,20 +196,20 @@ class HoneyPotShell:
     def runCommand(self):
         pp = None
 
-        def runOrPrompt():
+        def runOrPrompt() -> None:
             if self.cmdpending:
                 self.runCommand()
             else:
                 self.showPrompt()
 
-        def parse_arguments(arguments):
+        def parse_arguments(arguments: str) -> List[str]:
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
 
             return parsed_arguments
 
-        def parse_file_arguments(arguments):
+        def parse_file_arguments(arguments: str) -> List[str]:
             """
             Look up arguments in the file system
             """
@@ -326,12 +327,12 @@ class HoneyPotShell:
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
 
-    def resume(self):
+    def resume(self) -> None:
         if self.interactive:
             self.protocol.setInsertMode()
         self.runCommand()
 
-    def showPrompt(self):
+    def showPrompt(self) -> None:
         if not self.interactive:
             return
 
@@ -480,7 +481,7 @@ class StdOutStdErrEmulationProtocol:
     ):
         self.cmd = cmd
         self.cmdargs = cmdargs
-        self.input_data = input_data
+        self.input_data: bytes = input_data
         self.next_command = next_command
         self.data: bytes = b""
         self.redirected_data: bytes = b""
@@ -488,9 +489,9 @@ class StdOutStdErrEmulationProtocol:
         self.protocol = protocol
         self.redirect = redirect  # dont send to terminal if enabled
 
-    def connectionMade(self):
+    def connectionMade(self) -> None:
 
-        self.input_data: bytes = None
+        self.input_data = b""
 
     def outReceived(self, data: bytes) -> None:
         """
