@@ -12,7 +12,7 @@ import re
 from collections import OrderedDict
 from os import path
 from random import randint
-from typing import Any, Pattern
+from typing import Any, Pattern, Union
 
 from twisted.python import log
 
@@ -35,7 +35,7 @@ class UserDB:
 
     def __init__(self) -> None:
         self.userdb: dict[
-            tuple[Pattern[bytes] | bytes, Pattern[bytes] | bytes], bool
+            tuple[Union[Pattern[bytes], bytes], Union[Pattern[bytes], bytes]], bool
         ] = OrderedDict()
         self.load()
 
@@ -68,8 +68,8 @@ class UserDB:
         self, thelogin: bytes, thepasswd: bytes, src_ip: str = "0.0.0.0"
     ) -> bool:
         for credentials, policy in self.userdb.items():
-            login: bytes | Pattern[bytes]
-            passwd: bytes | Pattern[bytes]
+            login: Union[bytes, Pattern[bytes]]
+            passwd: Union[bytes, Pattern[bytes]]
             login, passwd = credentials
 
             if self.match_rule(login, thelogin):
@@ -78,13 +78,15 @@ class UserDB:
 
         return False
 
-    def match_rule(self, rule: bytes | Pattern[bytes], input: bytes) -> bool | bytes:
+    def match_rule(
+        self, rule: Union[bytes, Pattern[bytes]], input: bytes
+    ) -> Union[bool, bytes]:
         if isinstance(rule, bytes):
             return rule in [b"*", input]
         else:
             return bool(rule.search(input))
 
-    def re_or_bytes(self, rule: bytes) -> Pattern[bytes] | bytes:
+    def re_or_bytes(self, rule: bytes) -> Union[Pattern[bytes], bytes]:
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
 

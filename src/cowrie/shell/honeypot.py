@@ -8,7 +8,7 @@ import copy
 import os
 import re
 import shlex
-from typing import Any
+from typing import Any, Optional
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -30,7 +30,7 @@ class HoneyPotShell:
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
-        self.lexer: shlex.shlex | None = None
+        self.lexer: Optional[shlex.shlex] = None
         self.showPrompt()
 
     def lineReceived(self, line: str) -> None:

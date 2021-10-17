@@ -28,6 +28,8 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from twisted.python import log
 
 from cowrie.ssh_proxy.protocols import base_protocol
@@ -85,7 +87,7 @@ class SFTP(base_protocol.BaseProtocol):
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()
 
-        self.parent: str | None = None
+        self.parent: Optional[str] = None
         self.parentPacket = None
         self.offset: int = 0
 
