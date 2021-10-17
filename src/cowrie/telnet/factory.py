@@ -20,7 +20,6 @@ from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
 
 
-# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances
@@ -31,7 +30,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     portal: Optional[tp.Portal] = None  # gets set by Twisted plugin
 
     def __init__(self, backend, pool_handler):
-        self.backend = backend
+        self.backend: str = backend
         self.pool_handler = pool_handler
         super().__init__()
 
@@ -66,7 +65,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.startFactory(self)
         log.msg("Ready to accept Telnet connections")
 
-    def stopFactory(self):
+    def stopFactory(self) -> None:
         """
         Stop output plugins
         """
