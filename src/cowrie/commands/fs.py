@@ -6,19 +6,20 @@
 Filesystem related commands
 """
 
+from __future__ import annotations
 
 import copy
 import getopt
 import os.path
 import re
-from typing import Callable, Dict
+from typing import Callable
 
 from twisted.python import log
 
 import cowrie.shell.fs as fs
 from cowrie.shell.command import HoneyPotCommand
 
-commands: Dict[str, Callable] = {}
+commands: dict[str, Callable] = {}
 
 
 class Command_grep(HoneyPotCommand):

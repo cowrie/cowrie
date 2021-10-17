@@ -2,6 +2,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import os
 import socket
@@ -50,11 +51,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.hostname: str = user.server.hostname
         self.fs = user.server.fs
         self.pp = None
-        self.logintime = None
-        self.realClientIP = None
-        self.realClientPort = None
-        self.kippoIP = None
-        self.clientIP = None
+        self.logintime: float = None
+        self.realClientIP: str = None
+        self.realClientPort: int = None
+        self.kippoIP: str = None
+        self.clientIP: str = None
         self.sessionno = None
         self.factory = None
 

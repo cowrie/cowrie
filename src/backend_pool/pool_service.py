@@ -1,11 +1,13 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
+from __future__ import annotations
 
 import os
 import time
 from threading import Lock
 
-from twisted.internet import reactor, threads
+from twisted.internet import reactor  # type: ignore
+from twisted.internet import threads
 from twisted.python import log
 
 import backend_pool.libvirt.backend_service
@@ -58,7 +60,7 @@ class PoolService:
             "backend_pool", "guest_telnet_port", fallback=-1
         )
 
-        self.local_pool: str = (
+        self.local_pool: bool = (
             CowrieConfig.get("proxy", "pool", fallback="local") == "local"
         )
         self.pool_only: bool = CowrieConfig.getboolean(

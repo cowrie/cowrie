@@ -1,3 +1,4 @@
+from __future__ import annotations
 from twisted.internet import defer
 
 from backend_pool.ssh_exec import execute_ssh

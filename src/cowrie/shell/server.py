@@ -27,6 +27,8 @@
 # SUCH DAMAGE.
 
 
+from __future__ import annotations
+
 import json
 import random
 from configparser import NoOptionError

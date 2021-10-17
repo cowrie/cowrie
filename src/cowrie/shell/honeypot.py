@@ -2,11 +2,13 @@
 # See the COPYRIGHT file for more information
 
 
+from __future__ import annotations
+
 import copy
 import os
 import re
 import shlex
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -23,8 +25,8 @@ class HoneyPotShell:
         self.protocol = protocol
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
-        self.cmdpending: List[List[str]] = []
-        self.environ: Dict[str, str] = copy.copy(protocol.environ)
+        self.cmdpending: list[list[str]] = []
+        self.environ: dict[str, str] = copy.copy(protocol.environ)
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
@@ -37,7 +39,7 @@ class HoneyPotShell:
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += "@%{}=$:+^,()`"
 
-        tokens: List[str] = []
+        tokens: list[str] = []
 
         while True:
             try:
@@ -57,9 +59,7 @@ class HoneyPotShell:
                         continue
                     else:
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode(
-                                "utf8"
-                            )
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
                         )
                         break
                 elif tok == ";":
@@ -69,9 +69,7 @@ class HoneyPotShell:
                         continue
                     else:
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode(
-                                "utf8"
-                            )
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
                         )
                         break
                 elif tok == "$?":
@@ -117,7 +115,7 @@ class HoneyPotShell:
         else:
             self.showPrompt()
 
-    def do_command_substitution(self, start_tok):
+    def do_command_substitution(self, start_tok: str) -> str:
         if start_tok[0] == "(":
             # start parsing the (...) expression
             cmd_expr = start_tok
@@ -165,8 +163,9 @@ class HoneyPotShell:
                 pos += 2
             else:
                 if opening_count > closing_count and pos == len(cmd_expr) - 1:
-                    tok = self.lexer.get_token()
-                    cmd_expr = cmd_expr + " " + tok
+                    if self.lexer:
+                        tok = self.lexer.get_token()
+                        cmd_expr = cmd_expr + " " + tok
                 elif opening_count == closing_count:
                     result += cmd_expr[pos]
                 pos += 1
@@ -193,20 +192,20 @@ class HoneyPotShell:
     def runCommand(self):
         pp = None
 
-        def runOrPrompt():
+        def runOrPrompt() -> None:
             if self.cmdpending:
                 self.runCommand()
             else:
                 self.showPrompt()
 
-        def parse_arguments(arguments):
+        def parse_arguments(arguments: str) -> list[str]:
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
 
             return parsed_arguments
 
-        def parse_file_arguments(arguments):
+        def parse_file_arguments(arguments: str) -> list[str]:
             """
             Look up arguments in the file system
             """
@@ -324,12 +323,12 @@ class HoneyPotShell:
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
 
-    def resume(self):
+    def resume(self) -> None:
         if self.interactive:
             self.protocol.setInsertMode()
         self.runCommand()
 
-    def showPrompt(self):
+    def showPrompt(self) -> None:
         if not self.interactive:
             return
 
@@ -446,7 +445,7 @@ class HoneyPotShell:
             newbyt = newbuf.encode("utf8")
             if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
-                maxlen = max([len(x[fs.A_NAME]) for x in files]) + 1
+                maxlen = max(len(x[fs.A_NAME]) for x in files) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
                 count = 0
                 for file in files:
@@ -478,7 +477,7 @@ class StdOutStdErrEmulationProtocol:
     ):
         self.cmd = cmd
         self.cmdargs = cmdargs
-        self.input_data = input_data
+        self.input_data: bytes = input_data
         self.next_command = next_command
         self.data: bytes = b""
         self.redirected_data: bytes = b""
@@ -486,9 +485,9 @@ class StdOutStdErrEmulationProtocol:
         self.protocol = protocol
         self.redirect = redirect  # dont send to terminal if enabled
 
-    def connectionMade(self):
+    def connectionMade(self) -> None:
 
-        self.input_data: bytes = None
+        self.input_data = b""
 
     def outReceived(self, data: bytes) -> None:
         """

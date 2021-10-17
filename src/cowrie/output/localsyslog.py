@@ -27,6 +27,7 @@
 # SUCH DAMAGE.
 
 
+from __future__ import annotations
 import syslog
 
 import twisted.python.syslog

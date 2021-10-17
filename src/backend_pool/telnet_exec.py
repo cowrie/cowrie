@@ -1,8 +1,12 @@
 # Based on https://github.com/fjogstad/twisted-telnet-client
+from __future__ import annotations
+
 import re
+from typing import Optional
 
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.protocol import ClientFactory
 
 
@@ -18,7 +22,7 @@ class TelnetClient(StatefulTelnetProtocol):
         # callLater instance to wait until we have stop getting output for some time
         self.done_callback = None
 
-        self.command: bytes
+        self.command: Optional[bytes] = None
 
     def connectionMade(self):
         """

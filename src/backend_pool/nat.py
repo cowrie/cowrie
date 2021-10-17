@@ -1,6 +1,8 @@
+from __future__ import annotations
 from threading import Lock
 
-from twisted.internet import protocol, reactor
+from twisted.internet import protocol
+from twisted.internet import reactor  # type: ignore
 
 
 class ClientProtocol(protocol.Protocol):

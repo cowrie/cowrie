@@ -2,6 +2,7 @@
 # Based on code made by Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import os
 import zipfile
@@ -118,7 +119,7 @@ class Command_unzip(HoneyPotCommand):
                 self.mkfullpath(os.path.dirname(dest), f)
                 self.fs.mkfile(dest, 0, 0, f.file_size, 33188)
             else:
-                log.msg(f"  skipping: {f.name}\n")
+                log.msg(f"  skipping: {f.filename}\n")
 
 
 commands["/bin/unzip"] = Command_unzip

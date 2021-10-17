@@ -1,6 +1,30 @@
 Release Notes
 #############
 
+Release 2.3.0
+*************
+
+* Deprecate Python 3.6
+* Support Python 3.10
+* Dependency updates
+* MISP Output plugin extension
+* add new public keys ECDSAKeys and ed25519 (#1627)
+* fix userdb.example (#1619)
+* cache url submission to virustotal
+* MySQL connector (#1575) - needs new external dependency mysql-connector-python
+* Fix mysql string expansion (#1565)
+* Rewrite CSIRTG output plugin to use new library version
+* Fixed the Slack output to work with the versions 2.x of slackclient
+* fix MySQL error handling
+* fix tar command
+* limit connections to private address ranges
+* Update GreyNoise Output Script to Use Community API (#1524)
+* Implement getopt-style parsing for uname (#1516)
+* Allow SSLv3 connections for wget and curl
+* Support for 301 redirects in wget
+* Malshare update API (#1472)
+* Remove hpfeeds.py infavour of hpfeeds3.py
+
 Release 2.2.0
 *************
 

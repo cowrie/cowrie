@@ -20,12 +20,13 @@ or:
 
 """
 
+from __future__ import annotations
 
 import hashlib
 import os
 import tempfile
 from types import TracebackType
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Optional
 
 from twisted.python import log
 
@@ -51,7 +52,7 @@ class Artifact:
 
     def __exit__(
         self,
-        etype: Optional[Type[BaseException]],
+        etype: Optional[type[BaseException]],
         einst: Optional[BaseException],
         etrace: Optional[TracebackType],
     ) -> bool:
@@ -64,7 +65,7 @@ class Artifact:
     def fileno(self) -> Any:
         return self.fp.fileno()
 
-    def close(self, keepEmpty: bool = False) -> Optional[Tuple[str, str]]:
+    def close(self, keepEmpty: bool = False) -> Optional[tuple[str, str]]:
         size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
             os.remove(self.fp.name)

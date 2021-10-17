@@ -26,15 +26,16 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
 
 import abc
 import re
 import socket
 import time
 from os import environ
-from typing import Any, Dict, Pattern
+from typing import Any, Pattern
 
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.logger import formatTime
 
 from cowrie.core.config import CowrieConfig
@@ -94,8 +95,8 @@ class Output(metaclass=abc.ABCMeta):
     """
 
     def __init__(self) -> None:
-        self.sessions: Dict[str, str] = {}
-        self.ips: Dict[str, str] = {}
+        self.sessions: dict[str, str] = {}
+        self.ips: dict[str, str] = {}
 
         # Need these for each individual transport, or else the session numbers overlap
         self.sshRegex: Pattern[str] = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
@@ -142,7 +143,7 @@ class Output(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def write(self, event: Dict[str, Any]) -> None:
+    def write(self, event: dict[str, Any]) -> None:
         """
         Handle a general event within the output plugin
         """
@@ -180,7 +181,7 @@ class Output(metaclass=abc.ABCMeta):
         if "message" not in event and "format" not in event:
             return
 
-        ev: Dict[str, any] = convert(event)  # type: ignore
+        ev: dict[str, any] = convert(event)  # type: ignore
         ev["sensor"] = self.sensor
 
         if "isError" in ev:

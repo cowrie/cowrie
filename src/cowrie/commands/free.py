@@ -5,9 +5,9 @@
 This module ...
 """
 
+from __future__ import annotations
 
 import getopt
-from typing import Dict
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -65,7 +65,7 @@ class Command_free(HoneyPotCommand):
                 raw_mem_stats[key] = int(value / 1000)
         elif fmt == "human":
             magnitude = ["B", "M", "G", "T", "Z"]
-            for key, value in raw_mem_stats.iteritems():
+            for key, value in raw_mem_stats.items():
                 current_magnitude = 0
 
                 # Keep dividing until we get a sane magnitude
@@ -79,7 +79,7 @@ class Command_free(HoneyPotCommand):
         # Write the output to screen
         self.write(FREE_OUTPUT.format(**raw_mem_stats))
 
-    def get_free_stats(self) -> Dict[str, int]:
+    def get_free_stats(self) -> dict[str, int]:
         """
         Get the free stats from /proc
         """
@@ -93,7 +93,7 @@ class Command_free(HoneyPotCommand):
             "Shmem",
             "MemAvailable",
         ]
-        mem_info_map: Dict[str, int] = {}
+        mem_info_map: dict[str, int] = {}
         with open("/proc/meminfo") as proc_file:
             for line in proc_file:
                 tokens = line.split(":")

@@ -3,11 +3,13 @@
 # Copyright (c) 2019 Guilherme Borges
 # See LICENSE for details.
 
+from __future__ import annotations
+
 
 import os
 
 from twisted.cred import portal
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.trial import unittest
 
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pymongo
 
 from twisted.python import log

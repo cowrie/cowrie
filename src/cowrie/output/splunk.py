@@ -6,12 +6,13 @@ Not ready for production use.
 JSON log file is still recommended way to go
 """
 
+from __future__ import annotations
 
 import json
 from io import BytesIO
 from typing import Any
 
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.ssl import ClientContextFactory
 from twisted.python import log
 from twisted.web import client, http_headers

@@ -1,13 +1,14 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import getopt
 import ipaddress
 import os
 import time
 
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor, ssl  # type: ignore
 from twisted.python import compat, log
 from twisted.web import client
 
@@ -161,7 +162,7 @@ class Command_wget(HoneyPotCommand):
                         host, host
                     )
                 )
-                self.errorWrite("wget: unable to resolve host address ‘{}’\n".format(host))
+                self.errorWrite(f"wget: unable to resolve host address ‘{host}’\n")
                 return None
         except ValueError:
             pass

@@ -5,6 +5,7 @@
 This module contains the service commnad
 """
 
+from __future__ import annotations
 
 import getopt
 

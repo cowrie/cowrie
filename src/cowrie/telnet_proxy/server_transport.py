@@ -5,12 +5,13 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
+from __future__ import annotations
 
 import time
 import uuid
 
 from twisted.conch.telnet import TelnetTransport
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log

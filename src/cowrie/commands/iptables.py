@@ -1,7 +1,10 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
+from __future__ import annotations
 
 import optparse
+
+from typing import Any
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -39,6 +42,12 @@ class Command_iptables(HoneyPotCommand):
 
     # Default iptable table
     DEFAULT_TABLE = "filter"
+
+    table: str = DEFAULT_TABLE
+
+    tables: dict[str, dict[str, list[Any]]]
+
+    current_table: dict[str, list[Any]]
 
     def user_is_root(self):
         return self.protocol.user.username == "root"
@@ -219,7 +228,9 @@ class Command_iptables(HoneyPotCommand):
             )
 
         # Get the tables
-        self.tables = getattr(self.protocol.user.server, "iptables")
+        self.tables: dict[str, dict[str, list[any]]] = getattr(
+            self.protocol.user.server, "iptables"
+        )
 
         # Verify selected table
         if not self.is_valid_table(table):
@@ -231,10 +242,10 @@ class Command_iptables(HoneyPotCommand):
         # Done
         return True
 
-    def is_valid_table(self, table):
+    def is_valid_table(self, table: str) -> bool:
         if self.user_is_root():
             # Verify table existence
-            if table not in list(self.tables.keys()):
+            if table not in self.tables.keys():
                 self.write(
                     """{}: can\'t initialize iptables table \'{}\': Table does not exist (do you need to insmod?)
 Perhaps iptables or your kernel needs to be upgraded.\n""".format(
@@ -243,7 +254,6 @@ Perhaps iptables or your kernel needs to be upgraded.\n""".format(
                 )
                 self.exit()
             else:
-                # Exists
                 return True
         else:
             self.no_permission()

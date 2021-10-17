@@ -2,6 +2,7 @@
 Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html
 """
+from __future__ import annotations
 
 
 import base64
@@ -13,7 +14,8 @@ import time
 import dateutil.parser
 import requests
 
-from twisted.internet import reactor, threads
+from twisted.internet import reactor  # type: ignore
+from twisted.internet import threads
 from twisted.python import log
 
 import cowrie.core.output

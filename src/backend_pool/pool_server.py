@@ -1,6 +1,8 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
+
 import struct
 
 from twisted.internet.protocol import Factory, Protocol
@@ -12,8 +14,8 @@ from cowrie.core.config import CowrieConfig
 
 
 class PoolServer(Protocol):
-    def __init__(self, factory):
-        self.factory = factory
+    def __init__(self, factory: PoolServerFactory) -> None:
+        self.factory: PoolServerFactory = factory
         self.local_pool: bool = (
             CowrieConfig.get("proxy", "pool", fallback="local") == "local"
         )
@@ -25,13 +27,13 @@ class PoolServer(Protocol):
         )
 
         if self.use_nat:
-            self.nat_public_ip = CowrieConfig.get("backend_pool", "nat_public_ip")
+            self.nat_public_ip: str = CowrieConfig.get("backend_pool", "nat_public_ip")
 
-    def dataReceived(self, data):
-        res_op = struct.unpack("!c", bytes([data[0]]))[
+    def dataReceived(self, data: bytes) -> None:
+        res_op: bytes = struct.unpack("!c", bytes([data[0]]))[
             0
         ]  # yes, this needs to be done to extract the op code correctly
-        response = None
+        response: bytes = b""
 
         if res_op == b"i":
             recv = struct.unpack("!II?", data[1:])
@@ -76,10 +78,10 @@ class PoolServer(Protocol):
                     guest_id=guest_id,
                 )
 
-                ssh_port = CowrieConfig.getint(
+                ssh_port: int = CowrieConfig.getint(
                     "backend_pool", "guest_ssh_port", fallback=22
                 )
-                telnet_port = CowrieConfig.getint(
+                telnet_port: int = CowrieConfig.getint(
                     "backend_pool", "guest_telnet_port", fallback=23
                 )
 
@@ -162,31 +164,32 @@ class PoolServer(Protocol):
             # free this connection and allow VM to be re-used
             self.factory.pool_service.reuse_vm(guest_id)
 
-        if response:
+        if response and self.transport:
             self.transport.write(response)
 
 
 class PoolServerFactory(Factory):
-    def __init__(self):
-        self.initialised = False
+    def __init__(self) -> None:
+        self.initialised: bool = False
 
         # pool handling
-        self.pool_service = None
+        self.pool_service: PoolService
 
         self.tac = None
 
         # NAT service
         self.nat = NATService()
 
-    def startFactory(self):
+    def startFactory(self) -> None:
         # start the pool thread with default configs
         self.pool_service = PoolService(self.nat)
-        self.pool_service.start_pool()
+        if self.pool_service:
+            self.pool_service.start_pool()
 
-    def stopFactory(self):
+    def stopFactory(self) -> None:
         log.msg(eventid="cowrie.backend_pool.server", format="Stopping backend pool...")
-
-        self.pool_service.shutdown_pool()
+        if self.pool_service:
+            self.pool_service.shutdown_pool()
 
     def buildProtocol(self, addr):
         log.msg(

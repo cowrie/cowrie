@@ -5,9 +5,9 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
+from __future__ import annotations
 
 import time
-from typing import Optional
 
 from twisted.cred import portal as tp
 from twisted.internet import protocol
@@ -19,7 +19,6 @@ from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
 
 
-# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
     This factory creates HoneyPotTelnetAuthProtocol instances
@@ -27,10 +26,10 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     """
 
     tac = None
-    portal: Optional[tp.Portal] = None  # gets set by Twisted plugin
+    portal: tp.Portal | None = None  # gets set by Twisted plugin
 
     def __init__(self, backend, pool_handler):
-        self.backend = backend
+        self.backend: str = backend
         self.pool_handler = pool_handler
         super().__init__()
 
@@ -65,7 +64,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         protocol.ServerFactory.startFactory(self)
         log.msg("Ready to accept Telnet connections")
 
-    def stopFactory(self):
+    def stopFactory(self) -> None:
         """
         Stop output plugins
         """

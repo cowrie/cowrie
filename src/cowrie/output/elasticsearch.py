@@ -1,7 +1,8 @@
 # Simple elasticsearch logger
 
+from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from elasticsearch import Elasticsearch, NotFoundError
 
@@ -33,7 +34,7 @@ class Output(cowrie.core.output.Output):
             "output_elasticsearch", "verify_certs", fallback=True
         )
 
-        options: Dict[str, Any] = {}
+        options: dict[str, Any] = {}
         # connect
         if (username is not None) and (password is not None):
             options["http_auth"] = (username, password)

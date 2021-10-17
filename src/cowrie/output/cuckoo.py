@@ -30,6 +30,7 @@
 Send downloaded/uplaoded files to Cuckoo
 """
 
+from __future__ import annotations
 
 import os
 from urllib.parse import urljoin, urlparse
@@ -100,7 +101,7 @@ class Output(cowrie.core.output.Output):
         try:
             print(f"Looking for tasks for: {sha256}")
             res = requests.get(
-                urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode("utf-8")),
+                urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode()),
                 verify=False,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
                 timeout=60,

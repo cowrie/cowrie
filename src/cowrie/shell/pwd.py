@@ -27,9 +27,10 @@
 # SUCH DAMAGE.
 
 
+from __future__ import annotations
 from binascii import crc32
 from random import randint, seed
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 from twisted.python import log
 
@@ -44,7 +45,7 @@ class Passwd:
     """
 
     passwd_file = "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path"))
-    passwd: List[Dict[str, Any]] = []
+    passwd: list[dict[str, Any]] = []
 
     def __init__(self) -> None:
         self.load()
@@ -81,7 +82,7 @@ class Passwd:
                     pw_shell,
                 ) = line.split(":")
 
-                e: Dict[str, Union[str, int]] = {}
+                e: dict[str, Union[str, int]] = {}
                 e["pw_name"] = pw_name
                 e["pw_passwd"] = pw_passwd
                 e["pw_gecos"] = pw_gecos
@@ -108,7 +109,7 @@ class Passwd:
         #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-    def getpwnam(self, name: str) -> Dict[str, Any]:
+    def getpwnam(self, name: str) -> dict[str, Any]:
         """
         Get passwd entry for username
         """
@@ -117,7 +118,7 @@ class Passwd:
                 return e
         raise KeyError("getpwnam(): name not found in passwd file: " + name)
 
-    def getpwuid(self, uid: int) -> Dict[str, Any]:
+    def getpwuid(self, uid: int) -> dict[str, Any]:
         """
         Get passwd entry for uid
         """
@@ -126,7 +127,7 @@ class Passwd:
                 return e
         raise KeyError("getpwuid(): uid not found in passwd file: " + str(uid))
 
-    def setpwentry(self, name: str) -> Dict[str, Any]:
+    def setpwentry(self, name: str) -> dict[str, Any]:
         """
         If the user is not in /etc/passwd, creates a new user entry for the session
         """
@@ -135,7 +136,7 @@ class Passwd:
         seed_id = crc32(name.encode("utf-8"))
         seed(seed_id)
 
-        e: Dict[str, Any] = {}
+        e: dict[str, Any] = {}
         e["pw_name"] = name
         e["pw_passwd"] = "x"
         e["pw_gecos"] = 0
@@ -154,7 +155,7 @@ class Group:
     """
 
     group_file = "{}/etc/group".format(CowrieConfig.get("honeypot", "contents_path"))
-    group: List[Dict[str, Any]]
+    group: list[dict[str, Any]]
 
     def __init__(self):
         self.load()
@@ -179,7 +180,7 @@ class Group:
 
                 (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(":")
 
-                e: Dict[str, Union[str, int]] = {}
+                e: dict[str, Union[str, int]] = {}
                 e["gr_name"] = gr_name
                 try:
                     e["gr_gid"] = int(gr_gid)
@@ -199,7 +200,7 @@ class Group:
         #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
-    def getgrnam(self, name: str) -> Dict[str, Any]:
+    def getgrnam(self, name: str) -> dict[str, Any]:
         """
         Get group entry for groupname
         """
@@ -208,7 +209,7 @@ class Group:
                 return e
         raise KeyError("getgrnam(): name not found in group file: " + name)
 
-    def getgrgid(self, uid: int) -> Dict[str, Any]:
+    def getgrgid(self, uid: int) -> dict[str, Any]:
         """
         Get group entry for gid
         """

@@ -8,10 +8,10 @@ awk command
 limited implementation that only supports `print` command.
 """
 
+from __future__ import annotations
 
 import getopt
 import re
-from typing import Dict, List
 
 from twisted.python import log
 
@@ -27,7 +27,7 @@ class Command_awk(HoneyPotCommand):
     """
 
     # code is an array of dictionaries contain the regexes to match and the code to execute
-    code: List[Dict[str, str]] = []
+    code: list[dict[str, str]] = []
 
     def start(self):
         try:

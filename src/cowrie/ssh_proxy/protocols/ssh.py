@@ -26,6 +26,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
+from typing import Any
+
 import uuid
 
 from twisted.python import log
@@ -83,7 +87,7 @@ class SSH(base_protocol.BaseProtocol):
     def __init__(self, server):
         super().__init__()
 
-        self.channels = []
+        self.channels: list[dict[str, Any]] = []
         self.username = ""
         self.password = ""
         self.auth_type = ""
@@ -91,13 +95,12 @@ class SSH(base_protocol.BaseProtocol):
         self.sendOn = False
         self.expect_password = 0
         self.server = server
-        self.channels = []
         self.client = None
 
     def set_client(self, client):
         self.client = client
 
-    def parse_packet(self, parent, message_num, payload):
+    def parse_num_packet(self, parent: str, message_num: int, payload: bytes) -> None:
         self.data = payload
         self.packetSize = len(payload)
         self.sendOn = True
@@ -166,7 +169,7 @@ class SSH(base_protocol.BaseProtocol):
                 request = self.extract_string()
                 self.extract_bool()
 
-                if "password" in request.lower():
+                if b"password" in request.lower():
                     self.expect_password = i
 
         elif packet == "SSH_MSG_USERAUTH_INFO_RESPONSE":
@@ -183,7 +186,7 @@ class SSH(base_protocol.BaseProtocol):
             channel_type = self.extract_string()
             channel_id = self.extract_int(4)
 
-            log.msg(f"got channel {channel_type} request")
+            log.msg(f"got channel {channel_type!r} request")
 
             if channel_type == b"session":
                 # if using an interactive session reset frontend timeout
@@ -251,7 +254,7 @@ class SSH(base_protocol.BaseProtocol):
             else:
                 # UNKNOWN CHANNEL TYPE
                 if channel_type not in [b"exit-status"]:
-                    log.msg(f"[SSH Unknown Channel Type Detected - {channel_type}")
+                    log.msg(f"[SSH Unknown Channel Type Detected - {channel_type!r}")
 
         elif packet == "SSH_MSG_CHANNEL_OPEN_CONFIRMATION":
             channel = self.get_channel(self.extract_int(4), parent)
@@ -349,7 +352,7 @@ class SSH(base_protocol.BaseProtocol):
         elif packet == "SSH_MSG_GLOBAL_REQUEST":
             channel_type = self.extract_string()
             if channel_type == b"tcpip-forward":
-                if not CowrieConfig.getboolean(["ssh", "forwarding"]):
+                if not CowrieConfig.getboolean("ssh", "forwarding"):
                     self.sendOn = False
                     self.send_back(parent, 82, "")
 
@@ -391,7 +394,7 @@ class SSH(base_protocol.BaseProtocol):
                 {"clientID": channel_id, "type": channel_type, "session": session}
             )
 
-    def get_channel(self, channel_num, parent):
+    def get_channel(self, channel_num: int, parent: str) -> dict[str, Any]:
         the_channel = None
         for channel in self.channels:
             if parent == "[CLIENT]":
@@ -402,4 +405,7 @@ class SSH(base_protocol.BaseProtocol):
             if channel[search] == channel_num:
                 the_channel = channel
                 break
-        return the_channel
+        if the_channel is None:
+            raise KeyError
+        else:
+            return the_channel

@@ -6,6 +6,8 @@ This module contains a subclass of SSHChannel with additional logging
 and session size limiting
 """
 
+from __future__ import annotations
+
 
 import time
 

@@ -30,16 +30,18 @@
 Send SSH logins to Virustotal
 """
 
+from __future__ import annotations
 
 import datetime
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode, urlparse
 
 from zope.interface import implementer
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.ssl import ClientContextFactory
 from twisted.python import log
 from twisted.web import client, http_headers
@@ -65,7 +67,9 @@ class Output(cowrie.core.output.Output):
     agent: Any
     scan_url: bool
     scan_file: bool
-    url_cache: Dict[str, float] = {}  # url and last time succesfully submitted
+    url_cache: dict[
+        str, datetime.datetime
+    ] = {}  # url and last time succesfully submitted
 
     def start(self):
         """
@@ -98,7 +102,7 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry: Dict[str, Any]) -> None:
+    def write(self, entry: dict[str, Any]) -> None:
         if entry["eventid"] == "cowrie.session.file_download":
             if self.scan_url and "url" in entry:
                 log.msg("Checking url scan report at VT")
@@ -136,7 +140,7 @@ class Output(cowrie.core.output.Output):
         Check file scan report for a hash
         Argument is full event so we can access full file later on
         """
-        vtUrl = f"{VTAPI_URL}file/report".encode("utf8")
+        vtUrl = f"{VTAPI_URL}file/report".encode()
         headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
         fields = {"apikey": self.apiKey, "resource": entry["shasum"], "allinfo": 1}
         body = StringProducer(urlencode(fields).encode("utf-8"))
@@ -235,7 +239,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to VirusTotal
         """
-        vtUrl = f"{VTAPI_URL}file/scan".encode("utf8")
+        vtUrl = f"{VTAPI_URL}file/scan".encode()
         fields = {("apikey", self.apiKey)}
         files = {("file", fileName, open(artifact, "rb"))}
         if self.debug:
@@ -295,10 +299,14 @@ class Output(cowrie.core.output.Output):
         Check url scan report for a hash
         """
         if entry["url"] in self.url_cache:
-            log.msg("output_virustotal: url {} was already successfully submitted".format(entry["url"]))
+            log.msg(
+                "output_virustotal: url {} was already successfully submitted".format(
+                    entry["url"]
+                )
+            )
             return
 
-        vtUrl = f"{VTAPI_URL}url/report".encode("utf8")
+        vtUrl = f"{VTAPI_URL}url/report".encode()
         headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
         fields = {
             "apikey": self.apiKey,
@@ -355,7 +363,7 @@ class Output(cowrie.core.output.Output):
                     format="VT: New URL %(url)s",
                     session=entry["session"],
                     url=entry["url"],
-                    is_new="true"
+                    is_new="true",
                 )
                 return d
             elif j["response_code"] == 1 and "scans" not in j:
@@ -398,7 +406,7 @@ class Output(cowrie.core.output.Output):
         """
         Send a comment to VirusTotal with Twisted
         """
-        vtUrl = f"{VTAPI_URL}comments/put".encode("utf8")
+        vtUrl = f"{VTAPI_URL}comments/put".encode()
         parameters = {
             "resource": resource,
             "comment": self.commenttext,

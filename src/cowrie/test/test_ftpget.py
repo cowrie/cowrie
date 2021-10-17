@@ -3,6 +3,8 @@
 # Copyright (c) 2018 Michel Oosterhof
 # See LICENSE for details.
 
+from __future__ import annotations
+
 
 import os
 

@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
 import os
 import time
 
@@ -124,7 +126,7 @@ class Term(base_protocol.BaseProtocol):
                                 format="CMD: %(input)s",
                             )
                     except UnicodeDecodeError:
-                        log.err("Unusual execcmd: {}".format(repr(self.command)))
+                        log.err(f"Unusual execcmd: {repr(self.command)}")
 
                     self.command = b""
                     self.pointer = 0

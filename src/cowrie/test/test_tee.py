@@ -6,6 +6,7 @@
 """
 Tests for general shell interaction and tee command
 """
+from __future__ import annotations
 
 
 import os

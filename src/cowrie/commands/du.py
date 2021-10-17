@@ -1,6 +1,7 @@
 # Copyright (c) 2018 Danilo Vargas <danilo.vargas@csiete.org>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import os
 

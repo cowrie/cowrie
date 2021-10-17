@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
 
 class BaseProtocol:
     data: bytes = b""
@@ -44,7 +46,7 @@ class BaseProtocol:
         if ssh is not None:
             self.ssh = ssh
 
-    def parse_packet(self, parent, data):
+    def parse_packet(self, parent: str, data: bytes) -> None:
         # log.msg(parent + ' ' + repr(data))
         # log.msg(parent + ' ' + '\'\\x' + "\\x".join("{:02x}".format(ord(c)) for c in self.data) + '\'')
         pass
@@ -62,8 +64,11 @@ class BaseProtocol:
         return number.to_bytes(4, byteorder="big")
 
     def extract_string(self) -> bytes:
-        length = self.extract_int(4)
-        value = self.data[:length]
+        """
+        note: this actually returns bytes!
+        """
+        length: int = self.extract_int(4)
+        value: bytes = self.data[:length]
         self.packetSize -= length
         self.data = self.data[length:]
         return value

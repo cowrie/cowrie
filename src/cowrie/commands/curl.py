@@ -1,13 +1,15 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import getopt
 import ipaddress
 import os
 import time
 
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor  # type: ignore
+from twisted.internet import ssl
 from twisted.python import compat, log
 from twisted.web import client
 
@@ -258,7 +260,7 @@ class Command_curl(HoneyPotCommand):
             parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
             host: str = parsed.hostname.decode("utf8")
-            port: int = parsed.port or (443 if scheme == "https" else 80)
+            port: int = parsed.port or (443 if scheme == b"https" else 80)
             if scheme != b"http" and scheme != b"https":
                 raise NotImplementedError
         except Exception:
@@ -271,7 +273,7 @@ class Command_curl(HoneyPotCommand):
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:
             if ipaddress.ip_address(host).is_private:
-                self.errorWrite("curl: (6) Could not resolve host: {}\n".format(host))
+                self.errorWrite(f"curl: (6) Could not resolve host: {host}\n")
                 return None
         except ValueError:
             pass
@@ -283,7 +285,7 @@ class Command_curl(HoneyPotCommand):
         if CowrieConfig.has_option("honeypot", "out_addr"):
             out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
-        if scheme == "https":
+        if scheme == b"https":
             context_factory = ssl.optionsForClientTLS(hostname=host)
             self.connection = reactor.connectSSL(
                 host, port, factory, context_factory, bindAddress=out_addr

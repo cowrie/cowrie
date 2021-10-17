@@ -4,11 +4,11 @@
 tee command
 
 """
+from __future__ import annotations
 
 
 import getopt
 import os
-from typing import List
 
 from twisted.python import log
 
@@ -24,7 +24,7 @@ class Command_tee(HoneyPotCommand):
     """
 
     append = False
-    teeFiles: List[str] = []
+    teeFiles: list[str] = []
     writtenBytes = 0
     ignoreInterupts = False
 

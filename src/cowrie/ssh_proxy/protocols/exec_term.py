@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
 import os
 import time
 
@@ -47,7 +49,7 @@ class ExecTerm(base_protocol.BaseProtocol):
                 format="CMD: %(input)s",
             )
         except UnicodeDecodeError:
-            log.err("Unusual execcmd: {}".format(repr(command)))
+            log.err(f"Unusual execcmd: {repr(command)}")
 
         self.transportId = ssh.server.transportId
         self.channelId = channelId
@@ -57,7 +59,7 @@ class ExecTerm(base_protocol.BaseProtocol):
         self.ttylogEnabled: bool = CowrieConfig.getboolean(
             "honeypot", "ttylog", fallback=True
         )
-        self.ttylogSize: bool = 0
+        self.ttylogSize: int = 0
 
         if self.ttylogEnabled:
             self.ttylogFile = "{}/{}-{}-{}e.log".format(
@@ -68,7 +70,7 @@ class ExecTerm(base_protocol.BaseProtocol):
             )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
-    def parse_packet(self, parent, payload):
+    def parse_packet(self, parent: str, payload: bytes) -> None:
         if self.ttylogEnabled:
             ttylog.ttylog_write(
                 self.ttylogFile, len(payload), ttylog.TYPE_OUTPUT, time.time(), payload

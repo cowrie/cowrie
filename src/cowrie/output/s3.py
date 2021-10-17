@@ -2,6 +2,7 @@
 Send downloaded/uplaoded files to S3 (or compatible)
 """
 
+from __future__ import annotations
 
 from configparser import NoOptionError
 

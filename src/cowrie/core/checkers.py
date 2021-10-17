@@ -5,6 +5,7 @@
 This module contains ...
 """
 
+from __future__ import annotations
 
 from sys import modules
 

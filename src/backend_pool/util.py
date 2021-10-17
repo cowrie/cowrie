@@ -1,18 +1,17 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
+
 import os
 import random
 import subprocess
 import time
-from typing import Set
 
 
 def ping(guest_ip: str) -> int:
     # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
-    out = subprocess.run(
-        ["ping", "-c 1", guest_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    out = subprocess.run(["ping", "-c 1", guest_ip], capture_output=True)
     return out.returncode == 0
 
 
@@ -20,18 +19,17 @@ def nmap_port(guest_ip: str, port: int) -> int:
     # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
     out = subprocess.run(
         ["nmap", guest_ip, "-PN", "-p", str(port)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     return out.returncode == 0 and b"open" in out.stdout
 
 
-def read_file(file_name):
+def read_file(file_name: str) -> str:
     with open(file_name) as file:
         return file.read()
 
 
-def to_byte(n):
+def to_byte(n: int) -> str:
     return hex(n)[2:].zfill(2)
 
 
@@ -46,7 +44,7 @@ def generate_network_table(seed=None):
 
     # number of IPs per network is 253 (2-254)
     # generate random MACs, set ensures they are unique
-    macs: Set[str] = set()
+    macs: set[str] = set()
     while len(macs) < 253:
         macs.add(
             "48:d2:24:bf:"

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from twisted.conch.ssh import channel, common, connection, transport, userauth
-from twisted.internet import defer, protocol, reactor
+from twisted.internet import defer, protocol
+from twisted.internet import reactor  # type: ignore
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args

@@ -5,19 +5,20 @@
 This module contains authentication code
 """
 
+from __future__ import annotations
 
 import json
 import re
 from collections import OrderedDict
 from os import path
 from random import randint
-from typing import Any, Dict, List, Pattern, Tuple, Union
+from typing import Any, Pattern, Union
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 
-_USERDB_DEFAULTS: List[str] = [
+_USERDB_DEFAULTS: list[str] = [
     "root:x:!root",
     "root:x:!123456",
     "root:x:!/honeypot/i",
@@ -33,8 +34,8 @@ class UserDB:
     """
 
     def __init__(self) -> None:
-        self.userdb: Dict[
-            Tuple[Union[Pattern[bytes], bytes], Union[Pattern[bytes], bytes]], bool
+        self.userdb: dict[
+            tuple[Union[Pattern[bytes], bytes], Union[Pattern[bytes], bytes]], bool
         ] = OrderedDict()
         self.load()
 
@@ -43,7 +44,7 @@ class UserDB:
         load the user db
         """
 
-        dblines: List[str]
+        dblines: list[str]
         try:
             with open(
                 "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
@@ -134,7 +135,7 @@ class AuthRandom:
         # Are there auth_class parameters?
         if CowrieConfig.has_option("honeypot", "auth_class_parameters"):
             parameters: str = CowrieConfig.get("honeypot", "auth_class_parameters")
-            parlist: List[str] = parameters.split(",")
+            parlist: list[str] = parameters.split(",")
             if len(parlist) == 3:
                 self.mintry = int(parlist[0])
                 self.maxtry = int(parlist[1])
@@ -144,7 +145,7 @@ class AuthRandom:
             self.maxtry = self.mintry + 1
             log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
 
-        self.uservar: Dict[Any, Any] = {}
+        self.uservar: dict[Any, Any] = {}
         self.uservar_file: str = "{}/auth_random.json".format(
             CowrieConfig.get("honeypot", "state_path")
         )

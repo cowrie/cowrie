@@ -31,6 +31,8 @@ This module contains connection code to work around issues with the
 Granados SSH client library.
 """
 
+from __future__ import annotations
+
 import struct
 
 from twisted.conch.ssh import common, connection

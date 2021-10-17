@@ -43,10 +43,10 @@
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
 
-from typing import Dict
+from __future__ import annotations
 
 
-def formatCef(logentry: Dict[str, str]) -> str:
+def formatCef(logentry: dict[str, str]) -> str:
     """
     Take logentry and turn into CEF string
     """

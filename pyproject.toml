@@ -1,0 +1,31 @@
+[tool.mypy]
+
+namespace_packages = true
+plugins = [ "mypy_zope:plugin" ]
+
+ignore_missing_imports      = true
+warn_unused_configs         = true
+no_implicit_optional        = true
+show_column_numbers         = true
+show_error_codes            = true
+strict_optional             = true
+warn_no_return              = true
+warn_redundant_casts        = true
+warn_return_any             = true
+warn_unreachable            = true
+disallow_incomplete_defs    = true
+disallow_any_unimported     = true
+strict_equality             = true
+disallow_untyped_decorators = true
+disallow_subclassing_any    = true
+
+# These are too strict for us at the moment
+
+check_untyped_defs          = false
+disallow_untyped_defs       = false
+disallow_any_decorated      = false
+disallow_any_explicit       = false
+disallow_any_expr           = false
+disallow_any_generics       = false
+disallow_untyped_calls      = false
+warn_unused_ignores         = false

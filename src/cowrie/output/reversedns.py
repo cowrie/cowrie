@@ -1,4 +1,5 @@
-# `ipaddress` system library only on Python3.4+
+from __future__ import annotations
+
 import ipaddress
 
 from twisted.internet import defer
@@ -14,7 +15,7 @@ class Output(cowrie.core.output.Output):
     Output plugin used for reverse DNS lookup
     """
 
-    timeout: int = 3
+    timeout: list[int] = [3]
 
     def start(self):
         """

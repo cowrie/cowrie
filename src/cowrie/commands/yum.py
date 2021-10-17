@@ -5,11 +5,14 @@
 # Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch
 
 
+from __future__ import annotations
+
 import hashlib
 import random
 import re
 
-from twisted.internet import defer, reactor  # noqa: type
+from twisted.internet import defer
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 
@@ -202,7 +205,7 @@ Options:
                 "size": random.randint(100, 900),
                 "release": f"{random.randint(1, 15)}.el7",
             }
-        totalsize = sum([packages[x]["size"] for x in packages])
+        totalsize = sum(packages[x]["size"] for x in packages)
         repository = "base"
 
         yield self.sleep(1)

@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
 import re
 import struct
 import time
@@ -35,7 +37,7 @@ from hashlib import md5
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log, randbytes
@@ -96,7 +98,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             b"none", b"none", b"none", b"none"
         )
         self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-        self.otherVersionString = "Unknown"
+        self.otherVersionString: bytes = b"Unknown"
 
         log.msg(
             eventid="cowrie.session.connect",
@@ -192,7 +194,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.write(b"Protocol major versions differ.\n")
         self.transport.loseConnection()
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         """
         First, check for the version string (SSH-2.0-*).  After that has been
         received, this method adds data to the buffer, and pulls out any
@@ -209,7 +211,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=self.otherVersionString.decode("utf-8", errors="backslashreplace"),
+                version=self.otherVersionString.decode(
+                    "utf-8", errors="backslashreplace"
+                ),
                 format="Remote SSH version: %(version)s",
             )
             m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
@@ -219,8 +223,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                         repr(self.otherVersionString)
                     )
                 )
-                self.transport.write(b"Protocol mismatch.\n")
-                self.transport.loseConnection()
+                if self.transport:
+                    self.transport.write(b"Protocol mismatch.\n")
+                    self.transport.loseConnection()
                 return
             else:
                 self.gotVersion = True
@@ -290,9 +295,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def ssh_KEXINIT(self, packet):
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = [
+        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = (
             s.split(b",") for s in strings
-        ]
+        )
 
         # hassh SSH client fingerprint
         # https://github.com/salesforce/hassh
@@ -397,7 +402,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             log.msg(f"Disconnecting with error, code {reason}\nreason: {desc}")
             self.transport.loseConnection()
 
-    def receiveError(self, reasonCode, description):
+    def receiveError(self, reasonCode: str, description: str) -> None:
         """
         Called when we receive a disconnect error message from the other
         side.
@@ -411,7 +416,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         log.msg(f"Got remote error, code {reasonCode} reason: {description}")
 
-    def packet_buffer(self, message_num, payload):
+    def packet_buffer(self, message_num: int, payload: bytes) -> None:
         """
         We have to wait until we have a connection to the backend is ready. Meanwhile, we hold packets from client
         to server in here.
@@ -424,4 +429,4 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             if len(self.delayedPackets) > 0:
                 self.delayedPackets.append([message_num, payload])
             else:
-                self.sshParse.parse_packet("[SERVER]", message_num, payload)
+                self.sshParse.parse_num_packet("[SERVER]", message_num, payload)

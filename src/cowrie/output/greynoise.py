@@ -1,6 +1,7 @@
 """
 Send attackers IP to GreyNoise
 """
+from __future__ import annotations
 
 import treq
 
@@ -58,7 +59,7 @@ class Output(cowrie.core.output.Output):
                     f"The owner is {query['name']}.",
                 )
 
-        gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode("utf8")
+        gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode()
         headers = {"User-Agent": [COWRIE_USER_AGENT], "key": self.apiKey}
 
         try:

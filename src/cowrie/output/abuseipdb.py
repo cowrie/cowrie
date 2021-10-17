@@ -28,10 +28,10 @@ Cowrie plugin for reporting login attempts via the AbuseIPDB API.
 spammers, and abusive activity on the internet." <https://www.abuseipdb.com/>
 """
 
+from __future__ import annotations
 
 __author__ = "Benjamin Stephens"
 __version__ = "0.3b3"
-
 
 import pickle
 from collections import deque
@@ -42,7 +42,8 @@ from time import sleep, time
 
 from treq import post
 
-from twisted.internet import defer, reactor, threads
+from twisted.internet import defer, threads
+from twisted.internet import reactor  # type: ignore
 from twisted.python import log
 from twisted.web import http
 

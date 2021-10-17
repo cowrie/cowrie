@@ -7,6 +7,7 @@ encryption and the compression. The transport layer is described in
 RFC 4253.
 """
 
+from __future__ import annotations
 
 import re
 import struct
@@ -112,7 +113,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=self.otherVersionString.decode("utf-8", errors="backslashreplace"),
+                version=self.otherVersionString.decode(
+                    "utf-8", errors="backslashreplace"
+                ),
                 format="Remote SSH version: %(version)s",
             )
             m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
@@ -179,9 +182,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def ssh_KEXINIT(self, packet: bytes) -> Any:
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = [
+        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = (
             s.split(b",") for s in strings
-        ]
+        )
 
         # hassh SSH client fingerprint
         # https://github.com/salesforce/hassh

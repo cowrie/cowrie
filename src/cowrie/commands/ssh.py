@@ -2,12 +2,14 @@
 # See the COPYRIGHT file for more information
 
 
+from __future__ import annotations
+
 import getopt
 import hashlib
 import re
 import socket
 import time
-from typing import Callable, List
+from typing import Callable
 
 from twisted.internet import reactor  # type: ignore
 from twisted.python import log
@@ -35,7 +37,7 @@ class Command_ssh(HoneyPotCommand):
     """
 
     host: str
-    callbacks: List[Callable]
+    callbacks: list[Callable]
 
     def valid_ip(self, address):
         try:
