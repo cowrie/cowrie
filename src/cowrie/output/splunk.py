@@ -6,6 +6,7 @@ Not ready for production use.
 JSON log file is still recommended way to go
 """
 
+from __future__ import annotations
 
 import json
 from io import BytesIO

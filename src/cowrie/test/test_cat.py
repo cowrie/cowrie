@@ -7,6 +7,7 @@
 Tests for general shell interaction and cat command
 """
 
+from __future__ import annotations
 
 import os
 

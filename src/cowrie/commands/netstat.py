@@ -1,5 +1,6 @@
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
+from __future__ import annotations
 
 import socket
 

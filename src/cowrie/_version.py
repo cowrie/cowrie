@@ -5,6 +5,8 @@ Provides cowrie version information.
 # This file is auto-generated! Do not edit!
 # Use `python -m incremental.update cowrie` to change this file.
 
+from __future__ import annotations
+
 from typing import List
 
 from incremental import Version

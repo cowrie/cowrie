@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol, reactor
 

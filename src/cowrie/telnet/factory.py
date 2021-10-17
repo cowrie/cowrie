@@ -5,6 +5,7 @@ Telnet Transport and Authentication for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
+from __future__ import annotations
 
 import time
 from typing import Optional

@@ -5,6 +5,7 @@ Telnet User Session management for the Honeypot
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
 
+from __future__ import annotations
 
 import traceback
 

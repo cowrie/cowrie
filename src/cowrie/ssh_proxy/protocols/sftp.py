@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
 from typing import Optional
 
 from twisted.python import log
@@ -131,7 +133,7 @@ class SFTP(base_protocol.BaseProtocol):
 
         self.prevID: str = self.ID
         self.ID: int = self.extract_int(4)
-    
+
         self.path: bytes = b""
 
         if packet == "SSH_FXP_OPENDIR":
@@ -166,9 +168,7 @@ class SFTP(base_protocol.BaseProtocol):
         elif packet == "SSH_FXP_WRITE":
             if self.handle == self.extract_string():
                 self.offset = self.extract_int(8)
-                self.theFile = (
-                    self.theFile[: self.offset] + self.extract_data()
-                )
+                self.theFile = self.theFile[: self.offset] + self.extract_data()
 
         elif packet == "SSH_FXP_HANDLE":
             if self.ID == self.prevID:

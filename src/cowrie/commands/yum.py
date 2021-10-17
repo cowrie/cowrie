@@ -5,6 +5,8 @@
 # Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch
 
 
+from __future__ import annotations
+
 import hashlib
 import random
 import re

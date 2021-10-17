@@ -1,5 +1,6 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
+from __future__ import annotations
 import os
 from configparser import NoOptionError
 

@@ -1,6 +1,7 @@
 """
 Send attackers IP to GreyNoise
 """
+from __future__ import annotations
 
 import treq
 

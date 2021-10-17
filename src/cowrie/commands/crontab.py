@@ -6,6 +6,7 @@
 This module contains the crontab commnad
 """
 
+from __future__ import annotations
 
 import getopt
 

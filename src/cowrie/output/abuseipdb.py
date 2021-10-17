@@ -32,6 +32,7 @@ spammers, and abusive activity on the internet." <https://www.abuseipdb.com/>
 __author__ = "Benjamin Stephens"
 __version__ = "0.3b3"
 
+from __future__ import annotations
 
 import pickle
 from collections import deque

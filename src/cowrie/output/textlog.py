@@ -27,6 +27,8 @@
 # SUCH DAMAGE.
 
 
+from __future__ import annotations
+
 import cowrie.core.cef
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig

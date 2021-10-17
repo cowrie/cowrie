@@ -1,6 +1,7 @@
 """
 Output plugin for HPFeeds
 """
+from __future__ import annotations
 
 
 import hashlib

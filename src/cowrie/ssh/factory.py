@@ -5,6 +5,8 @@
 This module contains ...
 """
 
+from __future__ import annotations
+
 
 import time
 from configparser import NoOptionError
@@ -69,29 +71,26 @@ class CowrieSSHFactory(factory.SSHFactory):
         self.privateKeys = {}
         try:
             public_key_auth = [
-                i.encode("utf-8") for i in CowrieConfig.get("ssh", "public_key_auth").split(",")
+                i.encode("utf-8")
+                for i in CowrieConfig.get("ssh", "public_key_auth").split(",")
             ]
         except NoOptionError:
             # no keys defined, use the three most common pub keys of OpenSSH
-            public_key_auth = [
-                b"ssh-rsa",
-                b"ecdsa-sha2-nistp256",
-                b"ssh-ed25519"
-            ]
+            public_key_auth = [b"ssh-rsa", b"ecdsa-sha2-nistp256", b"ssh-ed25519"]
         for key in public_key_auth:
-            if key == b'ssh-rsa':
+            if key == b"ssh-rsa":
                 rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=rsaPubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=rsaPrivKeyString)
-            elif key == b'ssh-dss':
+            elif key == b"ssh-dss":
                 dsaaPubKeyString, dsaPrivKeyString = cowriekeys.getDSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=dsaaPubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=dsaPrivKeyString)
-            elif key == b'ecdsa-sha2-nistp256':
+            elif key == b"ecdsa-sha2-nistp256":
                 ecdsaPuKeyString, ecdsaPrivKeyString = cowriekeys.getECDSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=ecdsaPuKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=ecdsaPrivKeyString)
-            elif key == b'ssh-ed25519':
+            elif key == b"ssh-ed25519":
                 ed25519PubKeyString, ed25519PrivKeyString = cowriekeys.geted25519Keys()
                 self.publicKeys[key] = keys.Key.fromString(data=ed25519PubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=ed25519PrivKeyString)

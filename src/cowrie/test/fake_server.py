@@ -3,6 +3,7 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
+from __future__ import annotations
 
 from cowrie.shell import fs
 

@@ -2,6 +2,8 @@
 # See the COPYRIGHT file for more information
 
 
+from __future__ import annotations
+
 import time
 
 from cowrie.shell.command import HoneyPotCommand

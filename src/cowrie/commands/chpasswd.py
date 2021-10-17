@@ -6,6 +6,7 @@
 This module contains the chpasswd commnad
 """
 
+from __future__ import annotations
 
 import getopt
 

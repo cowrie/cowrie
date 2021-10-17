@@ -7,6 +7,7 @@
 Should be compatible with user mode linux
 """
 
+from __future__ import annotations
 
 import hashlib
 import struct

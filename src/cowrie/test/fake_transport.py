@@ -3,6 +3,8 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
+from __future__ import annotations
+
 from typing import Callable, Dict, List, Optional, Set
 
 from twisted.conch.insults import insults

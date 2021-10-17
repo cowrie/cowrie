@@ -3,6 +3,8 @@
 # See the COPYRIGHT file for more information
 
 
+from __future__ import annotations
+
 from os import environ
 
 from twisted.logger import textFileLogObserver

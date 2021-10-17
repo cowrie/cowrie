@@ -1,5 +1,6 @@
 # Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 
+from __future__ import annotations
 
 import optparse
 

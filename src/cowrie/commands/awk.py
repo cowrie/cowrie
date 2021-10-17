@@ -8,6 +8,7 @@ awk command
 limited implementation that only supports `print` command.
 """
 
+from __future__ import annotations
 
 import getopt
 import re

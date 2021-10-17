@@ -1,6 +1,8 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # All rights reserved.
 
+from __future__ import annotations
+
 from typing import Any, List, Tuple
 
 from twisted.conch.ssh import transport
@@ -12,7 +14,7 @@ from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.util import bin_string_to_hex, string_to_hex
 
 
-def get_int(data: bytes, length: int=4) -> int:
+def get_int(data: bytes, length: int = 4) -> int:
     return int.from_bytes(data[:length], byteorder="big")
 
 
@@ -24,6 +26,14 @@ def get_string(data: bytes) -> Tuple[int, bytes]:
     length = get_int(data, 4)
     value = data[4 : length + 4]
     return length + 4, value
+
+
+class BackendSSHFactory(protocol.ClientFactory):
+
+    server: Any
+
+    def buildProtocol(self, addr):
+        return BackendSSHTransport(self)
 
 
 class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
@@ -93,7 +103,9 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
         # send packets from the frontend that were waiting to go to the backend
         for packet in self.factory.server.delayedPackets:
-            self.factory.server.sshParse.parse_num_packet("[SERVER]", packet[0], packet[1])
+            self.factory.server.sshParse.parse_num_packet(
+                "[SERVER]", packet[0], packet[1]
+            )
         self.factory.server.delayedPackets = []
 
         # backend auth is done, attackers will now be connected to the backend
@@ -172,11 +184,3 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
                 self.factory.server.sshParse.parse_num_packet(
                     "[CLIENT]", message_num, payload
                 )
-
-
-class BackendSSHFactory(protocol.ClientFactory):
-
-    server: Any
-
-    def buildProtocol(self, addr):
-        return BackendSSHTransport(self)

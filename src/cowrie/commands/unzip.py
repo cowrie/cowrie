@@ -2,6 +2,7 @@
 # Based on code made by Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import os
 import zipfile

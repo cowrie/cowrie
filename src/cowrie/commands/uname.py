@@ -5,6 +5,7 @@
 uname command
 """
 
+from __future__ import annotations
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand

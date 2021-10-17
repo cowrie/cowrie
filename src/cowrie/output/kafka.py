@@ -29,7 +29,7 @@
 """
 Work in progress Kafka output. Not functional yet
 """
-
+from __future__ import annotations
 
 import json
 import logging

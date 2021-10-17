@@ -1,3 +1,4 @@
+from __future__ import annotations
 import tftpy
 from tftpy.TftpPacketTypes import TftpPacketDAT, TftpPacketOACK
 

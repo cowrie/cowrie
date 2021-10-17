@@ -26,6 +26,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
+
 import re
 import struct
 import time
@@ -209,7 +211,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=self.otherVersionString.decode("utf-8", errors="backslashreplace"),
+                version=self.otherVersionString.decode(
+                    "utf-8", errors="backslashreplace"
+                ),
                 format="Remote SSH version: %(version)s",
             )
             m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)

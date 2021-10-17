@@ -1,6 +1,7 @@
 # Copyright (c) 2010 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import random
 from typing import Optional

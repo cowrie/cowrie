@@ -5,6 +5,7 @@
 This module contains code to deal with Cowrie's configuration
 """
 
+from __future__ import annotations
 
 import configparser
 from os import environ

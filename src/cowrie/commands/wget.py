@@ -1,6 +1,7 @@
 # Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import getopt
 import ipaddress
@@ -161,7 +162,9 @@ class Command_wget(HoneyPotCommand):
                         host, host
                     )
                 )
-                self.errorWrite("wget: unable to resolve host address ‘{}’\n".format(host))
+                self.errorWrite(
+                    "wget: unable to resolve host address ‘{}’\n".format(host)
+                )
                 return None
         except ValueError:
             pass

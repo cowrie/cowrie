@@ -3,6 +3,8 @@
 
 # Todo, use os.stat_result, which contains the stat 10-tuple instead of the custom object.
 
+from __future__ import annotations
+
 import errno
 import fnmatch
 import hashlib

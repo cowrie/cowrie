@@ -6,6 +6,7 @@
 """
 Tests for uniq command
 """
+from __future__ import annotations
 
 
 import os

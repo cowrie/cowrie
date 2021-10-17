@@ -31,6 +31,7 @@ Send files to https://malshare.com/
 More info https://malshare.com/doc.php
 """
 
+from __future__ import annotations
 
 import os
 from urllib.parse import urlparse

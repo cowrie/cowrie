@@ -4,6 +4,7 @@
 """
 This module contains the python commnad
 """
+from __future__ import annotations
 
 
 import getopt

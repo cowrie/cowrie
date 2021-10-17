@@ -43,6 +43,8 @@
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
 
+from __future__ import annotations
+
 from typing import Dict
 
 

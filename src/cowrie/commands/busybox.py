@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand

@@ -1,4 +1,5 @@
 # Based on https://github.com/fjogstad/twisted-telnet-client
+from __future__ import annotations
 import re
 
 from typing import Optional

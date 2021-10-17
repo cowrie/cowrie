@@ -5,6 +5,7 @@
 This module contains the perl command
 """
 
+from __future__ import annotations
 
 import getopt
 

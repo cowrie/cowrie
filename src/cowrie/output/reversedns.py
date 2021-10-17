@@ -1,4 +1,5 @@
 # `ipaddress` system library only on Python3.4+
+from __future__ import annotations
 import ipaddress
 
 from twisted.internet import defer

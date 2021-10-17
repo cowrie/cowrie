@@ -5,6 +5,7 @@
 uniq command
 """
 
+from __future__ import annotations
 
 from twisted.python import log
 

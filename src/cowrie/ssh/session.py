@@ -6,6 +6,8 @@ This module contains ...
 """
 
 
+from __future__ import annotations
+
 from twisted.conch.ssh import session
 from twisted.conch.ssh.common import getNS
 from twisted.python import log

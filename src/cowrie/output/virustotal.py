@@ -30,6 +30,7 @@
 Send SSH logins to Virustotal
 """
 
+from __future__ import annotations
 
 import datetime
 import json
@@ -295,7 +296,11 @@ class Output(cowrie.core.output.Output):
         Check url scan report for a hash
         """
         if entry["url"] in self.url_cache:
-            log.msg("output_virustotal: url {} was already successfully submitted".format(entry["url"]))
+            log.msg(
+                "output_virustotal: url {} was already successfully submitted".format(
+                    entry["url"]
+                )
+            )
             return
 
         vtUrl = f"{VTAPI_URL}url/report".encode("utf8")
@@ -355,7 +360,7 @@ class Output(cowrie.core.output.Output):
                     format="VT: New URL %(url)s",
                     session=entry["session"],
                     url=entry["url"],
-                    is_new="true"
+                    is_new="true",
                 )
                 return d
             elif j["response_code"] == 1 and "scans" not in j:

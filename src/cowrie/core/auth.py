@@ -5,6 +5,7 @@
 This module contains authentication code
 """
 
+from __future__ import annotations
 
 import json
 import re

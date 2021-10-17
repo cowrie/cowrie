@@ -5,6 +5,7 @@
 This module contains the sleep command
 """
 
+from __future__ import annotations
 
 import re
 

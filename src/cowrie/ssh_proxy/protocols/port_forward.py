@@ -29,6 +29,8 @@
 # Inspiration and code snippets used from:
 # http://www.codeproject.com/Tips/612847/Generate-a-quick-and-easy-custom-pcap-file-using-P
 
+from __future__ import annotations
+
 from cowrie.ssh_proxy.protocols import base_protocol
 
 

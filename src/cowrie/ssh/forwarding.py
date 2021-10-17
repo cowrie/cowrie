@@ -5,6 +5,7 @@
 This module contains code for handling SSH direct-tcpip connection requests
 """
 
+from __future__ import annotations
 
 from twisted.conch.ssh import forwarding
 from twisted.python import log
