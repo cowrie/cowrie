@@ -67,7 +67,7 @@ class FTP(ftplib.FTP):
                 if resp[0] != "1":
                     raise ftplib.error_reply(resp)
                 conn, sockaddr = sock.accept()
-                if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:  # type: ignore
                     conn.settimeout(self.timeout)
             finally:
                 sock.close()
