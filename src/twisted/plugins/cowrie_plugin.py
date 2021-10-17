@@ -38,7 +38,7 @@ from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage

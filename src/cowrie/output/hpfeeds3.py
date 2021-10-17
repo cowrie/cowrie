@@ -9,7 +9,8 @@ import logging
 
 from hpfeeds.twisted import ClientSessionService
 
-from twisted.internet import endpoints, reactor, ssl
+from twisted.internet import endpoints, ssl
+from twisted.internet import reactor  # type: ignore
 from twisted.python import log
 
 import cowrie.core.output
@@ -24,10 +25,6 @@ class Output(cowrie.core.output.Output):
     channel = "cowrie.sessions"
 
     def start(self):
-        log.msg(
-            "WARNING: Beta version of new hpfeeds enabled. This will become hpfeeds in a future release."
-        )
-
         if CowrieConfig.has_option("output_hpfeeds3", "channel"):
             self.channel = CowrieConfig.get("output_hpfeeds3", "channel")
 

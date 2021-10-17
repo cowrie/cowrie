@@ -37,7 +37,7 @@ from hashlib import md5
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
-from twisted.internet import reactor
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log, randbytes

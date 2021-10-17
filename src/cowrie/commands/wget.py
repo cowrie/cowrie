@@ -8,7 +8,7 @@ import ipaddress
 import os
 import time
 
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor, ssl  # type: ignore
 from twisted.python import compat, log
 from twisted.web import client
 

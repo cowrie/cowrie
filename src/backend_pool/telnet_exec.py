@@ -5,7 +5,8 @@ import re
 from typing import Optional
 
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.protocol import ClientFactory
 
 

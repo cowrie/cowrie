@@ -40,7 +40,8 @@ from urllib.parse import urlencode, urlparse
 
 from zope.interface import implementer
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.internet import reactor  # type: ignore
 from twisted.internet.ssl import ClientContextFactory
 from twisted.python import log
 from twisted.web import client, http_headers

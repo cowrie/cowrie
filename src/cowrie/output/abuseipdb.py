@@ -43,7 +43,8 @@ from time import sleep, time
 
 from treq import post
 
-from twisted.internet import defer, reactor, threads
+from twisted.internet import defer, threads
+from twisted.internet import reactor  # type: ignore
 from twisted.python import log
 from twisted.web import http
 
