@@ -26,12 +26,12 @@ def nmap_port(guest_ip: str, port: int) -> int:
     return out.returncode == 0 and b"open" in out.stdout
 
 
-def read_file(file_name):
+def read_file(file_name: str) -> str:
     with open(file_name) as file:
         return file.read()
 
 
-def to_byte(n):
+def to_byte(n: int) -> str:
     return hex(n)[2:].zfill(2)
 
 

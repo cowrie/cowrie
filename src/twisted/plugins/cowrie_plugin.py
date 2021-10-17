@@ -203,7 +203,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             if local_pool or self.pool_only:
                 # start a pool locally
                 f = PoolServerFactory()
-                f.tac = self
+                f.tac = self  # type: ignore
 
                 listen_endpoints = get_endpoints_from_section(
                     CowrieConfig, "backend_pool", 6415
