@@ -260,7 +260,7 @@ class Command_curl(HoneyPotCommand):
             parsed = compat.urllib_parse.urlparse(url)
             scheme = parsed.scheme
             host: str = parsed.hostname.decode("utf8")
-            port: int = parsed.port or (443 if scheme == "https" else 80)
+            port: int = parsed.port or (443 if scheme == b"https" else 80)
             if scheme != b"http" and scheme != b"https":
                 raise NotImplementedError
         except Exception:
@@ -285,7 +285,7 @@ class Command_curl(HoneyPotCommand):
         if CowrieConfig.has_option("honeypot", "out_addr"):
             out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
-        if scheme == "https":
+        if scheme == b"https":
             context_factory = ssl.optionsForClientTLS(hostname=host)
             self.connection = reactor.connectSSL(
                 host, port, factory, context_factory, bindAddress=out_addr
