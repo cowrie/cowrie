@@ -96,7 +96,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             b"none", b"none", b"none", b"none"
         )
         self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-        self.otherVersionString = "Unknown"
+        self.otherVersionString: bytes = b"Unknown"
 
         log.msg(
             eventid="cowrie.session.connect",
@@ -192,7 +192,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.write(b"Protocol major versions differ.\n")
         self.transport.loseConnection()
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         """
         First, check for the version string (SSH-2.0-*).  After that has been
         received, this method adds data to the buffer, and pulls out any
@@ -397,7 +397,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             log.msg(f"Disconnecting with error, code {reason}\nreason: {desc}")
             self.transport.loseConnection()
 
-    def receiveError(self, reasonCode, description):
+    def receiveError(self, reasonCode: str, description: str) -> None:
         """
         Called when we receive a disconnect error message from the other
         side.
@@ -411,7 +411,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         log.msg(f"Got remote error, code {reasonCode} reason: {description}")
 
-    def packet_buffer(self, message_num, payload):
+    def packet_buffer(self, message_num: int, payload: bytes) -> None:
         """
         We have to wait until we have a connection to the backend is ready. Meanwhile, we hold packets from client
         to server in here.
@@ -424,4 +424,4 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             if len(self.delayedPackets) > 0:
                 self.delayedPackets.append([message_num, payload])
             else:
-                self.sshParse.parse_packet("[SERVER]", message_num, payload)
+                self.sshParse.parse_num_packet("[SERVER]", message_num, payload)

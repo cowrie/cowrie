@@ -97,7 +97,7 @@ class SSH(base_protocol.BaseProtocol):
     def set_client(self, client):
         self.client = client
 
-    def parse_packet(self, parent, message_num, payload):
+    def parse_num_packet(self, parent: str, message_num: int, payload: bytes) -> None:
         self.data = payload
         self.packetSize = len(payload)
         self.sendOn = True
@@ -166,7 +166,7 @@ class SSH(base_protocol.BaseProtocol):
                 request = self.extract_string()
                 self.extract_bool()
 
-                if "password" in request.lower():
+                if b"password" in request.lower():
                     self.expect_password = i
 
         elif packet == "SSH_MSG_USERAUTH_INFO_RESPONSE":
@@ -183,7 +183,7 @@ class SSH(base_protocol.BaseProtocol):
             channel_type = self.extract_string()
             channel_id = self.extract_int(4)
 
-            log.msg(f"got channel {channel_type} request")
+            log.msg(f"got channel {channel_type!r} request")
 
             if channel_type == b"session":
                 # if using an interactive session reset frontend timeout
@@ -251,7 +251,7 @@ class SSH(base_protocol.BaseProtocol):
             else:
                 # UNKNOWN CHANNEL TYPE
                 if channel_type not in [b"exit-status"]:
-                    log.msg(f"[SSH Unknown Channel Type Detected - {channel_type}")
+                    log.msg(f"[SSH Unknown Channel Type Detected - {channel_type!r}")
 
         elif packet == "SSH_MSG_CHANNEL_OPEN_CONFIRMATION":
             channel = self.get_channel(self.extract_int(4), parent)
@@ -349,7 +349,7 @@ class SSH(base_protocol.BaseProtocol):
         elif packet == "SSH_MSG_GLOBAL_REQUEST":
             channel_type = self.extract_string()
             if channel_type == b"tcpip-forward":
-                if not CowrieConfig.getboolean(["ssh", "forwarding"]):
+                if not CowrieConfig.getboolean("ssh", "forwarding"):
                     self.sendOn = False
                     self.send_back(parent, 82, "")
 

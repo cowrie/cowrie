@@ -57,7 +57,7 @@ class ExecTerm(base_protocol.BaseProtocol):
         self.ttylogEnabled: bool = CowrieConfig.getboolean(
             "honeypot", "ttylog", fallback=True
         )
-        self.ttylogSize: bool = 0
+        self.ttylogSize: int = 0
 
         if self.ttylogEnabled:
             self.ttylogFile = "{}/{}-{}-{}e.log".format(

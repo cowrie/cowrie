@@ -45,16 +45,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             )
 
     def __init__(self, user):
-        self.user = user
+        self.user: str = user
         self.environ = user.environ
         self.hostname: str = user.server.hostname
         self.fs = user.server.fs
         self.pp = None
-        self.logintime = None
-        self.realClientIP = None
-        self.realClientPort = None
-        self.kippoIP = None
-        self.clientIP = None
+        self.logintime: float = None
+        self.realClientIP: str = None
+        self.realClientPort: int = None
+        self.kippoIP: str = None
+        self.clientIP: str = None
         self.sessionno = None
         self.factory = None
 

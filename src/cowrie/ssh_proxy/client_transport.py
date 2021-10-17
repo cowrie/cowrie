@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # All rights reserved.
 
-from typing import Any
+from typing import Any, Tuple
 
 from twisted.conch.ssh import transport
 from twisted.internet import defer, protocol
@@ -12,15 +12,15 @@ from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.util import bin_string_to_hex, string_to_hex
 
 
-def get_int(data, length=4):
+def get_int(data: bytes, length: int=4) -> int:
     return int.from_bytes(data[:length], byteorder="big")
 
 
-def get_bool(data):
+def get_bool(data: bytes) -> bool:
     return bool(get_int(data, length=1))
 
 
-def get_string(data):
+def get_string(data: bytes) -> Tuple[int, bytes]:
     length = get_int(data, 4)
     value = data[4 : length + 4]
     return length + 4, value
@@ -93,7 +93,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
         # send packets from the frontend that were waiting to go to the backend
         for packet in self.factory.server.delayedPackets:
-            self.factory.server.sshParse.parse_packet("[SERVER]", packet[0], packet[1])
+            self.factory.server.sshParse.parse_num_packet("[SERVER]", packet[0], packet[1])
         self.factory.server.delayedPackets = []
 
         # backend auth is done, attackers will now be connected to the backend
@@ -151,7 +151,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         else:
             transport.SSHClientTransport.dispatchMessage(self, message_num, payload)
 
-    def packet_buffer(self, message_num, payload):
+    def packet_buffer(self, message_num: int, payload: bytes) -> None:
         """
         We can only proceed if authentication has been performed between client and proxy. Meanwhile we hold packets
         from the backend to the frontend in here.
@@ -164,12 +164,12 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
             if len(self.delayedPackets) > 0:
                 self.delayedPackets.append([message_num, payload])
                 for packet in self.delayedPackets:
-                    self.factory.server.sshParse.parse_packet(
+                    self.factory.server.sshParse.parse_num_packet(
                         "[CLIENT]", packet[0], packet[1]
                     )
                 self.delayedPackets = []
             else:
-                self.factory.server.sshParse.parse_packet(
+                self.factory.server.sshParse.parse_num_packet(
                     "[CLIENT]", message_num, payload
                 )
 
