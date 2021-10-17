@@ -73,7 +73,7 @@ Requirements
 
 Software required:
 
-* Python 3.6+
+* Python 3.7+
 * python-virtualenv
 
 For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.
