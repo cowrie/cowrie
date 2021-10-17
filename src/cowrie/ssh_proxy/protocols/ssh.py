@@ -406,6 +406,6 @@ class SSH(base_protocol.BaseProtocol):
                 the_channel = channel
                 break
         if the_channel is None:
-            raise KeyError 
-        else:         
+            raise KeyError
+        else:
             return the_channel

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import random
 from typing import Optional
@@ -20,36 +20,36 @@ O_O, O_Q, O_P = 1, 2, 3
 class Command_adduser(HoneyPotCommand):
     item: int
     output: List[Tuple[int, str]] = [
-            (O_O, "Adding user `%(username)s' ...\n"),
-            (O_O, "Adding new group `%(username)s' (1001) ...\n"),
-            (
-                O_O,
-                "Adding new user `%(username)s' (1001) with group `%(username)s' ...\n",
-            ),
-            (O_O, "Creating home directory `/home/%(username)s' ...\n"),
-            (O_O, "Copying files from `/etc/skel' ...\n"),
-            (O_P, "Password: "),
-            (O_P, "Password again: "),
-            (O_O, "\nChanging the user information for %(username)s\n"),
-            (O_O, "Enter the new value, or press ENTER for the default\n"),
-            (O_Q, "        Username []: "),
-            (O_Q, "        Full Name []: "),
-            (O_Q, "        Room Number []: "),
-            (O_Q, "        Work Phone []: "),
-            (O_Q, "        Home Phone []: "),
-            (O_Q, "        Mobile Phone []: "),
-            (O_Q, "        Country []: "),
-            (O_Q, "        City []: "),
-            (O_Q, "        Language []: "),
-            (O_Q, "        Favorite movie []: "),
-            (O_Q, "        Other []: "),
-            (O_Q, "Is the information correct? [Y/n] "),
-            (O_O, "ERROR: Some of the information you entered is invalid\n"),
-            (O_O, "Deleting user `%(username)s' ...\n"),
-            (O_O, "Deleting group `%(username)s' (1001) ...\n"),
-            (O_O, "Deleting home directory `/home/%(username)s' ...\n"),
-            (O_Q, "Try again? [Y/n] "),
-        ]
+        (O_O, "Adding user `%(username)s' ...\n"),
+        (O_O, "Adding new group `%(username)s' (1001) ...\n"),
+        (
+            O_O,
+            "Adding new user `%(username)s' (1001) with group `%(username)s' ...\n",
+        ),
+        (O_O, "Creating home directory `/home/%(username)s' ...\n"),
+        (O_O, "Copying files from `/etc/skel' ...\n"),
+        (O_P, "Password: "),
+        (O_P, "Password again: "),
+        (O_O, "\nChanging the user information for %(username)s\n"),
+        (O_O, "Enter the new value, or press ENTER for the default\n"),
+        (O_Q, "        Username []: "),
+        (O_Q, "        Full Name []: "),
+        (O_Q, "        Room Number []: "),
+        (O_Q, "        Work Phone []: "),
+        (O_Q, "        Home Phone []: "),
+        (O_Q, "        Mobile Phone []: "),
+        (O_Q, "        Country []: "),
+        (O_Q, "        City []: "),
+        (O_Q, "        Language []: "),
+        (O_Q, "        Favorite movie []: "),
+        (O_Q, "        Other []: "),
+        (O_Q, "Is the information correct? [Y/n] "),
+        (O_O, "ERROR: Some of the information you entered is invalid\n"),
+        (O_O, "Deleting user `%(username)s' ...\n"),
+        (O_O, "Deleting group `%(username)s' (1001) ...\n"),
+        (O_O, "Deleting home directory `/home/%(username)s' ...\n"),
+        (O_Q, "Try again? [Y/n] "),
+    ]
     username: Optional[str] = None
 
     def start(self):

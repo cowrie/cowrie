@@ -67,7 +67,9 @@ class Output(cowrie.core.output.Output):
     agent: Any
     scan_url: bool
     scan_file: bool
-    url_cache: Dict[str, datetime.datetime] = {}  # url and last time succesfully submitted
+    url_cache: Dict[
+        str, datetime.datetime
+    ] = {}  # url and last time succesfully submitted
 
     def start(self):
         """

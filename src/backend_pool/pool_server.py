@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import struct
 
-from typing import Optional
-
 from twisted.internet.protocol import Factory, Protocol
 from twisted.python import log
 

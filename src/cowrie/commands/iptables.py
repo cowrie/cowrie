@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import optparse
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -44,7 +44,7 @@ class Command_iptables(HoneyPotCommand):
     DEFAULT_TABLE = "filter"
 
     table: str = DEFAULT_TABLE
- 
+
     tables: Dict[str, Dict[str, List[Any]]]
 
     current_table: Dict[str, List[Any]]
@@ -228,7 +228,9 @@ class Command_iptables(HoneyPotCommand):
             )
 
         # Get the tables
-        self.tables: Dict[str, Dict[str, List[any]]] = getattr(self.protocol.user.server, "iptables")
+        self.tables: Dict[str, Dict[str, List[any]]] = getattr(
+            self.protocol.user.server, "iptables"
+        )
 
         # Verify selected table
         if not self.is_valid_table(table):
