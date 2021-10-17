@@ -23,6 +23,7 @@ Release 2.3.0
 * Allow SSLv3 connections for wget and curl
 * Support for 301 redirects in wget
 * Malshare update API (#1472)
+* Remove hpfeeds.py infavour of hpfeeds3.py
 
 Release 2.2.0
 *************
