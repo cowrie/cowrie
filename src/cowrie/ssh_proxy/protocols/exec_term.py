@@ -68,7 +68,7 @@ class ExecTerm(base_protocol.BaseProtocol):
             )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
-    def parse_packet(self, parent, payload):
+    def parse_packet(self, parent: str, payload: bytes) -> None:
         if self.ttylogEnabled:
             ttylog.ttylog_write(
                 self.ttylogFile, len(payload), ttylog.TYPE_OUTPUT, time.time(), payload
