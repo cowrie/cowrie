@@ -60,7 +60,7 @@ class PoolService:
             "backend_pool", "guest_telnet_port", fallback=-1
         )
 
-        self.local_pool: str = (
+        self.local_pool: bool = (
             CowrieConfig.get("proxy", "pool", fallback="local") == "local"
         )
         self.pool_only: bool = CowrieConfig.getboolean(

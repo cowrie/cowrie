@@ -7,9 +7,9 @@ This module contains ...
 
 from __future__ import annotations
 
-
-import time
 from configparser import NoOptionError
+import time
+from typing import Optional
 
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory, keys
@@ -32,11 +32,11 @@ class CowrieSSHFactory(factory.SSHFactory):
     They listen directly to the TCP port
     """
 
-    starttime: float | None = None
+    starttime: Optional[float] = None
     privateKeys = None
     publicKeys = None
     primes = None
-    portal: tp.Portal | None = None  # gets set by plugin
+    portal: Optional[tp.Portal] = None  # gets set by plugin
     tac = None  # gets set later
     ourVersionString: str = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"

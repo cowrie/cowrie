@@ -131,7 +131,7 @@ class SFTP(base_protocol.BaseProtocol):
         sftp_num: int = self.extract_int(1)
         packet: str = self.packetLayout[sftp_num]
 
-        self.prevID: str = self.ID
+        self.prevID: int = self.ID
         self.ID: int = self.extract_int(4)
 
         self.path: bytes = b""
