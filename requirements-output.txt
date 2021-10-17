@@ -29,10 +29,6 @@ slackclient==2.9.3
 # influxdb
 influxdb==5.3.1
 
-# kafka
-afkak==21.5.0.post0
-python-snappy==0.6.0
-
 # dblog_xmpp
 wokkel==18.0.0
 
