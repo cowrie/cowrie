@@ -65,7 +65,7 @@ class Command_free(HoneyPotCommand):
                 raw_mem_stats[key] = int(value / 1000)
         elif fmt == "human":
             magnitude = ["B", "M", "G", "T", "Z"]
-            for key, value in raw_mem_stats.iteritems():
+            for key, value in raw_mem_stats.items():
                 current_magnitude = 0
 
                 # Keep dividing until we get a sane magnitude
