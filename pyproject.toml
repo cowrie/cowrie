@@ -29,16 +29,3 @@ disallow_any_expr           = false
 disallow_any_generics       = false
 disallow_untyped_calls      = false
 warn_unused_ignores         = false
-
-# Disable some checks until the effected modules fully adopt mypy
-
-["tool.mypy-twisted.conch.*"]
-allow_untyped_defs = true
-check_untyped_defs = false
-
-[tool.mypy-twisted.conch.ssh.keys]
-warn_return_any = false
-
-["tool.mypy-twisted.cred.*"]
-allow_untyped_defs = true
-check_untyped_defs = false
