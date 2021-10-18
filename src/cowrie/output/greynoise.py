@@ -49,12 +49,14 @@ class Output(cowrie.core.output.Output):
             if query["noise"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
+                    session=entry["session"],
                     format=f"GreyNoise: {query['ip']} has been observed scanning the Internet. GreyNoise "
                     f"classification is {query['classification']} and the believed owner is {query['name']}",
                 )
             if query["riot"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
+                    session=entry["session"],
                     format=f"GreyNoise: {query['ip']} belongs to a benign service or provider. "
                     f"The owner is {query['name']}.",
                 )
