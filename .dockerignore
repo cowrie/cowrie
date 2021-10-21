@@ -1,0 +1,5 @@
+.direnv
+.tox
+.git
+.github
+.eggs
