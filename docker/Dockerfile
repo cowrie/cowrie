@@ -50,7 +50,7 @@ WORKDIR ${COWRIE_HOME}
 
 # Copy requirements first to use Docker caching better
 RUN mkdir -p ${COWRIE_HOME}/cowrie-git
-COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git/
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
