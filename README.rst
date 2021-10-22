@@ -1,10 +1,6 @@
 Cowrie
 ######
 
-|travis|_
-|circleci|_
-|codecov|_
-
 Welcome to the Cowrie GitHub repository
 *****************************************
 
@@ -61,17 +57,32 @@ Docker versions are available.
 
 * To get started quickly and give Cowrie a try, run::
 
-    $ docker run -p 2222:2222 cowrie/cowrie
+    $ docker run -p 2222:2222 cowrie/cowrie:latest
     $ ssh -p 2222 root@localhost
 
 * On Docker Hub: https://hub.docker.com/r/cowrie/cowrie
 
-* Or get the Dockerfile directly at https://github.com/cowrie/docker-cowrie
+* Configuring Cowrie in Docker
+
+Cowrie in Docker can be configured using environment variables. The
+variables start with COWRIE_ then have the section name in capitals,
+followed by the stanza in capitals. An example is below to enable
+telnet support::
+
+    COWRIE_TELNET_ENABLED=yes
+
+Alternatively, Cowrie in Docker can use an `etc` volume to store
+configuration data.  Create `cowrie.cfg` inside the etc volume
+with the following contents to enable telnet in your Cowrie Honeypot
+in Docker::
+
+    [telnet]
+    enabled = yes
 
 Requirements
 *****************************************
 
-Software required:
+Software required to run locally:
 
 * Python 3.7+
 * python-virtualenv
@@ -95,10 +106,6 @@ Files of interest:
 * `bin/createfs <https://github.com/cowrie/cowrie/blob/master/bin/createfs>`_ - used to create the fake filesystem
 * `bin/playlog <https://github.com/cowrie/cowrie/blob/master/bin/playlog>`_ - utility to replay session logs
 
-Data Sharing
-*****************************************
-Cowrie will by default upload data on crashes and Python exceptions to api.cowrie.org. This information is used to improve the honeypot and is not shared with third parties. It can be disabled by setting `enabled=false` in `[output_crashreporter]`.
-
 Contributors
 ***************
 
@@ -111,12 +118,3 @@ Many people have contributed to Cowrie over the years. Special thanks to:
 * Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
 * Guilherme Borges (sgtpepperpt) for SSH and telnet proxy (GSoC 2019)
 * And many many others.
-
-.. |travis| image:: https://travis-ci.com/cowrie/cowrie.svg?branch=master
-.. _travis: https://travis-ci.com/cowrie/cowrie
-
-.. |circleci| image:: https://circleci.com/gh/cowrie/cowrie.svg?style=svg
-.. _circleci: https://circleci.com/gh/cowrie/cowrie
-
-.. |codecov| image:: https://codecov.io/gh/cowrie/cowrie/branch/master/graph/badge.svg
-.. _codecov: https://codecov.io/gh/cowrie/cowrie
