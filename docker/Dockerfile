@@ -4,6 +4,7 @@
 
 ARG ARCH=
 ARG BUILD_DATE
+ARG TAG
 FROM ${ARCH}debian:bullseye-slim as builder
 
 WORKDIR /
@@ -44,74 +45,77 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       libsnappy-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Build a cowrie environment from github master HEAD.
-
 USER ${COWRIE_USER}
-
 WORKDIR ${COWRIE_HOME}
 
-COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
+# Copy requirements first to use Docker caching better
+RUN mkdir -p ${COWRIE_HOME}/cowrie-git
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
     pip install --no-cache-dir --upgrade pip wheel setuptools && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
-    pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
-    python -m compileall ${COWRIE_HOME}
+    pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
+
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 
-FROM ${ARCH}debian:bullseye-slim AS runtime
+FROM gcr.io/distroless/python3-debian11 AS runtime
+#FROM gcr.io/distroless/python3-debian11:debug AS runtime
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
 LABEL org.opencontainers.image.documentation="https://cowrie.readthedocs.io"
 LABEL org.opencontainers.image.source="https://github.com/cowrie/docker-cowrie"
-LABEL org.opencontainers.image.version="version"
+LABEL org.opencontainers.image.version="${TAG}"
 LABEL org.opencontainers.image.revision="Source control revision identifier for the packaged software."
 LABEL org.opencontainers.image.vendor="Cowrie"
 LABEL org.opencontainers.image.licenses="BSD-3-Clause"
-LABEL org.opencontainers.image.ref.name="latest"
+LABEL org.opencontainers.image.ref.name="${TAG}"
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
-LABEL org.opencontainers.image.base.digest="7beb0248fd81"
-LABEL org.opencontainers.image.base.name="docker.io/library/debian:bullseye-slim"
+#LABEL org.opencontainers.image.base.digest="7beb0248fd81"
+LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian11"
 
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
 
-RUN groupadd -r ${COWRIE_GROUP} && \
-    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+#RUN groupadd -r ${COWRIE_GROUP} && \
+#    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+COPY --from=builder --chown=0:0 /etc/passwd /etc/passwd
 
-RUN export DEBIAN_FRONTEND=noninteractive; \
-    apt-get update && \
-    apt-get install -y \
-        -o APT::Install-Suggests=false \
-        -o APT::Install-Recommends=false \
-      libssl1.1 \
-      ca-certificates \
-      libffi7 \
-      procps \
-      python3 \
-      python3-distutils && \
-    rm -rf /var/lib/apt/lists/* && \
-    ln -s /usr/bin/python3 /usr/local/bin/python
+#RUN export DEBIAN_FRONTEND=noninteractive; \
+#    apt-get update && \
+#    apt-get install -y \
+#        -o APT::Install-Suggests=false \
+#        -o APT::Install-Recommends=false \
+#      libssl1.1 \
+#      ca-certificates \
+#      libffi7 \
+#      procps \
+#      python3 \
+#      python3-distutils && \
+#    rm -rf /var/lib/apt/lists/* && \
+#    ln -s /usr/bin/python3 /usr/local/bin/python
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-ENV PATH=${COWRIE_HOME}/cowrie-git/bin:${PATH}
-ENV COWRIE_STDOUT=yes
+RUN python3 -m compileall ${COWRIE_HOME} /usr/lib/python3.9
+
+VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
 USER ${COWRIE_USER}
 WORKDIR ${COWRIE_HOME}/cowrie-git
 
-# preserve .dist file when etc/ volume is mounted
-RUN cp ${COWRIE_HOME}/cowrie-git/etc/cowrie.cfg.dist ${COWRIE_HOME}/cowrie-git
-VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
-RUN mv ${COWRIE_HOME}/cowrie-git/cowrie.cfg.dist ${COWRIE_HOME}/cowrie-git/etc
+ENV PATH=${COWRIE_HOME}/cowrie-env/bin:${PATH}
+ENV PYTHONPATH=${COWRIE_HOME}/cowrie-git/src
+ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT [ "cowrie" ]
-CMD [ "start", "-n" ]
+ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
+CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
+
 EXPOSE 2222 2223

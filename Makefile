@@ -77,7 +77,7 @@ TAG=$(shell git rev-parse --short=8 HEAD)
 
 .PHONY: docker-build
 docker-build: docker/Dockerfile ## Build Docker image
-	#docker build -t ${IMAGENAME}:${TAG} --no-cache --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+	#docker build -t ${IMAGENAME}:${TAG} --no-cache --build-arg TAG=${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 	docker build -t ${IMAGENAME}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-run
@@ -87,6 +87,8 @@ docker-run: docker-start ## Run Docker container
 docker-push: docker-build ## Push Docker image to Docker Hub
 	@echo "Pushing image to GitHub Docker Registry...\n"
 	docker push $(IMAGE):$(TAG)
+	docker tag $(IMAGE):$(TAG) $(IMAGE):latest
+	docker push $(IMAGE):latest
 
 .PHONY: docker-start
 docker-start: docker-create-volumes ## Start Docker container
