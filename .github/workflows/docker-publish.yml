@@ -1,6 +1,7 @@
+---
 name: Docker
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     # Publish `master` as Docker `latest` image.
     branches:
@@ -57,8 +58,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        # TODO: Create a PAT with `read:packages` and `write:packages` scopes and save it as an Actions secret `CR_PAT`
-        # run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+          # TODO: Create a PAT with `read:packages` and `write:packages` scopes and save it as an Actions secret `CR_PAT`
+          # run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push image to GitHub Container Registry
         run: |
