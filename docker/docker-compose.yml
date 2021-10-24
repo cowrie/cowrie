@@ -1,0 +1,19 @@
+---
+version: '3'
+
+volumes:
+  cowrie-etc:
+  cowrie-var:
+
+services:
+  cowrie:
+    restart: always
+    build:
+      context: context
+      dockerfile: Dockerfile
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+    volumes:
+      - cowrie-etc:/cowrie/cowrie-git/etc
+      - cowrie-var:/cowrie/cowrie-git/var

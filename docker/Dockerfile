@@ -50,7 +50,7 @@ WORKDIR ${COWRIE_HOME}
 
 # Copy requirements first to use Docker caching better
 RUN mkdir -p ${COWRIE_HOME}/cowrie-git
-COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git/
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
@@ -87,6 +87,7 @@ ENV COWRIE_GROUP=cowrie \
 #RUN groupadd -r ${COWRIE_GROUP} && \
 #    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
 COPY --from=builder --chown=0:0 /etc/passwd /etc/passwd
+COPY --from=builder --chown=0:0 /etc/group /etc/group
 
 #RUN export DEBIAN_FRONTEND=noninteractive; \
 #    apt-get update && \
