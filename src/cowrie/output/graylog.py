@@ -21,6 +21,7 @@ class Output(cowrie.core.output.Output):
         if 'True' in self.tls:
             self.cert = CowrieConfig.get("output_graylog_gelf", "cert")
             self.cert_key = CowrieConfig.get("output_graylog_gelf", "key")
+            self.verify = CowrieConfig.get("output_graylog_gelf", "verify")
 
         self.headers = {
             'Content-Type': 'application/json'
@@ -53,7 +54,7 @@ class Output(cowrie.core.output.Output):
         else:
             self.gelf = requests.post(
                 self.url,
-                verify=False,
+                verify=self.verify,
                 cert=(self.cert, self.cert_key),
                 headers=self.headers,
                 data=json.dumps(self.gelf_message)

@@ -783,6 +783,7 @@ url = http://127.0.0.1:12201/gelf
 tls = False
 cert =
 key =
+verify = True
 #
 # Local Syslog output module
 #

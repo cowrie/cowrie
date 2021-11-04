@@ -68,9 +68,13 @@ Open the Cowrie configuration file and find this block ::
     tls = False
     cert =
     key =
+    verify =
 
 Enable this block and specify url of your input.
-If you need tls - change status to True and specify path to your tls cert and key.
+
+- If you need tls - change status to True, and specify path to your tls cert and key.
+
+- If your using self signed certificatet you can disable certificate validation with key **False** or specify path to you can provide a custom certificate authority bundle
 
 Restart Cowrie
 
