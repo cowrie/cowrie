@@ -10,6 +10,14 @@ on:  # yamllint disable-line rule:truthy
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Hadolint'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

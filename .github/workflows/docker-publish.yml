@@ -14,6 +14,16 @@ on:  # yamllint disable-line rule:truthy
   # Run tests for any PRs.
   pull_request:
 
+  # Run manually
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Build and publish Docker image'
+
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: cowrie
