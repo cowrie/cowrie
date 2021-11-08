@@ -1,7 +1,19 @@
 ---
 name: Tox
 
-on: [push, pull_request]  # yamllint disable-line rule:truthy
+on:  # yamllint disable-line rule:truthy
+  push:
+
+  pull_request:
+
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Tox'
 
 jobs:
   build:
