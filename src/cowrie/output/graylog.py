@@ -2,31 +2,26 @@
 Simple Graylog HTTP Graylog Extended Log Format (GELF) logger.
 """
 
-import cowrie.core.output
+from __future__ import annotations
+
 import json
-import os
-import requests
 import time
 
+from io import BytesIO
+from twisted.internet import reactor
+from twisted.internet.ssl import ClientContextFactory
+from twisted.web import client, http_headers
+from twisted.web.client import FileBodyProducer
+
+import cowrie.core.output
 from cowrie.core.config import CowrieConfig
-
-
-url: bytes
 
 
 class Output(cowrie.core.output.Output):
     def start(self):
-        self.url = CowrieConfig.get("output_graylog_gelf", "url")
-        self.tls = CowrieConfig.get("output_graylog_gelf", "tls")
-        if 'True' in self.tls:
-            self.cert = CowrieConfig.get("output_graylog_gelf", "cert")
-            self.cert_key = CowrieConfig.get("output_graylog_gelf", "key")
-            self.verify = CowrieConfig.get("output_graylog_gelf", "verify")
-
-        self.headers = {
-            'Content-Type': 'application/json'
-        }
-        self.hostname = os.uname()[1]
+        self.url = CowrieConfig.get("output_graylog", "url").encode("utf8")
+        contextFactory = WebClientContextFactory()
+        self.agent = client.Agent(reactor, contextFactory)
 
     def stop(self):
         pass
@@ -37,25 +32,27 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_"):
                 del logentry[i]
 
-        self.gelf_message = {
+        gelf_message = {
             'version': '1.1',
-            'host': self.hostname,
+            'host': logentry["sensor"],
             'timestamp': time.time(),
             'short_message': json.dumps(logentry),
             'level': 1,
         }
 
-        if 'False' in self.tls:
-            self.gelf = requests.post(
-                self.url,
-                headers=self.headers,
-                data=json.dumps(self.gelf_message)
-            )
-        else:
-            self.gelf = requests.post(
-                self.url,
-                verify=self.verify,
-                cert=(self.cert, self.cert_key),
-                headers=self.headers,
-                data=json.dumps(self.gelf_message)
-            )
+        self.postentry(gelf_message)
+
+    def postentry(self, entry):
+        headers = http_headers.Headers(
+            {
+                b"Content-Type": [b"application/json"],
+            }
+        )
+
+        body = FileBodyProducer(BytesIO(json.dumps(entry).encode("utf8")))
+        req = self.agent.request(b"POST", self.url, headers, body)
+
+
+class WebClientContextFactory(ClientContextFactory):
+    def getContext(self, hostname, port):
+        return ClientContextFactory.getContext(self)

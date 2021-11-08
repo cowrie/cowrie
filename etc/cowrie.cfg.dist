@@ -776,14 +776,10 @@ userid = userid_here
 auth_key = auth_key_here
 batch_size = 100
 #
-# Graylog Extended Log Format (GELF) HTTP logging module
-[output_graylog_gelf]
+# Graylog logging module for GELF http input
+[output_graylog]
 enabled = false
-url = http://127.0.0.1:12201/gelf
-tls = False
-cert =
-key =
-verify = True
+url = http://graylog.example.com:122011/gelf
 #
 # Local Syslog output module
 #

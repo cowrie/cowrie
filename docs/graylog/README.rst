@@ -1,15 +1,15 @@
 How to send Cowrie output to Graylog via syslog
-####################################
+###############################################
 
 
 Prerequisites
-======================
+=============
 
 * Working Cowrie installation
 * Working Graylog installation
 
 Cowrie Configuration
-======================
+====================
 
 Open the Cowrie configuration file and uncomment these 3 lines::
 
@@ -20,7 +20,7 @@ Open the Cowrie configuration file and uncomment these 3 lines::
 Restart Cowrie
 
 Graylog Configuration
-======================
+=====================
 
 Open the Graylog web interface and click on the **System** drop-down in the top menu. From the drop-down menu select **Inputs**. Select **Syslog UDP** from the drop-down menu and click the **Launch new input** button. In the modal dialog enter the following information::
 
@@ -31,7 +31,7 @@ Open the Graylog web interface and click on the **System** drop-down in the top 
 Then click **Launch.**
 
 Syslog Configuration
-======================
+====================
 
 Create a rsyslog configuration file in /etc/rsyslog.d::
 
@@ -47,46 +47,63 @@ Restart rsyslog::
     $ sudo service rsyslog restart
 
 How to send Cowrie output to Graylog via HTTP GELF input
-####################################
+########################################################
 
 
 Prerequisites
-======================
+=============
 
 * Working Cowrie installation
 * Working Graylog installation
 * Working HTTP Gelf Input on Graylog
 
 Cowrie Configuration
-======================
+====================
 
 Open the Cowrie configuration file and find this block ::
 
-    [output_graylog_gelf]
+    [output_graylog]
     enabled = false
     url = http://127.0.0.1:12201/gelf
-    tls = False
-    cert =
-    key =
-    verify =
 
 Enable this block and specify url of your input.
-
-- If you need tls - change status to True, and specify path to your tls cert and key.
-
-- If your using self signed certificatet you can disable certificate validation with key **False** or specify path to you can provide a custom certificate authority bundle
 
 Restart Cowrie
 
 Graylog Configuration
-======================
+=====================
 
 Open the Graylog web interface and click on the **System** drop-down in the top menu. From the drop-down menu select **Inputs**. Select **GELF HTTP** from the drop-down menu and click the **Launch new input** button. In the modal dialog enter the information about your input.
+
+Click **Manage Extractors** near created input. On new page click **Actions** -> **Import extractors**  and paste this config ::
+
+    {
+      "extractors": [
+        {
+          "title": "Cowrie Json Parser",
+          "extractor_type": "json",
+          "converters": [],
+          "order": 0,
+          "cursor_strategy": "copy",
+          "source_field": "message",
+          "target_field": "",
+          "extractor_config": {
+            "list_separator": ", ",
+            "kv_separator": "=",
+            "key_prefix": "",
+            "key_separator": "_",
+            "replace_key_whitespace": false,
+            "key_whitespace_replacement": "_"
+          },
+          "condition_type": "none",
+          "condition_value": ""
+        }
+      ],
+      "version": "4.2.1"
+    }
 
 Then click **Launch.**
 
 Note:
-
-- If TLS is enabled - in URL block you must specify **https://**
 
 - Do not remove **/gelf** from the end of URL block, expect of case when your proxing this address behind nginx;
