@@ -50,7 +50,7 @@ class Output(cowrie.core.output.Output):
         )
 
         body = FileBodyProducer(BytesIO(json.dumps(entry).encode("utf8")))
-        req = self.agent.request(b"POST", self.url, headers, body)
+        self.agent.request(b"POST", self.url, headers, body)
 
 
 class WebClientContextFactory(ClientContextFactory):
