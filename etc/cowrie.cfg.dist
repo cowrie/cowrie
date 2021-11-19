@@ -775,8 +775,12 @@ enabled = false
 userid = userid_here
 auth_key = auth_key_here
 batch_size = 100
-
-
+#
+# Graylog logging module for GELF http input
+[output_graylog]
+enabled = false
+url = http://graylog.example.com:122011/gelf
+#
 # Local Syslog output module
 #
 # This sends log messages to the local syslog daemon.
