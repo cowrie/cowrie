@@ -34,7 +34,7 @@ class FTP(ftplib.FTP):
             (self.host, self.port), self.timeout, self.source_address
         )
         self.af = self.sock.family
-        self.file = self.sock.makefile(mode="rb")
+        self.file = self.sock.makefile(mode="r")
         self.welcome = self.getresp()
         return self.welcome
 
