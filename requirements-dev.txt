@@ -19,5 +19,5 @@ tox==3.24.4
 twistedchecker==0.7.4
 types-python-dateutil==2.8.2; python_version>'3.8'
 types-redis==3.5.17; python_version>'3.8'
-types-requests==2.26.0; python_version>'3.8''
+types-requests==2.26.0; python_version>'3.8'
 yamllint==1.26.3
