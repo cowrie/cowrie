@@ -84,7 +84,10 @@ class Command_ping(HoneyPotCommand):
             )
 
         self.running = True
-        self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
+        try:
+            self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
+        except Exception:
+            print("ping: Temporary failure in name resolution")
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
