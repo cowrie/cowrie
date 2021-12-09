@@ -79,6 +79,7 @@ class Command_ping(HoneyPotCommand):
                 self.exit()
         else:
             s = hashlib.md5((self.host).encode("utf-8")).hexdigest()
+            print(s)
             self.ip = ".".join(
                 [str(int(x, 16)) for x in (s[0:2], s[2:4], s[4:6], s[6:8])]
             )
@@ -87,7 +88,7 @@ class Command_ping(HoneyPotCommand):
         try:
             self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
         except Exception:
-            print("ping: Temporary failure in name resolution")
+            print("ping: {}: Temporary failure in name resolution".format(self.host))
         self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
