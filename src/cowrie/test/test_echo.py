@@ -18,16 +18,24 @@ PROMPT = b"root@unitTest:~# "
 class ShellEchoCommandTests(unittest.TestCase):
     """Test for echo command from cowrie/commands/base.py."""
 
-    def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
+    proto = None
+    tr = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
-        self.proto.makeConnection(self.tr)
-        self.tr.clear()
+        cls.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        cls.proto.makeConnection(cls.tr)
+        cls.tr.clear()
 
-    def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
+    def setUp(self) -> None:
+        self.tr.clear()
 
     def test_echo_command_001(self) -> None:
         self.proto.lineReceived(b"echo \"test\"\n")
@@ -78,7 +86,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_echo_command_013(self) -> None:
-        self.proto.lineReceived(b'echo "ls""ls"')
+        self.proto.lineReceived(b"echo \"ls\"\"ls\"")
         self.assertEqual(self.tr.value(), b"lsls\n" + PROMPT)
 
     def test_echo_command_014(self) -> None:
@@ -130,5 +138,5 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test_test_test_test_test\n" + PROMPT)
 
     def test_echo_command_026(self) -> None:
-        self.proto.lineReceived(b'echo "TEST1: `echo test1`, TEST2: `echo test2`"')
+        self.proto.lineReceived(b"echo \"TEST1: `echo test1`, TEST2: `echo test2`\"")
         self.assertEqual(self.tr.value(), b"TEST1: test1, TEST2: test2\n" + PROMPT)

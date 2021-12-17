@@ -18,16 +18,24 @@ PROMPT = b"root@unitTest:~# "
 class ShellUniqCommandTests(unittest.TestCase):
     """Tests for cowrie/commands/uniq.py."""
 
-    def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
+    proto = None
+    tr = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
-        self.proto.makeConnection(self.tr)
-        self.tr.clear()
+        cls.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        cls.proto.makeConnection(cls.tr)
+        cls.tr.clear()
 
-    def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
+    def setUp(self) -> None:
+        self.tr.clear()
 
     def test_uniq_command_001(self) -> None:
         self.proto.lineReceived(b"echo test | uniq\n")

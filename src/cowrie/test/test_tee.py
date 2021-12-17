@@ -18,27 +18,35 @@ PROMPT = b"root@unitTest:~# "
 class ShellTeeCommandTests(unittest.TestCase):
     """Tests for cowrie/commands/tee.py."""
 
-    def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
+    proto = None
+    tr = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
-        self.proto.makeConnection(self.tr)
+        cls.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        cls.proto.makeConnection(cls.tr)
+        cls.tr.clear()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
+    def setUp(self) -> None:
         self.tr.clear()
 
-    def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
-
     def test_tee_command_001(self) -> None:
-        """No such file."""
         self.proto.lineReceived(b"tee /a/b/c/d\n")
         self.assertEqual(
-            self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n"  # TODO: Is PROMPT missing?..
+            self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n"
         )
+        # tee still waiting input from stdin
+        self.proto.handle_CTRL_C()
 
     def test_tee_command_002(self) -> None:
-        """Argument - (stdin)."""
-        self.proto.lineReceived(b"tee /a/b/c/d\n")  # TODO: Where is a -?..
+        self.proto.lineReceived(b"tee /a/b/c/d\n")
         self.proto.handle_CTRL_C()
         self.assertEqual(
             self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n^C\n" + PROMPT
