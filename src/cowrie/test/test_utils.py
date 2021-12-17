@@ -36,27 +36,20 @@ class UtilsTestCase(unittest.TestCase):
             "[ssh]\n"
             "listen_addr = 1.1.1.1\n"
         )
-        self.assertEqual(
-            ["tcp:2223:interface=1.1.1.1"],
-            get_endpoints_from_section(cfg, "ssh", 2223),
-        )
+        self.assertEqual(["tcp:2223:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2223))
 
         cfg = get_config(
             "[ssh]\n"
             "listen_addr = 1.1.1.1\n"
         )
-        self.assertEqual(
-            ["tcp:2224:interface=1.1.1.1"],
-            get_endpoints_from_section(cfg, "ssh", 2224),
-        )
+        self.assertEqual(["tcp:2224:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2224))
 
         cfg = get_config(
             "[ssh]\n"
             "listen_addr = 1.1.1.1 2.2.2.2\n"
         )
         self.assertEqual(
-            ["tcp:2223:interface=1.1.1.1", "tcp:2223:interface=2.2.2.2"],
-            get_endpoints_from_section(cfg, "ssh", 2223),
+            ["tcp:2223:interface=1.1.1.1", "tcp:2223:interface=2.2.2.2"], get_endpoints_from_section(cfg, "ssh", 2223)
         )
 
         cfg = get_config(
@@ -65,8 +58,7 @@ class UtilsTestCase(unittest.TestCase):
             "listen_port = 23\n"
         )
         self.assertEqual(
-            ["tcp:23:interface=1.1.1.1", "tcp:23:interface=2.2.2.2"],
-            get_endpoints_from_section(cfg, "ssh", 2223),
+            ["tcp:23:interface=1.1.1.1", "tcp:23:interface=2.2.2.2"], get_endpoints_from_section(cfg, "ssh", 2223)
         )
 
         cfg = get_config(
@@ -74,25 +66,20 @@ class UtilsTestCase(unittest.TestCase):
             "listen_endpoints = tcp:23:interface=1.1.1.1 tcp:2323:interface=1.1.1.1\n"
         )
         self.assertEqual(
-            ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=1.1.1.1"],
-            get_endpoints_from_section(cfg, "ssh", 2223),
+            ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2223)
         )
 
     def test_create_endpoint_services(self) -> None:
         parent = MultiService()
-        create_endpoint_services(
-            reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory()
-        )
+        create_endpoint_services(reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory())
+        self.assertEqual(len(parent.services), 1)
+
+        parent = MultiService()
+        create_endpoint_services(reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory())
         self.assertEqual(len(parent.services), 1)
 
         parent = MultiService()
         create_endpoint_services(
-            reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory()
-        )
-        self.assertEqual(len(parent.services), 1)
-
-        parent = MultiService()
-        create_endpoint_services(
-            reactor, parent, ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=2.2.2.2"], protocol.Factory(),
+            reactor, parent, ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=2.2.2.2"], protocol.Factory()
         )
         self.assertEqual(len(parent.services), 2)

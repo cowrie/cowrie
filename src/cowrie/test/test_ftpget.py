@@ -20,29 +20,31 @@ PROMPT = b"root@unitTest:~# "
 class ShellFtpGetCommandTests(unittest.TestCase):
     """Tests for cowrie/commands/ftpget.py."""
 
+    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+    tr = FakeTransport("1.1.1.1", "1111")
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto.makeConnection(cls.tr)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
     def setUp(self) -> None:
-        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("1.1.1.1", "1111")
-        self.proto.makeConnection(self.tr)
         self.tr.clear()
 
-    def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
-
-    def test_help_command(self):
+    def test_help_command(self) -> None:
+        usage = b"BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.\n" \
+                b"\n" \
+                b"Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE\n" \
+                b"\n" \
+                b"Download a file via FTP\n" \
+                b"\n" \
+                b"    -c Continue previous transfer\n" \
+                b"    -v Verbose\n" \
+                b"    -u USER     Username\n" \
+                b"    -p PASS     Password\n" \
+                b"    -P NUM      Port\n\n"
         self.proto.lineReceived(b"ftpget\n")
-        self.assertEqual(
-            self.tr.value(),
-            b"""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
-
-Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
-
-Download a file via FTP
-
-    -c Continue previous transfer
-    -v Verbose
-    -u USER     Username
-    -p PASS     Password
-    -P NUM      Port\n\n"""
-            + PROMPT,
-        )
+        self.assertEqual(self.tr.value(), usage + PROMPT)

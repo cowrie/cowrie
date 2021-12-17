@@ -31,6 +31,5 @@ class ShellTftpCommandTests(unittest.TestCase):
     def test_echo_command_001(self) -> None:
         self.proto.lineReceived(b"tftp\n")
         self.assertEqual(
-            self.tr.value(),
-            b"usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n" + PROMPT,
+            self.tr.value(), b"usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n" + PROMPT
         )

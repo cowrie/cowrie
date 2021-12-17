@@ -50,35 +50,35 @@ class ShellChmodCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"chmod +x")
         self.assertEqual(
             self.tr.value(),
-            b"chmod: missing operand after \xe2\x80\x98+x\xe2\x80\x99\n" + TRY_CHMOD_HELP_MSG + PROMPT,
+            b"chmod: missing operand after \xe2\x80\x98+x\xe2\x80\x99\n" + TRY_CHMOD_HELP_MSG + PROMPT
         )
 
     def test_chmod_command_004(self) -> None:
         self.proto.lineReceived(b"chmod -A")
         self.assertEqual(
             self.tr.value(),
-            b"chmod: invalid option -- 'A'\n" + TRY_CHMOD_HELP_MSG + PROMPT,
+            b"chmod: invalid option -- 'A'\n" + TRY_CHMOD_HELP_MSG + PROMPT
         )
 
     def test_chmod_command_005(self) -> None:
         self.proto.lineReceived(b"chmod --A")
         self.assertEqual(
             self.tr.value(),
-            b"chmod: unrecognized option '--A'\n" + TRY_CHMOD_HELP_MSG + PROMPT,
+            b"chmod: unrecognized option '--A'\n" + TRY_CHMOD_HELP_MSG + PROMPT
         )
 
     def test_chmod_command_006(self) -> None:
         self.proto.lineReceived(b"chmod -x abcd")
         self.assertEqual(
             self.tr.value(),
-            b"chmod: cannot access 'abcd': No such file or directory\n" + PROMPT,
+            b"chmod: cannot access 'abcd': No such file or directory\n" + PROMPT
         )
 
     def test_chmod_command_007(self) -> None:
         self.proto.lineReceived(b"chmod abcd efgh")
         self.assertEqual(
             self.tr.value(),
-            b"chmod: invalid mode: \xe2\x80\x98abcd\xe2\x80\x99\n" + TRY_CHMOD_HELP_MSG + PROMPT,
+            b"chmod: invalid mode: \xe2\x80\x98abcd\xe2\x80\x99\n" + TRY_CHMOD_HELP_MSG + PROMPT
         )
 
     def test_chmod_command_008(self) -> None:
