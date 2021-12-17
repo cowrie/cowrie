@@ -5,7 +5,8 @@ from io import StringIO
 from twisted.application.service import MultiService
 from twisted.internet import reactor  # type: ignore
 from twisted.internet import protocol
-from twisted.trial import unittest
+# from twisted.trial import unittest
+import unittest
 
 from cowrie.core.utils import (
     create_endpoint_services,

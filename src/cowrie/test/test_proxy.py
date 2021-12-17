@@ -10,7 +10,8 @@ import os
 
 from twisted.cred import portal
 from twisted.internet import reactor  # type: ignore
-from twisted.trial import unittest
+# from twisted.trial import unittest
+import unittest
 
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
 from cowrie.core.realm import HoneyPotRealm
