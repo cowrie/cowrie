@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import os
 import unittest
+from typing import Optional
 
-from cowrie.shell import protocol
-from cowrie.test import fake_server, fake_transport
+from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
@@ -19,17 +21,14 @@ PROMPT = b"root@unitTest:~# "
 class ShellChmodCommandTests(unittest.TestCase):
     """Test for cowrie/commands/chmod.py."""
 
-    proto = None
-    tr = None
+    proto: Optional[HoneyPotInteractiveProtocol] = None
+    tr: Optional[FakeTransport] = None
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer())
-        )
-        cls.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        cls.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        cls.tr = FakeTransport("1.1.1.1", "1111")
         cls.proto.makeConnection(cls.tr)
-        cls.tr.clear()
 
     @classmethod
     def tearDownClass(cls) -> None:
