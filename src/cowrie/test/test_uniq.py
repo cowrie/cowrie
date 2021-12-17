@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import unittest
-from typing import Optional
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -20,13 +19,11 @@ PROMPT = b"root@unitTest:~# "
 class ShellUniqCommandTests(unittest.TestCase):
     """Tests for cowrie/commands/uniq.py."""
 
-    proto: Optional[HoneyPotInteractiveProtocol] = None
-    tr: Optional[FakeTransport] = None
+    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+    tr = FakeTransport("1.1.1.1", "1111")
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        cls.tr = FakeTransport("1.1.1.1", "1111")
         cls.proto.makeConnection(cls.tr)
 
     @classmethod
