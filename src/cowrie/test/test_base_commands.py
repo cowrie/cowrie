@@ -246,14 +246,15 @@ class ShellPipeCommandsTests(unittest.TestCase):
         )
         self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
+        self.tr.clear()
 
     def test_shell_pipe_with_cat_tail(self):
         self.proto.lineReceived(b"echo test | tail -n 1\n")
-        self.assertEqual(self.tr.value(), PROMPT + b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_shell_pipe_with_cat_head(self):
         self.proto.lineReceived(b"echo test | head -n 1\n")
-        self.assertEqual(self.tr.value(), PROMPT + b"test\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     # def test_shell_busybox_with_cat_and_sudo_grep(self):
     #     self.proto.lineReceived(b'busybox cat /proc/cpuinfo | sudo grep cpu \n')
