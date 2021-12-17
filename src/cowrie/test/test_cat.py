@@ -5,8 +5,9 @@ from __future__ import annotations
 import os
 import unittest
 
-from cowrie.shell import protocol
-from cowrie.test import fake_server, fake_transport
+from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
@@ -19,10 +20,8 @@ class ShellCatCommandTests(unittest.TestCase):
     """Test for cowrie/commands/cat.py."""
 
     def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer())
-        )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
@@ -30,26 +29,22 @@ class ShellCatCommandTests(unittest.TestCase):
         self.proto.connectionLost("tearDown From Unit Test")
 
     def test_cat_command_001(self) -> None:
-        """No such file."""
         self.proto.lineReceived(b"cat nonExisting\n")
         self.assertEqual(
             self.tr.value(), b"cat: nonExisting: No such file or directory\n" + PROMPT
         )
 
     def test_cat_command_002(self) -> None:
-        """Argument - (stdin)."""
         self.proto.lineReceived(b"echo test | cat -\n")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_cat_command_003(self) -> None:
-        """Test without arguments, read stdin only and quit."""
         self.proto.lineReceived(b"echo 1 | cat\n")
         self.proto.lineReceived(b"echo 2\n")
         self.proto.handle_CTRL_D()
         self.assertEqual(self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT)
 
     def test_cat_command_004(self) -> None:
-        """Test handle of CTRL_C."""
         self.proto.lineReceived(b"cat\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_C()

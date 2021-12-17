@@ -32,37 +32,47 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(something, "4.0 days 05:07:00")
 
     def test_get_endpoints_from_section(self) -> None:
-        cfg = get_config("[ssh]\n"
-                         "listen_addr = 1.1.1.1\n")
+        cfg = get_config(
+            "[ssh]\n"
+            "listen_addr = 1.1.1.1\n"
+        )
         self.assertEqual(
             ["tcp:2223:interface=1.1.1.1"],
             get_endpoints_from_section(cfg, "ssh", 2223),
         )
 
-        cfg = get_config("[ssh]\n"
-                         "listen_addr = 1.1.1.1\n")
+        cfg = get_config(
+            "[ssh]\n"
+            "listen_addr = 1.1.1.1\n"
+        )
         self.assertEqual(
             ["tcp:2224:interface=1.1.1.1"],
             get_endpoints_from_section(cfg, "ssh", 2224),
         )
 
-        cfg = get_config("[ssh]\n"
-                         "listen_addr = 1.1.1.1 2.2.2.2\n")
+        cfg = get_config(
+            "[ssh]\n"
+            "listen_addr = 1.1.1.1 2.2.2.2\n"
+        )
         self.assertEqual(
             ["tcp:2223:interface=1.1.1.1", "tcp:2223:interface=2.2.2.2"],
             get_endpoints_from_section(cfg, "ssh", 2223),
         )
 
-        cfg = get_config("[ssh]\n"
-                         "listen_addr = 1.1.1.1 2.2.2.2\n"
-                         "listen_port = 23\n")
+        cfg = get_config(
+            "[ssh]\n"
+            "listen_addr = 1.1.1.1 2.2.2.2\n"
+            "listen_port = 23\n"
+        )
         self.assertEqual(
             ["tcp:23:interface=1.1.1.1", "tcp:23:interface=2.2.2.2"],
             get_endpoints_from_section(cfg, "ssh", 2223),
         )
 
-        cfg = get_config("[ssh]\n"
-                         "listen_endpoints = tcp:23:interface=1.1.1.1 tcp:2323:interface=1.1.1.1\n")
+        cfg = get_config(
+            "[ssh]\n"
+            "listen_endpoints = tcp:23:interface=1.1.1.1 tcp:2323:interface=1.1.1.1\n"
+        )
         self.assertEqual(
             ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=1.1.1.1"],
             get_endpoints_from_section(cfg, "ssh", 2223),

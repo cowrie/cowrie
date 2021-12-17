@@ -6,8 +6,9 @@ from __future__ import annotations
 import os
 import unittest
 
-from cowrie.shell import protocol
-from cowrie.test import fake_server, fake_transport
+from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "share/cowrie/fs.pickle"
@@ -19,10 +20,8 @@ class ShellBaseCommandsTests(unittest.TestCase):
     """Tests for basic commands from cowrie/commands/base.py."""
 
     def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer())
-        )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
@@ -167,10 +166,8 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
 class ShellFileCommandsTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer())
-        )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
 
     def tearDown(self) -> None:
@@ -235,10 +232,8 @@ class ShellFileCommandsTests(unittest.TestCase):
 
 class ShellPipeCommandsTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer())
-        )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("1.1.1.1", "1111")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
