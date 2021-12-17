@@ -1,17 +1,8 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2018 Michel Oosterhof
 # See LICENSE for details.
-
-"""
-Tests for general shell interaction and echo command
-"""
 from __future__ import annotations
 
-
 import os
-
-# from twisted.trial import unittest
 import unittest
 
 from cowrie.shell import protocol
@@ -25,7 +16,9 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellEchoCommandTests(unittest.TestCase):
-    def setUp(self):
+    """Tests for cowrie/commands/awk.py."""
+
+    def setUp(self) -> None:
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
@@ -33,40 +26,30 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
-    def test_awk_command_001(self):
-        """
-        Test $0, full input line contents
-        """
+    def tearDown(self) -> None:
+        self.proto.connectionLost("tearDown From Unit Test")
+
+    def test_awk_command_001(self) -> None:
+        """Test $0, full input line contents."""
         self.proto.lineReceived(b'echo "test test" | awk "{ print $0 }"\n')
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
-    def test_awk_command_002(self):
-        """
-        Test $1, first agument
-        """
+    def test_awk_command_002(self) -> None:
+        """Test $1, first agument."""
         self.proto.lineReceived(b'echo "test" | awk "{ print $1 }"\n')
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
-    def test_awk_command_003(self):
-        """
-        Test $1 $2 space separated
-        """
+    def test_awk_command_003(self) -> None:
+        """Test $1 $2 space separated."""
         self.proto.lineReceived(b'echo "test test" | awk "{ print $1 $2 }"\n')
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
-    def test_awk_command_004(self):
-        """
-        Test $1,$2 comma separated
-        """
+    def test_awk_command_004(self) -> None:
+        """Test $1,$2 comma separated."""
         self.proto.lineReceived(b'echo "test test" | awk "{ print $1,$2 }"\n')
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
-    def test_awk_command_005(self):
-        """
-        Test $1$2 not separated
-        """
+    def test_awk_command_005(self) -> None:
+        """Test $1$2 not separated."""
         self.proto.lineReceived(b'echo "test test" | awk "{ print $1$2 }"\n')
         self.assertEqual(self.tr.value(), b"testtest\n" + PROMPT)
-
-    def tearDown(self):
-        self.proto.connectionLost("tearDown From Unit Test")

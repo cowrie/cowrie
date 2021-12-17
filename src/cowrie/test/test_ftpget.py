@@ -1,14 +1,9 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2018 Michel Oosterhof
 # See LICENSE for details.
 
 from __future__ import annotations
 
-
 import os
-
-# from twisted.trial import unittest
 import unittest
 
 from cowrie.shell import protocol
@@ -21,8 +16,10 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "share/cowrie/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
-class ShellftpgetCommandTests(unittest.TestCase):
-    def setUp(self):
+class ShellFtpGetCommandTests(unittest.TestCase):
+    """Tests for cowrie/commands/ftpget.py."""
+
+    def setUp(self) -> None:
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
@@ -30,10 +27,10 @@ class ShellftpgetCommandTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
+    def tearDown(self) -> None:
+        self.proto.connectionLost("tearDown From Unit Test")
+
     def test_help_command(self):
-        """
-        Basic test
-        """
         self.proto.lineReceived(b"ftpget\n")
         self.assertEqual(
             self.tr.value(),
@@ -50,6 +47,3 @@ Download a file via FTP
     -P NUM      Port\n\n"""
             + PROMPT,
         )
-
-    def tearDown(self):
-        self.proto.connectionLost("tearDown From Unit Test")

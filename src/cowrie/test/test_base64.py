@@ -1,17 +1,8 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2020 Peter Sufliarsky
 # See LICENSE for details.
-
-"""
-Tests for general shell interaction and base64 command
-"""
 from __future__ import annotations
 
-
 import os
-
-# from twisted.trial import unittest
 import unittest
 
 from cowrie.shell import protocol
@@ -26,7 +17,9 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellBase64CommandTests(unittest.TestCase):
-    def setUp(self):
+    """Tests for cowrie/commands/base64.py"""
+
+    def setUp(self) -> None:
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
@@ -34,19 +27,13 @@ class ShellBase64CommandTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
-    def test_base64_command_001(self):
-        """
-        Missing operand
-        """
+    def tearDown(self) -> None:
+        self.proto.connectionLost("tearDown From Unit Test")
+
+    def test_base64_command_001(self) -> None:
         self.proto.lineReceived(b"echo cowrie | base64")
         self.assertEqual(self.tr.value(), b"Y293cmllCg==\n" + PROMPT)
 
-    def test_base64_command_002(self):
-        """
-        Missing operand
-        """
+    def test_base64_command_002(self) -> None:
         self.proto.lineReceived(b"echo Y293cmllCg== | base64 -d")
         self.assertEqual(self.tr.value(), b"cowrie\n" + PROMPT)
-
-    def tearDown(self):
-        self.proto.connectionLost("tearDown From Unit Test")

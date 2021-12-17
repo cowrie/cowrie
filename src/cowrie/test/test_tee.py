@@ -1,17 +1,8 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2018 Michel Oosterhof
 # See LICENSE for details.
-
-"""
-Tests for general shell interaction and tee command
-"""
 from __future__ import annotations
 
-
 import os
-
-# from twisted.trial import unittest
 import unittest
 
 from cowrie.shell import protocol
@@ -25,7 +16,9 @@ PROMPT = b"root@unitTest:~# "
 
 
 class ShellTeeCommandTests(unittest.TestCase):
-    def setUp(self):
+    """Tests for cowrie/commands/tee.py."""
+
+    def setUp(self) -> None:
         self.proto = protocol.HoneyPotInteractiveProtocol(
             fake_server.FakeAvatar(fake_server.FakeServer())
         )
@@ -33,47 +26,39 @@ class ShellTeeCommandTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
-    def test_tee_command_001(self):
-        """
-        No such file
-        """
-        self.proto.lineReceived(b"tee /a/b/c/d\n")
-        self.assertEqual(self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n")
+    def tearDown(self) -> None:
+        self.proto.connectionLost("tearDown From Unit Test")
 
-    def test_tee_command_002(self):
-        """
-        argument - (stdin)
-        """
+    def test_tee_command_001(self) -> None:
+        """No such file."""
         self.proto.lineReceived(b"tee /a/b/c/d\n")
+        self.assertEqual(
+            self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n"  # TODO: Is PROMPT missing?..
+        )
+
+    def test_tee_command_002(self) -> None:
+        """Argument - (stdin)."""
+        self.proto.lineReceived(b"tee /a/b/c/d\n")  # TODO: Where is a -?..
         self.proto.handle_CTRL_C()
         self.assertEqual(
             self.tr.value(), b"tee: /a/b/c/d: No such file or directory\n^C\n" + PROMPT
         )
 
-    def test_tee_command_003(self):
-        """
-        test ignore stdin when called without '-'
-        """
+    def test_tee_command_003(self) -> None:
+        """Test ignore stdin when called without '-'."""
         self.proto.lineReceived(b"tee a\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_D()
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
-    def test_tee_command_004(self):
-        """
-        test handle of stdin
-        """
+    def test_tee_command_004(self) -> None:
+        """Test handle of stdin."""
         self.proto.lineReceived(b"echo test | tee\n")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
-    def test_tee_command_005(self):
-        """
-        test handle of CTRL_C
-        """
+    def test_tee_command_005(self) -> None:
+        """Test handle of CTRL_C."""
         self.proto.lineReceived(b"tee\n")
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_D()
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
-
-    def tearDown(self):
-        self.proto.connectionLost("tearDown From Unit Test")

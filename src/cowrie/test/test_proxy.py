@@ -1,21 +1,17 @@
-# -*- test-case-name: Cowrie Proxy Test Cases -*-
-
 # Copyright (c) 2019 Guilherme Borges
 # See LICENSE for details.
 
 from __future__ import annotations
 
-
 import os
-
-from twisted.cred import portal
-from twisted.internet import reactor  # type: ignore
-# from twisted.trial import unittest
 import unittest
 
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
 from cowrie.core.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
+
+from twisted.cred import portal
+from twisted.internet import reactor  # type: ignore
 
 # from cowrie.test.proxy_compare import ProxyTestCommand
 
@@ -23,13 +19,12 @@ os.environ["COWRIE_HONEYPOT_TTYLOG"] = "false"
 os.environ["COWRIE_OUTPUT_JSONLOG_ENABLED"] = "false"
 
 
-def create_ssh_factory(backend):
+def create_ssh_factory(backend: str) -> CowrieSSHFactory:
     factory = CowrieSSHFactory(backend, None)
     factory.portal = portal.Portal(HoneyPotRealm())
     factory.portal.registerChecker(HoneypotPublicKeyChecker())
     factory.portal.registerChecker(HoneypotPasswordChecker())
     # factory.portal.registerChecker(HoneypotNoneChecker())
-
     return factory
 
 
@@ -42,7 +37,8 @@ def create_ssh_factory(backend):
 
 
 class ProxyTests(unittest.TestCase):
-    """
+    """Proxy tests.
+
     How to test the proxy:
         - setUp runs a 'shell' backend on 4444; then set up a 'proxy' on port 5555 connected to the 'shell' backend
         - test_ssh_proxy runs an exec command via a client against both proxy and shell; returns a deferred
@@ -62,27 +58,20 @@ class ProxyTests(unittest.TestCase):
     USERNAME_PROXY = "root"
     PASSWORD_PROXY = "example"
 
-    def setUp(self):
-        # ################################################# #
-        # #################### Backend #################### #
-        # ################################################# #
-        # setup SSH backend
+    def setUp(self) -> None:
+        # Setup SSH backend.
         self.factory_shell_ssh = create_ssh_factory("shell")
         self.shell_server_ssh = reactor.listenTCP(
             self.PORT_BACKEND_SSH, self.factory_shell_ssh
         )
 
-        # ################################################# #
-        # #################### Proxy ###################### #
-        # ################################################# #
-        # setup proxy environment
+        # Setup proxy environment.
         os.environ["COWRIE_PROXY_BACKEND"] = "simple"
         os.environ["COWRIE_PROXY_BACKEND_SSH_HOST"] = self.HOST
         os.environ["COWRIE_PROXY_BACKEND_SSH_PORT"] = str(self.PORT_BACKEND_SSH)
         os.environ["COWRIE_PROXY_BACKEND_TELNET_HOST"] = self.HOST
         os.environ["COWRIE_PROXY_BACKEND_TELNET_PORT"] = str(self.PORT_BACKEND_TELNET)
-
-        # setup SSH proxy
+        # Setup SSH proxy.
         self.factory_proxy_ssh = create_ssh_factory("proxy")
         self.proxy_server_ssh = reactor.listenTCP(
             self.PORT_PROXY_SSH, self.factory_proxy_ssh
@@ -95,7 +84,7 @@ class ProxyTests(unittest.TestCase):
     #
     #     return command_tester.execute_both('ls -halt')
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         for client in self.factory_proxy_ssh.running:
             if client.transport:
                 client.transport.loseConnection()
