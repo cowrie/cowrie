@@ -1,4 +1,5 @@
 # -*- test-case-name: Cowrie Proxy Test Cases -*-
+#mypy: ignore
 
 # Copyright (c) 2019 Guilherme Borges
 # See LICENSE for details.

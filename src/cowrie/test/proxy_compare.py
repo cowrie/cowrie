@@ -1,3 +1,4 @@
+#mypy: ignore
 from __future__ import annotations
 
 from backend_pool.ssh_exec import execute_ssh
