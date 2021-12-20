@@ -110,8 +110,9 @@ class command_free(HoneyPotCommand):
         tmp = {}
         for key, value in meminfo.items():
             index = 0
+            value = float(value)            # src/cowrie/commands/free.py:114:17: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
             while value >= 1024 and index < len(magnitude):
-                value /= 1024
+                value /= 1024.0
                 index += 1
             tmp[key] = "{:g}{}".format(round(value, 1), magnitude[index])
         self.write(command_free.OUTPUT_FMT.format(**tmp))
@@ -127,7 +128,7 @@ class command_free(HoneyPotCommand):
         r["SwapUsed"] = r["SwapTotal"] - r["SwapFree"]
         return r
 
-    def _total(self, meminfo: Dict[str, int]):
+    def _total(self, meminfo: Dict[str, int]) -> None:
         total_total = meminfo["MemTotal"] + meminfo["SwapTotal"]    # )
         total_used = meminfo["MemUsed"] + meminfo["SwapUsed"]
         total_free = meminfo["MemFree"] + meminfo["SwapFree"]
