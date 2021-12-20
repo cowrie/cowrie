@@ -1,110 +1,147 @@
 # Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
 # All rights reserved.
-
-"""
-This module ...
-"""
-
-from __future__ import annotations
+from __future__ import absolute_import, division
 
 import getopt
+from typing import Dict
 
 from cowrie.shell.command import HoneyPotCommand
 
-commands = {}
 
-FREE_OUTPUT = """              total        used        free      shared  buff/cache   available
-Mem:{MemTotal:>15}{calc_total_used:>12}{MemFree:>12}{Shmem:>12}{calc_total_buffers_and_cache:>12}{MemAvailable:>12}
-Swap:{SwapTotal:>14}{calc_swap_used:>12}{SwapFree:>12}
-"""
-
-
-class Command_free(HoneyPotCommand):
-    """
-    free
-    """
+class command_free(HoneyPotCommand):
+    """/usr/bin/free"""
+    HELP = (
+        "\n"
+        "Usage:\n"
+        " free [options]\n"
+        "\n"
+        "Options:\n"
+        " -b, --bytes         show output in bytes\n"
+        " -k, --kilo          show output in kilobytes\n"
+        " -m, --mega          show output in megabytes\n"
+        " -g, --giga          show output in gigabytes\n"
+        "     --tera          show output in terabytes\n"
+        " -h, --human         show human-readable output\n"
+        "     --si            use powers of 1000 not 1024\n"
+        " -l, --lohi          show detailed low and high memory statistics\n"
+        " -o, --old           use old format (without -/+buffers/cache line)\n"
+        " -t, --total         show total for RAM + swap\n"
+        " -s N, --seconds N   repeat printing every N seconds\n"
+        " -c N, --count N     repeat printing N times, then exit\n"
+        "\n"
+        "     --help     display this help and exit\n"
+        " -V, --version  output version information and exit\n"
+        "\n"
+        "For more details see free(1).\n"
+    )
+    VERSION = "free from procps-ng 3.3.9\n"
+    MEMINFO_KEYS = ["MemTotal", "MemFree", "Shmem", "Buffers", "Cached", "SwapTotal", "SwapFree"]
+    OUTPUT_FMT = (
+        "             total       used       free     shared    buffers     cached\n"
+        "Mem:    {MemTotal:>10} {MemUsed:>10} {MemFree:>10} {Shmem:>10} {Buffers:>10} {Cached:>10}\n"
+        "-/+ buffers/cache\n"
+        "Swap:   {SwapTotal:>10} {SwapUsed:>10} {SwapFree:>10}\n"
+    )
 
     def call(self):
-        # Parse options or display no files
         try:
-            opts, args = getopt.getopt(self.args, "mh")
-        except getopt.GetoptError:
-            self.do_free()
+            opts, args = getopt.getopt(self.args, "hbkmgVt",
+                                       ["human", "bytes", "kilo", "mega", "giga", "tera", "help", "version", "total"])
+        except getopt.GetoptError as e:
+            self.errorWrite("free: invalid option -- {}\n".format(e.opt))
+            self._help()
             return
 
-        # Parse options
-        for o, a in opts:
-            if o in ("-h"):
-                self.do_free(fmt="human")
-                return
-            elif o in ("-m"):
-                self.do_free(fmt="megabytes")
-                return
-        self.do_free()
+        meminfo = self._read_meminfo()
 
-    def do_free(self, fmt="kilobytes"):
-        """
-        print free statistics
-        """
+        tmp = [oa[0] for oa in opts]
+        if not tmp:
+            self._print_stats(meminfo)
+            return
 
-        # Get real host memstats and add the calculated fields
-        raw_mem_stats = self.get_free_stats()
-        raw_mem_stats["calc_total_buffers_and_cache"] = (
-            raw_mem_stats["Buffers"] + raw_mem_stats["Cached"]
-        )
-        raw_mem_stats["calc_total_used"] = raw_mem_stats["MemTotal"] - (
-            raw_mem_stats["MemFree"] + raw_mem_stats["calc_total_buffers_and_cache"]
-        )
-        raw_mem_stats["calc_swap_used"] = (
-            raw_mem_stats["SwapTotal"] - raw_mem_stats["SwapFree"]
-        )
+        if "--help" in tmp:
+            self._help()
+            return
+        if "--version" in tmp or "-V" in tmp:
+            self._version()
+            return
+        if "--human" in tmp or "-h" in tmp:
+            self._print_stats_for_human(meminfo)
+            return
+        if "--total" in tmp or "-t" in tmp:
+            self._total(meminfo)
+            return
 
-        if fmt == "megabytes":
-            # Transform KB to MB
-            for key, value in raw_mem_stats.items():
-                raw_mem_stats[key] = int(value / 1000)
-        elif fmt == "human":
-            magnitude = ["B", "M", "G", "T", "Z"]
-            for key, value in raw_mem_stats.items():
-                current_magnitude = 0
+        for opt, arg in opts:
+            if opt in ("-b", "--bytes"):
+                self._print_stats(meminfo, fmt="bytes")
+                break
+            if opt in ("-k", "--kilo"):
+                self._print_stats(meminfo, fmt="kilo")
+                break
+            if opt in ("-m", "--mega"):
+                self._print_stats(meminfo, fmt="mega")
+                break
+            if opt in ("-g", "--giga"):
+                self._print_stats(meminfo, fmt="giga")
+                break
+            if opt == "--tera":
+                self._print_stats(meminfo, fmt="tera")
+                break
 
-                # Keep dividing until we get a sane magnitude
-                while value >= 1000 and current_magnitude < len(magnitude):
-                    value = round(float(value / 1000), 1)
-                    current_magnitude += 1
+    def _print_stats(self, meminfo: Dict[str, int], fmt: str = "kilo") -> None:
+        if fmt == "bytes":
+            for key, value in meminfo.items():
+                meminfo[key] = value * 1024
+        # elif fmt == "kilo":  # by default
+        elif fmt == "mega":
+            for key, value in meminfo.items():
+                meminfo[key] = value // 1024
+        elif fmt == "giga":
+            for key, value in meminfo.items():
+                meminfo[key] = (value // 1024) // 1024
+        elif fmt == "tera":
+            for key, value in meminfo.items():
+                meminfo[key] = ((value // 1024) // 1024) // 1024
+        self.write(command_free.OUTPUT_FMT.format(**meminfo))
 
-                # Format to string and append value with new magnitude
-                raw_mem_stats[key] = str(f"{value:g}{magnitude[current_magnitude]}")
+    def _print_stats_for_human(self, meminfo: Dict[str, int]) -> None:
+        magnitude = ["B", "M", "G", "T", "Z"]
+        tmp = {}
+        for key, value in meminfo.items():
+            index = 0
+            while value >= 1024 and index < len(magnitude):
+                value /= 1024
+                index += 1
+            tmp[key] = "{:g}{}".format(round(value, 1), magnitude[index])
+        self.write(command_free.OUTPUT_FMT.format(**tmp))
 
-        # Write the output to screen
-        self.write(FREE_OUTPUT.format(**raw_mem_stats))
+    def _read_meminfo(self) -> Dict[str, int]:
+        r = {}
+        data = self.fs.file_contents("/proc/meminfo")
+        for line in data.decode().splitlines():
+            key, value = line.split(":")
+            if key in command_free.MEMINFO_KEYS:
+                r[key] = int(value[:value.rfind(" ")])
+        r["MemUsed"] = r["MemTotal"] - r["MemFree"]
+        r["SwapUsed"] = r["SwapTotal"] - r["SwapFree"]
+        return r
 
-    def get_free_stats(self) -> dict[str, int]:
-        """
-        Get the free stats from /proc
-        """
-        needed_keys = [
-            "Buffers",
-            "Cached",
-            "MemTotal",
-            "MemFree",
-            "SwapTotal",
-            "SwapFree",
-            "Shmem",
-            "MemAvailable",
-        ]
-        mem_info_map: dict[str, int] = {}
-        with open("/proc/meminfo") as proc_file:
-            for line in proc_file:
-                tokens = line.split(":")
+    def _total(self, meminfo: Dict[str, int]):
+        total_total = meminfo["MemTotal"] + meminfo["SwapTotal"]    # )
+        total_used = meminfo["MemUsed"] + meminfo["SwapUsed"]
+        total_free = meminfo["MemFree"] + meminfo["SwapFree"]
+        self.write(command_free.OUTPUT_FMT.format(**meminfo))
+        self.write("Total:  {:>10} {:>10} {:>10}\n".format(total_total, total_used, total_free))
 
-                # Later we are going to do some math on those numbers, better not include uneeded keys for performance
-                if tokens[0] in needed_keys:
-                    mem_info_map[tokens[0]] = int(tokens[1].lstrip().split(" ")[0])
+    def _help(self) -> None:
+        self.write(command_free.HELP)
 
-        # Got a map with all tokens from /proc/meminfo and sizes in KBs
-        return mem_info_map
+    def _version(self) -> None:
+        self.write(command_free.VERSION)
 
 
-commands["/usr/bin/free"] = Command_free
-commands["free"] = Command_free
+commands = {
+    "free": command_free,
+    "/usr/bin/free": command_free,
+}
