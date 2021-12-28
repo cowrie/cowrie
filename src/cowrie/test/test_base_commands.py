@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import unittest
 
+from cowrie.commands.base import Command_php
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -97,9 +98,13 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"sh -c id\n")
         self.assertEqual(self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT)
 
-    # def test_php_command(self) -> None:
-    #    self.proto.lineReceived(b'php -h')
-    #    print("THIS TEST IS INCOMPLETE")
+    def test_php_help_command(self) -> None:
+        self.proto.lineReceived(b"php -h\n")
+        self.assertEqual(self.tr.value(), Command_php.HELP.encode() + PROMPT)
+
+    def test_php_version_command(self) -> None:
+        self.proto.lineReceived(b"php -v\n")
+        self.assertEqual(self.tr.value(), Command_php.VERSION.encode() + PROMPT)
 
     def test_chattr_command(self) -> None:
         self.proto.lineReceived(b"chattr\n")
