@@ -64,10 +64,8 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"passwd\n")
         self.proto.lineReceived(b"changeme\n")
         self.proto.lineReceived(b"changeme\n")
-        self.assertEqual(
-            self.tr.value(),
-            b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n" + PROMPT,
-        )
+        self.assertEqual(self.tr.value(),
+                         b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n" + PROMPT)
 
     def test_shutdown_command(self) -> None:
         self.proto.lineReceived(b"shutdown\n")
@@ -107,10 +105,8 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_set_command(self) -> None:
         self.proto.lineReceived(b"set\n")
-        self.assertEqual(
-            self.tr.value(),
-            b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n" + PROMPT,
-        )
+        self.assertEqual(self.tr.value(),
+                         b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n" + PROMPT)
 
     def test_unset_command(self) -> None:
         self.proto.lineReceived(b"unset\n")
@@ -158,80 +154,137 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
 
 class ShellFileCommandsTests(unittest.TestCase):
+    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+    tr = FakeTransport("", "31337")
+    cpuinfo = proto.fs.file_contents("/proc/cpuinfo")
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto.makeConnection(cls.tr)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
     def setUp(self) -> None:
-        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("", "31337")
-        self.proto.makeConnection(self.tr)
+        self.tr.clear()
 
-    def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
+    def test_cat_output(self) -> None:
+        self.proto.lineReceived(b"cat /proc/cpuinfo\n")
+        self.assertEqual(self.tr.value(), ShellFileCommandsTests.cpuinfo + PROMPT)
 
-    # def test_cat_output(self) -> None:
-    #    self.proto.lineReceived(b'cat /proc/cpuinfo')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_grep_output(self) -> None:
+        lines = [line.strip() for line in ShellFileCommandsTests.cpuinfo.splitlines() if b"cpu" in line]
+        lines.append(b"")
+        self.proto.lineReceived(b"grep cpu /proc/cpuinfo\n")
+        self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
 
-    # def test_grep_output(self) -> None:
-    #    self.proto.lineReceived(b'grep cpu /proc/cpuinfo')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_tail_output(self) -> None:
+        lines = [line.strip() for line in ShellFileCommandsTests.cpuinfo.splitlines()][-10:]
+        lines.append(b"")
+        self.proto.lineReceived(b"tail -n 10 /proc/cpuinfo\n")
+        self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
 
-    # def test_tail_output(self) -> None:
-    #    self.proto.lineReceived(b'tail -n 10 /proc/cpuinfo')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_head_output(self) -> None:
+        lines = [line.strip() for line in ShellFileCommandsTests.cpuinfo.splitlines()][:10]
+        lines.append(b"")
+        self.proto.lineReceived(b"head -n 10 /proc/cpuinfo\n")
+        self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
 
     # def test_cd_output(self) -> None:
     #    self.proto.lineReceived(b'cd /usr/bin')
     #    print("THIS TEST IS INCOMPLETE")
     #    print(self.tr.value())
 
-    # def test_rm_output(self) -> None:
-    #    self.proto.lineReceived(b'rm /usr/bin/gcc')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_rm_output(self) -> None:
+        self.proto.lineReceived(b"rm /usr/bin/gcc\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
-    # def test_cp_output(self) -> None:
-    #    self.proto.lineReceived(b'cp /usr/bin/gcc /tmp')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_rm_error_output(self) -> None:  # TODO: quotes?..
+        path = "/path/to/file/that/does/not/exist"
 
-    # def test_mv_output(self) -> None:
-    #    self.proto.lineReceived(b'mv /usr/bin/gcc /tmp')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+        self.proto.lineReceived(f"rm {path:s}\n".encode())
+        self.assertEqual(self.tr.value(),
+                         f"rm: cannot remove `{path:s}': No such file or directory\n".encode() + PROMPT)
 
-    # def test_mkdir_output(self) -> None:
-    #    self.proto.lineReceived(b'mkdir /tmp/hello')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_cp_output(self) -> None:
+        self.proto.lineReceived(b"cp /usr/bin/gcc /tmp\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
-    # def test_rmdir_output(self) -> None:
-    #    self.proto.lineReceived(b'mkdir /tmp/blah')
-    #    self.proto.lineReceived(b'rmdir /tmp/blah')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_cp_error_output(self) -> None:  # TODO: quotes?..
+        path = "/path/to/file/that/does/not/exist"
 
-    # def test_pwd_output(self) -> None:
-    #    self.proto.lineReceived(b'pwd')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+        self.proto.lineReceived(f"cp {path:s} /tmp\n".encode())
+        self.assertEqual(self.tr.value(),
+                         f"cp: cannot stat `{path:s}': No such file or directory\n".encode() + PROMPT)
 
-    # def test_touch_output(self) -> None:
-    #    self.proto.lineReceived(b'touch unittests.txt')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
+    def test_mv_output(self) -> None:
+        self.proto.lineReceived(b"mv /usr/bin/awk /tmp\n")
+        self.assertEqual(self.tr.value(), PROMPT)
+
+    def test_mv_error_output(self) -> None:  # TODO: quotes?..
+        path = "/path/to/file/that/does/not/exist"
+
+        self.proto.lineReceived(f"mv {path:s} /tmp\n".encode())
+        self.assertEqual(self.tr.value(),
+                         f"mv: cannot stat `{path:s}': No such file or directory\n".encode() + PROMPT)
+
+    def test_mkdir_output(self) -> None:
+        path = "/tmp/hello"
+
+        self.proto.lineReceived(f"mkdir {path:s}\n".encode())
+        self.assertEqual(self.tr.value(), PROMPT)
+        self.assertTrue(self.proto.fs.exists(path))
+        self.assertTrue(self.proto.fs.isdir(path))
+
+    def test_mkdir_error_output(self) -> None:  # TODO: quotes?..
+        path = "/etc"
+
+        self.proto.lineReceived(f"mkdir {path:s}\n".encode())
+        self.assertEqual(self.tr.value(), f"mkdir: cannot create directory `{path:s}': File exists\n".encode() + PROMPT)
+
+    def test_rmdir_output(self) -> None:
+        path = "/tmp/bye"
+
+        self.proto.lineReceived(f"mkdir {path:s}\n".encode())
+        self.tr.clear()
+        self.proto.lineReceived(f"rmdir {path:s}\n".encode())
+        self.assertEqual(self.tr.value(), PROMPT)
+        self.assertFalse(self.proto.fs.exists(path))
+
+    def test_rmdir_error_output(self) -> None:  # TODO: quotes?..
+        path = "/path/to/file/that/does/not/exist"
+
+        self.proto.lineReceived(f"rmdir {path:s}\n".encode())
+        self.assertEqual(self.tr.value(),
+                         f"rmdir: failed to remove `{path:s}': No such file or directory\n".encode() + PROMPT)
+
+    def test_pwd_output(self) -> None:
+        self.proto.lineReceived(b"pwd\n")
+        self.assertEqual(self.tr.value(), self.proto.cwd.encode() + b"\n" + PROMPT)
+
+    def test_touch_output(self) -> None:
+        path = "/tmp/test.txt"
+
+        self.proto.lineReceived(f"touch {path:s}\n".encode())
+        self.assertEqual(self.tr.value(), PROMPT)
+        self.assertTrue(self.proto.fs.exists(path))
 
 
 class ShellPipeCommandsTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("", "31337")
-        self.proto.makeConnection(self.tr)
-        self.tr.clear()
+    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+    tr = FakeTransport("", "31337")
 
-    def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto.makeConnection(cls.tr)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
+    def setUp(self) -> None:
+        self.tr.clear()
 
     def test_shell_pipe_with_cat_tail(self) -> None:
         self.proto.lineReceived(b"echo test | tail -n 1\n")
