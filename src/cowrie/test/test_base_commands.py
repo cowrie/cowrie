@@ -16,7 +16,7 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "share/cowrie/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
-class ShellBaseCommandsTests(unittest.TestCase):
+class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
     """Tests for basic commands from cowrie/commands/base.py."""
 
     def setUp(self) -> None:
@@ -56,10 +56,6 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"reset\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
-    # def test_ps_command(self) -> None:
-    #     self.proto.lineReceived(b'ps\n')
-    #     self.assertEqual(self.tr.value().decode('utf8'), "\n".join(self.data['results']['ps']))
-
     def test_id_command(self) -> None:
         self.proto.lineReceived(b"id\n")
         self.assertEqual(self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT)
@@ -80,11 +76,6 @@ class ShellBaseCommandsTests(unittest.TestCase):
     def test_poweroff_command(self) -> None:
         self.proto.lineReceived(b"poweroff\n")
         self.assertEqual(self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT)  # TODO: Is it right?..
-
-    # def test_history_command(self) -> None:
-    #    self.proto.lineReceived(b"history\n")
-    #    self.proto.lineReceived(b"history\n")
-    #    print("THIS TEST IS INCOMPLETE")
 
     def test_date_command(self) -> None:
         self.proto.lineReceived(b"date\n")
