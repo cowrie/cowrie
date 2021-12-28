@@ -20,7 +20,7 @@ class ShellEchoCommandTests(unittest.TestCase):
     """Tests for cowrie/commands/awk.py."""
 
     proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-    tr = FakeTransport("1.1.1.1", "1111")
+    tr = FakeTransport("", "31337")
 
     @classmethod
     def setUpClass(cls) -> None:

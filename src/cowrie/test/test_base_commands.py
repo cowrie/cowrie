@@ -21,7 +21,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("1.1.1.1", "1111")
+        self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
@@ -167,7 +167,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 class ShellFileCommandsTests(unittest.TestCase):
     def setUp(self) -> None:
         self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("1.1.1.1", "1111")
+        self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
 
     def tearDown(self) -> None:
@@ -233,7 +233,7 @@ class ShellFileCommandsTests(unittest.TestCase):
 class ShellPipeCommandsTests(unittest.TestCase):
     def setUp(self) -> None:
         self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("1.1.1.1", "1111")
+        self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
 
