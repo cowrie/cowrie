@@ -1,6 +1,5 @@
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
-
 from __future__ import annotations
 
 import os
@@ -36,21 +35,25 @@ class ShellBaseCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"users \n")
         self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
 
-    # def test_exit_command(self) -> None:
-    #     self.proto.lineReceived(b'exit \n')
+    def test_exit_command(self) -> None:
+        self.proto.lineReceived(b"exit\n")
+        self.assertEqual(self.tr.value(), b"")
 
-    # def test_logout_command(self) -> None:
-    #     self.proto.lineReceived(b'logout \n')
+    def test_logout_command(self) -> None:
+        self.proto.lineReceived(b"logout\n")
+        self.assertEqual(self.tr.value(), b"")
 
-    # def test_clear_command(self) -> None:
-    #     self.proto.lineReceived(b'clear \n')
+    def test_clear_command(self) -> None:
+        self.proto.lineReceived(b"clear\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_hostname_command(self) -> None:
         self.proto.lineReceived(b"hostname unitChanged\n")
         self.assertEqual(self.tr.value(), b"root@unitChanged:~# ")
 
-    # def test_reset_command(self) -> None:
-    #     self.proto.lineReceived(b'reset')
+    def test_reset_command(self) -> None:
+        self.proto.lineReceived(b"reset\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     # def test_ps_command(self) -> None:
     #     self.proto.lineReceived(b'ps\n')
@@ -58,9 +61,7 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_id_command(self) -> None:
         self.proto.lineReceived(b"id\n")
-        self.assertEqual(
-            self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
-        )
+        self.assertEqual(self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT)
 
     def test_passwd_command(self) -> None:
         self.proto.lineReceived(b"passwd\n")
@@ -71,11 +72,13 @@ class ShellBaseCommandsTests(unittest.TestCase):
             b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n" + PROMPT,
         )
 
-    # def test_shutdown_command(self) -> None:
-    #    self.proto.lineReceived(b'shutdown\n')
+    def test_shutdown_command(self) -> None:
+        self.proto.lineReceived(b"shutdown\n")
+        self.assertEqual(self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT)  # TODO: Is it right?..
 
-    # def test_poweroff_command(self) -> None:
-    #     self.proto.lineReceived(b'poweroff\n')
+    def test_poweroff_command(self) -> None:
+        self.proto.lineReceived(b"poweroff\n")
+        self.assertEqual(self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT)  # TODO: Is it right?..
 
     # def test_history_command(self) -> None:
     #    self.proto.lineReceived(b"history\n")
@@ -84,20 +87,15 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_date_command(self) -> None:
         self.proto.lineReceived(b"date\n")
-        self.assertRegex(
-            self.tr.value(),
-            b"[A-Za-z][A-Za-z][A-Za-z] [A-Za-z][A-Za-z][A-Za-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC [0-9][0-9][0-9][0-9]\n" + PROMPT,
-        )
+        self.assertRegex(self.tr.value(), rb"[A-Za-z]{3} [A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2} UTC \d{4}\n" + PROMPT)
 
-    # def test_bash_command(self) -> None:
-    #    self.proto.lineReceived(b'bash\n')
-    #    print("THIS TEST IS INCOMPLETE")
+    def test_bash_command(self) -> None:
+        self.proto.lineReceived(b"bash\n")
+        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_sh_command(self) -> None:
         self.proto.lineReceived(b"sh -c id\n")
-        self.assertEqual(
-            self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
-        )
+        self.assertEqual(self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT)
 
     # def test_php_command(self) -> None:
     #    self.proto.lineReceived(b'php -h')
@@ -113,7 +111,6 @@ class ShellBaseCommandsTests(unittest.TestCase):
 
     def test_set_command(self) -> None:
         self.proto.lineReceived(b"set\n")
-
         self.assertEqual(
             self.tr.value(),
             b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n" + PROMPT,
