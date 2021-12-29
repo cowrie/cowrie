@@ -45,10 +45,6 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo -n \"test  test\"\n")
         self.assertEqual(self.tr.value(), b"test  test" + PROMPT)
 
-    def test_echo_command_004(self) -> None:
-        self.proto.lineReceived(b"echo -n \"test  test\"\n")
-        self.assertEqual(self.tr.value(), b"test  test" + PROMPT)
-
     def test_echo_command_005(self) -> None:
         self.proto.lineReceived(b"echo test > test5; cat test5")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
