@@ -14,6 +14,7 @@ os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
+NONEXISTEN_FILE = "/path/to/the/file/that/does/not/exist"
 
 
 class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
@@ -152,6 +153,17 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"chgrp\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
+    def test_cd_output(self) -> None:
+        path = "/usr/bin"
+
+        self.proto.lineReceived(f"cd {path:s}".encode())
+        self.assertEqual(self.tr.value(), PROMPT.replace(b"~", path.encode()))
+        self.assertEqual(self.proto.cwd, path)
+
+    def test_cd_error_output(self) -> None:
+        self.proto.lineReceived(f"cd {NONEXISTEN_FILE:s}".encode())
+        self.assertEqual(self.tr.value(), f"bash: cd: {NONEXISTEN_FILE:s}: No such file or directory\n".encode() + PROMPT)
+
 
 class ShellFileCommandsTests(unittest.TestCase):
     proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
@@ -171,63 +183,52 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     def test_cat_output(self) -> None:
         self.proto.lineReceived(b"cat /proc/cpuinfo\n")
-        self.assertEqual(self.tr.value(), ShellFileCommandsTests.cpuinfo + PROMPT)
+        self.assertEqual(self.tr.value(), self.cpuinfo + PROMPT)
 
     def test_grep_output(self) -> None:
-        lines = [line.strip() for line in ShellFileCommandsTests.cpuinfo.splitlines() if b"cpu" in line]
+        lines = [line.strip() for line in self.cpuinfo.splitlines() if b"cpu" in line]
         lines.append(b"")
         self.proto.lineReceived(b"grep cpu /proc/cpuinfo\n")
         self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
 
     def test_tail_output(self) -> None:
-        lines = [line.strip() for line in ShellFileCommandsTests.cpuinfo.splitlines()][-10:]
+        lines = [line.strip() for line in self.cpuinfo.splitlines()][-10:]
         lines.append(b"")
         self.proto.lineReceived(b"tail -n 10 /proc/cpuinfo\n")
         self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
 
     def test_head_output(self) -> None:
-        lines = [line.strip() for line in ShellFileCommandsTests.cpuinfo.splitlines()][:10]
+        lines = [line.strip() for line in self.cpuinfo.splitlines()][:10]
         lines.append(b"")
         self.proto.lineReceived(b"head -n 10 /proc/cpuinfo\n")
         self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
-
-    # def test_cd_output(self) -> None:
-    #    self.proto.lineReceived(b'cd /usr/bin')
-    #    print("THIS TEST IS INCOMPLETE")
-    #    print(self.tr.value())
 
     def test_rm_output(self) -> None:
         self.proto.lineReceived(b"rm /usr/bin/gcc\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_rm_error_output(self) -> None:  # TODO: quotes?..
-        path = "/path/to/file/that/does/not/exist"
-
-        self.proto.lineReceived(f"rm {path:s}\n".encode())
+        self.proto.lineReceived(f"rm {NONEXISTEN_FILE:s}\n".encode())
         self.assertEqual(self.tr.value(),
-                         f"rm: cannot remove `{path:s}': No such file or directory\n".encode() + PROMPT)
+                         f"rm: cannot remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
 
     def test_cp_output(self) -> None:
         self.proto.lineReceived(b"cp /usr/bin/gcc /tmp\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_cp_error_output(self) -> None:  # TODO: quotes?..
-        path = "/path/to/file/that/does/not/exist"
-
-        self.proto.lineReceived(f"cp {path:s} /tmp\n".encode())
+        self.proto.lineReceived(f"cp {NONEXISTEN_FILE:s} /tmp\n".encode())
         self.assertEqual(self.tr.value(),
-                         f"cp: cannot stat `{path:s}': No such file or directory\n".encode() + PROMPT)
+                         f"cp: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
 
     def test_mv_output(self) -> None:
         self.proto.lineReceived(b"mv /usr/bin/awk /tmp\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_mv_error_output(self) -> None:  # TODO: quotes?..
-        path = "/path/to/file/that/does/not/exist"
-
-        self.proto.lineReceived(f"mv {path:s} /tmp\n".encode())
+        self.proto.lineReceived(f"mv {NONEXISTEN_FILE:s} /tmp\n".encode())
         self.assertEqual(self.tr.value(),
-                         f"mv: cannot stat `{path:s}': No such file or directory\n".encode() + PROMPT)
+                         f"mv: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
 
     def test_mkdir_output(self) -> None:
         path = "/tmp/hello"
@@ -253,11 +254,9 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.assertFalse(self.proto.fs.exists(path))
 
     def test_rmdir_error_output(self) -> None:  # TODO: quotes?..
-        path = "/path/to/file/that/does/not/exist"
-
-        self.proto.lineReceived(f"rmdir {path:s}\n".encode())
+        self.proto.lineReceived(f"rmdir {NONEXISTEN_FILE:s}\n".encode())
         self.assertEqual(self.tr.value(),
-                         f"rmdir: failed to remove `{path:s}': No such file or directory\n".encode() + PROMPT)
+                         f"rmdir: failed to remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
 
     def test_pwd_output(self) -> None:
         self.proto.lineReceived(b"pwd\n")
