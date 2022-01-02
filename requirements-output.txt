@@ -6,7 +6,7 @@ geoip2
 requests==2.26.0
 
 # elasticsearch
-elasticsearch==7.16.1
+elasticsearch==7.16.2
 
 # hpfeeds
 hpfeeds3==0.9.10
@@ -36,4 +36,4 @@ wokkel==18.0.0
 pymisp==2.4.152
 
 # redis
-redis==4.0.2
+redis==4.1.0
