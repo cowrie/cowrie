@@ -1016,6 +1016,16 @@ verify_cert = true
 publish_event = true
 debug = false
 
+# Send message using Telegram bot
+# 1. Create a bot following https://core.telegram.org/bots#6-botfather to get token.
+# 2. Send message to your bot, then use https://api.telegram.org/bot{bot_token}/getUpdates to find chat_id.
+# N.b. bot will only send messages on cowrie.login.success, cowrie.command.input/.failed, and
+# cowrie.session.file_download, to prevent spam. 
+[output_telegram]
+enabled = false
+bot_token = 123456789:AbCDEfGhiJkLmnOpQRstUVWxYZ
+chat_id = 987654321
+
 # The crashreporter sends data on Python exceptions to api.cowrie.org
 # To disable set `enabled = false` in cowrie.cfg
 [output_crashreporter]
