@@ -3,9 +3,7 @@
 from __future__ import absolute_import, division
 
 import treq
-from twisted.internet import defer, error
 from twisted.python import log
-import re
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
@@ -29,7 +27,7 @@ class Output(cowrie.core.output.Output):
                 del logentry[i]
 
         # Prepare base message
-        msgtxt = "<strong>[Cowrie "+logentry['sensor']+"]</strong>"
+        msgtxt = "<strong>[Cowrie " + logentry['sensor'] + "]</strong>"
         msgtxt += "\nEvent: " + logentry["eventid"]
         msgtxt += "\nSource: <code>" + logentry['src_ip'] + "</code>"
         msgtxt += "\nSession: <code>" + logentry['session'] + "</code>"
@@ -44,11 +42,11 @@ class Output(cowrie.core.output.Output):
         elif logentry["eventid"] == "cowrie.session.file_download":
             msgtxt += "\nUrl: " + logentry.get("url", "")
             self.send_message(msgtxt)
-    
+
     def send_message(self, message):
         log.msg("Telegram plugin will try to call TelegramBot")
         try:
-            r = treq.get('https://api.telegram.org/bot' + self.bot_token + '/sendMessage',
-                     params=[('chat_id', str(self.chat_id)), ('parse_mode','HTML'), ('text', message)])
+            treq.get('https://api.telegram.org/bot' + self.bot_token + '/sendMessage',
+                     params=[('chat_id', str(self.chat_id)), ('parse_mode', 'HTML'), ('text', message)])
         except Exception:
             log.msg("Telegram plugin request error")
