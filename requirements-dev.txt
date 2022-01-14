@@ -10,14 +10,14 @@ pre-commit==2.16.0
 pur==5.4.2
 pyre-check==0.9.9; python_version>'3.8'
 pytype==2021.12.15; platform_python_implementation=='CPython' and python_version<'3.10'
-pyupgrade==2.29.1
+pyupgrade==2.31.0
 pyyaml==6.0
-setuptools==60.1.0
+setuptools==60.2.0
 sphinx-copybutton==0.4.0
 sphinx_rtd_theme==1.0.0
-tox==3.24.4
+tox==3.24.5
 twistedchecker==0.7.4
 types-python-dateutil==2.8.4; python_version>'3.8'
-types-redis==4.0.6; python_version>'3.8'
-types-requests==2.26.2; python_version>'3.8'
+types-redis==4.1.1; python_version>'3.8'
+types-requests==2.26.3; python_version>'3.8'
 yamllint==1.26.3
