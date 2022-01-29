@@ -1,54 +1,50 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2018 Michel Oosterhof
 # See LICENSE for details.
 
 from __future__ import annotations
 
-
 import os
+import unittest
 
-from twisted.trial import unittest
+from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.fake_transport import FakeTransport
 
-from cowrie.shell import protocol
-from cowrie.test import fake_server, fake_transport
-
-os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "../data"
+os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
-os.environ["COWRIE_SHELL_FILESYSTEM"] = "../share/cowrie/fs.pickle"
+os.environ["COWRIE_SHELL_FILESYSTEM"] = "share/cowrie/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 
 
-class ShellftpgetCommandTests(unittest.TestCase):
-    def setUp(self):
-        self.proto = protocol.HoneyPotInteractiveProtocol(
-            fake_server.FakeAvatar(fake_server.FakeServer())
-        )
-        self.tr = fake_transport.FakeTransport("1.1.1.1", "1111")
-        self.proto.makeConnection(self.tr)
+class ShellFtpGetCommandTests(unittest.TestCase):
+    """Tests for cowrie/commands/ftpget.py."""
+
+    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+    tr = FakeTransport("", "31337")
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.proto.makeConnection(cls.tr)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.proto.connectionLost("tearDown From Unit Test")
+
+    def setUp(self) -> None:
         self.tr.clear()
 
-    def test_help_command(self):
-        """
-        Basic test
-        """
+    def test_help_command(self) -> None:
+        usage = b"BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.\n" \
+                b"\n" \
+                b"Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE\n" \
+                b"\n" \
+                b"Download a file via FTP\n" \
+                b"\n" \
+                b"    -c Continue previous transfer\n" \
+                b"    -v Verbose\n" \
+                b"    -u USER     Username\n" \
+                b"    -p PASS     Password\n" \
+                b"    -P NUM      Port\n\n"
         self.proto.lineReceived(b"ftpget\n")
-        self.assertEqual(
-            self.tr.value(),
-            b"""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
-
-Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
-
-Download a file via FTP
-
-    -c Continue previous transfer
-    -v Verbose
-    -u USER     Username
-    -p PASS     Password
-    -P NUM      Port\n\n"""
-            + PROMPT,
-        )
-
-    def tearDown(self):
-        self.proto.connectionLost("tearDown From Unit Test")
+        self.assertEqual(self.tr.value(), usage + PROMPT)

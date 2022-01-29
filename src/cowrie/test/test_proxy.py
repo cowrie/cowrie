@@ -1,20 +1,20 @@
 # -*- test-case-name: Cowrie Proxy Test Cases -*-
+#mypy: ignore  # noqa
 
 # Copyright (c) 2019 Guilherme Borges
 # See LICENSE for details.
 
 from __future__ import annotations
 
-
 import os
-
-from twisted.cred import portal
-from twisted.internet import reactor  # type: ignore
-from twisted.trial import unittest
+import unittest
 
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
 from cowrie.core.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
+
+from twisted.cred import portal
+from twisted.internet import reactor  # type: ignore
 
 # from cowrie.test.proxy_compare import ProxyTestCommand
 

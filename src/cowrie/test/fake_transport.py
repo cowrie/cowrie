@@ -1,5 +1,3 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
@@ -12,12 +10,11 @@ from twisted.test import proto_helpers
 
 
 class Container:
-    """
-    This class is placeholder for creating a fake interface
+    """This class is placeholder for creating a fake interface.
+
     @var host Client fake information
     @var port Fake Port for connection
     @var otherVersionString version
-    @var
     """
 
     otherVersionString = "1.0"
@@ -32,24 +29,18 @@ class Container:
     factory: Container | None
 
     def getPeer(self):
-        """
-        Fake function for mockup
-        """
+        """Fake function for mockup."""
         self.host = "1.1.1.1"
         self.port = 2222
         return self
 
     def processEnded(self, reason):
-        """
-        Fake function for mockup
-        """
+        """Fake function for mockup."""
         pass
 
 
 class FakeTransport(proto_helpers.StringTransport):
-    """
-    Fake transport with abortConnection() method.
-    """
+    """Fake transport with abortConnection() method."""
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
@@ -132,8 +123,7 @@ class FakeTransport(proto_helpers.StringTransport):
                 pass
 
     def setPrivateModes(self, modes):
-        """
-        Enable the given modes.
+        """Enable the given modes.
 
         Track which modes have been enabled so that the implementations of
         other L{insults.ITerminalTransport} methods can be properly implemented
