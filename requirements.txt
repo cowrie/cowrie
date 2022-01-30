@@ -12,3 +12,4 @@ service_identity==21.1.0
 tftpy==0.8.2
 treq==21.5.0
 twisted==22.1.0rc1
+twisted[tls]==22.1.0rc1
