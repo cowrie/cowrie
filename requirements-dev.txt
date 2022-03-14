@@ -1,9 +1,9 @@
-Sphinx==4.4.0
+Sphinx==4.3.2
 flake8==4.0.1
 importlib_metadata; python_version<'3.8'
 mypy-extensions==0.4.3; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy-zope==0.3.5; platform_python_implementation=='CPython' and python_version>'3.8'
-mypy==0.940; platform_python_implementation=='CPython' and python_version>'3.8'
+mypy==0.931; platform_python_implementation=='CPython' and python_version>'3.8'
 pathspec==0.9.0
 pipdeptree==2.2.1
 pre-commit==2.17.0
