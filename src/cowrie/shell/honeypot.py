@@ -317,6 +317,11 @@ class HoneyPotShell:
                         "utf8"
                     )
                 )
+
+                if not self.interactive:
+                    stat = failure.Failure(error.ProcessDone(status=""))
+                    self.protocol.terminal.transport.processEnded(stat)
+
                 runOrPrompt()
                 pp = None  # Got a error. Don't run any piped commands
                 break
@@ -374,10 +379,8 @@ class HoneyPotShell:
 
     def handle_CTRL_D(self) -> None:
         log.msg("Received CTRL-D, exiting..")
-
-        cmdclass = self.protocol.commands["exit"]
-        pp = StdOutStdErrEmulationProtocol(self.protocol, cmdclass, None, None, None)
-        self.protocol.call_command(pp, self.protocol.commands["exit"])
+        stat = failure.Failure(error.ProcessDone(status=""))
+        self.protocol.terminal.transport.processEnded(stat)
 
     def handle_TAB(self) -> None:
         """
