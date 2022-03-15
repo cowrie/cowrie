@@ -367,6 +367,12 @@ class fseditCmd(cmd.Cmd):
         gid = cwd[A_GID]
         mode = cwd[A_MODE]
 
+        # Modify file_mode when it is a file
+        if file_type == T_FILE:
+            file_file_mode = int('0o100000',8)
+            permits = mode & (2**9-1)
+            mode = file_file_mode+permits
+
         # create default file/directory size if none is specified
         if len(args) == 1:
             size = 4096
