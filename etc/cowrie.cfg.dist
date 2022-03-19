@@ -157,11 +157,6 @@ timezone = UTC
 #internet_facing_ip = 9.9.9.9
 
 
-# Enable to log the public IP of the honeypot (useful if listening on 127.0.0.1)
-# IP address is obtained by querying http://myip.threatstream.com
-#report_public_ip = true
-
-
 
 # ============================================================================
 # Authentication Specific Options
@@ -186,15 +181,6 @@ auth_class = UserDB
 #
 #auth_class = AuthRandom
 #auth_class_parameters = 2, 5, 10
-
-
-# ============================================================================
-# Historical SSH Specific Options
-# historical options in [honeypot] that have not yet been moved to [ssh]
-# ============================================================================
-
-# Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
-#reported_ssh_port = 22
 
 
 [backend_pool]
