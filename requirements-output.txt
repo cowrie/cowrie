@@ -37,3 +37,4 @@ pymisp==2.4.155.1
 
 # redis
 redis==4.1.4
+twisted>=22.4.0rc1 # not directly required, pinned by Snyk to avoid a vulnerability
