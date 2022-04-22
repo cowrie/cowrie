@@ -295,7 +295,7 @@ class Command_curl(HoneyPotCommand):
 
         try:
             deferred = treq.get(
-                url=url, allow_redirects=True, headers=headers, timeout=10
+                url=url, allow_redirects=False, headers=headers, timeout=10
             )
         except (
             defer.CancelledError,
