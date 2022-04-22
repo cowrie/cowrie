@@ -9,7 +9,6 @@ import os
 import time
 from typing import Optional
 
-from twisted.internet import defer
 from twisted.internet import error
 from twisted.python import compat, log
 from twisted.web.iweb import UNKNOWN_LENGTH
