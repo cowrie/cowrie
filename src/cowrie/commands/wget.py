@@ -22,7 +22,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-def tdiff(seconds: int) -> str:
+def tdiff(seconds):
     t = seconds
     days = int(t / (24 * 60 * 60))
     t -= days * 24 * 60 * 60
@@ -69,6 +69,8 @@ class Command_wget(HoneyPotCommand):
     totallength: int = 0  # total length
     proglen: int = 0
     url: bytes
+    host: str
+    started: float
 
     def start(self):
         url: str
