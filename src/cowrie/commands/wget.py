@@ -41,7 +41,7 @@ def tdiff(seconds: int) -> str:
     return s
 
 
-def sizeof_fmt(num):
+def sizeof_fmt(num: int) -> str:
     for x in ["bytes", "K", "M", "G", "T"]:
         if num < 1024.0:
             return f"{num}{x}"
@@ -152,7 +152,7 @@ class Command_wget(HoneyPotCommand):
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error)
 
-    def wgetDownload(self, url: str):
+    def wgetDownload(self, url):
         """
         Download `url`
         """
