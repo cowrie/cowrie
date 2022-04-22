@@ -189,6 +189,7 @@ class Command_curl(HoneyPotCommand):
     totallength: int = 0  # total length
     silent: bool = False
     url: bytes
+    host: str
 
     def start(self) -> None:
         try:
@@ -255,7 +256,7 @@ class Command_curl(HoneyPotCommand):
 
         parsed = compat.urllib_parse.urlparse(url)
         if parsed.hostname:
-            host: str = parsed.hostname
+            self.host = parsed.hostname
         if parsed.scheme:
             scheme = parsed.scheme
         # port: int = parsed.port or (443 if scheme == "https" else 80)
@@ -268,8 +269,8 @@ class Command_curl(HoneyPotCommand):
 
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:
-            if ipaddress.ip_address(host).is_private:
-                self.errorWrite(f"curl: (6) Could not resolve host: {host}\n")
+            if ipaddress.ip_address(self.host).is_private:
+                self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
                 self.exit()
                 return None
         except ValueError:
@@ -293,25 +294,12 @@ class Command_curl(HoneyPotCommand):
         # if CowrieConfig.has_option("honeypot", "out_addr"):
         #     out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
-        try:
-            deferred = treq.get(
-                url=url, allow_redirects=False, headers=headers, timeout=10
-            )
-        except (
-            defer.CancelledError,
-            error.ConnectingCancelledError,
-        ):
-            log.msg("requests timeout")
-            return None
-        except error.DNSLookupError:
-            log.msg("dns lookup error")
-            return None
-
+        deferred = treq.get(url=url, allow_redirects=False, headers=headers, timeout=10)
         return deferred
 
     def handle_CTRL_C(self):
         self.write("^C\n")
-        self.connection.transport.loseConnection()
+        self.exit()
 
     def success(self, response):
         """
@@ -396,12 +384,21 @@ class Command_curl(HoneyPotCommand):
         self.exit()
 
     def error(self, response):
+        """
+        handle any exceptions
+        """
+        if response.check(error.DNSLookupError) is not None:
+            self.write(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return
 
-        print(response)
+        # possible errors:
+        # defer.CancelledError,
+        # error.ConnectingCancelledError,
 
         log.msg(response.printTraceback())
-        if hasattr(error, "getErrorMessage"):  # Exceptions
-            errormsg = error.getErrorMessage()
+        if hasattr(response, "getErrorMessage"):  # Exceptions
+            errormsg = response.getErrorMessage()
         log.msg(errormsg)
         self.write("\n")
         self.protocol.logDispatch(

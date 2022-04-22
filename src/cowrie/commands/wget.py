@@ -110,13 +110,12 @@ class Command_wget(HoneyPotCommand):
             url = f"http://{url}"
 
         urldata = compat.urllib_parse.urlparse(url)
+        self.host = urldata.hostname
 
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:
-            if ipaddress.ip_address(urldata.hostname).is_private:
-                self.errorWrite(
-                    f"curl: (6) Could not resolve host: {urldata.hostname}\n"
-                )
+            if ipaddress.ip_address(self.host).is_private:
+                self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
                 self.exit()
                 return None
         except ValueError:
@@ -146,9 +145,7 @@ class Command_wget(HoneyPotCommand):
         if not self.quiet:
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
             self.errorWrite(f"--{tm}--  {url}\n")
-            self.errorWrite(
-                f"Connecting to {urldata.hostname}:{urldata.port}... connected.\n"
-            )
+            self.errorWrite(f"Connecting to {self.host}:{urldata.port}... connected.\n")
             self.errorWrite("HTTP request sent, awaiting response... ")
 
         self.deferred = self.wgetDownload(url)
@@ -156,7 +153,7 @@ class Command_wget(HoneyPotCommand):
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error)
 
-    def wgetDownload(self, url):
+    def wgetDownload(self, url: str):
         """
         Download `url`
         """
@@ -167,25 +164,12 @@ class Command_wget(HoneyPotCommand):
         # if CowrieConfig.has_option("honeypot", "out_addr"):
         #     out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
-        try:
-            deferred = treq.get(
-                url=url, allow_redirects=True, headers=headers, timeout=10
-            )
-        except (
-            defer.CancelledError,
-            error.ConnectingCancelledError,
-        ):
-            log.msg("requests timeout")
-            return None
-        except error.DNSLookupError:
-            log.msg("dns lookup error")
-            return None
-
+        deferred = treq.get(url=url, allow_redirects=True, headers=headers, timeout=10)
         return deferred
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         self.write("^C\n")
-        self.connection.transport.loseConnection()
+        self.exit()
 
     def success(self, response):
         """
@@ -326,12 +310,22 @@ class Command_wget(HoneyPotCommand):
         self.exit()
 
     def error(self, response):
-
+        """
+        handle errors
+        """
         print(response)
 
+        if response.check(error.DNSLookupError) is not None:
+            self.write(
+                f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
+            )
+            self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
+            self.exit()
+            return
+
         log.msg(response.printTraceback())
-        if hasattr(error, "getErrorMessage"):  # Exceptions
-            errormsg = error.getErrorMessage()
+        if hasattr(response, "getErrorMessage"):  # Exceptions
+            errormsg = response.getErrorMessage()
         log.msg(errormsg)
         self.write("\n")
         self.protocol.logDispatch(
