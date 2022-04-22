@@ -41,7 +41,7 @@ def tdiff(seconds: int) -> str:
     return s
 
 
-def sizeof_fmt(num: int) -> str:
+def sizeof_fmt(num):
     for x in ["bytes", "K", "M", "G", "T"]:
         if num < 1024.0:
             return f"{num}{x}"
