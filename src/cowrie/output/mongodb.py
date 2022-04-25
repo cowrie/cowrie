@@ -21,7 +21,7 @@ class Output(cowrie.core.output.Output):
 
     def update_one(self, collection, session, doc):
         try:
-            object_id = collection.update({"session": session}, doc)
+            object_id = collection.update_one({"session": session}, {"$set": doc})
             return object_id
         except Exception as e:
             log.msg(f"mongo error - {e}")
