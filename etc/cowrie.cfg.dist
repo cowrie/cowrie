@@ -1030,3 +1030,16 @@ enabled = false
 # WARNING: A binary file is read from this directory on start-up. Do not
 # change unless you understand the security implications!
 #dump_path = ${honeypot:state_path}/abuseipdb
+
+# Report login and session tracking attempts via the ThreatJammer.com Report API.
+# ThreatJammer.com is a risk assessment tool <https://threatjammer.com>
+# Read the docs for more information: https://cowrie.readthedocs.io/en/latest/threatjammer/README.html
+[output_threatjammer]
+enabled = false
+bearer_token = THREATJAMMER_API_TOKEN
+#api_url=https://dublin.report.threatjammer.com/v1/ip
+#track_login = true
+#track_session = false
+#ttl = 86400
+#category = ABUSE
+#tags = COWRIE,LOGIN,SESSION
