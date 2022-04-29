@@ -29,7 +29,7 @@ class Command_awk(HoneyPotCommand):
     # code is an array of dictionaries contain the regexes to match and the code to execute
     code: list[dict[str, str]] = []
 
-    def start(self):
+    def start(self) -> None:
         try:
             optlist, args = getopt.gnu_getopt(self.args, "Fvf", ["version"])
         except getopt.GetoptError as err:

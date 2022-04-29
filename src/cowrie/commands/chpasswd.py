@@ -74,7 +74,7 @@ class Command_chpasswd(HoneyPotCommand):
                 self.exit()
                 return
             elif o in "-c":
-                if args not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]:
+                if a not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]:
                     self.errorWrite(f"chpasswd: unsupported crypt method: {a}\n")
                     self.help()
                     self.exit()

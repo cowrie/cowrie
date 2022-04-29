@@ -783,7 +783,6 @@ class Command_ps(HoneyPotCommand):
                 ),
             ]
 
-        output = output_array
         for i in range(len(output_array)):
             if i != 0:
                 if "a" not in args and output_array[i][_user].strip() != user:
@@ -908,7 +907,7 @@ class Command_shutdown(HoneyPotCommand):
             )
             self.write("\n")
             self.write("The system is going down for maintenance NOW!\n")
-            reactor.callLater(3, self.finish)
+            reactor.callLater(3, self.finish)  # type: ignore[attr-defined]
         elif (
             len(self.args) > 1
             and self.args[0].strip().count("-r")
@@ -920,7 +919,7 @@ class Command_shutdown(HoneyPotCommand):
             )
             self.write("\n")
             self.write("The system is going down for reboot NOW!\n")
-            reactor.callLater(3, self.finish)
+            reactor.callLater(3, self.finish)  # type: ignore[attr-defined]
         else:
             self.write("Try `shutdown --help' for more information.\n")
             self.exit()
@@ -945,7 +944,7 @@ class Command_reboot(HoneyPotCommand):
             f"Broadcast message from root@{self.protocol.hostname} (pts/0) ({time.ctime()}):\n\n"
         )
         self.write("The system is going down for reboot NOW!\n")
-        reactor.callLater(3, self.finish)
+        reactor.callLater(3, self.finish)  # type: ignore[attr-defined]
 
     def finish(self):
         stat = failure.Failure(error.ProcessDone(status=""))
@@ -994,7 +993,7 @@ class Command_yes(HoneyPotCommand):
             self.write("{}\n".format(" ".join(self.args)))
         else:
             self.write("y\n")
-        self.scheduled = reactor.callLater(0.01, self.y)
+        self.scheduled = reactor.callLater(0.01, self.y)  # type: ignore[attr-defined]
 
     def handle_CTRL_C(self):
         self.scheduled.cancel()

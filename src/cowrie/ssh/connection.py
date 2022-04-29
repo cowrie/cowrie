@@ -39,8 +39,6 @@ from twisted.conch.ssh import common, connection
 from twisted.internet import defer
 from twisted.python import log
 
-MSG_CHANNEL_SUCCESS = 99
-
 
 class CowrieSSHConnection(connection.SSHConnection):
     """
@@ -57,7 +55,7 @@ class CowrieSSHConnection(connection.SSHConnection):
         if requestType == b"shell":
             wantReply = 0
             self.transport.sendPacket(
-                MSG_CHANNEL_SUCCESS,
+                connection.MSG_CHANNEL_SUCCESS,
                 struct.pack(">L", self.localToRemoteChannel[localChannel]),
             )
 

@@ -74,7 +74,7 @@ class Command_grep(HoneyPotCommand):
                 self.exit()
                 return
 
-            for opt in optlist:
+            for opt, arg in optlist:
                 if opt == "-h":
                     self.help()
 
@@ -109,6 +109,7 @@ class Command_tail(HoneyPotCommand):
     """
     tail command
     """
+    n: int = 10
 
     def tail_get_contents(self, filename):
         try:
@@ -132,7 +133,6 @@ class Command_tail(HoneyPotCommand):
             i += 1
 
     def start(self):
-        self.n = 10
         if not self.args or self.args[0] == ">":
             return
         else:

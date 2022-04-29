@@ -27,6 +27,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * Keyboard-interactive authentication (PAM)
     * IP based authentication
     """
+    user: str
 
     _pamDeferred: defer.Deferred | None
 

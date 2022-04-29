@@ -9,7 +9,6 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
 
-# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
     def __init__(self):
         # self.delayedPacketsToFrontend = []

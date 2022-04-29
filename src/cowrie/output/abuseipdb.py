@@ -93,7 +93,7 @@ class Output(output.Output):
                     self.logbook.sleep_until = t_wake
                     # and we set an alarm so the reactor knows when he can drag
                     # us back out of bed
-                    reactor.callLater(t_wake - t_now, self.logbook.wakeup)
+                    reactor.callLater(t_wake - t_now, self.logbook.wakeup)  # type: ignore[attr-defined]
 
             del self.logbook["sleeping"]
             del self.logbook["sleep_until"]
@@ -220,7 +220,7 @@ class LogBook(dict):
         # This is the method we pass in a callLater() before we go to sleep.
         self.sleeping = False
         self.sleep_until = 0
-        self.recall = reactor.callLater(CLEAN_DUMP_SCHED, self.cleanup_and_dump_state)
+        self.recall = reactor.callLater(CLEAN_DUMP_SCHED, self.cleanup_and_dump_state)  # type: ignore[attr-defined]
         log.msg(
             eventid="cowrie.abuseipdb.wakeup",
             format="AbuseIPDB plugin resuming activity after receiving "
@@ -300,7 +300,7 @@ class LogBook(dict):
         self.dump_state()
 
         if mode == 0 and not self.sleeping:
-            self.recall = reactor.callLater(
+            self.recall = reactor.callLater(  # type: ignore[attr-defined]
                 CLEAN_DUMP_SCHED, self.cleanup_and_dump_state
             )
 
@@ -315,7 +315,7 @@ class LogBook(dict):
         for k, v in self.items():
             dump[k] = v
 
-        reactor.callInThread(self.write_dump_file, dump)
+        reactor.callInThread(self.write_dump_file, dump)  # type: ignore[attr-defined]
 
     def write_dump_file(self, dump):
         # Check self._writing; waits for release; timeout after 10 seconds.
@@ -473,7 +473,7 @@ class Reporter:
 
             self.logbook.sleeping = True
             self.logbook.sleep_until = time() + retry
-            reactor.callLater(retry, self.logbook.wakeup)
+            reactor.callLater(retry, self.logbook.wakeup)  # type: ignore[attr-defined]
             # It's not serious if we don't, but it's best to call the clean-up
             # after logbook.sleeping has been set to True. The clean-up method
             # checks for this flag and will use the wake-up time rather than

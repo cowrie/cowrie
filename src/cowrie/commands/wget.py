@@ -111,6 +111,7 @@ class Command_wget(HoneyPotCommand):
             url = f"http://{url}"
 
         urldata = compat.urllib_parse.urlparse(url)
+
         self.host = urldata.hostname
 
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
@@ -184,7 +185,7 @@ class Command_wget(HoneyPotCommand):
 
         if self.limit_size > 0 and self.totallength > self.limit_size:
             log.msg(
-                f"Not saving URL ({self.url}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
+                f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
             )
             self.exit()
             return
@@ -332,7 +333,7 @@ class Command_wget(HoneyPotCommand):
         self.protocol.logDispatch(
             eventid="cowrie.session.file_download.failed",
             format="Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url,
+            url=self.url.decode(),
         )
         self.exit()
 

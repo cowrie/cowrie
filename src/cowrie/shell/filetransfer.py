@@ -36,9 +36,9 @@ class CowrieSFTPFile:
     SFTPTFile
     """
 
-    transfer_completed = 0
-    bytesReceived = 0
-    bytesReceivedLimit = CowrieConfig.getint(
+    contents: bytes
+    bytesReceived: int = 0
+    bytesReceivedLimit: int = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
 
@@ -80,10 +80,10 @@ class CowrieSFTPFile:
             self.sftpserver.fs.update_size(self.filename, self.bytesReceived)
         return self.sftpserver.fs.close(self.fd)
 
-    def readChunk(self, offset, length):
+    def readChunk(self, offset: int, length: int) -> bytes:
         return self.contents[offset : offset + length]
 
-    def writeChunk(self, offset, data):
+    def writeChunk(self, offset: int, data: bytes) -> None:
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             raise filetransfer.SFTPError(filetransfer.FX_FAILURE, "Quota exceeded")

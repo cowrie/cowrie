@@ -32,7 +32,7 @@ class ServerProtocol(protocol.Protocol):
         self.buffer = []
 
     def connectionMade(self):
-        reactor.connectTCP(self.dst_ip, self.dst_port, ClientFactory(self))
+        reactor.connectTCP(self.dst_ip, self.dst_port, ClientFactory(self))  # type: ignore[attr-defined]
 
     def dataReceived(self, data):
         self.buffer.append(data)
@@ -40,7 +40,7 @@ class ServerProtocol(protocol.Protocol):
 
     def sendData(self):
         if not self.client_protocol:
-            reactor.callLater(0.5, self.sendData)
+            reactor.callLater(0.5, self.sendData)  # type: ignore[attr-defined]
             return
 
         for packet in self.buffer:
@@ -88,10 +88,10 @@ class NATService:
                     self.bindings[guest_id][2]._realPortNumber,
                 )
             else:
-                nat_ssh = reactor.listenTCP(
+                nat_ssh = reactor.listenTCP(  # type: ignore[attr-defined]
                     0, ServerFactory(dst_ip, ssh_port), interface="0.0.0.0"
                 )
-                nat_telnet = reactor.listenTCP(
+                nat_telnet = reactor.listenTCP(  # type: ignore[attr-defined]
                     0, ServerFactory(dst_ip, telnet_port), interface="0.0.0.0"
                 )
                 self.bindings[guest_id] = [1, nat_ssh, nat_telnet]

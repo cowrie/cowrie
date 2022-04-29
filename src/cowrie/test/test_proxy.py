@@ -67,7 +67,7 @@ class ProxyTests(unittest.TestCase):
         # ################################################# #
         # setup SSH backend
         self.factory_shell_ssh = create_ssh_factory("shell")
-        self.shell_server_ssh = reactor.listenTCP(
+        self.shell_server_ssh = reactor.listenTCP(  # type: ignore[attr-defined]
             self.PORT_BACKEND_SSH, self.factory_shell_ssh
         )
 
@@ -83,7 +83,7 @@ class ProxyTests(unittest.TestCase):
 
         # setup SSH proxy
         self.factory_proxy_ssh = create_ssh_factory("proxy")
-        self.proxy_server_ssh = reactor.listenTCP(
+        self.proxy_server_ssh = reactor.listenTCP(  # type: ignore[attr-defined]
             self.PORT_PROXY_SSH, self.factory_proxy_ssh
         )
 

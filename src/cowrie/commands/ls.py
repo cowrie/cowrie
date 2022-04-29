@@ -175,11 +175,11 @@ class Command_ls(HoneyPotCommand):
                 perms[0] = "l"
                 linktarget = f" -> {file[fs.A_TARGET]}"
 
-            perms = "".join(perms)
+            permstr = "".join(perms)
             ctime = time.localtime(file[fs.A_CTIME])
 
             line = "{} 1 {} {} {} {} {}{}".format(
-                perms,
+                permstr,
                 self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent),
                 self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent),
                 str(file[fs.A_SIZE]).rjust(filesize_str_extent),

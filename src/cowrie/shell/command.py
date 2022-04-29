@@ -33,7 +33,7 @@ class HoneyPotCommand:
         self.args = list(args)
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
-        self.data: bytes = None  # output data
+        self.data: bytes = b''  # output data
         self.input_data: Optional[
             bytes
         ] = None  # used to store STDIN data passed via PIPE

@@ -11,6 +11,7 @@ import time
 
 from twisted.cred import portal as tp
 from twisted.internet import protocol
+from twisted.plugin import IPlugin
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
@@ -25,7 +26,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     They listen directly to the TCP port
     """
 
-    tac = None
+    tac: IPlugin
     portal: tp.Portal | None = None  # gets set by Twisted plugin
 
     def __init__(self, backend, pool_handler):
@@ -39,7 +40,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         Special delivery to the loggers to avoid scope problems
         """
         args["sessionno"] = "T{}".format(str(args["sessionno"]))
-        for output in self.tac.output_plugins:
+        for output in self.tac.output_plugins:  # type: ignore[attr-defined]
             output.logDispatch(**args)
 
     def startFactory(self):

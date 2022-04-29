@@ -39,7 +39,7 @@ class Command_dd(HoneyPotCommand):
             self.ddargs[operand] = value
 
         if self.input_data:
-            self.write(self.input_data)
+            self.writeBytes(self.input_data)
         else:
             bSuccess = True
             c = -1

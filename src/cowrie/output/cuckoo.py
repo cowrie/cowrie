@@ -93,11 +93,10 @@ class Output(cowrie.core.output.Output):
                 print("Sending file to Cuckoo")
                 self.postfile(entry["outfile"], entry["filename"])
 
-    def cuckoo_check_if_dup(self, sha256):
+    def cuckoo_check_if_dup(self, sha256: str) -> bool:
         """
         Check if file already was analyzed by cuckoo
         """
-        res = None
         try:
             print(f"Looking for tasks for: {sha256}")
             res = requests.get(
@@ -112,11 +111,11 @@ class Output(cowrie.core.output.Output):
                         res.json().get("sample", {}).get("id", 0)
                     )
                 )
-                res = True
+                return True
         except Exception as e:
             print(e)
 
-        return res
+        return False
 
     def postfile(self, artifact, fileName):
         """

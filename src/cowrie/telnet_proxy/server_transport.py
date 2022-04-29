@@ -136,7 +136,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
         d.addCallback(self.backend_connection_success)
         d.addErrback(self.backend_connection_error)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         self.telnetHandler.addPacket("frontend", data)
 
     def write(self, data):

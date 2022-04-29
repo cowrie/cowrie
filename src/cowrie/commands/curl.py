@@ -189,6 +189,7 @@ class Command_curl(HoneyPotCommand):
     silent: bool = False
     url: bytes
     host: str
+    port: int
 
     def start(self) -> None:
         try:
@@ -254,17 +255,22 @@ class Command_curl(HoneyPotCommand):
         self.url = url.encode("ascii")
 
         parsed = compat.urllib_parse.urlparse(url)
-        if parsed.hostname:
-            self.host = parsed.hostname
         if parsed.scheme:
             scheme = parsed.scheme
-        # port: int = parsed.port or (443 if scheme == "https" else 80)
         if scheme != "http" and scheme != "https":
             self.errorWrite(
                 f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
             )
             self.exit()
             return
+        if parsed.hostname:
+            self.host = parsed.hostname
+        else:
+            self.errorWrite(
+                f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
+            )
+            self.exit()
+        self.port = parsed.port or (443 if scheme == "https" else 80)
 
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:
@@ -308,7 +314,7 @@ class Command_curl(HoneyPotCommand):
         # TODO possible this is UNKNOWN_LENGTH
         if self.limit_size > 0 and self.totallength > self.limit_size:
             log.msg(
-                f"Not saving URL ({self.url}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
+                f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
             )
             self.exit()
             return
@@ -369,14 +375,14 @@ class Command_curl(HoneyPotCommand):
         self.protocol.logDispatch(
             eventid="cowrie.session.file_download",
             format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(filename)s",
-            url=self.url,
+            url=self.url.decode(),
             filename=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
         )
         log.msg(
             eventid="cowrie.session.file_download",
             format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(filename)s",
-            url=self.url,
+            url=self.url.decode(),
             filename=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
         )
@@ -386,8 +392,30 @@ class Command_curl(HoneyPotCommand):
         """
         handle any exceptions
         """
+
+        self.protocol.logDispatch(
+            eventid="cowrie.session.file_download.failed",
+            format="Attempt to download file(s) from URL (%(url)s) failed",
+            url=self.url.decode(),
+        )
+        log.msg(
+            eventid="cowrie.session.file_download.failed",
+            format="Attempt to download file(s) from URL (%(url)s) failed",
+            url=self.url,
+        )
+
         if response.check(error.DNSLookupError) is not None:
             self.write(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return
+
+        elif response.check(error.ConnectingCancelledError) is not None:
+            self.write(f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n")
+            self.exit()
+            return
+
+        elif response.check(error.ConnectionRefusedError) is not None:
+            self.write(f"curl: (7) Failed to connect to {self.host} port {self.port}: Connection refused\n")
             self.exit()
             return
 
@@ -400,11 +428,7 @@ class Command_curl(HoneyPotCommand):
             errormsg = response.getErrorMessage()
         log.msg(errormsg)
         self.write("\n")
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download.failed",
-            format="Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url,
-        )
+
         self.exit()
 
 
