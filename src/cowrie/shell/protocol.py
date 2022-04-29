@@ -57,7 +57,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.kippoIP: str
         self.clientIP: str
         self.sessionno: int
-        self.factory
+        self.factory = None
 
         if self.fs.exists(user.avatar.home):
             self.cwd = user.avatar.home
