@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from zope.interface import implementer
 
-from twisted.conch import interfaces as conchinterfaces
+from twisted.conch.interfaces import IConchUser
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.cred.portal import IRealm
 
@@ -45,7 +45,8 @@ class HoneyPotRealm:
         pass
 
     def requestAvatar(self, avatarId, mind, *interfaces):
-        if conchinterfaces.IConchUser in interfaces:
+        user: IConchUser
+        if IConchUser in interfaces:
             serv = shellserver.CowrieServer(self)
             user = shellavatar.CowrieUser(avatarId, serv)
             return interfaces[0], user, user.logout

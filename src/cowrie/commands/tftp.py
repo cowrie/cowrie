@@ -28,7 +28,7 @@ class Progress:
 class Command_tftp(HoneyPotCommand):
     port = 69
     hostname = None
-    file_to_get = None
+    file_to_get: str
     limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
 
     def makeTftpRetrieval(self):

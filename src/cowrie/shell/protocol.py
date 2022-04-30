@@ -51,12 +51,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.hostname: str = user.server.hostname
         self.fs = user.server.fs
         self.pp = None
-        self.logintime: float = None
-        self.realClientIP: str = None
-        self.realClientPort: int = None
-        self.kippoIP: str = None
-        self.clientIP: str = None
-        self.sessionno = None
+        self.logintime: float
+        self.realClientIP: str
+        self.realClientPort: int
+        self.kippoIP: str
+        self.clientIP: str
+        self.sessionno: int
         self.factory = None
 
         if self.fs.exists(user.avatar.home):
@@ -296,7 +296,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def connectionLost(self, reason):
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
-        self.keyHandlers = None
+        self.keyHandlers = {}
 
     def initializeScreen(self):
         """

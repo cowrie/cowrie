@@ -126,7 +126,7 @@ class Command_sudo(HoneyPotCommand):
                 self.protocol.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....
                 if self.input_data:
-                    self.write(self.input_data)
+                    self.writeBytes(self.input_data)
                 self.exit()
             else:
                 self.short_help()

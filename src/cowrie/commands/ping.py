@@ -85,7 +85,7 @@ class Command_ping(HoneyPotCommand):
 
         self.running = True
         self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
-        self.scheduled = reactor.callLater(0.2, self.showreply)
+        self.scheduled = reactor.callLater(0.2, self.showreply)  # type: ignore[attr-defined]
         self.count = 0
 
     def showreply(self):
@@ -102,7 +102,7 @@ class Command_ping(HoneyPotCommand):
             self.printstatistics()
             self.exit()
         else:
-            self.scheduled = reactor.callLater(1, self.showreply)
+            self.scheduled = reactor.callLater(1, self.showreply)  # type: ignore[attr-defined]
 
     def printstatistics(self):
         self.write(f"--- {self.host} ping statistics ---\n")

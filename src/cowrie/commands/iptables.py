@@ -228,7 +228,7 @@ class Command_iptables(HoneyPotCommand):
             )
 
         # Get the tables
-        self.tables: dict[str, dict[str, list[any]]] = getattr(
+        self.tables: dict[str, dict[str, list[Any]]] = getattr(
             self.protocol.user.server, "iptables"
         )
 
@@ -368,7 +368,7 @@ Options:
 
                 chains = [chain]
             else:
-                chains = iter(self.current_table.keys())
+                chains = list(self.current_table.keys())
 
             # Output buffer
             output = []
@@ -396,7 +396,7 @@ Options:
 
                 chains = [chain]
             else:
-                chains = iter(self.current_table.keys())
+                chains = list(self.current_table.keys())
 
             # Output buffer
             output = []
@@ -436,7 +436,7 @@ Options:
 
                 chains = [chain]
             else:
-                chains = iter(self.current_table.keys())
+                chains = list(self.current_table.keys())
 
             # Flush
             for chain in chains:

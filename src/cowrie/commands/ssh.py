@@ -121,14 +121,15 @@ class Command_ssh(HoneyPotCommand):
         self.protocol.password_input = True
 
     def wait(self, line):
-        reactor.callLater(2, self.finish, line)
+        reactor.callLater(2, self.finish, line)  # type: ignore[attr-defined]
 
     def finish(self, line):
         self.pause = False
-        rest, host = self.host, "localhost"
-        rest = self.host.strip().split(".")
-        if len(rest) and rest[0].isalpha():
-            host = rest[0]
+        rests = self.host.strip().split(".")
+        if len(rests) and rests[0].isalpha():
+            host = rests[0]
+        else:
+            host = "localhost"
         self.protocol.hostname = host
         self.protocol.cwd = "/root"
         if not self.fs.exists(self.protocol.cwd):

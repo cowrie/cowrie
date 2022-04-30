@@ -5,7 +5,6 @@ from twisted.internet import defer, protocol
 from twisted.internet import reactor  # type: ignore
 
 
-# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class PasswordAuth(userauth.SSHUserAuthClient):
     def __init__(self, user, password, conn):
         super().__init__(user, conn)
@@ -100,6 +99,6 @@ def execute_ssh(host, port, username, password, command, callback=None):
     done_deferred = defer.Deferred()
 
     factory = ClientCommandFactory(username, password, command, done_deferred, callback)
-    reactor.connectTCP(host, port, factory)
+    reactor.connectTCP(host, port, factory)  # type: ignore[attr-defined]
 
     return done_deferred

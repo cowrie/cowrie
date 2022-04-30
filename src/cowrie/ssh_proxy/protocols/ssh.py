@@ -88,14 +88,15 @@ class SSH(base_protocol.BaseProtocol):
         super().__init__()
 
         self.channels: list[dict[str, Any]] = []
-        self.username = ""
-        self.password = ""
-        self.auth_type = ""
+        self.username = b""
+        self.password = b""
+        self.auth_type = b""
+        self.service = b""
 
         self.sendOn = False
         self.expect_password = 0
         self.server = server
-        self.client = None
+        # self.client
 
     def set_client(self, client):
         self.client = client

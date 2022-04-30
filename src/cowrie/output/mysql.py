@@ -58,7 +58,6 @@ class Output(cowrie.core.output.Output):
     MySQL output
     """
 
-    db = None
     debug: bool = False
 
     def start(self):

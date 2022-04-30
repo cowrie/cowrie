@@ -165,6 +165,6 @@ class Output(cowrie.core.output.Output):
 
             if failed:
                 # Something went wrong, we need to add them to batch.
-                reactor.callFromThread(self.transmission_error, batch)
+                reactor.callFromThread(self.transmission_error, batch)  # type: ignore[attr-defined]
 
         req.addCallback(check_response)

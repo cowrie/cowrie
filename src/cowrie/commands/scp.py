@@ -144,27 +144,25 @@ class Command_scp(HoneyPotCommand):
                 destfile=fname,
             )
 
-            self.safeoutfile = None
-
             # Update the honeyfs to point to downloaded file
             self.fs.update_realfile(self.fs.getfile(fname), hash_path)
             self.fs.chown(fname, self.protocol.user.uid, self.protocol.user.gid)
 
-    def parse_scp_data(self, data):
+    def parse_scp_data(self, data: bytes) -> bytes:
         # scp data format:
         # C0XXX filesize filename\nfile_data\x00
         # 0XXX - file permissions
         # filesize - size of file in bytes in decimal notation
 
-        pos = data.find("\n")
+        pos = data.find(b"\n")
         if pos != -1:
             header = data[:pos]
 
             pos += 1
 
-            if re.match(r"^C0[\d]{3} [\d]+ [^\s]+$", header):
+            if re.match(rb"^C0[\d]{3} [\d]+ [^\s]+$", header):
 
-                r = re.search(r"C(0[\d]{3}) ([\d]+) ([^\s]+)", header)
+                r = re.search(rb"C(0[\d]{3}) ([\d]+) ([^\s]+)", header)
 
                 if r and r.group(1) and r.group(2) and r.group(3):
 
@@ -176,9 +174,9 @@ class Command_scp(HoneyPotCommand):
                     d = data[pos:dend]
 
                     if self.out_dir:
-                        fname = os.path.join(self.out_dir, r.group(3))
+                        fname = os.path.join(self.out_dir, r.group(3).decode())
                     else:
-                        fname = r.group(3)
+                        fname = r.group(3).decode()
 
                     outfile = self.fs.resolve_path(fname, self.protocol.cwd)
 
@@ -187,16 +185,15 @@ class Command_scp(HoneyPotCommand):
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.
                         self.errorWrite(f"-scp: {outfile}: No such file or directory\n")
-                        self.safeoutfile = None
-                        return ""
+                        return b""
 
                     self.save_file(d, outfile)
 
                     data = data[dend + 1 :]  # cut saved data + \x00
             else:
-                data = ""
+                data = b""
         else:
-            data = ""
+            data = b""
 
         return data
 
@@ -207,16 +204,16 @@ class Command_scp(HoneyPotCommand):
             and os.path.exists(self.protocol.terminal.stdinlogFile)
         ):
             with open(self.protocol.terminal.stdinlogFile, "rb") as f:
-                data = f.read()
-                header = data[: data.find(b"\n")]
-                if re.match(r"C0[\d]{3} [\d]+ [^\s]+", header.decode()):
-                    data = data[data.find(b"\n") + 1 :]
+                data: bytes = f.read()
+                header: bytes = data[: data.find(b"\n")]
+                if re.match(rb"C0[\d]{3} [\d]+ [^\s]+", header):
+                    content = data[data.find(b"\n") + 1 :]
                 else:
-                    data = ""
+                    content = b""
 
-            if data:
+            if content:
                 with open(self.protocol.terminal.stdinlogFile, "wb") as f:
-                    f.write(data)
+                    f.write(content)
 
         self.exit()
 

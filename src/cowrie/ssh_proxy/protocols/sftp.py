@@ -28,8 +28,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from twisted.python import log
 
 from cowrie.ssh_proxy.protocols import base_protocol
@@ -87,8 +85,7 @@ class SFTP(base_protocol.BaseProtocol):
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()
 
-        self.parent: Optional[str] = None
-        self.parentPacket = None
+        self.parent: str
         self.offset: int = 0
 
     def parse_packet(self, parent: str, payload: bytes) -> None:
@@ -98,6 +95,8 @@ class SFTP(base_protocol.BaseProtocol):
             self.parentPacket = self.serverPacket
         elif parent == "[CLIENT]":
             self.parentPacket = self.clientPacket
+        else:
+            raise Exception
 
         if self.parentPacket.packetSize == 0:
             self.parentPacket.packetSize = int(payload[:4].hex(), 16) - len(payload[4:])

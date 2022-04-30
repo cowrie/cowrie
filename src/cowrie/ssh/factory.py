@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from configparser import NoOptionError
 import time
-from typing import Optional
+from typing import Dict, Optional
 
 from twisted.conch.openssh_compat import primes
-from twisted.conch.ssh import factory, keys
+from twisted.conch.ssh import factory, keys, transport
 from twisted.cred import portal as tp
 from twisted.python import log
 
@@ -25,7 +25,6 @@ from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 
 
-# object is added for Python 2.7 compatibility (#1198) - as is super with args
 class CowrieSSHFactory(factory.SSHFactory):
     """
     This factory creates HoneyPotSSHTransport instances
@@ -33,11 +32,10 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     starttime: Optional[float] = None
-    privateKeys = None
-    publicKeys = None
+    privateKeys: Dict[bytes, bytes] = {}
+    publicKeys: Dict[bytes, bytes] = {}
     primes = None
     portal: Optional[tp.Portal] = None  # gets set by plugin
-    tac = None  # gets set later
     ourVersionString: str = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
     )
@@ -58,7 +56,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         Special delivery to the loggers to avoid scope problems
         """
         args["sessionno"] = "S{}".format(args["sessionno"])
-        for output in self.tac.output_plugins:
+        for output in self.tac.output_plugins:  # type: ignore[attr-defined]
             output.logDispatch(**args)
 
     def startFactory(self):
@@ -66,8 +64,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         self.starttime = time.time()
 
         # Load/create keys
-        self.publicKeys = {}
-        self.privateKeys = {}
         try:
             public_key_auth = [
                 i.encode("utf-8")
@@ -123,6 +119,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
+        t: transport.SSHServerTransport
         if self.backend == "proxy":
             t = proxyTransport.FrontendSSHTransport()
         else:

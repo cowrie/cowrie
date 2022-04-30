@@ -32,7 +32,7 @@ class Command_sleep(HoneyPotCommand):
             if m:
                 _time = int(m.group(1))
                 # Always sleep in seconds, not minutes or hours
-                self.scheduled = reactor.callLater(_time, self.done)
+                self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
             else:
                 self.write("usage: sleep seconds\n")
                 self.exit()

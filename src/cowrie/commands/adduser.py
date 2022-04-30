@@ -50,7 +50,7 @@ class Command_adduser(HoneyPotCommand):
     ]
     username: Optional[str] = None
 
-    def start(self):
+    def start(self) -> None:
         self.item = 0
         for arg in self.args:
             if arg.startswith("-") or arg.isdigit():
@@ -82,9 +82,9 @@ class Command_adduser(HoneyPotCommand):
             self.schedule_next()
 
     def schedule_next(self):
-        self.scheduled = reactor.callLater(0.5 + random.random() * 1, self.do_output)
+        self.scheduled = reactor.callLater(0.5 + random.random() * 1, self.do_output)  # type: ignore[attr-defined]
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         if self.item + 1 == len(self.output) and line.strip() in ("n", "no"):
             self.exit()
             return

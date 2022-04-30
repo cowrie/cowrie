@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import re
 import time
+from typing import List
 
 from twisted.python import log
 
@@ -10,7 +11,7 @@ from cowrie.core.checkers import HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
 
 
-def process_backspaces(s):
+def process_backspaces(s: bytes) -> bytes:
     """
     Takes a user-input string that might have backspaces in it (represented as 0x7F),
     and actually performs the 'backspace operation' to return a clean string.
@@ -25,7 +26,7 @@ def process_backspaces(s):
     return n
 
 
-def remove_all(original_string, remove_list):
+def remove_all(original_string: bytes, remove_list: List[bytes]) -> bytes:
     """
     Removes all substrings in the list remove_list from string original_string.
     """
@@ -38,7 +39,7 @@ def remove_all(original_string, remove_list):
 class TelnetHandler:
     def __init__(self, server):
         # holds packet data; useful to manipulate it across functions as needed
-        self.currentData = None
+        self.currentData: bytes = b""
         self.sendData = True
 
         # front and backend references
@@ -132,7 +133,7 @@ class TelnetHandler:
                 duration=time.time() - self.startTime,
             )
 
-    def sendBackend(self, data):
+    def sendBackend(self, data: bytes) -> None:
         self.backend_buffer.append(data)
 
         if not self.client:
@@ -142,7 +143,7 @@ class TelnetHandler:
             self.client.transport.write(packet)
             # log raw packets if user sets so
             if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
-                log.msg(b"to_backend - " + data)
+                log.msg("to_backend - " + data.decode("unicode-escape"))
 
             if self.ttylogEnabled and self.authStarted:
                 cleanData = data.replace(
@@ -159,12 +160,12 @@ class TelnetHandler:
 
             self.backend_buffer = self.backend_buffer[1:]
 
-    def sendFrontend(self, data):
+    def sendFrontend(self, data: bytes) -> None:
         self.server.transport.write(data)
 
         # log raw packets if user sets so
         if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
-            log.msg(b"to_frontend - " + data)
+            log.msg("to_frontend - " + data.decode("unicode-escape"))
 
         if self.ttylogEnabled and self.authStarted:
             ttylog.ttylog_write(
@@ -172,7 +173,7 @@ class TelnetHandler:
             )
             # self.ttylogSize += len(data)
 
-    def addPacket(self, parent, data):
+    def addPacket(self, parent: str, data: bytes) -> None:
         self.currentData = data
         self.sendData = True
 
@@ -221,7 +222,7 @@ class TelnetHandler:
             else:
                 self.sendFrontend(self.currentData)
 
-    def processUsernameInput(self):
+    def processUsernameInput(self) -> None:
         self.sendData = False  # withold data until input is complete
 
         # remove control characters
@@ -244,7 +245,7 @@ class TelnetHandler:
             # cleanup
             self.usernameState = process_backspaces(self.usernameState)
 
-            log.msg(f"User input login: {self.usernameState}")
+            log.msg(f"User input login: {self.usernameState.decode('unicode-escape')}")
             self.inputingLogin = False
 
             # actually send to backend
@@ -254,7 +255,7 @@ class TelnetHandler:
             # we now have to ignore the username echo from the backend in the next packet
             self.waitingLoginEcho = True
 
-    def processPasswordInput(self):
+    def processPasswordInput(self) -> None:
         self.sendData = False  # withold data until input is complete
 
         if self.prePasswordData:
@@ -274,7 +275,9 @@ class TelnetHandler:
             # cleanup
             self.passwordState = process_backspaces(self.passwordState)
 
-            log.msg(f"User input password: {self.passwordState}")
+            log.msg(
+                f"User input password: {self.passwordState.decode('unicode-escape')}"
+            )
             self.inputingPassword = False
 
             # having the password (and the username, either empy or set before), we can check the login
@@ -297,7 +300,7 @@ class TelnetHandler:
             self.currentData = passwordToSend + b"\r" + terminatingChar
             self.sendData = True
 
-    def setProcessingStateBackend(self):
+    def setProcessingStateBackend(self) -> None:
         """
         This function analyses a data packet and sets the processing state of the handler accordingly.
         It looks for authentication phases (password input and username input), as well as data that
@@ -319,7 +322,7 @@ class TelnetHandler:
 
         self.prePasswordData = b"\xff\xfb\x01" in self.currentData
 
-    def setProcessingStateFrontend(self):
+    def setProcessingStateFrontend(self) -> None:
         """
         Same for the frontend.
         """
@@ -329,11 +332,11 @@ class TelnetHandler:
         if hasNegotiationLogin:
             self.usernameState = hasNegotiationLogin.group(2)
             log.msg(
-                f"Detected username {self.usernameState.decode()} in negotiation, spoofing for backend..."
+                f"Detected username {self.usernameState.decode('unicode-escape')} in negotiation, spoofing for backend..."
             )
 
             # spoof username in data sent
             # username is always sent correct, password is the one sent wrong if we don't want to authenticate
             self.currentData = negotiationLoginPattern.sub(
-                br"\1" + self.backendLogin + br"\3", self.currentData
+                rb"\1" + self.backendLogin + rb"\3", self.currentData
             )

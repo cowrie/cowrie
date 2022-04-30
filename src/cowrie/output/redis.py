@@ -27,7 +27,7 @@ class Output(cowrie.core.output.Output):
         port: int = CowrieConfig.getint("output_redis", "port")
 
         try:
-            db = CowrieConfig.get("output_redis", "db")
+            db = CowrieConfig.getint("output_redis", "db")
         except NoOptionError:
             db = 0
 
