@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from twisted.internet import defer
 from twisted.internet import reactor  # type: ignore

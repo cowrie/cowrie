@@ -35,7 +35,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
-from typing import Any, Dict, Union
+from typing import Any, Dict
 from urllib.parse import urlencode, urlparse
 
 from zope.interface import implementer
