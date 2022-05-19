@@ -9,7 +9,7 @@ pipdeptree==2.2.1
 pre-commit==2.18.1
 pur==6.1.0
 pyre-check==0.9.13; python_version>'3.8'
-pytype==2022.4.26; platform_python_implementation=='CPython'
+pytype==2022.4.26; platform_python_implementation=='CPython' and python_version<'3.11'
 pyupgrade==2.32.0
 pyyaml==6.0
 setuptools==62.1.0
