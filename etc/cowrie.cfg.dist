@@ -1043,3 +1043,8 @@ bearer_token = THREATJAMMER_API_TOKEN
 #ttl = 86400
 #category = ABUSE
 #tags = COWRIE,LOGIN,SESSION
+
+# Send output to a Discord webhook
+[output_discord]
+enabled = false
+url = https://discord.com/api/webhooks/id/token
