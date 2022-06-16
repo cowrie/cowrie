@@ -1,12 +1,12 @@
 appdirs==1.4.4
 attrs==21.4.0
-bcrypt==3.2.0
+bcrypt==3.2.2
 configparser==5.2.0
-cryptography==37.0.1
+cryptography==37.0.2
 packaging==21.3
 pyasn1_modules==0.2.8
 pyopenssl==22.0.0
-pyparsing==3.0.8
+pyparsing==3.0.9
 python-dateutil==2.8.2
 service_identity==21.1.0
 tftpy==0.8.2
