@@ -2,10 +2,17 @@
 # `builder` contains all necessary code to build
 # `runtime` is stripped down.
 
-ARG ARCH=
-ARG BUILD_DATE
-ARG TAG
-FROM ${ARCH}debian:bullseye-slim as builder
+# TARGETPLATFORM, BUILDPLATFORM, TARGETARCH and BUILDARCH are set by the buildx builder
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETARCH
+ARG BUILDARCH
+
+# BUILD_DATE and TAG are passed from the Makefile
+ARG BUILD_DATE=unknown
+ARG TAG=unknown
+
+FROM ${TARGETARCH}debian:bullseye-slim as builder
 
 WORKDIR /
 
@@ -65,16 +72,16 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 FROM gcr.io/distroless/python3-debian11 AS runtime
 #FROM gcr.io/distroless/python3-debian11:debug AS runtime
 
-LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
 LABEL org.opencontainers.image.documentation="https://cowrie.readthedocs.io"
-LABEL org.opencontainers.image.source="https://github.com/cowrie/docker-cowrie"
-LABEL org.opencontainers.image.version="${TAG}"
+LABEL org.opencontainers.image.source="https://github.com/cowrie/cowrie"
+LABEL org.opencontainers.image.version=${TAG}
 LABEL org.opencontainers.image.revision="Source control revision identifier for the packaged software."
 LABEL org.opencontainers.image.vendor="Cowrie"
 LABEL org.opencontainers.image.licenses="BSD-3-Clause"
-LABEL org.opencontainers.image.ref.name="${TAG}"
+LABEL org.opencontainers.image.ref.name=${TAG}
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
