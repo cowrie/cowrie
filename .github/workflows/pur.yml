@@ -35,11 +35,13 @@ jobs:
           pur -r requirements.txt
           pur -r requirements-dev.txt
           pur --skip csirtgsdk -r requirements-output.txt
+          pur -r docs/requirements.txt
       - name: pip install
         run: |
           pip install --upgrade -r requirements.txt
           pip install --upgrade -r requirements-dev.txt
           pip install --upgrade -r requirements-output.txt
+          pip install --upgrade -r docs/requirements.txt
       - name: pip check
         run: |
           pip check
