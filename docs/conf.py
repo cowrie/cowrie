@@ -196,7 +196,7 @@ todo_include_todos = True
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "twisted": ("https://twistedmatrix.com/documents/current/api/", None),
+    "twisted": ("https://docs.twistedmatrix.com/en/latest/api/", None),
 }
 
 # -- Options for sphinx copybutton extension ---------------------------------

@@ -4,7 +4,6 @@ Release Notes
 Release 2.4.0
 *************
 
-
 * Deprecate Python 3.7
 * Early support for Python 3.11
 * ThreatJammer output plugin (@diegoparrilla)
