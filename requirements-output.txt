@@ -15,13 +15,13 @@ hpfeeds3==0.9.10
 mysql-connector-python==8.0.29
 
 # mongodb
-pymongo==4.1.1
+pymongo==4.2.0
 
 # rethinkdblog
 rethinkdb==2.4.9
 
 # s3
-botocore==1.27.31
+botocore==1.27.36
 
 # slack
 slackclient==2.9.4
