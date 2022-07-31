@@ -26,7 +26,7 @@ Actual Python packages are installed later.
 
 On Debian based systems (last verified on Debian 10, 2021-04-29)::
 
-    $ sudo apt-get install git python-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
+    $ sudo apt-get install git python3-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
 
 Step 2: Create a user account
 *****************************
