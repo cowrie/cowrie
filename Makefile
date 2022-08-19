@@ -1,5 +1,9 @@
 # This `Makefile` is intended for Cowrie developers.
 
+# Set default docker binary to docker in path if not specified.
+# This allows you to use other container runtimes (such as podman)
+# For example, to build with podman: DOCKER=podman make docker-build
+DOCKER?=docker
 
 # Dummy target `all`
 .DEFAULT_GOAL := help
@@ -78,7 +82,7 @@ TAG=$(shell git rev-parse --short=8 HEAD)
 .PHONY: docker-build
 docker-build: docker/Dockerfile ## Build Docker image
 	#docker build -t ${IMAGENAME}:${TAG} --no-cache --build-arg TAG=${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
-	docker build -t ${IMAGENAME}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+	$(DOCKER) build -t ${IMAGENAME}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-run
 docker-run: docker-start ## Run Docker container
@@ -86,13 +90,13 @@ docker-run: docker-start ## Run Docker container
 .PHONY: docker-push
 docker-push: docker-build ## Push Docker image to Docker Hub
 	@echo "Pushing image to GitHub Docker Registry...\n"
-	docker push $(IMAGE):$(TAG)
-	docker tag $(IMAGE):$(TAG) $(IMAGE):latest
-	docker push $(IMAGE):latest
+	$(DOCKER) push $(IMAGE):$(TAG)
+	$(DOCKER) tag $(IMAGE):$(TAG) $(IMAGE):latest
+	$(DOCKER) push $(IMAGE):latest
 
 .PHONY: docker-start
 docker-start: docker-create-volumes ## Start Docker container
-	docker run -p 2222:2222/tcp \
+	$(DOCKER) run -p 2222:2222/tcp \
 		   -p 2223:2223/tcp \
 		   -v cowrie-etc:/cowrie/cowrie-git/etc \
 		   -v cowrie-var:/cowrie/cowrie-git/var \
@@ -103,36 +107,36 @@ docker-start: docker-create-volumes ## Start Docker container
 
 .PHONY: docker-stop
 docker-stop: ## Stop Docker Container
-	docker stop ${CONTAINERNAME}
+	$(DOCKER) stop ${CONTAINERNAME}
 
 .PHONY: docker-rm
 docker-rm: docker-stop ## Delete Docker Container
-	docker rm ${CONTAINERNAME}
+	$(DOCKER) rm ${CONTAINERNAME}
 
 .PHONY: docker-clean
 docker-clean: docker-rm ## Clean
-	docker rmi ${IMAGENAME}:${TAG}
+	$(DOCKER) rmi ${IMAGENAME}:${TAG}
 
 .PHONY: docker-shell
 docker-shell: ## Start shell in running Docker container
-	@docker exec -it ${CONTAINERNAME} bash
+	@$(DOCKER) exec -it ${CONTAINERNAME} bash
 
 .PHONY: docker-logs
 docker-logs: ## Show Docker container logs
-	@docker logs ${CONTAINERNAME}
+	@$(DOCKER) logs ${CONTAINERNAME}
 
 .PHONY: docker-ps
 docker-ps:
-	@docker ps -f name=${CONTAINERNAME}
+	@$(DOCKER) ps -f name=${CONTAINERNAME}
 
 .PHONY: docker-status
 docker-status: docker-ps ## List running Docker containers
 
 .PHONY: docker-ip
 docker-ip: ## List IP of running Docker container
-	@docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINERNAME}
+	@$(DOCKER) inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINERNAME}
 
 .PHONY: docker-create-volumes
 docker-create-volumes:
-	docker volume create cowrie-var
-	docker volume create cowrie-etc
+	$(DOCKER) volume create cowrie-var
+	$(DOCKER) volume create cowrie-etc
