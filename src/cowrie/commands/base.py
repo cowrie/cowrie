@@ -198,7 +198,7 @@ class Command_printf(HoneyPotCommand):
                 if s.endswith("\\c"):
                     s = s[:-2]
 
-                self.write(codecs.escape_decode(s)[0])
+                self.writeBytes(codecs.escape_decode(s)[0])
 
 
 commands["/usr/bin/printf"] = Command_printf
