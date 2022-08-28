@@ -133,7 +133,7 @@ class Command_gcc(HoneyPotCommand):
 
             # Schedule call to make it more time consuming and real
             self.scheduled = reactor.callLater(  # type: ignore[attr-defined]
-                timeout, self.generate_file(output_file if output_file else "a.out")
+                timeout, self.generate_file, (output_file if output_file else "a.out")
             )
         else:
             self.no_files()
