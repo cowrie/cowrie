@@ -85,7 +85,7 @@ class Command_awk(HoneyPotCommand):
                     self.errorWrite(f"awk: {arg}: No such file or directory\n")
 
         else:
-            self.output(self.input_data)
+            self.output, (self.input_data)
         self.exit()
 
     def awk_parser(self, program):
