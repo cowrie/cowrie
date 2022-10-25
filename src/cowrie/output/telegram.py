@@ -26,7 +26,7 @@ class Output(cowrie.core.output.Output):
             if i.startswith('log_'):
                 del logentry[i]
 
-        logon_type = None
+        logon_type = ""
         # Prepare logon type
         if 'HoneyPotSSHTransport' in (logentry['system'].split(','))[0]:
             logon_type = 'SSH'
