@@ -28,6 +28,7 @@ from cowrie.core.config import CowrieConfig
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     startTime: float = 0.0
     gotVersion: bool = False
+    buf: bytes
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
     auth_timeout: int = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
@@ -35,6 +36,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     interactive_timeout: int = CowrieConfig.getint(
         "honeypot", "interactive_timeout", fallback=300
     )
+    ourVersionString: str
     transport: Any
     outgoingCompression: Any
     _blockedByKeyExchange: Any
@@ -106,7 +108,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
-        self.buf: bytes = self.buf + data
+        self.buf = self.buf + data
         if not self.gotVersion:
             if b"\n" not in self.buf:
                 return

@@ -53,7 +53,7 @@ from cowrie.core.config import CowrieConfig
 # How often we clean and dump and our lists/dict...
 CLEAN_DUMP_SCHED = 600
 # ...and the file we dump to.
-DUMP_FILE = "aipdb.dump"
+DUMP_FILE: str = "aipdb.dump"
 
 ABUSEIP_URL = "https://api.abuseipdb.com/api/v2/report"
 # AbuseIPDB will just 429 us if we report an IP too often; currently 15 minutes
@@ -63,11 +63,10 @@ REREPORT_MINIMUM = 900
 
 class Output(output.Output):
     def start(self):
-        self.tolerance_attempts = CowrieConfig.getint(
+        self.tolerance_attempts: int = CowrieConfig.getint(
             "output_abuseipdb", "tolerance_attempts", fallback=10
         )
-        self.state_path = CowrieConfig.get("output_abuseipdb", "dump_path")
-        self.state_path = Path(*(d for d in self.state_path.split("/")))
+        self.state_path = Path(CowrieConfig.get("output_abuseipdb", "dump_path"))
         self.state_dump = self.state_path / DUMP_FILE
 
         self.logbook = LogBook(self.tolerance_attempts, self.state_dump)
@@ -84,8 +83,8 @@ class Output(output.Output):
             # Check to see if we're still asleep after receiving a Retry-After
             # header in a previous response
             if self.logbook["sleeping"]:
-                t_wake = self.logbook["sleep_until"]
-                t_now = time()
+                t_wake: float = self.logbook["sleep_until"]
+                t_now: float = time()
                 if t_wake > t_now:
                     # If we're meant to be asleep, we'll set logbook.sleep to
                     # true and logbook.sleep_until to the time we can wake-up
@@ -199,12 +198,12 @@ class LogBook(dict):
 
     def __init__(self, tolerance_attempts, state_dump):
         self.sleeping = False
-        self.sleep_until = 0
+        self.sleep_until: float = 0.0
         self.tolerance_attempts = tolerance_attempts
-        self.tolerance_window = 60 * CowrieConfig.getint(
+        self.tolerance_window: int = 60 * CowrieConfig.getint(
             "output_abuseipdb", "tolerance_window", fallback=120
         )
-        self.rereport_after = 3600 * CowrieConfig.getfloat(
+        self.rereport_after: float = 3600 * CowrieConfig.getfloat(
             "output_abuseipdb", "rereport_after", fallback=24
         )
         if self.rereport_after < REREPORT_MINIMUM:

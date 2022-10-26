@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 import ipaddress
 
 from twisted.internet import defer
@@ -89,6 +90,7 @@ class Output(cowrie.core.output.Output):
                 d.addCallback(processForward)
                 d.addErrback(cbError)
 
+    @lru_cache(maxsize=1000)
     def reversedns(self, addr):
         """
         Perform a reverse DNS lookup on an IP
