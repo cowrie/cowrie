@@ -21,7 +21,7 @@ disallow_subclassing_any    = true
 
 # These are too strict for us at the moment
 
-check_untyped_defs          = false
+check_untyped_defs          = true
 disallow_untyped_defs       = false
 disallow_any_decorated      = false
 disallow_any_explicit       = false

@@ -112,7 +112,7 @@ class Command_wget(HoneyPotCommand):
 
         urldata = compat.urllib_parse.urlparse(url)
 
-        self.host = urldata.hostname
+        self.host: str = urldata.hostname
 
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:

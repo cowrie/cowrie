@@ -27,24 +27,24 @@ class PoolClient(Protocol):
     def set_parent(self, parent):
         self.parent = parent
 
-    def send_initialisation(self):
+    def send_initialisation(self) -> None:
         """
         Used only by the PoolHandler on the first connection, to set the pool up.
         """
-        max_vms = CowrieConfig.getint("proxy", "pool_max_vms", fallback=2)
-        vm_unused_timeout = CowrieConfig.getint(
+        max_vms: int = CowrieConfig.getint("proxy", "pool_max_vms", fallback=2)
+        vm_unused_timeout: int = CowrieConfig.getint(
             "proxy", "pool_vm_unused_timeout", fallback=600
         )
-        share_guests = CowrieConfig.getboolean(
+        share_guests: bool = CowrieConfig.getboolean(
             "proxy", "pool_share_guests", fallback=True
         )
 
-        buf = struct.pack("!cII?", b"i", max_vms, vm_unused_timeout, share_guests)
+        buf: bytes = struct.pack("!cII?", b"i", max_vms, vm_unused_timeout, share_guests)
         self.transport.write(buf)
 
-    def send_vm_request(self, src_ip):
-        fmt = f"!cH{len(src_ip)}s"
-        buf = struct.pack(fmt, b"r", len(src_ip), src_ip.encode())
+    def send_vm_request(self, src_ip: str) -> None:
+        fmt: str = f"!cH{len(src_ip)}s"
+        buf: bytes = struct.pack(fmt, b"r", len(src_ip), src_ip.encode())
 
         self.transport.write(buf)
 
@@ -55,7 +55,7 @@ class PoolClient(Protocol):
             buf = struct.pack("!cI", op_code, self.vm_id)
             self.transport.write(buf)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         # only makes sense to process data if we have a parent to send it to
         if not self.parent:
             log.err("Parent not set, discarding data from pool")
