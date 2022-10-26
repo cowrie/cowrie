@@ -9,6 +9,7 @@ import errno
 import fnmatch
 import hashlib
 import os
+from pathlib import Path
 import pickle
 import re
 import stat
@@ -333,7 +334,7 @@ class HoneyPotFilesystem:
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
         elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
-            return open(f[A_REALFILE], "rb").read()
+            return Path(f[A_REALFILE]).read_bytes()
         elif f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,
