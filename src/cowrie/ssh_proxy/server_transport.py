@@ -95,7 +95,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        self.transport.write(self.ourVersionString+b"\r\n")
+        self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
             b"none", b"none", b"none", b"none"
         )
