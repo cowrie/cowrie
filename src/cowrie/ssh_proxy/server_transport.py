@@ -55,7 +55,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     After both sides are authenticated, forward all things from one side to another.
     """
     buf: bytes
-    ourVersionString: str
+    ourVersionString: bytes
 
     # TODO merge this with HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin)
     # maybe create a parent class with common methods for the two
@@ -95,7 +95,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        self.transport.write(f"{self.ourVersionString}\r\n".encode())
+        self.transport.write(self.ourVersionString+b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
             b"none", b"none", b"none", b"none"
         )

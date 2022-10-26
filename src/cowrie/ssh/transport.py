@@ -36,7 +36,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     interactive_timeout: int = CowrieConfig.getint(
         "honeypot", "interactive_timeout", fallback=300
     )
-    ourVersionString: str
+    ourVersionString: bytes  # set by factory
     transport: Any
     outgoingCompression: Any
     _blockedByKeyExchange: Any
@@ -76,7 +76,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             protocol="ssh",
         )
 
-        self.transport.write(f"{self.ourVersionString}\r\n".encode("ascii"))
+        self.transport.write(self.ourVersionString+b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
             b"none", b"none", b"none", b"none"
         )
