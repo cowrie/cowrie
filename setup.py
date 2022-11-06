@@ -36,7 +36,7 @@ setup(
     ],
     setup_requires=["incremental", "click"],
     install_requires=[
-        "twisted==21.2.0",
+        "twisted==22.10.0",
         "cryptography>=0.9.1",
         "configparser",
         "pyopenssl",
