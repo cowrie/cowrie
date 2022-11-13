@@ -3,12 +3,12 @@ flake8==5.0.4
 mypy-extensions==0.4.3; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy-zope==0.3.9; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy==0.971; platform_python_implementation=='CPython' and python_version>'3.8'
-pathspec==0.9.0
+pathspec==0.10.1
 pipdeptree==2.2.1
 pre-commit==2.20.0
 pur==7.0.0
 pyre-check==0.9.15; python_version>'3.8'
-pytype==2022.8.23; platform_python_implementation=='CPython' and python_version<'3.11'
+pytype==2022.8.30; platform_python_implementation=='CPython' and python_version<'3.11'
 pyupgrade==2.37.3
 pyyaml==6.0
 readthedocs-sphinx-search==0.1.2
@@ -18,6 +18,6 @@ sphinx_rtd_theme==1.0.0
 tox==3.25.1
 twistedchecker==0.7.4
 types-python-dateutil==2.8.19; python_version>'3.8'
-types-redis==4.3.18; python_version>'3.8'
+types-redis==4.3.20; python_version>'3.8'
 types-requests==2.28.9; python_version>'3.8'
 yamllint==1.27.1

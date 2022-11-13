@@ -123,6 +123,8 @@ class Output(cowrie.core.output.Output):
             if resp.status_code == requests.codes.ok:
                 sha1_regex = re.compile(r"<sha1checksum>([^<]+)<\/sha1checksum>")
                 sha1_match = sha1_regex.search(response)
+                sha1_local = hashlib.sha1()
+                sha1_local.update(log_output.encode("utf8"))
                 if sha1_match is None:
                     log.msg(
                         "dshield: ERROR: Could not find sha1checksum in response: {}".format(
@@ -130,29 +132,29 @@ class Output(cowrie.core.output.Output):
                         )
                     )
                     failed = True
-                sha1_local = hashlib.sha1()
-                sha1_local.update(log_output.encode("utf8"))
-                if sha1_match.group(1) != sha1_local.hexdigest():
+                elif sha1_match.group(1) != sha1_local.hexdigest():
                     log.msg(
                         "dshield: ERROR: SHA1 Mismatch {} {} .".format(
                             sha1_match.group(1), sha1_local.hexdigest()
                         )
                     )
                     failed = True
+
                 md5_regex = re.compile(r"<md5checksum>([^<]+)<\/md5checksum>")
                 md5_match = md5_regex.search(response)
+                md5_local = hashlib.md5()
+                md5_local.update(log_output.encode("utf8"))
                 if md5_match is None:
                     log.msg("dshield: ERROR: Could not find md5checksum in response")
                     failed = True
-                md5_local = hashlib.md5()
-                md5_local.update(log_output.encode("utf8"))
-                if md5_match.group(1) != md5_local.hexdigest():
+                elif md5_match.group(1) != md5_local.hexdigest():
                     log.msg(
                         "dshield: ERROR: MD5 Mismatch {} {} .".format(
                             md5_match.group(1), md5_local.hexdigest()
                         )
                     )
                     failed = True
+
                 log.msg(
                     "dshield: SUCCESS: Sent {} bytes worth of data to secure.dshield.org".format(
                         len(log_output)

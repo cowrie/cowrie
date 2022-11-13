@@ -61,6 +61,8 @@ class Command_tftp(HoneyPotCommand):
             if tclient and tclient.context and not tclient.context.fileobj.closed:
                 tclient.context.fileobj.close()
 
+        self.artifactFile.close()
+
         if url:
             # log to cowrie.log
             log.msg(
