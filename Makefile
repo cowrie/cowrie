@@ -79,10 +79,17 @@ CONTAINERNAME := cowrie
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG=$(shell git rev-parse --short=8 HEAD)
 
-.PHONY: docker-build
-docker-build: docker/Dockerfile ## Build Docker image
+.PHONY: docker-build-legacy
+docker-build-legacy: docker/Dockerfile ## Build Docker image
 	#docker build -t ${IMAGENAME}:${TAG} --no-cache --build-arg TAG=${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 	$(DOCKER) build -t ${IMAGENAME}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+
+.PHONY: docker-buildx
+docker-buildx: docker/Dockerfile ## Build and push multiplatform Docker image
+	-docker buildx create --name cowriebuilder --use
+	docker buildx use cowriebuilder
+	docker buildx build --platform linux/amd64,linux/arm64 -t ${IMAGENAME}:${TAG} --build-arg TAG=${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
+#	docker buildx build --platform linux/amd64,linux/arm64 -t ${IMAGENAME}:latest --build-arg TAG=${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
 
 .PHONY: docker-run
 docker-run: docker-start ## Run Docker container
