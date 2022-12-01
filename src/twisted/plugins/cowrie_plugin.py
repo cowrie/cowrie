@@ -33,6 +33,7 @@ import sys
 from typing import Callable, ClassVar
 
 from zope.interface import implementer, provider
+from incremental import Version
 
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
@@ -54,7 +55,7 @@ from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
 
-if __twisted_version__.major < 20:
+if __twisted_version__ < Version("Twisted", 20, 0, 0):
     raise ImportError(
         "Your version of Twisted is too old. Please ensure your virtual environment is set up correctly."
     )

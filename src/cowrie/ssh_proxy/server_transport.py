@@ -54,6 +54,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     at the same time, perform the userauth service via ProxySSHAuthServer (built-in Cowrie's mechanism).
     After both sides are authenticated, forward all things from one side to another.
     """
+    buf: bytes
+    ourVersionString: bytes
 
     # TODO merge this with HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin)
     # maybe create a parent class with common methods for the two
@@ -64,9 +66,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.disconnected = False  # what was this used for
 
         self.peer_ip = None
-        self.peer_port = 0
+        self.peer_port: int = 0
         self.local_ip = None
-        self.local_port = 0
+        self.local_port: int = 0
 
         self.startTime = None
         self.transportId = None
@@ -93,7 +95,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        self.transport.write(f"{self.ourVersionString}\r\n".encode())
+        self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
             b"none", b"none", b"none", b"none"
         )
