@@ -83,7 +83,7 @@ class Command_dd(HoneyPotCommand):
 
                 self.exit(success=bSuccess)
 
-    def exit(self, success: bool=True) -> None:
+    def exit(self, success: bool = True) -> None:
         if success is True:
             self.write("0+0 records in\n")
             self.write("0+0 records out\n")

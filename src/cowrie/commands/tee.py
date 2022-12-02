@@ -86,7 +86,7 @@ class Command_tee(HoneyPotCommand):
         This is the tee output, if no file supplied
         """
         if inb:
-            inp = inb.decode('utf-8')
+            inp = inb.decode("utf-8")
         else:
             return
 
@@ -95,7 +95,7 @@ class Command_tee(HoneyPotCommand):
             lines.pop()
         for line in lines:
             self.write(line + "\n")
-            self.write_to_file(line.encode('utf-8') + b"\n")
+            self.write_to_file(line.encode("utf-8") + b"\n")
 
     def lineReceived(self, line: str) -> None:
         """
@@ -108,7 +108,7 @@ class Command_tee(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.output(line.encode('utf-8'))
+        self.output(line.encode("utf-8"))
 
     def handle_CTRL_C(self) -> None:
         if not self.ignoreInterupts:

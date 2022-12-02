@@ -99,7 +99,7 @@ class Command_cat(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.output(line.encode('utf-8'))
+        self.output(line.encode("utf-8"))
 
     def handle_CTRL_D(self) -> None:
         """

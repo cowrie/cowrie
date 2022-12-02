@@ -91,7 +91,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
         else:
             self.du_show(path, all=True)
 
-    def du_show(self, path: str, all: bool=False) -> None:
+    def du_show(self, path: str, all: bool = False) -> None:
         try:
             if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]

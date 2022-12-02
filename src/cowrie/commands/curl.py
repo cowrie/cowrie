@@ -410,12 +410,16 @@ class Command_curl(HoneyPotCommand):
             return
 
         elif response.check(error.ConnectingCancelledError) is not None:
-            self.write(f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n")
+            self.write(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
+            )
             self.exit()
             return
 
         elif response.check(error.ConnectionRefusedError) is not None:
-            self.write(f"curl: (7) Failed to connect to {self.host} port {self.port}: Connection refused\n")
+            self.write(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Connection refused\n"
+            )
             self.exit()
             return
 

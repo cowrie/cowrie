@@ -26,7 +26,7 @@ class ModifiedOptionParser(optparse.OptionParser):
     def error(self, msg: str) -> None:
         raise OptionParsingError(msg)
 
-    def exit(self, status: int=0, msg: Optional[str]=None) -> None:
+    def exit(self, status: int = 0, msg: Optional[str] = None) -> None:
         raise OptionParsingExit(status, msg)
 
 

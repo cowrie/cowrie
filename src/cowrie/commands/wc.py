@@ -74,9 +74,9 @@ class Command_wc(HoneyPotCommand):
                 contentsplit = contents.split(b"\n")
                 self.write(f"{len(contentsplit) - 1}\n")
             elif opt == "-w":
-                contentsplit = re.sub(
-                    b" +", b" ", contents.strip(b"\n").strip()
-                ).split(b" ")
+                contentsplit = re.sub(b" +", b" ", contents.strip(b"\n").strip()).split(
+                    b" "
+                )
                 self.write(f"{len(contentsplit)}\n")
             elif opt == "-m" or opt == "-c":
                 self.write(f"{len(contents)}\n")

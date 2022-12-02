@@ -43,7 +43,7 @@ class Command_free(HoneyPotCommand):
                 return
         self.do_free()
 
-    def do_free(self, fmt: str="kilobytes") -> None:
+    def do_free(self, fmt: str = "kilobytes") -> None:
         """
         print free statistics
         """

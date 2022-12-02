@@ -47,7 +47,7 @@ class Command_aptget(HoneyPotCommand):
         else:
             self.do_locked()
 
-    def sleep(self, time: float, time2: Optional[float]=None) -> defer.Deferred:
+    def sleep(self, time: float, time2: Optional[float] = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()
         if time2:
             time = random.randint(int(time * 100), int(time2 * 100.0)) / 100.0

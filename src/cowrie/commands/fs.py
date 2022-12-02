@@ -109,6 +109,7 @@ class Command_tail(HoneyPotCommand):
     """
     tail command
     """
+
     n: int = 10
 
     def tail_get_contents(self, filename: str) -> None:

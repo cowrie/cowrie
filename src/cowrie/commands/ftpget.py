@@ -22,7 +22,13 @@ class FTP(ftplib.FTP):
         self.source_address = kwargs.pop("source_address", None)
         ftplib.FTP.__init__(self, *args, **kwargs)
 
-    def connect(self, host: str="", port: int=0, timeout:float=-999.0, source_address: Optional[Tuple[str, int]]=None) -> str:
+    def connect(
+        self,
+        host: str = "",
+        port: int = 0,
+        timeout: float = -999.0,
+        source_address: Optional[Tuple[str, int]] = None,
+    ) -> str:
         if host != "":
             self.host = host
         if port > 0:
@@ -39,7 +45,9 @@ class FTP(ftplib.FTP):
         self.welcome = self.getresp()
         return self.welcome
 
-    def ntransfercmd(self, cmd: str, rest: Union[int, str, None]=None) -> Tuple[socket.socket,int]:
+    def ntransfercmd(
+        self, cmd: str, rest: Union[int, str, None] = None
+    ) -> Tuple[socket.socket, int]:
         size = 0
         if self.passiveserver:
             host, port = self.makepasv()

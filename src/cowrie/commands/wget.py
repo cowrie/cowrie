@@ -9,7 +9,6 @@ import os
 import time
 from typing import Any, Optional
 
-from twisted.internet import defer
 from twisted.internet import error
 from twisted.python import compat, log
 from twisted.web.iweb import UNKNOWN_LENGTH
@@ -51,7 +50,7 @@ def sizeof_fmt(num: float) -> str:
 
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
-def splitthousands(s: str, sep: str=",") -> str:
+def splitthousands(s: str, sep: str = ",") -> str:
     if len(s) <= 3:
         return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]

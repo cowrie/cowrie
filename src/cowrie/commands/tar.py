@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import tarfile
-from typing import Optional
 
 from twisted.python import log
 
