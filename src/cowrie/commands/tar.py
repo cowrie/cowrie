@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import tarfile
+from typing import Optional
 
 from twisted.python import log
 
@@ -23,7 +24,7 @@ class Command_tar(HoneyPotCommand):
             if p and not self.fs.exists(p):
                 self.fs.mkdir(p, 0, 0, 4096, f.mode, f.mtime)
 
-    def call(self):
+    def call(self) -> None:
         if len(self.args) < 2:
             self.write("tar: You must specify one of the `-Acdtrux' options\n")
             self.write("Try `tar --help' or `tar --usage' for more information.\n")

@@ -9,7 +9,7 @@ commands = {}
 
 
 class Command_ethtool(HoneyPotCommand):
-    def call(self):
+    def call(self) -> None:
         func = self.do_ethtool_help
         for x in self.args:
             if x.startswith("lo"):
@@ -20,7 +20,7 @@ class Command_ethtool(HoneyPotCommand):
                 func = self.do_ethtool_eth1
         func()
 
-    def do_ethtool_help(self):
+    def do_ethtool_help(self) -> None:
         """
         No real help output.
         """
@@ -29,14 +29,14 @@ class Command_ethtool(HoneyPotCommand):
 For more information run ethtool -h\n"""
         )
 
-    def do_ethtool_lo(self):
+    def do_ethtool_lo(self) -> None:
 
         self.write(
             """Settings for lo:
             Link detected: yes\n"""
         )
 
-    def do_ethtool_eth0(self):
+    def do_ethtool_eth0(self) -> None:
         self.write(
             """Settings for eth0:
 Supported ports: [ TP MII ]
@@ -68,7 +68,7 @@ Current message level: 0x00000033 (51)
 Link detected: yes\n"""
         )
 
-    def do_ethtool_eth1(self):
+    def do_ethtool_eth1(self) -> None:
         self.write(
             """Settings for eth1:
 Cannot get device settings: No such device

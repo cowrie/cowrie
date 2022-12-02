@@ -19,7 +19,7 @@ class Command_service(HoneyPotCommand):
     By Giannis Papaioannou <giannispapcod7@gmail.com>
     """
 
-    def status_all(self):
+    def status_all(self) -> None:
         """
         more services can be added here.
         """
@@ -86,11 +86,11 @@ class Command_service(HoneyPotCommand):
         for line in output:
             self.write(line + "\n")
 
-    def help(self):
+    def help(self) -> None:
         output = "Usage: service < option > | --status-all | [ service_name [ command | --full-restart ] ]"
         self.write(output + "\n")
 
-    def call(self):
+    def call(self) -> None:
         try:
             opts, args = getopt.gnu_getopt(
                 self.args, "h", ["help", "status-all", "full-restart"]

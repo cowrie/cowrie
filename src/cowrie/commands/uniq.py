@@ -54,7 +54,7 @@ class Command_uniq(HoneyPotCommand):
 
     last_line = None
 
-    def start(self):
+    def start(self) -> None:
         if "--help" in self.args:
             self.writeBytes(UNIQ_HELP.encode())
             self.exit()
@@ -66,7 +66,7 @@ class Command_uniq(HoneyPotCommand):
                 self.grep_input(line)
             self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="uniq",
@@ -75,10 +75,10 @@ class Command_uniq(HoneyPotCommand):
         )
         self.grep_input(line.encode())
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
-    def grep_input(self, line):
+    def grep_input(self, line: bytes) -> None:
         if not line == self.last_line:
             self.writeBytes(line + b"\n")
             self.last_line = line

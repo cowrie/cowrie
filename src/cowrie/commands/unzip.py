@@ -16,7 +16,7 @@ commands = {}
 
 
 class Command_unzip(HoneyPotCommand):
-    def mkfullpath(self, path, f):
+    def mkfullpath(self, path: str) -> None:
         l, d = path.split("/"), []
         while len(l):
             d.append(l.pop(0))
@@ -24,7 +24,7 @@ class Command_unzip(HoneyPotCommand):
             if not self.fs.exists(dir):
                 self.fs.mkdir(dir, 0, 0, 4096, 33188)
 
-    def call(self):
+    def call(self) -> None:
         if len(self.args) == 0 or self.args[0].startswith("-"):
             output = (
                 "UnZip 6.00 of 20 April 2009, by Debian. Original by Info-ZIP.\n"
@@ -116,7 +116,7 @@ class Command_unzip(HoneyPotCommand):
             if f.is_dir():
                 self.fs.mkdir(dest, 0, 0, 4096, 33188)
             elif not f.is_dir():
-                self.mkfullpath(os.path.dirname(dest), f)
+                self.mkfullpath(os.path.dirname(dest))
                 self.fs.mkfile(dest, 0, 0, f.file_size, 33188)
             else:
                 log.msg(f"  skipping: {f.filename}\n")

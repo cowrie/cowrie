@@ -7,9 +7,9 @@ This module contains the wc commnad
 """
 from __future__ import annotations
 
-
 import getopt
 import re
+from typing import Tuple
 
 from twisted.python import log
 
@@ -23,7 +23,7 @@ class Command_wc(HoneyPotCommand):
     wc command
     """
 
-    def version(self):
+    def version(self) -> None:
         self.writeBytes(b"wc (GNU coreutils) 8.30\n")
         self.writeBytes(b"Copyright (C) 2018 Free Software Foundation, Inc.\n")
         self.writeBytes(
@@ -36,7 +36,7 @@ class Command_wc(HoneyPotCommand):
         self.writeBytes(b"\n")
         self.writeBytes(b"Written by Paul Rubin and David MacKenzie.\n")
 
-    def help(self):
+    def help(self) -> None:
         self.writeBytes(b"Usage: wc [OPTION]... [FILE]...\n")
         self.writeBytes(
             b"Print newline, word, and byte counts for each FILE, and a total line if\n"
@@ -61,22 +61,22 @@ class Command_wc(HoneyPotCommand):
         self.writeBytes(b"\t-h\tdisplay this help and exit\n")
         self.writeBytes(b"\t-v\toutput version information and exit\n")
 
-    def wc_get_contents(self, filename, optlist):
+    def wc_get_contents(self, filename: str, optlist: list[Tuple[str, str]]) -> None:
         try:
             contents = self.fs.file_contents(filename)
             self.wc_application(contents, optlist)
         except Exception:
             self.errorWrite(f"wc: {filename}: No such file or directory\n")
 
-    def wc_application(self, contents, optlist):
+    def wc_application(self, contents: bytes, optlist: list[Tuple[str, str]]) -> None:
         for opt, arg in optlist:
             if opt == "-l":
                 contentsplit = contents.split(b"\n")
                 self.write(f"{len(contentsplit) - 1}\n")
             elif opt == "-w":
                 contentsplit = re.sub(
-                    " +", " ", contents.decode().strip("\n").strip()
-                ).split(" ")
+                    b" +", b" ", contents.strip(b"\n").strip()
+                ).split(b" ")
                 self.write(f"{len(contentsplit)}\n")
             elif opt == "-m" or opt == "-c":
                 self.write(f"{len(contents)}\n")
@@ -85,7 +85,7 @@ class Command_wc(HoneyPotCommand):
             else:
                 self.help()
 
-    def start(self):
+    def start(self) -> None:
         if not self.args:
             self.exit()
             return
@@ -119,7 +119,7 @@ class Command_wc(HoneyPotCommand):
 
         self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="wc",
@@ -127,7 +127,7 @@ class Command_wc(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 

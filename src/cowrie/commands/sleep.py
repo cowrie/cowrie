@@ -23,10 +23,10 @@ class Command_sleep(HoneyPotCommand):
 
     pattern = re.compile(r"(\d+)[mhs]?")
 
-    def done(self):
+    def done(self) -> None:
         self.exit()
 
-    def start(self):
+    def start(self) -> None:
         if len(self.args) == 1:
             m = re.match(r"(\d+)[mhs]?", self.args[0])
             if m:

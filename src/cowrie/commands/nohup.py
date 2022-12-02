@@ -10,7 +10,7 @@ commands = {}
 
 
 class Command_nohup(HoneyPotCommand):
-    def call(self):
+    def call(self) -> None:
         if not len(self.args):
             self.write("nohup: missing operand\n")
             self.write("Try `nohup --help' for more information.\n")

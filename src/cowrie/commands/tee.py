@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import getopt
 import os
+from typing import Optional
 
 from twisted.python import log
 
@@ -28,7 +29,7 @@ class Command_tee(HoneyPotCommand):
     writtenBytes = 0
     ignoreInterupts = False
 
-    def start(self):
+    def start(self) -> None:
         try:
             optlist, args = getopt.gnu_getopt(
                 self.args, "aip", ["help", "append", "version"]
@@ -75,28 +76,28 @@ class Command_tee(HoneyPotCommand):
             self.output(self.input_data)
             self.exit()
 
-    def write_to_file(self, data):
+    def write_to_file(self, data: bytes) -> None:
         self.writtenBytes += len(data)
         for outf in self.teeFiles:
             self.fs.update_size(outf, self.writtenBytes)
 
-    def output(self, input):
+    def output(self, inb: Optional[bytes]) -> None:
         """
         This is the tee output, if no file supplied
         """
-        if "decode" in dir(input):
-            input = input.decode("UTF-8")
-        if not isinstance(input, str):
-            pass
+        if inb:
+            inp = inb.decode('utf-8')
+        else:
+            return
 
-        lines = input.split("\n")
+        lines = inp.split("\n")
         if lines[-1] == "":
             lines.pop()
         for line in lines:
             self.write(line + "\n")
-            self.write_to_file(line + "\n")
+            self.write_to_file(line.encode('utf-8') + b"\n")
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         """
         This function logs standard input from the user send to tee
         """
@@ -107,21 +108,21 @@ class Command_tee(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.output(line)
+        self.output(line.encode('utf-8'))
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         if not self.ignoreInterupts:
             log.msg("Received CTRL-C, exiting..")
             self.write("^C\n")
             self.exit()
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         """
         ctrl-d is end-of-file, time to terminate
         """
         self.exit()
 
-    def help(self):
+    def help(self) -> None:
         self.write(
             """Usage: tee [OPTION]... [FILE]...
 Copy standard input to each FILE, and also to standard output.

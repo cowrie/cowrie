@@ -71,7 +71,7 @@ class Output(cowrie.core.output.Output):
         str, datetime.datetime
     ] = {}  # url and last time succesfully submitted
 
-    def start(self):
+    def start(self) -> None:
         """
         Start output plugin
         """
@@ -96,7 +96,7 @@ class Output(cowrie.core.output.Output):
         )
         self.agent = client.Agent(reactor, WebClientContextFactory())
 
-    def stop(self):
+    def stop(self) -> None:
         """
         Stop output plugin
         """

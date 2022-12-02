@@ -25,7 +25,7 @@ class Command_free(HoneyPotCommand):
     free
     """
 
-    def call(self):
+    def call(self) -> None:
         # Parse options or display no files
         try:
             opts, args = getopt.getopt(self.args, "mh")
@@ -43,7 +43,7 @@ class Command_free(HoneyPotCommand):
                 return
         self.do_free()
 
-    def do_free(self, fmt="kilobytes"):
+    def do_free(self, fmt: str="kilobytes") -> None:
         """
         print free statistics
         """

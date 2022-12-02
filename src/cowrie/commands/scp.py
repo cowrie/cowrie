@@ -55,14 +55,14 @@ class Command_scp(HoneyPotCommand):
 
     out_dir: str = ""
 
-    def help(self):
+    def help(self) -> None:
         self.write(
             """usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]
            [-l limit] [-o ssh_option] [-P port] [-S program]
            [[user@]host1:]file1 ... [[user@]host2:]file2\n"""
         )
 
-    def start(self):
+    def start(self) -> None:
         try:
             optlist, args = getopt.getopt(self.args, "12346BCpqrvfstdv:cFiloPS:")
         except getopt.GetoptError:
@@ -95,7 +95,7 @@ class Command_scp(HoneyPotCommand):
         self.write("\x00")
         self.write("\x00")
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.session.file_download",
             realm="scp",
@@ -104,7 +104,7 @@ class Command_scp(HoneyPotCommand):
         )
         self.protocol.terminal.write("\x00")
 
-    def drop_tmp_file(self, data, name):
+    def drop_tmp_file(self, data: bytes, name: str) -> None:
         tmp_fname = "{}-{}-{}-scp_{}".format(
             time.strftime("%Y%m%d-%H%M%S"),
             self.protocol.getProtoTransport().transportId,
@@ -117,7 +117,7 @@ class Command_scp(HoneyPotCommand):
         with open(self.safeoutfile, "wb+") as f:
             f.write(data)
 
-    def save_file(self, data, fname):
+    def save_file(self, data: bytes, fname: str) -> None:
         self.drop_tmp_file(data, fname)
 
         if os.path.exists(self.safeoutfile):
@@ -197,7 +197,7 @@ class Command_scp(HoneyPotCommand):
 
         return data
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         if (
             self.protocol.terminal.stdinlogOpen
             and self.protocol.terminal.stdinlogFile

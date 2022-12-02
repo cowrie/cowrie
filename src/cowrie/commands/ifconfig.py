@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Tuple
+
 from random import randint, randrange
 
 from cowrie.shell.command import HoneyPotCommand
@@ -29,27 +31,27 @@ commands = {}
 
 class Command_ifconfig(HoneyPotCommand):
     @staticmethod
-    def generate_packets():
+    def generate_packets() -> int:
         return randrange(222222, 555555)
 
     @staticmethod
-    def convert_bytes_to_mx(bytes_eth0):
+    def convert_bytes_to_mx(bytes_eth0: int) -> str:
         mb = float(bytes_eth0) / 1000 / 1000
         return f"{mb:.1f}"
 
-    def calculate_rx(self):
+    def calculate_rx(self) -> Tuple[int, str]:
         rx_bytes = randrange(111111111, 555555555)
         return rx_bytes, self.convert_bytes_to_mx(rx_bytes)
 
-    def calculate_tx(self):
+    def calculate_tx(self) -> Tuple[int, str]:
         rx_bytes = randrange(11111111, 55555555)
         return rx_bytes, self.convert_bytes_to_mx(rx_bytes)
 
-    def calculate_lo(self):
+    def calculate_lo(self) -> Tuple[int, str]:
         lo_bytes = randrange(11111111, 55555555)
         return lo_bytes, self.convert_bytes_to_mx(lo_bytes)
 
-    def call(self):
+    def call(self) -> None:
         rx_bytes_eth0, rx_mb_eth0 = self.calculate_rx()
         tx_bytes_eth0, tx_mb_eth0 = self.calculate_tx()
         lo_bytes, lo_mb = self.calculate_lo()

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 
 import getopt
+from typing import Optional
 
 from twisted.python import log
 
@@ -26,7 +27,7 @@ class Command_cat(HoneyPotCommand):
     number = False
     linenumber = 1
 
-    def start(self):
+    def start(self) -> None:
         try:
             optlist, args = getopt.gnu_getopt(
                 self.args, "AbeEnstTuv", ["help", "number", "version"]
@@ -71,21 +72,14 @@ class Command_cat(HoneyPotCommand):
             self.output(self.input_data)
             self.exit()
 
-    def output(self, input):
+    def output(self, inb: Optional[bytes]) -> None:
         """
         This is the cat output, with optional line numbering
         """
-        if input is None:
+        if inb is None:
             return
 
-        if isinstance(input, str):
-            input = input.encode("utf8")
-        elif isinstance(input, bytes):
-            pass
-        else:
-            log.msg(f"unusual cat input {repr(input)}")
-
-        lines = input.split(b"\n")
+        lines = inb.split(b"\n")
         if lines[-1] == b"":
             lines.pop()
         for line in lines:
@@ -94,7 +88,7 @@ class Command_cat(HoneyPotCommand):
                 self.linenumber = self.linenumber + 1
             self.writeBytes(line + b"\n")
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         """
         This function logs standard input from the user send to cat
         """
@@ -105,15 +99,15 @@ class Command_cat(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.output(line)
+        self.output(line.encode('utf-8'))
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         """
         ctrl-d is end-of-file, time to terminate
         """
         self.exit()
 
-    def help(self):
+    def help(self) -> None:
         self.write(
             """Usage: cat [OPTION]... [FILE]...
 Concatenate FILE(s) to standard output.

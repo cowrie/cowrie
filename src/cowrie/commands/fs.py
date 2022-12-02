@@ -27,22 +27,22 @@ class Command_grep(HoneyPotCommand):
     grep command
     """
 
-    def grep_get_contents(self, filename, match):
+    def grep_get_contents(self, filename: str, match: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
             self.grep_application(contents, match)
         except Exception:
             self.errorWrite(f"grep: {filename}: No such file or directory\n")
 
-    def grep_application(self, contents, match):
-        match = os.path.basename(match).replace('"', "").encode("utf8")
-        matches = re.compile(match)
+    def grep_application(self, contents: bytes, match: str) -> None:
+        bmatch = os.path.basename(match).replace('"', "").encode("utf8")
+        matches = re.compile(bmatch)
         contentsplit = contents.split(b"\n")
         for line in contentsplit:
             if matches.search(line):
                 self.writeBytes(line + b"\n")
 
-    def help(self):
+    def help(self) -> None:
         self.writeBytes(
             b"usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
         )
@@ -54,7 +54,7 @@ class Command_grep(HoneyPotCommand):
         )
         self.writeBytes(b"\t[--null] [pattern] [file ...]\n")
 
-    def start(self):
+    def start(self) -> None:
         if not self.args:
             self.help()
             self.exit()
@@ -87,7 +87,7 @@ class Command_grep(HoneyPotCommand):
 
         self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="grep",
@@ -95,7 +95,7 @@ class Command_grep(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 
@@ -111,7 +111,7 @@ class Command_tail(HoneyPotCommand):
     """
     n: int = 10
 
-    def tail_get_contents(self, filename):
+    def tail_get_contents(self, filename: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
             self.tail_application(contents)
@@ -120,7 +120,7 @@ class Command_tail(HoneyPotCommand):
                 f"tail: cannot open `{filename}' for reading: No such file or directory\n"
             )
 
-    def tail_application(self, contents):
+    def tail_application(self, contents: bytes) -> None:
         contentsplit = contents.split(b"\n")
         lines = int(len(contentsplit))
         if lines < self.n:
@@ -132,7 +132,7 @@ class Command_tail(HoneyPotCommand):
                 self.write("\n")
             i += 1
 
-    def start(self):
+    def start(self) -> None:
         if not self.args or self.args[0] == ">":
             return
         else:
@@ -158,7 +158,7 @@ class Command_tail(HoneyPotCommand):
 
         self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="tail",
@@ -166,7 +166,7 @@ class Command_tail(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 
@@ -182,7 +182,7 @@ class Command_head(HoneyPotCommand):
 
     n: int = 10
 
-    def head_application(self, contents):
+    def head_application(self, contents: bytes) -> None:
         i = 0
         contentsplit = contents.split(b"\n")
         for line in contentsplit:
@@ -190,7 +190,7 @@ class Command_head(HoneyPotCommand):
                 self.writeBytes(line + b"\n")
             i += 1
 
-    def head_get_file_contents(self, filename):
+    def head_get_file_contents(self, filename: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
             self.head_application(contents)
@@ -199,7 +199,7 @@ class Command_head(HoneyPotCommand):
                 f"head: cannot open `{filename}' for reading: No such file or directory\n"
             )
 
-    def start(self):
+    def start(self) -> None:
         self.n = 10
         if not self.args or self.args[0] == ">":
             return
@@ -226,7 +226,7 @@ class Command_head(HoneyPotCommand):
             self.head_application(self.input_data)
         self.exit()
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="head",
@@ -234,7 +234,7 @@ class Command_head(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 
@@ -248,7 +248,7 @@ class Command_cd(HoneyPotCommand):
     cd command
     """
 
-    def call(self):
+    def call(self) -> None:
         if not self.args or self.args[0] == "~":
             pname = self.protocol.user.avatar.home
         else:
@@ -278,7 +278,7 @@ class Command_rm(HoneyPotCommand):
     rm command
     """
 
-    def help(self):
+    def help(self) -> None:
         self.write(
             """Usage: rm [OPTION]... [FILE]...
 Remove (unlink) the FILE(s).
@@ -319,10 +319,10 @@ Full documentation at: <http://www.gnu.org/software/coreutils/rm>
 or available locally via: info '(coreutils) rm invocation'\n"""
         )
 
-    def paramError(self):
+    def paramError(self) -> None:
         self.errorWrite("Try 'rm --help' for more information\n")
 
-    def call(self):
+    def call(self) -> None:
         recursive = False
         force = False
         verbose = False
@@ -392,7 +392,7 @@ class Command_cp(HoneyPotCommand):
     cp command
     """
 
-    def call(self):
+    def call(self) -> None:
         if not len(self.args):
             self.errorWrite("cp: missing file operand\n")
             self.errorWrite("Try `cp --help' for more information.\n")
@@ -407,8 +407,9 @@ class Command_cp(HoneyPotCommand):
             if opt[0] in ("-r", "-a", "-R"):
                 recursive = True
 
-        def resolv(pname):
-            return self.fs.resolve_path(pname, self.protocol.cwd)
+        def resolv(pname: str) -> str:
+            rsv: str = self.fs.resolve_path(pname, self.protocol.cwd)
+            return rsv
 
         if len(args) < 2:
             self.errorWrite(
@@ -468,7 +469,7 @@ class Command_mv(HoneyPotCommand):
     mv command
     """
 
-    def call(self):
+    def call(self) -> None:
         if not len(self.args):
             self.errorWrite("mv: missing file operand\n")
             self.errorWrite("Try `mv --help' for more information.\n")
@@ -480,8 +481,9 @@ class Command_mv(HoneyPotCommand):
             self.errorWrite("Unrecognized option\n")
             self.exit()
 
-        def resolv(pname):
-            return self.fs.resolve_path(pname, self.protocol.cwd)
+        def resolv(pname: str) -> str:
+            rsv: str = self.fs.resolve_path(pname, self.protocol.cwd)
+            return rsv
 
         if len(args) < 2:
             self.errorWrite(
@@ -541,7 +543,7 @@ class Command_mkdir(HoneyPotCommand):
     mkdir command
     """
 
-    def call(self):
+    def call(self) -> None:
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             if self.fs.exists(pname):
@@ -565,7 +567,7 @@ class Command_rmdir(HoneyPotCommand):
     rmdir command
     """
 
-    def call(self):
+    def call(self) -> None:
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
@@ -603,7 +605,7 @@ class Command_pwd(HoneyPotCommand):
     pwd command
     """
 
-    def call(self):
+    def call(self) -> None:
         self.write(self.protocol.cwd + "\n")
 
 
@@ -616,7 +618,7 @@ class Command_touch(HoneyPotCommand):
     touch command
     """
 
-    def call(self):
+    def call(self) -> None:
         if not len(self.args):
             self.errorWrite("touch: missing file operand\n")
             self.errorWrite("Try `touch --help' for more information.\n")

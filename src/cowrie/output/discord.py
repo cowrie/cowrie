@@ -17,12 +17,12 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-    def start(self):
+    def start(self) -> None:
         self.url = CowrieConfig.get("output_discord", "url").encode("utf8")
         contextFactory = WebClientContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
     def write(self, logentry):

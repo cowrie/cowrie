@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 from twisted.internet import defer
 from twisted.internet import reactor  # type: ignore
@@ -25,9 +25,9 @@ commands = {}
 
 class Command_faked_package_class_factory:
     @staticmethod
-    def getCommand(name):
+    def getCommand(name: str) -> Callable:
         class Command_faked_installation(HoneyPotCommand):
-            def call(self):
+            def call(self) -> None:
                 self.write(f"{name}: Segmentation fault\n")
 
         return Command_faked_installation
@@ -41,7 +41,7 @@ class Command_yum(HoneyPotCommand):
     """
     packages: Dict[str, Dict[str, Any]] = {}
 
-    def start(self):
+    def start(self) -> None:
         if len(self.args) == 0:
             self.do_help()
         elif len(self.args) > 0 and self.args[0] == "version":
@@ -51,10 +51,10 @@ class Command_yum(HoneyPotCommand):
         else:
             self.do_locked()
 
-    def sleep(self, time, time2=None):
+    def sleep(self, time: float, time2: Optional[float]=None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()
         if time2:
-            time = random.randint(time * 100, time2 * 100) / 100.0
+            time = random.randint(int(time * 100), int(time2 * 100)) / 100.0
         reactor.callLater(time, d.callback, None)  # type: ignore[attr-defined]
         return d
 
@@ -315,7 +315,7 @@ Options:
         self.write("Complete!\n")
         self.exit()
 
-    def do_locked(self):
+    def do_locked(self) -> None:
         self.errorWrite(
             "Loaded plugins: changelog, kernel-module, ovl, priorities, tsflags, versionlock\n"
         )

@@ -7,8 +7,9 @@ import getopt
 import ipaddress
 import os
 import time
-from typing import Optional
+from typing import Any, Optional
 
+from twisted.internet import defer
 from twisted.internet import error
 from twisted.python import compat, log
 from twisted.web.iweb import UNKNOWN_LENGTH
@@ -22,7 +23,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-def tdiff(seconds):
+def tdiff(seconds: int) -> str:
     t = seconds
     days = int(t / (24 * 60 * 60))
     t -= days * 24 * 60 * 60
@@ -41,15 +42,16 @@ def tdiff(seconds):
     return s
 
 
-def sizeof_fmt(num):
+def sizeof_fmt(num: float) -> str:
     for x in ["bytes", "K", "M", "G", "T"]:
         if num < 1024.0:
             return f"{num}{x}"
         num /= 1024.0
+    raise Exception
 
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
-def splitthousands(s, sep=","):
+def splitthousands(s: str, sep: str=",") -> str:
     if len(s) <= 3:
         return s
     return splitthousands(s[:-3], sep) + sep + s[-3:]
@@ -72,7 +74,7 @@ class Command_wget(HoneyPotCommand):
     host: str
     started: float
 
-    def start(self):
+    def start(self) -> None:
         url: str
         try:
             optlist, args = getopt.getopt(self.args, "cqO:P:", ["header="])
@@ -90,7 +92,7 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        self.outfile: str = None
+        self.outfile = None
         self.quiet = False
         for opt in optlist:
             if opt[0] == "-O":
@@ -112,7 +114,10 @@ class Command_wget(HoneyPotCommand):
 
         urldata = compat.urllib_parse.urlparse(url)
 
-        self.host = urldata.hostname
+        if urldata.hostname:
+            self.host = urldata.hostname
+        else:
+            pass
 
         # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
         try:
@@ -132,7 +137,7 @@ class Command_wget(HoneyPotCommand):
 
         if self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
-            path = os.path.dirname(self.outfile)
+            path = os.path.dirname(self.outfile)  # type: ignore
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
                     "wget: {}: Cannot open: No such file or directory\n".format(
@@ -155,7 +160,7 @@ class Command_wget(HoneyPotCommand):
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error)
 
-    def wgetDownload(self, url):
+    def wgetDownload(self, url: str) -> Any:
         """
         Download `url`
         """
@@ -223,6 +228,7 @@ class Command_wget(HoneyPotCommand):
         """
         partial collect
         """
+        eta: float
         self.currentlength += len(data)
         if self.limit_size > 0 and self.currentlength > self.limit_size:
             log.msg(
@@ -248,7 +254,7 @@ class Command_wget(HoneyPotCommand):
             ("%s>" % (int(39.0 / 100.0 * percent) * "=")).ljust(39),
             splitthousands(str(int(self.currentlength))).ljust(12),
             self.speed / 1000,
-            tdiff(eta),
+            tdiff(int(eta)),
         )
         if not self.quiet:
             self.errorWrite(s.ljust(self.proglen))

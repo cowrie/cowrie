@@ -47,7 +47,7 @@ TRY_CHMOD_HELP_MSG = "Try 'chmod --help' for more information.\n"
 
 
 class Command_chmod(HoneyPotCommand):
-    def call(self):
+    def call(self) -> None:
         # parse the command line arguments
         opts, mode, files, getopt_err = self.parse_args()
         if getopt_err:

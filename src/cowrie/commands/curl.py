@@ -302,7 +302,7 @@ class Command_curl(HoneyPotCommand):
         deferred = treq.get(url=url, allow_redirects=False, headers=headers, timeout=10)
         return deferred
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         self.write("^C\n")
         self.exit()
 

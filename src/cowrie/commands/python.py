@@ -17,11 +17,11 @@ commands = {}
 
 
 class Command_python(HoneyPotCommand):
-    def version(self):
+    def version(self) -> None:
         ver = "Python 2.7.11+"
         self.write(ver + "\n")
 
-    def help(self):
+    def help(self) -> None:
         output = (
             "usage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...",
             "Options and arguments (and corresponding environment variables):",
@@ -71,7 +71,7 @@ class Command_python(HoneyPotCommand):
         for line in output:
             self.write(line + "\n")
 
-    def start(self):
+    def start(self) -> None:
         try:
             opts, args = getopt.gnu_getopt(
                 self.args, "BdEhiORsStuvVx3c:m:Q:W:", ["help", "version"]
@@ -120,7 +120,7 @@ class Command_python(HoneyPotCommand):
         if not len(self.args):
             pass
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="python",
@@ -128,7 +128,7 @@ class Command_python(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 
