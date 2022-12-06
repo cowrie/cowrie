@@ -8,7 +8,7 @@ import random
 import re
 import time
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
 from cowrie.core.config import CowrieConfig

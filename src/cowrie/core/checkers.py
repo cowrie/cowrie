@@ -92,7 +92,7 @@ class HoneypotPasswordChecker:
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())
 
-    def checkUserPass(self, theusername, thepassword, ip):
+    def checkUserPass(self, theusername: bytes, thepassword: bytes, ip: str) -> bool:
         # UserDB is the default auth_class
         authname = auth.UserDB
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 
 
 class PasswordAuth(userauth.SSHUserAuthClient):
@@ -99,6 +99,6 @@ def execute_ssh(host, port, username, password, command, callback=None):
     done_deferred = defer.Deferred()
 
     factory = ClientCommandFactory(username, password, command, done_deferred, callback)
-    reactor.connectTCP(host, port, factory)  # type: ignore[attr-defined]
+    reactor.connectTCP(host, port, factory)
 
     return done_deferred

@@ -39,7 +39,7 @@ from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
@@ -253,7 +253,7 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         if self.enableTelnet:
             f = cowrie.telnet.factory.HoneyPotTelnetFactory(backend, self.pool_handler)
-            f.tac = self  # type: ignore
+            f.tac = self
             f.portal = portal.Portal(core.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 

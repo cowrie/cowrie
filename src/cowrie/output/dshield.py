@@ -14,7 +14,7 @@ import time
 import dateutil.parser
 import requests
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet import threads
 from twisted.python import log
 
@@ -167,6 +167,6 @@ class Output(cowrie.core.output.Output):
 
             if failed:
                 # Something went wrong, we need to add them to batch.
-                reactor.callFromThread(self.transmission_error, batch)  # type: ignore[attr-defined]
+                reactor.callFromThread(self.transmission_error, batch)
 
         req.addCallback(check_response)

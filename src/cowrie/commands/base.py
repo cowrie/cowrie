@@ -13,7 +13,7 @@ import re
 import time
 from typing import Callable, Optional
 
-from twisted.internet import error, reactor  # type: ignore
+from twisted.internet import error, reactor
 from twisted.python import failure, log
 
 from cowrie.core import utils

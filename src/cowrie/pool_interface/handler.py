@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.python import log
 

@@ -6,7 +6,7 @@ from typing import Optional
 
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
 
@@ -67,7 +67,7 @@ class TelnetClient(StatefulTelnetProtocol):
 
         # start countdown to command done (when reached, consider the output was completely received and close)
         if not self.done_callback:
-            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore[attr-defined]
+            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore
         else:
             self.done_callback.reset(0.5)
 
@@ -76,7 +76,7 @@ class TelnetClient(StatefulTelnetProtocol):
         Sends a command via Telnet using line mode
         """
         self.command = command.encode()
-        self.sendLine(self.command)
+        self.sendLine(self.command)  # ignore: attr-defined
 
     def close(self):
         """
@@ -129,7 +129,7 @@ class TelnetClientCommand:
         factory = TelnetFactory(
             username, password, self.prompt, self.command, done_deferred, self.callback
         )
-        reactor.connectTCP(host, port, factory)  # type: ignore[attr-defined]
+        reactor.connectTCP(host, port, factory)
 
         return done_deferred
 

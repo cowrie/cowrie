@@ -13,7 +13,7 @@ import re
 from typing import Any, Callable, Dict, Optional
 
 from twisted.internet import defer
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 

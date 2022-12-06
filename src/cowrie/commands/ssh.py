@@ -11,7 +11,7 @@ import socket
 import time
 from typing import Callable
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig

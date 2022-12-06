@@ -18,6 +18,10 @@ disallow_any_unimported     = true
 strict_equality             = true
 disallow_untyped_decorators = true
 disallow_subclassing_any    = true
+warn_unused_ignores         = true
+
+# Getting these passing should be easy
+strict_concatenate          = true
 
 # These are too strict for us at the moment
 
@@ -28,4 +32,3 @@ disallow_any_explicit       = false
 disallow_any_expr           = false
 disallow_any_generics       = false
 disallow_untyped_calls      = false
-warn_unused_ignores         = false

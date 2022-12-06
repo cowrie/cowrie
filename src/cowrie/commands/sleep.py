@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 
 from cowrie.shell.command import HoneyPotCommand
 
