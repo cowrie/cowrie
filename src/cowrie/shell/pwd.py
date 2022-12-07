@@ -55,7 +55,7 @@ class Passwd:
         Load /etc/passwd
         """
         self.passwd = []
-        with open(self.passwd_file) as f:
+        with open(self.passwd_file, encoding="ascii") as f:
             while True:
                 rawline = f.readline()
                 if not rawline:
@@ -165,7 +165,7 @@ class Group:
         Load /etc/group
         """
         self.group = []
-        with open(self.group_file) as f:
+        with open(self.group_file, encoding="ascii") as f:
             while True:
                 rawline = f.readline()
                 if not rawline:
@@ -178,7 +178,7 @@ class Group:
                 if line.startswith("#"):
                     continue
 
-                (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(":")
+                (gr_name, _, gr_gid, gr_mem) = line.split(":")
 
                 e: dict[str, Union[str, int]] = {}
                 e["gr_name"] = gr_name

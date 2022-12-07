@@ -59,8 +59,8 @@ class Artifact:
         self.close()
         return True
 
-    def write(self, bytes: bytes) -> None:
-        self.fp.write(bytes)
+    def write(self, data: bytes) -> None:
+        self.fp.write(data)
 
     def fileno(self) -> Any:
         return self.fp.fileno()

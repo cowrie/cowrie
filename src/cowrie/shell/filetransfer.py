@@ -26,7 +26,7 @@ from twisted.conch.ssh.filetransfer import (
 from twisted.python import log
 from twisted.python.compat import nativeString
 
-import cowrie.shell.pwd as pwd
+from cowrie.shell import pwd
 from cowrie.core.config import CowrieConfig
 
 
