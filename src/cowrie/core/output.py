@@ -35,7 +35,7 @@ import time
 from os import environ
 from typing import Any, Pattern
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.logger import formatTime
 
 from cowrie.core.config import CowrieConfig

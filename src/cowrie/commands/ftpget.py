@@ -6,6 +6,7 @@ import ftplib
 import getopt
 import os
 import socket
+from typing import Optional, Tuple, Union
 
 from twisted.python import log
 
@@ -21,13 +22,19 @@ class FTP(ftplib.FTP):
         self.source_address = kwargs.pop("source_address", None)
         ftplib.FTP.__init__(self, *args, **kwargs)
 
-    def connect(self, host="", port=0, timeout=-999, source_address=None):
+    def connect(
+        self,
+        host: str = "",
+        port: int = 0,
+        timeout: float = -999.0,
+        source_address: Optional[Tuple[str, int]] = None,
+    ) -> str:
         if host != "":
             self.host = host
         if port > 0:
             self.port = port
-        if timeout != -999:
-            self.timeout = timeout
+        if timeout != -999.0:
+            self.timeout: int = int(timeout)
         if source_address is not None:
             self.source_address = source_address
         self.sock = socket.create_connection(
@@ -38,8 +45,10 @@ class FTP(ftplib.FTP):
         self.welcome = self.getresp()
         return self.welcome
 
-    def ntransfercmd(self, cmd, rest=None):
-        size = None
+    def ntransfercmd(
+        self, cmd: str, rest: Union[int, str, None] = None
+    ) -> Tuple[socket.socket, int]:
+        size = 0
         if self.passiveserver:
             host, port = self.makepasv()
             conn = socket.create_connection(
@@ -72,7 +81,9 @@ class FTP(ftplib.FTP):
             finally:
                 sock.close()
         if resp[:3] == "150":
-            size = ftplib.parse150(resp)
+            sz = ftplib.parse150(resp)
+            if sz:
+                size = sz
         return conn, size
 
 
@@ -92,7 +103,7 @@ class Command_ftpget(HoneyPotCommand):
     remote_file: str
     artifactFile: Artifact
 
-    def help(self):
+    def help(self) -> None:
         self.write(
             """BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
 
@@ -107,7 +118,7 @@ Download a file via FTP
     -P NUM      Port\n\n"""
         )
 
-    def start(self):
+    def start(self) -> None:
         try:
             optlist, args = getopt.getopt(self.args, "cvu:p:P:")
         except getopt.GetoptError:
@@ -222,7 +233,7 @@ Download a file via FTP
 
         self.exit()
 
-    def ftp_download(self):
+    def ftp_download(self) -> bool:
         out_addr = ("", 0)
         if CowrieConfig.has_option("honeypot", "out_addr"):
             out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)

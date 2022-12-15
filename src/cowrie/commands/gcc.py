@@ -8,7 +8,7 @@ import random
 import re
 import time
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
 from cowrie.core.config import CowrieConfig
@@ -53,7 +53,7 @@ class Command_gcc(HoneyPotCommand):
 
     scheduled: Deferred
 
-    def start(self):
+    def start(self) -> None:
         """
         Parse as much as possible from a GCC syntax and generate the output
         that is requested. The file that is generated can be read (and will)
@@ -138,7 +138,7 @@ class Command_gcc(HoneyPotCommand):
         else:
             self.no_files()
 
-    def handle_CTRL_C(self):
+    def handle_CTRL_C(self) -> None:
         """
         Make sure the scheduled call will be canceled
         """
@@ -146,7 +146,7 @@ class Command_gcc(HoneyPotCommand):
         if getattr(self, "scheduled", False):
             self.scheduled.cancel()
 
-    def no_files(self):
+    def no_files(self) -> None:
         """
         Notify user there are no input files, and exit
         """
@@ -156,7 +156,7 @@ compilation terminated.\n"""
         )
         self.exit()
 
-    def version(self, short):
+    def version(self, short: bool) -> None:
         """
         Print long or short version, and exit
         """
@@ -187,7 +187,7 @@ gcc version {} (Debian {}-5)""".format(
         self.write(f"{data}\n")
         self.exit()
 
-    def generate_file(self, outfile):
+    def generate_file(self, outfile: str) -> None:
         data = b""
         # TODO: make sure it is written to temp file, not downloads
         tmp_fname = "{}_{}_{}_{}".format(
@@ -222,7 +222,7 @@ gcc version {} (Debian {}-5)""".format(
 
         # Segfault command
         class segfault_command(HoneyPotCommand):
-            def call(self):
+            def call(self) -> None:
                 self.write("Segmentation fault\n")
 
         # Trick the 'new compiled file' as an segfault
@@ -231,14 +231,14 @@ gcc version {} (Debian {}-5)""".format(
         # Done
         self.exit()
 
-    def arg_missing(self, arg):
+    def arg_missing(self, arg: str) -> None:
         """
         Print missing argument message, and exit
         """
         self.write(f"{Command_gcc.APP_NAME}: argument to '{arg}' is missing\n")
         self.exit()
 
-    def help(self):
+    def help(self) -> None:
         """
         Print help info, and exit
         """

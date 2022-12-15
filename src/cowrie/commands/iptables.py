@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import optparse
 
-from typing import Any
+from typing import Any, Optional
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -12,21 +12,21 @@ commands = {}
 
 
 class OptionParsingError(RuntimeError):
-    def __init__(self, msg):
+    def __init__(self, msg: str) -> None:
         self.msg = msg
 
 
 class OptionParsingExit(Exception):
-    def __init__(self, status, msg):
+    def __init__(self, status: int, msg: Optional[str]) -> None:
         self.msg = msg
         self.status = status
 
 
 class ModifiedOptionParser(optparse.OptionParser):
-    def error(self, msg):
+    def error(self, msg: str) -> None:
         raise OptionParsingError(msg)
 
-    def exit(self, status=0, msg=None):
+    def exit(self, status: int = 0, msg: Optional[str] = None) -> None:
         raise OptionParsingExit(status, msg)
 
 
@@ -49,10 +49,11 @@ class Command_iptables(HoneyPotCommand):
 
     current_table: dict[str, list[Any]]
 
-    def user_is_root(self):
-        return self.protocol.user.username == "root"
+    def user_is_root(self) -> bool:
+        out: bool = self.protocol.user.username == "root"
+        return out
 
-    def start(self):
+    def start(self) -> None:
         """
         Emulate iptables commands, including permission checking.
 
@@ -187,7 +188,7 @@ class Command_iptables(HoneyPotCommand):
         # Done
         self.exit()
 
-    def setup_table(self, table):
+    def setup_table(self, table: str) -> bool:
         """
         Called during startup to make sure the current environment has some
         fake rules in memory.
@@ -261,7 +262,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""".format(
         # Failed
         return False
 
-    def is_valid_chain(self, chain):
+    def is_valid_chain(self, chain: str) -> bool:
         # Verify chain existence. Requires valid table first
         if chain not in list(self.current_table.keys()):
             self.write(
@@ -273,14 +274,14 @@ Perhaps iptables or your kernel needs to be upgraded.\n""".format(
         # Exists
         return True
 
-    def show_version(self):
+    def show_version(self) -> None:
         """
         Show version and exit
         """
         self.write(f"{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}\n")
         self.exit()
 
-    def show_help(self):
+    def show_help(self) -> None:
         """
         Show help and exit
         """
@@ -354,7 +355,7 @@ Options:
         )
         self.exit()
 
-    def list_rules(self, chain):
+    def list_rules(self, chain: str) -> None:
         """
         List current rules as commands
         """
@@ -382,7 +383,7 @@ Options:
         else:
             self.no_permission()
 
-    def list(self, chain):
+    def list(self, chain: str) -> None:
         """
         List current rules
         """
@@ -423,7 +424,7 @@ Options:
         else:
             self.no_permission()
 
-    def flush(self, chain):
+    def flush(self, chain: str) -> None:
         """
         Mark rules as flushed
         """
@@ -446,7 +447,7 @@ Options:
         else:
             self.no_permission()
 
-    def no_permission(self):
+    def no_permission(self) -> None:
         self.write(
             f"{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}: "
             + "can't initialize iptables table 'filter': "
@@ -455,7 +456,7 @@ Options:
         )
         self.exit()
 
-    def no_command(self):
+    def no_command(self) -> None:
         """
         Print no command message and exit
         """
@@ -467,7 +468,7 @@ Options:
         )
         self.exit()
 
-    def unknown_option(self, option):
+    def unknown_option(self, option: OptionParsingExit) -> None:
         """
         Print unknown option message and exit
         """
@@ -479,7 +480,7 @@ Options:
         )
         self.exit()
 
-    def bad_argument(self, argument):
+    def bad_argument(self, argument: str) -> None:
         """
         Print bad argument and exit
         """

@@ -74,8 +74,7 @@ class HoneypotPasswordChecker:
                 credentials.username, credentials.password, credentials.ip
             ):
                 return defer.succeed(credentials.username)
-            else:
-                return defer.fail(UnauthorizedLogin())
+            return defer.fail(UnauthorizedLogin())
         elif hasattr(credentials, "pamConversion"):
             return self.checkPamUser(
                 credentials.username, credentials.pamConversion, credentials.ip
@@ -87,12 +86,12 @@ class HoneypotPasswordChecker:
         return r.addCallback(self.cbCheckPamUser, username, ip)
 
     def cbCheckPamUser(self, responses, username, ip):
-        for (response, zero) in responses:
+        for (response, _) in responses:
             if self.checkUserPass(username, response, ip):
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())
 
-    def checkUserPass(self, theusername, thepassword, ip):
+    def checkUserPass(self, theusername: bytes, thepassword: bytes, ip: str) -> bool:
         # UserDB is the default auth_class
         authname = auth.UserDB
 
@@ -117,11 +116,11 @@ class HoneypotPasswordChecker:
                 password=thepassword,
             )
             return True
-        else:
-            log.msg(
-                eventid="cowrie.login.failed",
-                format="login attempt [%(username)s/%(password)s] failed",
-                username=theusername,
-                password=thepassword,
-            )
-            return False
+
+        log.msg(
+            eventid="cowrie.login.failed",
+            format="login attempt [%(username)s/%(password)s] failed",
+            username=theusername,
+            password=thepassword,
+        )
+        return False

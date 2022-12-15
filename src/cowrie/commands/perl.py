@@ -17,7 +17,7 @@ commands = {}
 
 
 class Command_perl(HoneyPotCommand):
-    def version(self):
+    def version(self) -> None:
         output = (
             "",
             "This is perl 5, version 14, subversion 2 (v5.14.2) built for x86_64-linux-thread-multi",
@@ -35,7 +35,7 @@ class Command_perl(HoneyPotCommand):
         for line in output:
             self.write(line + "\n")
 
-    def help(self):
+    def help(self) -> None:
         output = (
             "",
             "Usage: perl [switches] [--] [programfile] [arguments]",
@@ -72,7 +72,7 @@ class Command_perl(HoneyPotCommand):
         for line in output:
             self.write(line + "\n")
 
-    def start(self):
+    def start(self) -> None:
         try:
             opts, args = getopt.gnu_getopt(
                 self.args, "acfhnpsStTuUvwWXC:D:e:E:F:i:I:l:m:M:V:X:"
@@ -110,7 +110,7 @@ class Command_perl(HoneyPotCommand):
         if not len(self.args):
             pass
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="perl",
@@ -118,7 +118,7 @@ class Command_perl(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 

@@ -12,7 +12,7 @@ commands = {}
 
 
 class Command_du(HoneyPotCommand):
-    def message_help(self):
+    def message_help(self) -> str:
         return """Usage: du [OPTION]... [FILE]...
   or:  du [OPTION]... --files0-from=F
 Summarize disk usage of the set of FILEs, recursively for directories.
@@ -76,7 +76,7 @@ Report du translation bugs to <http://translationproject.org/team/>
 Full documentation at: <http://www.gnu.org/software/coreutils/du>
 or available locally via: info '(coreutils) du invocation'\n"""
 
-    def call(self):
+    def call(self) -> None:
         self.showHidden = False
         self.showDirectories = False
         path = self.protocol.cwd
@@ -91,7 +91,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
         else:
             self.du_show(path, all=True)
 
-    def du_show(self, path, all=False):
+    def du_show(self, path: str, all: bool = False) -> None:
         try:
             if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]

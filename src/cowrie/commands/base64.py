@@ -18,7 +18,7 @@ class Command_base64(HoneyPotCommand):
     mode: str = "e"
     ignore: bool
 
-    def start(self):
+    def start(self) -> None:
         self.mode = "e"
         self.ignore = False
 
@@ -140,7 +140,7 @@ Try 'base64 --help' for more information.
 
         self.dojob(line)
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 

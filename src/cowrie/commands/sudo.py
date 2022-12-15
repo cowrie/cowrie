@@ -65,17 +65,17 @@ Options:
 
 
 class Command_sudo(HoneyPotCommand):
-    def short_help(self):
+    def short_help(self) -> None:
         for ln in sudo_shorthelp:
             self.errorWrite(f"{ln}\n")
         self.exit()
 
-    def long_help(self):
+    def long_help(self) -> None:
         for ln in sudo_longhelp:
             self.errorWrite(f"{ln}\n")
         self.exit()
 
-    def version(self):
+    def version(self) -> None:
         self.errorWrite(
             """Sudo version 1.8.5p2
             Sudoers policy plugin version 1.8.5p2
@@ -84,7 +84,7 @@ class Command_sudo(HoneyPotCommand):
         )
         self.exit()
 
-    def start(self):
+    def start(self) -> None:
         start_value = None
         parsed_arguments = []
         for count in range(0, len(self.args)):

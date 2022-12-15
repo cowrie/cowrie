@@ -97,10 +97,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
-        try:
-            self.clientIP = CowrieConfig.get("honeypot", "fake_addr")
-        except Exception:
-            self.clientIP = self.realClientIP
+        self.clientIP = CowrieConfig.get(
+            "honeypot", "fake_addr", fallback=self.realClientIP
+        )
 
         # Source IP of server in user visible reports (can be fake or real)
         if CowrieConfig.has_option("honeypot", "internet_facing_ip"):
@@ -139,7 +138,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         class Command_txtcmd(command.HoneyPotCommand):
             def call(self):
                 log.msg(f'Reading txtcmd from "{txt}"')
-                with open(txt) as f:
+                with open(txt, encoding="utf-8") as f:
                     self.write(f.read())
 
         return Command_txtcmd
@@ -151,7 +150,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         return True if cmd in self.commands else False
 
     def getCommand(self, cmd, paths):
-        if not len(cmd.strip()):
+        if not cmd.strip():
             return None
         path = None
         if cmd in self.commands:
@@ -186,7 +185,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         line = line.decode("utf8")
 
-        if len(self.cmdstack):
+        if self.cmdstack:
             self.cmdstack[-1].lineReceived(line)
         else:
             log.msg(f"discarding input {line}")
@@ -329,15 +328,15 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         return recvline.RecvLine.handle_RETURN(self)
 
     def handle_CTRL_C(self):
-        if len(self.cmdstack):
+        if self.cmdstack:
             self.cmdstack[-1].handle_CTRL_C()
 
     def handle_CTRL_D(self):
-        if len(self.cmdstack):
+        if self.cmdstack:
             self.cmdstack[-1].handle_CTRL_D()
 
     def handle_TAB(self):
-        if len(self.cmdstack):
+        if self.cmdstack:
             self.cmdstack[-1].handle_TAB()
 
     def handle_CTRL_K(self):

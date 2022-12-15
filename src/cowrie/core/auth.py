@@ -47,7 +47,8 @@ class UserDB:
         dblines: list[str]
         try:
             with open(
-                "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
+                "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path")),
+                encoding="ascii",
             ) as db:
                 dblines = db.readlines()
         except OSError:
@@ -79,12 +80,11 @@ class UserDB:
         return False
 
     def match_rule(
-        self, rule: Union[bytes, Pattern[bytes]], input: bytes
+        self, rule: Union[bytes, Pattern[bytes]], data: bytes
     ) -> Union[bool, bytes]:
         if isinstance(rule, bytes):
-            return rule in [b"*", input]
-        else:
-            return bool(rule.search(input))
+            return rule in [b"*", data]
+        return bool(rule.search(data))
 
     def re_or_bytes(self, rule: bytes) -> Union[Pattern[bytes], bytes]:
         """
@@ -93,7 +93,7 @@ class UserDB:
         @param login: rule
         @type login: bytes
         """
-        res = re.match(br"/(.+)/(i)?$", rule)
+        res = re.match(rb"/(.+)/(i)?$", rule)
         if res:
             return re.compile(res.group(1), re.IGNORECASE if res.group(2) else 0)
 
@@ -156,7 +156,7 @@ class AuthRandom:
         Load user vars from json file
         """
         if path.isfile(self.uservar_file):
-            with open(self.uservar_file) as fp:
+            with open(self.uservar_file, encoding="utf-8") as fp:
                 try:
                     self.uservar = json.load(fp)
                 except Exception:
@@ -168,7 +168,7 @@ class AuthRandom:
         """
         data = self.uservar
         # Note: this is subject to races between cowrie logins
-        with open(self.uservar_file, "w") as fp:
+        with open(self.uservar_file, "w", encoding="utf-8") as fp:
             json.dump(data, fp)
 
     def checklogin(self, thelogin: bytes, thepasswd: bytes, src_ip: str) -> bool:
@@ -202,9 +202,8 @@ class AuthRandom:
                 auth = True
                 self.savevars()
                 return auth
-            else:
-                ipinfo["max"] = randint(self.mintry, self.maxtry)
-                log.msg("first time for {}, need: {}".format(src_ip, ipinfo["max"]))
+            ipinfo["max"] = randint(self.mintry, self.maxtry)
+            log.msg("first time for {}, need: {}".format(src_ip, ipinfo["max"]))
         else:
             if userpass in cache:
                 ipinfo = self.uservar[src_ip]

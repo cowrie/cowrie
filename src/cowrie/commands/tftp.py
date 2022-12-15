@@ -31,7 +31,7 @@ class Command_tftp(HoneyPotCommand):
     file_to_get: str
     limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
 
-    def makeTftpRetrieval(self):
+    def makeTftpRetrieval(self) -> None:
         progresshook = Progress(self).progresshook
 
         self.artifactFile = Artifact(self.file_to_get)
@@ -89,7 +89,7 @@ class Command_tftp(HoneyPotCommand):
                 self.file_to_get, self.protocol.user.uid, self.protocol.user.gid
             )
 
-    def start(self):
+    def start(self) -> None:
         parser = CustomParser(self)
         parser.prog = "tftp"
         parser.add_argument("hostname", nargs="?", default=None)

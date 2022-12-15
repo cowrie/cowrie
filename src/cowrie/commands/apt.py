@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import random
 import re
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
-from twisted.internet import defer, reactor  # type: ignore
+from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
 
 from cowrie.shell.command import HoneyPotCommand
@@ -18,9 +18,9 @@ commands = {}
 
 class Command_faked_package_class_factory:
     @staticmethod
-    def getCommand(name):
+    def getCommand(name: str) -> Callable:
         class Command_faked_installation(HoneyPotCommand):
-            def call(self):
+            def call(self) -> None:
                 self.write(f"{name}: Segmentation fault\n")
 
         return Command_faked_installation
@@ -47,14 +47,14 @@ class Command_aptget(HoneyPotCommand):
         else:
             self.do_locked()
 
-    def sleep(self, time, time2=None):
+    def sleep(self, time: float, time2: Optional[float] = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()
         if time2:
-            time = random.randint(time * 100, time2 * 100) / 100.0
+            time = random.randint(int(time * 100), int(time2 * 100.0)) / 100.0
         reactor.callLater(time, d.callback, None)  # type: ignore[attr-defined]
         return d
 
-    def do_version(self):
+    def do_version(self) -> None:
         self.write(
             """apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Supported modules:
@@ -71,7 +71,7 @@ Supported modules:
         )
         self.exit()
 
-    def do_help(self):
+    def do_help(self) -> None:
         self.write(
             """apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Usage: apt-get [options] command
@@ -187,7 +187,7 @@ pages for more information and options.
             yield self.sleep(2)
         self.exit()
 
-    def do_moo(self):
+    def do_moo(self) -> None:
         self.write("         (__)\n")
         self.write("         (oo)\n")
         self.write("   /------\\/\n")
@@ -197,7 +197,7 @@ pages for more information and options.
         self.write('...."Have you mooed today?"...\n')
         self.exit()
 
-    def do_locked(self):
+    def do_locked(self) -> None:
         self.errorWrite(
             "E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\n"
         )

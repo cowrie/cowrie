@@ -13,29 +13,29 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-def hardware_platform():
+def hardware_platform() -> str:
     return CowrieConfig.get("shell", "hardware_platform", fallback="x86_64")
 
 
-def kernel_name():
+def kernel_name() -> str:
     return CowrieConfig.get("shell", "kernel_name", fallback="Linux")
 
 
-def kernel_version():
+def kernel_version() -> str:
     return CowrieConfig.get("shell", "kernel_version", fallback="3.2.0-4-amd64")
 
 
-def kernel_build_string():
+def kernel_build_string() -> str:
     return CowrieConfig.get(
         "shell", "kernel_build_string", fallback="#1 SMP Debian 3.2.68-1+deb7u1"
     )
 
 
-def operating_system():
+def operating_system() -> str:
     return CowrieConfig.get("shell", "operating_system", fallback="GNU/Linux")
 
 
-def uname_help():
+def uname_help() -> str:
     return """Usage: uname [OPTION]...
 Print certain system information.  With no OPTION, same as -s.
 
@@ -58,25 +58,25 @@ or available locally via: info '(coreutils) uname invocation'\n
 """
 
 
-def uname_get_some_help():
+def uname_get_some_help() -> str:
     return "Try 'uname --help' for more information."
 
 
-def uname_fail_long(arg):
+def uname_fail_long(arg: str) -> str:
     return f"uname: unrecognized option '{arg}'\n{uname_get_some_help()}\n"
 
 
-def uname_fail_short(arg):
+def uname_fail_short(arg: str) -> str:
     return f"uname: invalid option -- '{arg}'\n{uname_get_some_help()}\n"
 
 
-def uname_fail_extra(arg):
+def uname_fail_extra(arg: str) -> str:
     # Note: These are apostrophes, not single quotation marks.
     return f"uname: extra operand ‘{arg}’\n{uname_get_some_help()}\n"
 
 
 class Command_uname(HoneyPotCommand):
-    def full_uname(self):
+    def full_uname(self) -> str:
         return "{} {} {} {} {} {}\n".format(
             kernel_name(),
             self.protocol.hostname,
@@ -86,7 +86,7 @@ class Command_uname(HoneyPotCommand):
             operating_system(),
         )
 
-    def call(self):
+    def call(self) -> None:
         opts = {
             "name": False,
             "release": False,

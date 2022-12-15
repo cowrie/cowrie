@@ -12,7 +12,7 @@ import json
 from io import BytesIO
 from typing import Any
 
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.ssl import ClientContextFactory
 from twisted.python import log
 from twisted.web import client, http_headers
@@ -31,7 +31,7 @@ class Output(cowrie.core.output.Output):
     agent: Any
     url: bytes
 
-    def start(self):
+    def start(self) -> None:
         self.token = CowrieConfig.get("output_splunk", "token")
         self.url = CowrieConfig.get("output_splunk", "url").encode("utf8")
         self.index = CowrieConfig.get("output_splunk", "index", fallback=None)
@@ -42,7 +42,7 @@ class Output(cowrie.core.output.Output):
         # contextFactory.method = TLSv1_METHOD
         self.agent = client.Agent(reactor, contextFactory)
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
     def write(self, logentry):

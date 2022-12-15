@@ -11,7 +11,7 @@ import time
 import uuid
 
 from twisted.conch.telnet import TelnetTransport
-from twisted.internet import reactor  # type: ignore
+from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
@@ -22,7 +22,7 @@ from cowrie.telnet_proxy.handler import TelnetHandler
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
-class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
+class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
     def __init__(self):
         super().__init__()
 

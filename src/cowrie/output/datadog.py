@@ -19,7 +19,7 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-    def start(self):
+    def start(self) -> None:
         self.url = CowrieConfig.get("output_datadog", "url").encode("utf8")
         self.api_key = CowrieConfig.get("output_datadog", "api_key", fallback="").encode("utf8")
         if len(self.api_key) == 0:
@@ -30,7 +30,7 @@ class Output(cowrie.core.output.Output):
         contextFactory = WebClientContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
     def write(self, logentry):

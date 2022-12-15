@@ -11,7 +11,7 @@ class Command_which(HoneyPotCommand):
     # Do not resolve args
     resolve_args = False
 
-    def call(self):
+    def call(self) -> None:
         """
         Look up all the arguments on PATH and print each (first) result
         """

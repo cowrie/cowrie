@@ -18,7 +18,7 @@ commands = {}
 
 
 class Command_crontab(HoneyPotCommand):
-    def help(self):
+    def help(self) -> None:
         output = (
             "usage:    crontab [-u user] file",
             "          crontab [-u user] [-i] {-e | -l | -r}",
@@ -31,7 +31,7 @@ class Command_crontab(HoneyPotCommand):
         for line in output:
             self.write(line + "\n")
 
-    def start(self):
+    def start(self) -> None:
         try:
             opts, args = getopt.getopt(self.args, "u:elri")
         except getopt.GetoptError as err:
@@ -62,7 +62,7 @@ class Command_crontab(HoneyPotCommand):
         if len(self.args):
             pass
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.command.input",
             realm="crontab",
@@ -70,7 +70,7 @@ class Command_crontab(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         self.exit()
 
 

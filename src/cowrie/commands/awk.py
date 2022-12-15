@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import getopt
 import re
+from typing import Match, Optional
 
 from twisted.python import log
 
@@ -88,7 +89,7 @@ class Command_awk(HoneyPotCommand):
             self.output(self.input_data)
         self.exit()
 
-    def awk_parser(self, program):
+    def awk_parser(self, program: str) -> list[dict[str, str]]:
         """
         search for awk execution patterns, either direct {} code or only executed for a certain regex
         { }
@@ -101,23 +102,23 @@ class Command_awk(HoneyPotCommand):
             code.append({"regex": m[1], "code": m[2]})
         return code
 
-    def awk_print(self, words):
+    def awk_print(self, words: str) -> None:
         """
         This is the awk `print` command that operates on a single line only
         """
         self.write(words)
         self.write("\n")
 
-    def output(self, input):
+    def output(self, inb: Optional[bytes]) -> None:
         """
         This is the awk output.
         """
-        if "decode" in dir(input):
-            input = input.decode("utf-8")
-        if not isinstance(input, str):
-            pass
+        if inb:
+            inp = inb.decode("utf-8")
+        else:
+            return
 
-        inputlines = input.split("\n")
+        inputlines = inp.split("\n")
         if inputlines[-1] == "":
             inputlines.pop()
         for inputline in inputlines:
@@ -127,7 +128,7 @@ class Command_awk(HoneyPotCommand):
             words = inputline.split()
             words.insert(0, inputline)
 
-            def repl(m):
+            def repl(m: Match) -> str:
                 try:
                     return words[int(m.group(1))]
                 except IndexError:
@@ -148,7 +149,7 @@ class Command_awk(HoneyPotCommand):
                         # print("LINE2: {}".format(line))
                         self.awk_print(line)
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         """
         This function logs standard input from the user send to awk
         """
@@ -159,15 +160,15 @@ class Command_awk(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.output(line)
+        self.output(line.encode())
 
-    def handle_CTRL_D(self):
+    def handle_CTRL_D(self) -> None:
         """
         ctrl-d is end-of-file, time to terminate
         """
         self.exit()
 
-    def help(self):
+    def help(self) -> None:
         self.write(
             """Usage: awk [POSIX or GNU style options] -f progfile [--] file ...
 Usage: awk [POSIX or GNU style options] [--] 'program' file ...
@@ -212,7 +213,7 @@ Examples:
 """
         )
 
-    def version(self):
+    def version(self) -> None:
         self.write(
             """GNU Awk 4.1.4, API: 1.1 (GNU MPFR 4.0.1, GNU MP 6.1.2)
 Copyright (C) 1989, 1991-2016 Free Software Foundation.

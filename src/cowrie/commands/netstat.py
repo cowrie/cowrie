@@ -10,7 +10,7 @@ commands = {}
 
 
 class Command_netstat(HoneyPotCommand):
-    def show_version(self):
+    def show_version(self) -> None:
         self.write("net-tools 1.60\n")
         self.write("netstat 1.42 (2001-04-15)\n")
         self.write(
@@ -25,7 +25,7 @@ class Command_netstat(HoneyPotCommand):
             + "+FR +ROSE +ASH +SIT +FDDI +HIPPI +HDLC/LAPB +EUI64\n"
         )
 
-    def show_help(self):
+    def show_help(self) -> None:
         self.write(
             """
 usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
@@ -64,7 +64,7 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
 """
         )
 
-    def do_netstat_route(self):
+    def do_netstat_route(self) -> None:
         self.write(
             """Kernel IP routing table
 Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n"""
@@ -88,7 +88,7 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         self.write(f"{l1}\n")
         self.write(f"{l2}\n")
 
-    def do_netstat_normal(self):
+    def do_netstat_normal(self) -> None:
         self.write(
             """Active Internet connections (w/o servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State\n"""
@@ -180,7 +180,7 @@ unix  2      [ ]         DGRAM                    9570
 unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\n"""
             )
 
-    def call(self):
+    def call(self) -> None:
         self.show_all = False
         self.show_numeric = False
         self.show_listen = False
