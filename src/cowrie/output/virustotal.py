@@ -100,7 +100,6 @@ class Output(cowrie.core.output.Output):
         """
         Stop output plugin
         """
-        pass
 
     def write(self, entry: dict[str, Any]) -> None:
         if entry["eventid"] == "cowrie.session.file_download":

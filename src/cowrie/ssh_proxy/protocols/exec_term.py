@@ -70,12 +70,12 @@ class ExecTerm(base_protocol.BaseProtocol):
             )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
-    def parse_packet(self, parent: str, payload: bytes) -> None:
+    def parse_packet(self, parent: str, data: bytes) -> None:
         if self.ttylogEnabled:
             ttylog.ttylog_write(
-                self.ttylogFile, len(payload), ttylog.TYPE_OUTPUT, time.time(), payload
+                self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
             )
-            self.ttylogSize += len(payload)
+            self.ttylogSize += len(data)
 
     def channel_closed(self):
         if self.ttylogEnabled:

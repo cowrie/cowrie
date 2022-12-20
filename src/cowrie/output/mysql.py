@@ -164,7 +164,7 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == "cowrie.session.params":
             self.simpleQuery(
-                "INSERT INTO `params` (`session`, `arch`) " "VALUES (%s, %s)",
+                "INSERT INTO `params` (`session`, `arch`) VALUES (%s, %s)",
                 (entry["session"], entry["arch"]),
             )
 
@@ -224,7 +224,7 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == "cowrie.client.version":
             r = yield self.db.runQuery(
-                "SELECT `id` FROM `clients` " "WHERE `version` = %s",
+                "SELECT `id` FROM `clients` WHERE `version` = %s",
                 (entry["version"],),
             )
 
@@ -232,20 +232,20 @@ class Output(cowrie.core.output.Output):
                 id = int(r[0][0])
             else:
                 yield self.db.runQuery(
-                    "INSERT INTO `clients` (`version`) " "VALUES (%s)",
+                    "INSERT INTO `clients` (`version`) VALUES (%s)",
                     (entry["version"],),
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ID()")
                 id = int(r[0][0])
             self.simpleQuery(
-                "UPDATE `sessions` " "SET `client` = %s " "WHERE `id` = %s",
+                "UPDATE `sessions` SET `client` = %s WHERE `id` = %s",
                 (id, entry["session"]),
             )
 
         elif entry["eventid"] == "cowrie.client.size":
             self.simpleQuery(
-                "UPDATE `sessions` " "SET `termsize` = %s " "WHERE `id` = %s",
+                "UPDATE `sessions` SET `termsize` = %s WHERE `id` = %s",
                 ("{}x{}".format(entry["width"], entry["height"]), entry["session"]),
             )
 

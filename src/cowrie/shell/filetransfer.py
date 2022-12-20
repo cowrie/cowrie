@@ -108,12 +108,6 @@ class CowrieSFTPDirectory:
     def __iter__(self):
         return self
 
-    def next(self):
-        """
-        Py2 compatibility
-        """
-        return self.__next__()
-
     def __next__(self):
         try:
             f = self.files.pop(0)
