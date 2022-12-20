@@ -20,7 +20,7 @@ test:
 
 .PHONY: build
 build:
-	python setup.py build sdist bdist
+	python -m build
 
 .PHONY: docs
 docs: ## Create documentation
@@ -42,11 +42,11 @@ pre-commit: ## Run pre-commit checks
 
 .PHONY: pip-upgrade
 pip-upgrade: ## Upgrade environment from requirements.txt
-	pip install --upgrade -r requirements.txt
+	python -m pip install --upgrade -r requirements.txt
 
 .PHONY: pip-check
 pip-check: ## Verify python packages
-	pip check
+	python -m pip check
 
 # This assumes two remotes, one is `origin`, your fork. The second is `cowrie` the main project
 .PHONY: git-remote
