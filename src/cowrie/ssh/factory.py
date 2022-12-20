@@ -38,7 +38,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     portal: Optional[tp.Portal] = None  # gets set by plugin
     ourVersionString: bytes = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
-    ).encode('ascii')
+    ).encode("ascii")
 
     def __init__(self, backend, pool_handler):
         self.pool_handler = pool_handler
@@ -101,7 +101,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         # this can come from backend in the future, check HonSSH's slim client
         self.ourVersionString = CowrieConfig.get(
             "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
-        ).encode('ascii')
+        ).encode("ascii")
 
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")

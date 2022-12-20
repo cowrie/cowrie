@@ -33,11 +33,11 @@ class Output(cowrie.core.output.Output):
                 del logentry[i]
 
         gelf_message = {
-            'version': '1.1',
-            'host': logentry["sensor"],
-            'timestamp': time.time(),
-            'short_message': json.dumps(logentry),
-            'level': 1,
+            "version": "1.1",
+            "host": logentry["sensor"],
+            "timestamp": time.time(),
+            "short_message": json.dumps(logentry),
+            "level": 1,
         }
 
         self.postentry(gelf_message)

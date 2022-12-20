@@ -22,7 +22,7 @@ __author__ = "Diego Parrilla Santamaria"
 __version__ = "0.1.0"
 
 import datetime
-from typing import Generator, List, Set
+from typing import Generator, List, Optional, Set
 
 from treq import post
 
@@ -73,7 +73,11 @@ class HTTPClient:
         self.api_url = api_url
 
     def report(
-        self, ip_set: Set[str], category: str, ttl: int = 0, tags: List[str] = []
+        self,
+        ip_set: Set[str],
+        category: str,
+        ttl: int = 0,
+        tags: Optional[List[str]] = None,
     ) -> None:
         payload: dict = {
             "addresses": list(ip_set),

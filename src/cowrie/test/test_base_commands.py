@@ -59,26 +59,38 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_id_command(self) -> None:
         self.proto.lineReceived(b"id\n")
-        self.assertEqual(self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT)
+        self.assertEqual(
+            self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
+        )
 
     def test_passwd_command(self) -> None:
         self.proto.lineReceived(b"passwd\n")
         self.proto.lineReceived(b"changeme\n")
         self.proto.lineReceived(b"changeme\n")
-        self.assertEqual(self.tr.value(),
-                         b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n" + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            b"Enter new UNIX password: Retype new UNIX password: passwd: password updated successfully\n"
+            + PROMPT,
+        )
 
     def test_shutdown_command(self) -> None:
         self.proto.lineReceived(b"shutdown\n")
-        self.assertEqual(self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT)  # TODO: Is it right?..
+        self.assertEqual(
+            self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT
+        )  # TODO: Is it right?..
 
     def test_poweroff_command(self) -> None:
         self.proto.lineReceived(b"poweroff\n")
-        self.assertEqual(self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT)  # TODO: Is it right?..
+        self.assertEqual(
+            self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT
+        )  # TODO: Is it right?..
 
     def test_date_command(self) -> None:
         self.proto.lineReceived(b"date\n")
-        self.assertRegex(self.tr.value(), rb"[A-Za-z]{3} [A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2} UTC \d{4}\n" + PROMPT)
+        self.assertRegex(
+            self.tr.value(),
+            rb"[A-Za-z]{3} [A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2} UTC \d{4}\n" + PROMPT,
+        )
 
     def test_bash_command(self) -> None:
         self.proto.lineReceived(b"bash\n")
@@ -86,7 +98,9 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_sh_command(self) -> None:
         self.proto.lineReceived(b"sh -c id\n")
-        self.assertEqual(self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT)
+        self.assertEqual(
+            self.tr.value(), b"uid=0(root) gid=0(root) groups=0(root)\n" + PROMPT
+        )
 
     def test_php_help_command(self) -> None:
         self.proto.lineReceived(b"php -h\n")
@@ -106,8 +120,11 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_set_command(self) -> None:
         self.proto.lineReceived(b"set\n")
-        self.assertEqual(self.tr.value(),
-                         b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n" + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n"
+            + PROMPT,
+        )
 
     def test_unset_command(self) -> None:
         self.proto.lineReceived(b"unset\n")
@@ -162,7 +179,11 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_cd_error_output(self) -> None:
         self.proto.lineReceived(f"cd {NONEXISTEN_FILE:s}".encode())
-        self.assertEqual(self.tr.value(), f"bash: cd: {NONEXISTEN_FILE:s}: No such file or directory\n".encode() + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            f"bash: cd: {NONEXISTEN_FILE:s}: No such file or directory\n".encode()
+            + PROMPT,
+        )
 
 
 class ShellFileCommandsTests(unittest.TestCase):
@@ -209,8 +230,11 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     def test_rm_error_output(self) -> None:  # TODO: quotes?..
         self.proto.lineReceived(f"rm {NONEXISTEN_FILE:s}\n".encode())
-        self.assertEqual(self.tr.value(),
-                         f"rm: cannot remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            f"rm: cannot remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            + PROMPT,
+        )
 
     def test_cp_output(self) -> None:
         self.proto.lineReceived(b"cp /usr/bin/gcc /tmp\n")
@@ -218,8 +242,11 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     def test_cp_error_output(self) -> None:  # TODO: quotes?..
         self.proto.lineReceived(f"cp {NONEXISTEN_FILE:s} /tmp\n".encode())
-        self.assertEqual(self.tr.value(),
-                         f"cp: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            f"cp: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            + PROMPT,
+        )
 
     def test_mv_output(self) -> None:
         self.proto.lineReceived(b"mv /usr/bin/awk /tmp\n")
@@ -227,8 +254,11 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     def test_mv_error_output(self) -> None:  # TODO: quotes?..
         self.proto.lineReceived(f"mv {NONEXISTEN_FILE:s} /tmp\n".encode())
-        self.assertEqual(self.tr.value(),
-                         f"mv: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            f"mv: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            + PROMPT,
+        )
 
     def test_mkdir_output(self) -> None:
         path = "/tmp/hello"
@@ -242,7 +272,11 @@ class ShellFileCommandsTests(unittest.TestCase):
         path = "/etc"
 
         self.proto.lineReceived(f"mkdir {path:s}\n".encode())
-        self.assertEqual(self.tr.value(), f"mkdir: cannot create directory `{path:s}': File exists\n".encode() + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            f"mkdir: cannot create directory `{path:s}': File exists\n".encode()
+            + PROMPT,
+        )
 
     def test_rmdir_output(self) -> None:
         path = "/tmp/bye"
@@ -255,8 +289,11 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     def test_rmdir_error_output(self) -> None:  # TODO: quotes?..
         self.proto.lineReceived(f"rmdir {NONEXISTEN_FILE:s}\n".encode())
-        self.assertEqual(self.tr.value(),
-                         f"rmdir: failed to remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode() + PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            f"rmdir: failed to remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            + PROMPT,
+        )
 
     def test_pwd_output(self) -> None:
         self.proto.lineReceived(b"pwd\n")

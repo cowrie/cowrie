@@ -264,7 +264,7 @@ class HoneyPotShell:
 
         # Gather all arguments with pipes
 
-        for index, pipe_indice in enumerate(pipe_indices):
+        for _index, pipe_indice in enumerate(pipe_indices):
             multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
             start = pipe_indice + 1
 
@@ -274,7 +274,7 @@ class HoneyPotShell:
         cmd_array.append(cmd)
         cmd = {}
 
-        for index, value in enumerate(multipleCmdArgs):
+        for value in multipleCmdArgs:
             cmd["command"] = value.pop(0)
             cmd["rargs"] = parse_arguments(value)
             cmd_array.append(cmd)
@@ -424,7 +424,7 @@ class HoneyPotShell:
             return
 
         # Clear early so we can call showPrompt if needed
-        for i in range(self.protocol.lineBufferIndex):
+        for _i in range(self.protocol.lineBufferIndex):
             self.protocol.terminal.cursorBackward()
             self.protocol.terminal.deleteCharacter()
 

@@ -107,7 +107,7 @@ class Command_sudo(HoneyPotCommand):
             self.short_help()
             return
 
-        for o, a in optlist:
+        for o, _a in optlist:
             if o in ("-V"):
                 self.version()
                 return

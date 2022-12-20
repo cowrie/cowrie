@@ -86,7 +86,7 @@ class Command_python(HoneyPotCommand):
             return
 
         # Parse options
-        for o, a in opts:
+        for o, _a in opts:
             if o in "-V":
                 self.version()
                 self.exit()

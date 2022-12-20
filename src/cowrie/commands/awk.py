@@ -42,7 +42,7 @@ class Command_awk(HoneyPotCommand):
             self.exit()
             return
 
-        for o, a in optlist:
+        for o, _a in optlist:
             if o in "--help":
                 self.help()
                 self.exit()

@@ -1,3 +1,9 @@
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.mypy]
 
 namespace_packages = true

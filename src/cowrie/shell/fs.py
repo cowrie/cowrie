@@ -151,7 +151,7 @@ class HoneyPotFilesystem:
         the virtual filesystem.
         """
 
-        for path, directories, filenames in os.walk(honeyfs_path):
+        for path, _directories, filenames in os.walk(honeyfs_path):
             for filename in filenames:
                 realfile_path: str = os.path.join(path, filename)
                 virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)

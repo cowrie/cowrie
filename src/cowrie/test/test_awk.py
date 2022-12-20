@@ -34,21 +34,21 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.tr.clear()
 
     def test_awk_command_001(self) -> None:
-        self.proto.lineReceived(b"echo \"test test\" | awk \"{ print $0 }\"\n")
+        self.proto.lineReceived(b'echo "test test" | awk "{ print $0 }"\n')
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_awk_command_002(self) -> None:
-        self.proto.lineReceived(b"echo \"test\" | awk \"{ print $1 }\"\n")
+        self.proto.lineReceived(b'echo "test" | awk "{ print $1 }"\n')
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_awk_command_003(self) -> None:
-        self.proto.lineReceived(b"echo \"test test\" | awk \"{ print $1 $2 }\"\n")
+        self.proto.lineReceived(b'echo "test test" | awk "{ print $1 $2 }"\n')
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_awk_command_004(self) -> None:
-        self.proto.lineReceived(b"echo \"test test\" | awk \"{ print $1,$2 }\"\n")
+        self.proto.lineReceived(b'echo "test test" | awk "{ print $1,$2 }"\n')
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_awk_command_005(self) -> None:
-        self.proto.lineReceived(b"echo \"test test\" | awk \"{ print $1$2 }\"\n")
+        self.proto.lineReceived(b'echo "test test" | awk "{ print $1$2 }"\n')
         self.assertEqual(self.tr.value(), b"testtest\n" + PROMPT)

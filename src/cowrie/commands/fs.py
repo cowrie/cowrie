@@ -74,7 +74,7 @@ class Command_grep(HoneyPotCommand):
                 self.exit()
                 return
 
-            for opt, arg in optlist:
+            for opt, _arg in optlist:
                 if opt == "-h":
                     self.help()
 
@@ -342,7 +342,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             self.exit()
             return
 
-        for o, a in optlist:
+        for o, _a in optlist:
             if o in ("--recursive", "-r", "-R"):
                 recursive = True
             elif o in ("--force", "-f"):

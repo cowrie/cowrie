@@ -69,7 +69,7 @@ class Command_wc(HoneyPotCommand):
             self.errorWrite(f"wc: {filename}: No such file or directory\n")
 
     def wc_application(self, contents: bytes, optlist: list[Tuple[str, str]]) -> None:
-        for opt, arg in optlist:
+        for opt, _arg in optlist:
             if opt == "-l":
                 contentsplit = contents.split(b"\n")
                 self.write(f"{len(contentsplit) - 1}\n")

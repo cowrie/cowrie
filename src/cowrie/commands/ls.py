@@ -49,7 +49,7 @@ class Command_ls(HoneyPotCommand):
             self.write("Try 'ls --help' for more information.\n")
             return
 
-        for x, a in opts:
+        for x, _a in opts:
             if x in ("-l"):
                 func = self.do_ls_l
             if x in ("-a"):

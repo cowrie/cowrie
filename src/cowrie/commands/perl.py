@@ -84,7 +84,7 @@ class Command_perl(HoneyPotCommand):
             self.exit()
 
         # Parse options
-        for o, a in opts:
+        for o, _a in opts:
             if o in ("-v"):
                 self.version()
                 self.exit()
