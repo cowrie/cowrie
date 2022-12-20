@@ -544,7 +544,7 @@ class StdOutStdErrEmulationProtocol:
         pass
 
     def processExited(self, reason):
-        log.msg("processExited for %s, status %d" % (self.cmd, reason.value.exitCode))
+        log.msg(f"processExited for {self.cmd}, status {reason.value.exitCode}")
 
     def processEnded(self, reason):
-        log.msg("processEnded for %s, status %d" % (self.cmd, reason.value.exitCode))
+        log.msg(f"processEnded for {self.cmd}, status {reason.value.exitCode}")

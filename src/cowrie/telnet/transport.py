@@ -19,10 +19,17 @@ from cowrie.core.config import CowrieConfig
 
 
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
-    def connectionMade(self):
-        self.transportId = uuid.uuid4().hex[:12]
-        sessionno = self.transport.sessionno
+    """
+    CowrieTelnetTransport
+    """
 
+    def __init__(self):
+        TelnetTransport.__init__()
+        TimeoutMixin.__init__()
+        self.transportId: str = uuid.uuid4().hex[:12]
+
+    def connectionMade(self):
+        sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)

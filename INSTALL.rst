@@ -236,34 +236,12 @@ CryptographyDeprecationWarning: Blowfish has been deprecated
 ============================================================
 
 The following warnings may occur, these can be safely ignored, and
-are not the reason your Cowrie installation is not working.
+are not the reason your Cowrie installation is not working::
 
-``CryptographyDeprecationWarning: Blowfish has been deprecated
-  b"blowfish-cbc": (algorithms.Blowfish, 16, modes.CBC),
-CryptographyDeprecationWarning: CAST5 has been deprecated
-  b"cast128-cbc": (algorithms.CAST5, 16, modes.CBC),
-CryptographyDeprecationWarning: Blowfish has been deprecated
-  b"blowfish-ctr": (algorithms.Blowfish, 16, modes.CTR),
-CryptographyDeprecationWarning: CAST5 has been deprecated
-  b"cast128-ctr": (algorithms.CAST5, 16, modes.CTR),``
-
-The algorithms are used in Cowrie to support old attackers that use
-these deprecated algorithms.
-
-CryptographyDeprecationWarning: Blowfish has been deprecated
-============================================================
-
-The following warnings may occur, these can be safely ignored, and
-are not the reason your Cowrie installation is not working.
-
-``CryptographyDeprecationWarning: Blowfish has been deprecated
-  b"blowfish-cbc": (algorithms.Blowfish, 16, modes.CBC),
-CryptographyDeprecationWarning: CAST5 has been deprecated
-  b"cast128-cbc": (algorithms.CAST5, 16, modes.CBC),
-CryptographyDeprecationWarning: Blowfish has been deprecated
-  b"blowfish-ctr": (algorithms.Blowfish, 16, modes.CTR),
-CryptographyDeprecationWarning: CAST5 has been deprecated
-  b"cast128-ctr": (algorithms.CAST5, 16, modes.CTR),``
+    CryptographyDeprecationWarning: Blowfish has been deprecated b"blowfish-cbc": (algorithms.Blowfish, 16, modes.CBC),
+    CryptographyDeprecationWarning: CAST5 has been deprecated b"cast128-cbc": (algorithms.CAST5, 16, modes.CBC),
+    CryptographyDeprecationWarning: Blowfish has been deprecated b"blowfish-ctr": (algorithms.Blowfish, 16, modes.CTR),
+    CryptographyDeprecationWarning: CAST5 has been deprecated b"cast128-ctr": (algorithms.CAST5, 16, modes.CTR),
 
 The algorithms are used in Cowrie to support old attackers that use
 these deprecated algorithms.
