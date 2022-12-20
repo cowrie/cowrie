@@ -76,7 +76,7 @@ class HoneypotPasswordChecker:
             ):
                 return defer.succeed(credentials.username)
             return defer.fail(UnauthorizedLogin())
-        elif hasattr(credentials, "pamConversion"):
+        if hasattr(credentials, "pamConversion"):
             return self.checkPamUser(
                 credentials.username, credentials.pamConversion, credentials.ip
             )
