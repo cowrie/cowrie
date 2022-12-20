@@ -41,7 +41,7 @@ class Output(cowrie.core.output.Output):
 
     def start(self):
         self.format = CowrieConfig.get("output_textlog", "format")
-        self.outfile = open(CowrieConfig.get("output_textlog", "logfile"), "a")
+        self.outfile = open(CowrieConfig.get("output_textlog", "logfile"), "a", encoding="utf-8")
 
     def stop(self):
         pass

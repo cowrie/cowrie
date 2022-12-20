@@ -40,4 +40,4 @@ disallow_any_generics       = false
 disallow_untyped_calls      = false
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = [ "R0912", "C0103", "C0114", "C0115", "C0116", "C0301" ]
+disable = [ "R0901", "R0903", "R0912", "C0103", "C0114", "C0115", "C0116", "C0301" ]
