@@ -9,7 +9,6 @@ import socket
 import sys
 import time
 import traceback
-from typing import Callable
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
@@ -48,9 +47,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def __init__(self, avatar):
         self.user = avatar
-        self.environ = user.environ
-        self.hostname: str = user.server.hostname
-        self.fs = user.server.fs
+        self.environ = avatar.environ
+        self.hostname: str = self.user.server.hostname
+        self.fs = self.user.server.fs
         self.pp = None
         self.logintime: float
         self.realClientIP: str
@@ -60,8 +59,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.sessionno: int
         self.factory = None
 
-        if self.fs.exists(user.avatar.home):
-            self.cwd = user.avatar.home
+        if self.fs.exists(self.user.avatar.home):
+            self.cwd = self.user.avatar.home
         else:
             self.cwd = "/"
         self.data = None
