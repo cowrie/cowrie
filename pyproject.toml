@@ -47,15 +47,15 @@ disallow_untyped_calls      = false
 
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = [ "R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301" ]
+disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301"]
 
 
 [tool.isort]
-profile = black
-known_zope = zope
-known_twisted = twisted
-known_first_party = cowrie,backend_pool
-sections=FUTURE,STDLIB,THIRDPARTY,ZOPE,TWISTED,FIRSTPARTY,LOCALFOLDER
+profile = "black"
+known_zope = "zope"
+known_twisted = "twisted"
+known_first_party = ["cowrie","backend_pool"]
+sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOLDER"]
 
 
 [tool.ruff]
