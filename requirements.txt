@@ -12,3 +12,4 @@ service_identity==21.1.0
 tftpy==0.8.2
 treq==22.2.0
 twisted==22.10.0
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
