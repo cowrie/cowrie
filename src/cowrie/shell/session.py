@@ -76,7 +76,7 @@ class SSHSessionForCowrieUser:
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
-    def closed(self):
+    def closed(self) -> None:
         """
         this is reliably called on both logout and disconnect
         we notify the protocol here we lost the connection
@@ -85,7 +85,7 @@ class SSHSessionForCowrieUser:
             self.protocol.connectionLost("disconnected")
             self.protocol = None
 
-    def eofReceived(self):
+    def eofReceived(self) -> None:
         if self.protocol:
             self.protocol.eofReceived()
 

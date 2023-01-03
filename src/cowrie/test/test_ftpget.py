@@ -35,16 +35,18 @@ class ShellFtpGetCommandTests(unittest.TestCase):
         self.tr.clear()
 
     def test_help_command(self) -> None:
-        usage = b"BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.\n" \
-                b"\n" \
-                b"Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE\n" \
-                b"\n" \
-                b"Download a file via FTP\n" \
-                b"\n" \
-                b"    -c Continue previous transfer\n" \
-                b"    -v Verbose\n" \
-                b"    -u USER     Username\n" \
-                b"    -p PASS     Password\n" \
-                b"    -P NUM      Port\n\n"
+        usage = (
+            b"BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.\n"
+            b"\n"
+            b"Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE\n"
+            b"\n"
+            b"Download a file via FTP\n"
+            b"\n"
+            b"    -c Continue previous transfer\n"
+            b"    -v Verbose\n"
+            b"    -u USER     Username\n"
+            b"    -p PASS     Password\n"
+            b"    -P NUM      Port\n\n"
+        )
         self.proto.lineReceived(b"ftpget\n")
         self.assertEqual(self.tr.value(), usage + PROMPT)

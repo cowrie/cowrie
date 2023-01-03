@@ -26,6 +26,10 @@ class Output(cowrie.core.output.Output):
     """
     dshield output
     """
+    debug: bool = False
+    userid: str
+    batch_size: int
+    batch: list
 
     def start(self):
         self.auth_key = CowrieConfig.get("output_dshield", "auth_key")
@@ -45,7 +49,7 @@ class Output(cowrie.core.output.Output):
             date = dateutil.parser.parse(entry["timestamp"])
             self.batch.append(
                 {
-                    "date": date.date().__str__(),
+                    "date": str(date.date()),
                     "time": date.time().strftime("%H:%M:%S"),
                     "timezone": time.strftime("%z"),
                     "source_ip": entry["src_ip"],
@@ -120,7 +124,7 @@ class Output(cowrie.core.output.Output):
                 log.msg(f"dshield: status code {resp.status_code}")
                 log.msg(f"dshield: response {resp.content}")
 
-            if resp.status_code == requests.codes.ok:
+            if resp.ok:
                 sha1_regex = re.compile(r"<sha1checksum>([^<]+)<\/sha1checksum>")
                 sha1_match = sha1_regex.search(response)
                 sha1_local = hashlib.sha1()
@@ -156,9 +160,7 @@ class Output(cowrie.core.output.Output):
                     failed = True
 
                 log.msg(
-                    "dshield: SUCCESS: Sent {} bytes worth of data to secure.dshield.org".format(
-                        len(log_output)
-                    )
+                    f"dshield: SUCCESS: Sent {log_output} bytes worth of data to secure.dshield.org"
                 )
             else:
                 log.msg(f"dshield ERROR: error {resp.status_code}.")

@@ -38,7 +38,7 @@ class ShellUniqCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_uniq_command_002(self) -> None:
-        self.proto.lineReceived(b"echo -e \"test\ntest\ntest\" | uniq\n")
+        self.proto.lineReceived(b'echo -e "test\ntest\ntest" | uniq\n')
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_uniq_command_003(self) -> None:

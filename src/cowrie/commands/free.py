@@ -34,7 +34,7 @@ class Command_free(HoneyPotCommand):
             return
 
         # Parse options
-        for o, a in opts:
+        for o, _a in opts:
             if o in ("-h"):
                 self.do_free(fmt="human")
                 return

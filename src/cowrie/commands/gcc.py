@@ -202,7 +202,7 @@ gcc version {} (Debian {}-5)""".format(
 
         # Data contains random garbage from an actual file, so when
         # catting the file, you'll see some 'real' compiled data
-        for i in range(random.randint(3, 15)):
+        for _i in range(random.randint(3, 15)):
             if random.randint(1, 3) == 1:
                 data = data + Command_gcc.RANDOM_DATA[::-1]
             else:

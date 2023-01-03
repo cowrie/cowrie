@@ -34,7 +34,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.tr.clear()
 
     def test_echo_command_001(self) -> None:
-        self.proto.lineReceived(b"echo \"test\"\n")
+        self.proto.lineReceived(b'echo "test"\n')
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_echo_command_002(self) -> None:
@@ -42,7 +42,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test test\n" + PROMPT)
 
     def test_echo_command_003(self) -> None:
-        self.proto.lineReceived(b"echo -n \"test  test\"\n")
+        self.proto.lineReceived(b'echo -n "test  test"\n')
         self.assertEqual(self.tr.value(), b"test  test" + PROMPT)
 
     def test_echo_command_005(self) -> None:
@@ -50,7 +50,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_echo_command_006(self) -> None:
-        self.proto.lineReceived(b"echo \"\\n\"\n")
+        self.proto.lineReceived(b'echo "\\n"\n')
         self.assertEqual(self.tr.value(), b"\\n\n" + PROMPT)
 
     def test_echo_command_007(self) -> None:
@@ -78,7 +78,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_echo_command_013(self) -> None:
-        self.proto.lineReceived(b"echo \"ls\"\"ls\"")
+        self.proto.lineReceived(b'echo "ls""ls"')
         self.assertEqual(self.tr.value(), b"lsls\n" + PROMPT)
 
     def test_echo_command_014(self) -> None:
@@ -90,7 +90,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"'ls'\n" + PROMPT)
 
     def test_echo_command_016(self) -> None:
-        self.proto.lineReceived(b"echo -e \"\x6b\x61\x6d\x69\"")
+        self.proto.lineReceived(b'echo -e "\x6b\x61\x6d\x69"')
         self.assertEqual(self.tr.value(), b"kami\n" + PROMPT)
 
     def test_echo_command_017(self) -> None:
@@ -130,5 +130,14 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test_test_test_test_test\n" + PROMPT)
 
     def test_echo_command_026(self) -> None:
-        self.proto.lineReceived(b"echo \"TEST1: `echo test1`, TEST2: `echo test2`\"")
+        self.proto.lineReceived(b'echo "TEST1: `echo test1`, TEST2: `echo test2`"')
         self.assertEqual(self.tr.value(), b"TEST1: test1, TEST2: test2\n" + PROMPT)
+
+    def test_echo_command_027(self) -> None:
+        self.proto.lineReceived(b"echo $LOGNAME")
+        self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
+
+    def test_echo_command_028(self) -> None:
+        self.proto.lineReceived(b"echo ${LOGNAME}")
+        self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
+

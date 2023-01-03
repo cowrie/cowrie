@@ -1,23 +1,26 @@
 Sphinx==5.3.0
+build==0.9.0
+coverage==7.0.0
+flake8-bugbear==22.12.6
 flake8==6.0.0
 mypy-extensions==0.4.3; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy-zope==0.3.11; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy==0.981; platform_python_implementation=='CPython' and python_version>'3.8'
-pathspec==0.10.1
-pipdeptree==2.2.1
+pathspec==0.10.3
+pipdeptree==2.3.3
 pre-commit==2.20.0
 pur==7.0.0
-pyre-check==0.9.15; python_version>'3.8'
-pytype==2022.8.30; platform_python_implementation=='CPython' and python_version<'3.11'
-pyupgrade==2.37.3
+pyre-check==0.9.17; python_version>'3.8'
+pytype==2022.12.15; platform_python_implementation=='CPython' and python_version<'3.11'
+pyupgrade==3.3.1
 pyyaml==6.0
 readthedocs-sphinx-search==0.1.2
-setuptools==65.5.1
-sphinx-copybutton==0.5.0
-sphinx_rtd_theme==1.0.0
-tox==3.25.1
-twistedchecker==0.7.4
-types-python-dateutil==2.8.19; python_version>'3.8'
-types-redis==4.3.20; python_version>'3.8'
-types-requests==2.28.9; python_version>'3.8'
-yamllint==1.27.1
+ruff==0.0.189
+setuptools==65.6.3
+sphinx-copybutton==0.5.1
+sphinx_rtd_theme==1.1.1
+tox==4.0.16
+types-python-dateutil==2.8.19.5; python_version>'3.8'
+types-redis==4.3.21.6; python_version>'3.8'
+types-requests==2.28.11.6; python_version>'3.8'
+yamllint==1.28.0

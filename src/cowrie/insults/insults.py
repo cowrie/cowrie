@@ -28,7 +28,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         "honeypot", "download_limit_size", fallback=0
     )
 
-    def __init__(self, prot=None, *a, **kw):
+    def __init__(self, protocolFactory=None, *a, **kw):
         self.type: str
         self.ttylogFile: str
         self.ttylogSize: int = 0
@@ -42,9 +42,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.startTime: float
         self.stdinlogFile: str
 
-        insults.ServerProtocol.__init__(self, prot, *a, **kw)
+        insults.ServerProtocol.__init__(self, protocolFactory, *a, **kw)
 
-        if prot is protocol.HoneyPotExecProtocol:
+        if protocolFactory is protocol.HoneyPotExecProtocol:
             self.type = "e"  # Execcmd
         else:
             self.type = "i"  # Interactive

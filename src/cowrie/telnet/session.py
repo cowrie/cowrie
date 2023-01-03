@@ -110,8 +110,8 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
     def outReceived(self, data: bytes) -> None:
         self.session.write(data)
 
-    def errReceived(self, err: bytes) -> None:
-        log.msg(f"Error received: {err.decode()}")
+    def errReceived(self, data: bytes) -> None:
+        log.msg(f"Error received: {data.decode()}")
         # EXTENDED_DATA_STDERR is from ssh, no equivalent in telnet?
         # self.session.writeExtended(connection.EXTENDED_DATA_STDERR, err)
 

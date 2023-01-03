@@ -32,8 +32,8 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
 
 
 def logger():
-    dir = CowrieConfig.get("honeypot", "log_path", fallback="log")
-    logfile = CowrieDailyLogFile("cowrie.log", dir)
+    directory = CowrieConfig.get("honeypot", "log_path", fallback="var/log/cowrie")
+    logfile = CowrieDailyLogFile("cowrie.log", directory)
 
     # use Z for UTC (Zulu) time, it's shorter.
     if "TZ" in environ and environ["TZ"] == "UTC":

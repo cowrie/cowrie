@@ -54,6 +54,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     at the same time, perform the userauth service via ProxySSHAuthServer (built-in Cowrie's mechanism).
     After both sides are authenticated, forward all things from one side to another.
     """
+
     buf: bytes
     ourVersionString: bytes
     gotVersion: bool
@@ -219,7 +220,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 ),
                 format="Remote SSH version: %(version)s",
             )
-            m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
+            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
                     "Bad protocol version identification: {}".format(

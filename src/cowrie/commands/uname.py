@@ -151,7 +151,7 @@ class Command_uname(HoneyPotCommand):
 
                     # Set all opts for -a/--all, single opt otherwise:
                     if target_opt == "__ALL__":
-                        for key, value in opts.items():
+                        for key in opts.keys():
                             opts[key] = True
                     else:
                         opts[target_opt] = True

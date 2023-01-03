@@ -59,17 +59,13 @@ class Command_unzip(HoneyPotCommand):
         path = self.fs.resolve_path(filename, self.protocol.cwd)
         if not path:
             self.write(
-                "unzip:  cannot find or open {0}, {0}.zip or {0}.ZIP.\n".format(
-                    filename
-                )
+                f"unzip:  cannot find or open {filename}, {filename}.zip or {filename}.ZIP.\n"
             )
             return
         if not self.protocol.fs.exists(path):
             if not self.protocol.fs.exists(path + ".zip"):
                 self.write(
-                    "unzip:  cannot find or open {0}, {0}.zip or {0}.ZIP.\n".format(
-                        filename
-                    )
+                    f"unzip:  cannot find or open {filename}, {filename}.zip or {filename}.ZIP.\n"
                 )
                 return
             else:
@@ -85,9 +81,7 @@ class Command_unzip(HoneyPotCommand):
             )
             self.write(output)
             self.write(
-                "unzip:  cannot find or open {0}, {0}.zip or {0}.ZIP.\n".format(
-                    filename
-                )
+                f"unzip:  cannot find or open {filename}, {filename}.zip or {filename}.ZIP.\n"
             )
             return
 
@@ -102,9 +96,7 @@ class Command_unzip(HoneyPotCommand):
             )
             self.write(output)
             self.write(
-                "unzip:   cannot find zipfile directory in one of {0}, {0}.zip or {0}.ZIP.\n".format(
-                    filename
-                )
+                f"unzip:  cannot find or open {filename}, {filename}.zip or {filename}.ZIP.\n"
             )
             return
         self.write(f"Archive:  {filename}\n")

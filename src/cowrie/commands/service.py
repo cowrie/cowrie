@@ -103,7 +103,7 @@ class Command_service(HoneyPotCommand):
             self.help()
             return
 
-        for o, a in opts:
+        for o, _a in opts:
             if o in ("--help") or o in ("-h"):
                 self.help()
                 return

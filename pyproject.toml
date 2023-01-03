@@ -1,5 +1,17 @@
-[tool.mypy]
+[project]
+name = "cowrie"
+version = "2.4.0"
 
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.mypy]
 namespace_packages = true
 plugins = [ "mypy_zope:plugin" ]
 
@@ -33,5 +45,25 @@ disallow_any_expr           = false
 disallow_any_generics       = false
 disallow_untyped_calls      = false
 
+
 [tool.pylint."MESSAGES CONTROL"]
-disable = [ "R0912", "C0103", "C0114", "C0115", "C0116", "C0301" ]
+disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301"]
+
+
+[tool.isort]
+profile = "black"
+known_zope = "zope"
+known_twisted = "twisted"
+known_first_party = ["cowrie","backend_pool"]
+sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOLDER"]
+
+
+[tool.ruff]
+line-length = 88
+
+# Enable Pyflakes `E` and `F` codes by default.
+select = ["E", "F"]
+ignore = ["E501"]
+
+# Assume Python 3.10.
+target-version = "py310"

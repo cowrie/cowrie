@@ -38,14 +38,14 @@ class TelnetClient(StatefulTelnetProtocol):
         when we detect the shell prompt.
         TODO: Need to handle authentication failure
         """
-        if self.factory.prompt.strip() == br"#":
-            self.re_prompt = re.compile(br"#")
+        if self.factory.prompt.strip() == rb"#":
+            self.re_prompt = re.compile(rb"#")
         else:
             self.re_prompt = re.compile(self.factory.prompt.encode())
 
-        if re.search(br"([Ll]ogin:\s+$)", data):
+        if re.search(rb"([Ll]ogin:\s+$)", data):
             self.sendLine(self.factory.username.encode())
-        elif re.search(br"([Pp]assword:\s+$)", data):
+        elif re.search(rb"([Pp]assword:\s+$)", data):
             self.sendLine(self.factory.password.encode())
         elif self.re_prompt.search(data):
             self.setLineMode()

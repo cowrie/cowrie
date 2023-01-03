@@ -19,7 +19,8 @@ from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
 from twisted.python import failure, log
 
-from cowrie.core import auth, credentials
+from cowrie.core import auth
+from cowrie.core import credentials as conchcredentials
 from cowrie.core.config import CowrieConfig
 
 
@@ -51,7 +52,7 @@ class HoneypotNoneChecker:
     Checker that does no authentication check
     """
 
-    credentialInterfaces = (credentials.IUsername,)
+    credentialInterfaces = (conchcredentials.IUsername,)
 
     def requestAvatarId(self, credentials):
         return defer.succeed(credentials.username)
@@ -64,8 +65,8 @@ class HoneypotPasswordChecker:
     """
 
     credentialInterfaces = (
-        credentials.IUsernamePasswordIP,
-        credentials.IPluggableAuthenticationModulesIP,
+        conchcredentials.IUsernamePasswordIP,
+        conchcredentials.IPluggableAuthenticationModulesIP,
     )
 
     def requestAvatarId(self, credentials):
@@ -75,7 +76,7 @@ class HoneypotPasswordChecker:
             ):
                 return defer.succeed(credentials.username)
             return defer.fail(UnauthorizedLogin())
-        elif hasattr(credentials, "pamConversion"):
+        if hasattr(credentials, "pamConversion"):
             return self.checkPamUser(
                 credentials.username, credentials.pamConversion, credentials.ip
             )

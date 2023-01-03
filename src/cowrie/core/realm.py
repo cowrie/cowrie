@@ -50,7 +50,7 @@ class HoneyPotRealm:
             serv = shellserver.CowrieServer(self)
             user = shellavatar.CowrieUser(avatarId, serv)
             return interfaces[0], user, user.logout
-        elif ITelnetProtocol in interfaces:
+        if ITelnetProtocol in interfaces:
             serv = shellserver.CowrieServer(self)
             user = session.HoneyPotTelnetSession(avatarId, serv)
             return interfaces[0], user, user.logout
