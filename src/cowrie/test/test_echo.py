@@ -132,3 +132,12 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_echo_command_026(self) -> None:
         self.proto.lineReceived(b'echo "TEST1: `echo test1`, TEST2: `echo test2`"')
         self.assertEqual(self.tr.value(), b"TEST1: test1, TEST2: test2\n" + PROMPT)
+
+    def test_echo_command_027(self) -> None:
+        self.proto.lineReceived(b"echo $LOGNAME")
+        self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
+
+    def test_echo_command_028(self) -> None:
+        self.proto.lineReceived(b"echo ${LOGNAME}")
+        self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
+
