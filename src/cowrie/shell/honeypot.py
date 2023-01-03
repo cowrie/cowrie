@@ -81,7 +81,7 @@ class HoneyPotShell:
                 elif "$(" in tok or "`" in tok:
                     tok = self.do_command_substitution(tok)
                 elif tok.startswith("${"):
-                    envRex = re.compile(r"^\$([_a-zA-Z0-9]+)$")
+                    envRex = re.compile(r"^\${([_a-zA-Z0-9]+)}$")
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
@@ -90,7 +90,7 @@ class HoneyPotShell:
                         else:
                             continue
                 elif tok.startswith("$"):
-                    envRex = re.compile(r"^\${([_a-zA-Z0-9]+)}$")
+                    envRex = re.compile(r"^\$([_a-zA-Z0-9]+)$")
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
