@@ -16,7 +16,7 @@ from typing import Callable
 
 from twisted.python import log
 
-import cowrie.shell.fs as fs
+from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
 commands: dict[str, Callable] = {}

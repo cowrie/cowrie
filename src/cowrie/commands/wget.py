@@ -320,7 +320,7 @@ class Command_wget(HoneyPotCommand):
         """
         handle errors
         """
-        print(response)
+        log.err(response)
 
         if response.check(error.DNSLookupError) is not None:
             self.write(

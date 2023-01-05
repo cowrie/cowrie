@@ -38,6 +38,8 @@ from urllib.parse import urljoin, urlparse
 import requests
 from requests.auth import HTTPBasicAuth
 
+from twisted.python import log
+
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
@@ -68,7 +70,7 @@ class Output(cowrie.core.output.Output):
 
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.file_download":
-            print("Sending file to Cuckoo")
+            log.msg("Sending file to Cuckoo")
             p = urlparse(entry["url"]).path
             if p == "":
                 fileName = entry["shasum"]
@@ -90,7 +92,7 @@ class Output(cowrie.core.output.Output):
                 self.cuckoo_force
                 or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False
             ):
-                print("Sending file to Cuckoo")
+                log.msg("Sending file to Cuckoo")
                 self.postfile(entry["outfile"], entry["filename"])
 
     def cuckoo_check_if_dup(self, sha256: str) -> bool:
@@ -98,7 +100,7 @@ class Output(cowrie.core.output.Output):
         Check if file already was analyzed by cuckoo
         """
         try:
-            print(f"Looking for tasks for: {sha256}")
+            log.msg(f"Looking for tasks for: {sha256}")
             res = requests.get(
                 urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode()),
                 verify=False,
@@ -106,14 +108,14 @@ class Output(cowrie.core.output.Output):
                 timeout=60,
             )
             if res and res.ok:
-                print(
+                log.msg(
                     "Sample found in Sandbox, with ID: {}".format(
                         res.json().get("sample", {}).get("id", 0)
                     )
                 )
                 return True
         except Exception as e:
-            print(e)
+            log.msg(e)
 
         return False
 
@@ -130,15 +132,15 @@ class Output(cowrie.core.output.Output):
                 verify=False,
             )
             if res and res.ok:
-                print(
+                log.msg(
                     "Cuckoo Request: {}, Task created with ID: {}".format(
                         res.status_code, res.json()["task_id"]
                     )
                 )
             else:
-                print(f"Cuckoo Request failed: {res.status_code}")
+                log.msg(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
-            print(f"Cuckoo Request failed: {e}")
+            log.msg(f"Cuckoo Request failed: {e}")
 
     def posturl(self, scanUrl):
         """
@@ -153,12 +155,12 @@ class Output(cowrie.core.output.Output):
                 verify=False,
             )
             if res and res.ok:
-                print(
+                log.msg(
                     "Cuckoo Request: {}, Task created with ID: {}".format(
                         res.status_code, res.json()["task_id"]
                     )
                 )
             else:
-                print(f"Cuckoo Request failed: {res.status_code}")
+                log.msg(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
-            print(f"Cuckoo Request failed: {e}")
+            log.msg(f"Cuckoo Request failed: {e}")

@@ -130,7 +130,7 @@ class PoolService:
         try:
             self.qemu.stop_backend()
         except libvirt.libvirtError:
-            print("Not connected to QEMU")
+            print("Not connected to QEMU")  # noqa: T201
 
     def shutdown_pool(self):
         # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
@@ -141,7 +141,7 @@ class PoolService:
         try:
             self.qemu.shutdown_backend()
         except libvirt.libvirtError:
-            print("Not connected to QEMU")
+            print("Not connected to QEMU")  # noqa: T201
 
     def restart_pool(self):
         log.msg(

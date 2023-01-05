@@ -196,37 +196,33 @@ class Command_iptables(HoneyPotCommand):
 
         # Create fresh tables on start
         if not hasattr(self.protocol.user.server, "iptables"):
-            setattr(
-                self.protocol.user.server,
-                "iptables",
-                {
-                    "raw": {"PREROUTING": [], "OUTPUT": []},
-                    "filter": {
-                        "INPUT": [
-                            (
-                                "ACCEPT",
-                                "tcp",
-                                "--",
-                                "anywhere",
-                                "anywhere",
-                                "tcp",
-                                "dpt:ssh",
-                            ),
-                            ("DROP", "all", "--", "anywhere", "anywhere", "", ""),
-                        ],
-                        "FORWARD": [],
-                        "OUTPUT": [],
-                    },
-                    "mangle": {
-                        "PREROUTING": [],
-                        "INPUT": [],
-                        "FORWARD": [],
-                        "OUTPUT": [],
-                        "POSTROUTING": [],
-                    },
-                    "nat": {"PREROUTING": [], "OUTPUT": []},
+            self.protocol.user.server.iptables = {
+                "raw": {"PREROUTING": [], "OUTPUT": []},
+                "filter": {
+                    "INPUT": [
+                        (
+                            "ACCEPT",
+                            "tcp",
+                            "--",
+                            "anywhere",
+                            "anywhere",
+                            "tcp",
+                            "dpt:ssh",
+                        ),
+                        ("DROP", "all", "--", "anywhere", "anywhere", "", ""),
+                    ],
+                    "FORWARD": [],
+                    "OUTPUT": [],
                 },
-            )
+                "mangle": {
+                    "PREROUTING": [],
+                    "INPUT": [],
+                    "FORWARD": [],
+                    "OUTPUT": [],
+                    "POSTROUTING": [],
+                },
+                "nat": {"PREROUTING": [], "OUTPUT": []},
+            }
 
         # Get the tables
         self.tables: dict[
@@ -362,7 +358,6 @@ Options:
 
         if self.user_is_root():
             if len(chain) > 0:
-                print(chain)
                 # Check chain
                 if not self.is_valid_chain(chain):
                     return
@@ -390,7 +385,6 @@ Options:
 
         if self.user_is_root():
             if len(chain) > 0:
-                print(chain)
                 # Check chain
                 if not self.is_valid_chain(chain):
                     return

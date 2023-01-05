@@ -103,7 +103,7 @@ Try 'base64 --help' for more information.
                 try:
                     self.dojob(self.fs.file_contents(pname))
                 except Exception as e:
-                    print(str(e))
+                    log.err(str(e))
                     self.errorWrite(f"base64: {args[0]}: No such file or directory\n")
             else:
                 self.errorWrite("base64: read error: Is a directory\n")

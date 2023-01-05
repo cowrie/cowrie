@@ -114,7 +114,7 @@ class CowrieServiceMaker:
         """
 
         if options["help"] is True:
-            print(
+            print(  # noqa: T201
                 """Usage: twistd [options] cowrie [-h]
 Options:
   -h, --help             print this help message.
@@ -125,7 +125,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             sys.exit(1)
 
         if os.name == "posix" and os.getuid() == 0:
-            print("ERROR: You must not run cowrie as root!")
+            print("ERROR: You must not run cowrie as root!")  # noqa: T201
             sys.exit(1)
 
         tz: str = CowrieConfig.get("honeypot", "timezone", fallback="UTC")
@@ -151,7 +151,7 @@ Makes a Cowrie SSH/Telnet honeypot.
 
         # check configurations
         if not self.enableTelnet and not self.enableSSH and not self.pool_only:
-            print(
+            print(  # noqa: T201
                 "ERROR: You must at least enable SSH or Telnet, or run the backend pool"
             )
             sys.exit(1)

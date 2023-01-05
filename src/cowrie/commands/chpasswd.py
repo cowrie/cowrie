@@ -44,13 +44,13 @@ class Command_chpasswd(HoneyPotCommand):
                     if not len(p):
                         self.write(f"chpasswd: line {c}: missing new password\n")
                     else:
+                        pass
                         """
                         TODO:
                             - update shadow file
                             - update userDB.txt (???)
                             - updte auth_random.json (if in use)
                         """
-                        pass
                 c += 1
         except Exception:
             self.write(f"chpasswd: line {c}: missing new password\n")
