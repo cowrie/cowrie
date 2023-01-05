@@ -15,10 +15,10 @@ commands = {}
 
 
 class Command_tar(HoneyPotCommand):
-    def mkfullpath(self, path, f):
-        l, d = path.split("/"), []
-        while len(l):
-            d.append(l.pop(0))
+    def mkfullpath(self, path: str, f: tarfile.TarInfo) -> None:
+        components, d = path.split("/"), []
+        while len(components):
+            d.append(components.pop(0))
             p = "/".join(d)
             if p and not self.fs.exists(p):
                 self.fs.mkdir(p, 0, 0, 4096, f.mode, f.mtime)
@@ -46,15 +46,15 @@ class Command_tar(HoneyPotCommand):
             self.write("tar: Error exit delayed from previous errors\n")
             return
 
-        f = self.fs.getfile(path)
-        if not f[A_REALFILE]:
+        hpf = self.fs.getfile(path)
+        if not hpf[A_REALFILE]:
             self.write("tar: this does not look like a tar archive\n")
             self.write("tar: skipping to next header\n")
             self.write("tar: error exit delayed from previous errors\n")
             return
 
         try:
-            t = tarfile.open(f[A_REALFILE])
+            t = tarfile.open(hpf[A_REALFILE])
         except Exception:
             self.write("tar: this does not look like a tar archive\n")
             self.write("tar: skipping to next header\n")
