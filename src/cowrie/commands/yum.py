@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 from twisted.internet import defer
 from twisted.internet import reactor
@@ -40,7 +40,7 @@ class Command_yum(HoneyPotCommand):
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
 
-    packages: Dict[str, Dict[str, Any]] = {}
+    packages: dict[str, dict[str, Any]] = {}
 
     def start(self) -> None:
         if len(self.args) == 0:

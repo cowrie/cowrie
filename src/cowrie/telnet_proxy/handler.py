@@ -2,7 +2,6 @@ from __future__ import annotations
 import os
 import re
 import time
-from typing import List
 
 from twisted.python import log
 
@@ -26,7 +25,7 @@ def process_backspaces(s: bytes) -> bytes:
     return n
 
 
-def remove_all(original_string: bytes, remove_list: List[bytes]) -> bytes:
+def remove_all(original_string: bytes, remove_list: list[bytes]) -> bytes:
     """
     Removes all substrings in the list remove_list from string original_string.
     """

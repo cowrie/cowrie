@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Optional
 
 import os
 import random
@@ -35,7 +35,7 @@ def to_byte(n: int) -> str:
     return hex(n)[2:].zfill(2)
 
 
-def generate_network_table(seed: Optional[int] = None) -> Dict[str, str]:
+def generate_network_table(seed: Optional[int] = None) -> dict[str, str]:
     """
     Generates a table associating MAC and IP addressed to be distributed by our virtual network adapter via DHCP.
     """
@@ -56,7 +56,7 @@ def generate_network_table(seed: Optional[int] = None) -> Dict[str, str]:
         )
 
     # associate each MAC with a sequential IP
-    table: Dict[str, str] = {}
+    table: dict[str, str] = {}
     ip_counter = 2
     for mac in macs:
         table[mac] = "192.168.150." + str(ip_counter)

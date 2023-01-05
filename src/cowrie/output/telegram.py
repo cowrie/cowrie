@@ -1,7 +1,5 @@
 # Simple Telegram Bot logger
 
-from __future__ import absolute_import, division
-
 import treq
 from twisted.python import log
 import cowrie.core.output

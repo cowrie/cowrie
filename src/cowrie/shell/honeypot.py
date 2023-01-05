@@ -8,7 +8,7 @@ import copy
 import os
 import re
 import shlex
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -25,7 +25,7 @@ class HoneyPotShell:
         self.protocol = protocol
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
-        self.cmdpending: List[List[str]] = []
+        self.cmdpending: list[list[str]] = []
         self.environ: dict[str, str] = copy.copy(protocol.environ)
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
@@ -39,7 +39,7 @@ class HoneyPotShell:
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += "@%{}=$:+^,()`"
 
-        tokens: List[str] = []
+        tokens: list[str] = []
 
         while True:
             try:
@@ -198,14 +198,14 @@ class HoneyPotShell:
             else:
                 self.showPrompt()
 
-        def parse_arguments(arguments: List[str]) -> List[str]:
+        def parse_arguments(arguments: list[str]) -> list[str]:
             parsed_arguments = []
             for arg in arguments:
                 parsed_arguments.append(arg)
 
             return parsed_arguments
 
-        def parse_file_arguments(arguments: str) -> List[str]:
+        def parse_file_arguments(arguments: str) -> list[str]:
             """
             Look up arguments in the file system
             """
@@ -242,7 +242,7 @@ class HoneyPotShell:
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
         cmd_array = []
-        cmd: Dict[str, Any] = {}
+        cmd: dict[str, Any] = {}
         while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
             if piece.count("="):
@@ -258,7 +258,7 @@ class HoneyPotShell:
             return
 
         pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
-        multipleCmdArgs: List[List[str]] = []
+        multipleCmdArgs: list[list[str]] = []
         pipe_indices.append(len(cmdAndArgs))
         start = 0
 

@@ -35,7 +35,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlencode, urlparse
 
 from zope.interface import implementer
@@ -206,7 +206,7 @@ class Output(cowrie.core.output.Output):
             elif j["response_code"] == 1:
                 log.msg("VT: response=1: this has been scanned before")
                 # Add detailed report to json log
-                scans_summary: Dict[str, Dict[str, str]] = {}
+                scans_summary: dict[str, dict[str, str]] = {}
                 for feed, info in j["scans"].items():
                     feed_key = feed.lower()
                     scans_summary[feed_key] = {}
@@ -372,7 +372,7 @@ class Output(cowrie.core.output.Output):
             elif j["response_code"] == 1 and "scans" in j:
                 log.msg("VT: response=1: this has been scanned before")
                 # Add detailed report to json log
-                scans_summary: Dict[str, Dict[str, str]] = {}
+                scans_summary: dict[str, dict[str, str]] = {}
                 for feed, info in j["scans"].items():
                     feed_key = feed.lower()
                     scans_summary[feed_key] = {}

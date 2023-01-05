@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import getopt
 import re
-from typing import Tuple
 
 from twisted.python import log
 
@@ -61,14 +60,14 @@ class Command_wc(HoneyPotCommand):
         self.writeBytes(b"\t-h\tdisplay this help and exit\n")
         self.writeBytes(b"\t-v\toutput version information and exit\n")
 
-    def wc_get_contents(self, filename: str, optlist: list[Tuple[str, str]]) -> None:
+    def wc_get_contents(self, filename: str, optlist: list[tuple[str, str]]) -> None:
         try:
             contents = self.fs.file_contents(filename)
             self.wc_application(contents, optlist)
         except Exception:
             self.errorWrite(f"wc: {filename}: No such file or directory\n")
 
-    def wc_application(self, contents: bytes, optlist: list[Tuple[str, str]]) -> None:
+    def wc_application(self, contents: bytes, optlist: list[tuple[str, str]]) -> None:
         for opt, _arg in optlist:
             if opt == "-l":
                 contentsplit = contents.split(b"\n")
