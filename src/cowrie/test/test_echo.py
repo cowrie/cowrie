@@ -140,4 +140,3 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_echo_command_028(self) -> None:
         self.proto.lineReceived(b"echo ${LOGNAME}")
         self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
-

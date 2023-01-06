@@ -1,39 +1,43 @@
 ---
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.10.0
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
-        args: ["--py37-plus"]
+        args: ["--py38-plus"]
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.12.0
     hooks:
       - id: black
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
-    hooks:
-      - id: flake8
-
   - repo: https://github.com/asottile/yesqa
-    rev: v1.2.2
+    rev: v1.4.0
     hooks:
       - id: yesqa
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.4.0
     hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
       - id: check-merge-conflict
+      - id: check-toml
       - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
       - id: mixed-line-ending
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
 
-  - repo: https://github.com/mattseymour/pre-commit-pytype
-    rev: '2021.4.9'
-    hooks:
-      - id: pytype
   - repo: https://github.com/pycqa/isort
-    rev: 5.8.0
+    rev: 5.11.4
     hooks:
       - id: isort
         name: isort (python)
