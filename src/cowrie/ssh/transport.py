@@ -169,6 +169,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         lenPad = bs - (totalSize % bs)
         if lenPad < 4:
             lenPad = lenPad + bs
+        padding: bytes
         if messageType == transport.MSG_KEXINIT:
             padding = b"\0" * lenPad
         else:
