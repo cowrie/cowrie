@@ -3,12 +3,12 @@ name = "cowrie"
 version = "2.4.0"
 
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.isort]
+profile = "black"
+known_zope = "zope"
+known_twisted = "twisted"
+known_first_party = ["cowrie","backend_pool"]
+sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOLDER"]
 
 
 [tool.mypy]
@@ -50,12 +50,7 @@ disallow_untyped_calls      = false
 disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301"]
 
 
-[tool.isort]
-profile = "black"
-known_zope = "zope"
-known_twisted = "twisted"
-known_first_party = ["cowrie","backend_pool"]
-sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOLDER"]
+[tool.pyright]
 
 
 [tool.ruff]
@@ -67,3 +62,11 @@ ignore = ["E501", "UP007", "B019", "RUF001"]
 
 # Assume Python 3.10.
 target-version = "py310"
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
