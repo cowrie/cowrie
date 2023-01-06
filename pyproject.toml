@@ -62,8 +62,8 @@ sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOL
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "UP", "YTT", "B", "T20", "Q"]
-ignore = ["E501", "UP007"]
+select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "PLR", "RUF"]
+ignore = ["E501", "UP007", "B019"]
 
 # Assume Python 3.10.
 target-version = "py310"

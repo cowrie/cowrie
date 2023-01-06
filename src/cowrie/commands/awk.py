@@ -121,18 +121,19 @@ class Command_awk(HoneyPotCommand):
         inputlines = inp.split("\n")
         if inputlines[-1] == "":
             inputlines.pop()
+
+        def repl(m: Match) -> str:
+            try:
+                return words[int(m.group(1))]
+            except IndexError:
+                return ""
+
         for inputline in inputlines:
 
             # split by whitespace and add full line in $0 as awk does.
             # TODO: change here to use custom field separator
             words = inputline.split()
             words.insert(0, inputline)
-
-            def repl(m: Match) -> str:
-                try:
-                    return words[int(m.group(1))]
-                except IndexError:
-                    return ""
 
             for c in self.code:
                 if re.match(c["regex"], inputline):
