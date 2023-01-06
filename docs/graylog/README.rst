@@ -103,4 +103,3 @@ Add the following lines to the file::
 Restart rsyslog::
 
     $ sudo service rsyslog restart
-

@@ -11,7 +11,7 @@ Squid Prerequisites
 Squid Installation
 ==================
 
-Install Squid:: 
+Install Squid::
 
      $ sudo apt-get install squid
 

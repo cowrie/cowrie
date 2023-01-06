@@ -84,7 +84,7 @@ Example expected output::
 
 ## Confirm That Events are Logged to the MySQL Database
 
-Wait for a new login attempt to occur. Use tail like before to quickly check if any activity has 
+Wait for a new login attempt to occur. Use tail like before to quickly check if any activity has
 been recorded in the cowrie.log file.
 
 Once a login event has occurred, log back into the MySQL database and verify that the event was recorded::
@@ -105,4 +105,3 @@ Example output::
     |  4 | a551c0a74e06 |       0 | root     | 123456      | 2017-11-27 23:16:00 |
     |  5 | a551c0a74e06 |       0 | root     | dreambox    | 2017-11-27 23:16:01 |
     ...
-
