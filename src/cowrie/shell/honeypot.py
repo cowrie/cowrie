@@ -181,13 +181,17 @@ class HoneyPotShell:
 
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(
-            HoneyPotShell(self.protocol, interactive=False, redirect=True)
+            HoneyPotShell(self.protocol, interactive=True, redirect=True)
         )
         # call lineReceived method that indicates that we have some commands to parse
         self.protocol.cmdstack[-1].lineReceived(cmd)
         # remove the shell
         res = self.protocol.cmdstack.pop()
-        return res.protocol.pp.redirected_data.decode()[:-1]
+        try:
+            output = res.protocol.pp.redirected_data.decode()[:-1]
+            return output
+        except:
+            return ""
 
     def runCommand(self):
         pp = None
