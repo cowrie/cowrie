@@ -190,7 +190,7 @@ class HoneyPotShell:
         try:
             output = res.protocol.pp.redirected_data.decode()[:-1]
             return output
-        except:
+        except AttributeError:
             return ""
 
     def runCommand(self):
