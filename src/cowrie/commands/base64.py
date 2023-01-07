@@ -138,7 +138,7 @@ Try 'base64 --help' for more information.
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.dojob(line.encode('ascii'))
+        self.dojob(line.encode("ascii"))
 
     def handle_CTRL_D(self) -> None:
         self.exit()
