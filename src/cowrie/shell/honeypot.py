@@ -172,7 +172,7 @@ class HoneyPotShell:
 
         return result
 
-    def run_subshell_command(self, cmd_expr):
+    def run_subshell_command(self, cmd_expr: str) -> str:
         # extract the command from $(...) or `...` or (...) expression
         if cmd_expr.startswith("$("):
             cmd = cmd_expr[2:-1]
@@ -181,7 +181,7 @@ class HoneyPotShell:
 
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(
-            HoneyPotShell(self.protocol, interactive=True, redirect=True)
+            HoneyPotShell(self.protocol, interactive=False, redirect=True)
         )
         # call lineReceived method that indicates that we have some commands to parse
         self.protocol.cmdstack[-1].lineReceived(cmd)

@@ -140,3 +140,7 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_echo_command_028(self) -> None:
         self.proto.lineReceived(b"echo ${LOGNAME}")
         self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
+
+    def test_echo_command_029(self) -> None:
+        self.proto.lineReceived(b"echo $(e)")
+        self.assertEqual(self.tr.value(), b"-bash: e: command not found\n\n" + PROMPT)
