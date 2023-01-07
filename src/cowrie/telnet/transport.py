@@ -22,13 +22,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
     CowrieTelnetTransport
     """
-
-    def __init__(self):
-        TelnetTransport.__init__()
-        TimeoutMixin.__init__()
-        self.transportId: str = uuid.uuid4().hex[:12]
-
     def connectionMade(self):
+        self.transportId: str = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(
