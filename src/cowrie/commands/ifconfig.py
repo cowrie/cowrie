@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Tuple
-
 from random import randint, randrange
 
 from cowrie.shell.command import HoneyPotCommand
@@ -39,15 +37,15 @@ class Command_ifconfig(HoneyPotCommand):
         mb = float(bytes_eth0) / 1000 / 1000
         return f"{mb:.1f}"
 
-    def calculate_rx(self) -> Tuple[int, str]:
+    def calculate_rx(self) -> tuple[int, str]:
         rx_bytes = randrange(111111111, 555555555)
         return rx_bytes, self.convert_bytes_to_mx(rx_bytes)
 
-    def calculate_tx(self) -> Tuple[int, str]:
+    def calculate_tx(self) -> tuple[int, str]:
         rx_bytes = randrange(11111111, 55555555)
         return rx_bytes, self.convert_bytes_to_mx(rx_bytes)
 
-    def calculate_lo(self) -> Tuple[int, str]:
+    def calculate_lo(self) -> tuple[int, str]:
         lo_bytes = randrange(11111111, 55555555)
         return lo_bytes, self.convert_bytes_to_mx(lo_bytes)
 

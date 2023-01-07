@@ -115,7 +115,7 @@ class fseditCmd(cmd.Cmd):
         try:
             pickle_file = open(pickle_file_path, "rb")
         except OSError as e:
-            print("Unable to open file {}: {}".format(pickle_file_path, repr(e)))
+            print(f"Unable to open file {pickle_file_path}: {repr(e)}")
             sys.exit(1)
 
         try:
@@ -247,7 +247,7 @@ class fseditCmd(cmd.Cmd):
                 perms[0] = "d"
             elif file[A_TYPE] == T_LINK:
                 perms[0] = "l"
-                linktarget = " -> {}".format(file[A_TARGET])
+                linktarget = f" -> {file[A_TARGET]}"
 
             perms = "".join(perms)
             ctime = time.localtime(file[A_CTIME])
@@ -369,9 +369,9 @@ class fseditCmd(cmd.Cmd):
 
         # Modify file_mode when it is a file
         if file_type == T_FILE:
-            file_file_mode = int('0o100000',8)
-            permits = mode & (2**9-1)
-            mode = file_file_mode+permits
+            file_file_mode = int("0o100000", 8)
+            permits = mode & (2**9 - 1)
+            mode = file_file_mode + permits
 
         # create default file/directory size if none is specified
         if len(args) == 1:

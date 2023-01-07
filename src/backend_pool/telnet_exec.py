@@ -8,6 +8,7 @@ from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
+from twisted.python import log
 
 
 class TelnetConnectionError(Exception):
@@ -111,7 +112,7 @@ class TelnetFactory(ClientFactory):
         return transport
 
     def clientConnectionFailed(self, connector, reason):
-        print(f"Telnet connection failed. Reason: {reason}")
+        log.err(f"Telnet connection failed. Reason: {reason}")
 
 
 class TelnetClientCommand:

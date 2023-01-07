@@ -103,7 +103,7 @@ Try 'base64 --help' for more information.
                 try:
                     self.dojob(self.fs.file_contents(pname))
                 except Exception as e:
-                    print(str(e))
+                    log.err(str(e))
                     self.errorWrite(f"base64: {args[0]}: No such file or directory\n")
             else:
                 self.errorWrite("base64: read error: Is a directory\n")
@@ -130,7 +130,7 @@ Try 'base64 --help' for more information.
             except Exception:
                 self.errorWrite("base64: invalid input\n")
 
-    def lineReceived(self, line):
+    def lineReceived(self, line: str) -> None:
         log.msg(
             eventid="cowrie.session.input",
             realm="base64",
@@ -138,7 +138,7 @@ Try 'base64 --help' for more information.
             format="INPUT (%(realm)s): %(input)s",
         )
 
-        self.dojob(line)
+        self.dojob(line.encode("ascii"))
 
     def handle_CTRL_D(self) -> None:
         self.exit()

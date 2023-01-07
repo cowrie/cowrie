@@ -2,6 +2,7 @@
 # See the COPYRIGHT file for more information
 from __future__ import annotations
 import os
+import sys
 
 from twisted.python import log
 
@@ -81,7 +82,7 @@ def create_network(connection, network_table):
                 eventid="cowrie.backend_pool.network_handler",
                 format="Failed to define a virtual network",
             )
-            exit(1)
+            sys.exit(1)
 
         # set the network active
         # not needed since apparently transient networks are created as active; uncomment if persistent

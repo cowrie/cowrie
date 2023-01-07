@@ -64,7 +64,7 @@ class Output(cowrie.core.output.Output):
         This function check whether the index exists.
         """
         if not self.es.indices.exists(index=self.index):
-            #  create index
+            # create index
             self.es.indices.create(index=self.index)
 
     def check_geoip_mapping(self):

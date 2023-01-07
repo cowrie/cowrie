@@ -76,16 +76,16 @@ class Output(cowrie.core.output.Output):
     @defer.inlineCallbacks
     def upload(self, shasum, filename):
         if shasum in self.seen:
-            print(f"Already uploaded file with sha {shasum} to S3")
+            log.msg(f"Already uploaded file with sha {shasum} to S3")
             return
 
         exists = yield self._object_exists_remote(shasum)
         if exists:
-            print(f"Somebody else already uploaded file with sha {shasum} to S3")
+            log.msg(f"Somebody else already uploaded file with sha {shasum} to S3")
             self.seen.add(shasum)
             return
 
-        print(f"Uploading file with sha {shasum} ({filename}) to S3")
+        log.msg(f"Uploading file with sha {shasum} ({filename}) to S3")
         with open(filename, "rb") as fp:
             yield threads.deferToThread(
                 self.client.put_object,

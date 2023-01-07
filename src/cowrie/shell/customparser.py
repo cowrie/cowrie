@@ -26,7 +26,7 @@ class CustomParser(argparse.ArgumentParser):
         usage=None,
         description=None,
         epilog=None,
-        parents=[],
+        parents=None,
         formatter_class=argparse.HelpFormatter,
         prefix_chars="-",
         fromfile_prefix_chars=None,
@@ -35,6 +35,8 @@ class CustomParser(argparse.ArgumentParser):
         add_help=True,
     ):
         self.protocol = protocol
+        if parents is None:
+            parents=[]
         super().__init__(
             prog=prog,
             usage=usage,

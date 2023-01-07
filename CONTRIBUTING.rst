@@ -51,4 +51,3 @@ Licensing
 *********
 
 See the `LICENSE <https://github.com/cowrie/cowrie/blob/master/LICENSE.rst>`_ file for our project's licensing. We will ask you confirm the licensing of your contribution.
-

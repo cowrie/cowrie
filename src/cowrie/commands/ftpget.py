@@ -6,7 +6,7 @@ import ftplib
 import getopt
 import os
 import socket
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from twisted.python import log
 
@@ -27,7 +27,7 @@ class FTP(ftplib.FTP):
         host: str = "",
         port: int = 0,
         timeout: float = -999.0,
-        source_address: Optional[Tuple[str, int]] = None,
+        source_address: Optional[tuple[str, int]] = None,
     ) -> str:
         if host != "":
             self.host = host
@@ -47,7 +47,7 @@ class FTP(ftplib.FTP):
 
     def ntransfercmd(
         self, cmd: str, rest: Union[int, str, None] = None
-    ) -> Tuple[socket.socket, int]:
+    ) -> tuple[socket.socket, int]:
         size = 0
         if self.passiveserver:
             host, port = self.makepasv()

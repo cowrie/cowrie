@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import sys
 from datetime import datetime
 
 from twisted.python import log
@@ -10,7 +11,7 @@ from cowrie.core.config import CowrieConfig
 token = CowrieConfig.get("output_csirtg", "token", fallback="a1b2c3d4")
 if token == "a1b2c3d4":
     log.msg("output_csirtg: token not found in configuration file")
-    exit(1)
+    sys.exit(1)
 
 os.environ["CSIRTG_TOKEN"] = token
 import csirtgsdk  # noqa: E402

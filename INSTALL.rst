@@ -165,7 +165,7 @@ Change the listening port to 23 in cowrie.cfg::
 Setcap
 ======
 
-Or use setcap to give permissions to Python to listen on ports<1024:: 
+Or use setcap to give permissions to Python to listen on ports<1024::
 
     $ setcap cap_net_bind_service=+ep /usr/bin/python3
 

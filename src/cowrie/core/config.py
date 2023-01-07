@@ -66,7 +66,7 @@ def get_config_path() -> list[str]:
     if found_confs:
         return found_confs
 
-    print("Config file not found")
+    print("Config file not found")  # noqa: T201
     return []
 
 

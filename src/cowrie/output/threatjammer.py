@@ -22,7 +22,7 @@ __author__ = "Diego Parrilla Santamaria"
 __version__ = "0.1.0"
 
 import datetime
-from typing import Generator, List, Optional, Set
+from typing import Generator, Optional
 
 from treq import post
 
@@ -74,10 +74,10 @@ class HTTPClient:
 
     def report(
         self,
-        ip_set: Set[str],
+        ip_set: set[str],
         category: str,
         ttl: int = 0,
-        tags: Optional[List[str]] = None,
+        tags: Optional[list[str]] = None,
     ) -> None:
         payload: dict = {
             "addresses": list(ip_set),
@@ -155,7 +155,7 @@ class Output(output.Output):
 
         self.last_report: int = -1
         self.report_bucket: int = BUFFER_FLUSH_MAX_SIZE
-        self.ip_set: Set[str] = set()
+        self.ip_set: set[str] = set()
 
         self.track_events = []
         if self.track_login:

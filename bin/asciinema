@@ -107,7 +107,7 @@ if __name__ == "__main__":
     try:
         optlist, args = getopt.getopt(sys.argv[1:], "hco:")
     except getopt.GetoptError as error:
-        sys.stderr.write("{}: {}\n".format(sys.argv[0], error))
+        sys.stderr.write(f"{sys.argv[0]}: {error}\n")
         help()
         sys.exit(1)
 
@@ -128,4 +128,4 @@ if __name__ == "__main__":
             logfd = open(logfile, "rb")
             playlog(logfd, settings)
         except OSError as e:
-            sys.stderr.write("{}: {}\n".format(sys.argv[0], e))
+            sys.stderr.write(f"{sys.argv[0]}: {e}\n")

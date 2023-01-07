@@ -17,9 +17,9 @@ commands = {}
 
 class Command_unzip(HoneyPotCommand):
     def mkfullpath(self, path: str) -> None:
-        l, d = path.split("/"), []
-        while len(l):
-            d.append(l.pop(0))
+        components, d = path.split("/"), []
+        while len(components):
+            d.append(components.pop(0))
             dir = "/" + "/".join(d)
             if not self.fs.exists(dir):
                 self.fs.mkdir(dir, 0, 0, 4096, 33188)

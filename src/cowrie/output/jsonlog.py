@@ -31,6 +31,8 @@ from __future__ import annotations
 import json
 import os
 
+from twisted.python import log
+
 import cowrie.core.output
 import cowrie.python.logfile
 from cowrie.core.config import CowrieConfig
@@ -67,4 +69,4 @@ class Output(cowrie.core.output.Output):
             self.outfile.write("\n")
             self.outfile.flush()
         except TypeError:
-            print("jsonlog: Can't serialize: '" + repr(logentry) + "'")
+            log.err("jsonlog: Can't serialize: '" + repr(logentry) + "'")

@@ -378,7 +378,7 @@ class HoneyPotFilesystem:
         try:
             directory = self.get_path(os.path.dirname(path.strip("/")))
         except IndexError:
-            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path) from None
         directory.append(
             [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None]
         )

@@ -112,7 +112,7 @@ class CowrieSFTPDirectory:
         try:
             f = self.files.pop(0)
         except IndexError:
-            raise StopIteration
+            raise StopIteration from None
 
         if f == "..":
             directory = self.dir.strip().split("/")

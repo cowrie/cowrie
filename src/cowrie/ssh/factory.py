@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from configparser import NoOptionError
 import time
-from typing import Dict, Optional
+from typing import Optional
 
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory, keys, transport
@@ -32,8 +32,8 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     starttime: Optional[float] = None
-    privateKeys: Dict[bytes, bytes] = {}
-    publicKeys: Dict[bytes, bytes] = {}
+    privateKeys: dict[bytes, bytes] = {}
+    publicKeys: dict[bytes, bytes] = {}
     primes = None
     portal: Optional[tp.Portal] = None  # gets set by plugin
     ourVersionString: bytes = CowrieConfig.get(
