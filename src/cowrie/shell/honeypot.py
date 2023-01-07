@@ -188,7 +188,7 @@ class HoneyPotShell:
         # remove the shell
         res = self.protocol.cmdstack.pop()
         try:
-            output = res.protocol.pp.redirected_data.decode()[:-1]
+            output: str = res.protocol.pp.redirected_data.decode()[:-1]
             return output
         except AttributeError:
             return ""
