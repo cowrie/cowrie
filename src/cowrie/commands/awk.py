@@ -209,8 +209,8 @@ gawk is a pattern scanning and processing language.
 By default it reads standard input and writes standard output.
 
 Examples:
-        gawk '{ sum += $1 }; END { print sum }' file
-        gawk -F: '{ print $1 }' /etc/passwd
+        awk '{ sum += $1 }; END { print sum }' file
+        awk -F: '{ print $1 }' /etc/passwd
 """
         )
 
