@@ -1,6 +1,16 @@
 Release Notes
 #############
 
+Release 2.5.0
+*************
+
+* Datadog output module (Fred Baguelin <frederic.baguelin@datadoghq.com>)
+* General improvements to shell expansion handling
+* New version of Twisted supported
+* Python 3.11 support
+* Pypy 3.9 support
+* Add session type to Telegram output
+
 Release 2.4.0
 *************
 
