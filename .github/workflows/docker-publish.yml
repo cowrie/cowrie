@@ -57,10 +57,22 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
+      - name: Checkout
       - uses: actions/checkout@v3
 
-      - name: Build image
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          platform: amd64,arm64
+
+      - name: Build image (old one)
         run: docker build --file docker/Dockerfile --tag $IMAGE_NAME .
+
+      - name: Build (buildx?)
+        uses: docker/build-push-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
