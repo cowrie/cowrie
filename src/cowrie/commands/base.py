@@ -181,7 +181,7 @@ commands["echo"] = Command_echo
 
 class Command_printf(HoneyPotCommand):
     def call(self) -> None:
-        if not len(self.args):
+        if not self.args:
             self.write("printf: usage: printf [-v var] format [arguments]\n")
         else:
             if "-v" not in self.args and len(self.args) < 2:
@@ -232,7 +232,7 @@ commands["reset"] = Command_clear
 
 class Command_hostname(HoneyPotCommand):
     def call(self) -> None:
-        if len(self.args):
+        if self.args:
             if self.protocol.user.username == "root":
                 self.protocol.hostname = self.args[0]
             else:
@@ -249,7 +249,7 @@ class Command_ps(HoneyPotCommand):
     def call(self) -> None:
         user = self.protocol.user.username
         args = ""
-        if len(self.args):
+        if self.args:
             args = self.args[0].strip()
         (
             _user,
@@ -878,7 +878,7 @@ commands["passwd"] = Command_passwd
 
 class Command_shutdown(HoneyPotCommand):
     def start(self) -> None:
-        if len(self.args) and self.args[0].strip().count("--help"):
+        if self.args and self.args[0].strip().count("--help"):
             output = [
                 "Usage:     shutdown [-akrhHPfnc] [-t secs] time [warning message]",
                 "-a:      use /etc/shutdown.allow ",
@@ -959,7 +959,7 @@ commands["reboot"] = Command_reboot
 class Command_history(HoneyPotCommand):
     def call(self) -> None:
         try:
-            if len(self.args) and self.args[0] == "-c":
+            if self.args and self.args[0] == "-c":
                 self.protocol.historyLines = []
                 self.protocol.historyPosition = 0
                 return
@@ -990,7 +990,7 @@ class Command_yes(HoneyPotCommand):
         self.y()
 
     def y(self) -> None:
-        if len(self.args):
+        if self.args:
             self.write("{}\n".format(" ".join(self.args)))
         else:
             self.write("y\n")
@@ -1007,7 +1007,7 @@ commands["yes"] = Command_yes
 
 class Command_sh(HoneyPotCommand):
     def call(self) -> None:
-        if len(self.args) and self.args[0].strip() == "-c":
+        if self.args and self.args[0].strip() == "-c":
 
             line = " ".join(self.args[1:])
 
@@ -1087,7 +1087,7 @@ class Command_php(HoneyPotCommand):
     VERSION = "PHP 5.3.5 (cli)\n" "Copyright (c) 1997-2010 The PHP Group\n"
 
     def start(self) -> None:
-        if len(self.args):
+        if self.args:
             if self.args[0] == "-v":
                 self.write(Command_php.VERSION)
             elif self.args[0] == "-h":
