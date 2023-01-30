@@ -65,4 +65,4 @@ class CowrieSSHConnection(connection.SSHConnection):
         if wantReply:
             d.addCallback(self._cbChannelRequest, localChannel)
             d.addErrback(self._ebChannelRequest, localChannel)
-            return d
+        return d

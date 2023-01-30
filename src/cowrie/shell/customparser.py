@@ -36,7 +36,7 @@ class CustomParser(argparse.ArgumentParser):
     ):
         self.protocol = protocol
         if parents is None:
-            parents=[]
+            parents = []
         super().__init__(
             prog=prog,
             usage=usage,

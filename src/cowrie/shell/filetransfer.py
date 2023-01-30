@@ -102,7 +102,7 @@ class CowrieSFTPDirectory:
     def __init__(self, server, directory):
         self.server = server
         self.files = server.fs.listdir(directory)
-        self.files = [".", ".."] + self.files
+        self.files = [".", "..", *self.files]
         self.dir = directory
 
     def __iter__(self):

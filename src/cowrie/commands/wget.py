@@ -302,15 +302,15 @@ class Command_wget(HoneyPotCommand):
 
         self.protocol.logDispatch(
             eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(filename)s",
-            url=self.url,
+            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+            url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
         )
         log.msg(
             eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(filename)s",
-            url=self.url,
+            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+            url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
         )
@@ -320,8 +320,6 @@ class Command_wget(HoneyPotCommand):
         """
         handle errors
         """
-        log.err(response)
-
         if response.check(error.DNSLookupError) is not None:
             self.write(
                 f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
@@ -330,6 +328,7 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
+        log.err(response)
         log.msg(response.printTraceback())
         if hasattr(response, "getErrorMessage"):  # Exceptions
             errormsg = response.getErrorMessage()
