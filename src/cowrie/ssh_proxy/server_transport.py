@@ -102,7 +102,6 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             b"none", b"none", b"none", b"none"
         )
         self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-        otherVersion: bytes = b"Unknown"
 
         log.msg(
             eventid="cowrie.session.connect",
