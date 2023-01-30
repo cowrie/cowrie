@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools ~= 65.63"]
+requires = ["setuptools >= 65.63"]
 
 [project]
 name = "cowrie"
@@ -25,7 +25,6 @@ classifiers=[
         "Topic :: Security"
 ]
 
-
 dependencies = [
         "twisted==22.10.0",
         "cryptography>=0.9.1",
@@ -42,6 +41,13 @@ dependencies = [
 [project.urls]
 homepage = "https://www.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
+
+[project.scripts]
+fsctl = "bin/fsctl"
+asciinema = "bin/asciinema:main"
+cowrie = "bin/cowrie:main"
+creatfs = "bin/createfs:main"
+playlog = "bin/playlog:main"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
@@ -88,7 +94,7 @@ strict_concatenate          = true
 
 # These are too strict for us at the moment
 
-check_untyped_defs          = true
+check_untyped_defs          = false
 disallow_untyped_defs       = false
 disallow_any_decorated      = false
 disallow_any_explicit       = false
