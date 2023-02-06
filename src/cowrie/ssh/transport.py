@@ -113,18 +113,18 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if not self.gotVersion:
             if b"\n" not in self.buf:
                 return
-            otherVersion: bytes = self.buf.split(b"\n")[0].strip()
+            self.otherVersionString: bytes = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=otherVersion.decode(
+                version=self.otherVersionString.decode(
                     "utf-8", errors="backslashreplace"
                 ),
                 format="Remote SSH version: %(version)s",
             )
-            m = re.match(rb"SSH-(\d+.\d+)-(.*)", otherVersion)
+            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    f"Bad protocol version identification: {repr(otherVersion)}"
+                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
                 )
                 # OpenSSH sending the same message
                 self.transport.write(b"Invalid SSH identification string.\n")
@@ -133,7 +133,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.gotVersion = True
             remote_version = m.group(1)
             if remote_version not in self.supportedVersions:
-                self._unsupportedVersionReceived(otherVersion)
+                self._unsupportedVersionReceived(self.otherVersionString)
                 return
             i = self.buf.index(b"\n")
             self.buf = self.buf[i + 1 :]
