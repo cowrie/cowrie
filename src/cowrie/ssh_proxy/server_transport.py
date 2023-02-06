@@ -211,18 +211,18 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if not self.gotVersion:
             if b"\n" not in self.buf:
                 return
-            otherVersion = self.buf.split(b"\n")[0].strip()
+            self.otherVersionString = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=otherVersion.decode(
+                version=self.otherVersionString.decode(
                     "utf-8", errors="backslashreplace"
                 ),
                 format="Remote SSH version: %(version)s",
             )
-            m = re.match(rb"SSH-(\d+.\d+)-(.*)", otherVersion)
+            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    f"Bad protocol version identification: {repr(otherVersion)}"
+                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
                 )
                 if self.transport:
                     self.transport.write(b"Protocol mismatch.\n")
