@@ -84,17 +84,17 @@ TAG=$(shell git rev-parse --short=8 HEAD)
 docker-build: docker/Dockerfile ## Build Docker image
 	-$(DOCKER) buildx create --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
-	$(DOCKER) buildx build --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
+	$(DOCKER) buildx build -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --load .
 
 .PHONY: docker-run
 docker-run: docker-start ## Run Docker container
 
 .PHONY: docker-push
-docker-push: docker-build ## Push Docker image to Docker Hub
+docker-push: ## Push Docker image to Docker Hub
 	@echo "Pushing image to GitHub Docker Registry...\n"
-	$(DOCKER) push $(IMAGE):$(TAG)
-	$(DOCKER) tag $(IMAGE):$(TAG) $(IMAGE):latest
-	$(DOCKER) push $(IMAGE):latest
+	-$(DOCKER) buildx create --name cowrie-builder
+	$(DOCKER) buildx use cowrie-builder
+	$(DOCKER) buildx build --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
 
 .PHONY: docker-start
 docker-start: docker-create-volumes ## Start Docker container
