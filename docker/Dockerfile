@@ -39,7 +39,6 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       python3 \
       rustc \
       cargo \
-      git \
       build-essential \
       python3-virtualenv \
       libsnappy-dev && \
