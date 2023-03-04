@@ -374,14 +374,14 @@ class Command_curl(HoneyPotCommand):
 
         self.protocol.logDispatch(
             eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(filename)s",
+            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
             url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
         )
         log.msg(
             eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(filename)s",
+            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
             url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
@@ -401,7 +401,7 @@ class Command_curl(HoneyPotCommand):
         log.msg(
             eventid="cowrie.session.file_download.failed",
             format="Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url,
+            url=self.url.decode(),
         )
 
         if response.check(error.DNSLookupError) is not None:

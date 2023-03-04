@@ -48,10 +48,10 @@ class Output(cowrie.core.output.Output):
     """
     cuckoo output
     """
-
     api_user: str
     api_passwd: str
     url_base: bytes
+    cuckoo_force: int
 
     def start(self):
         """
@@ -123,7 +123,8 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to Cuckoo
         """
-        files = {"file": (fileName, open(artifact, "rb").read())}
+        with open(artifact, "rb") as art:
+            files = {"file": (fileName, art.read())}
         try:
             res = requests.post(
                 urljoin(self.url_base, b"tasks/create/file"),

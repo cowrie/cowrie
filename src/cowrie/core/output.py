@@ -58,33 +58,31 @@ from cowrie.core.config import CowrieConfig
 #  cowrie.session.file_download
 #  cowrie.session.file_upload
 
-"""
-The time is available in two formats in each event, as key 'time'
-in epoch format and in key 'timestamp' as a ISO compliant string
-in UTC.
-"""
+
+# The time is available in two formats in each event, as key 'time'
+# in epoch format and in key 'timestamp' as a ISO compliant string
+# in UTC.
 
 
-def convert(input):
+def convert(data):
     """
     This converts a nested dictionary with bytes in it to string
     """
-    if isinstance(input, str):
-        return input
-    if isinstance(input, dict):
-        return {convert(key): convert(value) for key, value in list(input.items())}
-    if isinstance(input, dict):
-        return {convert(key): convert(value) for key, value in list(input.items())}
-    elif isinstance(input, list):
-        return [convert(element) for element in input]
-    elif isinstance(input, bytes):
+    if isinstance(data, str):
+        return data
+    if isinstance(data, dict):
+        return {convert(key): convert(value) for key, value in list(data.items())}
+    if isinstance(data, dict):
+        return {convert(key): convert(value) for key, value in list(data.items())}
+    if isinstance(data, list):
+        return [convert(element) for element in data]
+    if isinstance(data, bytes):
         try:
-            string = input.decode("utf-8")
+            string = data.decode("utf-8")
         except UnicodeDecodeError:
-            string = repr(input)
+            string = repr(data)
         return string
-    else:
-        return input
+    return data
 
 
 class Output(metaclass=abc.ABCMeta):

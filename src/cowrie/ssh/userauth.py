@@ -28,8 +28,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * IP based authentication
     """
 
+    bannerSent: bool = False
     user: str
-
     _pamDeferred: defer.Deferred | None
 
     def serviceStarted(self) -> None:
@@ -43,7 +43,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             self.interfaceToMethod[
                 credentials.IPluggableAuthenticationModulesIP
             ] = b"keyboard-interactive"
-        self.bannerSent: bool = False
         self._pamDeferred: defer.Deferred | None = None
         userauth.SSHUserAuthServer.serviceStarted(self)
 
@@ -57,10 +56,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.bannerSent = True
         try:
             issuefile = CowrieConfig.get("honeypot", "contents_path") + "/etc/issue.net"
-            data = open(issuefile).read()
+            with open(issuefile, "rb") as issue:
+                data = issue.read()
         except OSError:
             return
-        if not data or not len(data.strip()):
+        if not data or not data.strip():
             return
         self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b"en"))
 
@@ -84,7 +84,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     #         return defer.fail(error.ConchError("Incorrect signature"))
     #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
 
-    def auth_none(self, packet: bytes) -> Any:
+    def auth_none(self, _packet: bytes) -> Any:
         """
         Allow every login
         """
@@ -101,7 +101,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
-    def auth_keyboard_interactive(self, packet: bytes) -> Any:
+    def auth_keyboard_interactive(self, _packet: bytes) -> Any:
         """
         Keyboard interactive authentication.  No payload.  We create a
         PluggableAuthenticationModules credential and authenticate with our
@@ -142,7 +142,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             elif kind in (3, 4):
                 return defer.fail(error.ConchError("cannot handle PAM 3 or 4 messages"))
             else:
-                return defer.fail(error.ConchError("bad PAM auth kind %i" % (kind,)))
+                return defer.fail(error.ConchError(f"bad PAM auth kind {kind}" ))
         packet = NS(b"") + NS(b"") + NS(b"")
         packet += struct.pack(">L", len(resp))
         for prompt, echo in resp:

@@ -102,7 +102,6 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             b"none", b"none", b"none", b"none"
         )
         self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-        self.otherVersionString: bytes = b"Unknown"
 
         log.msg(
             eventid="cowrie.session.connect",
@@ -223,9 +222,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    "Bad protocol version identification: {}".format(
-                        repr(self.otherVersionString)
-                    )
+                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
                 )
                 if self.transport:
                     self.transport.write(b"Protocol mismatch.\n")

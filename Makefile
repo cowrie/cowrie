@@ -73,16 +73,18 @@ REGISTRY ?= cowrie
 
 IMAGE := $(REGISTRY)/$(MODULE)
 
-IMAGENAME := cowrie/cowrie
 CONTAINERNAME := cowrie
+PLATFORM := linux/amd64,linux/arm64
 
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG=$(shell git rev-parse --short=8 HEAD)
 
+
 .PHONY: docker-build
 docker-build: docker/Dockerfile ## Build Docker image
-	#docker build -t ${IMAGENAME}:${TAG} --no-cache --build-arg TAG=${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
-	$(DOCKER) build -t ${IMAGENAME}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+	-$(DOCKER) buildx create --name cowrie-builder
+	$(DOCKER) buildx use cowrie-builder
+	$(DOCKER) buildx build --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
 
 .PHONY: docker-run
 docker-run: docker-start ## Run Docker container
@@ -103,7 +105,7 @@ docker-start: docker-create-volumes ## Start Docker container
 		   -d \
 		   --cap-drop=ALL \
 		   --read-only \
-	           --name ${CONTAINERNAME} ${IMAGENAME}:${TAG}
+	           --name ${CONTAINERNAME} ${IMAGE}:${TAG}
 
 .PHONY: docker-stop
 docker-stop: ## Stop Docker Container
@@ -115,7 +117,7 @@ docker-rm: docker-stop ## Delete Docker Container
 
 .PHONY: docker-clean
 docker-clean: docker-rm ## Clean
-	$(DOCKER) rmi ${IMAGENAME}:${TAG}
+	$(DOCKER) rmi ${IMAGE}:${TAG}
 
 .PHONY: docker-shell
 docker-shell: ## Start shell in running Docker container

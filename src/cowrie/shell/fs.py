@@ -432,9 +432,7 @@ class HoneyPotFilesystem:
             return True
         return False
 
-    """
-    Below additions for SFTP support, try to keep functions here similar to os.*
-    """
+    # Below additions for SFTP support, try to keep functions here similar to os.*
 
     def open(self, filename: str, openFlags: int, mode: int) -> Optional[int]:
         """

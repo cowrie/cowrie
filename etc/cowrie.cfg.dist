@@ -558,7 +558,7 @@ ciphers = aes128-ctr,aes192-ctr,aes256-ctr,aes256-cbc,aes192-cbc,aes128-cbc,3des
 # hmac-sha2-256
 # hmac-sha1
 # hmac-md5
-macs = hmac-sha2-512,hmac-sha2-384,hmac-sha2-56,hmac-sha1,hmac-md5
+macs = hmac-sha2-512,hmac-sha2-384,hmac-sha2-256,hmac-sha1,hmac-md5
 
 
 # Compression Method to be used.
