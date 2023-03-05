@@ -1,11 +1,12 @@
 processor	: 0
 vendor_id	: GenuineIntel
 cpu family	: 6
-model		: 23
-model name	: Intel(R) Xeon(R) CPU E5-2686 v4  @ 2.66GHz
-stepping	: 6
-cpu MHz		: 2133.304
-cache size	: 6144 KB
+model		: 79
+model name	: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+stepping	: 1
+microcode	: 0xb000040
+cpu MHz		: 2300.190
+cache size	: 46080 KB
 physical id	: 0
 siblings	: 2
 core id		: 0
@@ -14,37 +15,39 @@ apicid		: 0
 initial apicid	: 0
 fpu		: yes
 fpu_exception	: yes
-cpuid level	: 10
+cpuid level	: 13
 wp		: yes
-flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm
-bogomips	: 4270.03
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm cpuid_fault invpcid_single pti fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs itlb_multihit mmio_stale_data
+bogomips	: 4600.13
 clflush size	: 64
 cache_alignment	: 64
-address sizes	: 36 bits physical, 48 bits virtual
+address sizes	: 46 bits physical, 48 bits virtual
 power management:
 
 processor	: 1
 vendor_id	: GenuineIntel
 cpu family	: 6
-model		: 23
-model name	: Intel(R) Core(TM)2 Duo CPU     E8200  @ 2.66GHz
-stepping	: 6
-cpu MHz		: 2133.304
-cache size	: 6144 KB
+model		: 79
+model name	: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+stepping	: 1
+microcode	: 0xb000040
+cpu MHz		: 2300.190
+cache size	: 46080 KB
 physical id	: 0
 siblings	: 2
 core id		: 1
 cpu cores	: 2
-apicid		: 1
-initial apicid	: 1
+apicid		: 2
+initial apicid	: 2
 fpu		: yes
 fpu_exception	: yes
-cpuid level	: 10
+cpuid level	: 13
 wp		: yes
-flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm
-bogomips	: 4266.61
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm cpuid_fault invpcid_single pti fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs itlb_multihit mmio_stale_data
+bogomips	: 4600.13
 clflush size	: 64
 cache_alignment	: 64
-address sizes	: 36 bits physical, 48 bits virtual
+address sizes	: 46 bits physical, 48 bits virtual
 power management:
-
