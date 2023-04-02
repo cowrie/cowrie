@@ -31,7 +31,7 @@ class Command_groups(HoneyPotCommand):
                                 self.errorWrite(f"groups: invalid option -- '{err.opt}'\nTry 'groups --help' for more information.\n")
                                 return
 
-                        for o,a in opts:
+                        for o in opts:
                                 if o in ("-h", "--help"):
                                         self.write(GROUPS_HELP)
                                         return
@@ -49,7 +49,7 @@ class Command_groups(HoneyPotCommand):
 
         def output(self, file_content, username):
 
-                groups_string = bytes("", encoding='utf-8')
+                groups_string = bytes("", encoding="utf-8")
                 if not username:
                         username = self.protocol.user.username
                 else:
@@ -58,12 +58,12 @@ class Command_groups(HoneyPotCommand):
                                 return
                         else:
                                 ss = username + " : "
-                                groups_string = bytes(ss, encoding='utf-8')
+                                groups_string = bytes(ss, encoding="utf-8")
 
 
                 groups_list = []
                 lines = file_content.split(b"\n")
-                usr_string = bytes(username, encoding ='utf-8')
+                usr_string = bytes(username, encoding ="utf-8")
                 for line in lines:
                         if usr_string in line:
                                 members = line.split(b":")
@@ -79,7 +79,7 @@ class Command_groups(HoneyPotCommand):
 
         def check_valid_user(self, username):
 
-                usr_byte = bytes(username, encoding='utf-8')
+                usr_byte = bytes(username, encoding="utf-8")
                 users = self.fs.file_contents("/etc/shadow")
                 lines = users.split(b"\n")
                 for line in lines:
