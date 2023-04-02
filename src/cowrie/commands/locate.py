@@ -61,19 +61,19 @@ class Command_locate(HoneyPotCommand):
                 )
                 return
 
-            for o in opts:
-                if o in ("-h", "--help"):
+            for vars in opts:
+                if vars in ("-h", "--help"):
                     self.write(LOCATE_HELP)
                     return
-                elif o in ("-v", "--version"):
+                elif vars in ("-v", "--version"):
                     self.write(LOCATE_VERSION)
                     return
             if len(args) > 0:
                 paths_list = []
                 curdir = "/"
                 locate_list = self.find_path(args, paths_list, curdir)
-                for ll in locate_list:
-                    self.write(ll + "\n")
+                for length in locate_list:
+                    self.write(length + "\n")
                 return
 
         else:
