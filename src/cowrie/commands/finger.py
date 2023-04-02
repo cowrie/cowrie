@@ -1,7 +1,6 @@
 from __future__ import annotations
 from cowrie.shell.command import HoneyPotCommand
 import datetime
-import time
 import getopt
 
 commands = {}
