@@ -58,7 +58,7 @@ class Command_locate(HoneyPotCommand):
                                 self.errorWrite(f"locate: invalid option -- '{err.opt}'\nTry 'locate --help' for more information.\n")
                                 return
 
-                        for o,a in opts:
+                        for o in opts:
                                 if o in ("-h", "--help"):
                                         self.write(LOCATE_HELP)
                                         return
@@ -69,8 +69,8 @@ class Command_locate(HoneyPotCommand):
                                 paths_list = []
                                 curdir = "/"
                                 locate_list = self.find_path(args, paths_list, curdir)
-                                for l in locate_list:
-                                        self.write(l + "\n")
+                                for ll in locate_list:
+                                        self.write(ll + "\n")
                                 return
 
                 else:
