@@ -62,10 +62,10 @@ class Command_locate(HoneyPotCommand):
                 return
 
             for vars in opts:
-                if vars in ("-h", "--help"):
+                if vars[0] == "-h" or vars[0] == "--help":
                     self.write(LOCATE_HELP)
                     return
-                elif vars in ("-v", "--version"):
+                elif vars[0] == "-v" or vars[0] == "--version":
                     self.write(LOCATE_VERSION)
                     return
             if len(args) > 0:
