@@ -36,11 +36,11 @@ class Command_groups(HoneyPotCommand):
                 )
                 return
 
-            for o in opts:
-                if o in ("-h", "--help"):
+            for vars in opts:
+                if vars in ("-h", "--help"):
                     self.write(GROUPS_HELP)
                     return
-                elif o in ("-v", "--version"):
+                elif vars in ("-v", "--version"):
                     self.write(GROUPS_VERSION)
                     return
 
