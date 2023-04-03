@@ -51,7 +51,7 @@ class Command_groups(HoneyPotCommand):
         else:
             content = self.fs.file_contents("/etc/group")
             self.output(content, "")
-
+    def output(self, file_content, username):
         groups_string = bytes("", encoding="utf-8")
         if not username:
             username = self.protocol.user.username
