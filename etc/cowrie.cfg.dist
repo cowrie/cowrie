@@ -105,8 +105,8 @@ ttylog_path = ${honeypot:state_path}/tty
 interactive_timeout = 180
 
 # Authentication Timeout
-# The server disconnects after this time if the user has not successfully logged in.  If the value is 0,
-# there is no time limit.  The default is 120 seconds.
+# The server disconnects after this time if the user has not successfully logged in. 
+# The default is 120 seconds.
 authentication_timeout = 120
 
 # EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
