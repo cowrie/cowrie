@@ -36,4 +36,4 @@ wokkel==18.0.0
 pymisp==2.4.166
 
 # redis
-redis==4.4.0
+redis==4.5.4
