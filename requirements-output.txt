@@ -3,7 +3,7 @@ csirtgsdk==1.1.5
 geoip2
 
 # dshield
-requests==2.28.1
+requests==2.31.0
 
 # elasticsearch
 elasticsearch==8.5.3
