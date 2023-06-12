@@ -26,17 +26,17 @@ classifiers=[
 ]
 
 dependencies = [
-        "twisted==22.10.0",
-        "cryptography>=0.9.1",
-        "configparser",
-        "pyopenssl",
-        "pyparsing",
-        "incremental",
-        "packaging",
-        "appdirs>=1.4.0",
-        "python-dateutil",
-        "service_identity>=14.0.0",
+        "Twisted==22.10.0",
 ]
+#        "cryptography>=0.9.1",
+#        "configparser",
+#        "pyparsing",
+#        "incremental",
+#        "packaging",
+#        "appdirs>=1.4.0",
+#        "python-dateutil",
+#        "service_identity>=14.0.0",
+#]
 
 [project.urls]
 homepage = "https://www.cowrie.org/"
