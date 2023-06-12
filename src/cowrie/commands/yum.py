@@ -10,7 +10,8 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Optional
+from collections.abc import Callable
 
 from twisted.internet import defer
 from twisted.internet import reactor

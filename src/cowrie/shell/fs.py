@@ -206,7 +206,7 @@ class HoneyPotFilesystem:
                 names = [x[A_NAME] for x in self.get_path("/".join(cwd))]
                 matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
                 for match in matches:
-                    foo(p[1:], cwd + [match])
+                    foo(p[1:], [*cwd, match])
 
         foo(pieces, cwdpieces)
         return found

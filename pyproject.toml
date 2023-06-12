@@ -26,17 +26,17 @@ classifiers=[
 ]
 
 dependencies = [
-        "twisted==22.10.0",
-        "cryptography>=0.9.1",
-        "configparser",
-        "pyopenssl",
-        "pyparsing",
-        "incremental",
-        "packaging",
-        "appdirs>=1.4.0",
-        "python-dateutil",
-        "service_identity>=14.0.0",
+        "Twisted==22.10.0",
 ]
+#        "cryptography>=0.9.1",
+#        "configparser",
+#        "pyparsing",
+#        "incremental",
+#        "packaging",
+#        "appdirs>=1.4.0",
+#        "python-dateutil",
+#        "service_identity>=14.0.0",
+#]
 
 [project.urls]
 homepage = "https://www.cowrie.org/"
@@ -114,7 +114,7 @@ disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "PLR", "RUF"]
+select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
 ignore = ["E501", "UP007", "B019", "RUF001"]
 
 # Assume Python 3.10.

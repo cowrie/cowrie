@@ -11,7 +11,8 @@ import getopt
 import random
 import re
 import time
-from typing import Callable, Optional
+from typing import Optional
+from collections.abc import Callable
 
 from twisted.internet import error, reactor
 from twisted.python import failure, log

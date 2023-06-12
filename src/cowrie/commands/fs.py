@@ -12,7 +12,7 @@ import copy
 import getopt
 import os.path
 import re
-from typing import Callable
+from collections.abc import Callable
 
 from twisted.python import log
 
