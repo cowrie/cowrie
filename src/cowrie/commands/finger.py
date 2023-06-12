@@ -115,7 +115,7 @@ No Plan.
                     )
                     return
             # If user is NOT real inform user
-            self.write("finger: {}: no such user\n".format(args[0]))
+            self.write(f"finger: {args[0]}: no such user\n")
 
             # IF TIME ALLOWS: Seperate into multiple functions
             # IF TIME ALLOWS: Make my comments more concise and remove debuggi>

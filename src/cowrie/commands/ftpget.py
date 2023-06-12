@@ -277,7 +277,7 @@ Download a file via FTP
                     self.username, self.password, str(e)
                 )
             )
-            self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
+            self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:
                 ftp.quit()
             except socket.timeout:
@@ -295,8 +295,8 @@ Download a file via FTP
             ftp.cwd(self.remote_dir)
             ftp.retrbinary(f"RETR {self.remote_file}", self.artifactFile.write)
         except Exception as e:
-            log.msg(f"FTP retrieval failed: {str(e)}")
-            self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
+            log.msg(f"FTP retrieval failed: {e!s}")
+            self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:
                 ftp.quit()
             except socket.timeout:

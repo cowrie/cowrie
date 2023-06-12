@@ -9,7 +9,7 @@ import hashlib
 import re
 import socket
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from twisted.internet import reactor
 from twisted.python import log

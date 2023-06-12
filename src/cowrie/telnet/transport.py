@@ -38,7 +38,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             dst_ip=self.transport.getHost().host,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno=f"T{str(sessionno)}",
+            sessionno=f"T{sessionno!s}",
             protocol="telnet",
         )
         TelnetTransport.connectionMade(self)
@@ -106,7 +106,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             # Should the connection be terminated instead?
             # The telnetd package on Ubuntu (netkit-telnet) does all negotiation before sending the login prompt,
             # but does handle client-initiated negotiation at any time.
-        return None  # This Failure has been handled, no need to continue processing errbacks
 
     def _chainNegotiation(self, res, func, option):
         return func(option).addErrback(self._handleNegotiationError, func, option)
