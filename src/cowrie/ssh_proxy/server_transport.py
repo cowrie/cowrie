@@ -222,7 +222,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
+                    f"Bad protocol version identification: {self.otherVersionString!r}"
                 )
                 if self.transport:
                     self.transport.write(b"Protocol mismatch.\n")

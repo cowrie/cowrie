@@ -12,7 +12,8 @@ import re
 import shlex
 import stat
 import time
-from typing import Callable, Optional
+from typing import Optional
+from collections.abc import Callable
 
 from twisted.internet import error
 from twisted.python import failure, log
@@ -147,7 +148,7 @@ class HoneyPotCommand:
         self.exit()
 
     def call(self) -> None:
-        self.write(f"Hello World! [{repr(self.args)}]\n")
+        self.write(f"Hello World! [{self.args!r}]\n")
 
     def exit(self) -> None:
         """

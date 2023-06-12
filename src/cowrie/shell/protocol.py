@@ -230,7 +230,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         try:
             self.execcmd = execcmd.decode("utf8")
         except UnicodeDecodeError:
-            log.err(f"Unusual execcmd: {repr(execcmd)}")
+            log.err(f"Unusual execcmd: {execcmd!r}")
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 

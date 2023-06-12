@@ -33,7 +33,8 @@ import re
 import socket
 import time
 from os import environ
-from typing import Any, Pattern
+from typing import Any
+from re import Pattern
 
 from twisted.internet import reactor
 from twisted.logger import formatTime

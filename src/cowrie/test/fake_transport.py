@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers

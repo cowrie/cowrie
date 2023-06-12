@@ -30,7 +30,8 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Callable, ClassVar
+from typing import ClassVar
+from collections.abc import Callable
 
 from zope.interface import implementer, provider
 from incremental import Version

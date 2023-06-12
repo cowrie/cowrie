@@ -448,7 +448,7 @@ class HoneyPotShell:
             else:
                 prefix = ""
             first = line.decode("utf8").split(" ")[:-1]
-            newbuf = " ".join(first + [f"{basedir}{prefix}"])
+            newbuf = " ".join([*first, f"{basedir}{prefix}"])
             newbyt = newbuf.encode("utf8")
             if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")

@@ -12,7 +12,8 @@ import re
 from collections import OrderedDict
 from os import path
 from random import randint
-from typing import Any, Pattern, Union
+from typing import Any, Union
+from re import Pattern
 
 from twisted.python import log
 
