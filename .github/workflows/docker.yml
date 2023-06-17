@@ -72,6 +72,7 @@ jobs:
           docker run --rm cowrie:test
 
       - name: Build and push
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v4
         with:
           file: docker/Dockerfile
