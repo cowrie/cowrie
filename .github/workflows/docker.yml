@@ -69,7 +69,7 @@ jobs:
 
       - name: Test
         run: |
-          docker run --rm cowrie:test
+          docker run -d --rm cowrie:test
 
       - name: Build and push
         if: github.event_name != 'pull_request'
