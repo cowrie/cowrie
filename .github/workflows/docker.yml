@@ -6,6 +6,7 @@ on:  # yamllint disable-line rule:truthy
     # Publish `master` as Docker `latest` image.
     branches:
       - master
+      - integration
 
     # Publish `v1.2.3` tags as releases.
     tags:
