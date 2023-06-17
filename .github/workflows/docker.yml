@@ -7,9 +7,6 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - master
 
-    # remove this in production
-    pull_request:
-
     # Publish `v1.2.3` tags as releases.
     tags:
       - v*
@@ -38,7 +35,7 @@ jobs:
     # needs: tox
 
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    # if: github.event_name == 'push'
 
     steps:
       - name: Checkout
