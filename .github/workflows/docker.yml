@@ -47,6 +47,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -62,27 +63,20 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: false
-          tags: cowrie/cowie:latest
+          load: true
+          tags: cowrie:test
           file: docker/Dockerfile
 
-#      - name: Push image to GitHub Container Registry
-#        run: |
-#          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-#
-#          # Change all uppercase to lowercase
-#          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-#
-#          # Strip git ref prefix from version
-#          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-#
-#          # Strip "v" prefix from tag name
-#          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-#
-#          # Use Docker `latest` tag convention
-#          [ "$VERSION" == "master" ] && VERSION=latest
-#
-#          echo IMAGE_ID=$IMAGE_ID
-#          echo VERSION=$VERSION
-#
-#          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-#          docker push $IMAGE_ID:$VERSION
+      - name: Test
+        run: |
+          docker run -d --rm cowrie:test
+
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v4
+        with:
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          load: true
+          tags: cowrie/cowrie:latest
