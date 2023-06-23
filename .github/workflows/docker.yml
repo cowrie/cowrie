@@ -77,6 +77,6 @@ jobs:
         with:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: false
+          push: true
           load: true
           tags: cowrie/cowrie:latest
