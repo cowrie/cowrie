@@ -86,6 +86,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.startTime: float = time.time()
         self.setTimeout(self.auth_timeout)
 
+    def loseConnection(self):
+        """
+        Need to delete the timeout
+        """
+        self.setTimeout(None)
+        transport.SSHServerTransport.loseConnection(self)
+
     def sendKexInit(self) -> None:
         """
         Don't send key exchange prematurely
