@@ -598,8 +598,7 @@ class HoneyPotFilesystem:
     def stat(self, path: str, follow_symlinks: bool = True) -> _statobj:
         p: Optional[list[Any]]
         if path == "/":
-            # TODO: shouldn't this be a list?
-            p = []
+            p = {}
             p[A_TYPE] = T_DIR
             p[A_UID] = 0
             p[A_GID] = 0
