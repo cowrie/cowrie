@@ -46,7 +46,7 @@ class HoneyPotShell:
                 tokkie: str | None = self.lexer.get_token()
                 # log.msg("tok: %s" % (repr(tok)))
 
-                if tokkie is None:
+                if tokkie is None: # self.lexer.eof put None for mypy
                     if tokens:
                         self.cmdpending.append(tokens)
                     break
@@ -167,8 +167,8 @@ class HoneyPotShell:
                 if opening_count > closing_count and pos == len(cmd_expr) - 1:
                     if self.lexer:
                         tokkie = self.lexer.get_token()
-                        if tokkie is self.lexer.eof:
-                            cmd_expr = cmd_expr
+                        if tokkie is None: # self.lexer.eof put None for mypy
+                            break
                         else:
                             cmd_expr = cmd_expr + " " + tokkie
                 elif opening_count == closing_count:
