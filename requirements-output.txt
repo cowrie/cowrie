@@ -6,7 +6,7 @@ geoip2
 requests==2.31.0
 
 # elasticsearch
-elasticsearch==8.8.0
+elasticsearch==8.9.0
 
 # hpfeeds
 hpfeeds3==0.9.10
