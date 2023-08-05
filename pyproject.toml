@@ -71,6 +71,7 @@ sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOL
 [tool.mypy]
 namespace_packages = true
 plugins = [ "mypy_zope:plugin" ]
+disable_error_code = [ "annotation-unchecked" ]
 
 ignore_missing_imports      = true
 warn_unused_configs         = true
