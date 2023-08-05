@@ -43,13 +43,15 @@ class HoneyPotShell:
 
         while True:
             try:
-                tok: str = self.lexer.get_token()
+                tokkie: str | None = self.lexer.get_token()
                 # log.msg("tok: %s" % (repr(tok)))
 
-                if tok == self.lexer.eof:
+                if tokkie is None: # self.lexer.eof put None for mypy
                     if tokens:
                         self.cmdpending.append(tokens)
                     break
+                else:
+                    tok: str = tokkie
 
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == "&&" or tok == "||":
@@ -164,8 +166,11 @@ class HoneyPotShell:
             else:
                 if opening_count > closing_count and pos == len(cmd_expr) - 1:
                     if self.lexer:
-                        tok = self.lexer.get_token()
-                        cmd_expr = cmd_expr + " " + tok
+                        tokkie = self.lexer.get_token()
+                        if tokkie is None: # self.lexer.eof put None for mypy
+                            break
+                        else:
+                            cmd_expr = cmd_expr + " " + tokkie
                 elif opening_count == closing_count:
                     result += cmd_expr[pos]
                 pos += 1
