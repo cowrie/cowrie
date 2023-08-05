@@ -15,7 +15,7 @@ hpfeeds3==0.9.10
 mysql-connector-python==8.1.0
 
 # mongodb
-pymongo==4.3.3
+pymongo==4.4.1
 
 # rethinkdblog
 rethinkdb==2.4.9
