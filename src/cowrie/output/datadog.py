@@ -33,6 +33,7 @@ class Output(cowrie.core.output.Output):
         self.service = CowrieConfig.get(
             "output_datadog", "service", fallback="honeypot"
         )
+        self.hostname = CowrieConfig.get("output_datadog", "hostname", fallback=platform.node())
         contextFactory = WebClientContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 
@@ -48,7 +49,7 @@ class Output(cowrie.core.output.Output):
             {
                 "ddsource": self.ddsource,
                 "ddtags": self.ddtags,
-                "hostname": platform.node(),
+                "hostname": self.hostname,
                 "message": json.dumps(logentry),
                 "service": self.service,
             }
