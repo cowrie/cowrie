@@ -1,4 +1,4 @@
-Sphinx==6.2.1
+Sphinx==7.2.2
 build==0.10.0
 coverage==7.2.7
 mypy-extensions==1.0.0; platform_python_implementation=='CPython' and python_version>'3.8'
