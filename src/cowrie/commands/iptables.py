@@ -283,7 +283,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n""".format(
         """
 
         self.write(
-            """{} {}'
+            f"""{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}'
 
 Usage: iptables -[AD] chain rule-specification [options]
        iptables -I chain [rulenum] rule-specification [options]
@@ -345,9 +345,7 @@ Options:
 [!] --fragment -f      match second or further fragments only
   --modprobe=<command>     try to insert modules using this command
   --set-counters PKTS BYTES    set the counter during insert/append
-[!] --version  -V      print package version.\n""".format(
-                Command_iptables.APP_NAME, Command_iptables.APP_VERSION
-            )
+[!] --version  -V      print package version.\n"""
         )
         self.exit()
 

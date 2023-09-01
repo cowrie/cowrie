@@ -166,12 +166,10 @@ compilation terminated.\n"""
         version_short = ".".join([str(v) for v in Command_gcc.APP_VERSION[:2]])
 
         if short:
-            data = """{} (Debian {}-8) {}
+            data = f"""{Command_gcc.APP_NAME} (Debian {version}-8) {version}
 Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.""".format(
-                Command_gcc.APP_NAME, version, version
-            )
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."""
         else:
             data = """Using built-in specs.
 COLLECT_GCC=gcc

@@ -29,7 +29,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
 
     bannerSent: bool = False
-    user: str
+    user: bytes
     _pamDeferred: defer.Deferred | None
 
     def serviceStarted(self) -> None:

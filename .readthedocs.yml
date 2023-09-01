@@ -19,7 +19,7 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  
+
 # Optionally Python version and requirements required to build your docs
 python:
   install:
