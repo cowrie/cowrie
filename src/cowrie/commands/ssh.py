@@ -82,10 +82,8 @@ class Command_ssh(HoneyPotCommand):
                 self.ip = host
             else:
                 self.write(
-                    "ssh: Could not resolve hostname {}: \
-                    Name or service not known\n".format(
-                        host
-                    )
+                    f"ssh: Could not resolve hostname {host}: \
+                    Name or service not known\n"
                 )
                 self.exit()
         else:
@@ -98,10 +96,8 @@ class Command_ssh(HoneyPotCommand):
         self.user = user
 
         self.write(
-            "The authenticity of host '{} ({})' \
-            can't be established.\n".format(
-                self.host, self.ip
-            )
+            f"The authenticity of host '{self.host} ({self.ip})' \
+            can't be established.\n"
         )
         self.write(
             "RSA key fingerprint is \
@@ -112,10 +108,8 @@ class Command_ssh(HoneyPotCommand):
 
     def yesno(self, line: str) -> None:
         self.write(
-            "Warning: Permanently added '{}' (RSA) to the \
-            list of known hosts.\n".format(
-                self.host
-            )
+            f"Warning: Permanently added '{self.host}' (RSA) to the \
+            list of known hosts.\n"
         )
         self.write(f"{self.user}@{self.host}'s password: ")
         self.protocol.password_input = True
@@ -136,10 +130,8 @@ class Command_ssh(HoneyPotCommand):
             self.protocol.cwd = "/"
         self.protocol.password_input = False
         self.write(
-            "Linux {} 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 \
-            UTC 2009 i686\n".format(
-                self.protocol.hostname
-            )
+            f"Linux {self.protocol.hostname} 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 \
+            UTC 2009 i686\n"
         )
         self.write(f"Last login: {time.ctime(time.time() - 123123)} from 192.168.9.4\n")
         self.exit()

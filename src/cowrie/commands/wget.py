@@ -139,9 +139,7 @@ class Command_wget(HoneyPotCommand):
             path = os.path.dirname(self.outfile)  # type: ignore
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
-                    "wget: {}: Cannot open: No such file or directory\n".format(
-                        self.outfile
-                    )
+                    f"wget: {self.outfile}: Cannot open: No such file or directory\n"
                 )
                 self.exit()
                 return

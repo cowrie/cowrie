@@ -355,7 +355,7 @@ class HoneyPotFilesystem:
         _dir = self.get_path(_path)
         outfile: str = os.path.basename(path)
         if outfile in [x[A_NAME] for x in _dir]:
-            _dir.remove([x for x in _dir if x[A_NAME] == outfile][0])
+            _dir.remove(next(x for x in _dir if x[A_NAME] == outfile))
         _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None])
         self.newcount += 1
         return True
