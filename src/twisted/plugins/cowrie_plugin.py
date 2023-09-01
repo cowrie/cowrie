@@ -90,11 +90,13 @@ class CowrieServiceMaker:
     tapname: ClassVar[str] = "cowrie"
     description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
-    output_plugins: list[Callable] = []
+    output_plugins: list[Callable]
     topService: service.Service
 
     def __init__(self) -> None:
         self.pool_handler = None
+
+        output_plugins = []
 
         # ssh is enabled by default
         self.enableSSH: bool = CowrieConfig.getboolean("ssh", "enabled", fallback=True)
