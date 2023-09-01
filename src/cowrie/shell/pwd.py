@@ -45,7 +45,7 @@ class Passwd:
     """
 
     passwd_file = "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path"))
-    passwd: list[dict[str, Any]] = []
+    passwd: list[dict[str, Any]]
 
     def __init__(self) -> None:
         self.load()
