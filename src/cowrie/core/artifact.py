@@ -69,7 +69,10 @@ class Artifact:
     def close(self, keepEmpty: bool = False) -> Optional[tuple[str, str]]:
         size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
-            os.remove(self.fp.name)
+            try:
+                os.remove(self.fp.name)
+            except FileNotFoundError:
+                pass
             return None
 
         self.fp.seek(0)
