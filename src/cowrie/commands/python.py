@@ -110,7 +110,6 @@ class Command_python(HoneyPotCommand):
             if self.fs.exists(sourcefile) or value == "-":
                 self.exit()
             else:
-
                 self.write(
                     "python: can't open file '%s': [Errno 2] No such file or directory\n"
                     % (value)

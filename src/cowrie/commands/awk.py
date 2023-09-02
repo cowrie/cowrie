@@ -130,7 +130,6 @@ class Command_awk(HoneyPotCommand):
                 return ""
 
         for inputline in inputlines:
-
             # split by whitespace and add full line in $0 as awk does.
             # TODO: change here to use custom field separator
             words = inputline.split()

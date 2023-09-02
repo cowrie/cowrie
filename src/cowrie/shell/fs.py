@@ -104,7 +104,6 @@ class PermissionDenied(Exception):
 
 class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
-
         self.fs: list[Any]
 
         try:
@@ -258,7 +257,6 @@ class HoneyPotFilesystem:
         return False
 
     def update_realfile(self, f: Any, realfile: str) -> None:
-
         if (
             not f[A_REALFILE]
             and os.path.exists(realfile)

@@ -84,9 +84,6 @@ PACKETLAYOUT = {
 
 
 class SSH(base_protocol.BaseProtocol):
-
-
-
     def __init__(self, server):
         super().__init__()
 

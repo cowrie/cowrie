@@ -116,7 +116,6 @@ class NATService:
     def free_all(self):
         self.lock.acquire()
         try:
-
             for guest_id in self.bindings:
                 self.bindings[guest_id][1].stopListening()
                 self.bindings[guest_id][2].stopListening()

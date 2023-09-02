@@ -22,6 +22,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
     CowrieTelnetTransport
     """
+
     def connectionMade(self):
         self.transportId: str = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno

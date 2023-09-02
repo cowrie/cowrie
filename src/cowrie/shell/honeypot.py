@@ -46,7 +46,7 @@ class HoneyPotShell:
                 tokkie: str | None = self.lexer.get_token()
                 # log.msg("tok: %s" % (repr(tok)))
 
-                if tokkie is None: # self.lexer.eof put None for mypy
+                if tokkie is None:  # self.lexer.eof put None for mypy
                     if tokens:
                         self.cmdpending.append(tokens)
                     break
@@ -167,7 +167,7 @@ class HoneyPotShell:
                 if opening_count > closing_count and pos == len(cmd_expr) - 1:
                     if self.lexer:
                         tokkie = self.lexer.get_token()
-                        if tokkie is None: # self.lexer.eof put None for mypy
+                        if tokkie is None:  # self.lexer.eof put None for mypy
                             break
                         else:
                             cmd_expr = cmd_expr + " " + tokkie
@@ -291,7 +291,6 @@ class HoneyPotShell:
 
         lastpp = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
-
             cmdclass = self.protocol.getCommand(
                 cmd["command"], environ["PATH"].split(":")
             )
@@ -498,7 +497,6 @@ class StdOutStdErrEmulationProtocol:
         self.redirect = redirect  # dont send to terminal if enabled
 
     def connectionMade(self) -> None:
-
         self.input_data = b""
 
     def outReceived(self, data: bytes) -> None:
