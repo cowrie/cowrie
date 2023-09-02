@@ -68,8 +68,8 @@ class Options(usage.Options):
     """
 
     # The '-c' parameters is currently ignored
-    optParameters: list[str] = []
-    optFlags: list[list[str]] = [["help", "h", "Display this help and exit."]]
+    optParameters: ClassVar[list[str]] = []
+    optFlags: ClassVar[list[list[str]]] = [["help", "h", "Display this help and exit."]]
 
 
 @provider(ILogObserver)

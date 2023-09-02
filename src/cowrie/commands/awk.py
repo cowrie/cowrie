@@ -29,7 +29,7 @@ class Command_awk(HoneyPotCommand):
     """
 
     # code is an array of dictionaries contain the regexes to match and the code to execute
-    code: list[dict[str, str]] = []
+    code: list[dict[str, str]]
 
     def start(self) -> None:
         try:
