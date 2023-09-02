@@ -26,6 +26,7 @@ class Output(cowrie.core.output.Output):
     """
     dshield output
     """
+
     debug: bool = False
     userid: str
     batch_size: int

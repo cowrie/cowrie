@@ -87,7 +87,7 @@ class HoneypotPasswordChecker:
         return r.addCallback(self.cbCheckPamUser, username, ip)
 
     def cbCheckPamUser(self, responses, username, ip):
-        for (response, _) in responses:
+        for response, _ in responses:
             if self.checkUserPass(username, response, ip):
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())

@@ -34,13 +34,14 @@ from cowrie.core.config import CowrieConfig
 
 
 class Artifact:
-
     artifactDir: str = CowrieConfig.get("honeypot", "download_path")
 
     def __init__(self, label: str) -> None:
         self.label: str = label
 
-        self.fp = tempfile.NamedTemporaryFile(dir=self.artifactDir, delete=False)  # pylint: disable=R1732
+        self.fp = tempfile.NamedTemporaryFile(
+            dir=self.artifactDir, delete=False
+        )  # pylint: disable=R1732
         self.tempFilename = self.fp.name
         self.closed: bool = False
 

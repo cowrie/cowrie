@@ -67,14 +67,14 @@ class Output(cowrie.core.output.Output):
     agent: Any
     scan_url: bool
     scan_file: bool
-    url_cache: dict[
-        str, datetime.datetime
-    ] = {}  # url and last time succesfully submitted
+    url_cache: dict[str, datetime.datetime]  # url and last time succesfully submitted
 
     def start(self) -> None:
         """
         Start output plugin
         """
+        self.url_cache = {}
+
         self.apiKey = CowrieConfig.get("output_virustotal", "api_key")
         self.debug = CowrieConfig.getboolean(
             "output_virustotal", "debug", fallback=False
@@ -481,12 +481,12 @@ def encode_multipart_formdata(fields, files):
     """
     BOUNDARY = b"----------ThIs_Is_tHe_bouNdaRY_$"
     L = []
-    for (key, value) in fields:
+    for key, value in fields:
         L.append(b"--" + BOUNDARY)
         L.append(b'Content-Disposition: form-data; name="%s"' % key.encode())
         L.append(b"")
         L.append(value.encode())
-    for (key, filename, value) in files:
+    for key, filename, value in files:
         L.append(b"--" + BOUNDARY)
         L.append(
             b'Content-Disposition: form-data; name="%s"; filename="%s"'

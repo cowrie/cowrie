@@ -54,8 +54,8 @@ class Output(cowrie.core.output.Output):
             match = re.search(r"^\d+[dhmw]{1}$", retention_policy_duration)
             if not match:
                 log.msg(
-                        "output_influx: invalid retention policy."
-                        f"Using default '{retention_policy_duration}'.."
+                    "output_influx: invalid retention policy."
+                    f"Using default '{retention_policy_duration}'.."
                 )
                 retention_policy_duration = retention_policy_duration_default
         else:

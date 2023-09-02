@@ -170,7 +170,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.redirFiles:
             for rp in self.redirFiles:
-
                 rf = rp[0]
 
                 if rp[1]:

@@ -22,11 +22,13 @@ class Command_dd(HoneyPotCommand):
     dd command
     """
 
-    ddargs: dict[str, str] = {}
+    ddargs: dict[str, str]
 
     def start(self) -> None:
         if not self.args or self.args[0] == ">":
             return
+
+        self.ddargs = {}
 
         for arg in self.args:
             if arg.find("=") == -1:

@@ -133,7 +133,6 @@ commands["who"] = Command_who
 
 class Command_echo(HoneyPotCommand):
     def call(self) -> None:
-
         newline = True
         escape_decode = False
 
@@ -1009,7 +1008,6 @@ commands["yes"] = Command_yes
 class Command_sh(HoneyPotCommand):
     def call(self) -> None:
         if self.args and self.args[0].strip() == "-c":
-
             line = " ".join(self.args[1:])
 
             # it might be sh -c 'echo "sometext"', so don't use line.strip('\'\"')

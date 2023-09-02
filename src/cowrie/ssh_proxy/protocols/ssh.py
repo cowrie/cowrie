@@ -44,46 +44,46 @@ from cowrie.ssh_proxy.protocols import (
 )
 from cowrie.ssh_proxy.util import int_to_hex, string_to_hex
 
+PACKETLAYOUT = {
+    1: "SSH_MSG_DISCONNECT",  # ['uint32', 'reason_code'], ['string', 'reason'], ['string', 'language_tag']
+    2: "SSH_MSG_IGNORE",  # ['string', 'data']
+    3: "SSH_MSG_UNIMPLEMENTED",  # ['uint32', 'seq_no']
+    4: "SSH_MSG_DEBUG",  # ['boolean', 'always_display']
+    5: "SSH_MSG_SERVICE_REQUEST",  # ['string', 'service_name']
+    6: "SSH_MSG_SERVICE_ACCEPT",  # ['string', 'service_name']
+    20: "SSH_MSG_KEXINIT",  # ['string', 'service_name']
+    21: "SSH_MSG_NEWKEYS",
+    50: "SSH_MSG_USERAUTH_REQUEST",  # ['string', 'username'], ['string', 'service_name'], ['string', 'method_name']
+    51: "SSH_MSG_USERAUTH_FAILURE",  # ['name-list', 'authentications'], ['boolean', 'partial_success']
+    52: "SSH_MSG_USERAUTH_SUCCESS",  #
+    53: "SSH_MSG_USERAUTH_BANNER",  # ['string', 'message'], ['string', 'language_tag']
+    60: "SSH_MSG_USERAUTH_INFO_REQUEST",  # ['string', 'name'], ['string', 'instruction'],
+    # ['string', 'language_tag'], ['uint32', 'num-prompts'],
+    # ['string', 'prompt[x]'], ['boolean', 'echo[x]']
+    61: "SSH_MSG_USERAUTH_INFO_RESPONSE",  # ['uint32', 'num-responses'], ['string', 'response[x]']
+    80: "SSH_MSG_GLOBAL_REQUEST",  # ['string', 'request_name'], ['boolean', 'want_reply']  #tcpip-forward
+    81: "SSH_MSG_REQUEST_SUCCESS",
+    82: "SSH_MSG_REQUEST_FAILURE",
+    90: "SSH_MSG_CHANNEL_OPEN",  # ['string', 'channel_type'], ['uint32', 'sender_channel'],
+    # ['uint32', 'initial_window_size'], ['uint32', 'maximum_packet_size'],
+    91: "SSH_MSG_CHANNEL_OPEN_CONFIRMATION",  # ['uint32', 'recipient_channel'], ['uint32', 'sender_channel'],
+    # ['uint32', 'initial_window_size'], ['uint32', 'maximum_packet_size']
+    92: "SSH_MSG_CHANNEL_OPEN_FAILURE",  # ['uint32', 'recipient_channel'], ['uint32', 'reason_code'],
+    # ['string', 'reason'], ['string', 'language_tag']
+    93: "SSH_MSG_CHANNEL_WINDOW_ADJUST",  # ['uint32', 'recipient_channel'], ['uint32', 'additional_bytes']
+    94: "SSH_MSG_CHANNEL_DATA",  # ['uint32', 'recipient_channel'], ['string', 'data']
+    95: "SSH_MSG_CHANNEL_EXTENDED_DATA",  # ['uint32', 'recipient_channel'],
+    # ['uint32', 'data_type_code'], ['string', 'data']
+    96: "SSH_MSG_CHANNEL_EOF",  # ['uint32', 'recipient_channel']
+    97: "SSH_MSG_CHANNEL_CLOSE",  # ['uint32', 'recipient_channel']
+    98: "SSH_MSG_CHANNEL_REQUEST",  # ['uint32', 'recipient_channel'], ['string', 'request_type'],
+    # ['boolean', 'want_reply']
+    99: "SSH_MSG_CHANNEL_SUCCESS",
+    100: "SSH_MSG_CHANNEL_FAILURE",
+}
+
 
 class SSH(base_protocol.BaseProtocol):
-    packetLayout = {
-        1: "SSH_MSG_DISCONNECT",  # ['uint32', 'reason_code'], ['string', 'reason'], ['string', 'language_tag']
-        2: "SSH_MSG_IGNORE",  # ['string', 'data']
-        3: "SSH_MSG_UNIMPLEMENTED",  # ['uint32', 'seq_no']
-        4: "SSH_MSG_DEBUG",  # ['boolean', 'always_display']
-        5: "SSH_MSG_SERVICE_REQUEST",  # ['string', 'service_name']
-        6: "SSH_MSG_SERVICE_ACCEPT",  # ['string', 'service_name']
-        20: "SSH_MSG_KEXINIT",  # ['string', 'service_name']
-        21: "SSH_MSG_NEWKEYS",
-        50: "SSH_MSG_USERAUTH_REQUEST",  # ['string', 'username'], ['string', 'service_name'], ['string', 'method_name']
-        51: "SSH_MSG_USERAUTH_FAILURE",  # ['name-list', 'authentications'], ['boolean', 'partial_success']
-        52: "SSH_MSG_USERAUTH_SUCCESS",  #
-        53: "SSH_MSG_USERAUTH_BANNER",  # ['string', 'message'], ['string', 'language_tag']
-        60: "SSH_MSG_USERAUTH_INFO_REQUEST",  # ['string', 'name'], ['string', 'instruction'],
-        # ['string', 'language_tag'], ['uint32', 'num-prompts'],
-        # ['string', 'prompt[x]'], ['boolean', 'echo[x]']
-        61: "SSH_MSG_USERAUTH_INFO_RESPONSE",  # ['uint32', 'num-responses'], ['string', 'response[x]']
-        80: "SSH_MSG_GLOBAL_REQUEST",  # ['string', 'request_name'], ['boolean', 'want_reply']  #tcpip-forward
-        81: "SSH_MSG_REQUEST_SUCCESS",
-        82: "SSH_MSG_REQUEST_FAILURE",
-        90: "SSH_MSG_CHANNEL_OPEN",  # ['string', 'channel_type'], ['uint32', 'sender_channel'],
-        # ['uint32', 'initial_window_size'], ['uint32', 'maximum_packet_size'],
-        91: "SSH_MSG_CHANNEL_OPEN_CONFIRMATION",  # ['uint32', 'recipient_channel'], ['uint32', 'sender_channel'],
-        # ['uint32', 'initial_window_size'], ['uint32', 'maximum_packet_size']
-        92: "SSH_MSG_CHANNEL_OPEN_FAILURE",  # ['uint32', 'recipient_channel'], ['uint32', 'reason_code'],
-        # ['string', 'reason'], ['string', 'language_tag']
-        93: "SSH_MSG_CHANNEL_WINDOW_ADJUST",  # ['uint32', 'recipient_channel'], ['uint32', 'additional_bytes']
-        94: "SSH_MSG_CHANNEL_DATA",  # ['uint32', 'recipient_channel'], ['string', 'data']
-        95: "SSH_MSG_CHANNEL_EXTENDED_DATA",  # ['uint32', 'recipient_channel'],
-        # ['uint32', 'data_type_code'], ['string', 'data']
-        96: "SSH_MSG_CHANNEL_EOF",  # ['uint32', 'recipient_channel']
-        97: "SSH_MSG_CHANNEL_CLOSE",  # ['uint32', 'recipient_channel']
-        98: "SSH_MSG_CHANNEL_REQUEST",  # ['uint32', 'recipient_channel'], ['string', 'request_type'],
-        # ['boolean', 'want_reply']
-        99: "SSH_MSG_CHANNEL_SUCCESS",
-        100: "SSH_MSG_CHANNEL_FAILURE",
-    }
-
     def __init__(self, server):
         super().__init__()
 
@@ -106,8 +106,8 @@ class SSH(base_protocol.BaseProtocol):
         self.packetSize = len(payload)
         self.sendOn = True
 
-        if message_num in self.packetLayout:
-            packet = self.packetLayout[message_num]
+        if message_num in PACKETLAYOUT:
+            packet = PACKETLAYOUT[message_num]
         else:
             packet = f"UNKNOWN_{message_num}"
 
@@ -364,7 +364,7 @@ class SSH(base_protocol.BaseProtocol):
                 self.server.sendPacket(message_num, payload)
 
     def send_back(self, parent, message_num, payload):
-        packet = self.packetLayout[message_num]
+        packet = PACKETLAYOUT[message_num]
 
         if parent == "[SERVER]":
             direction = "PROXY -> FRONTEND"

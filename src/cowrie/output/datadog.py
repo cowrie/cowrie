@@ -33,7 +33,9 @@ class Output(cowrie.core.output.Output):
         self.service = CowrieConfig.get(
             "output_datadog", "service", fallback="honeypot"
         )
-        self.hostname = CowrieConfig.get("output_datadog", "hostname", fallback=platform.node())
+        self.hostname = CowrieConfig.get(
+            "output_datadog", "hostname", fallback=platform.node()
+        )
         contextFactory = WebClientContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 

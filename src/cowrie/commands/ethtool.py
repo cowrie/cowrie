@@ -30,7 +30,6 @@ For more information run ethtool -h\n"""
         )
 
     def do_ethtool_lo(self) -> None:
-
         self.write(
             """Settings for lo:
             Link detected: yes\n"""

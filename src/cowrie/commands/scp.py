@@ -161,11 +161,9 @@ class Command_scp(HoneyPotCommand):
             pos += 1
 
             if re.match(rb"^C0[\d]{3} [\d]+ [^\s]+$", header):
-
                 r = re.search(rb"C(0[\d]{3}) ([\d]+) ([^\s]+)", header)
 
                 if r and r.group(1) and r.group(2) and r.group(3):
-
                     dend = pos + int(r.group(2))
 
                     if dend > len(data):

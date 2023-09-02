@@ -51,7 +51,6 @@ or available locally via: info '(coreutils) uniq invocation'
 
 
 class Command_uniq(HoneyPotCommand):
-
     last_line = None
 
     def start(self) -> None:

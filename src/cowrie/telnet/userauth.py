@@ -31,7 +31,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
     loginPrompt = b"login: "
     passwordPrompt = b"Password: "
-    windowSize = [40, 80]
+    windowSize: list[int]
 
     def connectionMade(self):
         # self.transport.negotiationMap[NAWS] = self.telnet_NAWS
@@ -41,6 +41,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         # I need to doubly escape here since my underlying
         # CowrieTelnetTransport hack would remove it and leave just \n
+        self.windowSize = [40, 80]
         self.transport.write(self.factory.banner.replace(b"\n", b"\r\r\n"))
         self.transport.write(self.loginPrompt)
 
