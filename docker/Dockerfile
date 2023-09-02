@@ -5,7 +5,7 @@
 ARG ARCH=
 ARG BUILD_DATE
 ARG TAG
-FROM ${ARCH}debian:bullseye-slim as builder
+FROM ${ARCH}debian:bookworm-slim as builder
 
 WORKDIR /
 
@@ -62,8 +62,8 @@ RUN python3 -m venv cowrie-env && \
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 
-FROM gcr.io/distroless/python3-debian11 AS runtime
-#FROM gcr.io/distroless/python3-debian11:debug AS runtime
+FROM gcr.io/distroless/python3-debian12 AS runtime
+#FROM gcr.io/distroless/python3-debian12:debug AS runtime
 
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
@@ -78,7 +78,7 @@ LABEL org.opencontainers.image.ref.name=${TAG}
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
-LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian11"
+LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12"
 
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
