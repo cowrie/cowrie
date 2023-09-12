@@ -358,7 +358,7 @@ class Reporter:
             "ip": ip,
             "categories": "18,22",
             "comment": "Cowrie Honeypot: Unauthorised SSH/Telnet login attempt "
-            'with user "{}" at {}'.format(uname, t),
+            f'with user "{uname}" at {t}',
         }
 
         self.http_request(params)

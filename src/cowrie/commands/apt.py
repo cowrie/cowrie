@@ -34,7 +34,7 @@ class Command_aptget(HoneyPotCommand):
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
 
-    packages: dict[str, dict[str, Any]] = {}
+    packages: dict[str, dict[str, Any]]
 
     def start(self) -> None:
         if len(self.args) == 0:
@@ -47,6 +47,7 @@ class Command_aptget(HoneyPotCommand):
             self.do_moo()
         else:
             self.do_locked()
+        self.packages = {}
 
     def sleep(self, time: float, time2: Optional[float] = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()

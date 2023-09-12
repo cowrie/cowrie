@@ -90,7 +90,6 @@ usage: finger [-lmps] [login ...]\n"""
                 return
         # If args given not any predefined, assume is username
         if len(args) > 0:
-
             for i in range(len(user_data)):
                 # Run if check to check if user is real
                 if args[0] == user_data[i][0]:

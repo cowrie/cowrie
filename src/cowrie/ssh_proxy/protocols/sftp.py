@@ -33,6 +33,43 @@ from twisted.python import log
 from cowrie.ssh_proxy.protocols import base_protocol
 
 
+PACKETLAYOUT = {
+    1: "SSH_FXP_INIT",
+    # ['uint32', 'version'], [['string', 'extension_name'], ['string', 'extension_data']]]
+    2: "SSH_FXP_VERSION",
+    # [['uint32', 'version'], [['string', 'extension_name'], ['string', 'extension_data']]]
+    3: "SSH_FXP_OPEN",
+    # [['uint32', 'id'], ['string', 'filename'], ['uint32', 'pflags'], ['ATTRS', 'attrs']]
+    4: "SSH_FXP_CLOSE",  # [['uint32', 'id'], ['string', 'handle']]
+    5: "SSH_FXP_READ",  # [['uint32', 'id'], ['string', 'handle'], ['uint64', 'offset'], ['uint32', 'len']]
+    6: "SSH_FXP_WRITE",
+    # [['uint32', 'id'], ['string', 'handle'], ['uint64', 'offset'], ['string', 'data']]
+    7: "SSH_FXP_LSTAT",  # [['uint32', 'id'], ['string', 'path']]
+    8: "SSH_FXP_FSTAT",  # [['uint32', 'id'], ['string', 'handle']]
+    9: "SSH_FXP_SETSTAT",  # [['uint32', 'id'], ['string', 'path'], ['ATTRS', 'attrs']]
+    10: "SSH_FXP_FSETSTAT",  # [['uint32', 'id'], ['string', 'handle'], ['ATTRS', 'attrs']]
+    11: "SSH_FXP_OPENDIR",  # [['uint32', 'id'], ['string', 'path']]
+    12: "SSH_FXP_READDIR",  # [['uint32', 'id'], ['string', 'handle']]
+    13: "SSH_FXP_REMOVE",  # [['uint32', 'id'], ['string', 'filename']]
+    14: "SSH_FXP_MKDIR",  # [['uint32', 'id'], ['string', 'path'], ['ATTRS', 'attrs']]
+    15: "SSH_FXP_RMDIR",  # [['uint32', 'id'], ['string', 'path']]
+    16: "SSH_FXP_REALPATH",  # [['uint32', 'id'], ['string', 'path']]
+    17: "SSH_FXP_STAT",  # [['uint32', 'id'], ['string', 'path']]
+    18: "SSH_FXP_RENAME",  # [['uint32', 'id'], ['string', 'oldpath'], ['string', 'newpath']]
+    19: "SSH_FXP_READLINK",  # [['uint32', 'id'], ['string', 'path']]
+    20: "SSH_FXP_SYMLINK",  # [['uint32', 'id'], ['string', 'linkpath'], ['string', 'targetpath']]
+    101: "SSH_FXP_STATUS",
+    # [['uint32', 'id'], ['uint32', 'error_code'], ['string', 'error_message'], ['string', 'language']]
+    102: "SSH_FXP_HANDLE",  # [['uint32', 'id'], ['string', 'handle']]
+    103: "SSH_FXP_DATA",  # [['uint32', 'id'], ['string', 'data']]
+    104: "SSH_FXP_NAME",
+    # [['uint32', 'id'], ['uint32', 'count'], [['string', 'filename'], ['string', 'longname'], ['ATTRS', 'attrs']]]
+    105: "SSH_FXP_ATTRS",  # [['uint32', 'id'], ['ATTRS', 'attrs']]
+    200: "SSH_FXP_EXTENDED",  # []
+    201: "SSH_FXP_EXTENDED_REPLY",  # []
+}
+
+
 class SFTP(base_protocol.BaseProtocol):
     prevID: int = 0
     ID: int = 0
@@ -42,42 +79,6 @@ class SFTP(base_protocol.BaseProtocol):
     payloadSize: int = 0
     payloadOffset: int = 0
     theFile: bytes = b""
-
-    packetLayout = {
-        1: "SSH_FXP_INIT",
-        # ['uint32', 'version'], [['string', 'extension_name'], ['string', 'extension_data']]]
-        2: "SSH_FXP_VERSION",
-        # [['uint32', 'version'], [['string', 'extension_name'], ['string', 'extension_data']]]
-        3: "SSH_FXP_OPEN",
-        # [['uint32', 'id'], ['string', 'filename'], ['uint32', 'pflags'], ['ATTRS', 'attrs']]
-        4: "SSH_FXP_CLOSE",  # [['uint32', 'id'], ['string', 'handle']]
-        5: "SSH_FXP_READ",  # [['uint32', 'id'], ['string', 'handle'], ['uint64', 'offset'], ['uint32', 'len']]
-        6: "SSH_FXP_WRITE",
-        # [['uint32', 'id'], ['string', 'handle'], ['uint64', 'offset'], ['string', 'data']]
-        7: "SSH_FXP_LSTAT",  # [['uint32', 'id'], ['string', 'path']]
-        8: "SSH_FXP_FSTAT",  # [['uint32', 'id'], ['string', 'handle']]
-        9: "SSH_FXP_SETSTAT",  # [['uint32', 'id'], ['string', 'path'], ['ATTRS', 'attrs']]
-        10: "SSH_FXP_FSETSTAT",  # [['uint32', 'id'], ['string', 'handle'], ['ATTRS', 'attrs']]
-        11: "SSH_FXP_OPENDIR",  # [['uint32', 'id'], ['string', 'path']]
-        12: "SSH_FXP_READDIR",  # [['uint32', 'id'], ['string', 'handle']]
-        13: "SSH_FXP_REMOVE",  # [['uint32', 'id'], ['string', 'filename']]
-        14: "SSH_FXP_MKDIR",  # [['uint32', 'id'], ['string', 'path'], ['ATTRS', 'attrs']]
-        15: "SSH_FXP_RMDIR",  # [['uint32', 'id'], ['string', 'path']]
-        16: "SSH_FXP_REALPATH",  # [['uint32', 'id'], ['string', 'path']]
-        17: "SSH_FXP_STAT",  # [['uint32', 'id'], ['string', 'path']]
-        18: "SSH_FXP_RENAME",  # [['uint32', 'id'], ['string', 'oldpath'], ['string', 'newpath']]
-        19: "SSH_FXP_READLINK",  # [['uint32', 'id'], ['string', 'path']]
-        20: "SSH_FXP_SYMLINK",  # [['uint32', 'id'], ['string', 'linkpath'], ['string', 'targetpath']]
-        101: "SSH_FXP_STATUS",
-        # [['uint32', 'id'], ['uint32', 'error_code'], ['string', 'error_message'], ['string', 'language']]
-        102: "SSH_FXP_HANDLE",  # [['uint32', 'id'], ['string', 'handle']]
-        103: "SSH_FXP_DATA",  # [['uint32', 'id'], ['string', 'data']]
-        104: "SSH_FXP_NAME",
-        # [['uint32', 'id'], ['uint32', 'count'], [['string', 'filename'], ['string', 'longname'], ['ATTRS', 'attrs']]]
-        105: "SSH_FXP_ATTRS",  # [['uint32', 'id'], ['ATTRS', 'attrs']]
-        200: "SSH_FXP_EXTENDED",  # []
-        201: "SSH_FXP_EXTENDED_REPLY",  # []
-    }
 
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)
@@ -128,7 +129,7 @@ class SFTP(base_protocol.BaseProtocol):
         self.command: bytes
 
         sftp_num: int = self.extract_int(1)
-        packet: str = self.packetLayout[sftp_num]
+        packet: str = PACKETLAYOUT[sftp_num]
 
         self.prevID: int = self.ID
         self.ID: int = self.extract_int(4)

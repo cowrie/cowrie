@@ -16,7 +16,6 @@ RETHINK_DB_SEGMENT = "output_rethinkdblog"
 
 
 class Output(cowrie.core.output.Output):
-
     # noinspection PyAttributeOutsideInit
     def start(self):
         self.host = CowrieConfig.get(RETHINK_DB_SEGMENT, "host")

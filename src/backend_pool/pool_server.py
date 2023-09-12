@@ -92,9 +92,7 @@ class PoolServer(Protocol):
                         guest_id, guest_ip, ssh_port, telnet_port
                     )
 
-                    fmt = "!cIIH{}sHHH{}s".format(
-                        len(self.nat_public_ip), len(guest_snapshot)
-                    )
+                    fmt = f"!cIIH{len(self.nat_public_ip)}sHHH{len(guest_snapshot)}s"
                     response = struct.pack(
                         fmt,
                         b"r",

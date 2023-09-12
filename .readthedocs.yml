@@ -15,9 +15,13 @@ formats:
 sphinx:
   configuration: docs/conf.py
 
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.11"
+
 # Optionally Python version and requirements required to build your docs
 python:
-  version: 3.8
   install:
     - requirements: docs/requirements.txt
     - method: pip

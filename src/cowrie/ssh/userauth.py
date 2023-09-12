@@ -29,7 +29,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
 
     bannerSent: bool = False
-    user: str
+    user: bytes
     _pamDeferred: defer.Deferred | None
 
     def serviceStarted(self) -> None:
@@ -142,7 +142,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             elif kind in (3, 4):
                 return defer.fail(error.ConchError("cannot handle PAM 3 or 4 messages"))
             else:
-                return defer.fail(error.ConchError(f"bad PAM auth kind {kind}" ))
+                return defer.fail(error.ConchError(f"bad PAM auth kind {kind}"))
         packet = NS(b"") + NS(b"") + NS(b"")
         packet += struct.pack(">L", len(resp))
         for prompt, echo in resp:

@@ -29,7 +29,6 @@ def get_string(data: bytes) -> tuple[int, bytes]:
 
 
 class BackendSSHFactory(protocol.ClientFactory):
-
     server: Any
 
     def buildProtocol(self, addr):

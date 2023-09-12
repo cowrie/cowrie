@@ -68,8 +68,8 @@ class Options(usage.Options):
     """
 
     # The '-c' parameters is currently ignored
-    optParameters: list[str] = []
-    optFlags: list[list[str]] = [["help", "h", "Display this help and exit."]]
+    optParameters: ClassVar[list[str]] = []
+    optFlags: ClassVar[list[list[str]]] = [["help", "h", "Display this help and exit."]]
 
 
 @provider(ILogObserver)
@@ -90,11 +90,13 @@ class CowrieServiceMaker:
     tapname: ClassVar[str] = "cowrie"
     description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
-    output_plugins: list[Callable] = []
+    output_plugins: list[Callable]
     topService: service.Service
 
     def __init__(self) -> None:
         self.pool_handler = None
+
+        self.output_plugins = []
 
         # ssh is enabled by default
         self.enableSSH: bool = CowrieConfig.getboolean("ssh", "enabled", fallback=True)

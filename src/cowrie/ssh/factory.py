@@ -32,8 +32,8 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     starttime: Optional[float] = None
-    privateKeys: dict[bytes, bytes] = {}
-    publicKeys: dict[bytes, bytes] = {}
+    privateKeys: dict[bytes, bytes]
+    publicKeys: dict[bytes, bytes]
     primes = None
     portal: Optional[tp.Portal] = None  # gets set by plugin
     ourVersionString: bytes = CowrieConfig.get(
@@ -43,6 +43,8 @@ class CowrieSSHFactory(factory.SSHFactory):
     def __init__(self, backend, pool_handler):
         self.pool_handler = pool_handler
         self.backend: str = backend
+        self.privateKeys = {}
+        self.publicKeys = {}
         self.services = {
             b"ssh-userauth": ProxySSHAuthServer
             if self.backend == "proxy"

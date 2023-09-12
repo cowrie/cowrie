@@ -16,7 +16,7 @@ class Output(cowrie.core.output.Output):
     Output plugin used for reverse DNS lookup
     """
 
-    timeout: list[int] = [3]
+    timeout: list[int]
 
     def start(self):
         """

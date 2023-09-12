@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
@@ -78,5 +78,5 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          load: true
+          load: false
           tags: cowrie/cowrie:latest

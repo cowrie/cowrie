@@ -8,6 +8,8 @@ from collections.abc import Callable
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
 
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
+
 
 class Container:
     """This class is placeholder for creating a fake interface.
@@ -23,7 +25,7 @@ class Container:
     sessionno = 1
     starttime = 0
     session: Container | None
-    sessions: dict[int, str] = {}
+    sessions: ClassVar[dict[int, str]] = {}
     conn: Container | None
     transport: Container | None
     factory: Container | None
@@ -44,11 +46,10 @@ class FakeTransport(proto_helpers.StringTransport):
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
-    redirFiles: set[list[str]] = set()
+    redirFiles: ClassVar[set[list[str]]] = set()
     width = 80
     height = 24
     void = object()
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 
     for keyID in (
         "UP_ARROW",
@@ -79,7 +80,7 @@ class FakeTransport(proto_helpers.StringTransport):
     TAB = "\x09"
     BACKSPACE = "\x08"
 
-    modes: dict[str, Callable] = {}
+    modes: ClassVar[dict[str, Callable]] = {}
 
     # '\x01':     self.handle_HOME,	# CTRL-A
     # '\x02':     self.handle_LEFT,	# CTRL-B
@@ -100,17 +101,6 @@ class FakeTransport(proto_helpers.StringTransport):
             self.modes[m] = True
 
     aborting = False
-    transport = Container()
-    transport.session = Container()
-    transport.session.conn = Container()
-    transport.session.conn.transport = Container()
-    transport.session.conn.transport.transport = Container()
-    transport.session.conn.transport.transport.sessionno = 1
-    transport.session.conn.transport.factory = Container()
-    transport.session.conn.transport.factory.sessions = {}
-    transport.session.conn.transport.factory.starttime = 0
-    factory = Container()
-    session: dict[str, str] = {}
 
     def abortConnection(self):
         self.aborting = True
@@ -150,8 +140,8 @@ class FakeTransport(proto_helpers.StringTransport):
             "underline": False,
             "blink": False,
             "reverseVideo": False,
-            "foreground": self.WHITE,
-            "background": self.BLACK,
+            "foreground": WHITE,
+            "background": BLACK,
         }
         self.charsets = {
             insults.G0: insults.CS_US,
@@ -159,6 +149,20 @@ class FakeTransport(proto_helpers.StringTransport):
             insults.G2: insults.CS_ALTERNATE,
             insults.G3: insults.CS_ALTERNATE_SPECIAL,
         }
+
+    def clear(self):
+        proto_helpers.StringTransport.clear(self)
+        self.transport = Container()
+        self.transport.session = Container()
+        self.transport.session.conn = Container()
+        self.transport.session.conn.transport = Container()
+        self.transport.session.conn.transport.transport = Container()
+        self.transport.session.conn.transport.transport.sessionno = 1
+        self.transport.session.conn.transport.factory = Container()
+        self.transport.session.conn.transport.factory.sessions = {}
+        self.transport.session.conn.transport.factory.starttime = 0
+        self.factory = Container()
+        self.session: dict[str, str] = {}
         self.eraseDisplay()
 
     def eraseDisplay(self):
