@@ -43,10 +43,10 @@ homepage = "https://www.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
 
 [project.scripts]
-fsctl = "src/cowrie/scripts/fsctl:run"
-asciinema = "src/cowrie/scripts/asciinema:run"
-creatfs = "src/cowrie/scripts/createfs:run"
-playlog = "src/cowrie/scripts/playlog:run"
+fsctl = "cowrie.scripts.fsctl:run"
+asciinema = "cowrie.scripts.asciinema:run"
+creatfs = "cowrie.scripts.createfs:run"
+playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]

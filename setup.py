@@ -2,12 +2,6 @@
 
 from setuptools import setup
 
-try:
-    import twisted
-except ImportError:
-    raise SystemExit("twisted not found.  Make sure you "
-                     "have installed the Twisted core package.")
-
 setup(
     packages=["cowrie", "twisted"],
     include_package_data=True,
