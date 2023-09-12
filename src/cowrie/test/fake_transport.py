@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import ClassVar
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
