@@ -44,7 +44,7 @@ jobs:
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
