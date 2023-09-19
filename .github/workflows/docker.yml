@@ -60,7 +60,7 @@ jobs:
 
       #  $(DOCKER) buildx build --platform ${PLATFORM} -t ${IMAGE}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
       - name: Build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           push: false
           load: true
@@ -73,7 +73,7 @@ jobs:
 
       - name: Build and push
         if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
