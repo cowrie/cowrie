@@ -58,7 +58,6 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
 
-      #  $(DOCKER) buildx build --platform ${PLATFORM} -t ${IMAGE}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
       - name: Build
         uses: docker/build-push-action@v5
         with:
@@ -79,4 +78,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           load: false
+          sbom: true
+          provenance: true
           tags: cowrie/cowrie:latest
