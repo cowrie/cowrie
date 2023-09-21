@@ -26,8 +26,8 @@ RUN groupadd -r ${COWRIE_GROUP} && \
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
-    apt-get update && \
-    apt-get install -y \
+    apt-get -q update && \
+    apt-get -q install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
       python3-pip \
@@ -39,7 +39,6 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       python3 \
       rustc \
       cargo \
-      git \
       build-essential \
       python3-virtualenv \
       libsnappy-dev && \
