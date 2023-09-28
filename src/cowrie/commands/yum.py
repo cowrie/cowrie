@@ -10,7 +10,8 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Optional
+from collections.abc import Callable
 
 from twisted.internet import defer
 from twisted.internet import reactor
@@ -40,7 +41,7 @@ class Command_yum(HoneyPotCommand):
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
 
-    packages: dict[str, dict[str, Any]] = {}
+    packages: dict[str, dict[str, Any]]
 
     def start(self) -> None:
         if len(self.args) == 0:
@@ -51,6 +52,7 @@ class Command_yum(HoneyPotCommand):
             self.do_install()
         else:
             self.do_locked()
+        self.packages = {}
 
     def sleep(self, time: float, time2: Optional[float] = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()

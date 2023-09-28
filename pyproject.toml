@@ -26,28 +26,27 @@ classifiers=[
 ]
 
 dependencies = [
-        "twisted==22.10.0",
-        "cryptography>=0.9.1",
-        "configparser",
-        "pyopenssl",
-        "pyparsing",
-        "incremental",
-        "packaging",
-        "appdirs>=1.4.0",
-        "python-dateutil",
-        "service_identity>=14.0.0",
+        "Twisted==23.8.0",
 ]
+#        "cryptography>=0.9.1",
+#        "configparser",
+#        "pyparsing",
+#        "incremental",
+#        "packaging",
+#        "appdirs>=1.4.0",
+#        "python-dateutil",
+#        "service_identity>=14.0.0",
+#]
 
 [project.urls]
 homepage = "https://www.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
 
 [project.scripts]
-fsctl = "bin/fsctl"
-asciinema = "bin/asciinema:main"
-cowrie = "bin/cowrie:main"
-creatfs = "bin/createfs:main"
-playlog = "bin/playlog:main"
+fsctl = "cowrie.scripts.fsctl:run"
+asciinema = "cowrie.scripts.asciinema:run"
+creatfs = "cowrie.scripts.createfs:run"
+playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
@@ -71,6 +70,7 @@ sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOL
 [tool.mypy]
 namespace_packages = true
 plugins = [ "mypy_zope:plugin" ]
+disable_error_code = [ "annotation-unchecked" ]
 
 ignore_missing_imports      = true
 warn_unused_configs         = true
@@ -104,7 +104,8 @@ disallow_untyped_calls      = false
 
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301"]
+disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
+ignored-classes = ["twisted.internet.reactor"]
 
 
 [tool.pyright]
@@ -114,11 +115,16 @@ disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "PLR", "RUF"]
+select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
 ignore = ["E501", "UP007", "B019", "RUF001"]
 
 # Assume Python 3.10.
 target-version = "py310"
+
+
+# Ignore `T201` (print) in all scripts
+[tool.ruff.per-file-ignores]
+"src/cowrie/scripts/*" = ["T201"]
 
 
 [tool.setuptools]

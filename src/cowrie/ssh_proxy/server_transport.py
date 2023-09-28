@@ -222,7 +222,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
+                    f"Bad protocol version identification: {self.otherVersionString!r}"
                 )
                 if self.transport:
                     self.transport.write(b"Protocol mismatch.\n")
@@ -306,9 +306,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         cencCS = ",".join([alg.decode("utf-8") for alg in encCS])
         cmacCS = ",".join([alg.decode("utf-8") for alg in macCS])
         ccompCS = ",".join([alg.decode("utf-8") for alg in compCS])
-        hasshAlgorithms = "{kex};{enc};{mac};{cmp}".format(
-            kex=ckexAlgs, enc=cencCS, mac=cmacCS, cmp=ccompCS
-        )
+        hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
         hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 
         log.msg(

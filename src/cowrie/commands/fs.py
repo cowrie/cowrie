@@ -12,7 +12,7 @@ import copy
 import getopt
 import os.path
 import re
-from typing import Callable
+from collections.abc import Callable
 
 from twisted.python import log
 
@@ -371,9 +371,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                 if i[fs.A_NAME] == basename:
                     if i[fs.A_TYPE] == fs.T_DIR and not recursive:
                         self.errorWrite(
-                            "rm: cannot remove `{}': Is a directory\n".format(
-                                i[fs.A_NAME]
-                            )
+                            f"rm: cannot remove `{i[fs.A_NAME]}': Is a directory\n"
                         )
                     else:
                         dir.remove(i)
@@ -456,7 +454,7 @@ class Command_cp(HoneyPotCommand):
                 dir = self.fs.get_path(os.path.dirname(resolv(dest)))
                 outfile = os.path.basename(dest.rstrip("/"))
             if outfile in [x[fs.A_NAME] for x in dir]:
-                dir.remove([x for x in dir if x[fs.A_NAME] == outfile][0])
+                dir.remove(next(x for x in dir if x[fs.A_NAME] == outfile))
             s[fs.A_NAME] = outfile
             dir.append(s)
 
@@ -552,7 +550,7 @@ class Command_mkdir(HoneyPotCommand):
                 return
             try:
                 self.fs.mkdir(pname, 0, 0, 4096, 16877)
-            except (fs.FileNotFound):
+            except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
                 )

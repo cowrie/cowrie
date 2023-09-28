@@ -22,7 +22,8 @@ __author__ = "Diego Parrilla Santamaria"
 __version__ = "0.1.0"
 
 import datetime
-from typing import Generator, Optional
+from typing import Optional
+from collections.abc import Generator
 
 from treq import post
 

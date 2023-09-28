@@ -26,6 +26,7 @@ class Output(cowrie.core.output.Output):
     """
     dshield output
     """
+
     debug: bool = False
     userid: str
     batch_size: int
@@ -104,7 +105,7 @@ class Output(cowrie.core.output.Output):
         headers = {"X-ISC-Authorization": auth_header, "Content-Type": "text/plain"}
 
         if self.debug:
-            log.msg(f"dshield: posting: {repr(headers)}")
+            log.msg(f"dshield: posting: {headers!r}")
             log.msg(f"dshield: posting: {log_output}")
 
         req = threads.deferToThread(

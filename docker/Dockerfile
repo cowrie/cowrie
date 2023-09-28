@@ -5,7 +5,7 @@
 ARG ARCH=
 ARG BUILD_DATE
 ARG TAG
-FROM ${ARCH}debian:bullseye-slim as builder
+FROM ${ARCH}debian:bookworm-slim as builder
 
 WORKDIR /
 
@@ -26,8 +26,8 @@ RUN groupadd -r ${COWRIE_GROUP} && \
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
-    apt-get update && \
-    apt-get install -y \
+    apt-get -q update && \
+    apt-get -q install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
       python3-pip \
@@ -39,7 +39,6 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       python3 \
       rustc \
       cargo \
-      git \
       build-essential \
       python3-virtualenv \
       libsnappy-dev && \
@@ -62,8 +61,8 @@ RUN python3 -m venv cowrie-env && \
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 
-FROM gcr.io/distroless/python3-debian11 AS runtime
-#FROM gcr.io/distroless/python3-debian11:debug AS runtime
+FROM gcr.io/distroless/python3-debian12 AS runtime
+#FROM gcr.io/distroless/python3-debian12:debug AS runtime
 
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
@@ -78,7 +77,7 @@ LABEL org.opencontainers.image.ref.name=${TAG}
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
-LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian11"
+LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12"
 
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
@@ -105,7 +104,7 @@ COPY --from=builder --chown=0:0 /etc/group /etc/group
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-RUN python3 -m compileall ${COWRIE_HOME} /usr/lib/python3.9
+RUN python3 -m compileall ${COWRIE_HOME} /usr/lib/python3.11
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 

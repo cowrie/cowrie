@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import getopt
 import re
-from typing import Match, Optional
+from typing import Optional
+from re import Match
 
 from twisted.python import log
 
@@ -28,7 +29,7 @@ class Command_awk(HoneyPotCommand):
     """
 
     # code is an array of dictionaries contain the regexes to match and the code to execute
-    code: list[dict[str, str]] = []
+    code: list[dict[str, str]]
 
     def start(self) -> None:
         try:
@@ -129,7 +130,6 @@ class Command_awk(HoneyPotCommand):
                 return ""
 
         for inputline in inputlines:
-
             # split by whitespace and add full line in $0 as awk does.
             # TODO: change here to use custom field separator
             words = inputline.split()

@@ -43,13 +43,15 @@ class HoneyPotShell:
 
         while True:
             try:
-                tok: str = self.lexer.get_token()
+                tokkie: str | None = self.lexer.get_token()
                 # log.msg("tok: %s" % (repr(tok)))
 
-                if tok == self.lexer.eof:
+                if tokkie is None:  # self.lexer.eof put None for mypy
                     if tokens:
                         self.cmdpending.append(tokens)
                     break
+                else:
+                    tok: str = tokkie
 
                 # For now, treat && and || same as ;, just execute without checking return code
                 if tok == "&&" or tok == "||":
@@ -164,8 +166,11 @@ class HoneyPotShell:
             else:
                 if opening_count > closing_count and pos == len(cmd_expr) - 1:
                     if self.lexer:
-                        tok = self.lexer.get_token()
-                        cmd_expr = cmd_expr + " " + tok
+                        tokkie = self.lexer.get_token()
+                        if tokkie is None:  # self.lexer.eof put None for mypy
+                            break
+                        else:
+                            cmd_expr = cmd_expr + " " + tokkie
                 elif opening_count == closing_count:
                     result += cmd_expr[pos]
                 pos += 1
@@ -286,7 +291,6 @@ class HoneyPotShell:
 
         lastpp = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
-
             cmdclass = self.protocol.getCommand(
                 cmd["command"], environ["PATH"].split(":")
             )
@@ -448,7 +452,7 @@ class HoneyPotShell:
             else:
                 prefix = ""
             first = line.decode("utf8").split(" ")[:-1]
-            newbuf = " ".join(first + [f"{basedir}{prefix}"])
+            newbuf = " ".join([*first, f"{basedir}{prefix}"])
             newbyt = newbuf.encode("utf8")
             if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
@@ -493,7 +497,6 @@ class StdOutStdErrEmulationProtocol:
         self.redirect = redirect  # dont send to terminal if enabled
 
     def connectionMade(self) -> None:
-
         self.input_data = b""
 
     def outReceived(self, data: bytes) -> None:

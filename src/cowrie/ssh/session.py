@@ -38,11 +38,11 @@ class HoneyPotSSHSession(session.SSHSession):
         return 0
 
     def request_agent(self, data: bytes) -> int:
-        log.msg(f"request_agent: {repr(data)}")
+        log.msg(f"request_agent: {data!r}")
         return 0
 
     def request_x11_req(self, data: bytes) -> int:
-        log.msg(f"request_x11: {repr(data)}")
+        log.msg(f"request_x11: {data!r}")
         return 0
 
     def closed(self) -> None:

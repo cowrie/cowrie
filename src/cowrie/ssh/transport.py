@@ -124,7 +124,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
+                    f"Bad protocol version identification: {self.otherVersionString!r}"
                 )
                 # OpenSSH sending the same message
                 self.transport.write(b"Invalid SSH identification string.\n")

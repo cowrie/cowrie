@@ -67,7 +67,6 @@ class SSHSessionForCowrieUser:
             format="Terminal Size: %(width)s %(height)s",
         )
         self.windowSize = windowSize
-        return None
 
     def execCommand(self, processprotocol, cmd):
         self.protocol = insults.LoggingServerProtocol(

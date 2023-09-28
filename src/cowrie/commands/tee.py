@@ -25,7 +25,7 @@ class Command_tee(HoneyPotCommand):
     """
 
     append = False
-    teeFiles: list[str] = []
+    teeFiles: list[str]
     writtenBytes = 0
     ignoreInterupts = False
 
@@ -40,6 +40,8 @@ class Command_tee(HoneyPotCommand):
             )
             self.exit()
             return
+
+        self.teeFiles = []
 
         for o, _a in optlist:
             if o in ("--help"):

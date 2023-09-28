@@ -94,7 +94,7 @@ def uptime(total_seconds: float) -> str:
     if len(s) > 0 or hours > 0:
         s += "{}:{}".format(str(hours).rjust(2), str(minutes).rjust(2, "0"))
     else:
-        s += f"{str(minutes)} min"
+        s += f"{minutes!s} min"
     return s
 
 

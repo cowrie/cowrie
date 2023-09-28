@@ -166,9 +166,7 @@ Download a file via FTP
         path = os.path.dirname(fakeoutfile)
         if not path or not self.fs.exists(path) or not self.fs.isdir(path):
             self.write(
-                "ftpget: can't open '{}': No such file or directory".format(
-                    self.local_file
-                )
+                f"ftpget: can't open '{self.local_file}': No such file or directory"
             )
             self.exit()
             return
@@ -250,9 +248,7 @@ Download a file via FTP
             ftp.connect(host=self.host, port=self.port, timeout=30)
         except Exception as e:
             log.msg(
-                "FTP connect failed: host={}, port={}, err={}".format(
-                    self.host, self.port, str(e)
-                )
+                f"FTP connect failed: host={self.host}, port={self.port}, err={e!s}"
             )
             self.write("ftpget: can't connect to remote host: Connection refused\n")
             return False
@@ -277,7 +273,7 @@ Download a file via FTP
                     self.username, self.password, str(e)
                 )
             )
-            self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
+            self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:
                 ftp.quit()
             except socket.timeout:
@@ -295,8 +291,8 @@ Download a file via FTP
             ftp.cwd(self.remote_dir)
             ftp.retrbinary(f"RETR {self.remote_file}", self.artifactFile.write)
         except Exception as e:
-            log.msg(f"FTP retrieval failed: {str(e)}")
-            self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
+            log.msg(f"FTP retrieval failed: {e!s}")
+            self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:
                 ftp.quit()
             except socket.timeout:

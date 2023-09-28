@@ -104,7 +104,6 @@ class PermissionDenied(Exception):
 
 class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
-
         self.fs: list[Any]
 
         try:
@@ -206,7 +205,7 @@ class HoneyPotFilesystem:
                 names = [x[A_NAME] for x in self.get_path("/".join(cwd))]
                 matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
                 for match in matches:
-                    foo(p[1:], cwd + [match])
+                    foo(p[1:], [*cwd, match])
 
         foo(pieces, cwdpieces)
         return found
@@ -258,7 +257,6 @@ class HoneyPotFilesystem:
         return False
 
     def update_realfile(self, f: Any, realfile: str) -> None:
-
         if (
             not f[A_REALFILE]
             and os.path.exists(realfile)
@@ -355,7 +353,7 @@ class HoneyPotFilesystem:
         _dir = self.get_path(_path)
         outfile: str = os.path.basename(path)
         if outfile in [x[A_NAME] for x in _dir]:
-            _dir.remove([x for x in _dir if x[A_NAME] == outfile][0])
+            _dir.remove(next(x for x in _dir if x[A_NAME] == outfile))
         _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None])
         self.newcount += 1
         return True
@@ -598,7 +596,6 @@ class HoneyPotFilesystem:
     def stat(self, path: str, follow_symlinks: bool = True) -> _statobj:
         p: Optional[list[Any]]
         if path == "/":
-            # TODO: shouldn't this be a list?
             p = []
             p[A_TYPE] = T_DIR
             p[A_UID] = 0

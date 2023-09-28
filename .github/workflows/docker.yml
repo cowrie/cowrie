@@ -32,60 +32,52 @@ jobs:
   # See also https://docs.docker.com/docker-hub/builds/
   push:
     # Ensure test job passes before pushing image.
-    needs: test
+    # needs: tox
 
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    # if: github.event_name == 'push'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
-          platform: amd64,arm64
+          platforms: linux/amd64,linux/arm64
 
-      #      - name: Login to Docker Hub
-      #        uses: docker/login-action@v2
-      #        with:
-      #          registry: ghcr.io
-      #          username: ${{ github.actor }}
-      #          password: ${{ secrets.GITHUB_TOKEN }}
-      #          # TODO: Create a PAT with `read:packages` and `write:packages` scopes and save it as an Actions secret `CR_PAT`
-      #          # run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
-
-      #  $(DOCKER) buildx build --platform ${PLATFORM} -t ${IMAGE}:${TAG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
       - name: Build
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           push: false
-          tags: cowrie/cowie:latest
+          load: true
+          tags: cowrie:test
           file: docker/Dockerfile
 
-#      - name: Push image to GitHub Container Registry
-#        run: |
-#          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-#
-#          # Change all uppercase to lowercase
-#          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-#
-#          # Strip git ref prefix from version
-#          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-#
-#          # Strip "v" prefix from tag name
-#          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-#
-#          # Use Docker `latest` tag convention
-#          [ "$VERSION" == "master" ] && VERSION=latest
-#
-#          echo IMAGE_ID=$IMAGE_ID
-#          echo VERSION=$VERSION
-#
-#          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-#          docker push $IMAGE_ID:$VERSION
+      - name: Test
+        run: |
+          docker run -d --rm cowrie:test
+
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          load: false
+          sbom: true
+          provenance: true
+          tags: cowrie/cowrie:latest

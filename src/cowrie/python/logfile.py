@@ -23,9 +23,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
         Return the suffix given a (year, month, day) tuple or unixtime
         """
         try:
-            return "{:02d}-{:02d}-{:02d}".format(
-                tupledate[0], tupledate[1], tupledate[2]
-            )
+            return f"{tupledate[0]:02d}-{tupledate[1]:02d}-{tupledate[2]:02d}"
         except Exception:
             # try taking a float unixtime
             return "_".join(map(str, self.toDate(tupledate)))
