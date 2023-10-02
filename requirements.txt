@@ -3,7 +3,7 @@ attrs==23.1.0
 bcrypt==4.0.1
 configparser==6.0.0
 cryptography==41.0.4
-packaging==23.1
+packaging==23.2
 pyasn1_modules==0.3.0
 pyparsing==3.1.1
 python-dateutil==2.8.2
