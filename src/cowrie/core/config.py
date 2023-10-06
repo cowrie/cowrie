@@ -36,7 +36,7 @@ class EnvironmentConfigParser(configparser.ConfigParser):
         return super().get(section, option, raw=raw, **kwargs)
 
 
-def readConfigFile(cfgfile: Union[list[str], str]) -> configparser.ConfigParser:
+def readConfigFile(cfgfile: list[str] | str) -> configparser.ConfigParser:
     """
     Read config files and return ConfigParser object
 

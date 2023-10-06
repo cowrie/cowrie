@@ -53,9 +53,9 @@ class Artifact:
 
     def __exit__(
         self,
-        etype: Optional[type[BaseException]],
-        einst: Optional[BaseException],
-        etrace: Optional[TracebackType],
+        etype: type[BaseException] | None,
+        einst: BaseException | None,
+        etrace: TracebackType | None,
     ) -> bool:
         self.close()
         return True
@@ -66,7 +66,7 @@ class Artifact:
     def fileno(self) -> Any:
         return self.fp.fileno()
 
-    def close(self, keepEmpty: bool = False) -> Optional[tuple[str, str]]:
+    def close(self, keepEmpty: bool = False) -> tuple[str, str] | None:
         size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
             try:

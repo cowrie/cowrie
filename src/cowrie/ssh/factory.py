@@ -31,11 +31,11 @@ class CowrieSSHFactory(factory.SSHFactory):
     They listen directly to the TCP port
     """
 
-    starttime: Optional[float] = None
+    starttime: float | None = None
     privateKeys: dict[bytes, bytes]
     publicKeys: dict[bytes, bytes]
     primes = None
-    portal: Optional[tp.Portal] = None  # gets set by plugin
+    portal: tp.Portal | None = None  # gets set by plugin
     ourVersionString: bytes = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
     ).encode("ascii")

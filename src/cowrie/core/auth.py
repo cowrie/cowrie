@@ -36,7 +36,7 @@ class UserDB:
 
     def __init__(self) -> None:
         self.userdb: dict[
-            tuple[Union[Pattern[bytes], bytes], Union[Pattern[bytes], bytes]], bool
+            tuple[Pattern[bytes] | bytes, Pattern[bytes] | bytes], bool
         ] = OrderedDict()
         self.load()
 
@@ -70,8 +70,8 @@ class UserDB:
         self, thelogin: bytes, thepasswd: bytes, src_ip: str = "0.0.0.0"
     ) -> bool:
         for credentials, policy in self.userdb.items():
-            login: Union[bytes, Pattern[bytes]]
-            passwd: Union[bytes, Pattern[bytes]]
+            login: bytes | Pattern[bytes]
+            passwd: bytes | Pattern[bytes]
             login, passwd = credentials
 
             if self.match_rule(login, thelogin):
@@ -81,13 +81,13 @@ class UserDB:
         return False
 
     def match_rule(
-        self, rule: Union[bytes, Pattern[bytes]], data: bytes
-    ) -> Union[bool, bytes]:
+        self, rule: bytes | Pattern[bytes], data: bytes
+    ) -> bool | bytes:
         if isinstance(rule, bytes):
             return rule in [b"*", data]
         return bool(rule.search(data))
 
-    def re_or_bytes(self, rule: bytes) -> Union[Pattern[bytes], bytes]:
+    def re_or_bytes(self, rule: bytes) -> Pattern[bytes] | bytes:
         """
         Convert a /.../ type rule to a regex, otherwise return the string as-is
 

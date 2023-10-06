@@ -110,7 +110,7 @@ class Command_awk(HoneyPotCommand):
         self.write(words)
         self.write("\n")
 
-    def output(self, inb: Optional[bytes]) -> None:
+    def output(self, inb: bytes | None) -> None:
         """
         This is the awk output.
         """

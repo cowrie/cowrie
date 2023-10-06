@@ -23,7 +23,7 @@ class TelnetClient(StatefulTelnetProtocol):
         # callLater instance to wait until we have stop getting output for some time
         self.done_callback = None
 
-        self.command: Optional[bytes] = None
+        self.command: bytes | None = None
 
     def connectionMade(self):
         """

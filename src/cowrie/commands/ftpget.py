@@ -27,7 +27,7 @@ class FTP(ftplib.FTP):
         host: str = "",
         port: int = 0,
         timeout: float = -999.0,
-        source_address: Optional[tuple[str, int]] = None,
+        source_address: tuple[str, int] | None = None,
     ) -> str:
         if host != "":
             self.host = host
@@ -46,7 +46,7 @@ class FTP(ftplib.FTP):
         return self.welcome
 
     def ntransfercmd(
-        self, cmd: str, rest: Union[int, str, None] = None
+        self, cmd: str, rest: int | str | None = None
     ) -> tuple[socket.socket, int]:
         size = 0
         if self.passiveserver:

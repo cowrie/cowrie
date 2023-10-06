@@ -35,7 +35,7 @@ def to_byte(n: int) -> str:
     return hex(n)[2:].zfill(2)
 
 
-def generate_network_table(seed: Optional[int] = None) -> dict[str, str]:
+def generate_network_table(seed: int | None = None) -> dict[str, str]:
     """
     Generates a table associating MAC and IP addressed to be distributed by our virtual network adapter via DHCP.
     """

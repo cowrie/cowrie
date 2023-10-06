@@ -30,7 +30,7 @@ class HoneyPotShell:
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
-        self.lexer: Optional[shlex.shlex] = None
+        self.lexer: shlex.shlex | None = None
         self.showPrompt()
 
     def lineReceived(self, line: str) -> None:

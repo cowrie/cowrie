@@ -72,7 +72,7 @@ class Command_cat(HoneyPotCommand):
             self.output(self.input_data)
             self.exit()
 
-    def output(self, inb: Optional[bytes]) -> None:
+    def output(self, inb: bytes | None) -> None:
         """
         This is the cat output, with optional line numbering
         """

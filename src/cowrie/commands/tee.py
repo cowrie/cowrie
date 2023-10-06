@@ -83,7 +83,7 @@ class Command_tee(HoneyPotCommand):
         for outf in self.teeFiles:
             self.fs.update_size(outf, self.writtenBytes)
 
-    def output(self, inb: Optional[bytes]) -> None:
+    def output(self, inb: bytes | None) -> None:
         """
         This is the tee output, if no file supplied
         """
