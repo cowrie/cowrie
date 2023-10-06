@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import getopt
 import os
-from typing import Optional
 
 from twisted.python import log
 

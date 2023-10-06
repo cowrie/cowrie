@@ -12,7 +12,6 @@ import re
 import shlex
 import stat
 import time
-from typing import Optional
 from collections.abc import Callable
 
 from twisted.internet import error

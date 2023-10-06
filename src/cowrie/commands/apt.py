@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import random
 import re
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Callable
 
 from twisted.internet import defer, reactor

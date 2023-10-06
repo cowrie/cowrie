@@ -11,7 +11,6 @@ import getopt
 import random
 import re
 import time
-from typing import Optional
 from collections.abc import Callable
 
 from twisted.internet import error, reactor

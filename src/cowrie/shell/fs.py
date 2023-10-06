@@ -15,7 +15,7 @@ import re
 import sys
 import stat
 import time
-from typing import Any, Optional
+from typing import Any
 
 from twisted.python import log
 

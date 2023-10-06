@@ -6,7 +6,6 @@ import ftplib
 import getopt
 import os
 import socket
-from typing import Optional, Union
 
 from twisted.python import log
 

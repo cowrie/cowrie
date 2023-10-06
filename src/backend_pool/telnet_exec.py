@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer

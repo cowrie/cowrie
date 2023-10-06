@@ -30,7 +30,7 @@
 from __future__ import annotations
 from binascii import crc32
 from random import randint, seed
-from typing import Any, Union
+from typing import Any
 
 from twisted.python import log
 

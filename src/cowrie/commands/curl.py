@@ -6,7 +6,6 @@ from __future__ import annotations
 import getopt
 import ipaddress
 import os
-from typing import Optional
 
 from twisted.internet import error
 from twisted.python import compat, log

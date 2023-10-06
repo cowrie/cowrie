@@ -8,7 +8,7 @@ import copy
 import os
 import re
 import shlex
-from typing import Any, Optional
+from typing import Any
 
 from twisted.internet import error
 from twisted.python import failure, log

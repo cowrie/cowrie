@@ -7,7 +7,7 @@ import getopt
 import ipaddress
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from twisted.internet import error
 from twisted.python import compat, log

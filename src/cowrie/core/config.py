@@ -11,7 +11,6 @@ import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
 
-from typing import Union
 
 
 def to_environ_key(key: str) -> str:

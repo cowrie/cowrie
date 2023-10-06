@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import getopt
 import re
-from typing import Optional
 from re import Match
 
 from twisted.python import log

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from configparser import NoOptionError
 import time
-from typing import Optional
 
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory, keys, transport
