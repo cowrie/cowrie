@@ -142,9 +142,7 @@ class HoneyPotFilesystem:
                 realfile_path: str = os.path.join(path, filename)
                 virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)
 
-                f: list[Any] | None = self.getfile(
-                    virtual_path, follow_symlinks=False
-                )
+                f: list[Any] | None = self.getfile(virtual_path, follow_symlinks=False)
                 if f and f[A_TYPE] == T_FILE:
                     self.update_realfile(f, realfile_path)
 

@@ -12,7 +12,6 @@ from os import environ
 from os.path import abspath, dirname, exists, join
 
 
-
 def to_environ_key(key: str) -> str:
     return key.upper()
 

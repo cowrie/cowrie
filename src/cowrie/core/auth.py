@@ -80,9 +80,7 @@ class UserDB:
 
         return False
 
-    def match_rule(
-        self, rule: bytes | Pattern[bytes], data: bytes
-    ) -> bool | bytes:
+    def match_rule(self, rule: bytes | Pattern[bytes], data: bytes) -> bool | bytes:
         if isinstance(rule, bytes):
             return rule in [b"*", data]
         return bool(rule.search(data))
