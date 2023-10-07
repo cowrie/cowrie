@@ -26,7 +26,7 @@
 # environment
 #
 # (default: svr04)
-hostname = svr04
+hostname = jpmorgan-076
 
 
 # Directory where to save log files in.
@@ -102,12 +102,12 @@ ttylog_path = ${honeypot:state_path}/tty
 # Interactive timeout determines when logged in sessions are
 # terminated for being idle. In seconds.
 # (default: 180)
-interactive_timeout = 180
+interactive_timeout = 360
 
 # Authentication Timeout
 # The server disconnects after this time if the user has not successfully logged in. 
 # The default is 120 seconds.
-authentication_timeout = 120
+authentication_timeout = 360
 
 # EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
 # (default: shell)
@@ -124,7 +124,7 @@ timezone = UTC
 # By default, Cowrie creates a shell prompt like: root@svr03:~#
 # If you want something totally custom, uncomment the option below and set your prompt
 # Beware that the path won't be included in your prompt any longer
-# prompt = hello>
+prompt = root@jpmc:~#
 
 
 # ============================================================================
@@ -344,7 +344,7 @@ telnet_spoof_authentication = true
 # more data than the prompt.
 
 # For login it is usually <hostname> login:
-telnet_username_prompt_regex = (\n|^)ubuntu login: .*
+telnet_username_prompt_regex = (\n|^)JPMC ubuntu login: .*
 
 # Password prompt is usually only the word Password
 telnet_password_prompt_regex = .*Password: .*

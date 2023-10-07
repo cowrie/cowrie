@@ -1,8 +1,8 @@
-processor	: 0
+processor	: 8
 vendor_id	: GenuineIntel
-cpu family	: 6
-model		: 79
-model name	: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+cpu family	: 10
+model		: 89
+model name	: Intel(R) Xeon(R) CPU E9-2686 v4 @ 4.30GHz
 stepping	: 1
 microcode	: 0xb000040
 cpu MHz		: 2300.190

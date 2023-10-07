@@ -1,6 +1,7 @@
 rootfs / rootfs rw 0 0
 sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
 proc /proc proc rw,relatime 0 0
+JFFS2 /JFFS2 JFFS2 rw,relatime 0 0
 udev /dev devtmpfs rw,relatime,size=10240k,nr_inodes=997843,mode=755 0 0
 devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0
 tmpfs /run tmpfs rw,nosuid,relatime,size=1613336k,mode=755 0 0

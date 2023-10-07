@@ -1,10 +1,10 @@
 Architecture:          x86_64
 CPU op-mode(s):        32-bit, 64-bit
 Byte Order:            Little Endian
-CPU(s):                2
+CPU(s):                16
 On-line CPU(s) list:   0-1
 Thread(s) per core:    1
-Core(s) per socket:    2
+Core(s) per socket:    32
 Socket(s):             1
 NUMA node(s):          1
 Vendor ID:             GenuineIntel

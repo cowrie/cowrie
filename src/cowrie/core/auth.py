@@ -24,8 +24,8 @@ _USERDB_DEFAULTS: list[str] = [
     "root:x:!123456",
     "root:x:!/honeypot/i",
     "root:x:*",
-    "phil:x:*",
-    "phil:x:fout",
+    "random:x:*",
+    "admin:x:admin",
 ]
 
 

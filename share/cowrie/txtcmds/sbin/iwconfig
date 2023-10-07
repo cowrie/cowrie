@@ -1,0 +1,13 @@
+Interface: wl0
+ SSID:
+ Identity:
+ WEP Hex KEY / WPA-PSK Passphrase:
+ Encryption: none
+ Authentication: open
+ EAP: none
+ Association Status:UNASSOCIATED
+ Access Point MAC Address:00:00:00:00:00:00
+ Signal Strength: 0%
+ Signal Strength: 0dBm (-100dBm Min, -40dBm Max)
+ Pump Channel: 0
+ Access Point Channel: 0

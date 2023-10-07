@@ -1,1 +1,3 @@
-32
+usage: getconf -a [pathname]
+       getconf [-v prog_env] system_var
+       getconf [-v prog_env] path_var pathname
