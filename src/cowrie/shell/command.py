@@ -12,7 +12,6 @@ import re
 import shlex
 import stat
 import time
-from typing import Optional
 from collections.abc import Callable
 
 from twisted.internet import error
@@ -35,9 +34,9 @@ class HoneyPotCommand:
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
-        self.input_data: Optional[
+        self.input_data: None | (
             bytes
-        ] = None  # used to store STDIN data passed via PIPE
+        ) = None  # used to store STDIN data passed via PIPE
         self.writefn: Callable[[bytes], None] = self.protocol.pp.outReceived
         self.errorWritefn: Callable[[bytes], None] = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command

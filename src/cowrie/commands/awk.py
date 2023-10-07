@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import getopt
 import re
-from typing import Optional
 from re import Match
 
 from twisted.python import log
@@ -110,7 +109,7 @@ class Command_awk(HoneyPotCommand):
         self.write(words)
         self.write("\n")
 
-    def output(self, inb: Optional[bytes]) -> None:
+    def output(self, inb: bytes | None) -> None:
         """
         This is the awk output.
         """

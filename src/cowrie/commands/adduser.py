@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import random
-from typing import Optional
 
 from twisted.internet import reactor
 
@@ -48,7 +47,7 @@ class Command_adduser(HoneyPotCommand):
         (O_O, "Deleting home directory `/home/%(username)s' ...\n"),
         (O_Q, "Try again? [Y/n] "),
     )
-    username: Optional[str] = None
+    username: str | None = None
 
     def start(self) -> None:
         self.item = 0

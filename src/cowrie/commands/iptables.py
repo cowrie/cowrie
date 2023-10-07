@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import optparse
 
-from typing import Any, Optional
+from typing import Any
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -17,7 +17,7 @@ class OptionParsingError(RuntimeError):
 
 
 class OptionParsingExit(Exception):
-    def __init__(self, status: int, msg: Optional[str]) -> None:
+    def __init__(self, status: int, msg: str | None) -> None:
         self.msg = msg
         self.status = status
 
@@ -26,7 +26,7 @@ class ModifiedOptionParser(optparse.OptionParser):
     def error(self, msg: str) -> None:
         raise OptionParsingError(msg)
 
-    def exit(self, status: int = 0, msg: Optional[str] = None) -> None:
+    def exit(self, status: int = 0, msg: str | None = None) -> None:
         raise OptionParsingExit(status, msg)
 
 

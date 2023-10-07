@@ -7,7 +7,7 @@ import getopt
 import ipaddress
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from twisted.internet import error
 from twisted.python import compat, log
@@ -64,7 +64,7 @@ class Command_wget(HoneyPotCommand):
     limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
     quiet: bool = False
 
-    outfile: Optional[str] = None  # outfile is the file saved inside the honeypot
+    outfile: str | None = None  # outfile is the file saved inside the honeypot
     artifact: Artifact  # artifact is the file saved for forensics in the real file system
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length

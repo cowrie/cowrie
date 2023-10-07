@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import random
 import re
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Callable
 
 from twisted.internet import defer, reactor
@@ -49,7 +49,7 @@ class Command_aptget(HoneyPotCommand):
             self.do_locked()
         self.packages = {}
 
-    def sleep(self, time: float, time2: Optional[float] = None) -> defer.Deferred:
+    def sleep(self, time: float, time2: float | None = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()
         if time2:
             time = random.randint(int(time * 100), int(time2 * 100.0)) / 100.0

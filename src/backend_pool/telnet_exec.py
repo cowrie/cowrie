@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer
@@ -23,7 +22,7 @@ class TelnetClient(StatefulTelnetProtocol):
         # callLater instance to wait until we have stop getting output for some time
         self.done_callback = None
 
-        self.command: Optional[bytes] = None
+        self.command: bytes | None = None
 
     def connectionMade(self):
         """

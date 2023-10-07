@@ -11,7 +11,6 @@ import getopt
 import random
 import re
 import time
-from typing import Optional
 from collections.abc import Callable
 
 from twisted.internet import error, reactor
@@ -846,7 +845,7 @@ class Command_passwd(HoneyPotCommand):
         self.write("Enter new UNIX password: ")
         self.protocol.password_input = True
         self.callbacks = [self.ask_again, self.finish]
-        self.passwd: Optional[str] = None
+        self.passwd: str | None = None
 
     def ask_again(self, line: str) -> None:
         self.passwd = line
