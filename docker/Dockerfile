@@ -104,7 +104,7 @@ COPY --from=builder --chown=0:0 /etc/group /etc/group
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-RUN python3 -m compileall ${COWRIE_HOME} /usr/lib/python3.11
+RUN [ "python3", "-m", "compileall", "${COWRIE_HOME}", "/usr/lib/python3.11" ]
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
