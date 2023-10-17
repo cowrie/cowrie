@@ -61,7 +61,7 @@ class ServerFactory(protocol.Factory):
         self.dst_ip: str = dst_ip
         self.dst_port: int = dst_port
 
-    def buildProtocol(self, addr):
+    def buildProtocol(self, addr: IAddress) -> ServerProtocol:
         return ServerProtocol(self.dst_ip, self.dst_port)
 
 
