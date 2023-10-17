@@ -16,6 +16,11 @@ class TelnetConnectionError(Exception):
 
 
 class TelnetClient(StatefulTelnetProtocol):
+    """
+    A telnet client
+    """
+    factory: TelnetFactory
+
     def __init__(self):
         # output from server
         self.response: bytes = b""
