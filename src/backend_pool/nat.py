@@ -1,11 +1,14 @@
 from __future__ import annotations
 from threading import Lock
 
+from twisted.internet.interfaces import IAddress
 from twisted.internet import protocol
 from twisted.internet import reactor
 
 
 class ClientProtocol(protocol.Protocol):
+    server_protocol: ServerProtocol
+
     def dataReceived(self, data: bytes) -> None:
         self.server_protocol.transport.write(data)  # type: ignore
 
@@ -17,7 +20,7 @@ class ClientFactory(protocol.ClientFactory):
     def __init__(self, server_protocol):
         self.server_protocol = server_protocol
 
-    def buildProtocol(self, addr):
+    def buildProtocol(self, addr: IAddress) -> ClientProtocol:
         client_protocol = ClientProtocol()
         client_protocol.server_protocol = self.server_protocol
         self.server_protocol.client_protocol = client_protocol
@@ -25,16 +28,16 @@ class ClientFactory(protocol.ClientFactory):
 
 
 class ServerProtocol(protocol.Protocol):
-    def __init__(self, dst_ip, dst_port):
-        self.dst_ip = dst_ip
-        self.dst_port = dst_port
-        self.client_protocol = None
-        self.buffer = []
+    def __init__(self, dst_ip: str, dst_port: int):
+        self.dst_ip: str = dst_ip
+        self.dst_port: int = dst_port
+        self.client_protocol: ClientProtocol
+        self.buffer: list[bytes] = []
 
     def connectionMade(self):
         reactor.connectTCP(self.dst_ip, self.dst_port, ClientFactory(self))
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         self.buffer.append(data)
         self.sendData()
 

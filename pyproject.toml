@@ -90,7 +90,7 @@ disallow_subclassing_any    = true
 warn_unused_ignores         = true
 
 # Getting these passing should be easy
-strict_concatenate          = true
+# strict_concatenate          = true
 
 # These are too strict for us at the moment
 

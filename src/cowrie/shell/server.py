@@ -50,11 +50,10 @@ class CowrieServer:
     multiple Cowrie connections
     """
 
-    fs = None
-    process = None
-    hostname: str = CowrieConfig.get("honeypot", "hostname")
-
     def __init__(self, realm: IRealm) -> None:
+        self.fs = None
+        self.process = None
+        self.hostname: str = CowrieConfig.get("honeypot", "hostname")
         try:
             arches = [
                 arch.strip() for arch in CowrieConfig.get("shell", "arch").split(",")

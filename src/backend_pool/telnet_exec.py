@@ -67,7 +67,7 @@ class TelnetClient(StatefulTelnetProtocol):
 
         # start countdown to command done (when reached, consider the output was completely received and close)
         if not self.done_callback:
-            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore
+            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore[attr-defined]
         else:
             self.done_callback.reset(0.5)
 

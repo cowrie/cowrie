@@ -80,7 +80,7 @@ class PoolService:
 
         self.any_vm_up: bool = False  # TODO fix for no VM available
 
-    def start_pool(self):
+    def start_pool(self) -> None:
         # cleanup older qemu objects
         self.qemu.destroy_all_cowrie()
 
@@ -101,7 +101,7 @@ class PoolService:
             "backend_pool", "recycle_period", fallback=-1
         )
         if recycle_period > 0:
-            reactor.callLater(recycle_period, self.restart_pool)
+            reactor.callLater(recycle_period, self.restart_pool)  # type: ignore[attr-defined]
 
     def stop_pool(self):
         # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
@@ -311,7 +311,7 @@ class PoolService:
             if self.guest_id == 252:
                 self.guest_id = 0
 
-    def producer_loop(self):
+    def producer_loop(self) -> None:
         # delete old VMs, but do not let pool size be 0
         if self.existing_pool_size() > 1:
             # mark timed-out VMs for destruction
@@ -333,7 +333,7 @@ class PoolService:
         self.__producer_mark_available()
 
         # sleep until next iteration
-        self.loop_next_call = reactor.callLater(
+        self.loop_next_call = reactor.callLater(  # type: ignore[attr-defined]
             self.loop_sleep_time, self.producer_loop
         )
 

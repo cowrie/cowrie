@@ -37,7 +37,6 @@ class CowrieSFTPFile:
     """
 
     contents: bytes
-    bytesReceived: int = 0
     bytesReceivedLimit: int = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
@@ -45,6 +44,7 @@ class CowrieSFTPFile:
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
+        self.bytesReceived: int = 0
 
         openFlags = 0
         if flags & FXF_READ == FXF_READ and flags & FXF_WRITE == 0:
