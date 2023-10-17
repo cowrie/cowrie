@@ -3,6 +3,7 @@ from __future__ import annotations
 from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol
 from twisted.internet import reactor
+from twisted.internet.interfaces import IAddress
 
 
 class PasswordAuth(userauth.SSHUserAuthClient):
@@ -85,7 +86,7 @@ class ClientCommandFactory(protocol.ClientFactory):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def buildProtocol(self, addr):
+    def buildProtocol(self, addr: IAddress) -> ClientCommandTransport:
         return ClientCommandTransport(
             self.username,
             self.password,

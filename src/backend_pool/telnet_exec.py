@@ -6,6 +6,7 @@ import re
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer
 from twisted.internet import reactor
+from twisted.internet.interfaces import IAddress
 from twisted.internet.protocol import ClientFactory
 from twisted.python import log
 
@@ -105,7 +106,7 @@ class TelnetFactory(ClientFactory):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def buildProtocol(self, addr):
+    def buildProtocol(self, addr: IAddress) -> TelnetTransport:
         transport = TelnetTransport(TelnetClient)
         transport.factory = self
         return transport
