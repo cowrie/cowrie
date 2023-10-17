@@ -1,5 +1,10 @@
+"""
+pool service
+"""
+
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
+
 from __future__ import annotations
 
 import os
@@ -10,9 +15,10 @@ from twisted.internet import reactor
 from twisted.internet import threads
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 import backend_pool.libvirt.backend_service
 import backend_pool.util
-from cowrie.core.config import CowrieConfig
 
 
 POOL_STATE_CREATED = "created"
@@ -24,7 +30,13 @@ POOL_STATE_DESTROYED = "destroyed"
 
 
 class NoAvailableVMs(Exception):
-    pass
+    """
+    no VM's available
+    """
+
+
+#    pass
+#
 
 
 class PoolService:
@@ -39,8 +51,10 @@ class PoolService:
         unavailable: marked for destruction after timeout
         destroyed:   deleted by qemu, can be removed from list
 
-    A lock is required to manipulate VMs in states [available, using, used], since these are the ones that can be
-    accessed by several consumers and the producer. All other states are accessed only by the single producer.
+    A lock is required to manipulate VMs in states [available,
+    using, used], since these are the ones that can be accessed by
+    several consumers and the producer. All other states are accessed
+    only by the single producer.
     """
 
     def __init__(self, nat_service):
@@ -55,7 +69,8 @@ class PoolService:
         self.loop_sleep_time: int = 5
         self.loop_next_call = None
 
-        # default configs; custom values will come from the client when they connect to the pool
+        # default configs; custom values will come from the client
+        # when they connect to the pool
         self.max_vm: int = 2
         self.vm_unused_timeout: int = 600
         self.share_guests: bool = True
@@ -112,7 +127,8 @@ class PoolService:
             reactor.callLater(recycle_period, self.restart_pool)  # type: ignore[attr-defined]
 
     def stop_pool(self):
-        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        # lazy import to avoid exception if not using the backend_pool
+        # and libvirt not installed (#1185)
         import libvirt
 
         log.msg(eventid="cowrie.backend_pool.service", format="Trying pool clean stop")
@@ -141,7 +157,8 @@ class PoolService:
             print("Not connected to QEMU")  # noqa: T201
 
     def shutdown_pool(self):
-        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        # lazy import to avoid exception if not using the backend_pool
+        # and libvirt not installed (#1185)
         import libvirt
 
         self.stop_pool()
@@ -167,7 +184,7 @@ class PoolService:
         self.vm_unused_timeout = vm_unused_timeout
         self.share_guests = share_guests
 
-    def get_guest_states(self, states):
+    def get_guest_states(self, states: list[str]) -> list:
         return [g for g in self.guests if g["state"] in states]
 
     def existing_pool_size(self):
@@ -181,9 +198,11 @@ class PoolService:
 
     def has_connectivity(self, ip):
         """
-        This method checks if a guest has either SSH or Telnet connectivity, to know whether it is ready for connections
-        and healthy. It takes into account whether those services are enabled, and if SSH is enabled and available, then
-        no Telnet check needs to be done.
+        This method checks if a guest has either SSH or Telnet
+        connectivity, to know whether it is ready for connections
+        and healthy. It takes into account whether those services
+        are enabled, and if SSH is enabled and available, then no
+        Telnet check needs to be done.
         """
         # check SSH connectivity, if enabled in configs, if disabled then we need to check telnet
         has_ssh = (
@@ -215,7 +234,8 @@ class PoolService:
                 )
 
                 # only mark guests without clients
-                # (and guest['connected'] == 0) sometimes did not work correctly as some VMs are not signaled as freed
+                # (and guest['connected'] == 0) sometimes did not
+                # work correctly as some VMs are not signaled as freed
                 if timed_out:
                     log.msg(
                         eventid="cowrie.backend_pool.service",
