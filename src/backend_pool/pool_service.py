@@ -198,8 +198,7 @@ class PoolService:
         """
         Checks timed-out VMs and acquires lock to safely mark for deletion
         """
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             # only mark VMs not in use
             used_guests = self.get_guest_states(["used"])
             for guest in used_guests:
@@ -217,16 +216,13 @@ class PoolService:
                         guest_ip=guest["guest_ip"],
                     )
                     guest["state"] = "unavailable"
-        finally:
-            self.guest_lock.release()
 
     def __producer_check_health(self):
         """
         Checks all usable guests, and whether they should have connectivity. If they don't, then
         mark them for deletion.
         """
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             usable_guests = self.get_guest_states(["available", "using", "used"])
             for guest in usable_guests:
                 if not self.has_connectivity(guest["guest_ip"]):
@@ -237,8 +233,6 @@ class PoolService:
                         guest_ip=guest["guest_ip"],
                     )
                     guest["state"] = "unavailable"
-        finally:
-            self.guest_lock.release()
 
     def __producer_destroy_timed_out(self):
         """
@@ -345,32 +339,23 @@ class PoolService:
 
     # Consumers
     def __consumers_get_guest_ip(self, src_ip):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             # if ip is the same, doesn't matter if being used or not
             usable_guests = self.get_guest_states(["used", "using"])
             for guest in usable_guests:
                 if src_ip in guest["client_ips"]:
                     return guest
-        finally:
-            self.guest_lock.release()
-
         return None
 
     def __consumers_get_available_guest(self):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             available_guests = self.get_guest_states(["available"])
             for guest in available_guests:
                 return guest
-        finally:
-            self.guest_lock.release()
-
         return None
 
     def __consumers_get_any_guest(self):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             # try to get a VM with few clients
             least_conn = None
 
@@ -380,8 +365,6 @@ class PoolService:
                     least_conn = guest
 
             return least_conn
-        finally:
-            self.guest_lock.release()
 
     # Consumer methods to be called concurrently
     def request_vm(self, src_ip):
@@ -412,8 +395,7 @@ class PoolService:
         return guest["id"], guest["guest_ip"], guest["snapshot"]
 
     def free_vm(self, guest_id):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             for guest in self.guests:
                 if guest["id"] == guest_id:
                     guest["freed_timestamp"] = backend_pool.util.now()
@@ -422,12 +404,9 @@ class PoolService:
                     if guest["connected"] == 0:
                         guest["state"] = "used"
                     return
-        finally:
-            self.guest_lock.release()
 
     def reuse_vm(self, guest_id):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             for guest in self.guests:
                 if guest["id"] == guest_id:
                     guest["connected"] -= 1
@@ -437,5 +416,3 @@ class PoolService:
                         guest["state"] = guest["prev_state"]
                         guest["prev_state"] = None
                     return
-        finally:
-            self.guest_lock.release()

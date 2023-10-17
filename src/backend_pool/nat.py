@@ -76,8 +76,7 @@ class NATService:
         )  # we need to be thread-safe just in case, this is accessed from multiple clients
 
     def request_binding(self, guest_id, dst_ip, ssh_port, telnet_port):
-        self.lock.acquire()
-        try:
+        with self.lock:
             # see if binding is already created
             if guest_id in self.bindings:
                 # increase connected
@@ -97,12 +96,9 @@ class NATService:
                 self.bindings[guest_id] = [1, nat_ssh, nat_telnet]
 
                 return nat_ssh._realPortNumber, nat_telnet._realPortNumber
-        finally:
-            self.lock.release()
 
     def free_binding(self, guest_id):
-        self.lock.acquire()
-        try:
+        with self.lock:
             self.bindings[guest_id][0] -= 1
 
             # stop listening if no one is connected
@@ -110,14 +106,9 @@ class NATService:
                 self.bindings[guest_id][1].stopListening()
                 self.bindings[guest_id][2].stopListening()
                 del self.bindings[guest_id]
-        finally:
-            self.lock.release()
 
     def free_all(self):
-        self.lock.acquire()
-        try:
+        with self.lock:
             for guest_id in self.bindings:
                 self.bindings[guest_id][1].stopListening()
                 self.bindings[guest_id][2].stopListening()
-        finally:
-            self.lock.release()
