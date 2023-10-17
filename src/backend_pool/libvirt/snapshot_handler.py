@@ -8,7 +8,7 @@ import shutil
 import subprocess
 
 
-def create_disk_snapshot(source_img, destination_img):
+def create_disk_snapshot(source_img: str, destination_img: str) -> bool:
     try:
         shutil.chown(source_img, getpass.getuser())
     except PermissionError:

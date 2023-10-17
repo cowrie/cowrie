@@ -51,7 +51,7 @@ class LibvirtBackendService:
             eventid="cowrie.backend_pool.qemu", format="Connection to QEMU established"
         )
 
-    def start_backend(self):
+    def start_backend(self) -> None:
         """
         Initialises QEMU/libvirt environment needed to run guests. Namely starts networks and network filters.
         """
@@ -66,7 +66,7 @@ class LibvirtBackendService:
         # service is ready to be used (create guests and use them)
         self.ready = True
 
-    def stop_backend(self):
+    def stop_backend(self) -> None:
         log.msg(
             eventid="cowrie.backend_pool.qemu", format="Doing QEMU clean shutdown..."
         )
@@ -75,7 +75,7 @@ class LibvirtBackendService:
 
         self.destroy_all_cowrie()
 
-    def shutdown_backend(self):
+    def shutdown_backend(self) -> None:
         self.conn.close()  # close libvirt connection
 
         log.msg(
@@ -150,7 +150,7 @@ class LibvirtBackendService:
                 error=error,
             )
 
-    def __destroy_all_guests(self):
+    def __destroy_all_guests(self) -> None:
         domains = self.conn.listDomainsID()
         if not domains:
             log.msg(
@@ -165,7 +165,7 @@ class LibvirtBackendService:
                 except KeyboardInterrupt:
                     pass
 
-    def __destroy_all_networks(self):
+    def __destroy_all_networks(self) -> None:
         networks = self.conn.listNetworks()
         if not networks:
             log.msg(
@@ -177,7 +177,7 @@ class LibvirtBackendService:
                 n = self.conn.networkLookupByName(network)
                 n.destroy()
 
-    def __destroy_all_network_filters(self):
+    def __destroy_all_network_filters(self) -> None:
         network_filters = self.conn.listNWFilters()
         if not network_filters:
             log.msg(
@@ -190,7 +190,7 @@ class LibvirtBackendService:
                 n = self.conn.nwfilterLookupByName(nw_filter)
                 n.undefine()
 
-    def destroy_all_cowrie(self):
+    def destroy_all_cowrie(self) -> None:
         self.__destroy_all_guests()
         self.__destroy_all_networks()
         self.__destroy_all_network_filters()
