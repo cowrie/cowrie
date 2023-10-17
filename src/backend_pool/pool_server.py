@@ -212,7 +212,7 @@ class PoolServerFactory(Factory):
             self.pool_service.shutdown_pool()
 
     def buildProtocol(self, addr: IAddress) -> PoolServer:
-        assert isinstance(addr, IPv4Address) or isinstance(addr, IPv6Address)
+        assert isinstance(addr, (IPv4Address, IPv6Address))
         log.msg(
             eventid="cowrie.backend_pool.server",
             format="Received connection from %(host)s:%(port)s",

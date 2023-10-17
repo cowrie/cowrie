@@ -1,3 +1,7 @@
+"""
+backend service
+"""
+
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
@@ -10,10 +14,11 @@ import uuid
 
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
 import backend_pool.util
-from cowrie.core.config import CowrieConfig
 
 LIBVIRT_URI = "qemu:///system"
 
@@ -24,7 +29,8 @@ class LibvirtError(Exception):
 
 class LibvirtBackendService:
     def __init__(self):
-        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        # lazy import to avoid exception if not using the backend_pool
+        # and libvirt not installed (#1185)
         import libvirt
 
         # open connection to libvirt
@@ -53,7 +59,8 @@ class LibvirtBackendService:
 
     def start_backend(self) -> None:
         """
-        Initialises QEMU/libvirt environment needed to run guests. Namely starts networks and network filters.
+        Initialises QEMU/libvirt environment needed to run guests.
+        Namely starts networks and network filters.
         """
         # create a network filter
         self.filter = backend_pool.libvirt.network_handler.create_filter(self.conn)

@@ -1,3 +1,7 @@
+"""
+general utility functions
+"""
+
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 
@@ -11,13 +15,11 @@ import time
 
 
 def ping(guest_ip: str) -> int:
-    # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
     out = subprocess.run(["ping", "-c 1", guest_ip], capture_output=True)
     return out.returncode == 0
 
 
 def nmap_port(guest_ip: str, port: int) -> int:
-    # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
     out = subprocess.run(
         ["nmap", guest_ip, "-PN", "-p", str(port)],
         capture_output=True,
@@ -36,7 +38,8 @@ def to_byte(n: int) -> str:
 
 def generate_network_table(seed: int | None = None) -> dict[str, str]:
     """
-    Generates a table associating MAC and IP addressed to be distributed by our virtual network adapter via DHCP.
+    Generates a table associating MAC and IP addressed to be
+    distributed by our virtual network adapter via DHCP.
     """
 
     # we use the seed in case we want to generate the same table twice
@@ -70,10 +73,9 @@ def now() -> float:
 
 def to_absolute_path(path: str) -> str:
     """
-    Converts a relative path to absolute, useful when converting cowrie configs (relative) to qemu paths
-    (which must be absolute)
+    Converts a relative path to absolute, useful when converting
+    cowrie configs (relative) to qemu paths (which must be absolute)
     """
     if not os.path.isabs(path):
         return os.path.join(os.getcwd(), path)
-    else:
-        return path
+    return path

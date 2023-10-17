@@ -7,9 +7,10 @@ from configparser import NoOptionError
 
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
-from cowrie.core.config import CowrieConfig
 
 
 class QemuGuestError(Exception):

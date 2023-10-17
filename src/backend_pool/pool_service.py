@@ -1,6 +1,19 @@
 """
-pool service
-"""
+The server interfaces exposes a producer-consumer infinite loop
+that runs on _pool_service.py_.
+
+The **producer** is an infinite loop started by the server, and
+runs every 5 seconds. It creates VMs up to the configured limit,
+checks which VMs become available (by testing if they accept SSH
+and/or Telnet connections), and destroys VMs that are no longer
+needed.
+
+**Consumer** methods are called by server request, and basically
+involve requesting and freeing VMs. All operations on shared data
+in the producer-consumer are guarded by a lock, since there may be
+concurrent requests. The lock protects the _guests_ list, which
+contains references for each VM backend (in our case libvirt/QEMU
+instances).  """
 
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information

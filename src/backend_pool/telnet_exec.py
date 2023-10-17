@@ -19,6 +19,7 @@ class TelnetClient(StatefulTelnetProtocol):
     """
     A telnet client
     """
+
     factory: TelnetFactory
 
     def __init__(self):

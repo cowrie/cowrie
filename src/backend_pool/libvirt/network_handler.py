@@ -6,8 +6,9 @@ import sys
 
 from twisted.python import log
 
-import backend_pool.util
 from cowrie.core.config import CowrieConfig
+
+import backend_pool.util
 
 
 def create_filter(connection):
