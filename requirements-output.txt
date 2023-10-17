@@ -21,7 +21,7 @@ pymongo==4.5.0
 rethinkdb==2.4.9
 
 # s3
-botocore==1.31.54
+botocore==1.31.64
 
 # slack
 slackclient==2.9.4
