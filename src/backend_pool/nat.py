@@ -79,7 +79,9 @@ class NATService:
             Lock()
         )  # we need to be thread-safe just in case, this is accessed from multiple clients
 
-    def request_binding(self, guest_id: int, dst_ip: str, ssh_port: int, telnet_port: int) -> tuple[int, int]:
+    def request_binding(
+        self, guest_id: int, dst_ip: str, ssh_port: int, telnet_port: int
+    ) -> tuple[int, int]:
         with self.lock:
             # see if binding is already created
             if guest_id in self.bindings:
