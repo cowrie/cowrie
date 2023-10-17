@@ -217,7 +217,7 @@ class PoolService:
                     )
                     guest["state"] = "unavailable"
 
-    def __producer_check_health(self):
+    def __producer_check_health(self) -> None:
         """
         Checks all usable guests, and whether they should have connectivity. If they don't, then
         mark them for deletion.
@@ -234,7 +234,7 @@ class PoolService:
                     )
                     guest["state"] = "unavailable"
 
-    def __producer_destroy_timed_out(self):
+    def __producer_destroy_timed_out(self) -> None:
         """
         Loops over 'unavailable' guests, and invokes qemu to destroy the corresponding domain
         """
@@ -250,7 +250,7 @@ class PoolService:
                     error=error,
                 )
 
-    def __producer_remove_destroyed(self):
+    def __producer_remove_destroyed(self) -> None:
         """
         Removes guests marked as destroyed (so no qemu domain existing)
         and simply removes their object from the list
@@ -259,7 +259,7 @@ class PoolService:
         for guest in destroyed_guests:
             self.guests.remove(guest)
 
-    def __producer_mark_available(self):
+    def __producer_mark_available(self) -> None:
         """
         Checks recently-booted guests ('created' state), and whether they are accepting SSH or Telnet connections,
         which indicates they are ready to be used ('available' state).
@@ -280,7 +280,7 @@ class PoolService:
                     boot_time=boot_time,
                 )
 
-    def __producer_create_guests(self):
+    def __producer_create_guests(self) -> None:
         """
         Creates guests until the pool has the allotted amount
         """
@@ -394,7 +394,7 @@ class PoolService:
 
         return guest["id"], guest["guest_ip"], guest["snapshot"]
 
-    def free_vm(self, guest_id):
+    def free_vm(self, guest_id: int) -> None:
         with self.guest_lock:
             for guest in self.guests:
                 if guest["id"] == guest_id:
@@ -405,7 +405,7 @@ class PoolService:
                         guest["state"] = "used"
                     return
 
-    def reuse_vm(self, guest_id):
+    def reuse_vm(self, guest_id: int) -> None:
         with self.guest_lock:
             for guest in self.guests:
                 if guest["id"] == guest_id:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from threading import Lock
+from typing import Any
 
 from twisted.internet.interfaces import IAddress
 from twisted.internet import protocol
@@ -73,12 +74,12 @@ class NATService:
     """
 
     def __init__(self):
-        self.bindings = {}
+        self.bindings: dict[int, Any] = {}
         self.lock = (
             Lock()
         )  # we need to be thread-safe just in case, this is accessed from multiple clients
 
-    def request_binding(self, guest_id, dst_ip, ssh_port, telnet_port):
+    def request_binding(self, guest_id: int, dst_ip: str, ssh_port: int, telnet_port: int) -> tuple[int, int]:
         with self.lock:
             # see if binding is already created
             if guest_id in self.bindings:
@@ -90,17 +91,17 @@ class NATService:
                     self.bindings[guest_id][2]._realPortNumber,
                 )
             else:
-                nat_ssh = reactor.listenTCP(
+                nat_ssh = reactor.listenTCP(  # type: ignore[attr-defined]
                     0, ServerFactory(dst_ip, ssh_port), interface="0.0.0.0"
                 )
-                nat_telnet = reactor.listenTCP(
+                nat_telnet = reactor.listenTCP(  # type: ignore[attr-defined]
                     0, ServerFactory(dst_ip, telnet_port), interface="0.0.0.0"
                 )
                 self.bindings[guest_id] = [1, nat_ssh, nat_telnet]
 
                 return nat_ssh._realPortNumber, nat_telnet._realPortNumber
 
-    def free_binding(self, guest_id):
+    def free_binding(self, guest_id: int) -> None:
         with self.lock:
             self.bindings[guest_id][0] -= 1
 
