@@ -20,6 +20,7 @@ instances).  """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 import time
 from threading import Lock
@@ -40,6 +41,21 @@ POOL_STATE_USING = "using"
 POOL_STATE_USED = "used"
 POOL_STATE_UNAVAILABLE = "unavailable"
 POOL_STATE_DESTROYED = "destroyed"
+
+
+@dataclass
+class Guest:
+    """Class for keeping track of QEMU guests."""
+
+    id: int
+    client_ips: list[str]
+    state: str
+    prev_state: str
+    start_timestamp: float
+    domain: str
+    guest_ip: str
+    name: str
+    snapshot: str
 
 
 class NoAvailableVMs(Exception):
