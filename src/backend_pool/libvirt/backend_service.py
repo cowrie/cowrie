@@ -20,8 +20,6 @@ import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
 import backend_pool.util
 
-LIBVIRT_URI = "qemu:///system"
-
 
 class LibvirtError(Exception):
     pass
@@ -33,13 +31,17 @@ class LibvirtBackendService:
         # and libvirt not installed (#1185)
         import libvirt
 
+        libvirt_uri: str = CowrieConfig.get(
+            "backend_pool", "libvirt_uri", fallback="qemu:///system"
+        )
+
         # open connection to libvirt
-        self.conn = libvirt.open(LIBVIRT_URI)
+        self.conn = libvirt.open(libvirt_uri)
         if self.conn is None:
             log.msg(
                 eventid="cowrie.backend_pool.qemu",
                 format="Failed to open connection to %(uri)s",
-                uri=LIBVIRT_URI,
+                uri=libvirt_uri,
             )
             raise LibvirtError()
 

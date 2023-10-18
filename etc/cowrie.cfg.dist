@@ -209,6 +209,11 @@ config_files_path = ${honeypot:share_path}/pool_configs
 network_config = default_network.xml
 nw_filter_config = default_filter.xml
 
+# libvirt URI, common settings are qemu:///system or qemu:///session
+libvirt_uri = qemu:///system
+# Use this syntax to directly connect to the UNIX socket
+# libvirt_uri = qemu+unix:///session?socket=/home/cowrie/.cache/libvirt/libvirt-sock
+
 # =====================================
 # Guest details (for a generic x86-64 guest, like Ubuntu)
 #
