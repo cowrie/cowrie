@@ -26,7 +26,7 @@ class LibvirtError(Exception):
 
 
 class LibvirtBackendService:
-    def __init__(self):
+    def __init__(self) -> None:
         # lazy import to avoid exception if not using the backend_pool
         # and libvirt not installed (#1185)
         import libvirt
@@ -40,7 +40,7 @@ class LibvirtBackendService:
         if self.conn is None:
             log.msg(
                 eventid="cowrie.backend_pool.qemu",
-                format="Failed to open connection to %(uri)s",
+                format="Failed to open connection to libvirtd at %(uri)s",
                 uri=libvirt_uri,
             )
             raise LibvirtError()
@@ -56,7 +56,9 @@ class LibvirtBackendService:
         self.network_table = backend_pool.util.generate_network_table(seed)
 
         log.msg(
-            eventid="cowrie.backend_pool.qemu", format="Connection to QEMU established"
+            eventid="cowrie.backend_pool.qemu",
+            format="Connection to libvirtd established at %(uri)s",
+            uri=libvirt_uri,
         )
 
     def start_backend(self) -> None:
@@ -77,7 +79,7 @@ class LibvirtBackendService:
 
     def stop_backend(self) -> None:
         log.msg(
-            eventid="cowrie.backend_pool.qemu", format="Doing QEMU clean shutdown..."
+            eventid="cowrie.backend_pool.qemu", format="Doing libvirtd clean shutdown..."
         )
 
         self.ready = False
@@ -89,7 +91,7 @@ class LibvirtBackendService:
 
         log.msg(
             eventid="cowrie.backend_pool.qemu",
-            format="Connection to QEMU closed successfully",
+            format="Connection to libvirtd closed successfully",
         )
 
     def get_mac_ip(self, ip_tester):
