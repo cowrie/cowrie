@@ -39,7 +39,7 @@ class LibvirtBackendService:
         self.conn = libvirt.open(libvirt_uri)
         if self.conn is None:
             log.msg(
-                eventid="cowrie.backend_pool.qemu",
+                eventid="cowrie.backend_pool.libvirtd",
                 format="Failed to open connection to libvirtd at %(uri)s",
                 uri=libvirt_uri,
             )
@@ -56,7 +56,7 @@ class LibvirtBackendService:
         self.network_table = backend_pool.util.generate_network_table(seed)
 
         log.msg(
-            eventid="cowrie.backend_pool.qemu",
+            eventid="cowrie.backend_pool.libvirtd",
             format="Connection to libvirtd established at %(uri)s",
             uri=libvirt_uri,
         )
@@ -79,7 +79,8 @@ class LibvirtBackendService:
 
     def stop_backend(self) -> None:
         log.msg(
-            eventid="cowrie.backend_pool.qemu", format="Doing libvirtd clean shutdown..."
+            eventid="cowrie.backend_pool.libvirtd",
+            format="Doing libvirtd clean shutdown...",
         )
 
         self.ready = False
@@ -90,7 +91,7 @@ class LibvirtBackendService:
         self.conn.close()  # close libvirt connection
 
         log.msg(
-            eventid="cowrie.backend_pool.qemu",
+            eventid="cowrie.backend_pool.libvirtd",
             format="Connection to libvirtd closed successfully",
         )
 
@@ -126,7 +127,9 @@ class LibvirtBackendService:
             self.conn, guest_mac, guest_unique_id
         )
         if dom is None:
-            log.msg(eventid="cowrie.backend_pool.qemu", format="Failed to create guest")
+            log.msg(
+                eventid="cowrie.backend_pool.libvirtd", format="Failed to create guest"
+            )
             return None
 
         return dom, snapshot, guest_ip
@@ -136,7 +139,7 @@ class LibvirtBackendService:
             return
 
         try:
-            # destroy the domain in qemu
+            # destroy the domain in QEMU
             domain.destroy()
 
             # we want to remove the snapshot if either:
@@ -156,7 +159,7 @@ class LibvirtBackendService:
                 os.remove(snapshot)  # destroy its disk snapshot
         except Exception as error:
             log.err(
-                eventid="cowrie.backend_pool.qemu",
+                eventid="cowrie.backend_pool.libvirtd",
                 format="Error destroying guest: %(error)s",
                 error=error,
             )
@@ -165,7 +168,8 @@ class LibvirtBackendService:
         domains = self.conn.listDomainsID()
         if not domains:
             log.msg(
-                eventid="cowrie.backend_pool.qemu", format="Could not get domain list"
+                eventid="cowrie.backend_pool.libvirtd",
+                format="Could not get domain list",
             )
 
         for domain_id in domains:
@@ -180,7 +184,8 @@ class LibvirtBackendService:
         networks = self.conn.listNetworks()
         if not networks:
             log.msg(
-                eventid="cowrie.backend_pool.qemu", format="Could not get network list"
+                eventid="cowrie.backend_pool.libvirtd",
+                format="Could not get network list",
             )
 
         for network in networks:
@@ -192,7 +197,7 @@ class LibvirtBackendService:
         network_filters = self.conn.listNWFilters()
         if not network_filters:
             log.msg(
-                eventid="cowrie.backend_pool.qemu",
+                eventid="cowrie.backend_pool.libvirtd",
                 format="Could not get network filters list",
             )
 
