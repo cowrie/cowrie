@@ -6,6 +6,7 @@ import re
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer
 from twisted.internet import reactor
+from twisted.internet.interfaces import IAddress
 from twisted.internet.protocol import ClientFactory
 from twisted.python import log
 
@@ -15,6 +16,12 @@ class TelnetConnectionError(Exception):
 
 
 class TelnetClient(StatefulTelnetProtocol):
+    """
+    A telnet client
+    """
+
+    factory: TelnetFactory
+
     def __init__(self):
         # output from server
         self.response: bytes = b""
@@ -67,7 +74,7 @@ class TelnetClient(StatefulTelnetProtocol):
 
         # start countdown to command done (when reached, consider the output was completely received and close)
         if not self.done_callback:
-            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore
+            self.done_callback = reactor.callLater(0.5, self.close)  # type: ignore[attr-defined]
         else:
             self.done_callback.reset(0.5)
 
@@ -105,7 +112,7 @@ class TelnetFactory(ClientFactory):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def buildProtocol(self, addr):
+    def buildProtocol(self, addr: IAddress) -> TelnetTransport:
         transport = TelnetTransport(TelnetClient)
         transport.factory = self
         return transport

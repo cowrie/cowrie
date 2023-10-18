@@ -90,7 +90,7 @@ disallow_subclassing_any    = true
 warn_unused_ignores         = true
 
 # Getting these passing should be easy
-strict_concatenate          = true
+# strict_concatenate          = true
 
 # These are too strict for us at the moment
 
@@ -116,7 +116,7 @@ line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
-ignore = ["E501", "UP007", "B019", "RUF001"]
+ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.
 target-version = "py310"

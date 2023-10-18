@@ -23,10 +23,10 @@ from cowrie.shell import pwd
 
 class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     id = 0  # telnet can only have 1 simultaneous session, unlike SSH
-    # to be populated by HoneyPotTelnetAuthProtocol after auth
-    transportId = None
 
     def __init__(self, username, server):
+        # to be populated by HoneyPotTelnetAuthProtocol after auth
+        self.transportId = None
         self.windowSize = [40, 80]
         self.username = username.decode()
         self.server = server

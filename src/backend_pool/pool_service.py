@@ -1,7 +1,26 @@
+"""
+The server interfaces exposes a producer-consumer infinite loop
+that runs on _pool_service.py_.
+
+The **producer** is an infinite loop started by the server, and
+runs every 5 seconds. It creates VMs up to the configured limit,
+checks which VMs become available (by testing if they accept SSH
+and/or Telnet connections), and destroys VMs that are no longer
+needed.
+
+**Consumer** methods are called by server request, and basically
+involve requesting and freeing VMs. All operations on shared data
+in the producer-consumer are guarded by a lock, since there may be
+concurrent requests. The lock protects the _guests_ list, which
+contains references for each VM backend (in our case libvirt/QEMU
+instances).  """
+
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
+
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 import time
 from threading import Lock
@@ -10,13 +29,43 @@ from twisted.internet import reactor
 from twisted.internet import threads
 from twisted.python import log
 
+from cowrie.core.config import CowrieConfig
+
 import backend_pool.libvirt.backend_service
 import backend_pool.util
-from cowrie.core.config import CowrieConfig
+
+
+POOL_STATE_CREATED = "created"
+POOL_STATE_AVAILABLE = "available"
+POOL_STATE_USING = "using"
+POOL_STATE_USED = "used"
+POOL_STATE_UNAVAILABLE = "unavailable"
+POOL_STATE_DESTROYED = "destroyed"
+
+
+@dataclass
+class Guest:
+    """Class for keeping track of QEMU guests."""
+
+    id: int
+    client_ips: list[str]
+    state: str
+    prev_state: str
+    start_timestamp: float
+    domain: str
+    guest_ip: str
+    name: str
+    snapshot: str
 
 
 class NoAvailableVMs(Exception):
-    pass
+    """
+    no VM's available
+    """
+
+
+#    pass
+#
 
 
 class PoolService:
@@ -31,8 +80,10 @@ class PoolService:
         unavailable: marked for destruction after timeout
         destroyed:   deleted by qemu, can be removed from list
 
-    A lock is required to manipulate VMs in states [available, using, used], since these are the ones that can be
-    accessed by several consumers and the producer. All other states are accessed only by the single producer.
+    A lock is required to manipulate VMs in states [available,
+    using, used], since these are the ones that can be accessed by
+    several consumers and the producer. All other states are accessed
+    only by the single producer.
     """
 
     def __init__(self, nat_service):
@@ -47,7 +98,8 @@ class PoolService:
         self.loop_sleep_time: int = 5
         self.loop_next_call = None
 
-        # default configs; custom values will come from the client when they connect to the pool
+        # default configs; custom values will come from the client
+        # when they connect to the pool
         self.max_vm: int = 2
         self.vm_unused_timeout: int = 600
         self.share_guests: bool = True
@@ -80,7 +132,7 @@ class PoolService:
 
         self.any_vm_up: bool = False  # TODO fix for no VM available
 
-    def start_pool(self):
+    def start_pool(self) -> None:
         # cleanup older qemu objects
         self.qemu.destroy_all_cowrie()
 
@@ -101,10 +153,11 @@ class PoolService:
             "backend_pool", "recycle_period", fallback=-1
         )
         if recycle_period > 0:
-            reactor.callLater(recycle_period, self.restart_pool)
+            reactor.callLater(recycle_period, self.restart_pool)  # type: ignore[attr-defined]
 
     def stop_pool(self):
-        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        # lazy import to avoid exception if not using the backend_pool
+        # and libvirt not installed (#1185)
         import libvirt
 
         log.msg(eventid="cowrie.backend_pool.service", format="Trying pool clean stop")
@@ -133,7 +186,8 @@ class PoolService:
             print("Not connected to QEMU")  # noqa: T201
 
     def shutdown_pool(self):
-        # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+        # lazy import to avoid exception if not using the backend_pool
+        # and libvirt not installed (#1185)
         import libvirt
 
         self.stop_pool()
@@ -159,11 +213,11 @@ class PoolService:
         self.vm_unused_timeout = vm_unused_timeout
         self.share_guests = share_guests
 
-    def get_guest_states(self, states):
+    def get_guest_states(self, states: list[str]) -> list:
         return [g for g in self.guests if g["state"] in states]
 
     def existing_pool_size(self):
-        return len([g for g in self.guests if g["state"] != "destroyed"])
+        return len([g for g in self.guests if g["state"] != POOL_STATE_DESTROYED])
 
     def is_ip_free(self, ip):
         for guest in self.guests:
@@ -173,9 +227,11 @@ class PoolService:
 
     def has_connectivity(self, ip):
         """
-        This method checks if a guest has either SSH or Telnet connectivity, to know whether it is ready for connections
-        and healthy. It takes into account whether those services are enabled, and if SSH is enabled and available, then
-        no Telnet check needs to be done.
+        This method checks if a guest has either SSH or Telnet
+        connectivity, to know whether it is ready for connections
+        and healthy. It takes into account whether those services
+        are enabled, and if SSH is enabled and available, then no
+        Telnet check needs to be done.
         """
         # check SSH connectivity, if enabled in configs, if disabled then we need to check telnet
         has_ssh = (
@@ -198,17 +254,17 @@ class PoolService:
         """
         Checks timed-out VMs and acquires lock to safely mark for deletion
         """
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             # only mark VMs not in use
-            used_guests = self.get_guest_states(["used"])
+            used_guests = self.get_guest_states([POOL_STATE_USED])
             for guest in used_guests:
                 timed_out = (
                     guest["freed_timestamp"] + guest_timeout < backend_pool.util.now()
                 )
 
                 # only mark guests without clients
-                # (and guest['connected'] == 0) sometimes did not work correctly as some VMs are not signaled as freed
+                # (and guest['connected'] == 0) sometimes did not
+                # work correctly as some VMs are not signaled as freed
                 if timed_out:
                     log.msg(
                         eventid="cowrie.backend_pool.service",
@@ -216,18 +272,17 @@ class PoolService:
                         guest_id=guest["id"],
                         guest_ip=guest["guest_ip"],
                     )
-                    guest["state"] = "unavailable"
-        finally:
-            self.guest_lock.release()
+                    guest["state"] = POOL_STATE_UNAVAILABLE
 
-    def __producer_check_health(self):
+    def __producer_check_health(self) -> None:
         """
         Checks all usable guests, and whether they should have connectivity. If they don't, then
         mark them for deletion.
         """
-        self.guest_lock.acquire()
-        try:
-            usable_guests = self.get_guest_states(["available", "using", "used"])
+        with self.guest_lock:
+            usable_guests = self.get_guest_states(
+                [POOL_STATE_AVAILABLE, POOL_STATE_USING, POOL_STATE_USED]
+            )
             for guest in usable_guests:
                 if not self.has_connectivity(guest["guest_ip"]):
                     log.msg(
@@ -236,19 +291,17 @@ class PoolService:
                         guest_id=guest["id"],
                         guest_ip=guest["guest_ip"],
                     )
-                    guest["state"] = "unavailable"
-        finally:
-            self.guest_lock.release()
+                    guest["state"] = POOL_STATE_UNAVAILABLE
 
-    def __producer_destroy_timed_out(self):
+    def __producer_destroy_timed_out(self) -> None:
         """
         Loops over 'unavailable' guests, and invokes qemu to destroy the corresponding domain
         """
-        unavailable_guests = self.get_guest_states(["unavailable"])
+        unavailable_guests = self.get_guest_states([POOL_STATE_UNAVAILABLE])
         for guest in unavailable_guests:
             try:
                 self.qemu.destroy_guest(guest["domain"], guest["snapshot"])
-                guest["state"] = "destroyed"
+                guest["state"] = POOL_STATE_DESTROYED
             except Exception as error:
                 log.err(
                     eventid="cowrie.backend_pool.service",
@@ -256,27 +309,27 @@ class PoolService:
                     error=error,
                 )
 
-    def __producer_remove_destroyed(self):
+    def __producer_remove_destroyed(self) -> None:
         """
         Removes guests marked as destroyed (so no qemu domain existing)
         and simply removes their object from the list
         """
-        destroyed_guests = self.get_guest_states(["destroyed"])
+        destroyed_guests = self.get_guest_states([POOL_STATE_DESTROYED])
         for guest in destroyed_guests:
             self.guests.remove(guest)
 
-    def __producer_mark_available(self):
+    def __producer_mark_available(self) -> None:
         """
         Checks recently-booted guests ('created' state), and whether they are accepting SSH or Telnet connections,
         which indicates they are ready to be used ('available' state).
 
         No lock needed since the 'created' state is only accessed by the single-threaded producer
         """
-        created_guests = self.get_guest_states(["created"])
+        created_guests = self.get_guest_states([POOL_STATE_CREATED])
         for guest in created_guests:
             if self.has_connectivity(guest["guest_ip"]):
                 self.any_vm_up = True  # TODO fix for no VM available
-                guest["state"] = "available"
+                guest["state"] = POOL_STATE_AVAILABLE
                 boot_time = int(time.time() - guest["start_timestamp"])
                 log.msg(
                     eventid="cowrie.backend_pool.service",
@@ -286,7 +339,7 @@ class PoolService:
                     boot_time=boot_time,
                 )
 
-    def __producer_create_guests(self):
+    def __producer_create_guests(self) -> None:
         """
         Creates guests until the pool has the allotted amount
         """
@@ -299,7 +352,7 @@ class PoolService:
             self.guests.append(
                 {
                     "id": self.guest_id,
-                    "state": "created",
+                    "state": POOL_STATE_CREATED,
                     "prev_state": None,  # used in case a guest is requested and freed immediately, to revert the state
                     "start_timestamp": time.time(),
                     "guest_ip": guest_ip,
@@ -317,7 +370,7 @@ class PoolService:
             if self.guest_id == 252:
                 self.guest_id = 0
 
-    def producer_loop(self):
+    def producer_loop(self) -> None:
         # delete old VMs, but do not let pool size be 0
         if self.existing_pool_size() > 1:
             # mark timed-out VMs for destruction
@@ -339,49 +392,38 @@ class PoolService:
         self.__producer_mark_available()
 
         # sleep until next iteration
-        self.loop_next_call = reactor.callLater(
+        self.loop_next_call = reactor.callLater(  # type: ignore[attr-defined]
             self.loop_sleep_time, self.producer_loop
         )
 
     # Consumers
     def __consumers_get_guest_ip(self, src_ip):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             # if ip is the same, doesn't matter if being used or not
-            usable_guests = self.get_guest_states(["used", "using"])
+            usable_guests = self.get_guest_states([POOL_STATE_USED, POOL_STATE_USING])
             for guest in usable_guests:
                 if src_ip in guest["client_ips"]:
                     return guest
-        finally:
-            self.guest_lock.release()
-
         return None
 
     def __consumers_get_available_guest(self):
-        self.guest_lock.acquire()
-        try:
-            available_guests = self.get_guest_states(["available"])
+        with self.guest_lock:
+            available_guests = self.get_guest_states([POOL_STATE_AVAILABLE])
             for guest in available_guests:
                 return guest
-        finally:
-            self.guest_lock.release()
-
         return None
 
     def __consumers_get_any_guest(self):
-        self.guest_lock.acquire()
-        try:
+        with self.guest_lock:
             # try to get a VM with few clients
             least_conn = None
 
-            usable_guests = self.get_guest_states(["using", "used"])
+            usable_guests = self.get_guest_states([POOL_STATE_USING, POOL_STATE_USED])
             for guest in usable_guests:
                 if not least_conn or guest["connected"] < least_conn["connected"]:
                     least_conn = guest
 
             return least_conn
-        finally:
-            self.guest_lock.release()
 
     # Consumer methods to be called concurrently
     def request_vm(self, src_ip):
@@ -405,29 +447,25 @@ class PoolService:
             raise NoAvailableVMs()
 
         guest["prev_state"] = guest["state"]
-        guest["state"] = "using"
+        guest["state"] = POOL_STATE_USING
         guest["connected"] += 1
         guest["client_ips"].add(src_ip)
 
         return guest["id"], guest["guest_ip"], guest["snapshot"]
 
-    def free_vm(self, guest_id):
-        self.guest_lock.acquire()
-        try:
+    def free_vm(self, guest_id: int) -> None:
+        with self.guest_lock:
             for guest in self.guests:
                 if guest["id"] == guest_id:
                     guest["freed_timestamp"] = backend_pool.util.now()
                     guest["connected"] -= 1
 
                     if guest["connected"] == 0:
-                        guest["state"] = "used"
+                        guest["state"] = POOL_STATE_USED
                     return
-        finally:
-            self.guest_lock.release()
 
-    def reuse_vm(self, guest_id):
-        self.guest_lock.acquire()
-        try:
+    def reuse_vm(self, guest_id: int) -> None:
+        with self.guest_lock:
             for guest in self.guests:
                 if guest["id"] == guest_id:
                     guest["connected"] -= 1
@@ -437,5 +475,3 @@ class PoolService:
                         guest["state"] = guest["prev_state"]
                         guest["prev_state"] = None
                     return
-        finally:
-            self.guest_lock.release()
