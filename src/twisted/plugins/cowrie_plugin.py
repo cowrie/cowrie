@@ -184,6 +184,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             except Exception:
                 log.err()
                 log.msg(f"Failed to load output engine: {engine}")
+                sys.exit(1)
 
         self.topService = service.MultiService()
         application = service.Application("cowrie")
