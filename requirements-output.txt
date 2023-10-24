@@ -9,7 +9,7 @@ requests==2.31.0
 elasticsearch==8.10.1
 
 # hpfeeds
-hpfeeds3==0.9.10
+hpfeeds==3.1.0
 
 # mysql
 mysql-connector-python==8.1.0
