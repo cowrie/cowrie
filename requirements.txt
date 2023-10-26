@@ -2,7 +2,7 @@ appdirs==1.4.4
 attrs==23.1.0
 bcrypt==4.0.1
 configparser==6.0.0
-cryptography==41.0.4
+cryptography==41.0.5
 packaging==23.2
 pyasn1_modules==0.3.0
 pyparsing==3.1.1
@@ -10,4 +10,4 @@ python-dateutil==2.8.2
 service_identity==23.1.0
 tftpy==0.8.2
 treq==22.2.0
-twisted==23.8.0
+twisted==23.10.0rc1
