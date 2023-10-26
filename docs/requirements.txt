@@ -3,4 +3,4 @@ setuptools==68.2.2
 Sphinx==7.2.6
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==1.3.0
-twisted==23.8.0
+twisted==23.10.0rc1
