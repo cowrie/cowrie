@@ -198,19 +198,11 @@ Running using Supervisord (OPTIONAL)
 On Debian, put the below in /etc/supervisor/conf.d/cowrie.conf::
 
     [program:cowrie]
-    command=/home/cowrie/cowrie/bin/cowrie start
+    command=/home/cowrie/cowrie/bin/cowrie start -n
     directory=/home/cowrie/cowrie/
     user=cowrie
     autorestart=true
     redirect_stderr=true
-
-Update the bin/cowrie script, change::
-
-    DAEMONIZE=""
-
-to::
-
-    DAEMONIZE="-n"
 
 Configure Additional Output Plugins (OPTIONAL)
 **********************************************
