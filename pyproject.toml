@@ -26,7 +26,7 @@ classifiers=[
 ]
 
 dependencies = [
-        "Twisted==23.8.0",
+        "Twisted==23.10.0",
 ]
 #        "cryptography>=0.9.1",
 #        "configparser",
