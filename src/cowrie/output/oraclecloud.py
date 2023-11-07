@@ -8,7 +8,7 @@ import string
 import time
 import oci
 from oci import auth
-from datetime import datetime
+import datetime
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -30,6 +30,8 @@ class Output(cowrie.core.output.Output):
     def sendLogs(self, logentry):
         log_id = self.generate_random_log_id()
         # Initialize service client with default config file
+        current_time = datetime.datetime.utcnow()
+        formatted_time = current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")        
         current_time = datetime.datetime.utcnow()
         self.log_ocid = CowrieConfig.get("output_oraclecloud", "log_ocid")
 
