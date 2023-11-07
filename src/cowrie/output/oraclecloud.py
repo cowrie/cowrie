@@ -66,23 +66,24 @@ class Output(cowrie.core.output.Output):
             # identity_client = oci.identity.IdentityClient(config={}, signer=signer)
             self.loggingingestion_client = oci.loggingingestion.LoggingClient(config={}, signer=signer)                     
 
-        if authtype == "user_principals":
+        elif authtype == "user_principals":
             tenancy_ocid=CowrieConfig.get("output_oraclecloud", "tenancy_ocid")
             user_ocid=CowrieConfig.get("output_oraclecloud", "user_ocid")
             region=CowrieConfig.get("output_oraclecloud", "region")
             fingerprint=CowrieConfig.get("output_oraclecloud", "fingerprint")
-            priv_key=CowrieConfig.get("output_oraclecloud", "priv_key", raw=True)
+            keyfile=CowrieConfig.get("output_oraclecloud", "keyfile")
 
             config_with_key_content = {
                 "user": user_ocid,
-                "key_content": priv_key,
+                "key_file": keyfile,
                 "fingerprint": fingerprint,
                 "tenancy": tenancy_ocid,
                 "region": region
             }
             oci.config.validate_config(config_with_key_content)
             self.loggingingestion_client = oci.loggingingestion.LoggingClient(config_with_key_content)
-
+        else:
+            raise ValueError("Invalid authentication type")
 
     def stop(self):
         pass
