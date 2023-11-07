@@ -43,7 +43,7 @@ class Output(cowrie.core.output.Output):
                     oci.loggingingestion.models.LogEntryBatch(
                         entries=[
                             oci.loggingingestion.models.LogEntry(
-                                data=json.dumps(logentry),
+                                data=logentry,
                                 id=log_id,
                                 time=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))],
                         source="EXAMPLE-source-Value",
