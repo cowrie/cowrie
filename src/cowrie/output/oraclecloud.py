@@ -20,7 +20,7 @@ class Output(cowrie.core.output.Output):
     """
 
 
-    def generate_random_log_id():
+    def generate_random_log_id(self):
         random.seed(time.time())
         charset = string.ascii_letters + string.digits
         random_log_id = ''.join(random.choice(charset) for _ in range(32))
