@@ -32,6 +32,7 @@ class Output(cowrie.core.output.Output):
         # Initialize service client with default config file       
         current_time = datetime.datetime.utcnow()
         self.log_ocid = CowrieConfig.get("output_oraclecloud", "log_ocid")
+        self.hostname = CowrieConfig.get("honeypot", "hostname")
 
         # Send the request to service, some parameters are not required, see API
         # doc for more info
@@ -46,12 +47,10 @@ class Output(cowrie.core.output.Output):
                                 data=logentry,
                                 id=log_id,
                                 time=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))],
-                        source="EXAMPLE-source-Value",
+                        source=self.hostname,
                         type="cowrie")]),
             timestamp_opc_agent_processing=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
-
-        # Get the data from response
-        print(put_logs_response.headers)         
+      
 
     def start(self):
         """
