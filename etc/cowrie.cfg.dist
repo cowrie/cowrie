@@ -1066,3 +1066,13 @@ api_key = abcdef1234567890fedcba0987654321
 ddsource = cowrie
 ddtags = env:dev
 service = honeypot
+
+[output_oraclecloud]
+enabled = true
+authtype = user_principals
+log_ocid = ocid1.log.oc1.eu-stockholm-1.xxx
+user_ocid = ocid1.user.oc1..xxx
+fingerprint = 77:9c:4xxxxx
+tenancy_ocid = ocid1.tenancy.oc1..xxx
+region = eu-stockholm-1
+keyfile = /hxxome/xx/raspi.pem

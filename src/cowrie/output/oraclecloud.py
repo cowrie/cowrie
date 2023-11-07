@@ -34,27 +34,36 @@ class Output(cowrie.core.output.Output):
         self.log_ocid = CowrieConfig.get("output_oraclecloud", "log_ocid")
         self.hostname = CowrieConfig.get("honeypot", "hostname")
 
-        # Send the request to service, some parameters are not required, see API
-        # doc for more info
-        put_logs_response = self.loggingingestion_client.put_logs(
-            log_id=self.log_ocid,
-            put_logs_details=oci.loggingingestion.models.PutLogsDetails(
-                specversion="1.0",
-                log_entry_batches=[
-                    oci.loggingingestion.models.LogEntryBatch(
-                        entries=[
-                            oci.loggingingestion.models.LogEntry(
-                                data=logentry,
-                                id=log_id,
-                                time=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))],
-                        source=self.hostname,
-                        type="cowrie")]),
-            timestamp_opc_agent_processing=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
-      
+        try:
+            # Send the request to service, some parameters are not required, see API
+            # doc for more info
+            self.loggingingestion_client.put_logs(
+                log_id=self.log_ocid,
+                put_logs_details=oci.loggingingestion.models.PutLogsDetails(
+                    specversion="1.0",
+                    log_entry_batches=[
+                        oci.loggingingestion.models.LogEntryBatch(
+                            entries=[
+                                oci.loggingingestion.models.LogEntry(
+                                    data=logentry,
+                                    id=log_id,
+                                    time=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))],
+                            source=self.hostname,
+                            type="cowrie")]),
+                timestamp_opc_agent_processing=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        except oci.exceptions.ServiceError as ex:
+            print(
+                f"Oracle Cloud plugin Error: {ex.message}\n" +
+                f"Oracle Cloud plugin Status Code: {ex.status}\n"
+            )
+        except Exception as ex:
+            print(f"Oracle Cloud plugin Error: {ex}")
+            raise
+            
 
     def start(self):
         """
-        Initialize pymisp module and ObjectWrapper (Abstract event and object creation)
+        Initialize Oracle Cloud LoggingClient with user or instance principal authentication
         """
 
         authtype=CowrieConfig.get("output_oraclecloud", "authtype")
