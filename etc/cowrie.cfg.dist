@@ -1067,12 +1067,21 @@ ddsource = cowrie
 ddtags = env:dev
 service = honeypot
 
+# Oracle Cloud custom logs output module
+# sends JSON directly to Oracle Cloud custom logs
+# mandatory field: authtype, log_ocid
+# optional fields (to be set if user_principals is selected as authtype): user_ocid, fingerprint, tenancy_ocid, region, keyfile
+# For more information on Oracle Cloud custom logs: https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/custom_logs.htm
+# For more information on Oracle Cloud user principal authentication method: https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five
+# For more information on Oracle Cloud instance principal authentication method: https://blogs.oracle.com/developers/post/accessing-the-oracle-cloud-infrastructure-api-using-instance-principals
 [output_oraclecloud]
 enabled = true
-authtype = user_principals
-log_ocid = ocid1.log.oc1.eu-stockholm-1.xxx
-user_ocid = ocid1.user.oc1..xxx
-fingerprint = 77:9c:4xxxxx
-tenancy_ocid = ocid1.tenancy.oc1..xxx
-region = eu-stockholm-1
-keyfile = /hxxome/xx/raspi.pem
+# authtype must be set either to user_principals or to instance_principals
+authtype = instance_principals
+# following parameters must be set in case user_principals is used. keyfile is the absolute path to your API pem key file.
+#log_ocid = ocid1.log.oc1.eu-stockholm-1.xxx
+#user_ocid = ocid1.user.oc1..xxx
+#fingerprint = 77:9c:4xxxxx
+#tenancy_ocid = ocid1.tenancy.oc1..xxx
+#region = eu-stockholm-1
+#keyfile = /home/xx/key.pem
