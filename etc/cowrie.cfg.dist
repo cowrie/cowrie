@@ -1075,7 +1075,7 @@ service = honeypot
 # For more information on Oracle Cloud user principal authentication method: https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm#five
 # For more information on Oracle Cloud instance principal authentication method: https://blogs.oracle.com/developers/post/accessing-the-oracle-cloud-infrastructure-api-using-instance-principals
 [output_oraclecloud]
-enabled = true
+enabled = false
 # authtype must be set either to user_principals or to instance_principals
 authtype = instance_principals
 # following parameters must be set in case user_principals is used. keyfile is the absolute path to your API pem key file.
