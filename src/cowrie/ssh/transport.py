@@ -121,7 +121,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 ),
                 format="Remote SSH version: %(version)s",
             )
-            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
+            m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
                     f"Bad protocol version identification: {self.otherVersionString!r}"
