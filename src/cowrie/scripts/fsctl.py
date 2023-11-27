@@ -757,9 +757,9 @@ class fseditCmd(cmd.Cmd):
 
 
 def run():
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
         print(
-            "Usage: %s <fs.pickle>"
+            "Usage: %s <fs.pickle> [command]"
             % os.path.basename(
                 sys.argv[0],
             )
@@ -769,7 +769,10 @@ def run():
     pickle_file_name = sys.argv[1].strip()
     print(pickle_file_name)
 
-    fseditCmd(pickle_file_name).cmdloop()
+    if len(sys.argv) == 3:
+        fseditCmd(pickle_file_name).onecmd()
+    else:
+        fseditCmd(pickle_file_name).cmdloop()
 
 
 if __name__ == "__main__":
