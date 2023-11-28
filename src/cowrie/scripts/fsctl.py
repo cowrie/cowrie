@@ -770,7 +770,7 @@ def run():
     print(pickle_file_name)
 
     if len(sys.argv) == 3:
-        fseditCmd(pickle_file_name).onecmd()
+        fseditCmd(pickle_file_name).onecmd(sys.argv[2])
     else:
         fseditCmd(pickle_file_name).cmdloop()
 
