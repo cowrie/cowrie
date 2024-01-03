@@ -5,7 +5,7 @@ mypy-zope==1.0.3; platform_python_implementation=='CPython' and python_version>'
 mypy==1.8.0; platform_python_implementation=='CPython' and python_version>'3.8'
 pathspec==0.12.1
 pipdeptree==2.13.1
-pre-commit==3.5.0
+pre-commit==3.6.0
 pylint==3.0.3
 pyre-check==0.9.19; python_version>'3.8'
 pyright==1.1.344
