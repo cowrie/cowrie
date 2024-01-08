@@ -1,5 +1,5 @@
 appdirs==1.4.4
-attrs==23.1.0
+attrs==23.2.0
 bcrypt==4.1.2
 configparser==6.0.0
 cryptography==41.0.7
