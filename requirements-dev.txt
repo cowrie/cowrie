@@ -12,7 +12,7 @@ pyright==1.1.344
 pytype==2023.6.2; platform_python_implementation=='CPython' and python_version<'3.11'
 pyupgrade==3.15.0
 pyyaml==6.0.1
-readthedocs-sphinx-search==0.3.1
+readthedocs-sphinx-search==0.3.2
 ruff==0.1.9
 setuptools==69.0.3
 sphinx-copybutton==0.5.2
