@@ -12,7 +12,7 @@ elasticsearch==8.12.0
 hpfeeds==3.1.0
 
 # mysql
-mysql-connector-python==8.2.0
+mysql-connector-python==8.3.0
 
 # mongodb
 pymongo==4.6.1
@@ -21,7 +21,7 @@ pymongo==4.6.1
 rethinkdb==2.4.10.post1
 
 # s3
-botocore==1.34.24
+botocore==1.34.29
 
 # slack
 slackclient==2.9.4
@@ -39,4 +39,4 @@ pymisp==2.4.183
 redis==5.0.1
 
 # Oracle Cloud
-oci==2.118.2
+oci==2.119.1
