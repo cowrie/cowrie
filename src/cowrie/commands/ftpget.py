@@ -275,7 +275,7 @@ Download a file via FTP
             self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:
                 ftp.quit()
-            except socket.timeout:
+            except TimeoutError:
                 pass
             return False
 
@@ -294,7 +294,7 @@ Download a file via FTP
             self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:
                 ftp.quit()
-            except socket.timeout:
+            except TimeoutError:
                 pass
             return False
 
@@ -305,7 +305,7 @@ Download a file via FTP
 
         try:
             ftp.quit()
-        except socket.timeout:
+        except TimeoutError:
             pass
 
         return True
