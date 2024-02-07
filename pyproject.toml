@@ -115,15 +115,15 @@ ignored-classes = ["twisted.internet.reactor"]
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
-ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
+lint.select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
+lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.
 target-version = "py310"
 
 
 # Ignore `T201` (print) in all scripts
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "src/cowrie/scripts/*" = ["T201"]
 
 
