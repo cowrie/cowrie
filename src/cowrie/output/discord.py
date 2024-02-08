@@ -25,15 +25,15 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def write(self, logentry):
-        webhook_message = "__New logentry__\n"
+    def write(self, event):
+        webhook_message = "__New event__\n"
 
-        for i in list(logentry.keys()):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
             else:
-                webhook_message += f"{i}: `{logentry[i]}`\n"
+                webhook_message += f"{i}: `{event[i]}`\n"
 
         self.postentry({"content": webhook_message})
 

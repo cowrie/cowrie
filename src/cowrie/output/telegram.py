@@ -18,35 +18,35 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
 
         logon_type = ""
         # Prepare logon type
-        if "HoneyPotSSHTransport" in (logentry["system"].split(","))[0]:
+        if "HoneyPotSSHTransport" in (event["system"].split(","))[0]:
             logon_type = "SSH"
-        elif "CowrieTelnetTransport" in (logentry["system"].split(","))[0]:
+        elif "CowrieTelnetTransport" in (event["system"].split(","))[0]:
             logon_type = "Telnet"
 
         # Prepare base message
-        msgtxt = "<strong>[Cowrie " + logentry["sensor"] + "]</strong>"
-        msgtxt += "\nEvent: " + logentry["eventid"]
+        msgtxt = "<strong>[Cowrie " + event["sensor"] + "]</strong>"
+        msgtxt += "\nEvent: " + event["eventid"]
         msgtxt += "\nLogon type: " + logon_type
-        msgtxt += "\nSource: <code>" + logentry["src_ip"] + "</code>"
-        msgtxt += "\nSession: <code>" + logentry["session"] + "</code>"
+        msgtxt += "\nSource: <code>" + event["src_ip"] + "</code>"
+        msgtxt += "\nSession: <code>" + event["session"] + "</code>"
 
-        if logentry["eventid"] == "cowrie.login.success":
-            msgtxt += "\nUsername: <code>" + logentry["username"] + "</code>"
-            msgtxt += "\nPassword: <code>" + logentry["password"] + "</code>"
+        if event["eventid"] == "cowrie.login.success":
+            msgtxt += "\nUsername: <code>" + event["username"] + "</code>"
+            msgtxt += "\nPassword: <code>" + event["password"] + "</code>"
             self.send_message(msgtxt)
-        elif logentry["eventid"] in ["cowrie.command.failed", "cowrie.command.input"]:
-            msgtxt += "\nCommand: <pre>" + logentry["input"] + "</pre>"
+        elif event["eventid"] in ["cowrie.command.failed", "cowrie.command.input"]:
+            msgtxt += "\nCommand: <pre>" + event["input"] + "</pre>"
             self.send_message(msgtxt)
-        elif logentry["eventid"] == "cowrie.session.file_download":
-            msgtxt += "\nUrl: " + logentry.get("url", "")
+        elif event["eventid"] == "cowrie.session.file_download":
+            msgtxt += "\nUrl: " + event.get("url", "")
             self.send_message(msgtxt)
 
     def send_message(self, message):

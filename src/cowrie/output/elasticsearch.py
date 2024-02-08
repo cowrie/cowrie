@@ -114,12 +114,12 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
 
         self.es.index(
-            index=self.index, doc_type=self.type, body=logentry, pipeline=self.pipeline
+            index=self.index, doc_type=self.type, body=event, pipeline=self.pipeline
         )

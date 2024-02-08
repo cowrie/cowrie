@@ -48,12 +48,12 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, logentry):
+    def write(self, event):
         if self.format == "cef":
-            self.outfile.write("{} ".format(logentry["timestamp"]))
-            self.outfile.write(f"{cowrie.core.cef.formatCef(logentry)}\n")
+            self.outfile.write("{} ".format(event["timestamp"]))
+            self.outfile.write(f"{cowrie.core.cef.formatCef(event)}\n")
         else:
-            self.outfile.write("{} ".format(logentry["timestamp"]))
-            self.outfile.write("{} ".format(logentry["session"]))
-            self.outfile.write("{}\n".format(logentry["message"]))
+            self.outfile.write("{} ".format(event["timestamp"]))
+            self.outfile.write("{} ".format(event["session"]))
+            self.outfile.write("{}\n".format(event["message"]))
         self.outfile.flush()

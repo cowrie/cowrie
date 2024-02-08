@@ -724,13 +724,13 @@ class fseditCmd(cmd.Cmd):
         """
         os.system("clear")
 
-    def emptyline(self):
+    def emptyline(self) -> bool:
         """
         By default the cmd object will repeat the last command
         if a blank line is entered. Since this is different than
         bash behavior, overriding this method will stop it.
         """
-        pass
+        return False
 
     def help_help(self):
         print("Type help <topic> to get more information.")

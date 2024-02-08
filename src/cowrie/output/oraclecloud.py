@@ -23,7 +23,7 @@ class Output(cowrie.core.output.Output):
         random_log_id = "".join(secrets.choice(charset) for _ in range(32))
         return f"cowrielog-{random_log_id}"
 
-    def sendLogs(self, logentry):
+    def sendLogs(self, event):
         log_id = self.generate_random_log_id()
         # Initialize service client with default config file
         current_time = datetime.datetime.utcnow()
@@ -41,7 +41,7 @@ class Output(cowrie.core.output.Output):
                         oci.loggingingestion.models.LogEntryBatch(
                             entries=[
                                 oci.loggingingestion.models.LogEntry(
-                                    data=logentry,
+                                    data=event,
                                     id=log_id,
                                     time=current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                                 )
@@ -103,13 +103,13 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, logentry):
+    def write(self, event):
         """
         Push to Oracle Cloud put_logs
         """
         # Add the entry to redis
-        for i in list(logentry.keys()):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
-        self.sendLogs(json.dumps(logentry))
+                del event[i]
+        self.sendLogs(json.dumps(event))

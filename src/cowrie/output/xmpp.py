@@ -82,14 +82,14 @@ class Output(cowrie.core.output.Output):
         self.anonymous = True
         self.xmppclient.startService()
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
             elif i == "time":
-                del logentry[i]
-        msgJson = json.dumps(logentry, indent=5)
+                del event[i]
+        msgJson = json.dumps(event, indent=5)
 
         self.muc.groupChat(self.muc.jrooms, msgJson)
 
