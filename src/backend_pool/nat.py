@@ -4,16 +4,20 @@ from typing import Any
 
 from twisted.internet.interfaces import IAddress
 from twisted.internet import protocol
+from twisted.internet.protocol import connectionDone
 from twisted.internet import reactor
+from twisted.python import failure
 
 
 class ClientProtocol(protocol.Protocol):
     server_protocol: ServerProtocol
 
     def dataReceived(self, data: bytes) -> None:
-        self.server_protocol.transport.write(data)  # type: ignore
+        assert self.server_protocol.transport is not None
+        self.server_protocol.transport.write(data)
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        assert self.server_protocol.transport is not None
         self.server_protocol.transport.loseConnection()
 
 
@@ -51,7 +55,7 @@ class ServerProtocol(protocol.Protocol):
             self.client_protocol.transport.write(packet)
         self.buffer = []
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason=connectionDone):
         if self.client_protocol:
             self.client_protocol.transport.loseConnection()
 
