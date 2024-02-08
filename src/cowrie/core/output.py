@@ -225,6 +225,8 @@ class Output(metaclass=abc.ABCMeta):
                     sessionno = f"S{sshmatch.groups()[0]}"
             if sessionno == "0":
                 return
+        else:
+            print("Can't determine sessionno")
 
         if sessionno in self.ips:
             ev["src_ip"] = self.ips[sessionno]

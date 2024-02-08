@@ -26,7 +26,8 @@ class CommandChannel(channel.SSHChannel):
 
         self.data = b""
 
-    def channelOpen(self, _ignoredData):
+    def channelOpen(self, specificData):
+        assert self.conn is not None
         self.conn.sendRequest(self, "exec", common.NS(self.command), wantReply=True)
 
     def dataReceived(self, data: bytes) -> None:
@@ -65,7 +66,7 @@ class ClientCommandTransport(transport.SSHClientTransport):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def verifyHostKey(self, _pub_key, _fingerprint):
+    def verifyHostKey(self, hostKey, fingerprint):
         return defer.succeed(True)
 
     def connectionSecure(self):
