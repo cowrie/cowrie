@@ -69,32 +69,32 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry):
-        if entry["eventid"] == "cowrie.session.file_download":
+    def write(self, event):
+        if event["eventid"] == "cowrie.session.file_download":
             log.msg("Sending file to Cuckoo")
-            p = urlparse(entry["url"]).path
+            p = urlparse(event["url"]).path
             if p == "":
-                fileName = entry["shasum"]
+                fileName = event["shasum"]
             else:
                 b = os.path.basename(p)
                 if b == "":
-                    fileName = entry["shasum"]
+                    fileName = event["shasum"]
                 else:
                     fileName = b
 
             if (
                 self.cuckoo_force
-                or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False
+                or self.cuckoo_check_if_dup(os.path.basename(event["outfile"])) is False
             ):
-                self.postfile(entry["outfile"], fileName)
+                self.postfile(event["outfile"], fileName)
 
-        elif entry["eventid"] == "cowrie.session.file_upload":
+        elif event["eventid"] == "cowrie.session.file_upload":
             if (
                 self.cuckoo_force
-                or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False
+                or self.cuckoo_check_if_dup(os.path.basename(event["outfile"])) is False
             ):
                 log.msg("Sending file to Cuckoo")
-                self.postfile(entry["outfile"], entry["filename"])
+                self.postfile(event["outfile"], event["filename"])
 
     def cuckoo_check_if_dup(self, sha256: str) -> bool:
         """

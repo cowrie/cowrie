@@ -49,7 +49,7 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry):
+    def write(self, event):
         """
         events are done in emit() not in write()
         """

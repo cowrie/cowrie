@@ -42,20 +42,20 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, entry):
+    def write(self, event):
         if (
-            entry["eventid"] == "cowrie.login.success"
-            or entry["eventid"] == "cowrie.login.failed"
+            event["eventid"] == "cowrie.login.success"
+            or event["eventid"] == "cowrie.login.failed"
         ):
-            date = dateutil.parser.parse(entry["timestamp"])
+            date = dateutil.parser.parse(event["timestamp"])
             self.batch.append(
                 {
                     "date": str(date.date()),
                     "time": date.time().strftime("%H:%M:%S"),
                     "timezone": time.strftime("%z"),
-                    "source_ip": entry["src_ip"],
-                    "user": entry["username"],
-                    "password": entry["password"],
+                    "source_ip": event["src_ip"],
+                    "user": event["username"],
+                    "password": event["password"],
                 }
             )
 

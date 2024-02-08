@@ -52,80 +52,80 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         self.mongo_client.close()
 
-    def write(self, entry):
-        for i in list(entry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del entry[i]
+                del event[i]
 
-        eventid = entry["eventid"]
+        eventid = event["eventid"]
 
         if eventid == "cowrie.session.connect":
             # Check if sensor exists, else add it.
             doc = self.col_sensors.find_one({"sensor": self.sensor})
             if not doc:
-                self.insert_one(self.col_sensors, entry)
+                self.insert_one(self.col_sensors, event)
 
             # Prep extra elements just to make django happy later on
-            entry["starttime"] = entry["timestamp"]
-            entry["endtime"] = None
-            entry["sshversion"] = None
-            entry["termsize"] = None
+            event["starttime"] = event["timestamp"]
+            event["endtime"] = None
+            event["sshversion"] = None
+            event["termsize"] = None
             log.msg("Session Created")
-            self.insert_one(self.col_sessions, entry)
+            self.insert_one(self.col_sessions, event)
 
         elif eventid in ["cowrie.login.success", "cowrie.login.failed"]:
-            self.insert_one(self.col_auth, entry)
+            self.insert_one(self.col_auth, event)
 
         elif eventid in ["cowrie.command.input", "cowrie.command.failed"]:
-            self.insert_one(self.col_input, entry)
+            self.insert_one(self.col_input, event)
 
         elif eventid == "cowrie.session.file_download":
             # ToDo add a config section and offer to store the file in the db - useful for central logging
             # we will add an option to set max size, if its 16mb or less we can store as normal,
             # If over 16 either fail or we just use gridfs both are simple enough.
-            self.insert_one(self.col_downloads, entry)
+            self.insert_one(self.col_downloads, event)
 
         elif eventid == "cowrie.client.version":
-            doc = self.col_sessions.find_one({"session": entry["session"]})
+            doc = self.col_sessions.find_one({"session": event["session"]})
             if doc:
-                doc["sshversion"] = entry["version"]
-                self.update_one(self.col_sessions, entry["session"], doc)
+                doc["sshversion"] = event["version"]
+                self.update_one(self.col_sessions, event["session"], doc)
             else:
                 pass
 
         elif eventid == "cowrie.client.size":
-            doc = self.col_sessions.find_one({"session": entry["session"]})
+            doc = self.col_sessions.find_one({"session": event["session"]})
             if doc:
-                doc["termsize"] = "{}x{}".format(entry["width"], entry["height"])
-                self.update_one(self.col_sessions, entry["session"], doc)
+                doc["termsize"] = "{}x{}".format(event["width"], event["height"])
+                self.update_one(self.col_sessions, event["session"], doc)
             else:
                 pass
 
         elif eventid == "cowrie.session.closed":
-            doc = self.col_sessions.find_one({"session": entry["session"]})
+            doc = self.col_sessions.find_one({"session": event["session"]})
             if doc:
-                doc["endtime"] = entry["timestamp"]
-                self.update_one(self.col_sessions, entry["session"], doc)
+                doc["endtime"] = event["timestamp"]
+                self.update_one(self.col_sessions, event["session"], doc)
             else:
                 pass
 
         elif eventid == "cowrie.log.closed":
             # ToDo Compress to opimise the space and if your sending to remote db
-            with open(entry["ttylog"]) as ttylog:
-                entry["ttylogpath"] = entry["ttylog"]
-                entry["ttylog"] = ttylog.read().encode().hex()
-            self.insert_one(self.col_ttylog, entry)
+            with open(event["ttylog"]) as ttylog:
+                event["ttylogpath"] = event["ttylog"]
+                event["ttylog"] = ttylog.read().encode().hex()
+            self.insert_one(self.col_ttylog, event)
 
         elif eventid == "cowrie.client.fingerprint":
-            self.insert_one(self.col_keyfingerprints, entry)
+            self.insert_one(self.col_keyfingerprints, event)
 
         elif eventid == "cowrie.direct-tcpip.request":
-            self.insert_one(self.col_ipforwards, entry)
+            self.insert_one(self.col_ipforwards, event)
 
         elif eventid == "cowrie.direct-tcpip.data":
-            self.insert_one(self.col_ipforwardsdata, entry)
+            self.insert_one(self.col_ipforwardsdata, event)
 
         # Catch any other event types
         else:
-            self.insert_one(self.col_event, entry)
+            self.insert_one(self.col_event, event)
