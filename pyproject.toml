@@ -109,7 +109,11 @@ ignored-classes = ["twisted.internet.reactor"]
 
 
 [tool.pyright]
-
+include = ["src"]
+reportAttributeAccessIssue = "none"
+reportOptionalMemberAccess = "none"
+reportMissingImports = "none"
+reportArgumentType = "none"
 
 [tool.ruff]
 line-length = 88

@@ -129,22 +129,22 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         else:
             log.msg("Wrong number of NAWS bytes")
 
-    def enableLocal(self, opt):
-        if opt == ECHO:
+    def enableLocal(self, option):
+        if option == ECHO:
             return True
         # TODO: check if twisted now supports SGA (see git commit c58056b0)
-        elif opt == SGA:
+        elif option == SGA:
             return False
         else:
             return False
 
-    def enableRemote(self, opt):
+    def enableRemote(self, option):
         # TODO: check if twisted now supports LINEMODE (see git commit c58056b0)
-        if opt == LINEMODE:
+        if option == LINEMODE:
             return False
-        elif opt == NAWS:
+        elif option == NAWS:
             return True
-        elif opt == SGA:
+        elif option == SGA:
             return True
         else:
             return False

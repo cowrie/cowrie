@@ -89,7 +89,7 @@ class SFTP(base_protocol.BaseProtocol):
         self.parent: str
         self.offset: int = 0
 
-    def parse_packet(self, parent: str, payload: bytes) -> None:
+    def parse_packet(self, parent: str, data: bytes) -> None:
         self.parent = parent
 
         if parent == "[SERVER]":
@@ -100,28 +100,28 @@ class SFTP(base_protocol.BaseProtocol):
             raise Exception
 
         if self.parentPacket.packetSize == 0:
-            self.parentPacket.packetSize = int(payload[:4].hex(), 16) - len(payload[4:])
-            payload = payload[4:]
-            self.parentPacket.data = payload
-            payload = b""
+            self.parentPacket.packetSize = int(data[:4].hex(), 16) - len(data[4:])
+            data = data[4:]
+            self.parentPacket.data = data
+            data = b""
 
         else:
-            if len(payload) > self.parentPacket.packetSize:
+            if len(data) > self.parentPacket.packetSize:
                 self.parentPacket.data = (
-                    self.parentPacket.data + payload[: self.parentPacket.packetSize]
+                    self.parentPacket.data + data[: self.parentPacket.packetSize]
                 )
-                payload = payload[self.parentPacket.packetSize :]
+                data = data[self.parentPacket.packetSize :]
                 self.parentPacket.packetSize = 0
             else:
-                self.parentPacket.packetSize -= len(payload)
-                self.parentPacket.data = self.parentPacket.data + payload
-                payload = b""
+                self.parentPacket.packetSize -= len(data)
+                self.parentPacket.data = self.parentPacket.data + data
+                data = b""
 
         if self.parentPacket.packetSize == 0:
             self.handle_packet(parent)
 
-        if len(payload) != 0:
-            self.parse_packet(parent, payload)
+        if len(data) != 0:
+            self.parse_packet(parent, data)
 
     def handle_packet(self, parent: str) -> None:
         self.packetSize: int = self.parentPacket.packetSize
