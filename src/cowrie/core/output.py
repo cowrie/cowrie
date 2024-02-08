@@ -225,7 +225,7 @@ class Output(metaclass=abc.ABCMeta):
             if sessionno == "0":
                 return
         else:
-            print(f"Can't determine sessionno: {repr(ev)}")
+            print(f"Can't determine sessionno: {ev!r}")  # noqa: T201
             return
 
         if sessionno in self.ips:
