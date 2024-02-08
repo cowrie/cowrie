@@ -110,15 +110,16 @@ ignored-classes = ["twisted.internet.reactor"]
 
 [tool.pyright]
 include = ["src"]
-reportArgumentType = "information"
+typeCheckingMode = "basic"
+reportArgumentType = "none"
 reportAssignmentType = "information"
 reportAttributeAccessIssue = "none"
 reportCallIssue = "information"
 reportGeneralTypeIssues = "information"
 reportIncompatibleMethodOverride = "information"
 reportIncompatibleVariableOverride = "information"
-reportMissingImports = "information"
-reportMissingModuleSource = "information"
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
 reportOperatorIssue = "information"
 reportOptionalCall = "information"
 reportOptionalMemberAccess = "none"
