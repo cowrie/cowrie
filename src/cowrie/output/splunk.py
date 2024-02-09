@@ -112,5 +112,5 @@ class Output(cowrie.core.output.Output):
 
 
 class WebClientContextFactory(ClientContextFactory):
-    def getContext(self, hostname, port):
+    def getContext(self):
         return ClientContextFactory.getContext(self)
