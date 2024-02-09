@@ -39,9 +39,9 @@ class Artifact:
     def __init__(self, label: str) -> None:
         self.label: str = label
 
-        self.fp = tempfile.NamedTemporaryFile(
+        self.fp = tempfile.NamedTemporaryFile(  # pylint: disable=R1732
             dir=self.artifactDir, delete=False
-        )  # pylint: disable=R1732
+        )
         self.tempFilename = self.fp.name
         self.closed: bool = False
 
