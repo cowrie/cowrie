@@ -106,6 +106,7 @@ def run():
     except getopt.GetoptError as error:
         print("Error: %s\n" % error)
         help()
+        return
 
     options = [x[0] for x in optlist]
     if "-b" in options and "-i" in options:
