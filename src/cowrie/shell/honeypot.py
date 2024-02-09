@@ -555,7 +555,7 @@ class StdOutStdErrEmulationProtocol:
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
-    def errConnectionLost(self):
+    def errConnectionLost(self) -> None:
         pass
 
     def processExited(self, reason: failure.Failure) -> None:
