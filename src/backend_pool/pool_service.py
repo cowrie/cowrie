@@ -155,7 +155,7 @@ class PoolService:
         if recycle_period > 0:
             reactor.callLater(recycle_period, self.restart_pool)  # type: ignore[attr-defined]
 
-    def stop_pool(self):
+    def stop_pool(self) -> None:
         # lazy import to avoid exception if not using the backend_pool
         # and libvirt not installed (#1185)
         import libvirt
@@ -185,7 +185,7 @@ class PoolService:
         except libvirt.libvirtError:
             print("Not connected to QEMU")  # noqa: T201
 
-    def shutdown_pool(self):
+    def shutdown_pool(self) -> None:
         # lazy import to avoid exception if not using the backend_pool
         # and libvirt not installed (#1185)
         import libvirt
@@ -197,7 +197,7 @@ class PoolService:
         except libvirt.libvirtError:
             print("Not connected to QEMU")  # noqa: T201
 
-    def restart_pool(self):
+    def restart_pool(self) -> None:
         log.msg(
             eventid="cowrie.backend_pool.service",
             format="Refreshing pool, terminating current instances and rebooting",
@@ -216,16 +216,16 @@ class PoolService:
     def get_guest_states(self, states: list[str]) -> list:
         return [g for g in self.guests if g["state"] in states]
 
-    def existing_pool_size(self):
+    def existing_pool_size(self) -> int:
         return len([g for g in self.guests if g["state"] != POOL_STATE_DESTROYED])
 
-    def is_ip_free(self, ip):
+    def is_ip_free(self, ip: str) -> bool:
         for guest in self.guests:
             if guest["guest_ip"] == ip:
                 return False
         return True
 
-    def has_connectivity(self, ip):
+    def has_connectivity(self, ip: str) -> bool:
         """
         This method checks if a guest has either SSH or Telnet
         connectivity, to know whether it is ready for connections
