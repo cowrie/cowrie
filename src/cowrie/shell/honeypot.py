@@ -118,6 +118,10 @@ class HoneyPotShell:
             self.showPrompt()
 
     def do_command_substitution(self, start_tok: str) -> str:
+        """
+        this performs command substitution, like replace $(ls) `ls`
+        """
+        result = ""
         if start_tok[0] == "(":
             # start parsing the (...) expression
             cmd_expr = start_tok
@@ -134,6 +138,10 @@ class HoneyPotShell:
             result = start_tok[:backtick_pos]
             cmd_expr = start_tok[backtick_pos:]
             pos = 1
+        else:
+            log.msg(f"failed command substitution: {start_tok}")
+            return start_tok
+
         opening_count = 1
         closing_count = 0
 
