@@ -541,10 +541,10 @@ class StdOutStdErrEmulationProtocol:
             self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
 
-    def inConnectionLost(self):
+    def inConnectionLost(self) -> None:
         pass
 
-    def outConnectionLost(self):
+    def outConnectionLost(self) -> None:
         """
         Called from HoneyPotBaseProtocol.call_command() to run a next command in the chain
         """
@@ -558,8 +558,8 @@ class StdOutStdErrEmulationProtocol:
     def errConnectionLost(self):
         pass
 
-    def processExited(self, reason):
+    def processExited(self, reason: failure.Failure) -> None:
         log.msg(f"processExited for {self.cmd}, status {reason.value.exitCode}")
 
-    def processEnded(self, reason):
+    def processEnded(self, reason: failure.Failure) -> None:
         log.msg(f"processEnded for {self.cmd}, status {reason.value.exitCode}")

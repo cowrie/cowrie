@@ -208,7 +208,9 @@ class PoolService:
         self.stop_pool()
         self.start_pool()
 
-    def set_configs(self, max_vm: int, vm_unused_timeout: int, share_guests: bool) -> None:
+    def set_configs(
+        self, max_vm: int, vm_unused_timeout: int, share_guests: bool
+    ) -> None:
         """
         Custom configurations sent from the client are set on the pool here.
         """

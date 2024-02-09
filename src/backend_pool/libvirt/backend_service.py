@@ -96,7 +96,7 @@ class LibvirtBackendService:
             format="Connection to libvirtd closed successfully",
         )
 
-    def get_mac_ip(self, ip_tester: Callable[[str],bool]) -> tuple[str, str]:
+    def get_mac_ip(self, ip_tester: Callable[[str], bool]) -> tuple[str, str]:
         """
         Get a MAC and IP that are not being used by any guest.
         """
