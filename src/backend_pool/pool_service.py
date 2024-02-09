@@ -24,7 +24,7 @@ from dataclasses import dataclass
 import os
 import time
 from threading import Lock
-from typing import Optional, Tuple
+from typing import Optional
 
 from twisted.internet import reactor
 from twisted.internet import threads
@@ -425,7 +425,7 @@ class PoolService:
             return min(usable_guests, key=lambda guest: guest.connected)
 
     # Consumer methods to be called concurrently
-    def request_vm(self, src_ip: str) -> Tuple[int, str, str]:
+    def request_vm(self, src_ip: str) -> tuple[int, str, str]:
         # first check if there is one for the ip
         guest = self.__consumers_get_guest_ip(src_ip)
 
