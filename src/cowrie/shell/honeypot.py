@@ -402,24 +402,24 @@ class HoneyPotShell:
             clue = ""
         else:
             clue = line.split()[-1].decode("utf8")
+
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
-
-        try:
-            basedir = os.path.dirname(clue)
-        except Exception:
-            pass
+        basedir = os.path.dirname(clue)
         if basedir and basedir[-1] != "/":
             basedir += "/"
 
-        files = []
-        tmppath = basedir
         if not basedir:
             tmppath = self.protocol.cwd
+        else:
+            tmppath = basedir
+
         try:
             r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
         except Exception:
             return
+
+        files = []
         for x in self.protocol.fs.get_path(r):
             if clue == "":
                 files.append(x)
