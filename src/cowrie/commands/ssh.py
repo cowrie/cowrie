@@ -53,6 +53,8 @@ class Command_ssh(HoneyPotCommand):
         except getopt.GetoptError:
             self.write("Unrecognized option\n")
             self.exit()
+            return
+
         for opt in optlist:
             if opt[0] == "-V":
                 self.write(

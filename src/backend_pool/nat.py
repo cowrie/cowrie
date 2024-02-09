@@ -22,7 +22,7 @@ class ClientProtocol(protocol.Protocol):
 
 
 class ClientFactory(protocol.ClientFactory):
-    def __init__(self, server_protocol):
+    def __init__(self, server_protocol: ServerProtocol) -> None:
         self.server_protocol = server_protocol
 
     def buildProtocol(self, addr: IAddress) -> ClientProtocol:

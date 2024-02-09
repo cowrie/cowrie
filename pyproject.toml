@@ -110,7 +110,7 @@ ignored-classes = ["twisted.internet.reactor"]
 
 [tool.pyright]
 include = ["src"]
-typeCheckingMode = "standard"
+typeCheckingMode = "strict"
 reportArgumentType = "none"
 reportAssignmentType = "none"
 reportAttributeAccessIssue = "none"

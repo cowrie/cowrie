@@ -82,6 +82,7 @@ class Command_perl(HoneyPotCommand):
                 "Unrecognized switch: -" + err.opt + " (-h will show valid options).\n"
             )
             self.exit()
+            return
 
         # Parse options
         for o, _a in opts:
