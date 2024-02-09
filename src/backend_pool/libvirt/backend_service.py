@@ -11,6 +11,7 @@ import os
 import random
 import sys
 import uuid
+from collections.abc import Callable
 
 from twisted.python import log
 
@@ -95,7 +96,7 @@ class LibvirtBackendService:
             format="Connection to libvirtd closed successfully",
         )
 
-    def get_mac_ip(self, ip_tester):
+    def get_mac_ip(self, ip_tester: Callable[[str], bool]) -> tuple[str, str]:
         """
         Get a MAC and IP that are not being used by any guest.
         """

@@ -39,12 +39,12 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, e):
+    def write(self, event):
         """
         Only pass on connection events
         """
-        if e["eventid"] == "cowrie.session.connect":
-            self.submitIp(e)
+        if event["eventid"] == "cowrie.session.connect":
+            self.submitIp(event)
 
     def submitIp(self, e):
         peerIP = e["src_ip"]

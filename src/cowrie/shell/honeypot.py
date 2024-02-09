@@ -118,6 +118,10 @@ class HoneyPotShell:
             self.showPrompt()
 
     def do_command_substitution(self, start_tok: str) -> str:
+        """
+        this performs command substitution, like replace $(ls) `ls`
+        """
+        result = ""
         if start_tok[0] == "(":
             # start parsing the (...) expression
             cmd_expr = start_tok
@@ -134,6 +138,10 @@ class HoneyPotShell:
             result = start_tok[:backtick_pos]
             cmd_expr = start_tok[backtick_pos:]
             pos = 1
+        else:
+            log.msg(f"failed command substitution: {start_tok}")
+            return start_tok
+
         opening_count = 1
         closing_count = 0
 
@@ -402,24 +410,24 @@ class HoneyPotShell:
             clue = ""
         else:
             clue = line.split()[-1].decode("utf8")
+
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
-
-        try:
-            basedir = os.path.dirname(clue)
-        except Exception:
-            pass
+        basedir = os.path.dirname(clue)
         if basedir and basedir[-1] != "/":
             basedir += "/"
 
-        files = []
-        tmppath = basedir
         if not basedir:
             tmppath = self.protocol.cwd
+        else:
+            tmppath = basedir
+
         try:
             r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
         except Exception:
             return
+
+        files = []
         for x in self.protocol.fs.get_path(r):
             if clue == "":
                 files.append(x)
@@ -533,10 +541,10 @@ class StdOutStdErrEmulationProtocol:
             self.protocol.terminal.write(data)
         self.err_data = self.err_data + data
 
-    def inConnectionLost(self):
+    def inConnectionLost(self) -> None:
         pass
 
-    def outConnectionLost(self):
+    def outConnectionLost(self) -> None:
         """
         Called from HoneyPotBaseProtocol.call_command() to run a next command in the chain
         """
@@ -547,11 +555,11 @@ class StdOutStdErrEmulationProtocol:
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
-    def errConnectionLost(self):
+    def errConnectionLost(self) -> None:
         pass
 
-    def processExited(self, reason):
+    def processExited(self, reason: failure.Failure) -> None:
         log.msg(f"processExited for {self.cmd}, status {reason.value.exitCode}")
 
-    def processEnded(self, reason):
+    def processEnded(self, reason: failure.Failure) -> None:
         log.msg(f"processEnded for {self.cmd}, status {reason.value.exitCode}")

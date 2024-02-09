@@ -1,7 +1,9 @@
 from __future__ import annotations
-from cowrie.shell.command import HoneyPotCommand
+
 import datetime
 import getopt
+
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
@@ -79,15 +81,15 @@ class Command_finger(HoneyPotCommand):
             # self.write("{}\n".format(time.strftime("%a %b %d %H:%M:%S UTC %Y">
             return
 
-        if len(self.args):
-            try:
-                opts, args = getopt.gnu_getopt(self.args, "")
-            except getopt.GetoptError as err:
-                self.errorWrite(
-                    f"""finger: invalid option -- '{err.opt}'
+        try:
+            opts, args = getopt.gnu_getopt(self.args, "")
+        except getopt.GetoptError as err:
+            self.errorWrite(
+                f"""finger: invalid option -- '{err.opt}'
 usage: finger [-lmps] [login ...]\n"""
-                )
-                return
+            )
+            return
+
         # If args given not any predefined, assume is username
         if len(args) > 0:
             for i in range(len(user_data)):

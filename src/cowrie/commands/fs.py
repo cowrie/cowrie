@@ -258,7 +258,7 @@ class Command_cd(HoneyPotCommand):
             newpath = self.fs.resolve_path(pname, self.protocol.cwd)
             inode = self.fs.getfile(newpath)
         except Exception:
-            pass
+            inode = None
         if pname == "-":
             self.errorWrite("bash: cd: OLDPWD not set\n")
             return
@@ -478,7 +478,7 @@ class Command_mv(HoneyPotCommand):
             optlist, args = getopt.gnu_getopt(self.args, "-bfiStTuv")
         except getopt.GetoptError:
             self.errorWrite("Unrecognized option\n")
-            self.exit()
+            return
 
         def resolv(pname: str) -> str:
             rsv: str = self.fs.resolve_path(pname, self.protocol.cwd)

@@ -45,11 +45,11 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
 
         splunkentry = {}
         if self.index:
@@ -61,8 +61,8 @@ class Output(cowrie.core.output.Output):
         if self.host:
             splunkentry["host"] = self.host
         else:
-            splunkentry["host"] = logentry["sensor"]
-        splunkentry["event"] = logentry
+            splunkentry["host"] = event["sensor"]
+        splunkentry["event"] = event
         self.postentry(splunkentry)
 
     def postentry(self, entry):
@@ -112,5 +112,5 @@ class Output(cowrie.core.output.Output):
 
 
 class WebClientContextFactory(ClientContextFactory):
-    def getContext(self, hostname, port):
+    def getContext(self):
         return ClientContextFactory.getContext(self)

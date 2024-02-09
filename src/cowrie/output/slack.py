@@ -49,17 +49,17 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
 
         self.sc = WebClient(self.slack_token)
         self.sc.chat_postMessage(
             channel=self.slack_channel,
             text="{} {}".format(
                 time.strftime("%Y-%m-%d %H:%M:%S"),
-                json.dumps(logentry, indent=4, sort_keys=True),
+                json.dumps(event, indent=4, sort_keys=True),
             ),
         )

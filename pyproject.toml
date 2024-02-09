@@ -109,7 +109,23 @@ ignored-classes = ["twisted.internet.reactor"]
 
 
 [tool.pyright]
-
+include = ["src"]
+typeCheckingMode = "strict"
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportCallIssue = "information"
+reportGeneralTypeIssues = "information"
+reportIncompatibleMethodOverride = "information"
+reportIncompatibleVariableOverride = "none"
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
+reportOperatorIssue = "information"
+reportOptionalCall = "information"
+reportOptionalMemberAccess = "none"
+reportOptionalOperand = "information"
+reportPossiblyUnboundVariable = "information"
+reportUnsupportedDunderAll = "information"
 
 [tool.ruff]
 line-length = 88

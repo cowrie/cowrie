@@ -57,16 +57,16 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         self.outfile.flush()
 
-    def write(self, logentry):
+    def write(self, event):
         if self.epoch_timestamp:
-            logentry["epoch"] = int(logentry["time"] * 1000000 / 1000)
-        for i in list(logentry.keys()):
+            event["epoch"] = int(event["time"] * 1000000 / 1000)
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_") or i == "time" or i == "system":
-                del logentry[i]
+                del event[i]
         try:
-            json.dump(logentry, self.outfile, separators=(",", ":"))
+            json.dump(event, self.outfile, separators=(",", ":"))
             self.outfile.write("\n")
             self.outfile.flush()
         except TypeError:
-            log.err("jsonlog: Can't serialize: '" + repr(logentry) + "'")
+            log.err("jsonlog: Can't serialize: '" + repr(event) + "'")

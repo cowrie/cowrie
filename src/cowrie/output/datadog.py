@@ -42,17 +42,17 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
         message = [
             {
                 "ddsource": self.ddsource,
                 "ddtags": self.ddtags,
                 "hostname": self.hostname,
-                "message": json.dumps(logentry),
+                "message": json.dumps(event),
                 "service": self.service,
             }
         ]
@@ -70,5 +70,5 @@ class Output(cowrie.core.output.Output):
 
 
 class WebClientContextFactory(ClientContextFactory):
-    def getContext(self, hostname, port):
+    def getContext(self):
         return ClientContextFactory.getContext(self)

@@ -51,12 +51,12 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def write(self, entry: dict[str, Any]) -> None:
-        if entry["eventid"] == "cowrie.session.file_download":
-            self.upload(entry["shasum"], entry["outfile"])
+    def write(self, event: dict[str, Any]) -> None:
+        if event["eventid"] == "cowrie.session.file_download":
+            self.upload(event["shasum"], event["outfile"])
 
-        elif entry["eventid"] == "cowrie.session.file_upload":
-            self.upload(entry["shasum"], entry["outfile"])
+        elif event["eventid"] == "cowrie.session.file_upload":
+            self.upload(event["shasum"], event["outfile"])
 
     @defer.inlineCallbacks
     def _object_exists_remote(self, shasum):

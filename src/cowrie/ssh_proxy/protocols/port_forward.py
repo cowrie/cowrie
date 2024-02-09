@@ -38,5 +38,5 @@ class PortForward(base_protocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)
 
-    def parse_packet(self, parent: str, payload: bytes) -> None:
+    def parse_packet(self, parent: str, data: bytes) -> None:
         pass

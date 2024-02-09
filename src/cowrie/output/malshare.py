@@ -65,22 +65,22 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry):
-        if entry["eventid"] == "cowrie.session.file_download":
-            p = urlparse(entry["url"]).path
+    def write(self, event):
+        if event["eventid"] == "cowrie.session.file_download":
+            p = urlparse(event["url"]).path
             if p == "":
-                fileName = entry["shasum"]
+                fileName = event["shasum"]
             else:
                 b = os.path.basename(p)
                 if b == "":
-                    fileName = entry["shasum"]
+                    fileName = event["shasum"]
                 else:
                     fileName = b
 
-            self.postfile(entry["outfile"], fileName)
+            self.postfile(event["outfile"], fileName)
 
-        elif entry["eventid"] == "cowrie.session.file_upload":
-            self.postfile(entry["outfile"], entry["filename"])
+        elif event["eventid"] == "cowrie.session.file_upload":
+            self.postfile(event["outfile"], event["filename"])
 
     def postfile(self, artifact, fileName):
         """

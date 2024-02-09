@@ -171,6 +171,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             except ValueError:
                 log.err("Failed to parse TCP tunnel response code")
                 self._close("Connection refused")
+                return
             if res_code != 200:
                 log.err(f"Unexpected response code: {res_code}")
                 self._close("Connection refused")

@@ -182,9 +182,9 @@ class Output(output.Output):
             format="ThreatJammer.com output plugin successfully terminated. Bye!",
         )
 
-    def write(self, ev):
-        if ev["eventid"].rsplit(".", 1)[0] in self.track_events:
-            source_ip: str = ev["src_ip"]
+    def write(self, event):
+        if event["eventid"].rsplit(".", 1)[0] in self.track_events:
+            source_ip: str = event["src_ip"]
             self.ip_set.add(source_ip)
 
             if self.last_report == -1:

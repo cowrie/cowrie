@@ -26,17 +26,17 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
 
         gelf_message = {
             "version": "1.1",
-            "host": logentry["sensor"],
+            "host": event["sensor"],
             "timestamp": time.time(),
-            "short_message": json.dumps(logentry),
+            "short_message": json.dumps(event),
             "level": 1,
         }
 
@@ -54,5 +54,5 @@ class Output(cowrie.core.output.Output):
 
 
 class WebClientContextFactory(ClientContextFactory):
-    def getContext(self, hostname, port):
+    def getContext(self):
         return ClientContextFactory.getContext(self)

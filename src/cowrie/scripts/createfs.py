@@ -165,6 +165,7 @@ def run():
     except getopt.GetoptError as error:
         sys.stderr.write("Error: %s\n" % error)
         help()
+        return
 
     for o, a in optlist:
         if o == "-v":

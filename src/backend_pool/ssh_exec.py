@@ -26,7 +26,8 @@ class CommandChannel(channel.SSHChannel):
 
         self.data = b""
 
-    def channelOpen(self, _ignoredData):
+    def channelOpen(self, specificData: bytes) -> None:
+        assert self.conn is not None
         self.conn.sendRequest(self, "exec", common.NS(self.command), wantReply=True)
 
     def dataReceived(self, data: bytes) -> None:
@@ -35,7 +36,7 @@ class CommandChannel(channel.SSHChannel):
     def extReceived(self, dataType: int, data: bytes) -> None:
         self.data += data
 
-    def closeReceived(self):
+    def closeReceived(self) -> None:
         self.conn.transport.loseConnection()
         self.done_deferred.callback(self.data)
 
@@ -51,7 +52,7 @@ class ClientConnection(connection.SSHConnection):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def serviceStarted(self):
+    def serviceStarted(self) -> None:
         self.openChannel(
             CommandChannel(self.command, self.done_deferred, self.callback, conn=self)
         )
@@ -65,10 +66,10 @@ class ClientCommandTransport(transport.SSHClientTransport):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def verifyHostKey(self, _pub_key, _fingerprint):
+    def verifyHostKey(self, hostKey, fingerprint):
         return defer.succeed(True)
 
-    def connectionSecure(self):
+    def connectionSecure(self) -> None:
         self.requestService(
             PasswordAuth(
                 self.username,
