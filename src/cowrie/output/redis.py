@@ -50,13 +50,13 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, logentry):
+    def write(self, event):
         """
         Push to redis
         """
         # Add the entry to redis
-        for i in list(logentry.keys()):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
-        self.send_method(self.redis, self.keyname, json.dumps(logentry))
+                del event[i]
+        self.send_method(self.redis, self.keyname, json.dumps(event))

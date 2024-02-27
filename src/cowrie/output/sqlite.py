@@ -51,8 +51,8 @@ class Output(cowrie.core.output.Output):
         d.addErrback(self.sqlerror)
 
     @defer.inlineCallbacks
-    def write(self, entry):
-        if entry["eventid"] == "cowrie.session.connect":
+    def write(self, event):
+        if event["eventid"] == "cowrie.session.connect":
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `sensors` " "WHERE `ip` = ?", (self.sensor,)
             )
@@ -69,78 +69,78 @@ class Output(cowrie.core.output.Output):
             self.simpleQuery(
                 "INSERT INTO `sessions` (`id`, `starttime`, `sensor`, `ip`) "
                 "VALUES (?, ?, ?, ?)",
-                (entry["session"], entry["timestamp"], sensorid, entry["src_ip"]),
+                (event["session"], event["timestamp"], sensorid, event["src_ip"]),
             )
 
-        elif entry["eventid"] == "cowrie.login.success":
+        elif event["eventid"] == "cowrie.login.success":
             self.simpleQuery(
                 "INSERT INTO `auth` (`session`, `success`, `username`, `password`, `timestamp`) "
                 "VALUES (?, ?, ?, ?, ?)",
                 (
-                    entry["session"],
+                    event["session"],
                     1,
-                    entry["username"],
-                    entry["password"],
-                    entry["timestamp"],
+                    event["username"],
+                    event["password"],
+                    event["timestamp"],
                 ),
             )
 
-        elif entry["eventid"] == "cowrie.login.failed":
+        elif event["eventid"] == "cowrie.login.failed":
             self.simpleQuery(
                 "INSERT INTO `auth` (`session`, `success`, `username`, `password`, `timestamp`) "
                 "VALUES (?, ?, ?, ?, ?)",
                 (
-                    entry["session"],
+                    event["session"],
                     0,
-                    entry["username"],
-                    entry["password"],
-                    entry["timestamp"],
+                    event["username"],
+                    event["password"],
+                    event["timestamp"],
                 ),
             )
 
-        elif entry["eventid"] == "cowrie.command.input":
+        elif event["eventid"] == "cowrie.command.input":
             self.simpleQuery(
                 "INSERT INTO `input` (`session`, `timestamp`, `success`, `input`) "
                 "VALUES (?, ?, ?, ?)",
-                (entry["session"], entry["timestamp"], 1, entry["input"]),
+                (event["session"], event["timestamp"], 1, event["input"]),
             )
 
-        elif entry["eventid"] == "cowrie.command.failed":
+        elif event["eventid"] == "cowrie.command.failed":
             self.simpleQuery(
                 "INSERT INTO `input` (`session`, `timestamp`, `success`, `input`) "
                 "VALUES (?, ?, ?, ?)",
-                (entry["session"], entry["timestamp"], 0, entry["input"]),
+                (event["session"], event["timestamp"], 0, event["input"]),
             )
 
-        elif entry["eventid"] == "cowrie.session.params":
+        elif event["eventid"] == "cowrie.session.params":
             self.simpleQuery(
                 "INSERT INTO `params` (`session`, `arch`) " "VALUES (?, ?)",
-                (entry["session"], entry["arch"]),
+                (event["session"], event["arch"]),
             )
 
-        elif entry["eventid"] == "cowrie.session.file_download":
+        elif event["eventid"] == "cowrie.session.file_download":
             self.simpleQuery(
                 "INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) "
                 "VALUES (?, ?, ?, ?, ?)",
                 (
-                    entry["session"],
-                    entry["timestamp"],
-                    entry["url"],
-                    entry["outfile"],
-                    entry["shasum"],
+                    event["session"],
+                    event["timestamp"],
+                    event["url"],
+                    event["outfile"],
+                    event["shasum"],
                 ),
             )
 
-        elif entry["eventid"] == "cowrie.session.file_download.failed":
+        elif event["eventid"] == "cowrie.session.file_download.failed":
             self.simpleQuery(
                 "INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) "
                 "VALUES (?, ?, ?, ?, ?)",
-                (entry["session"], entry["timestamp"], entry["url"], "NULL", "NULL"),
+                (event["session"], event["timestamp"], event["url"], "NULL", "NULL"),
             )
 
-        elif entry["eventid"] == "cowrie.client.version":
+        elif event["eventid"] == "cowrie.client.version":
             r = yield self.db.runQuery(
-                "SELECT `id` FROM `clients` " "WHERE `version` = ?", (entry["version"],)
+                "SELECT `id` FROM `clients` " "WHERE `version` = ?", (event["version"],)
             )
 
             if r and r[0][0]:
@@ -148,63 +148,63 @@ class Output(cowrie.core.output.Output):
             else:
                 yield self.db.runQuery(
                     "INSERT INTO `clients` (`version`) " "VALUES (?)",
-                    (entry["version"],),
+                    (event["version"],),
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ROWID()")
                 id = int(r[0][0])
             self.simpleQuery(
                 "UPDATE `sessions` " "SET `client` = ? " "WHERE `id` = ?",
-                (id, entry["session"]),
+                (id, event["session"]),
             )
 
-        elif entry["eventid"] == "cowrie.client.size":
+        elif event["eventid"] == "cowrie.client.size":
             self.simpleQuery(
                 "UPDATE `sessions` " "SET `termsize` = ? " "WHERE `id` = ?",
-                ("{}x{}".format(entry["width"], entry["height"]), entry["session"]),
+                ("{}x{}".format(event["width"], event["height"]), event["session"]),
             )
 
-        elif entry["eventid"] == "cowrie.session.closed":
+        elif event["eventid"] == "cowrie.session.closed":
             self.simpleQuery(
                 "UPDATE `sessions` " "SET `endtime` = ? " "WHERE `id` = ?",
-                (entry["timestamp"], entry["session"]),
+                (event["timestamp"], event["session"]),
             )
 
-        elif entry["eventid"] == "cowrie.log.closed":
+        elif event["eventid"] == "cowrie.log.closed":
             self.simpleQuery(
                 "INSERT INTO `ttylog` (`session`, `ttylog`, `size`) "
                 "VALUES (?, ?, ?)",
-                (entry["session"], entry["ttylog"], entry["size"]),
+                (event["session"], event["ttylog"], event["size"]),
             )
 
-        elif entry["eventid"] == "cowrie.client.fingerprint":
+        elif event["eventid"] == "cowrie.client.fingerprint":
             self.simpleQuery(
                 "INSERT INTO `keyfingerprints` (`session`, `username`, `fingerprint`) "
                 "VALUES (?, ?, ?)",
-                (entry["session"], entry["username"], entry["fingerprint"]),
+                (event["session"], event["username"], event["fingerprint"]),
             )
 
-        elif entry["eventid"] == "cowrie.direct-tcpip.request":
+        elif event["eventid"] == "cowrie.direct-tcpip.request":
             self.simpleQuery(
                 "INSERT INTO `ipforwards` (`session`, `timestamp`, `dst_ip`, `dst_port`) "
                 "VALUES (?, ?, ?, ?)",
                 (
-                    entry["session"],
-                    entry["timestamp"],
-                    entry["dst_ip"],
-                    entry["dst_port"],
+                    event["session"],
+                    event["timestamp"],
+                    event["dst_ip"],
+                    event["dst_port"],
                 ),
             )
 
-        elif entry["eventid"] == "cowrie.direct-tcpip.data":
+        elif event["eventid"] == "cowrie.direct-tcpip.data":
             self.simpleQuery(
                 "INSERT INTO `ipforwardsdata` (`session`, `timestamp`, `dst_ip`, `dst_port`, `data`) "
                 "VALUES (?, ?, ?, ?, ?)",
                 (
-                    entry["session"],
-                    entry["timestamp"],
-                    entry["dst_ip"],
-                    entry["dst_port"],
-                    entry["data"],
+                    event["session"],
+                    event["timestamp"],
+                    event["dst_ip"],
+                    event["dst_port"],
+                    event["data"],
                 ),
             )

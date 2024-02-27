@@ -6,7 +6,7 @@ geoip2
 requests==2.31.0
 
 # elasticsearch
-elasticsearch==8.12.0
+elasticsearch==8.12.1
 
 # hpfeeds
 hpfeeds==3.1.0
@@ -21,7 +21,7 @@ pymongo==4.6.1
 rethinkdb==2.4.10.post1
 
 # s3
-botocore==1.34.30
+botocore==1.34.45
 
 # slack
 slackclient==2.9.4
@@ -33,10 +33,10 @@ influxdb==5.3.1
 wokkel==18.0.0
 
 # misp
-pymisp==2.4.183
+pymisp==2.4.185
 
 # redis
 redis==5.0.1
 
 # Oracle Cloud
-oci==2.120.0
+oci==2.122.0

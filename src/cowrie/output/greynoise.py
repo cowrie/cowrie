@@ -35,12 +35,12 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry):
-        if entry["eventid"] == "cowrie.session.connect":
-            self.scanip(entry)
+    def write(self, event):
+        if event["eventid"] == "cowrie.session.connect":
+            self.scanip(event)
 
     @defer.inlineCallbacks
-    def scanip(self, entry):
+    def scanip(self, event):
         """
         Scan IP against GreyNoise API
         """
@@ -49,19 +49,19 @@ class Output(cowrie.core.output.Output):
             if query["noise"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
-                    session=entry["session"],
+                    session=event["session"],
                     format=f"GreyNoise: {query['ip']} has been observed scanning the Internet. GreyNoise "
                     f"classification is {query['classification']} and the believed owner is {query['name']}",
                 )
             if query["riot"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
-                    session=entry["session"],
+                    session=event["session"],
                     format=f"GreyNoise: {query['ip']} belongs to a benign service or provider. "
                     f"The owner is {query['name']}.",
                 )
 
-        gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode()
+        gn_url = f"{GNAPI_URL}{event['src_ip']}".encode()
         headers = {"User-Agent": [COWRIE_USER_AGENT], "key": self.apiKey}
 
         try:
@@ -91,4 +91,4 @@ class Output(cowrie.core.output.Output):
         if j["message"] == "Success":
             message(j)
         else:
-            log.msg("GreyNoise: no results for for IP {}".format(entry["src_ip"]))
+            log.msg("GreyNoise: no results for for IP {}".format(event["src_ip"]))

@@ -100,18 +100,18 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
-    def write(self, entry):
+    def write(self, event):
         if self.client is None:
             log.msg("output_influx: client object is not instantiated")
             return
 
         # event id
-        eventid = entry["eventid"]
+        eventid = event["eventid"]
 
         # measurement init
         m = {
             "measurement": eventid.replace(".", "_"),
-            "tags": {"session": entry["session"], "src_ip": entry["src_ip"]},
+            "tags": {"session": event["session"], "src_ip": event["src_ip"]},
             "fields": {"sensor": self.sensor},
         }
 
@@ -119,87 +119,87 @@ class Output(cowrie.core.output.Output):
         if eventid in ["cowrie.command.failed", "cowrie.command.input"]:
             m["fields"].update(
                 {
-                    "input": entry["input"],
+                    "input": event["input"],
                 }
             )
 
         elif eventid == "cowrie.session.connect":
             m["fields"].update(
                 {
-                    "protocol": entry["protocol"],
-                    "src_port": entry["src_port"],
-                    "dst_port": entry["dst_port"],
-                    "dst_ip": entry["dst_ip"],
+                    "protocol": event["protocol"],
+                    "src_port": event["src_port"],
+                    "dst_port": event["dst_port"],
+                    "dst_ip": event["dst_ip"],
                 }
             )
 
         elif eventid in ["cowrie.login.success", "cowrie.login.failed"]:
             m["fields"].update(
                 {
-                    "username": entry["username"],
-                    "password": entry["password"],
+                    "username": event["username"],
+                    "password": event["password"],
                 }
             )
 
         elif eventid == "cowrie.session.file_download":
             m["fields"].update(
                 {
-                    "shasum": entry.get("shasum"),
-                    "url": entry.get("url"),
-                    "outfile": entry.get("outfile"),
+                    "shasum": event.get("shasum"),
+                    "url": event.get("url"),
+                    "outfile": event.get("outfile"),
                 }
             )
 
         elif eventid == "cowrie.session.file_download.failed":
-            m["fields"].update({"url": entry.get("url")})
+            m["fields"].update({"url": event.get("url")})
 
         elif eventid == "cowrie.session.file_upload":
             m["fields"].update(
                 {
-                    "shasum": entry.get("shasum"),
-                    "outfile": entry.get("outfile"),
+                    "shasum": event.get("shasum"),
+                    "outfile": event.get("outfile"),
                 }
             )
 
         elif eventid == "cowrie.session.closed":
-            m["fields"].update({"duration": entry["duration"]})
+            m["fields"].update({"duration": event["duration"]})
 
         elif eventid == "cowrie.client.version":
             m["fields"].update(
                 {
-                    "version": ",".join(entry["version"]),
+                    "version": ",".join(event["version"]),
                 }
             )
 
         elif eventid == "cowrie.client.kex":
             m["fields"].update(
                 {
-                    "maccs": ",".join(entry["macCS"]),
-                    "kexalgs": ",".join(entry["kexAlgs"]),
-                    "keyalgs": ",".join(entry["keyAlgs"]),
-                    "compcs": ",".join(entry["compCS"]),
-                    "enccs": ",".join(entry["encCS"]),
+                    "maccs": ",".join(event["macCS"]),
+                    "kexalgs": ",".join(event["kexAlgs"]),
+                    "keyalgs": ",".join(event["keyAlgs"]),
+                    "compcs": ",".join(event["compCS"]),
+                    "enccs": ",".join(event["encCS"]),
                 }
             )
 
         elif eventid == "cowrie.client.size":
             m["fields"].update(
                 {
-                    "height": entry["height"],
-                    "width": entry["width"],
+                    "height": event["height"],
+                    "width": event["width"],
                 }
             )
 
         elif eventid == "cowrie.client.var":
             m["fields"].update(
                 {
-                    "name": entry["name"],
-                    "value": entry["value"],
+                    "name": event["name"],
+                    "value": event["value"],
                 }
             )
 
         elif eventid == "cowrie.client.fingerprint":
-            m["fields"].update({"fingerprint": entry["fingerprint"]})
+            m["fields"].update({"fingerprint": event["fingerprint"]})
 
             # cowrie.direct-tcpip.data, cowrie.direct-tcpip.request
             # cowrie.log.closed

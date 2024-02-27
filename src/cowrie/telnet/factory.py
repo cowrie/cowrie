@@ -73,12 +73,3 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         Stop output plugins
         """
         protocol.ServerFactory.stopFactory(self)
-
-    def buildProtocol(self, addr):
-        """
-        Overidden so we can keep a reference to running protocols (which is used for testing)
-        """
-        p = self.protocol()
-        p.factory = self
-
-        return p

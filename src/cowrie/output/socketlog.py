@@ -24,13 +24,13 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         self.sock.close()
 
-    def write(self, logentry):
-        for i in list(logentry.keys()):
+    def write(self, event):
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
-                del logentry[i]
+                del event[i]
 
-        message = json.dumps(logentry) + "\n"
+        message = json.dumps(event) + "\n"
 
         try:
             self.sock.sendall(message.encode())

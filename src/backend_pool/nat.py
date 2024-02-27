@@ -4,21 +4,25 @@ from typing import Any
 
 from twisted.internet.interfaces import IAddress
 from twisted.internet import protocol
+from twisted.internet.protocol import connectionDone
 from twisted.internet import reactor
+from twisted.python import failure
 
 
 class ClientProtocol(protocol.Protocol):
     server_protocol: ServerProtocol
 
     def dataReceived(self, data: bytes) -> None:
-        self.server_protocol.transport.write(data)  # type: ignore
+        assert self.server_protocol.transport is not None
+        self.server_protocol.transport.write(data)
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        assert self.server_protocol.transport is not None
         self.server_protocol.transport.loseConnection()
 
 
 class ClientFactory(protocol.ClientFactory):
-    def __init__(self, server_protocol):
+    def __init__(self, server_protocol: ServerProtocol) -> None:
         self.server_protocol = server_protocol
 
     def buildProtocol(self, addr: IAddress) -> ClientProtocol:
@@ -42,18 +46,19 @@ class ServerProtocol(protocol.Protocol):
         self.buffer.append(data)
         self.sendData()
 
-    def sendData(self):
+    def sendData(self) -> None:
         if not self.client_protocol:
-            reactor.callLater(0.5, self.sendData)
+            reactor.callLater(0.5, self.sendData)  # type: ignore[attr-defined]
             return
 
+        assert self.client_protocol.transport is not None
         for packet in self.buffer:
             self.client_protocol.transport.write(packet)
         self.buffer = []
 
-    def connectionLost(self, reason):
-        if self.client_protocol:
-            self.client_protocol.transport.loseConnection()
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        assert self.client_protocol.transport is not None
+        self.client_protocol.transport.loseConnection()
 
 
 class ServerFactory(protocol.Factory):

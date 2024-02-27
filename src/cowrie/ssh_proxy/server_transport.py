@@ -239,27 +239,27 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self.sendKexInit()
         packet = self.getPacket()
         while packet:
-            message_num = ord(packet[0:1])
-            self.dispatchMessage(message_num, packet[1:])
+            messageNum = ord(packet[0:1])
+            self.dispatchMessage(messageNum, packet[1:])
             packet = self.getPacket()
 
-    def dispatchMessage(self, message_num, payload):
+    def dispatchMessage(self, messageNum, payload):
         # overriden dispatchMessage sets services, we do that here too then
         # we're particularly interested in userauth, since Twisted does most of that for us
-        if message_num == 5:
+        if messageNum == 5:
             self.ssh_SERVICE_REQUEST(payload)
-        elif 50 <= message_num <= 79:  # userauth numbers
+        elif 50 <= messageNum <= 79:  # userauth numbers
             self.frontendAuthenticated = False
             transport.SSHServerTransport.dispatchMessage(
-                self, message_num, payload
+                self, messageNum, payload
             )  # let userauth deal with it
 
         # TODO delay userauth until backend is connected?
 
         elif transport.SSHServerTransport.isEncrypted(self, "both"):
-            self.packet_buffer(message_num, payload)
+            self.packet_buffer(messageNum, payload)
         else:
-            transport.SSHServerTransport.dispatchMessage(self, message_num, payload)
+            transport.SSHServerTransport.dispatchMessage(self, messageNum, payload)
 
     def sendPacket(self, messageType, payload):
         """
@@ -415,7 +415,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         log.msg(f"Got remote error, code {reasonCode} reason: {description}")
 
-    def packet_buffer(self, message_num: int, payload: bytes) -> None:
+    def packet_buffer(self, messageNum: int, payload: bytes) -> None:
         """
         We have to wait until we have a connection to the backend is ready. Meanwhile, we hold packets from client
         to server in here.
@@ -423,9 +423,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if not self.backendConnected:
             # wait till backend connects to send packets to them
             log.msg("Connection to backend not ready, buffering packet from frontend")
-            self.delayedPackets.append([message_num, payload])
+            self.delayedPackets.append([messageNum, payload])
         else:
             if len(self.delayedPackets) > 0:
-                self.delayedPackets.append([message_num, payload])
+                self.delayedPackets.append([messageNum, payload])
             else:
-                self.sshParse.parse_num_packet("[SERVER]", message_num, payload)
+                self.sshParse.parse_num_packet("[SERVER]", messageNum, payload)

@@ -19,7 +19,7 @@ def ping(guest_ip: str) -> int:
     return out.returncode == 0
 
 
-def nmap_port(guest_ip: str, port: int) -> int:
+def nmap_port(guest_ip: str, port: int) -> bool:
     out = subprocess.run(
         ["nmap", guest_ip, "-PN", "-p", str(port)],
         capture_output=True,

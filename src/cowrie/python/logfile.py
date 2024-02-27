@@ -18,20 +18,20 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
     Overload original Twisted with improved date formatting
     """
 
-    def suffix(self, tupledate):
+    def suffix(self, tupledate: float | tuple[int, int, int]) -> str:
         """
         Return the suffix given a (year, month, day) tuple or unixtime
         """
-        try:
+        if isinstance(tupledate, tuple):
             return f"{tupledate[0]:02d}-{tupledate[1]:02d}-{tupledate[2]:02d}"
-        except Exception:
-            # try taking a float unixtime
+        if isinstance(tupledate, float):
             return "_".join(map(str, self.toDate(tupledate)))
+        raise AttributeError("wrong type")
 
 
 def logger():
     directory = CowrieConfig.get("honeypot", "log_path", fallback="var/log/cowrie")
-    logfile = CowrieDailyLogFile("cowrie.log", directory)
+    cowrielog = CowrieDailyLogFile("cowrie.log", directory)
 
     # use Z for UTC (Zulu) time, it's shorter.
     if "TZ" in environ and environ["TZ"] == "UTC":
@@ -39,4 +39,4 @@ def logger():
     else:
         timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-    return textFileLogObserver(logfile, timeFormat=timeFormat)
+    return textFileLogObserver(cowrielog, timeFormat=timeFormat)

@@ -30,9 +30,9 @@ class Output(cowrie.core.output.Output):
         """
         pass
 
-    def write(self, entry):
+    def write(self, event):
         """
-        Process log entry
+        Process log event
         """
 
         def processConnect(result):
@@ -44,10 +44,10 @@ class Output(cowrie.core.output.Output):
             payload = result[0][0].payload
             log.msg(
                 eventid="cowrie.reversedns.connect",
-                session=entry["session"],
+                session=event["session"],
                 format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s"
                 " ttl=%(ttl)i",
-                src_ip=entry["src_ip"],
+                src_ip=event["src_ip"],
                 ptr=str(payload.name),
                 ttl=payload.ttl,
             )
@@ -61,10 +61,10 @@ class Output(cowrie.core.output.Output):
             payload = result[0][0].payload
             log.msg(
                 eventid="cowrie.reversedns.forward",
-                session=entry["session"],
+                session=event["session"],
                 format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s"
                 " ttl=%(ttl)i",
-                dst_ip=entry["dst_ip"],
+                dst_ip=event["dst_ip"],
                 ptr=str(payload.name),
                 ttl=payload.ttl,
             )
@@ -79,13 +79,13 @@ class Output(cowrie.core.output.Output):
                 log.msg("reversedns: Error in DNS lookup")
                 failure.printTraceback()
 
-        if entry["eventid"] == "cowrie.session.connect":
-            d = self.reversedns(entry["src_ip"])
+        if event["eventid"] == "cowrie.session.connect":
+            d = self.reversedns(event["src_ip"])
             if d is not None:
                 d.addCallback(processConnect)
                 d.addErrback(cbError)
-        elif entry["eventid"] == "cowrie.direct-tcpip.request":
-            d = self.reversedns(entry["dst_ip"])
+        elif event["eventid"] == "cowrie.direct-tcpip.request":
+            d = self.reversedns(event["dst_ip"])
             if d is not None:
                 d.addCallback(processForward)
                 d.addErrback(cbError)

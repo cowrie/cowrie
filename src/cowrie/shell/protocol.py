@@ -290,6 +290,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         this logs out when connection times out
         """
+        assert self.terminal is not None
         self.terminal.write(b"timed out waiting for input: auto-logout\n")
         HoneyPotBaseProtocol.timeoutConnection(self)
 
@@ -319,14 +320,15 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.lineBuffer[self.lineBufferIndex : self.lineBufferIndex + 1] = [ch]
         self.lineBufferIndex += 1
         if not self.password_input:
+            assert self.terminal is not None
             self.terminal.write(ch)
 
-    def handle_RETURN(self):
+    def handle_RETURN(self) -> None:
         if len(self.cmdstack) == 1:
             if self.lineBuffer:
                 self.historyLines.append(b"".join(self.lineBuffer))
             self.historyPosition = len(self.historyLines)
-        return recvline.RecvLine.handle_RETURN(self)
+        recvline.RecvLine.handle_RETURN(self)
 
     def handle_CTRL_C(self) -> None:
         if self.cmdstack:
@@ -341,6 +343,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.cmdstack[-1].handle_TAB()
 
     def handle_CTRL_K(self) -> None:
+        assert self.terminal is not None
         self.terminal.eraseToLineEnd()
         self.lineBuffer = self.lineBuffer[0 : self.lineBufferIndex]
 
@@ -349,11 +352,13 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         Handle a 'form feed' byte - generally used to request a screen
         refresh/redraw.
         """
+        assert self.terminal is not None
         self.terminal.eraseDisplay()
         self.terminal.cursorHome()
         self.drawInputLine()
 
     def handle_CTRL_U(self) -> None:
+        assert self.terminal is not None
         for _ in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
             self.terminal.deleteCharacter()
