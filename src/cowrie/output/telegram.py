@@ -14,9 +14,7 @@ class Output(cowrie.core.output.Output):
     def start(self):
         self.bot_token = CowrieConfig.get("output_telegram", "bot_token")
         self.chat_id = CowrieConfig.get("output_telegram", "chat_id")
-        self.log_login = CowrieConfig.get("output_telegram", "log_login")
-        self.log_commands = CowrieConfig.get("output_telegram", "log_commands")
-        self.log_file_download = CowrieConfig.get("output_telegram", "log_file_download")
+        self.events_logged = CowrieConfig.get("output_telegram", "events_logged")
 
     def stop(self):
         pass
@@ -34,6 +32,10 @@ class Output(cowrie.core.output.Output):
         elif "CowrieTelnetTransport" in (event["system"].split(","))[0]:
             logon_type = "Telnet"
 
+        # Parse event to log list
+            
+        events_logged_list: list[str] = self.events_logged.split(",")
+
         # Prepare base message
         msgtxt = "<strong>[Cowrie " + event["sensor"] + "]</strong>"
         msgtxt += "\nEvent: " + event["eventid"]
@@ -41,14 +43,14 @@ class Output(cowrie.core.output.Output):
         msgtxt += "\nSource: <code>" + event["src_ip"] + "</code>"
         msgtxt += "\nSession: <code>" + event["session"] + "</code>"
 
-        if event["eventid"] == "cowrie.login.success" and log_login:
+        if event["eventid"] == "cowrie.login.success" and ("login" in events_logged_list):
             msgtxt += "\nUsername: <code>" + event["username"] + "</code>"
             msgtxt += "\nPassword: <code>" + event["password"] + "</code>"
             self.send_message(msgtxt)
-        elif event["eventid"] in ["cowrie.command.failed", "cowrie.command.input"] and log_commands:
+        elif event["eventid"] in ["cowrie.command.failed", "cowrie.command.input"] and ("commands" in events_logged_list):
             msgtxt += "\nCommand: <pre>" + event["input"] + "</pre>"
             self.send_message(msgtxt)
-        elif event["eventid"] == "cowrie.session.file_download" and log_file_download:
+        elif event["eventid"] == "cowrie.session.file_download" and ("file_download" in events_logged_list):
             msgtxt += "\nUrl: " + event.get("url", "")
             self.send_message(msgtxt)
 
