@@ -51,7 +51,7 @@ pip-check: ## Verify python packages
 # This assumes two remotes, one is `origin`, your fork. The second is `cowrie` the main project
 .PHONY: git-remote
 git-remote: ## Add remote git configuration
-	git remote add cowrie https://github.com/cowrie/cowrie
+	git remote add origin https://github.com/crispy-computing-robot/cowrie
 
 .PHONY: pur
 pip-pur: ## Upgrade dependencies based on latest packages
@@ -68,8 +68,8 @@ pip-pur: ## Upgrade dependencies based on latest packages
 MODULE := cowrie
 
 # Where to push the docker image.
-#REGISTRY ?= docker.pkg.github.com/cowrie/cowrie
-REGISTRY ?= cowrie
+#REGISTRY ?= docker.pkg.github.com/vchokshi/cowrie
+REGISTRY ?= vchokshi
 
 IMAGE := $(REGISTRY)/$(MODULE)
 
