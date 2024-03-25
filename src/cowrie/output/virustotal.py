@@ -42,7 +42,6 @@ from zope.interface import implementer
 
 from twisted.internet import defer
 from twisted.internet import reactor
-from twisted.internet.ssl import ClientContextFactory
 from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.iweb import IBodyProducer
@@ -94,7 +93,7 @@ class Output(cowrie.core.output.Output):
         self.commenttext = CowrieConfig.get(
             "output_virustotal", "commenttext", fallback=COMMENT
         )
-        self.agent = client.Agent(reactor, WebClientContextFactory())
+        self.agent = client.Agent(reactor)
 
     def stop(self) -> None:
         """
@@ -446,11 +445,6 @@ class Output(cowrie.core.output.Output):
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
-
-
-class WebClientContextFactory(ClientContextFactory):
-    def getContext(self):
-        return ClientContextFactory.getContext(self)
 
 
 @implementer(IBodyProducer)
