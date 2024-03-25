@@ -8,7 +8,6 @@ import json
 
 from io import BytesIO
 from twisted.internet import reactor
-from twisted.internet.ssl import ClientContextFactory
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
 
@@ -19,8 +18,7 @@ from cowrie.core.config import CowrieConfig
 class Output(cowrie.core.output.Output):
     def start(self) -> None:
         self.url = CowrieConfig.get("output_discord", "url").encode("utf8")
-        contextFactory = WebClientContextFactory()
-        self.agent = client.Agent(reactor, contextFactory)
+        self.agent = client.Agent(reactor)
 
     def stop(self) -> None:
         pass
@@ -46,8 +44,3 @@ class Output(cowrie.core.output.Output):
 
         body = FileBodyProducer(BytesIO(json.dumps(entry).encode("utf8")))
         self.agent.request(b"POST", self.url, headers, body)
-
-
-class WebClientContextFactory(ClientContextFactory):
-    def getContext(self):
-        return ClientContextFactory.getContext(self)
