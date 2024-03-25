@@ -4,14 +4,16 @@ Simple Graylog HTTP Graylog Extended Log Format (GELF) logger.
 
 from __future__ import annotations
 
+from io import BytesIO
 import json
 import time
 
-from io import BytesIO
-from twisted.internet import reactor
-from twisted.internet.ssl import ClientContextFactory
+from zope.interface import implementer
+
+from twisted.internet import reactor, ssl
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
+from twisted.web.iweb import IPolicyForHTTPS
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -20,7 +22,7 @@ from cowrie.core.config import CowrieConfig
 class Output(cowrie.core.output.Output):
     def start(self) -> None:
         self.url = CowrieConfig.get("output_graylog", "url").encode("utf8")
-        contextFactory = WebClientContextFactory()
+        contextFactory = WhitelistContextFactory()
         self.agent = client.Agent(reactor, contextFactory)
 
     def stop(self) -> None:
@@ -53,6 +55,7 @@ class Output(cowrie.core.output.Output):
         self.agent.request(b"POST", self.url, headers, body)
 
 
-class WebClientContextFactory(ClientContextFactory):
-    def getContext(self):
-        return ClientContextFactory.getContext(self)
+@implementer(IPolicyForHTTPS)
+class WhitelistContextFactory:
+    def creatorForNetloc(self, hostname, port):
+        return ssl.CertificateOptions(verify=False)
