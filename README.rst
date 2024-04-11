@@ -62,7 +62,8 @@ Docker versions are available.
 
 * On Docker Hub: https://hub.docker.com/r/cowrie/cowrie
 
-### Configuring Cowrie in Docker
+Configuring Cowrie in Docker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Cowrie in Docker can be configured using environment variables. The
 variables start with COWRIE_ then have the section name in capitals,
