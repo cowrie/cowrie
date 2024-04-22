@@ -36,7 +36,7 @@ wokkel==18.0.0
 pymisp==2.4.187
 
 # redis
-redis==5.0.1
+redis==5.0.3
 
 # Oracle Cloud
 oci==2.122.0
