@@ -40,3 +40,5 @@ redis==5.0.3
 
 # Oracle Cloud
 oci==2.122.0
+aiohttp>=3.9.4 # not directly required, pinned by Snyk to avoid a vulnerability
+cryptography>=42.0.6 # not directly required, pinned by Snyk to avoid a vulnerability
