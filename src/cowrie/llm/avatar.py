@@ -14,8 +14,8 @@ from twisted.conch.ssh.connection import OPEN_UNKNOWN_CHANNEL_TYPE
 from twisted.python import components, log
 
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import server
-from cowrie.ssh import forwarding
+from cowrie.llm import server
+from cowrie.llm import session as llmsession
 from cowrie.ssh import session as sshsession
 
 
@@ -48,4 +48,4 @@ class CowrieUser(avatar.ConchUser):
             )
 
 
-components.registerAdapter(shellsession.SSHSessionForCowrieUser, CowrieUser, ISession)
+components.registerAdapter(llmsession.SSHSessionForCowrieUser, CowrieUser, ISession)
