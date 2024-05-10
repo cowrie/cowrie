@@ -111,8 +111,7 @@ class Command_python(HoneyPotCommand):
                 self.exit()
             else:
                 self.write(
-                    "python: can't open file '%s': [Errno 2] No such file or directory\n"
-                    % (value)
+                    f"python: can't open file '{value}': [Errno 2] No such file or directory\n"
                 )
                 self.exit()
 

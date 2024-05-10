@@ -90,10 +90,9 @@ Written by Simon Josefsson.
         else:
             if len(args) > 1:
                 self.errorWrite(
-                    """base64: extra operand '%s'
+                    f"""base64: extra operand '{args[0]}'
 Try 'base64 --help' for more information.
 """
-                    % args[0]
                 )
                 self.exit()
                 return

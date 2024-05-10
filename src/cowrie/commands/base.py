@@ -753,7 +753,7 @@ class Command_ps(HoneyPotCommand):
                     "Ss   ",
                     "Nov08",
                     "   0:00 ",
-                    "/usr/sbin/sshd: %s@pts/0" % user,
+                    f"/usr/sbin/sshd: {user}@pts/0",
                 ),
                 (
                     "%s".ljust(8) % user,
@@ -779,7 +779,7 @@ class Command_ps(HoneyPotCommand):
                     "R+   ",
                     "04:32",
                     "   0:00 ",
-                    "ps %s" % " ".join(self.args),
+                    "ps {}".format(" ".join(self.args)),
                 ),
             ]
 
@@ -830,9 +830,7 @@ class Command_id(HoneyPotCommand):
     def call(self) -> None:
         u = self.protocol.user
         self.write(
-            "uid={}({}) gid={}({}) groups={}({})\n".format(
-                u.uid, u.username, u.gid, u.username, u.gid, u.username
-            )
+            f"uid={u.uid}({u.username}) gid={u.gid}({u.username}) groups={u.gid}({u.username})\n"
         )
 
 

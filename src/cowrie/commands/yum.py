@@ -202,9 +202,7 @@ Options:
 
         for y in [re.sub("[^A-Za-z0-9]", "", x) for x in self.args[1:]]:
             self.packages[y] = {
-                "version": "{}.{}-{}".format(
-                    random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)
-                ),
+                "version": f"{random.choice([0, 1])}.{random.randint(1, 40)}-{random.randint(1, 10)}",
                 "size": random.randint(100, 900),
                 "release": f"{random.randint(1, 15)}.el7",
             }
@@ -217,9 +215,7 @@ Options:
         )
         yield self.sleep(2.2)
         self.write(
-            "{} packages excluded due to repository priority protections\n".format(
-                random.randint(200, 300)
-            )
+            f"{random.randint(200, 300)} packages excluded due to repository priority protections\n"
         )
         yield self.sleep(0.9)
         self.write("Resolving Dependencies\n")
