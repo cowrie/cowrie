@@ -11,7 +11,7 @@ from twisted.python import log
 
 from cowrie.insults import insults
 
-# from cowrie.shell import protocol
+from cowrie.llm import protocol
 
 
 @implementer(ISession)

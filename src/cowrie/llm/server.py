@@ -43,3 +43,4 @@ class CowrieServer:
 
     def __init__(self, realm: IRealm) -> None:
         log.msg(f"Initialized llm server")
+        self.hostname = "llm"
