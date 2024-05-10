@@ -77,14 +77,7 @@ def uname_fail_extra(arg: str) -> str:
 
 class Command_uname(HoneyPotCommand):
     def full_uname(self) -> str:
-        return "{} {} {} {} {} {}\n".format(
-            kernel_name(),
-            self.protocol.hostname,
-            kernel_version(),
-            kernel_build_string(),
-            hardware_platform(),
-            operating_system(),
-        )
+        return f"{kernel_name()} {self.protocol.hostname} {kernel_version()} {kernel_build_string()} {hardware_platform()} {operating_system()}\n"
 
     def call(self) -> None:
         opts = {

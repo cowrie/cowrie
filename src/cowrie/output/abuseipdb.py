@@ -374,8 +374,8 @@ class Reporter:
         params = {
             "ip": ip,
             "categories": "18,22",
-            "comment": "Cowrie Honeypot: {} unauthorised SSH/Telnet login attempts "
-            "between {} and {}".format(self.attempts, t_first, t_last),
+            "comment": f"Cowrie Honeypot: {self.attempts} unauthorised SSH/Telnet login attempts "
+            f"between {t_first} and {t_last}",
         }
 
         self.http_request(params)

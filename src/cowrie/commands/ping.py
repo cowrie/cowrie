@@ -91,9 +91,7 @@ class Command_ping(HoneyPotCommand):
     def showreply(self) -> None:
         ms = 40 + random.random() * 10
         self.write(
-            "64 bytes from {} ({}): icmp_seq={} ttl=50 time={:.1f} ms\n".format(
-                self.host, self.ip, self.count + 1, ms
-            )
+            f"64 bytes from {self.host} ({self.ip}): icmp_seq={self.count + 1} ttl=50 time={ms:.1f} ms\n"
         )
         self.count += 1
         if self.count == self.max:

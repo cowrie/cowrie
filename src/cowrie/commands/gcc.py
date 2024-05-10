@@ -171,15 +171,13 @@ Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."""
         else:
-            data = """Using built-in specs.
+            data = f"""Using built-in specs.
 COLLECT_GCC=gcc
 COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/4.7/lto-wrapper
 Target: x86_64-linux-gnu
-Configured with: ../src/configure -v --with-pkgversion=\'Debian {}-5\' --with-bugurl=file:///usr/share/doc/gcc-{}/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-{} --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/{} --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-objc-gc --with-arch-32=i586 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion=\'Debian {version}-5\' --with-bugurl=file:///usr/share/doc/gcc-{version_short}/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-{version_short} --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/{version_short} --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-objc-gc --with-arch-32=i586 --with-tune=generic --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
 Thread model: posix
-gcc version {} (Debian {}-5)""".format(
-                version, version_short, version_short, version_short, version, version
-            )
+gcc version {version} (Debian {version}-5)"""
 
         # Write
         self.write(f"{data}\n")
@@ -310,5 +308,5 @@ For bug reporting instructions, please see:
 commands["/usr/bin/gcc"] = Command_gcc
 commands["gcc"] = Command_gcc
 commands[
-    "/usr/bin/gcc-%s" % (".".join([str(v) for v in Command_gcc.APP_VERSION[:2]]))
+    "/usr/bin/gcc-{}".format(".".join([str(v) for v in Command_gcc.APP_VERSION[:2]]))
 ] = Command_gcc

@@ -346,9 +346,7 @@ class Command_curl(HoneyPotCommand):
 
         if self.outfile and not self.silent:
             self.write(
-                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- {}".format(
-                    self.currentlength, self.currentlength, 63673, 65181
-                )
+                f"\r100  {self.currentlength}  100  {self.currentlength}    0     0  {63673}      0 --:--:-- --:--:-- --:--:-- {65181}"
             )
 
         if not self.outfile:
