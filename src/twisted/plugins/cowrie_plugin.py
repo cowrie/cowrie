@@ -45,8 +45,8 @@ from twisted.plugin import IPlugin
 from twisted.python import log, usage
 
 import cowrie.core.checkers
-import cowrie.core.realm
 import cowrie.core.uuid
+import cowrie.shell.realm
 import cowrie.ssh.factory
 import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
@@ -226,7 +226,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         if self.enableSSH:
             factory = cowrie.ssh.factory.CowrieSSHFactory(backend, self.pool_handler)
             factory.tac = self  # type: ignore
-            factory.portal = portal.Portal(core.realm.HoneyPotRealm())
+            factory.portal = portal.Portal(cowrie.shell.realm.HoneyPotRealm())
             factory.portal.registerChecker(core.checkers.HoneypotPublicKeyChecker())
             factory.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
@@ -247,7 +247,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         if self.enableTelnet:
             f = cowrie.telnet.factory.HoneyPotTelnetFactory(backend, self.pool_handler)
             f.tac = self
-            f.portal = portal.Portal(core.realm.HoneyPotRealm())
+            f.portal = portal.Portal(cowrie.shell.realm.HoneyPotRealm())
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
             listen_endpoints = get_endpoints_from_section(CowrieConfig, "telnet", 2223)
