@@ -109,7 +109,7 @@ idle_timeout = 180
 # The default is 120 seconds.
 authentication_timeout = 120
 
-# EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
+# EXPERIMENTAL: back-end to user for Cowrie, options: shell, proxy or llm
 # (default: shell)
 backend = shell
 
