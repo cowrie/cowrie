@@ -38,6 +38,7 @@ from cowrie.llm import avatar as llmavatar
 from cowrie.llm import server as llmserver
 from cowrie.telnet import session
 
+
 @implementer(IRealm)
 class HoneyPotRealm:
     def __init__(self) -> None:
