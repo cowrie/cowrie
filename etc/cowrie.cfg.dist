@@ -1175,3 +1175,6 @@ password = guest
 vhost = /
 exchange = cowrie
 exchange_type = topic
+
+[openai]
+API_KEY = xxxxx

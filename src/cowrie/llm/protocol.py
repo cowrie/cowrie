@@ -150,11 +150,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     def connectionMade(self) -> None:
         HoneyPotBaseProtocol.connectionMade(self)
         self.setTimeout(60)
-        self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
-        # TODO: quick and dirty fix to deal with \n separated commands
-        # HoneypotShell() needs a rewrite to better work with pending input
-        self.cmdstack[0].lineReceived("; ".join(self.execcmd.split("\n")))
-        # TODO: ADD LLM CODE HERE
+        # TODO: ADD LLM CODE HERE TO WORK ON self.execcmd
 
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID
@@ -166,8 +162,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self) -> None:
-        self.displayMOTD()
-
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
@@ -192,12 +186,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
                 b"\x1b": self.handle_ESC,  # ESC
             }
         )
-
-    def displayMOTD(self) -> None:
-        try:
-            self.terminal.write(self.fs.file_contents("/etc/motd"))
-        except Exception:
-            pass
 
     def timeoutConnection(self) -> None:
         """
@@ -232,21 +220,24 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.terminal.write(ch)
 
     def handle_RETURN(self) -> None:
-        if len(self.cmdstack) == 1:
-            if self.lineBuffer:
-                self.historyLines.append(b"".join(self.lineBuffer))
-            self.historyPosition = len(self.historyLines)
+        if self.lineBuffer:
+            self.historyLines.append(b"".join(self.lineBuffer))
+        self.historyPosition = len(self.historyLines)
         recvline.RecvLine.handle_RETURN(self)
 
     def handle_CTRL_C(self) -> None:
+        return
         if self.cmdstack:
             self.cmdstack[-1].handle_CTRL_C()
 
     def handle_CTRL_D(self) -> None:
+        self.connectionLost(None)
+        return
         if self.cmdstack:
             self.cmdstack[-1].handle_CTRL_D()
 
     def handle_TAB(self) -> None:
+        return
         if self.cmdstack:
             self.cmdstack[-1].handle_TAB()
 
