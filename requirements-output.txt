@@ -3,7 +3,7 @@ csirtgsdk==1.1.5
 geoip2
 
 # dshield
-requests==2.31.0
+requests==2.32.0
 
 # elasticsearch
 elasticsearch==8.12.1
@@ -36,7 +36,7 @@ wokkel==18.0.0
 pymisp==2.4.187
 
 # redis
-redis==5.0.1
+redis==5.0.4
 
 # Oracle Cloud
 oci==2.122.0

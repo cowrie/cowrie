@@ -71,8 +71,7 @@ def playlog(fd, settings):
 
 def help(brief=0):
     print(
-        "Usage: %s [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n"
-        % os.path.basename(sys.argv[0])
+        f"Usage: {os.path.basename(sys.argv[0])} [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n"
     )
 
     if not brief:
@@ -104,7 +103,7 @@ def run():
     try:
         optlist, args = getopt.getopt(sys.argv[1:], "fhibcm:w:", ["help"])
     except getopt.GetoptError as error:
-        print("Error: %s\n" % error)
+        print(f"Error: {error}\n")
         help()
         return
 
