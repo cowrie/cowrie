@@ -28,8 +28,8 @@ class CowrieSSHChannel(channel.SSHChannel):
     bytesWritten: int = 0
     name: bytes = b"cowrie-ssh-channel"
     startTime: float = 0.0
-    ttylogPath: str = CowrieConfig.get("honeypot", "log_path")
-    downloadPath: str = CowrieConfig.get("honeypot", "download_path")
+    ttylogPath: str = CowrieConfig.get("honeypot", "log_path", fallback=".")
+    downloadPath: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
     ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)
     bytesReceivedLimit: int = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0

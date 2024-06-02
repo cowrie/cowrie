@@ -48,7 +48,7 @@ class Command_scp(HoneyPotCommand):
     scp command
     """
 
-    download_path = CowrieConfig.get("honeypot", "download_path")
+    download_path = CowrieConfig.get("honeypot", "download_path", fallback=".")
     download_path_uniq = CowrieConfig.get(
         "honeypot", "download_path_uniq", fallback=download_path
     )

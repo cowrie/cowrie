@@ -53,10 +53,13 @@ class CowrieServer:
     def __init__(self, realm: IRealm) -> None:
         self.fs = None
         self.process = None
-        self.hostname: str = CowrieConfig.get("honeypot", "hostname")
+        self.hostname: str = CowrieConfig.get("honeypot", "hostname", fallback="svr04")
         try:
             arches = [
-                arch.strip() for arch in CowrieConfig.get("shell", "arch").split(",")
+                arch.strip()
+                for arch in CowrieConfig.get(
+                    "shell", "arch", fallback="linux-x64-lsb"
+                ).split(",")
             ]
             self.arch = random.choice(arches)
         except NoOptionError:

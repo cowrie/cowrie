@@ -19,7 +19,6 @@ from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
 from twisted.python import failure, log
 
-from cowrie.core import auth
 from cowrie.core import credentials as conchcredentials
 from cowrie.core.config import CowrieConfig
 
@@ -93,19 +92,15 @@ class HoneypotPasswordChecker:
         return defer.fail(UnauthorizedLogin())
 
     def checkUserPass(self, theusername: bytes, thepassword: bytes, ip: str) -> bool:
-        # UserDB is the default auth_class
-        authname = auth.UserDB
-
         # Is the auth_class defined in the config file?
-        if CowrieConfig.has_option("honeypot", "auth_class"):
-            authclass = CowrieConfig.get("honeypot", "auth_class")
-            authmodule = "cowrie.core.auth"
+        authclass = CowrieConfig.get("honeypot", "auth_class", fallback="UserDB")
+        authmodule = "cowrie.core.auth"
 
-            # Check if authclass exists in this module
-            if hasattr(modules[authmodule], authclass):
-                authname = getattr(modules[authmodule], authclass)
-            else:
-                log.msg(f"auth_class: {authclass} not found in {authmodule}")
+        # Check if authclass exists in this module
+        if hasattr(modules[authmodule], authclass):
+            authname = getattr(modules[authmodule], authclass)
+        else:
+            log.msg(f"auth_class: {authclass} not found in {authmodule}")
 
         theauth = authname()
 
