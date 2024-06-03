@@ -55,7 +55,8 @@ class Output(cowrie.core.output.Output):
         )
 
     def stop(self):
-        self.outfile.flush()
+        if self.outfile:
+            self.outfile.flush()
 
     def write(self, event):
         if self.epoch_timestamp:
