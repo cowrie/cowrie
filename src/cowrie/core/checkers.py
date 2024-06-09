@@ -21,6 +21,7 @@ from twisted.python import failure, log
 
 from cowrie.core import credentials as conchcredentials
 from cowrie.core.config import CowrieConfig
+import cowrie.core.auth  # noqa: F401
 
 
 @implementer(ICredentialsChecker)
