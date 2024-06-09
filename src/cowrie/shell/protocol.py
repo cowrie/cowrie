@@ -241,7 +241,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         # TODO: quick and dirty fix to deal with \n separated commands
         # HoneypotShell() needs a rewrite to better work with pending input
-        self.cmdstack[0].lineReceived("; ".join(self.execcmd.split("\n")))
+        self.cmdstack[0].lineReceived("; ".join(self.execcmd.strip().split("\n")))
 
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID
