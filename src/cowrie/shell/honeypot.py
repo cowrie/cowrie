@@ -68,12 +68,7 @@ class HoneyPotShell:
                     if tokens:
                         self.cmdpending.append(tokens)
                         tokens = []
-                        continue
-                    else:
-                        self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
-                        )
-                        break
+                    continue
                 elif tok == "$?":
                     tok = "0"
                 elif tok[0] == "(":
