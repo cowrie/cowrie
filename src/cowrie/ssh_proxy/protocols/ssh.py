@@ -51,6 +51,7 @@ PACKETLAYOUT = {
     4: "SSH_MSG_DEBUG",  # ['boolean', 'always_display']
     5: "SSH_MSG_SERVICE_REQUEST",  # ['string', 'service_name']
     6: "SSH_MSG_SERVICE_ACCEPT",  # ['string', 'service_name']
+    7: "SSH_MSG_EXT_INFO",  # ['TODO', 'TODO']
     20: "SSH_MSG_KEXINIT",  # ['string', 'service_name']
     21: "SSH_MSG_NEWKEYS",
     50: "SSH_MSG_USERAUTH_REQUEST",  # ['string', 'username'], ['string', 'service_name'], ['string', 'method_name']
@@ -88,15 +89,15 @@ class SSH(base_protocol.BaseProtocol):
         super().__init__()
 
         self.channels: list[dict[str, Any]] = []
-        self.username = b""
-        self.password = b""
-        self.auth_type = b""
-        self.service = b""
+        self.username: bytes = b""
+        self.password: bytes = b""
+        self.auth_type: bytes = b""
+        self.service: bytes = b""
 
-        self.sendOn = False
+        self.sendOn: bool = False
         self.expect_password = 0
         self.server = server
-        # self.client
+        self.client = None
 
     def set_client(self, client):
         self.client = client
@@ -131,6 +132,14 @@ class SSH(base_protocol.BaseProtocol):
             service = self.extract_string()
             if service == b"ssh-userauth":
                 self.sendOn = False
+
+        if packet == "SSH_MSG_EXT_INFO":
+            extensioncount: int = self.extract_int(4)
+            for _ in range(extensioncount):
+                log.msg(
+                    f"SSH_MSG_EXT_INFO: {self.extract_string()!r}={self.extract_string()!r}"
+                )
+            self.sendOn = False
 
         # - UserAuth
         if packet == "SSH_MSG_USERAUTH_REQUEST":
