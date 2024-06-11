@@ -98,6 +98,7 @@ class SSH(base_protocol.BaseProtocol):
         self.expect_password = 0
         self.server = server
         self.client = None
+        self.log_raw = CowrieConfig.getboolean("proxy", "log_raw", fallback=False)
 
     def set_client(self, client):
         self.client = client
@@ -111,6 +112,7 @@ class SSH(base_protocol.BaseProtocol):
             packet = PACKETLAYOUT[message_num]
         else:
             packet = f"UNKNOWN_{message_num}"
+            log.msg(f"unknown packet {packet}: {payload!r}")
 
         if parent == "[SERVER]":
             direction = "PROXY -> BACKEND"
@@ -118,7 +120,7 @@ class SSH(base_protocol.BaseProtocol):
             direction = "BACKEND -> PROXY"
 
         # log raw packets if user sets so
-        if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
+        if self.log_raw:
             log.msg(
                 eventid="cowrie.proxy.ssh",
                 format="%(direction)s - %(packet)s - %(payload)s",
@@ -133,7 +135,7 @@ class SSH(base_protocol.BaseProtocol):
             if service == b"ssh-userauth":
                 self.sendOn = False
 
-        if packet == "SSH_MSG_EXT_INFO":
+        elif packet == "SSH_MSG_EXT_INFO":
             extensioncount: int = self.extract_int(4)
             for _ in range(extensioncount):
                 log.msg(
@@ -142,7 +144,7 @@ class SSH(base_protocol.BaseProtocol):
             self.sendOn = False
 
         # - UserAuth
-        if packet == "SSH_MSG_USERAUTH_REQUEST":
+        elif packet == "SSH_MSG_USERAUTH_REQUEST":
             self.sendOn = False
             self.username = self.extract_string()
             self.extract_string()  # service
@@ -164,6 +166,7 @@ class SSH(base_protocol.BaseProtocol):
             if b"publickey" in auth_list:
                 log.msg("[SSH] Detected Public Key Auth - Disabling!")
                 payload = string_to_hex("password") + chr(0).encode()
+                # self.server.sendPacket(51, payload)
 
         elif packet == "SSH_MSG_USERAUTH_SUCCESS":
             self.sendOn = False
@@ -292,6 +295,7 @@ class SSH(base_protocol.BaseProtocol):
                 channel["session"] = term.Term(
                     the_uuid, channel["name"], self, channel["clientID"]
                 )
+                log.msg(f"{packet}: {channel_type!r}")
 
             elif channel_type == b"exec":
                 channel["name"] = "[EXEC" + str(channel["serverID"]) + "]"
@@ -300,10 +304,12 @@ class SSH(base_protocol.BaseProtocol):
                 channel["session"] = exec_term.ExecTerm(
                     the_uuid, channel["name"], self, channel["serverID"], command
                 )
+                log.msg(f"{packet}: {channel_type!r}: {command!r}")
 
             elif channel_type == b"subsystem":
                 self.extract_bool()
                 subsystem = self.extract_string()
+                log.msg(f"{packet}: {channel_type!r}: {subsystem!r}")
 
                 if subsystem == b"sftp":
                     if CowrieConfig.getboolean("ssh", "sftp_enabled"):
@@ -316,14 +322,20 @@ class SSH(base_protocol.BaseProtocol):
                         self.send_back(parent, 100, int_to_hex(channel["serverID"]))
                 else:
                     # UNKNOWN SUBSYSTEM
+                    log.msg(f"{packet}: {channel_type!r}: {subsystem!r}")
                     log.msg(
                         "[SSH] Unknown Subsystem Type Detected - " + subsystem.decode()
                     )
+            elif channel_type == b"env":
+                _ = self.extract_bool()
+                var = self.extract_string()
+                value = self.extract_string()
+                log.msg(f"{packet}: env: {var.decode()}={value.decode()}")
+
             else:
                 # UNKNOWN CHANNEL REQUEST TYPE
                 if channel_type not in [
                     b"window-change",
-                    b"env",
                     b"pty-req",
                     b"exit-status",
                     b"exit-signal",
@@ -364,7 +376,10 @@ class SSH(base_protocol.BaseProtocol):
             if channel_type == b"tcpip-forward":
                 if not CowrieConfig.getboolean("ssh", "forwarding"):
                     self.sendOn = False
-                    self.send_back(parent, 82, "")
+                    self.send_back(parent, 82, b"")
+
+        else:
+            log.msg(f"unhandled packet: {packet}")
 
         if self.sendOn:
             if parent == "[SERVER]":
@@ -372,7 +387,7 @@ class SSH(base_protocol.BaseProtocol):
             else:
                 self.server.sendPacket(message_num, payload)
 
-    def send_back(self, parent, message_num, payload):
+    def send_back(self, parent: str, message_num: int, payload: bytes) -> None:
         packet = PACKETLAYOUT[message_num]
 
         if parent == "[SERVER]":
