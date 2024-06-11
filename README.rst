@@ -3,6 +3,13 @@ Cowrie LLM
 
 A LLM enhanced cowrie shell.
 
+Build Docker with:
+``docker build -f docker/Dockerfile -t cowrie:latest .``
+
+Run Docker with:
+``docker run -p 2222:2222 cowrie:latest``
+
+
 Information below is from the original Cowrie repository.
 
 Welcome to the Cowrie GitHub repository
