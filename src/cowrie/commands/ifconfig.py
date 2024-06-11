@@ -7,22 +7,9 @@ from random import randint, randrange
 
 from cowrie.shell.command import HoneyPotCommand
 
-HWaddr = "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(
-    randint(0, 255),
-    randint(0, 255),
-    randint(0, 255),
-    randint(0, 255),
-    randint(0, 255),
-    randint(0, 255),
-)
+HWaddr = f"{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}"
 
-inet6 = "fe{:02x}::{:02x}:{:02x}ff:fe{:02x}:{:02x}01/64".format(
-    randint(0, 255),
-    randrange(111, 888),
-    randint(0, 255),
-    randint(0, 255),
-    randint(0, 255),
-)
+inet6 = f"fe{randint(0, 255):02x}::{randrange(111, 888):02x}:{randint(0, 255):02x}ff:fe{randint(0, 255):02x}:{randint(0, 255):02x}01/64"
 
 commands = {}
 

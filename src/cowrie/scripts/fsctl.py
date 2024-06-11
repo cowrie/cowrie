@@ -108,7 +108,7 @@ class fseditCmd(cmd.Cmd):
         cmd.Cmd.__init__(self)
 
         if not os.path.isfile(pickle_file_path):
-            print("File %s does not exist." % pickle_file_path)
+            print(f"File {pickle_file_path} does not exist.")
             sys.exit(1)
 
         try:
@@ -297,11 +297,11 @@ class fseditCmd(cmd.Cmd):
             target_dir = resolve_reference(self.pwd, relative_dir)
 
             if exists(self.fs, target_dir) is False:
-                print("cd: %s: No such file or directory" % target_dir)
+                print(f"cd: {target_dir}: No such file or directory")
             elif is_directory(self.fs, target_dir):
                 self.update_pwd(target_dir)
             else:
-                print("cd: %s: Not a directory" % target_dir)
+                print(f"cd: {target_dir}: Not a directory")
 
     def do_pwd(self, args):
         """
@@ -386,7 +386,7 @@ class fseditCmd(cmd.Cmd):
 
         self.save_pickle()
 
-        print("Added '%s'" % path)
+        print(f"Added '{path}'")
 
     def do_rm(self, arguments):
         """
@@ -431,7 +431,7 @@ class fseditCmd(cmd.Cmd):
 
         self.save_pickle()
 
-        print("Deleted %s" % target_path)
+        print(f"Deleted {target_path}")
 
     def do_rmdir(self, arguments):
         """
@@ -474,7 +474,7 @@ class fseditCmd(cmd.Cmd):
         if self.pwd == target_path:
             self.do_cd("..")
 
-        print("Deleted %s" % target_path)
+        print(f"Deleted {target_path}")
 
     def do_mv(self, arguments):
         """
@@ -496,7 +496,7 @@ class fseditCmd(cmd.Cmd):
         dst = dst.strip("/")
 
         if not exists(self.fs, src):
-            print("Source file '%s' does not exist!" % src)
+            print(f"Source file '{src}' does not exist!")
             return
 
         # Get the parent directory of the source file
@@ -522,7 +522,7 @@ class fseditCmd(cmd.Cmd):
             return
 
         if not exists(self.fs, dstparent):
-            print("Destination directory '%s' doesn't exist!" % dst)
+            print(f"Destination directory '{dst}' doesn't exist!")
             return
 
         if src == self.pwd:
@@ -608,7 +608,7 @@ class fseditCmd(cmd.Cmd):
         target_path = resolve_reference(self.pwd, arg_list[1])
 
         if not exists(self.fs, target_path):
-            print("File '%s' doesn't exist." % target_path)
+            print(f"File '{target_path}' doesn't exist.")
             return
 
         target_object = getpath(self.fs, target_path)
@@ -631,7 +631,7 @@ class fseditCmd(cmd.Cmd):
         target_path = resolve_reference(self.pwd, arg_list[1])
 
         if not exists(self.fs, target_path):
-            print("File '%s' doesn't exist." % target_path)
+            print(f"File '{target_path}' doesn't exist.")
             return
 
         target_object = getpath(self.fs, target_path)
@@ -656,7 +656,7 @@ class fseditCmd(cmd.Cmd):
         target_path = resolve_reference(self.pwd, arg_list[1])
 
         if not exists(self.fs, target_path):
-            print("File '%s' doesn't exist." % target_path)
+            print(f"File '{target_path}' doesn't exist.")
             return
 
         target_object = getpath(self.fs, target_path)
@@ -692,7 +692,7 @@ class fseditCmd(cmd.Cmd):
         target_path = resolve_reference(self.pwd, arg_list[0])
 
         if not exists(self.fs, target_path):
-            print("File '%s' doesn't exist." % target_path)
+            print(f"File '{target_path}' doesn't exist.")
             return
 
         target_object = getpath(self.fs, target_path)
@@ -759,10 +759,9 @@ class fseditCmd(cmd.Cmd):
 def run():
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         print(
-            "Usage: %s <fs.pickle> [command]"
-            % os.path.basename(
+            "Usage: {} <fs.pickle> [command]".format(os.path.basename(
                 sys.argv[0],
-            )
+            ))
         )
         sys.exit(1)
 

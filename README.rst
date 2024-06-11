@@ -62,7 +62,8 @@ Docker versions are available.
 
 * On Docker Hub: https://hub.docker.com/r/cowrie/cowrie
 
-* Configuring Cowrie in Docker
+Configuring Cowrie in Docker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Cowrie in Docker can be configured using environment variables. The
 variables start with COWRIE_ then have the section name in capitals,
@@ -84,7 +85,7 @@ Requirements
 
 Software required to run locally:
 
-* Python 3.8+
+* Python 3.9+
 * python-virtualenv
 
 For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.

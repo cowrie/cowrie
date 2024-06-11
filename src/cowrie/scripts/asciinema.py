@@ -89,8 +89,7 @@ def playlog(fd, settings):
 
 def help(verbose=False):
     print(
-        "usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>..."
-        % os.path.basename(sys.argv[0])
+        f"usage: {os.path.basename(sys.argv[0])} [-c] [-o output] <tty-log-file> <tty-log-file>..."
     )
 
     if verbose:

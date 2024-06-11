@@ -66,10 +66,10 @@ def recurse(localroot, root, tree, maxdepth=100):
 
     localpath = os.path.join(localroot, root[1:])
 
-    logit(" %s\n" % (localpath))
+    logit(f" {localpath}\n")
 
     if not os.access(localpath, os.R_OK):
-        logit(" Cannot access %s\n" % localpath)
+        logit(f" Cannot access {localpath}\n")
         return
 
     for name in os.listdir(localpath):
@@ -102,14 +102,12 @@ def recurse(localroot, root, tree, maxdepth=100):
 
         if S_ISLNK(s[ST_MODE]):
             if not os.access(path, os.R_OK):
-                logit(" Cannot access link: %s\n" % path)
+                logit(f" Cannot access link: {path}\n")
                 continue
             realpath = os.path.realpath(path)
             if not realpath.startswith(localroot):
                 logit(
-                    ' Link "{}" has real path "{}" outside local root "{}"\n'.format(
-                        path, realpath, localroot
-                    )
+                    f' Link "{path}" has real path "{realpath}" outside local root "{localroot}"\n'
                 )
                 continue
             else:
@@ -130,7 +128,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         elif S_ISFIFO(s[ST_MODE]):
             entry[A_TYPE] = T_FIFO
         else:
-            sys.stderr.write("We should handle %s" % path)
+            sys.stderr.write(f"We should handle {path}")
             sys.exit(1)
 
         tree.append(entry)
@@ -138,8 +136,7 @@ def recurse(localroot, root, tree, maxdepth=100):
 
 def help(brief=False):
     print(
-        "Usage: %s [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n"
-        % os.path.basename(sys.argv[0])
+        f"Usage: {os.path.basename(sys.argv[0])} [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n"
     )
 
     if not brief:
@@ -163,7 +160,7 @@ def run():
     try:
         optlist, args = getopt.getopt(sys.argv[1:], "hvpl:d:o:", ["help"])
     except getopt.GetoptError as error:
-        sys.stderr.write("Error: %s\n" % error)
+        sys.stderr.write(f"Error: {error}\n")
         help()
         return
 
@@ -182,7 +179,7 @@ def run():
             help()
 
     if output and os.path.isfile(output):
-        sys.stderr.write("File: %s exists!\n" % output)
+        sys.stderr.write(f"File: {output} exists!\n")
         sys.exit(1)
 
     logit("Processing:\n")

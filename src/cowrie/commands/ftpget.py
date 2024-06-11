@@ -268,9 +268,7 @@ Download a file via FTP
             ftp.login(user=self.username, passwd=self.password)
         except Exception as e:
             log.msg(
-                "FTP login failed: user={}, passwd={}, err={}".format(
-                    self.username, self.password, str(e)
-                )
+                f"FTP login failed: user={self.username}, passwd={self.password}, err={e!s}"
             )
             self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
             try:

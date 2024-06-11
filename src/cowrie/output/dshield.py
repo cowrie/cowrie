@@ -132,16 +132,12 @@ class Output(cowrie.core.output.Output):
                 sha1_local.update(log_output.encode("utf8"))
                 if sha1_match is None:
                     log.msg(
-                        "dshield: ERROR: Could not find sha1checksum in response: {}".format(
-                            repr(response)
-                        )
+                        f"dshield: ERROR: Could not find sha1checksum in response: {response!r}"
                     )
                     failed = True
                 elif sha1_match.group(1) != sha1_local.hexdigest():
                     log.msg(
-                        "dshield: ERROR: SHA1 Mismatch {} {} .".format(
-                            sha1_match.group(1), sha1_local.hexdigest()
-                        )
+                        f"dshield: ERROR: SHA1 Mismatch {sha1_match.group(1)} {sha1_local.hexdigest()} ."
                     )
                     failed = True
 
@@ -154,9 +150,7 @@ class Output(cowrie.core.output.Output):
                     failed = True
                 elif md5_match.group(1) != md5_local.hexdigest():
                     log.msg(
-                        "dshield: ERROR: MD5 Mismatch {} {} .".format(
-                            md5_match.group(1), md5_local.hexdigest()
-                        )
+                        f"dshield: ERROR: MD5 Mismatch {md5_match.group(1)} {md5_local.hexdigest()} ."
                     )
                     failed = True
 
