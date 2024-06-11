@@ -1,6 +1,11 @@
-Cowrie
+Cowrie LLM
 ######
 
+A LLM enhanced cowrie shell.
+
+Information below is from the original Cowrie repository.
+
+######
 Welcome to the Cowrie GitHub repository
 *****************************************
 
