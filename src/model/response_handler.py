@@ -22,14 +22,26 @@ class ResponseHandler():
         if flag_d:
             flags = flags+"-d"
 
-        responses = self.response_dict["ls"]
-        if flags in responses.keys():
-            responses = responses[flags]
+        resp = self.find_static_response("ls", flags, path)
+        if resp is None:
+            #TODO: Call LLM
+            return "'Generation by LLM'"
         else:
-            return "Some new flags I don't have, maybe command not recognized"
-
-        if path in responses.keys():
-            return responses[path]
-        else:
-            return "Some new ls-view I don't have"
+            return resp
         
+    def find_static_response(self,
+                      command:str,
+                      flags: list[str] = "",
+                      path: None | str = None
+                      ):
+        if path is not None:
+            try:
+                return self.response_dict[command][flags][path]
+            except Exception:
+                return None
+        else:
+            try:
+                return self.response_dict[command][flags]
+            except Exception:
+                return None
+

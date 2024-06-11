@@ -59,7 +59,7 @@ class Command_ls(HoneyPotCommand):
                 self.showHidden = True
             if x in ("-d"):
                 self.showDirectories = True
-            if x in ("-true"):
+            if x in ("-t"):
                 self.useLLM = False
                 
 
