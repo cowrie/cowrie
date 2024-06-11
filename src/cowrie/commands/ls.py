@@ -60,6 +60,9 @@ class Command_ls(HoneyPotCommand):
         for arg in args:
             paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
 
+        if hasattr(self, "rh"):
+            func = self.do_ls_llm
+
         if not paths:
             func(path)
         else:
@@ -88,6 +91,12 @@ class Command_ls(HoneyPotCommand):
             self.write(f"ls: cannot access {path}: No such file or directory\n")
             return
         return files
+    
+    def do_ls_llm(self, path: str) -> None:
+        print(path)
+        self.write(self.rh.respond("ls"))
+        self.write("\n")
+        
 
     def do_ls_normal(self, path: str) -> None:
         files = self.get_dir_files(path)

@@ -1,0 +1,4 @@
+{
+    "ls": "bin etc usr cats bits bobs",
+    "ls -l": "long list of stuff"
+}

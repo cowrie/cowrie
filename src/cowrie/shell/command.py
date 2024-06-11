@@ -20,6 +20,7 @@ from twisted.python import failure, log
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
+from model.response_handler import ResponseHandler
 
 class HoneyPotCommand:
     """
@@ -98,6 +99,8 @@ class HoneyPotCommand:
                         )
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
+        #TODO: comment this
+        self.rh = ResponseHandler()
 
     def write(self, data: str) -> None:
         """
