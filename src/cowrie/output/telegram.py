@@ -34,7 +34,7 @@ class Output(cowrie.core.output.Output):
 
         # Parse event to log list
             
-        events_logged_list: list[str] = self.events_logged.split(",")
+        events_logged_list: list[str] = self.events_logged.replace(' ','').split(",")
 
         # Prepare base message
         msgtxt = "<strong>[Cowrie " + event["sensor"] + "]</strong>"
