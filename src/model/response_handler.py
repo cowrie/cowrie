@@ -23,8 +23,9 @@ class ResponseHandler():
         if flag_d:
             flags = flags+"-d"
 
-        cmd = "pwd"
-        resp = self.find_static_response(cmd, flags, path)
+        cmd = "ls"
+        #resp = self.find_static_response(cmd, flags, path)
+        resp = get_llm_response(cmd)
         if resp is None:
             resp = get_llm_response(cmd)
         else:
