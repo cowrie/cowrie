@@ -1,5 +1,5 @@
 import json
-from model.llm import LLM
+#from model.llm import LLM
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
@@ -24,10 +24,11 @@ class ResponseHandler():
             flags = flags+"-d"
 
         cmd = "ls"
-        #resp = self.find_static_response(cmd, flags, path)
-        resp = LLM.get_llm_response(cmd)
+        resp = self.find_static_response(cmd, flags, path)
+        #resp = LLM.get_llm_response(cmd)
         if resp is None:
-            resp = LLM.get_llm_response(cmd)
+            #resp = LLM.get_llm_response(cmd)
+            pass
         else:
             return resp
         
