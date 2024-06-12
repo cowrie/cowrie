@@ -1,10 +1,14 @@
 import json
 
+from model.cowrie_handler import CowrieHandler
+
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
 
 class ResponseHandler():
-    def __init__(self) -> None:
+    def __init__(self, fs) -> None:
+        self.ch = CowrieHandler(fs)
+
         with open(RESPONSE_PATH) as response_file:
             self.response_dict = json.load(response_file)
 
@@ -23,11 +27,16 @@ class ResponseHandler():
             flags = flags+"-d"
 
         resp = self.find_static_response("ls", flags, path)
+
         if resp is None:
             #TODO: Call LLM
-            return "'Generation by LLM'"
-        else:
-            return resp
+            resp = "'Generation by LLM'"
+        
+        #Should maybe be just for new LLM generations?
+        self.ch.enforce_ls(path, resp)
+
+        return resp
+
         
     def find_static_response(self,
                       command:str,
@@ -44,4 +53,3 @@ class ResponseHandler():
                 return self.response_dict[command][flags]
             except Exception:
                 return None
-
