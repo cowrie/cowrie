@@ -16,7 +16,7 @@ class CowrieHandler():
             return ctime-random.uniform(0, months_ago*30*24*60*60)
 
         def random_size():
-            return random.randrange(1024, 4000000, 1024)
+            return random.randrange(1024, int(4e6), 1024)
         
         for item in items:
             item_path = path+"/"+item
@@ -25,8 +25,6 @@ class CowrieHandler():
                     self.fs.mkfile(item_path, 0, 0, random_size(), 33188, random_time(6))
                 else:
                     self.fs.mkdir(item_path, 0, 0, 4096, 33188, random_time(6))
-
-
 
 
 

@@ -100,7 +100,7 @@ class HoneyPotCommand:
             else:
                 self.safeoutfile = p[fs.A_REALFILE]
         #TODO: comment this
-        self.rh = ResponseHandler(self.fs)
+        self.rh = protocol.rh
 
     def write(self, data: str) -> None:
         """
