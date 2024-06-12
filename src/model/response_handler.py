@@ -1,5 +1,5 @@
 import json
-from llm.py import LLM
+from .llm.py import LLM
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
