@@ -24,4 +24,4 @@ class LLM:
         return response
 
     def get_llm_response(self, question):
-        return self..generate_response(question)
+        return self.generate_response(question)
