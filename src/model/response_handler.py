@@ -23,7 +23,7 @@ class ResponseHandler():
         if flag_d:
             flags = flags+"-d"
 
-        cmd = "ls"
+        cmd = "pwd"
         resp = self.find_static_response(cmd, flags, path)
         if resp is None:
             resp = get_llm_response(cmd)
