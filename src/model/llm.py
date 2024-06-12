@@ -23,7 +23,5 @@ class LLM:
         response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response
 
-llm_instance = LLM()
-
-def get_llm_response(question):
-    return llm_instance.generate_response(question)
+    def get_llm_response(self, question):
+        return self..generate_response(question)
