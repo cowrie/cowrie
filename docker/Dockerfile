@@ -51,13 +51,15 @@ WORKDIR ${COWRIE_HOME}
 RUN mkdir -p ${COWRIE_HOME}/cowrie-git
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git/
 
+COPY /src/model/download_models.py /tmp/
+
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
     pip install --no-cache-dir --upgrade pip wheel setuptools && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
-    python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py
+    python3 /tmp/download_models.py
 
 #RUN huggingface-cli download distilgpt2
 
