@@ -57,7 +57,7 @@ RUN python3 -m venv cowrie-env && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
-    python3 download_models.py
+    python3 cowrie-git/src/model/download_models.py
 
 #RUN huggingface-cli download distilgpt2
 
