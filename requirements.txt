@@ -11,6 +11,7 @@ service_identity==24.1.0
 tftpy==0.8.2
 treq==23.11.0
 twisted==24.3.0
+torch
 transformers
 accelerate
 bitsandbytes
