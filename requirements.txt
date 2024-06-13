@@ -14,4 +14,3 @@ twisted==24.3.0
 transformers
 accelerate
 bitsandbytes
-huggingface-cli
