@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
 
 def download_model(model_path, model_name):
@@ -10,7 +10,7 @@ def download_model(model_path, model_name):
         os.makedirs(model_path, mode=0o777)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
 
     # Save the model and tokenizer to the specified directory
     model.save_pretrained(model_path)

@@ -10,12 +10,12 @@ model_name = "prajjwal1/bert-tiny"
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
 model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", load_in_4bit=True)
 '''
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class LLM:
     def __init__(self, model_name="distilgpt2"):
-        self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-        self.model = GPT2LMHeadModel.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
 
     def generate_response(self, cmd):
         inputs = self.tokenizer(cmd, return_tensors="pt")
