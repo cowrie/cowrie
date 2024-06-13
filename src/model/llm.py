@@ -17,11 +17,11 @@ class LLM:
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         self.model = GPT2LMHeadModel.from_pretrained(model_name)
 
-    def generate_response(self, question):
-        inputs = self.tokenizer.encode(question, return_tensors="pt")
-        outputs = self.model.generate(inputs, max_length=100, num_return_sequences=1)
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+    def generate_response(self, cmd):
+        inputs = self.tokenizer(cmd, return_tensors="pt")
+        response = self.model(**inputs)
+        #outputs = self.model.generate(inputs, max_length=100, num_return_sequences=1)
+        #response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response
 
-    def get_llm_response(self, question):
-        return self.generate_response(question)
+cowrie_llm = LLM()
