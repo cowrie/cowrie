@@ -57,9 +57,9 @@ RUN python3 -m venv cowrie-env && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
-    pip install --no-cache-dir transformers[torch] huggingface-hub
+    python3 download_models.py
 
-RUN huggingface-cli download distilgpt2
+#RUN huggingface-cli download distilgpt2
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
