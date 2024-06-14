@@ -28,7 +28,7 @@ class ResponseHandler():
             flags = flags+"-d"
 
         #resp = self.find_static_response("ls", flags, path)
-        resp = cowrie_llm.generate_response("pwd")
+        resp = cowrie_llm.generate_response("ls")
 
         if resp is None:
             #resp = cowrie_llm.generate_response("pwd")

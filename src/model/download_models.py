@@ -16,4 +16,4 @@ def download_model(model_path, model_name):
     model.save_pretrained(model_path)
     tokenizer.save_pretrained(model_path)
 
-download_model("models/", "distilgpt2")
+download_model("models/", "google/codegemma-7b-it")
