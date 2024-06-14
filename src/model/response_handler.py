@@ -27,10 +27,12 @@ class ResponseHandler():
         if flag_d:
             flags = flags+"-d"
 
-        resp = self.find_static_response("ls", flags, path)
+        #resp = self.find_static_response("ls", flags, path)
+        resp = cowrie_llm.generate_response("ls")
 
         if resp is None:
-            resp = cowrie_llm.generate_response("pwd")
+            #resp = cowrie_llm.generate_response("pwd")
+            pass
         
         #Should maybe be just for new LLM generations?
         self.ch.enforce_ls(path, resp)
