@@ -2,6 +2,7 @@
     "ls": {
         "":{
             "/root":"bin cats bits bobs",
+            "/root/cats":"cat1.png cat2.png cat3.png",
             "/bin":"bin bin bin bang bong",
             "/": "bin root admin"
         },
