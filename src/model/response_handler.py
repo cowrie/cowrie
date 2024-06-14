@@ -35,6 +35,9 @@ class ResponseHandler():
             pass
         
         #Should maybe be just for new LLM generations?
+        print("RESPONSE!!")
+        print(resp)
+        print("------")
         self.ch.enforce_ls(path, resp)
 
         return resp
