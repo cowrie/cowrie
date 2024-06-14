@@ -4,7 +4,7 @@ class LLM:
     def __init__(self, model_name="google/codegemma-7b-it"):
         token = open("token.txt", "r").read()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", load_in_4bit=True)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
 
     def generate_response(self, cmd):
         #inputs = self.tokenizer(cmd, return_tensors="pt")
