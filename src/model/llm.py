@@ -27,8 +27,10 @@ class LLM:
                     {"role": "user", "content": prompt2}]
 
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+        #len_chat = len(tokenized_chat["input_ids"])
+        prompt_length = tokenized_chat["input_ids"].shape[1]
         outputs = self.model.generate(tokenized_chat, max_new_tokens=100)
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        response = self.tokenizer.decode(outputs[0][prompt_length:], skip_special_tokens=True)
         return response
 
 cowrie_llm = LLM()
