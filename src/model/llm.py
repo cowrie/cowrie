@@ -1,8 +1,9 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class LLM:
-    def __init__(self, model_name="google/codegemma-7b-it"):
-        token = open("token.txt", "r").read()
+    def __init__(self, model_name="google/codegemma-2b"):
+        #token = open("token.txt", "r").read()
+        token = "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"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
 
@@ -21,13 +22,13 @@ class LLM:
             "pwd"
         answer1 = "/home/admin"
         prompt2 = cmd 
-        self.messages = [{"role": "user", "content": base_prompt},
+        messages = [{"role": "user", "content": base_prompt},
                     {"role": "assistant", "content": answer1},
                     {"role": "user", "content": prompt2}]
 
-        tokenized_chat = tokenizer.apply_chat_template(self.messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
-        outputs = model.generate(tokenized_chat, max_new_tokens=100)
-        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+        outputs = self.model.generate(tokenized_chat, max_new_tokens=100)
+        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response
 
 cowrie_llm = LLM()
