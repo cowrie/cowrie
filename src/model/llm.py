@@ -7,9 +7,6 @@ class LLM:
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
 
     def generate_response(self, cmd):
-        #inputs = self.tokenizer(cmd, return_tensors="pt")
-        #output = self.model.generate(**inputs, max_new_tokens=60)
-        #response = self.tokenizer.decode(output[0], skip_special_tokens=True)
         base_prompt = "You are Linux OS terminal for a server containing sensitive patient data. "+\
             "Your personality is: You are a Linux OS terminal. You act and respond exactly as a Linux terminal. "+\
             "You will respond to all commands just as a Linux terminal would. " +\
@@ -27,7 +24,6 @@ class LLM:
 
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
         len_chat = tokenized_chat.shape[1]
-        #prompt_length = tokenized_chat["input_ids"].shape[1]
         outputs = self.model.generate(tokenized_chat, max_new_tokens=100)
         response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
         return response
