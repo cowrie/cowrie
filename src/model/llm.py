@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class LLM:
-    def __init__(self, model_name="google/codegemma-2b"):
+    def __init__(self, model_name="google/codegemma-7b-it"):
         token = open("token.txt", "r").read()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
