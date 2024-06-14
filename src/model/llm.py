@@ -21,8 +21,6 @@ class LLM:
         inputs = self.tokenizer(cmd, return_tensors="pt")
         output = self.model.generate(**inputs, max_new_tokens=60)
         response = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        #outputs = self.model.generate(inputs, max_length=100, num_return_sequences=1)
-        #response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response
 
 cowrie_llm = LLM()

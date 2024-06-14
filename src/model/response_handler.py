@@ -23,12 +23,9 @@ class ResponseHandler():
         if flag_d:
             flags = flags+"-d"
 
-        cmd = "ls"
-        #resp = self.find_static_response(cmd, flags, path)
-        resp = cowrie_llm.generate_response(cmd)
+        resp = self.find_static_response("ls", flags, path)
         if resp is None:
-            #resp = LLM.get_llm_response(cmd)
-            pass
+            resp = cowrie_llm.generate_response("pwd")
         else:
             return resp
         
