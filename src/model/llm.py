@@ -27,6 +27,8 @@ class LLM:
                     {"role": "user", "content": prompt2}]
 
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+        print(f"Tokenized chat: {tokenized_chat}")
+        print(f"Tokenized chat [input ids]: {tokenized_chat["input_ids"]}")
         len_chat = len(tokenized_chat["input_ids"])
         #prompt_length = tokenized_chat["input_ids"].shape[1]
         outputs = self.model.generate(tokenized_chat, max_new_tokens=100)
