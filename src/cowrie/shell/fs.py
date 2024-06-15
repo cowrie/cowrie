@@ -32,7 +32,8 @@ from cowrie.core.config import CowrieConfig
     A_CONTENTS,
     A_TARGET,
     A_REALFILE,
-) = list(range(0, 10))
+    A_IS_LLM,
+) = list(range(0, 11))
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
 
 
@@ -55,7 +56,8 @@ class _statobj:
         st_size: int,
         st_atime: float,
         st_mtime: float,
-        st_ctime: float,
+        st_ctime: float, 
+        st_is_llm: bool = False,
     ) -> None:
         self.st_mode: int = st_mode
         self.st_ino: int = st_ino
@@ -67,6 +69,7 @@ class _statobj:
         self.st_atime: float = st_atime
         self.st_mtime: float = st_mtime
         self.st_ctime: float = st_ctime
+        self.st_is_llm: bool = st_is_llm
 
 
 class TooManyLevels(Exception):
@@ -310,10 +313,17 @@ class HoneyPotFilesystem:
         It tries A_REALFILE first and then tries honeyfs directory
         Then return the executable header for executables
         """
+
+
         path: str = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
             raise FileNotFound
         f: Any = self.getfile(path)
+
+        #TODO: Remove
+        print("f:")
+        print(f)
+
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
@@ -323,6 +333,10 @@ class HoneyPotFilesystem:
             # (The exceptions to this are some system files in /proc and /sys,
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
+        if f[A_IS_LLM] and f[A_TYPE] == T_FILE:
+            print("LLM TRIGGER")
+            llm_content: str = self.rh.file_contents_respond(path)
+            return llm_content.encode()
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return open(
                 CowrieConfig.get("honeypot", "share_path") + "/arch/" + self.arch,
@@ -338,6 +352,7 @@ class HoneyPotFilesystem:
         size: int,
         mode: int,
         ctime: float | None = None,
+        is_llm: bool = False
     ) -> bool:
         if self.newcount > 10000:
             return False
@@ -352,7 +367,7 @@ class HoneyPotFilesystem:
         outfile: str = os.path.basename(path)
         if outfile in [x[A_NAME] for x in _dir]:
             _dir.remove(next(x for x in _dir if x[A_NAME] == outfile))
-        _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None])
+        _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None, is_llm])
         self.newcount += 1
         return True
 
@@ -364,6 +379,7 @@ class HoneyPotFilesystem:
         size: int,
         mode: int,
         ctime: float | None = None,
+        is_llm: bool = False
     ) -> None:
         if self.newcount > 10000:
             raise OSError(errno.EDQUOT, os.strerror(errno.EDQUOT), path)
@@ -376,7 +392,7 @@ class HoneyPotFilesystem:
         except IndexError:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path) from None
         directory.append(
-            [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None]
+            [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None, is_llm]
         )
         self.newcount += 1
 
