@@ -59,7 +59,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: false
           load: true
@@ -72,7 +72,7 @@ jobs:
 
       - name: Build and push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
