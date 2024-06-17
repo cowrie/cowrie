@@ -22,9 +22,9 @@ class CowrieHandler():
             item_path = path+"/"+item
             if not self.fs.exists(item_path):
                 if is_file(item):
-                    self.fs.mkfile(item_path, 0, 0, random_size(), 33188, random_time(6))
+                    self.fs.mkfile(item_path, 0, 0, random_size(), 33188, random_time(6), is_llm=True)
                 else:
-                    self.fs.mkdir(item_path, 0, 0, 4096, 33188, random_time(6))
+                    self.fs.mkdir(item_path, 0, 0, 4096, 33188, random_time(6), is_llm=True)
 
 
 

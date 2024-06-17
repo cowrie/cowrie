@@ -8,6 +8,7 @@ RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
 class ResponseHandler():
     def __init__(self, fs) -> None:
+        fs.rh = self
         self.ch = CowrieHandler(fs)
 
         with open(RESPONSE_PATH) as response_file:
@@ -58,3 +59,7 @@ class ResponseHandler():
                 return self.response_dict[command][flags]
             except Exception:
                 return None
+            
+    def file_contents_respond(self, path: str):
+        print("Path:", path)
+        return "fake file contents in "+path
