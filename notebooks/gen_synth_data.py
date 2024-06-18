@@ -187,7 +187,9 @@ def create_file_system(root_dir, data):
                         create_file_system(sub_path, sub_value)
                 else:
                     with open(os.path.join(current_path, item), 'w') as f:
-                        pass  # Create an empty file
+                        txt = "Personal records: Medical Coding for now until we retrain"
+                        f.write(txt)
+
 
 def generate_random_text(max_length=700):
     characters = string.ascii_letters + string.digits + string.punctuation + ' '
@@ -200,7 +202,9 @@ def create_random_text_file(path):
     filename = ''.join(random.choices(string.ascii_lowercase, k=5)) + '.txt'
     filepath = os.path.join(path, filename)
     with open(filepath, 'w') as f:
-        f.write(generate_random_text())
+        #f.write(generate_random_text())
+        txt = "Personal records: Medical Coding for now until we retrain"
+        f.write(txt)
 
 # Function to create random directory tree
 def create_random_directory_tree(root_path, current_level, max_level):
@@ -298,10 +302,11 @@ def traverse_filesystem(starting_directory):
             # Print the list of files (or process it as needed)
             for file in file_list:
                 
-                command = 'cat {0}'.format(file)
-                stdout = execute_command(command, subdirectory_path)
-                datafile.write(command + "\n")
-                datafile.write(stdout + "\n")
+                if os.path.isfile(subdirectory_path + "/" + file):
+                    command = 'cat {0}'.format(file)
+                    stdout = execute_command(command, subdirectory_path)
+                    datafile.write(command + "\n")
+                    datafile.write(stdout + "\n")
 
                 # Do an echo
                 command = 'echo $USER $HOME $SHELL'
@@ -310,35 +315,47 @@ def traverse_filesystem(starting_directory):
                 datafile.write(stdout + "\n")
 
                 # Do an printenv
-                command = 'printenv'
-                stdout = execute_command(command, subdirectory_path)
-                datafile.write(command + "\n")
-                datafile.write(stdout + "\n")
+                #command = 'printenv'
+                #stdout = execute_command(command, subdirectory_path)
+                #datafile.write(command + "\n")
+                #datafile.write(stdout + "\n")
             
 # main
 if __name__ == "__main__":
 
-    root_dir = './root/' + names.get_last_name()
-    unix_root_dir = '/'
-
-    iterations = 100
+    # Every thing must run under a root directory. 
+    # Create it if does not exist
+    # must create manually for simplicity and run this under root
+    
+    # number of iterations
+    iterations = 10000
 
     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = f"data_{current_datetime}.txt"
     global datafile
     datafile = open(filename, 'w')
 
-    for i in range(iterations):
+    user_dir = names.get_last_name()
     
-        # remove existing file system
-        if os.path.exists(root_dir):
-            shutil.rmtree(root_dir)
-            
+    for i in range(iterations):
+
+        # remove existing user directory system
+        if os.path.exists(user_dir):
+            shutil.rmtree(user_dir)
+
+        user_dir = names.get_first_name() + "_" + names.get_last_name()
+
         # Generate the file system    
         #generate_file_system(root_dir)
-        create_random_hospital_file_system(root_dir, max_depth=1, current_depth=1)
+        create_random_hospital_file_system(user_dir, max_depth=1, current_depth=1)
         
         # traverse the file system 
-        traverse_filesystem(root_dir)
+        traverse_filesystem(user_dir)
 
     datafile.close()
+
+    # Clean Up
+
+    # remove existing user directory system
+    if os.path.exists(user_dir):
+        shutil.rmtree(user_dir)
