@@ -135,6 +135,9 @@ class SSH(base_protocol.BaseProtocol):
             if service == b"ssh-userauth":
                 self.sendOn = False
 
+        elif packet == "SSH_MSG_USERAUTH_BANNER":
+            self.sendOn = False
+
         elif packet == "SSH_MSG_EXT_INFO":
             extensioncount: int = self.extract_int(4)
             for _ in range(extensioncount):
