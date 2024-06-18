@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import json
 
-with open("command_lookup.json", "r") as f:
+with open("cmd_lookup.json", "r") as f:
     LOOKUPS = json.load(f)
 
 class LLM:
