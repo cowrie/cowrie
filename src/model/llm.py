@@ -8,7 +8,7 @@ with open(f"{RESPONSE_PATH}/cmd_lookup.json", "r") as f:
 
 class LLM:
     def __init__(self, model_name="google/codegemma-7b-it"):
-        token = open(f"{RESPONSE_PATH}/token.txt", "r").read()
+        token = open(f"{RESPONSE_PATH}/token.txt", "r").read().rstrip()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
 
