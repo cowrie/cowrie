@@ -11,7 +11,6 @@ class LLM:
         with open(f"{RESPONSE_PATH}/token.txt", "r") as f:
             token = f.read().rstrip()
         
-        print(f"TOKEN: {token}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
 
