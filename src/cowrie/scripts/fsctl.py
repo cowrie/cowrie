@@ -99,8 +99,7 @@ def resolve_reference(pwd, relativeReference):
 
     tempPath = os.path.join(pwd, relativeReference)
     absoluteReference = os.path.normpath(tempPath)
-
-    return absoluteReference
+    return absoluteReference.replace("\\", "/")
 
 
 class fseditCmd(cmd.Cmd):
@@ -284,17 +283,21 @@ class fseditCmd(cmd.Cmd):
         Changes the current directory.\nUsage: cd <target directory>
         """
 
+        
+
         # count  the number of arguments
         # 1 or more arguments: changes the directory to the first arg
         #                      and ignores the rest
         # 0 arguments: changes to '/'
         arguments = args.split()
 
+
         if not len(arguments):
             self.update_pwd("/")
         else:
             relative_dir = arguments[0]
             target_dir = resolve_reference(self.pwd, relative_dir)
+
 
             if exists(self.fs, target_dir) is False:
                 print(f"cd: {target_dir}: No such file or directory")
