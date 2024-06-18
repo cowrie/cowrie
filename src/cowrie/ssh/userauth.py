@@ -14,6 +14,7 @@ from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.internet import defer
 from twisted.python.failure import Failure
+from twisted.cred import credentials as twistedcreds
 
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
@@ -33,12 +34,18 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     _pamDeferred: defer.Deferred | None
 
     def serviceStarted(self) -> None:
+        """
+        """
         self.interfaceToMethod[credentials.IUsername] = b"none"
         self.interfaceToMethod[credentials.IUsernamePasswordIP] = b"password"
+        try:
+            del self.interfaceToMethod[twistedcreds.ISSHPrivateKey]
+        except KeyError as e:
+            print(f"KeyError {e!r}")
+
         keyboard: bool = CowrieConfig.getboolean(
             "ssh", "auth_keyboard_interactive_enabled", fallback=False
         )
-
         if keyboard is True:
             self.interfaceToMethod[
                 credentials.IPluggableAuthenticationModulesIP
