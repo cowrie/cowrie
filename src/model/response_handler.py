@@ -1,10 +1,8 @@
 import json
-
 from model.cowrie_handler import CowrieHandler
 from model.llm import cowrie_llm
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
-
 
 class ResponseHandler():
     def __init__(self, fs) -> None:
@@ -28,12 +26,11 @@ class ResponseHandler():
         if flag_d:
             flags = flags+"-d"
 
-        #resp = self.find_static_response("ls", flags, path)
-        resp = cowrie_llm.generate_response("ls")
+        resp = self.find_static_response("ls", flags, path)
+        #resp = cowrie_llm.generate_response("ls")
 
         if resp is None:
-            #resp = cowrie_llm.generate_response("pwd")
-            pass
+            resp = cowrie_llm.generate_response("ls")
         
         #Should maybe be just for new LLM generations?
         print("RESPONSE!!")

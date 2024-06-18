@@ -10,9 +10,6 @@ class LLM:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
 
-    def get_example_message(self, cmd):
-        return command_lookup[cmd]
-
     def create_messages(self, base_prompt, cmd):
         answer = LOOKUPS[cmd]
         messages = [
@@ -32,12 +29,6 @@ class LLM:
             "You will need to make up realistic answers to the command, as they would be returned by a real linux terminal for a hospital server. "+\
             "It is very important that you do not name files and directiories file1.txt file2.txt file3.txt or similarly, rather create plausible file names for a real terminal with patient data.\n\n"+\
             "{cmd}"
-
-        #answer1 = 
-        #prompt2 = cmd
-        #messages = [{"role": "user", "content": base_prompt},
-        #            {"role": "assistant", "content": answer1},
-        #            {"role": "user", "content": prompt2}]
 
         messages = self.create_messages(base_prompt, cmd)
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
