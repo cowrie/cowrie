@@ -47,6 +47,13 @@ class ResponseHandler():
         print("------")
         return resp
         
+    def ifconfig_respond(self):
+        resp = cowrie_llm.generate_response("ifconfig")
+        print("RESPONSE!!")
+        print(resp)
+        print("------")
+        return resp
+
     def find_static_response(self,
                       command:str,
                       flags: list[str] = "",

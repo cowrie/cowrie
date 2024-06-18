@@ -75,7 +75,12 @@ lo        Link encap:Local Loopback
             lo_bytes,
             lo_mb,
         )
-        self.write(f"{result}\n")
+
+        if hasattr(self, "rh"):
+            self.write(self.rh.ifconfig_respond())
+            self.write("\n")
+        else:
+            self.write(f"{result}\n")
 
 
 commands["/sbin/ifconfig"] = Command_ifconfig
