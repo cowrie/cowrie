@@ -52,6 +52,9 @@ RUN mkdir -p ${COWRIE_HOME}/cowrie-git
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git/
 
 COPY /src/model/download_models.py /tmp/
+COPY /src/model/static_setup/build_profile.py /tmp/
+
+
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
@@ -61,10 +64,13 @@ RUN python3 -m venv cowrie-env && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
     python3 /tmp/download_models.py
 
-#RUN huggingface-cli download distilgpt2
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
+#Feels like you could do this in a simpler way but it works
+RUN python3 -m venv cowrie-env && \
+    . cowrie-env/bin/activate && \
+     python3 /tmp/build_profile.py
 
 FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime

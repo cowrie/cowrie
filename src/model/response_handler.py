@@ -1,6 +1,6 @@
 import json
 from model.cowrie_handler import CowrieHandler
-from model.llm import cowrie_llm
+from model.llm import LLM
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
@@ -8,6 +8,7 @@ class ResponseHandler():
     def __init__(self, fs) -> None:
         fs.rh = self
         self.ch = CowrieHandler(fs)
+        self.llm = LLM()
 
         with open(RESPONSE_PATH) as response_file:
             self.response_dict = json.load(response_file)
@@ -30,7 +31,7 @@ class ResponseHandler():
         #resp = cowrie_llm.generate_response("ls")
 
         if resp is None:
-            resp = cowrie_llm.generate_response("ls")
+            resp = self.llm.generate_response("ls")
         
         #Should maybe be just for new LLM generations?
         print("RESPONSE!!")
@@ -41,14 +42,14 @@ class ResponseHandler():
         return resp
 
     def netstat_respond(self):
-        resp = cowrie_llm.generate_response("netstat")
+        resp = self.llm.generate_response("netstat")
         print("RESPONSE!!")
         print(resp)
         print("------")
         return resp
         
     def ifconfig_respond(self):
-        resp = cowrie_llm.generate_response("ifconfig")
+        resp = self.llm.generate_response("ifconfig")
         print("RESPONSE!!")
         print(resp)
         print("------")
