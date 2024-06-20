@@ -1,0 +1,5 @@
+[
+    {"cmd": "ls", "cwd":"/var/www/mywebsite", "response":"assets  config  logs  public  scripts  templates"},
+    {"cmd": "ls", "cwd":"/var/lib/mysql", "response":"backup  config  data  logs  scripts  tmp"},
+    {"cmd": "ls", "cwd":"/home/admin/projects/app", "response":"build  docs  node_modules  src  test  webpack.config.js"}}
+]

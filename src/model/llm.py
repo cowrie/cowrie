@@ -12,6 +12,8 @@ class LLM:
     def __init__(self, model_name="google/codegemma-7b-it"):
         with open(f"{RESPONSE_PATH}/token.txt", "r") as f:
             token = f.read().rstrip()
+
+        self.profile = self.get_profile()
         
         #self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         #self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
@@ -21,6 +23,10 @@ class LLM:
             profile = prompt_file.read()
         return profile
 
+    def get_examples(self, cmd):
+        with open(PROMPTS_PATH+f"/ex_{cmd}.json", "r") as ex_file:
+            examples = json.load(ex_file)
+        return examples
 
     def create_messages(self, base_prompt, cmd):
         answer = LOOKUPS[cmd]
@@ -48,6 +54,37 @@ class LLM:
         outputs = self.model.generate(tokenized_chat, max_new_tokens=100)
         response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
         return response
+    
+    def generate_from_messages(self, messages, max_new_tokens=100):
+        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+        print("tokenized chat:")
+        print(tokenized_chat)
+        len_chat = tokenized_chat.shape[1]
+        outputs = self.model.generate(tokenized_chat, max_new_tokens=max_new_tokens)
+        response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
+        return response
+
+
+    def generate_ls_response(self, cwd):
+        def format_q(cmd, cwd):
+            return f"Command: {cmd}\nCurrent directory: {cwd}"
+
+        #Maybe we should load all these by initialisation
+        examples = self.get_examples("ls")
+        ex_q = [format_q(ex["cmd"], ex["cwd"]) for ex in examples]
+        ex_a = [ex["response"] for ex in examples]
+
+        messages = [{"role":"user", "content":self.profile},
+                    {"role":"model", "content":""}]
+        for i in range(len(examples)):
+            messages.append({"role":"user", "content":ex_q[i]})
+            messages.append({"role":"model", "content":ex_a[i]})
+        
+        messages.append({"role":"user", "content":format_q("ls", cwd)})
+
+        return self.generate_from_messages(messages)
+
+
     
     def generate_lscpu_response(self):
         profile = self.get_profile()
