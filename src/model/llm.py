@@ -1,9 +1,10 @@
 import os
+#To be added for LLM
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
     from transformers import AutoTokenizer, AutoModelForCausalLM
-    
+    import torch
+
 import json
-import torch
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model"
 
