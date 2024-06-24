@@ -6,6 +6,9 @@ A LLM enhanced cowrie shell.
 Build Docker with:
 ``docker build -f docker/Dockerfile -t cowrie:latest .``
 
+Alternatively, if you want to build quicker by not having a real LLM, use:
+``docker build -f docker/Dockerfile_no_llm -t cowrie:latest .``
+
 Run Docker with:
 ``docker run -p 2222:2222 cowrie:latest``
 
