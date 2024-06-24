@@ -20,7 +20,6 @@ class LLM:
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
-        self.model.to(self.device)
 
     def get_profile(self):
         with open(PROMPTS_PATH+"/profile.txt", "r") as prompt_file:
