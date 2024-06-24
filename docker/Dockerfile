@@ -84,6 +84,13 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
     apt-get update && apt-get install -y nvidia-container-toolkit
 
+RUN apt-get update && \
+    apt-get install -y \
+      python3 \
+      python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
