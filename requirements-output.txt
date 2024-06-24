@@ -3,10 +3,10 @@ csirtgsdk==1.1.5
 geoip2
 
 # dshield
-requests==2.32.0
+requests==2.32.3
 
 # elasticsearch
-elasticsearch==8.12.1
+elasticsearch==8.14.0
 
 # hpfeeds
 hpfeeds==3.1.0
@@ -21,13 +21,13 @@ pymongo==4.6.3
 rethinkdb==2.4.10.post1
 
 # s3
-botocore==1.34.75
+botocore==1.34.118
 
 # slack
 slackclient==2.9.4
 
 # influxdb
-influxdb==5.3.1
+influxdb==5.3.2
 
 # dblog_xmpp
 wokkel==18.0.0
@@ -36,7 +36,7 @@ wokkel==18.0.0
 pymisp==2.4.187
 
 # redis
-redis==5.0.4
+redis==5.0.6
 
 # Oracle Cloud
 oci==2.122.0
