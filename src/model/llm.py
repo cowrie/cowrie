@@ -17,9 +17,10 @@ class LLM:
         self.profile = self.get_profile()
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using device: {self.device}")
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", load_in_4bit=True)
 
     def get_profile(self):
         with open(PROMPTS_PATH+"/profile.txt", "r") as prompt_file:
