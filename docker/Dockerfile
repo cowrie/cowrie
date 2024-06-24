@@ -5,7 +5,8 @@
 ARG ARCH=
 ARG BUILD_DATE
 ARG TAG
-FROM ${ARCH}debian:bookworm-slim as builder
+#FROM ${ARCH}debian:bookworm-slim as builder
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS builder
 
 WORKDIR /
 
@@ -72,8 +73,16 @@ RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
      python3 /tmp/build_profile.py
 
-FROM gcr.io/distroless/python3-debian12 AS runtime
+#FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
+
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
+    apt-get update -y && \
+    apt-get -y install curl && \
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - && \
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
+    apt-get update && apt-get install -y nvidia-container-toolkit
 
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
