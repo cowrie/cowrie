@@ -3,14 +3,17 @@ Cowrie LLM
 
 A LLM enhanced cowrie shell.
 
-Build Docker with:
+1. Install stuff for GPU:
+``chmod +x gpu_configuration.sh && ./gpu_configuration.sh``
+
+2.1 Build Docker with:
 ``docker build -f docker/Dockerfile -t cowrie:latest .``
 
-Alternatively, if you want to build quicker by not having a real LLM, use:
+2.2 Alternatively, if you want to build quicker by not having a real LLM, use:
 ``docker build -f docker/Dockerfile_no_llm -t cowrie:latest .``
 
-Run Docker with:
-``docker run -p 2222:2222 cowrie:latest``
+3. Run Docker with:
+``docker run --gpus all -e COWRIE_USE_LLM=true -p 2222:2222 cowrie:latest``
 
 
 Information below is from the original Cowrie repository.
