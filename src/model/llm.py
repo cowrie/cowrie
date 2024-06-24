@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import json
+import torch
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model"
 
@@ -14,9 +15,12 @@ class LLM:
             token = f.read().rstrip()
 
         self.profile = self.get_profile()
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        #self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-        #self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto")
+        self.model.to(self.device)
 
     def get_profile(self):
         with open(PROMPTS_PATH+"/profile.txt", "r") as prompt_file:
@@ -49,7 +53,7 @@ class LLM:
             "{cmd}"
 
         messages = self.create_messages(base_prompt, cmd)
-        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.device)
         len_chat = tokenized_chat.shape[1]
         outputs = self.model.generate(tokenized_chat, max_new_tokens=100)
         response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
