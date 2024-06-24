@@ -7,7 +7,7 @@ pathspec==0.12.1
 pipdeptree==2.21.0
 pre-commit==3.7.1
 pylint==3.2.2
-pyre-check==0.9.19; python_version>'3.8'
+pyre-check==0.9.21; python_version>'3.8'
 pyright==1.1.367
 pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<'3.11'
 pyupgrade==3.15.2
