@@ -16,6 +16,10 @@ ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
 
+#Toggle to use real LLM instead of fake
+ARG USE_LLM=false
+ENV COWRIE_USE_LLM=${USE_LLM}
+
 # Set locale to UTF-8, otherwise upstream libraries have bytes/string conversion issues
 ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
@@ -49,11 +53,12 @@ WORKDIR ${COWRIE_HOME}
 
 # Copy requirements first to use Docker caching better
 RUN mkdir -p ${COWRIE_HOME}/cowrie-git
+
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git/
 
-COPY /src/model/download_models.py /tmp/
-COPY /src/model/static_setup/build_profile.py /tmp/
-
+#Add LLM requirements to requirements.txt if using llm
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements-llm.txt ${COWRIE_HOME}/cowrie-git/
+RUN if [ "$USE_LLM" = "true" ]; then cat ${COWRIE_HOME}/cowrie-git/requirements-llm.txt >> ${COWRIE_HOME}/cowrie-git/requirements.txt; fi
 
 
 RUN python3 -m venv cowrie-env && \
@@ -61,8 +66,7 @@ RUN python3 -m venv cowrie-env && \
     pip install --no-cache-dir --upgrade pip wheel setuptools && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
-    pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
-    python3 /tmp/download_models.py
+    pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
 
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
@@ -70,7 +74,8 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 #Feels like you could do this in a simpler way but it works
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-     python3 /tmp/build_profile.py
+    python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
+    python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
 
 FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
@@ -93,6 +98,8 @@ LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12"
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
+
+ENV COWRIE_USE_LLM=${USE_LLM}
 
 #RUN groupadd -r ${COWRIE_GROUP} && \
 #    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}

@@ -1,6 +1,7 @@
 import json
 from model.cowrie_handler import CowrieHandler
-from model.llm import LLM
+from model.llm import LLM, FakeLLM
+import os
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
@@ -8,7 +9,13 @@ class ResponseHandler():
     def __init__(self, fs) -> None:
         fs.rh = self
         self.ch = CowrieHandler(fs)
-        self.llm = LLM()
+        if os.environ["COWRIE_USE_LLM"].lower() == "true":
+            print("using real llm")
+            self.llm = LLM()
+        else:
+            print("using fake llm")
+            self.llm = FakeLLM()
+
 
         with open(RESPONSE_PATH) as response_file:
             self.response_dict = json.load(response_file)
