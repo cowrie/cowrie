@@ -4,7 +4,9 @@
             "/root":"bin cats bits bobs",
             "/root/cats":"cat1.png cat2.png cat3.png",
             "/bin":"bin bin bin bang bong",
-            "/": "bin root admin"
+            "/": "bin root admin",
+            "/home/ai_sweden":"Documents Projects speed_boldness.txt README.md",
+            "/home/ai_sweden/Projects":"AI_Model_Deployment Data_Analysis NLP_Research Robotics_Development"
         },
         "-l":{
             "/root":"total 16\ndrwxr-xr-x 2 user user 4096 Jun 11 10:32 dir1\ndrwxr-xr-x 3 user user 4096 Jun 11 10:33 dir2\n-rw-r--r-- 1 user user  123 Jun 11 10:34 file1.txt\n-rw-r--r-- 1 user user  456 Jun 11 10:35 file2.txt"
@@ -15,7 +17,12 @@
     },
     "pwd":{
         "":{
-            "/root":"/root i guess?"
+            "/root":"/root I guess?"
+        }
+    },
+    "file_contents":{
+        "":{
+            "/home/ai_sweden/speed_boldness.txt":"====================================================\nAI Sweden: Speed and Boldness\n====================================================\n\nWelcome to AI Sweden! Our motto, \"Speed and Boldness,\" drives everything we do. This document highlights how these principles are embedded in our work culture and projects.\n\n1. Speed\n-----------\n- Rapid Prototyping: We embrace agile methodologies to develop, test, and iterate quickly.\n- Efficient Collaboration: Our teams utilize cutting-edge tools for seamless and speedy communication.\n- Accelerated Learning: Continuous learning and adaptation keep us ahead of the curve.\n\n2. Boldness\n-------------\n- Innovative Thinking: We challenge conventional methods to create groundbreaking solutions.\n- Risk-Taking: Calculated risks are encouraged to achieve extraordinary results.\n- Leadership: Bold leadership inspires confidence and drives transformational change.\n\n====================================================\n\nExamples of Projects Embodying Our Motto:\n----------------------------------------------\n- AI_Model_Deployment: Revolutionizing industries with swift and bold AI solutions.\n- Data_Analysis: Delivering fast insights with daring analytical approaches.\n- NLP_Research: Pushing the boundaries of natural language understanding.\n- Robotics_Development: Bold innovations for the future of robotics.\n\n====================================================\n\nJoin us in our mission to transform the world with speed and boldness!\n\n====================================================\n"
         }
     }
   }
