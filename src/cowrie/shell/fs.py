@@ -324,6 +324,10 @@ class HoneyPotFilesystem:
         print("f:")
         print(f)
 
+        if f[A_IS_LLM] and f[A_TYPE] == T_FILE:
+            print("LLM TRIGGER")
+            llm_content: str = self.rh.file_contents_respond(path)
+
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
@@ -332,11 +336,7 @@ class HoneyPotFilesystem:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,
             # but it's likely better to return nothing than suspiciously fail.)
-            return b""
-        if f[A_IS_LLM] and f[A_TYPE] == T_FILE:
-            print("LLM TRIGGER")
-            llm_content: str = self.rh.file_contents_respond(path)
-            return llm_content.encode()
+            return b""   
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return open(
                 CowrieConfig.get("honeypot", "share_path") + "/arch/" + self.arch,
@@ -646,3 +646,6 @@ class HoneyPotFilesystem:
         if f[A_TYPE] != T_FILE:
             return
         f[A_SIZE] = size
+
+    def update_file_size(self, file, size):
+        file[A_SIZE] = size

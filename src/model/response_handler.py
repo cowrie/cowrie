@@ -6,9 +6,9 @@ import os
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model/static_responses.json"
 
 class ResponseHandler():
-    def __init__(self, fs) -> None:
-        fs.rh = self
-        self.ch = CowrieHandler(fs)
+    def __init__(self, protocol) -> None:
+        protocol.fs.rh = self
+        self.ch = CowrieHandler(protocol)
         if os.environ["COWRIE_USE_LLM"].lower() == "true":
             print("using real llm")
             self.llm = LLM()
@@ -81,5 +81,8 @@ class ResponseHandler():
                 return None
             
     def file_contents_respond(self, path: str):
-        print("Path:", path)
-        return "fake file contents in "+path
+        resp = self.find_static_response("file_contents", "", path)
+        if resp is None:
+            resp = "fake file contents in "+path
+        self.ch.enforce_file_contents(path, resp)
+        return resp

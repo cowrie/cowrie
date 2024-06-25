@@ -69,8 +69,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.password_input = False
         self.cmdstack = []
 
-        #Try to add rh and ch here
-        self.rh = ResponseHandler(self.fs)
+        self.rh = ResponseHandler(self)
 
     def getProtoTransport(self):
         """
