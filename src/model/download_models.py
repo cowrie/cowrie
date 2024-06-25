@@ -12,8 +12,8 @@ def download_model(model_path, model_name):
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
     model = AutoModelForCausalLM.from_pretrained(model_name, token=token)
 
-    model.save_pretrained(model_path)
-    tokenizer.save_pretrained(model_path)
+    model.save_pretrained(model_path+model_name)
+    tokenizer.save_pretrained(model_path+model_name)
 
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
-    download_model("models/", "google/codegemma-7b-it")
+    download_model("/models/", "codegemma-7b-it")
