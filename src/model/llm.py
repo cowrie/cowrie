@@ -1,7 +1,7 @@
 import os
 #To be added for LLM
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
-    from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+    from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, AutoConfig
     from accelerate import init_empty_weights, dispatch_model
     import torch
 
@@ -24,14 +24,16 @@ class LLM:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
+        config = AutoConfig.from_pretrained(model_name, use_auth_token=token)
+
         with init_empty_weights():
-            self.model = AutoModelForCausalLM.from_config(model_name, return_dict=False)
+            model = AutoModelForCausalLM.from_config(config)
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         #quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
         quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4")
 
-        self.model = dispatch_model(self.model, device_map="auto", quantization_config=quantization_config)
+        self.model = dispatch_model(model, device_map="auto", quantization_config=quantization_config)
         #self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", quantization_config=quantization_config)
 
     def get_profile(self):
