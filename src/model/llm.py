@@ -2,6 +2,7 @@ import os
 #To be added for LLM
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
     from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+    from accelerate import init_empty_weights, dispatch_model
     import torch
 
 import json
@@ -23,10 +24,15 @@ class LLM:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
+        with init_empty_weights():
+            model = AutoModelForCausalLM.from_config(model_name)
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         #quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
         quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4")
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", quantization_config=quantization_config)
+
+        self.model = dispatch_model(model, device_map="auto", quantization_config=quantization_config)
+        #self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", quantization_config=quantization_config)
 
     def get_profile(self):
         with open(PROMPTS_PATH+"/profile.txt", "r") as prompt_file:
@@ -74,7 +80,6 @@ class LLM:
         response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
         return response
 
-
     def generate_ls_response(self, cwd):
         def format_q(cmd, cwd):
             return f"Command: {cmd}\nCurrent directory: {cwd}"
@@ -94,8 +99,6 @@ class LLM:
 
         return self.generate_from_messages(messages)
 
-
-    
     def generate_lscpu_response(self):
         profile = self.get_profile()
 
