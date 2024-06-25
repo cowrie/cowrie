@@ -24,15 +24,8 @@ class LLM:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
-        #config = AutoConfig.from_pretrained(model_name, use_auth_token=token)
-
-        #with init_empty_weights():
-            #self.model = AutoModelForCausalLM.from_config(config)
-
         quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-        #quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
-
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", quantization_config=quantization_config)
 
     def get_profile(self):
