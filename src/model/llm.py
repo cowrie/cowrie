@@ -25,13 +25,13 @@ class LLM:
         print(f"Using device: {self.device}")
 
         with init_empty_weights():
-            model = AutoModelForCausalLM.from_config(model_name)
+            self.model = AutoModelForCausalLM.from_config(model_name, return_dict=False)
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
         #quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
         quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4")
 
-        self.model = dispatch_model(model, device_map="auto", quantization_config=quantization_config)
+        self.model = dispatch_model(self.model, device_map="auto", quantization_config=quantization_config)
         #self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", quantization_config=quantization_config)
 
     def get_profile(self):
