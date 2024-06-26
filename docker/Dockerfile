@@ -42,6 +42,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       python3-dev \
       python3-venv \
       python3 \
+      git \
       rustc \
       cargo \
       build-essential \
@@ -75,7 +76,7 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 #Feels like you could do this in a simpler way but it works
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
+    git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
 
 #FROM gcr.io/distroless/python3-debian12 AS runtime
