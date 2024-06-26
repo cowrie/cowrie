@@ -73,6 +73,12 @@ RUN python3 -m venv cowrie-env && \
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
+ARG HUGGINGFACE_USERNAME
+ARG HUGGINGFACE_TOKEN
+
+ENV HUGGINGFACE_USERNAME=${HUGGINGFACE_USERNAME}
+ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
+
 #Feels like you could do this in a simpler way but it works
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
