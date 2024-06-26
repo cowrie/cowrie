@@ -22,21 +22,8 @@ class ResponseHandler():
 
     
     def ls_respond(self,
-                   path: str,
-                   flag_l=False,
-                   flag_a=False,
-                   flag_d=False):
-        flags = ""
-        if flag_l:
-            flags = flags+"-l"
-        if flag_a:
-            flags = flags+"-a"
-        if flag_d:
-            flags = flags+"-d"
-
-        resp = self.find_static_response("ls", flags, path)
-        #resp = cowrie_llm.generate_response("ls")
-
+                   path: str):
+        resp = self.find_static_response("ls", "", path)
         if resp is None:
             resp = self.llm.generate_response("ls")
         
@@ -45,8 +32,6 @@ class ResponseHandler():
         print(resp)
         print("------")
         self.ch.enforce_ls(path, resp)
-
-        return resp
 
     def netstat_respond(self):
         resp = self.llm.generate_response("netstat")

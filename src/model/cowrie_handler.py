@@ -20,7 +20,7 @@ class CowrieHandler():
             return ctime-random.uniform(0, months_ago*30*24*60*60)
 
         def random_size():
-            return random.randrange(1024, int(4e6), 1024)
+            return random.randrange(1024, int(1e6), 1024)
         
         perm = stat.S_IFREG |stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
         for item in items:

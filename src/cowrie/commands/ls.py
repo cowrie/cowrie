@@ -52,6 +52,8 @@ class Command_ls(HoneyPotCommand):
             return
 
         for x, _a in opts:
+            if x in ("-t"):
+                self.useLLM = False
             if x in ("-l"):
                 self.showLong = True
                 func = self.do_ls_l
@@ -59,15 +61,18 @@ class Command_ls(HoneyPotCommand):
                 self.showHidden = True
             if x in ("-d"):
                 self.showDirectories = True
-            if x in ("-t"):
-                self.useLLM = False
                 
 
         for arg in args:
             paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
 
+        #Before responding, let the response handler manage the paths/directories
         if hasattr(self, "rh") and self.useLLM:
-            func = self.do_ls_llm
+            if not paths:
+                self.rh.ls_respond(path)
+            else:
+                for path in paths:
+                    self.rh.ls_respond(path)
 
         if not paths:
             func(path)
@@ -97,14 +102,6 @@ class Command_ls(HoneyPotCommand):
             self.write(f"ls: cannot access {path}: No such file or directory\n")
             return
         return files
-    
-    def do_ls_llm(self, path: str) -> None:
-        self.write(self.rh.ls_respond(path, 
-                                      flag_l=self.showLong,
-                                      flag_a=self.showHidden,
-                                      flag_d=self.showDirectories))
-        self.write("\n")
-        
 
     def do_ls_normal(self, path: str) -> None:
         files = self.get_dir_files(path)
