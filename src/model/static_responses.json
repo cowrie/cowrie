@@ -7,12 +7,6 @@
             "/": "bin root admin",
             "/home/ai_sweden":"Documents Projects speed_boldness.txt README.md",
             "/home/ai_sweden/Projects":"AI_Model_Deployment Data_Analysis NLP_Research Robotics_Development"
-        },
-        "-l":{
-            "/root":"total 16\ndrwxr-xr-x 2 user user 4096 Jun 11 10:32 dir1\ndrwxr-xr-x 3 user user 4096 Jun 11 10:33 dir2\n-rw-r--r-- 1 user user  123 Jun 11 10:34 file1.txt\n-rw-r--r-- 1 user user  456 Jun 11 10:35 file2.txt"
-        },
-        "-l-a":{
-            "/root":"long with all files"
         }
     },
     "pwd": {
