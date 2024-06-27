@@ -10,6 +10,9 @@ class CowrieHandler():
         self.fs = protocol.fs
     
     def enforce_ls(self, path: str, ls_view: str):
+        if not self.fs.exists(path):
+            return
+
         items = ls_view.split(" ") 
 
         def is_file(item: str):
