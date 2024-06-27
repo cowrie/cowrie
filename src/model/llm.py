@@ -109,7 +109,6 @@ class LLM:
 
     
     def generate_ifconfig_response(self, base_prompt):
-        # Define the static parts of the ifconfig output
         static_ifconfig_template = """
         eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
                 inet {ip_address}  netmask 255.255.255.0  broadcast 192.168.1.255
@@ -121,7 +120,6 @@ class LLM:
                 TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
         """
 
-        # Generate dynamic parts
         ip_prompt = base_prompt.format(cmd="Generate a realistic IP address for a hospital server.")
         ipv6_prompt = base_prompt.format(cmd="Generate a realistic IPv6 address for a hospital server.")
         mac_prompt = base_prompt.format(cmd="Generate a realistic MAC address for a hospital server.")
@@ -130,7 +128,6 @@ class LLM:
         ipv6_address = self.generate_dynamic_content(ipv6_prompt, "IPv6 Address:")
         mac_address = self.generate_dynamic_content(mac_prompt, "MAC Address:")
 
-        # Fill in the template with dynamic parts
         ifconfig_response = static_ifconfig_template.format(
             ip_address=ip_address,
             ipv6_address=ipv6_address,
