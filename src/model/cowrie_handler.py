@@ -8,9 +8,12 @@ class CowrieHandler():
     def __init__(self, protocol) -> None:
         self.protocol = protocol
         self.fs = protocol.fs
+        self.enforced_ls_paths = []
     
     def enforce_ls(self, path: str, ls_view: str):
         if not self.fs.exists(path):
+            return
+        if path in self.enforced_ls_paths:
             return
 
         items = ls_view.split(" ") 
@@ -33,6 +36,7 @@ class CowrieHandler():
                     self.fs.mkfile(item_path, 0, 0, random_size(), perm, random_time(6), is_llm=True)
                 else:
                     self.fs.mkdir(item_path, 0, 0, 4096, perm, random_time(6), is_llm=True)
+        self.enforced_ls_paths.append(path)
 
     def enforce_file_contents(self, path, contents):
         tmp_fname = "{}-{}-{}-redir_{}".format(
