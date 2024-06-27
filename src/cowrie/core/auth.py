@@ -7,6 +7,7 @@ This module contains authentication code
 
 from __future__ import annotations
 
+import configparser
 import json
 import re
 from collections import OrderedDict
@@ -127,18 +128,20 @@ class AuthRandom:
 
     def __init__(self) -> None:
         # Default values
-        self.mintry: int = 2
-        self.maxtry: int = 5
-        self.maxcache: int = 10
+        self.mintry: int
+        self.maxtry: int
+        self.maxcache: int
 
-        # Are there auth_class parameters?
-        if CowrieConfig.has_option("honeypot", "auth_class_parameters"):
+        try:
             parameters: str = CowrieConfig.get("honeypot", "auth_class_parameters")
             parlist: list[str] = parameters.split(",")
-            if len(parlist) == 3:
-                self.mintry = int(parlist[0])
-                self.maxtry = int(parlist[1])
-                self.maxcache = int(parlist[2])
+            self.mintry = int(parlist[0])
+            self.maxtry = int(parlist[1])
+            self.maxcache = int(parlist[2])
+        except configparser.Error:
+            self.mintry = 2
+            self.maxtry = 5
+            self.maxcache = 10
 
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1

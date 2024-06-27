@@ -47,7 +47,7 @@ class Output(cowrie.core.output.Output):
         self.epoch_timestamp = CowrieConfig.getboolean(
             "output_jsonlog", "epoch_timestamp", fallback=False
         )
-        fn = CowrieConfig.get("output_jsonlog", "logfile")
+        fn = CowrieConfig.get("output_jsonlog", "logfile", fallback="cowrie.json")
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
         self.outfile = cowrie.python.logfile.CowrieDailyLogFile(
@@ -55,7 +55,8 @@ class Output(cowrie.core.output.Output):
         )
 
     def stop(self):
-        self.outfile.flush()
+        if self.outfile:
+            self.outfile.flush()
 
     def write(self, event):
         if self.epoch_timestamp:
