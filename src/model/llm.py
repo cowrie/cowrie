@@ -57,13 +57,15 @@ class LLM:
             "You will need to make up realistic answers to the command, as they would be returned by a real linux terminal for a hospital server. "+\
             "It is very important that you do not name files and directiories file1.txt file2.txt file3.txt or similarly, rather create plausible file names for a real terminal with patient data.\n\n"+\
             "{cmd}"
-
-        messages = self.create_messages(base_prompt, cmd)
-        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.device)
-        len_chat = tokenized_chat.shape[1]
-        outputs = self.model.generate(tokenized_chat, max_new_tokens=500)
-        response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
-        return response
+        
+        if cmd == "ifconfig":
+            return self.generate_ifconfig_response(base_prompt)
+        else:
+            messages = self.create_messages(base_prompt, cmd)
+            tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.device)
+            len_chat = tokenized_chat.shape[1]
+            outputs = self.model.generate(tokenized_chat, max_new_tokens=500)
+            response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
     
     def generate_from_messages(self, messages, max_new_tokens=100):
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
@@ -92,6 +94,38 @@ class LLM:
         messages.append({"role":"user", "content":format_q("ls", cwd)})
 
         return self.generate_from_messages(messages)
+
+    
+    def generate_ifconfig_response(self, base_prompt):
+        # Define the static parts of the ifconfig output
+        static_ifconfig_template = """
+        eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+                inet {ip_address}  netmask 255.255.255.0  broadcast 192.168.1.255
+                inet6 {ipv6_address}  prefixlen 64  scopeid 0x20<link>
+                ether {mac_address}  txqueuelen 1000  (Ethernet)
+                RX packets 123456  bytes 987654321 (987.6 MB)
+                RX errors 0  dropped 0  overruns 0  frame 0
+                TX packets 123456  bytes 987654321 (987.6 MB)
+                TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+        """
+
+        # Generate dynamic parts
+        ip_prompt = base_prompt.format(cmd="Generate a realistic IP address for a hospital server.")
+        ipv6_prompt = base_prompt.format(cmd="Generate a realistic IPv6 address for a hospital server.")
+        mac_prompt = base_prompt.format(cmd="Generate a realistic MAC address for a hospital server.")
+
+        ip_address = self.generate_dynamic_content(ip_prompt, "IP Address:")
+        ipv6_address = self.generate_dynamic_content(ipv6_prompt, "IPv6 Address:")
+        mac_address = self.generate_dynamic_content(mac_prompt, "MAC Address:")
+
+        # Fill in the template with dynamic parts
+        ifconfig_response = static_ifconfig_template.format(
+            ip_address=ip_address,
+            ipv6_address=ipv6_address,
+            mac_address=mac_address
+        )
+
+        return ifconfig_response
 
     def generate_lscpu_response(self):
         profile = self.get_profile()
