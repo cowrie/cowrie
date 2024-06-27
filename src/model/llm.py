@@ -15,7 +15,7 @@ with open(f"{RESPONSE_PATH}/cmd_lookup.json", "r") as f:
     LOOKUPS = json.load(f)
 
 class LLM:
-    def __init__(self, model_name="/models/codegemma-7b-it"):
+    def __init__(self, model_name="google/codegemma-7b-it"):
         with open(f"{RESPONSE_PATH}/token.txt", "r") as f:
             token = f.read().rstrip()
 
