@@ -87,7 +87,9 @@ class Command_ls(HoneyPotCommand):
                     files = [x for x in files if not x[fs.A_NAME].startswith(".")]
                 files.sort()
             else:
-                files = (self.protocol.fs.getfile(path)[:],)
+                file = self.protocol.fs.getfile(path)[:]
+                file[fs.A_NAME] = path
+                files = [file]
         except Exception:
             self.write(f"ls: cannot access {path}: No such file or directory\n")
             return
