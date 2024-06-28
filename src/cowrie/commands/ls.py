@@ -35,7 +35,6 @@ class Command_ls(HoneyPotCommand):
         paths = []
         self.showHidden = False
         self.showDirectories = False
-        self.showHumanReadable = False
         func = self.do_ls_normal
 
         # Parse options or display no files
@@ -53,9 +52,6 @@ class Command_ls(HoneyPotCommand):
         for x, _a in opts:
             if x in ("-l"):
                 func = self.do_ls_l
-            if x in ("-lh"):
-                func = self.do_ls_l
-                self.showHumanReadable = True
             if x in ("-a"):
                 self.showHidden = True
             if x in ("-d"):
@@ -135,17 +131,6 @@ class Command_ls(HoneyPotCommand):
         filesize_str_extent = 0
         if len(files):
             filesize_str_extent = max(len(str(x[fs.A_SIZE])) for x in files)
-            # convert to human readable format if needed
-            if self.showHumanReadable:
-                for file in files:
-                    if file[fs.A_SIZE] >= 1024 * 1024 * 1024:
-                        file[fs.A_SIZE] = f"{file[fs.A_SIZE] / (1024 * 1024 * 1024):.1f}G"
-                    elif file[fs.A_SIZE] >= 1024 * 1024:
-                        file[fs.A_SIZE] = f"{file[fs.A_SIZE] / (1024 * 1024):.1f}M"
-                    elif file[fs.A_SIZE] >= 1024:
-                        file[fs.A_SIZE] = f"{file[fs.A_SIZE] / 1024:.1f}K"
-                    elif file[fs.A_SIZE] < 1024:
-                        file[fs.A_SIZE] = f"{file[fs.A_SIZE]}B"
 
         user_name_str_extent = 0
         if len(files):
