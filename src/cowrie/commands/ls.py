@@ -49,12 +49,10 @@ class Command_ls(HoneyPotCommand):
             self.write(f"ls: {err}\n")
             self.write("Try 'ls --help' for more information.\n")
             return
-        print("opts: ", opts)
         for x, _a in opts:
             if x in ("-l"):
                 func = self.do_ls_l
             if x in ("-h"):
-                print("Human readable")
                 self.showHumanReadable = True
 
             if x in ("-a"):
