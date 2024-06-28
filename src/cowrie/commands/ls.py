@@ -35,6 +35,7 @@ class Command_ls(HoneyPotCommand):
         paths = []
         self.showHidden = False
         self.showDirectories = False
+        self.showHumanReadable = False
         func = self.do_ls_normal
 
         # Parse options or display no files
@@ -48,10 +49,14 @@ class Command_ls(HoneyPotCommand):
             self.write(f"ls: {err}\n")
             self.write("Try 'ls --help' for more information.\n")
             return
-
+        print("opts: ", opts)
         for x, _a in opts:
             if x in ("-l"):
                 func = self.do_ls_l
+            if x in ("-h"):
+                print("Human readable")
+                self.showHumanReadable = True
+
             if x in ("-a"):
                 self.showHidden = True
             if x in ("-d"):
@@ -121,16 +126,34 @@ class Command_ls(HoneyPotCommand):
         Display detailed information about files
         Mimics the output of GNU ls -l and supports the following options:
         -a, -h
-        
+
         :param path: The path to list
         """
         files = self.get_dir_files(path)
         if not files:
             return
-
+        # Create a list to hold formatted sizes for display
+        formatted_sizes = []
         filesize_str_extent = 0
         if len(files):
             filesize_str_extent = max(len(str(x[fs.A_SIZE])) for x in files)
+            if self.showHumanReadable:
+                for x in files:
+                    size = x[fs.A_SIZE]  # Original size
+                    if size >= 1024 * 1024 * 1024:
+                        formatted_size = f"{size / 1024 / 1024 / 1024:.1f}G"
+                    elif size >= 1024 * 1024:
+                        formatted_size = f"{size / 1024 / 1024:.1f}M"
+                    elif size >= 1024:
+                        formatted_size = f"{size / 1024:.1f}K"
+                    else:
+                        formatted_size = str(size)
+
+                    formatted_sizes.append(formatted_size)
+                # Recalculate the extent with the formatted sizes
+                filesize_str_extent = max(len(size) for size in formatted_sizes)
+            else:
+                formatted_sizes = [str(x[fs.A_SIZE]) for x in files]
 
         user_name_str_extent = 0
         if len(files):
@@ -140,7 +163,7 @@ class Command_ls(HoneyPotCommand):
         if len(files):
             group_name_str_extent = max(len(self.gid2name(x[fs.A_GID])) for x in files)
 
-        for file in files:
+        for i, file in enumerate(files):
             if file[fs.A_NAME].startswith(".") and not self.showHidden:
                 continue
 
@@ -193,7 +216,7 @@ class Command_ls(HoneyPotCommand):
                 permstr,
                 self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent),
                 self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent),
-                str(file[fs.A_SIZE]).rjust(filesize_str_extent),
+                formatted_sizes[i].rjust(filesize_str_extent),
                 time.strftime("%Y-%m-%d %H:%M", ctime),
                 file[fs.A_NAME],
                 linktarget,
