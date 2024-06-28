@@ -4,7 +4,7 @@ if os.environ["COWRIE_USE_LLM"].lower() == "true":
     from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, AutoConfig
     from accelerate import init_empty_weights, dispatch_model
     import torch
-
+import re
 import json
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model"
@@ -110,29 +110,36 @@ class LLM:
     
     def generate_ifconfig_response(self, base_prompt):
         static_ifconfig_template = """
-        eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
-                inet {ip_address}  netmask 255.255.255.0  broadcast 192.168.1.255
-                inet6 {ipv6_address}  prefixlen 64  scopeid 0x20<link>
-                ether {mac_address}  txqueuelen 1000  (Ethernet)
-                RX packets 123456  bytes 987654321 (987.6 MB)
-                RX errors 0  dropped 0  overruns 0  frame 0
-                TX packets 123456  bytes 987654321 (987.6 MB)
-                TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+        eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu {eth0_mtu}
+                inet {eth0_ip_address}  netmask {eth0_netmask}  broadcast {eth0_broadcast}
+                inet6 {eth0_ipv6_address}  prefixlen 64  scopeid 0x20<link>
+                ether {eth0_mac_address}  txqueuelen {eth0_txqueuelen}  (Ethernet)
+                RX packets {eth0_rx_packets}  bytes {eth0_rx_bytes} ({eth0_rx_human_readable_bytes})
+                RX errors {eth0_rx_errors}  dropped {eth0_rx_dropped}  overruns {eth0_rx_overruns}  frame {eth0_rx_frame}
+                TX packets {eth0_tx_packets}  bytes {eth0_tx_bytes} ({eth0_tx_human_readable_bytes})
+                TX errors {eth0_tx_errors}  dropped {eth0_tx_dropped}  overruns {eth0_tx_overruns}  carrier {eth0_tx_carrier}  collisions {eth0_collisions}
+
+        lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
+                inet {lo_ip_address}  netmask {lo_netmask}
+                inet6 {lo_ipv6_address}  prefixlen 128  scopeid 0x10<host>
+                loop  txqueuelen {lo_txqueuelen}  (Local Loopback)
+                RX packets {lo_rx_packets}  bytes {lo_rx_bytes} ({lo_rx_human_readable_bytes})
+                RX errors {lo_rx_errors}  dropped {lo_rx_dropped}  overruns {lo_rx_overruns}  frame {lo_rx_frame}
+                TX packets {lo_tx_packets}  bytes {lo_tx_bytes} ({lo_tx_human_readable_bytes})
+                TX errors {lo_tx_errors}  dropped {lo_tx_dropped}  overruns {lo_tx_overruns}  carrier {lo_tx_carrier}  collisions {lo_collisions}
         """
 
-        ip_prompt = base_prompt.format(cmd="Generate a realistic IP address for a hospital server.")
-        ipv6_prompt = base_prompt.format(cmd="Generate a realistic IPv6 address for a hospital server.")
-        mac_prompt = base_prompt.format(cmd="Generate a realistic MAC address for a hospital server.")
-
-        ip_address = self.generate_dynamic_content(ip_prompt, "IP Address:")
-        ipv6_address = self.generate_dynamic_content(ipv6_prompt, "IPv6 Address:")
-        mac_address = self.generate_dynamic_content(mac_prompt, "MAC Address:")
-
-        ifconfig_response = static_ifconfig_template.format(
-            ip_address=ip_address,
-            ipv6_address=ipv6_address,
-            mac_address=mac_address
+        prompt = (
+            "Generate realistic values for the following variables for an ifconfig command on a Linux terminal of a hospital server:\n"
+            "eth0_ip_address, eth0_netmask, eth0_broadcast, eth0_ipv6_address, eth0_mac_address, eth0_txqueuelen, eth0_rx_packets, eth0_rx_bytes, eth0_rx_human_readable_bytes, "
+            "eth0_rx_errors, eth0_rx_dropped, eth0_rx_overruns, eth0_rx_frame, eth0_tx_packets, eth0_tx_bytes, eth0_tx_human_readable_bytes, eth0_tx_errors, eth0_tx_dropped, "
+            "eth0_tx_overruns, eth0_tx_carrier, eth0_collisions, eth0_mtu, lo_ip_address, lo_netmask, lo_ipv6_address, lo_txqueuelen, lo_rx_packets, lo_rx_bytes, lo_rx_human_readable_bytes, "
+            "lo_rx_errors, lo_rx_dropped, lo_rx_overruns, lo_rx_frame, lo_tx_packets, lo_tx_bytes, lo_tx_human_readable_bytes, lo_tx_errors, lo_tx_dropped, lo_tx_overruns, lo_tx_carrier, lo_collisions, lo_mtu."
         )
+
+        content = self.generate_dynamic_content(base_prompt.format(cmd="ifconfig"), prompt)
+        dynamic_values = dict(re.findall(r"(\w+):\s*([^\n]+)", content))
+        ifconfig_response = static_ifconfig_template.format(**dynamic_values)
 
         return ifconfig_response
 
