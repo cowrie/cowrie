@@ -186,7 +186,6 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
 
         combined_values = {**default_values, **dynamic_values}
         ifconfig_response = static_ifconfig_template.format(**combined_values)
-        print(ifconfig_response)
 
         return ifconfig_response
 
