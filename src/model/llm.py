@@ -109,24 +109,23 @@ class LLM:
 
     
     def generate_ifconfig_response(self, base_prompt):
-        static_ifconfig_template = """
-        eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu {eth0_mtu}
-                inet {eth0_ip_address}  netmask {eth0_netmask}  broadcast {eth0_broadcast}
-                inet6 {eth0_ipv6_address}  prefixlen 64  scopeid 0x20<link>
-                ether {eth0_mac_address}  txqueuelen {eth0_txqueuelen}  (Ethernet)
-                RX packets {eth0_rx_packets}  bytes {eth0_rx_bytes} ({eth0_rx_human_readable_bytes})
-                RX errors {eth0_rx_errors}  dropped {eth0_rx_dropped}  overruns {eth0_rx_overruns}  frame {eth0_rx_frame}
-                TX packets {eth0_tx_packets}  bytes {eth0_tx_bytes} ({eth0_tx_human_readable_bytes})
-                TX errors {eth0_tx_errors}  dropped {eth0_tx_dropped}  overruns {eth0_tx_overruns}  carrier {eth0_tx_carrier}  collisions {eth0_collisions}
+        static_ifconfig_template = """eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu {eth0_mtu}
+        inet {eth0_ip_address}  netmask {eth0_netmask}  broadcast {eth0_broadcast}
+        inet6 {eth0_ipv6_address}  prefixlen 64  scopeid 0x20<link>
+        ether {eth0_mac_address}  txqueuelen {eth0_txqueuelen}  (Ethernet)
+        RX packets {eth0_rx_packets}  bytes {eth0_rx_bytes} ({eth0_rx_human_readable_bytes})
+        RX errors {eth0_rx_errors}  dropped {eth0_rx_dropped}  overruns {eth0_rx_overruns}  frame {eth0_rx_frame}
+        TX packets {eth0_tx_packets}  bytes {eth0_tx_bytes} ({eth0_tx_human_readable_bytes})
+        TX errors {eth0_tx_errors}  dropped {eth0_tx_dropped}  overruns {eth0_tx_overruns}  carrier {eth0_tx_carrier}  collisions {eth0_collisions}
 
-        lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
-                inet {lo_ip_address}  netmask {lo_netmask}
-                inet6 {lo_ipv6_address}  prefixlen 128  scopeid 0x10<host>
-                loop  txqueuelen {lo_txqueuelen}  (Local Loopback)
-                RX packets {lo_rx_packets}  bytes {lo_rx_bytes} ({lo_rx_human_readable_bytes})
-                RX errors {lo_rx_errors}  dropped {lo_rx_dropped}  overruns {lo_rx_overruns}  frame {lo_rx_frame}
-                TX packets {lo_tx_packets}  bytes {lo_tx_bytes} ({lo_tx_human_readable_bytes})
-                TX errors {lo_tx_errors}  dropped {lo_tx_dropped}  overruns {lo_tx_overruns}  carrier {lo_tx_carrier}  collisions {lo_collisions}
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
+        inet {lo_ip_address}  netmask {lo_netmask}
+        inet6 {lo_ipv6_address}  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen {lo_txqueuelen}  (Local Loopback)
+        RX packets {lo_rx_packets}  bytes {lo_rx_bytes} ({lo_rx_human_readable_bytes})
+        RX errors {lo_rx_errors}  dropped {lo_rx_dropped}  overruns {lo_rx_overruns}  frame {lo_rx_frame}
+        TX packets {lo_tx_packets}  bytes {lo_tx_bytes} ({lo_tx_human_readable_bytes})
+        TX errors {lo_tx_errors}  dropped {lo_tx_dropped}  overruns {lo_tx_overruns}  carrier {lo_tx_carrier}  collisions {lo_collisions}
         """
 
         dynamic_prompt = (
@@ -187,6 +186,7 @@ class LLM:
 
         combined_values = {**default_values, **dynamic_values}
         ifconfig_response = static_ifconfig_template.format(**combined_values)
+        print(ifconfig_response)
 
         return ifconfig_response
 
