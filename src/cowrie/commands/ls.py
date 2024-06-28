@@ -35,6 +35,7 @@ class Command_ls(HoneyPotCommand):
         paths = []
         self.showHidden = False
         self.showDirectories = False
+        self.showHumanReadable = False
         func = self.do_ls_normal
 
         # Parse options or display no files
