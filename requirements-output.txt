@@ -33,7 +33,7 @@ influxdb==5.3.2
 wokkel==18.0.0
 
 # misp
-pymisp==2.4.187
+pymisp==2.4.194
 
 # redis
 redis==5.0.6
