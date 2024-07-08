@@ -2,20 +2,23 @@ import os
 #To be added for LLM
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
     from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, AutoConfig
-    from accelerate import init_empty_weights, dispatch_model
     import torch
 import re
 import json
 
 RESPONSE_PATH = "/cowrie/cowrie-git/src/model"
-
 PROMPTS_PATH = "/cowrie/cowrie-git/src/model/prompts"
+
+TEMPLATE_TOKEN = "<unk>"
+TEMPLATE_TOKEN_ID = 0
+SYSTEM_ROLE_AVAILABLE = True
+
 
 with open(f"{RESPONSE_PATH}/cmd_lookup.json", "r") as f:
     LOOKUPS = json.load(f)
 
 class LLM:
-    def __init__(self, model_name="google/codegemma-7b-it"):
+    def __init__(self, model_name="microsoft/Phi-3-mini-4k-instruct"):
         with open(f"{RESPONSE_PATH}/token.txt", "r") as f:
             token = f.read().rstrip()
 
@@ -38,35 +41,9 @@ class LLM:
             examples = json.load(ex_file)
         return examples
 
-    def create_messages(self, base_prompt, cmd):
-        answer = LOOKUPS[cmd]
-        messages = [
-            {"role": "user", "content": base_prompt},
-            {"role": "assistant", "content": answer},
-            {"role": "user", "content": cmd}
-        ]
-        return messages
+    def fill_template(template):
+        pass
 
-    def generate_response(self, cmd):
-        base_prompt = f"You are Linux OS terminal for a server containing sensitive patient data. "+\
-            "Your personality is: You are a Linux OS terminal. You act and respond exactly as a Linux terminal. "+\
-            "You will respond to all commands just as a Linux terminal would. " +\
-            "You can only respond to user inputs and you must not write any commands on your own. " +\
-            "You must not in any case have a conversation with user as a chatbot and must not explain your output and do not repeat commands user inputs. " +\
-            "Do not explain to user what they are seeing. Only respond as Linux terminal. "+\
-            "You will need to make up realistic answers to the command, as they would be returned by a real linux terminal for a hospital server. "+\
-            "It is very important that you do not name files and directiories file1.txt file2.txt file3.txt or similarly, rather create plausible file names for a real terminal with patient data.\n\n"+\
-            "{cmd}"
-        
-        if cmd == "ifconfig":
-            return self.generate_ifconfig_response(base_prompt)
-        else:
-            messages = self.create_messages(base_prompt, cmd)
-            tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.device)
-            len_chat = tokenized_chat.shape[1]
-            outputs = self.model.generate(tokenized_chat, max_new_tokens=500)
-            response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
-            return response
     
     def generate_dynamic_content(self, base_prompt, dynamic_part):
         messages = [
@@ -107,7 +84,79 @@ class LLM:
 
         return self.generate_from_messages(messages)
 
-    
+
+    def fill_template(self, messages):
+        tokenized_template = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False, return_tensors="pt")
+
+        print("tokenized:\n", tokenized_template)
+        holes = tokenized_template == TEMPLATE_TOKEN_ID
+        hole_indices = holes.nonzero()
+
+        def has_whitespace(token):
+            decoded = tokenizer.decode(token)
+            return decoded[0] == " "
+
+        for hole_i in hole_indices:
+            before = tokenized_template[0, :hole_i]
+            after = tokenized_template[0, hole_i+1:]
+
+            last = 1
+            while not has_whitespace(last):
+                before = model.generate(before, max_new_tokens=1)
+                print("before:\n", before)
+                last = before[0, -1]
+
+
+
+
+
+    def generate_ifconfig_response_template(self):
+        profile = self.get_profile()
+        template = f"""
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu {TEMPLATE_TOKEN}
+    inet {TEMPLATE_TOKEN}  netmask {TEMPLATE_TOKEN}  broadcast {TEMPLATE_TOKEN}
+    inet6 {TEMPLATE_TOKEN}  prefixlen 64  scopeid 0x20<link>
+    ether {TEMPLATE_TOKEN}  txqueuelen {TEMPLATE_TOKEN}  (Ethernet)
+    RX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    RX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  frame {TEMPLATE_TOKEN}
+    TX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    TX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  carrier {TEMPLATE_TOKEN}  collisions {TEMPLATE_TOKEN}
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {TEMPLATE_TOKEN}
+    inet {TEMPLATE_TOKEN}  netmask {TEMPLATE_TOKEN}
+    inet6 {TEMPLATE_TOKEN}  prefixlen 128  scopeid 0x10<host>
+    loop  txqueuelen {TEMPLATE_TOKEN}  (Local Loopback)
+    RX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    RX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  frame {TEMPLATE_TOKEN}
+    TX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    TX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  carrier {TEMPLATE_TOKEN}  collisions {TEMPLATE_TOKEN}
+"""
+        base_prompt = profile
+        examples = self.get_examples("ifconfig")
+
+        if len(examples) > 0:
+            base_prompt = base_prompt + f'\n\nHere {"are a few examples" if len(examples) > 1 else "is an example"} of a response to the ifconfig command'
+
+            for i in range(len(examples)):
+                base_prompt = base_prompt+f"\n\nExample {i+1}\n:"+examples[i]["response"]
+        print(base_prompt)
+
+        if SYSTEM_ROLE_AVAILABLE:
+            messages = [
+                {"role":"system", "content":base_prompt}
+                ]
+        else:
+            messages = [
+                {"role":"user", "content":base_prompt},
+                {"role":"model", "content":""}
+                ]
+        messages.append({"role":"user", "content":"ifconfig"})
+        messages.append({"role":"model", "content":template})
+        return self.fill_template(messages)
+
+
+
+
     def generate_ifconfig_response(self, base_prompt):
         static_ifconfig_template = """eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu {eth0_mtu}
         inet {eth0_ip_address}  netmask {eth0_netmask}  broadcast {eth0_broadcast}

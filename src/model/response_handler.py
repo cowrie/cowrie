@@ -25,7 +25,7 @@ class ResponseHandler():
                    path: str):
         resp = self.find_static_response("ls", "", path)
         if resp is None:
-            resp = self.llm.generate_response("ls")
+            resp = self.llm.generate_ls_response(path)
         
         #Should maybe be just for new LLM generations?
         print("RESPONSE!!")
@@ -36,17 +36,18 @@ class ResponseHandler():
     def netstat_respond(self):
         resp = self.find_static_response("netstat")
         if resp is None:
-            resp = self.llm.generate_response("netstat")
+            resp = self.llm.generate_netstat_response()
         print("RESPONSE!!")
         print(resp)
         print("------")
+
         return resp
         
     def ifconfig_respond(self):
         #resp = self.find_static_response("ifconfig")
         #if resp is None:
-        resp = self.llm.generate_response("ifconfig")
-        print("RESPONSE!!")
+        resp = self.llm.generate_ifconfig_response_template()
+        print("ifconfig RESPONSE!!")
         print(resp)
         print("------")
         return resp

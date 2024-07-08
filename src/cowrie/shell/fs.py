@@ -324,7 +324,7 @@ class HoneyPotFilesystem:
         print("f:")
         print(f)
 
-
+        #If file has been made up but is not real, make it real
         try:
             if f[A_IS_LLM] and f[A_TYPE] == T_FILE:
                 print("LLM TRIGGER")
