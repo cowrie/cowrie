@@ -324,10 +324,14 @@ class HoneyPotFilesystem:
         print("f:")
         print(f)
 
-        if f[A_IS_LLM] and f[A_TYPE] == T_FILE:
-            print("LLM TRIGGER")
-            llm_content: str = self.rh.file_contents_respond(path)
 
+        try:
+            if f[A_IS_LLM] and f[A_TYPE] == T_FILE:
+                print("LLM TRIGGER")
+                llm_content: str = self.rh.file_contents_respond(path)
+        except IndexError:
+            pass    
+    
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
