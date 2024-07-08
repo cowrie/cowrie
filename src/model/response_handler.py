@@ -37,18 +37,16 @@ class ResponseHandler():
         resp = self.find_static_response("netstat")
         if resp is None:
             resp = self.llm.generate_response("netstat")
-        print("RESPONSE!!")
-        print(resp)
-        print("------")
         return resp
         
     def ifconfig_respond(self):
         #resp = self.find_static_response("ifconfig")
         #if resp is None:
         resp = self.llm.generate_response("ifconfig")
-        print("RESPONSE!!")
-        print(resp)
-        print("------")
+        return resp
+
+    def last_respond(self):
+        resp = self.llm.generate_response("last")
         return resp
 
     def find_static_response(self,
