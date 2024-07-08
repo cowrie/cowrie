@@ -1,4 +1,5 @@
 import os
+from huggingface_hub import snapshot_download
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
     from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -8,7 +9,8 @@ def download_model(model_path, model_name):
     """Download a Hugging Face model and tokenizer to the specified directory"""
     with open(f"{RESPONSE_PATH}/token.txt", "r") as f:
         token = f.read().rstrip()
-
+    
+    '''
     if not os.path.exists(model_path):
         os.umask(0)
         os.makedirs(model_path, mode=0o777)
@@ -18,6 +20,9 @@ def download_model(model_path, model_name):
 
     model.save_pretrained(model_path+model_name)
     tokenizer.save_pretrained(model_path+model_name)
+    '''
+
+    snapshot_download(repo_id=model_name, token=token)
 
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
     download_model("models/", "google/codegemma-7b-it")

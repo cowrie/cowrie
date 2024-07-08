@@ -15,12 +15,8 @@ kmem:x:15:
 dialout:x:20:
 fax:x:21:
 voice:x:22:
-cdrom:x:24:phil
-floppy:x:25:phil
 tape:x:26:
 sudo:x:27:
-audio:x:29:phil
-dip:x:30:phil
 www-data:x:33:
 backup:x:34:
 operator:x:37:
@@ -30,9 +26,7 @@ src:x:40:
 gnats:x:41:
 shadow:x:42:
 utmp:x:43:
-video:x:44:phil
 sasl:x:45:
-plugdev:x:46:phil
 staff:x:50:
 games:x:60:
 users:x:100:

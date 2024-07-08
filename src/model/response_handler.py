@@ -52,6 +52,10 @@ class ResponseHandler():
         print("------")
         return resp
 
+    def last_respond(self):
+        resp = self.llm.generate_response("last")
+        return resp
+
     def find_static_response(self,
                       command:str,
                       flags: list[str] = "",
