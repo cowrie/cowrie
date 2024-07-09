@@ -16,7 +16,7 @@ dialout:x:20:
 fax:x:21:
 voice:x:22:
 tape:x:26:
-sudo:x:27:
+sudo:x:27:guest
 www-data:x:33:
 backup:x:34:
 operator:x:37:
