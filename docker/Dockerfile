@@ -99,10 +99,10 @@ RUN apt-get update && \
 
 #FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
 #Feels like you could do this in a simpler way but it works
-RUN python3 -m venv cowrie-env && \
-    . cowrie-env/bin/activate && \
+#RUN python3 -m venv cowrie-env && \
+#    . cowrie-env/bin/activate && \
     #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
-    python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
+RUN  python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
 
 LABEL org.opencontainers.image.created=${BUILD_DATE}
