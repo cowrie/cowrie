@@ -33,12 +33,12 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
     apt-get update && apt-get install -y nvidia-container-toolkit nvidia-container-runtime
 
-RUN apt-get update && \
-    apt-get install -y \
-      python3 \
-      python3-pip && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && \
+#    apt-get install -y \
+#      python3 \
+#      python3-pip && \
+#    apt-get clean && \
+#    rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r ${COWRIE_GROUP} && \
     useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
@@ -97,19 +97,19 @@ ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
+    
 #FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
 
-RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
-    apt-get update -y && \
-    apt-get -y install curl && \
-    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - && \
-    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
-    apt-get update && apt-get install -y nvidia-container-toolkit
+#RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
+#    apt-get update -y && \
+#    apt-get -y install curl && \
+#    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - && \
+#    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
+#    apt-get update && apt-get install -y nvidia-container-toolkit
 
 
 RUN apt-get update && \
