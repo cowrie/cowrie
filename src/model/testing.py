@@ -1,8 +1,8 @@
 import os
 #To be added for LLM
-if os.environ["COWRIE_USE_LLM"].lower() == "true":
-    from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, StoppingCriteria, StoppingCriteriaList
-    import torch
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, AutoConfig, StoppingCriteria, StoppingCriteriaList
+import torch
 import re
 import json
 
@@ -13,23 +13,20 @@ TEMPLATE_TOKEN = "<unk>"
 TEMPLATE_TOKEN_ID = 0
 SYSTEM_ROLE_AVAILABLE = True
 
-
-with open(f"{RESPONSE_PATH}/cmd_lookup.json", "r") as f:
-    LOOKUPS = json.load(f)
-
 class LLM:
     def __init__(self, model_name="microsoft/Phi-3-mini-4k-instruct"):
-        with open(f"{RESPONSE_PATH}/token.txt", "r") as f:
-            token = f.read().rstrip()
 
-        self.profile = self.get_profile()
+        self.profile = "You are a system"
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
-        quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, token=token, device_map="auto", quantization_config=quantization_config)
+        #quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cpu")
+
+        self.model.generation_config.pad_token_id = self.tokenizer.pad_token_id
+
 
     def get_profile(self):
         with open(PROMPTS_PATH+"/profile.txt", "r") as prompt_file:
@@ -40,10 +37,6 @@ class LLM:
         with open(PROMPTS_PATH+f"/ex_{cmd}.json", "r") as ex_file:
             examples = json.load(ex_file)
         return examples
-
-    def fill_template(template):
-        pass
-
     
     def generate_dynamic_content(self, base_prompt, dynamic_part):
         messages = [
@@ -75,73 +68,73 @@ class LLM:
         ex_a = [ex["response"] for ex in examples]
 
         messages = [{"role":"user", "content":self.profile},
-                    {"role":"model", "content":""}]
+                    {"role":"assistant", "content":""}]
         for i in range(len(examples)):
             messages.append({"role":"user", "content":ex_q[i]})
-            messages.append({"role":"model", "content":ex_a[i]})
+            messages.append({"role":"assistant", "content":ex_a[i]})
         
         messages.append({"role":"user", "content":format_q("ls", cwd)})
 
         return self.generate_from_messages(messages)
 
 
-    def fill_template(self, messages, max_slot_len=20):
+    def fill_template(self, messages):
         tokenized_template = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False, return_tensors="pt")
         
-        holes = tokenized_template == TEMPLATE_TOKEN_ID
-        hole_indices = holes.nonzero()[:,1]
-
         stopping_criteria = StoppingCriteriaList([NewWordSC(tokenizer=self.tokenizer)])
 
-        before = tokenized_template[:, :hole_indices[0]]  
-        for i in range(hole_indices.shape[0]):
-            hole_i = hole_indices[i]
-    
-            #Need to check for cutoff instead of just removing last token if we want sampling
-            before = self.model.generate(before, 
-                                         do_sample=False,
-                                         max_new_tokens=max_slot_len,
-                                         stopping_criteria=stopping_criteria,
-                                         bad_words_ids=[[TEMPLATE_TOKEN_ID]])[:, :-1]
-            if hole_i == hole_indices[-1]:
-              tokenized_template = torch.cat([before, tokenized_template[:, hole_i+1:]], dim=1)
+        index = -1
+        while index < tokenized_template.size(dim=1):
+            index += 1
+            if not tokenized_template[0, index] == TEMPLATE_TOKEN_ID:
+                continue
+            print("tokenized template:")
+            print(self.tokenizer.decode(tokenized_template, skip_special_tokens=True))
+
+            before = tokenized_template[:, :index]
+
+            before = self.model.generate(before, max_new_tokens=20, stopping_criteria=stopping_criteria, bad_words_ids=[[TEMPLATE_TOKEN_ID]])
+
+            if index+1 < tokenized_template.size(dim=1):
+                after = tokenized_template[:, index+1:]
+                tokenized_template = torch.cat((before, after), 1)
             else:
-              before = torch.cat([before, tokenized_template[:, hole_i+1:hole_indices[i+1]]], dim=1)
+                tokenized_template = before
+
         return self.tokenizer.decode(tokenized_template[0, :])
 
 
 
 
-    def generate_ifconfig_response_template(self):
-        profile = self.get_profile()
-        template = f"""
-eth0      Link encap:Ethernet  HWaddr {TEMPLATE_TOKEN}  
-          inet addr:{TEMPLATE_TOKEN}  Bcast:{TEMPLATE_TOKEN}  Mask:{TEMPLATE_TOKEN}
-          inet6 addr: {TEMPLATE_TOKEN} Scope:Link
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:123456 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:123456 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000 
-          RX bytes:{TEMPLATE_TOKEN} ({TEMPLATE_TOKEN} MB)  TX bytes:{TEMPLATE_TOKEN} ({TEMPLATE_TOKEN} MB)
-          Interrupt:20 Memory:fa800000-fa820000 
 
-lo        Link encap:Local Loopback  
-          inet addr:{TEMPLATE_TOKEN}  Mask:{TEMPLATE_TOKEN}
-          inet6 addr: ::1/128 Scope:Host
-          UP LOOPBACK RUNNING  MTU:{TEMPLATE_TOKEN}  Metric:1
-          RX packets:1234 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:1234 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000 
-          RX bytes:{TEMPLATE_TOKEN} ({TEMPLATE_TOKEN} KB)  TX bytes:{TEMPLATE_TOKEN} ({TEMPLATE_TOKEN} KB)
+    def generate_ifconfig_response_template(self):
+        template = f"""
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu {TEMPLATE_TOKEN}
+    inet {TEMPLATE_TOKEN}  netmask {TEMPLATE_TOKEN}  broadcast {TEMPLATE_TOKEN}
+    inet6 {TEMPLATE_TOKEN}  prefixlen 64  scopeid 0x20<link>
+    ether {TEMPLATE_TOKEN}  txqueuelen {TEMPLATE_TOKEN}  (Ethernet)
+    RX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    RX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  frame {TEMPLATE_TOKEN}
+    TX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    TX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  carrier {TEMPLATE_TOKEN}  collisions {TEMPLATE_TOKEN}
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {TEMPLATE_TOKEN}
+    inet {TEMPLATE_TOKEN}  netmask {TEMPLATE_TOKEN}
+    inet6 {TEMPLATE_TOKEN}  prefixlen 128  scopeid 0x10<host>
+    loop  txqueuelen {TEMPLATE_TOKEN}  (Local Loopback)
+    RX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    RX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  frame {TEMPLATE_TOKEN}
+    TX packets {TEMPLATE_TOKEN}  bytes {TEMPLATE_TOKEN} ({TEMPLATE_TOKEN})
+    TX errors {TEMPLATE_TOKEN}  dropped {TEMPLATE_TOKEN}  overruns {TEMPLATE_TOKEN}  carrier {TEMPLATE_TOKEN}  collisions {TEMPLATE_TOKEN}
 """
-        base_prompt = profile
-        examples = self.get_examples("ifconfig")
+        base_prompt = self.profile
+        examples = [{"response":"This is a example"}]
 
         if len(examples) > 0:
             base_prompt = base_prompt + f'\n\nHere {"are a few examples" if len(examples) > 1 else "is an example"} of a response to the ifconfig command'
 
             for i in range(len(examples)):
-                base_prompt = base_prompt+f"\n\nExample {i+1}:\n"+examples[i]["response"]
+                base_prompt = base_prompt+f"\n\nExample {i+1}\n:"+examples[i]["response"]
         print(base_prompt)
 
         if SYSTEM_ROLE_AVAILABLE:
@@ -151,10 +144,10 @@ lo        Link encap:Local Loopback
         else:
             messages = [
                 {"role":"user", "content":base_prompt},
-                {"role":"model", "content":""}
+                {"role":"assistant", "content":""}
                 ]
         messages.append({"role":"user", "content":"ifconfig"})
-        messages.append({"role":"model", "content":template})
+        messages.append({"role":"assistant", "content":template})
         return self.fill_template(messages)
 
 
@@ -254,7 +247,7 @@ class FakeLLM:
         def func(*args, **kwargs):
             return "Something generated by a LLM"
         return func
-    
+
 
 class NewWordSC(StoppingCriteria):
     def __init__(self, tokenizer):
@@ -266,13 +259,16 @@ class NewWordSC(StoppingCriteria):
         res = torch.zeros_like(lasts, dtype=torch.bool)
         for i in range(lasts.shape[0]):
             decoded = self.tokenizer.decode(lasts[i])
-            #print(f"decoded: '{decoded}'")
-            if " " in decoded:
+            print(f"decoded: '{decoded}'")
+            if decoded.startswith(" "):
                 res[i] = True
             elif "\n" in decoded:
                 res[i] = True
-            elif "\t" in decoded:
-                res[i] = True
-            elif decoded == "":
-              return True
         return res
+
+
+
+
+llm = LLM()
+
+print(llm.generate_ifconfig_response_template())
