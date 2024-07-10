@@ -274,5 +274,5 @@ class NewWordSC(StoppingCriteria):
             elif "\t" in decoded:
                 res[i] = True
             elif decoded == "":
-              return True
+              res[i] = True
         return res
