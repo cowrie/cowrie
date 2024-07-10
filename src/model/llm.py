@@ -200,8 +200,8 @@ NUMA node0 CPU(s):     {TEMPLATE_TOKEN}
         """
         base_prompt = base_prompt + f'\n\nHere {"are a few examples" if len(examples) > 1 else "is an example"} of a response to the lscpu command'
 
-            for i in range(len(examples)):
-                base_prompt = base_prompt+f"\n\nExample {i+1}:\n"+examples[i]["response"]
+        for i in range(len(examples)):
+            base_prompt = base_prompt+f"\n\nExample {i+1}:\n"+examples[i]["response"]
 
         if SYSTEM_ROLE_AVAILABLE:
             messages = [
