@@ -91,8 +91,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m venv cowrie-env && \
-    . cowrie-env/bin/activate
 
 RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     apt-get update -y && \
@@ -103,7 +101,9 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
 
     #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
 
-RUN python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
+RUN python3 -m venv cowrie-env && \
+    . cowrie-env/bin/activate && \
+    python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
 #FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
 #Feels like you could do this in a simpler way but it works
