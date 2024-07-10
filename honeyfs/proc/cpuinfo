@@ -1,23 +1,23 @@
 processor	: 0
 vendor_id	: GenuineIntel
 cpu family	: 6
-model		: 23
-model name	: Intel(R) Core(TM)2 Duo CPU     E8200  @ 2.66GHz
+model		: 61
+model name	: Intel(R) Core(TM) i7-2960XM CPU @ 2.70GHz
 stepping	: 6
-cpu MHz		: 2133.304
-cache size	: 6144 KB
+cpu MHz		: 2700.00
+cache size	: 4096 KB
 physical id	: 0
-siblings	: 2
+siblings	: 7
 core id		: 0
 cpu cores	: 2
 apicid		: 0
 initial apicid	: 0
 fpu		: yes
 fpu_exception	: yes
-cpuid level	: 10
+cpuid level	: 13
 wp		: yes
-flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm
-bogomips	: 4270.03
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 eagerfpu pcid flexpriority xsaveopt arat tpr_shadow ida popcnt pts pclmulqdq tsc_deadline_timer
+bogomips	: 6517
 clflush size	: 64
 cache_alignment	: 64
 address sizes	: 36 bits physical, 48 bits virtual
@@ -26,22 +26,22 @@ power management:
 processor	: 1
 vendor_id	: GenuineIntel
 cpu family	: 6
-model		: 23
-model name	: Intel(R) Core(TM)2 Duo CPU     E8200  @ 2.66GHz
+model		: 61
+model name	: Intel(R) Core(TM) i7-2960XM CPU @ 2.70GHz
 stepping	: 6
-cpu MHz		: 2133.304
-cache size	: 6144 KB
+cpu MHz		: 2700.00
+cache size	: 4096 KB
 physical id	: 0
-siblings	: 2
+siblings	: 7
 core id		: 1
 cpu cores	: 2
 apicid		: 1
 initial apicid	: 1
 fpu		: yes
 fpu_exception	: yes
-cpuid level	: 10
+cpuid level	: 13
 wp		: yes
-flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 eagerfpu pcid flexpriority xsaveopt arat tpr_shadow ida popcnt pts pclmulqdq tsc_deadline_timer
 bogomips	: 4266.61
 clflush size	: 64
 cache_alignment	: 64
