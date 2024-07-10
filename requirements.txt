@@ -11,3 +11,4 @@ service_identity==24.1.0
 tftpy==0.8.2
 treq==23.11.0
 twisted==24.3.0
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
