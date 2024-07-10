@@ -111,7 +111,6 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
     apt-get update && apt-get install -y nvidia-container-toolkit
 
-RUN nvidia-smi
 
 RUN apt-get update && \
     apt-get install -y \
@@ -173,6 +172,7 @@ ENV PATH=${COWRIE_HOME}/cowrie-env/bin:${PATH}
 ENV PYTHONPATH=${COWRIE_HOME}/cowrie-git/src
 ENV PYTHONUNBUFFERED=1
 
+RUN nvidia-smi
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
 CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
 
