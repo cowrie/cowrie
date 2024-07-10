@@ -41,8 +41,8 @@ class LLM:
             examples = json.load(ex_file)
         return examples
 
-    def fill_template(template):
-        pass
+    #def fill_template(template):
+        #pass
 
     
     def generate_dynamic_content(self, base_prompt, dynamic_part):
@@ -240,7 +240,30 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
 
     def generate_lscpu_response(self):
         base_prompt = self.get_profile()
+        template = f"""Architecture:          {TEMPLATE_TOKEN}
+CPU op-mode(s):        {TEMPLATE_TOKEN}, {TEMPLATE_TOKEN}
+Byte Order:            {TEMPLATE_TOKEN}
+CPU(s):                {TEMPLATE_TOKEN}
+On-line CPU(s) list:   {TEMPLATE_TOKEN}
+Thread(s) per core:    {TEMPLATE_TOKEN}
+Core(s) per socket:    {TEMPLATE_TOKEN}
+Socket(s):             {TEMPLATE_TOKEN}
+NUMA node(s):          {TEMPLATE_TOKEN}
+Vendor ID:             {TEMPLATE_TOKEN}
+CPU family:            {TEMPLATE_TOKEN}
+Model:                 {TEMPLATE_TOKEN}
+Stepping:              {TEMPLATE_TOKEN}
+CPU MHz:               {TEMPLATE_TOKEN}
+BogoMIPS:              {TEMPLATE_TOKEN}
+Hypervisor vendor:     {TEMPLATE_TOKEN}
+Virtualization type:   {TEMPLATE_TOKEN}
+L1d cache:             {TEMPLATE_TOKEN}
+L1i cache:             {TEMPLATE_TOKEN}
+L2 cache:              {TEMPLATE_TOKEN}
+NUMA node0 CPU(s):     {TEMPLATE_TOKEN}
+"""
         examples = self.get_examples("lscpu")
+        """
         base_prompt = base_prompt + "\n\nHere are an example of a response to the lscpu command:"
         base_prompt = base_prompt + f"\n\n{examples['response']}"
 
@@ -253,6 +276,25 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
         outputs = self.model.generate(tokenized_chat, max_new_tokens=250)
         response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
         return response.strip()
+        """
+        base_prompt = base_prompt + f'\n\nHere {"are a few examples" if len(examples) > 1 else "is an example"} of a response to the lscpu command'
+
+        for i in range(len(examples)):
+            base_prompt = base_prompt+f"\n\nExample {i+1}\n:"+examples[i]["response"]
+        print(base_prompt)
+
+        if SYSTEM_ROLE_AVAILABLE:
+            messages = [
+                {"role":"system", "content":base_prompt}
+                ]
+        else:
+            messages = [
+                {"role":"user", "content":base_prompt},
+                {"role":"model", "content":""}
+                ]
+        messages.append({"role":"user", "content":"lscpu"})
+        messages.append({"role":"model", "content":template})
+        return self.fill_template(messages)
 
 class FakeLLM:
     def __init__(self, *args, **kwargs):
