@@ -172,7 +172,6 @@ ENV PATH=${COWRIE_HOME}/cowrie-env/bin:${PATH}
 ENV PYTHONPATH=${COWRIE_HOME}/cowrie-git/src
 ENV PYTHONUNBUFFERED=1
 
-RUN nvidia-smi
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
 CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
 
