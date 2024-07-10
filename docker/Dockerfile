@@ -26,6 +26,8 @@ ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8
 
+RUN nvidia-smi
+
 RUN groupadd -r ${COWRIE_GROUP} && \
     useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
 
@@ -99,8 +101,6 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     apt-get update && apt-get install -y nvidia-container-toolkit
 
     #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
-
-COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
