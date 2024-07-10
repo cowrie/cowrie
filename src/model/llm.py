@@ -41,21 +41,7 @@ class LLM:
             examples = json.load(ex_file)
         return examples
 
-    def fill_template(template):
-        pass
 
-    
-    def generate_dynamic_content(self, base_prompt, dynamic_part):
-        messages = [
-            {"role": "user", "content": base_prompt},
-            {"role": "assistant", "content": dynamic_part},
-        ]
-        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(self.device)
-        len_chat = tokenized_chat.shape[1]
-        outputs = self.model.generate(tokenized_chat, max_new_tokens=50)
-        response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
-        return response.strip()
-    
     def generate_from_messages(self, messages, max_new_tokens=100):
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
         print("tokenized chat:")
@@ -160,7 +146,7 @@ lo        Link encap:Local Loopback
 
         if use_template:
             return self.generate_ifconfig_response_template(messages)
-        return self.generate_from_messages(messages)
+        return self.generate_from_messages(messages, max_new_tokens=1000)
 
     def generate_lscpu_response(self):
         profile = self.get_profile()
