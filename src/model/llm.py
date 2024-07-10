@@ -300,22 +300,6 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
 
         return ifconfig_response
 
-    def generate_lscpu_response(self):
-        profile = self.get_profile()
-
-        if SYSTEM_ROLE_AVAILABLE:
-            messages = [
-                {"role":"system", "content":base_prompt}
-                ]
-        else:
-            messages = [
-                {"role":"user", "content":base_prompt},
-                {"role":"model", "content":""}
-                ]
-        messages.append({"role":"user", "content":"lscpu"})
-        messages.append({"role":"model", "content":template})
-        return self.fill_template(messages)
-
 class FakeLLM:
     def __init__(self, *args, **kwargs):
         pass
