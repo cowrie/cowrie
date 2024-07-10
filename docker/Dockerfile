@@ -91,7 +91,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-
 RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     apt-get update -y && \
     apt-get -y install curl && \
@@ -100,6 +99,8 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     apt-get update && apt-get install -y nvidia-container-toolkit
 
     #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
+
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
