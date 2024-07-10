@@ -1,24 +1,3 @@
 [
-    {"cmd": "lscpu", "response": """Architecture:          x86_64
-    CPU op-mode(s):        32-bit, 64-bit
-    Byte Order:            Little Endian
-    CPU(s):                2
-    On-line CPU(s) list:   0-1
-    Thread(s) per core:    1
-    Core(s) per socket:    2
-    Socket(s):             1
-    NUMA node(s):          1
-    Vendor ID:             GenuineIntel
-    CPU family:            6
-    Model:                 23
-    Stepping:              6
-    CPU MHz:               2200.000
-    BogoMIPS:              4270.03
-    Hypervisor vendor:     KVM
-    Virtualization type:   full
-    L1d cache:             32K
-    L1i cache:             32K
-    L2 cache:              6144K
-    NUMA node0 CPU(s):     0-1
-    """}
+    {"cmd": "lscpu", "response": "Architecture:          x86_64\nCPU op-mode(s):        32-bit, 64-bit\nByte Order:            Little Endian\nCPU(s):                2\nOn-line CPU(s) list:   0-1\nThread(s) per core:    1\nCore(s) per socket:    2\nSocket(s):             1\nNUMA node(s):          1\nVendor ID:             GenuineIntel\nCPU family:            6\nModel:                 23\nStepping:              6\nCPU MHz:               2200.000\nBogoMIPS:              4270.03\nHypervisor vendor:     KVM\nVirtualization type:   full\nL1d cache:             32K\nL1i cache:             32K\nL2 cache:              6144K\nNUMA node0 CPU(s):     0-1\n"}
 ]
