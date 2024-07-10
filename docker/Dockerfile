@@ -113,7 +113,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN apt-get python3.10-venv && \
+RUN apt install python3.10-venv && \
     python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
     #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
