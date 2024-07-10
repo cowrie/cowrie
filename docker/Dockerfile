@@ -173,6 +173,6 @@ ENV PYTHONPATH=${COWRIE_HOME}/cowrie-git/src
 ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
-CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
+CMD [ "/cowrie/cowrie-env/bin/twistd ; /cowrie/cowrie-env/src/model/static_setup/build_profile.py", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
 
 EXPOSE 2222 2223
