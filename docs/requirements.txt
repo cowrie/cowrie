@@ -4,3 +4,4 @@ Sphinx==7.3.7
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==2.0.0
 twisted==24.3.0
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
