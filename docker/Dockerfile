@@ -26,6 +26,13 @@ ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8
 
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
+    apt-get update -y && \
+    apt-get -y install curl && \
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - && \
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
+    apt-get update && apt-get install -y nvidia-container-toolkit nvidia-container-runtime
+
 RUN groupadd -r ${COWRIE_GROUP} && \
     useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
 
@@ -80,22 +87,15 @@ ENV HUGGINGFACE_USERNAME=${HUGGINGFACE_USERNAME}
 ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
 
 #Feels like you could do this in a simpler way but it works
+
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    #git clone https://${HUGGINGFACE_USERNAME}:${HUGGINGFACE_TOKEN}@huggingface.co/google/codegemma-7b-it && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
     python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
-
+    
 #FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
-
-RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
-    apt-get update -y && \
-    apt-get -y install curl && \
-    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - && \
-    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
-    apt-get update && apt-get install -y nvidia-container-toolkit
 
 RUN apt-get update && \
     apt-get install -y \
@@ -158,6 +158,6 @@ ENV PYTHONPATH=${COWRIE_HOME}/cowrie-git/src
 ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
-CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
+CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie"]
 
 EXPOSE 2222 2223

@@ -25,4 +25,4 @@ def download_model(model_path, model_name):
     snapshot_download(repo_id=model_name, token=token)
 
 if os.environ["COWRIE_USE_LLM"].lower() == "true":
-    download_model("models/", "google/codegemma-7b-it")
+    download_model("models/", "microsoft/Phi-3-mini-4k-instruct")
