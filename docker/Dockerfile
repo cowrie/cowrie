@@ -81,7 +81,7 @@ ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
 
 #FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
-#FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
 
 RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
     apt-get update -y && \
@@ -97,7 +97,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
+#FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
 #Feels like you could do this in a simpler way but it works
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
