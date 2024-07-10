@@ -26,17 +26,16 @@ else:
 
 
 #build for lscpu
-"""
 try:
     lscpu_resp = static_cache[profile_hash]["lscpu"]
 except KeyError:
     if llm is None:
         llm = LLM()
     lscpu_resp = llm.generate_lscpu_response()
-"""
-if llm is None:
-    llm = LLM()
-lscpu_resp = llm.generate_lscpu_response()
+
+#if llm is None:
+#    llm = LLM()
+#lscpu_resp = llm.generate_lscpu_response()
 
 LSCPU_PATH = TEXTCMDS_PATH+"/usr/bin/lscpu"
 with open(LSCPU_PATH, "w") as lscpu_file:
