@@ -40,8 +40,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN nvidia-smi
-
 RUN groupadd -r ${COWRIE_GROUP} && \
     useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
 
