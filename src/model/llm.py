@@ -239,10 +239,21 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu {lo_mtu}
         return ifconfig_response
 
     def generate_lscpu_response(self):
-        profile = self.get_profile()
+        base_prompt = self.get_profile()
+        examples = self.get_examples("lscpu")
+        base_prompt = base_prompt + "\n\nHere are an example of a response to the lscpu command:"
+        base_prompt = base_prompt + f"\n\n{examples['response']}"
 
-        return "Makeshift lscpu response"
-    
+        messages = [
+            {"role": "user", "content": base_prompt}
+        ]
+
+        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+        len_chat = tokenized_chat.shape[1]
+        outputs = self.model.generate(tokenized_chat, max_new_tokens=250)
+        response = self.tokenizer.decode(outputs[0][len_chat:], skip_special_tokens=True)
+        return response.strip()
+
 class FakeLLM:
     def __init__(self, *args, **kwargs):
         pass
