@@ -1,10 +1,10 @@
 build==1.2.1
-coverage==7.5.1
+coverage==7.6.0
 mypy-extensions==1.0.0; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy-zope==1.0.5; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy==1.10.0; platform_python_implementation=='CPython' and python_version>'3.8'
 pathspec==0.12.1
-pipdeptree==2.21.0
+pipdeptree==2.23.1
 pre-commit==3.7.1
 pylint==3.2.2
 pyre-check==0.9.21; python_version>'3.8'
@@ -14,7 +14,7 @@ pyupgrade==3.15.2
 pyyaml==6.0.1
 readthedocs-sphinx-search==0.3.2
 ruff==0.5.1
-setuptools==69.5.1
+setuptools==70.0.0
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==2.0.0
 tox==4.15.1
