@@ -35,6 +35,8 @@ class Command_ls(HoneyPotCommand):
         paths = []
         self.showHidden = False
         self.showDirectories = False
+        self.showLong = False
+        self.useLLM = True
         self.showHumanReadable = False
         func = self.do_ls_normal
 
@@ -50,7 +52,10 @@ class Command_ls(HoneyPotCommand):
             self.write("Try 'ls --help' for more information.\n")
             return
         for x, _a in opts:
+            if x in ("-t"):
+                self.useLLM = False
             if x in ("-l"):
+                self.showLong = True
                 func = self.do_ls_l
             if x in ("-h"):
                 self.showHumanReadable = True
@@ -59,9 +64,18 @@ class Command_ls(HoneyPotCommand):
                 self.showHidden = True
             if x in ("-d"):
                 self.showDirectories = True
+                
 
         for arg in args:
             paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
+
+        #Before responding, let the response handler manage the paths/directories
+        if hasattr(self, "rh") and self.useLLM:
+            if not paths:
+                self.rh.ls_respond(path)
+            else:
+                for path in paths:
+                    self.rh.ls_respond(path)
 
         if not paths:
             func(path)
