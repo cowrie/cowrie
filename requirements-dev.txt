@@ -11,7 +11,7 @@ pyre-check==0.9.22; python_version>'3.8'
 pyright==1.1.376
 pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<'3.11'
 pyupgrade==3.17.0
-pyyaml==6.0.1
+pyyaml==6.0.2
 readthedocs-sphinx-search==0.3.2
 ruff==0.6.1
 setuptools==70.0.0
