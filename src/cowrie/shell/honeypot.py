@@ -330,7 +330,7 @@ class HoneyPotShell:
                     )
                 )
 
-                if isinstance(self.protocol, protocol.HoneyPotExecProtocol):
+                if isinstance(self.protocol, protocol.HoneyPotExecProtocol) and not self.cmdpending:
                     stat = failure.Failure(error.ProcessDone(status=""))
                     self.protocol.terminal.transport.processEnded(stat)
 
