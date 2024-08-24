@@ -291,7 +291,7 @@ class Command_wget(HoneyPotCommand):
             )
 
         # Update the honeyfs to point to artifact file if output is to file
-        if self.outfile:
+        if self.outfile and self.protocol.user:
             self.fs.mkfile(self.outfile, 0, 0, self.currentlength, 33188)
             self.fs.chown(self.outfile, self.protocol.user.uid, self.protocol.user.gid)
             self.fs.update_realfile(
