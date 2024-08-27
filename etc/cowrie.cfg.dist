@@ -26,7 +26,7 @@
 # environment
 #
 # (default: svr04)
-hostname = svr04
+hostname = ssh_server
 
 
 # Directory where to save log files in.
@@ -587,7 +587,8 @@ compression = zlib@openssh.com,zlib,none
 # e.g listen_endpoints = "tcp:2222:interface=0.0.0.0 tcp:1022:interface=0.0.0.0" will result listening both on ports 2222 and 1022
 # use authbind for port numbers under 1024
 
-listen_endpoints = tcp:2222:interface=0.0.0.0
+listen_endpoints = tcp:22:interface=0.0.0.0
+listen_port = 22
 
 # Enable the SFTP subsystem
 # (default: true)
