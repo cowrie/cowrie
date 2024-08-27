@@ -5,7 +5,7 @@ configparser==7.0.0
 cryptography==43.0.0
 packaging==24.1
 pyasn1_modules==0.4.0
-pyparsing==3.1.2
+pyparsing==3.1.4
 python-dateutil==2.9.0.post0
 service_identity==24.1.0
 tftpy==0.8.2
