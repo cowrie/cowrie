@@ -47,7 +47,7 @@ class TelnetHandler:
 
         # definitions from config
         self.spoofAuthenticationData = CowrieConfig.getboolean(
-            "proxy", "telnet_spoof_authentication"
+            "proxy", "telnet_spoof_authentication", fallback=True
         )
 
         self.backendLogin = CowrieConfig.get("proxy", "backend_user").encode()
@@ -87,7 +87,7 @@ class TelnetHandler:
 
         # tty logging
         self.startTime = time.time()
-        self.ttylogPath = CowrieConfig.get("honeypot", "ttylog_path")
+        self.ttylogPath = CowrieConfig.get("honeypot", "ttylog_path", fallback=".")
         self.ttylogEnabled = CowrieConfig.getboolean(
             "honeypot", "ttylog", fallback=True
         )
