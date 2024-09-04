@@ -14,7 +14,7 @@ pyupgrade==3.17.0
 pyyaml==6.0.2
 readthedocs-sphinx-search==0.3.2
 ruff==0.6.2
-setuptools==70.0.0
+setuptools==74.1.0
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==2.0.0
 tox==4.17.0
