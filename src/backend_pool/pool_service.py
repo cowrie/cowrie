@@ -332,7 +332,7 @@ class PoolService:
         """
         created_guests = self.get_guest_states([POOL_STATE_CREATED])
         for guest in created_guests:
-            if self.has_connectivity(guest.guest_ip):
+            if guest.guest_ip and self.has_connectivity(guest.guest_ip):
                 self.any_vm_up = True  # TODO fix for no VM available
                 guest.state = POOL_STATE_AVAILABLE
                 boot_time = int(time.time() - guest.start_timestamp)
