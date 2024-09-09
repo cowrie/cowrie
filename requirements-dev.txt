@@ -1,4 +1,4 @@
-build==1.2.1
+build==1.2.2
 coverage==7.6.1
 mypy-extensions==1.0.0; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy-zope==1.0.5; platform_python_implementation=='CPython' and python_version>'3.8'
