@@ -4,7 +4,7 @@ mypy-extensions==1.0.0; platform_python_implementation=='CPython' and python_ver
 mypy-zope==1.0.5; platform_python_implementation=='CPython' and python_version>'3.8'
 mypy==1.10.0; platform_python_implementation=='CPython' and python_version>'3.8'
 pathspec==0.12.1
-pipdeptree==2.23.1
+pipdeptree==2.23.3
 pre-commit==3.8.0
 pylint==3.2.7
 pyre-check==0.9.22; python_version>'3.8'
