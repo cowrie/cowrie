@@ -1090,3 +1090,6 @@ authtype = instance_principals
 enabled = false
 host = 127.0.0.1
 port = 514
+# protocol options: udp or tcp
+# (default: udp)
+protocol = udp
