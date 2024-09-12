@@ -1085,3 +1085,11 @@ authtype = instance_principals
 #tenancy_ocid = ocid1.tenancy.oc1..xxx
 #region = eu-stockholm-1
 #keyfile = /home/xx/key.pem
+
+[output_remotesyslog]
+enabled = false
+host = 127.0.0.1
+port = 514
+# protocol options: udp or tcp
+# (default: udp)
+protocol = udp
