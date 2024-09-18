@@ -131,8 +131,8 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["E", "W", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "ANN"]
-lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038", "ANN101", "ANN102"]
+lint.select = ["E", "W", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
+lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.
 target-version = "py310"
