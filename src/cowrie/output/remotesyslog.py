@@ -23,7 +23,7 @@ class Output(cowrie.core.output.Output):
 
         self.logger = logging.getLogger("cowrieLogger")
 
-        self.handler = logging.handlers.SysLogHandler(address = (self.host, self.port), socktype= None if protocol == 'udp' else socket.SOCK_STREAM)
+        self.handler = logging.handlers.SysLogHandler(address = (self.host, self.port), socktype= None if protocol == "udp" else socket.SOCK_STREAM)
 
         self.logger.addHandler(
            self.handler
@@ -40,4 +40,4 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_") or i == "time" or i == "system":
                 del event[i]
 
-        self.logger.warning(repr(event)+'\n')
+        self.logger.warning(repr(event)+"\n")
