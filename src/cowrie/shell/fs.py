@@ -384,7 +384,7 @@ class HoneyPotFilesystem:
             return False
         if f is None:
             return False
-        return f[A_TYPE] == T_FILE
+        return bool(f[A_TYPE] == T_FILE)
 
     def islink(self, path: str) -> bool:
         """
@@ -398,7 +398,7 @@ class HoneyPotFilesystem:
             return False
         if f is None:
             return False
-        return f[A_TYPE] == T_LINK
+        return bool(f[A_TYPE] == T_LINK)
 
     def isdir(self, path: str) -> bool:
         """
@@ -413,7 +413,7 @@ class HoneyPotFilesystem:
             directory = None
         if directory is None:
             return False
-        return directory[A_TYPE] == T_DIR
+        return bool(directory[A_TYPE] == T_DIR)
 
     # Below additions for SFTP support, try to keep functions here similar to os.*
 
