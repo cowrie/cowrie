@@ -54,10 +54,7 @@ def logit(ftxt):
 
 
 def checkblacklist(ftxt):
-    for value in blacklist_files:
-        if fnmatch.fnmatch(ftxt, value):
-            return True
-    return False
+    return any(fnmatch.fnmatch(ftxt, value) for value in blacklist_files)
 
 
 def recurse(localroot, root, tree, maxdepth=100):
@@ -80,10 +77,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         path = os.path.join(localpath, name)
 
         try:
-            if os.path.islink(path):
-                s = os.lstat(path)
-            else:
-                s = os.stat(path)
+            s = os.lstat(path) if os.path.islink(path) else os.stat(path)
         except OSError:
             continue
 
@@ -165,9 +159,7 @@ def run():
         return
 
     for o, a in optlist:
-        if o == "-v":
-            pass
-        elif o == "-p":
+        if o == "-v" or o == "-p":
             pass
         elif o == "-l":
             localroot = a

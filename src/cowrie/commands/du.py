@@ -82,9 +82,9 @@ or available locally via: info '(coreutils) du invocation'\n"""
         path = self.protocol.cwd
         args = self.args
         if args:
-            if "-sh" == args[0]:
+            if args[0] == "-sh":
                 self.write("28K     .\n")
-            elif "--help" == args[0]:
+            elif args[0] == "--help":
                 self.write(self.message_help())
             else:
                 self.du_show(path)

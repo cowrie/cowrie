@@ -114,10 +114,7 @@ class SSH(base_protocol.BaseProtocol):
             packet = f"UNKNOWN_{message_num}"
             log.msg(f"unknown packet {packet}: {payload!r}")
 
-        if parent == "[SERVER]":
-            direction = "PROXY -> BACKEND"
-        else:
-            direction = "BACKEND -> PROXY"
+        direction = "PROXY -> BACKEND" if parent == "[SERVER]" else "BACKEND -> PROXY"
 
         # log raw packets if user sets so
         if self.log_raw:
@@ -425,10 +422,7 @@ class SSH(base_protocol.BaseProtocol):
     def get_channel(self, channel_num: int, parent: str) -> dict[str, Any]:
         the_channel = None
         for channel in self.channels:
-            if parent == "[CLIENT]":
-                search = "serverID"
-            else:
-                search = "clientID"
+            search = "serverID" if parent == "[CLIENT]" else "clientID"
 
             if channel[search] == channel_num:
                 the_channel = channel

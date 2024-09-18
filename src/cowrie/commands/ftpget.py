@@ -12,6 +12,7 @@ from twisted.python import log
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
+import contextlib
 
 commands = {}
 
@@ -146,10 +147,8 @@ Download a file via FTP
             elif opt[0] == "-p":
                 self.password = opt[1]
             elif opt[0] == "-P":
-                try:
+                with contextlib.suppress(ValueError):
                     self.port = int(opt[1])
-                except ValueError:
-                    pass
 
         if len(args) == 2:
             self.host, self.remote_path = args
@@ -271,10 +270,8 @@ Download a file via FTP
                 f"FTP login failed: user={self.username}, passwd={self.password}, err={e!s}"
             )
             self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
-            try:
+            with contextlib.suppress(TimeoutError):
                 ftp.quit()
-            except TimeoutError:
-                pass
             return False
 
         # download
@@ -290,10 +287,8 @@ Download a file via FTP
         except Exception as e:
             log.msg(f"FTP retrieval failed: {e!s}")
             self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
-            try:
+            with contextlib.suppress(TimeoutError):
                 ftp.quit()
-            except TimeoutError:
-                pass
             return False
 
         # quit
@@ -301,10 +296,8 @@ Download a file via FTP
             self.write("ftpget: cmd (null) (null)\n")
             self.write("ftpget: cmd QUIT (null)\n")
 
-        try:
+        with contextlib.suppress(TimeoutError):
             ftp.quit()
-        except TimeoutError:
-            pass
 
         return True
 

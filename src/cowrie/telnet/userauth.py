@@ -142,9 +142,4 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         # TODO: check if twisted now supports LINEMODE (see git commit c58056b0)
         if option == LINEMODE:
             return False
-        elif option == NAWS:
-            return True
-        elif option == SGA:
-            return True
-        else:
-            return False
+        return bool(option in (NAWS, SGA))

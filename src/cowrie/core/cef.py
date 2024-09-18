@@ -79,11 +79,10 @@ def formatCef(logentry: dict[str, str]) -> str:
     elif logentry["eventid"] == "cowrie.login.failed":
         cefExtensions["duser"] = logentry["username"]
         cefExtensions["outcome"] = "failed"
-    elif logentry["eventid"] == "cowrie.file.file_download":
-        cefExtensions["filehash"] = logentry["filehash"]
-        cefExtensions["filePath"] = logentry["filename"]
-        cefExtensions["fsize"] = logentry["size"]
-    elif logentry["eventid"] == "cowrie.file.file_upload":
+    elif (
+        logentry["eventid"] == "cowrie.file.file_download"
+        or logentry["eventid"] == "cowrie.file.file_upload"
+    ):
         cefExtensions["filehash"] = logentry["filehash"]
         cefExtensions["filePath"] = logentry["filename"]
         cefExtensions["fsize"] = logentry["size"]

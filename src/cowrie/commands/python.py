@@ -91,11 +91,7 @@ class Command_python(HoneyPotCommand):
                 self.version()
                 self.exit()
                 return
-            elif o in "--help":
-                self.help()
-                self.exit()
-                return
-            elif o in "-h":
+            elif o in "--help" or o in "-h":
                 self.help()
                 self.exit()
                 return

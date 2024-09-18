@@ -53,19 +53,17 @@ class Command_dd(HoneyPotCommand):
                     self.errorWrite(f"dd: {iname}: Is a directory\n")
                     bSuccess = False
 
-                if bSuccess:
-                    if "bs" in self.ddargs:
-                        block = parse_size(self.ddargs["bs"])
-                        if block <= 0:
-                            self.errorWrite(f"dd: invalid number '{block}'\n")
-                            bSuccess = False
+                if bSuccess and "bs" in self.ddargs:
+                    block = parse_size(self.ddargs["bs"])
+                    if block <= 0:
+                        self.errorWrite(f"dd: invalid number '{block}'\n")
+                        bSuccess = False
 
-                if bSuccess:
-                    if "count" in self.ddargs:
-                        c = int(self.ddargs["count"])
-                        if c < 0:
-                            self.errorWrite(f"dd: invalid number '{c}'\n")
-                            bSuccess = False
+                if bSuccess and "count" in self.ddargs:
+                    c = int(self.ddargs["count"])
+                    if c < 0:
+                        self.errorWrite(f"dd: invalid number '{c}'\n")
+                        bSuccess = False
 
                 if bSuccess:
                     try:
@@ -116,9 +114,7 @@ def parse_size(param: str) -> int:
     digits = int(z.group(1))
     letters = z.group(2)
 
-    if not letters:
-        multiplier = 1
-    elif letters == "c":
+    if not letters or letters == "c":
         multiplier = 1
     elif letters == "w":
         multiplier = 2

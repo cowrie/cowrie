@@ -49,6 +49,7 @@ from twisted.web import http
 
 from cowrie.core import output
 from cowrie.core.config import CowrieConfig
+import contextlib
 
 # How often we clean and dump and our lists/dict...
 CLEAN_DUMP_SCHED = 600
@@ -277,15 +278,10 @@ class LogBook(dict):
         # seconds. MODES: 0) Normal looping task, and; 1) Sleep/Stop mode;
         # cancels any scheduled callLater() and doesn't recall itself.
         if mode == 1:
-            try:
+            with contextlib.suppress(AttributeError):
                 self.recall.cancel()
-            except AttributeError:
-                pass
 
-        if self.sleeping:
-            t = self.sleep_until
-        else:
-            t = time()
+        t = self.sleep_until if self.sleeping else time()
 
         delete_me = []
         for k in self:

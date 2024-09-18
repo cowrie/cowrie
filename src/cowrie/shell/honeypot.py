@@ -183,10 +183,7 @@ class HoneyPotShell:
 
     def run_subshell_command(self, cmd_expr: str) -> str:
         # extract the command from $(...) or `...` or (...) expression
-        if cmd_expr.startswith("$("):
-            cmd = cmd_expr[2:-1]
-        else:
-            cmd = cmd_expr[1:-1]
+        cmd = cmd_expr[2:-1] if cmd_expr.startswith("$(") else cmd_expr[1:-1]
 
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(
@@ -330,7 +327,10 @@ class HoneyPotShell:
                     )
                 )
 
-                if isinstance(self.protocol, protocol.HoneyPotExecProtocol) and not self.cmdpending:
+                if (
+                    isinstance(self.protocol, protocol.HoneyPotExecProtocol)
+                    and not self.cmdpending
+                ):
                     stat = failure.Failure(error.ProcessDone(status=""))
                     self.protocol.terminal.transport.processEnded(stat)
 
@@ -402,10 +402,7 @@ class HoneyPotShell:
             return
 
         line: bytes = b"".join(self.protocol.lineBuffer)
-        if line[-1:] == b" ":
-            clue = ""
-        else:
-            clue = line.split()[-1].decode("utf8")
+        clue = "" if line[-1:] == b" " else line.split()[-1].decode("utf8")
 
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
@@ -413,10 +410,7 @@ class HoneyPotShell:
         if basedir and basedir[-1] != "/":
             basedir += "/"
 
-        if not basedir:
-            tmppath = self.protocol.cwd
-        else:
-            tmppath = basedir
+        tmppath = basedir if basedir else self.protocol.cwd
 
         try:
             r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)

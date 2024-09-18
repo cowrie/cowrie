@@ -225,10 +225,7 @@ class PoolService:
         return len([g for g in self.guests if g.state != POOL_STATE_DESTROYED])
 
     def is_ip_free(self, ip: str) -> bool:
-        for guest in self.guests:
-            if guest.guest_ip == ip:
-                return False
-        return True
+        return all(guest.guest_ip != ip for guest in self.guests)
 
     def has_connectivity(self, ip: str) -> bool:
         """
@@ -356,17 +353,17 @@ class PoolService:
             # create guest object
             self.guests.append(
                 Guest(
-                    id= self.guest_id,
-                    state= POOL_STATE_CREATED,
-                    prev_state= None,  # used in case a guest is requested and freed immediately, to revert the state
-                    start_timestamp = time.time(),
-                    guest_ip= guest_ip,
-                    connected= 0,
-                    client_ips= list(),
-                    freed_timestamp= -1,
+                    id=self.guest_id,
+                    state=POOL_STATE_CREATED,
+                    prev_state=None,  # used in case a guest is requested and freed immediately, to revert the state
+                    start_timestamp=time.time(),
+                    guest_ip=guest_ip,
+                    connected=0,
+                    client_ips=list(),
+                    freed_timestamp=-1,
                     domain=dom,
-                    snapshot= snap,
-                    name=""
+                    snapshot=snap,
+                    name="",
                 )
             )
 

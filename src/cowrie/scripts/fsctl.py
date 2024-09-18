@@ -86,10 +86,7 @@ def is_directory(fs, path):
     :return:
     """
     file = getpath(fs, path)
-    if file[A_TYPE] == T_DIR:
-        return True
-    else:
-        return False
+    return file[A_TYPE] == T_DIR
 
 
 def resolve_reference(pwd, relativeReference):
@@ -188,10 +185,7 @@ class fseditCmd(cmd.Cmd):
             longls = True
             args = args[3:]
 
-        if not len(args):
-            path = self.pwd
-        else:
-            path = resolve_reference(self.pwd, args)
+        path = self.pwd if not len(args) else resolve_reference(self.pwd, args)
 
         if exists(self.fs, path) is False:
             print(f"ls: cannot access {path}: No such file or directory")
@@ -253,15 +247,9 @@ class fseditCmd(cmd.Cmd):
             uid = file[A_UID]
             gid = file[A_GID]
 
-            if uid == 0:
-                uid = "root"
-            else:
-                uid = str(uid).rjust(4)
+            uid = "root" if uid == 0 else str(uid).rjust(4)
 
-            if gid == 0:
-                gid = "root"
-            else:
-                gid = str(gid).rjust(4)
+            gid = "root" if gid == 0 else str(gid).rjust(4)
 
             print(
                 "{} 1 {} {} {} {} {}{}".format(
@@ -372,10 +360,7 @@ class fseditCmd(cmd.Cmd):
             mode = file_file_mode + permits
 
         # create default file/directory size if none is specified
-        if len(args) == 1:
-            size = 4096
-        else:
-            size = int(args[1])
+        size = 4096 if len(args) == 1 else int(args[1])
 
         # set the last update time stamp to now
         ctime = time.time()

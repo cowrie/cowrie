@@ -242,7 +242,7 @@ class Command_iptables(HoneyPotCommand):
     def is_valid_table(self, table: str) -> bool:
         if self.user_is_root():
             # Verify table existence
-            if table not in self.tables.keys():
+            if table not in self.tables:
                 self.write(
                     f"""{Command_iptables.APP_NAME}: can\'t initialize iptables table \'{table}\': Table does not exist (do you need to insmod?)
 Perhaps iptables or your kernel needs to be upgraded.\n"""

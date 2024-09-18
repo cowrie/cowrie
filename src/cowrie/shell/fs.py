@@ -153,10 +153,7 @@ class HoneyPotFilesystem:
         cwdpieces: list[str] = []
 
         # If a path within home directory is specified, convert it to an absolute path
-        if pathspec.startswith("~/"):
-            path = self.home + pathspec[1:]
-        else:
-            path = pathspec
+        path = self.home + pathspec[1:] if pathspec.startswith("~/") else pathspec
 
         pieces = path.rstrip("/").split("/")
 
@@ -240,9 +237,7 @@ class HoneyPotFilesystem:
         Returns False for broken symbolic links.
         """
         f: list[Any] | None = self.getfile(path, follow_symlinks=True)
-        if f is not None:
-            return True
-        return False
+        return f is not None
 
     def lexists(self, path: str) -> bool:
         """
@@ -250,9 +245,7 @@ class HoneyPotFilesystem:
         Returns True for broken symbolic links.
         """
         f: list[Any] | None = self.getfile(path, follow_symlinks=False)
-        if f is not None:
-            return True
-        return False
+        return f is not None
 
     def update_realfile(self, f: Any, realfile: str) -> None:
         if (
@@ -391,9 +384,7 @@ class HoneyPotFilesystem:
             return False
         if f is None:
             return False
-        if f[A_TYPE] == T_FILE:
-            return True
-        return False
+        return f[A_TYPE] == T_FILE
 
     def islink(self, path: str) -> bool:
         """
@@ -407,9 +398,7 @@ class HoneyPotFilesystem:
             return False
         if f is None:
             return False
-        if f[A_TYPE] == T_LINK:
-            return True
-        return False
+        return f[A_TYPE] == T_LINK
 
     def isdir(self, path: str) -> bool:
         """
@@ -424,9 +413,7 @@ class HoneyPotFilesystem:
             directory = None
         if directory is None:
             return False
-        if directory[A_TYPE] == T_DIR:
-            return True
-        return False
+        return directory[A_TYPE] == T_DIR
 
     # Below additions for SFTP support, try to keep functions here similar to os.*
 

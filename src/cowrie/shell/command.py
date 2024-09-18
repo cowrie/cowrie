@@ -19,6 +19,7 @@ from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+import contextlib
 
 
 class HoneyPotCommand:
@@ -171,10 +172,8 @@ class HoneyPotCommand:
         else:
             ret = failure.Failure(error.ProcessDone(status=""))
             # The session could be disconnected already, when his happens .transport is gone
-            try:
+            with contextlib.suppress(AttributeError):
                 self.protocol.terminal.transport.processEnded(ret)
-            except AttributeError:
-                pass
 
     def handle_CTRL_C(self) -> None:
         log.msg("Received CTRL-C, exiting..")

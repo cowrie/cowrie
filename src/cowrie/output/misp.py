@@ -47,7 +47,7 @@ class Output(cowrie.core.output.Output):
         misp_url = CowrieConfig.get("output_misp", "base_url")
         misp_key = CowrieConfig.get("output_misp", "api_key")
         misp_verifycert = (
-            "true" == CowrieConfig.get("output_misp", "verify_cert").lower()
+            CowrieConfig.get("output_misp", "verify_cert").lower() == "true"
         )
         self.misp_api = PyMISP(
             url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False

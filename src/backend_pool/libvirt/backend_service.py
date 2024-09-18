@@ -20,6 +20,7 @@ from cowrie.core.config import CowrieConfig
 import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
 import backend_pool.util
+import contextlib
 
 
 class LibvirtError(Exception):
@@ -176,10 +177,8 @@ class LibvirtBackendService:
         for domain_id in domains:
             d = self.conn.lookupByID(domain_id)
             if d.name().startswith("cowrie"):
-                try:
+                with contextlib.suppress(KeyboardInterrupt):
                     d.destroy()
-                except KeyboardInterrupt:
-                    pass
 
     def __destroy_all_networks(self) -> None:
         networks = self.conn.listNetworks()

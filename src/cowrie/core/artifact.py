@@ -31,6 +31,7 @@ from typing import Any
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+import contextlib
 
 
 class Artifact:
@@ -69,10 +70,8 @@ class Artifact:
     def close(self, keepEmpty: bool = False) -> tuple[str, str] | None:
         size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 os.remove(self.fp.name)
-            except FileNotFoundError:
-                pass
             return None
 
         self.fp.seek(0)

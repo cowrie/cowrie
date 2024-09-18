@@ -191,10 +191,7 @@ class Output(cowrie.core.output.Output):
 
                 try:
                     b = os.path.basename(urlparse(event["url"]).path)
-                    if b == "":
-                        fileName = event["shasum"]
-                    else:
-                        fileName = b
+                    fileName = event["shasum"] if b == "" else b
                 except KeyError:
                     fileName = event["shasum"]
 

@@ -20,6 +20,7 @@ from twisted.python import failure, log
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import command, honeypot
+import contextlib
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -148,7 +149,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Check if cmd (the argument of a command) is a command, too.
         """
-        return True if cmd in self.commands else False
+        return cmd in self.commands
 
     def getCommand(self, cmd, paths):
         if not cmd.strip():
@@ -281,10 +282,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         )
 
     def displayMOTD(self) -> None:
-        try:
+        with contextlib.suppress(Exception):
             self.terminal.write(self.fs.file_contents("/etc/motd"))
-        except Exception:
-            pass
 
     def timeoutConnection(self) -> None:
         """
