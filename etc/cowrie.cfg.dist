@@ -1093,3 +1093,8 @@ port = 514
 # protocol options: udp or tcp
 # (default: udp)
 protocol = udp
+
+[output_axiom]
+enabled = false
+api_token = fill_out_your_token_here
+dataset = cowrie
