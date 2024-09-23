@@ -57,6 +57,9 @@ class Output(cowrie.core.output.Output):
         if "isError" not in event:
             event["isError"] = False
 
+        if "system" not in event:
+            event["system"] = "cowrie"
+
         if self.format == "cef":
             self.syslog.emit(
                 {
