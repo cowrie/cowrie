@@ -356,17 +356,17 @@ class PoolService:
             # create guest object
             self.guests.append(
                 Guest(
-                    id= self.guest_id,
-                    state= POOL_STATE_CREATED,
-                    prev_state= None,  # used in case a guest is requested and freed immediately, to revert the state
-                    start_timestamp = time.time(),
-                    guest_ip= guest_ip,
-                    connected= 0,
-                    client_ips= list(),
-                    freed_timestamp= -1,
+                    id=self.guest_id,
+                    state=POOL_STATE_CREATED,
+                    prev_state=None,  # used in case a guest is requested and freed immediately, to revert the state
+                    start_timestamp=time.time(),
+                    guest_ip=guest_ip,
+                    connected=0,
+                    client_ips=list(),
+                    freed_timestamp=-1,
                     domain=dom,
-                    snapshot= snap,
-                    name=""
+                    snapshot=snap,
+                    name="",
                 )
             )
 

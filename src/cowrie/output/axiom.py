@@ -34,9 +34,6 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def log_response(self, out):
-        print(out.text())
-
     @defer.inlineCallbacks
     def write(self, event):
         event["_time"] = event.pop("timestamp")
@@ -48,7 +45,7 @@ class Output(cowrie.core.output.Output):
         try:
             msg = json.dumps(event, separators=(",", ":")).encode()
         except TypeError:
-            msg = "jsonlog: Can't serialize: '" + repr(event) + "'".encode()
+            log.err("jsonlog: Can't serialize: '" + repr(event) + "'")
 
         resp = yield treq.post(
             self.url,
@@ -58,4 +55,4 @@ class Output(cowrie.core.output.Output):
 
         if resp.code != 200:
             error = yield resp.text()
-            print(error)
+            log.err("jsonlog: Can't submit to Axiom: '" + repr(error) + "'")
