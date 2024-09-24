@@ -11,7 +11,6 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
     def start(self):
         self.host = CowrieConfig.get(
             "output_remotesyslog", "host", fallback="127.0.0.1"
@@ -19,15 +18,18 @@ class Output(cowrie.core.output.Output):
 
         self.port = int(CowrieConfig.get("output_remotesyslog", "port", fallback="514"))
 
-        protocol = CowrieConfig.get("output_remotesyslog", "protocol", fallback="udp").lower()
+        protocol = CowrieConfig.get(
+            "output_remotesyslog", "protocol", fallback="udp"
+        ).lower()
 
         self.logger = logging.getLogger("cowrieLogger")
 
-        self.handler = logging.handlers.SysLogHandler(address = (self.host, self.port), socktype= None if protocol == "udp" else socket.SOCK_STREAM)
-
-        self.logger.addHandler(
-           self.handler
+        self.handler = logging.handlers.SysLogHandler(
+            address=(self.host, self.port),
+            socktype=None if protocol == "udp" else socket.SOCK_STREAM,
         )
+
+        self.logger.addHandler(self.handler)
 
     def stop(self):
         self.handler.flush()
@@ -40,4 +42,4 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_") or i == "time" or i == "system":
                 del event[i]
 
-        self.logger.warning(repr(event)+"\n")
+        self.logger.warning(repr(event) + "\n")
