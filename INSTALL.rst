@@ -24,9 +24,9 @@ Step 1: Install system dependencies
 First we install system-wide support for Python virtual environments and other dependencies.
 Actual Python packages are installed later.
 
-On Debian based systems (last verified on Debian 10, 2021-04-29)::
+On Debian based systems (last verified on Debian Bookworm)::
 
-    $ sudo apt-get install git python3-virtualenv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind virtualenv
+    $ sudo apt-get install git python3-venv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
 
 Step 2: Create a user account
 *****************************
