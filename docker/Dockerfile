@@ -40,7 +40,6 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       rustc \
       cargo \
       build-essential \
-      python3-virtualenv \
       libsnappy-dev && \
     rm -rf /var/lib/apt/lists/*
 
