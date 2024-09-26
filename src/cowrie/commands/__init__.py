@@ -30,6 +30,7 @@ __all__ = [
     "last",
     "locate",
     "ls",
+    "lspci",
     "nc",
     "netstat",
     "nohup",
