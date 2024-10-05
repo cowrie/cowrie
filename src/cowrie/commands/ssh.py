@@ -122,10 +122,7 @@ class Command_ssh(HoneyPotCommand):
     def finish(self, line: str) -> None:
         self.pause = False
         rests = self.host.strip().split(".")
-        if len(rests) and rests[0].isalpha():
-            host = rests[0]
-        else:
-            host = "localhost"
+        host = rests[0] if len(rests) and rests[0].isalpha() else "localhost"
         self.protocol.hostname = host
         self.protocol.cwd = "/root"
         if not self.fs.exists(self.protocol.cwd):

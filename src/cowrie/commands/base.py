@@ -785,12 +785,14 @@ class Command_ps(HoneyPotCommand):
 
         for i in range(len(output_array)):
             if i != 0:
-                if "a" not in args and output_array[i][_user].strip() != user:
-                    continue
-                elif (
+                if (
                     "a" not in args
-                    and "x" not in args
-                    and output_array[i][_tty].strip() != "pts/0"
+                    and output_array[i][_user].strip() != user
+                    or (
+                        "a" not in args
+                        and "x" not in args
+                        and output_array[i][_tty].strip() != "pts/0"
+                    )
                 ):
                     continue
             line = [_pid, _tty, _time, _command]

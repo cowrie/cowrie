@@ -52,10 +52,10 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, event: dict[str, Any]) -> None:
-        if event["eventid"] == "cowrie.session.file_download":
-            self.upload(event["shasum"], event["outfile"])
-
-        elif event["eventid"] == "cowrie.session.file_upload":
+        if (
+            event["eventid"] == "cowrie.session.file_download"
+            or event["eventid"] == "cowrie.session.file_upload"
+        ):
             self.upload(event["shasum"], event["outfile"])
 
     @defer.inlineCallbacks

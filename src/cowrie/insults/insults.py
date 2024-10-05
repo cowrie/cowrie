@@ -172,10 +172,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             for rp in self.redirFiles:
                 rf = rp[0]
 
-                if rp[1]:
-                    url = rp[1]
-                else:
-                    url = rf[rf.find("redir_") + len("redir_") :]
+                url = rp[1] if rp[1] else rf[rf.find("redir_") + len("redir_") :]
 
                 try:
                     if not os.path.exists(rf):

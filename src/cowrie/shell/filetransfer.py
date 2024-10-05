@@ -206,10 +206,7 @@ class SFTPServerForCowrieUser:
     def getAttrs(self, path, followLinks):
         log.msg(f"SFTP getAttrs: {path}")
         path = self._absPath(path)
-        if followLinks:
-            s = self.fs.stat(path)
-        else:
-            s = self.fs.lstat(path)
+        s = self.fs.stat(path) if followLinks else self.fs.lstat(path)
         return self._getAttrs(s)
 
     def setAttrs(self, path, attrs):

@@ -171,7 +171,7 @@ class SFTP(base_protocol.BaseProtocol):
                 self.theFile = self.theFile[: self.offset] + self.extract_data()
 
         elif packet == "SSH_FXP_HANDLE":
-            if self.ID == self.prevID:
+            if self.prevID == self.ID:
                 self.handle = self.extract_string()
 
         elif packet == "SSH_FXP_READDIR":
@@ -237,23 +237,22 @@ class SFTP(base_protocol.BaseProtocol):
         elif packet == "SSH_FXP_RMDIR":
             self.command = b"rmdir " + self.extract_string()
 
-        elif packet == "SSH_FXP_STATUS":
-            if self.ID == self.prevID:
-                code = self.extract_int(4)
-                if code in [0, 1]:
-                    if b"get" not in self.command and b"put" not in self.command:
-                        log.msg(
-                            parent + " [SFTP] Entered Command: " + self.command.decode()
-                        )
-                else:
-                    message = self.extract_string()
+        elif packet == "SSH_FXP_STATUS" and self.prevID == self.ID:
+            code = self.extract_int(4)
+            if code in [0, 1]:
+                if b"get" not in self.command and b"put" not in self.command:
                     log.msg(
-                        parent
-                        + " [SFTP] Failed Command: "
-                        + self.command.decode()
-                        + " Reason: "
-                        + message.decode()
+                        parent + " [SFTP] Entered Command: " + self.command.decode()
                     )
+            else:
+                message = self.extract_string()
+                log.msg(
+                    parent
+                    + " [SFTP] Failed Command: "
+                    + self.command.decode()
+                    + " Reason: "
+                    + message.decode()
+                )
 
     def extract_attrs(self) -> bytes:
         cmd: str = ""

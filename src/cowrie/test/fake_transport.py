@@ -9,6 +9,7 @@ from collections.abc import Callable
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
+import contextlib
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 
@@ -109,10 +110,8 @@ class FakeTransport(proto_helpers.StringTransport):
 
     def resetModes(self, modes):
         for m in modes:
-            try:
+            with contextlib.suppress(KeyError):
                 del self.modes[m]
-            except KeyError:
-                pass
 
     def setPrivateModes(self, modes):
         """Enable the given modes.

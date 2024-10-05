@@ -3,19 +3,16 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 import getpass
 import shutil
 import subprocess
 
 
 def create_disk_snapshot(source_img: str, destination_img: str) -> bool:
-    try:
+    with suppress(PermissionError):
         shutil.chown(source_img, getpass.getuser())
-    except PermissionError:
-        # log.msg('Should have root to create snapshot')
-        pass
 
-    # could use `capture_output=True` instead of `stdout` and `stderr` args in Python 3.7
     out = subprocess.run(
         [
             "qemu-img",
