@@ -22,14 +22,17 @@ classifiers=[
         "Operating System :: POSIX :: Linux",
         "Operating System :: POSIX",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
         "Topic :: Security"
 ]
 
 dependencies = [
+        "bcrypt==4.2.0",
         "Twisted==24.7.0",
+        "treq=24.9.0",
 ]
 #        "cryptography>=0.9.1",
-#        "configparser",
 #        "pyparsing",
 #        "incremental",
 #        "packaging",
