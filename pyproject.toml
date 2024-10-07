@@ -36,8 +36,6 @@ dependencies = [
 #        "pyparsing",
 #        "incremental",
 #        "packaging",
-#        "appdirs>=1.4.0",
-#        "python-dateutil",
 #        "service_identity>=14.0.0",
 #]
 
