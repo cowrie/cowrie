@@ -2,7 +2,7 @@ build==1.2.2
 coverage==7.6.1
 mypy-extensions==1.0.0; platform_python_implementation=='CPython'
 mypy-zope==1.0.5; platform_python_implementation=='CPython'
-mypy==1.10.0; platform_python_implementation=='CPython'
+mypy==1.11.2; platform_python_implementation=='CPython'
 pathspec==0.12.1
 pipdeptree==2.23.4
 pre-commit==3.8.0
