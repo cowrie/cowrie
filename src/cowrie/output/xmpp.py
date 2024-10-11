@@ -85,9 +85,7 @@ class Output(cowrie.core.output.Output):
     def write(self, event):
         for i in list(event.keys()):
             # Remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-            elif i == "time":
+            if i.startswith("log_") or i == "time":
                 del event[i]
         msgJson = json.dumps(event, indent=5)
 

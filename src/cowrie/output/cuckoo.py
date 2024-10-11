@@ -77,10 +77,7 @@ class Output(cowrie.core.output.Output):
                 fileName = event["shasum"]
             else:
                 b = os.path.basename(p)
-                if b == "":
-                    fileName = event["shasum"]
-                else:
-                    fileName = b
+                fileName = event["shasum"] if b == "" else b
 
             if (
                 self.cuckoo_force

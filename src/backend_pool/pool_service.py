@@ -225,10 +225,7 @@ class PoolService:
         return len([g for g in self.guests if g.state != POOL_STATE_DESTROYED])
 
     def is_ip_free(self, ip: str) -> bool:
-        for guest in self.guests:
-            if guest.guest_ip == ip:
-                return False
-        return True
+        return all(guest.guest_ip != ip for guest in self.guests)
 
     def has_connectivity(self, ip: str) -> bool:
         """

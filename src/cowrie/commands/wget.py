@@ -102,9 +102,8 @@ class Command_wget(HoneyPotCommand):
         # for some reason getopt doesn't recognize "-O -"
         # use try..except for the case if passed command is malformed
         try:
-            if not self.outfile:
-                if "-O" in args:
-                    self.outfile = args[args.index("-O") + 1]
+            if not self.outfile and "-O" in args:
+                self.outfile = args[args.index("-O") + 1]
         except Exception:
             pass
 
