@@ -21,6 +21,7 @@ import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import command, honeypot
 
+from model.response_handler import ResponseHandler
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
@@ -67,6 +68,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.data = None
         self.password_input = False
         self.cmdstack = []
+
+        self.rh = ResponseHandler(self)
 
     def getProtoTransport(self):
         """

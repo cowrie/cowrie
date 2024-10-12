@@ -5,7 +5,8 @@
 ARG ARCH=
 ARG BUILD_DATE
 ARG TAG
-FROM ${ARCH}debian:bookworm-slim as builder
+#FROM ${ARCH}debian:bookworm-slim as builder
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS builder
 
 WORKDIR /
 
@@ -16,10 +17,21 @@ ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
 
+#Toggle to use real LLM instead of fake, MUST BE LOWERCASE
+ARG USE_LLM=true
+ENV COWRIE_USE_LLM=${USE_LLM}
+
 # Set locale to UTF-8, otherwise upstream libraries have bytes/string conversion issues
 ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8
+
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
+    apt-get update -y && \
+    apt-get -y install curl && \
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - && \
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list && \
+    apt-get update && apt-get install -y nvidia-container-toolkit nvidia-container-runtime
 
 RUN groupadd -r ${COWRIE_GROUP} && \
     useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
@@ -37,6 +49,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       python3-dev \
       python3-venv \
       python3 \
+      git \
       rustc \
       cargo \
       build-essential \
@@ -48,7 +61,13 @@ WORKDIR ${COWRIE_HOME}
 
 # Copy requirements first to use Docker caching better
 RUN mkdir -p ${COWRIE_HOME}/cowrie-git
+
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output.txt ${COWRIE_HOME}/cowrie-git/
+
+#Add LLM requirements to requirements.txt if using llm
+COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements-llm.txt ${COWRIE_HOME}/cowrie-git/
+RUN if [ "$USE_LLM" = "true" ]; then cat ${COWRIE_HOME}/cowrie-git/requirements-llm.txt >> ${COWRIE_HOME}/cowrie-git/requirements.txt; fi
+
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
@@ -57,11 +76,32 @@ RUN python3 -m venv cowrie-env && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
 
+
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
+ARG HUGGINGFACE_USERNAME
+ARG HUGGINGFACE_TOKEN
 
-FROM gcr.io/distroless/python3-debian12 AS runtime
+ENV HUGGINGFACE_USERNAME=${HUGGINGFACE_USERNAME}
+ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
+
+#Feels like you could do this in a simpler way but it works
+
+RUN python3 -m venv cowrie-env && \
+    . cowrie-env/bin/activate && \
+    python3 ${COWRIE_HOME}/cowrie-git/src/model/download_models.py && \
+    python3 ${COWRIE_HOME}/cowrie-git/src/model/static_setup/build_profile.py
+    
+#FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime
+
+RUN apt-get update && \
+    apt-get install -y \
+      python3 \
+      python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
@@ -81,6 +121,8 @@ LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12"
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
+
+ENV COWRIE_USE_LLM=${USE_LLM}
 
 #RUN groupadd -r ${COWRIE_GROUP} && \
 #    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
@@ -115,6 +157,6 @@ ENV PYTHONPATH=${COWRIE_HOME}/cowrie-git/src
 ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
-CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
+CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie"]
 
 EXPOSE 2222 2223
