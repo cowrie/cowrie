@@ -41,3 +41,6 @@ redis==5.0.8
 
 # Oracle Cloud
 oci==2.129.2
+
+# RabbitMQ
+pika==1.3.2
