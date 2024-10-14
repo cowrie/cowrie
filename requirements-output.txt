@@ -7,7 +7,7 @@ requests==2.32.3
 python-dateutil==2.9.0.post0
 
 # elasticsearch
-elasticsearch==8.15.0
+elasticsearch==8.15.1
 
 # hpfeeds
 hpfeeds==3.1.0
