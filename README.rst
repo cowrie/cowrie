@@ -24,7 +24,7 @@ Documentation
 
 The Documentation can be found `here <https://cowrie.readthedocs.io/en/latest/index.html>`_.
 
-You can also `Ask Cowrie Guru <https://gurubase.io/g/cowrie>`_. It is an Cowrie-focused AI to answer your questions.
+You can also `Ask Cowrie Guru <https://gurubase.io/g/cowrie>`_. It is a Cowrie-focused AI to answer your questions.
 
 Slack
 *****************************************
