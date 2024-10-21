@@ -51,7 +51,7 @@ or available locally via: info '(coreutils) uniq invocation'
 
 
 class Command_uniq(HoneyPotCommand):
-    last_line = None
+    last_line: bytes | None = None
 
     def start(self) -> None:
         if "--help" in self.args:

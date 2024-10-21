@@ -34,7 +34,7 @@ class BaseProtocol:
     packetSize: int = 0
     name: str = ""
     uuid: str = ""
-    ttylog_file = None
+    ttylog_file: str | None = None
 
     def __init__(self, uuid=None, name=None, ssh=None):
         if uuid is not None:
