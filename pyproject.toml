@@ -110,7 +110,7 @@ disallow_untyped_decorators = true
 disallow_subclassing_any    = true
 warn_unused_ignores         = true
 local_partial_types         = true
-
+no_implicit_reexport        = true
 
 # Getting these passing should be easy
 # strict_concatenate          = true
