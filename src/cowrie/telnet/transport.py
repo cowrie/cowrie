@@ -62,7 +62,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         Timeout is reset when authentication succeeds.
         """
         log.msg("Timeout reached in CowrieTelnetTransport")
-        self.transport.loseConnection()
+        if self.transport:
+            self.transport.loseConnection()
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
