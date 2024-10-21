@@ -60,7 +60,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         for output in self.tac.output_plugins:
             output.logDispatch(**args)
 
-    def startFactory(self):
+    def startFactory(self) -> None:
         # For use by the uptime command
         self.starttime = time.time()
 
@@ -107,7 +107,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         factory.SSHFactory.startFactory(self)
         log.msg("Ready to accept SSH connections")
 
-    def stopFactory(self):
+    def stopFactory(self) -> None:
         factory.SSHFactory.stopFactory(self)
 
     def buildProtocol(self, addr):
