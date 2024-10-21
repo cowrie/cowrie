@@ -9,7 +9,8 @@ import time
 from typing import Any
 
 from twisted.conch.insults import insults
-from twisted.python import log
+from twisted.internet.protocol import connectionDone
+from twisted.python import failure, log
 
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
@@ -49,7 +50,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         else:
             self.type = "i"  # Interactive
 
-    def getSessionId(self):
+    def getSessionId(self) -> tuple[str, str]:
         transportId = self.transport.session.conn.transport.transportId
         channelId = self.transport.session.id
         return (transportId, channelId)
@@ -138,7 +139,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         self.transport.loseConnection()
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
         FIXME: this method is called 4 times on logout....
         it's called once from Avatar.closed() if disconnected
@@ -240,7 +241,7 @@ class LoggingTelnetServerProtocol(LoggingServerProtocol):
     Wrap LoggingServerProtocol with single method to fetch session id for Telnet
     """
 
-    def getSessionId(self):
+    def getSessionId(self) -> tuple[str, str]:
         transportId = self.transport.session.transportId
         sn = self.transport.session.transport.transport.sessionno
         return (transportId, sn)

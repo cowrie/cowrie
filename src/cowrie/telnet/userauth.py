@@ -17,7 +17,8 @@ from twisted.conch.telnet import (
     AuthenticatingTelnetProtocol,
     ITelnetProtocol,
 )
-from twisted.python import log
+from twisted.internet.protocol import connectionDone
+from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.credentials import UsernamePasswordIP
@@ -45,7 +46,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.write(self.factory.banner.replace(b"\n", b"\r\r\n"))
         self.transport.write(self.loginPrompt)
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
         Fires on pre-authentication disconnects
         """

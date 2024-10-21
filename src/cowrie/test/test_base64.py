@@ -29,7 +29,7 @@ class ShellBase64CommandTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.proto.connectionLost("tearDown From Unit Test")
+        cls.proto.connectionLost()
 
     def setUp(self) -> None:
         self.tr.clear()

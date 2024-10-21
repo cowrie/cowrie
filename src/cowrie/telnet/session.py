@@ -14,7 +14,8 @@ from zope.interface import implementer
 from twisted.conch.ssh import session
 from twisted.conch.telnet import ECHO, SGA, TelnetBootstrapProtocol
 from twisted.internet import interfaces, protocol
-from twisted.python import log
+from twisted.internet.protocol import connectionDone
+from twisted.python import failure, log
 
 from cowrie.insults import insults
 from cowrie.shell import protocol as cproto
@@ -83,13 +84,13 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         except Exception:
             log.msg(traceback.format_exc())
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         TelnetBootstrapProtocol.connectionLost(self, reason)
         self.server = None
         self.avatar = None
         self.protocol = None
 
-    def logout(self):
+    def logout(self) -> None:
         log.msg(f"avatar {self.username} logging out")
 
 
