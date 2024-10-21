@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 import os
 import socket
 import sys
@@ -27,12 +28,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     Base protocol for interactive and non-interactive use
     """
 
-    commands: ClassVar = {}
+    commands: ClassVar[dict] = {}
     for c in cowrie.commands.__all__:
         try:
-            module = __import__(
-                f"cowrie.commands.{c}", globals(), locals(), ["commands"]
-            )
+            module = import_module(f"cowrie.commands.{c}")
             commands.update(module.commands)
         except ImportError as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
