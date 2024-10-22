@@ -97,15 +97,18 @@ Pipeline
 --------
 When running Graylog with the Forwarder input, traditional extractors are not available. Instead, you can use a pipeline rule to parse the JSON data.
 
-1. Create a Stream and add the Cowrie logs to it.
+Create a Stream and add the Cowrie logs to it.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Streams** -> **Create Stream** -> **Title:** Cowrie -> **Description:** Cowrie logs -> **Create Stream**
 
-2. Create a Stream Rule for the Cowrie Stream.
+Create a Stream Rule for the Cowrie Stream.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Streams** -> **Cowrie** -> **Manage Rules** -> **Add Stream Rule** -> **Type:** `match input` **Input:** `Cowrie (GELF HTTP)` -> **Save**
 
-3. Create a Pipeline Rule for the Cowrie Stream.
+Create a Pipeline Rule for the Cowrie Stream.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **System** -> **Pipelines** -> **Manage rules** -> **Create Rule** -> **Use Source Code Editor**
 
@@ -123,7 +126,8 @@ Paste the following code into the Rule source::
       set_fields(map);
     end
 
-4. Create a Pipeline for the Cowrie Stream.
+Create a Pipeline for the Cowrie Stream.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **System** -> **Pipelines** -> **Manage pipelines** -> **Add new pipeline** -> **Title:** `Parse Cowrie logs` -> **Description:** Cowrie logs -> **Create Pipeline**
 
