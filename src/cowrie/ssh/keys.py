@@ -21,7 +21,7 @@ from twisted.python import log
 from cowrie.core.config import CowrieConfig
 
 
-def getRSAKeys():
+def getRSAKeys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get("ssh", "rsa_public_key")
     privateKeyFile: str = CowrieConfig.get("ssh", "rsa_private_key")
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
@@ -44,7 +44,7 @@ def getRSAKeys():
     return publicKeyString, privateKeyString
 
 
-def getDSAKeys():
+def getDSAKeys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get("ssh", "dsa_public_key")
     privateKeyFile: str = CowrieConfig.get("ssh", "dsa_private_key")
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
@@ -65,7 +65,7 @@ def getDSAKeys():
     return publicKeyString, privateKeyString
 
 
-def getECDSAKeys():
+def getECDSAKeys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get("ssh", "ecdsa_public_key")
     privateKeyFile: str = CowrieConfig.get("ssh", "ecdsa_private_key")
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):
@@ -86,7 +86,7 @@ def getECDSAKeys():
     return publicKeyString, privateKeyString
 
 
-def geted25519Keys():
+def geted25519Keys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get("ssh", "ed25519_public_key")
     privateKeyFile: str = CowrieConfig.get("ssh", "ed25519_private_key")
     if not (os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile)):

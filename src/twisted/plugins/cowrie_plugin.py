@@ -28,6 +28,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 import os
 import sys
 from typing import ClassVar
@@ -160,9 +161,7 @@ Makes a Cowrie SSH/Telnet honeypot.
                 continue
             engine: str = x.split("_")[1]
             try:
-                output = __import__(
-                    f"cowrie.output.{engine}", globals(), locals(), ["output"]
-                ).Output()
+                output = import_module(f"cowrie.output.{engine}").Output()
                 log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg(f"Loaded output engine: {engine}")

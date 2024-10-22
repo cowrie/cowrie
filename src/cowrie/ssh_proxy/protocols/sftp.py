@@ -79,6 +79,7 @@ class SFTP(base_protocol.BaseProtocol):
     payloadSize: int = 0
     payloadOffset: int = 0
     theFile: bytes = b""
+    parentPacket: base_protocol.BaseProtocol
 
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)

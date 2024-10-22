@@ -171,7 +171,7 @@ class PoolService:
 
         # try destroying all guests
         for guest in self.guests:
-            self.qemu.destroy_guest(guest["domain"], guest["snapshot"])
+            self.qemu.destroy_guest(guest.domain, guest.snapshot)
 
         # force destroy remaining stuff
         self.qemu.destroy_all_cowrie()
@@ -268,7 +268,7 @@ class PoolService:
                 )
 
                 # only mark guests without clients
-                # (and guest['connected'] == 0) sometimes did not
+                # (and guest.connected == 0) sometimes did not
                 # work correctly as some VMs are not signaled as freed
                 if timed_out:
                     log.msg(

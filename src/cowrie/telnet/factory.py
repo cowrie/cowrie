@@ -45,7 +45,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         for output in self.tac.output_plugins:
             output.logDispatch(**args)
 
-    def startFactory(self):
+    def startFactory(self) -> None:
         try:
             honeyfs = CowrieConfig.get("honeypot", "contents_path")
             issuefile = honeyfs + "/etc/issue.net"
