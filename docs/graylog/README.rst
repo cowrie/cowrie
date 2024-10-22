@@ -111,12 +111,12 @@ When running Graylog with the Forwarder input, traditional extractors are not av
 
 Paste the following code into the Rule source::
 
-    rule "Parse Cowie message"
+    rule "Parse Cowrie message"
     when
       has_field("message")
     then
       // If you want to keep the original message, uncomment the following line and comment out the next line.
-      //let json_string = regex_replace("\"message\"", to_string($message.message), "\"cowie_message\"");
+      //let json_string = regex_replace("\"message\"", to_string($message.message), "\"cowrie_message\"");
       let json_string = to_string($message.message);
       let json = parse_json(json_string);
       let map = to_map(json);
