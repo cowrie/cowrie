@@ -33,7 +33,7 @@ class CowrieSSHFactory(factory.SSHFactory):
     starttime: float | None = None
     privateKeys: dict[bytes, bytes]
     publicKeys: dict[bytes, bytes]
-    primes = None
+    primes: dict[int, list[tuple[int, int]]] | None = None
     portal: tp.Portal | None = None  # gets set by plugin
     ourVersionString: bytes = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
