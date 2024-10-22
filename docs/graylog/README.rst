@@ -18,8 +18,8 @@ Using Syslog
 Open the Cowrie configuration file and uncomment these 3 lines::
 
     [output_localsyslog]
-    facility * USER
-    format * text
+    facility = USER
+    format = text
 
 Restart Cowrie
 
@@ -29,8 +29,8 @@ Using GELF HTTP Input
 Open the Cowrie configuration file and find this block ::
 
     [output_graylog]
-    enabled * false
-    url * http://127.0.0.1:12201/gelf
+    enabled = false
+    url = http://127.0.0.1:12201/gelf
 
 Enable this block and specify url of your input.
 
@@ -55,6 +55,17 @@ GELF HTTP Input
 
 Open the Graylog web interface and click on the **System** drop-down in the top menu. From the drop-down menu select **Inputs**. Select **GELF HTTP** from the drop-down menu and click the **Launch new input** button. In the modal dialog enter the information about your input.
 
+Then click **Launch.**
+
+Note:
+
+- Do not remove **/gelf** from the end of URL block, expect of case when your proxing this address behind nginx;
+
+Parsing Cowrie JSON
+===================
+
+Extractor
+---------
 Click **Manage Extractors** near created input. On new page click **Actions** -> **Import extractors**  and paste this config ::
 
     {
@@ -82,11 +93,36 @@ Click **Manage Extractors** near created input. On new page click **Actions** ->
       "version": "4.2.1"
     }
 
-Then click **Launch.**
+Pipeline
+--------
+When running Graylog with the Forwarder input, traditional extractors are not available. Instead, you can use a pipeline rule to parse the JSON data.
 
-Note:
+1. Create a Stream and add the Cowrie logs to it.
+**Streams** -> **Create Stream** -> **Title:** Cowrie -> **Description:** Cowrie logs -> **Create Stream**
 
-- Do not remove **/gelf** from the end of URL block, expect of case when your proxing this address behind nginx;
+2. Create a Stream Rule for the Cowrie Stream.
+**Streams** -> **Cowrie** -> **Manage Rules** -> **Add Stream Rule** -> **Type:** `match input` **Input:** `Cowrie (GELF HTTP)` -> **Save**
+
+3. Create a Pipeline Rule for the Cowrie Stream.
+**System** -> **Pipelines** -> **Manage rules** -> **Create Rule** -> **Use Source Code Editor**
+Paste the following code into the Rule source::
+
+    rule "Parse Cowie message"
+    when
+      has_field("message")
+    then
+      // If you want to keep the original message, uncomment the following line and comment out the next line.
+      //let json_string = regex_replace("\"message\"", to_string($message.message), "\"cowie_message\"");
+      let json_string = to_string($message.message);
+      let json = parse_json(json_string);
+      let map = to_map(json);
+      set_fields(map);
+    end
+
+4. Create a Pipeline for the Cowrie Stream.
+**System** -> **Pipelines** -> **Manage pipelines** -> **Add new pipeline** -> **Title:** `Parse Cowrie logs` -> **Description:** Cowrie logs -> **Create Pipeline**
+Under the **Pipeline connections** section, connect the Cowrie Stream to the Pipeline by clicking the **Edit connections** button and selecting the Cowrie Stream.
+Under Pipeline Stages, edit Stage 0 and add the Pipeline Rule to the Stage.
 
 Syslog Configuration (For Syslog Output only)
 *********************************************
