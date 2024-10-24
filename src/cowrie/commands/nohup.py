@@ -18,7 +18,7 @@ class Command_nohup(HoneyPotCommand):
         path = self.fs.resolve_path("nohup.out", self.protocol.cwd)
         if self.fs.exists(path):
             return
-        self.fs.mkfile(path, 0, 0, 0, 33188)
+        self.fs.mkfile(path, self.protocol.user.uid, self.protocol.user.gid, 0, 33188)
         self.write("nohup: ignoring input and appending output to 'nohup.out'\n")
 
 

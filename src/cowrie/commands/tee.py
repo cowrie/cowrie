@@ -68,7 +68,9 @@ class Command_tee(HoneyPotCommand):
                     raise FileNotFound
 
                 self.teeFiles.append(pname)
-                self.fs.mkfile(pname, 0, 0, 0, 0o644)
+                self.fs.mkfile(
+                    pname, self.protocol.user.uid, self.protocol.user.gid, 0, 0o644
+                )
 
             except FileNotFound:
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")

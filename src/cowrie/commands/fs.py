@@ -558,7 +558,9 @@ class Command_mkdir(HoneyPotCommand):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
                 return
             try:
-                self.fs.mkdir(pname, 0, 0, 4096, 16877)
+                self.fs.mkdir(
+                    pname, self.protocol.user.uid, self.protocol.user.gid, 4096, 16877
+                )
             except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
@@ -646,7 +648,9 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
                 return
 
-            self.fs.mkfile(pname, 0, 0, 0, 33188)
+            self.fs.mkfile(
+                pname, self.protocol.user.uid, self.protocol.user.gid, 0, 33188
+            )
 
 
 commands["/bin/touch"] = Command_touch
