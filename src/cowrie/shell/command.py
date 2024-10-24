@@ -75,7 +75,9 @@ class HoneyPotCommand:
                 )
                 perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
                 try:
-                    self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)
+                    uid = self.protocol.user.uid
+                    gid = self.protocol.user.gid
+                    self.fs.mkfile(self.outfile, uid, gid, 0, stat.S_IFREG | perm)
                 except fs.FileNotFound:
                     # The outfile locates at a non-existing directory.
                     self.errorWrite(

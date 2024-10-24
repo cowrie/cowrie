@@ -558,7 +558,9 @@ class Command_mkdir(HoneyPotCommand):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
                 return
             try:
-                self.fs.mkdir(pname, 0, 0, 4096, 16877)
+                uid = self.protocol.user.uid
+                gid = self.protocol.user.gid
+                self.fs.mkdir(pname, uid, gid, 4096, 16877)
             except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
