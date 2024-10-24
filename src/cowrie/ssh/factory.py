@@ -152,6 +152,7 @@ class CowrieSSHFactory(factory.SSHFactory):
                 b"aes256-cbc",
                 b"aes192-cbc",
                 b"aes128-cbc",
+                b"3des-cbc",
                 b"blowfish-cbc",
                 b"cast128-cbc",
             ]
