@@ -51,12 +51,16 @@ class Command_tftp(HoneyPotCommand):
             self.file_to_get = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
 
             if hasattr(tclient.context, "metrics"):
-                self.fs.mkfile(
-                    self.file_to_get, 0, 0, tclient.context.metrics.bytes, 33188
-                )
+                size = tclient.context.metrics.bytes
             else:
-                self.fs.mkfile(self.file_to_get, 0, 0, 0, 33188)
-
+                size = 0
+            self.fs.mkfile(
+                self.file_to_get,
+                self.protocol.user.uid,
+                self.protocol.user.gid,
+                size,
+                33188,
+            )
         except tftpy.TftpException:
             if tclient and tclient.context and not tclient.context.fileobj.closed:
                 tclient.context.fileobj.close()

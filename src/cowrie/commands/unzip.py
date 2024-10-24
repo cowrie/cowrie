@@ -22,7 +22,9 @@ class Command_unzip(HoneyPotCommand):
             d.append(components.pop(0))
             dir = "/" + "/".join(d)
             if not self.fs.exists(dir):
-                self.fs.mkdir(dir, 0, 0, 4096, 33188)
+                self.fs.mkdir(
+                    dir, self.protocol.user.uid, self.protocol.user.gid, 4096, 33188
+                )
 
     def call(self) -> None:
         if len(self.args) == 0 or self.args[0].startswith("-"):
@@ -106,10 +108,18 @@ class Command_unzip(HoneyPotCommand):
             if not len(dest):
                 continue
             if f.is_dir():
-                self.fs.mkdir(dest, 0, 0, 4096, 33188)
+                self.fs.mkdir(
+                    dest, self.protocol.user.uid, self.protocol.user.gid, 4096, 33188
+                )
             elif not f.is_dir():
                 self.mkfullpath(os.path.dirname(dest))
-                self.fs.mkfile(dest, 0, 0, f.file_size, 33188)
+                self.fs.mkfile(
+                    dest,
+                    self.protocol.user.uid,
+                    self.protocol.user.gid,
+                    f.file_size,
+                    33188,
+                )
             else:
                 log.msg(f"  skipping: {f.filename}\n")
 

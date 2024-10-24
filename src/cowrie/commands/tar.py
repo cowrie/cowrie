@@ -21,7 +21,14 @@ class Command_tar(HoneyPotCommand):
             d.append(components.pop(0))
             p = "/".join(d)
             if p and not self.fs.exists(p):
-                self.fs.mkdir(p, 0, 0, 4096, f.mode, f.mtime)
+                self.fs.mkdir(
+                    p,
+                    self.protocol.user.uid,
+                    self.protocol.user.gid,
+                    4096,
+                    f.mode,
+                    f.mtime,
+                )
 
     def call(self) -> None:
         if len(self.args) < 2:
@@ -68,10 +75,24 @@ class Command_tar(HoneyPotCommand):
             if not extract or not len(dest):
                 continue
             if f.isdir():
-                self.fs.mkdir(dest, 0, 0, 4096, f.mode, f.mtime)
+                self.fs.mkdir(
+                    dest,
+                    self.protocol.user.uid,
+                    self.protocol.user.gid,
+                    4096,
+                    f.mode,
+                    f.mtime,
+                )
             elif f.isfile():
                 self.mkfullpath(os.path.dirname(dest), f)
-                self.fs.mkfile(dest, 0, 0, f.size, f.mode, f.mtime)
+                self.fs.mkfile(
+                    dest,
+                    self.protocol.user.uid,
+                    self.protocol.user.gid,
+                    f.size,
+                    f.mode,
+                    f.mtime,
+                )
             else:
                 log.msg(f"tar: skipping [{f.name}]")
 
