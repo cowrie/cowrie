@@ -9,3 +9,4 @@ service_identity==24.1.0
 tftpy==0.8.2
 treq==24.9.0
 twisted==24.7.0
+urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
