@@ -8,4 +8,4 @@ requests==2.32.3
 service_identity==24.1.0
 tftpy==0.8.2
 treq==24.9.0
-twisted==24.7.0
+twisted==24.10.0
