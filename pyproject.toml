@@ -29,7 +29,7 @@ classifiers=[
 
 dependencies = [
         "bcrypt==4.2.0",
-        "Twisted==24.7.0",
+        "Twisted==24.10.0",
         "treq==24.9.0",
 ]
 
