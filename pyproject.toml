@@ -136,7 +136,7 @@ disallow_untyped_calls      = false
 
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
+disable = ["R0801", "R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
 ignored-classes = ["twisted.internet.reactor"]
 
 
@@ -163,7 +163,7 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
+lint.select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TRY"]
 lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.
