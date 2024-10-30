@@ -46,7 +46,7 @@ def sizeof_fmt(num: float) -> str:
         if num < 1024.0:
             return f"{num}{x}"
         num /= 1024.0
-    raise Exception
+    raise ValueError
 
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
