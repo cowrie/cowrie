@@ -60,10 +60,7 @@ class Command_cat(HoneyPotCommand):
 
                 try:
                     contents = self.fs.file_contents(pname)
-                    if contents:
-                        self.output(contents)
-                    else:
-                        raise FileNotFound
+                    self.output(contents)
                 except FileNotFound:
                     self.errorWrite(f"cat: {arg}: No such file or directory\n")
             self.exit()
