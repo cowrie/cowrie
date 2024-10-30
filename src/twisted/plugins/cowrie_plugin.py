@@ -35,7 +35,6 @@ from typing import ClassVar
 from collections.abc import Callable
 
 from zope.interface import implementer, provider
-from incremental import Version
 
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
