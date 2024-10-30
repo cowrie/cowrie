@@ -19,16 +19,18 @@ class Command_ls(HoneyPotCommand):
     def uid2name(self, uid: int) -> str:
         try:
             name: str = Passwd().getpwuid(uid)["pw_name"]
-            return name
         except Exception:
             return str(uid)
+        else:
+            return name
 
     def gid2name(self, gid: int) -> str:
         try:
             group: str = Group().getgrgid(gid)["gr_name"]
-            return group
         except Exception:
             return str(gid)
+        else:
+            return group
 
     def call(self) -> None:
         path = self.protocol.cwd
