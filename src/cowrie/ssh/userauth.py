@@ -14,6 +14,7 @@ from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.internet import defer
 from twisted.python.failure import Failure
+from twisted.python import log
 
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
@@ -162,7 +163,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             ...
             string response n
         """
-        d: defer.Deferred | None = self._pamDeferred
+        assert self._pamDeferred is not None
+        d: defer.Deferred = self._pamDeferred
         self._pamDeferred = None
         resp: list
 
