@@ -185,9 +185,9 @@ pages for more information and options.
                 random.randint(10000, 90000),
                 33188,
             )
-            self.protocol.commands[
-                f"/usr/bin/{p}"
-            ] = Command_faked_package_class_factory.getCommand(p)
+            self.protocol.commands[f"/usr/bin/{p}"] = (
+                Command_faked_package_class_factory.getCommand(p)
+            )
             yield self.sleep(2)
         self.exit()
 

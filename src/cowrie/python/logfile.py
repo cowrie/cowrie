@@ -26,7 +26,7 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
             return f"{tupledate[0]:02d}-{tupledate[1]:02d}-{tupledate[2]:02d}"
         if isinstance(tupledate, float):
             return "_".join(map(str, self.toDate(tupledate)))
-        raise AttributeError("wrong type")
+        raise TypeError
 
 
 def logger():

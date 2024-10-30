@@ -52,11 +52,11 @@ class CustomParser(argparse.ArgumentParser):
         )
 
     def exit(self, status=0, message=None):
-        raise ExitException("Exiting...")
+        raise ExitException
 
     def _print_message(self, message, file=None):
         super()._print_message(message, self.protocol)
 
     def error(self, message):
         self.print_usage(self.protocol)
-        raise OptionNotFound("Sorry no option found")
+        raise OptionNotFound

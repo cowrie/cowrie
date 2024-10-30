@@ -226,9 +226,9 @@ class Command_iptables(HoneyPotCommand):
             }
 
         # Get the tables
-        self.tables: dict[
-            str, dict[str, list[Any]]
-        ] = self.protocol.user.server.iptables
+        self.tables: dict[str, dict[str, list[Any]]] = (
+            self.protocol.user.server.iptables
+        )
 
         # Verify selected table
         if not self.is_valid_table(table):
