@@ -98,7 +98,7 @@ class SFTP(base_protocol.BaseProtocol):
         elif parent == "[CLIENT]":
             self.parentPacket = self.clientPacket
         else:
-            raise Exception
+            raise ValueError
 
         if self.parentPacket.packetSize == 0:
             self.parentPacket.packetSize = int(data[:4].hex(), 16) - len(data[4:])
