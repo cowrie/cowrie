@@ -45,9 +45,11 @@ class CowrieSSHFactory(factory.SSHFactory):
         self.privateKeys = {}
         self.publicKeys = {}
         self.services = {
-            b"ssh-userauth": ProxySSHAuthServer
-            if self.backend == "proxy"
-            else HoneyPotSSHUserAuthServer,
+            b"ssh-userauth": (
+                ProxySSHAuthServer
+                if self.backend == "proxy"
+                else HoneyPotSSHUserAuthServer
+            ),
             b"ssh-connection": connection.CowrieSSHConnection,
         }
         super().__init__()

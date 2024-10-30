@@ -2,6 +2,7 @@
 Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html
 """
+
 from __future__ import annotations
 
 

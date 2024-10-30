@@ -41,9 +41,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         )
 
         if keyboard is True:
-            self.interfaceToMethod[
-                credentials.IPluggableAuthenticationModulesIP
-            ] = b"keyboard-interactive"
+            self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = (
+                b"keyboard-interactive"
+            )
         self._pamDeferred: defer.Deferred | None = None
         userauth.SSHUserAuthServer.serviceStarted(self)
 

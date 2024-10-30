@@ -54,26 +54,24 @@ class Command_tee(HoneyPotCommand):
 
         for arg in args:
             pname = self.fs.resolve_path(arg, self.protocol.cwd)
-
             if self.fs.isdir(pname):
                 self.errorWrite(f"tee: {arg}: Is a directory\n")
                 continue
 
+            folder_path = os.path.dirname(pname)
+            fname = self.fs.resolve_path(folder_path, self.protocol.cwd)
+            if not self.fs.isdir(fname):
+                self.errorWrite(f"tee: {arg}: No such file or directory\n")
+                continue
+
             try:
-                pname = self.fs.resolve_path(arg, self.protocol.cwd)
-
-                folder_path = os.path.dirname(pname)
-
-                if not self.fs.exists(folder_path) or not self.fs.isdir(folder_path):
-                    raise FileNotFound
-
-                self.teeFiles.append(pname)
                 self.fs.mkfile(
                     pname, self.protocol.user.uid, self.protocol.user.gid, 0, 0o644
                 )
-
             except FileNotFound:
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
+            else:
+                self.teeFiles.append(pname)
 
         if self.input_data:
             self.output(self.input_data)

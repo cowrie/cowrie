@@ -46,11 +46,11 @@ class FakeAvatar:
             "TMOUT": "1800",
         }
         if self.uid == 0:
-            self.environ[
-                "PATH"
-            ] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            self.environ["PATH"] = (
+                "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            )
         else:
-            self.environ[
-                "PATH"
-            ] = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+            self.environ["PATH"] = (
+                "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+            )
         self.windowSize = [25, 80]
