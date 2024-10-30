@@ -2,6 +2,7 @@ attrs==24.2.0
 bcrypt==4.2.0
 cryptography==43.0.1
 hyperlink==21.0.0
+idna==3.10
 packaging==24.1
 pyasn1_modules==0.4.0
 requests==2.32.3
