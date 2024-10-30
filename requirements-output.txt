@@ -40,4 +40,5 @@ pymisp==2.5.1
 redis==5.0.8
 
 # Oracle Cloud
-oci==2.129.2
+# Disabled 2024-10-31 because downgrades our cryptography package to vulnerable version
+# oci==2.129.2
