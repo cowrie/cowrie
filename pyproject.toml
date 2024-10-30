@@ -28,9 +28,18 @@ classifiers=[
 ]
 
 dependencies = [
+        "attrs==24.2.0",
         "bcrypt==4.2.0",
-        "Twisted==24.10.0",
-        "treq==24.9.0",
+        "cryptography==43.0.3",
+        "hyperlink==21.0.0",
+        "idna==3.10",
+        "packaging==24.1",
+        "pyasn1_modules==0.4.1",
+        "requests==2.32.3",
+        "service_identity==24.2.0",
+        "tftpy==0.8.2",
+        "treq==24.9.1",
+        "twisted==24.10.0",
 ]
 
 [project.urls]
