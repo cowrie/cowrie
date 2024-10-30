@@ -51,13 +51,13 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         }
 
         if self.uid == 0:
-            self.environ[
-                "PATH"
-            ] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            self.environ["PATH"] = (
+                "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            )
         else:
-            self.environ[
-                "PATH"
-            ] = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+            self.environ["PATH"] = (
+                "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+            )
 
         # required because HoneyPotBaseProtocol relies on avatar.avatar.home
         self.avatar = self

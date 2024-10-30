@@ -5,7 +5,7 @@
 ARG ARCH=
 ARG BUILD_DATE
 ARG TAG
-FROM ${ARCH}debian:bookworm-slim as builder
+FROM ${ARCH}debian:bookworm-slim AS builder
 
 WORKDIR /
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import ftplib
 import getopt
 import os
-import socket
 
 from twisted.python import log
 
@@ -14,76 +13,6 @@ from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
-
-
-class FTP(ftplib.FTP):
-    def __init__(self, *args, **kwargs):
-        self.source_address = kwargs.pop("source_address", None)
-        ftplib.FTP.__init__(self, *args, **kwargs)
-
-    def connect(
-        self,
-        host: str = "",
-        port: int = 0,
-        timeout: float = -999.0,
-        source_address: tuple[str, int] | None = None,
-    ) -> str:
-        if host != "":
-            self.host = host
-        if port > 0:
-            self.port = port
-        if timeout != -999.0:
-            self.timeout: int = int(timeout)
-        if source_address is not None:
-            self.source_address = source_address
-        self.sock = socket.create_connection(
-            (self.host, self.port), self.timeout, self.source_address
-        )
-        self.af = self.sock.family
-        self.file = self.sock.makefile(mode="r")
-        self.welcome = self.getresp()
-        return self.welcome
-
-    def ntransfercmd(
-        self, cmd: str, rest: int | str | None = None
-    ) -> tuple[socket.socket, int]:
-        size = 0
-        if self.passiveserver:
-            host, port = self.makepasv()
-            conn = socket.create_connection(
-                (host, port), self.timeout, self.source_address
-            )
-            try:
-                if rest is not None:
-                    self.sendcmd(f"REST {rest}")
-                resp = self.sendcmd(cmd)
-                if resp[0] == "2":
-                    resp = self.getresp()
-                if resp[0] != "1":
-                    raise ftplib.error_reply(resp)
-            except Exception:
-                conn.close()
-                raise
-        else:
-            sock = self.makeport()
-            try:
-                if rest is not None:
-                    self.sendcmd(f"REST {rest}")
-                resp = self.sendcmd(cmd)
-                if resp[0] == "2":
-                    resp = self.getresp()
-                if resp[0] != "1":
-                    raise ftplib.error_reply(resp)
-                conn, sockaddr = sock.accept()
-                if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:  # type: ignore
-                    conn.settimeout(self.timeout)
-            finally:
-                sock.close()
-        if resp[:3] == "150":
-            sz = ftplib.parse150(resp)
-            if sz:
-                size = sz
-        return conn, size
 
 
 class Command_ftpget(HoneyPotCommand):
@@ -235,7 +164,7 @@ Download a file via FTP
         if CowrieConfig.has_option("honeypot", "out_addr"):
             out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
 
-        ftp = FTP(source_address=out_addr)
+        ftp = ftplib.FTP(source_address=out_addr)
 
         # connect
         if self.verbose:

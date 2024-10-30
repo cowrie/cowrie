@@ -75,8 +75,8 @@ def create_network(connection, network_table):
         hosts=hosts,
     )
 
+    # create a transient virtual network
     try:
-        # create a transient virtual network
         net = connection.networkCreateXML(network_config)
         if net is None:
             log.msg(
@@ -89,7 +89,6 @@ def create_network(connection, network_table):
         # not needed since apparently transient networks are created as active; uncomment if persistent
         # net.create()
 
-        return net
     except libvirt.libvirtError as e:
         log.err(
             eventid="cowrie.backend_pool.network_handler",
@@ -97,3 +96,5 @@ def create_network(connection, network_table):
             error=e,
         )
         return connection.networkLookupByName("cowrie")
+
+    return net

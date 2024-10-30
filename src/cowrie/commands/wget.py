@@ -46,7 +46,7 @@ def sizeof_fmt(num: float) -> str:
         if num < 1024.0:
             return f"{num}{x}"
         num /= 1024.0
-    raise Exception
+    raise ValueError
 
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
@@ -65,7 +65,9 @@ class Command_wget(HoneyPotCommand):
     quiet: bool = False
 
     outfile: str | None = None  # outfile is the file saved inside the honeypot
-    artifact: Artifact  # artifact is the file saved for forensics in the real file system
+    artifact: (
+        Artifact  # artifact is the file saved for forensics in the real file system
+    )
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     proglen: int = 0

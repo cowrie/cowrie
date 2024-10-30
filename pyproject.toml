@@ -28,9 +28,18 @@ classifiers=[
 ]
 
 dependencies = [
+        "attrs==24.2.0",
         "bcrypt==4.2.0",
-        "Twisted==24.10.0",
-        "treq==24.9.0",
+        "cryptography==43.0.3",
+        "hyperlink==21.0.0",
+        "idna==3.10",
+        "packaging==24.1",
+        "pyasn1_modules==0.4.1",
+        "requests==2.32.3",
+        "service_identity==24.2.0",
+        "tftpy==0.8.2",
+        "treq==24.9.1",
+        "twisted==24.10.0",
 ]
 
 [project.urls]
@@ -127,7 +136,7 @@ disallow_untyped_calls      = false
 
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
+disable = ["R0801", "R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
 ignored-classes = ["twisted.internet.reactor"]
 
 
@@ -154,7 +163,7 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
+lint.select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TRY"]
 lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.

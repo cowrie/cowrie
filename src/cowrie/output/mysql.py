@@ -44,7 +44,7 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
                 mysql.connector.errorcode.CR_SERVER_LOST,
                 mysql.connector.errorcode.ER_LOCK_DEADLOCK,
             ):
-                raise e
+                raise
 
             log.msg(f"output_mysql: got error {e!r}, retrying operation")
             conn = self.connections.get(self.threadID())

@@ -48,9 +48,9 @@ class CowrieUser(avatar.ConchUser):
 
         # SSH forwarding disabled only when option is explicitly set
         if CowrieConfig.getboolean("ssh", "forwarding", fallback=True):
-            self.channelLookup[
-                b"direct-tcpip"
-            ] = forwarding.cowrieOpenConnectForwardingClient
+            self.channelLookup[b"direct-tcpip"] = (
+                forwarding.cowrieOpenConnectForwardingClient
+            )
 
     def logout(self) -> None:
         log.msg(f"avatar {self.username} logging out")
