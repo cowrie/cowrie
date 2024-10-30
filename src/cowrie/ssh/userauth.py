@@ -166,9 +166,6 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self._pamDeferred = None
         resp: list
 
-        if not d:
-            raise Exception("can't find deferred in ssh_USERAUTH_INFO_RESPONSE")
-
         try:
             resp = []
             numResps = struct.unpack(">L", packet[:4])[0]
@@ -177,8 +174,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 response, packet = getNS(packet)
                 resp.append((response, 0))
             if packet:
-                raise error.ConchError(f"{len(packet):d} bytes of extra data")
-        except Exception:
-            d.errback(Failure())
+                log.msg(f"PAM Response: {len(packet):d} extra bytes: {packet!r}")
+        except Exception as e:
+            d.errback(Failure(e))
         else:
             d.callback(resp)
