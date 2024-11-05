@@ -73,7 +73,7 @@ dev = [
 "pre-commit==4.0.1",
 "pylint==3.2.7",
 "pyre-check==0.9.22",
-"pyright==1.1.384",
+"pyright==1.1.387",
 "pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<'3.11'",
 "pyupgrade==3.17.0",
 "pyyaml==6.0.2",
