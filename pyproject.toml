@@ -33,7 +33,7 @@ dependencies = [
         "cryptography==43.0.3",
         "hyperlink==21.0.0",
         "idna==3.10",
-        "packaging==24.1",
+        "packaging==24.2",
         "pyasn1_modules==0.4.1",
         "requests==2.32.3",
         "service_identity==24.2.0",
