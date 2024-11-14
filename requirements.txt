@@ -10,3 +10,4 @@ service_identity==24.2.0
 tftpy==0.8.2
 treq==24.9.1
 twisted==24.10.0
+urllib3==2.2.3
