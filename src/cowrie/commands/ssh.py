@@ -42,9 +42,10 @@ class Command_ssh(HoneyPotCommand):
     def valid_ip(self, address: str) -> bool:
         try:
             socket.inet_aton(address)
-            return True
         except Exception:
             return False
+        else:
+            return True
 
     def start(self) -> None:
         try:

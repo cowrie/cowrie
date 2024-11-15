@@ -79,6 +79,7 @@ class SFTP(base_protocol.BaseProtocol):
     payloadSize: int = 0
     payloadOffset: int = 0
     theFile: bytes = b""
+    parentPacket: base_protocol.BaseProtocol
 
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)
@@ -97,7 +98,7 @@ class SFTP(base_protocol.BaseProtocol):
         elif parent == "[CLIENT]":
             self.parentPacket = self.clientPacket
         else:
-            raise Exception
+            raise ValueError
 
         if self.parentPacket.packetSize == 0:
             self.parentPacket.packetSize = int(data[:4].hex(), 16) - len(data[4:])

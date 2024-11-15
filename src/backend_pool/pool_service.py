@@ -171,7 +171,7 @@ class PoolService:
 
         # try destroying all guests
         for guest in self.guests:
-            self.qemu.destroy_guest(guest["domain"], guest["snapshot"])
+            self.qemu.destroy_guest(guest.domain, guest.snapshot)
 
         # force destroy remaining stuff
         self.qemu.destroy_all_cowrie()
@@ -219,14 +219,14 @@ class PoolService:
         self.share_guests = share_guests
 
     def get_guest_states(self, states: list[str]) -> list[Guest]:
-        return [g for g in self.guests if g["state"] in states]
+        return [g for g in self.guests if g.state in states]
 
     def existing_pool_size(self) -> int:
-        return len([g for g in self.guests if g["state"] != POOL_STATE_DESTROYED])
+        return len([g for g in self.guests if g.state != POOL_STATE_DESTROYED])
 
     def is_ip_free(self, ip: str) -> bool:
         for guest in self.guests:
-            if guest["guest_ip"] == ip:
+            if guest.guest_ip == ip:
                 return False
         return True
 
@@ -268,7 +268,7 @@ class PoolService:
                 )
 
                 # only mark guests without clients
-                # (and guest['connected'] == 0) sometimes did not
+                # (and guest.connected == 0) sometimes did not
                 # work correctly as some VMs are not signaled as freed
                 if timed_out:
                     log.msg(
@@ -355,18 +355,19 @@ class PoolService:
 
             # create guest object
             self.guests.append(
-                {
-                    "id": self.guest_id,
-                    "state": POOL_STATE_CREATED,
-                    "prev_state": None,  # used in case a guest is requested and freed immediately, to revert the state
-                    "start_timestamp": time.time(),
-                    "guest_ip": guest_ip,
-                    "connected": 0,
-                    "client_ips": set(),
-                    "freed_timestamp": -1,
-                    "domain": dom,
-                    "snapshot": snap,
-                }
+                Guest(
+                    id=self.guest_id,
+                    state=POOL_STATE_CREATED,
+                    prev_state=None,  # used in case a guest is requested and freed immediately, to revert the state
+                    start_timestamp=time.time(),
+                    guest_ip=guest_ip,
+                    connected=0,
+                    client_ips=list(),
+                    freed_timestamp=-1,
+                    domain=dom,
+                    snapshot=snap,
+                    name="",
+                )
             )
 
             self.guest_id += 1

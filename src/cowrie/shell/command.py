@@ -34,9 +34,9 @@ class HoneyPotCommand:
         self.environ = self.protocol.cmdstack[0].environ
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
-        self.input_data: None | (
-            bytes
-        ) = None  # used to store STDIN data passed via PIPE
+        self.input_data: None | (bytes) = (
+            None  # used to store STDIN data passed via PIPE
+        )
         self.writefn: Callable[[bytes], None] = self.protocol.pp.outReceived
         self.errorWritefn: Callable[[bytes], None] = self.protocol.pp.errReceived
         # MS-DOS style redirect handling, inside the command
@@ -75,7 +75,13 @@ class HoneyPotCommand:
                 )
                 perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
                 try:
-                    self.fs.mkfile(self.outfile, 0, 0, 0, stat.S_IFREG | perm)
+                    self.fs.mkfile(
+                        self.outfile,
+                        self.protocol.user.uid,
+                        self.protocol.user.gid,
+                        0,
+                        stat.S_IFREG | perm,
+                    )
                 except fs.FileNotFound:
                     # The outfile locates at a non-existing directory.
                     self.errorWrite(

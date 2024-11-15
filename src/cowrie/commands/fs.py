@@ -181,32 +181,34 @@ class Command_head(HoneyPotCommand):
     head command
     """
 
-    n: int = 10
+    linecount: int = 10
+    bytecount: int = 0
 
     def head_application(self, contents: bytes) -> None:
-        i = 0
-        contentsplit = contents.split(b"\n")
-        for line in contentsplit:
-            if i < self.n:
+        if self.bytecount:
+            self.writeBytes(contents[: self.bytecount])
+        elif self.linecount:
+            linesplit = contents.split(b"\n")
+            for line in linesplit[: self.linecount]:
                 self.writeBytes(line + b"\n")
-            i += 1
 
     def head_get_file_contents(self, filename: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
             self.head_application(contents)
-        except Exception:
+        except fs.FileNotFound:
             self.errorWrite(
                 f"head: cannot open `{filename}' for reading: No such file or directory\n"
             )
 
     def start(self) -> None:
-        self.n = 10
+        self.lines: int = 10
+        self.bytecount: int = 0
         if not self.args or self.args[0] == ">":
             return
         else:
             try:
-                optlist, args = getopt.getopt(self.args, "n:")
+                optlist, args = getopt.getopt(self.args, "c:n:")
             except getopt.GetoptError as err:
                 self.errorWrite(f"head: invalid option -- '{err.opt}'\n")
                 self.exit()
@@ -215,9 +217,16 @@ class Command_head(HoneyPotCommand):
             for opt in optlist:
                 if opt[0] == "-n":
                     if not opt[1].isdigit():
-                        self.errorWrite(f"head: illegal offset -- {opt[1]}\n")
+                        self.errorWrite(f"head: invalid number of lines: `{opt[1]}`\n")
                     else:
-                        self.n = int(opt[1])
+                        self.linecount = int(opt[1])
+                        self.bytecount = 0
+                elif opt[0] == "-c":
+                    if not opt[1].isdigit():
+                        self.errorWrite(f"head: invalid number of bytes: `{opt[1]}`\n")
+                    else:
+                        self.bytecount = int(opt[1])
+                        self.linecount = 0
 
         if not self.input_data:
             files = self.check_arguments("head", args)
@@ -549,7 +558,9 @@ class Command_mkdir(HoneyPotCommand):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
                 return
             try:
-                self.fs.mkdir(pname, 0, 0, 4096, 16877)
+                self.fs.mkdir(
+                    pname, self.protocol.user.uid, self.protocol.user.gid, 4096, 16877
+                )
             except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
@@ -637,7 +648,9 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
                 return
 
-            self.fs.mkfile(pname, 0, 0, 0, 33188)
+            self.fs.mkfile(
+                pname, self.protocol.user.uid, self.protocol.user.gid, 0, 33188
+            )
 
 
 commands["/bin/touch"] = Command_touch

@@ -179,7 +179,13 @@ class Command_scp(HoneyPotCommand):
                     outfile = self.fs.resolve_path(fname, self.protocol.cwd)
 
                     try:
-                        self.fs.mkfile(outfile, 0, 0, r.group(2), r.group(1))
+                        self.fs.mkfile(
+                            outfile,
+                            self.protocol.user.uid,
+                            self.protocol.user.gid,
+                            r.group(2),
+                            r.group(1),
+                        )
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.
                         self.errorWrite(f"-scp: {outfile}: No such file or directory\n")

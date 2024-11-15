@@ -21,7 +21,7 @@ from twisted.python import log
 from cowrie.core.config import CowrieConfig
 
 
-def getRSAKeys():
+def getRSAKeys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get(
         "ssh", "rsa_public_key", fallback="ssh_host_rsa_key.pub"
     )
@@ -48,7 +48,7 @@ def getRSAKeys():
     return publicKeyString, privateKeyString
 
 
-def getDSAKeys():
+def getDSAKeys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get(
         "ssh", "dsa_public_key", fallback="ssh_host_dsa_key.pub"
     )
@@ -73,7 +73,7 @@ def getDSAKeys():
     return publicKeyString, privateKeyString
 
 
-def getECDSAKeys():
+def getECDSAKeys() -> tuple[bytes, bytes]: 
     publicKeyFile: str = CowrieConfig.get(
         "ssh", "ecdsa_public_key", fallback="ssh_host_ecdsa_key.pub"
     )
@@ -98,7 +98,7 @@ def getECDSAKeys():
     return publicKeyString, privateKeyString
 
 
-def geted25519Keys():
+def geted25519Keys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get(
         "ssh", "ed25519_public_key", fallback="ssh_host_ed25519_key.pub"
     )

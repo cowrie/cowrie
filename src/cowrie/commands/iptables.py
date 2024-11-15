@@ -5,6 +5,7 @@ from __future__ import annotations
 import optparse
 
 from typing import Any
+from typing_extensions import Never
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -23,10 +24,10 @@ class OptionParsingExit(Exception):
 
 
 class ModifiedOptionParser(optparse.OptionParser):
-    def error(self, msg: str) -> None:
+    def error(self, msg: str) -> Never:
         raise OptionParsingError(msg)
 
-    def exit(self, status: int = 0, msg: str | None = None) -> None:
+    def exit(self, status: int = 0, msg: str | None = None) -> Never:
         raise OptionParsingExit(status, msg)
 
 
@@ -225,9 +226,9 @@ class Command_iptables(HoneyPotCommand):
             }
 
         # Get the tables
-        self.tables: dict[
-            str, dict[str, list[Any]]
-        ] = self.protocol.user.server.iptables
+        self.tables: dict[str, dict[str, list[Any]]] = (
+            self.protocol.user.server.iptables
+        )
 
         # Verify selected table
         if not self.is_valid_table(table):

@@ -16,6 +16,7 @@ from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+from cowrie.shell import protocol
 
 
 class HoneyPotShell:
@@ -197,9 +198,10 @@ class HoneyPotShell:
         res = self.protocol.cmdstack.pop()
         try:
             output: str = res.protocol.pp.redirected_data.decode()[:-1]
-            return output
         except AttributeError:
             return ""
+        else:
+            return output
 
     def runCommand(self):
         pp = None
@@ -329,7 +331,10 @@ class HoneyPotShell:
                     )
                 )
 
-                if not self.interactive:
+                if (
+                    isinstance(self.protocol, protocol.HoneyPotExecProtocol)
+                    and not self.cmdpending
+                ):
                     stat = failure.Failure(error.ProcessDone(status=""))
                     self.protocol.terminal.transport.processEnded(stat)
 
