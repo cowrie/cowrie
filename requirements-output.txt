@@ -1,3 +1,6 @@
+# Include base requirements
+-r requirements.txt
+
 # csirtg. it has an implicit dependency on geoip2
 csirtgsdk==1.1.5
 geoip2

@@ -1,3 +1,6 @@
+# Include base requirements
+-r requirements.txt
+
 build==1.2.2.post1
 coverage==7.6.4
 mypy-extensions==1.0.0; platform_python_implementation=='CPython'
