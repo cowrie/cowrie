@@ -73,7 +73,7 @@ def getDSAKeys() -> tuple[bytes, bytes]:
     return publicKeyString, privateKeyString
 
 
-def getECDSAKeys() -> tuple[bytes, bytes]: 
+def getECDSAKeys() -> tuple[bytes, bytes]:
     publicKeyFile: str = CowrieConfig.get(
         "ssh", "ecdsa_public_key", fallback="ssh_host_ecdsa_key.pub"
     )
