@@ -193,7 +193,7 @@ gcc version {version} (Debian {version}-5)"""
             re.sub("[^A-Za-z0-9]", "_", outfile),
         )
         safeoutfile = os.path.join(
-            CowrieConfig.get("honeypot", "download_path"), tmp_fname
+            CowrieConfig.get("honeypot", "download_path", fallback="."), tmp_fname
         )
 
         # Data contains random garbage from an actual file, so when

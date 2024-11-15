@@ -20,7 +20,7 @@ class Command_ftpget(HoneyPotCommand):
     ftpget command
     """
 
-    download_path = CowrieConfig.get("honeypot", "download_path")
+    download_path = CowrieConfig.get("honeypot", "download_path", fallback=".")
     verbose: bool
     host: str
     port: int
