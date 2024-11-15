@@ -212,9 +212,10 @@ gcc version {version} (Debian {version}-5)"""
         outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
 
         # Create file for the protocol
-        self.fs.mkfile(outfile, 0, 0, len(data), 33188)
+        self.fs.mkfile(
+            outfile, self.protocol.user.uid, self.protocol.user.gid, len(data), 33188
+        )
         self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
-        self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
 
         # Segfault command
         class segfault_command(HoneyPotCommand):

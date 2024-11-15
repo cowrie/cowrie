@@ -178,10 +178,16 @@ pages for more information and options.
             self.write(
                 "Setting up {} ({}) ...\n".format(p, self.packages[p]["version"])
             )
-            self.fs.mkfile(f"/usr/bin/{p}", 0, 0, random.randint(10000, 90000), 33188)
-            self.protocol.commands[
-                f"/usr/bin/{p}"
-            ] = Command_faked_package_class_factory.getCommand(p)
+            self.fs.mkfile(
+                f"/usr/bin/{p}",
+                self.protocol.user.uid,
+                self.protocol.user.gid,
+                random.randint(10000, 90000),
+                33188,
+            )
+            self.protocol.commands[f"/usr/bin/{p}"] = (
+                Command_faked_package_class_factory.getCommand(p)
+            )
             yield self.sleep(2)
         self.exit()
 

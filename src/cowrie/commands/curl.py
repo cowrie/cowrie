@@ -182,7 +182,9 @@ class Command_curl(HoneyPotCommand):
 
     limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
     outfile: str | None = None  # outfile is the file saved inside the honeypot
-    artifact: Artifact  # artifact is the file saved for forensics in the real file system
+    artifact: (
+        Artifact  # artifact is the file saved for forensics in the real file system
+    )
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     silent: bool = False
@@ -363,8 +365,13 @@ class Command_curl(HoneyPotCommand):
 
         # Update the honeyfs to point to artifact file if output is to file
         if self.outfile:
-            self.fs.mkfile(self.outfile, 0, 0, self.currentlength, 33188)
-            self.fs.chown(self.outfile, self.protocol.user.uid, self.protocol.user.gid)
+            self.fs.mkfile(
+                self.outfile,
+                self.protocol.user.uid,
+                self.protocol.user.gid,
+                self.currentlength,
+                33188,
+            )
             self.fs.update_realfile(
                 self.fs.getfile(self.outfile), self.artifact.shasumFilename
             )

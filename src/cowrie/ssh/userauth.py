@@ -14,6 +14,7 @@ from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.internet import defer
 from twisted.python.failure import Failure
+from twisted.python import log
 
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
@@ -40,9 +41,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         )
 
         if keyboard is True:
-            self.interfaceToMethod[
-                credentials.IPluggableAuthenticationModulesIP
-            ] = b"keyboard-interactive"
+            self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = (
+                b"keyboard-interactive"
+            )
         self._pamDeferred: defer.Deferred | None = None
         userauth.SSHUserAuthServer.serviceStarted(self)
 
@@ -162,12 +163,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             ...
             string response n
         """
-        d: defer.Deferred | None = self._pamDeferred
+        assert self._pamDeferred is not None
+        d: defer.Deferred = self._pamDeferred
         self._pamDeferred = None
         resp: list
-
-        if not d:
-            raise Exception("can't find deferred in ssh_USERAUTH_INFO_RESPONSE")
 
         try:
             resp = []
@@ -177,8 +176,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 response, packet = getNS(packet)
                 resp.append((response, 0))
             if packet:
-                raise error.ConchError(f"{len(packet):d} bytes of extra data")
-        except Exception:
-            d.errback(Failure())
+                log.msg(f"PAM Response: {len(packet):d} extra bytes: {packet!r}")
+        except Exception as e:
+            d.errback(Failure(e))
         else:
             d.callback(resp)

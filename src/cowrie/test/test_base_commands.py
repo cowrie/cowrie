@@ -27,7 +27,7 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.tr.clear()
 
     def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
+        self.proto.connectionLost()
 
     def test_whoami_command(self) -> None:
         self.proto.lineReceived(b"whoami\n")
@@ -197,7 +197,7 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.proto.connectionLost("tearDown From Unit Test")
+        cls.proto.connectionLost()
 
     def setUp(self) -> None:
         self.tr.clear()
@@ -317,7 +317,7 @@ class ShellPipeCommandsTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.proto.connectionLost("tearDown From Unit Test")
+        cls.proto.connectionLost()
 
     def setUp(self) -> None:
         self.tr.clear()

@@ -195,9 +195,10 @@ class HoneyPotShell:
         res = self.protocol.cmdstack.pop()
         try:
             output: str = res.protocol.pp.redirected_data.decode()[:-1]
-            return output
         except AttributeError:
             return ""
+        else:
+            return output
 
     def runCommand(self):
         pp = None

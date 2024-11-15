@@ -19,8 +19,9 @@ from typing import Any
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
+from twisted.internet.protocol import connectionDone
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import log, randbytes
+from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
 
@@ -237,7 +238,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         transport.SSHServerTransport.setService(self, service)
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
         This seems to be the only reliable place of catching lost connection
         """

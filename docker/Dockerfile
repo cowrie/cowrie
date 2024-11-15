@@ -5,7 +5,7 @@
 ARG ARCH=
 ARG BUILD_DATE
 ARG TAG
-FROM ${ARCH}debian:bookworm-slim as builder
+FROM ${ARCH}debian:bookworm-slim AS builder
 
 WORKDIR /
 
@@ -40,7 +40,6 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       rustc \
       cargo \
       build-essential \
-      python3-virtualenv \
       libsnappy-dev && \
     rm -rf /var/lib/apt/lists/*
 

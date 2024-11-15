@@ -22,21 +22,25 @@ classifiers=[
         "Operating System :: POSIX :: Linux",
         "Operating System :: POSIX",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
         "Topic :: Security"
 ]
 
 dependencies = [
-        "Twisted==24.7.0",
+        "attrs==24.2.0",
+        "bcrypt==4.2.0",
+        "cryptography==43.0.3",
+        "hyperlink==21.0.0",
+        "idna==3.10",
+        "packaging==24.2",
+        "pyasn1_modules==0.4.1",
+        "requests==2.32.3",
+        "service_identity==24.2.0",
+        "tftpy==0.8.2",
+        "treq==24.9.1",
+        "twisted==24.10.0",
 ]
-#        "cryptography>=0.9.1",
-#        "configparser",
-#        "pyparsing",
-#        "incremental",
-#        "packaging",
-#        "appdirs>=1.4.0",
-#        "python-dateutil",
-#        "service_identity>=14.0.0",
-#]
 
 [project.urls]
 homepage = "https://www.cowrie.org/"
@@ -58,6 +62,32 @@ rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
 influxdb = ["influxdb"]
+dev = [
+"build==1.2.2.post1",
+"coverage==7.6.4",
+"mypy-extensions==1.0.0; platform_python_implementation=='CPython'",
+"mypy-zope==1.0.8; platform_python_implementation=='CPython'",
+"mypy==1.10.0; platform_python_implementation=='CPython'",
+"pathspec==0.12.1",
+"pipdeptree==2.23.4",
+"pre-commit==4.0.1",
+"pylint==3.2.7",
+"pyre-check==0.9.23",
+"pyright==1.1.387",
+"pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<'3.11'",
+"pyupgrade==3.17.0",
+"pyyaml==6.0.2",
+"readthedocs-sphinx-search==0.3.2",
+"ruff==0.7.2",
+"setuptools==75.1.0",
+"sphinx-copybutton==0.5.2",
+"sphinx_rtd_theme==3.0.1",
+"tox==4.23.2",
+"types-python-dateutil==2.9.0.20241003",
+"types-redis==4.6.0.20240903",
+"types-requests==2.32.0.20241016",
+"yamllint==1.35.1",
+]
 
 [tool.isort]
 profile = "black"
@@ -88,6 +118,8 @@ strict_equality             = true
 disallow_untyped_decorators = true
 disallow_subclassing_any    = true
 warn_unused_ignores         = true
+local_partial_types         = true
+no_implicit_reexport        = true
 
 # Getting these passing should be easy
 # strict_concatenate          = true
@@ -104,7 +136,7 @@ disallow_untyped_calls      = false
 
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = ["R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
+disable = ["R0801", "R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
 ignored-classes = ["twisted.internet.reactor"]
 
 
@@ -131,7 +163,7 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["E", "W", "F", "UP", "YTT", "B", "T20", "Q", "RUF"]
+lint.select = ["E", "W", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TRY"]
 lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.

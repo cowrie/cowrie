@@ -98,7 +98,10 @@ class Output(cowrie.core.output.Output):
                 config_with_key_content
             )
         else:
-            raise ValueError("Invalid authentication type")
+            log.msg(
+                "output_oraclecloud.authtype must be instance_principals or user_principals"
+            )
+            raise ValueError()
 
     def stop(self):
         pass

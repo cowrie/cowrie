@@ -26,7 +26,7 @@ class ShellTftpCommandTests(unittest.TestCase):
         self.tr.clear()
 
     def tearDown(self) -> None:
-        self.proto.connectionLost("tearDown From Unit Test")
+        self.proto.connectionLost()
 
     def test_echo_command_001(self) -> None:
         self.proto.lineReceived(b"tftp\n")

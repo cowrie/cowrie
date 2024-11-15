@@ -15,16 +15,18 @@ class Output(cowrie.core.output.Output):
     def insert_one(self, collection, event):
         try:
             object_id = collection.insert_one(event).inserted_id
-            return object_id
         except Exception as e:
             log.msg(f"mongo error - {e}")
+        else:
+            return object_id
 
     def update_one(self, collection, session, doc):
         try:
             object_id = collection.update_one({"session": session}, {"$set": doc})
-            return object_id
         except Exception as e:
             log.msg(f"mongo error - {e}")
+        else:
+            return object_id
 
     def start(self):
         db_addr = CowrieConfig.get("output_mongodb", "connection_string")

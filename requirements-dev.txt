@@ -1,24 +1,27 @@
-build==1.2.2
-coverage==7.6.1
-mypy-extensions==1.0.0; platform_python_implementation=='CPython' and python_version>'3.8'
-mypy-zope==1.0.5; platform_python_implementation=='CPython' and python_version>'3.8'
-mypy==1.10.0; platform_python_implementation=='CPython' and python_version>'3.8'
+# Include base requirements
+-r requirements.txt
+
+build==1.2.2.post1
+coverage==7.6.4
+mypy-extensions==1.0.0; platform_python_implementation=='CPython'
+mypy-zope==1.0.8; platform_python_implementation=='CPython'
+mypy==1.12.1; platform_python_implementation=='CPython'
 pathspec==0.12.1
-pipdeptree==2.23.3
-pre-commit==3.8.0
+pipdeptree==2.23.4
+pre-commit==4.0.1
 pylint==3.2.7
-pyre-check==0.9.22; python_version>'3.8'
-pyright==1.1.376
+pyre-check==0.9.23
+pyright==1.1.387
 pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<'3.11'
 pyupgrade==3.17.0
 pyyaml==6.0.2
 readthedocs-sphinx-search==0.3.2
-ruff==0.6.2
-setuptools==74.1.0
+ruff==0.7.2
+setuptools==75.1.0
 sphinx-copybutton==0.5.2
-sphinx_rtd_theme==2.0.0
-tox==4.18.1
-types-python-dateutil==2.9.0.20240316; python_version>'3.8'
-types-redis==4.6.0.20240903; python_version>'3.8'
-types-requests==2.32.0.20240712; python_version>'3.8'
+sphinx_rtd_theme==3.0.1
+tox==4.23.2
+types-python-dateutil==2.9.0.20241003
+types-redis==4.6.0.20240903
+types-requests==2.32.0.20241016
 yamllint==1.35.1

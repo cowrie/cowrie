@@ -72,9 +72,10 @@ def getpath(fs, path):
 def exists(fs, path):
     try:
         getpath(fs, path)
-        return True
     except FileNotFound:
         return False
+    else:
+        return True
 
 
 def is_directory(fs, path):
