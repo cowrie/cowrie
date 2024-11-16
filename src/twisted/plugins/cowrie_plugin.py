@@ -151,7 +151,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         for x in CowrieConfig.sections():
             if not x.startswith("output_"):
                 continue
-            if CowrieConfig.getboolean(x, "enabled") is False:
+            if CowrieConfig.getboolean(x, "enabled", fallback=False) is False:
                 continue
             engine: str = x.split("_")[1]
             try:

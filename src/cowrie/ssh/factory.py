@@ -7,7 +7,7 @@ This module contains ...
 
 from __future__ import annotations
 
-from configparser import NoOptionError
+from configparser import NoOptionError, NoSectionError
 import time
 
 from twisted.conch.openssh_compat import primes
@@ -72,7 +72,7 @@ class CowrieSSHFactory(factory.SSHFactory):
                 i.encode("utf-8")
                 for i in CowrieConfig.get("ssh", "public_key_auth").split(",")
             ]
-        except NoOptionError:
+        except (NoOptionError, NoSectionError):
             # no keys defined, use the three most common pub keys of OpenSSH
             public_key_auth = [b"ssh-rsa", b"ecdsa-sha2-nistp256", b"ssh-ed25519"]
         for key in public_key_auth:
@@ -145,7 +145,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             t.supportedCiphers = [
                 i.encode("utf-8") for i in CowrieConfig.get("ssh", "ciphers").split(",")
             ]
-        except NoOptionError:
+        except (NoOptionError, NoSectionError):
             # Reorder supported ciphers to resemble current openssh more
             t.supportedCiphers = [
                 b"aes128-ctr",
@@ -163,7 +163,7 @@ class CowrieSSHFactory(factory.SSHFactory):
             t.supportedMACs = [
                 i.encode("utf-8") for i in CowrieConfig.get("ssh", "macs").split(",")
             ]
-        except NoOptionError:
+        except (NoOptionError, NoSectionError):
             # SHA1 and MD5 are considered insecure now. Use better algos
             # like SHA-256 and SHA-384
             t.supportedMACs = [
@@ -179,7 +179,7 @@ class CowrieSSHFactory(factory.SSHFactory):
                 i.encode("utf-8")
                 for i in CowrieConfig.get("ssh", "compression").split(",")
             ]
-        except NoOptionError:
+        except (NoOptionError, NoSectionError):
             t.supportedCompressions = [b"zlib@openssh.com", b"zlib", b"none"]
 
         t.factory = self
