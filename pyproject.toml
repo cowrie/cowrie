@@ -3,7 +3,7 @@ requires = ["setuptools >= 65.63"]
 
 [project]
 name = "cowrie"
-version = "2.5.0"
+dynamic = ["version"]
 description="Cowrie SSH/Telnet Honeypot."
 license.text="BSD-3-Clause"
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]

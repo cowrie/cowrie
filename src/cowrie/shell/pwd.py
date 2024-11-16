@@ -44,7 +44,9 @@ class Passwd:
     passwords.
     """
 
-    passwd_file = "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path"))
+    passwd_file = "{}/etc/passwd".format(
+        CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
+    )
     passwd: list[dict[str, Any]]
 
     def __init__(self) -> None:
@@ -154,7 +156,9 @@ class Group:
     /etc/group.
     """
 
-    group_file = "{}/etc/group".format(CowrieConfig.get("honeypot", "contents_path"))
+    group_file = "{}/etc/group".format(
+        CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
+    )
     group: list[dict[str, Any]]
 
     def __init__(self):
