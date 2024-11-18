@@ -325,7 +325,7 @@ class HoneyPotFilesystem:
             return b""
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return open(
-                CowrieConfig.get("honeypot", "share_path") + "/arch/" + self.arch,
+                CowrieConfig.get("honeypot", "data_path") + "/arch/" + self.arch,
                 "rb",
             ).read()
         return b""

@@ -44,7 +44,7 @@ download_path = ${honeypot:state_path}/downloads
 # Directory for static data files
 #
 # (default: share/cowrie)
-share_path = share/cowrie
+data_path = src/cowrie/data
 
 
 # Directory for variable state files
@@ -204,7 +204,7 @@ save_snapshots = false
 snapshot_path = ${honeypot:state_path}/snapshots
 
 # pool xml configs
-config_files_path = ${honeypot:share_path}/pool_configs
+config_files_path = ${honeypot:data_path}/pool_configs
 
 network_config = default_network.xml
 nw_filter_config = default_filter.xml
@@ -380,7 +380,7 @@ log_raw = false
 # a real template linux installation.
 #
 # (default: fs.pickle)
-filesystem = ${honeypot:share_path}/fs.pickle
+filesystem = ${honeypot:data_path}/fs.pickle
 
 
 # File that contains output for the `ps` command.
