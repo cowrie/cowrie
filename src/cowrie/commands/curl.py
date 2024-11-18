@@ -256,7 +256,7 @@ class Command_curl(HoneyPotCommand):
 
         self.url = url.encode("ascii")
 
-        parsed = compat.urllib_parse.urlparse(url)
+        parsed = parse.urlparse(url)
         if parsed.scheme:
             scheme = parsed.scheme
         if scheme != "http" and scheme != "https":
