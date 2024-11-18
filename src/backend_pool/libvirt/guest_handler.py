@@ -24,7 +24,7 @@ def create_guest(connection, mac_address, guest_unique_id):
     # get guest configurations
     configuration_file: str = os.path.join(
         CowrieConfig.get(
-            "backend_pool", "config_files_path", fallback="share/pool_configs"
+            "backend_pool", "config_files_path", fallback="src/cowrie/data/pool_configs"
         ),
         CowrieConfig.get("backend_pool", "guest_config", fallback="default_guest.xml"),
     )

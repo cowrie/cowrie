@@ -30,17 +30,17 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     apt-get -q install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
-      python3-pip \
-      ca-certificates \
-      libffi-dev \
-      libssl-dev \
-      python3-dev \
-      python3-venv \
-      python3 \
-      rustc \
-      cargo \
       build-essential \
-      libsnappy-dev && \
+      ca-certificates \
+      cargo \
+      libffi-dev \
+      libsnappy-dev \
+      libssl-dev \
+      python3 \
+      python3-dev \
+      python3-pip \
+      python3-venv \
+      rustc && \
     rm -rf /var/lib/apt/lists/*
 
 USER ${COWRIE_USER}
@@ -52,7 +52,7 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    pip install --no-cache-dir --upgrade pip wheel setuptools && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt

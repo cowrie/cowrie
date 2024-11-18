@@ -21,6 +21,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
+
     ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path", fallback=".")
     downloadPath: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
     ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=True)

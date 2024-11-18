@@ -51,6 +51,7 @@ Edit cowrie.cfg::
 Activate output to mysql::
 
     [output_mysql]
+    enabled = true
     host = localhost
     database = cowrie
     username = cowrie

@@ -15,9 +15,10 @@ Cowrie Configuration
 Using Syslog
 ============
 
-Open the Cowrie configuration file and uncomment these 3 lines::
+Open the Cowrie configuration file and enable localsyslog output::
 
     [output_localsyslog]
+    enabled = true
     facility = USER
     format = text
 

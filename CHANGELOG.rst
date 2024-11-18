@@ -1,6 +1,20 @@
 Release Notes
 #############
 
+Release 2.6.0
+*************
+* Breaking change: default location of static files has moved from share/cowrie to src/cowrie/data
+* In the configuration file the `share_path` is now `data_path`
+* Python 3.12 support
+* Python 3.13 support
+* Pypy 3.10 support
+* Python 3.8 no longer supported
+* Twisted 24.10 support
+* Docker builds now use Debian 12 Bookworm
+* New output plugins: Oracle, Remote Syslog, Axiom
+* New commands: finger, groups, locate, lspci
+* Cowrie can now be installed with `pip install -e`
+
 Release 2.5.0
 *************
 

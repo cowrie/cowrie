@@ -11,7 +11,7 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_SHELL_FILESYSTEM"] = "share/cowrie/fs.pickle"
+os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 NONEXISTEN_FILE = "/path/to/the/file/that/does/not/exist"

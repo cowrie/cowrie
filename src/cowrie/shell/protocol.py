@@ -167,7 +167,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     break
 
         txt = os.path.normpath(
-            "{}/txtcmds/{}".format(CowrieConfig.get("honeypot", "share_path"), path)
+            "{}/txtcmds/{}".format(CowrieConfig.get("honeypot", "data_path"), path)
         )
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
