@@ -153,7 +153,7 @@ class Output(cowrie.core.output.Output):
                 d.addCallback(cbBody)
                 return d
             else:
-                log.msg(f"VT Request failed: {response.code} {response.phrase}")
+                log.msg(f"VT scanfile failed: {response.code} {response.phrase}")
 
         def cbBody(body):
             """
@@ -270,7 +270,7 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg(f"VT Request failed: {response.code} {response.phrase}")
+                log.msg(f"VT postfile failed: {response.code} {response.phrase}")
 
         def cbError(failure):
             failure.printTraceback()
@@ -320,11 +320,12 @@ class Output(cowrie.core.output.Output):
             Main response callback, checks HTTP response code
             """
             if response.code == 200:
+                log.msg(f"VT scanurl successful: {response.code} {response.phrase}")
                 d = client.readBody(response)
                 d.addCallback(cbBody)
                 return d
             else:
-                log.msg(f"VT Request failed: {response.code} {response.phrase}")
+                log.msg(f"VT scanurl failed: {response.code} {response.phrase}")
 
         def cbBody(body):
             """
@@ -348,13 +349,11 @@ class Output(cowrie.core.output.Output):
             """
             if self.debug:
                 log.msg(f"VT scanurl result: {result}")
+            if result == b"[]\n":
+                log.err(f"VT scanurl did not return results: {result}")
+                return
             result = result.decode("utf8")
             j = json.loads(result)
-            if j == b"[]\n":
-                log.err(f"VT scanurl did not return results: {j}")
-                return
-            else:
-                log.msg("VT: {}".format(j["verbose_msg"]))
 
             # we got a status=200 assume it was successfully submitted
             self.url_cache[event["url"]] = datetime.datetime.now()
@@ -434,7 +433,7 @@ class Output(cowrie.core.output.Output):
                 d.addErrback(cbPartial)
                 return d
             else:
-                log.msg(f"VT Request failed: {response.code} {response.phrase}")
+                log.msg(f"VT postcomment failed: {response.code} {response.phrase}")
 
         def cbError(failure):
             failure.printTraceback()
