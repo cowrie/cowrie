@@ -43,7 +43,7 @@ download_path = ${honeypot:state_path}/downloads
 
 # Directory for static data files
 #
-# (default: share/cowrie)
+# (default: src/cowrie/cowrie)
 data_path = src/cowrie/data
 
 
