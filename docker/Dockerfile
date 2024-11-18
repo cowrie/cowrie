@@ -52,7 +52,7 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    pip install --no-cache-dir --upgrade pip wheel setuptools && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
