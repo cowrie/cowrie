@@ -31,16 +31,16 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
       build-essential \
-      cargo \
       ca-certificates \
+      cargo \
       libffi-dev \
-      libsnappy-dev && \
+      libsnappy-dev \
       libssl-dev \
       python3 \
       python3-dev \
       python3-pip \
       python3-venv \
-      rustc \
+      rustc && \
     rm -rf /var/lib/apt/lists/*
 
 USER ${COWRIE_USER}
