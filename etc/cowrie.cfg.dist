@@ -385,8 +385,8 @@ filesystem = ${honeypot:data_path}/fs.pickle
 
 # File that contains output for the `ps` command.
 #
-# (default: share/cowrie/cmdoutput.json)
-processes = share/cowrie/cmdoutput.json
+# (default: ${honeypot_data_path}/cmdoutput.json)
+processes = ${honeypot:data_path}/cmdoutput.json
 
 
 # Fake architectures/OS
