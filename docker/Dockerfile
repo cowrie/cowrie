@@ -30,17 +30,17 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     apt-get -q install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
-      python3-pip \
+      build-essential \
+      cargo \
       ca-certificates \
       libffi-dev \
-      libssl-dev \
-      python3-dev \
-      python3-venv \
-      python3 \
-      rustc \
-      cargo \
-      build-essential \
       libsnappy-dev && \
+      libssl-dev \
+      python3 \
+      python3-dev \
+      python3-pip \
+      python3-venv \
+      rustc \
     rm -rf /var/lib/apt/lists/*
 
 USER ${COWRIE_USER}
