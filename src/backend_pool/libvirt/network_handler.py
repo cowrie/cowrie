@@ -17,7 +17,7 @@ def create_filter(connection):
 
     filter_file: str = os.path.join(
         CowrieConfig.get(
-            "backend_pool", "config_files_path", fallback="share/pool_configs"
+            "backend_pool", "config_files_path", fallback="src/cowrie/data/pool_configs"
         ),
         CowrieConfig.get(
             "backend_pool", "nw_filter_config", fallback="default_filter.xml"
@@ -44,7 +44,7 @@ def create_network(connection, network_table):
     # TODO support more interfaces and therefore more IP space to allow > 253 guests
     network_file: str = os.path.join(
         CowrieConfig.get(
-            "backend_pool", "config_files_path", fallback="share/pool_configs"
+            "backend_pool", "config_files_path", fallback="src/cowrie/data/pool_configs"
         ),
         CowrieConfig.get(
             "backend_pool", "network_config", fallback="default_network.xml"
