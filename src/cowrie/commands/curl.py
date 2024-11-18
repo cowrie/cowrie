@@ -6,9 +6,10 @@ from __future__ import annotations
 import getopt
 import ipaddress
 import os
+from urllib import parse
 
 from twisted.internet import error
-from twisted.python import compat, log
+from twisted.python import log
 
 import treq
 
@@ -226,7 +227,7 @@ class Command_curl(HoneyPotCommand):
 
         if "://" not in url:
             url = "http://" + url
-        urldata = compat.urllib_parse.urlparse(url)
+        urldata = parse.urlparse(url)
 
         for opt in optlist:
             if opt[0] == "-o":

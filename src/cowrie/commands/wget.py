@@ -8,9 +8,10 @@ import ipaddress
 import os
 import time
 from typing import Any
+from urllib import parse
 
 from twisted.internet import error
-from twisted.python import compat, log
+from twisted.python import log
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 import treq
@@ -113,7 +114,7 @@ class Command_wget(HoneyPotCommand):
         if "://" not in url:
             url = f"http://{url}"
 
-        urldata = compat.urllib_parse.urlparse(url)
+        urldata = parse.urlparse(url)
 
         if urldata.hostname:
             self.host = urldata.hostname
