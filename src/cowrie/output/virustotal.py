@@ -350,7 +350,11 @@ class Output(cowrie.core.output.Output):
                 log.msg(f"VT scanurl result: {result}")
             result = result.decode("utf8")
             j = json.loads(result)
-            log.msg("VT: {}".format(j["verbose_msg"]))
+            if j == b"[]\n":
+                log.err(f"VT scanurl did not return results: {j}")
+                return
+            else:
+                log.msg("VT: {}".format(j["verbose_msg"]))
 
             # we got a status=200 assume it was successfully submitted
             self.url_cache[event["url"]] = datetime.datetime.now()
