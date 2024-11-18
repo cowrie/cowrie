@@ -1,7 +1,7 @@
 LICENSE
 #######
 
-Copyright (c) 2009-2019 Upi Tamminen, Michel Oosterhof
+Copyright (c) 2009-2024 Upi Tamminen, Michel Oosterhof
 
 All rights reserved.
 
