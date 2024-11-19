@@ -373,7 +373,7 @@ class HoneyPotFilesystem:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
         try:
             directory = self.get_path(os.path.dirname(path.strip("/")))
-        except IndexError:
+        except (IndexError, FileNotFound):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path) from None
         directory.append(
             [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None]
@@ -594,13 +594,7 @@ class HoneyPotFilesystem:
     def stat(self, path: str, follow_symlinks: bool = True) -> _statobj:
         p: list[Any] | None
         if path == "/":
-            p = []
-            p[A_TYPE] = T_DIR
-            p[A_UID] = 0
-            p[A_GID] = 0
-            p[A_SIZE] = 4096
-            p[A_MODE] = 16877
-            p[A_CTIME] = time.time()
+            p = ["/", T_DIR, 0, 0, 4096, 16877, time.time(), [], None, None]
         else:
             p = self.getfile(path, follow_symlinks=follow_symlinks)
 
