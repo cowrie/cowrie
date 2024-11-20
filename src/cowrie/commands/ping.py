@@ -78,6 +78,7 @@ class Command_ping(HoneyPotCommand):
             else:
                 self.write(f"ping: unknown host {self.host}\n")
                 self.exit()
+                return
         else:
             s = hashlib.md5((self.host).encode("utf-8")).hexdigest()
             self.ip = ".".join(
@@ -100,6 +101,7 @@ class Command_ping(HoneyPotCommand):
             self.write("\n")
             self.printstatistics()
             self.exit()
+            return
         else:
             self.scheduled = reactor.callLater(1, self.showreply)  # type: ignore[attr-defined]
 
