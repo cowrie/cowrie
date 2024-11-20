@@ -43,7 +43,26 @@ class HoneypotPublicKeyChecker:
             type=_pubKey.sshType(),
         )
 
-        return failure.Failure(error.ConchError("Incorrect signature"))
+        if CowrieConfig.getboolean("ssh", "auth_publickey_allow_any", fallback=False):
+            log.msg(
+                eventid="cowrie.login.success",
+                format="public key login attempt for [%(username)s] succeeded",
+                username=credentials.username,
+                fingerprint=_pubKey.fingerprint(),
+                key=_pubKey.toString("OPENSSH"),
+                type=_pubKey.sshType(),
+            )
+            return defer.succeed(credentials.username)
+        else:
+            log.msg(
+                eventid="cowrie.login.failed",
+                format="public key login attempt for [%(username)s] failed",
+                username=credentials.username,
+                fingerprint=_pubKey.fingerprint(),
+                key=_pubKey.toString("OPENSSH"),
+                type=_pubKey.sshType(),
+            )
+            return failure.Failure(error.ConchError("Incorrect signature"))
 
 
 @implementer(ICredentialsChecker)
@@ -55,6 +74,11 @@ class HoneypotNoneChecker:
     credentialInterfaces = (conchcredentials.IUsername,)
 
     def requestAvatarId(self, credentials):
+        log.msg(
+            eventid="cowrie.login.success",
+            format="login attempt [%(username)s] succeeded",
+            username=credentials.username,
+        )
         return defer.succeed(credentials.username)
 
 
