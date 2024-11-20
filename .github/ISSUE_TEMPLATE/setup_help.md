@@ -4,7 +4,7 @@ about: Issues with setting up Cowrie
 
 ---
 
-Please do not attach graphical screenshots, instead coy and paste text output. This makes it searchable.
+Please do not attach graphical screenshots, instead copy and paste text output. This makes it searchable.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -22,6 +22,8 @@ A clear and concise description of what you expected to happen.
 **Server (please complete the following information):**
  - OS: [e.g. RedHat Linux 7.1, output of uname -a]
  - Python: [e.g. Python 3.6.6, output of python -V]
+ - Twisted: [e.g. Twisted 24.10, output of twistd --version]
+
 
 **Additional context**
 Add any other context about the problem here.
