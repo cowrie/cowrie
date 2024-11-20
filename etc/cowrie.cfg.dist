@@ -640,9 +640,15 @@ forward_tunnel = false
 # (default: false)
 #auth_none_enabled = false
 
+# Public key authentication
+# This is an all or nothing switch that will allow none or any public key certificate to login
+#
+# (default: false)
+auth_publickey_allow_any = false
 
 # Configure keyboard-interactive login
 auth_keyboard_interactive_enabled = false
+
 
 # ============================================================================
 # Telnet Specific Options
