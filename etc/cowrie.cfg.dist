@@ -204,7 +204,7 @@ auth_class = UserDB
 pool_only = false
 
 # time between full VM recycling (cleans older VMs and boots newer ones) - involves some downtime between cycles
-# -1 to disable
+# -1 to disable in seconds
 recycle_period = 1500
 
 # change interface below to allow connections from outside (e.g. remote pool)
