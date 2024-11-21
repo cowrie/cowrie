@@ -1104,3 +1104,14 @@ protocol = udp
 enabled = false
 api_token = fill_out_your_token_here
 dataset = cowrie
+
+# rabbitmq
+[output_rmq]
+enabled = false
+host = 127.0.0.1
+port = 5672
+username = guest
+password = guest
+vhost = /
+exchange = cowrie
+exchange_type = topic
