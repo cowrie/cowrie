@@ -114,9 +114,9 @@ class Output(cowrie.core.output.Output):
                     f"output_mysql: SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
                 )
             r = yield self.db.runQuery(
-                f"SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
+                "SELECT `id` FROM `sensors` WHERE `ip` = %s",
+                (self.sensor,),
             )
-
             if r:
                 sensorid = r[0][0]
             else:
@@ -125,7 +125,8 @@ class Output(cowrie.core.output.Output):
                         f"output_mysql: INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
                     )
                 yield self.db.runQuery(
-                    f"INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
+                    "INSERT INTO `sensors` (`ip`) VALUES (%s)",
+                    (self.sensor,),
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ID()")
