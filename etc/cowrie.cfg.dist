@@ -122,7 +122,7 @@ backend = shell
 # to (a new) `cowrie.log`.
 # `plain` will write to `cowrie.log` and will not rotate. Use `plain`
 # if you want to use external log rotation solutions like `logrotate`
-logfile = rotating
+logtype = rotating
 
 # Timezone Cowrie uses for logging
 # This can be any valid timezone for the TZ environment variable

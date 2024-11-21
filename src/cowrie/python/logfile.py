@@ -37,7 +37,7 @@ def logger():
     """
     directory = CowrieConfig.get("honeypot", "log_path", fallback=".")
 
-    logtype = CowrieConfig.get("honeypot", "log_type", fallback="plain")
+    logtype = CowrieConfig.get("honeypot", "logtype", fallback="plain")
     if logtype == "rotating":
         cowrielog = CowrieDailyLogFile("cowrie.log", directory)
     elif logtype == "plain":
