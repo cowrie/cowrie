@@ -114,10 +114,14 @@ authentication_timeout = 120
 backend = shell
 
 # Logging Type
-# By default Cowrie will log to `cowrie.log` and at midnight rotate
-# this to `cowrie.log-<year>-<month>-<date>.log` and then writes
-# again to (a new) `cowrie.log`.
-# Valid options are `rotating` and `linear`
+# Valid options are `rotating` and `plain`.
+# Without a config file, the default is `plain`.
+#
+# Use `rotating` and Cowrie will log to `cowrie.log` and at midnight
+# rotate to `cowrie.log-<year>-<month>-<date>.log` and continue writing
+# to (a new) `cowrie.log`.
+# `plain` will write to `cowrie.log` and will not rotate. Use `plain`
+# if you want to use external log rotation solutions like `logrotate`
 logfile = rotating
 
 # Timezone Cowrie uses for logging
