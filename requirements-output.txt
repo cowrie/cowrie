@@ -45,3 +45,6 @@ redis==5.2.0
 # Oracle Cloud
 # Disabled 2024-10-31 because downgrades our cryptography package to vulnerable version
 # oci==2.129.2
+
+# rabbitmq
+pika==1.3.2
