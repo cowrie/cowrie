@@ -105,13 +105,20 @@ ttylog_path = ${honeypot:state_path}/tty
 interactive_timeout = 180
 
 # Authentication Timeout
-# The server disconnects after this time if the user has not successfully logged in. 
+# The server disconnects after this time if the user has not successfully logged in.
 # The default is 120 seconds.
 authentication_timeout = 120
 
 # EXPERIMENTAL: back-end to user for Cowrie, options: proxy or shell
 # (default: shell)
 backend = shell
+
+# Logging Type
+# By default Cowrie will log to `cowrie.log` and at midnight rotate
+# this to `cowrie.log-<year>-<month>-<date>.log` and then writes
+# again to (a new) `cowrie.log`.
+# Valid options are `rotating` and `linear`
+logfile = rotating
 
 # Timezone Cowrie uses for logging
 # This can be any valid timezone for the TZ environment variable

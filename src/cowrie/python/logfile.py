@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from os import environ
+from pathlib import Path
 
 from twisted.logger import textFileLogObserver
 from twisted.python import logfile
@@ -30,8 +31,19 @@ class CowrieDailyLogFile(logfile.DailyLogFile):
 
 
 def logger():
-    directory = CowrieConfig.get("honeypot", "log_path", fallback="var/log/cowrie")
-    cowrielog = CowrieDailyLogFile("cowrie.log", directory)
+    """
+    Custom logger that can log in a defined timezone and with custom
+    roll over properties
+    """
+    directory = CowrieConfig.get("honeypot", "log_path", fallback=".")
+
+    logtype = CowrieConfig.get("honeypot", "log_type", fallback="dailyrotate")
+    if logtype == "dailyrotate":
+        cowrielog = CowrieDailyLogFile("cowrie.log", directory)
+    elif logtype == "plain":
+        cowrielog = open(Path(directory, "plain.log"), "w", encoding="utf-8")
+    else:
+        raise ValueError
 
     # use Z for UTC (Zulu) time, it's shorter.
     if "TZ" in environ and environ["TZ"] == "UTC":
