@@ -67,7 +67,7 @@ def get_config_path() -> list[str]:
         log.msg(f"Reading configuration from {found_confs!r}")
         return found_confs
 
-    log.msg("Config file not found")  # noqa: T201
+    log.msg("Config file not found")
     return []
 
 
