@@ -210,4 +210,8 @@ pages for more information and options.
 
 
 commands["/usr/bin/apt-get"] = Command_aptget
+commands["/bin/apt-get"] = Command_aptget
 commands["apt-get"] = Command_aptget
+commands["/usr/bin/apt"] = Command_aptget
+commands["/bin/apt"] = Command_aptget
+commands["apt"] = Command_aptget
