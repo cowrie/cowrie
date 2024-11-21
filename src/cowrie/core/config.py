@@ -11,6 +11,8 @@ import configparser
 from os import environ
 from os.path import abspath, dirname, exists, join
 
+from twisted.python import log
+
 
 def to_environ_key(key: str) -> str:
     return key.upper()
@@ -62,9 +64,10 @@ def get_config_path() -> list[str]:
     found_confs = [path for path in config_files if exists(path)]
 
     if found_confs:
+        log.msg(f"Reading configuration from {found_confs!r}")
         return found_confs
 
-    print("Config file not found")  # noqa: T201
+    log.msg("Config file not found")  # noqa: T201
     return []
 
 
