@@ -29,9 +29,9 @@ python_version_warning() {
         echo "Cowrie has dropped support for Python 2.7."
         echo
     fi
-    if python -V 2>&1 | grep -q  '^Python 3.5'; then
+    if python -V 2>&1 | grep -q  '^Python 3.[5678]'; then
         echo
-        echo "DEPRECATION: Python 3.5 is no longer supported by Cowrie."
+        echo "DEPRECATION: Python<3.9 is no longer supported by Cowrie."
         echo
     fi
 }
@@ -62,7 +62,7 @@ cowrie_status() {
     # Print status
     PID=$(cat ${PIDFILE} 2>/dev/null || echo "")
     if [ -n "$PID" ]; then
-        if ps -p "$PID" 2>&1 >/dev/null; then
+        if ps -e -o pid | grep -e "^\W*$PID$" 2>&1 >/dev/null; then
             echo "cowrie is running (PID: ${PID})."
         else
             echo "cowrie is not running (PID: ${PID})."
