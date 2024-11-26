@@ -32,6 +32,8 @@ class HoneyPotShell:
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.lexer: shlex.shlex | None = None
+
+        # this is the first prompt after starting
         self.showPrompt()
 
     def lineReceived(self, line: str) -> None:
@@ -109,8 +111,10 @@ class HoneyPotShell:
                 return
 
         if self.cmdpending:
+            # if we have a complete command, go and run it
             self.runCommand()
         else:
+            # if there's no command, display a prompt again
             self.showPrompt()
 
     def do_command_substitution(self, start_tok: str) -> str:

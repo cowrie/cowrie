@@ -205,19 +205,6 @@ commands["/usr/bin/printf"] = Command_printf
 commands["printf"] = Command_printf
 
 
-class Command_exit(HoneyPotCommand):
-    def call(self) -> None:
-        stat = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(stat)
-
-    def exit(self) -> None:
-        pass
-
-
-commands["exit"] = Command_exit
-commands["logout"] = Command_exit
-
-
 class Command_clear(HoneyPotCommand):
     def call(self) -> None:
         self.protocol.terminal.reset()

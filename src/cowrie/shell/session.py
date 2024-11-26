@@ -30,12 +30,13 @@ class SSHSessionForCowrieUser:
         self.gid = avatar.gid
         self.username = avatar.username
         self.environ = {
+            "HOME": self.avatar.home,
             "LOGNAME": self.username,
             "SHELL": "/bin/bash",
-            "USER": self.username,
-            "HOME": self.avatar.home,
+            "SHLVL": "1",
             "TMOUT": "1800",
             "UID": str(self.uid),
+            "USER": self.username,
         }
         if self.uid == 0:
             self.environ["PATH"] = (
