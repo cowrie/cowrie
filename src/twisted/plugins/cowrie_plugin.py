@@ -31,8 +31,7 @@ from __future__ import annotations
 from importlib import import_module
 import os
 import sys
-from typing import ClassVar
-from collections.abc import Callable
+from typing import ClassVar, TYPE_CHECKING
 
 from zope.interface import implementer, provider
 
@@ -55,6 +54,9 @@ from cowrie._version import __version__ as __cowrie_version__
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class Options(usage.Options):

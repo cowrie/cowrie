@@ -6,9 +6,12 @@ import re
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer
 from twisted.internet import reactor
-from twisted.internet.interfaces import IAddress
 from twisted.internet.protocol import ClientFactory
 from twisted.python import log
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from twisted.internet.interfaces import IAddress
 
 
 class TelnetConnectionError(Exception):

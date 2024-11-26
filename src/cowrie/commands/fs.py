@@ -12,12 +12,15 @@ import copy
 import getopt
 import os.path
 import re
-from collections.abc import Callable
 
 from twisted.python import log
 
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 commands: dict[str, Callable] = {}
 

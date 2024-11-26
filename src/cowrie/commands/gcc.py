@@ -9,10 +9,13 @@ import re
 import time
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from twisted.internet.defer import Deferred
 
 commands = {}
 

@@ -11,7 +11,6 @@ import getopt
 import random
 import re
 import time
-from collections.abc import Callable
 
 from twisted.internet import error, reactor
 from twisted.python import failure, log
@@ -19,6 +18,10 @@ from twisted.python import failure, log
 from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import HoneyPotShell
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 commands: dict[str, Callable] = {}
 

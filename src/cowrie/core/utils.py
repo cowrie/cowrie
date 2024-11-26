@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
-import configparser
-from typing import BinaryIO
+from typing import BinaryIO, TYPE_CHECKING
 
 from twisted.application import internet
 from twisted.internet import endpoints
+
+if TYPE_CHECKING:
+    import configparser
 
 
 def durationHuman(duration: float) -> str:

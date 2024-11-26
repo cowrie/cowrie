@@ -6,13 +6,15 @@ from __future__ import annotations
 
 import random
 import re
-from typing import Any
-from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
 
 from cowrie.shell.command import HoneyPotCommand
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 commands = {}
 

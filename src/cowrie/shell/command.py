@@ -12,13 +12,16 @@ import re
 import shlex
 import stat
 import time
-from collections.abc import Callable
 
 from twisted.internet import error
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class HoneyPotCommand:

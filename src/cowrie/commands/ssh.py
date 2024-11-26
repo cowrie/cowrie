@@ -9,13 +9,16 @@ import hashlib
 import re
 import socket
 import time
-from collections.abc import Callable
 
 from twisted.internet import reactor
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 commands = {}
 

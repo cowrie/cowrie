@@ -33,11 +33,14 @@ import json
 import random
 from configparser import NoOptionError
 
-from twisted.cred.portal import IRealm
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from twisted.cred.portal import IRealm
 
 
 class CowrieServer:
