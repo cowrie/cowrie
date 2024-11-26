@@ -11,7 +11,6 @@ import getopt
 import random
 import re
 import time
-from collections.abc import Callable
 
 from twisted.internet import error, reactor
 from twisted.python import failure, log
@@ -19,6 +18,10 @@ from twisted.python import failure, log
 from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import HoneyPotShell
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 commands: dict[str, Callable] = {}
 
@@ -100,8 +103,7 @@ class Command_w(HoneyPotCommand):
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
         )
         self.write(
-            "%-8s pts/0    %s %s    0.00s  0.00s  0.00s w\n"
-            % (
+            "{:8s} pts/0    {} {}    0.00s  0.00s  0.00s w\n".format(
                 self.protocol.user.username,
                 self.protocol.clientIP[:17].ljust(17),
                 time.strftime("%H:%M", time.localtime(self.protocol.logintime)),
@@ -116,8 +118,7 @@ commands["w"] = Command_w
 class Command_who(HoneyPotCommand):
     def call(self) -> None:
         self.write(
-            "%-8s pts/0        %s %s (%s)\n"
-            % (
+            "{:8s} pts/0        {} {} ({})\n".format(
                 self.protocol.user.username,
                 time.strftime("%Y-%m-%d", time.localtime(self.protocol.logintime)),
                 time.strftime("%H:%M", time.localtime(self.protocol.logintime)),

@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
-from collections.abc import Callable
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, N_COLORS = list(range(9))
 

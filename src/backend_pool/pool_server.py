@@ -13,7 +13,6 @@ from __future__ import annotations
 import struct
 
 from twisted.internet.address import IPv4Address, IPv6Address
-from twisted.internet.interfaces import IAddress
 from twisted.internet.protocol import Factory, Protocol
 from twisted.python import log
 
@@ -21,6 +20,10 @@ from cowrie.core.config import CowrieConfig
 
 from backend_pool.nat import NATService
 from backend_pool.pool_service import NoAvailableVMs, PoolService
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from twisted.internet.interfaces import IAddress
 
 RES_OP_I = b"i"
 RES_OP_R = b"r"
@@ -105,7 +108,7 @@ class PoolServer(Protocol):
 
                 # after we receive ip and ports, expose ports in the pool's public interface
                 # we use NAT if this pool is being run remotely, and if users choose so
-                if not self.local_pool and self.use_nat or self.pool_only:
+                if (not self.local_pool and self.use_nat) or self.pool_only:
                     nat_ssh_port, nat_telnet_port = self.factory.nat.request_binding(
                         guest_id, guest_ip, ssh_port, telnet_port
                     )
@@ -156,7 +159,7 @@ class PoolServer(Protocol):
             )
 
             # free the NAT
-            if not self.local_pool and self.use_nat or self.pool_only:
+            if (not self.local_pool and self.use_nat) or self.pool_only:
                 self.factory.nat.free_binding(guest_id)
 
             # free the vm
@@ -174,7 +177,7 @@ class PoolServer(Protocol):
             )
 
             # free the NAT
-            if not self.local_pool and self.use_nat or self.pool_only:
+            if (not self.local_pool and self.use_nat) or self.pool_only:
                 self.factory.nat.free_binding(guest_id)
 
             # free this connection and allow VM to be re-used

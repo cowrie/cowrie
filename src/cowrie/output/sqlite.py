@@ -144,7 +144,7 @@ class Output(cowrie.core.output.Output):
             )
 
             if r and r[0][0]:
-                id = int(r[0][0])
+                clientid = int(r[0][0])
             else:
                 yield self.db.runQuery(
                     "INSERT INTO `clients` (`version`) " "VALUES (?)",
@@ -152,10 +152,10 @@ class Output(cowrie.core.output.Output):
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ROWID()")
-                id = int(r[0][0])
+                clientid = int(r[0][0])
             self.simpleQuery(
                 "UPDATE `sessions` " "SET `client` = ? " "WHERE `id` = ?",
-                (id, event["session"]),
+                (clientid, event["session"]),
             )
 
         elif event["eventid"] == "cowrie.client.size":

@@ -38,7 +38,9 @@ def playlog(fd, settings):
 
     while 1:
         try:
-            (op, tty, length, dir, sec, usec) = struct.unpack("<iLiiLL", fd.read(ssize))
+            (op, tty, length, direction, sec, usec) = struct.unpack(
+                "<iLiiLL", fd.read(ssize)
+            )
             data = fd.read(length)
         except struct.error:
             break
@@ -49,12 +51,12 @@ def playlog(fd, settings):
         if str(tty) == str(currtty) and op == OP_WRITE:
             # the first stream seen is considered 'output'
             if prefdir == 0:
-                prefdir = dir
-            if dir == TYPE_INTERACT:
+                prefdir = direction
+            if direction == TYPE_INTERACT:
                 color = COLOR_INTERACT
-            elif dir == TYPE_INPUT:
+            elif direction == TYPE_INPUT:
                 color = COLOR_INPUT
-            if dir == prefdir:
+            if direction == prefdir:
                 curtime = float(sec) + float(usec) / 1000000
                 if prevtime != 0:
                     sleeptime = curtime - prevtime
@@ -87,7 +89,7 @@ def playlog(fd, settings):
             json.dump(thelog, outfp, indent=4)
 
 
-def help(verbose=False):
+def printhelp(verbose=False):
     print(
         f"usage: {os.path.basename(sys.argv[0])} [-c] [-o output] <tty-log-file> <tty-log-file>..."
     )
@@ -107,19 +109,19 @@ def run():
         optlist, args = getopt.getopt(sys.argv[1:], "hco:")
     except getopt.GetoptError as error:
         sys.stderr.write(f"{sys.argv[0]}: {error}\n")
-        help()
+        printhelp()
         sys.exit(1)
 
     for o, a in optlist:
         if o == "-h":
-            help()
+            printhelp()
         if o == "-c":
             settings["colorify"] = True
         if o == "-o":
             settings["output"] = a
 
     if len(args) < 1:
-        help()
+        printhelp()
         sys.exit(2)
 
     for logfile in args:

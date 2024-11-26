@@ -10,8 +10,7 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any
-from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 
 from twisted.internet import defer
 from twisted.internet import reactor
@@ -19,6 +18,9 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 arch = "x86_64"
 commands = {}

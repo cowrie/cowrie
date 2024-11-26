@@ -14,7 +14,7 @@ class ProxyTestCommand:
 
     def __init__(
         self,
-        type,
+        connection_type,
         hostname,
         port_backend,
         port_proxy,
@@ -37,7 +37,7 @@ class ProxyTestCommand:
         self.password_proxy = password_proxy
 
         # whether to execute the command via SSH or Telnet
-        self.execute = execute_ssh if type == "ssh" else execute_telnet
+        self.execute = execute_ssh if connection_type == "ssh" else execute_telnet
 
     def execute_both(self, command):
         def callback_backend(data):

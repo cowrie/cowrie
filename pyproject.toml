@@ -78,7 +78,7 @@ dev = [
 "pyupgrade==3.19.0",
 "pyyaml==6.0.2",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.7.2",
+"ruff==0.8.0",
 "setuptools==75.1.0",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.0.1",
@@ -163,7 +163,7 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TRY"]
+lint.select = ["A", "B", "E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
 lint.ignore = ["E501", "UP007", "B019", "RUF001", "UP038"]
 
 # Assume Python 3.10.

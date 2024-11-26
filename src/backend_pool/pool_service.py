@@ -177,7 +177,7 @@ class PoolService:
         self.qemu.destroy_all_cowrie()
 
         # close any NAT sockets
-        if not self.local_pool and self.use_nat or self.pool_only:
+        if (not self.local_pool and self.use_nat) or self.pool_only:
             log.msg(
                 eventid="cowrie.backend_pool.service", format="Free all NAT bindings"
             )

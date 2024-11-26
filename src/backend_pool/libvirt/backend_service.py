@@ -11,7 +11,10 @@ import os
 import random
 import sys
 import uuid
-from collections.abc import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from twisted.python import log
 

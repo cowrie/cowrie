@@ -1,9 +1,12 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from twisted.conch.ssh import channel, common, connection, transport, userauth
 from twisted.internet import defer, protocol
 from twisted.internet import reactor
-from twisted.internet.interfaces import IAddress
+
+if TYPE_CHECKING:
+    from twisted.internet.interfaces import IAddress
 
 
 class PasswordAuth(userauth.SSHUserAuthClient):

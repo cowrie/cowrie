@@ -403,7 +403,7 @@ Options:
                 # Format the rules
                 for rule in self.current_table[chain]:
                     chain_output.append(
-                        "%-10s %-4s %-3s %-20s %-20s %s %s" % rule,
+                        f"{rule[0]:10s} {rule[1]:4s} {rule[2]:3}s {rule[3]:20s} {rule[4]:20s} {rule[5]:s} {rule[6]:s}"
                     )
 
                 # Create one string

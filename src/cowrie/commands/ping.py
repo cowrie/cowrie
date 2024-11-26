@@ -108,8 +108,7 @@ class Command_ping(HoneyPotCommand):
     def printstatistics(self) -> None:
         self.write(f"--- {self.host} ping statistics ---\n")
         self.write(
-            "%d packets transmitted, %d received, 0%% packet loss, time 907ms\n"
-            % (self.count, self.count)
+            f"{self.count} packets transmitted, {self.count} received, 0% packet loss, time 907ms\n"
         )
         self.write("rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n")
 
