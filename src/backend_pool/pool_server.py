@@ -105,7 +105,7 @@ class PoolServer(Protocol):
 
                 # after we receive ip and ports, expose ports in the pool's public interface
                 # we use NAT if this pool is being run remotely, and if users choose so
-                if not self.local_pool and self.use_nat or self.pool_only:
+                if (not self.local_pool and self.use_nat) or self.pool_only:
                     nat_ssh_port, nat_telnet_port = self.factory.nat.request_binding(
                         guest_id, guest_ip, ssh_port, telnet_port
                     )
@@ -156,7 +156,7 @@ class PoolServer(Protocol):
             )
 
             # free the NAT
-            if not self.local_pool and self.use_nat or self.pool_only:
+            if (not self.local_pool and self.use_nat) or self.pool_only:
                 self.factory.nat.free_binding(guest_id)
 
             # free the vm
@@ -174,7 +174,7 @@ class PoolServer(Protocol):
             )
 
             # free the NAT
-            if not self.local_pool and self.use_nat or self.pool_only:
+            if (not self.local_pool and self.use_nat) or self.pool_only:
                 self.factory.nat.free_binding(guest_id)
 
             # free this connection and allow VM to be re-used

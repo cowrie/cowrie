@@ -90,7 +90,7 @@ def uptime(total_seconds: float) -> str:
 
     s: str = ""
     if days > 0:
-        s += str(days) + " " + (days == 1 and "day" or "days") + ", "
+        s += str(days) + " " + ((days == 1 and "day") or "days") + ", "
     if len(s) > 0 or hours > 0:
         s += "{}:{}".format(str(hours).rjust(2), str(minutes).rjust(2, "0"))
     else:
