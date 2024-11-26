@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-from twisted.python import log
+from twisted.internet import error
+from twisted.python import failure
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import HoneyPotShell
