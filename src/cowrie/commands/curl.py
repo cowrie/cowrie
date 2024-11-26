@@ -365,7 +365,7 @@ class Command_curl(HoneyPotCommand):
             self.write("\n")
 
         # Update the honeyfs to point to artifact file if output is to file
-        if self.outfile:
+        if self.outfile and self.protocol.user:
             self.fs.mkfile(
                 self.outfile,
                 self.protocol.user.uid,
