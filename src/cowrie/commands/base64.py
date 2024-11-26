@@ -15,7 +15,7 @@ class Command_base64(HoneyPotCommand):
     author: Ivan Korolev (@fe7ch)
     """
 
-    mode: str = "e"
+    mode: str
     ignore: bool
 
     def start(self) -> None:
@@ -85,8 +85,11 @@ Written by Simon Josefsson.
             elif opt[0] == "-w" or opt[0] == "wrap":
                 pass
 
-        if self.input_data:
-            self.dojob(self.input_data)
+        if len(args) == 0:
+            if self.input_data:
+                self.dojob(self.input_data)
+            else:
+                return
         else:
             if len(args) > 1:
                 self.errorWrite(
