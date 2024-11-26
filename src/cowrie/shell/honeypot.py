@@ -200,10 +200,16 @@ class HoneyPotShell:
         )
         # call lineReceived method that indicates that we have some commands to parse
         self.protocol.cmdstack[-1].lineReceived(cmd)
-        # remove the shell
+        # and remove the shell
         res = self.protocol.cmdstack.pop()
+
         try:
-            output: str = res.protocol.pp.redirected_data.decode()[:-1]
+            if cmd_expr.startswith("("):
+                output: str = res.protocol.pp.redirected_data.decode()
+            else:
+                # trailing newlines are stripped for command substitution
+                output: str = res.protocol.pp.redirected_data.decode().rstrip('\n')
+
         except AttributeError:
             return ""
         else:
