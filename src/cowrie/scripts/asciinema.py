@@ -38,7 +38,9 @@ def playlog(fd, settings):
 
     while 1:
         try:
-            (op, tty, length, dir, sec, usec) = struct.unpack("<iLiiLL", fd.read(ssize))
+            (op, tty, length, direction, sec, usec) = struct.unpack(
+                "<iLiiLL", fd.read(ssize)
+            )
             data = fd.read(length)
         except struct.error:
             break
@@ -49,12 +51,12 @@ def playlog(fd, settings):
         if str(tty) == str(currtty) and op == OP_WRITE:
             # the first stream seen is considered 'output'
             if prefdir == 0:
-                prefdir = dir
-            if dir == TYPE_INTERACT:
+                prefdir = direction
+            if direction == TYPE_INTERACT:
                 color = COLOR_INTERACT
-            elif dir == TYPE_INPUT:
+            elif direction == TYPE_INPUT:
                 color = COLOR_INPUT
-            if dir == prefdir:
+            if direction == prefdir:
                 curtime = float(sec) + float(usec) / 1000000
                 if prevtime != 0:
                     sleeptime = curtime - prevtime
