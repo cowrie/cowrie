@@ -100,8 +100,7 @@ class Command_w(HoneyPotCommand):
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
         )
         self.write(
-            "%-8s pts/0    %s %s    0.00s  0.00s  0.00s w\n"
-            % (
+            "{:8s} pts/0    {} {}    0.00s  0.00s  0.00s w\n".format(
                 self.protocol.user.username,
                 self.protocol.clientIP[:17].ljust(17),
                 time.strftime("%H:%M", time.localtime(self.protocol.logintime)),
@@ -116,8 +115,7 @@ commands["w"] = Command_w
 class Command_who(HoneyPotCommand):
     def call(self) -> None:
         self.write(
-            "%-8s pts/0        %s %s (%s)\n"
-            % (
+            "{:8s} pts/0        {} {} ({})\n".format(
                 self.protocol.user.username,
                 time.strftime("%Y-%m-%d", time.localtime(self.protocol.logintime)),
                 time.strftime("%H:%M", time.localtime(self.protocol.logintime)),
