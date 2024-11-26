@@ -59,7 +59,7 @@ class Command_sh(HoneyPotCommand):
         try:
             shell.environ["SHLVL"] = str(int(parentshell.environ["SHLVL"]) + 1)
         except KeyError:
-            shell.environ["SHLVL"] = 1
+            shell.environ["SHLVL"] = "1"
         self.protocol.cmdstack.append(shell)
         self.protocol.cmdstack.remove(self)
 

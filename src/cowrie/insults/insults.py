@@ -33,6 +33,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.type: str
         self.ttylogFile: str
         self.ttylogSize: int = 0
+        self.bytesSent: int = 0
         self.bytesReceived: int = 0
         self.redirFiles: set[list[str]] = set()
         self.redirlogOpen: bool = False  # it will be set at core/protocol.py
@@ -95,6 +96,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.terminalProtocol.execcmd.encode("utf8")
 
     def write(self, data: bytes) -> None:
+        self.bytesSent += len(data)
         if self.ttylogEnabled and self.ttylogOpen:
             ttylog.ttylog_write(
                 self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
@@ -121,10 +123,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data
             )
 
-        # prevent crash if something like this was passed:
-        # echo cmd ; exit; \n\n
-        if self.terminalProtocol:
-            insults.ServerProtocol.dataReceived(self, data)
+        insults.ServerProtocol.dataReceived(self, data)
 
     def eofReceived(self) -> None:
         """
@@ -225,12 +224,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
             log.msg(
                 eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                format="Closing TTY Log: %(ttylog)s after %(duration)s seconds",
                 ttylog=shasumfile,
                 size=self.ttylogSize,
                 shasum=shasum,
                 duplicate=duplicate,
-                duration=time.time() - self.startTime,
+                duration=f"{time.time() - self.startTime:.1f}",
             )
 
         insults.ServerProtocol.connectionLost(self, reason)
