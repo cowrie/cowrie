@@ -9,6 +9,7 @@ __all__ = [
     "awk",
     "base",
     "base64",
+    "bash",
     "busybox",
     "cat",
     "chmod",
