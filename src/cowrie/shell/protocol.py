@@ -190,6 +190,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cmdstack[-1].lineReceived(string)
         else:
             log.msg(f"discarding input {string}")
+            stat = failure.Failure(error.ProcessDone(status=""))
+            self.terminal.transport.processEnded(stat)
 
     def call_command(self, pp, cmd, *args):
         self.pp = pp

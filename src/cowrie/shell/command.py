@@ -34,7 +34,7 @@ class HoneyPotCommand:
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
-        self.environ = self.protocol.cmdstack[0].environ
+        self.environ = self.protocol.cmdstack[-1].environ
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
         self.input_data: None | (bytes) = (
@@ -174,7 +174,8 @@ class HoneyPotCommand:
                 self.protocol.terminal.redirFiles.add((self.safeoutfile, ""))
 
         if len(self.protocol.cmdstack):
-            self.protocol.cmdstack.pop()
+            self.protocol.cmdstack.remove(self)
+
             if len(self.protocol.cmdstack):
                 self.protocol.cmdstack[-1].resume()
         else:

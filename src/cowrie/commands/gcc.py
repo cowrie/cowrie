@@ -56,7 +56,7 @@ class Command_gcc(HoneyPotCommand):
 
     scheduled: Deferred
 
-    def start(self) -> None:
+    def call(self) -> None:
         """
         Parse as much as possible from a GCC syntax and generate the output
         that is requested. The file that is generated can be read (and will)
@@ -151,17 +151,16 @@ class Command_gcc(HoneyPotCommand):
 
     def no_files(self) -> None:
         """
-        Notify user there are no input files, and exit
+        Notify user there are no input files
         """
         self.write(
             """gcc: fatal error: no input files
 compilation terminated.\n"""
         )
-        self.exit()
 
     def version(self, short: bool) -> None:
         """
-        Print long or short version, and exit
+        Print long or short version
         """
 
         # Generate version number
@@ -184,7 +183,6 @@ gcc version {version} (Debian {version}-5)"""
 
         # Write
         self.write(f"{data}\n")
-        self.exit()
 
     def generate_file(self, outfile: str) -> None:
         data = b""
@@ -228,15 +226,11 @@ gcc version {version} (Debian {version}-5)"""
         # Trick the 'new compiled file' as an segfault
         self.protocol.commands[outfile] = segfault_command
 
-        # Done
-        self.exit()
-
     def arg_missing(self, arg: str) -> None:
         """
         Print missing argument message, and exit
         """
         self.write(f"{Command_gcc.APP_NAME}: argument to '{arg}' is missing\n")
-        self.exit()
 
     def help(self) -> None:
         """
@@ -306,7 +300,6 @@ For bug reporting instructions, please see:
 <file:///usr/share/doc/gcc-4.7/README.Bugs>.
 """
         )
-        self.exit()
 
 
 commands["/usr/bin/gcc"] = Command_gcc
