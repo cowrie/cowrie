@@ -23,7 +23,9 @@ def playlog(fd, settings):
 
     while 1:
         try:
-            (op, tty, length, dir, sec, usec) = struct.unpack("<iLiiLL", fd.read(ssize))
+            (op, tty, length, direction, sec, usec) = struct.unpack(
+                "<iLiiLL", fd.read(ssize)
+            )
             data = fd.read(length)
         except struct.error:
             if settings["tail"]:
@@ -39,17 +41,17 @@ def playlog(fd, settings):
         if str(tty) == str(currtty) and op == OP_WRITE:
             # the first stream seen is considered 'output'
             if prefdir == 0:
-                prefdir = dir
+                prefdir = direction
                 # use the other direction
                 if settings["input_only"]:
                     prefdir = TYPE_INPUT
-                    if dir == TYPE_INPUT:
+                    if direction == TYPE_INPUT:
                         prefdir = TYPE_OUTPUT
-            if dir == TYPE_INTERACT:
+            if direction == TYPE_INTERACT:
                 color = b"\033[36m"
-            elif dir == TYPE_INPUT:
+            elif direction == TYPE_INPUT:
                 color = b"\033[33m"
-            if dir == prefdir or settings["both_dirs"]:
+            if direction == prefdir or settings["both_dirs"]:
                 curtime = float(sec) + float(usec) / 1000000
                 if prevtime != 0:
                     sleeptime = curtime - prevtime
@@ -69,7 +71,7 @@ def playlog(fd, settings):
             break
 
 
-def help(brief=0):
+def printhelp(brief=0):
     print(
         f"Usage: {os.path.basename(sys.argv[0])} [-bfhi] [-m secs] [-w file] <tty-log-file> <tty-log-file>...\n"
     )
@@ -104,7 +106,7 @@ def run():
         optlist, args = getopt.getopt(sys.argv[1:], "fhibcm:w:", ["help"])
     except getopt.GetoptError as error:
         print(f"Error: {error}\n")
-        help()
+        printhelp()
         return
 
     options = [x[0] for x in optlist]
@@ -122,12 +124,12 @@ def run():
         elif o == "-b":
             settings["both_dirs"] = 1
         elif o in ["-h", "--help"]:
-            help()
+            printhelp()
         elif o == "-c":
             settings["colorify"] = 1
 
     if len(args) < 1:
-        help()
+        printhelp()
 
     for logfile in args:
         try:

@@ -134,7 +134,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         tree.append(entry)
 
 
-def help(brief=False):
+def printhelp(brief=False):
     print(
         f"Usage: {os.path.basename(sys.argv[0])} [-h] [-v] [-p] [-l dir] [-d maxdepth] [-o file]\n"
     )
@@ -161,7 +161,7 @@ def run():
         optlist, args = getopt.getopt(sys.argv[1:], "hvpl:d:o:", ["help"])
     except getopt.GetoptError as error:
         sys.stderr.write(f"Error: {error}\n")
-        help()
+        printhelp()
         return
 
     for o, a in optlist:
@@ -176,7 +176,7 @@ def run():
         elif o == "-o":
             output = a
         elif o in ["-h", "--help"]:
-            help()
+            printhelp()
 
     if output and os.path.isfile(output):
         sys.stderr.write(f"File: {output} exists!\n")

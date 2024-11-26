@@ -87,7 +87,7 @@ def playlog(fd, settings):
             json.dump(thelog, outfp, indent=4)
 
 
-def help(verbose=False):
+def printhelp(verbose=False):
     print(
         f"usage: {os.path.basename(sys.argv[0])} [-c] [-o output] <tty-log-file> <tty-log-file>..."
     )
@@ -107,19 +107,19 @@ def run():
         optlist, args = getopt.getopt(sys.argv[1:], "hco:")
     except getopt.GetoptError as error:
         sys.stderr.write(f"{sys.argv[0]}: {error}\n")
-        help()
+        printhelp()
         sys.exit(1)
 
     for o, a in optlist:
         if o == "-h":
-            help()
+            printhelp()
         if o == "-c":
             settings["colorify"] = True
         if o == "-o":
             settings["output"] = a
 
     if len(args) < 1:
-        help()
+        printhelp()
         sys.exit(2)
 
     for logfile in args:

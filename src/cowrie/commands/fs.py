@@ -369,7 +369,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             pname = self.fs.resolve_path(f, self.protocol.cwd)
             try:
                 # verify path to file exists
-                dir = self.fs.get_path("/".join(pname.split("/")[:-1]))
+                directory = self.fs.get_path("/".join(pname.split("/")[:-1]))
                 # verify that the file itself exists
                 self.fs.get_path(pname)
             except (IndexError, fs.FileNotFound):
@@ -379,14 +379,14 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                     )
                 continue
             basename = pname.split("/")[-1]
-            for i in dir[:]:
+            for i in directory[:]:
                 if i[fs.A_NAME] == basename:
                     if i[fs.A_TYPE] == fs.T_DIR and not recursive:
                         self.errorWrite(
                             f"rm: cannot remove `{i[fs.A_NAME]}': Is a directory\n"
                         )
                     else:
-                        dir.remove(i)
+                        directory.remove(i)
                         if verbose:
                             if i[fs.A_TYPE] == fs.T_DIR:
                                 self.write(f"removed directory '{i[fs.A_NAME]}'\n")
@@ -460,15 +460,15 @@ class Command_cp(HoneyPotCommand):
                 continue
             s = copy.deepcopy(self.fs.getfile(resolv(src)))
             if isdir:
-                dir = self.fs.get_path(resolv(dest))
+                directory = self.fs.get_path(resolv(dest))
                 outfile = os.path.basename(src)
             else:
-                dir = self.fs.get_path(os.path.dirname(resolv(dest)))
+                directory = self.fs.get_path(os.path.dirname(resolv(dest)))
                 outfile = os.path.basename(dest.rstrip("/"))
-            if outfile in [x[fs.A_NAME] for x in dir]:
-                dir.remove(next(x for x in dir if x[fs.A_NAME] == outfile))
+            if outfile in [x[fs.A_NAME] for x in directory]:
+                directory.remove(next(x for x in directory if x[fs.A_NAME] == outfile))
             s[fs.A_NAME] = outfile
-            dir.append(s)
+            directory.append(s)
 
 
 commands["/bin/cp"] = Command_cp
@@ -531,14 +531,14 @@ class Command_mv(HoneyPotCommand):
                 continue
             s = self.fs.getfile(resolv(src))
             if isdir:
-                dir = self.fs.get_path(resolv(dest))
+                directory = self.fs.get_path(resolv(dest))
                 outfile = os.path.basename(src)
             else:
-                dir = self.fs.get_path(os.path.dirname(resolv(dest)))
+                directory = self.fs.get_path(os.path.dirname(resolv(dest)))
                 outfile = os.path.basename(dest)
-            if dir != os.path.dirname(resolv(src)):
+            if directory != os.path.dirname(resolv(src)):
                 s[fs.A_NAME] = outfile
-                dir.append(s)
+                directory.append(s)
                 sdir = self.fs.get_path(os.path.dirname(resolv(src)))
                 sdir.remove(s)
             else:
@@ -589,23 +589,23 @@ class Command_rmdir(HoneyPotCommand):
                         f"rmdir: failed to remove `{f}': Directory not empty\n"
                     )
                     continue
-                dir = self.fs.get_path("/".join(pname.split("/")[:-1]))
+                directory = self.fs.get_path("/".join(pname.split("/")[:-1]))
             except (IndexError, fs.FileNotFound):
-                dir = None
+                directory = None
             fname = os.path.basename(f)
-            if not dir or fname not in [x[fs.A_NAME] for x in dir]:
+            if not directory or fname not in [x[fs.A_NAME] for x in directory]:
                 self.errorWrite(
                     f"rmdir: failed to remove `{f}': No such file or directory\n"
                 )
                 continue
-            for i in dir[:]:
+            for i in directory[:]:
                 if i[fs.A_NAME] == fname:
                     if i[fs.A_TYPE] != fs.T_DIR:
                         self.errorWrite(
                             f"rmdir: failed to remove '{f}': Not a directory\n"
                         )
                         return
-                    dir.remove(i)
+                    directory.remove(i)
                     break
 
 
