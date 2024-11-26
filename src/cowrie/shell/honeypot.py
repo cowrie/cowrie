@@ -204,11 +204,12 @@ class HoneyPotShell:
         res = self.protocol.cmdstack.pop()
 
         try:
+            output: str
             if cmd_expr.startswith("("):
-                output: str = res.protocol.pp.redirected_data.decode()
+                output = res.protocol.pp.redirected_data.decode()
             else:
                 # trailing newlines are stripped for command substitution
-                output: str = res.protocol.pp.redirected_data.decode().rstrip('\n')
+                output = res.protocol.pp.redirected_data.decode().rstrip("\n")
 
         except AttributeError:
             return ""
