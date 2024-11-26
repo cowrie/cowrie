@@ -152,10 +152,12 @@ class HoneyPotShell:
                 closing_count += 1
                 if opening_count == closing_count:
                     if cmd_expr[0] == "(":
-                        # return the command in () without executing it
-                        result = cmd_expr[1:pos]
+                        # execute the command in () and print to user
+                        self.protocol.terminal.write(
+                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
+                        )
                     else:
-                        # execute the command in $() or `` or () and return the output
+                        # execute the command in $() or `` and return the output
                         result += self.run_subshell_command(cmd_expr[: pos + 1])
 
                     # check whether there are more command substitutions remaining
