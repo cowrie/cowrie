@@ -20,10 +20,14 @@ class Command_unzip(HoneyPotCommand):
         components, d = path.split("/"), []
         while len(components):
             d.append(components.pop(0))
-            dir = "/" + "/".join(d)
-            if not self.fs.exists(dir):
+            directory = "/" + "/".join(d)
+            if not self.fs.exists(directory):
                 self.fs.mkdir(
-                    dir, self.protocol.user.uid, self.protocol.user.gid, 4096, 33188
+                    directory,
+                    self.protocol.user.uid,
+                    self.protocol.user.gid,
+                    4096,
+                    33188,
                 )
 
     def call(self) -> None:
