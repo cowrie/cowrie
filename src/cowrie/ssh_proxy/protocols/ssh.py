@@ -33,6 +33,7 @@ from typing import Any
 import uuid
 
 from twisted.python import log
+from twisted.conch.ssh import connection, transport, userauth
 
 from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.protocols import (
@@ -108,12 +109,6 @@ class SSH(base_protocol.BaseProtocol):
         self.packetSize = len(payload)
         self.sendOn = True
 
-        if message_num in PACKETLAYOUT:
-            packet = PACKETLAYOUT[message_num]
-        else:
-            packet = f"UNKNOWN_{message_num}"
-            log.msg(f"unknown packet {packet}: {payload!r}")
-
         if parent == "[SERVER]":
             direction = "PROXY -> BACKEND"
         else:
@@ -125,20 +120,20 @@ class SSH(base_protocol.BaseProtocol):
                 eventid="cowrie.proxy.ssh",
                 format="%(direction)s - %(packet)s - %(payload)s",
                 direction=direction,
-                packet=packet.ljust(37),
+                packet=PACKETLAYOUT[message_num].ljust(37),
                 payload=repr(payload),
                 protocol="ssh",
             )
 
-        if packet == "SSH_MSG_SERVICE_REQUEST":
+        if message_num == transport.MSG_SERVICE_REQUEST:
             service = self.extract_string()
             if service == b"ssh-userauth":
                 self.sendOn = False
 
-        elif packet == "SSH_MSG_USERAUTH_BANNER":
+        elif message_num == userauth.MSG_USERAUTH_BANNER:
             self.sendOn = False
 
-        elif packet == "SSH_MSG_EXT_INFO":
+        elif message_num == transport.MSG_EXT_INFO:
             extensioncount: int = self.extract_int(4)
             for _ in range(extensioncount):
                 log.msg(
@@ -147,7 +142,7 @@ class SSH(base_protocol.BaseProtocol):
             self.sendOn = False
 
         # - UserAuth
-        elif packet == "SSH_MSG_USERAUTH_REQUEST":
+        elif message_num == userauth.MSG_USERAUTH_REQUEST:
             self.sendOn = False
             self.username = self.extract_string()
             self.extract_string()  # service
@@ -162,7 +157,7 @@ class SSH(base_protocol.BaseProtocol):
                 self.sendOn = False
                 self.server.sendPacket(51, string_to_hex("password") + chr(0).encode())
 
-        elif packet == "SSH_MSG_USERAUTH_FAILURE":
+        elif message_num == userauth.MSG_USERAUTH_FAILURE:
             self.sendOn = False
             auth_list = self.extract_string()
 
@@ -171,10 +166,10 @@ class SSH(base_protocol.BaseProtocol):
                 payload = string_to_hex("password") + chr(0).encode()
                 # self.server.sendPacket(51, payload)
 
-        elif packet == "SSH_MSG_USERAUTH_SUCCESS":
+        elif message_num == userauth.MSG_USERAUTH_SUCCESS:
             self.sendOn = False
 
-        elif packet == "SSH_MSG_USERAUTH_INFO_REQUEST":
+        elif message_num == userauth.MSG_USERAUTH_INFO_REQUEST:
             self.sendOn = False
             self.auth_type = b"keyboard-interactive"
             self.extract_string()
@@ -188,7 +183,7 @@ class SSH(base_protocol.BaseProtocol):
                 if b"password" in request.lower():
                     self.expect_password = i
 
-        elif packet == "SSH_MSG_USERAUTH_INFO_RESPONSE":
+        elif message_num == userauth.MSG_USERAUTH_INFO_RESPONSE:
             self.sendOn = False
             num_responses = self.extract_int(4)
             for i in range(0, num_responses):
@@ -198,7 +193,7 @@ class SSH(base_protocol.BaseProtocol):
 
         # - End UserAuth
         # - Channels
-        elif packet == "SSH_MSG_CHANNEL_OPEN":
+        elif message_num == connection.MSG_CHANNEL_OPEN:
             channel_type = self.extract_string()
             channel_id = self.extract_int(4)
 
@@ -272,7 +267,7 @@ class SSH(base_protocol.BaseProtocol):
                 if channel_type not in [b"exit-status"]:
                     log.msg(f"[SSH Unknown Channel Type Detected - {channel_type!r}")
 
-        elif packet == "SSH_MSG_CHANNEL_OPEN_CONFIRMATION":
+        elif message_num == connection.MSG_CHANNEL_OPEN_CONFIRMATION:
             channel = self.get_channel(self.extract_int(4), parent)
             # SENDER
             sender_id = self.extract_int(4)
@@ -283,12 +278,12 @@ class SSH(base_protocol.BaseProtocol):
                 channel["clientID"] = sender_id
                 # CHANNEL OPENED
 
-        elif packet == "SSH_MSG_CHANNEL_OPEN_FAILURE":
+        elif message_num == connection.MSG_CHANNEL_OPEN_FAILURE:
             channel = self.get_channel(self.extract_int(4), parent)
             self.channels.remove(channel)
             # CHANNEL FAILED TO OPEN
 
-        elif packet == "SSH_MSG_CHANNEL_REQUEST":
+        elif message_num == connection.MSG_CHANNEL_REQUEST:
             channel = self.get_channel(self.extract_int(4), parent)
             channel_type = self.extract_string()
             the_uuid = uuid.uuid4().hex
@@ -298,7 +293,7 @@ class SSH(base_protocol.BaseProtocol):
                 channel["session"] = term.Term(
                     the_uuid, channel["name"], self, channel["clientID"]
                 )
-                log.msg(f"{packet}: {channel_type!r}")
+                log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}")
 
             elif channel_type == b"exec":
                 channel["name"] = "[EXEC" + str(channel["serverID"]) + "]"
@@ -307,12 +302,12 @@ class SSH(base_protocol.BaseProtocol):
                 channel["session"] = exec_term.ExecTerm(
                     the_uuid, channel["name"], self, channel["serverID"], command
                 )
-                log.msg(f"{packet}: {channel_type!r}: {command!r}")
+                log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {command!r}")
 
             elif channel_type == b"subsystem":
                 self.extract_bool()
                 subsystem = self.extract_string()
-                log.msg(f"{packet}: {channel_type!r}: {subsystem!r}")
+                log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}")
 
                 if subsystem == b"sftp":
                     if CowrieConfig.getboolean("ssh", "sftp_enabled"):
@@ -325,7 +320,7 @@ class SSH(base_protocol.BaseProtocol):
                         self.send_back(parent, 100, int_to_hex(channel["serverID"]))
                 else:
                     # UNKNOWN SUBSYSTEM
-                    log.msg(f"{packet}: {channel_type!r}: {subsystem!r}")
+                    log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}")
                     log.msg(
                         "[SSH] Unknown Subsystem Type Detected - " + subsystem.decode()
                     )
@@ -333,7 +328,7 @@ class SSH(base_protocol.BaseProtocol):
                 _ = self.extract_bool()
                 var = self.extract_string()
                 value = self.extract_string()
-                log.msg(f"{packet}: env: {var.decode()}={value.decode()}")
+                log.msg(f"MSG_CHANNEL_REQUEST: env: {var.decode()}={value.decode()}")
 
             else:
                 # UNKNOWN CHANNEL REQUEST TYPE
@@ -347,10 +342,10 @@ class SSH(base_protocol.BaseProtocol):
                         f"[SSH] Unknown Channel Request Type Detected - {channel_type.decode()}"
                     )
 
-        elif packet == "SSH_MSG_CHANNEL_FAILURE":
+        elif message_num == connection.MSG_CHANNEL_FAILURE:
             pass
 
-        elif packet == "SSH_MSG_CHANNEL_CLOSE":
+        elif message_num == connection.MSG_CHANNEL_CLOSE:
             channel = self.get_channel(self.extract_int(4), parent)
             # Is this needed?!
             channel[parent] = True
@@ -364,17 +359,17 @@ class SSH(base_protocol.BaseProtocol):
                 self.channels.remove(channel)
         # - END Channels
         # - ChannelData
-        elif packet == "SSH_MSG_CHANNEL_DATA":
+        elif message_num == connection.MSG_CHANNEL_DATA:
             channel = self.get_channel(self.extract_int(4), parent)
             channel["session"].parse_packet(parent, self.extract_string())
 
-        elif packet == "SSH_MSG_CHANNEL_EXTENDED_DATA":
+        elif message_num == connection.MSG_CHANNEL_EXTENDED_DATA:
             channel = self.get_channel(self.extract_int(4), parent)
             self.extract_int(4)
             channel["session"].parse_packet(parent, self.extract_string())
         # - END ChannelData
 
-        elif packet == "SSH_MSG_GLOBAL_REQUEST":
+        elif message_num == connection.MSG_GLOBAL_REQUEST:
             channel_type = self.extract_string()
             if channel_type == b"tcpip-forward":
                 if not CowrieConfig.getboolean("ssh", "forwarding"):
@@ -382,7 +377,7 @@ class SSH(base_protocol.BaseProtocol):
                     self.send_back(parent, 82, b"")
 
         else:
-            log.msg(f"unhandled packet: {packet}")
+            log.msg(f"Unhandled SSH packet: {message_num}")
 
         if self.sendOn:
             if parent == "[SERVER]":
@@ -391,7 +386,6 @@ class SSH(base_protocol.BaseProtocol):
                 self.server.sendPacket(message_num, payload)
 
     def send_back(self, parent: str, message_num: int, payload: bytes) -> None:
-        packet = PACKETLAYOUT[message_num]
 
         if parent == "[SERVER]":
             direction = "PROXY -> FRONTEND"
@@ -402,7 +396,7 @@ class SSH(base_protocol.BaseProtocol):
                 eventid="cowrie.proxy.ssh",
                 format="%(direction)s - %(packet)s - %(payload)s",
                 direction=direction,
-                packet=packet.ljust(37),
+                packet=PACKETLAYOUT[message_num].ljust(37),
                 payload=repr(payload),
                 protocol="ssh",
             )
