@@ -41,6 +41,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: set SOURCE_DATE_EPOCH
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU

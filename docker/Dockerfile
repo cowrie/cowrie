@@ -3,7 +3,7 @@
 # `runtime` is stripped down.
 
 ARG ARCH=
-ARG BUILD_DATE
+ARG SOURCE_DATE_EPOCH
 ARG TAG
 FROM ${ARCH}debian:bookworm-slim AS builder
 
