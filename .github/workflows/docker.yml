@@ -63,11 +63,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - id: docker_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: cowrie/cowrie
-          tags: type=sha,format=long
+#      - id: docker_meta
+#        uses: docker/metadata-action@v5
+#        with:
+#          images: cowrie/cowrie
+#          tags: type=sha,format=long
 
       - name: Build
         id: build
@@ -101,8 +101,5 @@ jobs:
         run: |
           cosign sign cowrie/cowrie@${DIGEST}
           cosign verify cowrie/cowrie@${DIGEST}
-
-      - name: Verify pushed tags
-        run: cosign verify cowrie/cowrie:latest
         env:
           COSIGN_EXPERIMENTAL: 1
