@@ -82,7 +82,7 @@ jobs:
           docker run -d --rm cowrie:test
 
       - name: Build and push
-        id: buid-and-push
+        id: build-and-push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         uses: docker/build-push-action@v6
         with:
@@ -96,7 +96,7 @@ jobs:
 
       - name: Sign the images with GitHub OIDC Token
         env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          DIGEST: ${{ steps.build-and-push.outputs.containerimage.digest }}
           TAGS: ${{ steps.docker_meta.outputs.tags }}
         run: |
           images=""
