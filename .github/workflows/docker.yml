@@ -36,8 +36,7 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      packages: write
+      id-token: write  # Required for cosign OIDC
 
     steps:
       - name: Checkout
@@ -48,6 +47,7 @@ jobs:
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.7.0
+        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -64,13 +64,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-#      - id: docker_meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: cowrie/cowrie
-#          tags: type=sha,format=long
-
-      - name: Build
+      - name: Build Container Image
         id: build
         uses: docker/build-push-action@v6
         with:
@@ -83,7 +77,7 @@ jobs:
         run: |
           docker run -d --rm cowrie:test
 
-      - name: Push
+      - name: Push Container Image
         id: push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         uses: docker/build-push-action@v6
@@ -97,6 +91,7 @@ jobs:
           tags: cowrie/cowrie:latest
 
       - name: Sign the images with GitHub OIDC Token
+        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
           COSIGN_EXPERIMENTAL: 1
