@@ -35,7 +35,8 @@ jobs:
     # needs: tox
 
     runs-on: ubuntu-latest
-    # if: github.event_name == 'push'
+    permissions:
+      id-token: write  # Required for cosign OIDC
 
     steps:
       - name: Checkout
@@ -44,10 +45,17 @@ jobs:
       - name: set SOURCE_DATE_EPOCH
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
-      # Add support for more platforms with QEMU (optional)
-      # https://github.com/docker/setup-qemu-action
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.7.0
+        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
 
       - name: Login to Docker Hub
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
@@ -56,12 +64,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64
-
-      - name: Build
+      - name: Build Container Image
+        id: build
         uses: docker/build-push-action@v6
         with:
           push: false
@@ -73,7 +77,8 @@ jobs:
         run: |
           docker run -d --rm cowrie:test
 
-      - name: Build and push
+      - name: Push Container Image
+        id: push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         uses: docker/build-push-action@v6
         with:
@@ -84,3 +89,12 @@ jobs:
           sbom: true
           provenance: true
           tags: cowrie/cowrie:latest
+
+      - name: Sign the images with GitHub OIDC Token
+        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          cosign sign cowrie/cowrie@${DIGEST}
+          cosign verify cowrie/cowrie@${DIGEST}
