@@ -103,6 +103,7 @@ jobs:
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
+          cosign sign cowrie/cowrie:latest
           cosign sign --yes ${images}
 
       - name: Verify pushed tags
