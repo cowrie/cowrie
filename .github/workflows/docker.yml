@@ -117,3 +117,8 @@ jobs:
             images+="${tag}@${DIGEST} "
           done
           cosign sign --yes ${images}
+
+      - name: Verify pushed tags
+        run: cosign verify cowrie/cowrie:latest
+        env:
+          COSIGN_EXPERIMENTAL: 1
