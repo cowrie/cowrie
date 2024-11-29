@@ -93,8 +93,8 @@ jobs:
       - name: Sign the images with GitHub OIDC Token
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         env:
-          DIGEST: ${{ steps.build.outputs.digest }}
+          DIGEST: ${{ steps.push.outputs.digest }}
           COSIGN_EXPERIMENTAL: 1
         run: |
-          cosign sign cowrie/cowrie@${DIGEST}
-          cosign verify cowrie/cowrie@${DIGEST}
+          cosign sign -y cowrie/cowrie@${DIGEST}
+          cosign verify cowrie/cowrie@${DIGEST} --certificate-oidc-issuer-regexp '.*' --certificate-identity '.*' 
