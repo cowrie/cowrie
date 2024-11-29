@@ -96,15 +96,10 @@ jobs:
 
       - name: Sign the images with GitHub OIDC Token
         env:
-          DIGEST: ${{ steps.build-and-push.outputs.containerimage.digest }}
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
           cosign sign cowrie/cowrie@${DIGEST}
-          cosign sign --yes ${images}
+          cosign verify cowrie/cowrie@${DIGEST}
 
       - name: Verify pushed tags
         run: cosign verify cowrie/cowrie:latest
