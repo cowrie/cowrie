@@ -35,7 +35,8 @@ jobs:
     # needs: tox
 
     runs-on: ubuntu-latest
-    # if: github.event_name == 'push'
+    permissions:
+      id-token: write
 
     steps:
       - name: Checkout
