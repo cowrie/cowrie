@@ -82,6 +82,7 @@ jobs:
           docker run -d --rm cowrie:test
 
       - name: Build and push
+        id: buid-and-push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         uses: docker/build-push-action@v6
         with:
@@ -92,20 +93,6 @@ jobs:
           sbom: true
           provenance: true
           tags: cowrie/cowrie:latest
-
-      # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-      - name: Sign image with a key
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
-        env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
       - name: Sign the images with GitHub OIDC Token
         env:
