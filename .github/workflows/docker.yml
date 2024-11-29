@@ -99,8 +99,7 @@ jobs:
       - name: Sign the images with GitHub OIDC Token
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
+          COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign cowrie/cowrie@${DIGEST}
           cosign verify cowrie/cowrie@${DIGEST}
-        env:
-          COSIGN_EXPERIMENTAL: 1
