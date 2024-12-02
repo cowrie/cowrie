@@ -19,7 +19,7 @@ readthedocs-sphinx-search==0.3.2
 ruff==0.8.0
 setuptools==75.1.0
 sphinx-copybutton==0.5.2
-sphinx_rtd_theme==3.0.1
+sphinx_rtd_theme==3.0.2
 tox==4.23.2
 twine==5.1.1
 types-python-dateutil==2.9.0.20241003
