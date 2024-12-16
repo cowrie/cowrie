@@ -40,7 +40,7 @@ wokkel==18.0.0
 pymisp==2.5.2
 
 # redis
-redis==5.2.0
+redis==5.2.1
 
 # Oracle Cloud
 # Disabled 2024-10-31 because downgrades our cryptography package to vulnerable version
