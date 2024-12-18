@@ -44,6 +44,7 @@ dependencies = [
 
 [project.urls]
 homepage = "https://www.cowrie.org/"
+documentation = "https://docs.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
 
 [project.scripts]
