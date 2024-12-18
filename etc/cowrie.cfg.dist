@@ -1054,7 +1054,7 @@ enabled = false
 
 # Report login and session tracking attempts via the ThreatJammer.com Report API.
 # ThreatJammer.com is a risk assessment tool <https://threatjammer.com>
-# Read the docs for more information: https://cowrie.readthedocs.io/en/latest/threatjammer/README.html
+# Read the docs for more information: https://docs.cowrie.org/en/latest/threatjammer/README.html
 [output_threatjammer]
 enabled = false
 bearer_token = THREATJAMMER_API_TOKEN

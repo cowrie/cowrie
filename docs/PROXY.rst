@@ -33,14 +33,14 @@ Backend configs
 If you choose the simple backend, configure the hosts and ports for your backend. For the
 backend pool, configure the variables starting with ``pool\_``. You'll also need to deal with
 the ``[backend_pool]`` section, which we detail in the
-`Backend Pool's own documentation <https://cowrie.readthedocs.io/en/latest/BACKEND_POOL.html>`_.
+`Backend Pool's own documentation <https://docs.cowrie.org/en/latest/BACKEND_POOL.html>`_.
 
 The backend pool can be run in the same machine as Cowrie, or on a remote one (e.g. Cowrie on a
 Raspberry Pi, and the pool in a larger machine). In the former case, set ``pool`` to ``local``;
 in the later, set ``pool`` to ``remote`` and specify its host and port, matching with the
 ``listen_endpoints`` of the ``[backend_pool]`` section. Further configurations sent by the client
 are explained in
-`Backend Pool's own documentation <https://cowrie.readthedocs.io/en/latest/BACKEND_POOL.html>`_.
+`Backend Pool's own documentation <https://docs.cowrie.org/en/latest/BACKEND_POOL.html>`_.
 
 Authentication
 ==============

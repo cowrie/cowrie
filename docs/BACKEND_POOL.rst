@@ -17,7 +17,7 @@ Further below in this guide we'll discuss how to create your own images and cust
 libvirt's XML configuration files.
 
 First of all, install the needed dependencies for the pool, as explained in
-`the installation steps <https://cowrie.readthedocs.io/en/latest/INSTALL.html>`_.
+`the installation steps <https://docs.cowrie.org/en/latest/INSTALL.html>`_.
 
 Authorization
 *************

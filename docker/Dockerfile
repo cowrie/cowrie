@@ -65,7 +65,7 @@ FROM gcr.io/distroless/python3-debian12 AS runtime
 
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
-LABEL org.opencontainers.image.documentation="https://cowrie.readthedocs.io"
+LABEL org.opencontainers.image.documentation="https://docs.cowrie.org"
 LABEL org.opencontainers.image.source="https://github.com/cowrie/cowrie"
 LABEL org.opencontainers.image.version=${TAG}
 LABEL org.opencontainers.image.revision="Source control revision identifier for the packaged software."
