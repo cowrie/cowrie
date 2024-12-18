@@ -22,7 +22,7 @@ to another system.
 Documentation
 ****************************************
 
-The Documentation can be found `here <https://cowrie.readthedocs.io/en/latest/index.html>`_.
+The Documentation can be found `here <https://docs.cowrie.org/en/latest/index.html>`_.
 
 Slack
 *****************************************
