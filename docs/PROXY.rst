@@ -40,7 +40,7 @@ Raspberry Pi, and the pool in a larger machine). In the former case, set ``pool`
 in the later, set ``pool`` to ``remote`` and specify its host and port, matching with the
 ``listen_endpoints`` of the ``[backend_pool]`` section. Further configurations sent by the client
 are explained in
-`Backend Pool's own documentation <https://dcos.cowrie.org/en/latest/BACKEND_POOL.html>`_.
+`Backend Pool's own documentation <https://docs.cowrie.org/en/latest/BACKEND_POOL.html>`_.
 
 Authentication
 ==============
