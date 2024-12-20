@@ -40,7 +40,12 @@ class Output(cowrie.core.output.Output):
             Create log messages for connect events
             """
             if result is None:
+                log.msg("reversedns: no results (1)")
                 return
+            if len(result[0]) == 0:
+                log.msg("reversedns: no results (2)")
+                return
+
             payload = result[0][0].payload
             log.msg(
                 eventid="cowrie.reversedns.connect",
