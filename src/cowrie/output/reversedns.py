@@ -75,6 +75,9 @@ class Output(cowrie.core.output.Output):
             elif failure.type == error.DNSNameError:
                 # DNSNameError is the NXDOMAIN response
                 log.msg("reversedns: No PTR record returned")
+            elif failure.type == error.DNSServerError:
+                # DNSServerError is the SERVFAIL response
+                log.msg("reversedns: DNS server not responding")
             else:
                 log.msg("reversedns: Error in DNS lookup")
                 failure.printTraceback()
