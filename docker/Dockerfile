@@ -83,7 +83,7 @@ ENV COWRIE_GROUP=cowrie \
 
 #RUN groupadd -r ${COWRIE_GROUP} && \
 #    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
-COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc
+COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 #RUN export DEBIAN_FRONTEND=noninteractive; \
 #    apt-get update && \
