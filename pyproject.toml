@@ -28,7 +28,7 @@ classifiers=[
 ]
 
 dependencies = [
-        "attrs==24.2.0",
+        "attrs==24.3.0",
         "bcrypt==4.2.1",
         "cryptography==44.0.0",
         "hyperlink==21.0.0",
