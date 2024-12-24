@@ -90,7 +90,7 @@ docker-build: docker/Dockerfile ## Build Docker image
 docker-load: docker-build ## Load Docker image
 	-$(DOCKER) buildx create --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
-	$(DOCKER) buildx build --sbom=true --provenance=true --load -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+	$(DOCKER) buildx build --load -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-build ## Push Docker image
 docker-push:  ## Push Docker image to Docker Hub

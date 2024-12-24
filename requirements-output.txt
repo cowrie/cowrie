@@ -25,7 +25,8 @@ pymongo==4.10.1
 rethinkdb==2.4.10.post1
 
 # s3
-botocore==1.35.76
+# Disabled 2024-12-23 because too large
+# botocore==1.35.76
 
 # slack
 slackclient==2.9.4
@@ -34,7 +35,8 @@ slackclient==2.9.4
 influxdb==5.3.2
 
 # dblog_xmpp
-wokkel==18.0.0
+# Disabled 2024-12-23 because unmaintained upstream dependency: https://github.com/cowrie/cowrie/issues/1639
+# wokkel==18.0.0
 
 # misp
 pymisp==2.5.4
