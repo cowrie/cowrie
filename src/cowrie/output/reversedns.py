@@ -40,7 +40,12 @@ class Output(cowrie.core.output.Output):
             Create log messages for connect events
             """
             if result is None:
+                log.msg("reversedns: no results (1)")
                 return
+            if len(result[0]) == 0:
+                log.msg("reversedns: no results (2)")
+                return
+
             payload = result[0][0].payload
             log.msg(
                 eventid="cowrie.reversedns.connect",
@@ -75,6 +80,9 @@ class Output(cowrie.core.output.Output):
             elif failure.type == error.DNSNameError:
                 # DNSNameError is the NXDOMAIN response
                 log.msg("reversedns: No PTR record returned")
+            elif failure.type == error.DNSServerError:
+                # DNSServerError is the SERVFAIL response
+                log.msg("reversedns: DNS server not responding")
             else:
                 log.msg("reversedns: Error in DNS lookup")
                 failure.printTraceback()
