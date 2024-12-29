@@ -53,32 +53,15 @@ For both settings:
 Docker
 *****************************************
 
-Docker versions are available.
+Docker images are available on Docker Hub.
 
 * To get started quickly and give Cowrie a try, run::
 
     $ docker run -p 2222:2222 cowrie/cowrie:latest
     $ ssh -p 2222 root@localhost
 
-* On Docker Hub: https://hub.docker.com/r/cowrie/cowrie
-
-Configuring Cowrie in Docker
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Cowrie in Docker can be configured using environment variables. The
-variables start with COWRIE_ then have the section name in capitals,
-followed by the stanza in capitals. An example is below to enable
-telnet support::
-
-    COWRIE_TELNET_ENABLED=yes
-
-Alternatively, Cowrie in Docker can use an `etc` volume to store
-configuration data.  Create `cowrie.cfg` inside the etc volume
-with the following contents to enable telnet in your Cowrie Honeypot
-in Docker::
-
-    [telnet]
-    enabled = yes
+For more detailed instructions on using Docker in Cowrie, check
+:ref:`Building Docker Images<Building Docker Images>`
 
 Requirements
 *****************************************
