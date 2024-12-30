@@ -98,13 +98,16 @@ class Command_free(HoneyPotCommand):
             "MemAvailable",
         ]
         mem_info_map: dict[str, int] = {}
-        with open("/proc/meminfo") as proc_file:
-            for line in proc_file:
-                tokens = line.split(":")
+        try:
+            with open("/proc/meminfo") as proc_file:
+                for line in proc_file:
+                    tokens = line.split(":")
 
-                # Later we are going to do some math on those numbers, better not include uneeded keys for performance
-                if tokens[0] in needed_keys:
-                    mem_info_map[tokens[0]] = int(tokens[1].lstrip().split(" ")[0])
+                    # Later we are going to do some math on those numbers, better not include uneeded keys for performance
+                    if tokens[0] in needed_keys:
+                        mem_info_map[tokens[0]] = int(tokens[1].lstrip().split(" ")[0])
+        except Exception:
+            pass
 
         # Got a map with all tokens from /proc/meminfo and sizes in KBs
         return mem_info_map
