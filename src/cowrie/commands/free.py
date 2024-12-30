@@ -50,6 +50,10 @@ class Command_free(HoneyPotCommand):
 
         # Get real host memstats and add the calculated fields
         raw_mem_stats = self.get_free_stats()
+
+        if raw_mem_stats == {}:
+            return
+
         raw_mem_stats["calc_total_buffers_and_cache"] = (
             raw_mem_stats["Buffers"] + raw_mem_stats["Cached"]
         )
