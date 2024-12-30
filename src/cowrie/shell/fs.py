@@ -118,8 +118,7 @@ class HoneyPotFilesystem:
                 self.fs = pickle.load(f, encoding="utf8")
         except configparser.NoSectionError:
             log.msg("Loading default pickle file")
-            picklefile = importlib.resources.files(data) / "fs.pickle"
-            with picklefile.open("rb") as f:
+            with importlib.resources.open_binary(data, "fs.pickle") as f:
                 self.fs = pickle.load(f)
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
