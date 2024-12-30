@@ -5,9 +5,11 @@
 
 from __future__ import annotations
 
+import configparser
 import errno
 import fnmatch
 import hashlib
+import importlib
 import os
 from pathlib import Path
 import pickle
@@ -20,6 +22,8 @@ from typing import Any
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie import data
+
 
 (
     A_NAME,
@@ -112,6 +116,11 @@ class HoneyPotFilesystem:
         except UnicodeDecodeError:
             with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
                 self.fs = pickle.load(f, encoding="utf8")
+        except configparser.NoSectionError:
+            log.msg("Loading default pickle file")
+            picklefile = importlib.resources.files(data) / "fs.pickle"
+            with picklefile.open("rb") as f:
+                self.fs = pickle.load(f)
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
             sys.exit(2)
