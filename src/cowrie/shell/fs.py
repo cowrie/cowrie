@@ -137,7 +137,10 @@ class HoneyPotFilesystem:
 
         # Get the honeyfs path from the config file and explore it for file
         # contents:
-        self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
+        try:
+            self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
+        except Exception as e:
+            log.msg(f"Failed to load honeyfs {e!r}")
 
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """
