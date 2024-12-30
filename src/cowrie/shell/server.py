@@ -88,5 +88,6 @@ class CowrieServer:
             self.process = self.getCommandOutput(
                 CowrieConfig.get("shell", "processes")
             )["command"]["ps"]
-        except NoOptionError:
+        except Exception as e:
+            log.msg(f"Could not load process list {e!r}")
             self.process = None
