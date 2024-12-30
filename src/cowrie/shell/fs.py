@@ -332,10 +332,7 @@ class HoneyPotFilesystem:
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
-            return open(
-                CowrieConfig.get("honeypot", "data_path") + "/arch/" + self.arch,
-                "rb",
-            ).read()
+            return importlib.resources.read_binary(data, "arch", self.arch)
         return b""
 
     def mkfile(
