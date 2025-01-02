@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+import importlib
 import os
 import socket
 import sys
@@ -22,6 +23,7 @@ from twisted.python import failure, log
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import command, honeypot
+from cowrie import data
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -138,9 +140,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     def txtcmd(self, txt: str) -> object:
         class Command_txtcmd(command.HoneyPotCommand):
             def call(self):
-                log.msg(f'Reading txtcmd from "{txt}"')
-                with open(txt, encoding="utf-8") as f:
-                    self.write(f.read())
+                self.writeBytes(txt)
 
         return Command_txtcmd
 
@@ -166,11 +166,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     path = i
                     break
 
-        txt = os.path.normpath(
-            "{}/txtcmds/{}".format(CowrieConfig.get("honeypot", "data_path"), path)
-        )
-        if os.path.exists(txt) and os.path.isfile(txt):
-            return self.txtcmd(txt)
+        if path is None:
+            return None
+
+        with importlib.resources.path(data, "") as data_path:
+            binary_file_path = data_path / "txtcmds" / path.lstrip("/")
+            with open(binary_file_path, "rb") as file:
+                binary_data = file.read()
+                return self.txtcmd(binary_data)
 
         if path in self.commands:
             return self.commands[path]
