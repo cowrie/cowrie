@@ -32,16 +32,21 @@ Configuring Cowrie in Docker with Config Files
 **********************************************
 
 Alternatively, Cowrie in Docker can use an `etc` mount to store
-configuration data.  Create ```cowrie.cfg``` inside the etc directory
-(or volume) with the following contents to enable telnet in
-Cowrie in Docker::
+configuration data. Docker can either mount a volume or a directory.
+
+Mounting a volume or directory on `/etc` will make existing files
+unavailable to Cowrie, so make sure to copy `userdb.txt` and
+`cowrie.cfg.dist` there too!
+
+Create ```cowrie.cfg``` inside the etc directory (or volume)
+with the following contents to enable telnet in Cowrie in Docker::
 
     [telnet]
     enabled = yes
 
 Start Cowrie as::
 
-    $ docker run -p 2223:2223 --mount type=bind,source=./etc,target=/opt/cowrie/cowrie-git/etc cowrie/cowrie
+    $ docker run -p 2223:2223 --mount type=bind,source=./etc,target=/cowrie/cowrie-git/etc cowrie/cowrie
     $ telnet localhost 2223
 
 Environment variables take precedence over the configuration file.
