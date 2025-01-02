@@ -57,7 +57,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return
         self.bannerSent = True
         try:
-            issuefile = CowrieConfig.get("honeypot", "contents_path") + "/etc/issue.net"
+            issuefile = (
+                CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
+                + "/etc/issue.net"
+            )
             with open(issuefile, "rb") as issue:
                 data = issue.read()
         except (OSError, configparser.Error):
