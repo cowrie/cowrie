@@ -64,11 +64,22 @@ Attributes:
 cowrie.session.file_upload
 ==========================
 
-File uploaded to Cowrie, generaly through SFTP or SCP or another way.
+File uploaded to Cowrie, generally through SFTP or SCP or another way.
 
 Attributes:
 
     * filename
+    * outfile
+    * shasum
+
+cowrie.session.file_download
+==========================
+
+File downloaded to Cowrie
+
+Attributes:
+
+    * url
     * outfile
     * shasum
 
@@ -81,6 +92,14 @@ Attributes:
 
     * input
 
+cowrie.command.failed
+====================
+
+Command line input failed
+
+Attributes:
+
+    * input
 
 cowrie.virustotal.scanfile
 ==========================
@@ -115,7 +134,6 @@ Attributes:
 
     * version
 
-
 cowrie.client.kex
 =====================
 
@@ -136,6 +154,15 @@ Session closed
 Attributes:
 
     * duration
+
+cowrie.session.params
+=====================
+
+Session parameters
+
+Attributes:
+
+    * arch
 
 cowrie.log.closed
 =====================
