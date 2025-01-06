@@ -6,7 +6,7 @@ ALTER TABLE `session` RENAME `sessions` ;
 
 CREATE TABLE IF NOT EXISTS `sensors` (
   `id` int(11) NOT NULL auto_increment,
-  `ip` varchar(61) NOT NULL,
+  `ip` varchar(15) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ;
 
