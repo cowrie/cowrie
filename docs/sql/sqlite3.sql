@@ -24,7 +24,7 @@ CREATE INDEX input_index ON input(session, timestamp, realm);
 
 CREATE TABLE IF NOT EXISTS `sensors` (
   `id` INTEGER PRIMARY KEY,
-  `ip` varchar(15) NOT NULL
+  `ip` varchar(61) NOT NULL
 ) ;
 
 CREATE TABLE IF NOT EXISTS `sessions` (
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `starttime` datetime NOT NULL,
   `endtime` datetime default NULL,
   `sensor` int(4) NOT NULL,
-  `ip` varchar(15) NOT NULL default '',
+  `ip` varchar(61) NOT NULL default '',
   `termsize` varchar(7) default NULL,
   `client` int(4) default NULL
 ) ;
