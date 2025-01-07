@@ -162,7 +162,9 @@ reportPossiblyUnboundVariable = "information"
 reportUnsupportedDunderAll = "information"
 
 [tool.pytype]
-inputs = ['src']
+inputs = ["src"]
+jobs = "auto"
+keep-going = true
 
 [tool.ruff]
 line-length = 88
