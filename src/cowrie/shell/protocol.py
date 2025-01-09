@@ -168,11 +168,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if path is None:
             return None
 
-        with importlib.resources.path(data, "") as data_path:
-            binary_file_path = data_path / "txtcmds" / path.lstrip("/")
-            with open(binary_file_path, "rb") as file:
-                binary_data = file.read()
-                return self.txtcmd(binary_data)
+        try:
+            with importlib.resources.path(data, "") as data_path:
+                binary_file_path = data_path / "txtcmds" / path.lstrip("/")
+                with open(binary_file_path, "rb") as file:
+                    binary_data = file.read()
+                    return self.txtcmd(binary_data)
+        except FileNotFoundError:
+            pass
 
         if path in self.commands:
             return self.commands[path]
