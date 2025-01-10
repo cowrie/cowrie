@@ -289,7 +289,7 @@ class TelnetHandler:
                 passwordToSend = self.backendPassword
                 self.authDone = True
                 self.server.setTimeout(
-                    CowrieConfig.getint("honeypot", "interactive_timeout", fallback=300)
+                    CowrieConfig.getint("honeypot", "idle_timeout", fallback=300)
                 )
             else:
                 log.msg("Sending invalid auth to backend")

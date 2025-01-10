@@ -4,6 +4,7 @@ Telnet Transport and Authentication for the Honeypot
 
 @author: Olivier Bilodeau <obilodeau@gosecure.ca>
 """
+
 from __future__ import annotations
 
 
@@ -106,7 +107,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         # Remove the short timeout of the login prompt.
         self.transport.setTimeout(
-            CowrieConfig.getint("honeypot", "interactive_timeout", fallback=300)
+            CowrieConfig.getint("honeypot", "idle_timeout", fallback=300)
         )
 
         # replace myself with avatar protocol

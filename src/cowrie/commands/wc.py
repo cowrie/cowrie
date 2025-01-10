@@ -5,6 +5,7 @@
 """
 This module contains the wc commnad
 """
+
 from __future__ import annotations
 
 import getopt

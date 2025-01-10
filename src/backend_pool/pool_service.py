@@ -13,7 +13,7 @@ involve requesting and freeing VMs. All operations on shared data
 in the producer-consumer are guarded by a lock, since there may be
 concurrent requests. The lock protects the _guests_ list, which
 contains references for each VM backend (in our case libvirt/QEMU
-instances).  """
+instances)."""
 
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
