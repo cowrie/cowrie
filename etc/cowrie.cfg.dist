@@ -99,10 +99,10 @@ ttylog = true
 # (default: ttylog_path = %(state_path)s/tty)
 ttylog_path = ${honeypot:state_path}/tty
 
-# Interactive timeout determines when logged in sessions are
+# Idle timeout determines when logged in sessions are
 # terminated for being idle. In seconds.
 # (default: 180)
-interactive_timeout = 180
+idle_timeout = 180
 
 # Authentication Timeout
 # The server disconnects after this time if the user has not successfully logged in.

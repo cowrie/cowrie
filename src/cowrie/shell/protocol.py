@@ -94,8 +94,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         log.msg(eventid="cowrie.session.params", arch=self.user.server.arch)
 
-        timeout = CowrieConfig.getint("honeypot", "interactive_timeout", fallback=180)
-        self.setTimeout(timeout)
+        idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
+        self.setTimeout(idle_timeout)
 
         # Source IP of client in user visible reports (can be fake or real)
         self.clientIP = CowrieConfig.get(
@@ -316,6 +316,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         """
         Easier way to implement password input?
         """
+        self.resetTimeout()  # Reset the idle timeout
         if self.mode == "insert":
             self.lineBuffer.insert(self.lineBufferIndex, ch)
         else:
