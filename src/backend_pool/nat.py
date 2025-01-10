@@ -84,9 +84,7 @@ class NATService:
 
     def __init__(self):
         self.bindings: dict[int, Any] = {}
-        self.lock = (
-            Lock()
-        )  # we need to be thread-safe just in case, this is accessed from multiple clients
+        self.lock = Lock()  # we need to be thread-safe just in case, this is accessed from multiple clients
 
     def request_binding(
         self, guest_id: int, dst_ip: str, ssh_port: int, telnet_port: int

@@ -366,8 +366,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         if self.pool_interface:
             # free VM from pool (VM was used if we performed SSH authentication to the backend)
-            vm_dirty = self.sshParse.client.authDone if self.sshParse.client else False
-            self.pool_interface.send_vm_free(vm_dirty)
+            try:
+                vm_dirty = (
+                    self.sshParse.client.authDone if self.sshParse.client else False
+                )
+                self.pool_interface.send_vm_free(vm_dirty)
+            except AttributeError:
+                pass
 
             # close transport connection to pool
             self.pool_interface.transport.loseConnection()

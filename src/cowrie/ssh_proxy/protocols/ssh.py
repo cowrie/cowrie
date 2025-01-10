@@ -45,7 +45,11 @@ from cowrie.ssh_proxy.protocols import (
 )
 from cowrie.ssh_proxy.util import int_to_hex, string_to_hex
 
-PACKETLAYOUT = transport.messages | connection.messages | userauth.SSHUserAuthServer.protocolMessages
+PACKETLAYOUT = (
+    transport.messages
+    | connection.messages
+    | userauth.SSHUserAuthServer.protocolMessages
+)
 
 # PACKETLAYOUT = {
 #     1: "SSH_MSG_DISCONNECT",  # ['uint32', 'reason_code'], ['string', 'reason'], ['string', 'language_tag']
@@ -387,7 +391,6 @@ class SSH(base_protocol.BaseProtocol):
                 self.server.sendPacket(message_num, payload)
 
     def send_back(self, parent: str, message_num: int, payload: bytes) -> None:
-
         if parent == "[SERVER]":
             direction = "PROXY -> FRONTEND"
         else:
