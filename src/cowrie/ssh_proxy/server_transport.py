@@ -371,7 +371,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                     self.sshParse.client.authDone if self.sshParse.client else False
                 )
                 self.pool_interface.send_vm_free(vm_dirty)
-            except:
+            except AttributeError:
                 pass
 
             # close transport connection to pool
