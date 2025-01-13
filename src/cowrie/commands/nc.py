@@ -4,7 +4,6 @@ import re
 import socket
 import struct
 
-from twisted.internet.defer import inlineCallbacks
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
@@ -63,8 +62,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
           [-x proxy_address[:port]] [destination] [port]\n"""
         )
 
-    @inlineCallbacks
-    def start(self) -> None:
+    def start(self):
         try:
             optlist, args = getopt.getopt(
                 self.args, "46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:"

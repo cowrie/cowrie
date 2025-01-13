@@ -78,7 +78,7 @@ class Command_wget(HoneyPotCommand):
     started: float
 
     @inlineCallbacks
-    def start(self) -> None:
+    def start(self):
         url: str
         try:
             optlist, args = getopt.getopt(self.args, "cqO:P:", ["header="])
@@ -139,7 +139,7 @@ class Command_wget(HoneyPotCommand):
 
         if self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
-            path = os.path.dirname(self.outfile)  # type: ignore
+            path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
                     f"wget: {self.outfile}: Cannot open: No such file or directory\n"
