@@ -7,10 +7,11 @@ from twisted.names import client, dns
 from twisted.python import log
 
 BLOCKED_IPS = [
+    "0.0.0.0/8",  # Current IP range 0.0.0.0 - 10.255.255.255
     "10.0.0.0/8",  # Private IP range 10.0.0.0 - 10.255.255.255
     "172.16.0.0/12",  # Private IP range 172.16.0.0 - 172.31.255.255
     "192.168.0.0/16",  # Private IP range 192.168.0.0 - 192.168.255.255
-    "169.254.169.254",  # Cloud metadata IP (usually for AWS, GCP, etc.)
+    "169.254.0.0/16",  # Cloud metadata IP (usually for AWS, GCP, etc.)
     "100.100.100.200",  # Alibaba Cloud metadata IP
     "127.0.0.0/8",  # Loopback addresses (localhost)
     "0.0.0.0/8",  # This is a reserved IP range
