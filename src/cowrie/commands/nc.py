@@ -87,19 +87,6 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
             return
 
-        if re.match(r"^\d+$", host):
-            address = int(host)
-        elif re.match(r"^[\d\.]+$", host):
-            try:
-                address = dottedQuadToNum(host)
-            except OSError:
-                self.exit()
-                return
-        else:
-            # TODO: should do dns lookup
-            self.exit()
-            return
-
         allowed = yield communication_allowed(host)
         if not allowed:
             self.exit()
