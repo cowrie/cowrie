@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import getopt
-import ipaddress
 import os
 import time
 from typing import Any
 from urllib import parse
 
 from twisted.internet import error
+from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 from twisted.web.iweb import UNKNOWN_LENGTH
 
@@ -18,6 +18,7 @@ import treq
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -76,7 +77,8 @@ class Command_wget(HoneyPotCommand):
     host: str
     started: float
 
-    def start(self) -> None:
+    @inlineCallbacks
+    def start(self):
         url: str
         try:
             optlist, args = getopt.getopt(self.args, "cqO:P:", ["header="])
@@ -121,14 +123,12 @@ class Command_wget(HoneyPotCommand):
         else:
             pass
 
-        # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
-        try:
-            if ipaddress.ip_address(self.host).is_private:
-                self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
-                self.exit()
-                return None
-        except ValueError:
-            pass
+        allowed = yield communication_allowed(self.host)
+        if not allowed:
+            log.msg("Attempt to access blocked network address")
+            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return None
 
         self.url = url.encode("utf8")
 
@@ -139,7 +139,7 @@ class Command_wget(HoneyPotCommand):
 
         if self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
-            path = os.path.dirname(self.outfile)  # type: ignore
+            path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
                     f"wget: {self.outfile}: Cannot open: No such file or directory\n"

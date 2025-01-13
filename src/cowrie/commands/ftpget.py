@@ -10,6 +10,7 @@ from twisted.python import log
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -96,6 +97,10 @@ Download a file via FTP
             self.write(
                 f"ftpget: can't open '{self.local_file}': No such file or directory"
             )
+            self.exit()
+            return
+
+        if not communication_allowed(self.host):
             self.exit()
             return
 

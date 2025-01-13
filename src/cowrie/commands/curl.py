@@ -4,18 +4,20 @@
 from __future__ import annotations
 
 import getopt
-import ipaddress
 import os
 from urllib import parse
 
 from twisted.internet import error
+from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 
 import treq
 
 from cowrie.core.artifact import Artifact
+from cowrie.core.network import communication_allowed
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
+
 
 commands = {}
 
@@ -193,7 +195,8 @@ class Command_curl(HoneyPotCommand):
     host: str
     port: int
 
-    def start(self) -> None:
+    @inlineCallbacks
+    def start(self):
         try:
             optlist, args = getopt.getopt(
                 self.args, "sho:O", ["help", "manual", "silent"]
@@ -274,14 +277,12 @@ class Command_curl(HoneyPotCommand):
             self.exit()
         self.port = parsed.port or (443 if scheme == "https" else 80)
 
-        # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
-        try:
-            if ipaddress.ip_address(self.host).is_private:
-                self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
-                self.exit()
-                return None
-        except ValueError:
-            pass
+        allowed = yield communication_allowed(self.host)
+        if not allowed:
+            log.msg("Attempt to access blocked network address")
+            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return None
 
         self.artifact = Artifact("curl-download")
 

@@ -1,11 +1,12 @@
 from __future__ import annotations
 import getopt
-import ipaddress
 import re
 import socket
 import struct
 
+
 from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 long = int
@@ -61,7 +62,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
           [-x proxy_address[:port]] [destination] [port]\n"""
         )
 
-    def start(self) -> None:
+    def start(self):
         try:
             optlist, args = getopt.getopt(
                 self.args, "46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:"
@@ -84,20 +85,8 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
             return
 
-        if re.match(r"^\d+$", host):
-            address = int(host)
-        elif re.match(r"^[\d\.]+$", host):
-            try:
-                address = dottedQuadToNum(host)
-            except OSError:
-                self.exit()
-                return
-        else:
-            # TODO: should do dns lookup
-            self.exit()
-            return
-
-        if ipaddress.ip_address(address).is_private:
+        allowed = yield communication_allowed(host)
+        if not allowed:
             self.exit()
             return
 
