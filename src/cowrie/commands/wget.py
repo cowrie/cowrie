@@ -18,6 +18,7 @@ import treq
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -121,14 +122,10 @@ class Command_wget(HoneyPotCommand):
         else:
             pass
 
-        # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
-        try:
-            if ipaddress.ip_address(self.host).is_private:
-                self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
-                self.exit()
-                return None
-        except ValueError:
-            pass
+        if not communication_allowed(self.host):
+            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return None
 
         self.url = url.encode("utf8")
 

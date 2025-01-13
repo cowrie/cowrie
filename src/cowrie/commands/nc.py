@@ -6,6 +6,7 @@ import socket
 import struct
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 long = int
@@ -97,7 +98,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
             return
 
-        if ipaddress.ip_address(address).is_private:
+        if not communication_allowed(host):
             self.exit()
             return
 

@@ -14,6 +14,7 @@ from twisted.python import log
 import treq
 
 from cowrie.core.artifact import Artifact
+from cowrie.core.network import communication_allowed
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
@@ -274,14 +275,10 @@ class Command_curl(HoneyPotCommand):
             self.exit()
         self.port = parsed.port or (443 if scheme == "https" else 80)
 
-        # TODO: need to do full name resolution in case someon passes DNS name pointing to local address
-        try:
-            if ipaddress.ip_address(self.host).is_private:
-                self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
-                self.exit()
-                return None
-        except ValueError:
-            pass
+        if not communication_allowed(self.host):
+            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return None
 
         self.artifact = Artifact("curl-download")
 
