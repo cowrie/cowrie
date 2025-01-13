@@ -52,21 +52,22 @@ def resolve_cname(
 
     try:
         # Look up the DNS records for the address
-        result: Optional[list[dns.RRHeader]] = yield client.lookupAddress(address)
+        result = yield client.lookupAddress(address)
         if result:
+            headers: list[dns.RRHeader] = result[0]  # type: ignore
             # Iterate through the DNS records to find CNAME or A/AAAA record
-            for rr in result:
-                if isinstance(rr[0].payload, dns.Record_CNAME):
+            for rr in headers:
+                if isinstance(rr.payload, dns.Record_CNAME):
                     # It's a CNAME, resolve the target domain recursively
-                    resolved_ip = yield resolve_cname(rr[0].payload.name, visited)  # type: ignore
+                    resolved_ip = yield resolve_cname(rr.payload.name, visited)
                     if resolved_ip:
                         return resolved_ip
-                elif isinstance(rr[0].payload, dns.Record_A):
+                elif isinstance(rr.payload, dns.Record_A):
                     # We found an A record (IPv4 address), return it immediately
-                    return str(rr[0].payload.dottedQuad())  # type: ignore
-                elif isinstance(rr[0].payload, dns.Record_AAAA):
+                    return str(rr.payload.dottedQuad())
+                elif isinstance(rr.payload, dns.Record_AAAA):
                     # We found an AAAA record (IPv6 address), return it immediately
-                    return str(rr[0].payload.dottedQuad())  # type: ignore
+                    return str(rr.payload.dottedQuad())
     except Exception as e:
         log.err(e)
         return None  # In case of any failure, return None
