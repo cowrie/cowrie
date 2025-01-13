@@ -1,9 +1,10 @@
 from __future__ import annotations
 import getopt
-import ipaddress
 import re
 import socket
 import struct
+
+from twisted.internet.defer import inlineCallbacks
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
@@ -62,6 +63,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
           [-x proxy_address[:port]] [destination] [port]\n"""
         )
 
+    @inlineCallbacks
     def start(self) -> None:
         try:
             optlist, args = getopt.getopt(
@@ -98,7 +100,8 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
             return
 
-        if not communication_allowed(host):
+        allowed = yield communication_allowed(host)
+        if not allowed:
             self.exit()
             return
 

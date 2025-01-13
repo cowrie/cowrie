@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import getopt
-import ipaddress
 import os
 import time
 from typing import Any
 from urllib import parse
 
 from twisted.internet import error
+from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
 from twisted.web.iweb import UNKNOWN_LENGTH
 
@@ -77,6 +77,7 @@ class Command_wget(HoneyPotCommand):
     host: str
     started: float
 
+    @inlineCallbacks
     def start(self) -> None:
         url: str
         try:
@@ -122,7 +123,9 @@ class Command_wget(HoneyPotCommand):
         else:
             pass
 
-        if not communication_allowed(self.host):
+        allowed = yield communication_allowed(self.host)
+        if not allowed:
+            log.msg("Attempt to access blocked network address")
             self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
             self.exit()
             return None
