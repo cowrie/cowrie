@@ -1,8 +1,10 @@
-from twisted.internet.defer import inlineCallbacks, Deferred
-from twisted.names import client, dns
+from collections.abc import Generator
 import ipaddress
 from typing import Optional, Union
-from collections.abc import Generator
+
+from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.names import client, dns
+from twisted.python import log
 
 BLOCKED_IPS = [
     "10.0.0.0/8",  # Private IP range 10.0.0.0 - 10.255.255.255
@@ -39,6 +41,9 @@ def resolve_cname(
     Resolve a CNAME record recursively and return the final resolved IP address (either IPv4 or IPv6)
     or None if not resolvable. `visited` is a set that tracks the domains we've already resolved to prevent cycles.
     """
+
+    log.msg(f"resolve_cname({address})")
+
     # Prevent cyclic resolution (avoid infinite loops)
     if address in visited:
         return None
@@ -51,20 +56,22 @@ def resolve_cname(
         if result:
             # Iterate through the DNS records to find CNAME or A/AAAA record
             for rr in result:
-                if isinstance(rr.payload, dns.Record_CNAME):
+                if isinstance(rr[0].payload, dns.Record_CNAME):
                     # It's a CNAME, resolve the target domain recursively
-                    resolved_ip = yield resolve_cname(rr.payload.name, visited)  # type: ignore
+                    resolved_ip = yield resolve_cname(rr[0].payload.name, visited)  # type: ignore
                     if resolved_ip:
                         return resolved_ip
-                elif isinstance(rr.payload, dns.Record_A):
+                elif isinstance(rr[0].payload, dns.Record_A):
                     # We found an A record (IPv4 address), return it immediately
-                    return str(rr.payload.dottedQuad())  # type: ignore
-                elif isinstance(rr.payload, dns.Record_AAAA):
+                    return str(rr[0].payload.dottedQuad())  # type: ignore
+                elif isinstance(rr[0].payload, dns.Record_AAAA):
                     # We found an AAAA record (IPv6 address), return it immediately
-                    return str(rr.payload.dottedQuad())  # type: ignore
-    except Exception:
+                    return str(rr[0].payload.dottedQuad())  # type: ignore
+    except Exception as e:
+        log.err(e)
         return None  # In case of any failure, return None
 
+    log.msg("no valid a or cname record")
     return None  # No valid A or CNAME records were found
 
 
