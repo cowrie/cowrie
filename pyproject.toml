@@ -72,7 +72,7 @@ dev = [
 "pathspec==0.12.1",
 "pipdeptree==2.25.0",
 "pre-commit==4.1.0",
-"pylint==3.3.3",
+"pylint==3.3.4",
 "pyre-check==0.9.23",
 "pyright==1.1.392.post0",
 "pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<='3.9'",
