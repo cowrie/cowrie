@@ -1,6 +1,6 @@
 readthedocs-sphinx-search==0.3.2
 setuptools==75.8.0
-Sphinx==8.1.3
+Sphinx==8.2.1
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.0.2
 twisted==24.11.0
