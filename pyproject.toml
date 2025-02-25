@@ -67,7 +67,7 @@ dev = [
 "build==1.2.2.post1",
 "coverage==7.6.11",
 "mypy-extensions==1.0.0; platform_python_implementation=='CPython'",
-"mypy-zope==1.0.10; platform_python_implementation=='CPython'",
+"mypy-zope==1.0.11; platform_python_implementation=='CPython'",
 "mypy==1.13.0; platform_python_implementation=='CPython'",
 "pathspec==0.12.1",
 "pipdeptree==2.25.0",
