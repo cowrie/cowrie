@@ -46,7 +46,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.0
+        uses: sigstore/cosign-installer@v3.8.1
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
 
       - name: Set up QEMU
