@@ -62,7 +62,7 @@ Docker images are available on Docker Hub.
 
 * Build docker locally::
 
-    $ docker-compose -f docker/docker-compose.yml up -d
+    $ docker-compose -f docker/docker-compose.yml up
 
 For more detailed instructions on using Docker in Cowrie, check
 :ref:`Building Docker Images<Building Docker Images>`
