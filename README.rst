@@ -60,6 +60,10 @@ Docker images are available on Docker Hub.
     $ docker run -p 2222:2222 cowrie/cowrie:latest
     $ ssh -p 2222 root@localhost
 
+* Build docker locally::
+
+    $ docker-compose -f docker/docker-compose.yml up -d
+
 For more detailed instructions on using Docker in Cowrie, check
 :ref:`Building Docker Images<Building Docker Images>`
 
