@@ -30,7 +30,7 @@ classifiers=[
 dependencies = [
         "attrs==25.1.0",
         "bcrypt==4.2.1",
-        "cryptography==44.0.1",
+        "cryptography==44.0.2",
         "hyperlink==21.0.0",
         "idna==3.10",
         "packaging==24.2",
