@@ -128,7 +128,6 @@ class Output(cowrie.core.output.Output):
             # Update last activity time
             self.session_tracking[session_id]["last_time"] = timestamp
 
-            # Process specific event types to gather session data
             if event["eventid"] == "cowrie.session.file_download":
                 # Track file downloads in session data
                 download_info = {
@@ -139,12 +138,14 @@ class Output(cowrie.core.output.Output):
                 }
                 self.session_tracking[session_id]["downloads"].append(download_info)
 
-                # Handle file sighting/event creation with existing logic
-                file_sha_attrib = self.find_attribute("sha256", event["shasum"])
+                # Option 1: Create immediate malware events as in the old script
+                # This gives instant malware upload without waiting for session to end
+                file_sha_attrib = self.find_attribute("malware-sample", f"*|{event['shasum']}")
                 if file_sha_attrib:
                     if self.debug:
                         log.msg("MISP: File known, add sighting")
                     self.add_sighting(event, file_sha_attrib)
+                # Don't create immediate event - let the session event handle it
 
             elif event["eventid"] == "cowrie.session.file_upload":
                 # Track file uploads in session data
@@ -404,15 +405,22 @@ class Output(cowrie.core.output.Output):
                 # Add MITRE ATT&CK tagging
                 misp_event.add_tag("misp-galaxy:mitre-attack-pattern=\"Command and Scripting Interpreter - T1059\"")
 
-        # Add downloads as custom file objects
         if session_data.get("downloads"):
             for i, download in enumerate(session_data["downloads"]):
+                # Add the actual malware sample as a separate attribute to the event (not part of an object)
+                if "outfile" in download and download["shasum"] != "unknown":
+                    malware_attr = MISPAttribute()
+                    malware_attr.type = "malware-sample"
+                    malware_attr.value = os.path.basename(download["outfile"]) + "|" + download["shasum"]
+                    malware_attr.data = Path(download["outfile"])  # This uploads the actual binary
+                    malware_attr.expand = "binary"
+                    malware_attr.comment = f"File downloaded to Cowrie honeypot in session {session_id}"
+                    malware_attr.to_ids = True
+                    misp_event.add_attribute(**malware_attr)
+
+                # Still create the file object for structured data
                 file_object = MISPObject(name='cowrie-file-download', standalone=True)
-
-                if "shasum" in download and download["shasum"] != "unknown":
-                    file_object.add_attribute(type='sha256', value=download["shasum"],
-                                            object_relation='sha256')
-
+                
                 if "url" in download and download["url"] != "unknown":
                     file_object.add_attribute(type='url', value=download["url"],
                                             object_relation='url')
@@ -483,13 +491,12 @@ class Output(cowrie.core.output.Output):
                 if cmd.get('command', '').strip():  # Skip empty commands
                     summary_lines.append(f"{i+1}. {cmd.get('command', 'unknown')}")
 
-        # Add download details
         if session_data.get("downloads"):
             summary_lines.append("\nFiles downloaded:")
             for i, download in enumerate(session_data["downloads"]):
                 summary_lines.append(
                     f"{i+1}. URL: {download.get('url', 'unknown')}, " +
-                    f"SHA256: {download.get('shasum', 'unknown')}")
+                    f"Filename: {os.path.basename(download.get('outfile', 'unknown'))}")
 
         # Add upload details
         if session_data.get("uploads"):
