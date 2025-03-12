@@ -32,7 +32,6 @@ from __future__ import annotations
 from twisted.cred.portal import IRealm
 from twisted.python import log
 
-from cowrie.core.config import CowrieConfig
 
 
 class CowrieServer:
@@ -42,5 +41,5 @@ class CowrieServer:
     """
 
     def __init__(self, realm: IRealm) -> None:
-        log.msg(f"Initialized llm server")
+        log.msg("Initialized llm server")
         self.hostname = "llm"

@@ -3,12 +3,8 @@
 
 from __future__ import annotations
 
-import os
 import socket
-import sys
 import time
-import traceback
-from typing import ClassVar
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
@@ -111,6 +107,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         string = line.decode("utf8")
         log.msg(f"received input {string}")
+
+
+
+
         # TODO: ADD LLM STUFF HERE
 
     def uptime(self):
