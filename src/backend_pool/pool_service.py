@@ -425,7 +425,10 @@ class PoolService:
         """
         with self.guest_lock:
             usable_guests = self.get_guest_states([POOL_STATE_USING, POOL_STATE_USED])
-            return min(usable_guests, key=lambda guest: guest.connected)
+            if usable_guests:
+                return min(usable_guests, key=lambda guest: guest.connected)
+            else:
+                return None
 
     # Consumer methods to be called concurrently
     def request_vm(self, src_ip: str) -> tuple[int, str, str]:

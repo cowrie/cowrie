@@ -26,7 +26,7 @@ Actual Python packages are installed later.
 
 On Debian based systems (last verified on Debian Bookworm)::
 
-    $ sudo apt-get install git python3-venv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
+    $ sudo apt-get install git python3-pip python3-venv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
 
 Step 2: Create a user account
 *****************************
@@ -71,7 +71,7 @@ Next you need to create your virtual environment::
 
     $ pwd
     /home/cowrie/cowrie
-    $ python -m venv cowrie-env
+    $ python3 -m venv cowrie-env
     New python executable in ./cowrie/cowrie-env/bin/python
     Installing setuptools, pip, wheel...done.
 
@@ -179,16 +179,16 @@ If you want to use the proxy functionality combined with the automatic
 backend pool, you need to install some dependencies, namely QEMU, libvirt,
 and their Python interface. In Debian/Ubuntu::
 
-    $ sudo apt-get install qemu qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
+    $ sudo apt-get install qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
 
 Then install the Python API to run the backend pool::
 
-    (cowrie-env) $ python -m pip install libvirt-python==6.4.0
+    (cowrie-env) $ python -m pip install -r requirements-pool.txt
 
 To allow QEMU to use disk images and snapshots, set it to run with the user and group of the user running the pool
 (usually called 'cowrie' too::
 
-    $ sudo vim /etc/libvirt/qemu.conf
+    $ sudo vi /etc/libvirt/qemu.conf
 
 Search and set both `user` and `group` to `"cowrie"`, or the username/group you'll be running the backend pool with.
 
@@ -214,7 +214,6 @@ record the data other ways.  Supported output plugins include:
 * Cuckoo
 * ELK (Elastic) Stack
 * Graylog
-* Kippo-Graph
 * Splunk
 * SQL (MySQL, SQLite3, RethinkDB)
 
@@ -227,16 +226,10 @@ Troubleshooting
 CryptographyDeprecationWarning: Blowfish has been deprecated
 ============================================================
 
-The following warnings may occur, these can be safely ignored, and
-are not the reason your Cowrie installation is not working::
+The following warning may occur, this can be safely ignored, and
+is not the reason your Cowrie installation is not working::
 
-    CryptographyDeprecationWarning: Blowfish has been deprecated b"blowfish-cbc": (algorithms.Blowfish, 16, modes.CBC),
-    CryptographyDeprecationWarning: CAST5 has been deprecated b"cast128-cbc": (algorithms.CAST5, 16, modes.CBC),
-    CryptographyDeprecationWarning: Blowfish has been deprecated b"blowfish-ctr": (algorithms.Blowfish, 16, modes.CTR),
-    CryptographyDeprecationWarning: CAST5 has been deprecated b"cast128-ctr": (algorithms.CAST5, 16, modes.CTR),
-
-The algorithms are used in Cowrie to support old attackers that use
-these deprecated algorithms.
+    CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
 
 twistd: unknown command: cowrie
 ===============================
