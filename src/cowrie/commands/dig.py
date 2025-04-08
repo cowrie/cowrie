@@ -59,7 +59,8 @@ class Command_dig(HoneyPotCommand):
             answer = (
                 "help.\t\t585\tIN\tSOA\tns0.centralnic.net. hostmaster.centralnic.net. 1743974120 900 1800 6048000 3600\n\n"
             )
-            self.dns_text(domain, query_id, record_type, answer)
+            status = 'NXDOMAIN'
+            self.dns_text(domain, query_id, record_type, answer, status)
 
         else:
             # Fake lookup result map
@@ -69,11 +70,11 @@ class Command_dig(HoneyPotCommand):
                 "example.com": "93.184.216.34",
                 "attacker.com": "185.199.108.153",
             }
-
+            status = 'NOERROR'
             # Default fake IP for unknown domains
             ip = mock_dns.get(domain, self._get_random_ip())
             answer = f"{domain}.\t\t34\tIN\t{record_type}\t{ip}\n\n"
-            self.dns_text(domain, query_id, record_type, answer)
+            self.dns_text(domain, query_id, record_type, answer, status)
 
         self.exit()
         return
@@ -91,11 +92,11 @@ class Command_dig(HoneyPotCommand):
             Use "dig -h" (or "dig -h | more") for complete list of options\n"""
         )
 
-    def dns_text(self, domain, query_id, record_type, answer):
+    def dns_text(self, domain, query_id, record_type, answer, status):
         self.write(f"; <<>> DiG 9.10.6 <<>> {domain}\n")
         self.write(';; global options: +cmd\n')
         self.write(';; Got answer:\n')
-        self.write(f';; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: {query_id}\n')
+        self.write(f';; ->>HEADER<<- opcode: QUERY, status: {status}, id: {query_id}\n')
         self.write(';; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n')
 
         self.write(";; OPT PSEUDOSECTION:\n")
