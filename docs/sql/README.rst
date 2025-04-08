@@ -27,14 +27,14 @@ First create an empty database named ``cowrie``::
 
 Create a Cowrie user account for the database and grant all access privileges::
 
-    GRANT ALL ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
+    CREATE USER 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
 
 **Restricted Privileges:**
 
 Alternatively you can grant the Cowrie account with less privileges. The following command grants the account with the
 bare minimum required for the output logging to function::
 
-    GRANT INSERT, SELECT, UPDATE ON cowrie.* TO 'cowrie'@'localhost' IDENTIFIED BY 'PASSWORD HERE';
+    GRANT INSERT, SELECT, UPDATE ON cowrie.* TO 'cowrie'@'localhost';
 
 Apply the privilege settings and exit mysql::
 
