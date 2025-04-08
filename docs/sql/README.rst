@@ -1,11 +1,12 @@
-How to Send Cowrie output to a MySQL Database
+How to Send Cowrie output to a MySQL or PostgreSQL Database
 #############################################
 
-MySQL Output Plugin Prerequisites
+MySQL/PostgreSQL Output Plugin Prerequisites
 =================================
 
 * Working Cowrie installation
 * Working MySQL installation
+* Working PosterSQL installation
 
 MySQL Installation
 ==================
@@ -105,3 +106,93 @@ Example output::
     |  4 | a551c0a74e06 |       0 | root     | 123456      | 2017-11-27 23:16:00 |
     |  5 | a551c0a74e06 |       0 | root     | dreambox    | 2017-11-27 23:16:01 |
     ...
+
+PostgreSQL Installation
+==================
+
+On your Cowrie server, run::
+
+    $ su - cowrie
+    $ source cowrie/cowrie-env/bin/activate
+    $ pip install psycopg2
+
+PostgreSQL Configuration
+========================
+
+First create an empty database named ``cowrie`` as a PostgreSQL superuser (e.g., ``postgres``)::
+
+    $ psql -U postgres
+    CREATE DATABASE cowrie;
+
+Create a Cowrie user account for the database and grant access privileges::
+
+    CREATE USER cowrie WITH PASSWORD 'PASSWORD HERE';
+    GRANT CONNECT ON DATABASE cowrie TO cowrie;
+    \c cowrie
+    GRANT USAGE ON SCHEMA public TO cowrie;
+    GRANT INSERT, SELECT, UPDATE ON ALL TABLES IN SCHEMA public TO cowrie;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT INSERT, SELECT, UPDATE ON TABLES TO cowrie;
+    \q
+
+Log into the PostgreSQL database using the Cowrie account to verify proper access privileges and load the database schema provided in the ``docs/sql/`` directory::
+
+    $ cd ~/cowrie/docs/sql/
+    $ psql -U cowrie -d cowrie -f postgres.sql
+
+PostgreSQL Schema Update for Boolean Compatibility
+==================================================
+
+PostgreSQL does not support TINYINT. If you are porting the MySQL schema, update boolean-like fields to use PostgreSQL's ``BOOLEAN`` type or ``INTEGER`` with 0/1 semantics.
+
+Cowrie Configuration for PostgreSQL
+===================================
+
+Uncomment and update the following entries in ``etc/cowrie.cfg`` under the Output Plugins section::
+
+    [output_postgresql]
+    enabled = true
+    host = localhost
+    database = cowrie
+    username = cowrie
+    password = PASSWORD HERE
+    port = 5432
+    debug = false
+
+Restart Cowrie::
+
+    $ cd ~/cowrie/bin/
+    $ ./cowrie restart
+
+Verify That the PostgreSQL Output Engine Has Been Loaded
+========================================================
+
+Check the end of the ``~/cowrie/var/log/cowrie/cowrie.log`` to make sure that the PostgreSQL output engine has loaded successfully::
+
+    $ cd ~/cowrie/var/log/cowrie/
+    $ tail cowrie.log
+
+Example expected output::
+
+    2025-04-07T22:20:00-0000 [-] Loaded output engine: jsonlog
+    2025-04-07T22:20:00-0000 [-] Loaded output engine: postgresql
+    ...
+    2025-04-07T22:20:14-0000 [-] Ready to accept SSH connections
+
+Confirm That Events are Logged to the PostgreSQL Database
+==========================================================
+
+Wait for a new login attempt to occur. Use ``tail`` like before to quickly check if any activity has been recorded in the ``cowrie.log`` file.
+
+Once a login event has occurred, log back into the PostgreSQL database and verify that the event was recorded::
+
+    $ psql -U cowrie -d cowrie
+    SELECT * FROM auth;
+
+Example output::
+
+     id |     session      | success | username | password  |     timestamp
+    ----+------------------+---------+----------+-----------+---------------------
+      1 | 863c26257d88     | t       | root     | 12345     | 2025-04-07 22:23:14
+      2 | 863c26257d88     | f       | root     | dreambox  | 2025-04-07 22:23:15
+    ...
+
