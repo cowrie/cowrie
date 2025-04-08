@@ -4,8 +4,8 @@ dig command
 
 from __future__ import annotations
 
-import random
 import re
+import secrets
 from datetime import datetime
 
 from cowrie.shell.command import HoneyPotCommand
@@ -17,10 +17,10 @@ class Command_dig(HoneyPotCommand):
     @staticmethod
     def _get_random_ip() -> str:
         return (
-            f"{random.randint(1, 255)}."
-            f"{random.randint(0, 255)}."
-            f"{random.randint(0, 255)}."
-            f"{random.randint(1, 254)}"
+            f"{secrets.randbelow(255) + 1}."
+            f"{secrets.randbelow(256)}."
+            f"{secrets.randbelow(256)}."
+            f"{secrets.randbelow(253) + 1}"
         )
 
     @staticmethod
@@ -45,7 +45,8 @@ class Command_dig(HoneyPotCommand):
         domain = self.args[0]
 
         record_type = 'A'
-        query_id = random.randint(1000, 9999)
+        query_id = secrets.randbelow(9000) + 1000
+
         if domain == "-v":
             self.display_version()
 
@@ -109,10 +110,10 @@ class Command_dig(HoneyPotCommand):
 
         self.write(answer)
 
-        self.write(f";; Query time: {random.randint(5, 100)} msec\n")
+        self.write(f";; Query time: {secrets.randbelow(96) + 5} msec\n")
         self.write(";; SERVER: 2001:730:3ef2::10#53(2001:730:3ef2::10)\n")
         self.write(f';; WHEN: {datetime.now().strftime("%a %b %d %H:%M:%S UTC %Y")}\n')
-        self.write(f";; MSG SIZE  rcvd: {random.randint(50, 256)}\n")
+        self.write(f";; MSG SIZE  rcvd: {secrets.randbelow(207) + 50}\n")
 
     def display_help(self):
         self.write(
