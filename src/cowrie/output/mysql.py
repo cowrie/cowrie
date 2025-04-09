@@ -252,9 +252,7 @@ class Output(cowrie.core.output.Output):
 
         elif event["eventid"] == "cowrie.session.closed":
             self.simpleQuery(
-                "UPDATE `sessions` "
-                "SET `endtime` = FROM_UNIXTIME(%s) "
-                "WHERE `id` = %s",
+                "UPDATE `sessions` SET `endtime` = FROM_UNIXTIME(%s) WHERE `id` = %s",
                 (event["time"], event["session"]),
             )
 
