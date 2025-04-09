@@ -28,9 +28,9 @@ classifiers=[
 ]
 
 dependencies = [
-        "attrs==25.3.0",
-        "bcrypt==4.3.0",
-        "cryptography==44.0.2",
+        "attrs==25.1.0",
+        "bcrypt==4.2.1",
+        "cryptography==44.0.1",
         "hyperlink==21.0.0",
         "idna==3.10",
         "packaging==24.2",
@@ -65,30 +65,30 @@ slack = ["slackclient"]
 influxdb = ["influxdb"]
 dev = [
 "build==1.2.2.post1",
-"coverage==7.8.0",
+"coverage==7.6.11",
 "mypy-extensions==1.0.0; platform_python_implementation=='CPython'",
 "mypy-zope==1.0.11; platform_python_implementation=='CPython'",
 "mypy==1.13.0; platform_python_implementation=='CPython'",
 "pathspec==0.12.1",
-"pipdeptree==2.26.0",
+"pipdeptree==2.25.0",
 "pre-commit==4.1.0",
-"pylint==3.3.6",
+"pylint==3.3.4",
 "pyre-check==0.9.23",
-"pyright==1.1.396",
+"pyright==1.1.394",
 "pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<='3.9'",
 "pytype==2024.10.11; platform_python_implementation=='CPython' and python_version>='3.10'",
 "pyupgrade==3.19.1",
 "pyyaml==6.0.2",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.9.9",
-"setuptools==78.1.0",
+"ruff==0.9.7",
+"setuptools==75.8.0",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.0.2",
-"tox==4.24.2",
+"tox==4.24.1",
 "types-python-dateutil==2.9.0.20241206",
 "types-redis==4.6.0.20241004",
-"types-requests==2.32.0.20250301",
-"yamllint==1.37.0",
+"types-requests==2.32.0.20241016",
+"yamllint==1.35.1",
 ]
 
 [tool.isort]
