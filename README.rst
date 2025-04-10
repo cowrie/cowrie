@@ -68,7 +68,7 @@ Requirements
 
 Software required to run locally:
 
-* Python 3.9+
+* Python 3.10+
 * python-virtualenv
 
 For Python dependencies, see `requirements.txt <https://github.com/cowrie/cowrie/blob/master/requirements.txt>`_.
