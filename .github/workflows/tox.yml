@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14-dev", "pypy-3.10", "pypy-3.11"]
-    continue-on-error: ${{ matrix.python-version == "3.14-dev" }}
+    continue-on-error: ${{ matrix.python-version == '3.14-dev' }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
