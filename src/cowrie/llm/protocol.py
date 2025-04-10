@@ -108,10 +108,93 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         string = line.decode("utf8")
         log.msg(f"received input {string}")
 
+        # Log the command input for analysis
+        log.msg(eventid="cowrie.command.input", input=string, format="CMD: %(input)s")
 
+        # Use LLM client to get a response
+        self._process_command_with_llm(string)
 
+    def _process_command_with_llm(self, command: str) -> None:
+        """
+        Process a command by sending it to the LLM and writing the response
+        to the terminal.
+        """
+        from twisted.internet import defer
+        from cowrie.llm.llm import LLMClient
 
-        # TODO: ADD LLM STUFF HERE
+        # Initialize LLM client if needed
+        if not hasattr(self, "llm_client"):
+            try:
+                self.llm_client = LLMClient()
+                self.command_history = []
+                self.hostname_displayed = False
+            except Exception as e:
+                log.err(f"Error initializing LLM client: {e}")
+                self.terminal.write(
+                    b"Error connecting to backend system. Connection terminated.\n"
+                )
+                self.terminal.loseConnection()
+                return
+
+        # Add the command to our history
+        self.command_history.append(f"User: {command}")
+
+        # Construct an appropriate prompt for the LLM
+        # We'll include system context to help the LLM respond appropriately
+        system_context = (
+            "You are simulating a Linux server that has been accessed via SSH. "
+            "Respond as if you were the shell on this system. "
+            "Your response should be the output that would be displayed after executing the command. "
+            "Keep responses realistic, including appropriate error messages for invalid commands. "
+            "For file paths, maintain consistent state with previous commands. "
+            f"The hostname is '{self.hostname}' and username is '{self.user.username}'. "
+            f"The current working directory is '{self.cwd}'. "
+        )
+
+        prompt = [system_context] + self.command_history[
+            -10:
+        ]  # Keep only the last 10 commands for context
+
+        # Get response asynchronously
+        d = self.llm_client.get_response(prompt)
+        d.addCallback(self._handle_llm_response)
+        d.addErrback(self._handle_llm_error)
+
+    def _handle_llm_response(self, response: str) -> None:
+        """
+        Handle the response from the LLM and display it to the user.
+        """
+        if response:
+            # Add the response to our history
+            self.command_history.append(f"System: {response}")
+
+            # Write the response to the terminal
+            self.terminal.write(f"{response}\n".encode("utf-8"))
+        else:
+            self.terminal.write(b"Error: No response from backend system.\n")
+
+        # Show the prompt after response
+        self._show_prompt()
+
+    def _handle_llm_error(self, failure):
+        """
+        Handle errors from the LLM client.
+        """
+        log.err(f"Error getting response from LLM: {failure}")
+        self.terminal.write(b"Error communicating with backend system.\n")
+        self._show_prompt()
+
+    def _show_prompt(self):
+        """
+        Display the appropriate command prompt to the user.
+        """
+        # Build a realistic prompt
+        if self.user.username == "root":
+            prompt = f"{self.user.username}@{self.hostname}:{self.cwd}# "
+        else:
+            prompt = f"{self.user.username}@{self.hostname}:{self.cwd}$ "
+
+        self.terminal.write(prompt.encode("utf-8"))
 
     def uptime(self):
         """
@@ -150,7 +233,70 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     def connectionMade(self) -> None:
         HoneyPotBaseProtocol.connectionMade(self)
         self.setTimeout(60)
-        # TODO: ADD LLM CODE HERE TO WORK ON self.execcmd
+
+        # Process the exec command with LLM
+        self._process_exec_with_llm()
+
+    def _process_exec_with_llm(self) -> None:
+        """
+        Process an exec command with the LLM and return the result.
+        Used when commands are passed directly to SSH (e.g., ssh user@host 'command')
+        """
+        from twisted.internet import defer
+        from cowrie.llm.llm import LLMClient
+
+        # Initialize LLM client
+        try:
+            self.llm_client = LLMClient()
+            self.command_history = []
+        except Exception as e:
+            log.err(f"Error initializing LLM client for exec: {e}")
+            self.terminal.write(b"Error: Could not connect to backend system.\n")
+            ret = failure.Failure(error.ProcessTerminated(exitCode=1))
+            self.terminal.transport.processEnded(ret)
+            return
+
+        # Construct the prompt
+        system_context = (
+            "You are simulating a Linux server that has been accessed via SSH with a command to execute. "
+            "Respond with ONLY the output that would be displayed after executing this command. "
+            "Keep responses realistic, including appropriate error messages for invalid commands. "
+            f"The hostname is '{self.hostname}' and username is '{self.user.username}'. "
+            f"The current working directory is '{self.cwd}'. "
+            "The command to execute is: " + self.execcmd
+        )
+
+        prompt = [system_context]
+
+        # Get response asynchronously
+        d = self.llm_client.get_response(prompt)
+        d.addCallback(self._handle_exec_response)
+        d.addErrback(self._handle_exec_error)
+
+    def _handle_exec_response(self, response: str) -> None:
+        """
+        Handle the LLM response for an exec command.
+        """
+        if response:
+            # Write the response to the terminal
+            self.terminal.write(f"{response}\n".encode("utf-8"))
+        else:
+            self.terminal.write(b"Error: Command execution failed.\n")
+
+        # End the process
+        ret = failure.Failure(error.ProcessTerminated(exitCode=0))
+        self.terminal.transport.processEnded(ret)
+
+    def _handle_exec_error(self, failure):
+        """
+        Handle errors from the LLM client during exec.
+        """
+        log.err(f"Error getting response from LLM for exec: {failure}")
+        self.terminal.write(b"Error: Command execution failed.\n")
+
+        # End the process with error
+        ret = failure.Failure(error.ProcessTerminated(exitCode=1))
+        self.terminal.transport.processEnded(ret)
 
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID
@@ -165,7 +311,25 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
-        # self.cmdstack = [honeypot.HoneyPotShell(self)]
+        # Display welcome message and initial prompt
+        try:
+            from cowrie.llm.llm import LLMClient
+
+            self.llm_client = LLMClient()
+            self.command_history = []
+
+            # Show welcome banner (similar to what would be shown on a real system)
+            welcome = f"Welcome to {self.hostname}\n"
+            self.terminal.write(welcome.encode("utf-8"))
+
+            # Show the prompt
+            self._show_prompt()
+        except Exception as e:
+            log.err(f"Error in connectionMade: {e}")
+            self.terminal.write(
+                b"Error connecting to backend system. Connection terminated.\n"
+            )
+            self.terminal.loseConnection()
 
         self.keyHandlers.update(
             {

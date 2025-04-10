@@ -33,7 +33,6 @@ from twisted.cred.portal import IRealm
 from twisted.python import log
 
 
-
 class CowrieServer:
     """
     This class represents a 'virtual server' that can be shared between
@@ -41,5 +40,12 @@ class CowrieServer:
     """
 
     def __init__(self, realm: IRealm) -> None:
-        log.msg("Initialized llm server")
-        self.hostname = "llm"
+        from cowrie.core.config import CowrieConfig
+
+        log.msg("Initialized LLM backend server")
+        # Get hostname from config or use default
+        self.hostname = CowrieConfig.get("honeypot", "hostname", fallback="svr04")
+        log.msg(f"LLM backend server using hostname: {self.hostname}")
+
+        # We don't need a virtual filesystem for the LLM backend
+        # The LLM will simulate all filesystem interactions
