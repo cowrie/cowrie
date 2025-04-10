@@ -71,7 +71,7 @@ dev = [
 "mypy==1.13.0; platform_python_implementation=='CPython'",
 "pathspec==0.12.1",
 "pipdeptree==2.26.0",
-"pre-commit==4.1.0",
+"pre-commit==4.2.0",
 "pylint==3.3.6",
 "pyre-check==0.9.23",
 "pyright==1.1.396",
