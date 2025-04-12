@@ -26,7 +26,7 @@ class Output(cowrie.core.output.Output):
     def sendLogs(self, event):
         log_id = self.generate_random_log_id()
         # Initialize service client with default config file
-        current_time = datetime.datetime.utcnow()
+        current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         self.log_ocid = CowrieConfig.get("output_oraclecloud", "log_ocid")
         self.hostname = CowrieConfig.get("honeypot", "hostname")
 

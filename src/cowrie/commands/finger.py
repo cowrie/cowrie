@@ -12,7 +12,7 @@ FINGER_HELP = """Usage:"""
 
 class Command_finger(HoneyPotCommand):
     def call(self):
-        time = datetime.datetime.utcnow()
+        time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         user_data = []
         # Get all user data and convert to string
         all_users_byte = self.fs.file_contents("/etc/passwd")

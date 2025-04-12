@@ -961,7 +961,7 @@ commands["history"] = Command_history
 
 class Command_date(HoneyPotCommand):
     def call(self) -> None:
-        time = datetime.datetime.utcnow()
+        time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         self.write("{}\n".format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
 
 
