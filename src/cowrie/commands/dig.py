@@ -44,7 +44,7 @@ class Command_dig(HoneyPotCommand):
 
         domain = self.args[0]
 
-        record_type = 'A'
+        record_type = "A"
         query_id = secrets.randbelow(9000) + 1000
 
         if domain == "-v":
@@ -57,10 +57,8 @@ class Command_dig(HoneyPotCommand):
             self.invalid_arg(domain)
 
         elif not self._is_valid_domain(domain):
-            answer = (
-                "help.\t\t585\tIN\tSOA\tns0.centralnic.net. hostmaster.centralnic.net. 1743974120 900 1800 6048000 3600\n\n"
-            )
-            status = 'NXDOMAIN'
+            answer = "help.\t\t585\tIN\tSOA\tns0.centralnic.net. hostmaster.centralnic.net. 1743974120 900 1800 6048000 3600\n\n"
+            status = "NXDOMAIN"
             self.dns_text(domain, query_id, record_type, answer, status)
 
         else:
@@ -71,7 +69,7 @@ class Command_dig(HoneyPotCommand):
                 "example.com": "93.184.216.34",
                 "attacker.com": "185.199.108.153",
             }
-            status = 'NOERROR'
+            status = "NOERROR"
             # Default fake IP for unknown domains
             ip = mock_dns.get(domain, self._get_random_ip())
             answer = f"{domain}.\t\t34\tIN\t{record_type}\t{ip}\n\n"
@@ -95,10 +93,12 @@ class Command_dig(HoneyPotCommand):
 
     def dns_text(self, domain, query_id, record_type, answer, status):
         self.write(f"; <<>> DiG 9.10.6 <<>> {domain}\n")
-        self.write(';; global options: +cmd\n')
-        self.write(';; Got answer:\n')
-        self.write(f';; ->>HEADER<<- opcode: QUERY, status: {status}, id: {query_id}\n')
-        self.write(';; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n')
+        self.write(";; global options: +cmd\n")
+        self.write(";; Got answer:\n")
+        self.write(f";; ->>HEADER<<- opcode: QUERY, status: {status}, id: {query_id}\n")
+        self.write(
+            ";; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n"
+        )
 
         self.write(";; OPT PSEUDOSECTION:\n")
         self.write("; EDNS: version: 0, flags:; udp: 512\n")
@@ -112,7 +112,7 @@ class Command_dig(HoneyPotCommand):
 
         self.write(f";; Query time: {secrets.randbelow(96) + 5} msec\n")
         self.write(";; SERVER: 2001:730:3ef2::10#53(2001:730:3ef2::10)\n")
-        self.write(f';; WHEN: {datetime.now().strftime("%a %b %d %H:%M:%S UTC %Y")}\n')
+        self.write(f";; WHEN: {datetime.now().strftime('%a %b %d %H:%M:%S UTC %Y')}\n")
         self.write(f";; MSG SIZE  rcvd: {secrets.randbelow(207) + 50}\n")
 
     def display_help(self):
