@@ -25,6 +25,7 @@ __all__ = [
     "fs",
     "ftpget",
     "gcc",
+    "git",
     "groups",
     "ifconfig",
     "iptables",
