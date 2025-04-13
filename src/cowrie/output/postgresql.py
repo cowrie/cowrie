@@ -22,11 +22,11 @@ class ReconnectingPostgreSQLConnectionPool(adbapi.ConnectionPool):
         except OperationalError as e:
             # Typical disconnection or restart issues
             transient_errors = (
-                '08003',  # connection_does_not_exist
-                '08006',  # connection_failure
-                '40001',  # serialization_failure
-                '57014',  # query_canceled
-                '53300',  # too_many_connections
+                "08003",  # connection_does_not_exist
+                "08006",  # connection_failure
+                "40001",  # serialization_failure
+                "57014",  # query_canceled
+                "53300",  # too_many_connections
             )
             if e.pgcode not in transient_errors:
                 raise
@@ -69,7 +69,11 @@ class Output(cowrie.core.output.Output):
         log.msg(f"output_postgresql: PostgreSQL Error: {error.value.args!r}")
 
     def simpleQuery(self, sql, args):
-        if sql.startswith("INSERT") or sql.startswith("UPDATE") or sql.startswith("DELETE"):
+        if (
+            sql.startswith("INSERT")
+            or sql.startswith("UPDATE")
+            or sql.startswith("DELETE")
+        ):
             sql += " RETURNING id"
 
         if self.debug:

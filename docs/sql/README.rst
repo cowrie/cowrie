@@ -6,7 +6,7 @@ MySQL/PostgreSQL Output Plugin Prerequisites
 
 * Working Cowrie installation
 * Working MySQL installation
-* Working PosterSQL installation
+* Working PostgreSQL installation
 
 MySQL Installation
 ==================
@@ -147,7 +147,7 @@ PostgreSQL does not support TINYINT. If you are porting the MySQL schema, update
 Cowrie Configuration for PostgreSQL
 ===================================
 
-Uncomment and update the following entries in ``etc/cowrie.cfg`` under the Output Plugins section::
+Add the following entries in ``etc/cowrie.cfg`` under the Output Plugins section::
 
     [output_postgresql]
     enabled = true
