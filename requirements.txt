@@ -4,7 +4,7 @@ cryptography==44.0.2
 hyperlink==21.0.0
 idna==3.10
 packaging==24.2
-pyasn1_modules==0.4.1
+pyasn1_modules==0.4.2
 requests==2.32.3
 service_identity==24.2.0
 tftpy==0.8.5
