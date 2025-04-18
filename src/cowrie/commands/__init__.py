@@ -17,6 +17,7 @@ __all__ = [
     "crontab",
     "curl",
     "dd",
+    "dig",
     "du",
     "env",
     "ethtool",
