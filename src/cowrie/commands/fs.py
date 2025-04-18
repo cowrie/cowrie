@@ -33,21 +33,40 @@ class Command_grep(HoneyPotCommand):
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
-            self.grep_application(contents, match)
+            self.grep_application(contents, match, filename=filename)
         except Exception:
             self.errorWrite(f"grep: {filename}: No such file or directory\n")
 
-    def grep_application(self, contents: bytes, match: str) -> None:
+    def grep_application(self, contents: bytes, match: str, filename: str = None) -> None:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
         matches = re.compile(bmatch)
         contentsplit = contents.split(b"\n")
         for line in contentsplit:
             if matches.search(line):
-                self.writeBytes(line + b"\n")
+                if filename:
+                    output = f"{filename}:".encode("utf8") + line + b"\n"
+                else:
+                    output = line + b"\n"
+                self.writeBytes(output)
+
+    def grep_recursive(self, path: str, match: str) -> None:
+        try:
+            if not self.fs.isdir(path):
+                return
+
+            entries = self.fs.listdir(path)
+            for entry in entries:
+                full_path = os.path.join(path, entry)
+                if self.fs.isdir(full_path):
+                    self.grep_recursive(full_path, match)
+                else:
+                    self.grep_get_contents(full_path, match)
+        except Exception as e:
+            self.errorWrite(f"grep: cannot recurse into {path}: {str(e)}\n")
 
     def help(self) -> None:
         self.writeBytes(
-            b"usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
+            b"usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZr] [-A num] [-B num] [-C[num]]\n"
         )
         self.writeBytes(
             b"\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n"
@@ -63,32 +82,55 @@ class Command_grep(HoneyPotCommand):
             self.exit()
             return
 
-        self.n = 10
-        if self.args[0] == ">":
-            pass
-        else:
-            try:
-                optlist, args = getopt.getopt(
-                    self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:"
-                )
-            except getopt.GetoptError as err:
-                self.errorWrite(f"grep: invalid option -- {err.opt}\n")
+        recursive = False
+
+        try:
+            optlist, args = getopt.getopt(
+                self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZrA:B:C:e:f:r:"
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(f"grep: invalid option -- {err.opt}\n")
+            self.help()
+            self.exit()
+            return
+
+        for opt, _arg in optlist:
+            if opt == "-h":
                 self.help()
                 self.exit()
                 return
+            elif opt == "-r":
+                recursive = True
 
-            for opt, _arg in optlist:
-                if opt == "-h":
-                    self.help()
+        if len(args) < 1:
+            self.errorWrite("grep: missing pattern\n")
+            self.exit()
+            return
 
-        if not self.input_data:
-            files = self.check_arguments("grep", args[1:])
-            for pname in files:
-                self.grep_get_contents(pname, args[0])
+        self.match = args[0]
+
+        if self.input_data:
+            self.grep_application(self.input_data, self.match)
+            self.exit()
+            return
+
+        self.files = args[1:]
+        if not self.files:
+            self.interaction = True
+            return
         else:
-            self.grep_application(self.input_data, args[0])
-
-        self.exit()
+            if recursive:
+                files = [self.fs.resolve_path(arg, self.protocol.cwd) for arg in args[1:]]
+                for path in files:
+                    if self.fs.isdir(path):
+                        self.grep_recursive(path, self.match)
+                    else:
+                        self.grep_get_contents(path, self.match)
+            else:
+                files = self.check_arguments("grep", args[1:])
+                for path in files:
+                    self.grep_get_contents(path, self.match)
+            self.exit()
 
     def lineReceived(self, line: str) -> None:
         log.msg(
@@ -97,16 +139,24 @@ class Command_grep(HoneyPotCommand):
             input=line,
             format="INPUT (%(realm)s): %(input)s",
         )
+        if hasattr(self, 'interaction') and self.interaction:
+            bline = line.encode('utf8')
+            bmatch = os.path.basename(self.match).replace('"', "").encode("utf8")
+            matches = re.compile(bmatch)
+            if matches.search(bline):
+                self.writeBytes(bline + b"\n")
 
     def handle_CTRL_D(self) -> None:
-        self.exit()
+        if hasattr(self, 'interactive') and self.interactive:
+            self.exit()
+        else:
+            self.exit()
 
 
 commands["/bin/grep"] = Command_grep
 commands["grep"] = Command_grep
 commands["/bin/egrep"] = Command_grep
 commands["/bin/fgrep"] = Command_grep
-
 
 class Command_tail(HoneyPotCommand):
     """
