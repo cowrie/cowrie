@@ -876,6 +876,15 @@ sourcetype = cowrie
 source = cowrie
 
 
+# Prometheus logging module
+#
+# Prometheus requires an extra Python module: pip install prometheus_client
+#
+[output_prometheus]
+enabled = false
+port = 9000
+debug = false
+
 # HPFeeds3
 # Python3 implementation of HPFeeds
 [output_hpfeeds3]
