@@ -19,7 +19,7 @@ All containers will join a user-defined Docker network so they can find one anot
 
 
 2. Run Prometheus
-============================
+==================
 
 Create a volume for Prometheus’s TSDB::
 
@@ -39,7 +39,7 @@ Or from ~/cowrie call docker run with updated path::
     -v ./docs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro \
 
 3. Launch Prometheus on `cowrie-net`:
-============================
+======================================
 ::
 
     docker run -d \
@@ -55,7 +55,7 @@ Verify it’s running at http://localhost:9090/targets
 
 
 3. Run Cowrie with Prometheus metrics
-============================
+======================================
 
 ::
 
@@ -70,7 +70,7 @@ Verify it’s running at http://localhost:9090/targets
 ---
 
 4. Run node-exporter (host metrics)
-============================
+======================================
 
 ::
 
@@ -86,7 +86,7 @@ Verify it’s running at http://localhost:9090/targets
 ---
 
 5. Run cAdvisor (container metrics)
-============================
+======================================
 
 ::
 
