@@ -161,7 +161,7 @@ class Command_grep(HoneyPotCommand):
             input=line,
             format="INPUT (%(realm)s): %(input)s",
         )
-        if self.interaction:
+        if self.interactive:
             bline = line.encode('utf8')
             bmatch = os.path.basename(self.match).replace('"', "").encode("utf8")
             matches = re.compile(bmatch)
