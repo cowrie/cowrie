@@ -1,0 +1,21 @@
+---
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: 'cowrie'
+    static_configs:
+      - targets: [
+        'cowrie:9000',
+      ]
+  - job_name: 'scrapers'
+    static_configs:
+      - targets: [
+        'node-exporter:9100',
+        'cadvisor:8080'
+      ]
+    metric_relabel_configs:
+      - source_labels: [ cowrie ]
+        regex: '^cowrie$'
+        action: keep
+      - action: drop
+        regex: '.*'
