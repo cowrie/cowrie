@@ -41,7 +41,6 @@ class Output(cowrie.core.output.Output):
             self.col_auth = self.mongo_db["auth"]
             self.col_input = self.mongo_db["input"]
             self.col_downloads = self.mongo_db["downloads"]
-            self.col_input = self.mongo_db["input"]
             self.col_clients = self.mongo_db["clients"]
             self.col_ttylog = self.mongo_db["ttylog"]
             self.col_keyfingerprints = self.mongo_db["keyfingerprints"]
