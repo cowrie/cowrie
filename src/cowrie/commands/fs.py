@@ -98,6 +98,7 @@ class Command_grep(HoneyPotCommand):
 
         self.match = self.remaining_args[0]
         self.files = self.remaining_args[1:]
+        self.interactive = False
 
         if self.input_data:
             self.grep_application(self.input_data, self.match)
@@ -114,7 +115,7 @@ class Command_grep(HoneyPotCommand):
             self.handle_files()
 
         self.exit()
-    
+
     def show_help_and_exit(self) -> None:
         self.help()
         self.exit()
@@ -160,7 +161,7 @@ class Command_grep(HoneyPotCommand):
             input=line,
             format="INPUT (%(realm)s): %(input)s",
         )
-        if hasattr(self, 'interaction') and self.interaction:
+        if self.interaction:
             bline = line.encode('utf8')
             bmatch = os.path.basename(self.match).replace('"', "").encode("utf8")
             matches = re.compile(bmatch)
@@ -168,10 +169,7 @@ class Command_grep(HoneyPotCommand):
                 self.writeBytes(bline + b"\n")
 
     def handle_CTRL_D(self) -> None:
-        if hasattr(self, 'interactive') and self.interactive:
-            self.exit()
-        else:
-            self.exit()
+        self.exit()
 
 
 commands["/bin/grep"] = Command_grep
