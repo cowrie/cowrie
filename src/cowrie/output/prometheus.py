@@ -95,7 +95,7 @@ class Output(cowrie.core.output.Output):
         self._srcip_seen_5m: set[str] = set()
         self._srcip_seen_60m: set[str] = set()
 
-        # Periodic callbacks for event‑loop lag & unique‑IP gauges
+        # Periodic callbacks for event-loop lag & unique-IP gauges
         task.LoopingCall(self._report_loop_lag).start(5, now=False)
         task.LoopingCall(self._flush_unique_ip_gauges, 300, "5m").start(300, now=False)
         task.LoopingCall(self._flush_unique_ip_gauges, 3600, "1h").start(
@@ -135,7 +135,7 @@ class Output(cowrie.core.output.Output):
 
         except Exception as e:
             if self.debug:
-                log.msg(f"[Prometheus] Exception: {str(e)}")
+                log.msg(f"[Prometheus] Exception: {e!s}")
             py_exceptions.labels(exception=e.__class__.__name__).inc()
 
     def _on_session_connect(self, ev: dict) -> None:
