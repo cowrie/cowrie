@@ -11,9 +11,9 @@ This guide will show you how to stand up a complete monitoring stack in Docker:
 All containers will join a user-defined Docker network so they can find one another by name.
 
 1. Create the Docker network
-============================
+=============================
 
-::
+.. code-block:: bash
 
     docker network create cowrie-net
 
@@ -21,26 +21,33 @@ All containers will join a user-defined Docker network so they can find one anot
 2. Run Prometheus
 ==================
 
-Create a volume for Prometheus’s TSDB::
+Create a volume for Prometheus’s TSDB
+
+.. code-block:: bash
 
     docker volume create prometheus-data
 
 
 For configuration file you can
 
-Copy the example config into `/etc/prometheus` on your host::
+Copy the example config into `/etc/prometheus` on your host
+
+.. code-block:: bash
 
     sudo mkdir -p /etc/prometheus
     sudo cp ./docs/prometheus/prometheus.yaml /etc/prometheus/prometheus.yaml
 
 
-Or from ~/cowrie call docker run with updated path::
+Or from ~/cowrie call docker run with updated path
+
+.. code-block:: bash
 
     -v ./docs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro \
 
-3. Launch Prometheus on `cowrie-net`:
+3. Launch Prometheus on `cowrie-net`
 ======================================
-::
+
+.. code-block:: bash
 
     docker run -d \
       --name prometheus \
@@ -57,7 +64,7 @@ Verify it’s running at http://localhost:9090/targets
 3. Run Cowrie with Prometheus metrics
 ======================================
 
-::
+.. code-block:: bash
 
     docker run
       --name cowrie \
@@ -72,7 +79,7 @@ Verify it’s running at http://localhost:9090/targets
 4. Run node-exporter (host metrics)
 ======================================
 
-::
+.. code-block:: bash
 
     docker run -d \
       --name node-exporter \
@@ -88,7 +95,7 @@ Verify it’s running at http://localhost:9090/targets
 5. Run cAdvisor (container metrics)
 ======================================
 
-::
+.. code-block:: bash
 
     docker run -d \
       --name cadvisor \
@@ -114,7 +121,7 @@ Add the following entries in ``etc/cowrie.cfg`` under the Output Plugins section
 
 Ensure your `prometheus.yaml` has:
 
-::
+.. code-block:: yaml
 
     global:
       scrape_interval: 5s
