@@ -29,6 +29,7 @@ class Command_grep(HoneyPotCommand):
     """
     grep command
     """
+    MAX_RECURSION_DEPTH = 10
 
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
@@ -49,16 +50,22 @@ class Command_grep(HoneyPotCommand):
                     output = line + b"\n"
                 self.writeBytes(output)
 
-    def grep_recursive(self, path: str, match: str) -> None:
+    def grep_recursive(self, path: str, match: str, depth: int = 0) -> None:
+        if depth > self.MAX_RECURSION_DEPTH:
+            self.errorWrite(f"grep: maximum recursion depth reached in {path}\n")
+            return
+
         try:
             if not self.fs.isdir(path):
                 return
 
             entries = self.fs.listdir(path)
             for entry in entries:
+                if entry in (".", ".."):
+                    continue
                 full_path = os.path.join(path, entry)
                 if self.fs.isdir(full_path):
-                    self.grep_recursive(full_path, match)
+                    self.grep_recursive(full_path, match, depth + 1)
                 else:
                     self.grep_get_contents(full_path, match)
         except Exception as e:
@@ -78,59 +85,73 @@ class Command_grep(HoneyPotCommand):
 
     def start(self) -> None:
         if not self.args:
-            self.help()
-            self.exit()
+            self.show_help_and_exit()
             return
 
-        recursive = False
-
-        try:
-            optlist, args = getopt.getopt(
-                self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZrA:B:C:e:f:r:"
-            )
-        except getopt.GetoptError as err:
-            self.errorWrite(f"grep: invalid option -- {err.opt}\n")
-            self.help()
-            self.exit()
+        if not self.parse_options():
             return
 
-        for opt, _arg in optlist:
-            if opt == "-h":
-                self.help()
-                self.exit()
-                return
-            elif opt == "-r":
-                recursive = True
-
-        if len(args) < 1:
+        if len(self.remaining_args) < 1:
             self.errorWrite("grep: missing pattern\n")
             self.exit()
             return
 
-        self.match = args[0]
+        self.match = self.remaining_args[0]
+        self.files = self.remaining_args[1:]
 
         if self.input_data:
             self.grep_application(self.input_data, self.match)
             self.exit()
             return
 
-        self.files = args[1:]
         if not self.files:
-            self.interaction = True
+            self.interactive = True
             return
+
+        if self.recursive:
+            self.handle_recursive()
         else:
-            if recursive:
-                files = [self.fs.resolve_path(arg, self.protocol.cwd) for arg in args[1:]]
-                for path in files:
-                    if self.fs.isdir(path):
-                        self.grep_recursive(path, self.match)
-                    else:
-                        self.grep_get_contents(path, self.match)
+            self.handle_files()
+
+        self.exit()
+    
+    def show_help_and_exit(self) -> None:
+        self.help()
+        self.exit()
+
+    def parse_options(self) -> bool:
+        try:
+            optlist, args = getopt.getopt(
+                self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZrA:B:C:e:f:r:"
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(f"grep: invalid option -- {err.opt}\n")
+            self.show_help_and_exit()
+            return False
+
+        self.recursive = False
+        for opt, _ in optlist:
+            if opt == "-h":
+                self.show_help_and_exit()
+                return False
+            elif opt == "-r":
+                self.recursive = True
+
+        self.remaining_args = args
+        return True
+
+    def handle_recursive(self) -> None:
+        resolved_files = [self.fs.resolve_path(arg, self.protocol.cwd) for arg in self.files]
+        for path in resolved_files:
+            if self.fs.isdir(path):
+                self.grep_recursive(path, self.match)
             else:
-                files = self.check_arguments("grep", args[1:])
-                for path in files:
-                    self.grep_get_contents(path, self.match)
-            self.exit()
+                self.grep_get_contents(path, self.match)
+
+    def handle_files(self) -> None:
+        resolved_files = self.check_arguments("grep", self.files)
+        for path in resolved_files:
+            self.grep_get_contents(path, self.match)
 
     def lineReceived(self, line: str) -> None:
         log.msg(
