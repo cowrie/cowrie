@@ -1,8 +1,8 @@
 How to Send Cowrie output to a MySQL or PostgreSQL Database
-#############################################
+###########################################################
 
 MySQL/PostgreSQL Output Plugin Prerequisites
-=================================
+============================================
 
 * Working Cowrie installation
 * Working MySQL installation
@@ -108,7 +108,7 @@ Example output::
     ...
 
 PostgreSQL Installation
-==================
+=======================
 
 On your Cowrie server, run::
 
