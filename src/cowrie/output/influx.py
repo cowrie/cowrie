@@ -213,6 +213,5 @@ class Output(cowrie.core.output.Output):
 
         if not result:
             log.msg(
-                f"output_influx: error when writing '{eventid}' measurement"
-                "in the db."
+                f"output_influx: error when writing '{eventid}' measurement in the db."
             )
