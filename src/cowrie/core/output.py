@@ -182,8 +182,7 @@ class Output(metaclass=abc.ABCMeta):
         ev: dict[str, any] = convert(event)  # type: ignore
         ev["sensor"] = self.sensor
 
-        if "isError" in ev:
-            del ev["isError"]
+        ev.pop("isError", None)
 
         # Add ISO timestamp and sensor data
         if "time" not in ev:

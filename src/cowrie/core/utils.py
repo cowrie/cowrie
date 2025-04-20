@@ -17,7 +17,7 @@ def durationHuman(duration: float) -> str:
     """
     Turn number of seconds into human readable string
     """
-    seconds: int = int(round(duration))
+    seconds: int = round(duration)
     minutes: int
     minutes, seconds = divmod(seconds, 60)
     hours: int
