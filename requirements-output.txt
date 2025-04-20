@@ -21,6 +21,9 @@ mysql-connector-python==9.2.0
 # mongodb
 pymongo==4.12.0
 
+# postgresql
+psycopg2==2.9.10
+
 # rethinkdblog
 rethinkdb==2.4.10.post1
 
