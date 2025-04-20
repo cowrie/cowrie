@@ -31,7 +31,7 @@ Create a Cowrie user account for the database and grant all access privileges::
 
 **Restricted Privileges:**
 
-Alternatively you can grant the Cowrie account with less privileges. The following command grants the account with the
+Alternatively you can grant the Cowrie account fewer privileges. The following command grants the account with the
 bare minimum required for the output logging to function::
 
     GRANT INSERT, SELECT, UPDATE ON cowrie.* TO 'cowrie'@'localhost';
@@ -52,7 +52,7 @@ Next, log into the MySQL database using the Cowrie account to verify proper acce
 Cowrie Configuration for MySQL
 ==============================
 
-Uncomment and update the following entries to ``etc/cowrie.cfg`` under the Output Plugins section::
+Add the following entries to ``etc/cowrie.cfg`` under the Output Plugins section::
 
     [output_mysql]
     host = localhost
@@ -68,10 +68,10 @@ Restart Cowrie::
     $ cd ~/cowrie/bin/
     $ ./cowrie restart
 
-Verify That the MySQL Output Engine Has Been Loaded
+Verify that the MySQL Output Engine Has Been Loaded
 
-Check the end of the ~/cowrie/var/log/cowrie/cowrie.log to make
-sure that the MySQL output engine has loaded successfully::
+Check the end of the ``var/log/cowrie/cowrie.log`` to make
+sure the MySQL output engine loaded successfully::
 
     $ cd ~/cowrie/var/log/cowrie/
     $ tail cowrie.log
@@ -83,7 +83,7 @@ Example expected output::
     ...
     2017-11-27T22:19:58-0600 [-] Ready to accept SSH connections
 
-## Confirm That Events are Logged to the MySQL Database
+## Confirm that events are logged to the MySQL Database
 
 Wait for a new login attempt to occur. Use tail like before to quickly check if any activity has
 been recorded in the cowrie.log file.
@@ -166,7 +166,7 @@ Restart Cowrie::
 Verify That the PostgreSQL Output Engine Has Been Loaded
 ========================================================
 
-Check the end of the ``~/cowrie/var/log/cowrie/cowrie.log`` to make sure that the PostgreSQL output engine has loaded successfully::
+Check the end of the ``var/log/cowrie/cowrie.log`` to make sure that the PostgreSQL output engine has loaded successfully::
 
     $ cd ~/cowrie/var/log/cowrie/
     $ tail cowrie.log
