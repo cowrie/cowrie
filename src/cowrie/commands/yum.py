@@ -257,7 +257,7 @@ Options:
         self.write(f"Install  {len(self.packages)} Packages\n\n")
 
         self.write(f"Total download size: {totalsize} k\n")
-        self.write(f"Installed size: {0.0032*totalsize:.1f} M\n")
+        self.write(f"Installed size: {0.0032 * totalsize:.1f} M\n")
         self.write("Is this ok [y/d/N]: ")
         # Assume 'yes'
 
