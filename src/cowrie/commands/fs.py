@@ -44,7 +44,7 @@ class Command_grep(HoneyPotCommand):
         contentsplit = contents.split(b"\n")
         for line in contentsplit:
             if matches.search(line):
-                if filename:
+                if self.recursive and filename:
                     output = f"{filename}:".encode("utf8") + line + b"\n"
                 else:
                     output = line + b"\n"
