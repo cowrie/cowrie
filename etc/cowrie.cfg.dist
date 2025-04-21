@@ -830,6 +830,23 @@ password = secret
 port = 3306
 debug = false
 
+
+# PostgresSQL logging module
+# Database structure for this module is supplied in docs/sql/postgres.sql
+#
+# PostgresSQL logging requires extra software: sudo apt-get install libpq-dev
+# PostgresSQL logging requires an extra Python module: pip install psycopg2
+#
+[output_postgresql]
+enabled = false
+host = localhost
+database = cowrie
+username = cowrie
+password = secret
+port = 5432
+debug = false
+
+
 # Rethinkdb output module
 # Rethinkdb output module requires extra Python module: pip install rethinkdb
 
@@ -874,6 +891,16 @@ token = 6A0EA6C6-8006-4E39-FC44-C35FF6E561A8
 index = cowrie
 sourcetype = cowrie
 source = cowrie
+
+
+# Prometheus logging module
+#
+# Prometheus requires an extra Python module: pip install prometheus_client
+#
+[output_prometheus]
+enabled = false
+port = 9000
+debug = false
 
 
 # HPFeeds3

@@ -126,7 +126,7 @@ class Command_tail(HoneyPotCommand):
 
     def tail_application(self, contents: bytes) -> None:
         contentsplit = contents.split(b"\n")
-        lines = int(len(contentsplit))
+        lines = len(contentsplit)
         if lines < self.n:
             self.n = lines - 1
         i = 0
