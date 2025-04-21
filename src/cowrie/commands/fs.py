@@ -12,6 +12,7 @@ import copy
 import getopt
 import os.path
 import re
+from typing import Optional
 
 from twisted.python import log
 
@@ -38,14 +39,14 @@ class Command_grep(HoneyPotCommand):
         except Exception:
             self.errorWrite(f"grep: {filename}: No such file or directory\n")
 
-    def grep_application(self, contents: bytes, match: str, filename: str = None) -> None:
+    def grep_application(self, contents: bytes, match: str, filename: Optional[str] = None) -> None:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
         matches = re.compile(bmatch)
         contentsplit = contents.split(b"\n")
         for line in contentsplit:
             if matches.search(line):
                 if self.recursive and filename:
-                    output = f"{filename}:".encode("utf8") + line + b"\n"
+                    output = f"{filename}:".encode() + line + b"\n"
                 else:
                     output = line + b"\n"
                 self.writeBytes(output)
@@ -69,7 +70,7 @@ class Command_grep(HoneyPotCommand):
                 else:
                     self.grep_get_contents(full_path, match)
         except Exception as e:
-            self.errorWrite(f"grep: cannot recurse into {path}: {str(e)}\n")
+            self.errorWrite(f"grep: cannot recurse into {path}: {e}\n")
 
     def help(self) -> None:
         self.writeBytes(
@@ -162,7 +163,7 @@ class Command_grep(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
         if self.interactive:
-            bline = line.encode('utf8')
+            bline = line.encode("utf8")
             bmatch = os.path.basename(self.match).replace('"', "").encode("utf8")
             matches = re.compile(bmatch)
             if matches.search(bline):
