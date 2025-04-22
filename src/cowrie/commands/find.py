@@ -108,5 +108,6 @@ class Command_find(HoneyPotCommand):
 
         return True
 
+
 commands["find"] = Command_find
 commands["/bin/find"] = Command_find
