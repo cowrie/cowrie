@@ -1,5 +1,5 @@
 readthedocs-sphinx-search==0.3.2
-setuptools==78.1.0
+setuptools==79.0.0
 Sphinx==8.2.3
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.0.2
