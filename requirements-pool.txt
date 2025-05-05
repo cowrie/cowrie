@@ -1,1 +1,1 @@
-libvirt-python==11.2.0
+libvirt-python==11.3.0
