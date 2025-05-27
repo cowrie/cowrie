@@ -55,4 +55,4 @@ redis==6.1.0
 pika==1.3.2
 
 # prometheus
-prometheus_client==0.21.1
+prometheus_client==0.22.0
