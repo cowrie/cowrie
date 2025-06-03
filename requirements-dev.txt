@@ -17,7 +17,7 @@ pytype==2024.10.11; platform_python_implementation=='CPython' and python_version
 pyupgrade==3.20.0
 pyyaml==6.0.2
 readthedocs-sphinx-search==0.3.2
-ruff==0.11.10
+ruff==0.11.12
 setuptools==80.8.0
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.0.2
