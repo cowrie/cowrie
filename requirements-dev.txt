@@ -23,7 +23,7 @@ sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.0.2
 tox==4.26.0
 twine==6.1.0
-types-python-dateutil==2.9.0.20241206
+types-python-dateutil==2.9.0.20250516
 types-redis==4.6.0.20241004
 types-requests==2.32.0.20250515
 yamllint==1.37.1
