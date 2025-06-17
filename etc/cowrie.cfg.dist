@@ -1152,3 +1152,10 @@ password = guest
 vhost = /
 exchange = cowrie
 exchange_type = topic
+
+[output_wazuh]
+auth_url = 
+event_url = 
+username = 
+password = 
+
