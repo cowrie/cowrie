@@ -8,6 +8,6 @@ pyasn1_modules==0.4.2
 requests==2.32.4
 service_identity==24.2.0
 tftpy==0.8.5
-treq==24.9.1
+treq==25.5.0
 twisted==25.5.0
 urllib3==2.4.0
