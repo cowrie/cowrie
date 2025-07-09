@@ -68,11 +68,11 @@ class VirusTotalOutputTests(unittest.TestCase):
         }).encode())
         
         # Mock agent request
-        deferred = defer.Deferred()
+        deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
         
         # Mock file upload
-        self.output.postfile = Mock(return_value=defer.succeed(None))
+        self.output.postfile = Mock(return_value=defer.succeed(None))  # type: ignore
         
         # Test event
         event = {
@@ -127,7 +127,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }).encode())
         
         # Mock agent request
-        deferred = defer.Deferred()
+        deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
         
         # Test event
@@ -159,11 +159,11 @@ class VirusTotalOutputTests(unittest.TestCase):
         }).encode())
         
         # Mock agent request
-        deferred = defer.Deferred()
+        deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
         
         # Mock URL submission
-        self.output.submiturl = Mock(return_value=defer.succeed(None))
+        self.output.submiturl = Mock(return_value=defer.succeed(None))  # type: ignore
         
         # Test event
         event = {
@@ -197,11 +197,11 @@ class VirusTotalOutputTests(unittest.TestCase):
             }).encode())
             
             # Mock agent request
-            deferred = defer.Deferred()
+            deferred: defer.Deferred = defer.Deferred()
             self.output.agent.request.return_value = deferred
             
             # Mock comment posting
-            self.output.postcomment = Mock(return_value=defer.succeed(True))
+            self.output.postcomment = Mock(return_value=defer.succeed(True))  # type: ignore
             
             # Call postfile
             result = self.output.postfile(tmp_path, "test-file.exe")
@@ -234,7 +234,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }).encode())
         
         # Mock agent request
-        deferred = defer.Deferred()
+        deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
         
         # Call postcomment
@@ -260,7 +260,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         mock_response = MockResponse(200, b"")
         
         # Mock agent request
-        deferred = defer.Deferred()
+        deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
         
         # Test event
@@ -307,9 +307,9 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_write_method_file_download(self) -> None:
         """Test write method for file download events"""
         # Mock methods
-        self.output.scanfile = Mock()
-        self.output.scanurl = Mock()
-        self.output._is_new_shasum = Mock(return_value=True)
+        self.output.scanfile = Mock()  # type: ignore
+        self.output.scanurl = Mock()  # type: ignore
+        self.output._is_new_shasum = Mock(return_value=True)  # type: ignore
         
         # Test file download event
         event = {
@@ -328,8 +328,8 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_write_method_file_upload(self) -> None:
         """Test write method for file upload events"""
         # Mock methods
-        self.output.scanfile = Mock()
-        self.output._is_new_shasum = Mock(return_value=True)
+        self.output.scanfile = Mock()  # type: ignore
+        self.output._is_new_shasum = Mock(return_value=True)  # type: ignore
         
         # Test file upload event
         event = {
@@ -355,7 +355,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         for method_name, params in methods_to_test:
             with self.subTest(method=method_name):
                 # Mock agent request
-                deferred = defer.Deferred()
+                deferred: defer.Deferred = defer.Deferred()
                 self.output.agent.request.return_value = deferred
                 
                 # Call method
