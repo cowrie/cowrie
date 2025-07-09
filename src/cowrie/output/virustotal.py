@@ -27,11 +27,12 @@
 # SUCH DAMAGE.
 
 """
-Send SSH logins to Virustotal
+Send SSH logins to VirusTotal using v3 API
 """
 
 from __future__ import annotations
 
+import base64
 import datetime
 import json
 import os
@@ -50,7 +51,7 @@ import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 COWRIE_USER_AGENT = "Cowrie Honeypot"
-VTAPI_URL = "https://www.virustotal.com/vtapi/v2/"
+VTAPI_URL = "https://www.virustotal.com/api/v3/"
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/cowrie/cowrie"
 TIME_SINCE_FIRST_DOWNLOAD = datetime.timedelta(minutes=1)
 
@@ -138,11 +139,12 @@ class Output(cowrie.core.output.Output):
         Check file scan report for a hash
         Argument is full event so we can access full file later on
         """
-        vtUrl = f"{VTAPI_URL}file/report".encode()
-        headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
-        fields = {"apikey": self.apiKey, "resource": event["shasum"], "allinfo": 1}
-        body = StringProducer(urlencode(fields).encode("utf-8"))
-        d = self.agent.request(b"POST", vtUrl, headers, body)
+        vtUrl = f"{VTAPI_URL}files/{event['shasum']}".encode()
+        headers = http_headers.Headers({
+            "User-Agent": [COWRIE_USER_AGENT],
+            "x-apikey": [self.apiKey]
+        })
+        d = self.agent.request(b"GET", vtUrl, headers)
 
         def cbResponse(response):
             """
@@ -179,55 +181,74 @@ class Output(cowrie.core.output.Output):
                 log.msg(f"VT scanfile result: {result}")
             result = result.decode("utf8")
             j = json.loads(result)
-            log.msg("VT: {}".format(j["verbose_msg"]))
-            if j["response_code"] == 0:
-                log.msg(
-                    eventid="cowrie.virustotal.scanfile",
-                    format="VT: New file %(sha256)s",
-                    session=event["session"],
-                    sha256=j["resource"],
-                    is_new="true",
-                )
+            
+            # Check for errors in v3 API response
+            if "error" in j:
+                if j["error"]["code"] == "NotFoundError":
+                    log.msg("VT: New file - not found in database")
+                    log.msg(
+                        eventid="cowrie.virustotal.scanfile",
+                        format="VT: New file %(sha256)s",
+                        session=event["session"],
+                        sha256=event["shasum"],
+                        is_new="true",
+                    )
 
-                try:
-                    b = os.path.basename(urlparse(event["url"]).path)
-                    if b == "":
+                    try:
+                        b = os.path.basename(urlparse(event["url"]).path)
+                        if b == "":
+                            fileName = event["shasum"]
+                        else:
+                            fileName = b
+                    except KeyError:
                         fileName = event["shasum"]
-                    else:
-                        fileName = b
-                except KeyError:
-                    fileName = event["shasum"]
 
-                if self.upload is True:
-                    return self.postfile(event["outfile"], fileName)
+                    if self.upload is True:
+                        return self.postfile(event["outfile"], fileName)
+                    else:
+                        return
                 else:
+                    log.msg(f"VT: Error - {j['error']['code']}: {j['error']['message']}")
                     return
-            elif j["response_code"] == 1:
-                log.msg("VT: response=1: this has been scanned before")
+            
+            # Process successful response with file data
+            if "data" in j:
+                data = j["data"]
+                attributes = data.get("attributes", {})
+                
+                # Extract scan results
+                last_analysis_results = attributes.get("last_analysis_results", {})
+                stats = attributes.get("last_analysis_stats", {})
+                
+                log.msg("VT: File found in database")
                 # Add detailed report to json log
                 scans_summary: dict[str, dict[str, str]] = {}
-                for feed, info in j["scans"].items():
-                    feed_key = feed.lower()
-                    scans_summary[feed_key] = {}
-                    scans_summary[feed_key]["detected"] = str(info["detected"]).lower()
-                    scans_summary[feed_key]["result"] = str(info["result"]).lower()
+                for engine, result in last_analysis_results.items():
+                    engine_key = engine.lower()
+                    scans_summary[engine_key] = {}
+                    scans_summary[engine_key]["detected"] = str(result.get("category") in ["malicious", "suspicious"]).lower()
+                    scans_summary[engine_key]["result"] = str(result.get("result", "")).lower()
+                
+                malicious_count = stats.get("malicious", 0)
+                total_count = sum(stats.values())
+                scan_date = attributes.get("last_analysis_date", "unknown")
+                
                 log.msg(
                     eventid="cowrie.virustotal.scanfile",
                     format="VT: Binary file with sha256 %(sha256)s was found malicious "
                     "by %(positives)s out of %(total)s feeds (scanned on %(scan_date)s)",
                     session=event["session"],
-                    positives=j["positives"],
-                    total=j["total"],
-                    scan_date=j["scan_date"],
-                    sha256=j["resource"],
+                    positives=malicious_count,
+                    total=total_count,
+                    scan_date=scan_date,
+                    sha256=event["shasum"],
                     scans=scans_summary,
                     is_new="false",
                 )
-                log.msg("VT: permalink: {}".format(j["permalink"]))
-            elif j["response_code"] == -2:
-                log.msg("VT: response=-2: this has been queued for analysis already")
+                # v3 API doesn't have a direct permalink, construct one
+                log.msg("VT: permalink: https://www.virustotal.com/gui/file/{}".format(event["shasum"]))
             else:
-                log.msg("VT: unexpected response code: {}".format(j["response_code"]))
+                log.msg("VT: unexpected response format")
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -237,8 +258,8 @@ class Output(cowrie.core.output.Output):
         """
         Send a file to VirusTotal
         """
-        vtUrl = f"{VTAPI_URL}file/scan".encode()
-        fields = {("apikey", self.apiKey)}
+        vtUrl = f"{VTAPI_URL}files".encode()
+        fields = {}  # v3 API doesn't need apikey in form data
         files = {("file", fileName, open(artifact, "rb"))}
         if self.debug:
             log.msg(f"submitting to VT: {files!r}")
@@ -249,6 +270,7 @@ class Output(cowrie.core.output.Output):
                 "User-Agent": [COWRIE_USER_AGENT],
                 "Accept": ["*/*"],
                 "Content-Type": [contentType],
+                "x-apikey": [self.apiKey],
             }
         )
 
@@ -280,13 +302,27 @@ class Output(cowrie.core.output.Output):
                 log.msg(f"VT postfile result: {result}")
             result = result.decode("utf8")
             j = json.loads(result)
-            # This is always a new resource, since we did the scan before
-            # so always create the comment
-            log.msg("response=0: posting comment")
-            if self.comment is True:
-                return self.postcomment(j["resource"])
-            else:
+            
+            # Check for errors in v3 API response
+            if "error" in j:
+                log.msg(f"VT: Upload error - {j['error']['code']}: {j['error']['message']}")
                 return
+            
+            # Process successful upload response
+            if "data" in j:
+                data = j["data"]
+                file_id = data.get("id")
+                if file_id:
+                    log.msg("VT: File uploaded successfully")
+                    # Post comment if enabled
+                    if self.comment is True:
+                        return self.postcomment(file_id)
+                    else:
+                        return
+                else:
+                    log.msg("VT: Upload successful but no file ID returned")
+            else:
+                log.msg("VT: unexpected upload response format")
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -304,16 +340,16 @@ class Output(cowrie.core.output.Output):
             )
             return
 
-        vtUrl = f"{VTAPI_URL}url/report".encode()
-        headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
-        fields = {
-            "apikey": self.apiKey,
-            "resource": event["url"],
-            "scan": 1,
-            "allinfo": 1,
-        }
-        body = StringProducer(urlencode(fields).encode("utf-8"))
-        d = self.agent.request(b"POST", vtUrl, headers, body)
+        # First submit the URL for scanning, then get the report
+        # v3 API requires URL to be base64 encoded with padding removed
+        url_id = base64.urlsafe_b64encode(event["url"].encode()).decode().rstrip("=")
+        
+        vtUrl = f"{VTAPI_URL}urls/{url_id}".encode()
+        headers = http_headers.Headers({
+            "User-Agent": [COWRIE_USER_AGENT],
+            "x-apikey": [self.apiKey]
+        })
+        d = self.agent.request(b"GET", vtUrl, headers)
 
         def cbResponse(response):
             """
@@ -358,46 +394,93 @@ class Output(cowrie.core.output.Output):
             # we got a status=200 assume it was successfully submitted
             self.url_cache[event["url"]] = datetime.datetime.now()
 
-            if j["response_code"] == 0:
-                log.msg(
-                    eventid="cowrie.virustotal.scanurl",
-                    format="VT: New URL %(url)s",
-                    session=event["session"],
-                    url=event["url"],
-                    is_new="true",
-                )
-                return d
-            elif j["response_code"] == 1 and "scans" not in j:
-                log.msg(
-                    "VT: response=1: this was submitted before but has not yet been scanned."
-                )
-            elif j["response_code"] == 1 and "scans" in j:
-                log.msg("VT: response=1: this has been scanned before")
+            # Check for errors in v3 API response
+            if "error" in j:
+                if j["error"]["code"] == "NotFoundError":
+                    log.msg("VT: New URL - not found in database")
+                    log.msg(
+                        eventid="cowrie.virustotal.scanurl",
+                        format="VT: New URL %(url)s",
+                        session=event["session"],
+                        url=event["url"],
+                        is_new="true",
+                    )
+                    # Submit URL for scanning
+                    return self.submiturl(event)
+                else:
+                    log.msg(f"VT: Error - {j['error']['code']}: {j['error']['message']}")
+                    return
+            
+            # Process successful response with URL data
+            if "data" in j:
+                data = j["data"]
+                attributes = data.get("attributes", {})
+                
+                # Check if URL has been scanned
+                last_analysis_results = attributes.get("last_analysis_results", {})
+                if not last_analysis_results:
+                    log.msg("VT: URL was submitted but has not yet been scanned")
+                    return
+                
+                stats = attributes.get("last_analysis_stats", {})
+                
+                log.msg("VT: URL has been scanned before")
                 # Add detailed report to json log
                 scans_summary: dict[str, dict[str, str]] = {}
-                for feed, info in j["scans"].items():
-                    feed_key = feed.lower()
-                    scans_summary[feed_key] = {}
-                    scans_summary[feed_key]["detected"] = str(info["detected"]).lower()
-                    scans_summary[feed_key]["result"] = str(info["result"]).lower()
+                for engine, result in last_analysis_results.items():
+                    engine_key = engine.lower()
+                    scans_summary[engine_key] = {}
+                    scans_summary[engine_key]["detected"] = str(result.get("category") in ["malicious", "suspicious"]).lower()
+                    scans_summary[engine_key]["result"] = str(result.get("result", "")).lower()
+                
+                malicious_count = stats.get("malicious", 0)
+                total_count = sum(stats.values())
+                scan_date = attributes.get("last_analysis_date", "unknown")
+                
                 log.msg(
                     eventid="cowrie.virustotal.scanurl",
                     format="VT: URL %(url)s was found malicious by "
                     "%(positives)s out of %(total)s feeds (scanned on %(scan_date)s)",
                     session=event["session"],
-                    positives=j["positives"],
-                    total=j["total"],
-                    scan_date=j["scan_date"],
-                    url=j["url"],
+                    positives=malicious_count,
+                    total=total_count,
+                    scan_date=scan_date,
+                    url=event["url"],
                     scans=scans_summary,
                     is_new="false",
                 )
-                log.msg("VT: permalink: {}".format(j["permalink"]))
-            elif j["response_code"] == -2:
-                log.msg("VT: response=-2: this has been queued for analysis already")
-                log.msg("VT: permalink: {}".format(j["permalink"]))
+                # v3 API doesn't have a direct permalink, construct one
+                log.msg("VT: permalink: https://www.virustotal.com/gui/url/{}".format(url_id))
             else:
-                log.msg("VT: unexpected response code: {}".format(j["response_code"]))
+                log.msg("VT: unexpected response format")
+
+        d.addCallback(cbResponse)
+        d.addErrback(cbError)
+        return d
+
+    def submiturl(self, event):
+        """
+        Submit a URL for scanning in VirusTotal v3 API
+        """
+        vtUrl = f"{VTAPI_URL}urls".encode()
+        headers = http_headers.Headers({
+            "User-Agent": [COWRIE_USER_AGENT],
+            "x-apikey": [self.apiKey],
+            "Content-Type": ["application/x-www-form-urlencoded"]
+        })
+        body = StringProducer(urlencode({"url": event["url"]}).encode("utf-8"))
+        d = self.agent.request(b"POST", vtUrl, headers, body)
+
+        def cbResponse(response):
+            if response.code == 200:
+                log.msg("VT: URL submitted successfully for scanning")
+                return
+            else:
+                log.msg(f"VT: URL submission failed: {response.code} {response.phrase}")
+
+        def cbError(failure):
+            log.msg("VT: Error submitting URL")
+            failure.printTraceback()
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
@@ -407,14 +490,21 @@ class Output(cowrie.core.output.Output):
         """
         Send a comment to VirusTotal with Twisted
         """
-        vtUrl = f"{VTAPI_URL}comments/put".encode()
-        parameters = {
-            "resource": resource,
-            "comment": self.commenttext,
-            "apikey": self.apiKey,
+        vtUrl = f"{VTAPI_URL}files/{resource}/comments".encode()
+        comment_data = {
+            "data": {
+                "type": "comment",
+                "attributes": {
+                    "text": self.commenttext
+                }
+            }
         }
-        headers = http_headers.Headers({"User-Agent": [COWRIE_USER_AGENT]})
-        body = StringProducer(urlencode(parameters).encode("utf-8"))
+        headers = http_headers.Headers({
+            "User-Agent": [COWRIE_USER_AGENT],
+            "x-apikey": [self.apiKey],
+            "Content-Type": ["application/json"]
+        })
+        body = StringProducer(json.dumps(comment_data).encode("utf-8"))
         d = self.agent.request(b"POST", vtUrl, headers, body)
 
         def cbBody(body):
@@ -443,7 +533,19 @@ class Output(cowrie.core.output.Output):
                 log.msg(f"VT postcomment result: {result}")
             result = result.decode("utf8")
             j = json.loads(result)
-            return j["response_code"]
+            
+            # Check for errors in v3 API response
+            if "error" in j:
+                log.msg(f"VT: Comment error - {j['error']['code']}: {j['error']['message']}")
+                return False
+            
+            # Process successful comment response
+            if "data" in j:
+                log.msg("VT: Comment posted successfully")
+                return True
+            else:
+                log.msg("VT: unexpected comment response format")
+                return False
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
