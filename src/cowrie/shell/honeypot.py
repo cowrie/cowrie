@@ -134,14 +134,14 @@ class HoneyPotShell:
         cmd_tokens = []
         opening_count = 1
         closing_count = 0
-        
+
         while opening_count > closing_count:
             if self.lexer is None:
                 break
             tok = self.lexer.get_token()
             if tok is None:
                 break
-            
+
             if tok == ")":
                 closing_count += 1
                 if opening_count == closing_count:
@@ -153,7 +153,7 @@ class HoneyPotShell:
                 cmd_tokens.append(tok)
             else:
                 cmd_tokens.append(tok)
-        
+
         # execute the command and print to terminal
         cmd_str = " ".join(cmd_tokens)
         self.protocol.terminal.write(
@@ -170,7 +170,7 @@ class HoneyPotShell:
             pos = 1
             opening_count = 1
             closing_count = 0
-            
+
             # parse the remaining tokens to find the matching closing parenthesis
             while opening_count > closing_count:
                 if cmd_expr[pos] == ")":
@@ -274,13 +274,12 @@ class HoneyPotShell:
     def _execute_subshell_with_full_output(self, cmd: str) -> str:
         """Execute subshell commands and capture ALL output, not just the last command."""
         # Split commands by separators and execute each one
-        import shlex
         lexer = shlex.shlex(instream=cmd, punctuation_chars=True, posix=True)
         lexer.wordchars += "@%{}=$:+^,()`"
-        
+
         accumulated_output = ""
         current_cmd_tokens = []
-        
+
         while True:
             tok = lexer.get_token()
             if tok is None:
@@ -300,7 +299,7 @@ class HoneyPotShell:
                 # Note: We're ignoring && and || conditional logic for now
             else:
                 current_cmd_tokens.append(tok)
-        
+
         return accumulated_output
 
     def _execute_command_substitution(self, cmd: str) -> str:
