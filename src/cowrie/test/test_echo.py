@@ -159,9 +159,9 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
 
     def test_subshell_parentheses_004(self) -> None:
-        """Test parentheses with multiple commands - known limitation: redirection only captures last command"""
+        """Test parentheses with multiple commands - should execute all commands"""
         self.proto.lineReceived(b"(echo hello; echo world)")
-        self.assertEqual(self.tr.value(), b"world\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"hello\nworld\n" + PROMPT)
 
     def test_subshell_parentheses_005(self) -> None:
         """Test parentheses in middle of command line is syntax error"""
@@ -188,3 +188,35 @@ class ShellEchoCommandTests(unittest.TestCase):
         output = self.tr.value()
         self.assertIn(b"first", output)
         self.assertIn(b"second", output)
+
+    def test_subshell_parentheses_009(self) -> None:
+        """Test subshell with different command separators"""
+        self.proto.lineReceived(b"(echo first && echo second)")
+        output = self.tr.value()
+        self.assertIn(b"first", output)
+        self.assertIn(b"second", output)
+
+    def test_subshell_parentheses_010(self) -> None:
+        """Test subshell with OR operator"""
+        self.proto.lineReceived(b"(echo first || echo second)")
+        output = self.tr.value()
+        self.assertIn(b"first", output)
+        self.assertIn(b"second", output)
+
+    def test_subshell_parentheses_011(self) -> None:
+        """Test subshell with multiple semicolons"""
+        self.proto.lineReceived(b"(echo one; echo two; echo three)")
+        output = self.tr.value()
+        self.assertIn(b"one", output)
+        self.assertIn(b"two", output)
+        self.assertIn(b"three", output)
+
+    def test_command_substitution_multiple_commands(self) -> None:
+        """Test command substitution with multiple commands"""
+        self.proto.lineReceived(b"echo $(echo first; echo second)")
+        self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
+
+    def test_command_substitution_in_middle_multiple(self) -> None:
+        """Test command substitution in middle with multiple commands"""
+        self.proto.lineReceived(b"echo before $(echo first; echo second) after")
+        self.assertEqual(self.tr.value(), b"before first\nsecond after\n" + PROMPT)

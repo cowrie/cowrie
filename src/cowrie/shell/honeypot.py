@@ -263,6 +263,55 @@ class HoneyPotShell:
         else:
             cmd = cmd_expr[1:-1]
 
+        # For subshells with multiple commands, we need to capture all output
+        # Create a custom output accumulator
+        if cmd_expr.startswith("("):
+            return self._execute_subshell_with_full_output(cmd)
+        else:
+            # Command substitution - use existing method
+            return self._execute_command_substitution(cmd)
+
+    def _execute_subshell_with_full_output(self, cmd: str) -> str:
+        """Execute subshell commands and capture ALL output, not just the last command."""
+        # Split commands by separators and execute each one
+        import shlex
+        lexer = shlex.shlex(instream=cmd, punctuation_chars=True, posix=True)
+        lexer.wordchars += "@%{}=$:+^,()`"
+        
+        accumulated_output = ""
+        current_cmd_tokens = []
+        
+        while True:
+            tok = lexer.get_token()
+            if tok is None:
+                # Process final command
+                if current_cmd_tokens:
+                    cmd_str = " ".join(current_cmd_tokens)
+                    output = self._execute_single_command_with_redirect(cmd_str)
+                    accumulated_output += output
+                break
+            elif tok in (";", "&&", "||"):
+                # Process current command and start new one
+                if current_cmd_tokens:
+                    cmd_str = " ".join(current_cmd_tokens)
+                    output = self._execute_single_command_with_redirect(cmd_str)
+                    accumulated_output += output
+                    current_cmd_tokens = []
+                # Note: We're ignoring && and || conditional logic for now
+            else:
+                current_cmd_tokens.append(tok)
+        
+        return accumulated_output
+
+    def _execute_command_substitution(self, cmd: str) -> str:
+        """Execute command substitution - should capture all output."""
+        # Command substitution should also capture all output from multiple commands
+        output = self._execute_subshell_with_full_output(cmd)
+        # trailing newlines are stripped for command substitution
+        return output.rstrip("\n")
+
+    def _execute_single_command_with_redirect(self, cmd: str) -> str:
+        """Execute a single command and return its output."""
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(
             HoneyPotShell(self.protocol, interactive=False, redirect=True)
@@ -273,13 +322,7 @@ class HoneyPotShell:
         res = self.protocol.cmdstack.pop()
 
         try:
-            output: str
-            if cmd_expr.startswith("("):
-                output = res.protocol.pp.redirected_data.decode()
-            else:
-                # trailing newlines are stripped for command substitution
-                output = res.protocol.pp.redirected_data.decode().rstrip("\n")
-
+            output = res.protocol.pp.redirected_data.decode()
         except AttributeError:
             return ""
         else:
