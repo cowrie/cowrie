@@ -7,14 +7,10 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from twisted.internet import defer
-from twisted.python import log
-from twisted.test import proto_helpers
-from twisted.web import http_headers
 
-from cowrie.core.config import CowrieConfig
 from cowrie.output.virustotal import Output, StringProducer
 
 
@@ -52,15 +48,15 @@ class VirusTotalOutputTests(unittest.TestCase):
         self.assertEqual(producer.length, len(body))
         
         # Test all interface methods exist
-        self.assertTrue(hasattr(producer, 'startProducing'))
-        self.assertTrue(hasattr(producer, 'pauseProducing'))
-        self.assertTrue(hasattr(producer, 'resumeProducing'))
-        self.assertTrue(hasattr(producer, 'stopProducing'))
+        self.assertTrue(hasattr(producer, "startProducing"))
+        self.assertTrue(hasattr(producer, "pauseProducing"))
+        self.assertTrue(hasattr(producer, "resumeProducing"))
+        self.assertTrue(hasattr(producer, "stopProducing"))
 
     def test_scanfile_new_file_not_found(self) -> None:
         """Test file scanning when file is not found in VirusTotal database"""
         # Mock response for file not found
-        mock_response = MockResponse(200, json.dumps({
+        MockResponse(200, json.dumps({
             "error": {
                 "code": "NotFoundError",
                 "message": "File not found"
@@ -83,7 +79,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }
         
         # Call scanfile
-        result = self.output.scanfile(event)
+        self.output.scanfile(event)
         
         # Verify request was made with correct parameters
         self.output.agent.request.assert_called_once()
@@ -101,7 +97,7 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_scanfile_existing_file_found(self) -> None:
         """Test file scanning when file exists in VirusTotal database"""
         # Mock response for existing file
-        mock_response = MockResponse(200, json.dumps({
+        MockResponse(200, json.dumps({
             "data": {
                 "id": "abc123",
                 "attributes": {
@@ -137,7 +133,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }
         
         # Call scanfile
-        result = self.output.scanfile(event)
+        self.output.scanfile(event)
         
         # Verify request was made correctly
         self.output.agent.request.assert_called_once()
@@ -151,7 +147,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         expected_url_id = base64.urlsafe_b64encode(test_url.encode()).decode().rstrip("=")
         
         # Mock response for URL not found
-        mock_response = MockResponse(200, json.dumps({
+        MockResponse(200, json.dumps({
             "error": {
                 "code": "NotFoundError",
                 "message": "URL not found"
@@ -172,7 +168,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }
         
         # Call scanurl
-        result = self.output.scanurl(event)
+        self.output.scanurl(event)
         
         # Verify request was made with correct base64 encoded URL
         self.output.agent.request.assert_called_once()
@@ -189,7 +185,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         
         try:
             # Mock response for successful upload
-            mock_response = MockResponse(200, json.dumps({
+            MockResponse(200, json.dumps({
                 "data": {
                     "id": "uploaded-file-id",
                     "type": "analysis"
@@ -204,7 +200,7 @@ class VirusTotalOutputTests(unittest.TestCase):
             self.output.postcomment = Mock(return_value=defer.succeed(True))  # type: ignore
             
             # Call postfile
-            result = self.output.postfile(tmp_path, "test-file.exe")
+            self.output.postfile(tmp_path, "test-file.exe")
             
             # Verify request was made correctly
             self.output.agent.request.assert_called_once()
@@ -226,7 +222,7 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_postcomment_v3_format(self) -> None:
         """Test comment posting using v3 API format"""
         # Mock response for successful comment
-        mock_response = MockResponse(200, json.dumps({
+        MockResponse(200, json.dumps({
             "data": {
                 "id": "comment-id",
                 "type": "comment"
@@ -238,7 +234,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         self.output.agent.request.return_value = deferred
         
         # Call postcomment
-        result = self.output.postcomment("test-file-id")
+        self.output.postcomment("test-file-id")
         
         # Verify request was made correctly
         self.output.agent.request.assert_called_once()
@@ -257,7 +253,7 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_submiturl_v3_format(self) -> None:
         """Test URL submission using v3 API format"""
         # Mock response for successful URL submission
-        mock_response = MockResponse(200, b"")
+        MockResponse(200, b"")
         
         # Mock agent request
         deferred: defer.Deferred = defer.Deferred()
@@ -269,7 +265,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }
         
         # Call submiturl
-        result = self.output.submiturl(event)
+        self.output.submiturl(event)
         
         # Verify request was made correctly
         self.output.agent.request.assert_called_once()
@@ -299,7 +295,7 @@ class VirusTotalOutputTests(unittest.TestCase):
         }
         
         # Call scanurl - should return early due to cache
-        result = self.output.scanurl(event)
+        self.output.scanurl(event)
         
         # Verify no request was made
         self.output.agent.request.assert_not_called()
