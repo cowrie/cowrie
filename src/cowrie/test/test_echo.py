@@ -172,3 +172,11 @@ class ShellEchoCommandTests(unittest.TestCase):
         """Test command substitution does substitute output into command line"""
         self.proto.lineReceived(b"echo before $(echo middle) after")
         self.assertEqual(self.tr.value(), b"before middle after\n" + PROMPT)
+
+    def test_subshell_parentheses_007(self) -> None:
+        """Test complex subshell with pipes doesn't crash - regression test"""
+        self.proto.lineReceived(b'nproc ; uname -a (nproc; uname -a) |tr "\\n" "|"')
+        # Should not crash and should execute commands
+        output = self.tr.value()
+        self.assertIn(b"Linux unitTest", output)
+        self.assertIn(PROMPT, output)

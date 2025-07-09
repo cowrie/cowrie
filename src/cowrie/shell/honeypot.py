@@ -367,6 +367,8 @@ class HoneyPotShell:
         cmd = {}
 
         for value in multipleCmdArgs:
+            if not value:  # Skip empty command lists
+                continue
             cmd["command"] = value.pop(0)
             cmd["rargs"] = parse_arguments(value)
             cmd_array.append(cmd)
