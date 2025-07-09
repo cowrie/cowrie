@@ -74,9 +74,14 @@ class HoneyPotShell:
                     continue
                 elif tok == "$?":
                     tok = "0"
-                elif tok[0] == "(":
-                    cmd = self.do_command_substitution(tok)
-                    tokens = cmd.split()
+                elif tok == "(" or (tok.startswith("(") and not tok.startswith("$(")):
+                    if tokens:
+                        self.cmdpending.append(tokens)
+                        tokens = []
+                    if tok == "(":
+                        self.do_subshell_execution_from_lexer()
+                    else:
+                        self.do_subshell_execution(tok)
                     continue
                 elif "$(" in tok or "`" in tok:
                     tok = self.do_command_substitution(tok)
@@ -117,16 +122,82 @@ class HoneyPotShell:
             # if there's no command, display a prompt again
             self.showPrompt()
 
+    def do_subshell_execution_from_lexer(self) -> None:
+        """
+        Execute a subshell command reading tokens from the lexer until matching closing parenthesis.
+        Output goes directly to the terminal.
+        """
+        cmd_tokens = []
+        opening_count = 1
+        closing_count = 0
+        
+        while opening_count > closing_count:
+            if self.lexer is None:
+                break
+            tok = self.lexer.get_token()
+            if tok is None:
+                break
+            
+            if tok == ")":
+                closing_count += 1
+                if opening_count == closing_count:
+                    break
+                else:
+                    cmd_tokens.append(tok)
+            elif tok == "(":
+                opening_count += 1
+                cmd_tokens.append(tok)
+            else:
+                cmd_tokens.append(tok)
+        
+        # execute the command and print to terminal
+        cmd_str = " ".join(cmd_tokens)
+        self.protocol.terminal.write(
+            self.run_subshell_command(f"({cmd_str})").encode()
+        )
+
+    def do_subshell_execution(self, start_tok: str) -> None:
+        """
+        Execute a subshell command (command) without output substitution.
+        Output goes directly to the terminal.
+        """
+        if start_tok[0] == "(":
+            cmd_expr = start_tok
+            pos = 1
+            opening_count = 1
+            closing_count = 0
+            
+            # parse the remaining tokens to find the matching closing parenthesis
+            while opening_count > closing_count:
+                if cmd_expr[pos] == ")":
+                    closing_count += 1
+                    if opening_count == closing_count:
+                        # execute the command in () and print to terminal
+                        self.protocol.terminal.write(
+                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
+                        )
+                        break
+                    else:
+                        pos += 1
+                elif cmd_expr[pos] == "(":
+                    opening_count += 1
+                    pos += 1
+                else:
+                    if opening_count > closing_count and pos == len(cmd_expr) - 1:
+                        if self.lexer:
+                            tokkie = self.lexer.get_token()
+                            if tokkie is None:  # self.lexer.eof put None for mypy
+                                break
+                            else:
+                                cmd_expr = cmd_expr + " " + tokkie
+                    pos += 1
+
     def do_command_substitution(self, start_tok: str) -> str:
         """
         this performs command substitution, like replace $(ls) `ls`
         """
         result = ""
-        if start_tok[0] == "(":
-            # start parsing the (...) expression
-            cmd_expr = start_tok
-            pos = 1
-        elif "$(" in start_tok:
+        if "$(" in start_tok:
             # split the first token to prefix and $(... part
             dollar_pos = start_tok.index("$(")
             result = start_tok[:dollar_pos]
@@ -151,14 +222,8 @@ class HoneyPotShell:
                 # found an end of $(...) or `...`
                 closing_count += 1
                 if opening_count == closing_count:
-                    if cmd_expr[0] == "(":
-                        # execute the command in () and print to user
-                        self.protocol.terminal.write(
-                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
-                        )
-                    else:
-                        # execute the command in $() or `` and return the output
-                        result += self.run_subshell_command(cmd_expr[: pos + 1])
+                    # execute the command in $() or `` and return the output
+                    result += self.run_subshell_command(cmd_expr[: pos + 1])
 
                     # check whether there are more command substitutions remaining
                     if pos < len(cmd_expr) - 1:

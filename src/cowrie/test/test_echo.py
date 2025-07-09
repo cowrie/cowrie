@@ -144,3 +144,31 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_echo_command_029(self) -> None:
         self.proto.lineReceived(b"echo $(e)")
         self.assertEqual(self.tr.value(), b"-bash: e: command not found\n\n" + PROMPT)
+
+    def test_subshell_parentheses_001(self) -> None:
+        """Test basic subshell execution with parentheses - should output directly"""
+        self.proto.lineReceived(b"(echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_subshell_parentheses_002(self) -> None:
+        """Test subshell vs command substitution difference"""
+        self.proto.lineReceived(b"echo $(echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+        self.tr.clear()
+        self.proto.lineReceived(b"(echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_subshell_parentheses_004(self) -> None:
+        """Test parentheses with multiple commands - known limitation: redirection only captures last command"""
+        self.proto.lineReceived(b"(echo hello; echo world)")
+        self.assertEqual(self.tr.value(), b"world\n" + PROMPT)
+
+    def test_subshell_parentheses_005(self) -> None:
+        """Test parentheses execution order - subshell executes immediately"""
+        self.proto.lineReceived(b"echo before (echo middle) after")
+        self.assertEqual(self.tr.value(), b"middle\nbefore\n-bash: after: command not found\n" + PROMPT)
+
+    def test_subshell_parentheses_006(self) -> None:
+        """Test command substitution does substitute output into command line"""
+        self.proto.lineReceived(b"echo before $(echo middle) after")
+        self.assertEqual(self.tr.value(), b"before middle after\n" + PROMPT)
