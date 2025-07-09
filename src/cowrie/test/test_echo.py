@@ -166,7 +166,7 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_subshell_parentheses_004(self) -> None:
         """Test parentheses in middle of command line is syntax error"""
         self.proto.lineReceived(b"echo before (echo middle) after")
-        self.assertEqual(self.tr.value(), b"-bash: syntax error near unexpected token `(echo'\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"-bash: syntax error near unexpected token `(echo'\\n" + PROMPT)
 
     def test_subshell_parentheses_005(self) -> None:
         """Test command substitution does substitute output into command line"""
