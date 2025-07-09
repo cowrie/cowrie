@@ -75,9 +75,13 @@ class HoneyPotShell:
                 elif tok == "$?":
                     tok = "0"
                 elif tok == "(" or (tok.startswith("(") and not tok.startswith("$(")):
+                    # Parentheses can only appear at the start of a command, not in the middle
                     if tokens:
-                        self.cmdpending.append(tokens)
-                        tokens = []
+                        # Parentheses in the middle of a command line is a syntax error
+                        self.protocol.terminal.write(
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
+                        )
+                        break
                     if tok == "(":
                         self.do_subshell_execution_from_lexer()
                     else:

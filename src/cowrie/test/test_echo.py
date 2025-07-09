@@ -164,9 +164,9 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"world\n" + PROMPT)
 
     def test_subshell_parentheses_005(self) -> None:
-        """Test parentheses execution order - subshell executes immediately"""
+        """Test parentheses in middle of command line is syntax error"""
         self.proto.lineReceived(b"echo before (echo middle) after")
-        self.assertEqual(self.tr.value(), b"middle\nbefore\n-bash: after: command not found\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"-bash: syntax error near unexpected token `(echo'\n" + PROMPT)
 
     def test_subshell_parentheses_006(self) -> None:
         """Test command substitution does substitute output into command line"""
@@ -174,9 +174,17 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"before middle after\n" + PROMPT)
 
     def test_subshell_parentheses_007(self) -> None:
-        """Test complex subshell with pipes doesn't crash - regression test"""
+        """Test complex subshell with pipes syntax error - regression test"""
         self.proto.lineReceived(b'nproc ; uname -a (nproc; uname -a) |tr "\\n" "|"')
-        # Should not crash and should execute commands
+        # Should be a syntax error due to parentheses after uname -a
         output = self.tr.value()
-        self.assertIn(b"Linux unitTest", output)
-        self.assertIn(PROMPT, output)
+        self.assertIn(b"-bash: nproc: command not found", output)
+        self.assertIn(b"syntax error near unexpected token", output)
+        # The syntax error prevents further execution
+
+    def test_subshell_parentheses_008(self) -> None:
+        """Test valid subshell after semicolon should work"""
+        self.proto.lineReceived(b"echo first; (echo second)")
+        output = self.tr.value()
+        self.assertIn(b"first", output)
+        self.assertIn(b"second", output)
