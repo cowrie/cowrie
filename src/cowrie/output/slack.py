@@ -120,8 +120,8 @@ class Output(cowrie.core.output.Output):
                                                     +f"(SHA: `{event.get('shasum', 'unknown')}`)",
             "cowrie.direct-tcpip.request":  lambda: f"*TCP* : :arrows_counterclockwise: `{event.get('src_ip', 'unknown')}:{event.get('src_port', '???')}` ->"
                                                     +f" `{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}`",
-            "cowrie.direct-tcpip.data": lambda: "*TCP* : :no_entry: Blocked direct-tcp forward request to "
-                                                +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}` with data of {len(data)} bytes",
+            "cowrie.direct-tcpip.data": lambda: f"*TCP* : :no_entry: Blocked direct-tcp forward request to `{event.get('dst_ip', 'unknown')}:"
+                                                +f"{event.get('dst_port', '???')}` with {len(event.get('data', ''))} bytes of data",
             "cowrie.command.failed":    lambda: f"*CMD* : :arrow_right_hook: *Failed* `{event.get('input', 'unknown')}` > "
                                                 +f"`{event.get('message', 'unknown')}`",
             "cowrie.session.file_download_failed":lambda: f"*FILE* : :x: *Download Failed* `{event.get('message', 'unknown')}`",
