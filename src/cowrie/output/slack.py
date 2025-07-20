@@ -158,7 +158,7 @@ class Output(cowrie.core.output.Output):
 
         # Check for verbose events to skip in case of quiet mode
         verbose_events = (
-            "cowrie.client.version", "cowrie.client.kex", "cowrie.client.connect",
+            "cowrie.client.kex", "cowrie.client.connect",
             "cowrie.client.size", "cowrie.client.var", "cowrie.log.closed",
             "cowrie.log.opened", "cowrie.session.params"
         )
