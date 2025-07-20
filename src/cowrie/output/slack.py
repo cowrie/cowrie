@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import time
+from typing import Any, Dict, List
 
 from slack import WebClient
 
@@ -43,7 +44,7 @@ class Output(cowrie.core.output.Output):
     slack output
     """
 
-    def start(self):
+    def start(self) -> None:
         self.name = "slack output engine"
         self.slack_channel = CowrieConfig.get("output_slack", "channel")
         self.slack_token = CowrieConfig.get("output_slack", "token")
@@ -51,13 +52,15 @@ class Output(cowrie.core.output.Output):
         self.no_timestamp = CowrieConfig.getboolean("output_slack", "no_timestamp", fallback=False)
         self.quiet = CowrieConfig.getboolean("output_slack", "quiet", fallback=False)
         if self.no_timestamp and not self.simplified:
-            log.msg(f"{self.name}: parameter 'no_timestamp' is only effective when 'simplified' mode is enabled, this will be ignored.")
+            log.msg(
+                f"{self.name}: parameter 'no_timestamp' is only effective when "
+                + f"'simplified' mode is enabled, this will be ignored."
+            )
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
-
-    def _format_simplified_message(self, event):
+    def _format_simplified_message(self, event: Dict[str, Any]) -> str:
         """
         Format event into a simplified, readable message with Slack formatting
         """
@@ -65,29 +68,30 @@ class Output(cowrie.core.output.Output):
             timestamp = ""
         else:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S") + " "
-        
-        logon_types = {"HoneyPotSSHTransport":"SSH", 
-                       "cowrie.ssh": "SSH",
-                       "HTTP": "HTTP",
-                       "CowrieTelnetTransport":"Telnet",
-                       "cowrie.telnet": "Telnet"}
+
+        logon_types = {
+            "HoneyPotSSHTransport": "SSH",
+            "cowrie.ssh": "SSH",
+            "HTTP": "HTTP",
+            "CowrieTelnetTransport": "Telnet",
+            "cowrie.telnet": "Telnet"
+        }
         logon_type = next((logon_types[type] for type in logon_types if type in event.get("system", "")), "XXX")
-        
+
         session = event.get("session", "unknown")
         src_ip = event.get("src_ip", "unknown")
         eventid = event.get("eventid", "unknown")
 
         base_msg = f"{timestamp}[{logon_type}_{session}] `{src_ip}` "
 
-
         # Helper function for command formatting
-        def _format_command(cmd):
+        def _format_command(cmd: str) -> str:
             cmd = cmd.strip()
             if '\n' in cmd or '\r' in cmd:
                 return f"*MULTILINE CMD* : :arrow_down_small: ```{cmd}```"
             return f"*CMD* : :arrow_forward: `{cmd}`"
-        
-        def _format_download(event):
+
+        def _format_download(event: Dict[str, Any]) -> str:
             if event.get('url', '') == '':
                 return f"*FILE* : :page_facing_up: Created file `{event.get('destfile', 'unknown')}` (SHA: `{event.get('shasum', 'unknown')}`)"
             return f"*FILE* : :inbox_tray: Downloaded URL `{event.get('url', 'unknown')}` to local file (SHA: `{event.get('shasum', 'unknown')}`)"
@@ -95,55 +99,75 @@ class Output(cowrie.core.output.Output):
 
         # Dictionary of event handlers
         event_handlers = {
-            "cowrie.client.connect":                lambda: f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
-            "cowrie.session.connect":               lambda: f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
-            "cowrie.login.success":                 lambda: f"*LOGIN* : :unlock: *SUCCESS* (`{event.get('username', 'unknown')}`:`{event.get('password', event.get('key', 'unknown'))}`)",
-            "cowrie.login.failed":                  lambda: f"*LOGIN* : :lock: *FAILED* (`{event.get('username', 'unknown')}`:`{event.get('password', event.get('key', 'unknown'))}`)",
-
-            "cowrie.client.fingerprint":            lambda: f"*FINGERPRINT* : :bust_in_silhouette: `{event.get('username', 'unknown')}` | :gear: `{event.get('type', 'unknown')}` | :key: `{event.get('fingerprint', 'unknown')}`",
-            "cowrie.client.version":                lambda: f"*CLIENT* : :gear: Version `{event.get('version', 'unknown')}`",
-            "cowrie.client.kex":                    lambda: f"*KEX Config* : :level_slider: Algorithm `{event.get('kexAlgs', 'unknown')}` (Hassh = `{event.get('hassh', 'unknown')}`)",
-            "cowrie.session.closed":                lambda: f":red_circle: *LOGOUT* :red_circle: Session closed - Total duration: `{event.get('duration', 'unknown')}` seconds",
-            
-            "cowrie.command.input":                 lambda: _format_command(event.get('input', '')),
-            "cowrie.session.file_download":         lambda: _format_download(event),
-            "cowrie.session.file_upload":           lambda: f"*FILE* : :outbox_tray: Uploaded file to `{event.get('filename', 'unknown')}` (SHA: `{event.get('shasum', 'unknown')}`)",
-            "cowrie.direct-tcpip.request":          lambda: f"*TCP* : :arrows_counterclockwise: `{event.get('src_ip', 'unknown')}:{event.get('src_port', '???')}` -> `{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}`",
-            "cowrie.direct-tcpip.data":             lambda: f"*TCP* : :no_entry: Blocked direct-tcp forward request to `{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}` with data `{event.get('data', '') if len(event.get('data', '')) < 250 else 'of ' + str(len(event.get('data', '')))}B`",
-
-            "cowrie.command.failed":                lambda: f"*CMD* : :arrow_right_hook: *Failed* `{event.get('input', 'unknown')}` > `{event.get('message', 'unknown')}`",
-            "cowrie.session.file_download_failed":  lambda: f"*FILE* : :x: *Download Failed* `{event.get('message', 'unknown')}`",
-            "cowrie.session.file_upload_failed":    lambda: f"*FILE* : :x: *Upload Failed* `{event.get('message', 'unknown')}`",
+            "cowrie.client.connect":        lambda: f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} "
+                                                   +f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
+            "cowrie.session.connect":       lambda: f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} "
+                                                   +f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
+            "cowrie.login.success":         lambda: f"*LOGIN* : :unlock: *SUCCESS* (`{event.get('username', 'unknown')}`:"
+                                                   +f"`{event.get('password', event.get('key', 'unknown'))}`)",
+            "cowrie.login.failed":          lambda: f"*LOGIN* : :lock: *FAILED* (`{event.get('username', 'unknown')}`:"
+                                                   +f"`{event.get('password', event.get('key', 'unknown'))}`)",
+            "cowrie.client.fingerprint":    lambda: f"*FINGERPRINT* : :bust_in_silhouette: `{event.get('username', 'unknown')}` | "
+                                                   +f":gear: `{event.get('type', 'unknown')}` | :key: `{event.get('fingerprint', 'unknown')}`",
+            "cowrie.client.version":        lambda: f"*CLIENT* : :gear: Version `{event.get('version', 'unknown')}`",
+            "cowrie.client.kex":            lambda: f"*KEX Config* : :level_slider: Algorithm `{event.get('kexAlgs', 'unknown')}`"
+                                                   +f"(Hassh = `{event.get('hassh', 'unknown')}`)",
+            "cowrie.session.closed":        lambda: f":red_circle: *LOGOUT* :red_circle: Session closed - "
+                                                   +f"Total duration: `{event.get('duration', 'unknown')}` seconds",
+            "cowrie.command.input":         lambda: _format_command(event.get('input', '')),
+            "cowrie.session.file_download": lambda: _format_download(event),
+            "cowrie.session.file_upload":   lambda: f"*FILE* : :outbox_tray: Uploaded file to `{event.get('filename', 'unknown')}` "
+                                                   +f"(SHA: `{event.get('shasum', 'unknown')}`)",
+            "cowrie.direct-tcpip.request":  lambda: f"*TCP* : :arrows_counterclockwise: `{event.get('src_ip', 'unknown')}:{event.get('src_port', '???')}` -> "
+                                                   +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}`",
+            "cowrie.direct-tcpip.data": lambda: f"*TCP* : :no_entry: Blocked direct-tcp forward request to "
+                                               +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}` with data "
+                                               +f"`{event.get('data', '') if len(event.get('data', '')) < 250 else 'of ' + str(len(event.get('data', '')))}B`",
+            "cowrie.command.failed":    lambda: f"*CMD* : :arrow_right_hook: *Failed* `{event.get('input', 'unknown')}` > "
+                                               +f"`{event.get('message', 'unknown')}`",
+            "cowrie.session.file_download_failed":lambda: f"*FILE* : :x: *Download Failed* `{event.get('message', 'unknown')}`",
+            "cowrie.session.file_upload_failed":  lambda: f"*FILE* : :x: *Upload Failed* `{event.get('message', 'unknown')}`",
         }
 
         # Check if we have a handler for this event
         if eventid in event_handlers:
             return f"{base_msg}{event_handlers[eventid]()}"
-        
+
         # For other events, include the eventid and important details
-        details = []
-        for key in ["input", "message", "username", "password", "url", "filename", "fname", "type", "fingerprint", "duration", "outfile", "shasum", "src_ip", "src_port"]:
+        details: List[str] = []
+        for key in (
+            "input", "message", "username", "password", "url", "filename",
+            "fname", "type", "fingerprint", "duration", "outfile",
+            "shasum", "src_ip", "src_port"
+        ):
             if key in event and event[key]:
                 details.append(f"{key}: `{event[key]}`")
-        
+
         if details:
             return f"{base_msg}*{eventid.upper().replace('.', '_')}* : {' | '.join(details)}"
         elif not self.quiet:
             return f"{base_msg}*{eventid.upper().replace('.', '_')}* : Event occurred"
+        return ""
 
-    def write(self, event):
+    def write(self, event: Dict[str, Any]) -> None:
         for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
                 del event[i]
 
         self.sc = WebClient(self.slack_token)
-        
+
         # Check for verbose events to skip in case of quiet mode
-        verbose_events = ("cowrie.client.version", "cowrie.client.kex", "cowrie.client.connect", "cowrie.client.size", "cowrie.client.var", "cowrie.log.closed", "cowrie.log.opened", "cowrie.session.params")
+        verbose_events = (
+            "cowrie.client.version", "cowrie.client.kex", "cowrie.client.connect",
+            "cowrie.client.size", "cowrie.client.var", "cowrie.log.closed",
+            "cowrie.log.opened", "cowrie.session.params"
+        )
         eventid = event.get("eventid", "")
         if self.quiet:
-            if (eventid in verbose_events) or (eventid == 'cowrie.command.input' and event.get("input", '') == ''):
+            if (eventid in verbose_events) or (
+                eventid == 'cowrie.command.input' and event.get("input", '') == ''
+            ):
                 return
 
         if self.simplified:
@@ -154,7 +178,7 @@ class Output(cowrie.core.output.Output):
                 time.strftime("%Y-%m-%d %H:%M:%S"),
                 json.dumps(event, indent=4, sort_keys=True),
             )
-        
+
         self.sc.chat_postMessage(
             channel=self.slack_channel,
             text=message,
