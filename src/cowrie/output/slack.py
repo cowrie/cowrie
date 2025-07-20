@@ -54,7 +54,7 @@ class Output(cowrie.core.output.Output):
         if self.no_timestamp and not self.simplified:
             log.msg(
                 f"{self.name}: parameter 'no_timestamp' is only effective when "
-                + f"'simplified' mode is enabled, this will be ignored."
+                + "'simplified' mode is enabled, this will be ignored."
             )
 
     def stop(self) -> None:
@@ -100,31 +100,31 @@ class Output(cowrie.core.output.Output):
         # Dictionary of event handlers
         event_handlers = {
             "cowrie.client.connect":        lambda: f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} "
-                                                   +f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
+                                                    +f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
             "cowrie.session.connect":       lambda: f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} "
-                                                   +f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
+                                                    +f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`",
             "cowrie.login.success":         lambda: f"*LOGIN* : :unlock: *SUCCESS* (`{event.get('username', 'unknown')}`:"
-                                                   +f"`{event.get('password', event.get('key', 'unknown'))}`)",
+                                                    +f"`{event.get('password', event.get('key', 'unknown'))}`)",
             "cowrie.login.failed":          lambda: f"*LOGIN* : :lock: *FAILED* (`{event.get('username', 'unknown')}`:"
-                                                   +f"`{event.get('password', event.get('key', 'unknown'))}`)",
+                                                    +f"`{event.get('password', event.get('key', 'unknown'))}`)",
             "cowrie.client.fingerprint":    lambda: f"*FINGERPRINT* : :bust_in_silhouette: `{event.get('username', 'unknown')}` | "
-                                                   +f":gear: `{event.get('type', 'unknown')}` | :key: `{event.get('fingerprint', 'unknown')}`",
+                                                    +f":gear: `{event.get('type', 'unknown')}` | :key: `{event.get('fingerprint', 'unknown')}`",
             "cowrie.client.version":        lambda: f"*CLIENT* : :gear: Version `{event.get('version', 'unknown')}`",
             "cowrie.client.kex":            lambda: f"*KEX Config* : :level_slider: Algorithm `{event.get('kexAlgs', 'unknown')}`"
-                                                   +f"(Hassh = `{event.get('hassh', 'unknown')}`)",
-            "cowrie.session.closed":        lambda: f":red_circle: *LOGOUT* :red_circle: Session closed - "
-                                                   +f"Total duration: `{event.get('duration', 'unknown')}` seconds",
+                                                    +f"(Hassh = `{event.get('hassh', 'unknown')}`)",
+            "cowrie.session.closed":        lambda: ":red_circle: *LOGOUT* :red_circle: Session closed - "
+                                                    +f"Total duration: `{event.get('duration', 'unknown')}` seconds",
             "cowrie.command.input":         lambda: _format_command(event.get('input', '')),
             "cowrie.session.file_download": lambda: _format_download(event),
             "cowrie.session.file_upload":   lambda: f"*FILE* : :outbox_tray: Uploaded file to `{event.get('filename', 'unknown')}` "
-                                                   +f"(SHA: `{event.get('shasum', 'unknown')}`)",
+                                                    +f"(SHA: `{event.get('shasum', 'unknown')}`)",
             "cowrie.direct-tcpip.request":  lambda: f"*TCP* : :arrows_counterclockwise: `{event.get('src_ip', 'unknown')}:{event.get('src_port', '???')}` -> "
-                                                   +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}`",
-            "cowrie.direct-tcpip.data": lambda: f"*TCP* : :no_entry: Blocked direct-tcp forward request to "
-                                               +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}` with data "
-                                               +f"`{event.get('data', '') if len(event.get('data', '')) < 250 else 'of ' + str(len(event.get('data', '')))}B`",
+                                                    +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}`",
+            "cowrie.direct-tcpip.data": lambda: "*TCP* : :no_entry: Blocked direct-tcp forward request to "
+                                                +f"`{event.get('dst_ip', 'unknown')}:{event.get('dst_port', '???')}` with data "
+                                                +f"`{event.get('data', '') if len(event.get('data', '')) < 250 else 'of ' + str(len(event.get('data', '')))}B`",
             "cowrie.command.failed":    lambda: f"*CMD* : :arrow_right_hook: *Failed* `{event.get('input', 'unknown')}` > "
-                                               +f"`{event.get('message', 'unknown')}`",
+                                                +f"`{event.get('message', 'unknown')}`",
             "cowrie.session.file_download_failed":lambda: f"*FILE* : :x: *Download Failed* `{event.get('message', 'unknown')}`",
             "cowrie.session.file_upload_failed":  lambda: f"*FILE* : :x: *Upload Failed* `{event.get('message', 'unknown')}`",
         }
