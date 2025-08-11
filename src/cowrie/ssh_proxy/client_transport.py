@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from twisted.conch.ssh import factory, transport
+from twisted.conch.ssh import transport
 from twisted.internet import defer, protocol
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
