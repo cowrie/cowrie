@@ -26,7 +26,7 @@ Contributing via Pull Requests
 
 Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
 
-1. You are working against the latest source on the *master* branch.
+1. You are working against the latest source on the *main* branch.
 2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
 3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
 
@@ -50,4 +50,4 @@ Looking at the existing issues is a great way to find something to contribute on
 Licensing
 *********
 
-See the `LICENSE <https://github.com/cowrie/cowrie/blob/master/LICENSE.rst>`_ file for our project's licensing. We will ask you confirm the licensing of your contribution.
+See the `LICENSE <https://github.com/cowrie/cowrie/blob/main/LICENSE.rst>`_ file for our project's licensing. We will ask you confirm the licensing of your contribution.
