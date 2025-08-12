@@ -4,7 +4,7 @@
 
 ARG ARCH=
 ARG SOURCE_DATE_EPOCH
-ARG TAG
+ARG TAG=
 FROM ${ARCH}debian:bookworm-slim AS builder
 
 WORKDIR /
