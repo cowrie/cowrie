@@ -55,7 +55,7 @@ git-remote: ## Add remote git configuration
 
 .PHONY: pur
 pip-pur: ## Upgrade dependencies based on latest packages
-	git checkout master
+	git checkout main
 	-git branch -D "dependency-upgrade-`date -u +%Y-%m-%d`"
 	git checkout -b "dependency-upgrade-`date -u +%Y-%m-%d`"
 	pur -r requirements.txt
