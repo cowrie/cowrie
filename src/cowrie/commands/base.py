@@ -949,7 +949,7 @@ class Command_history(HoneyPotCommand):
                 return
             count = 1
             for line in self.protocol.historyLines:
-                self.write(f" {str(count).rjust(4)}  {line.decode()}\n")
+                self.write(f" {count:4d}  {line.decode()}\n")
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
