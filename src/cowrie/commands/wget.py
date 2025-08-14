@@ -10,7 +10,7 @@ from typing import Any
 from urllib import parse
 
 from twisted.internet import error
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, CancelledError
 from twisted.python import log
 from twisted.web.iweb import UNKNOWN_LENGTH
 
@@ -150,9 +150,10 @@ class Command_wget(HoneyPotCommand):
         self.artifact = Artifact("curl-download")
 
         if not self.quiet:
+            port = urldata.port if urldata.port is not None else 80
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
             self.errorWrite(f"--{tm}--  {url}\n")
-            self.errorWrite(f"Connecting to {self.host}:{urldata.port}... connected.\n")
+            self.errorWrite(f"Connecting to {self.host}:{port}... connected.\n")
             self.errorWrite("HTTP request sent, awaiting response... ")
 
         self.deferred = self.wgetDownload(url)
@@ -324,11 +325,32 @@ class Command_wget(HoneyPotCommand):
         """
         handle errors
         """
+        self.protocol.logDispatch(
+            eventid="cowrie.session.file_download.failed",
+            format="Attempt to download file(s) from URL (%(url)s) failed",
+            url=self.url.decode(),
+        )
+
         if response.check(error.DNSLookupError) is not None:
             self.write(
                 f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
             )
             self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
+            self.exit()
+            return
+
+        if response.check(CancelledError) is not None:
+            self.write("failed: Operation timed out.\n")
+            self.exit()
+            return
+
+        if response.check(error.ConnectingCancelledError) is not None:
+            self.write("cancel failed: Operation timed out.\n")
+            self.exit()
+            return
+
+        if response.check(error.ConnectingDone) is not None:
+            self.write("No data received.\n")
             self.exit()
             return
 
@@ -338,11 +360,6 @@ class Command_wget(HoneyPotCommand):
             errormsg = response.getErrorMessage()
         log.msg(errormsg)
         self.write("\n")
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download.failed",
-            format="Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url.decode(),
-        )
         self.exit()
 
 
