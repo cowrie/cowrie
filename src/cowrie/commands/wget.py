@@ -354,11 +354,11 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        log.err(response)
-        log.msg(response.printTraceback())
+        log.err(f"Unhandled wget error: {str(response)}")
+        log.msg(f"Uhhandled wget traceback: {response.printTraceback()}")
         if hasattr(response, "getErrorMessage"):  # Exceptions
             errormsg = response.getErrorMessage()
-        log.msg(errormsg)
+        log.msg(f"Unhandled wget error message: {errormsg}")
         self.write("\n")
         self.exit()
 
