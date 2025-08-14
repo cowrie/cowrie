@@ -331,16 +331,13 @@ class Command_wget(HoneyPotCommand):
             url=self.url.decode(),
         )
 
-        if response.check(error.DNSLookupError) is not None:
-            self.write(
-                f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
-            )
-            self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
+        if response.check(CancelledError) is not None:
+            self.write("failed: Operation timed out.\n")
             self.exit()
             return
 
-        if response.check(CancelledError) is not None:
-            self.write("failed: Operation timed out.\n")
+        if response.check(error.ConnectionRefusedError) is not None:
+            self.write("Connection refused\n")
             self.exit()
             return
 
@@ -351,6 +348,14 @@ class Command_wget(HoneyPotCommand):
 
         if response.check(error.ConnectionDone) is not None:
             self.write("No data received.\n")
+            self.exit()
+            return
+
+        if response.check(error.DNSLookupError) is not None:
+            self.write(
+                f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
+            )
+            self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
             return
 
