@@ -35,6 +35,7 @@ from __future__ import annotations
 import os
 from urllib.parse import urljoin, urlparse
 
+# TODO: use `treq`
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -42,6 +43,8 @@ from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
+
+HTTP_TIMEOUT = 20
 
 
 class Output(cowrie.core.output.Output):
@@ -106,7 +109,7 @@ class Output(cowrie.core.output.Output):
                 urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode()),
                 verify=False,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
-                timeout=60,
+                timeout=HTTP_TIMEOUT,
             )
             if res and res.ok:
                 log.msg(
@@ -132,6 +135,7 @@ class Output(cowrie.core.output.Output):
                 files=files,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
                 verify=False,
+                timeout=HTTP_TIMEOUT,
             )
             if res and res.ok:
                 log.msg(
@@ -155,6 +159,7 @@ class Output(cowrie.core.output.Output):
                 data=data,
                 auth=HTTPBasicAuth(self.api_user, self.api_passwd),
                 verify=False,
+                timeout=HTTP_TIMEOUT,
             )
             if res and res.ok:
                 log.msg(
