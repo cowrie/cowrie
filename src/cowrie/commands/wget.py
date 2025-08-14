@@ -349,7 +349,7 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        if response.check(error.ConnectingDone) is not None:
+        if response.check(error.ConnectionDone) is not None:
             self.write("No data received.\n")
             self.exit()
             return
