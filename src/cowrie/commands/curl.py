@@ -284,7 +284,7 @@ class Command_curl(HoneyPotCommand):
         allowed = yield communication_allowed(self.host)
         if not allowed:
             log.msg("Attempt to access blocked network address")
-            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.errorWrite(f"curl: (7) Could not resolve host: {self.host}\n")
             self.exit()
             return None
 
@@ -306,9 +306,13 @@ class Command_curl(HoneyPotCommand):
         # if CowrieConfig.has_option("honeypot", "out_addr"):
         #     out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
         if self.head_request:
-            deferred = treq.head(url=url, allow_redirects=False, headers=headers, timeout=10)
+            deferred = treq.head(
+                url=url, allow_redirects=False, headers=headers, timeout=10
+            )
         else:
-            deferred = treq.get(url=url, allow_redirects=False, headers=headers, timeout=10)
+            deferred = treq.get(
+                url=url, allow_redirects=False, headers=headers, timeout=10
+            )
         return deferred
 
     def handle_CTRL_C(self) -> None:
@@ -328,7 +332,9 @@ class Command_curl(HoneyPotCommand):
             for key, values in response.headers.getAllRawHeaders():
                 decoded_key = key.decode() if isinstance(key, bytes) else key
                 for value in values:
-                    decoded_value = value.decode() if isinstance(value, bytes) else value
+                    decoded_value = (
+                        value.decode() if isinstance(value, bytes) else value
+                    )
                     self.write(f"{decoded_key}: {decoded_value}\n")
             self.exit()
             return
@@ -428,35 +434,45 @@ class Command_curl(HoneyPotCommand):
             url=self.url.decode(),
         )
 
-        if response.check(error.DNSLookupError) is not None:
-            self.write(f"curl: (6) Could not resolve host: {self.host}\n")
-            self.exit()
-            return
-
-        elif response.check(error.ConnectingCancelledError) is not None:
+        if response.check(error.CancelledError) is not None:
             self.write(
                 f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
             )
             self.exit()
             return
 
-        elif response.check(error.ConnectionRefusedError) is not None:
+        if response.check(error.ConnectionRefusedError) is not None:
             self.write(
                 f"curl: (7) Failed to connect to {self.host} port {self.port}: Connection refused\n"
             )
             self.exit()
             return
 
-        # possible errors:
-        # defer.CancelledError,
-        # error.ConnectingCancelledError,
+        if response.check(error.ConnectingCancelledError) is not None:
+            self.write(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
+            )
+            self.exit()
+            return
 
-        log.msg(response.printTraceback())
+        if response.check(error.ConnectionDone) is not None:
+            self.write(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
+            )
+            self.exit()
+            return
+
+        if response.check(error.DNSLookupError) is not None:
+            self.write(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return
+
+        log.err(f"Unhandled curl error: {response!s}")
+        log.msg(f"Uhhandled curl traceback: {response.printTraceback()}")
         if hasattr(response, "getErrorMessage"):  # Exceptions
-            errormsg = response.getErrorMessage()
-        log.msg(errormsg)
-        self.write("\n")
+            log.msg(f"Unhandled curl error message: {response.getErrorMessage}")
 
+        self.write("\n")
         self.exit()
 
 
