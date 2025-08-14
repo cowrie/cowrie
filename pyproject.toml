@@ -30,7 +30,7 @@ classifiers=[
 dependencies = [
         "attrs==25.3.0",
         "bcrypt==4.3.0",
-        "cryptography==45.0.5",
+        "cryptography==45.0.6",
         "hyperlink==21.0.0",
         "idna==3.10",
         "packaging==25.0",
@@ -39,7 +39,7 @@ dependencies = [
         "service_identity==24.2.0",
         "tftpy==0.8.6",
         "treq==25.5.0",
-        "twisted==25.5.0",
+        "twisted[conch]==25.5.0",
 ]
 
 [project.urls]
@@ -68,11 +68,11 @@ dev = [
 "coverage==7.10.2",
 "mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
 "mypy-zope==1.0.13; platform_python_implementation=='CPython'",
-"mypy==1.13.0; platform_python_implementation=='CPython'",
+"mypy==1.17.1; platform_python_implementation=='CPython'",
 "pathspec==0.12.1",
 "pipdeptree==2.28.0",
 "pre-commit==4.2.0",
-"pylint==3.3.7",
+"pylint==3.3.8",
 "pyre-check==0.9.25",
 "pyright==1.1.401",
 "pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<='3.9'",
@@ -85,9 +85,9 @@ dev = [
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.0.2",
 "tox==4.27.0",
-"types-python-dateutil==2.9.0.20250516",
+"types-python-dateutil==2.9.0.20250809",
 "types-redis==4.6.0.20241004",
-"types-requests==2.32.0.20250602",
+"types-requests==2.32.4.20250809",
 "yamllint==1.37.1",
 ]
 

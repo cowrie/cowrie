@@ -1,6 +1,6 @@
 attrs==25.3.0
 bcrypt==4.3.0
-cryptography==45.0.5
+cryptography==45.0.6
 hyperlink==21.0.0
 idna==3.10
 packaging==25.0
@@ -9,5 +9,5 @@ requests==2.32.4
 service_identity==24.2.0
 tftpy==0.8.6
 treq==25.5.0
-twisted==25.5.0
+twisted[conch]==25.5.0
 urllib3==2.5.0

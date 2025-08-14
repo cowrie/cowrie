@@ -3,7 +3,7 @@ name: Docker Build and Publish
 
 on:  # yamllint disable-line rule:truthy
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `main` as Docker `latest` image.
     branches:
       - main
 
@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: set SOURCE_DATE_EPOCH
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
@@ -97,4 +97,4 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign -y cowrie/cowrie@${DIGEST}
-          cosign verify cowrie/cowrie --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/heads/master'
+          cosign verify cowrie/cowrie --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/heads/main'
