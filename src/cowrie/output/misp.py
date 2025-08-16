@@ -26,6 +26,7 @@ def ignore_warnings(f):
             warnings.simplefilter("ignore")
             response = f(*args, **kwargs)
         return response
+
     return inner
 
 
@@ -75,10 +76,10 @@ class Output(cowrie.core.output.Output):
         for session_id, session_data in self.session_tracking.items():
             if not session_data.get("event_created", False):
                 has_activity = (
-                    session_data.get("auth_success", False) or
-                    session_data.get("commands", []) or
-                    session_data.get("downloads", []) or
-                    session_data.get("uploads", [])
+                    session_data.get("auth_success", False)
+                    or session_data.get("commands", [])
+                    or session_data.get("downloads", [])
+                    or session_data.get("uploads", [])
                 )
 
                 if has_activity and self.handle_sessions:
@@ -113,16 +114,20 @@ class Output(cowrie.core.output.Output):
                     "client_details": {},
                     "event_created": False,
                     "end_time": None,
-                    "duration": None
+                    "duration": None,
                 }
 
                 # Track client details for SSH sessions
                 if "protocol" in event and event["protocol"] == "ssh":
                     # Add SSH-specific details
                     if "version" in event:
-                        self.session_tracking[session_id]["client_details"]["version"] = event["version"]
+                        self.session_tracking[session_id]["client_details"][
+                            "version"
+                        ] = event["version"]
                     if "hassh" in event:
-                        self.session_tracking[session_id]["client_details"]["hassh"] = event["hassh"]
+                        self.session_tracking[session_id]["client_details"]["hassh"] = (
+                            event["hassh"]
+                        )
 
             # Update last activity time
             self.session_tracking[session_id]["last_time"] = timestamp
@@ -133,13 +138,15 @@ class Output(cowrie.core.output.Output):
                     "url": event.get("url", "unknown"),
                     "outfile": event.get("outfile", "unknown"),
                     "shasum": event.get("shasum", "unknown"),
-                    "timestamp": timestamp
+                    "timestamp": timestamp,
                 }
                 self.session_tracking[session_id]["downloads"].append(download_info)
 
                 # Option 1: Create immediate malware events as in the old script
                 # This gives instant malware upload without waiting for session to end
-                file_sha_attrib = self.find_attribute("malware-sample", f"*|{event['shasum']}")
+                file_sha_attrib = self.find_attribute(
+                    "malware-sample", f"*|{event['shasum']}"
+                )
                 if file_sha_attrib:
                     if self.debug:
                         log.msg("MISP: File known, add sighting")
@@ -151,7 +158,7 @@ class Output(cowrie.core.output.Output):
                 upload_info = {
                     "outfile": event.get("outfile", "unknown"),
                     "shasum": event.get("shasum", "unknown"),
-                    "timestamp": timestamp
+                    "timestamp": timestamp,
                 }
                 self.session_tracking[session_id]["uploads"].append(upload_info)
 
@@ -169,20 +176,24 @@ class Output(cowrie.core.output.Output):
                 # Update session login details
                 self.session_tracking[session_id]["usernames"].add(event["username"])
                 if "password" in event:
-                    self.session_tracking[session_id]["passwords"].add(event["password"])
+                    self.session_tracking[session_id]["passwords"].add(
+                        event["password"]
+                    )
 
                 # Track login attempt details
                 attempt_details = {
                     "username": event["username"],
                     "successful": success,
-                    "timestamp": timestamp
+                    "timestamp": timestamp,
                 }
                 if "password" in event:
                     attempt_details["password"] = event["password"]
                 elif "fingerprint" in event:
                     attempt_details["fingerprint"] = event["fingerprint"]
 
-                self.session_tracking[session_id]["login_attempts"].append(attempt_details)
+                self.session_tracking[session_id]["login_attempts"].append(
+                    attempt_details
+                )
 
                 # Mark login success
                 if success:
@@ -193,20 +204,26 @@ class Output(cowrie.core.output.Output):
                 command = event["input"]
 
                 # Store command in session data
-                cmd_details = {
-                    "command": command,
-                    "timestamp": timestamp
-                }
+                cmd_details = {"command": command, "timestamp": timestamp}
                 self.session_tracking[session_id]["commands"].append(cmd_details)
 
                 # Flag dangerous commands
                 dangerous_commands = [
-                    "wget", "curl", "nc", "netcat", "ncat",
-                    "chmod +x", "rm -rf", "dd if=/dev/", "> /dev/sd",
+                    "wget",
+                    "curl",
+                    "nc",
+                    "netcat",
+                    "ncat",
+                    "chmod +x",
+                    "rm -rf",
+                    "dd if=/dev/",
+                    "> /dev/sd",
                 ]
 
                 if any(dc in command for dc in dangerous_commands):
-                    self.session_tracking[session_id]["dangerous_commands"].append(cmd_details)
+                    self.session_tracking[session_id]["dangerous_commands"].append(
+                        cmd_details
+                    )
                     if self.debug:
                         log.msg(f"MISP: Dangerous command detected: {command}")
 
@@ -221,15 +238,17 @@ class Output(cowrie.core.output.Output):
                 # Only create events for sessions with meaningful activity
                 if not self.session_tracking[session_id].get("event_created", False):
                     has_activity = (
-                        self.session_tracking[session_id].get("auth_success", False) or
-                        self.session_tracking[session_id].get("commands", []) or
-                        self.session_tracking[session_id].get("downloads", []) or
-                        self.session_tracking[session_id].get("uploads", [])
+                        self.session_tracking[session_id].get("auth_success", False)
+                        or self.session_tracking[session_id].get("commands", [])
+                        or self.session_tracking[session_id].get("downloads", [])
+                        or self.session_tracking[session_id].get("uploads", [])
                     )
 
                     # Create a comprehensive session event if there's activity worth reporting
                     if has_activity and self.handle_sessions:
-                        self.create_session_event(session_id, self.session_tracking[session_id])
+                        self.create_session_event(
+                            session_id, self.session_tracking[session_id]
+                        )
                         self.session_tracking[session_id]["event_created"] = True
 
     @ignore_warnings
@@ -313,33 +332,49 @@ class Output(cowrie.core.output.Output):
         session_object = MISPObject(name="cowrie-session", standalone=True)
 
         # Add session attributes with correct syntax
-        session_object.add_attribute(type="text", value=session_id, object_relation="id")
+        session_object.add_attribute(
+            type="text", value=session_id, object_relation="id"
+        )
 
         if session_data.get("start_time"):
-            session_object.add_attribute(type="datetime", value=session_data["start_time"],
-                                        object_relation="start-time")
+            session_object.add_attribute(
+                type="datetime",
+                value=session_data["start_time"],
+                object_relation="start-time",
+            )
 
         if session_data.get("end_time"):
-            session_object.add_attribute(type="datetime", value=session_data["end_time"],
-                                        object_relation="end-time")
+            session_object.add_attribute(
+                type="datetime",
+                value=session_data["end_time"],
+                object_relation="end-time",
+            )
 
         if session_data.get("duration"):
-            session_object.add_attribute(type="text", value=str(session_data["duration"]),
-                                        object_relation="duration")
+            session_object.add_attribute(
+                type="text",
+                value=str(session_data["duration"]),
+                object_relation="duration",
+            )
 
         if session_data.get("dst_ip"):
-            session_object.add_attribute(type="ip-dst", value=session_data["dst_ip"],
-                                        object_relation="dst-ip")
+            session_object.add_attribute(
+                type="ip-dst", value=session_data["dst_ip"], object_relation="dst-ip"
+            )
 
         if session_data.get("dst_port"):
-            session_object.add_attribute(type="port", value=str(session_data["dst_port"]),
-                                        object_relation="dst-port")
+            session_object.add_attribute(
+                type="port",
+                value=str(session_data["dst_port"]),
+                object_relation="dst-port",
+            )
 
         # Add client details if available
         if session_data.get("client_details"):
             for key, value in session_data["client_details"].items():
-                session_object.add_attribute(type="text", value=str(value),
-                                            object_relation=f"client-{key}")
+                session_object.add_attribute(
+                    type="text", value=str(value), object_relation=f"client-{key}"
+                )
 
         misp_event.add_object(session_object)
 
@@ -349,117 +384,168 @@ class Output(cowrie.core.output.Output):
 
             # Add usernames
             for username in session_data.get("usernames", []):
-                auth_object.add_attribute(type="text", value=username,
-                                        object_relation="username")
+                auth_object.add_attribute(
+                    type="text", value=username, object_relation="username"
+                )
 
             # Add success status
-            auth_object.add_attribute(type="text",
-                                    value=str(session_data.get("auth_success", False)).lower(),
-                                    object_relation="authentication-success")
+            auth_object.add_attribute(
+                type="text",
+                value=str(session_data.get("auth_success", False)).lower(),
+                object_relation="authentication-success",
+            )
 
             # Add detailed login attempts
             for i, attempt in enumerate(session_data.get("login_attempts", [])):
                 attempt_details = (
-                    f"User: {attempt.get('username', 'unknown')}, " +
-                    (f"Password: {attempt.get('password', 'unknown')}, " if "password" in attempt else "") +
-                    (f"Fingerprint: {attempt.get('fingerprint', 'unknown')}, " if "fingerprint" in attempt else "") +
-                    f"Success: {attempt.get('successful', False)}"
+                    f"User: {attempt.get('username', 'unknown')}, "
+                    + (
+                        f"Password: {attempt.get('password', 'unknown')}, "
+                        if "password" in attempt
+                        else ""
+                    )
+                    + (
+                        f"Fingerprint: {attempt.get('fingerprint', 'unknown')}, "
+                        if "fingerprint" in attempt
+                        else ""
+                    )
+                    + f"Success: {attempt.get('successful', False)}"
                 )
-                auth_object.add_attribute(type="text", value=attempt_details,
-                                        object_relation=f"attempt-{i+1}")
+                auth_object.add_attribute(
+                    type="text",
+                    value=attempt_details,
+                    object_relation=f"attempt-{i + 1}",
+                )
 
             misp_event.add_object(auth_object)
 
             # Add MITRE ATT&CK tagging for authentication
             if session_data.get("auth_success", False):
-                misp_event.add_tag('misp-galaxy:mitre-attack-pattern="Valid Accounts - T1078"')
+                misp_event.add_tag(
+                    'misp-galaxy:mitre-attack-pattern="Valid Accounts - T1078"'
+                )
             else:
-                misp_event.add_tag('misp-galaxy:mitre-attack-pattern="Brute Force - T1110"')
+                misp_event.add_tag(
+                    'misp-galaxy:mitre-attack-pattern="Brute Force - T1110"'
+                )
 
         # Add commands as a custom object (no template constraints)
         if session_data.get("commands"):
             command_object = MISPObject(name="cowrie-commands", standalone=True)
 
             # Add a summary attribute
-            command_object.add_attribute(type="text",
-                                       value=f"{len(session_data['commands'])} commands executed",
-                                       object_relation="summary")
+            command_object.add_attribute(
+                type="text",
+                value=f"{len(session_data['commands'])} commands executed",
+                object_relation="summary",
+            )
 
             # Add each command
             for i, cmd in enumerate(session_data["commands"]):
                 command_value = cmd.get("command", "")
                 # Skip empty commands
                 if command_value.strip():
-                    command_object.add_attribute(type="text", value=command_value,
-                                              object_relation=f"command-{i+1}")
+                    command_object.add_attribute(
+                        type="text",
+                        value=command_value,
+                        object_relation=f"command-{i + 1}",
+                    )
 
                     # Add timestamp if available
                     if "timestamp" in cmd and cmd["timestamp"] != "unknown":
-                        command_object.add_attribute(type="datetime", value=cmd["timestamp"],
-                                                  object_relation=f"timestamp-{i+1}")
+                        command_object.add_attribute(
+                            type="datetime",
+                            value=cmd["timestamp"],
+                            object_relation=f"timestamp-{i + 1}",
+                        )
 
             # Only add the object if it has attributes
             if command_object.attributes:
                 misp_event.add_object(command_object)
                 # Add MITRE ATT&CK tagging
-                misp_event.add_tag('misp-galaxy:mitre-attack-pattern="Command and Scripting Interpreter - T1059"')
+                misp_event.add_tag(
+                    'misp-galaxy:mitre-attack-pattern="Command and Scripting Interpreter - T1059"'
+                )
 
         if session_data.get("downloads"):
-            for i, download in enumerate(session_data["downloads"]):
+            for download in session_data["downloads"]:
                 # Add the actual malware sample as a separate attribute to the event (not part of an object)
                 if "outfile" in download and download["shasum"] != "unknown":
                     malware_attr = MISPAttribute()
                     malware_attr.type = "malware-sample"
-                    malware_attr.value = os.path.basename(download["outfile"]) + "|" + download["shasum"]
-                    malware_attr.data = Path(download["outfile"])  # This uploads the actual binary
+                    malware_attr.value = (
+                        os.path.basename(download["outfile"]) + "|" + download["shasum"]
+                    )
+                    malware_attr.data = Path(
+                        download["outfile"]
+                    )  # This uploads the actual binary
                     malware_attr.expand = "binary"
-                    malware_attr.comment = f"File downloaded to Cowrie honeypot in session {session_id}"
+                    malware_attr.comment = (
+                        f"File downloaded to Cowrie honeypot in session {session_id}"
+                    )
                     malware_attr.to_ids = True
                     misp_event.add_attribute(**malware_attr)
 
                 # Still create the file object for structured data
                 file_object = MISPObject(name="cowrie-file-download", standalone=True)
-                
+
                 if "url" in download and download["url"] != "unknown":
-                    file_object.add_attribute(type="url", value=download["url"],
-                                            object_relation="url")
+                    file_object.add_attribute(
+                        type="url", value=download["url"], object_relation="url"
+                    )
 
                 if "outfile" in download and download["outfile"] != "unknown":
-                    file_object.add_attribute(type="filename",
-                                            value=os.path.basename(download["outfile"]),
-                                            object_relation="filename")
+                    file_object.add_attribute(
+                        type="filename",
+                        value=os.path.basename(download["outfile"]),
+                        object_relation="filename",
+                    )
 
                 if "timestamp" in download and download["timestamp"] != "unknown":
-                    file_object.add_attribute(type="datetime", value=download["timestamp"],
-                                            object_relation="timestamp")
+                    file_object.add_attribute(
+                        type="datetime",
+                        value=download["timestamp"],
+                        object_relation="timestamp",
+                    )
 
                 # Only add the object if it has attributes
                 if file_object.attributes:
                     misp_event.add_object(file_object)
 
             # Add MITRE ATT&CK tagging for file downloads
-            misp_event.add_tag('misp-galaxy:mitre-attack-pattern="Ingress Tool Transfer - T1105"')
+            misp_event.add_tag(
+                'misp-galaxy:mitre-attack-pattern="Ingress Tool Transfer - T1105"'
+            )
 
         # Add uploads as custom file objects
         if session_data.get("uploads"):
-            for i, upload in enumerate(session_data["uploads"]):
+            for upload in session_data["uploads"]:
                 file_object = MISPObject(name="cowrie-file-upload", standalone=True)
 
                 if "shasum" in upload and upload["shasum"] != "unknown":
-                    file_object.add_attribute(type="sha256", value=upload["shasum"],
-                                            object_relation="sha256")
+                    file_object.add_attribute(
+                        type="sha256", value=upload["shasum"], object_relation="sha256"
+                    )
 
                 if "outfile" in upload and upload["outfile"] != "unknown":
-                    file_object.add_attribute(type="filename",
-                                            value=os.path.basename(upload["outfile"]),
-                                            object_relation="filename")
+                    file_object.add_attribute(
+                        type="filename",
+                        value=os.path.basename(upload["outfile"]),
+                        object_relation="filename",
+                    )
 
                 if "timestamp" in upload and upload["timestamp"] != "unknown":
-                    file_object.add_attribute(type="datetime", value=upload["timestamp"],
-                                            object_relation="timestamp")
+                    file_object.add_attribute(
+                        type="datetime",
+                        value=upload["timestamp"],
+                        object_relation="timestamp",
+                    )
 
-                file_object.add_attribute(type="text", value="Uploaded to honeypot",
-                                        object_relation="attachment-type")
+                file_object.add_attribute(
+                    type="text",
+                    value="Uploaded to honeypot",
+                    object_relation="attachment-type",
+                )
 
                 # Only add the object if it has attributes
                 if file_object.attributes:
@@ -480,7 +566,7 @@ class Output(cowrie.core.output.Output):
             f"Usernames Attempted: {', '.join(session_data.get('usernames', ['none']))}",
             f"Number of Commands: {len(session_data.get('commands', []))}",
             f"Number of Downloads: {len(session_data.get('downloads', []))}",
-            f"Number of Uploads: {len(session_data.get('uploads', []))}"
+            f"Number of Uploads: {len(session_data.get('uploads', []))}",
         ]
 
         # Add command details
@@ -488,22 +574,24 @@ class Output(cowrie.core.output.Output):
             summary_lines.append("\nCommands executed:")
             for i, cmd in enumerate(session_data["commands"]):
                 if cmd.get("command", "").strip():  # Skip empty commands
-                    summary_lines.append(f"{i+1}. {cmd.get('command', 'unknown')}")
+                    summary_lines.append(f"{i + 1}. {cmd.get('command', 'unknown')}")
 
         if session_data.get("downloads"):
             summary_lines.append("\nFiles downloaded:")
             for i, download in enumerate(session_data["downloads"]):
                 summary_lines.append(
-                    f"{i+1}. URL: {download.get('url', 'unknown')}, " +
-                    f"Filename: {os.path.basename(download.get('outfile', 'unknown'))}")
+                    f"{i + 1}. URL: {download.get('url', 'unknown')}, "
+                    + f"Filename: {os.path.basename(download.get('outfile', 'unknown'))}"
+                )
 
         # Add upload details
         if session_data.get("uploads"):
             summary_lines.append("\nFiles uploaded:")
             for i, upload in enumerate(session_data["uploads"]):
                 summary_lines.append(
-                    f"{i+1}. Filename: {os.path.basename(upload.get('outfile', 'unknown'))}, " +
-                    f"SHA256: {upload.get('shasum', 'unknown')}")
+                    f"{i + 1}. Filename: {os.path.basename(upload.get('outfile', 'unknown'))}, "
+                    + f"SHA256: {upload.get('shasum', 'unknown')}"
+                )
 
         summary_attr = MISPAttribute()
         summary_attr.type = "text"
