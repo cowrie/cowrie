@@ -13,7 +13,7 @@ from cowrie.core.config import CowrieConfig
 try:
     from pymisp import ExpandedPyMISP as PyMISP
 except ImportError:
-    from pymisp import PyMISP as PyMISP  # type: ignore
+    from pymisp import PyMISP as PyMISP
 
 
 class Output(cowrie.core.output.Output):
