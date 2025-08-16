@@ -1,7 +1,5 @@
 from __future__ import annotations
 import os
-import warnings
-from functools import wraps
 from pathlib import Path
 from typing import Any
 
@@ -18,18 +16,6 @@ except ImportError:
     from pymisp import PyMISP as PyMISP
 
 
-# PyMISP is very verbose regarding Python 2 deprecation
-def ignore_warnings(f):
-    @wraps(f)
-    def inner(*args, **kwargs):
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("ignore")
-            response = f(*args, **kwargs)
-        return response
-
-    return inner
-
-
 class Output(cowrie.core.output.Output):
     """
     MISP Upload Plugin for Cowrie.
@@ -42,22 +28,20 @@ class Output(cowrie.core.output.Output):
     Events are now consolidated to create one comprehensive event per session
     """
 
-    @ignore_warnings
-    def start(self):
+    def start(self) -> None:
         """
         Start output plugin
         """
         misp_url = CowrieConfig.get("output_misp", "base_url")
         misp_key = CowrieConfig.get("output_misp", "api_key")
-        misp_verifycert = (
-            "true" == CowrieConfig.get("output_misp", "verify_cert").lower()
-        )
-        self.misp_api = PyMISP(
-            url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False
-        )
+        misp_verifycert = CowrieConfig.getboolean("output_misp", "verify_cert")
         self.debug = CowrieConfig.getboolean("output_misp", "debug", fallback=False)
         self.publish = CowrieConfig.getboolean(
             "output_misp", "publish_event", fallback=False
+        )
+
+        self.misp_api = PyMISP(
+            url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False
         )
 
         # Session tracking for comprehensive session events
@@ -68,7 +52,7 @@ class Output(cowrie.core.output.Output):
             "output_misp", "handle_session_events", fallback=True
         )
 
-    def stop(self):
+    def stop(self) -> None:
         """
         Stop output plugin - create final events for any remaining sessions
         """
@@ -251,7 +235,6 @@ class Output(cowrie.core.output.Output):
                         )
                         self.session_tracking[session_id]["event_created"] = True
 
-    @ignore_warnings
     def find_attribute(self, attribute_type, searchterm):
         """
         Returns a matching attribute or None if nothing was found.
@@ -262,8 +245,7 @@ class Output(cowrie.core.output.Output):
 
         if result["Attribute"]:
             return result["Attribute"][0]
-        else:
-            return None
+        return None
 
     def add_standard_tags(self, misp_event):
         """
@@ -276,7 +258,6 @@ class Output(cowrie.core.output.Output):
         misp_event.add_tag("type:OSINT")
         return misp_event
 
-    @ignore_warnings
     def add_sighting(self, event, attribute):
         """
         Add a sighting to an existing attribute
@@ -291,7 +272,6 @@ class Output(cowrie.core.output.Output):
         except Exception as e:
             log.msg(f"MISP: Error adding sighting: {e}")
 
-    @ignore_warnings
     def create_session_event(self, session_id, session_data):
         """
         Creates a comprehensive MISP event for an entire session using custom objects
