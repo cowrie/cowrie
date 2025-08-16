@@ -69,7 +69,7 @@ class Output(cowrie.core.output.Output):
                 if has_activity and self.handle_sessions:
                     self.create_session_event(session_id, session_data)
 
-    def write(self, event):
+    def write(self, event: dict[str, Any]) -> None:
         """
         Process events and submit to MISP
         """
