@@ -80,7 +80,7 @@ dev = [
 "pyupgrade==3.20.0",
 "pyyaml==6.0.2",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.12.8",
+"ruff==0.12.9",
 "setuptools==80.9.0",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.0.2",
