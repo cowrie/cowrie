@@ -49,11 +49,11 @@ class Output(cowrie.core.output.Output):
         self.slack_channel = CowrieConfig.get("output_slack", "channel")
         self.slack_token = CowrieConfig.get("output_slack", "token")
         self.simplified = CowrieConfig.getboolean("output_slack", "simplified", fallback=False)
-        self.no_timestamp = CowrieConfig.getboolean("output_slack", "no_timestamp", fallback=False)
+        self.show_timestamp = not CowrieConfig.getboolean("output_slack", "timestamp", fallback=True)
         self.verbose = CowrieConfig.getboolean("output_slack", "verbose", fallback=True)
-        if self.no_timestamp and not self.simplified:
+        if not self.show_timestamp and not self.simplified:
             log.msg(
-                f"{self.name}: parameter 'no_timestamp' is only effective when "
+                f"{self.name}: setting 'timestamp=false' is only effective when "
                 + "'simplified' mode is enabled, this will be ignored."
             )
 
@@ -64,7 +64,7 @@ class Output(cowrie.core.output.Output):
         """
         Format event into a simplified, readable message with Slack formatting
         """
-        if self.no_timestamp:
+        if not self.show_timestamp:
             timestamp = ""
         else:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S") + " "
