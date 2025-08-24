@@ -942,13 +942,13 @@ force = 0
 api_key = 130928309823098
 enabled = false
 
-# This will produce a _lot_ of messages unless simplified and quiet are set
+# This will produce a _lot_ of messages unless simplified and verbose=false are set
 [output_slack]
 enabled = false
 channel = #channel_that_events_should_be_posted_in
 simplified = true
 no_timestamp = false
-quiet = true
+verbose = false
 token = slack_token_for_your_bot
 debug = false
 

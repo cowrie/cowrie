@@ -50,7 +50,7 @@ class Output(cowrie.core.output.Output):
         self.slack_token = CowrieConfig.get("output_slack", "token")
         self.simplified = CowrieConfig.getboolean("output_slack", "simplified", fallback=False)
         self.no_timestamp = CowrieConfig.getboolean("output_slack", "no_timestamp", fallback=False)
-        self.quiet = CowrieConfig.getboolean("output_slack", "quiet", fallback=False)
+        self.verbose = CowrieConfig.getboolean("output_slack", "verbose", fallback=True)
         if self.no_timestamp and not self.simplified:
             log.msg(
                 f"{self.name}: parameter 'no_timestamp' is only effective when "
@@ -144,7 +144,7 @@ class Output(cowrie.core.output.Output):
 
         if details:
             return f"{base_msg}*{eventid.upper().replace('.', '_')}* : {' | '.join(details)}"
-        elif not self.quiet:
+        elif self.verbose:
             return f"{base_msg}*{eventid.upper().replace('.', '_')}* : Event occurred"
         return ""
 
@@ -156,14 +156,14 @@ class Output(cowrie.core.output.Output):
 
         self.sc = WebClient(self.slack_token)
 
-        # Check for verbose events to skip in case of quiet mode
+        # Check for verbose events to skip in case of not verbose mode
         verbose_events = (
             "cowrie.client.kex", "cowrie.client.connect",
             "cowrie.client.size", "cowrie.client.var", "cowrie.log.closed",
             "cowrie.log.opened", "cowrie.session.params"
         )
         eventid = event.get("eventid", "")
-        if self.quiet:
+        if not self.verbose:
             if (eventid in verbose_events) or (
                 eventid == 'cowrie.command.input' and event.get("input", '') == ''
             ):
