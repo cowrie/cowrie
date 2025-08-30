@@ -50,9 +50,16 @@ class Output(cowrie.core.output.Output):
         fn = CowrieConfig.get("output_jsonlog", "logfile", fallback="cowrie.json")
         dirs = os.path.dirname(fn)
         base = os.path.basename(fn)
-        self.outfile = cowrie.python.logfile.CowrieDailyLogFile(
-            base, dirs, defaultMode=0o664
-        )
+
+        logtype = CowrieConfig.get("honeypot", "logtype", fallback="plain")
+        if logtype == "rotating":
+            self.outfile = cowrie.python.logfile.CowrieDailyLogFile(
+                base, dirs, defaultMode=0o664
+            )
+        elif logtype == "plain":
+            self.outfile = open(Path(dirs, base), "w", encoding="utf-8")
+        else:
+            raise ValueError
 
     def stop(self):
         if self.outfile:
