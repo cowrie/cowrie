@@ -5,6 +5,10 @@
 from __future__ import annotations
 
 import configparser
+<<<<<<< HEAD
+=======
+import importlib.resources
+>>>>>>> b64009e3 (up)
 import struct
 from typing import Any
 
@@ -19,6 +23,7 @@ from twisted.python import log
 
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
+from cowrie import data
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -56,18 +61,27 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         if self.bannerSent:
             return
         self.bannerSent = True
+
         try:
-            issuefile = (
-                CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
-                + "/etc/issue.net"
-            )
-            with open(issuefile, "rb") as issue:
-                data = issue.read()
-        except (OSError, configparser.Error):
+            with open(
+                "{}/etc/issue.net".format(
+                    CowrieConfig.get("honeypot", "contents_path")
+                ),
+                encoding="ascii",
+            ) as f:
+                issue = f.read()
+        except configparser.Error as e:
+            log.msg("Loading default /etc/issue.net file")
+            resources_path = importlib.resources.files(data)
+            config_file_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
+            issue = config_file_path.read_text(encoding="utf-8")
+        except OSError as e:
+            log.err(e, "ERROR: Failed to load /etc/issue.net")
+
+        if not issue or not issue.strip():
             return
-        if not data or not data.strip():
-            return
-        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b"en"))
+
+        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(issue) + NS(b"en"))
 
     def ssh_USERAUTH_REQUEST(self, packet: bytes) -> Any:
         """
