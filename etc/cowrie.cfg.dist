@@ -122,6 +122,8 @@ backend = shell
 # to (a new) `cowrie.log`.
 # `plain` will write to `cowrie.log` and will not rotate. Use `plain`
 # if you want to use external log rotation solutions like `logrotate`
+#
+# This affects both `cowrie.log` and `cowrie.json`
 logtype = rotating
 
 # Timezone Cowrie uses for logging
