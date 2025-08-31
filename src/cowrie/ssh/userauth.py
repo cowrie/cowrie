@@ -78,10 +78,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         except OSError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
 
-        if not issue or not issue.strip():
+        if not banner or not banner.strip():
             return
 
-        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(issue) + NS(b"en"))
+        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(banner) + NS(b"en"))
 
     def ssh_USERAUTH_REQUEST(self, packet: bytes) -> Any:
         """
