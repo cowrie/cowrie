@@ -318,8 +318,10 @@ class HoneyPotFilesystem:
         """
         Retrieve the content of a file in the honeyfs
         It follows links.
-        It tries A_REALFILE first and then tries honeyfs directory
-        Then return the executable header for executables
+        It retrieves the content in this order
+        1) if there's honeyfs, (A_REALFILE)
+        2) built-in contents (A_CONTENTS) from the pickle file
+        3) a generic binary header
         """
         path: str = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
@@ -329,6 +331,8 @@ class HoneyPotFilesystem:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return Path(f[A_REALFILE]).read_bytes()
+        if f[A_TYPE] == T_FILE and f[A_CONTENTS]:
+            return f[A_CONTENTS]
         if f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,
@@ -406,8 +410,7 @@ class HoneyPotFilesystem:
     def islink(self, path: str) -> bool:
         """
         Return True if path refers to a directory entry that is a symbolic
-        link. Always False if symbolic links are not supported by the python
-        runtime.
+        link.
         """
         try:
             f: list[Any] | None = self.getfile(path)
