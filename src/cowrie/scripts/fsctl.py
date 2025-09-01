@@ -8,10 +8,10 @@
 # relative file references.
 #
 # Do not use to build a complete file system. Use:
-# /opt/cowrie/bin/createfs
+# `bin/createfs`
 #
-# Instead it should be used to edit existing file systems
-# such as the default: /opt/cowrie/data/fs.pickle.
+# Instead it can be used to edit existing file systems
+# such as the default: `src/cowrie/data/fs.pickle`.
 #
 # Donovan Hubbard
 # Douglas Hubbard
@@ -139,18 +139,17 @@ class fseditCmd(cmd.Cmd):
         self.update_pwd("/")
 
         self.intro = (
-            "\nKippo/Cowrie file system interactive editor\n"
-            + "Donovan Hubbard, Douglas Hubbard, March 2013\n"
-            + "Type 'help' for help\n"
+            "\nCowrie file system interactive editor\n" + "Type 'help' for help\n"
         )
 
-    def save_pickle(self):
+    def save_pickle(self) -> None:
         """
         saves the current file system to the pickle
         :return:
         """
         try:
-            pickle.dump(self.fs, open(self.pickle_file_path, "wb"))
+            with open(self.pickle_file_path, "wb") as f:
+                pickle.dump(self.fs, f)
         except Exception as e:
             print(
                 (
@@ -167,6 +166,51 @@ class fseditCmd(cmd.Cmd):
         Exits the file system editor
         """
         return True
+
+    def do_load(self, args):
+        """
+        Update A_CONTENTS on normal files
+        Two arguments, first the file in the pickle file system, and second the name of the file of which to copy
+        the contents
+        """
+        arguments = args.split()
+        print(f"do_load: {arguments}")
+        if len(arguments) != 2:
+            print("Usage: load <honeyfs file> <realfile>")
+            return False
+
+        try:
+            cwd = getpath(self.fs, arguments[0])
+        except FileNotFound:
+            print(f"Can't find file: {arguments[0]}")
+            return
+
+        try:
+            with open(arguments[1]) as f:
+                cwd[A_CONTENTS] = f.read()
+        except OSError as e:
+            print(f"Unable to open file {arguments[1]}: {e!r}")
+            return
+
+        self.save_pickle()
+
+    def do_cat(self, args):
+        """
+        Cat file, one file only for now
+        """
+        arguments = args.split()
+        if len(arguments) != 1:
+            print("needs 1 argument")
+            return False
+
+        cwd = getpath(self.fs, arguments[0])
+        if cwd[A_TYPE] == T_FILE:
+            if not cwd[A_CONTENTS]:
+                print(f"No content in pickle file for {arguments[0]}")
+            else:
+                print(cwd[A_CONTENTS])
+        else:
+            print("not a file")
 
     def do_EOF(self, args):
         """
