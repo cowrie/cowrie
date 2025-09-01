@@ -184,7 +184,7 @@ class fseditCmd(cmd.Cmd):
             return
 
         try:
-            with open(arguments[1]) as f:
+            with open(arguments[1], "rb") as f:
                 cwd[A_CONTENTS] = f.read()
         except OSError as e:
             print(f"Unable to open file {arguments[1]}: {e!r}")
