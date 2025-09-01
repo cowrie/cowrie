@@ -113,13 +113,11 @@ class fseditCmd(cmd.Cmd):
             sys.exit(1)
 
         try:
-            pickle_file = open(pickle_file_path, "rb")
+            with open(pickle_file_path, "rb") as pickle_file:
+                self.fs = pickle.load(pickle_file, encoding="utf-8")
         except OSError as e:
             print(f"Unable to open file {pickle_file_path}: {e!r}")
             sys.exit(1)
-
-        try:
-            self.fs = pickle.load(pickle_file, encoding="utf-8")
         except Exception:
             print(
                 (
@@ -200,7 +198,7 @@ class fseditCmd(cmd.Cmd):
         """
         arguments = args.split()
         if len(arguments) != 1:
-            print("needs 1 argument")
+            print("usage: cat <file>")
             return False
 
         cwd = getpath(self.fs, arguments[0])
@@ -803,17 +801,10 @@ class fseditCmd(cmd.Cmd):
 
 def run():
     if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print(
-            "Usage: {} <fs.pickle> [command]".format(
-                os.path.basename(
-                    sys.argv[0],
-                )
-            )
-        )
+        print(f"Usage: {os.path.basename(sys.argv[0])} <fs.pickle> [command]")
         sys.exit(1)
 
     pickle_file_name = sys.argv[1].strip()
-    print(pickle_file_name)
 
     if len(sys.argv) == 3:
         fseditCmd(pickle_file_name).onecmd(sys.argv[2])
