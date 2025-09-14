@@ -1,0 +1,19 @@
+---
+# .github/workflows/ci-cd.yml
+jobs:
+  pypi-publish:
+    name: Upload commit to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: test-pypi
+      url: https://test.pypi.org/p/cowrie
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      # retrieve your distributions here
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_COWRIE_TEST }}
+          repository-url: https://test.pypi.org/cowrie/
