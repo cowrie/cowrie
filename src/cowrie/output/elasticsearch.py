@@ -23,7 +23,7 @@ class Output(cowrie.core.output.Output):
         host = CowrieConfig.get("output_elasticsearch", "host")
         port = CowrieConfig.get("output_elasticsearch", "port")
         self.index = CowrieConfig.get("output_elasticsearch", "index")
-        self.type = CowrieConfig.get("output_elasticsearch", "type")
+        self.type = CowrieConfig.get("output_elasticsearch", "type", fallback="_doc")
         self.pipeline = CowrieConfig.get("output_elasticsearch", "pipeline")
         # new options (creds + https)
         username = CowrieConfig.get("output_elasticsearch", "username", fallback=None)
