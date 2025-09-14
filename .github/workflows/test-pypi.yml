@@ -1,5 +1,21 @@
 ---
-# .github/workflows/ci-cd.yml
+name: test-pypi
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    # Publish `main` as to test.pypi.org
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'test-pypi upload'
+
 jobs:
   pypi-publish:
     name: Upload commit to PyPI
