@@ -17,7 +17,7 @@ on:  # yamllint disable-line rule:truthy
         description: 'test-pypi upload'
 
 jobs:
-  pypi-publish:
+  test-pypi-publish:
     name: Upload commit to PyPI
     runs-on: ubuntu-latest
     environment:
@@ -27,9 +27,29 @@ jobs:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
       # retrieve your distributions here
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+
+      - name: Build and publish
+        run: |
+          python -m build
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           password: ${{ secrets.PYPI_COWRIE_TEST }}
           repository-url: https://test.pypi.org/cowrie/
