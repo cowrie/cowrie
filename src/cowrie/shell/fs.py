@@ -339,7 +339,10 @@ class HoneyPotFilesystem:
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
-            return importlib.resources.read_binary(data, "arch", self.arch)
+            with importlib.resources.as_file(
+                importlib.resources.files(data).joinpath("arch").joinpath(self.arch)
+            ) as arch:
+                return arch.read_bytes()
         return b""
 
     def mkfile(
