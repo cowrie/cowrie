@@ -40,7 +40,7 @@ jobs:
 
       - name: Build and check
         run: |
-          python -m build
+          SETUPTOOLS_SCM_OVERRIDES_FOR_PKG='{local_scheme="no-local-version"}' python -m build
           twine check --strict dist/*
 
       - name: Publish package distributions to PyPI
