@@ -47,13 +47,12 @@ class Passwd:
     /etc/passwd. Note that contrary to the name, it does not handle any
     passwords.
     """
-
     try:
         with open(
             "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path")),
             encoding="ascii",
         ) as f:
-            passwd_contents = f.read()
+            passwd_contents = f.read().split("\n")
     except configparser.NoSectionError:
         log.msg("Loading default /etc/passwd file")
         resources_path = importlib.resources.files(data)

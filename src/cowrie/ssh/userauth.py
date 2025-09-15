@@ -77,6 +77,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             banner = banner_path.read_text(encoding="utf-8")
         except OSError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
+            return
 
         if not banner or not banner.strip():
             return
