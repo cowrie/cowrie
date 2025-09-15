@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools >= 65.63"]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "cowrie"
@@ -187,3 +188,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/cowrie/_version.py"

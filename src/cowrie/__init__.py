@@ -1,4 +1,7 @@
-# setup version
-from ._version import __version__ as version
+from importlib.metadata import version, PackageNotFoundError
 
-__version__: str = version.short()
+try:
+    __version__ = version("cowrie")
+except PackageNotFoundError:
+    # package is not installed
+    pass

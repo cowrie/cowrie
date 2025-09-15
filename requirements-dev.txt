@@ -19,6 +19,7 @@ pyyaml==6.0.2
 readthedocs-sphinx-search==0.3.2
 ruff==0.12.12
 setuptools==80.9.0
+setuptools-scm==9.2.0
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.0.2
 tox==4.28.4
