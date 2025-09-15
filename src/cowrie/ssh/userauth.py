@@ -69,7 +69,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 ),
                 encoding="ascii",
             ) as f:
-                issue = f.read()
+                banner = f.read()
         except configparser.Error as e:
             log.msg("Loading default /etc/issue.net file")
             resources_path = importlib.resources.files(data)
