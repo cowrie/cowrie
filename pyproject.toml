@@ -5,7 +5,7 @@ requires = ["setuptools >= 65.63"]
 name = "cowrie"
 dynamic = ["version"]
 description="Cowrie SSH/Telnet Honeypot."
-license.text="BSD-3-Clause"
+license="BSD-3-Clause"
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 keywords=["ssh", "telnet", "honeypot"]
@@ -17,7 +17,6 @@ classifiers=[
         "Framework :: Twisted",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
-        "License :: OSI Approved :: BSD License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",
         "Operating System :: POSIX",
