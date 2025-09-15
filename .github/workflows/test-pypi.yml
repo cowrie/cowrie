@@ -39,7 +39,7 @@ jobs:
       - name: Build and check
         run: |
           python -m build
-          twine check dist/*
+          twine check --strict dist/*
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
