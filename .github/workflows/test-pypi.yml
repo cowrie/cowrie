@@ -26,8 +26,10 @@ jobs:
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-      # retrieve your distributions here
-      - uses: actions/checkout@v2
+      # retrieve your distributions here, need fetch-depth to get metadata for version
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v2
 
