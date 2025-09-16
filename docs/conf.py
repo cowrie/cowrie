@@ -11,26 +11,22 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-# The Makefile sets PYTHONPATH so this module is available
-from cowrie import version as cowrie_version_object
 
 # -- Project information -----------------------------------------------------
 
 project = "cowrie"
-copyright = "2014-2023, Michel Oosterhof"
+copyright = "2014-2025, Michel Oosterhof"
 author = "Michel Oosterhof"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
-# The short X.Y version.
-version = "{major}.{minor}".format(
-    major=cowrie_version_object.major, minor=cowrie_version_object.minor
-)
-# The full version, including alpha/beta/rc tags.
-release = cowrie_version_object.short()
 
+from importlib.metadata import version as get_version
+# The full version, including alpha/beta/rc tags.
+release: str = get_version("cowrie")
+# The short X.Y version.
+version: str = ".".join(release.split('.')[:2])
 
 # -- General configuration ---------------------------------------------------
 
