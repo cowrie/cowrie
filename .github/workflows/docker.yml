@@ -3,9 +3,9 @@ name: Docker Build and Publish
 
 on:  # yamllint disable-line rule:truthy
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `main` as Docker `latest` image.
     branches:
-      - master
+      - main
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -40,17 +40,31 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: set SOURCE_DATE_EPOCH
+      - name: Install dependencies
+        run: python -m pip install -q --upgrade pip setuptools setuptools-scm wheel
+
+      - name: Generate version file
+        run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
+
+      - name: Set SOURCE_DATE_EPOCH
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.1
+        uses: sigstore/cosign-installer@v3.10.0
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+
+      - name: Extract Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: cowrie/cowrie
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -70,6 +84,8 @@ jobs:
         with:
           push: false
           load: true
+          # use context to access src/cowrie/_version.py we created earlier
+          context: .
           tags: cowrie:test
           file: docker/Dockerfile
 
@@ -84,6 +100,8 @@ jobs:
         with:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
+          # use context to access src/cowrie/_version.py we created earlier
+          context: .
           push: true
           load: false
           sbom: true
@@ -97,4 +115,4 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign -y cowrie/cowrie@${DIGEST}
-          cosign verify cowrie/cowrie --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/heads/master'
+          cosign verify cowrie/cowrie --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/heads/main'

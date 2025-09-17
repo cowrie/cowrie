@@ -144,3 +144,78 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_echo_command_029(self) -> None:
         self.proto.lineReceived(b"echo $(e)")
         self.assertEqual(self.tr.value(), b"-bash: e: command not found\n\n" + PROMPT)
+
+    def test_subshell_parentheses_001(self) -> None:
+        """Test basic subshell execution with parentheses - should output directly"""
+        self.proto.lineReceived(b"(echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_subshell_parentheses_002(self) -> None:
+        """Test subshell vs command substitution difference"""
+        self.proto.lineReceived(b"echo $(echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+        self.tr.clear()
+        self.proto.lineReceived(b"(echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_subshell_parentheses_003(self) -> None:
+        """Test parentheses with multiple commands - should execute all commands"""
+        self.proto.lineReceived(b"(echo hello; echo world)")
+        self.assertEqual(self.tr.value(), b"hello\nworld\n" + PROMPT)
+
+    def test_subshell_parentheses_004(self) -> None:
+        """Test parentheses in middle of command line is syntax error"""
+        self.proto.lineReceived(b"echo before (echo middle) after")
+        self.assertEqual(self.tr.value(), b"-bash: syntax error near unexpected token `(echo'\\n" + PROMPT)
+
+    def test_subshell_parentheses_005(self) -> None:
+        """Test command substitution does substitute output into command line"""
+        self.proto.lineReceived(b"echo before $(echo middle) after")
+        self.assertEqual(self.tr.value(), b"before middle after\n" + PROMPT)
+
+    def test_subshell_parentheses_006(self) -> None:
+        """Test complex subshell with pipes syntax error - regression test"""
+        self.proto.lineReceived(b'nproc ; uname -a (nproc; uname -a) |tr "\\n" "|"')
+        # Should be a syntax error due to parentheses after uname -a
+        output = self.tr.value()
+        self.assertIn(b"-bash: nproc: command not found", output)
+        self.assertIn(b"syntax error near unexpected token", output)
+
+    def test_subshell_parentheses_007(self) -> None:
+        """Test valid subshell after semicolon should work"""
+        self.proto.lineReceived(b"echo first; (echo second)")
+        output = self.tr.value()
+        self.assertIn(b"first", output)
+        self.assertIn(b"second", output)
+
+    def test_subshell_parentheses_008(self) -> None:
+        """Test subshell with different command separators"""
+        self.proto.lineReceived(b"(echo first && echo second)")
+        output = self.tr.value()
+        self.assertIn(b"first", output)
+        self.assertIn(b"second", output)
+
+    def test_subshell_parentheses_009(self) -> None:
+        """Test subshell with OR operator"""
+        self.proto.lineReceived(b"(echo first || echo second)")
+        output = self.tr.value()
+        self.assertIn(b"first", output)
+        self.assertIn(b"second", output)
+
+    def test_subshell_parentheses_010(self) -> None:
+        """Test subshell with multiple semicolons"""
+        self.proto.lineReceived(b"(echo one; echo two; echo three)")
+        output = self.tr.value()
+        self.assertIn(b"one", output)
+        self.assertIn(b"two", output)
+        self.assertIn(b"three", output)
+
+    def test_command_substitution_multiple_commands(self) -> None:
+        """Test command substitution with multiple commands"""
+        self.proto.lineReceived(b"echo $(echo first; echo second)")
+        self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
+
+    def test_command_substitution_in_middle_multiple(self) -> None:
+        """Test command substitution in middle with multiple commands"""
+        self.proto.lineReceived(b"echo before $(echo first; echo second) after")
+        self.assertEqual(self.tr.value(), b"before first\nsecond after\n" + PROMPT)

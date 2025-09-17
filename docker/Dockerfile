@@ -4,7 +4,6 @@
 
 ARG ARCH=
 ARG SOURCE_DATE_EPOCH
-ARG TAG
 FROM ${ARCH}debian:bookworm-slim AS builder
 
 WORKDIR /
@@ -26,10 +25,11 @@ RUN groupadd -r ${COWRIE_GROUP} && \
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
-    apt-get -q update && \
-    apt-get -q install -y \
+    apt-get -qq update && \
+    apt-get -qq install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
+        -o Dpkg::Use-Pty="0" \
       build-essential \
       ca-certificates \
       cargo \
@@ -52,13 +52,15 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir --upgrade cffi && \
-    pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
-    pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
+    pip install -q --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install -q --no-cache-dir --upgrade cffi && \
+    pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
+    pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
+# RUN . cowrie-env/bin/activate && \
+#     pip install -e ${COWRIE_HOME}/cowrie-git
 
 FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
@@ -67,11 +69,9 @@ LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
 LABEL org.opencontainers.image.documentation="https://docs.cowrie.org"
 LABEL org.opencontainers.image.source="https://github.com/cowrie/cowrie"
-LABEL org.opencontainers.image.version=${TAG}
 LABEL org.opencontainers.image.revision="Source control revision identifier for the packaged software."
 LABEL org.opencontainers.image.vendor="Cowrie"
 LABEL org.opencontainers.image.licenses="BSD-3-Clause"
-LABEL org.opencontainers.image.ref.name=${TAG}
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
@@ -90,6 +90,7 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 #    apt-get install -y \
 #        -o APT::Install-Suggests=false \
 #        -o APT::Install-Recommends=false \
+#        -o Dpkg::Use-Pty="0" \
 #      libssl1.1 \
 #      ca-certificates \
 #      libffi7 \

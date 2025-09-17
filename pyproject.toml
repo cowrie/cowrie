@@ -1,11 +1,13 @@
 [build-system]
-requires = ["setuptools >= 65.63"]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "cowrie"
 dynamic = ["version"]
 description="Cowrie SSH/Telnet Honeypot."
-license.text="BSD-3-Clause"
+license="BSD-3-Clause"
+license-files = [ "LICENSE.rst" ]
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 keywords=["ssh", "telnet", "honeypot"]
@@ -17,7 +19,6 @@ classifiers=[
         "Framework :: Twisted",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
-        "License :: OSI Approved :: BSD License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",
         "Operating System :: POSIX",
@@ -30,16 +31,16 @@ classifiers=[
 dependencies = [
         "attrs==25.3.0",
         "bcrypt==4.3.0",
-        "cryptography==44.0.2",
+        "cryptography==45.0.7",
         "hyperlink==21.0.0",
         "idna==3.10",
-        "packaging==24.2",
+        "packaging==25.0",
         "pyasn1_modules==0.4.2",
-        "requests==2.32.3",
+        "requests==2.32.5",
         "service_identity==24.2.0",
-        "tftpy==0.8.5",
-        "treq==24.9.1",
-        "twisted==24.11.0",
+        "tftpy==0.8.6",
+        "treq==25.5.0",
+        "twisted[conch]==25.5.0",
 ]
 
 [project.urls]
@@ -64,31 +65,31 @@ s3 = ["botocore"]
 slack = ["slackclient"]
 influxdb = ["influxdb"]
 dev = [
-"build==1.2.2.post1",
-"coverage==7.8.0",
-"mypy-extensions==1.0.0; platform_python_implementation=='CPython'",
-"mypy-zope==1.0.11; platform_python_implementation=='CPython'",
-"mypy==1.13.0; platform_python_implementation=='CPython'",
+"build==1.3.0",
+"coverage==7.10.6",
+"mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
+"mypy-zope==1.0.13; platform_python_implementation=='CPython'",
+"mypy==1.17.1; platform_python_implementation=='CPython'",
 "pathspec==0.12.1",
-"pipdeptree==2.26.0",
-"pre-commit==4.2.0",
-"pylint==3.3.6",
-"pyre-check==0.9.23",
-"pyright==1.1.399",
+"pipdeptree==2.28.0",
+"pre-commit==4.3.0",
+"pylint==3.3.8",
+"pyre-check==0.9.25",
+"pyright==1.1.404",
 "pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<='3.9'",
 "pytype==2024.10.11; platform_python_implementation=='CPython' and python_version>='3.10'",
-"pyupgrade==3.19.1",
+"pyupgrade==3.20.0",
 "pyyaml==6.0.2",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.11.6",
-"setuptools==78.1.0",
+"ruff==0.12.12",
+"setuptools==80.9.0",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.0.2",
-"tox==4.25.0",
-"types-python-dateutil==2.9.0.20241206",
+"tox==4.30.2",
+"types-python-dateutil==2.9.0.20250822",
 "types-redis==4.6.0.20241004",
-"types-requests==2.32.0.20250328",
-"yamllint==1.37.0",
+"types-requests==2.32.4.20250809",
+"yamllint==1.37.1",
 ]
 
 [tool.isort]
@@ -188,3 +189,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/cowrie/_version.py"

@@ -13,6 +13,8 @@ import re
 import time
 
 import dateutil.parser
+
+# TODO: use `treq`
 import requests
 
 from twisted.internet import reactor
@@ -21,6 +23,8 @@ from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
+
+HTTP_TIMEOUT = 10
 
 
 class Output(cowrie.core.output.Output):
@@ -114,7 +118,7 @@ class Output(cowrie.core.output.Output):
             method="PUT",
             url="https://secure.dshield.org/api/file/sshlog",
             headers=headers,
-            timeout=10,
+            timeout=HTTP_TIMEOUT,
             data=log_output,
         )
 

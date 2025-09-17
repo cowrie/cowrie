@@ -7,13 +7,9 @@ setup(
     include_package_data=True,
     package_dir={"": "src"},
     package_data={"": ["*.md"]},
-    use_incremental=True,
-    scripts=["bin/fsctl", "bin/asciinema", "bin/cowrie", "bin/createfs", "bin/playlog"],
-    setup_requires=["incremental", "click"],
+    scripts=["bin/cowrie"],
+    setup_requires=["click"],
 )
-
-import sys
-
 
 def refresh_plugin_cache():
     from twisted.plugin import IPlugin, getPlugins

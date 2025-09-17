@@ -43,6 +43,8 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
+HTTP_TIMEOUT = 20
+
 
 class Output(cowrie.core.output.Output):
     """
@@ -92,6 +94,7 @@ class Output(cowrie.core.output.Output):
                 + self.apiKey
                 + "&action=upload",
                 files={"upload": open(artifact, "rb")},
+                timeout=HTTP_TIMEOUT,
             )
             if res and res.ok:
                 log.msg("Submitted to MalShare")

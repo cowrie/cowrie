@@ -21,6 +21,7 @@ __all__ = [
     "du",
     "env",
     "ethtool",
+    "find",
     "finger",
     "free",
     "fs",

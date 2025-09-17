@@ -74,9 +74,18 @@ class HoneyPotShell:
                     continue
                 elif tok == "$?":
                     tok = "0"
-                elif tok[0] == "(":
-                    cmd = self.do_command_substitution(tok)
-                    tokens = cmd.split()
+                elif tok == "(" or (tok.startswith("(") and not tok.startswith("$(")):
+                    # Parentheses can only appear at the start of a command, not in the middle
+                    if tokens:
+                        # Parentheses in the middle of a command line is a syntax error
+                        self.protocol.terminal.write(
+                            f"-bash: syntax error near unexpected token `{tok}'\\n".encode()
+                        )
+                        break
+                    if tok == "(":
+                        self.do_subshell_execution_from_lexer()
+                    else:
+                        self.do_subshell_execution(tok)
                     continue
                 elif "$(" in tok or "`" in tok:
                     tok = self.do_command_substitution(tok)
@@ -187,6 +196,76 @@ class HoneyPotShell:
 
         return result
 
+    def do_subshell_execution_from_lexer(self) -> None:
+        """
+        Execute a subshell command reading tokens from the lexer until matching closing parenthesis.
+        Output goes directly to the terminal.
+        """
+        cmd_tokens = []
+        opening_count = 1
+        closing_count = 0
+
+        while opening_count > closing_count:
+            if self.lexer is None:
+                break
+            tok = self.lexer.get_token()
+            if tok is None:
+                break
+
+            if tok == ")":
+                closing_count += 1
+                if opening_count == closing_count:
+                    break
+                else:
+                    cmd_tokens.append(tok)
+            elif tok == "(":
+                opening_count += 1
+                cmd_tokens.append(tok)
+            else:
+                cmd_tokens.append(tok)
+
+        # execute the command and print to terminal
+        cmd_str = " ".join(cmd_tokens)
+        self.protocol.terminal.write(
+            self.run_subshell_command(f"({cmd_str})").encode()
+        )
+
+    def do_subshell_execution(self, start_tok: str) -> None:
+        """
+        Execute a subshell command (command) without output substitution.
+        Output goes directly to the terminal.
+        """
+        if start_tok[0] == "(":
+            cmd_expr = start_tok
+            pos = 1
+            opening_count = 1
+            closing_count = 0
+
+            # parse the remaining tokens to find the matching closing parenthesis
+            while opening_count > closing_count:
+                if cmd_expr[pos] == ")":
+                    closing_count += 1
+                    if opening_count == closing_count:
+                        # execute the command in () and print to terminal
+                        self.protocol.terminal.write(
+                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
+                        )
+                        break
+                    else:
+                        pos += 1
+                elif cmd_expr[pos] == "(":
+                    opening_count += 1
+                    pos += 1
+                else:
+                    if opening_count > closing_count and pos == len(cmd_expr) - 1:
+                        if self.lexer:
+                            tokkie = self.lexer.get_token()
+                            if tokkie is None:  # self.lexer.eof put None for mypy
+                                break
+                            else:
+                                cmd_expr = cmd_expr + " " + tokkie
+                    pos += 1
+
     def run_subshell_command(self, cmd_expr: str) -> str:
         # extract the command from $(...) or `...` or (...) expression
         if cmd_expr.startswith("$("):
@@ -194,6 +273,54 @@ class HoneyPotShell:
         else:
             cmd = cmd_expr[1:-1]
 
+        # For subshells with multiple commands, we need to capture all output
+        # Create a custom output accumulator
+        if cmd_expr.startswith("("):
+            return self._execute_subshell_with_full_output(cmd)
+        else:
+            # Command substitution - use existing method
+            return self._execute_command_substitution(cmd)
+
+    def _execute_subshell_with_full_output(self, cmd: str) -> str:
+        """Execute subshell commands and capture ALL output, not just the last command."""
+        # Split commands by separators and execute each one
+        lexer = shlex.shlex(instream=cmd, punctuation_chars=True, posix=True)
+        lexer.wordchars += "@%{}=$:+^,()`"
+
+        accumulated_output = ""
+        current_cmd_tokens: list[str] = []
+
+        while True:
+            tok = lexer.get_token()
+            if tok is None:
+                # Process final command
+                if current_cmd_tokens:
+                    cmd_str = " ".join(current_cmd_tokens)
+                    output = self._execute_single_command_with_redirect(cmd_str)
+                    accumulated_output += output
+                break
+            elif tok in (";", "&&", "||"):
+                # Process current command and start new one
+                if current_cmd_tokens:
+                    cmd_str = " ".join(current_cmd_tokens)
+                    output = self._execute_single_command_with_redirect(cmd_str)
+                    accumulated_output += output
+                    current_cmd_tokens = []
+                # Note: We're ignoring && and || conditional logic for now
+            else:
+                current_cmd_tokens.append(tok)
+
+        return accumulated_output
+
+    def _execute_command_substitution(self, cmd: str) -> str:
+        """Execute command substitution - should capture all output."""
+        # Command substitution should also capture all output from multiple commands
+        output = self._execute_subshell_with_full_output(cmd)
+        # trailing newlines are stripped for command substitution
+        return output.rstrip("\n")
+
+    def _execute_single_command_with_redirect(self, cmd: str) -> str:
+        """Execute a single command and return its output."""
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(
             HoneyPotShell(self.protocol, interactive=False, redirect=True)
@@ -204,13 +331,7 @@ class HoneyPotShell:
         res = self.protocol.cmdstack.pop()
 
         try:
-            output: str
-            if cmd_expr.startswith("("):
-                output = res.protocol.pp.redirected_data.decode()
-            else:
-                # trailing newlines are stripped for command substitution
-                output = res.protocol.pp.redirected_data.decode().rstrip("\n")
-
+            output: str = res.protocol.pp.redirected_data.decode()
         except AttributeError:
             return ""
         else:
@@ -302,6 +423,8 @@ class HoneyPotShell:
         cmd = {}
 
         for value in multipleCmdArgs:
+            if not value:  # Skip empty command lists
+                continue
             cmd["command"] = value.pop(0)
             cmd["rargs"] = parse_arguments(value)
             cmd_array.append(cmd)
@@ -460,7 +583,7 @@ class HoneyPotShell:
         newbuf = ""
         if len(files) == 1:
             newbuf = " ".join(
-                line.decode("utf8").split()[:-1] + [f"{basedir}{files[0][fs.A_NAME]}"]
+                [*line.decode("utf8").split()[:-1], f"{basedir}{files[0][fs.A_NAME]}"]
             )
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += "/"

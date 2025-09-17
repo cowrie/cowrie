@@ -55,7 +55,7 @@ git-remote: ## Add remote git configuration
 
 .PHONY: pur
 pip-pur: ## Upgrade dependencies based on latest packages
-	git checkout master
+	git checkout main
 	-git branch -D "dependency-upgrade-`date -u +%Y-%m-%d`"
 	git checkout -b "dependency-upgrade-`date -u +%Y-%m-%d`"
 	pur -r requirements.txt
@@ -82,19 +82,22 @@ TAG=$(shell git rev-parse --short=8 HEAD)
 
 .PHONY: docker-build
 docker-build: docker/Dockerfile ## Build Docker image
-	-$(DOCKER) buildx create --name cowrie-builder
+	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)
+	-$(DOCKER) buildx create --append --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
 	$(DOCKER) buildx build --sbom=true --provenance=true --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-load
 docker-load: docker-build ## Load Docker image
-	-$(DOCKER) buildx create --name cowrie-builder
+	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)
+	-$(DOCKER) buildx create --append --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
 	$(DOCKER) buildx build --load -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-build ## Push Docker image
 docker-push:  ## Push Docker image to Docker Hub
-	-$(DOCKER) buildx create --name cowrie-builder
+	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)
+	-$(DOCKER) buildx create --append --name cowrie-builder
 	@echo "Pushing image to GitHub Docker Registry...\n"
 	$(DOCKER) buildx use cowrie-builder
 	$(DOCKER) buildx build --sbom=true --provenance=true --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile --push .
