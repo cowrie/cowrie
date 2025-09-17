@@ -7,6 +7,7 @@ name = "cowrie"
 dynamic = ["version"]
 description="Cowrie SSH/Telnet Honeypot."
 license="BSD-3-Clause"
+license-files = [ "LICENSE.rst" ]
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 keywords=["ssh", "telnet", "honeypot"]
