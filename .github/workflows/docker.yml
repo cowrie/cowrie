@@ -70,7 +70,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64,linux/arm64
-          buildkitd-flags: "--progress=quiet"
 
       - name: Login to Docker Hub
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
