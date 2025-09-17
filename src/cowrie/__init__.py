@@ -1,1 +1,1 @@
-import package_name._version as __version__
+import cowrie._version as __version__
