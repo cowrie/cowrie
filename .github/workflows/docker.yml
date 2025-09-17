@@ -100,6 +100,8 @@ jobs:
         with:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
+          # use context to access src/cowrie/_version.py we created earlier
+          context: .
           push: true
           load: false
           sbom: true
