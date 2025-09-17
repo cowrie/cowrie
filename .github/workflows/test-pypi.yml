@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build setuptools twine wheel
+          python -m pip install build setuptools twine wheel packaging
 
       - name: Build and check
         run: |
