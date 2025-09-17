@@ -45,7 +45,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip setuptools setuptools-scm wheel
+        run: python -m pip install -q --upgrade pip setuptools setuptools-scm wheel
 
       - name: Generate version file
         run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
@@ -100,6 +100,8 @@ jobs:
         with:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
+          # use context to access src/cowrie/_version.py we created earlier
+          context: .
           push: true
           load: false
           sbom: true
