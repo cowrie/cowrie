@@ -50,9 +50,6 @@ jobs:
       - name: Generate version file
         run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
 
-      - name: Debug that version file is created
-        run: cat src/cowrie/_version.py
-
       - name: Set SOURCE_DATE_EPOCH
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
