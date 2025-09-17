@@ -26,8 +26,8 @@ RUN groupadd -r ${COWRIE_GROUP} && \
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
-    apt-get -q update && \
-    apt-get -q install -y \
+    apt-get -qq update && \
+    apt-get -qq install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
       build-essential \
