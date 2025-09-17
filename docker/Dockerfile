@@ -52,13 +52,16 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} requirements.txt requirements-output
 
 RUN python3 -m venv cowrie-env && \
     . cowrie-env/bin/activate && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --upgrade pip setuptools setuptools-scm wheel build && \
     pip install --no-cache-dir --upgrade cffi && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
     pip install --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
+# Generate src/cowrie/_version.py from git metadata
+RUN . cowrie-env/bin/activate && \
+    python3 -m build ${COWRIE_HOME}/cowrie-git
 
 FROM gcr.io/distroless/python3-debian12 AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
