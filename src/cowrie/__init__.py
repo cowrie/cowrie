@@ -1,7 +1,1 @@
-from importlib.metadata import version, PackageNotFoundError
-
-try:
-    __version__ = version("cowrie")
-except PackageNotFoundError:
-    # package is not installed
-    pass
+import cowrie._version as __version__
