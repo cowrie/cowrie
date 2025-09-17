@@ -81,6 +81,8 @@ jobs:
         with:
           push: false
           load: true
+          # use context to access src/cowrie/_version.py we created earlier
+          context: .
           tags: cowrie:test
           file: docker/Dockerfile
 
