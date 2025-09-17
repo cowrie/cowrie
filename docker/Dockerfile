@@ -29,6 +29,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     apt-get -qq install -y \
         -o APT::Install-Suggests=false \
         -o APT::Install-Recommends=false \
+        -o Dpkg::Use-Pty="0" \
       build-essential \
       ca-certificates \
       cargo \
@@ -89,6 +90,7 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 #    apt-get install -y \
 #        -o APT::Install-Suggests=false \
 #        -o APT::Install-Recommends=false \
+#        -o Dpkg::Use-Pty="0" \
 #      libssl1.1 \
 #      ca-certificates \
 #      libffi7 \
