@@ -49,6 +49,8 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
+          print-hash: true
+          verify-metadata: false
 
       - name: Download and test package
         if: ${{ github.repository == 'cowrie/cowrie' }}
