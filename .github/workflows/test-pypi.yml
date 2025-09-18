@@ -32,11 +32,13 @@ jobs:
           fetch-depth: 0
 
       - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build setuptools twine wheel packaging
+          python -m pip install build setuptools==80.9.0 setuptools-scm==9.2.0 twine==6.2.0 wheel==0.45.1 packaging==25.0
 
       - name: Build and check
         run: |
@@ -49,6 +51,8 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
+          print-hash: true
+          verify-metadata: false
 
       - name: Download and test package
         if: ${{ github.repository == 'cowrie/cowrie' }}
