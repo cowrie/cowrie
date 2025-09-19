@@ -137,7 +137,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg(
             f"Twisted Version {__twisted_version__.major}.{__twisted_version__.minor}.{__twisted_version__.micro}"
         )
-        log.msg(f"Cowrie Version {__cowrie_version__}")
+        log.msg(f"Cowrie Version {__cowrie_version__.__version__}")
 
         # check configurations
         if not self.enableTelnet and not self.enableSSH and not self.pool_only:

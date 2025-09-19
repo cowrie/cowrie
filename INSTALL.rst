@@ -79,11 +79,8 @@ Activate the virtual environment and install packages::
 
     $ source cowrie-env/bin/activate
     (cowrie-env) $ python -m pip install --upgrade pip
-    (cowrie-env) $ python -m pip install --upgrade -r requirements.txt
-
-And finally install Cowrie package in pip::
-
     (cowrie-env) $ python -m pip install -e .
+
 
 Step 5: Install configuration file
 **********************************
