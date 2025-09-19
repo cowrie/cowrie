@@ -11,7 +11,6 @@ import os
 from configparser import NoOptionError, NoSectionError
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -59,40 +58,6 @@ def getRSAKeys() -> tuple[bytes, bytes]:
     )
     publicKeyString = keys.Key(rsaKey).public().toString("openssh")
     privateKeyString = keys.Key(rsaKey).toString("openssh")
-    with open(publicKeyFile, "w+b") as f:
-        f.write(publicKeyString)
-    with open(privateKeyFile, "w+b") as f:
-        f.write(privateKeyString)
-    return publicKeyString, privateKeyString
-
-
-def getDSAKeys() -> tuple[bytes, bytes]:
-    """
-    If no keys in configfile file, generate but don't write them.
-    If keys are defined, but don't exist, create them.
-    If keys defined and exists, return contents
-    """
-    try:
-        publicKeyFile: str = CowrieConfig.get("ssh", "dsa_public_key")
-        privateKeyFile: str = CowrieConfig.get("ssh", "dsa_private_key")
-    except (NoOptionError, NoSectionError):
-        dsaKey = dsa.generate_private_key(
-            key_size=DSA_KEY_SIZE, backend=default_backend()
-        )
-        publicKeyString = keys.Key(dsaKey).public().toString("openssh")
-        privateKeyString = keys.Key(dsaKey).toString("openssh")
-        return publicKeyString, privateKeyString
-
-    if os.path.exists(publicKeyFile) and os.path.exists(privateKeyFile):
-        with open(publicKeyFile, "rb") as f:
-            publicKeyString = f.read()
-        with open(privateKeyFile, "rb") as f:
-            privateKeyString = f.read()
-        return publicKeyString, privateKeyString
-
-    dsaKey = dsa.generate_private_key(key_size=DSA_KEY_SIZE, backend=default_backend())
-    publicKeyString = keys.Key(dsaKey).public().toString("openssh")
-    privateKeyString = keys.Key(dsaKey).toString("openssh")
     with open(publicKeyFile, "w+b") as f:
         f.write(publicKeyString)
     with open(privateKeyFile, "w+b") as f:
