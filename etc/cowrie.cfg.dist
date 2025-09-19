@@ -944,11 +944,27 @@ force = 0
 api_key = 130928309823098
 enabled = false
 
-# This will produce a _lot_ of messages - you have been warned....
+# Sends Cowrie event notifications to a Slack channel.
+# Warning: This will produce a _lot_ of messages unless `simplified = true` 
+#          and `verbose = false` are set.
+#
+# Parameters:
+#  - channel:    Name of the Slack channel Cowrie's bot should post to.
+#  - token:      Secret token for Cowrie's Slack bot.
+#  - simplified: If true, messages are formatted into a single line instead of
+#                 raw JSON. (default = false)
+#  - timestamp:  If true, each message includes a timestamp,
+#                 if false, timestamps are hidden. (default = true)
+#  - verbose:    If false, reduces the number of messages by suppressing 
+#                 verbose event types: client.kex, client.connect, client.size,
+#                 client.var, log.closed, log.opened, session.params (default = true)
 [output_slack]
 enabled = false
-channel = channel_that_events_should_be_posted_in
+channel = #channel_that_events_should_be_posted_in
 token = slack_token_for_your_bot
+simplified = true
+timestamp = true
+verbose = false
 debug = false
 
 
