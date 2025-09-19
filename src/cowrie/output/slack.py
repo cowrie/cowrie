@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 from slack import WebClient
 
@@ -60,7 +60,7 @@ class Output(cowrie.core.output.Output):
     def stop(self) -> None:
         pass
 
-    def _format_simplified_message(self, event: Dict[str, Any]) -> str:
+    def _format_simplified_message(self, event: dict[str, Any]) -> str:
         """
         Format event into a simplified, readable message with Slack formatting
         """
@@ -87,12 +87,12 @@ class Output(cowrie.core.output.Output):
         # Helper function for command formatting
         def _format_command(cmd: str) -> str:
             cmd = cmd.strip()
-            if '\n' in cmd or '\r' in cmd:
+            if "\n" in cmd or "\r" in cmd:
                 return f"*MULTILINE CMD* : :arrow_down_small: ```{cmd}```"
             return f"*CMD* : :arrow_forward: `{cmd}`"
 
-        def _format_download(event: Dict[str, Any]) -> str:
-            if event.get('url', '') == '':
+        def _format_download(event: dict[str, Any]) -> str:
+            if event.get("url", "") == "":
                 return f"*FILE* : :page_facing_up: Created file `{event.get('destfile', 'unknown')}` (SHA: `{event.get('shasum', 'unknown')}`)"
             return f"*FILE* : :inbox_tray: Downloaded URL `{event.get('url', 'unknown')}` to local file (SHA: `{event.get('shasum', 'unknown')}`)"
 
@@ -114,7 +114,7 @@ class Output(cowrie.core.output.Output):
                                                     +f"(Hassh = `{event.get('hassh', 'unknown')}`)",
             "cowrie.session.closed":        lambda: ":red_circle: *LOGOUT* :red_circle: Session closed - "
                                                     +f"Total duration: `{event.get('duration', 'unknown')}` seconds",
-            "cowrie.command.input":         lambda: _format_command(event.get('input', '')),
+            "cowrie.command.input":         lambda: _format_command(event.get("input", "")),
             "cowrie.session.file_download": lambda: _format_download(event),
             "cowrie.session.file_upload":   lambda: f"*FILE* : :outbox_tray: Uploaded file to `{event.get('filename', 'unknown')}` "
                                                     +f"(SHA: `{event.get('shasum', 'unknown')}`)",
@@ -133,13 +133,13 @@ class Output(cowrie.core.output.Output):
             return f"{base_msg}{event_handlers[eventid]()}"
 
         # For other events, include the eventid and important details
-        details: List[str] = []
+        details: list[str] = []
         for key in (
             "input", "message", "username", "password", "url", "filename",
             "fname", "type", "fingerprint", "duration", "outfile",
             "shasum", "src_ip", "src_port"
         ):
-            if key in event and event[key]:
+            if event.get(key):
                 details.append(f"{key}: `{event[key]}`")
 
         if details:
@@ -148,7 +148,7 @@ class Output(cowrie.core.output.Output):
             return f"{base_msg}*{eventid.upper().replace('.', '_')}* : Event occurred"
         return ""
 
-    def write(self, event: Dict[str, Any]) -> None:
+    def write(self, event: dict[str, Any]) -> None:
         for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
@@ -165,7 +165,7 @@ class Output(cowrie.core.output.Output):
         eventid = event.get("eventid", "")
         if not self.verbose:
             if (eventid in verbose_events) or (
-                eventid == 'cowrie.command.input' and event.get("input", '') == ''
+                eventid == "cowrie.command.input" and event.get("input", "") == ""
             ):
                 return
 
