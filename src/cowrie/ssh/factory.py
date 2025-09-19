@@ -83,10 +83,6 @@ class CowrieSSHFactory(factory.SSHFactory):
                 rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=rsaPubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=rsaPrivKeyString)
-            elif key == b"ssh-dss":
-                dsaaPubKeyString, dsaPrivKeyString = cowriekeys.getDSAKeys()
-                self.publicKeys[key] = keys.Key.fromString(data=dsaaPubKeyString)
-                self.privateKeys[key] = keys.Key.fromString(data=dsaPrivKeyString)
             elif key == b"ecdsa-sha2-nistp256":
                 ecdsaPuKeyString, ecdsaPrivKeyString = cowriekeys.getECDSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=ecdsaPuKeyString)
