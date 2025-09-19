@@ -539,7 +539,7 @@ public_key_auth = ssh-rsa,ecdsa-sha2-nistp256,ssh-ed25519
 # SSH-2.0-OpenSSH_5.9
 #
 # (default: "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
-version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
+version = SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3
 
 # Cipher encryption algorithms to be used.
 #
