@@ -51,7 +51,7 @@ repository = "https://github.com/cowrie/cowrie"
 [project.scripts]
 fsctl = "cowrie.scripts.fsctl:run"
 asciinema = "cowrie.scripts.asciinema:run"
-creatfs = "cowrie.scripts.createfs:run"
+createfs = "cowrie.scripts.createfs:run"
 playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
