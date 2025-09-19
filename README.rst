@@ -64,9 +64,6 @@ Docker images are available on Docker Hub.
 
     $ make docker-build
 
-For more detailed instructions on using Docker in Cowrie, check
-:ref:`Building Docker Images<Building Docker Images>`
-
 Requirements
 *****************************************
 
