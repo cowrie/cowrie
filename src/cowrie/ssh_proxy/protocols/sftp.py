@@ -225,7 +225,7 @@ class SFTP(base_protocol.BaseProtocol):
                     shasum = hashlib.sha256(self.theFile).hexdigest()
                     outfile = os.path.join(self.downloadPath, shasum)
                     fname = self.command.decode().split(" ")[-1]
-                    duplicate =  os.path.exists(outfile)
+                    duplicate = os.path.exists(outfile)
 
                     if not duplicate:
                         f = open(outfile, "wb")

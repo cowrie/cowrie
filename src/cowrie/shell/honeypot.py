@@ -226,9 +226,7 @@ class HoneyPotShell:
 
         # execute the command and print to terminal
         cmd_str = " ".join(cmd_tokens)
-        self.protocol.terminal.write(
-            self.run_subshell_command(f"({cmd_str})").encode()
-        )
+        self.protocol.terminal.write(self.run_subshell_command(f"({cmd_str})").encode())
 
     def do_subshell_execution(self, start_tok: str) -> None:
         """

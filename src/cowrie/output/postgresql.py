@@ -45,7 +45,9 @@ class Output(cowrie.core.output.Output):
     debug: bool = False
 
     def start(self):
-        self.debug = CowrieConfig.getboolean("output_postgresql", "debug", fallback=False)
+        self.debug = CowrieConfig.getboolean(
+            "output_postgresql", "debug", fallback=False
+        )
         port = CowrieConfig.getint("output_postgresql", "port", fallback=5432)
 
         try:

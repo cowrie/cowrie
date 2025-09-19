@@ -27,6 +27,7 @@ def get_string(data: bytes) -> tuple[int, bytes]:
     value = data[4 : length + 4]
     return length + 4, value
 
+
 class BackendSSHFactory(protocol.ClientFactory):
     server: Any
 
@@ -39,6 +40,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
     This class represents the transport layer from Cowrie's proxy to the backend SSH server. It is responsible for
     authentication to that server, and sending messages it gets to the handler.
     """
+
     def __init__(self, factory: BackendSSHFactory):
         self.delayedPackets: list[tuple[int, bytes]] = []
         self.factory: BackendSSHFactory = factory  # type: ignore
