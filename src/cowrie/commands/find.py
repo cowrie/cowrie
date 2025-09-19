@@ -13,6 +13,7 @@ import os
 
 commands = {}
 
+
 class Command_find(HoneyPotCommand):
     """
     find command

@@ -54,14 +54,14 @@ class Output(cowrie.core.output.Output):
     def write(self, event):
         if event["eventid"] == "cowrie.session.connect":
             r = yield self.db.runQuery(
-                "SELECT `id` FROM `sensors` " "WHERE `ip` = ?", (self.sensor,)
+                "SELECT `id` FROM `sensors` WHERE `ip` = ?", (self.sensor,)
             )
 
             if r and r[0][0]:
                 sensorid = r[0][0]
             else:
                 yield self.db.runQuery(
-                    "INSERT INTO `sensors` (`ip`) " "VALUES (?)", (self.sensor,)
+                    "INSERT INTO `sensors` (`ip`) VALUES (?)", (self.sensor,)
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ROWID()")
@@ -114,7 +114,7 @@ class Output(cowrie.core.output.Output):
 
         elif event["eventid"] == "cowrie.session.params":
             self.simpleQuery(
-                "INSERT INTO `params` (`session`, `arch`) " "VALUES (?, ?)",
+                "INSERT INTO `params` (`session`, `arch`) VALUES (?, ?)",
                 (event["session"], event["arch"]),
             )
 
@@ -140,40 +140,39 @@ class Output(cowrie.core.output.Output):
 
         elif event["eventid"] == "cowrie.client.version":
             r = yield self.db.runQuery(
-                "SELECT `id` FROM `clients` " "WHERE `version` = ?", (event["version"],)
+                "SELECT `id` FROM `clients` WHERE `version` = ?", (event["version"],)
             )
 
             if r and r[0][0]:
                 clientid = int(r[0][0])
             else:
                 yield self.db.runQuery(
-                    "INSERT INTO `clients` (`version`) " "VALUES (?)",
+                    "INSERT INTO `clients` (`version`) VALUES (?)",
                     (event["version"],),
                 )
 
                 r = yield self.db.runQuery("SELECT LAST_INSERT_ROWID()")
                 clientid = int(r[0][0])
             self.simpleQuery(
-                "UPDATE `sessions` " "SET `client` = ? " "WHERE `id` = ?",
+                "UPDATE `sessions` SET `client` = ? WHERE `id` = ?",
                 (clientid, event["session"]),
             )
 
         elif event["eventid"] == "cowrie.client.size":
             self.simpleQuery(
-                "UPDATE `sessions` " "SET `termsize` = ? " "WHERE `id` = ?",
+                "UPDATE `sessions` SET `termsize` = ? WHERE `id` = ?",
                 ("{}x{}".format(event["width"], event["height"]), event["session"]),
             )
 
         elif event["eventid"] == "cowrie.session.closed":
             self.simpleQuery(
-                "UPDATE `sessions` " "SET `endtime` = ? " "WHERE `id` = ?",
+                "UPDATE `sessions` SET `endtime` = ? WHERE `id` = ?",
                 (event["timestamp"], event["session"]),
             )
 
         elif event["eventid"] == "cowrie.log.closed":
             self.simpleQuery(
-                "INSERT INTO `ttylog` (`session`, `ttylog`, `size`) "
-                "VALUES (?, ?, ?)",
+                "INSERT INTO `ttylog` (`session`, `ttylog`, `size`) VALUES (?, ?, ?)",
                 (event["session"], event["ttylog"], event["size"]),
             )
 

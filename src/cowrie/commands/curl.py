@@ -306,9 +306,13 @@ class Command_curl(HoneyPotCommand):
         # if CowrieConfig.has_option("honeypot", "out_addr"):
         #     out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
         if self.head_request:
-            deferred = treq.head(url=url, allow_redirects=False, headers=headers, timeout=10)
+            deferred = treq.head(
+                url=url, allow_redirects=False, headers=headers, timeout=10
+            )
         else:
-            deferred = treq.get(url=url, allow_redirects=False, headers=headers, timeout=10)
+            deferred = treq.get(
+                url=url, allow_redirects=False, headers=headers, timeout=10
+            )
         return deferred
 
     def handle_CTRL_C(self) -> None:
@@ -328,7 +332,9 @@ class Command_curl(HoneyPotCommand):
             for key, values in response.headers.getAllRawHeaders():
                 decoded_key = key.decode() if isinstance(key, bytes) else key
                 for value in values:
-                    decoded_value = value.decode() if isinstance(value, bytes) else value
+                    decoded_value = (
+                        value.decode() if isinstance(value, bytes) else value
+                    )
                     self.write(f"{decoded_key}: {decoded_value}\n")
             self.exit()
             return

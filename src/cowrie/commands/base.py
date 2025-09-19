@@ -1031,7 +1031,7 @@ class Command_php(HoneyPotCommand):
         "\n"
     )
 
-    VERSION = "PHP 5.3.5 (cli)\n" "Copyright (c) 1997-2010 The PHP Group\n"
+    VERSION = "PHP 5.3.5 (cli)\nCopyright (c) 1997-2010 The PHP Group\n"
 
     def start(self) -> None:
         if self.args:
