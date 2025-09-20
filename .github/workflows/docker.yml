@@ -121,4 +121,4 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
         run: |
           cosign sign -y cowrie/cowrie@${DIGEST}
-          cosign verify cowrie/cowrie --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/heads/main'
+          cosign verify cowrie/cowrie@${DIGEST} --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity-regexp 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/.*'
