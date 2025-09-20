@@ -65,6 +65,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: cowrie/cowrie
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }} # Tag 'latest' for main branch pushes
+            type=sha,format=short
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -106,7 +111,8 @@ jobs:
           load: false
           sbom: true
           provenance: true
-          tags: cowrie/cowrie:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Sign the images with GitHub OIDC Token
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
