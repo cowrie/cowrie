@@ -31,7 +31,7 @@ And edit the userid. Then::
 
 And then restart Cowrie::
 
-	$ bin/cowrie restart
+	(cowrie-env) $ cowrie restart
 
 
 How do I add files to the file system?
@@ -48,7 +48,7 @@ First add a file system entry, the `1024` here is the file size. The
 `chown` commands only takes numerical uid's, they should match
 entries in `honeyfs/etc/passwd`::
 
-	$ bin/fsctl share/cowrie/fs.pickle
+	(cowrie-env) $ fsctl share/cowrie/fs.pickle
         fs.pickle:/$ touch /home/phil/myfile 1024
         fs.pickle:/$ chown 1000:1000 /home/phil/myfile
 

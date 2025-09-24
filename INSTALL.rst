@@ -104,8 +104,8 @@ is preserved if activated, otherwise Cowrie will attempt to load
 the environment called "cowrie-env"::
 
 
-    $ bin/cowrie start
-    Activating virtualenv "cowrie-env"
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ cowrie start
     Starting cowrie with extra arguments [] ...
 
 Step 7: Listening on port 22 (OPTIONAL)
@@ -256,17 +256,17 @@ Updating Cowrie
 
 First stop your honeypot. Then pull updates from GitHub, and upgrade your Python dependencies::
 
-    $ bin/cowrie stop
-    $ git pull
-    $ python -m pip install --upgrade -r requirements.txt
+    (cowrie-env) $ cowrie stop
+    (cowrie-env) $ git pull
+    (cowrie-env) $ python -m pip install --upgrade -r requirements.txt
 
 If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too::
 
-    $ python -m pip install --upgrade -r requirements-output.txt
+    (cowrie-env) $ python -m pip install --upgrade -r requirements-output.txt
 
 And finally, restart Cowrie after finishing all updates::
 
-    $ bin/cowrie start
+    (cowrie-env) $ cowrie start
 
 Modifying Cowrie
 ****************
