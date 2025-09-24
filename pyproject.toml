@@ -49,6 +49,7 @@ documentation = "https://docs.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
 
 [project.scripts]
+cowrie = "cowrie.scripts.cowrie:run"
 fsctl = "cowrie.scripts.fsctl:run"
 asciinema = "cowrie.scripts.asciinema:run"
 createfs = "cowrie.scripts.createfs:run"

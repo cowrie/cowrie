@@ -7,7 +7,6 @@ setup(
     include_package_data=True,
     package_dir={"": "src"},
     package_data={"": ["*.md"]},
-    scripts=["bin/cowrie"],
     setup_requires=["click"],
 )
 
