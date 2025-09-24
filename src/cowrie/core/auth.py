@@ -53,7 +53,7 @@ class UserDB:
                 encoding="ascii",
             ) as db:
                 dblines = db.readlines()
-        except OSError:
+        except (OSError, configparser.Error):
             log.msg("Could not read etc/userdb.txt, default database activated")
             dblines = _USERDB_DEFAULTS
 
