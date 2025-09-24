@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import configparser
 import struct
 from typing import Any
 
@@ -59,7 +60,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             issuefile = CowrieConfig.get("honeypot", "contents_path") + "/etc/issue.net"
             with open(issuefile, "rb") as issue:
                 data = issue.read()
-        except OSError:
+        except (OSError, configparser.Error):
             return
         if not data or not data.strip():
             return
