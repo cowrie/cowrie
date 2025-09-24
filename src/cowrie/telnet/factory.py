@@ -7,6 +7,7 @@ Telnet Transport and Authentication for the Honeypot
 
 from __future__ import annotations
 
+import configparser
 import time
 
 from twisted.internet import protocol
@@ -54,7 +55,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             issuefile = honeyfs + "/etc/issue.net"
             with open(issuefile, "rb") as banner:
                 self.banner = banner.read()
-        except OSError:
+        except (OSError, configparser.Error):
             self.banner = b""
 
         # For use by the uptime command
