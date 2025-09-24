@@ -6,6 +6,7 @@ from __future__ import annotations
 import getopt
 import re
 
+from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -44,6 +45,8 @@ Written by David MacKenzie and Jim Meyering.
 
 MODE_REGEX = "^[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=]?[0-7]+$"
 TRY_CHMOD_HELP_MSG = "Try 'chmod --help' for more information.\n"
+
+NO_PERM_BITS_MASK = 0o000
 
 
 class Command_chmod(HoneyPotCommand):
@@ -88,6 +91,14 @@ class Command_chmod(HoneyPotCommand):
                     self.write(
                         f"chmod: cannot access '{file}': No such file or directory\n"
                     )
+                else:
+                    f = self.fs.getfile(path)
+                    file_mode_no_perm = f[fs.A_MODE] & NO_PERM_BITS_MASK
+                    try:
+                        # this works for `chmod 0600 ./file`, but not for `chmod u+rwx .,/file`
+                        f[fs.A_MODE] = file_mode_no_perm | int(mode, 8)
+                    except ValueError:
+                        pass
 
     def parse_args(self):
         mode = None
