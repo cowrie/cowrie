@@ -97,7 +97,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         """
         Fired on a successful login
         """
-        interface, protocol, logout = ial
+        _interface, protocol, logout = ial
         protocol.windowSize = self.windowSize
         self.protocol = protocol
         self.logout = logout

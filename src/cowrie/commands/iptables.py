@@ -157,7 +157,7 @@ class Command_iptables(HoneyPotCommand):
 
         # Parse options or display no files
         try:
-            (opts, args) = parser.parse_args(list(self.args))
+            (opts, _args) = parser.parse_args(list(self.args))
         except OptionParsingError:
             self.bad_argument(self.args[0])
             return

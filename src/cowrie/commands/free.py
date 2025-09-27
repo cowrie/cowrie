@@ -28,7 +28,7 @@ class Command_free(HoneyPotCommand):
     def call(self) -> None:
         # Parse options or display no files
         try:
-            opts, args = getopt.getopt(self.args, "mh")
+            opts, _args = getopt.getopt(self.args, "mh")
         except getopt.GetoptError:
             self.do_free()
             return

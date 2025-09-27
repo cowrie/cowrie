@@ -64,7 +64,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
 
     def start(self):
         try:
-            optlist, args = getopt.getopt(
+            _optlist, args = getopt.getopt(
                 self.args, "46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:"
             )
         except getopt.GetoptError:
