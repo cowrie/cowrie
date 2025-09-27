@@ -46,9 +46,9 @@ def is_process_running(pid: int) -> bool:
     """Check if a process with the given PID is running."""
     try:
         os.kill(pid, 0)
-        return True
     except (OSError, ProcessLookupError):
         return False
+    return True
 
 
 def remove_stale_pidfile() -> None:
