@@ -35,8 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
-          python -m pip -q install -r requirements.txt
-          python -m pip -q install -r requirements-dev.txt
+          python -m pip -q install -e '.[dev]'
           python -m pip -q install tox-gh-actions
 
       - name: Generate version file

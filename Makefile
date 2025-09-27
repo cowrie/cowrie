@@ -53,16 +53,6 @@ pip-check: ## Verify python packages
 git-remote: ## Add remote git configuration
 	git remote add cowrie https://github.com/cowrie/cowrie
 
-.PHONY: pur
-pip-pur: ## Upgrade dependencies based on latest packages
-	git checkout main
-	-git branch -D "dependency-upgrade-`date -u +%Y-%m-%d`"
-	git checkout -b "dependency-upgrade-`date -u +%Y-%m-%d`"
-	pur -r requirements.txt
-	pur -r requirements-dev.txt
-	pur -r requirements-output.txt
-	git commit -m "dependency upgrade `date -u`" requirements*.txt
-# This Makefile is for developers and is not required to run Cowrie
 
 # The binary to build (just the basename).
 MODULE := cowrie
