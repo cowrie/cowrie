@@ -158,7 +158,7 @@ def run():
     output = ""
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], "hvpl:d:o:", ["help"])
+        optlist, _args = getopt.getopt(sys.argv[1:], "hvpl:d:o:", ["help"])
     except getopt.GetoptError as error:
         sys.stderr.write(f"Error: {error}\n")
         printhelp()

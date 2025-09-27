@@ -14,7 +14,7 @@ log/
 .eggs/
 .envrc
 .direnv/
-.pyre/
+.pyre*
 .pytype/
 __pycache__/
 *.py[cod]

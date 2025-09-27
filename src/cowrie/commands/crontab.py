@@ -33,7 +33,7 @@ class Command_crontab(HoneyPotCommand):
 
     def start(self) -> None:
         try:
-            opts, args = getopt.getopt(self.args, "u:elri")
+            opts, _args = getopt.getopt(self.args, "u:elri")
         except getopt.GetoptError as err:
             self.write(f"crontab: invalid option -- '{err.opt}'\n")
             self.write("crontab: usage error: unrecognized option\n")

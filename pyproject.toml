@@ -61,6 +61,7 @@ dshield = ["requests"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
 mongodb = ["pymongo"]
+pool = ["libvirt-python==11.7.0"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
@@ -92,6 +93,7 @@ dev = [
 "types-requests==2.32.4.20250913",
 "yamllint==1.37.1",
 ]
+
 
 [tool.isort]
 profile = "black"
