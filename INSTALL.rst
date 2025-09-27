@@ -184,7 +184,8 @@ and their Python interface. In Debian/Ubuntu::
 
 Then install the Python API to run the backend pool::
 
-    (cowrie-env) $ python -m pip install -r requirements-pool.txt
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ python -m pip install -e '.[pool]'
 
 To allow QEMU to use disk images and snapshots, set it to run with the user and group of the user running the pool
 (usually called 'cowrie' too::
@@ -258,7 +259,7 @@ First stop your honeypot. Then pull updates from GitHub, and upgrade your Python
 
     (cowrie-env) $ cowrie stop
     (cowrie-env) $ git pull
-    (cowrie-env) $ python -m pip install --upgrade -r requirements.txt
+    (cowrie-env) $ python -m pip install --upgrade -e .
 
 If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too::
 
