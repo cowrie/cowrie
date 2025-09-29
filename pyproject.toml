@@ -81,7 +81,7 @@ dev = [
 "pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<='3.9'",
 "pytype==2024.10.11; platform_python_implementation=='CPython' and python_version>='3.10'",
 "pyupgrade==3.20.0",
-"pyyaml==6.0.2",
+"pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
 "ruff==0.13.1",
 "setuptools==80.9.0",
