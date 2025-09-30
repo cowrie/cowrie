@@ -1,5 +1,5 @@
 attrs==25.3.0
-bcrypt==4.3.0
+bcrypt==5.0.0
 cryptography==46.0.1
 hyperlink==21.0.0
 idna==3.10
