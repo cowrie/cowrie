@@ -12,6 +12,7 @@ import copy
 import getopt
 import os.path
 import re
+from typing import Optional
 
 from twisted.python import log
 
@@ -29,25 +30,51 @@ class Command_grep(HoneyPotCommand):
     """
     grep command
     """
+    MAX_RECURSION_DEPTH = 10
 
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
-            self.grep_application(contents, match)
+            self.grep_application(contents, match, filename=filename)
         except Exception:
             self.errorWrite(f"grep: {filename}: No such file or directory\n")
 
-    def grep_application(self, contents: bytes, match: str) -> None:
+    def grep_application(self, contents: bytes, match: str, filename: Optional[str] = None) -> None:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
         matches = re.compile(bmatch)
         contentsplit = contents.split(b"\n")
         for line in contentsplit:
             if matches.search(line):
-                self.writeBytes(line + b"\n")
+                if self.recursive and filename:
+                    output = f"{filename}:".encode() + line + b"\n"
+                else:
+                    output = line + b"\n"
+                self.writeBytes(output)
+
+    def grep_recursive(self, path: str, match: str, depth: int = 0) -> None:
+        if depth > self.MAX_RECURSION_DEPTH:
+            self.errorWrite(f"grep: maximum recursion depth reached in {path}\n")
+            return
+
+        try:
+            if not self.fs.isdir(path):
+                return
+
+            entries = self.fs.listdir(path)
+            for entry in entries:
+                if entry in (".", ".."):
+                    continue
+                full_path = os.path.join(path, entry)
+                if self.fs.isdir(full_path):
+                    self.grep_recursive(full_path, match, depth + 1)
+                else:
+                    self.grep_get_contents(full_path, match)
+        except Exception as e:
+            self.errorWrite(f"grep: cannot recurse into {path}: {e}\n")
 
     def help(self) -> None:
         self.writeBytes(
-            b"usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
+            b"usage: grep [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZr] [-A num] [-B num] [-C[num]]\n"
         )
         self.writeBytes(
             b"\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n"
@@ -59,36 +86,74 @@ class Command_grep(HoneyPotCommand):
 
     def start(self) -> None:
         if not self.args:
-            self.help()
+            self.show_help_and_exit()
+            return
+
+        if not self.parse_options():
+            return
+
+        if len(self.remaining_args) < 1:
+            self.errorWrite("grep: missing pattern\n")
             self.exit()
             return
 
-        self.n = 10
-        if self.args[0] == ">":
-            pass
-        else:
-            try:
-                optlist, args = getopt.getopt(
-                    self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:"
-                )
-            except getopt.GetoptError as err:
-                self.errorWrite(f"grep: invalid option -- {err.opt}\n")
-                self.help()
-                self.exit()
-                return
+        self.match = self.remaining_args[0]
+        self.files = self.remaining_args[1:]
+        self.interactive = False
 
-            for opt, _arg in optlist:
-                if opt == "-h":
-                    self.help()
+        if self.input_data:
+            self.grep_application(self.input_data, self.match)
+            self.exit()
+            return
 
-        if not self.input_data:
-            files = self.check_arguments("grep", args[1:])
-            for pname in files:
-                self.grep_get_contents(pname, args[0])
+        if not self.files:
+            self.interactive = True
+            return
+
+        if self.recursive:
+            self.handle_recursive()
         else:
-            self.grep_application(self.input_data, args[0])
+            self.handle_files()
 
         self.exit()
+
+    def show_help_and_exit(self) -> None:
+        self.help()
+        self.exit()
+
+    def parse_options(self) -> bool:
+        try:
+            optlist, args = getopt.getopt(
+                self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZrA:B:C:e:f:r:"
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(f"grep: invalid option -- {err.opt}\n")
+            self.show_help_and_exit()
+            return False
+
+        self.recursive = False
+        for opt, _ in optlist:
+            if opt == "-h":
+                self.show_help_and_exit()
+                return False
+            elif opt == "-r":
+                self.recursive = True
+
+        self.remaining_args = args
+        return True
+
+    def handle_recursive(self) -> None:
+        resolved_files = [self.fs.resolve_path(arg, self.protocol.cwd) for arg in self.files]
+        for path in resolved_files:
+            if self.fs.isdir(path):
+                self.grep_recursive(path, self.match)
+            else:
+                self.grep_get_contents(path, self.match)
+
+    def handle_files(self) -> None:
+        resolved_files = self.check_arguments("grep", self.files)
+        for path in resolved_files:
+            self.grep_get_contents(path, self.match)
 
     def lineReceived(self, line: str) -> None:
         log.msg(
@@ -97,6 +162,12 @@ class Command_grep(HoneyPotCommand):
             input=line,
             format="INPUT (%(realm)s): %(input)s",
         )
+        if self.interactive:
+            bline = line.encode("utf8")
+            bmatch = os.path.basename(self.match).replace('"', "").encode("utf8")
+            matches = re.compile(bmatch)
+            if matches.search(bline):
+                self.writeBytes(bline + b"\n")
 
     def handle_CTRL_D(self) -> None:
         self.exit()
@@ -106,7 +177,6 @@ commands["/bin/grep"] = Command_grep
 commands["grep"] = Command_grep
 commands["/bin/egrep"] = Command_grep
 commands["/bin/fgrep"] = Command_grep
-
 
 class Command_tail(HoneyPotCommand):
     """
