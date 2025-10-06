@@ -178,10 +178,10 @@ class ShellEchoCommandTests(unittest.TestCase):
 
     def test_subshell_parentheses_006(self) -> None:
         """Test complex subshell with pipes syntax error - regression test"""
-        self.proto.lineReceived(b'nproc ; uname -a (nproc; uname -a) |tr "\\n" "|"')
+        self.proto.lineReceived(b'abc ; uname -a (abc; uname -a) |tr "\\n" "|"')
         # Should be a syntax error due to parentheses after uname -a
         output = self.tr.value()
-        self.assertIn(b"-bash: nproc: command not found", output)
+        self.assertIn(b"-bash: abc: command not found", output)
         self.assertIn(b"syntax error near unexpected token", output)
 
     def test_subshell_parentheses_007(self) -> None:
