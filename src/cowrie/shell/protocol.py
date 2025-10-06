@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from importlib import import_module
 import importlib
+from pathlib import Path
 import socket
 import sys
 import time
@@ -169,8 +170,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return None
 
         try:
-            with importlib.resources.path(data, "") as data_path:
-                binary_file_path = data_path / "txtcmds" / path.lstrip("/")
+            resource_root = importlib.resources.files(data)
+            resource_path_in_package = (
+                resource_root / "txtcmds" / Path(path.lstrip("/"))
+            )
+
+            with importlib.resources.as_file(
+                resource_path_in_package
+            ) as binary_file_path:
                 with open(binary_file_path, "rb") as file:
                     binary_data = file.read()
                     return self.txtcmd(binary_data)
