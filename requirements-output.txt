@@ -19,7 +19,7 @@ hpfeeds==3.1.0
 mysql-connector-python==9.4.0
 
 # mongodb
-pymongo==4.15.0
+pymongo==4.15.2
 
 # postgresql
 # psycopg2==2.9.10
