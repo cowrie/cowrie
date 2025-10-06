@@ -62,7 +62,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             ) as f:
                 self.banner = f.read()
         except configparser.Error as e:
-            log.msg("Loading default /etc/issue.net file")
+            log.msg(f"Loading default /etc/issue.net file: {e!r}")
             resources_path = importlib.resources.files(data)
             config_file_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
             self.banner = config_file_path.read_text(encoding="utf-8")

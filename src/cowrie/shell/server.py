@@ -29,9 +29,9 @@
 
 from __future__ import annotations
 
+import configparser
 import json
 import random
-from configparser import Error
 
 from twisted.python import log
 
