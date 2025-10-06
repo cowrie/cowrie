@@ -5,10 +5,7 @@
 from __future__ import annotations
 
 import configparser
-<<<<<<< HEAD
-=======
 import importlib.resources
->>>>>>> b64009e3 (up)
 import struct
 from typing import Any
 
