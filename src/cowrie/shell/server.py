@@ -54,7 +54,7 @@ class CowrieServer:
     """
 
     def __init__(self, realm: IRealm) -> None:
-        self.fs = None
+        self.fs: fs.HoneyPotFilesystem | None = None
         self.process = None
         self.hostname: str = CowrieConfig.get("honeypot", "hostname", fallback="svr04")
         try:
@@ -78,7 +78,7 @@ class CowrieServer:
             cmdoutput = json.load(f)
         return cmdoutput
 
-    def initFileSystem(self, home):
+    def initFileSystem(self, home: str) -> None:
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
