@@ -53,8 +53,8 @@ class Passwd:
             encoding="ascii",
         ) as f:
             passwd_contents = f.read().split("\n")
-    except configparser.NoSectionError:
-        log.msg("Loading default /etc/passwd file")
+    except configparser.Error:
+        log.msg("Loading default /etc/passwd file from pickle file")
         resources_path = importlib.resources.files(data)
         config_file_path = resources_path.joinpath("honeyfs", "etc", "passwd")
         passwd_contents = config_file_path.read_text(encoding="utf-8").split("\n")
