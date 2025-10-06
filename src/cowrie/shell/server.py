@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import json
 import random
-from configparser import NoOptionError
+from configparser import Error
 
 from twisted.python import log
 
@@ -65,7 +65,7 @@ class CowrieServer:
                 ).split(",")
             ]
             self.arch = random.choice(arches)
-        except NoOptionError:
+        except configparser.Error:
             self.arch = "linux-x64-lsb"
 
         log.msg(f"Initialized emulated server as architecture: {self.arch}")
@@ -88,6 +88,6 @@ class CowrieServer:
             self.process = self.getCommandOutput(
                 CowrieConfig.get("shell", "processes")
             )["command"]["ps"]
-        except Exception as e:
+        except configparser.Error as e:
             log.msg(f"Could not load process list {e!r}")
             self.process = None
