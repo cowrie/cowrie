@@ -331,8 +331,8 @@ class HoneyPotFilesystem:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return Path(f[A_REALFILE]).read_bytes()
-        if f[A_TYPE] == T_FILE and f[A_CONTENTS]:
-            return f[A_CONTENTS]
+        if f[A_TYPE] == T_FILE and isinstance(f[A_CONTENTS], bytes):
+            return bytes(f[A_CONTENTS])
         if f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,

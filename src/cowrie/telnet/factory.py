@@ -58,6 +58,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 "{}/etc/issue.net".format(
                     CowrieConfig.get("honeypot", "contents_path")
                 ),
+                mode="rb",
                 encoding="ascii",
             ) as f:
                 self.banner = f.read()
@@ -65,7 +66,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             log.msg(f"Loading default /etc/issue.net file: {e!r}")
             resources_path = importlib.resources.files(data)
             config_file_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
-            self.banner = config_file_path.read_text(encoding="utf-8")
+            self.banner = config_file_path.read_text(encoding="utf-8").encode()
         except OSError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             self.banner = b""
