@@ -8,10 +8,7 @@ Telnet Transport and Authentication for the Honeypot
 from __future__ import annotations
 
 import configparser
-<<<<<<< HEAD
-=======
 import importlib.resources
->>>>>>> fb2c3674 (honeyfs code)
 import time
 from typing import TYPE_CHECKING
 
