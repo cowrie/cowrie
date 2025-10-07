@@ -53,6 +53,10 @@ jobs:
           print-hash: true
           verify-metadata: false
 
+      - name: Sleep for publishing
+        run: sleep 60s
+        shell: bash
+
       - name: Download and test package
         if: ${{ github.repository == 'cowrie/cowrie' }}
         run: |
