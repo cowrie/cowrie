@@ -19,7 +19,7 @@ hpfeeds==3.1.0
 mysql-connector-python==9.4.0
 
 # mongodb
-pymongo==4.15.0
+pymongo==4.15.2
 
 # postgresql
 # psycopg2==2.9.10
@@ -42,7 +42,7 @@ influxdb==5.3.2
 # wokkel==18.0.0
 
 # misp
-pymisp==2.5.17.1
+pymisp==2.5.17.2
 
 # redis
 redis==6.4.0
