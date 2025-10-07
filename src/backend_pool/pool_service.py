@@ -24,7 +24,6 @@ from dataclasses import dataclass
 import os
 import time
 from threading import Lock
-from typing import Optional
 
 from twisted.internet import reactor
 from twisted.internet import threads

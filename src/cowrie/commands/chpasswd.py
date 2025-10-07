@@ -40,7 +40,7 @@ class Command_chpasswd(HoneyPotCommand):
         try:
             for line in contents.split(b"\n"):
                 if len(line):
-                    u, p = line.split(b":")
+                    _u, p = line.split(b":")
                     if not len(p):
                         self.write(f"chpasswd: line {c}: missing new password\n")
                     else:
@@ -57,7 +57,7 @@ class Command_chpasswd(HoneyPotCommand):
 
     def start(self) -> None:
         try:
-            opts, args = getopt.getopt(
+            opts, _args = getopt.getopt(
                 self.args,
                 "c:ehmr:s:",
                 ["crypt-method", "encrypted", "help", "md5", "root", "sha-rounds"],

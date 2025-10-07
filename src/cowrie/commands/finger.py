@@ -82,7 +82,7 @@ class Command_finger(HoneyPotCommand):
             return
 
         try:
-            opts, args = getopt.gnu_getopt(self.args, "")
+            _opts, args = getopt.gnu_getopt(self.args, "")
         except getopt.GetoptError as err:
             self.errorWrite(
                 f"""finger: invalid option -- '{err.opt}'

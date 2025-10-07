@@ -99,7 +99,7 @@ class Command_sudo(HoneyPotCommand):
                 parsed_arguments.append(self.args[index_2])
 
         try:
-            optlist, args = getopt.getopt(
+            optlist, _args = getopt.getopt(
                 self.args[0:start_value], "bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:"
             )
         except getopt.GetoptError as err:

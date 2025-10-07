@@ -1,6 +1,5 @@
 from collections.abc import Generator
 import ipaddress
-from typing import Optional, Union
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.names import client, dns

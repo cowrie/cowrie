@@ -238,7 +238,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         transport.SSHServerTransport.setService(self, service)
 
-    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+    def connectionLost(self, reason: failure.Failure | None = connectionDone) -> None:
         """
         This seems to be the only reliable place of catching lost connection
         """
