@@ -69,7 +69,17 @@ class Command_grep(HoneyPotCommand):
         else:
             try:
                 optlist, args = getopt.getopt(
-                    self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:"
+                    self.args,
+                    "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:",
+                    [
+                        "binary-files=",
+                        "color=",
+                        "color",
+                        "context=",
+                        "directories=",
+                        "label",
+                        "line-buffered",
+                    ],
                 )
             except getopt.GetoptError as err:
                 self.errorWrite(f"grep: invalid option -- {err.opt}\n")
