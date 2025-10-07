@@ -81,7 +81,18 @@ class Command_wget(HoneyPotCommand):
     def start(self):
         url: str
         try:
-            optlist, args = getopt.getopt(self.args, "cqO:P:", ["header="])
+            optlist, args = getopt.getopt(
+                self.args,
+                "cqO:TP:",
+                [
+                    "quiet",
+                    "header=",
+                    "max-redirect=",
+                    "post-data",
+                    "timeout=",
+                    "tries=",
+                ],
+            )
         except getopt.GetoptError:
             self.errorWrite("Unrecognized option\n")
             self.exit()
