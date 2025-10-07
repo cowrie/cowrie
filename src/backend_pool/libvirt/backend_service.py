@@ -199,11 +199,11 @@ class LibvirtBackendService:
 
     def __destroy_all_network_filters(self) -> None:
         network_filters = self.conn.listNWFilters()
-        # if not network_filters:
-        #     log.msg(
-        #         eventid="cowrie.backend_pool.libvirtd",
-        #         format="Could not get network filters list",
-        #     )
+        if not network_filters:
+            log.msg(
+                eventid="cowrie.backend_pool.libvirtd",
+                format="Could not get network filters list",
+            )
 
         for nw_filter in network_filters:
             if nw_filter.startswith("cowrie"):
