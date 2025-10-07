@@ -201,7 +201,12 @@ class fseditCmd(cmd.Cmd):
             print("usage: cat <file>")
             return False
 
-        cwd = getpath(self.fs, arguments[0])
+        try:
+            cwd = getpath(self.fs, arguments[0])
+        except FileNotFound:
+            print(f"file not found {arguments[0]}")
+            return
+
         if cwd[A_TYPE] == T_FILE:
             if not cwd[A_CONTENTS]:
                 print(f"No content in pickle file for {arguments[0]}")
