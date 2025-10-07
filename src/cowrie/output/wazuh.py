@@ -18,18 +18,18 @@ from cowrie.core.config import CowrieConfig
 from twisted.python import log
 
 def json_serializer(obj):
-    if hasattr(obj, 'name'):
+    if hasattr(obj, "name"):
         return obj.name
     elif isinstance(obj, datetime):
         return obj.isoformat()
-    elif hasattr(obj, '__dict__'):
+    elif hasattr(obj, "__dict__"):
         return str(obj)
     else:
         return str(obj)
 
 def json_content(response):
     def cb_body(body):
-        return json.loads(body.decode('utf-8'))
+        return json.loads(body.decode("utf-8"))
     
     d = readBody(response)
     d.addCallback(cb_body)
@@ -61,23 +61,23 @@ class Output(cowrie.core.output.Output):
             return {k: self.clean_event_data(v) for k, v in data.items()}
         elif isinstance(data, (list, tuple)):
             return [self.clean_event_data(item) for item in data]
-        elif hasattr(data, 'name'):
+        elif hasattr(data, "name"):
             return data.name
         elif isinstance(data, datetime):
             return data.isoformat()
         elif isinstance(data, bytes):
             try:
-                return data.decode('utf-8')
+                return data.decode("utf-8")
             except UnicodeDecodeError:
                 return data.hex()
-        elif hasattr(data, '__dict__'):
+        elif hasattr(data, "__dict__"):
             return str(data)
         else:
             return data
 
     def makeBasic(self):
         import base64
-        return base64.b64encode(f"{self.username}:{self.password}".encode("utf-8")).decode("utf-8")
+        return base64.b64encode(f"{self.username}:{self.password}".encode()).decode("utf-8")
 
     @inlineCallbacks
     def authenticate(self):
