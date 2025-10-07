@@ -403,7 +403,7 @@ class PoolService:
         )
 
     # Consumers
-    def __consumers_get_guest_ip(self, src_ip: str) -> Optional[Guest]:
+    def __consumers_get_guest_ip(self, src_ip: str) -> Guest | None:
         with self.guest_lock:
             # if ip is the same, doesn't matter if being used or not
             usable_guests = self.get_guest_states([POOL_STATE_USED, POOL_STATE_USING])
@@ -412,14 +412,14 @@ class PoolService:
                     return guest
         return None
 
-    def __consumers_get_available_guest(self) -> Optional[Guest]:
+    def __consumers_get_available_guest(self) -> Guest | None:
         with self.guest_lock:
             available_guests = self.get_guest_states([POOL_STATE_AVAILABLE])
             for guest in available_guests:
                 return guest
         return None
 
-    def __consumers_get_any_guest(self) -> Optional[Guest]:
+    def __consumers_get_any_guest(self) -> Guest | None:
         """
         try to get a VM with few clients
         """
