@@ -37,7 +37,7 @@ Features
 
 For both settings:
 
-* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `playlog` utility.
+* Session logs are stored in a `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `playlog` utility.
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
