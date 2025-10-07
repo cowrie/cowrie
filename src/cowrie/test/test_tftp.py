@@ -28,7 +28,7 @@ class ShellTftpCommandTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.proto.connectionLost()
 
-    def test_echo_command_001(self) -> None:
+    def test_tftp_command_001(self) -> None:
         self.proto.lineReceived(b"tftp\n")
         self.assertEqual(
             self.tr.value(),

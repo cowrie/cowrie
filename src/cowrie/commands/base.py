@@ -949,7 +949,7 @@ class Command_history(HoneyPotCommand):
                 return
             count = 1
             for line in self.protocol.historyLines:
-                self.write(f" {str(count).rjust(4)}  {line}\n")
+                self.write(f" {count:4d}  {line.decode()}\n")
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
@@ -961,7 +961,7 @@ commands["history"] = Command_history
 
 class Command_date(HoneyPotCommand):
     def call(self) -> None:
-        time = datetime.datetime.utcnow()
+        time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         self.write("{}\n".format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
 
 
@@ -1031,7 +1031,7 @@ class Command_php(HoneyPotCommand):
         "\n"
     )
 
-    VERSION = "PHP 5.3.5 (cli)\n" "Copyright (c) 1997-2010 The PHP Group\n"
+    VERSION = "PHP 5.3.5 (cli)\nCopyright (c) 1997-2010 The PHP Group\n"
 
     def start(self) -> None:
         if self.args:

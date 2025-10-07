@@ -50,7 +50,7 @@ import cowrie.ssh.factory
 import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
 from cowrie import core
-from cowrie._version import __version__ as __cowrie_version__
+from cowrie import __version__ as __cowrie_version__
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
@@ -137,9 +137,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         log.msg(
             f"Twisted Version {__twisted_version__.major}.{__twisted_version__.minor}.{__twisted_version__.micro}"
         )
-        log.msg(
-            f"Cowrie Version {__cowrie_version__.major}.{__cowrie_version__.minor}.{__cowrie_version__.micro}"
-        )
+        log.msg(f"Cowrie Version {__cowrie_version__.__version__}")
 
         # check configurations
         if not self.enableTelnet and not self.enableSSH and not self.pool_only:

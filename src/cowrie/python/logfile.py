@@ -41,7 +41,7 @@ def logger():
     if logtype == "rotating":
         cowrielog = CowrieDailyLogFile("cowrie.log", directory)
     elif logtype == "plain":
-        cowrielog = open(Path(directory, "plain.log"), "w", encoding="utf-8")
+        cowrielog = open(Path(directory, "cowrie.log"), "a", encoding="utf-8")
     else:
         raise ValueError
 

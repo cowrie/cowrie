@@ -20,18 +20,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "pypy-3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14-dev", "pypy-3.10", "pypy-3.11"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-dev.txt
-          pip install tox-gh-actions
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e '.[dev]'
+          python -m pip -q install tox-gh-actions
+
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+
       - name: Test with tox
         run: tox

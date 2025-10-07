@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import configparser
+import importlib.resources
 import struct
 from typing import Any
 
@@ -18,6 +20,7 @@ from twisted.python import log
 
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
+from cowrie import data
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -55,15 +58,28 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         if self.bannerSent:
             return
         self.bannerSent = True
+
         try:
-            issuefile = CowrieConfig.get("honeypot", "contents_path") + "/etc/issue.net"
-            with open(issuefile, "rb") as issue:
-                data = issue.read()
-        except OSError:
+            with open(
+                "{}/etc/issue.net".format(
+                    CowrieConfig.get("honeypot", "contents_path")
+                ),
+                encoding="ascii",
+            ) as f:
+                banner = f.read()
+        except configparser.Error as e:
+            log.msg(f"Loading default /etc/issue.net file: {e!r}")
+            resources_path = importlib.resources.files(data)
+            banner_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
+            banner = banner_path.read_text(encoding="utf-8")
+        except OSError as e:
+            log.err(e, "ERROR: Failed to load /etc/issue.net")
             return
-        if not data or not data.strip():
+
+        if not banner or not banner.strip():
             return
-        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(data) + NS(b"en"))
+
+        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(banner) + NS(b"en"))
 
     def ssh_USERAUTH_REQUEST(self, packet: bytes) -> Any:
         """
@@ -98,6 +114,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         Overridden to pass src_ip to credentials.UsernamePasswordIP
         """
         password = getNS(packet[1:])[0]
+        if password == b"\x00":
+            return None  # sshamble
         srcIp = self.transport.transport.getPeer().host  # type: ignore
         c = credentials.UsernamePasswordIP(self.user, password, srcIp)
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)

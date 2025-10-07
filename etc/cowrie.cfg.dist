@@ -122,6 +122,8 @@ backend = shell
 # to (a new) `cowrie.log`.
 # `plain` will write to `cowrie.log` and will not rotate. Use `plain`
 # if you want to use external log rotation solutions like `logrotate`
+#
+# This affects both `cowrie.log` and `cowrie.json`
 logtype = rotating
 
 # Timezone Cowrie uses for logging
@@ -500,14 +502,12 @@ enabled = true
 # automatically.
 rsa_public_key = ${honeypot:state_path}/ssh_host_rsa_key.pub
 rsa_private_key = ${honeypot:state_path}/ssh_host_rsa_key
-dsa_public_key = ${honeypot:state_path}/ssh_host_dsa_key.pub
-dsa_private_key = ${honeypot:state_path}/ssh_host_dsa_key
 ecdsa_public_key = ${honeypot:state_path}/ssh_host_ecdsa_key.pub
 ecdsa_private_key = ${honeypot:state_path}/ssh_host_ecdsa_key
 ed25519_public_key = ${honeypot:state_path}/ssh_host_ed25519_key.pub
 ed25519_private_key = ${honeypot:state_path}/ssh_host_ed25519_key
 
-# Public keys supported are: ssh-rsa, ssh-dss, ecdsa-sha2-nistp256, ssh-ed25519
+# Public keys supported are: ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
 public_key_auth = ssh-rsa,ecdsa-sha2-nistp256,ssh-ed25519
 
 # SSH version string as present to the client.
@@ -537,7 +537,7 @@ public_key_auth = ssh-rsa,ecdsa-sha2-nistp256,ssh-ed25519
 # SSH-2.0-OpenSSH_5.9
 #
 # (default: "SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2")
-version = SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2
+version = SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3
 
 # Cipher encryption algorithms to be used.
 #
@@ -830,6 +830,23 @@ password = secret
 port = 3306
 debug = false
 
+
+# PostgresSQL logging module
+# Database structure for this module is supplied in docs/sql/postgres.sql
+#
+# PostgresSQL logging requires extra software: sudo apt-get install libpq-dev
+# PostgresSQL logging requires an extra Python module: pip install psycopg2
+#
+[output_postgresql]
+enabled = false
+host = localhost
+database = cowrie
+username = cowrie
+password = secret
+port = 5432
+debug = false
+
+
 # Rethinkdb output module
 # Rethinkdb output module requires extra Python module: pip install rethinkdb
 
@@ -876,6 +893,16 @@ sourcetype = cowrie
 source = cowrie
 
 
+# Prometheus logging module
+#
+# Prometheus requires an extra Python module: pip install prometheus_client
+#
+[output_prometheus]
+enabled = false
+port = 9000
+debug = false
+
+
 # HPFeeds3
 # Python3 implementation of HPFeeds
 [output_hpfeeds3]
@@ -915,11 +942,27 @@ force = 0
 api_key = 130928309823098
 enabled = false
 
-# This will produce a _lot_ of messages - you have been warned....
+# Sends Cowrie event notifications to a Slack channel.
+# Warning: This will produce a _lot_ of messages unless `simplified = true` 
+#          and `verbose = false` are set.
+#
+# Parameters:
+#  - channel:    Name of the Slack channel Cowrie's bot should post to.
+#  - token:      Secret token for Cowrie's Slack bot.
+#  - simplified: If true, messages are formatted into a single line instead of
+#                 raw JSON. (default = false)
+#  - timestamp:  If true, each message includes a timestamp,
+#                 if false, timestamps are hidden. (default = true)
+#  - verbose:    If false, reduces the number of messages by suppressing 
+#                 verbose event types: client.kex, client.connect, client.size,
+#                 client.var, log.closed, log.opened, session.params (default = true)
 [output_slack]
 enabled = false
-channel = channel_that_events_should_be_posted_in
+channel = #channel_that_events_should_be_posted_in
 token = slack_token_for_your_bot
+simplified = true
+timestamp = true
+verbose = false
 debug = false
 
 

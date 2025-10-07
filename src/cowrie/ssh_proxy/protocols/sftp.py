@@ -28,9 +28,13 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
+
 from twisted.python import log
 from twisted.conch.ssh import filetransfer
 
+from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.protocols import base_protocol
 
 
@@ -84,6 +88,8 @@ class SFTP(base_protocol.BaseProtocol):
 
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)
+
+        self.downloadPath: str = CowrieConfig.get("honeypot", "download_path")
 
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()
@@ -213,6 +219,28 @@ class SFTP(base_protocol.BaseProtocol):
                 elif b"put" in self.command:
                     log.msg(
                         parent + " [SFTP] Finished Uploading: " + self.path.decode()
+                    )
+
+                    # TODO: should use artifact functions
+                    shasum = hashlib.sha256(self.theFile).hexdigest()
+                    outfile = os.path.join(self.downloadPath, shasum)
+                    fname = self.command.decode().split(" ")[-1]
+                    duplicate = os.path.exists(outfile)
+
+                    if not duplicate:
+                        f = open(outfile, "wb")
+                        f.write(self.theFile)
+                        f.close()
+
+                    log.msg(
+                        format='SFTP Uploaded file "%(filename)s" to %(outfile)s',
+                        eventid="cowrie.session.file_upload",
+                        filename=fname,
+                        duplicate=duplicate,
+                        url=fname,
+                        outfile=outfile,
+                        shasum=shasum,
+                        destfile=fname,
                     )
 
                     # if self.out.cfg.getboolean(['download', 'passive']):

@@ -170,11 +170,11 @@ class LibvirtBackendService:
 
     def __destroy_all_guests(self) -> None:
         domains = self.conn.listDomainsID()
-        if not domains:
-            log.msg(
-                eventid="cowrie.backend_pool.libvirtd",
-                format="Could not get domain list",
-            )
+        # if not domains:
+        #     log.msg(
+        #         eventid="cowrie.backend_pool.libvirtd",
+        #         format="Could not get domain list",
+        #     )
 
         for domain_id in domains:
             d = self.conn.lookupByID(domain_id)
@@ -186,11 +186,11 @@ class LibvirtBackendService:
 
     def __destroy_all_networks(self) -> None:
         networks = self.conn.listNetworks()
-        if not networks:
-            log.msg(
-                eventid="cowrie.backend_pool.libvirtd",
-                format="Could not get network list",
-            )
+        # if not networks:
+        #     log.msg(
+        #         eventid="cowrie.backend_pool.libvirtd",
+        #         format="Could not get network list",
+        #     )
 
         for network in networks:
             if network.startswith("cowrie"):
@@ -199,11 +199,11 @@ class LibvirtBackendService:
 
     def __destroy_all_network_filters(self) -> None:
         network_filters = self.conn.listNWFilters()
-        if not network_filters:
-            log.msg(
-                eventid="cowrie.backend_pool.libvirtd",
-                format="Could not get network filters list",
-            )
+        # if not network_filters:
+        #     log.msg(
+        #         eventid="cowrie.backend_pool.libvirtd",
+        #         format="Could not get network filters list",
+        #     )
 
         for nw_filter in network_filters:
             if nw_filter.startswith("cowrie"):

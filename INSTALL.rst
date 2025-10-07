@@ -79,15 +79,16 @@ Activate the virtual environment and install packages::
 
     $ source cowrie-env/bin/activate
     (cowrie-env) $ python -m pip install --upgrade pip
-    (cowrie-env) $ python -m pip install --upgrade -r requirements.txt
+    (cowrie-env) $ python -m pip install -e .
+
 
 Step 5: Install configuration file
 **********************************
 
-The configuration for Cowrie is stored in cowrie.cfg.dist and
-cowrie.cfg (Located in cowrie/etc). Both files are read on startup, where entries from
-cowrie.cfg take precedence. The .dist file can be overwritten by
-upgrades, cowrie.cfg will not be touched. To run with a standard
+The configuration for Cowrie is stored in `cowrie.cfg.dist` and
+`cowrie.cfg` (located in cowrie/etc). Both files are read on startup, where entries from
+`cowrie.cfg` take precedence. The .dist file can be overwritten by
+upgrades, `cowrie.cfg` will not be touched. To run with a standard
 configuration, there is no need to change anything. To enable telnet,
 for example, create cowrie.cfg and input only the following::
 
@@ -103,8 +104,8 @@ is preserved if activated, otherwise Cowrie will attempt to load
 the environment called "cowrie-env"::
 
 
-    $ bin/cowrie start
-    Activating virtualenv "cowrie-env"
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ cowrie start
     Starting cowrie with extra arguments [] ...
 
 Step 7: Listening on port 22 (OPTIONAL)
@@ -183,7 +184,9 @@ and their Python interface. In Debian/Ubuntu::
 
 Then install the Python API to run the backend pool::
 
-    (cowrie-env) $ python -m pip install -r requirements-pool.txt
+
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ python -m pip install -e '.[pool]'
 
 To allow QEMU to use disk images and snapshots, set it to run with the user and group of the user running the pool
 (usually called 'cowrie' too::
@@ -255,17 +258,17 @@ Updating Cowrie
 
 First stop your honeypot. Then pull updates from GitHub, and upgrade your Python dependencies::
 
-    $ bin/cowrie stop
-    $ git pull
-    $ python -m pip install --upgrade -r requirements.txt
+    (cowrie-env) $ cowrie stop
+    (cowrie-env) $ git pull
+    (cowrie-env) $ python -m pip install --upgrade -e .
 
 If you use output plugins like SQL, Splunk, or ELK, remember to also upgrade your dependencies for these too::
 
-    $ python -m pip install --upgrade -r requirements-output.txt
+    (cowrie-env) $ python -m pip install --upgrade -r requirements-output.txt
 
 And finally, restart Cowrie after finishing all updates::
 
-    $ bin/cowrie start
+    (cowrie-env) $ cowrie start
 
 Modifying Cowrie
 ****************

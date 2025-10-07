@@ -2,6 +2,7 @@
 # See the COPYRIGHT file for more information
 
 from __future__ import annotations
+from http.client import responses
 
 import getopt
 import os
@@ -191,6 +192,7 @@ class Command_curl(HoneyPotCommand):
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     silent: bool = False
+    head_request: bool = False
     url: bytes
     host: str
     port: int
@@ -199,7 +201,7 @@ class Command_curl(HoneyPotCommand):
     def start(self):
         try:
             optlist, args = getopt.getopt(
-                self.args, "sho:O", ["help", "manual", "silent"]
+                self.args, "sho:OI", ["help", "manual", "silent", "head"]
             )
         except getopt.GetoptError as err:
             # TODO: should be 'unknown' instead of 'not recognized'
@@ -217,6 +219,8 @@ class Command_curl(HoneyPotCommand):
                 return
             elif opt[0] == "-s" or opt[0] == "--silent":
                 self.silent = True
+            elif opt[0] == "-I" or opt[0] == "--head":
+                self.head_request = True
 
         if len(args):
             if args[0] is not None:
@@ -301,8 +305,14 @@ class Command_curl(HoneyPotCommand):
         # out_addr = None
         # if CowrieConfig.has_option("honeypot", "out_addr"):
         #     out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
-
-        deferred = treq.get(url=url, allow_redirects=False, headers=headers, timeout=10)
+        if self.head_request:
+            deferred = treq.head(
+                url=url, allow_redirects=False, headers=headers, timeout=10
+            )
+        else:
+            deferred = treq.get(
+                url=url, allow_redirects=False, headers=headers, timeout=10
+            )
         return deferred
 
     def handle_CTRL_C(self) -> None:
@@ -315,6 +325,20 @@ class Command_curl(HoneyPotCommand):
         """
         self.totallength = response.length
         # TODO possible this is UNKNOWN_LENGTH
+
+        if self.head_request:
+            reason = responses.get(response.code, "")
+            self.write(f"HTTP/1.1 {response.code} {reason}\n")
+            for key, values in response.headers.getAllRawHeaders():
+                decoded_key = key.decode() if isinstance(key, bytes) else key
+                for value in values:
+                    decoded_value = (
+                        value.decode() if isinstance(value, bytes) else value
+                    )
+                    self.write(f"{decoded_key}: {decoded_value}\n")
+            self.exit()
+            return
+
         if self.limit_size > 0 and self.totallength > self.limit_size:
             log.msg(
                 f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"

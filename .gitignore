@@ -19,6 +19,7 @@ log/
 __pycache__/
 *.py[cod]
 *env/
+src/cowrie/_version.py
 src/twisted/plugins/dropin.cache
 .DS_Store
 _trial_temp

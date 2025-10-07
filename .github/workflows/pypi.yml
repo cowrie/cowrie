@@ -1,0 +1,64 @@
+---
+name: pypi-publish
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    # Publish only `tags` to pypi.org
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'pypi upload'
+
+jobs:
+  pypi-publish:
+    name: Upload commit to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cowrie
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      # retrieve your distributions here, need fetch-depth to get metadata for version
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build setuptools==80.9.0 setuptools-scm==9.2.0 twine==6.2.0 wheel==0.45.1 packaging==25.0
+
+      - name: Build and check
+        run: |
+          SETUPTOOLS_SCM_OVERRIDES_FOR_COWRIE='{local_scheme="no-local-version"}' python -m build
+          twine check --strict dist/*
+
+      - name: Publish package distributions to PyPI
+        if: ${{ github.repository == 'cowrie/cowrie' }}
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        with:
+          verbose: true
+          print-hash: true
+          verify-metadata: false
+
+      - name: Sleep for publishing
+        run: sleep 60s
+        shell: bash
+
+      - name: Download and test package
+        if: ${{ github.repository == 'cowrie/cowrie' }}
+        run: |
+           python -m pip install cowrie
+           twistd cowrie
