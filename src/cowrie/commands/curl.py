@@ -201,7 +201,7 @@ class Command_curl(HoneyPotCommand):
     def start(self):
         try:
             optlist, args = getopt.getopt(
-                self.args, "sho:OI", ["help", "manual", "silent", "head"]
+                self.args, "Lsho:IO", ["help", "manual", "silent", "head"]
             )
         except getopt.GetoptError as err:
             # TODO: should be 'unknown' instead of 'not recognized'
