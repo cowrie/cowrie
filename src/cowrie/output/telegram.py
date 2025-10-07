@@ -24,17 +24,18 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_"):
                 del event[i]
 
-        logon_type = ""
         # Prepare logon type
-        if "HoneyPotSSHTransport" in (event["system"].split(","))[0]:
-            logon_type = "SSH"
-        elif "CowrieTelnetTransport" in (event["system"].split(","))[0]:
-            logon_type = "Telnet"
+        # if "HoneyPotSSHTransport" in (event["system"].split(","))[0]:
+        #     logon_type = "SSH"
+        # elif "CowrieTelnetTransport" in (event["system"].split(","))[0]:
+        #     logon_type = "Telnet"
+        # else:
+        #     logon_type = ""
 
         # Prepare base message
         msgtxt = "<strong>[Cowrie " + event["sensor"] + "]</strong>"
         msgtxt += "\nEvent: " + event["eventid"]
-        msgtxt += "\nLogon type: " + logon_type
+        # msgtxt += "\nLogon type: " + logon_type
         msgtxt += "\nSource: <code>" + event["src_ip"] + "</code>"
         msgtxt += "\nSession: <code>" + event["session"] + "</code>"
 
