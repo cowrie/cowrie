@@ -8,7 +8,9 @@ Telnet Transport and Authentication for the Honeypot
 from __future__ import annotations
 
 import configparser
+import importlib.resources
 import time
+from typing import TYPE_CHECKING
 
 from twisted.internet import protocol
 from twisted.python import log
@@ -17,7 +19,7 @@ from cowrie.core.config import CowrieConfig
 from cowrie.telnet.transport import CowrieTelnetTransport
 from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
-from typing import TYPE_CHECKING
+from cowrie import data
 
 if TYPE_CHECKING:
     from twisted.plugin import IPlugin
@@ -50,12 +52,25 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             output.logDispatch(**args)
 
     def startFactory(self) -> None:
+        """ """
         try:
-            honeyfs = CowrieConfig.get("honeypot", "contents_path")
-            issuefile = honeyfs + "/etc/issue.net"
-            with open(issuefile, "rb") as banner:
-                self.banner = banner.read()
-        except (OSError, configparser.Error):
+            with open(
+                "{}/etc/issue.net".format(
+                    CowrieConfig.get("honeypot", "contents_path")
+                ),
+                mode="rb",
+                encoding="ascii",
+            ) as f:
+                self.banner = f.read()
+        except configparser.Error as e:
+            log.msg(f"Loading default /etc/issue.net file: {e!r}")
+            resources_path = importlib.resources.files(data)
+            config_file_path = (
+                resources_path.joinpath("honeyfs").joinpath("etc").joinpath("issue.net")
+            )
+            self.banner = config_file_path.read_text(encoding="utf-8").encode()
+        except OSError as e:
+            log.err(e, "ERROR: Failed to load /etc/issue.net")
             self.banner = b""
 
         # For use by the uptime command

@@ -29,12 +29,16 @@
 
 from __future__ import annotations
 from binascii import crc32
+import configparser
+import importlib.resources
 from random import randint, seed
+import sys
 from typing import Any
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie import data
 
 
 class Passwd:
@@ -44,9 +48,23 @@ class Passwd:
     passwords.
     """
 
-    passwd_file = "{}/etc/passwd".format(
-        CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
-    )
+    try:
+        with open(
+            "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path")),
+            encoding="ascii",
+        ) as f:
+            passwd_contents = f.read().split("\n")
+    except configparser.Error:
+        log.msg("Loading default /etc/passwd file from pickle file")
+        resources_path = importlib.resources.files(data)
+        config_file_path = (
+            resources_path.joinpath("honeyfs").joinpath("etc").joinpath("passwd")
+        )
+        passwd_contents = config_file_path.read_text(encoding="utf-8").split("\n")
+    except Exception as e:
+        log.err(e, "ERROR: Failed to load /etc/passwd")
+        sys.exit(2)
+
     passwd: list[dict[str, Any]]
 
     def __init__(self) -> None:
@@ -57,49 +75,44 @@ class Passwd:
         Load /etc/passwd
         """
         self.passwd = []
-        with open(self.passwd_file, encoding="ascii") as f:
-            while True:
-                rawline = f.readline()
-                if not rawline:
-                    break
+        for rawline in self.passwd_contents:
+            line = rawline.strip()
+            if not line:
+                continue
 
-                line = rawline.strip()
-                if not line:
-                    continue
+            if line.startswith("#"):
+                continue
 
-                if line.startswith("#"):
-                    continue
+            if len(line.split(":")) != 7:
+                log.msg("Error parsing line `" + line + "` in <honeyfs>/etc/passwd")
+                continue
 
-                if len(line.split(":")) != 7:
-                    log.msg("Error parsing line `" + line + "` in <honeyfs>/etc/passwd")
-                    continue
+            (
+                pw_name,
+                pw_passwd,
+                pw_uid,
+                pw_gid,
+                pw_gecos,
+                pw_dir,
+                pw_shell,
+            ) = line.split(":")
 
-                (
-                    pw_name,
-                    pw_passwd,
-                    pw_uid,
-                    pw_gid,
-                    pw_gecos,
-                    pw_dir,
-                    pw_shell,
-                ) = line.split(":")
+            e: dict[str, str | int] = {}
+            e["pw_name"] = pw_name
+            e["pw_passwd"] = pw_passwd
+            e["pw_gecos"] = pw_gecos
+            e["pw_dir"] = pw_dir
+            e["pw_shell"] = pw_shell
+            try:
+                e["pw_uid"] = int(pw_uid)
+            except ValueError:
+                e["pw_uid"] = 1001
+            try:
+                e["pw_gid"] = int(pw_gid)
+            except ValueError:
+                e["pw_gid"] = 1001
 
-                e: dict[str, str | int] = {}
-                e["pw_name"] = pw_name
-                e["pw_passwd"] = pw_passwd
-                e["pw_gecos"] = pw_gecos
-                e["pw_dir"] = pw_dir
-                e["pw_shell"] = pw_shell
-                try:
-                    e["pw_uid"] = int(pw_uid)
-                except ValueError:
-                    e["pw_uid"] = 1001
-                try:
-                    e["pw_gid"] = int(pw_gid)
-                except ValueError:
-                    e["pw_gid"] = 1001
-
-                self.passwd.append(e)
+            self.passwd.append(e)
 
     def save(self):
         """

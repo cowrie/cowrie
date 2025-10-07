@@ -29,9 +29,9 @@
 
 from __future__ import annotations
 
+import configparser
 import json
 import random
-from configparser import NoOptionError
 
 from twisted.python import log
 
@@ -54,7 +54,7 @@ class CowrieServer:
     """
 
     def __init__(self, realm: IRealm) -> None:
-        self.fs = None
+        self.fs: fs.HoneyPotFilesystem | None = None
         self.process = None
         self.hostname: str = CowrieConfig.get("honeypot", "hostname", fallback="svr04")
         try:
@@ -65,7 +65,7 @@ class CowrieServer:
                 ).split(",")
             ]
             self.arch = random.choice(arches)
-        except NoOptionError:
+        except configparser.Error:
             self.arch = "linux-x64-lsb"
 
         log.msg(f"Initialized emulated server as architecture: {self.arch}")
@@ -78,7 +78,7 @@ class CowrieServer:
             cmdoutput = json.load(f)
         return cmdoutput
 
-    def initFileSystem(self, home):
+    def initFileSystem(self, home: str) -> None:
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
@@ -88,5 +88,6 @@ class CowrieServer:
             self.process = self.getCommandOutput(
                 CowrieConfig.get("shell", "processes")
             )["command"]["ps"]
-        except NoOptionError:
+        except configparser.Error as e:
+            log.msg(f"Could not load process list {e!r}")
             self.process = None
