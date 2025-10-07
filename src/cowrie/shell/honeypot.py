@@ -79,7 +79,7 @@ class HoneyPotShell:
                     if tokens:
                         # Parentheses in the middle of a command line is a syntax error
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\\n".encode()
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
                         )
                         break
                     if tok == "(":
