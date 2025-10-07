@@ -1,8 +1,8 @@
 Installing Cowrie in seven steps
 ################################
 
-This guide describes how to install Cowrie in ``shell`` mode. For ``proxy`` mode
-read `PROXY.rst`.
+This guide describes how to install Cowrie in ``shell`` mode with ``git clone``.
+For ``proxy`` mode read `PROXY.rst`.
 
 * :ref:`Step 1: Install system dependencies<Step 1: Install system dependencies>`
 * :ref:`Step 2: Create a user account<Step 2: Create a user account>`
@@ -183,6 +183,7 @@ and their Python interface. In Debian/Ubuntu::
     $ sudo apt-get install qemu-system-arm qemu-system-x86 libvirt-dev libvirt-daemon libvirt-daemon-system libvirt-clients nmap
 
 Then install the Python API to run the backend pool::
+
 
     $ source cowrie-env/bin/activate
     (cowrie-env) $ python -m pip install -e '.[pool]'

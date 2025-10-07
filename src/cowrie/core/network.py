@@ -1,6 +1,5 @@
 from collections.abc import Generator
 import ipaddress
-from typing import Union
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.names import client, dns
@@ -24,7 +23,7 @@ BLOCKED_IPS = [
 
 def is_ip_address(
     address: str,
-) -> Union[ipaddress.IPv4Address, ipaddress.IPv6Address] | None:
+) -> ipaddress.IPv4Address | ipaddress.IPv6Address | None:
     """
     Returns an IPv4 or IPv6 address if the string is a valid IP, otherwise returns None.
     """

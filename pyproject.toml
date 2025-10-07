@@ -78,8 +78,7 @@ dev = [
 "pylint==3.3.8",
 "pyre-check==0.9.25",
 "pyright==1.1.405",
-"pytype==2024.1.24; platform_python_implementation=='CPython' and python_version<='3.9'",
-"pytype==2024.10.11; platform_python_implementation=='CPython' and python_version>='3.10'",
+"pytype==2024.10.11; platform_python_implementation=='CPython'",
 "pyupgrade==3.20.0",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
@@ -175,7 +174,7 @@ line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
 lint.select = ["A", "B", "E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
-lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001", "UP038"]
+lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001"]
 
 exclude = [ "src/cowrie/_version.py" ]
 

@@ -1,12 +1,6 @@
 Cowrie
 ######
 
-Welcome to the Cowrie GitHub repository
-*****************************************
-
-This is the official repository for the Cowrie SSH and Telnet
-Honeypot effort.
-
 What is Cowrie
 *****************************************
 
@@ -43,17 +37,25 @@ Features
 
 For both settings:
 
-* Session logs are stored in an `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `bin/playlog` utility.
+* Session logs are stored in a `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `playlog` utility.
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
 * Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`_)
 * JSON logging for easy processing in log management solutions
 
+Installation
+*****************************************
+
+There are currently three ways to install Cowrie: `git clone`, `Docker` and `pip`.
+`Docker` is the easiest to try and run, but to configure and modify you'll need a good understanding of containers and volumes.
+`git clone` is recommended if you want to change the configuration of the honeypot.
+`pip` mode is still under development.
+
 Docker
 *****************************************
 
-Docker images are available on Docker Hub.
+`Docker images <https://hub.docker.com/repository/docker/cowrie/cowrie>`_ are available on Docker Hub.
 
 * To get started quickly and give Cowrie a try, run::
 
@@ -63,6 +65,18 @@ Docker images are available on Docker Hub.
 * To just make it locally, run::
 
     $ make docker-build
+
+PyPI
+*****************************************
+
+`Cowrie is available on PyPI <https://pypi.org/project/cowrie>`_, to install run::
+
+    $ pip install cowrie
+    $ twistd cowrie
+
+When installed this way, it will behave differently from having a full directory download.
+
+This is still in beta and may not work as expected, `git clone` or `docker` methods are preferred.
 
 Requirements
 *****************************************
@@ -85,10 +99,10 @@ Files of interest:
 * `src/cowrie/data/txtcmds/` - output for simple fake commands
 * `var/log/cowrie/cowrie.json` - audit output in JSON format
 * `var/log/cowrie/cowrie.log` - log/debug output
-* `var/lib/cowrie/tty/` - session logs, replayable with the `bin/playlog` utility.
+* `var/lib/cowrie/tty/` - session logs, replayable with the `playlog` utility.
 * `var/lib/cowrie/downloads/` - files transferred from the attacker to the honeypot are stored here
-* `bin/createfs` - create your own fake filesystem
-* `bin/playlog` - utility to replay session logs
+* `createfs` - create your own fake filesystem
+* `playlog` - utility to replay session logs
 
 Contributors
 ***************
