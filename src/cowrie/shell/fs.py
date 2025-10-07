@@ -5,9 +5,11 @@
 
 from __future__ import annotations
 
+import configparser
 import errno
 import fnmatch
 import hashlib
+import importlib
 import os
 from pathlib import Path
 import pickle
@@ -20,6 +22,8 @@ from typing import Any
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie import data
+
 
 (
     A_NAME,
@@ -112,6 +116,10 @@ class HoneyPotFilesystem:
         except UnicodeDecodeError:
             with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
                 self.fs = pickle.load(f, encoding="utf8")
+        except configparser.NoSectionError:
+            log.msg("Loading default pickle file")
+            with importlib.resources.open_binary(data, "fs.pickle") as f:
+                self.fs = pickle.load(f)
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
             sys.exit(2)
@@ -129,7 +137,10 @@ class HoneyPotFilesystem:
 
         # Get the honeyfs path from the config file and explore it for file
         # contents:
-        self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
+        try:
+            self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
+        except Exception as e:
+            log.msg(f"Failed to load honeyfs {e!r}")
 
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """
@@ -307,8 +318,10 @@ class HoneyPotFilesystem:
         """
         Retrieve the content of a file in the honeyfs
         It follows links.
-        It tries A_REALFILE first and then tries honeyfs directory
-        Then return the executable header for executables
+        It retrieves the content in this order
+        1) if there's honeyfs, (A_REALFILE)
+        2) built-in contents (A_CONTENTS) from the pickle file
+        3) a generic binary header
         """
         path: str = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
@@ -318,16 +331,18 @@ class HoneyPotFilesystem:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return Path(f[A_REALFILE]).read_bytes()
+        if f[A_TYPE] == T_FILE and isinstance(f[A_CONTENTS], bytes):
+            return bytes(f[A_CONTENTS])
         if f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
-            return open(
-                CowrieConfig.get("honeypot", "data_path") + "/arch/" + self.arch,
-                "rb",
-            ).read()
+            with importlib.resources.as_file(
+                importlib.resources.files(data).joinpath("arch").joinpath(self.arch)
+            ) as arch:
+                return arch.read_bytes()
         return b""
 
     def mkfile(
@@ -398,8 +413,7 @@ class HoneyPotFilesystem:
     def islink(self, path: str) -> bool:
         """
         Return True if path refers to a directory entry that is a symbolic
-        link. Always False if symbolic links are not supported by the python
-        runtime.
+        link.
         """
         try:
             f: list[Any] | None = self.getfile(path)

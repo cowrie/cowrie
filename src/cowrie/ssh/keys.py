@@ -64,7 +64,6 @@ def getRSAKeys() -> tuple[bytes, bytes]:
         f.write(privateKeyString)
     return publicKeyString, privateKeyString
 
-
 def getECDSAKeys() -> tuple[bytes, bytes]:
     """
     If no keys in configfile file, generate but don't write them.
