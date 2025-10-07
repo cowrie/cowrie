@@ -47,6 +47,7 @@ class Passwd:
     /etc/passwd. Note that contrary to the name, it does not handle any
     passwords.
     """
+
     try:
         with open(
             "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path")),
@@ -56,7 +57,9 @@ class Passwd:
     except configparser.Error:
         log.msg("Loading default /etc/passwd file from pickle file")
         resources_path = importlib.resources.files(data)
-        config_file_path = resources_path.joinpath("honeyfs", "etc", "passwd")
+        config_file_path = (
+            resources_path.joinpath("honeyfs").joinpath("etc").joinpath("passwd")
+        )
         passwd_contents = config_file_path.read_text(encoding="utf-8").split("\n")
     except Exception as e:
         log.err(e, "ERROR: Failed to load /etc/passwd")
