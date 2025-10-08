@@ -298,10 +298,11 @@ class Output(cowrie.core.output.Output):
         """
         vtUrl = f"{VTAPI_URL}files".encode()
         fields = {}  # v3 API doesn't need apikey in form data
-        files = {("file", fileName, open(artifact, "rb"))}
-        if self.debug:
-            log.msg(f"submitting to VT: {files!r}")
-        contentType, body = encode_multipart_formdata(fields, files)
+        with open(artifact, "rb") as f:
+            files = {("file", fileName, f)}
+            if self.debug:
+                log.msg(f"submitting to VT: {files!r}")
+            contentType, body = encode_multipart_formdata(fields, files)
         producer = StringProducer(body)
         headers = http_headers.Headers(
             {
@@ -495,9 +496,7 @@ class Output(cowrie.core.output.Output):
                     is_new="false",
                 )
                 # v3 API doesn't have a direct permalink, construct one
-                log.msg(
-                    f"VT: permalink: https://www.virustotal.com/gui/url/{url_id}"
-                )
+                log.msg(f"VT: permalink: https://www.virustotal.com/gui/url/{url_id}")
             else:
                 log.msg("VT: unexpected response format")
 
@@ -520,10 +519,14 @@ class Output(cowrie.core.output.Output):
         body = StringProducer(urlencode({"url": event["url"]}).encode("utf-8"))
         d = self.agent.request(b"POST", vtUrl, headers, body)
 
+        def cbBody(body):
+            return processResult(body)
+
         def cbResponse(response):
             if response.code == 200:
-                log.msg("VT: URL submitted successfully for scanning")
-                return
+                d = readBody(response)
+                d.addCallback(cbBody)
+                return d
             else:
                 log.msg(f"VT: URL submission failed: {response.code} {response.phrase}")
 
@@ -531,13 +534,42 @@ class Output(cowrie.core.output.Output):
             log.msg("VT: Error submitting URL")
             failure.printTraceback()
 
+        def processResult(result):
+            if self.debug:
+                log.msg(f"VT submiturl result: {result}")
+            result = result.decode("utf8")
+            j = json.loads(result)
+
+            # Check for errors in v3 API response
+            if "error" in j:
+                log.msg(
+                    f"VT: URL submission error - {j['error']['code']}: {j['error']['message']}"
+                )
+                return
+
+            # Process successful submission response
+            if "data" in j:
+                data = j["data"]
+                url_id = data.get("id")
+                if url_id:
+                    log.msg("VT: URL submitted successfully for scanning")
+                    # Post comment if enabled (this is a new URL submission)
+                    if self.comment is True:
+                        return self.postcomment_url(url_id)
+                    else:
+                        return
+                else:
+                    log.msg("VT: URL submission successful but no ID returned")
+            else:
+                log.msg("VT: unexpected URL submission response format")
+
         d.addCallback(cbResponse)
         d.addErrback(cbError)
         return d
 
     def postcomment(self, resource):
         """
-        Send a comment to VirusTotal with Twisted
+        Send a comment to VirusTotal for a file
         """
         vtUrl = f"{VTAPI_URL}files/{resource}/comments".encode()
         comment_data = {
@@ -593,6 +625,70 @@ class Output(cowrie.core.output.Output):
                 return True
             else:
                 log.msg("VT: unexpected comment response format")
+                return False
+
+        d.addCallback(cbResponse)
+        d.addErrback(cbError)
+        return d
+
+    def postcomment_url(self, url_id):
+        """
+        Send a comment to VirusTotal for a URL
+        """
+        vtUrl = f"{VTAPI_URL}urls/{url_id}/comments".encode()
+        comment_data = {
+            "data": {"type": "comment", "attributes": {"text": self.commenttext}}
+        }
+        headers = http_headers.Headers(
+            {
+                "User-Agent": [COWRIE_USER_AGENT],
+                "x-apikey": [self.apiKey],
+                "Content-Type": ["application/json"],
+            }
+        )
+        body = StringProducer(json.dumps(comment_data).encode("utf-8"))
+        d = self.agent.request(b"POST", vtUrl, headers, body)
+
+        def cbBody(body):
+            return processResult(body)
+
+        def cbPartial(failure):
+            """
+            Google HTTP Server does not set Content-Length. Twisted marks it as partial
+            """
+            return processResult(failure.value.response)
+
+        def cbResponse(response):
+            if response.code == 200:
+                d = readBody(response)
+                d.addCallback(cbBody)
+                d.addErrback(cbPartial)
+                return d
+            else:
+                log.msg(f"VT postcomment_url failed: {response.code} {response.phrase}")
+
+        def cbError(failure):
+            failure.printTraceback()
+
+        def processResult(result):
+            if self.debug:
+                log.msg(f"VT postcomment_url result: {result}")
+            result = result.decode("utf8")
+            j = json.loads(result)
+
+            # Check for errors in v3 API response
+            if "error" in j:
+                log.msg(
+                    f"VT: URL comment error - {j['error']['code']}: {j['error']['message']}"
+                )
+                return False
+
+            # Process successful comment response
+            if "data" in j:
+                log.msg("VT: URL comment posted successfully")
+                return True
+            else:
+                log.msg("VT: unexpected URL comment response format")
                 return False
 
         d.addCallback(cbResponse)

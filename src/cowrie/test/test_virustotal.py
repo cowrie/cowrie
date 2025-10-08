@@ -257,6 +257,37 @@ class VirusTotalOutputTests(unittest.TestCase):
         self.assertIn(b"Content-Type", headers._rawHeaders)
         self.assertEqual(headers._rawHeaders[b"Content-Type"], [b"application/json"])
 
+    def test_postcomment_url_v3_format(self) -> None:
+        """Test URL comment posting using v3 API format"""
+        # Mock response for successful URL comment
+        MockResponse(
+            200, json.dumps({"data": {"id": "comment-id", "type": "comment"}}).encode()
+        )
+
+        # Mock agent request
+        deferred: defer.Deferred = defer.Deferred()
+        self.output.agent.request.return_value = deferred
+
+        # Call postcomment_url
+        self.output.postcomment_url("test-url-id")
+
+        # Verify request was made correctly
+        self.output.agent.request.assert_called_once()
+        call_args = self.output.agent.request.call_args
+
+        # Check method and URL
+        self.assertEqual(call_args[0][0], b"POST")
+        self.assertEqual(
+            call_args[0][1],
+            b"https://www.virustotal.com/api/v3/urls/test-url-id/comments",
+        )
+
+        # Check headers
+        headers = call_args[0][2]
+        self.assertIn(b"X-Apikey", headers._rawHeaders)
+        self.assertIn(b"Content-Type", headers._rawHeaders)
+        self.assertEqual(headers._rawHeaders[b"Content-Type"], [b"application/json"])
+
     def test_submiturl_v3_format(self) -> None:
         """Test URL submission using v3 API format"""
         # Mock response for successful URL submission
@@ -348,6 +379,7 @@ class VirusTotalOutputTests(unittest.TestCase):
             ("scanfile", {"session": "test", "shasum": "abc123"}),
             ("scanurl", {"session": "test", "url": "http://example.com"}),
             ("postcomment", "test-file-id"),
+            ("postcomment_url", "test-url-id"),
             ("submiturl", {"url": "http://example.com"}),
         ]
 
@@ -359,7 +391,7 @@ class VirusTotalOutputTests(unittest.TestCase):
 
                 # Call method
                 method = getattr(self.output, method_name)
-                if method_name == "postcomment":
+                if method_name in ("postcomment", "postcomment_url"):
                     method(params)
                 else:
                     method(params)
