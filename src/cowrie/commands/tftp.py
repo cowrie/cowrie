@@ -4,6 +4,7 @@ import struct
 from typing import TYPE_CHECKING, Any
 
 from twisted.internet import defer, reactor
+from twisted.internet.defer import CancelledError
 from twisted.internet.protocol import DatagramProtocol
 from twisted.python import log
 
@@ -98,14 +99,14 @@ class TFTPClient(DatagramProtocol):
         self.last_packet = packet
         self.scheduleTimeout()
 
-    def datagramReceived(self, data: bytes, addr: tuple[str, int]) -> None:
+    def datagramReceived(self, datagram: bytes, addr: tuple[str, int]) -> None:
         """Handle received TFTP packet"""
-        if len(data) < 4:
+        if len(datagram) < 4:
             log.msg("TFTP: Received malformed packet (too short)")
             return
 
         # Extract opcode
-        opcode = struct.unpack("!H", data[:2])[0]
+        opcode = struct.unpack("!H", datagram[:2])[0]
 
         # Save server's TID (port) from first response
         if self.server_tid is None:
@@ -117,9 +118,9 @@ class TFTPClient(DatagramProtocol):
         self.retry_count = 0
 
         if opcode == OPCODE_DATA:
-            self.handleDATA(data)
+            self.handleDATA(datagram)
         elif opcode == OPCODE_ERROR:
-            self.handleERROR(data)
+            self.handleERROR(datagram)
         else:
             log.msg(f"TFTP: Unexpected opcode {opcode}")
 
@@ -311,17 +312,17 @@ class Command_tftp(HoneyPotCommand):
         if hasattr(self.artifactFile, "fp") and not self.artifactFile.fp.closed:
             try:
                 self.artifactFile.fp.close()
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
         return result
 
-    def _download_success(self, result: None) -> None:
+    def _download_success(self, _result: None) -> None:
         """Called when download completes successfully"""
         # Artifact.close() processes the file (hashing, renaming)
         # The file handle is already closed by _ensure_artifact_closed
         try:
             self.artifactFile.close()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass  # Already closed or empty file
 
         url = f"tftp://{self.hostname}:{self.port}/{self.file_to_get.lstrip('/')}"
@@ -369,12 +370,10 @@ class Command_tftp(HoneyPotCommand):
         # Just clean up the temp file if it exists
         try:
             self.artifactFile.close()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass  # Already closed or empty file
 
         # Check if this is a cancellation (from CTRL-C)
-        from twisted.internet.defer import CancelledError
-
         if failure.check(CancelledError):
             # User cancelled with CTRL-C, exit silently (^C already printed)
             return
@@ -419,7 +418,7 @@ class Command_tftp(HoneyPotCommand):
             try:
                 if hasattr(self.artifactFile, "fp") and not self.artifactFile.fp.closed:
                     self.artifactFile.fp.close()
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
         # Cancel the deferred - this will trigger cleanup callback which stops UDP port
