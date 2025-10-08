@@ -1,0 +1,42 @@
+2025-10-07T06:11:20+0000 [-] Reading configuration from ['/Users/mich/src/cowrie/etc/cowrie.cfg.dist']
+2025-10-07T06:11:20+0000 [-] Python Version 3.12.11 (main, Jun  3 2025, 15:41:47) [Clang 19.1.7 ]
+2025-10-07T06:11:20+0000 [-] Twisted Version 25.5.0
+2025-10-07T06:11:20+0000 [-] Cowrie Version 2.8.1.dev4+gf230510ea.d20251007
+2025-10-07T06:11:20+0000 [-] Unhandled Error
+	Traceback (most recent call last):
+	  File "/Users/mich/src/cowrie/src/twisted/plugins/cowrie_plugin.py", line 158, in makeService
+	    output = import_module(f"cowrie.output.{engine}").Output()
+	  File "/Users/mich/src/cowrie/src/cowrie/core/output.py", line 119, in __init__
+	    self.start()
+	  File "/Users/mich/src/cowrie/src/cowrie/output/jsonlog.py", line 57, in start
+	    self.outfile = cowrie.python.logfile.CowrieDailyLogFile(
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/python/logfile.py", line 48, in __init__
+	    self._openFile()
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/python/logfile.py", line 249, in _openFile
+	    BaseLogFile._openFile(self)
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/python/logfile.py", line 80, in _openFile
+	    self._file = cast(BinaryIO, open(self.path, "wb+", 0))
+	builtins.FileNotFoundError: [Errno 2] No such file or directory: 'var/log/cowrie/cowrie.json'
+	
+2025-10-07T06:11:20+0000 [-] Failed to load output engine: jsonlog
+2025-10-07T06:11:20+0000 [twisted.scripts._twistd_unix.UnixAppLogger#info] twistd 25.5.0 (/Users/mich/src/cowrie/.direnv/python-3.12.11/bin/python 3.12.11) starting up.
+2025-10-07T06:11:20+0000 [twisted.scripts._twistd_unix.UnixAppLogger#info] reactor class: twisted.internet.selectreactor.SelectReactor.
+2025-10-07T06:11:20+0000 [-] CowrieSSHFactory starting on 2222
+2025-10-07T06:11:20+0000 [cowrie.ssh.factory.CowrieSSHFactory#info] Starting factory <cowrie.ssh.factory.CowrieSSHFactory object at 0x110d78f10>
+2025-10-07T06:11:20+0000 [-] Unhandled Error
+	Traceback (most recent call last):
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/internet/defer.py", line 155, in execute
+	    result = callable(*args, **kwargs)
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/internet/posixbase.py", line 366, in listenTCP
+	    p.startListening()
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/internet/tcp.py", line 1380, in startListening
+	    self.factory.doStart()
+	  File "/Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/internet/protocol.py", line 78, in doStart
+	    self.startFactory()
+	  File "/Users/mich/src/cowrie/src/cowrie/ssh/factory.py", line 83, in startFactory
+	    rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys()
+	  File "/Users/mich/src/cowrie/src/cowrie/ssh/keys.py", line 61, in getRSAKeys
+	    with open(publicKeyFile, "w+b") as f:
+	builtins.FileNotFoundError: [Errno 2] No such file or directory: 'var/lib/cowrie/ssh_host_rsa_key.pub'
+	
+2025-10-07T06:11:20+0000 [twisted.logger._global#warn] /Users/mich/src/cowrie/.direnv/python-3.12.11/lib/python3.12/site-packages/twisted/internet/defer.py:1155: builtins.ResourceWarning: unclosed <socket.socket fd=9, family=2, type=1, proto=0, laddr=('0.0.0.0', 2222)>
