@@ -59,7 +59,6 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                     CowrieConfig.get("honeypot", "contents_path")
                 ),
                 mode="rb",
-                encoding="ascii",
             ) as f:
                 self.banner = f.read()
         except configparser.Error as e:
