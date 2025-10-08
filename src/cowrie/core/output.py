@@ -237,6 +237,13 @@ class Output(metaclass=abc.ABCMeta):
         else:
             ev["session"] = self.sessions[sessionno]
 
+        if sessionno[0] == "S":
+            ev["protocol"] = "ssh"
+        elif sessionno[0] == "T":
+            ev["protocol"] = "telnet"
+        else:
+            ev["protocol"] = "unknown"
+
         self.write(ev)
 
         # Disconnect is special, remove cached data
