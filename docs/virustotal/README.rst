@@ -241,7 +241,11 @@ Free VirusTotal API tier has strict rate limits:
 
 **Recommendations**:
 
+<<<<<<< HEAD
 * Set ``scan_url = false`` if you want to reduce API usage (disabling URL scans halves the API requests)
+=======
+* Keep ``scan_url = false`` unless specifically needed
+>>>>>>> 87c4ae23 (more VT)
 * Monitor your API usage in VirusTotal dashboard
 * Consider upgrading to paid tier for high-traffic honeypots
 

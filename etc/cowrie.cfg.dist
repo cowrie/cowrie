@@ -926,7 +926,7 @@ scan_file = True
 scan_url = True
 # Optional: Organize uploaded files and URLs in a VirusTotal collection
 # If not set, no collection will be created
-#collection = cowrie
+collection = cowrie
 
 
 # Cuckoo output module
