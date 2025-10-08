@@ -1,4 +1,0 @@
-
-(uname -m; cat /proc/cpuinfo; cat /proc/version; echo 'ZORG_ARCH_DUMP') 2>/dev/null
-
-
