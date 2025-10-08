@@ -405,6 +405,113 @@ class VirusTotalOutputTests(unittest.TestCase):
                 # Reset mock for next test
                 self.output.agent.request.reset_mock()
 
+    def test_collection_initialization(self) -> None:
+        """Test collection initialization"""
+        # Create output plugin with collection configured
+        output = Output()
+        output.apiKey = "test-api-key"
+        output.debug = True
+        output.collection_name = "test-collection"
+
+        # Mock agent
+        mock_agent = Mock()
+        output.agent = mock_agent
+
+        # Initialize collection
+        output._init_collection()
+
+        # Verify request was made
+        self.assertTrue(mock_agent.request.called)
+        call_args = mock_agent.request.call_args
+        method, url, _headers, body = call_args[0]
+
+        # Check method and URL
+        self.assertEqual(method, b"POST")
+        self.assertEqual(url, b"https://www.virustotal.com/api/v3/collections")
+
+        # Check body format
+        body_content = body.body.decode()
+        collection_data = json.loads(body_content)
+        self.assertEqual(collection_data["data"]["type"], "collection")
+        self.assertEqual(
+            collection_data["data"]["attributes"]["name"], "test-collection"
+        )
+
+    def test_add_file_to_collection(self) -> None:
+        """Test adding a file to a collection"""
+        # Setup output with collection
+        self.output.collection_name = "test-collection"
+        self.output.collection_id = "test-collection-id"
+
+        # Mock agent request
+        deferred: defer.Deferred = defer.Deferred()
+        self.output.agent.request.return_value = deferred
+
+        # Add file to collection
+        self.output._add_to_collection("files", "test-file-hash", "test file")
+
+        # Verify request was made
+        self.assertTrue(self.output.agent.request.called)
+        call_args = self.output.agent.request.call_args
+        method, url, _headers, body = call_args[0]
+
+        # Check method and URL
+        self.assertEqual(method, b"POST")
+        self.assertEqual(
+            url, b"https://www.virustotal.com/api/v3/collections/test-collection-id/files"
+        )
+
+        # Check body format
+        body_content = body.body.decode()
+        data = json.loads(body_content)
+        self.assertEqual(data["data"][0]["type"], "file")
+        self.assertEqual(data["data"][0]["id"], "test-file-hash")
+
+    def test_add_url_to_collection(self) -> None:
+        """Test adding a URL to a collection"""
+        # Setup output with collection
+        self.output.collection_name = "test-collection"
+        self.output.collection_id = "test-collection-id"
+
+        # Mock agent request
+        deferred: defer.Deferred = defer.Deferred()
+        self.output.agent.request.return_value = deferred
+
+        # Add URL to collection
+        self.output._add_to_collection("urls", "test-url-id", "test URL")
+
+        # Verify request was made
+        self.assertTrue(self.output.agent.request.called)
+        call_args = self.output.agent.request.call_args
+        method, url, _headers, body = call_args[0]
+
+        # Check method and URL
+        self.assertEqual(method, b"POST")
+        self.assertEqual(
+            url, b"https://www.virustotal.com/api/v3/collections/test-collection-id/urls"
+        )
+
+        # Check body format
+        body_content = body.body.decode()
+        data = json.loads(body_content)
+        self.assertEqual(data["data"][0]["type"], "url")
+        self.assertEqual(data["data"][0]["id"], "test-url-id")
+
+    def test_no_collection_when_not_configured(self) -> None:
+        """Test that collection operations are skipped when not configured"""
+        # Ensure no collection is configured
+        self.output.collection_name = None
+        self.output.collection_id = None
+
+        # Mock agent request
+        self.output.agent.request.reset_mock()
+
+        # Try to add to collection
+        self.output._add_to_collection("files", "test-file", "test file")
+
+        # Verify no request was made
+        self.assertFalse(self.output.agent.request.called)
+
 
 if __name__ == "__main__":
     unittest.main()

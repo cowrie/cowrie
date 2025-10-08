@@ -96,6 +96,8 @@ class Output(cowrie.core.output.Output):
     scan_url: bool
     scan_file: bool
     url_cache: dict[str, datetime.datetime]  # url and last time succesfully submitted
+    collection_name: str | None = None
+    collection_id: str | None = None
 
     def start(self) -> None:
         """
@@ -117,12 +119,19 @@ class Output(cowrie.core.output.Output):
             "output_virustotal", "scan_file", fallback=True
         )
         self.scan_url = CowrieConfig.getboolean(
-            "output_virustotal", "scan_url", fallback=False
+            "output_virustotal", "scan_url", fallback=True
         )
         self.commenttext = CowrieConfig.get(
             "output_virustotal", "commenttext", fallback=COMMENT
         )
+        self.collection_name = CowrieConfig.get(
+            "output_virustotal", "collection", fallback=None
+        )
         self.agent = client.Agent(reactor)
+
+        # Initialize collection if configured
+        if self.collection_name:
+            self._init_collection()
 
     def stop(self) -> None:
         """
@@ -353,6 +362,9 @@ class Output(cowrie.core.output.Output):
                 file_id = data.get("id")
                 if file_id:
                     log.msg("VT: File uploaded successfully")
+                    # Add to collection if enabled
+                    if self.collection_name:
+                        self._add_to_collection("files", file_id, f"file {file_id}")
                     # Post comment if enabled
                     if self.comment:
                         return self._post_comment("files", file_id, "Comment")
@@ -497,6 +509,9 @@ class Output(cowrie.core.output.Output):
                 url_id = data.get("id")
                 if url_id:
                     log.msg("VT: URL submitted successfully for scanning")
+                    # Add to collection if enabled
+                    if self.collection_name:
+                        self._add_to_collection("urls", url_id, f"URL {url_id}")
                     # Post comment if enabled (this is a new URL submission)
                     if self.comment:
                         return self._post_comment("urls", url_id, "URL comment")
@@ -560,6 +575,128 @@ class Output(cowrie.core.output.Output):
             body=body,
             process_response=process_response,
             error_prefix=f"VT post{comment_type.lower()}",
+        )
+
+    def _init_collection(self) -> None:
+        """
+        Initialize collection - create if doesn't exist or get ID if exists
+        This is called during start() if collection is configured
+        """
+        # Try to create the collection (it's idempotent - won't duplicate if exists)
+        vtUrl = f"{VTAPI_URL}collections".encode()
+        collection_data = {
+            "data": {
+                "type": "collection",
+                "attributes": {
+                    "name": self.collection_name,
+                    "description": f"Cowrie honeypot artifacts - {self.collection_name}",
+                },
+            }
+        }
+        headers = self._build_headers(content_type="application/json")
+        body = StringProducer(json.dumps(collection_data).encode("utf-8"))
+
+        def process_response(body_bytes):
+            if self.debug:
+                log.msg(f"VT create collection result: {body_bytes}")
+            result = body_bytes.decode("utf8")
+            j = json.loads(result)
+
+            # Check for errors in v3 API response
+            if "error" in j:
+                error_code = j["error"].get("code")
+                # AlreadyExistsError means collection exists - that's OK
+                if error_code == "AlreadyExistsError":
+                    log.msg(
+                        f"VT: Collection '{self.collection_name}' already exists - will use existing"
+                    )
+                    # We'll get the ID from the error details if available
+                    # Otherwise we'll get it on first add operation
+                else:
+                    log.msg(
+                        f"VT: Collection creation error - {j['error']['code']}: {j['error'].get('message', 'Unknown error')}"
+                    )
+                return
+
+            # Process successful creation response
+            if "data" in j:
+                data = j["data"]
+                collection_id = data.get("id")
+                if collection_id:
+                    self.collection_id = collection_id
+                    log.msg(
+                        f"VT: Collection '{self.collection_name}' created with ID: {collection_id}"
+                    )
+                else:
+                    log.msg("VT: Collection created but no ID returned")
+            else:
+                log.msg("VT: unexpected collection creation response format")
+
+        self._make_request(
+            b"POST",
+            vtUrl,
+            headers,
+            body=body,
+            process_response=process_response,
+            error_prefix="VT create collection",
+        )
+
+    def _add_to_collection(
+        self, resource_type: str, resource_id: str, resource_descriptor: str
+    ) -> defer.Deferred[Any]:
+        """
+        Add a file or URL to the configured collection
+
+        Args:
+            resource_type: 'files' or 'urls'
+            resource_id: The file hash or URL ID
+            resource_descriptor: Human-readable description for logging
+        """
+        if not self.collection_name or not self.collection_id:
+            # Collection not configured or not initialized yet
+            if self.debug and self.collection_name:
+                log.msg(
+                    f"VT: Cannot add {resource_descriptor} to collection - collection ID not yet available"
+                )
+            return defer.succeed(None)
+
+        vtUrl = f"{VTAPI_URL}collections/{self.collection_id}/{resource_type}".encode()
+
+        # Build the request based on resource type
+        if resource_type == "files":
+            item_data = {"type": "file", "id": resource_id}
+        else:  # urls
+            item_data = {"type": "url", "id": resource_id}
+
+        headers = self._build_headers(content_type="application/json")
+        body = StringProducer(json.dumps({"data": [item_data]}).encode("utf-8"))
+
+        def process_response(body_bytes):
+            if self.debug:
+                log.msg(f"VT add to collection result: {body_bytes}")
+            result = body_bytes.decode("utf8")
+            j = json.loads(result)
+
+            # Check for errors in v3 API response
+            if "error" in j:
+                log.msg(
+                    f"VT: Add to collection error - {j['error']['code']}: {j['error'].get('message', 'Unknown error')}"
+                )
+                return False
+
+            # Success
+            log.msg(
+                f"VT: Added {resource_descriptor} to collection '{self.collection_name}'"
+            )
+            return True
+
+        return self._make_request(
+            b"POST",
+            vtUrl,
+            headers,
+            body=body,
+            process_response=process_response,
+            error_prefix="VT add to collection",
         )
 
     # Legacy methods for backward compatibility
