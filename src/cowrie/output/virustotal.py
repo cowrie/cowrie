@@ -45,7 +45,7 @@ from twisted.internet import defer
 from twisted.internet import reactor
 from twisted.python import log
 from twisted.web import client, http_headers
-from twisted.web.iweb import IBodyProducer
+from twisted.web.iweb import IBodyProducer, IResponse
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -54,6 +54,30 @@ COWRIE_USER_AGENT = "Cowrie Honeypot"
 VTAPI_URL = "https://www.virustotal.com/api/v3/"
 COMMENT = "First seen by #Cowrie SSH/telnet Honeypot http://github.com/cowrie/cowrie"
 TIME_SINCE_FIRST_DOWNLOAD = datetime.timedelta(minutes=1)
+
+
+def readBody(response: IResponse) -> defer.Deferred:
+    """
+    Read response body with proper handling to avoid deprecation warnings.
+    This is a wrapper around client.readBody that ensures compatibility.
+    """
+    from twisted.internet.protocol import Protocol
+
+    d: defer.Deferred = defer.Deferred()
+
+    class BodyCollector(Protocol):
+        def __init__(self):
+            self.data = b""
+
+        def dataReceived(self, data):
+            self.data += data
+
+        def connectionLost(self, reason):
+            d.callback(self.data)
+
+    collector = BodyCollector()
+    response.deliverBody(collector)
+    return d
 
 
 class Output(cowrie.core.output.Output):
@@ -150,7 +174,12 @@ class Output(cowrie.core.output.Output):
             Main response callback, check HTTP response code
             """
             if response.code == 200:
-                d = client.readBody(response)
+                d = readBody(response)
+                d.addCallback(cbBody)
+                return d
+            elif response.code == 404:
+                # File not found - read body to get error details
+                d = readBody(response)
                 d.addCallback(cbBody)
                 return d
             else:
@@ -296,7 +325,7 @@ class Output(cowrie.core.output.Output):
 
         def cbResponse(response):
             if response.code == 200:
-                d = client.readBody(response)
+                d = readBody(response)
                 d.addCallback(cbBody)
                 d.addErrback(cbPartial)
                 return d
@@ -367,7 +396,7 @@ class Output(cowrie.core.output.Output):
             """
             if response.code == 200:
                 log.msg(f"VT scanurl successful: {response.code} {response.phrase}")
-                d = client.readBody(response)
+                d = readBody(response)
                 d.addCallback(cbBody)
                 return d
             else:
@@ -467,9 +496,7 @@ class Output(cowrie.core.output.Output):
                 )
                 # v3 API doesn't have a direct permalink, construct one
                 log.msg(
-                    "VT: permalink: https://www.virustotal.com/gui/url/{}".format(
-                        url_id
-                    )
+                    f"VT: permalink: https://www.virustotal.com/gui/url/{url_id}"
                 )
             else:
                 log.msg("VT: unexpected response format")
@@ -537,7 +564,7 @@ class Output(cowrie.core.output.Output):
 
         def cbResponse(response):
             if response.code == 200:
-                d = client.readBody(response)
+                d = readBody(response)
                 d.addCallback(cbBody)
                 d.addErrback(cbPartial)
                 return d
