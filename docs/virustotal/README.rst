@@ -44,9 +44,9 @@ Add the following to your ``etc/cowrie.cfg`` file:
     # Scan downloaded files (default: True)
     scan_file = true
 
-    # Scan URLs (default: False)
-    # Note: Enabling this doubles API requests for downloads
-    scan_url = false
+    # Scan URLs (default: True)
+    # Note: This doubles API requests for downloads
+    scan_url = true
 
     # Optional: Collection name for organizing artifacts
     # If not set, no collection will be created
@@ -78,10 +78,10 @@ Enable scanning of downloaded files. When enabled:
 3. If upload is successful and ``comment=true``, a comment is added
 4. If collection is configured, file is added to the collection
 
-scan_url (optional, default: False)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+scan_url (optional, default: True)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Enable scanning of URLs from which files were downloaded. **Warning**: This doubles the number of API requests for each file download event.
+Enable scanning of URLs from which files were downloaded. **Note**: This doubles the number of API requests for each file download event.
 
 When enabled:
 
@@ -241,7 +241,7 @@ Free VirusTotal API tier has strict rate limits:
 
 **Recommendations**:
 
-* Keep ``scan_url = false`` unless specifically needed
+* Set ``scan_url = false`` if you want to reduce API usage (disabling URL scans halves the API requests)
 * Monitor your API usage in VirusTotal dashboard
 * Consider upgrading to paid tier for high-traffic honeypots
 
