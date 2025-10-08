@@ -119,7 +119,7 @@ class Output(cowrie.core.output.Output):
             "output_virustotal", "scan_file", fallback=True
         )
         self.scan_url = CowrieConfig.getboolean(
-            "output_virustotal", "scan_url", fallback=False
+            "output_virustotal", "scan_url", fallback=True
         )
         self.commenttext = CowrieConfig.get(
             "output_virustotal", "commenttext", fallback=COMMENT

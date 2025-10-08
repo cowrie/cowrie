@@ -919,11 +919,14 @@ debug=false
 #
 [output_virustotal]
 enabled = false
-api_key = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+api_key = yourkeyhere
 upload = True
 debug = False
 scan_file = True
-scan_url = False
+scan_url = True
+# Optional: Organize uploaded files and URLs in a VirusTotal collection
+# If not set, no collection will be created
+collection = cowrie
 
 
 # Cuckoo output module
