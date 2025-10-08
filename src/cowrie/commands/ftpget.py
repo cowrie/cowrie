@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-import ftplib
 import getopt
 import os
+from typing import TYPE_CHECKING
 
+from twisted.internet import defer, reactor
+from twisted.internet.protocol import ClientCreator, Protocol
+from twisted.protocols.ftp import CommandFailed, FTPClient
 from twisted.python import log
 
 from cowrie.core.artifact import Artifact
@@ -13,7 +16,28 @@ from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
 
+if TYPE_CHECKING:
+    from twisted.python.failure import Failure
+
 commands = {}
+
+
+class FTPFileReceiver(Protocol):
+    """
+    Protocol to receive FTP file data
+    """
+
+    def __init__(self, artifact: Artifact) -> None:
+        self.artifact = artifact
+        self.bytes_received = 0
+
+    def dataReceived(self, data: bytes) -> None:
+        self.artifact.write(data)
+        self.bytes_received += len(data)
+
+    def connectionLost(self, reason: Failure | None = None) -> None:
+        # Transfer complete
+        pass
 
 
 class Command_ftpget(HoneyPotCommand):
@@ -31,6 +55,7 @@ class Command_ftpget(HoneyPotCommand):
     remote_dir: str
     remote_file: str
     artifactFile: Artifact
+    ftp_client: FTPClient | None
 
     def help(self) -> None:
         self.write(
@@ -116,25 +141,102 @@ Download a file via FTP
         self.url_log = f"{self.url_log}/{self.remote_path}"
 
         self.artifactFile = Artifact(self.local_file)
+        self.ftp_client = None
+        self.fakeoutfile = fakeoutfile
 
-        result = self.ftp_download()
-
-        self.artifactFile.close()
-
-        if not result:
-            # log to cowrie.log
-            log.msg(
-                format="Attempt to download file(s) from URL (%(url)s) failed",
-                url=self.url_log,
-            )
-
-            self.protocol.logDispatch(
-                eventid="cowrie.session.file_download.failed",
-                format="Attempt to download file(s) from URL (%(url)s) failed",
-                url=self.url_log,
-            )
+        # Start async download
+        d = self.ftp_download_async()
+        if d:
+            d.addCallback(self._download_success)
+            d.addErrback(self._download_error)
+        else:
+            self.artifactFile.close()
             self.exit()
-            return
+
+    def ftp_download_async(self) -> defer.Deferred[None] | None:
+        """
+        Async FTP download using Twisted FTPClient
+        """
+        # Create FTP client
+        username = self.username or "anonymous"
+        password = self.password or "busybox@"
+
+        creator = ClientCreator(reactor, FTPClient, username, password, passive=True)
+
+        # Connect
+        if self.verbose:
+            self.write(f"Connecting to {self.host}\n")
+
+        d = creator.connectTCP(self.host, self.port, timeout=30)
+        d.addCallback(self._ftp_connected)
+        return d  # type: ignore[no-any-return]
+
+    def _ftp_connected(self, client: FTPClient) -> defer.Deferred[None]:
+        """
+        Called when FTP connection established
+        """
+        self.ftp_client = client
+
+        if self.verbose:
+            self.write("ftpget: cmd (null) (null)\n")
+            username = self.username or "anonymous"
+            password = self.password or "busybox@"
+            self.write(f"ftpget: cmd USER {username}\n")
+            self.write(f"ftpget: cmd PASS {password}\n")
+
+        # Change to remote directory if needed
+        d: defer.Deferred[None]
+        if self.remote_dir:
+            d = client.cwd(self.remote_dir)
+        else:
+            d = defer.succeed(None)
+
+        d.addCallback(lambda _: self._start_retrieval())
+        return d
+
+    def _start_retrieval(self) -> defer.Deferred[None]:
+        """
+        Start file retrieval
+        """
+        if self.verbose:
+            self.write("ftpget: cmd TYPE I (null)\n")
+            self.write("ftpget: cmd PASV (null)\n")
+            self.write(f"ftpget: cmd SIZE {self.remote_path}\n")
+            self.write(f"ftpget: cmd RETR {self.remote_path}\n")
+
+        # Create receiver protocol
+        receiver = FTPFileReceiver(self.artifactFile)
+
+        # Retrieve file
+        if self.ftp_client:
+            d: defer.Deferred[None] = self.ftp_client.retrieveFile(
+                self.remote_file, receiver
+            )
+            d.addCallback(lambda _: self._quit_ftp())
+            return d
+        else:
+            return defer.fail(Exception("FTP client not connected"))
+
+    def _quit_ftp(self) -> defer.Deferred[None]:
+        """
+        Quit FTP connection
+        """
+        if self.verbose:
+            self.write("ftpget: cmd (null) (null)\n")
+            self.write("ftpget: cmd QUIT (null)\n")
+
+        d: defer.Deferred[None]
+        if self.ftp_client:
+            d = self.ftp_client.quit()
+            return d
+        else:
+            return defer.succeed(None)
+
+    def _download_success(self, result: None) -> None:
+        """
+        Called when download completes successfully
+        """
+        self.artifactFile.close()
 
         # log to cowrie.log
         log.msg(
@@ -155,92 +257,48 @@ Download a file via FTP
 
         # Update the honeyfs to point to downloaded file
         self.fs.mkfile(
-            fakeoutfile, 0, 0, os.path.getsize(self.artifactFile.shasumFilename), 33188
+            self.fakeoutfile,
+            0,
+            0,
+            os.path.getsize(self.artifactFile.shasumFilename),
+            33188,
         )
         self.fs.update_realfile(
-            self.fs.getfile(fakeoutfile), self.artifactFile.shasumFilename
+            self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
         )
-        self.fs.chown(fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
+        self.fs.chown(self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
 
         self.exit()
 
-    def ftp_download(self) -> bool:
-        out_addr = ("", 0)
-        if CowrieConfig.has_option("honeypot", "out_addr"):
-            out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
+    def _download_error(self, failure: Failure) -> None:
+        """
+        Called when download fails
+        """
+        self.artifactFile.close()
 
-        ftp = ftplib.FTP(source_address=out_addr)
+        error_msg = "Connection error"
 
-        # connect
-        if self.verbose:
-            self.write(
-                f"Connecting to {self.host}\n"
-            )  # TODO: add its IP address after the host
+        if failure.check(CommandFailed):
+            # FTP command failed (auth, file not found, etc)
+            error_msg = f"FTP error: {failure.value.args[0]}"
+        else:
+            # Network/connection error
+            error_msg = f"Connection failed: {failure.getErrorMessage()}"
 
-        try:
-            ftp.connect(host=self.host, port=self.port, timeout=30)
-        except Exception as e:
-            log.msg(
-                f"FTP connect failed: host={self.host}, port={self.port}, err={e!s}"
-            )
-            self.write("ftpget: can't connect to remote host: Connection refused\n")
-            return False
+        log.msg(
+            format="Attempt to download file(s) from URL (%(url)s) failed: %(error)s",
+            url=self.url_log,
+            error=error_msg,
+        )
 
-        # login
-        if self.verbose:
-            self.write("ftpget: cmd (null) (null)\n")
-            if self.username:
-                self.write(f"ftpget: cmd USER {self.username}\n")
-            else:
-                self.write("ftpget: cmd USER anonymous\n")
-            if self.password:
-                self.write(f"ftpget: cmd PASS {self.password}\n")
-            else:
-                self.write("ftpget: cmd PASS busybox@\n")
+        self.protocol.logDispatch(
+            eventid="cowrie.session.file_download.failed",
+            format="Attempt to download file(s) from URL (%(url)s) failed",
+            url=self.url_log,
+        )
 
-        try:
-            ftp.login(user=self.username, passwd=self.password)
-        except Exception as e:
-            log.msg(
-                f"FTP login failed: user={self.username}, passwd={self.password}, err={e!s}"
-            )
-            self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
-            try:
-                ftp.quit()
-            except TimeoutError:
-                pass
-            return False
-
-        # download
-        if self.verbose:
-            self.write("ftpget: cmd TYPE I (null)\n")
-            self.write("ftpget: cmd PASV (null)\n")
-            self.write(f"ftpget: cmd SIZE {self.remote_path}\n")
-            self.write(f"ftpget: cmd RETR {self.remote_path}\n")
-
-        try:
-            ftp.cwd(self.remote_dir)
-            ftp.retrbinary(f"RETR {self.remote_file}", self.artifactFile.write)
-        except Exception as e:
-            log.msg(f"FTP retrieval failed: {e!s}")
-            self.write(f"ftpget: unexpected server response to USER: {e!s}\n")
-            try:
-                ftp.quit()
-            except TimeoutError:
-                pass
-            return False
-
-        # quit
-        if self.verbose:
-            self.write("ftpget: cmd (null) (null)\n")
-            self.write("ftpget: cmd QUIT (null)\n")
-
-        try:
-            ftp.quit()
-        except TimeoutError:
-            pass
-
-        return True
+        self.write(f"ftpget: {error_msg}\n")
+        self.exit()
 
 
 commands["/usr/bin/ftpget"] = Command_ftpget
