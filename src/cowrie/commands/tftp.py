@@ -409,18 +409,10 @@ class Command_tftp(HoneyPotCommand):
         """Handle CTRL-C interruption - cancel TFTP transfer"""
         log.msg("TFTP: Received CTRL-C, canceling transfer")
 
-        # Cancel the deferred if it exists and hasn't fired
-        if self.tftp_client:
-            if self.tftp_client.deferred and not self.tftp_client.deferred.called:
-                self.tftp_client.deferred.cancel()
-
-            # Cancel timeout if active
-            if self.tftp_client.timeout_call and self.tftp_client.timeout_call.active():
+        # Cancel timeout if active
+        if self.tftp_client and self.tftp_client.timeout_call:
+            if self.tftp_client.timeout_call.active():
                 self.tftp_client.timeout_call.cancel()
-
-        # Stop UDP listener if active
-        if self.udp_port:
-            self.udp_port.stopListening()
 
         # Close artifact file
         if hasattr(self, "artifactFile"):
@@ -429,6 +421,11 @@ class Command_tftp(HoneyPotCommand):
                     self.artifactFile.fp.close()
             except Exception:
                 pass
+
+        # Cancel the deferred - this will trigger cleanup callback which stops UDP port
+        if self.tftp_client:
+            if self.tftp_client.deferred and not self.tftp_client.deferred.called:
+                self.tftp_client.deferred.cancel()
 
         self.write("^C")
         self.exit()
