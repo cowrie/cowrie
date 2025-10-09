@@ -46,6 +46,7 @@ from twisted.python import log, usage
 
 import cowrie.core.checkers
 import cowrie.core.realm
+import cowrie.core.uuid
 import cowrie.ssh.factory
 import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
@@ -108,6 +109,9 @@ class CowrieServiceMaker:
             "backend_pool", "pool_only", fallback=False
         )
 
+        self.uuid = core.uuid.create_uuid()
+        CowrieConfig.set("honeypot", "uuid", str(self.uuid))
+
     def makeService(self, options: dict) -> service.Service:
         """
         Construct a TCPServer from a factory defined in Cowrie.
@@ -138,6 +142,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             f"Twisted Version {__twisted_version__.major}.{__twisted_version__.minor}.{__twisted_version__.micro}"
         )
         log.msg(f"Cowrie Version {__cowrie_version__.__version__}")
+        log.msg(f"Sensor UUID: {self.uuid}")
 
         # check configurations
         if not self.enableTelnet and not self.enableSSH and not self.pool_only:
