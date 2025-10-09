@@ -29,7 +29,10 @@
 
 from __future__ import annotations
 
+import os
 import uuid
+
+from cowrie.core.config import CowrieConfig
 
 
 def create_uuid() -> uuid.UUID:
@@ -40,3 +43,26 @@ def create_uuid() -> uuid.UUID:
         A uuid.UUID object.
     """
     return uuid.uuid1()
+
+
+def get_uuid() -> str:
+    """
+    Retrieve UUID from state or create new one
+    """
+    try:
+        with open(
+            os.path.join(
+                CowrieConfig.get("honeypot", "state_path", fallback="."), "uuid"
+            )
+        ) as f:
+            return f.read()
+    except Exception:
+        uuid = str(create_uuid())
+        with open(
+            os.path.join(
+                CowrieConfig.get("honeypot", "state_path", fallback="."), "uuid"
+            ),
+            "w",
+        ) as f:
+            f.write(f"{uuid}\n")
+        return uuid

@@ -109,7 +109,7 @@ class CowrieServiceMaker:
             "backend_pool", "pool_only", fallback=False
         )
 
-        self.uuid = core.uuid.create_uuid()
+        self.uuid = core.uuid.get_uuid()
         CowrieConfig.set("honeypot", "uuid", str(self.uuid))
 
     def makeService(self, options: dict) -> service.Service:
