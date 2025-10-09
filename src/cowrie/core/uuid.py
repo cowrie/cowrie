@@ -63,9 +63,10 @@ def get_uuid() -> str:
         # Validation: Check if the read content is a valid UUID before returning
         try:
             uuid.UUID(uuid_from_file)  # Will raise ValueError if invalid format
-            return uuid_from_file
         except ValueError:
             log.msg(f"UUID read from file {uuidpath} is invalid: '{uuid_from_file}'")
+        else:
+            return uuid_from_file
     except FileNotFoundError:
         # First run
         pass
