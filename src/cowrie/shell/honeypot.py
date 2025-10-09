@@ -16,7 +16,6 @@ from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-from cowrie.shell import protocol
 
 
 class HoneyPotShell:
@@ -464,6 +463,9 @@ class HoneyPotShell:
                         "utf8"
                     )
                 )
+
+                # Import here to avoid circular dependency with protocol module
+                from cowrie.shell import protocol
 
                 if (
                     isinstance(self.protocol, protocol.HoneyPotExecProtocol)

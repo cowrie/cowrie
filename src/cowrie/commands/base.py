@@ -17,7 +17,7 @@ from twisted.python import failure, log
 
 from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -826,11 +826,14 @@ commands["id"] = Command_id
 
 
 class Command_passwd(HoneyPotCommand):
+    callbacks: list[Callable]
+    passwd: str | None
+
     def start(self) -> None:
         self.write("Enter new UNIX password: ")
         self.protocol.password_input = True
         self.callbacks = [self.ask_again, self.finish]
-        self.passwd: str | None = None
+        self.passwd = None
 
     def ask_again(self, line: str) -> None:
         self.passwd = line
@@ -970,6 +973,8 @@ commands["date"] = Command_date
 
 
 class Command_yes(HoneyPotCommand):
+    scheduled: Any
+
     def start(self) -> None:
         self.y()
 
