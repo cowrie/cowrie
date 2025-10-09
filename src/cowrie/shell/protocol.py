@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from importlib import import_module
 import importlib
-from pathlib import Path
 import socket
 import sys
 import time
@@ -137,7 +136,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.user = None
         self.environ = None
 
-    def txtcmd(self, txt: str) -> object:
+    def txtcmd(self, txt: bytes) -> object:
         class Command_txtcmd(command.HoneyPotCommand):
             def call(self):
                 self.writeBytes(txt)
@@ -171,8 +170,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         try:
             resource_root = importlib.resources.files(data)
-            resource_path_in_package = (
-                resource_root / "txtcmds" / Path(path.lstrip("/"))
+            # Use joinpath instead of / operator to avoid type issues
+            resource_path_in_package = resource_root.joinpath("txtcmds").joinpath(
+                path.lstrip("/")
             )
 
             with importlib.resources.as_file(
