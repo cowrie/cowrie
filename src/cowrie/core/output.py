@@ -105,8 +105,9 @@ class Output(metaclass=abc.ABCMeta):
         self.sensor: str = CowrieConfig.get(
             "honeypot", "sensor_name", fallback=socket.gethostname()
         )
-        self.timeFormat: str
+        self.uuid: str = CowrieConfig.get("honeypot", "uuid", fallback="unknown")
 
+        self.timeFormat: str
         # use Z for UTC (Zulu) time, it's shorter.
         if "TZ" in environ and environ["TZ"] == "UTC":
             self.timeFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -181,6 +182,7 @@ class Output(metaclass=abc.ABCMeta):
 
         ev: dict[str, any] = convert(event)  # type: ignore
         ev["sensor"] = self.sensor
+        ev["uuid"] = self.uuid
 
         ev.pop("isError", None)
 
