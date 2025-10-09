@@ -57,7 +57,7 @@ def get_uuid() -> str:
     uuidpath = os.path.join(state_path, "uuid")
 
     try:
-        with open(uuidpath, "r", encoding="ascii") as f:
+        with open(uuidpath, encoding="ascii") as f:
             uuid_from_file = f.read().strip()
 
         # Validation: Check if the read content is a valid UUID before returning
@@ -73,7 +73,7 @@ def get_uuid() -> str:
         log.err(
             f"Permission denied when attempting to read uuid from {uuidpath}: {e!r}"
         )
-    except IOError as e:
+    except OSError as e:
         # Catch other I/O errors (e.g., directory not found, device error)
         log.err(f"I/O error when reading uuid from {uuidpath}: {e!r}")
 
@@ -85,7 +85,7 @@ def get_uuid() -> str:
             f.write(f"{new_uuid_str}\n")
     except PermissionError as e:
         log.err(f"Permission denied when attempting to write uuid to {uuidpath}: {e!r}")
-    except IOError as e:
+    except OSError as e:
         log.err(f"I/O error when writing uuid to {uuidpath}: {e!r}")
 
     return new_uuid_str
