@@ -2,9 +2,8 @@
 # `builder` contains all necessary code to build
 # `runtime` is stripped down.
 
-ARG ARCH=
 ARG SOURCE_DATE_EPOCH
-FROM ${ARCH}debian:bookworm-slim AS builder
+FROM debian:bookworm-slim AS builder
 
 WORKDIR /
 
@@ -62,7 +61,7 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 # RUN . cowrie-env/bin/activate && \
 #     pip install -e ${COWRIE_HOME}/cowrie-git
 
-FROM gcr.io/distroless/python3-debian12 AS runtime
+FROM gcr.io/distroless/python3-debian12:latest AS runtime
 #FROM gcr.io/distroless/python3-debian12:debug AS runtime
 
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
