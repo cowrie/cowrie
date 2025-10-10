@@ -177,8 +177,10 @@ class fseditCmd(cmd.Cmd):
             print("Usage: load <honeyfs file> <realfile>")
             return False
 
+        path = resolve_reference(self.pwd, arguments[0])
+
         try:
-            cwd = getpath(self.fs, arguments[0])
+            cwd = getpath(self.fs, path)
         except FileNotFound:
             print(f"Can't find file: {arguments[0]}")
             return
@@ -201,12 +203,19 @@ class fseditCmd(cmd.Cmd):
             print("usage: cat <file>")
             return False
 
-        cwd = getpath(self.fs, arguments[0])
+        path = resolve_reference(self.pwd, arguments[0])
+
+        try:
+            cwd = getpath(self.fs, path)
+        except FileNotFound:
+            print(f"cat: {arguments[0]}: No such file")
+            return
+
         if cwd[A_TYPE] == T_FILE:
             if not cwd[A_CONTENTS]:
                 print(f"No content in pickle file for {arguments[0]}")
             else:
-                print(cwd[A_CONTENTS])
+                print(cwd[A_CONTENTS].decode())
         else:
             print("not a file")
 
