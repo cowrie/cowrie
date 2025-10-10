@@ -41,11 +41,11 @@ class Command_aptget(HoneyPotCommand):
     def start(self) -> None:
         if len(self.args) == 0:
             self.do_help()
-        elif len(self.args) > 0 and self.args[0] == "-v":
+        elif self.args[0] == "-v":
             self.do_version()
-        elif len(self.args) > 0 and self.args[0] == "install":
+        elif self.args[0] == "install":
             self.do_install()
-        elif len(self.args) > 0 and self.args[0] == "moo":
+        elif self.args[0] == "moo":
             self.do_moo()
         else:
             self.do_locked()

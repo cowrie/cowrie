@@ -48,9 +48,9 @@ class Command_yum(HoneyPotCommand):
     def start(self) -> None:
         if len(self.args) == 0:
             self.do_help()
-        elif len(self.args) > 0 and self.args[0] == "version":
+        elif self.args[0] == "version":
             self.do_version()
-        elif len(self.args) > 0 and self.args[0] == "install":
+        elif self.args[0] == "install":
             self.do_install()
         else:
             self.do_locked()
