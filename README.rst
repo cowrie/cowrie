@@ -101,8 +101,14 @@ Files of interest:
 * `var/log/cowrie/cowrie.log` - log/debug output
 * `var/lib/cowrie/tty/` - session logs, replayable with the `playlog` utility.
 * `var/lib/cowrie/downloads/` - files transferred from the attacker to the honeypot are stored here
+
+Commands
+******************************************
+* `cowrie` - start, stop and restart Cowrie
+* `fsctl` - modify the fake filesystem
 * `createfs` - create your own fake filesystem
 * `playlog` - utility to replay session logs
+* `asciinema` - turn Cowrie logs into asciinema files
 
 Contributors
 ***************
