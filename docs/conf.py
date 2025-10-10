@@ -205,4 +205,4 @@ copybutton_prompt_text = "$ "
 
 # -- Options for sphinxcontrib google analytics ------------------------------
 
-googleanalytics_measurement_code = "G-WMWS339K2N"
+googleanalytics_id = "G-WMWS339K2N"
