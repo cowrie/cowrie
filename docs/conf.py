@@ -23,10 +23,11 @@ author = "Michel Oosterhof"
 # built documents.
 
 from importlib.metadata import version as get_version
+
 # The full version, including alpha/beta/rc tags.
 release: str = get_version("cowrie")
 # The short X.Y version.
-version: str = ".".join(release.split('.')[:2])
+version: str = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 
@@ -48,6 +49,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_copybutton",
     "sphinx_search.extension",
+    "sphinxcontrib.googleanalytics",
 ]
 
 autosectionlabel_prefix_document = True
@@ -200,3 +202,7 @@ intersphinx_mapping = {
 # -- Options for sphinx copybutton extension ---------------------------------
 
 copybutton_prompt_text = "$ "
+
+# -- Options for sphinxcontrib google analytics ------------------------------
+
+googleanalytics_id = "G-WMWS339K2N"
