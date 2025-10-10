@@ -170,7 +170,7 @@ class Output(cowrie.core.output.Output):
         return ""
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in event.keys():
+        for i in list(event.keys()):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
                 del event[i]
