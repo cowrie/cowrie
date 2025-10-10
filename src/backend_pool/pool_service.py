@@ -124,8 +124,7 @@ class PoolService:
             "backend_pool", "use_nat", fallback=True
         )
 
-        # detect invalid config
-        if not self.ssh_port > 0 and not self.telnet_port > 0:
+        if self.ssh_port == -1 or self.telnet_port == -1:
             log.msg(
                 eventid="cowrie.backend_pool.service",
                 format="Invalid configuration: one of SSH or Telnet ports must be defined!",
