@@ -91,7 +91,7 @@ def formatCef(logentry: dict[str, str]) -> str:
     # 'out' 'outcome'  request, rt
 
     cefList = []
-    for key in list(cefExtensions.keys()):
+    for key in cefExtensions.keys():
         value = str(cefExtensions[key])
         cefList.append(f"{key}={value}")
 

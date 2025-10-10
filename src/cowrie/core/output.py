@@ -72,9 +72,9 @@ def convert(data):
     if isinstance(data, str):
         return data
     if isinstance(data, dict):
-        return {convert(key): convert(value) for key, value in list(data.items())}
+        return {convert(key): convert(value) for key, value in data.items()}
     if isinstance(data, dict):
-        return {convert(key): convert(value) for key, value in list(data.items())}
+        return {convert(key): convert(value) for key, value in data.items()}
     if isinstance(data, list):
         return [convert(element) for element in data]
     if isinstance(data, bytes):
