@@ -11,6 +11,8 @@ from twisted.conch.ssh import forwarding
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.fingerprint import JA4Fingerprint, JA4HFingerprint
+import struct
 
 
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
@@ -117,6 +119,37 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
         pass
 
     def dataReceived(self, data: bytes) -> None:
+        # Try to fingerprint the forwarded traffic
+        fingerprints = {}
+
+        # Check for TLS Client Hello (0x16 = Handshake, 0x01 = Client Hello)
+        if len(data) >= 6 and data[0] == 0x16 and data[5] == 0x01:
+            try:
+                # Simple TLS Client Hello parsing
+                # This is a basic version - just log that we detected TLS
+                fingerprints['protocol'] = 'tls'
+                log.msg(
+                    eventid="cowrie.direct-tcpip.fingerprint",
+                    format="Detected TLS Client Hello in forwarded traffic to %(dst_ip)s:%(dst_port)s",
+                    dst_ip=self.hostport[0],
+                    dst_port=self.hostport[1],
+                )
+            except Exception as e:
+                log.msg(f"Error fingerprinting TLS: {e}")
+
+        # Check for HTTP request
+        elif data.startswith(b'GET ') or data.startswith(b'POST ') or data.startswith(b'HEAD '):
+            try:
+                fingerprints['protocol'] = 'http'
+                log.msg(
+                    eventid="cowrie.direct-tcpip.fingerprint",
+                    format="Detected HTTP request in forwarded traffic to %(dst_ip)s:%(dst_port)s",
+                    dst_ip=self.hostport[0],
+                    dst_port=self.hostport[1],
+                )
+            except Exception as e:
+                log.msg(f"Error fingerprinting HTTP: {e}")
+
         log.msg(
             eventid="cowrie.direct-tcpip.data",
             format="discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s",
@@ -153,6 +186,31 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
 
     def dataReceived(self, data: bytes) -> None:
+        # Try to fingerprint the tunneled traffic
+        # Check for TLS Client Hello
+        if len(data) >= 6 and data[0] == 0x16 and data[5] == 0x01:
+            try:
+                log.msg(
+                    eventid="cowrie.direct-tcpip.fingerprint",
+                    format="Detected TLS Client Hello in tunneled traffic to %(dst_ip)s:%(dst_port)s",
+                    dst_ip=self.dstport[0],
+                    dst_port=self.dstport[1],
+                )
+            except Exception as e:
+                log.msg(f"Error fingerprinting TLS in tunnel: {e}")
+
+        # Check for HTTP request
+        elif data.startswith(b'GET ') or data.startswith(b'POST ') or data.startswith(b'HEAD '):
+            try:
+                log.msg(
+                    eventid="cowrie.direct-tcpip.fingerprint",
+                    format="Detected HTTP request in tunneled traffic to %(dst_ip)s:%(dst_port)s",
+                    dst_ip=self.dstport[0],
+                    dst_port=self.dstport[1],
+                )
+            except Exception as e:
+                log.msg(f"Error fingerprinting HTTP in tunnel: {e}")
+
         log.msg(
             eventid="cowrie.tunnelproxy-tcpip.data",
             format="sending via tunnel proxy %(data)s",
