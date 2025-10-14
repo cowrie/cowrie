@@ -24,6 +24,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.fingerprint import fingerprint_tcp_connection
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
@@ -77,6 +78,15 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             sessionno=f"S{self.transport.sessionno}",
             protocol="ssh",
         )
+
+        # Generate JA4TCP fingerprint
+        ja4tcp = fingerprint_tcp_connection(self.transport)
+        if ja4tcp:
+            log.msg(
+                eventid="cowrie.client.ja4tcp",
+                format="SSH client JA4TCP fingerprint: %(ja4tcp)s",
+                ja4tcp=ja4tcp,
+            )
 
         self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(

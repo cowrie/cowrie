@@ -17,6 +17,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.fingerprint import fingerprint_tcp_connection
 
 
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
@@ -43,6 +44,16 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             sessionno=f"T{sessionno!s}",
             protocol="telnet",
         )
+
+        # Generate JA4TCP fingerprint
+        ja4tcp = fingerprint_tcp_connection(self.transport)
+        if ja4tcp:
+            log.msg(
+                eventid="cowrie.client.ja4tcp",
+                format="Telnet client JA4TCP fingerprint: %(ja4tcp)s",
+                ja4tcp=ja4tcp,
+            )
+
         TelnetTransport.connectionMade(self)
 
     def write(self, data):
