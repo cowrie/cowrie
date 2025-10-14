@@ -12,10 +12,10 @@ from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.fingerprint import (
-    JA4Fingerprint,
-    JA4HFingerprint,
+    generate_ja4,
+    generate_ja4h,
     parse_tls_client_hello,
-    parse_http_request
+    parse_http_request,
 )
 
 
@@ -130,7 +130,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
             tls_info = parse_tls_client_hello(data)
             if tls_info:
                 try:
-                    ja4 = JA4Fingerprint.generate(
+                    ja4 = generate_ja4(
                         tls_version=tls_info["tls_version"],
                         ciphers=tls_info["ciphers"],
                         extensions=tls_info["extensions"],
@@ -153,7 +153,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
             http_info = parse_http_request(data)
             if http_info:
                 try:
-                    ja4h = JA4HFingerprint.generate(
+                    ja4h = generate_ja4h(
                         method=http_info["method"],
                         version=http_info["version"],
                         headers=http_info["headers"],
@@ -214,7 +214,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             tls_info = parse_tls_client_hello(data)
             if tls_info:
                 try:
-                    ja4 = JA4Fingerprint.generate(
+                    ja4 = generate_ja4(
                         tls_version=tls_info["tls_version"],
                         ciphers=tls_info["ciphers"],
                         extensions=tls_info["extensions"],
@@ -237,7 +237,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             http_info = parse_http_request(data)
             if http_info:
                 try:
-                    ja4h = JA4HFingerprint.generate(
+                    ja4h = generate_ja4h(
                         method=http_info["method"],
                         version=http_info["version"],
                         headers=http_info["headers"],

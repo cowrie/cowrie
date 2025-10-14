@@ -35,10 +35,10 @@ from twisted.python import log
 
 from cowrie.ssh_proxy.protocols import base_protocol
 from cowrie.core.fingerprint import (
-    JA4Fingerprint,
-    JA4HFingerprint,
+    generate_ja4,
+    generate_ja4h,
     parse_tls_client_hello,
-    parse_http_request
+    parse_http_request,
 )
 
 
@@ -57,7 +57,7 @@ class PortForward(base_protocol.BaseProtocol):
             tls_info = parse_tls_client_hello(data)
             if tls_info:
                 try:
-                    ja4 = JA4Fingerprint.generate(
+                    ja4 = generate_ja4(
                         tls_version=tls_info["tls_version"],
                         ciphers=tls_info["ciphers"],
                         extensions=tls_info["extensions"],
@@ -78,7 +78,7 @@ class PortForward(base_protocol.BaseProtocol):
             http_info = parse_http_request(data)
             if http_info:
                 try:
-                    ja4h = JA4HFingerprint.generate(
+                    ja4h = generate_ja4h(
                         method=http_info["method"],
                         version=http_info["version"],
                         headers=http_info["headers"],
