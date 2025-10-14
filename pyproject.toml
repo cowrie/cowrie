@@ -107,6 +107,7 @@ sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOL
 namespace_packages = true
 plugins = [ "mypy_zope:plugin" ]
 disable_error_code = [ "annotation-unchecked" ]
+exclude = [ "src/cowrie/vendor/" ]
 
 ignore_missing_imports      = true
 warn_unused_configs         = true
@@ -144,10 +145,12 @@ disallow_untyped_calls      = false
 [tool.pylint."MESSAGES CONTROL"]
 disable = ["R0801", "R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
 ignored-classes = ["twisted.internet.reactor"]
+ignore-paths = ["src/cowrie/vendor"]
 
 
 [tool.pyright]
 include = ["src"]
+exclude = ["src/cowrie/vendor"]
 typeCheckingMode = "strict"
 reportArgumentType = "none"
 reportAssignmentType = "none"
@@ -167,6 +170,7 @@ reportUnsupportedDunderAll = "information"
 
 [tool.pytype]
 inputs = ["src"]
+exclude = ["src/cowrie/vendor"]
 jobs = "auto"
 keep-going = true
 
@@ -177,7 +181,7 @@ line-length = 88
 lint.select = ["A", "B", "E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
 lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001"]
 
-exclude = [ "src/cowrie/_version.py" ]
+exclude = [ "src/cowrie/_version.py", "src/cowrie/vendor/" ]
 
 # Assume Python 3.10.
 target-version = "py310"
