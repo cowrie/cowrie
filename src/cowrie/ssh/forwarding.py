@@ -131,12 +131,12 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
             if tls_info:
                 try:
                     ja4 = JA4Fingerprint.generate(
-                        tls_version=tls_info['tls_version'],
-                        ciphers=tls_info['ciphers'],
-                        extensions=tls_info['extensions'],
-                        has_sni=tls_info['has_sni'],
-                        alpn=tls_info['alpn'],
-                        signature_algorithms=tls_info['signature_algorithms']
+                        tls_version=tls_info["tls_version"],
+                        ciphers=tls_info["ciphers"],
+                        extensions=tls_info["extensions"],
+                        has_sni=tls_info["has_sni"],
+                        alpn=tls_info["alpn"],
+                        signature_algorithms=tls_info["signature_algorithms"]
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4",
@@ -149,17 +149,17 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                     log.msg(f"Error generating JA4 fingerprint: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b'GET ') or data.startswith(b'POST ') or data.startswith(b'HEAD '):
+        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
             http_info = parse_http_request(data)
             if http_info:
                 try:
                     ja4h = JA4HFingerprint.generate(
-                        method=http_info['method'],
-                        version=http_info['version'],
-                        headers=http_info['headers'],
-                        cookies=http_info['cookies'],
-                        referer=http_info['referer'],
-                        accept_language=http_info['accept_language']
+                        method=http_info["method"],
+                        version=http_info["version"],
+                        headers=http_info["headers"],
+                        cookies=http_info["cookies"],
+                        referer=http_info["referer"],
+                        accept_language=http_info["accept_language"]
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4h",
@@ -215,12 +215,12 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             if tls_info:
                 try:
                     ja4 = JA4Fingerprint.generate(
-                        tls_version=tls_info['tls_version'],
-                        ciphers=tls_info['ciphers'],
-                        extensions=tls_info['extensions'],
-                        has_sni=tls_info['has_sni'],
-                        alpn=tls_info['alpn'],
-                        signature_algorithms=tls_info['signature_algorithms']
+                        tls_version=tls_info["tls_version"],
+                        ciphers=tls_info["ciphers"],
+                        extensions=tls_info["extensions"],
+                        has_sni=tls_info["has_sni"],
+                        alpn=tls_info["alpn"],
+                        signature_algorithms=tls_info["signature_algorithms"]
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4",
@@ -233,17 +233,17 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                     log.msg(f"Error generating JA4 fingerprint in tunnel: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b'GET ') or data.startswith(b'POST ') or data.startswith(b'HEAD '):
+        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
             http_info = parse_http_request(data)
             if http_info:
                 try:
                     ja4h = JA4HFingerprint.generate(
-                        method=http_info['method'],
-                        version=http_info['version'],
-                        headers=http_info['headers'],
-                        cookies=http_info['cookies'],
-                        referer=http_info['referer'],
-                        accept_language=http_info['accept_language']
+                        method=http_info["method"],
+                        version=http_info["version"],
+                        headers=http_info["headers"],
+                        cookies=http_info["cookies"],
+                        referer=http_info["referer"],
+                        accept_language=http_info["accept_language"]
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4h",
