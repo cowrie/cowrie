@@ -160,6 +160,10 @@ def parse_tls_client_hello(data: bytes) -> dict | None:
 
             offset += ext_length
 
+    except Exception as e:
+        log.msg(f"Error parsing TLS Client Hello: {e}")
+        return None
+    else:
         return {
             "tls_version": tls_version,
             "ciphers": ciphers,
@@ -168,10 +172,6 @@ def parse_tls_client_hello(data: bytes) -> dict | None:
             "alpn": alpn,
             "signature_algorithms": signature_algorithms,
         }
-
-    except Exception as e:
-        log.msg(f"Error parsing TLS Client Hello: {e}")
-        return None
 
 
 def parse_http_request(data: bytes) -> dict | None:
@@ -233,6 +233,10 @@ def parse_http_request(data: bytes) -> dict | None:
             elif header_name.lower() == "accept-language":
                 accept_language = header_value
 
+    except Exception as e:
+        log.msg(f"Error parsing HTTP request: {e}")
+        return None
+    else:
         return {
             "method": method,
             "version": version,
@@ -241,10 +245,6 @@ def parse_http_request(data: bytes) -> dict | None:
             "referer": referer,
             "accept_language": accept_language,
         }
-
-    except Exception as e:
-        log.msg(f"Error parsing HTTP request: {e}")
-        return None
 
 
 def calculate_ttl_hops(ttl: int) -> int:
@@ -351,9 +351,10 @@ class JA4TCPFingerprint:
             # Return a minimal fingerprint with just peer information
             try:
                 peer = self.transport.getPeer()
-                return f"unknown_{peer.host}_{peer.port}"
             except Exception:
                 return None
+            else:
+                return f"unknown_{peer.host}_{peer.port}"
 
         # Build fingerprint from available information
         parts = []
