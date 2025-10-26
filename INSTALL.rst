@@ -98,8 +98,7 @@ for example, create cowrie.cfg and input only the following::
 Step 6: Starting Cowrie
 ***********************
 
-Start Cowrie with the cowrie command. You can add the cowrie/bin
-directory to your path if desired. An existing virtual environment
+Start Cowrie with the `cowrie` command. An existing virtual environment
 is preserved if activated, otherwise Cowrie will attempt to load
 the environment called "cowrie-env"::
 
@@ -110,6 +109,11 @@ the environment called "cowrie-env"::
 
 Step 7: Listening on port 22 (OPTIONAL)
 ***************************************
+
+The SSH daemon runs on port 22 by default. Cowrie runs on port 2222 by default.
+To receive most traffic, Cowrie will need to listen on port 22. This requires two
+changes: First, If you have an existing SSHD on port 22 it will need to be moved
+to another port. Second, Cowrie will need to listen to requests on port 22.
 
 There are three methods to make Cowrie accessible on the default SSH port (22): `iptables`, `authbind` and `setcap`.
 
@@ -124,9 +128,17 @@ The following firewall rule will forward incoming traffic on port 22 to port 222
 
     $ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 
+With nft::
+
+    $ sudo nft add rule ip nat prerouting tcp dport 22 redirect to 2222
+
 Or for telnet::
 
     $ sudo iptables -t nat -A PREROUTING -p tcp --dport 23 -j REDIRECT --to-port 2223
+
+Or with nft::
+
+    $ sudo nft add rule ip nat prerouting tcp dport 23 redirect to 2223
 
 Note that you should test this rule only from another host; it doesn't apply to loopback connections.
 
@@ -144,8 +156,6 @@ Alternatively you can run authbind to listen as non-root on port 22 directly::
     $ sudo chown cowrie:cowrie /etc/authbind/byport/22
     $ sudo chmod 770 /etc/authbind/byport/22
 
-Edit bin/cowrie and modify the AUTHBIND_ENABLED setting
-
 Change the listening port to 22 in cowrie.cfg::
 
     [ssh]
@@ -161,7 +171,11 @@ Or for telnet::
 Change the listening port to 23 in cowrie.cfg::
 
     [telnet]
-    listen_endpoints = tcp:2223:interface=0.0.0.0
+    listen_endpoints = tcp:23:interface=0.0.0.0
+
+And start Cowrie with AUTHBIND_ENABLED::
+
+    $ AUTHBIND_ENABLED=yes cowrie start
 
 Setcap
 ======
