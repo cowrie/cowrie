@@ -78,7 +78,6 @@ dev = [
 "pylint==3.3.8",
 "pyre-check==0.9.25",
 "pyright==1.1.405",
-"pytype==2024.10.11; platform_python_implementation=='CPython'",
 "pyupgrade==3.20.0",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
@@ -167,12 +166,6 @@ reportOptionalMemberAccess = "none"
 reportOptionalOperand = "information"
 reportPossiblyUnboundVariable = "information"
 reportUnsupportedDunderAll = "information"
-
-[tool.pytype]
-inputs = ["src"]
-exclude = ["src/cowrie/vendor"]
-jobs = "auto"
-keep-going = true
 
 [tool.ruff]
 line-length = 88
@@ -275,7 +268,6 @@ legacy_tox_ini = """
             --config-file="{toxinidir}/pyproject.toml" \
             {tty:--pretty:}                        \
             {posargs:src}
-        - pytype -d import-error --keep-going --jobs auto {posargs:src}
         - pyre --noninteractive analyze
         - pyright {posargs:src}
     basepython = python3.10
