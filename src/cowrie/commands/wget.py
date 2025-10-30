@@ -6,12 +6,15 @@ from __future__ import annotations
 import getopt
 import os
 import time
+import posixpath
 from typing import Any
 from urllib import parse
 
-from twisted.internet import error
+from twisted.internet import defer, error, reactor
 from twisted.internet.defer import inlineCallbacks, CancelledError
+from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.python import log
+from twisted.protocols.ftp import CommandFailed, FTPClient
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 import treq
@@ -58,6 +61,22 @@ def splitthousands(s: str, sep: str = ",") -> str:
     return splitthousands(s[:-3], sep) + sep + s[-3:]
 
 
+class _FTPWgetReceiver(Protocol):
+    """
+    Receive FTP data and forward to wget collector
+    """
+
+    def __init__(self, command: Command_wget) -> None:
+        self.command = command
+
+    def dataReceived(self, data: bytes) -> None:
+        self.command.collect(data)
+
+    def connectionLost(self, reason=None):
+        # Download completion handled by command callbacks
+        return None
+
+
 class Command_wget(HoneyPotCommand):
     """
     wget command
@@ -75,6 +94,10 @@ class Command_wget(HoneyPotCommand):
     proglen: int = 0
     url: bytes
     host: str
+    scheme: str
+    ftp_client: FTPClient | None = None
+    ftp_remote_dir: str | None = None
+    ftp_remote_file: str | None = None
     started: float
 
     @inlineCallbacks
@@ -128,6 +151,7 @@ class Command_wget(HoneyPotCommand):
             url = f"http://{url}"
 
         urldata = parse.urlparse(url)
+        self.scheme = (urldata.scheme or "http").lower()
 
         if urldata.hostname:
             self.host = urldata.hostname
@@ -137,7 +161,13 @@ class Command_wget(HoneyPotCommand):
         allowed = yield communication_allowed(self.host)
         if not allowed:
             log.msg("Attempt to access blocked network address")
-            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            if not self.quiet:
+                tm = time.strftime("%Y-%m-%d %H:%M:%S")
+                self.errorWrite(f"--{tm}--  {url}\n")
+                self.errorWrite(
+                    f"Resolving {self.host} ({self.host})... failed: nodename nor servname provided, or not known.\n"
+                )
+            self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
             return None
 
@@ -158,25 +188,38 @@ class Command_wget(HoneyPotCommand):
                 self.exit()
                 return
 
-        self.artifact = Artifact("curl-download")
+        self.artifact = Artifact("wget-download")
 
         if not self.quiet:
-            port = urldata.port if urldata.port is not None else 80
+            if urldata.port is not None:
+                port = urldata.port
+            elif self.scheme == "https":
+                port = 443
+            elif self.scheme == "ftp":
+                port = 21
+            else:
+                port = 80
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
             self.errorWrite(f"--{tm}--  {url}\n")
             self.errorWrite(f"Connecting to {self.host}:{port}... connected.\n")
-            self.errorWrite("HTTP request sent, awaiting response... ")
+            proto_label = "HTTP" if self.scheme in ("http", "https") else self.scheme.upper()
+            self.errorWrite(f"{proto_label} request sent, awaiting response... ")
 
-        self.deferred = self.wgetDownload(url)
-        if self.deferred:
-            self.deferred.addCallback(self.success)
-            self.deferred.addErrback(self.error)
+        if self.scheme == "ftp":
+            self.deferred = self.ftpDownload(urldata)
+            if self.deferred:
+                self.deferred.addErrback(self.error)
+        else:
+            self.deferred = self.httpDownload(url)
+            if self.deferred:
+                self.deferred.addCallback(self.success)
+                self.deferred.addErrback(self.error)
 
-    def wgetDownload(self, url: str) -> Any:
+    def httpDownload(self, url: str) -> Any:
         """
         Download `url`
         """
-        headers = {"User-Agent": ["curl/7.38.0"]}
+        headers = {"User-Agent": ["Wget/1.25.0 (linux-gnu)"]}
 
         # TODO: use designated outbound interface
         # out_addr = None
@@ -186,6 +229,146 @@ class Command_wget(HoneyPotCommand):
         deferred = treq.get(url=url, allow_redirects=True, headers=headers, timeout=10)
         return deferred
 
+    def ftpDownload(self, urldata: parse.ParseResult) -> Any:
+        """
+        Download `url` via FTP
+        """
+        username = parse.unquote(urldata.username) if urldata.username else "anonymous"
+        password = parse.unquote(urldata.password) if urldata.password else "busybox@"
+        port = urldata.port or 21
+
+        raw_path = urldata.path or ""
+        if urldata.params:
+            raw_path = f"{raw_path};{urldata.params}"
+        remote_path = parse.unquote(raw_path)
+
+        if not remote_path or remote_path.endswith("/"):
+            self.errorWrite("wget: unsupported directory target in FTP URL\n")
+            self.exit()
+            return None
+
+        self.ftp_remote_dir = posixpath.dirname(remote_path)
+        self.ftp_remote_file = posixpath.basename(remote_path)
+
+        if not self.ftp_remote_file:
+            self.errorWrite("wget: missing remote filename in FTP URL\n")
+            self.exit()
+            return None
+
+        self.ftp_client = None
+
+        creator = ClientCreator(reactor, FTPClient, username, password, passive=True)
+        deferred = creator.connectTCP(self.host, port, timeout=30)
+        deferred.addCallback(self._ftp_connected)
+        return deferred
+
+    def _ftp_connected(self, client: FTPClient) -> defer.Deferred[Any]:
+        """
+        Handle established FTP connection
+        """
+        self.ftp_client = client
+
+        if self.ftp_remote_dir and self.ftp_remote_dir not in (".", "./"):
+            d: defer.Deferred[Any] = client.cwd(self.ftp_remote_dir)
+        else:
+            d = defer.succeed(None)
+
+        d.addCallback(lambda _: self._ftp_start_retrieve())
+        return d
+
+    def _ftp_start_retrieve(self) -> defer.Deferred[Any]:
+        """
+        Start retrieving file over FTP
+        """
+        if not self._begin_download(None, "application/octet-stream", "200 OK"):
+            if self.ftp_client:
+                try:
+                    quit_deferred = self.ftp_client.quit()
+                    if isinstance(quit_deferred, defer.Deferred):
+                        quit_deferred.addErrback(
+                            lambda failure: log.msg(
+                                f"FTP quit failed during abort: {failure.getErrorMessage()}"
+                            )
+                        )
+                except Exception as e:  # pragma: no cover - defensive
+                    log.msg(f"FTP quit raised exception during abort: {e!s}")
+                finally:
+                    self.ftp_client = None
+            return defer.succeed(None)
+
+        if not self.ftp_client or not self.ftp_remote_file:
+            return defer.fail(Exception("FTP client not connected"))
+
+        receiver = _FTPWgetReceiver(self)
+        deferred = self.ftp_client.retrieveFile(self.ftp_remote_file, receiver)
+        deferred.addCallback(self._ftp_after_retrieve)
+        return deferred  # type: ignore[no-any-return]
+
+    def _ftp_after_retrieve(self, result: Any) -> Any:
+        """
+        Cleanup after FTP retrieval completes
+        """
+        if self.ftp_client:
+            try:
+                quit_deferred = self.ftp_client.quit()
+                if isinstance(quit_deferred, defer.Deferred):
+                    quit_deferred.addErrback(
+                        lambda failure: log.msg(
+                            f"FTP quit failed: {failure.getErrorMessage()}"
+                        )
+                    )
+            except Exception as e:  # pragma: no cover - defensive
+                log.msg(f"FTP quit raised exception: {e!s}")
+            finally:
+                self.ftp_client = None
+
+        self.collectioncomplete(None)
+        return result
+
+    def _begin_download(
+        self, total_length: int | None, contenttype: str, status_line: str = "200 OK"
+    ) -> bool:
+        """
+        Prepare transfer bookkeeping and display status
+        """
+        if total_length is not None:
+            self.totallength = total_length
+        else:
+            self.totallength = 0
+
+        if (
+            total_length is not None
+            and self.limit_size > 0
+            and self.totallength > self.limit_size
+        ):
+            log.msg(
+                f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
+            )
+            self.exit()
+            return False
+
+        self.currentlength = 0
+        self.proglen = 0
+        self.contenttype = contenttype
+        self.speed = 0.0
+        self.started = time.time()
+
+        if not self.quiet:
+            self.errorWrite(f"{status_line}\n")
+            if total_length is not None:
+                self.errorWrite(
+                    f"Length: {self.totallength} ({sizeof_fmt(self.totallength)}) [{self.contenttype}]\n"
+                )
+            else:
+                self.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
+
+            if self.outfile in (None, "-"):
+                self.errorWrite("Saving to: `STDOUT'\n\n")
+            else:
+                self.errorWrite(f"Saving to: `{self.outfile}'\n\n")
+
+        return True
+
     def handle_CTRL_C(self) -> None:
         self.write("^C\n")
         self.exit()
@@ -194,43 +377,30 @@ class Command_wget(HoneyPotCommand):
         """
         successful treq get
         """
-        # TODO possible this is UNKNOWN_LENGTH
-        if response.length != UNKNOWN_LENGTH:
-            self.totallength = response.length
-        else:
-            self.totallength = 0
-
-        if self.limit_size > 0 and self.totallength > self.limit_size:
-            log.msg(
-                f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
-            )
-            self.exit()
-            return
-
-        self.started = time.time()
-
-        if not self.quiet:
-            self.errorWrite("200 OK\n")
-
         if response.headers.hasHeader(b"content-type"):
-            self.contenttype = response.headers.getRawHeaders(b"content-type")[
-                0
-            ].decode()
+            contenttype = response.headers.getRawHeaders(b"content-type")[0].decode()
         else:
-            self.contenttype = "text/whatever"
+            contenttype = "text/whatever"
 
-        if not self.quiet:
-            if response.length != UNKNOWN_LENGTH:
-                self.errorWrite(
-                    f"Length: {self.totallength} ({sizeof_fmt(self.totallength)}) [{self.contenttype}]\n"
-                )
+        status_line = "200 OK"
+        code = getattr(response, "code", None)
+        phrase = getattr(response, "phrase", None)
+        if code is not None:
+            if phrase:
+                if isinstance(phrase, bytes):
+                    phrase = phrase.decode()
+                status_line = f"{code} {phrase}"
             else:
-                self.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
+                status_line = str(code)
 
-            if self.outfile is None:
-                self.errorWrite("Saving to: `STDOUT'\n\n")
-            else:
-                self.errorWrite(f"Saving to: `{self.outfile}'\n\n")
+        total_length: int | None
+        if response.length != UNKNOWN_LENGTH:
+            total_length = response.length
+        else:
+            total_length = None
+
+        if not self._begin_download(total_length, contenttype, status_line):
+            return None
 
         deferred = treq.collect(response, self.collect)
         deferred.addCallback(self.collectioncomplete)
@@ -352,6 +522,15 @@ class Command_wget(HoneyPotCommand):
 
         if response.check(CancelledError) is not None:
             self.write("failed: Operation timed out.\n")
+            self.exit()
+            return
+
+        if response.check(CommandFailed) is not None:
+            details = ""
+            value = getattr(response, "value", None)
+            if value and getattr(value, "args", None):
+                details = value.args[0]
+            self.write(f"wget: FTP error: {details}\n")
             self.exit()
             return
 
