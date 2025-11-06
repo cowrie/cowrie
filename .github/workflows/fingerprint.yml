@@ -92,15 +92,6 @@ jobs:
           # Clone detect-kippo-cowrie
           git clone https://github.com/blazeinfosec/detect-kippo-cowrie.git
 
-          # Clone honeyscanner
-          git clone https://github.com/honeynet/honeyscanner.git
-
-      - name: Install honeyscanner dependencies
-        run: |
-          cd tools/honeyscanner/honeyscanner
-          pip install pipenv
-          pipenv install --system
-
       - name: Wait for services to be ready
         run: |
           echo "Testing SSH connectivity..."
@@ -128,23 +119,33 @@ jobs:
 
           # Service version detection
           echo -e "\n=== Service Version Detection ==="
-          nmap -sV -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1 | tee results/nmap-version.txt
+          CMD="nmap -sV -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1"
+          echo "Command: $CMD"
+          $CMD | tee results/nmap-version.txt
 
           # OS detection (requires root, may not work in container)
           echo -e "\n=== OS Detection Scan ==="
-          sudo nmap -O -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1 2>&1 | tee results/nmap-os.txt || echo "OS detection failed (expected in container)"
+          CMD="sudo nmap -O -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1"
+          echo "Command: $CMD"
+          $CMD 2>&1 | tee results/nmap-os.txt || echo "OS detection failed (expected in container)"
 
           # Aggressive scan
           echo -e "\n=== Aggressive Scan ==="
-          nmap -A -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1 | tee results/nmap-aggressive.txt
+          CMD="nmap -A -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1"
+          echo "Command: $CMD"
+          $CMD | tee results/nmap-aggressive.txt
 
           # Script scan for SSH
           echo -e "\n=== SSH Script Scan ==="
-          nmap -p ${{ env.COWRIE_SSH_PORT }} --script ssh-auth-methods,ssh-hostkey,ssh2-enum-algos 127.0.0.1 | tee results/nmap-ssh-scripts.txt
+          CMD="nmap -p ${{ env.COWRIE_SSH_PORT }} --script ssh-auth-methods,ssh-hostkey,ssh2-enum-algos 127.0.0.1"
+          echo "Command: $CMD"
+          $CMD | tee results/nmap-ssh-scripts.txt
 
           # Banner grab
           echo -e "\n=== Banner Grab ==="
-          nmap -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} --script banner 127.0.0.1 | tee results/nmap-banner.txt
+          CMD="nmap -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} --script banner 127.0.0.1"
+          echo "Command: $CMD"
+          $CMD | tee results/nmap-banner.txt
 
       - name: Run detect-kippo-cowrie
         id: detect-kippo-cowrie
@@ -161,16 +162,20 @@ jobs:
           DETECT_RESULT=${PIPESTATUS[0]}
           echo "DETECT_KIPPO_RESULT=$DETECT_RESULT" >> $GITHUB_ENV
 
-      - name: Run honeyscanner
-        id: honeyscanner
+      - name: Run advanced behavioral detection tests
+        id: advanced-tests
         continue-on-error: true
         run: |
           echo "========================================="
-          echo "Running honeyscanner"
+          echo "Running advanced behavioral detection tests"
           echo "========================================="
 
-          cd tools/honeyscanner/honeyscanner
-          python3 main.py --target-ip 127.0.0.1 --port ${{ env.COWRIE_SSH_PORT }} 2>&1 | tee ../../../results/honeyscanner.txt || echo "Honeyscanner completed with errors (may be expected)"
+          chmod +x .github/scripts/advanced-honeypot-tests.py
+          python3 .github/scripts/advanced-honeypot-tests.py 127.0.0.1 ${{ env.COWRIE_SSH_PORT }} root root 2>&1 | tee results/advanced-tests.txt
+
+          # Capture exit code
+          ADVANCED_RESULT=${PIPESTATUS[0]}
+          echo "ADVANCED_TEST_RESULT=$ADVANCED_RESULT" >> $GITHUB_ENV
 
       - name: Analyze results and generate report
         id: analyze
@@ -204,24 +209,32 @@ jobs:
             cat results/detect-kippo-cowrie.txt
 
             # Check if detection was positive
-            if grep -qi "honeypot\|score.*[2-9]" results/detect-kippo-cowrie.txt; then
+            # Score >= 2 means likely honeypot, score 0 means not a honeypot
+            if grep -q "is not a honeypot" results/detect-kippo-cowrie.txt; then
+              echo "✓ detect-kippo-cowrie: NOT identified as honeypot"
+            elif grep -Eq "score.*[2-9]|is.*honeypot" results/detect-kippo-cowrie.txt | grep -v "not a honeypot"; then
               echo "⚠️  WARNING: detect-kippo-cowrie identified this as a honeypot"
               DETECTIONS_FOUND=1
+            elif grep -Eq "score.*1[^0-9]" results/detect-kippo-cowrie.txt; then
+              echo "⚠️  WARNING: detect-kippo-cowrie score 1 - possibly honeypot or misconfigured"
             else
               echo "✓ detect-kippo-cowrie did not identify as honeypot"
             fi
           fi
 
-          echo -e "\n## Honeyscanner Analysis"
-          if [ -f results/honeyscanner.txt ]; then
-            # Show summary of honeyscanner results
-            echo "Honeyscanner output (last 50 lines):"
-            tail -n 50 results/honeyscanner.txt
+          echo -e "\n## Advanced Behavioral Tests Analysis"
+          if [ -f results/advanced-tests.txt ]; then
+            cat results/advanced-tests.txt
 
-            # Check for vulnerability detections
-            if grep -qi "vulnerable\|detected\|found.*issue" results/honeyscanner.txt; then
-              echo "⚠️  WARNING: Honeyscanner found potential vulnerabilities"
+            # Check if advanced tests detected honeypot
+            if [ "${{ env.ADVANCED_TEST_RESULT }}" = "1" ]; then
+              echo "⚠️  WARNING: Advanced behavioral tests identified honeypot indicators"
               DETECTIONS_FOUND=1
+            elif grep -qi "LIKELY HONEYPOT\|SUSPICIOUS" results/advanced-tests.txt; then
+              echo "⚠️  WARNING: Advanced tests found suspicious behaviors"
+              DETECTIONS_FOUND=1
+            else
+              echo "✓ Advanced behavioral tests passed"
             fi
           fi
 
