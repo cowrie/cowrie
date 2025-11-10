@@ -78,7 +78,7 @@ dev = [
 "pylint==3.3.9",
 "pyre-check==0.9.25",
 "pyright==1.1.407",
-"pyupgrade==3.20.0",
+"pyupgrade==3.21.0",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
 "ruff==0.14.3",
