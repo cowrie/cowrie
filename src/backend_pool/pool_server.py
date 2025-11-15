@@ -172,7 +172,7 @@ class PoolServer(Protocol):
 
             log.msg(
                 eventid="cowrie.backend_pool.server",
-                format="Re-using VM %(guest_id)s (not used by attacker)",
+                format="Reusing VM %(guest_id)s (not used by attacker)",
                 guest_id=guest_id,
             )
 
@@ -180,7 +180,7 @@ class PoolServer(Protocol):
             if (not self.local_pool and self.use_nat) or self.pool_only:
                 self.factory.nat.free_binding(guest_id)
 
-            # free this connection and allow VM to be re-used
+            # free this connection and allow VM to be reused
             self.factory.pool_service.reuse_vm(guest_id)
 
         if response and self.transport:

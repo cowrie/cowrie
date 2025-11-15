@@ -147,7 +147,7 @@ class LibvirtBackendService:
             domain.destroy()
 
             # we want to remove the snapshot if either:
-            #   - explicitely set save_snapshots to False
+            #   - explicitly set save_snapshots to False
             #   - no snapshot dir was defined (using cowrie's root dir) - should not happen but prevent it
             if (
                 (
