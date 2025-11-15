@@ -1,0 +1,33 @@
+[workspace]
+members = [
+    "routertrap",
+    "routertrap-ebpf",
+    "routertrap-common",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+aya = { version = "0.12", features = ["async_tokio"] }
+aya-log = "0.2"
+tokio = { version = "1.40", features = ["full"] }
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+ipnet = "2.9"
+regex = "1.10"
+
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1

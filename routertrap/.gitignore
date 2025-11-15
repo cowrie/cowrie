@@ -1,0 +1,39 @@
+# Rust
+target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# eBPF
+*.o
+*.ll
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Config
+routertrap.toml
+!routertrap.toml.example
+
+# Runtime
+/var/lib/routertrap/
+/var/log/routertrap/
+*.db
+*.db-shm
+*.db-wal
+
+# SSH Keys
+ssh_host_*_key
+ssh_host_*_key.pub

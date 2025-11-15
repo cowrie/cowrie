@@ -1,0 +1,60 @@
+[package]
+name = "routertrap"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+aya = { workspace = true }
+aya-log = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+ipnet = { workspace = true }
+regex = { workspace = true }
+routertrap-common = { path = "../routertrap-common" }
+
+# Async runtime
+async-trait = "0.1"
+futures = "0.3"
+
+# Networking
+socket2 = { version = "0.5", features = ["all"] }
+bytes = "1.7"
+pnet = "0.35"
+trust-dns-proto = "0.24"
+
+# SSH/Telnet
+russh = "0.44"
+russh-keys = "0.44"
+telnet = "0.2"
+
+# BGP
+bgp-rs = "0.9"
+
+# SNMP
+snmp = "0.3"
+
+# Metrics
+prometheus = "0.13"
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "postgres", "mysql"] }
+
+# Threat Intel
+stix = "0.3"
+
+# Hashing for fingerprinting
+sha2 = "0.10"
+md5 = "0.7"
+
+[[bin]]
+name = "routertrap"
+path = "src/main.rs"

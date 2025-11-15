@@ -1,0 +1,201 @@
+# RouterTrap Configuration File
+# Full example with all available options
+
+[honeypot]
+# Hostname displayed in router prompts and banners
+hostname = "router.example.com"
+
+# IP address to bind all services to (use 0.0.0.0 for all interfaces)
+listen_ip = "0.0.0.0"
+
+# Session timeout in seconds
+session_timeout = 300
+
+# Maximum concurrent connections
+max_connections = 1000
+
+# ============================================================================
+# BGP Protocol Configuration
+# ============================================================================
+[protocols.bgp]
+enabled = true
+port = 179
+
+# Autonomous System Number
+asn = 65001
+
+# BGP Router ID (typically an IP address)
+router_id = "192.168.1.1"
+
+# Enable Cisco IOS BGP emulation
+emulate_cisco = true
+
+# Enable Juniper JunOS BGP emulation
+emulate_juniper = true
+
+# ============================================================================
+# SSH Service Configuration
+# ============================================================================
+[protocols.ssh]
+enabled = true
+port = 22
+
+# SSH banner (shown during connection)
+banner = "SSH-2.0-Cisco-1.25"
+
+# SSH version string
+version = "SSH-2.0"
+
+# Path to SSH host key (will be generated if doesn't exist)
+hostkey_path = "/var/lib/routertrap/ssh_host_rsa_key"
+
+# Maximum authentication attempts before disconnect
+max_auth_tries = 3
+
+# Default router type: "cisco" or "juniper"
+default_router = "cisco"
+
+# ============================================================================
+# Telnet Service Configuration
+# ============================================================================
+[protocols.telnet]
+enabled = true
+port = 23
+
+# Telnet banner
+banner = "Cisco IOS Software, C3750 Software (C3750-IPSERVICESK9-M), Version 15.2(4)E8"
+
+# Default router type: "cisco" or "juniper"
+default_router = "cisco"
+
+# ============================================================================
+# SNMP Configuration (Amplification Vector)
+# ============================================================================
+[protocols.snmp]
+enabled = true
+port = 161
+
+# Community strings to accept (all accepted in honeypot mode)
+communities = ["public", "private", "community"]
+
+# Enable SNMPv3
+v3_enabled = true
+
+# ============================================================================
+# NTP Configuration (CVE-2013-5211 - monlist amplification)
+# ============================================================================
+[protocols.ntp]
+enabled = true
+port = 123
+
+# Allow monlist command (intentionally vulnerable for detection)
+# Set to true to detect attackers exploiting this vulnerability
+allow_monlist = true
+
+# ============================================================================
+# DNS Configuration (Amplification Vector)
+# ============================================================================
+[protocols.dns]
+enabled = true
+port = 53
+
+# Allow recursive queries (amplification vector)
+# Set to true to detect DNS amplification attacks
+allow_recursion = true
+
+# Optional: Path to zone file for more realistic responses
+zone_file = "/var/lib/routertrap/dns/zones.conf"
+
+# ============================================================================
+# Memcached Configuration (CVE-2018-1000115)
+# ============================================================================
+[protocols.memcached]
+enabled = true
+port = 11211
+
+# Enable UDP protocol (vulnerable to amplification)
+# Set to true to detect Memcached amplification attacks
+udp_enabled = true
+
+# ============================================================================
+# SSDP/UPnP Configuration (Amplification Vector)
+# ============================================================================
+[protocols.ssdp]
+enabled = true
+port = 1900
+
+# Device type to advertise
+device_type = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
+
+# ============================================================================
+# Detection Engine Configuration
+# ============================================================================
+[detection]
+# Enable detection engine
+enabled = true
+
+# Number of packets before considering it a scan
+scan_threshold = 100
+
+# Minimum amplification ratio to flag as attack (e.g., 2.0 = 2x amplification)
+amplification_ratio_threshold = 2.0
+
+# Automatically block detected attackers
+auto_block = true
+
+# Block duration in seconds (3600 = 1 hour)
+block_duration = 3600
+
+# Path to botnet signature database
+botnet_signatures_path = "/var/lib/routertrap/signatures/"
+
+# ============================================================================
+# Threat Intelligence Feeds Configuration
+# ============================================================================
+[feeds]
+# Enable feed generation
+enabled = true
+
+# Output directory for feeds
+output_dir = "/var/lib/routertrap/feeds/"
+
+# Enable STIX 2.1 format export
+stix_enabled = true
+
+# Enable MISP format export
+misp_enabled = true
+
+# Enable simple JSON format export
+json_enabled = true
+
+# Feed update interval in seconds
+update_interval = 300
+
+# ============================================================================
+# Logging Configuration
+# ============================================================================
+[logging]
+# Log output directory
+output_dir = "/var/log/routertrap/"
+
+# Enable JSON formatted logs
+json_logs = true
+
+# Enable syslog forwarding
+syslog_enabled = false
+
+# Syslog server (optional)
+syslog_server = "syslog.example.com:514"
+
+# Database logging configuration
+[logging.database]
+enabled = true
+
+# Database type: "sqlite", "postgres", or "mysql"
+db_type = "sqlite"
+
+# Connection string
+# SQLite: "/var/lib/routertrap/routertrap.db"
+# Postgres: "postgresql://user:pass@localhost/routertrap"
+# MySQL: "mysql://user:pass@localhost/routertrap"
+connection_string = "/var/lib/routertrap/routertrap.db"
