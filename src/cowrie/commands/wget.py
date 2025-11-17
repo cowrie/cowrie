@@ -105,14 +105,42 @@ class Command_wget(HoneyPotCommand):
         self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
         self.errorWrite("Try `wget --help' for more options.\n")
 
+    def print_help_message(self) -> None:
+        """
+        Print GNU-style wget help message.
+
+        Lists both implemented options (that actually work) and recognized options
+        (that are silently ignored for compatibility).
+        """
+
+        self.write("GNU Wget 1.25.0, a non-interactive network retriever.\n")
+        self.write("Usage: wget [OPTION]... [URL]...\n\n")
+        self.write("Startup:\n")
+        self.write("  -h,  --help              print this help\n\n")
+        self.write("Download:\n")
+        self.write("  -c,  --continue          resume getting a partially-downloaded file\n")
+        self.write("  -O                       write documents to FILE\n")
+        self.write("  -q,  --quiet             quiet (no output)\n")
+        self.write("  -T,  --timeout=SECONDS   set all timeout values to SECONDS\n")
+        self.write("       --tries=NUMBER      set number of retries to NUMBER\n\n")
+        self.write("HTTP options:\n")
+        self.write("       --header=STRING     insert STRING among the headers\n")
+        self.write("       --post-data=STRING  use the POST method; send STRING as the data\n")
+        self.write("       --max-redirect=NUM  maximum redirections allowed per page\n\n")
+        self.write("Directories:\n")
+        self.write("  -P,  --directory-prefix=PREFIX  save files to PREFIX/..\n\n")
+        self.write("Email bug reports, questions, discussions to <bug-wget@gnu.org>\n")
+        self.write("and/or open issues at https://savannah.gnu.org/bugs/?func=additem&group=wget.\n")
+
     @inlineCallbacks
     def start(self):
         url: str
         try:
             optlist, args = getopt.getopt(
                 self.args,
-                "cqO:TP:",
+                "hcqO:TP:",
                 [
+                    "help",
                     "quiet",
                     "header=",
                     "max-redirect=",
@@ -125,6 +153,13 @@ class Command_wget(HoneyPotCommand):
             self.print_usage_error(f"invalid option -- '{err.opt}'")
             self.exit()
             return
+
+        # Handle help option first - print help and exit immediately
+        for opt in optlist:
+            if opt[0] in ["-h", "--help"]:
+                self.print_help_message()
+                self.exit()
+                return
 
         if len(args):
             url = args[0].strip()
