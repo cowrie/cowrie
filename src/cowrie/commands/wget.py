@@ -226,7 +226,6 @@ class Command_wget(HoneyPotCommand):
 
             # Simulate connection timeout
             self.errorWrite(f"Connecting to {self.host}:{self.port}... ")
-            time.sleep(1)  # Small delay to simulate timeout
             self.errorWrite("failed: Connection timed out.\n")
             self.errorWrite("Retrying.\n\n")
 
@@ -586,7 +585,6 @@ class Command_wget(HoneyPotCommand):
             return
 
         if response.check(CancelledError) is not None:
-            time.sleep(1)  # Small delay to simulate timeout
             self.write("failed: Operation timed out.\n")
             self.exit()
             return
@@ -601,7 +599,6 @@ class Command_wget(HoneyPotCommand):
             return
 
         if response.check(error.ConnectingCancelledError) is not None:
-            time.sleep(1)  # Small delay to simulate timeout
             self.write("cancel failed: Operation timed out.\n")
             self.exit()
             return
