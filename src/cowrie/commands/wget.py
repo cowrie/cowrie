@@ -168,7 +168,7 @@ class Command_wget(HoneyPotCommand):
                 tm = time.strftime("%Y-%m-%d %H:%M:%S")
                 self.errorWrite(f"--{tm}--  {url}\n")
                 self.errorWrite(
-                    f"Resolving {self.host} ({self.host})... failed: nodename nor servname provided, or not known.\n"
+                    f"Resolving {self.host} ({self.host})... failed: Temporary failure in name resolution.\n"
                 )
             self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
@@ -516,7 +516,7 @@ class Command_wget(HoneyPotCommand):
 
         if response.check(error.DNSLookupError) is not None:
             self.write(
-                f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
+                f"Resolving no.such ({self.host})... failed: Temporary failure in name resolution.\n"
             )
             self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
