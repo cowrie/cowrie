@@ -22,9 +22,18 @@ import treq
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
+
+# Initialize rate limiter
+wget_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("honeypot", "wget_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("honeypot", "wget_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("honeypot", "wget_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("honeypot", "wget_rate_limit_max_hosts", fallback=1000)
+)
 
 
 def tdiff(seconds: int) -> str:
@@ -94,6 +103,7 @@ class Command_wget(HoneyPotCommand):
     url: bytes
     host: str
     scheme: str
+    port: int = 80
     ftp_client: FTPClient | None = None
     ftp_remote_dir: str | None = None
     ftp_remote_file: str | None = None
@@ -192,10 +202,36 @@ class Command_wget(HoneyPotCommand):
         urldata = parse.urlparse(url)
         self.scheme = (urldata.scheme or "http").lower()
 
+        # self.host is required as it will be used as key in rate limiter from this point forward
         if urldata.hostname:
             self.host = urldata.hostname
         else:
-            pass
+            self.print_usage_error("invalid URL")
+            self.exit()
+            return
+
+        # Determine self.port: use explicit port from URL, otherwise use scheme default
+        if urldata.port is not None:
+            self.port = urldata.port
+        elif self.scheme == "https":
+            self.port = 443
+        elif self.scheme == "ftp":
+            self.port = 21
+        else:
+            self.port = 80
+
+        # Check rate limit before proceeding
+        if not wget_rate_limiter.check(self.host):
+            log.msg(f"wget: rate limit exceeded for host: {self.host}. Simulating connection timeout")
+
+            # Simulate connection timeout
+            self.errorWrite(f"Connecting to {self.host}:{self.port}... ")
+            time.sleep(1)  # Small delay to simulate timeout
+            self.errorWrite("failed: Connection timed out.\n")
+            self.errorWrite("Retrying.\n\n")
+
+            self.exit()
+            return
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
@@ -230,17 +266,9 @@ class Command_wget(HoneyPotCommand):
         self.artifact = Artifact("wget-download")
 
         if not self.quiet:
-            if urldata.port is not None:
-                port = urldata.port
-            elif self.scheme == "https":
-                port = 443
-            elif self.scheme == "ftp":
-                port = 21
-            else:
-                port = 80
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
             self.errorWrite(f"--{tm}--  {url}\n")
-            self.errorWrite(f"Connecting to {self.host}:{port}... connected.\n")
+            self.errorWrite(f"Connecting to {self.host}:{self.port}... connected.\n")
             proto_label = "HTTP" if self.scheme in ("http", "https") else self.scheme.upper()
             self.errorWrite(f"{proto_label} request sent, awaiting response... ")
 
@@ -274,7 +302,6 @@ class Command_wget(HoneyPotCommand):
         """
         username = parse.unquote(urldata.username) if urldata.username else "anonymous"
         password = parse.unquote(urldata.password) if urldata.password else "busybox@"
-        port = urldata.port or 21
 
         raw_path = urldata.path or ""
         if urldata.params:
@@ -297,7 +324,7 @@ class Command_wget(HoneyPotCommand):
         self.ftp_client = None
 
         creator = ClientCreator(reactor, FTPClient, username, password, passive=True)
-        deferred = creator.connectTCP(self.host, port, timeout=30)
+        deferred = creator.connectTCP(self.host, self.port, timeout=30)
         deferred.addCallback(self._ftp_connected)
         return deferred
 
@@ -559,6 +586,7 @@ class Command_wget(HoneyPotCommand):
             return
 
         if response.check(CancelledError) is not None:
+            time.sleep(1)  # Small delay to simulate timeout
             self.write("failed: Operation timed out.\n")
             self.exit()
             return
@@ -573,6 +601,7 @@ class Command_wget(HoneyPotCommand):
             return
 
         if response.check(error.ConnectingCancelledError) is not None:
+            time.sleep(1)  # Small delay to simulate timeout
             self.write("cancel failed: Operation timed out.\n")
             self.exit()
             return
