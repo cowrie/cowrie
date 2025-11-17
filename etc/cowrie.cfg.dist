@@ -1115,6 +1115,10 @@ bearer_token = THREATJAMMER_API_TOKEN
 [output_discord]
 enabled = false
 url = https://discord.com/api/webhooks/id/token
+default_delay = 0.3
+retry_delay = 2
+max_retries = 5
+
 
 # Datadog output module
 # sends JSON directly to Datadog
