@@ -138,7 +138,7 @@ class Command_wget(HoneyPotCommand):
         for opt in optlist:
             if opt[0] == "-O":
                 self.outfile = opt[1]
-            if opt[0] == "-q":
+            elif opt[0] in ["-q", "--quiet"]:
                 self.quiet = True
 
         # for some reason getopt doesn't recognize "-O -"
