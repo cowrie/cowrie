@@ -98,6 +98,13 @@ class Command_wget(HoneyPotCommand):
     ftp_remote_file: str | None = None
     started: float
 
+    def print_usage_error(self, error_msg: str = "") -> None:
+        """Print usage error message"""
+        if error_msg:
+            self.errorWrite(f"wget: {error_msg}\n")
+        self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
+        self.errorWrite("Try `wget --help' for more options.\n")
+
     @inlineCallbacks
     def start(self):
         url: str
@@ -114,17 +121,15 @@ class Command_wget(HoneyPotCommand):
                     "tries=",
                 ],
             )
-        except getopt.GetoptError:
-            self.errorWrite("Unrecognized option\n")
+        except getopt.GetoptError as err:
+            self.print_usage_error(f"invalid option -- '{err.opt}'")
             self.exit()
             return
 
         if len(args):
             url = args[0].strip()
         else:
-            self.errorWrite("wget: missing URL\n")
-            self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
-            self.errorWrite("Try `wget --help' for more options.\n")
+            self.print_usage_error("missing URL")
             self.exit()
             return
 
