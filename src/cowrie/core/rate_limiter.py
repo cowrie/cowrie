@@ -2,7 +2,6 @@
 
 import time
 from collections import defaultdict
-from typing import Dict, List
 
 
 class RateLimiter:
@@ -35,7 +34,7 @@ class RateLimiter:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.max_keys = max_keys
-        self.request_tracker: Dict[str, List[float]] = defaultdict(list)
+        self.request_tracker: dict[str, list[float]] = defaultdict(list)
         self.last_cleanup = time.time()
 
     def check(self, key: str) -> bool:

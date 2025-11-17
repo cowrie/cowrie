@@ -428,7 +428,7 @@ class Command_wget(HoneyPotCommand):
             else:
                 self.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
 
-            dest = 'STDOUT' if self.outfile is None or self.outfile == "-" else self.outfile
+            dest = "STDOUT" if self.outfile is None or self.outfile == "-" else self.outfile
             self.errorWrite(f"Saving to: `{dest}'\n\n")
 
         return True
@@ -527,7 +527,7 @@ class Command_wget(HoneyPotCommand):
                 )
             )
             self.errorWrite("\n\n")
-            dest = 'stdout' if self.outfile is None or self.outfile == "-" else self.outfile
+            dest = "stdout" if self.outfile is None or self.outfile == "-" else self.outfile
             self.errorWrite(
                 "{} ({:3.2f} KB/s) - `{}' saved [{}/{}]\n\n".format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),
