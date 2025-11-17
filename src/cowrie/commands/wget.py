@@ -90,6 +90,7 @@ class Command_wget(HoneyPotCommand):
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     proglen: int = 0
+    wget_version: str = "1.25.0"  # GNU wget version used in --help and User-Agent header
     url: bytes
     host: str
     scheme: str
@@ -113,7 +114,7 @@ class Command_wget(HoneyPotCommand):
         (that are silently ignored for compatibility).
         """
 
-        self.write("GNU Wget 1.25.0, a non-interactive network retriever.\n")
+        self.write(f"GNU Wget {self.wget_version}, a non-interactive network retriever.\n")
         self.write("Usage: wget [OPTION]... [URL]...\n\n")
         self.write("Startup:\n")
         self.write("  -h,  --help              print this help\n\n")
@@ -257,7 +258,7 @@ class Command_wget(HoneyPotCommand):
         """
         Download `url`
         """
-        headers = {"User-Agent": ["Wget/1.25.0 (linux-gnu)"]}
+        headers = {"User-Agent": [f"Wget/{self.wget_version} (linux-gnu)"]}
 
         # TODO: use designated outbound interface
         # out_addr = None
