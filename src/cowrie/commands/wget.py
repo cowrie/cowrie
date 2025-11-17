@@ -28,22 +28,20 @@ commands = {}
 
 
 def tdiff(seconds: int) -> str:
-    t = seconds
-    days = int(t / (24 * 60 * 60))
-    t -= days * 24 * 60 * 60
-    hours = int(t / (60 * 60))
-    t -= hours * 60 * 60
-    minutes = int(t / 60)
-    t -= minutes * 60
+    days, remainder = divmod(seconds, 86400)  # 86400 = 24*60*60
+    hours, remainder = divmod(remainder, 3600)  # 3600 = 60*60
+    minutes, secs = divmod(remainder, 60)
 
-    s = f"{t}s"
-    if minutes >= 1:
-        s = f"{minutes}m {s}"
-    if hours >= 1:
-        s = f"{hours}h {s}"
+    parts = []
     if days >= 1:
-        s = f"{days}d {s}"
-    return s
+        parts.append(f"{days}d")
+    if hours >= 1:
+        parts.append(f"{hours}h")
+    if minutes >= 1:
+        parts.append(f"{minutes}m")
+    parts.append(f"{secs}s")
+
+    return " ".join(parts)
 
 
 def sizeof_fmt(num: float) -> str:
