@@ -181,7 +181,7 @@ class Command_wget(HoneyPotCommand):
             if not len(self.outfile.strip()) or not urldata.path.count("/"):
                 self.outfile = "index.html"
 
-        if self.outfile != "-":
+        elif self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
             path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
@@ -365,10 +365,8 @@ class Command_wget(HoneyPotCommand):
             else:
                 self.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
 
-            if self.outfile in (None, "-"):
-                self.errorWrite("Saving to: `STDOUT'\n\n")
-            else:
-                self.errorWrite(f"Saving to: `{self.outfile}'\n\n")
+            dest = 'STDOUT' if self.outfile is None or self.outfile == "-" else self.outfile
+            self.errorWrite(f"Saving to: `{dest}'\n\n")
 
         return True
 
@@ -466,11 +464,12 @@ class Command_wget(HoneyPotCommand):
                 )
             )
             self.errorWrite("\n\n")
+            dest = 'stdout' if self.outfile is None or self.outfile == "-" else self.outfile
             self.errorWrite(
                 "{} ({:3.2f} KB/s) - `{}' saved [{}/{}]\n\n".format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),
                     self.speed / 1000,
-                    self.outfile,
+                    dest,
                     self.currentlength,
                     self.totallength,
                 )
