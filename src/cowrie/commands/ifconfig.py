@@ -3,45 +3,68 @@
 
 from __future__ import annotations
 
+import time
 from random import randint, randrange
 
 from cowrie.shell.command import HoneyPotCommand
 
-HWaddr = f"{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}"
+init_time = time.time()
 
+HWaddr = f"{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}:{randint(0, 255):02x}"
 inet6 = f"fe{randint(0, 255):02x}::{randrange(111, 888):02x}:{randint(0, 255):02x}ff:fe{randint(0, 255):02x}:{randint(0, 255):02x}01/64"
+
+base_rx_bytes = randrange(50000000, 150000000)
+base_tx_bytes = randrange(5000000, 50000000)
+base_lo_bytes = randrange(10000000, 80000000)
+
+rx_rate = randrange(100, 300)
+tx_rate = randrange(200, 800)
+lo_rate = randrange(10, 50)
+avg_packet_size = randrange(500, 1500)
 
 commands = {}
 
 
 class Command_ifconfig(HoneyPotCommand):
     @staticmethod
-    def generate_packets() -> int:
-        return randrange(222222, 555555)
+    def calculate_packets(byte_count: int) -> int:
+        return int(byte_count / avg_packet_size)
 
     @staticmethod
     def convert_bytes_to_mx(bytes_eth0: int) -> str:
         mb = float(bytes_eth0) / 1000 / 1000
         return f"{mb:.1f}"
-
+        
     def calculate_rx(self) -> tuple[int, str]:
-        rx_bytes = randrange(111111111, 555555555)
+        session_uptime = time.time() - self.protocol.logintime
+        session_rx = int(session_uptime * rx_rate)
+
+        rx_bytes = base_rx_bytes + session_rx
         return rx_bytes, self.convert_bytes_to_mx(rx_bytes)
 
     def calculate_tx(self) -> tuple[int, str]:
-        rx_bytes = randrange(11111111, 55555555)
-        return rx_bytes, self.convert_bytes_to_mx(rx_bytes)
+        session_uptime = time.time() - self.protocol.logintime
+        session_tx = int(session_uptime * tx_rate)
+
+        tx_bytes = base_tx_bytes + session_tx
+        return tx_bytes, self.convert_bytes_to_mx(tx_bytes)
 
     def calculate_lo(self) -> tuple[int, str]:
-        lo_bytes = randrange(11111111, 55555555)
+        session_uptime = time.time() - self.protocol.logintime
+        session_lo = int(session_uptime * lo_rate)
+
+        lo_bytes = base_lo_bytes + session_lo
         return lo_bytes, self.convert_bytes_to_mx(lo_bytes)
 
     def call(self) -> None:
         rx_bytes_eth0, rx_mb_eth0 = self.calculate_rx()
         tx_bytes_eth0, tx_mb_eth0 = self.calculate_tx()
         lo_bytes, lo_mb = self.calculate_lo()
-        rx_packets = self.generate_packets()
-        tx_packets = self.generate_packets()
+
+        rx_packets = self.calculate_packets(rx_bytes_eth0)
+        tx_packets = self.calculate_packets(tx_bytes_eth0)
+        lo_packets = self.calculate_packets(lo_bytes)
+
         result = """eth0      Link encap:Ethernet  HWaddr {}
           inet addr:{}  Bcast:{}.255  Mask:255.255.255.0
           inet6 addr: {} Scope:Link
@@ -56,8 +79,8 @@ lo        Link encap:Local Loopback
           inet addr:127.0.0.1  Mask:255.0.0.0
           inet6 addr: ::1/128 Scope:Host
           UP LOOPBACK RUNNING  MTU:65536  Metric:1
-          RX packets:110 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:110 errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:{} errors:0 dropped:0 overruns:0 frame:0
+          TX packets:{} errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:0
           RX bytes:{} ({} MB)  TX bytes:{} ({} MB)""".format(
             HWaddr,
@@ -70,6 +93,8 @@ lo        Link encap:Local Loopback
             rx_mb_eth0,
             tx_bytes_eth0,
             tx_mb_eth0,
+            lo_packets,
+            lo_packets,
             lo_bytes,
             lo_mb,
             lo_bytes,
