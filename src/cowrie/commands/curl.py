@@ -15,12 +15,21 @@ from twisted.python import log
 import treq
 
 from cowrie.core.artifact import Artifact
-from cowrie.core.network import communication_allowed
 from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
 
 commands = {}
+
+# Initialize rate limiter
+curl_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("honeypot", "curl_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("honeypot", "curl_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("honeypot", "curl_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("honeypot", "curl_rate_limit_max_hosts", fallback=1000)
+)
 
 CURL_HELP = """Usage: curl [options...] <url>
 Options: (H) means HTTP/HTTPS only, (F) means FTP only
@@ -280,6 +289,17 @@ class Command_curl(HoneyPotCommand):
             )
             self.exit()
         self.port = parsed.port or (443 if scheme == "https" else 80)
+
+        # Check rate limit before proceeding
+        if not curl_rate_limiter.check(self.host):
+            log.msg(f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout")
+
+            # Simulate connection timeout
+            self.write(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
+            )
+            self.exit()
+            return
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
