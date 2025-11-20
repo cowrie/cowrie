@@ -12,16 +12,17 @@ import re
 import shlex
 import stat
 import time
+from typing import Any, TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from twisted.internet import error
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class HoneyPotCommand:
@@ -40,11 +41,24 @@ class HoneyPotCommand:
         self.input_data: None | (
             bytes
         ) = None  # used to store STDIN data passed via PIPE
-        self.writefn: Callable[[bytes], None] = self.protocol.pp.outReceived
-        self.errorWritefn: Callable[[bytes], None] = self.protocol.pp.errReceived
+        pp: Any = getattr(self.protocol, "pp", None)
+        self.writefn: Callable[[bytes], None]
+        self.errorWritefn: Callable[[bytes], None]
+        if pp and hasattr(pp, "write_stdout") and hasattr(pp, "write_stderr"):
+            self.writefn = cast("Callable[[bytes], None]", pp.write_stdout)
+            self.errorWritefn = cast("Callable[[bytes], None]", pp.write_stderr)
+        else:
+            self.writefn = cast(
+                "Callable[[bytes], None]", self.protocol.pp.outReceived
+            )
+            self.errorWritefn = cast(
+                "Callable[[bytes], None]", self.protocol.pp.errReceived
+            )
+
         # MS-DOS style redirect handling, inside the command
         # TODO: handle >>, 2>, etc
-        if ">" in self.args or ">>" in self.args:
+        use_legacy_redirect = not getattr(pp, "has_redirections", False)
+        if use_legacy_redirect and (">" in self.args or ">>" in self.args):
             if self.args[-1] in [">", ">>"]:
                 self.errorWrite("-bash: parse error near '\\n' \n")
                 return
@@ -162,6 +176,15 @@ class HoneyPotCommand:
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
         """
+        if (
+            self.protocol
+            and self.protocol.terminal
+            and hasattr(self.protocol, "pp")
+            and getattr(self.protocol.pp, "redirect_real_files", None)
+        ):
+            for real_path, virtual_path in self.protocol.pp.redirect_real_files:
+                self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+
         if (
             self.protocol
             and self.protocol.terminal

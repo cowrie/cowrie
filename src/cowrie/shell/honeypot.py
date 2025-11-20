@@ -8,6 +8,8 @@ import copy
 import os
 import re
 import shlex
+import stat
+import time
 from typing import Any
 
 from twisted.internet import error
@@ -119,11 +121,55 @@ class HoneyPotShell:
                 return
 
         if self.cmdpending:
+            # Coalesce fd redirection tokens so we don't treat `2` as a command
+            self.cmdpending = [
+                self._merge_redirection_tokens(tokens) for tokens in self.cmdpending
+            ]
             # if we have a complete command, go and run it
             self.runCommand()
         else:
             # if there's no command, display a prompt again
             self.showPrompt()
+
+    def _merge_redirection_tokens(self, tokens: list[str]) -> list[str]:
+        """
+        Combine shlex-split redirection tokens back together.
+        Example: ['2', '>', '/dev/null'] -> ['2>', '/dev/null']
+        """
+        merged: list[str] = []
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i]
+            nxt = tokens[i + 1] if i + 1 < len(tokens) else None
+            nxt2 = tokens[i + 2] if i + 2 < len(tokens) else None
+            nxt3 = tokens[i + 3] if i + 3 < len(tokens) else None
+
+            if tok.isdigit() and nxt in (">", ">>", ">&"):
+                combined = f"{tok}{nxt}"
+                if nxt == ">&" and nxt2 not in (None, "|", ";", "&&", "||"):
+                    combined += str(nxt2)
+                    i += 3
+                elif nxt in (">", ">>") and nxt2 == "&":
+                    if nxt3 not in (None, "|", ";", "&&", "||"):
+                        combined += "&" + str(nxt3)
+                        i += 4
+                    else:
+                        combined += "&"
+                        i += 3
+                else:
+                    i += 2
+                merged.append(combined)
+                continue
+
+            if tok in (">", ">>") and nxt == "&":
+                merged.append(f"{tok}&")
+                i += 2
+                continue
+
+            merged.append(tok)
+            i += 1
+
+        return merged
 
     def do_command_substitution(self, start_tok: str) -> str:
         """
@@ -364,6 +410,86 @@ class HoneyPotShell:
 
             return parsed_arguments
 
+        def parse_redirections(
+            arguments: list[str],
+        ) -> tuple[list[str], dict[str, Any]]:
+            cleaned: list[str] = []
+            redirects: dict[str, Any] = {
+                "files": [],
+                "fd_mappings": {},
+                "stdin": None,
+            }
+
+            i = 0
+            while i < len(arguments):
+                tok = arguments[i]
+                consume = 1
+                op = None
+                inline_target = ""
+                fd: int | None = None
+
+                # Prefer fd-to-fd duplication (>&) before plain output (>)
+                redir_match = re.match(r"^(\d*)(>>|>&|>|<)(.*)$", tok)
+                if redir_match:
+                    fd_text, op, inline_target = redir_match.groups()
+                    fd = int(fd_text) if fd_text else None
+
+                if not op and tok in (">", ">>", "<", ">&"):
+                    op = tok
+
+                if op:
+                    next_token = arguments[i + 1] if (i + 1) < len(arguments) else None
+
+                    if op in (">", ">>"):
+                        target_fd = 1 if fd is None else fd
+                        append_flag = op == ">>"
+                        target = inline_target or next_token
+                        if target is None:
+                            cleaned.append(tok)
+                            i += consume
+                            continue
+                        if not inline_target:
+                            consume = 2
+                        redirects["files"].append(
+                            {"fd": target_fd, "target": target, "append": append_flag}
+                        )
+                        i += consume
+                        continue
+
+                    if op == "<":
+                        source_fd = 0 if fd is None else fd
+                        target = inline_target or next_token
+                        if target is None:
+                            cleaned.append(tok)
+                            i += consume
+                            continue
+                        if not inline_target:
+                            consume = 2
+                        redirects["stdin"] = {"fd": source_fd, "target": target}
+                        i += consume
+                        continue
+
+                    if op == ">&":
+                        target = inline_target or next_token
+                        if target is None or not target.isdigit():
+                            cleaned.append(tok)
+                            i += consume
+                            continue
+                        if not inline_target:
+                            consume = 2
+                        source_fd = 1 if fd is None else fd
+                        redirects["fd_mappings"][source_fd] = int(target)
+                        i += consume
+                        continue
+
+                cleaned.append(tok)
+                i += consume
+
+            redirects["has_redirections"] = bool(
+                redirects["files"] or redirects["fd_mappings"] or redirects["stdin"]
+            )
+            return cleaned, redirects
+
         if not self.cmdpending:
             if self.protocol.pp.next_command is None:  # command dont have pipe(s)
                 if self.interactive:
@@ -386,6 +512,7 @@ class HoneyPotShell:
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
+        cmd_tokens: list[str] = []
         cmd_array = []
         cmd: dict[str, Any] = {}
         while cmdAndArgs:
@@ -394,36 +521,46 @@ class HoneyPotShell:
                 key, val = piece.split("=", 1)
                 environ[key] = val
                 continue
-            cmd["command"] = piece
-            cmd["rargs"] = []
+            cmd_tokens = [piece, *cmdAndArgs]
             break
 
-        if "command" not in cmd or not cmd["command"]:
+        if not cmd_tokens:
             runOrPrompt()
             return
 
-        pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
+        pipe_indices = [i for i, x in enumerate(cmd_tokens) if x == "|"]
         multipleCmdArgs: list[list[str]] = []
-        pipe_indices.append(len(cmdAndArgs))
+        pipe_indices.append(len(cmd_tokens))
         start = 0
 
         # Gather all arguments with pipes
 
         for _index, pipe_indice in enumerate(pipe_indices):
-            multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
+            multipleCmdArgs.append(cmd_tokens[start:pipe_indice])
             start = pipe_indice + 1
 
-        cmd["rargs"] = parse_arguments(multipleCmdArgs.pop(0))
-        # parse_file_arguments parses too much. should not parse every argument
-        # cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
-        cmd_array.append(cmd)
-        cmd = {}
+        first_args, first_redirects = parse_redirections(multipleCmdArgs.pop(0))
+        if not first_args:
+            runOrPrompt()
+            return
+
+        cmd_array.append(
+            {
+                "command": first_args.pop(0),
+                "rargs": parse_arguments(first_args),
+                "redirects": first_redirects,
+            }
+        )
 
         for value in multipleCmdArgs:
             if not value:  # Skip empty command lists
                 continue
-            cmd["command"] = value.pop(0)
-            cmd["rargs"] = parse_arguments(value)
+            cleaned_args, redirects = parse_redirections(value)
+            if not cleaned_args:
+                continue
+            cmd["command"] = cleaned_args.pop(0)
+            cmd["rargs"] = parse_arguments(cleaned_args)
+            cmd["redirects"] = redirects
             cmd_array.append(cmd)
             cmd = {}
 
@@ -439,7 +576,13 @@ class HoneyPotShell:
                 )
                 if index == len(cmd_array) - 1:
                     lastpp = StdOutStdErrEmulationProtocol(
-                        self.protocol, cmdclass, cmd["rargs"], None, None, self.redirect
+                        self.protocol,
+                        cmdclass,
+                        cmd["rargs"],
+                        None,
+                        None,
+                        self.redirect,
+                        cmd.get("redirects", {}),
                     )
                     pp = lastpp
                 else:
@@ -450,6 +593,7 @@ class HoneyPotShell:
                         None,
                         lastpp,
                         self.redirect,
+                        cmd.get("redirects", {}),
                     )
                     lastpp = pp
             else:
@@ -458,11 +602,25 @@ class HoneyPotShell:
                     input=" ".join(cmd2),
                     format="Command not found: %(input)s",
                 )
-                self.protocol.terminal.write(
-                    "-bash: {}: command not found\n".format(cmd["command"]).encode(
-                        "utf8"
-                    )
+                message = "-bash: {}: command not found\n".format(cmd["command"]).encode(
+                    "utf8"
                 )
+                redirects = cmd.get("redirects", {})
+                if redirects.get("has_redirections"):
+                    temp_pp = StdOutStdErrEmulationProtocol(
+                        self.protocol,
+                        None,
+                        [],
+                        None,
+                        None,
+                        self.redirect,
+                        redirects,
+                    )
+                    temp_pp.errReceived(message)
+                    for real_path, virtual_path in temp_pp.redirect_real_files:
+                        self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+                else:
+                    self.protocol.terminal.write(message)
 
                 # Import here to avoid circular dependency with protocol module
                 from cowrie.shell import protocol
@@ -477,6 +635,10 @@ class HoneyPotShell:
                 runOrPrompt()
                 pp = None  # Got a error. Don't run any piped commands
                 break
+        if pp and getattr(pp, "has_redirection_error", False):
+            runOrPrompt()
+            return
+
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
 
@@ -628,42 +790,178 @@ class StdOutStdErrEmulationProtocol:
     __author__ = "davegermiquet"
 
     def __init__(
-        self, protocol, cmd, cmdargs, input_data, next_command, redirect=False
-    ):
+        self,
+        protocol: Any,
+        cmd: Any,
+        cmdargs: list[str],
+        input_data: bytes | None,
+        next_command: Any,
+        redirect: bool = False,
+        redirections: dict[str, Any] | None = None,
+    ) -> None:
         self.cmd = cmd
         self.cmdargs = cmdargs
-        self.input_data: bytes = input_data
+        self.input_data: bytes | None = input_data
         self.next_command = next_command
         self.data: bytes = b""
         self.redirected_data: bytes = b""
         self.err_data: bytes = b""
         self.protocol = protocol
         self.redirect = redirect  # dont send to terminal if enabled
+        self.redirections = redirections or {
+            "files": [],
+            "fd_mappings": {},
+            "stdin": None,
+            "has_redirections": False,
+        }
+        self.stdout_file: dict[str, Any] | None = None
+        self.stderr_file: dict[str, Any] | None = None
+        self.stdout_to_stderr = False
+        self.stderr_to_stdout = False
+        self.redirection_error = False
+        self.redirect_real_files: list[tuple[str, str]] = []
+        self._stdout_written = 0
+        self._stderr_written = 0
+        self._setup_redirections()
+        self.has_redirection_error = self.redirection_error or (
+            getattr(self.next_command, "has_redirection_error", False)
+            if self.next_command
+            else False
+        )
+        self.has_redirections = bool(self.redirections.get("has_redirections"))
+        self.write_stdout = self._write_stdout
+        self.write_stderr = self._write_stderr
+
+    def _setup_redirections(self) -> None:
+        fd_mappings = self.redirections.get("fd_mappings", {})
+        self.stderr_to_stdout = fd_mappings.get(2) == 1
+        self.stdout_to_stderr = fd_mappings.get(1) == 2
+
+        stdin_info = self.redirections.get("stdin")
+        if stdin_info:
+            self._prepare_stdin(stdin_info)
+
+        for entry in self.redirections.get("files", []):
+            fd = entry.get("fd")
+            target = entry.get("target")
+            append = entry.get("append", False)
+            if fd is None or target is None:
+                continue
+            if fd == 1:
+                self.stdout_file = self._prepare_output_file(target, append)
+                if self.stdout_file:
+                    self._stdout_written = self.stdout_file.get("start_size", 0)
+            elif fd == 2:
+                self.stderr_file = self._prepare_output_file(target, append)
+                if self.stderr_file:
+                    self._stderr_written = self.stderr_file.get("start_size", 0)
+
+    def _prepare_stdin(self, stdin_info: dict[str, Any]) -> None:
+        target = stdin_info.get("target")
+        if target is None:
+            return
+
+        try:
+            path = self.protocol.fs.resolve_path(target, self.protocol.cwd)
+            data = self.protocol.fs.file_contents(path)
+        except fs.FileNotFound:
+            self._emit_redirection_error(
+                f"-bash: {target}: No such file or directory\n"
+            )
+            return
+        except fs.PermissionDenied:
+            self._emit_redirection_error(f"-bash: {target}: Permission denied\n")
+            return
+        else:
+            self.input_data = data
+
+    def _prepare_output_file(
+        self, target: str, append: bool
+    ) -> dict[str, Any] | None:
+        outfile = self.protocol.fs.resolve_path(target, self.protocol.cwd)
+        p = self.protocol.fs.getfile(outfile)
+        if outfile == "/dev/null":
+            return {
+                "virtual": outfile,
+                "real": None,
+                "append": append,
+                "start_size": 0,
+                "devnull": True,
+            }
+        start_size = p[fs.A_SIZE] if p and append else 0
+
+        if (
+            not p
+            or not p[fs.A_REALFILE]
+            or p[fs.A_REALFILE].startswith("honeyfs")
+        ):
+            tmp_fname = "{}-{}-{}-redir_{}".format(
+                time.strftime("%Y%m%d-%H%M%S"),
+                self.protocol.getProtoTransport().transportId,
+                self.protocol.terminal.transport.session.id,
+                re.sub("[^A-Za-z0-9]", "_", outfile),
+            )
+            safeoutfile = os.path.join(
+                CowrieConfig.get("honeypot", "download_path"), tmp_fname
+            )
+            perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
+            try:
+                self.protocol.fs.mkfile(
+                    outfile,
+                    self.protocol.user.uid,
+                    self.protocol.user.gid,
+                    0,
+                    stat.S_IFREG | perm,
+                )
+            except fs.FileNotFound:
+                self._emit_redirection_error(
+                    f"-bash: {outfile}: No such file or directory\n"
+                )
+                return None
+            except fs.PermissionDenied:
+                self._emit_redirection_error(
+                    f"-bash: {outfile}: Permission denied\n"
+                )
+                return None
+            with open(safeoutfile, "ab"):
+                self.protocol.fs.update_realfile(
+                    self.protocol.fs.getfile(outfile), safeoutfile
+                )
+        else:
+            safeoutfile = p[fs.A_REALFILE]
+            if not append:
+                try:
+                    open(safeoutfile, "wb").close()
+                    self.protocol.fs.update_size(outfile, 0)
+                    start_size = 0
+                except OSError as e:
+                    log.msg(f"Failed to truncate redirect target {safeoutfile}: {e}")
+                    return None
+
+        self.redirect_real_files.append((safeoutfile, outfile))
+        return {
+            "virtual": outfile,
+            "real": safeoutfile,
+            "append": append,
+            "start_size": start_size,
+        }
+
+    def _emit_redirection_error(self, message: str) -> None:
+        self.redirection_error = True
+        try:
+            self.protocol.terminal.write(message.encode("utf8"))
+        except Exception:
+            log.msg(message)
 
     def connectionMade(self) -> None:
-        self.input_data = b""
+        if self.input_data is None:
+            self.input_data = b""
 
     def outReceived(self, data: bytes) -> None:
         """
         Invoked when a command in the chain called 'write' method
-        If we have a next command, pass the data via input_data field
-        Else print data to the terminal
         """
-        self.data = data
-
-        if not self.next_command:
-            if not self.redirect:
-                if self.protocol is not None and self.protocol.terminal is not None:
-                    self.protocol.terminal.write(data)
-                else:
-                    log.msg("Connection was probably lost. Could not write to terminal")
-            else:
-                self.redirected_data += self.data
-        else:
-            if self.next_command.input_data is None:
-                self.next_command.input_data = self.data
-            else:
-                self.next_command.input_data += self.data
+        self._write_stdout(data)
 
     def insert_command(self, command):
         """
@@ -673,9 +971,7 @@ class StdOutStdErrEmulationProtocol:
         self.next_command = command
 
     def errReceived(self, data: bytes) -> None:
-        if self.protocol and self.protocol.terminal:
-            self.protocol.terminal.write(data)
-        self.err_data = self.err_data + data
+        self._write_stderr(data)
 
     def inConnectionLost(self) -> None:
         pass
@@ -699,3 +995,89 @@ class StdOutStdErrEmulationProtocol:
 
     def processEnded(self, reason: failure.Failure) -> None:
         log.msg(f"processEnded for {self.cmd}, status {reason.value.exitCode}")
+
+    def _pipe_to_next(self, data: bytes) -> bool:
+        """
+        Pass data to the next command in the pipeline if present.
+        """
+        if not self.next_command:
+            return False
+        if self.next_command.input_data is None:
+            self.next_command.input_data = data
+        else:
+            self.next_command.input_data += data
+        return True
+
+    def _write_to_terminal(self, data: bytes) -> None:
+        if self.protocol is not None and self.protocol.terminal is not None:
+            self.protocol.terminal.write(data)
+        else:
+            log.msg("Connection was probably lost. Could not write to terminal")
+
+    def _write_stdout(self, data: bytes, from_stderr: bool = False) -> None:
+        self.data = data
+
+        if self.stdout_to_stderr and not from_stderr:
+            self._write_stderr(data, redirected=True)
+            return
+
+        if self.stdout_file:
+            self._write_to_file(self.stdout_file, data, is_stdout=True)
+            return
+
+        if self._pipe_to_next(data):
+            return
+
+        if self.redirect:
+            # Used for command substitutions
+            self.redirected_data += data
+            return
+
+        self._write_to_terminal(data)
+
+    def _write_stderr(self, data: bytes, redirected: bool = False) -> None:
+        self.err_data = self.err_data + data
+
+        if self.stderr_to_stdout and not redirected:
+            # Duplicate stderr to stdout destinations (e.g., 2>&1)
+            if self.stdout_file:
+                self._write_to_file(self.stdout_file, data, is_stdout=True)
+                return
+            if self._pipe_to_next(data):
+                return
+            if self.redirect:
+                self.redirected_data += data
+                return
+            if self.protocol and self.protocol.terminal:
+                self.protocol.terminal.write(data)
+            return
+
+        if self.stderr_file:
+            self._write_to_file(self.stderr_file, data, is_stdout=False)
+            return
+
+        if self.protocol and self.protocol.terminal:
+            self.protocol.terminal.write(data)
+
+    def _write_to_file(
+        self, file_info: dict[str, Any], data: bytes, is_stdout: bool
+    ) -> None:
+        if file_info.get("devnull"):
+            return
+
+        real_path = file_info["real"]
+        try:
+            with open(real_path, "ab") as f:
+                f.write(data)
+        except OSError as e:
+            log.msg(f"Failed to write redirected output: {e}")
+            return
+
+        if is_stdout:
+            self._stdout_written += len(data)
+            written = self._stdout_written
+        else:
+            self._stderr_written += len(data)
+            written = self._stderr_written
+
+        self.protocol.fs.update_size(file_info["virtual"], written)

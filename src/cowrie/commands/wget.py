@@ -513,15 +513,15 @@ class Command_wget(HoneyPotCommand):
         )
 
         if response.check(error.DNSLookupError) is not None:
-            self.write(
+            self.errorWrite(
                 f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
             )
-            self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
+            self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
             return
 
         if response.check(CancelledError) is not None:
-            self.write("failed: Operation timed out.\n")
+            self.errorWrite("failed: Operation timed out.\n")
             self.exit()
             return
 
@@ -530,17 +530,17 @@ class Command_wget(HoneyPotCommand):
             value = getattr(response, "value", None)
             if value and getattr(value, "args", None):
                 details = value.args[0]
-            self.write(f"wget: FTP error: {details}\n")
+            self.errorWrite(f"wget: FTP error: {details}\n")
             self.exit()
             return
 
         if response.check(error.ConnectingCancelledError) is not None:
-            self.write("cancel failed: Operation timed out.\n")
+            self.errorWrite("cancel failed: Operation timed out.\n")
             self.exit()
             return
 
         if response.check(error.ConnectingDone) is not None:
-            self.write("No data received.\n")
+            self.errorWrite("No data received.\n")
             self.exit()
             return
 
@@ -548,7 +548,7 @@ class Command_wget(HoneyPotCommand):
         log.msg(f"Uhhandled wget traceback: {response.printTraceback()}")
         if hasattr(response, "getErrorMessage"):  # Exceptions
             log.msg(f"Unhandled wget error message: {response.getErrorMessage}")
-        self.write("\n")
+        self.errorWrite("\n")
         self.exit()
 
 

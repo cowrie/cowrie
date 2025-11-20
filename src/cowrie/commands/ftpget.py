@@ -297,7 +297,7 @@ Download a file via FTP
             url=self.url_log,
         )
 
-        self.write(f"ftpget: {error_msg}\n")
+        self.errorWrite(f"ftpget: {error_msg}\n")
         self.exit()
 
 

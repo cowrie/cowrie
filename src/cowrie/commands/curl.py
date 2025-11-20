@@ -205,8 +205,8 @@ class Command_curl(HoneyPotCommand):
             )
         except getopt.GetoptError as err:
             # TODO: should be 'unknown' instead of 'not recognized'
-            self.write(f"curl: {err}\n")
-            self.write(
+            self.errorWrite(f"curl: {err}\n")
+            self.errorWrite(
                 "curl: try 'curl --help' or 'curl --manual' for more information\n"
             )
             self.exit()
@@ -226,7 +226,7 @@ class Command_curl(HoneyPotCommand):
             if args[0] is not None:
                 url = str(args[0]).strip()
         else:
-            self.write(
+            self.errorWrite(
                 "curl: try 'curl --help' or 'curl --manual' for more information\n"
             )
             self.exit()
@@ -246,7 +246,7 @@ class Command_curl(HoneyPotCommand):
                     or not len(self.outfile.strip())
                     or not urldata.path.count("/")
                 ):
-                    self.write("curl: Remote file name has no length!\n")
+                    self.errorWrite("curl: Remote file name has no length!\n")
                     self.exit()
                     return
 
@@ -255,7 +255,7 @@ class Command_curl(HoneyPotCommand):
             if self.outfile:
                 path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
-                self.write(
+                self.errorWrite(
                     f"curl: {self.outfile}: Cannot open: No such file or directory\n"
                 )
                 self.exit()
@@ -435,19 +435,19 @@ class Command_curl(HoneyPotCommand):
         )
 
         if response.check(error.DNSLookupError) is not None:
-            self.write(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
             self.exit()
             return
 
         elif response.check(error.ConnectingCancelledError) is not None:
-            self.write(
+            self.errorWrite(
                 f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
             )
             self.exit()
             return
 
         elif response.check(error.ConnectionRefusedError) is not None:
-            self.write(
+            self.errorWrite(
                 f"curl: (7) Failed to connect to {self.host} port {self.port}: Connection refused\n"
             )
             self.exit()
