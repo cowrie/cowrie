@@ -139,37 +139,115 @@ class HoneyPotShell:
         merged: list[str] = []
         i = 0
         while i < len(tokens):
-            tok = tokens[i]
-            nxt = tokens[i + 1] if i + 1 < len(tokens) else None
-            nxt2 = tokens[i + 2] if i + 2 < len(tokens) else None
-            nxt3 = tokens[i + 3] if i + 3 < len(tokens) else None
-
-            if tok.isdigit() and nxt in (">", ">>", ">&"):
-                combined = f"{tok}{nxt}"
-                if nxt == ">&" and nxt2 not in (None, "|", ";", "&&", "||"):
-                    combined += str(nxt2)
-                    i += 3
-                elif nxt in (">", ">>") and nxt2 == "&":
-                    if nxt3 not in (None, "|", ";", "&&", "||"):
-                        combined += "&" + str(nxt3)
-                        i += 4
-                    else:
-                        combined += "&"
-                        i += 3
-                else:
-                    i += 2
+            combined, consumed = self._combine_redir_sequence(tokens, i)
+            if combined:
                 merged.append(combined)
+                i += consumed
                 continue
-
-            if tok in (">", ">>") and nxt == "&":
-                merged.append(f"{tok}&")
-                i += 2
-                continue
-
-            merged.append(tok)
+            merged.append(tokens[i])
             i += 1
-
         return merged
+
+    def _combine_redir_sequence(
+        self, tokens: list[str], index: int
+    ) -> tuple[str | None, int]:
+        """Glue together fd + operator (+ optional ampersand/target) tokens."""
+        tok = tokens[index]
+        nxt = tokens[index + 1] if index + 1 < len(tokens) else None
+        nxt2 = tokens[index + 2] if index + 2 < len(tokens) else None
+        nxt3 = tokens[index + 3] if index + 3 < len(tokens) else None
+
+        if tok.isdigit() and nxt in (">", ">>", ">&"):
+            combined = f"{tok}{nxt}"
+            if nxt == ">&" and nxt2 not in (None, "|", ";", "&&", "||"):
+                return combined + str(nxt2), 3
+            if nxt in (">", ">>") and nxt2 == "&":
+                if nxt3 not in (None, "|", ";", "&&", "||"):
+                    return combined + "&" + str(nxt3), 4
+                return combined + "&", 3
+            return combined, 2
+
+        if tok in (">", ">>") and nxt == "&":
+            return f"{tok}&", 2
+
+        return None, 1
+
+    def _extract_redir_op(
+        self, token: str
+    ) -> tuple[str | None, int | None, str]:
+        """Parse a combined redirection token into (op, fd, inline target)."""
+        match = re.match(r"^(\d*)(>>|>&|>|<)(.*)$", token)
+        if not match:
+            return None, None, ""
+        fd_text, op, inline_target = match.groups()
+        fd = int(fd_text) if fd_text else None
+        return op, fd, inline_target
+
+    def _apply_redirection(
+        self,
+        op: str,
+        fd: int | None,
+        inline_target: str,
+        next_token: str | None,
+        redirects: dict[str, Any],
+        cleaned: list[str],
+        raw_token: str,
+    ) -> int:
+        """Handle one redirection token and record it in the redirects dict."""
+        if op in (">", ">>"):
+            target_fd = 1 if fd is None else fd
+            append_flag = op == ">>"
+            target = inline_target or next_token
+            if target is None:
+                cleaned.append(raw_token)
+                return 1
+            return self._record_file_redir(
+                redirects, target_fd, target, append_flag, inline_target
+            )
+
+        if op == "<":
+            source_fd = 0 if fd is None else fd
+            target = inline_target or next_token
+            if target is None:
+                cleaned.append(raw_token)
+                return 1
+            if not inline_target:
+                return self._set_stdin_redirect(redirects, source_fd, target)
+            redirects["stdin"] = {"fd": source_fd, "target": target}
+            return 1
+
+        if op == ">&":
+            target = inline_target or next_token
+            if target is None or not target.isdigit():
+                cleaned.append(raw_token)
+                return 1
+            consume = 1 if inline_target else 2
+            source_fd = 1 if fd is None else fd
+            redirects["fd_mappings"][source_fd] = int(target)
+            return consume
+
+        return 0
+
+    def _record_file_redir(
+        self,
+        redirects: dict[str, Any],
+        target_fd: int,
+        target: str,
+        append_flag: bool,
+        inline_target: str,
+    ) -> int:
+        """Add a stdout/stderr file redirection entry."""
+        redirects["files"].append(
+            {"fd": target_fd, "target": target, "append": append_flag}
+        )
+        return 1 if inline_target else 2
+
+    def _set_stdin_redirect(
+        self, redirects: dict[str, Any], source_fd: int, target: str
+    ) -> int:
+        """Record stdin redirection target."""
+        redirects["stdin"] = {"fd": source_fd, "target": target}
+        return 2
 
     def do_command_substitution(self, start_tok: str) -> str:
         """
@@ -418,68 +496,31 @@ class HoneyPotShell:
                 "files": [],
                 "fd_mappings": {},
                 "stdin": None,
+                "has_redirections": False,
             }
 
             i = 0
             while i < len(arguments):
                 tok = arguments[i]
+                op, fd, inline_target = self._extract_redir_op(tok)
                 consume = 1
-                op = None
-                inline_target = ""
-                fd: int | None = None
-
-                # Prefer fd-to-fd duplication (>&) before plain output (>)
-                redir_match = re.match(r"^(\d*)(>>|>&|>|<)(.*)$", tok)
-                if redir_match:
-                    fd_text, op, inline_target = redir_match.groups()
-                    fd = int(fd_text) if fd_text else None
 
                 if not op and tok in (">", ">>", "<", ">&"):
                     op = tok
 
                 if op:
                     next_token = arguments[i + 1] if (i + 1) < len(arguments) else None
-
-                    if op in (">", ">>"):
-                        target_fd = 1 if fd is None else fd
-                        append_flag = op == ">>"
-                        target = inline_target or next_token
-                        if target is None:
-                            cleaned.append(tok)
-                            i += consume
-                            continue
-                        if not inline_target:
-                            consume = 2
-                        redirects["files"].append(
-                            {"fd": target_fd, "target": target, "append": append_flag}
-                        )
-                        i += consume
-                        continue
-
-                    if op == "<":
-                        source_fd = 0 if fd is None else fd
-                        target = inline_target or next_token
-                        if target is None:
-                            cleaned.append(tok)
-                            i += consume
-                            continue
-                        if not inline_target:
-                            consume = 2
-                        redirects["stdin"] = {"fd": source_fd, "target": target}
-                        i += consume
-                        continue
-
-                    if op == ">&":
-                        target = inline_target or next_token
-                        if target is None or not target.isdigit():
-                            cleaned.append(tok)
-                            i += consume
-                            continue
-                        if not inline_target:
-                            consume = 2
-                        source_fd = 1 if fd is None else fd
-                        redirects["fd_mappings"][source_fd] = int(target)
-                        i += consume
+                    consumed = self._apply_redirection(
+                        op,
+                        fd,
+                        inline_target,
+                        next_token,
+                        redirects,
+                        cleaned,
+                        tok,
+                    )
+                    if consumed:
+                        i += consumed
                         continue
 
                 cleaned.append(tok)
@@ -833,6 +874,7 @@ class StdOutStdErrEmulationProtocol:
         self.write_stderr = self._write_stderr
 
     def _setup_redirections(self) -> None:
+        """Prepare stdin/stdout/stderr file handles and fd mappings."""
         fd_mappings = self.redirections.get("fd_mappings", {})
         self.stderr_to_stdout = fd_mappings.get(2) == 1
         self.stdout_to_stderr = fd_mappings.get(1) == 2
@@ -857,6 +899,7 @@ class StdOutStdErrEmulationProtocol:
                     self._stderr_written = self.stderr_file.get("start_size", 0)
 
     def _prepare_stdin(self, stdin_info: dict[str, Any]) -> None:
+        """Load stdin from a redirected file path into input_data."""
         target = stdin_info.get("target")
         if target is None:
             return
@@ -878,6 +921,7 @@ class StdOutStdErrEmulationProtocol:
     def _prepare_output_file(
         self, target: str, append: bool
     ) -> dict[str, Any] | None:
+        """Resolve and ready an output file, returning metadata for writing."""
         outfile = self.protocol.fs.resolve_path(target, self.protocol.cwd)
         p = self.protocol.fs.getfile(outfile)
         if outfile == "/dev/null":
@@ -890,53 +934,15 @@ class StdOutStdErrEmulationProtocol:
             }
         start_size = p[fs.A_SIZE] if p and append else 0
 
-        if (
-            not p
-            or not p[fs.A_REALFILE]
-            or p[fs.A_REALFILE].startswith("honeyfs")
-        ):
-            tmp_fname = "{}-{}-{}-redir_{}".format(
-                time.strftime("%Y%m%d-%H%M%S"),
-                self.protocol.getProtoTransport().transportId,
-                self.protocol.terminal.transport.session.id,
-                re.sub("[^A-Za-z0-9]", "_", outfile),
-            )
-            safeoutfile = os.path.join(
-                CowrieConfig.get("honeypot", "download_path"), tmp_fname
-            )
-            perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
-            try:
-                self.protocol.fs.mkfile(
-                    outfile,
-                    self.protocol.user.uid,
-                    self.protocol.user.gid,
-                    0,
-                    stat.S_IFREG | perm,
-                )
-            except fs.FileNotFound:
-                self._emit_redirection_error(
-                    f"-bash: {outfile}: No such file or directory\n"
-                )
+        if self._needs_new_backing(p):
+            safeoutfile = self._create_redirect_target(outfile)
+            if safeoutfile is None:
                 return None
-            except fs.PermissionDenied:
-                self._emit_redirection_error(
-                    f"-bash: {outfile}: Permission denied\n"
-                )
-                return None
-            with open(safeoutfile, "ab"):
-                self.protocol.fs.update_realfile(
-                    self.protocol.fs.getfile(outfile), safeoutfile
-                )
         else:
-            safeoutfile = p[fs.A_REALFILE]
-            if not append:
-                try:
-                    open(safeoutfile, "wb").close()
-                    self.protocol.fs.update_size(outfile, 0)
-                    start_size = 0
-                except OSError as e:
-                    log.msg(f"Failed to truncate redirect target {safeoutfile}: {e}")
-                    return None
+            reuse = self._reuse_existing_backing(outfile, p, append)
+            if reuse is None:
+                return None
+            safeoutfile, start_size = reuse
 
         self.redirect_real_files.append((safeoutfile, outfile))
         return {
@@ -946,7 +952,63 @@ class StdOutStdErrEmulationProtocol:
             "start_size": start_size,
         }
 
+    def _needs_new_backing(self, p: Any) -> bool:
+        """Decide whether to create a fresh real file for redirection target."""
+        return not p or not p[fs.A_REALFILE] or p[fs.A_REALFILE].startswith("honeyfs")
+
+    def _create_redirect_target(self, outfile: str) -> str | None:
+        """Create a new backing file for a redirected output target."""
+        tmp_fname = "{}-{}-{}-redir_{}".format(
+            time.strftime("%Y%m%d-%H%M%S"),
+            self.protocol.getProtoTransport().transportId,
+            self.protocol.terminal.transport.session.id,
+            re.sub("[^A-Za-z0-9]", "_", outfile),
+        )
+        safeoutfile = os.path.join(
+            CowrieConfig.get("honeypot", "download_path"), tmp_fname
+        )
+        perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
+        try:
+            self.protocol.fs.mkfile(
+                outfile,
+                self.protocol.user.uid,
+                self.protocol.user.gid,
+                0,
+                stat.S_IFREG | perm,
+            )
+        except fs.FileNotFound:
+            self._emit_redirection_error(
+                f"-bash: {outfile}: No such file or directory\n"
+            )
+            return None
+        except fs.PermissionDenied:
+            self._emit_redirection_error(f"-bash: {outfile}: Permission denied\n")
+            return None
+
+        with open(safeoutfile, "ab"):
+            self.protocol.fs.update_realfile(
+                self.protocol.fs.getfile(outfile), safeoutfile
+            )
+        return safeoutfile
+
+    def _reuse_existing_backing(
+        self, outfile: str, p: Any, append: bool
+    ) -> tuple[str, int] | None:
+        """Reuse an existing backing file, truncating if needed."""
+        safeoutfile = p[fs.A_REALFILE]
+        start_size = p[fs.A_SIZE] if append else 0
+        if not append:
+            try:
+                open(safeoutfile, "wb").close()
+                self.protocol.fs.update_size(outfile, 0)
+                start_size = 0
+            except OSError as e:
+                log.msg(f"Failed to truncate redirect target {safeoutfile}: {e}")
+                return None
+        return safeoutfile, start_size
+
     def _emit_redirection_error(self, message: str) -> None:
+        """Send a redirection-related error to the terminal and flag failure."""
         self.redirection_error = True
         try:
             self.protocol.terminal.write(message.encode("utf8"))
