@@ -30,7 +30,7 @@ class StdOutStdErrEmulationProtocol:
         input_data: bytes | None,
         next_command: Any,
         redirect: bool = False,
-        redirections: dict[str, Any] | None = None,
+        redirections: list[dict[str, Any]] | None = None,
     ) -> None:
         self.cmd = cmd
         self.cmdargs = cmdargs
@@ -41,16 +41,12 @@ class StdOutStdErrEmulationProtocol:
         self.err_data: bytes = b""
         self.protocol = protocol
         self.redirect = redirect  # dont send to terminal if enabled
-        self.redirections = redirections or {
-            "files": [],
-            "fd_mappings": {},
-            "stdin": None,
-            "has_redirections": False,
-        }
-        self.stdout_file: dict[str, Any] | None = None
-        self.stderr_file: dict[str, Any] | None = None
-        self.stdout_to_stderr = False
-        self.stderr_to_stdout = False
+        self.redirections = redirections or []
+        
+        # FD Table: fd -> (type, value)
+        # Types: "file", "pipe", "terminal", "devnull"
+        self.targets: dict[int, tuple[str, Any]] = {}
+        
         self.redirection_error = False
         self.redirect_real_files: list[tuple[str, str]] = []
         self._stdout_written = 0
@@ -61,41 +57,67 @@ class StdOutStdErrEmulationProtocol:
             if self.next_command
             else False
         )
-        self.has_redirections = bool(self.redirections.get("has_redirections"))
+        self.has_redirections = bool(self.redirections)
         self.write_stdout = self._write_stdout
         self.write_stderr = self._write_stderr
 
     def _setup_redirections(self) -> None:
-        """Prepare stdin/stdout/stderr file handles and fd mappings."""
-        fd_mappings = self.redirections.get("fd_mappings", {})
-        self.stderr_to_stdout = fd_mappings.get(2) == 1
-        self.stdout_to_stderr = fd_mappings.get(1) == 2
+        """Process redirection operations to build the FD table."""
+        # Initialize default FDs
+        self.targets[0] = ("stdin", None)
+        self.targets[1] = ("pipe", None) if self.next_command else ("terminal", None)
+        self.targets[2] = ("terminal", None)
 
-        stdin_info = self.redirections.get("stdin")
-        if stdin_info:
-            self._prepare_stdin(stdin_info)
+        # If redirect is True (command substitution), stdout default is capture
+        if self.redirect:
+            self.targets[1] = ("capture", None)
 
-        for entry in self.redirections.get("files", []):
-            fd = entry.get("fd")
-            target = entry.get("target")
-            append = entry.get("append", False)
-            if fd is None or target is None:
-                continue
-            if fd == 1:
-                self.stdout_file = self._prepare_output_file(target, append)
-                if self.stdout_file:
-                    self._stdout_written = self.stdout_file.get("start_size", 0)
-            elif fd == 2:
-                self.stderr_file = self._prepare_output_file(target, append)
-                if self.stderr_file:
-                    self._stderr_written = self.stderr_file.get("start_size", 0)
+        # Defer stdin reading until after all redirections are processed
+        # This ensures that if an output redirection truncates a file also used for input,
+        # the input reading sees the truncated (empty) file, matching standard shell behavior.
+        pending_stdin_target: str | None = None
 
-    def _prepare_stdin(self, stdin_info: dict[str, Any]) -> None:
+        for op in self.redirections:
+            if op["type"] == "file":
+                fd = op["fd"]
+                target = op["target"]
+                append = op["append"]
+                file_info = self._prepare_output_file(target, append)
+                if file_info:
+                    if file_info.get("devnull"):
+                         self.targets[fd] = ("devnull", None)
+                    else:
+                        self.targets[fd] = ("file", file_info)
+                        if fd == 1:
+                            self._stdout_written = file_info.get("start_size", 0)
+                        elif fd == 2:
+                            self._stderr_written = file_info.get("start_size", 0)
+            
+            elif op["type"] == "stdin":
+                fd = op["fd"]
+                target = op["target"]
+                pending_stdin_target = target
+                # Stdin is handled by loading input_data, so we don't strictly need it in targets for writing,
+                # but we track it for completeness if needed.
+                self.targets[fd] = ("file_input", target)
+
+            elif op["type"] == "dup":
+                fd = op["fd"]
+                target_fd = op["target"]
+                if target_fd in self.targets:
+                    self.targets[fd] = self.targets[target_fd]
+                else:
+                    # If target FD is not open/defined, what to do?
+                    # Bash says "Bad file descriptor".
+                    # For now, maybe default to terminal or ignore?
+                    # Let's ignore to match previous behavior of being lenient, or set to closed?
+                    pass
+        
+        if pending_stdin_target:
+            self._prepare_stdin(pending_stdin_target)
+
+    def _prepare_stdin(self, target: str) -> None:
         """Load stdin from a redirected file path into input_data."""
-        target = stdin_info.get("target")
-        if target is None:
-            return
-
         try:
             path = self.protocol.fs.resolve_path(target, self.protocol.cwd)
             data = self.protocol.fs.file_contents(path)
@@ -270,48 +292,30 @@ class StdOutStdErrEmulationProtocol:
 
     def _write_stdout(self, data: bytes, from_stderr: bool = False) -> None:
         self.data = data
-
-        if self.stdout_to_stderr and not from_stderr:
-            self._write_stderr(data, redirected=True)
-            return
-
-        if self.stdout_file:
-            self._write_to_file(self.stdout_file, data, is_stdout=True)
-            return
-
-        if self._pipe_to_next(data):
-            return
-
-        if self.redirect:
-            # Used for command substitutions
-            self.redirected_data += data
-            return
-
-        self._write_to_terminal(data)
+        self._write_to_fd(1, data)
 
     def _write_stderr(self, data: bytes, redirected: bool = False) -> None:
         self.err_data = self.err_data + data
+        self._write_to_fd(2, data)
 
-        if self.stderr_to_stdout and not redirected:
-            # Duplicate stderr to stdout destinations (e.g., 2>&1)
-            if self.stdout_file:
-                self._write_to_file(self.stdout_file, data, is_stdout=True)
-                return
-            if self._pipe_to_next(data):
-                return
-            if self.redirect:
-                self.redirected_data += data
-                return
-            if self.protocol and self.protocol.terminal:
-                self.protocol.terminal.write(data)
+    def _write_to_fd(self, fd: int, data: bytes) -> None:
+        target = self.targets.get(fd)
+        if not target:
+            # Fallback or closed
             return
 
-        if self.stderr_file:
-            self._write_to_file(self.stderr_file, data, is_stdout=False)
-            return
-
-        if self.protocol and self.protocol.terminal:
-            self.protocol.terminal.write(data)
+        t_type, t_val = target
+        
+        if t_type == "terminal":
+            self._write_to_terminal(data)
+        elif t_type == "pipe":
+            self._pipe_to_next(data)
+        elif t_type == "capture":
+            self.redirected_data += data
+        elif t_type == "file":
+            self._write_to_file(t_val, data, is_stdout=(fd == 1))
+        elif t_type == "devnull":
+            pass
 
     def _write_to_file(
         self, file_info: dict[str, Any], data: bytes, is_stdout: bool

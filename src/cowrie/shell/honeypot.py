@@ -355,9 +355,9 @@ class HoneyPotShell:
             multipleCmdArgs.append(cmd_tokens[start:pipe_indice])
             start = pipe_indice + 1
 
-        first_args, first_redirects = self.parser.parse_redirections(multipleCmdArgs.pop(0))
+        first_args, first_ops = self.parser.parse_redirections(multipleCmdArgs.pop(0))
         if not first_args:
-            if first_redirects["has_redirections"]:
+            if first_ops:
                 # Handle redirection without command (e.g. > file)
                 pp = StdOutStdErrEmulationProtocol(
                     self.protocol,
@@ -366,7 +366,7 @@ class HoneyPotShell:
                     None,
                     None,
                     self.redirect,
-                    first_redirects,
+                    first_ops,
                 )
                 # This triggers _setup_redirections which creates files
             runOrPrompt()
@@ -376,21 +376,21 @@ class HoneyPotShell:
             {
                 "command": first_args.pop(0),
                 "rargs": parse_arguments(first_args),
-                "redirects": first_redirects,
+                "redirects": first_ops,
             }
         )
 
-        for value in multipleCmdArgs:
-            if not value:  # Skip empty command lists
+        for cmd_args in multipleCmdArgs:
+            args, ops = self.parser.parse_redirections(cmd_args)
+            if not args:
                 continue
-            cleaned_args, redirects = self.parser.parse_redirections(value)
-            if not cleaned_args:
-                continue
-            cmd["command"] = cleaned_args.pop(0)
-            cmd["rargs"] = parse_arguments(cleaned_args)
-            cmd["redirects"] = redirects
-            cmd_array.append(cmd)
-            cmd = {}
+            cmd_array.append(
+                {
+                    "command": args.pop(0),
+                    "rargs": parse_arguments(args),
+                    "redirects": ops,
+                }
+            )
 
         lastpp = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
@@ -421,7 +421,7 @@ class HoneyPotShell:
                         None,
                         lastpp,
                         self.redirect,
-                        cmd.get("redirects", {}),
+                        cmd.get("redirects", []),
                     )
                     lastpp = pp
             else:
@@ -433,8 +433,8 @@ class HoneyPotShell:
                 message = "-bash: {}: command not found\n".format(cmd["command"]).encode(
                     "utf8"
                 )
-                redirects = cmd.get("redirects", {})
-                if redirects.get("has_redirections"):
+                redirects = cmd.get("redirects", [])
+                if redirects:
                     temp_pp = StdOutStdErrEmulationProtocol(
                         self.protocol,
                         None,

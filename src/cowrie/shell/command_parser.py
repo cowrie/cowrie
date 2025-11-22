@@ -60,17 +60,12 @@ class CommandParser:
 
     def parse_redirections(
         self, arguments: list[str]
-    ) -> tuple[list[str], dict[str, Any]]:
+    ) -> tuple[list[str], list[dict[str, Any]]]:
         """
-        Parse arguments for redirections and return cleaned args and redirection info.
+        Parse arguments for redirections and return cleaned args and ordered redirection operations.
         """
         cleaned: list[str] = []
-        redirects: dict[str, Any] = {
-            "files": [],
-            "fd_mappings": {},
-            "stdin": None,
-            "has_redirections": False,
-        }
+        ops: list[dict[str, Any]] = []
 
         i = 0
         while i < len(arguments):
@@ -88,7 +83,7 @@ class CommandParser:
                     fd,
                     inline_target,
                     next_token,
-                    redirects,
+                    ops,
                     cleaned,
                     tok,
                 )
@@ -99,10 +94,7 @@ class CommandParser:
             cleaned.append(tok)
             i += consume
 
-        redirects["has_redirections"] = bool(
-            redirects["files"] or redirects["fd_mappings"] or redirects["stdin"]
-        )
-        return cleaned, redirects
+        return cleaned, ops
 
     def _extract_redir_op(
         self, token: str
@@ -121,11 +113,11 @@ class CommandParser:
         fd: int | None,
         inline_target: str,
         next_token: str | None,
-        redirects: dict[str, Any],
+        ops: list[dict[str, Any]],
         cleaned: list[str],
         raw_token: str,
     ) -> int:
-        """Handle one redirection token and record it in the redirects dict."""
+        """Handle one redirection token and append it to the ops list."""
         if op in (">", ">>"):
             target_fd = 1 if fd is None else fd
             append_flag = op == ">>"
@@ -133,9 +125,14 @@ class CommandParser:
             if target is None:
                 cleaned.append(raw_token)
                 return 1
-            return self._record_file_redir(
-                redirects, target_fd, target, append_flag, inline_target
-            )
+            
+            ops.append({
+                "type": "file",
+                "fd": target_fd,
+                "target": target,
+                "append": append_flag
+            })
+            return 1 if inline_target else 2
 
         if op == "<":
             source_fd = 0 if fd is None else fd
@@ -144,42 +141,59 @@ class CommandParser:
                 cleaned.append(raw_token)
                 return 1
             if not inline_target:
-                return self._set_stdin_redirect(redirects, source_fd, target)
-            redirects["stdin"] = {"fd": source_fd, "target": target}
+                ops.append({
+                    "type": "stdin",
+                    "fd": source_fd,
+                    "target": target
+                })
+                return 2
+            ops.append({
+                "type": "stdin",
+                "fd": source_fd,
+                "target": target
+            })
             return 1
 
         if op == ">&":
             target = inline_target or next_token
-            if target is None or not target.isdigit():
+            if target is None:
                 cleaned.append(raw_token)
                 return 1
+            
             consume = 1 if inline_target else 2
             source_fd = 1 if fd is None else fd
-            redirects["fd_mappings"][source_fd] = int(target)
+            
+            if target == "-":
+                # Close FD
+                # Not fully supported yet, but we can parse it
+                pass
+            elif target.isdigit():
+                # FD duplication: source_fd = target_fd
+                ops.append({
+                    "type": "dup",
+                    "fd": source_fd,
+                    "target": int(target)
+                })
+            else:
+                # Handle `>&`. Standard `sh` expects a digit or `-` after `>&` for file descriptor duplication.
+                # Bash allows `>&file` or `&>file` to redirect both stdout and stderr to a file.
+                # However, Cowrie's previous implementation strictly required a digit for `>&`.
+                # If the target is not a digit, we treat it as a normal argument rather than a redirection
+                # to maintain backward compatibility and avoid ambiguous parsing.
+                if not target.isdigit():
+                     cleaned.append(raw_token)
+                     return 1
+                
+                ops.append({
+                    "type": "dup",
+                    "fd": source_fd,
+                    "target": int(target)
+                })
+
             return consume
 
         return 0
 
-    def _record_file_redir(
-        self,
-        redirects: dict[str, Any],
-        target_fd: int,
-        target: str,
-        append_flag: bool,
-        inline_target: str,
-    ) -> int:
-        """Add a stdout/stderr file redirection entry."""
-        redirects["files"].append(
-            {"fd": target_fd, "target": target, "append": append_flag}
-        )
-        return 1 if inline_target else 2
-
-    def _set_stdin_redirect(
-        self, redirects: dict[str, Any], source_fd: int, target: str
-    ) -> int:
-        """Record stdin redirection target."""
-        redirects["stdin"] = {"fd": source_fd, "target": target}
-        return 2
 
     def do_command_substitution(self, start_tok: str, shell_instance: Any) -> str:
         """

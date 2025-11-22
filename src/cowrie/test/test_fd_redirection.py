@@ -117,11 +117,7 @@ class ShellFdRedirectionTests(unittest.TestCase):
         )
 
     def test_invalid_fd_redirection(self) -> None:
-        # Redirecting to invalid FD (e.g. 5) should probably fail or be ignored depending on implementation
-        # Bash usually errors with "Bad file descriptor"
-        # Cowrie implementation currently ignores invalid FDs in _setup_redirections or doesn't map them
         self.proto.lineReceived(b"echo test 5> outfile")
-        # If ignored, it prints to stdout
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_multiple_output_redirections(self) -> None:
@@ -147,15 +143,34 @@ class ShellFdRedirectionTests(unittest.TestCase):
 
     def test_swap_stdout_stderr(self) -> None:
         # 3>&1 1>&2 2>&3
-        # We don't fully support 3>&1 yet in the parser/protocol as generic FD handling
-        # But we can test 3>&1 1>&2 2>&3 if we implemented full swapping.
-        # For now, let's test a simpler case that we know works or should work:
-        # echo test 1>&2
-        self.proto.lineReceived(b"echo test 1>&2")
-        # Should go to stderr (which in our fake transport is mixed but we can check logic if we separated them)
-        # Since FakeTransport just captures everything, we just check it's there.
-        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+        # This swaps stdout and stderr.
+        
+        cmd = b"cat missingfile > out_file 2> err_file 3>&1 1>&2 2>&3; cat out_file; echo SEP; cat err_file"
+        self.proto.lineReceived(cmd)
+        output = self.tr.value()
+        
+        # Expected:
+        # out_file contains "cat: missingfile: No such file or directory\n"
+        # err_file is empty
+        # Output should be: cat: missingfile: ...\nSEP\n
+        
+        self.assertIn(b"cat: missingfile: No such file or directory\nSEP\n", output)
+        self.assertTrue(output.endswith(PROMPT))
 
     def test_filename_with_spaces(self) -> None:
         self.proto.lineReceived(b"echo test > 'file with spaces'; cat 'file with spaces'")
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+    def test_multiple_redirections_same_file(self) -> None:
+        self.proto.lineReceived(b"echo test > file > file; cat file")
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+    def test_input_output_same_file(self) -> None:
+        # In a real shell, `cat < file > file` truncates the file before reading, resulting in empty file.
+        # Cowrie should emulate this behavior.
+        self.proto.lineReceived(b"echo content > file; cat < file > file; cat file")
+        self.assertEqual(self.tr.value(), PROMPT)
+
+    def test_stdout_to_stderr_to_file(self) -> None:
+        self.proto.lineReceived(b"echo test 1>&2 2> file; cat file")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
