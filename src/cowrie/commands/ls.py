@@ -48,8 +48,8 @@ class Command_ls(HoneyPotCommand):
                 ["help", "version", "param"],
             )
         except getopt.GetoptError as err:
-            self.write(f"ls: {err}\n")
-            self.write("Try 'ls --help' for more information.\n")
+            self.errorWrite(f"ls: {err}\n")
+            self.errorWrite("Try 'ls --help' for more information.\n")
             return
         for x, _a in opts:
             if x in ("-l"):
@@ -92,7 +92,7 @@ class Command_ls(HoneyPotCommand):
                 file[fs.A_NAME] = path
                 files = [file]
         except Exception:
-            self.write(f"ls: cannot access {path}: No such file or directory\n")
+            self.errorWrite(f"ls: cannot access {path}: No such file or directory\n")
             return
         return files
 

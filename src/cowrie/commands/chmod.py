@@ -67,15 +67,17 @@ class Command_chmod(HoneyPotCommand):
 
         # check for presence of mode and files in arguments
         if (not mode or mode.startswith("-")) and not files:
-            self.write("chmod: missing operand\n" + TRY_CHMOD_HELP_MSG)
+            self.errorWrite("chmod: missing operand\n" + TRY_CHMOD_HELP_MSG)
             return
         if mode and not files:
-            self.write(f"chmod: missing operand after ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
+            self.errorWrite(
+                f"chmod: missing operand after ‘{mode}’\n" + TRY_CHMOD_HELP_MSG
+            )
             return
 
         # mode has to match the regex
         if not re.fullmatch(MODE_REGEX, mode):
-            self.write(f"chmod: invalid mode: ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
+            self.errorWrite(f"chmod: invalid mode: ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
             return
 
         # go through the list of files and check whether they exist
@@ -84,11 +86,13 @@ class Command_chmod(HoneyPotCommand):
                 # if the current directory is empty, return 'No such file or directory'
                 files = self.fs.get_path(self.protocol.cwd)[:]
                 if not files:
-                    self.write("chmod: cannot access '*': No such file or directory\n")
+                    self.errorWrite(
+                        "chmod: cannot access '*': No such file or directory\n"
+                    )
             else:
                 path = self.fs.resolve_path(file, self.protocol.cwd)
                 if not self.fs.exists(path):
-                    self.write(
+                    self.errorWrite(
                         f"chmod: cannot access '{file}': No such file or directory\n"
                     )
                 else:

@@ -32,8 +32,8 @@ class Command_tar(HoneyPotCommand):
 
     def call(self) -> None:
         if len(self.args) < 2:
-            self.write("tar: You must specify one of the `-Acdtrux' options\n")
-            self.write("Try `tar --help' or `tar --usage' for more information.\n")
+            self.errorWrite("tar: You must specify one of the `-Acdtrux' options\n")
+            self.errorWrite("Try `tar --help' or `tar --usage' for more information.\n")
             return
 
         filename = self.args[1]
@@ -47,25 +47,27 @@ class Command_tar(HoneyPotCommand):
 
         path = self.fs.resolve_path(filename, self.protocol.cwd)
         if not path or not self.protocol.fs.exists(path):
-            self.write(f"tar: {filename}: Cannot open: No such file or directory\n")
-            self.write("tar: Error is not recoverable: exiting now\n")
-            self.write("tar: Child returned status 2\n")
-            self.write("tar: Error exit delayed from previous errors\n")
+            self.errorWrite(
+                f"tar: {filename}: Cannot open: No such file or directory\n"
+            )
+            self.errorWrite("tar: Error is not recoverable: exiting now\n")
+            self.errorWrite("tar: Child returned status 2\n")
+            self.errorWrite("tar: Error exit delayed from previous errors\n")
             return
 
         hpf = self.fs.getfile(path)
         if not hpf[A_REALFILE]:
-            self.write("tar: this does not look like a tar archive\n")
-            self.write("tar: skipping to next header\n")
-            self.write("tar: error exit delayed from previous errors\n")
+            self.errorWrite("tar: this does not look like a tar archive\n")
+            self.errorWrite("tar: skipping to next header\n")
+            self.errorWrite("tar: error exit delayed from previous errors\n")
             return
 
         try:
             t = tarfile.open(hpf[A_REALFILE])
         except Exception:
-            self.write("tar: this does not look like a tar archive\n")
-            self.write("tar: skipping to next header\n")
-            self.write("tar: error exit delayed from previous errors\n")
+            self.errorWrite("tar: this does not look like a tar archive\n")
+            self.errorWrite("tar: skipping to next header\n")
+            self.errorWrite("tar: error exit delayed from previous errors\n")
             return
 
         for f in t:
