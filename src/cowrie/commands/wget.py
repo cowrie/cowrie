@@ -22,28 +22,35 @@ import treq
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
+# Initialize rate limiter
+wget_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("honeypot", "wget_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("honeypot", "wget_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("honeypot", "wget_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("honeypot", "wget_rate_limit_max_hosts", fallback=1000)
+)
+
 
 def tdiff(seconds: int) -> str:
-    t = seconds
-    days = int(t / (24 * 60 * 60))
-    t -= days * 24 * 60 * 60
-    hours = int(t / (60 * 60))
-    t -= hours * 60 * 60
-    minutes = int(t / 60)
-    t -= minutes * 60
+    days, remainder = divmod(seconds, 86400)  # 86400 = 24*60*60
+    hours, remainder = divmod(remainder, 3600)  # 3600 = 60*60
+    minutes, secs = divmod(remainder, 60)
 
-    s = f"{t}s"
-    if minutes >= 1:
-        s = f"{minutes}m {s}"
-    if hours >= 1:
-        s = f"{hours}h {s}"
+    parts = []
     if days >= 1:
-        s = f"{days}d {s}"
-    return s
+        parts.append(f"{days}d")
+    if hours >= 1:
+        parts.append(f"{hours}h")
+    if minutes >= 1:
+        parts.append(f"{minutes}m")
+    parts.append(f"{secs}s")
+
+    return " ".join(parts)
 
 
 def sizeof_fmt(num: float) -> str:
@@ -92,13 +99,49 @@ class Command_wget(HoneyPotCommand):
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     proglen: int = 0
+    wget_version: str = "1.25.0"  # GNU wget version used in --help and User-Agent header
     url: bytes
     host: str
     scheme: str
+    port: int = 80
     ftp_client: FTPClient | None = None
     ftp_remote_dir: str | None = None
     ftp_remote_file: str | None = None
     started: float
+
+    def print_usage_error(self, error_msg: str = "") -> None:
+        """Print usage error message"""
+        if error_msg:
+            self.errorWrite(f"wget: {error_msg}\n")
+        self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
+        self.errorWrite("Try `wget --help' for more options.\n")
+
+    def print_help_message(self) -> None:
+        """
+        Print GNU-style wget help message.
+
+        Lists both implemented options (that actually work) and recognized options
+        (that are silently ignored for compatibility).
+        """
+
+        self.write(f"GNU Wget {self.wget_version}, a non-interactive network retriever.\n")
+        self.write("Usage: wget [OPTION]... [URL]...\n\n")
+        self.write("Startup:\n")
+        self.write("  -h,  --help              print this help\n\n")
+        self.write("Download:\n")
+        self.write("  -c,  --continue          resume getting a partially-downloaded file\n")
+        self.write("  -O                       write documents to FILE\n")
+        self.write("  -q,  --quiet             quiet (no output)\n")
+        self.write("  -T,  --timeout=SECONDS   set all timeout values to SECONDS\n")
+        self.write("       --tries=NUMBER      set number of retries to NUMBER\n\n")
+        self.write("HTTP options:\n")
+        self.write("       --header=STRING     insert STRING among the headers\n")
+        self.write("       --post-data=STRING  use the POST method; send STRING as the data\n")
+        self.write("       --max-redirect=NUM  maximum redirections allowed per page\n\n")
+        self.write("Directories:\n")
+        self.write("  -P,  --directory-prefix=PREFIX  save files to PREFIX/..\n\n")
+        self.write("Email bug reports, questions, discussions to <bug-wget@gnu.org>\n")
+        self.write("and/or open issues at https://savannah.gnu.org/bugs/?func=additem&group=wget.\n")
 
     @inlineCallbacks
     def start(self):
@@ -106,8 +149,9 @@ class Command_wget(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(
                 self.args,
-                "cqO:TP:",
+                "hcqO:TP:",
                 [
+                    "help",
                     "quiet",
                     "header=",
                     "max-redirect=",
@@ -116,17 +160,22 @@ class Command_wget(HoneyPotCommand):
                     "tries=",
                 ],
             )
-        except getopt.GetoptError:
-            self.errorWrite("Unrecognized option\n")
+        except getopt.GetoptError as err:
+            self.print_usage_error(f"invalid option -- '{err.opt}'")
             self.exit()
             return
+
+        # Handle help option first - print help and exit immediately
+        for opt in optlist:
+            if opt[0] in ["-h", "--help"]:
+                self.print_help_message()
+                self.exit()
+                return
 
         if len(args):
             url = args[0].strip()
         else:
-            self.errorWrite("wget: missing URL\n")
-            self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
-            self.errorWrite("Try `wget --help' for more options.\n")
+            self.print_usage_error("missing URL")
             self.exit()
             return
 
@@ -135,7 +184,7 @@ class Command_wget(HoneyPotCommand):
         for opt in optlist:
             if opt[0] == "-O":
                 self.outfile = opt[1]
-            if opt[0] == "-q":
+            elif opt[0] in ["-q", "--quiet"]:
                 self.quiet = True
 
         # for some reason getopt doesn't recognize "-O -"
@@ -153,10 +202,35 @@ class Command_wget(HoneyPotCommand):
         urldata = parse.urlparse(url)
         self.scheme = (urldata.scheme or "http").lower()
 
+        # self.host is required as it will be used as key in rate limiter from this point forward
         if urldata.hostname:
             self.host = urldata.hostname
         else:
-            pass
+            self.print_usage_error("invalid URL")
+            self.exit()
+            return
+
+        # Determine self.port: use explicit port from URL, otherwise use scheme default
+        if urldata.port is not None:
+            self.port = urldata.port
+        elif self.scheme == "https":
+            self.port = 443
+        elif self.scheme == "ftp":
+            self.port = 21
+        else:
+            self.port = 80
+
+        # Check rate limit before proceeding
+        if not wget_rate_limiter.check(self.host):
+            log.msg(f"wget: rate limit exceeded for host: {self.host}. Simulating connection timeout")
+
+            # Simulate connection timeout
+            self.errorWrite(f"Connecting to {self.host}:{self.port}... ")
+            self.errorWrite("failed: Connection timed out.\n")
+            self.errorWrite("Retrying.\n\n")
+
+            self.exit()
+            return
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
@@ -165,7 +239,7 @@ class Command_wget(HoneyPotCommand):
                 tm = time.strftime("%Y-%m-%d %H:%M:%S")
                 self.errorWrite(f"--{tm}--  {url}\n")
                 self.errorWrite(
-                    f"Resolving {self.host} ({self.host})... failed: nodename nor servname provided, or not known.\n"
+                    f"Resolving {self.host} ({self.host})... failed: Temporary failure in name resolution.\n"
                 )
             self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
@@ -178,7 +252,7 @@ class Command_wget(HoneyPotCommand):
             if not len(self.outfile.strip()) or not urldata.path.count("/"):
                 self.outfile = "index.html"
 
-        if self.outfile != "-":
+        elif self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
             path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
@@ -191,17 +265,9 @@ class Command_wget(HoneyPotCommand):
         self.artifact = Artifact("wget-download")
 
         if not self.quiet:
-            if urldata.port is not None:
-                port = urldata.port
-            elif self.scheme == "https":
-                port = 443
-            elif self.scheme == "ftp":
-                port = 21
-            else:
-                port = 80
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
             self.errorWrite(f"--{tm}--  {url}\n")
-            self.errorWrite(f"Connecting to {self.host}:{port}... connected.\n")
+            self.errorWrite(f"Connecting to {self.host}:{self.port}... connected.\n")
             proto_label = "HTTP" if self.scheme in ("http", "https") else self.scheme.upper()
             self.errorWrite(f"{proto_label} request sent, awaiting response... ")
 
@@ -219,7 +285,7 @@ class Command_wget(HoneyPotCommand):
         """
         Download `url`
         """
-        headers = {"User-Agent": ["Wget/1.25.0 (linux-gnu)"]}
+        headers = {"User-Agent": [f"Wget/{self.wget_version} (linux-gnu)"]}
 
         # TODO: use designated outbound interface
         # out_addr = None
@@ -235,7 +301,6 @@ class Command_wget(HoneyPotCommand):
         """
         username = parse.unquote(urldata.username) if urldata.username else "anonymous"
         password = parse.unquote(urldata.password) if urldata.password else "busybox@"
-        port = urldata.port or 21
 
         raw_path = urldata.path or ""
         if urldata.params:
@@ -258,7 +323,7 @@ class Command_wget(HoneyPotCommand):
         self.ftp_client = None
 
         creator = ClientCreator(reactor, FTPClient, username, password, passive=True)
-        deferred = creator.connectTCP(self.host, port, timeout=30)
+        deferred = creator.connectTCP(self.host, self.port, timeout=30)
         deferred.addCallback(self._ftp_connected)
         return deferred
 
@@ -362,10 +427,8 @@ class Command_wget(HoneyPotCommand):
             else:
                 self.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
 
-            if self.outfile in (None, "-"):
-                self.errorWrite("Saving to: `STDOUT'\n\n")
-            else:
-                self.errorWrite(f"Saving to: `{self.outfile}'\n\n")
+            dest = "STDOUT" if self.outfile is None or self.outfile == "-" else self.outfile
+            self.errorWrite(f"Saving to: `{dest}'\n\n")
 
         return True
 
@@ -463,11 +526,12 @@ class Command_wget(HoneyPotCommand):
                 )
             )
             self.errorWrite("\n\n")
+            dest = "stdout" if self.outfile is None or self.outfile == "-" else self.outfile
             self.errorWrite(
                 "{} ({:3.2f} KB/s) - `{}' saved [{}/{}]\n\n".format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),
                     self.speed / 1000,
-                    self.outfile,
+                    dest,
                     self.currentlength,
                     self.totallength,
                 )
@@ -514,7 +578,7 @@ class Command_wget(HoneyPotCommand):
 
         if response.check(error.DNSLookupError) is not None:
             self.write(
-                f"Resolving no.such ({self.host})... failed: nodename nor servname provided, or not known.\n"
+                f"Resolving no.such ({self.host})... failed: Temporary failure in name resolution.\n"
             )
             self.write(f"wget: unable to resolve host address ‘{self.host}’\n")
             self.exit()
