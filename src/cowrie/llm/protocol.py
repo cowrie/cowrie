@@ -356,16 +356,14 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         self.setInsertMode()
 
     def characterReceived(self, ch, moreCharactersComing):
-        """
-        Easier way to implement password input?
-        """
+        if self.terminal is None:
+            return
         if self.mode == "insert":
             self.lineBuffer.insert(self.lineBufferIndex, ch)
         else:
             self.lineBuffer[self.lineBufferIndex : self.lineBufferIndex + 1] = [ch]
         self.lineBufferIndex += 1
         if not self.password_input:
-            assert self.terminal is not None
             self.terminal.write(ch)
 
     def handle_RETURN(self) -> None:
@@ -375,23 +373,18 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         recvline.RecvLine.handle_RETURN(self)
 
     def handle_CTRL_C(self) -> None:
-        return
-        if self.cmdstack:
-            self.cmdstack[-1].handle_CTRL_C()
+        pass
 
     def handle_CTRL_D(self) -> None:
-        self.connectionLost(None)
-        return
-        if self.cmdstack:
-            self.cmdstack[-1].handle_CTRL_D()
+        if self.terminal is not None:
+            self.terminal.loseConnection()
 
     def handle_TAB(self) -> None:
-        return
-        if self.cmdstack:
-            self.cmdstack[-1].handle_TAB()
+        pass
 
     def handle_CTRL_K(self) -> None:
-        assert self.terminal is not None
+        if self.terminal is None:
+            return
         self.terminal.eraseToLineEnd()
         self.lineBuffer = self.lineBuffer[0 : self.lineBufferIndex]
 
@@ -400,13 +393,15 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         Handle a 'form feed' byte - generally used to request a screen
         refresh/redraw.
         """
-        assert self.terminal is not None
+        if self.terminal is None:
+            return
         self.terminal.eraseDisplay()
         self.terminal.cursorHome()
         self.drawInputLine()
 
     def handle_CTRL_U(self) -> None:
-        assert self.terminal is not None
+        if self.terminal is None:
+            return
         for _ in range(self.lineBufferIndex):
             self.terminal.cursorBackward()
             self.terminal.deleteCharacter()
