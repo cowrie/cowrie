@@ -1,7 +1,7 @@
 Release Notes
 #############
 
-Release 2.8.0
+Release 2.9.0
 *************
 
 **NEW FEATURES:**
