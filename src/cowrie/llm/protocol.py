@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import socket
 import time
 
@@ -13,6 +14,17 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
+
+
+def strip_markdown(text: str) -> str:
+    """
+    Remove markdown code block formatting from LLM responses.
+    """
+    # Remove ```language\n...\n``` blocks, keeping the content
+    text = re.sub(r"```\w*\n?", "", text)
+    # Remove any remaining backticks
+    text = text.replace("`", "")
+    return text.strip()
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -119,22 +131,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Process a command by sending it to the LLM and writing the response
         to the terminal.
         """
-        from twisted.internet import defer
         from cowrie.llm.llm import LLMClient
 
         # Initialize LLM client if needed
         if not hasattr(self, "llm_client"):
-            try:
-                self.llm_client = LLMClient()
-                self.command_history = []
-                self.hostname_displayed = False
-            except Exception as e:
-                log.err(f"Error initializing LLM client: {e}")
-                self.terminal.write(
-                    b"Error connecting to backend system. Connection terminated.\n"
-                )
-                self.terminal.loseConnection()
-                return
+            self.llm_client = LLMClient()
+            self.command_history = []
 
         # Add the command to our history
         self.command_history.append(f"User: {command}")
@@ -164,24 +166,25 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Handle the response from the LLM and display it to the user.
         """
+        if self.terminal is None:
+            return
+
         if response:
-            # Add the response to our history
-            self.command_history.append(f"System: {response}")
+            clean_response = strip_markdown(response)
+            self.command_history.append(f"System: {clean_response}")
+            self.terminal.write(f"{clean_response}\n".encode("utf-8"))
+        # If no response, just show the prompt silently (like an empty command)
 
-            # Write the response to the terminal
-            self.terminal.write(f"{response}\n".encode("utf-8"))
-        else:
-            self.terminal.write(b"Error: No response from backend system.\n")
-
-        # Show the prompt after response
         self._show_prompt()
 
     def _handle_llm_error(self, failure):
         """
         Handle errors from the LLM client.
         """
-        log.err(f"Error getting response from LLM: {failure}")
-        self.terminal.write(b"Error communicating with backend system.\n")
+        log.err(f"LLM error: {failure}")
+        if self.terminal is None:
+            return
+        # Show nothing - just the prompt, as if the command produced no output
         self._show_prompt()
 
     def _show_prompt(self):
@@ -277,25 +280,27 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         """
         Handle the LLM response for an exec command.
         """
-        if response:
-            # Write the response to the terminal
-            self.terminal.write(f"{response}\n".encode("utf-8"))
-        else:
-            self.terminal.write(b"Error: Command execution failed.\n")
+        if self.terminal is None:
+            return
 
-        # End the process
+        if response:
+            clean_response = strip_markdown(response)
+            self.terminal.write(f"{clean_response}\n".encode("utf-8"))
+        # If no response, produce no output (some commands are silent)
+
         ret = failure.Failure(error.ProcessTerminated(exitCode=0))
         self.terminal.transport.processEnded(ret)
 
-    def _handle_exec_error(self, failure):
+    def _handle_exec_error(self, exec_failure):
         """
         Handle errors from the LLM client during exec.
         """
-        log.err(f"Error getting response from LLM for exec: {failure}")
-        self.terminal.write(b"Error: Command execution failed.\n")
+        log.err(f"LLM exec error: {exec_failure}")
+        if self.terminal is None:
+            return
 
-        # End the process with error
-        ret = failure.Failure(error.ProcessTerminated(exitCode=1))
+        # Produce no output, exit with 0 (as if command succeeded silently)
+        ret = failure.Failure(error.ProcessTerminated(exitCode=0))
         self.terminal.transport.processEnded(ret)
 
     def keystrokeReceived(self, keyID, modifier):
@@ -311,25 +316,16 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
-        # Display welcome message and initial prompt
-        try:
-            from cowrie.llm.llm import LLMClient
+        from cowrie.llm.llm import LLMClient
 
-            self.llm_client = LLMClient()
-            self.command_history = []
+        self.llm_client = LLMClient()
+        self.command_history = []
 
-            # Show welcome banner (similar to what would be shown on a real system)
-            welcome = f"Welcome to {self.hostname}\n"
-            self.terminal.write(welcome.encode("utf-8"))
+        # Show welcome banner
+        welcome = f"Welcome to {self.hostname}\n"
+        self.terminal.write(welcome.encode("utf-8"))
 
-            # Show the prompt
-            self._show_prompt()
-        except Exception as e:
-            log.err(f"Error in connectionMade: {e}")
-            self.terminal.write(
-                b"Error connecting to backend system. Connection terminated.\n"
-            )
-            self.terminal.loseConnection()
+        self._show_prompt()
 
         self.keyHandlers.update(
             {
