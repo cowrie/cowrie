@@ -24,7 +24,7 @@ class EnvironmentConfigParser(configparser.ConfigParser):
     # TODO: def sections()
     """
 
-    def has_option(self, section: str, option: str) -> bool:
+    def has_option(self, section: str, option: str) -> bool:  # type: ignore[override]
         if to_environ_key("_".join(("cowrie", section, option))) in environ:
             return True
         return super().has_option(section, option)
