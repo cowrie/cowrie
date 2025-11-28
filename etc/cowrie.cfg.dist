@@ -380,6 +380,43 @@ log_raw = false
 
 
 # ============================================================================
+# LLM Options
+# Options for the LLM (Large Language Model) backend
+# ============================================================================
+
+[llm]
+
+# API key for the LLM service (required for LLM backend)
+# For OpenAI: get your key from https://platform.openai.com/api-keys
+#api_key = sk-xxx
+
+# LLM model to use
+# (default: gpt-4o-mini)
+#model = gpt-4o-mini
+
+# API host URL
+# (default: https://api.openai.com)
+#host = https://api.openai.com
+
+# API path
+# (default: /v1/chat/completions)
+#path = /v1/chat/completions
+
+# Maximum tokens in the response
+# (default: 500)
+#max_tokens = 500
+
+# Temperature for response generation (0.0-2.0)
+# Higher values make output more random, lower values more deterministic
+# (default: 0.7)
+#temperature = 0.7
+
+# Enable debug logging for LLM requests/responses
+# (default: false)
+#debug = false
+
+
+# ============================================================================
 # Shell Options
 # Options around Cowrie's Shell Emulation
 # ============================================================================
