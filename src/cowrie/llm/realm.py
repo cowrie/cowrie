@@ -36,7 +36,7 @@ from twisted.cred.portal import IRealm
 
 from cowrie.llm import avatar as llmavatar
 from cowrie.llm import server as llmserver
-from cowrie.telnet import session
+from cowrie.llm import telnet as llmtelnet
 
 
 @implementer(IRealm)
@@ -52,6 +52,6 @@ class HoneyPotRealm:
             return interfaces[0], user, user.logout
         if ITelnetProtocol in interfaces:
             serv = llmserver.CowrieServer(self)
-            user = session.HoneyPotTelnetSession(avatarId, serv)
+            user = llmtelnet.HoneyPotTelnetSession(avatarId, serv)
             return interfaces[0], user, user.logout
         raise NotImplementedError
