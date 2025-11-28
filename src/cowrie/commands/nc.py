@@ -52,28 +52,28 @@ class Command_nc(HoneyPotCommand):
 
     s: socket.socket
 
-    def help(self) -> None:
-        self.write(
-            """This is nc from the netcat-openbsd package. An alternative nc is available
-in the netcat-traditional package.
-usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
-          [-P proxy_username] [-p source_port] [-q seconds] [-s source]
-          [-T toskeyword] [-V rtable] [-w timeout] [-X proxy_protocol]
-          [-x proxy_address[:port]] [destination] [port]\n"""
-        )
+    def print_usage_error(self, error_msg: str = "") -> None:
+        """Print usage error message"""
+        if error_msg:
+            self.errorWrite(f"nc: {error_msg}\n")
+
+        self.errorWrite("usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]\n")
+        self.errorWrite("\t  [-m minttl] [-O length] [-P proxy_username] [-p source_port]\n")
+        self.errorWrite("\t  [-q seconds] [-s source] [-T keyword] [-V rtable] [-W recvlimit] [-w timeout]\n")
+        self.errorWrite("\t  [-X proxy_protocol] [-x proxy_address[:port]]\t\t  [destination] [port]\n")
 
     def start(self):
         try:
             _optlist, args = getopt.getopt(
-                self.args, "46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:"
+                self.args, "46CDdFhklNnrStUuvZzI:i:M:m:O:P:p:q:s:T:V:W:w:X:x:"
             )
-        except getopt.GetoptError:
-            self.help()
+        except getopt.GetoptError as err:
+            self.print_usage_error(f"invalid option -- '{err.opt}'")
             self.exit()
             return
 
         if not args or len(args) < 2:
-            self.help()
+            self.print_usage_error()
             self.exit()
             return
 
