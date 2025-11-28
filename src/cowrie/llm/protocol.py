@@ -11,9 +11,11 @@ from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.internet import error
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log
+from twisted.python import failure
+from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.llm.llm import LLMClient
 
 
 def strip_markdown(text: str) -> str:
@@ -88,7 +90,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                     s.connect(("8.8.8.8", 80))
                     self.kippoIP = s.getsockname()[0]
-            except Exception:
+            except OSError:
                 self.kippoIP = "192.168.0.1"
 
     def timeoutConnection(self) -> None:
@@ -129,8 +131,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Process a command by sending it to the LLM and writing the response
         to the terminal.
         """
-        from cowrie.llm.llm import LLMClient
-
         # Initialize LLM client if needed
         if not hasattr(self, "llm_client"):
             self.llm_client = LLMClient()
@@ -174,11 +174,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         self._show_prompt()
 
-    def _handle_llm_error(self, failure):
+    def _handle_llm_error(self, err):
         """
         Handle errors from the LLM client.
         """
-        log.err(f"LLM error: {failure}")
+        log.err(f"LLM error: {err}")
         if self.terminal is None:
             return
         # Show nothing - just the prompt, as if the command produced no output
@@ -242,8 +242,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Process an exec command with the LLM and return the result.
         Used when commands are passed directly to SSH (e.g., ssh user@host 'command')
         """
-        from cowrie.llm.llm import LLMClient
-
         self.llm_client = LLMClient()
         self.command_history = []
 
@@ -303,8 +301,6 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def connectionMade(self) -> None:
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
-
-        from cowrie.llm.llm import LLMClient
 
         self.llm_client = LLMClient()
         self.command_history = []
