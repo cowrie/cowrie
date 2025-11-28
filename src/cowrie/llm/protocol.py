@@ -9,7 +9,7 @@ import time
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
-from twisted.internet import error
+from twisted.internet import defer, error
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure
 from twisted.python import log
@@ -155,7 +155,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         prompt = [system_context, *self.command_history[-10:]]
 
         # Get response asynchronously
-        d = self.llm_client.get_response(prompt)
+        d: defer.Deferred[str] = self.llm_client.get_response(prompt)
         d.addCallback(self._handle_llm_response)
         d.addErrback(self._handle_llm_error)
 
@@ -258,7 +258,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         prompt = [system_context]
 
         # Get response asynchronously
-        d = self.llm_client.get_response(prompt)
+        d: defer.Deferred[str] = self.llm_client.get_response(prompt)
         d.addCallback(self._handle_exec_response)
         d.addErrback(self._handle_exec_error)
 

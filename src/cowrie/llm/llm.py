@@ -4,13 +4,15 @@
 from __future__ import annotations
 
 import json
+from typing import Any, Generator
 
 from twisted.internet import defer, protocol, reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.python import failure as tw_failure
 from twisted.python import log
 from twisted.web.client import Agent, HTTPConnectionPool, _HTTP11ClientFactory
 from twisted.web.http_headers import Headers
-from twisted.web.iweb import IBodyProducer
+from twisted.web.iweb import IBodyProducer, IResponse
 from zope.interface import implementer
 
 from cowrie.core.config import CowrieConfig
@@ -53,7 +55,7 @@ class SimpleResponseReceiver(protocol.Protocol):
     def dataReceived(self, data: bytes) -> None:
         self.buf += data
 
-    def connectionLost(self, reason=protocol.connectionDone) -> None:
+    def connectionLost(self, reason: tw_failure.Failure = protocol.connectionDone) -> None:
         self.d.callback((self.status_code, self.buf))
 
 
@@ -119,18 +121,20 @@ class LLMClient:
             "temperature": self.temperature,
         }
 
-    def _handle_response_body(self, response):
+    def _handle_response_body(self, response: IResponse) -> Deferred[tuple[int, bytes]]:
         """Extract the response body from the HTTP response."""
-        d = defer.Deferred()
+        d: Deferred[tuple[int, bytes]] = defer.Deferred()
         response.deliverBody(SimpleResponseReceiver(response.code, d))
         return d
 
-    def _handle_connection_error(self, failure):
+    def _handle_connection_error(
+        self, err: tw_failure.Failure
+    ) -> tuple[int, bytes]:
         """Handle connection errors."""
-        failure.trap(Exception)
-        return (500, failure.getErrorMessage().encode("utf-8"))
+        err.trap(Exception)
+        return (500, err.getErrorMessage().encode("utf-8"))
 
-    def _send_request(self, prompt: list[str]):
+    def _send_request(self, prompt: list[str]) -> Deferred[tuple[int, bytes]]:
         """Send request to the LLM API."""
         request_body = self._format_request_body(prompt)
 
@@ -138,7 +142,7 @@ class LLMClient:
             log.msg(f"LLM request: {json.dumps(request_body, indent=2)}")
 
         url = f"{self.host}{self.path}"
-        d = self.agent.request(
+        d: Deferred[Any] = self.agent.request(
             b"POST",
             url.encode("utf-8"),
             headers=self._build_headers(),
@@ -149,7 +153,9 @@ class LLMClient:
         return d
 
     @inlineCallbacks
-    def get_response(self, prompt: list[str]) -> str:
+    def get_response(
+        self, prompt: list[str]
+    ) -> Generator[Deferred[Any], Any, str]:
         """
         Get a response from the LLM for the given prompt.
 
@@ -176,7 +182,8 @@ class LLMClient:
             log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
 
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            return response_json["choices"][0]["message"]["content"]
+            content: str = response_json["choices"][0]["message"]["content"]
+            return content
 
         log.err(f"Unexpected LLM response format: {response}")
         return ""
