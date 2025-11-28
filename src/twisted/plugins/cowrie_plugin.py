@@ -233,7 +233,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             elif backend == "llm":
                 factory.portal = portal.Portal(cowrie.llm.realm.HoneyPotRealm())
             else:
-                raise Exception(f"invalid backend: {backend}")
+                raise ValueError(backend)
 
             factory.portal.registerChecker(core.checkers.HoneypotPublicKeyChecker())
             factory.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
@@ -260,7 +260,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             elif backend == "llm":
                 f.portal = portal.Portal(cowrie.llm.realm.HoneyPotRealm())
             else:
-                raise Exception(f"invalid backend: {backend}")
+                raise ValueError(backend)
 
             f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
 
