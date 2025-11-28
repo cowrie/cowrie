@@ -151,9 +151,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             f"The current working directory is '{self.cwd}'. "
         )
 
-        prompt = [system_context] + self.command_history[
-            -10:
-        ]  # Keep only the last 10 commands for context
+        # Keep only the last 10 commands for context
+        prompt = [system_context, *self.command_history[-10:]]
 
         # Get response asynchronously
         d = self.llm_client.get_response(prompt)
