@@ -172,7 +172,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if response:
             clean_response = strip_markdown(response)
             self.command_history.append(f"System: {clean_response}")
-            self.terminal.write(f"{clean_response}\n".encode("utf-8"))
+            self.terminal.write(f"{clean_response}\n".encode())
         # If no response, just show the prompt silently (like an empty command)
 
         self._show_prompt()
@@ -245,7 +245,6 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Process an exec command with the LLM and return the result.
         Used when commands are passed directly to SSH (e.g., ssh user@host 'command')
         """
-        from twisted.internet import defer
         from cowrie.llm.llm import LLMClient
 
         # Initialize LLM client
@@ -285,7 +284,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
         if response:
             clean_response = strip_markdown(response)
-            self.terminal.write(f"{clean_response}\n".encode("utf-8"))
+            self.terminal.write(f"{clean_response}\n".encode())
         # If no response, produce no output (some commands are silent)
 
         ret = failure.Failure(error.ProcessTerminated(exitCode=0))
