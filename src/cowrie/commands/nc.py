@@ -125,12 +125,15 @@ class Command_nc(HoneyPotCommand):
         # Parse relevant options
         listen_mode = False
         source_port = None
+        use_udp = False
 
         for o, a in _optlist:
             if o == "-l":
                 listen_mode = True
             elif o == "-p":
                 source_port = a
+            elif o == "-u":
+                use_udp = True
 
         # No arguments provided
         if not args:
@@ -153,6 +156,12 @@ class Command_nc(HoneyPotCommand):
         # Mixing listen mode with client mode is invalid
         if listen_mode:
             self.print_usage_error()
+            self.exit()
+            return
+
+        # UDP mode not implemented - fake permission denied
+        if use_udp:
+            self.errorWrite("nc: Permission denied\n")
             self.exit()
             return
 
