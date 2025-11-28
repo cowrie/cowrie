@@ -197,7 +197,7 @@ version_file = "src/cowrie/_version.py"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,pypy310,pypy311
+    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,py315t,pypy310,pypy311
     deps = -r{toxinidir}/requirements.txt
     skip_missing_interpreters = True
 
@@ -209,6 +209,8 @@ legacy_tox_ini = """
         3.13: py313
         3.14: py314
         3.14t: py314t
+        3.15: py315
+        3.15t: py315t
         pypy-3.10: pypy310
         pypy-3.11: pypy311
 
