@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Generator
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
@@ -17,6 +16,9 @@ from twisted.web.iweb import IBodyProducer, IResponse
 from zope.interface import implementer
 
 from cowrie.core.config import CowrieConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @implementer(IBodyProducer)
