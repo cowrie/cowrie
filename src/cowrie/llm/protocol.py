@@ -118,9 +118,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         commands work with string rather than bytes.
         """
         string = line.decode("utf8")
-        log.msg(f"received input {string}")
 
-        # Log the command input for analysis
         log.msg(eventid="cowrie.command.input", input=string, format="CMD: %(input)s")
 
         # Use LLM client to get a response
@@ -247,16 +245,8 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         """
         from cowrie.llm.llm import LLMClient
 
-        # Initialize LLM client
-        try:
-            self.llm_client = LLMClient()
-            self.command_history = []
-        except Exception as e:
-            log.err(f"Error initializing LLM client for exec: {e}")
-            self.terminal.write(b"Error: Could not connect to backend system.\n")
-            ret = failure.Failure(error.ProcessTerminated(exitCode=1))
-            self.terminal.transport.processEnded(ret)
-            return
+        self.llm_client = LLMClient()
+        self.command_history = []
 
         # Construct the prompt
         system_context = (
