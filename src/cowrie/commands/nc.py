@@ -1,12 +1,10 @@
 from __future__ import annotations
 import getopt
-import re
 import socket
 import struct
 
-
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed
+from cowrie.core.network import communication_allowed, is_valid_port
 from cowrie.shell.command import HoneyPotCommand
 
 long = int
@@ -132,7 +130,7 @@ class Command_nc(HoneyPotCommand):
         host = args[0]
         port = args[1]
 
-        if not re.match(r"^\d+$", port):
+        if not is_valid_port(port):
             self.errorWrite(f"nc: port number invalid: {port}\n")
             self.exit()
             return
