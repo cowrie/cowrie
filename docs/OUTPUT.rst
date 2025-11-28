@@ -73,7 +73,7 @@ Attributes:
     * shasum
 
 cowrie.session.file_download
-==========================
+============================
 
 File downloaded to Cowrie
 
@@ -93,7 +93,7 @@ Attributes:
     * input
 
 cowrie.command.failed
-====================
+=====================
 
 Command line input failed
 
