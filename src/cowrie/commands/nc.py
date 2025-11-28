@@ -119,11 +119,10 @@ class Command_nc(HoneyPotCommand):
             return
 
         # Handle help option first - print help and exit immediately
-        for opt in _optlist:
-            if opt[0] == "-h":
-                self.print_help_message()
-                self.exit()
-                return
+        if "-h" in [o[0] for o in _optlist]:
+            self.print_help_message()
+            self.exit()
+            return
 
         if not args or len(args) < 2:
             self.print_usage_error()
