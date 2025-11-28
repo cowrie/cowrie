@@ -109,7 +109,12 @@ class Command_nc(HoneyPotCommand):
                 self.args, "46CDdFhklNnrStUuvZzI:i:M:m:O:P:p:q:s:T:V:W:w:X:x:"
             )
         except getopt.GetoptError as err:
-            self.print_usage_error(f"invalid option -- '{err.opt}'")
+            if "requires argument" in err.msg:
+                message = "option requires an argument"
+            else:
+                message = "invalid option"
+
+            self.print_usage_error(f"{message} -- '{err.opt}'")
             self.exit()
             return
 
