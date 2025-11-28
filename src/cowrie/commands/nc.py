@@ -122,8 +122,43 @@ class Command_nc(HoneyPotCommand):
             self.exit()
             return
 
-        if not args or len(args) < 2:
+        # Parse relevant options
+        listen_mode = False
+        source_port = None
+
+        for o, a in _optlist:
+            if o == "-l":
+                listen_mode = True
+            elif o == "-p":
+                source_port = a
+
+        # No arguments provided
+        if not args:
+            if listen_mode:
+                if not source_port:
+                    # Listen mode requires -p to specify port
+                    self.errorWrite("nc: missing port number\n")
+                elif not is_valid_port(source_port):
+                    # Port specified but invalid
+                    self.errorWrite(f"nc: port number invalid: {source_port}\n")
+                else:
+                    # Valid listen mode request, but not implemented - fake permission denied
+                    self.errorWrite("nc: Permission denied\n")
+            else:
+                # Client mode without any arguments
+                self.print_usage_error()
+            self.exit()
+            return
+
+        # Mixing listen mode with client mode is invalid
+        if listen_mode:
             self.print_usage_error()
+            self.exit()
+            return
+
+        # Client mode requires host and port
+        if len(args) < 2:
+            self.errorWrite("nc: missing port number\n")
             self.exit()
             return
 
