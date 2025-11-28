@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
