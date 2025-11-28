@@ -62,6 +62,47 @@ class Command_nc(HoneyPotCommand):
         self.errorWrite("\t  [-q seconds] [-s source] [-T keyword] [-V rtable] [-W recvlimit] [-w timeout]\n")
         self.errorWrite("\t  [-X proxy_protocol] [-x proxy_address[:port]]\t\t  [destination] [port]\n")
 
+    def print_help_message(self) -> None:
+        self.errorWrite("OpenBSD netcat\n")
+        self.print_usage_error()
+        self.errorWrite("\tCommand Summary:\n")
+        self.errorWrite("\t\t-4\t\tUse IPv4\n")
+        self.errorWrite("\t\t-6\t\tUse IPv6\n")
+        self.errorWrite("\t\t-b\t\tAllow broadcast\n")
+        self.errorWrite("\t\t-C\t\tSend CRLF as line-ending\n")
+        self.errorWrite("\t\t-D\t\tEnable the debug socket option\n")
+        self.errorWrite("\t\t-d\t\tDetach from stdin\n")
+        self.errorWrite("\t\t-F\t\tPass socket fd\n")
+        self.errorWrite("\t\t-h\t\tThis help text\n")
+        self.errorWrite("\t\t-I length\tTCP receive buffer length\n")
+        self.errorWrite("\t\t-i interval\tDelay interval for lines sent, ports scanned\n")
+        self.errorWrite("\t\t-k\t\tKeep inbound sockets open for multiple connects\n")
+        self.errorWrite("\t\t-l\t\tListen mode, for inbound connects\n")
+        self.errorWrite("\t\t-M ttl\t\tOutgoing TTL / Hop Limit\n")
+        self.errorWrite("\t\t-m minttl\tMinimum incoming TTL / Hop Limit\n")
+        self.errorWrite("\t\t-N\t\tShutdown the network socket after EOF on stdin\n")
+        self.errorWrite("\t\t-n\t\tSuppress name/port resolutions\n")
+        self.errorWrite("\t\t-O length\tTCP send buffer length\n")
+        self.errorWrite("\t\t-P proxyuser\tUsername for proxy authentication\n")
+        self.errorWrite("\t\t-p port\t\tSpecify local port for remote connects\n")
+        self.errorWrite("\t\t-q secs\t\tquit after EOF on stdin and delay of secs\n")
+        self.errorWrite("\t\t-r\t\tRandomize remote ports\n")
+        self.errorWrite("\t\t-S\t\tEnable the TCP MD5 signature option\n")
+        self.errorWrite("\t\t-s source\tLocal source address\n")
+        self.errorWrite("\t\t-T keyword\tTOS value\n")
+        self.errorWrite("\t\t-t\t\tAnswer TELNET negotiation\n")
+        self.errorWrite("\t\t-U\t\tUse UNIX domain socket\n")
+        self.errorWrite("\t\t-u\t\tUDP mode\n")
+        self.errorWrite("\t\t-V rtable\tSpecify alternate routing table\n")
+        self.errorWrite("\t\t-v\t\tVerbose\n")
+        self.errorWrite("\t\t-W recvlimit\tTerminate after receiving a number of packets\n")
+        self.errorWrite("\t\t-w timeout\tTimeout for connects and final net reads\n")
+        self.errorWrite("\t\t" '-X proto\tProxy protocol: "4", "5" (SOCKS) or "connect"' "\n")
+        self.errorWrite("\t\t-x addr[:port]\tSpecify proxy address and port\n")
+        self.errorWrite("\t\t-Z\t\tDCCP mode\n")
+        self.errorWrite("\t\t-z\t\tZero-I/O mode [used for scanning]\n")
+        self.errorWrite("\tPort numbers can be individual or ranges: lo-hi [inclusive]\n")
+
     def start(self):
         try:
             _optlist, args = getopt.getopt(
@@ -71,6 +112,13 @@ class Command_nc(HoneyPotCommand):
             self.print_usage_error(f"invalid option -- '{err.opt}'")
             self.exit()
             return
+
+        # Handle help option first - print help and exit immediately
+        for opt in _optlist:
+            if opt[0] == "-h":
+                self.print_help_message()
+                self.exit()
+                return
 
         if not args or len(args) < 2:
             self.print_usage_error()
