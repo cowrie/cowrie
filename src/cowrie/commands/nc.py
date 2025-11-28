@@ -85,7 +85,7 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             self.exit()
             return
 
-        allowed = yield communication_allowed(host)
+        allowed = communication_allowed(host)
         if not allowed:
             self.exit()
             return
