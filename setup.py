@@ -12,4 +12,5 @@ setup(
 
 def refresh_plugin_cache():
     from twisted.plugin import IPlugin, getPlugins
+
     list(getPlugins(IPlugin))

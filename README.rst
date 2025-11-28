@@ -9,7 +9,8 @@ designed to log brute force attacks and the shell interaction
 performed by the attacker. In medium interaction mode (shell) it
 emulates a UNIX system in Python, in high interaction mode (proxy)
 it functions as an SSH and telnet proxy to observe attacker behavior
-to another system.
+to another system. In LLM mode, it uses large language models to
+generate dynamic responses to attacker commands.
 
 `Cowrie <http://github.com/cowrie/cowrie/>`_ is maintained by Michel Oosterhof.
 
@@ -34,6 +35,11 @@ Features
 * Or proxy SSH and telnet to another system
    * Run as a pure telnet and ssh proxy with monitoring
    * Or let Cowrie manage a pool of QEMU emulated servers to provide the systems to login to
+
+* Or use an LLM backend (experimental):
+   * Use large language models (e.g., OpenAI GPT) to dynamically generate realistic shell responses
+   * Handles any command without predefined responses
+   * Maintains conversation context for consistent sessions
 
 For both settings:
 
