@@ -29,8 +29,11 @@
 
 from __future__ import annotations
 
-from twisted.cred.portal import IRealm
 from twisted.python import log
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from twisted.cred.portal import IRealm
 
 
 class CowrieServer:
