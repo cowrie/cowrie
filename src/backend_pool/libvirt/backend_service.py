@@ -11,7 +11,7 @@ import os
 import random
 import sys
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -40,7 +40,7 @@ class LibvirtBackendService:
         )
 
         # open connection to libvirt
-        self.conn = libvirt.open(libvirt_uri)
+        self.conn: Any = libvirt.open(libvirt_uri)
         if self.conn is None:
             log.msg(
                 eventid="cowrie.backend_pool.libvirtd",
@@ -49,8 +49,8 @@ class LibvirtBackendService:
             )
             raise LibvirtError()
 
-        self.filter = None
-        self.network = None
+        self.filter: Any = None
+        self.network: Any = None
 
         # signals backend is ready to be operated
         self.ready: bool = False
@@ -115,14 +115,16 @@ class LibvirtBackendService:
 
         raise LibvirtError()
 
-    def create_guest(self, ip_tester):
+    def create_guest(
+        self, ip_tester: Callable[[str], bool]
+    ) -> tuple[Any, str, str] | None:
         """
         Returns an unready domain and its snapshot information.
 
         Guarantee that the IP is free with the ip_tester function.
         """
         if not self.ready:
-            return
+            return None
 
         # create a single guest
         guest_unique_id = uuid.uuid4().hex
@@ -138,7 +140,7 @@ class LibvirtBackendService:
 
         return dom, snapshot, guest_ip
 
-    def destroy_guest(self, domain, snapshot):
+    def destroy_guest(self, domain: Any, snapshot: str) -> None:
         if not self.ready:
             return
 
