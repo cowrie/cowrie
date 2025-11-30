@@ -1,6 +1,18 @@
 Release Notes
 #############
 
+Release 2.9.0
+*************
+
+**NEW FEATURES:**
+
+* **LLM Backend**: New experimental backend that uses Large Language Models (such as OpenAI's GPT) to generate realistic shell responses. Instead of static command emulation, the LLM dynamically generates output for any command, making the honeypot more convincing and capable of handling unexpected inputs. See the `LLM documentation <https://docs.cowrie.org/en/latest/LLM.html>`_ for setup instructions.
+
+**CONFIGURATION CHANGES:**
+
+* New ``[llm]`` configuration section for LLM backend settings including API key, model selection, and response parameters.
+
+
 Release 2.7.0
 *************
 

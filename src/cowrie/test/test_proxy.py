@@ -9,7 +9,7 @@ import os
 import unittest
 
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
-from cowrie.core.realm import HoneyPotRealm
+from cowrie.shell.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
 
 from twisted.cred import portal

@@ -58,7 +58,7 @@ class Command_ftpget(HoneyPotCommand):
     ftp_client: FTPClient | None
 
     def help(self) -> None:
-        self.write(
+        self.errorWrite(
             """BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
 
 Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
@@ -119,7 +119,7 @@ Download a file via FTP
         fakeoutfile = self.fs.resolve_path(self.local_file, self.protocol.cwd)
         path = os.path.dirname(fakeoutfile)
         if not path or not self.fs.exists(path) or not self.fs.isdir(path):
-            self.write(
+            self.errorWrite(
                 f"ftpget: can't open '{self.local_file}': No such file or directory"
             )
             self.exit()

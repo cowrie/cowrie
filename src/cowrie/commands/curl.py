@@ -223,7 +223,7 @@ class Command_curl(HoneyPotCommand):
 
         for opt in optlist:
             if opt[0] == "-h" or opt[0] == "--help":
-                self.write(CURL_HELP)
+                self.errorWrite(CURL_HELP)
                 self.exit()
                 return
             elif opt[0] == "-s" or opt[0] == "--silent":
@@ -295,7 +295,7 @@ class Command_curl(HoneyPotCommand):
             log.msg(f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout")
 
             # Simulate connection timeout
-            self.write(
+            self.errorWrite(
                 f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
             )
             self.exit()

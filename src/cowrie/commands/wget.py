@@ -577,7 +577,7 @@ class Command_wget(HoneyPotCommand):
         )
 
         if response.check(error.DNSLookupError) is not None:
-            self.write(
+            self.errorWrite(
                 f"Resolving no.such ({self.host})... failed: Temporary failure in name resolution.\n"
             )
             self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")

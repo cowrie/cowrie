@@ -52,7 +52,7 @@ Attributes:
     * password
 
 cowrie.client.size
-===================
+==================
 
 Width and height of the users terminal as communicated through the SSH protocol.
 
@@ -73,7 +73,7 @@ Attributes:
     * shasum
 
 cowrie.session.file_download
-==========================
+============================
 
 File downloaded to Cowrie
 
@@ -93,7 +93,7 @@ Attributes:
     * input
 
 cowrie.command.failed
-====================
+=====================
 
 Command line input failed
 
@@ -114,7 +114,7 @@ Attributes:
     * total
 
 cowrie.session.connect
-==========================
+======================
 
 New connection
 
@@ -135,7 +135,7 @@ Attributes:
     * version
 
 cowrie.client.kex
-=====================
+=================
 
 SSH Key Exchange Attributes
 
@@ -165,7 +165,7 @@ Attributes:
     * arch
 
 cowrie.log.closed
-=====================
+=================
 
 TTY Log closed
 
@@ -190,7 +190,7 @@ Attributes:
     * src_port
 
 cowrie.direct-tcpip.data
-===========================
+========================
 
 Data attempted to be sent through direct-tcpip forwarding
 

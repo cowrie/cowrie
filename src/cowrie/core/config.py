@@ -24,7 +24,10 @@ class EnvironmentConfigParser(configparser.ConfigParser):
     # TODO: def sections()
     """
 
-    def has_option(self, section: str, option: str) -> bool:
+    # Python 3.14+ changed the signature to accept str | _UNNAMED_SECTION
+    def has_option(  # type: ignore[override,unused-ignore]
+        self, section: str, option: str
+    ) -> bool:
         if to_environ_key("_".join(("cowrie", section, option))) in environ:
             return True
         return super().has_option(section, option)
