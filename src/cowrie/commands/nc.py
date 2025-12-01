@@ -255,3 +255,6 @@ class Command_nc(HoneyPotCommand):
 
 commands["/bin/nc"] = Command_nc
 commands["nc"] = Command_nc
+commands["/usr/bin/nc"] = Command_nc
+commands["netcat"] = Command_nc
+commands["/bin/netcat"] = Command_nc
