@@ -8,7 +8,7 @@ from cowrie.core.network import communication_allowed, is_valid_port
 from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
-from twisted.python import log
+from twisted.python import log  # pylint: disable=no-name-in-module
 
 long = int
 
@@ -242,11 +242,11 @@ class Command_nc(HoneyPotCommand):
                 return
 
             self.recv_data()
-        except socket.TimeoutError:
+        except TimeoutError:
             if verbose:
                 self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
             self.exit()
-        except socket.OSError:
+        except OSError:
             if verbose:
                 self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Connection refused\n")
             self.exit()
