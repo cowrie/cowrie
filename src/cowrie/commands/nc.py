@@ -127,6 +127,7 @@ class Command_nc(HoneyPotCommand):
         listen_mode = False
         source_port = None
         use_udp = False
+        verbose = False
         zero_io = False
 
         for o, a in _optlist:
@@ -136,6 +137,8 @@ class Command_nc(HoneyPotCommand):
                 source_port = a
             elif o == "-u":
                 use_udp = True
+            elif o == "-v":
+                verbose = True
             elif o == "-z":
                 zero_io = True
 
@@ -200,6 +203,9 @@ class Command_nc(HoneyPotCommand):
         try:
             self.s.connect((host, int(port)))
 
+            if verbose:
+                self.errorWrite(f"Connection to {host} {port} port [tcp/*] succeeded!\n")
+
             # Zero I/O mode: test connection only, no data transfer
             if zero_io:
                 self.s.close()
@@ -207,6 +213,14 @@ class Command_nc(HoneyPotCommand):
                 return
 
             self.recv_data()
+        except socket.TimeoutError:
+            if verbose:
+                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
+            self.exit()
+        except socket.OSError:
+            if verbose:
+                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Connection refused\n")
+            self.exit()
         except Exception:
             self.exit()
 
