@@ -126,6 +126,7 @@ class Command_nc(HoneyPotCommand):
         listen_mode = False
         source_port = None
         use_udp = False
+        zero_io = False
 
         for o, a in _optlist:
             if o == "-l":
@@ -134,6 +135,8 @@ class Command_nc(HoneyPotCommand):
                 source_port = a
             elif o == "-u":
                 use_udp = True
+            elif o == "-z":
+                zero_io = True
 
         # No arguments provided
         if not args:
@@ -194,6 +197,13 @@ class Command_nc(HoneyPotCommand):
         self.s.bind(out_addr)
         try:
             self.s.connect((host, int(port)))
+
+            # Zero I/O mode: test connection only, no data transfer
+            if zero_io:
+                self.s.close()
+                self.exit()
+                return
+
             self.recv_data()
         except Exception:
             self.exit()
