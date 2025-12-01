@@ -127,11 +127,14 @@ class Command_nc(HoneyPotCommand):
         listen_mode = False
         source_port = None
         use_udp = False
+        use_ipv6 = False
         verbose = False
         zero_io = False
 
         for o, a in _optlist:
-            if o == "-l":
+            if o == "-6":
+                use_ipv6 = True
+            elif o == "-l":
                 listen_mode = True
             elif o == "-p":
                 source_port = a
@@ -169,6 +172,12 @@ class Command_nc(HoneyPotCommand):
         # UDP mode not implemented - fake permission denied
         if use_udp:
             self.errorWrite("nc: Permission denied\n")
+            self.exit()
+            return
+
+        # IPv6 not supported - simulate unreachable network
+        if use_ipv6:
+            self.errorWrite("nc: Network is unreachable\n")
             self.exit()
             return
 
