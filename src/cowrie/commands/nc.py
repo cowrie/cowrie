@@ -5,11 +5,22 @@ import struct
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed, is_valid_port
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
+
+from twisted.python import log
 
 long = int
 
 commands = {}
+
+# Initialize rate limiter
+nc_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("honeypot", "nc_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("honeypot", "nc_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("honeypot", "nc_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("honeypot", "nc_rate_limit_max_hosts", fallback=1000)
+)
 
 
 def makeMask(n: int) -> int:
@@ -195,8 +206,17 @@ class Command_nc(HoneyPotCommand):
             self.exit()
             return
 
+        # Check rate limit before proceeding
+        if not nc_rate_limiter.check(host):
+            log.msg(f"nc: rate limit exceeded for host: {host}. Simulating operation timeout")
+            if verbose:
+                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
+            self.exit()
+            return
+
         allowed = communication_allowed(host)
         if not allowed:
+            log.msg(f"nc: blocked connection attempt to {host} (private/reserved IP range)")
             self.exit()
             return
 
