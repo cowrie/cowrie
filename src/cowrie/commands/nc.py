@@ -49,6 +49,7 @@ class Command_nc(HoneyPotCommand):
     """
 
     s: socket.socket
+    CONNECT_TIMEOUT: float = 10.0  # seconds
 
     def print_usage_error(self, error_msg: str = "") -> None:
         """Print usage error message"""
@@ -194,6 +195,7 @@ class Command_nc(HoneyPotCommand):
             out_addr = ("0.0.0.0", 0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.settimeout(self.CONNECT_TIMEOUT)
         self.s.bind(out_addr)
         try:
             self.s.connect((host, int(port)))
