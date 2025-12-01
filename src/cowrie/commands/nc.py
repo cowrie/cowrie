@@ -1,17 +1,26 @@
 from __future__ import annotations
 import getopt
-import re
 import socket
 import struct
 
-
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed
+from cowrie.core.network import communication_allowed, is_valid_port
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
+
+from twisted.python import log  # pylint: disable=no-name-in-module
 
 long = int
 
 commands = {}
+
+# Initialize rate limiter
+nc_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("honeypot", "nc_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("honeypot", "nc_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("honeypot", "nc_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("honeypot", "nc_rate_limit_max_hosts", fallback=1000)
+)
 
 
 def makeMask(n: int) -> int:
@@ -51,42 +60,163 @@ class Command_nc(HoneyPotCommand):
     """
 
     s: socket.socket
+    CONNECT_TIMEOUT: float = 10.0  # seconds
 
-    def help(self) -> None:
-        self.write(
-            """This is nc from the netcat-openbsd package. An alternative nc is available
-in the netcat-traditional package.
-usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
-          [-P proxy_username] [-p source_port] [-q seconds] [-s source]
-          [-T toskeyword] [-V rtable] [-w timeout] [-X proxy_protocol]
-          [-x proxy_address[:port]] [destination] [port]\n"""
-        )
+    def print_usage_error(self, error_msg: str = "") -> None:
+        """Print usage error message"""
+        if error_msg:
+            self.errorWrite(f"nc: {error_msg}\n")
+
+        self.errorWrite("usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]\n")
+        self.errorWrite("\t  [-m minttl] [-O length] [-P proxy_username] [-p source_port]\n")
+        self.errorWrite("\t  [-q seconds] [-s source] [-T keyword] [-V rtable] [-W recvlimit] [-w timeout]\n")
+        self.errorWrite("\t  [-X proxy_protocol] [-x proxy_address[:port]]\t\t  [destination] [port]\n")
+
+    def print_help_message(self) -> None:
+        self.errorWrite("OpenBSD netcat\n")
+        self.print_usage_error()
+        self.errorWrite("\tCommand Summary:\n")
+        self.errorWrite("\t\t-4\t\tUse IPv4\n")
+        self.errorWrite("\t\t-6\t\tUse IPv6\n")
+        self.errorWrite("\t\t-b\t\tAllow broadcast\n")
+        self.errorWrite("\t\t-C\t\tSend CRLF as line-ending\n")
+        self.errorWrite("\t\t-D\t\tEnable the debug socket option\n")
+        self.errorWrite("\t\t-d\t\tDetach from stdin\n")
+        self.errorWrite("\t\t-F\t\tPass socket fd\n")
+        self.errorWrite("\t\t-h\t\tThis help text\n")
+        self.errorWrite("\t\t-I length\tTCP receive buffer length\n")
+        self.errorWrite("\t\t-i interval\tDelay interval for lines sent, ports scanned\n")
+        self.errorWrite("\t\t-k\t\tKeep inbound sockets open for multiple connects\n")
+        self.errorWrite("\t\t-l\t\tListen mode, for inbound connects\n")
+        self.errorWrite("\t\t-M ttl\t\tOutgoing TTL / Hop Limit\n")
+        self.errorWrite("\t\t-m minttl\tMinimum incoming TTL / Hop Limit\n")
+        self.errorWrite("\t\t-N\t\tShutdown the network socket after EOF on stdin\n")
+        self.errorWrite("\t\t-n\t\tSuppress name/port resolutions\n")
+        self.errorWrite("\t\t-O length\tTCP send buffer length\n")
+        self.errorWrite("\t\t-P proxyuser\tUsername for proxy authentication\n")
+        self.errorWrite("\t\t-p port\t\tSpecify local port for remote connects\n")
+        self.errorWrite("\t\t-q secs\t\tquit after EOF on stdin and delay of secs\n")
+        self.errorWrite("\t\t-r\t\tRandomize remote ports\n")
+        self.errorWrite("\t\t-S\t\tEnable the TCP MD5 signature option\n")
+        self.errorWrite("\t\t-s source\tLocal source address\n")
+        self.errorWrite("\t\t-T keyword\tTOS value\n")
+        self.errorWrite("\t\t-t\t\tAnswer TELNET negotiation\n")
+        self.errorWrite("\t\t-U\t\tUse UNIX domain socket\n")
+        self.errorWrite("\t\t-u\t\tUDP mode\n")
+        self.errorWrite("\t\t-V rtable\tSpecify alternate routing table\n")
+        self.errorWrite("\t\t-v\t\tVerbose\n")
+        self.errorWrite("\t\t-W recvlimit\tTerminate after receiving a number of packets\n")
+        self.errorWrite("\t\t-w timeout\tTimeout for connects and final net reads\n")
+        self.errorWrite("\t\t" '-X proto\tProxy protocol: "4", "5" (SOCKS) or "connect"' "\n")
+        self.errorWrite("\t\t-x addr[:port]\tSpecify proxy address and port\n")
+        self.errorWrite("\t\t-Z\t\tDCCP mode\n")
+        self.errorWrite("\t\t-z\t\tZero-I/O mode [used for scanning]\n")
+        self.errorWrite("\tPort numbers can be individual or ranges: lo-hi [inclusive]\n")
 
     def start(self):
         try:
             _optlist, args = getopt.getopt(
-                self.args, "46bCDdhklnrStUuvZzI:i:O:P:p:q:s:T:V:w:X:x:"
+                self.args, "46CDdFhklNnrStUuvZzI:i:M:m:O:P:p:q:s:T:V:W:w:X:x:"
             )
-        except getopt.GetoptError:
-            self.help()
+        except getopt.GetoptError as err:
+            if "requires argument" in err.msg:
+                message = "option requires an argument"
+            else:
+                message = "invalid option"
+
+            self.print_usage_error(f"{message} -- '{err.opt}'")
             self.exit()
             return
 
-        if not args or len(args) < 2:
-            self.help()
+        # Handle help option first - print help and exit immediately
+        if "-h" in [o[0] for o in _optlist]:
+            self.print_help_message()
+            self.exit()
+            return
+
+        # Parse relevant options
+        listen_mode = False
+        source_port = None
+        use_udp = False
+        use_ipv6 = False
+        verbose = False
+        zero_io = False
+
+        for o, a in _optlist:
+            if o == "-6":
+                use_ipv6 = True
+            elif o == "-l":
+                listen_mode = True
+            elif o == "-p":
+                source_port = a
+            elif o == "-u":
+                use_udp = True
+            elif o == "-v":
+                verbose = True
+            elif o == "-z":
+                zero_io = True
+
+        # No arguments provided
+        if not args:
+            if listen_mode:
+                if not source_port:
+                    # Listen mode requires -p to specify port
+                    self.errorWrite("nc: missing port number\n")
+                elif not is_valid_port(source_port):
+                    # Port specified but invalid
+                    self.errorWrite(f"nc: port number invalid: {source_port}\n")
+                else:
+                    # Valid listen mode request, but not implemented - fake permission denied
+                    self.errorWrite("nc: Permission denied\n")
+            else:
+                # Client mode without any arguments
+                self.print_usage_error()
+            self.exit()
+            return
+
+        # Mixing listen mode with client mode is invalid
+        if listen_mode:
+            self.print_usage_error()
+            self.exit()
+            return
+
+        # UDP mode not implemented - fake permission denied
+        if use_udp:
+            self.errorWrite("nc: Permission denied\n")
+            self.exit()
+            return
+
+        # IPv6 not supported - simulate unreachable network
+        if use_ipv6:
+            self.errorWrite("nc: Network is unreachable\n")
+            self.exit()
+            return
+
+        # Client mode requires host and port
+        if len(args) < 2:
+            self.errorWrite("nc: missing port number\n")
             self.exit()
             return
 
         host = args[0]
         port = args[1]
 
-        if not re.match(r"^\d+$", port):
+        if not is_valid_port(port):
             self.errorWrite(f"nc: port number invalid: {port}\n")
             self.exit()
             return
 
-        allowed = yield communication_allowed(host)
+        # Check rate limit before proceeding
+        if not nc_rate_limiter.check(host):
+            log.msg(f"nc: rate limit exceeded for host: {host}. Simulating operation timeout")
+            if verbose:
+                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
+            self.exit()
+            return
+
+        allowed = communication_allowed(host)
         if not allowed:
+            log.msg(f"nc: blocked connection attempt to {host} (private/reserved IP range)")
             self.exit()
             return
 
@@ -97,10 +227,29 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
             out_addr = ("0.0.0.0", 0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.settimeout(self.CONNECT_TIMEOUT)
         self.s.bind(out_addr)
         try:
             self.s.connect((host, int(port)))
+
+            if verbose:
+                self.errorWrite(f"Connection to {host} {port} port [tcp/*] succeeded!\n")
+
+            # Zero I/O mode: test connection only, no data transfer
+            if zero_io:
+                self.s.close()
+                self.exit()
+                return
+
             self.recv_data()
+        except TimeoutError:
+            if verbose:
+                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
+            self.exit()
+        except OSError:
+            if verbose:
+                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Connection refused\n")
+            self.exit()
         except Exception:
             self.exit()
 
@@ -125,11 +274,16 @@ usage: nc [-46bCDdhjklnrStUuvZz] [-I length] [-i interval] [-O length]
         self.write("^C\n")
         if hasattr(self, "s"):
             self.s.close()
+        self.exit()
 
     def handle_CTRL_D(self) -> None:
         if hasattr(self, "s"):
             self.s.close()
+        self.exit()
 
 
 commands["/bin/nc"] = Command_nc
 commands["nc"] = Command_nc
+commands["/usr/bin/nc"] = Command_nc
+commands["netcat"] = Command_nc
+commands["/bin/netcat"] = Command_nc

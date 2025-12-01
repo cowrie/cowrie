@@ -1,5 +1,6 @@
 from collections.abc import Generator
 import ipaddress
+import re
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.names import client, dns
@@ -19,6 +20,15 @@ BLOCKED_IPS = [
     "255.255.255.255",  # Limited broadcast address
     "::1",  # IPv6 loopback range
 ]
+
+# Valid TCP/UDP port range: 1-65535
+# https://www.debuggex.com/r/jjEFZZQ34aPvCBMA
+PORT_PATTERN = re.compile(r"^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$")
+
+
+def is_valid_port(port: str) -> bool:
+    """Check if port string is a valid TCP/UDP port number (1-65535)"""
+    return bool(PORT_PATTERN.match(port))
 
 
 def is_ip_address(
