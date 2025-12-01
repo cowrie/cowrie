@@ -245,10 +245,12 @@ class Command_nc(HoneyPotCommand):
         self.write("^C\n")
         if hasattr(self, "s"):
             self.s.close()
+        self.exit()
 
     def handle_CTRL_D(self) -> None:
         if hasattr(self, "s"):
             self.s.close()
+        self.exit()
 
 
 commands["/bin/nc"] = Command_nc
