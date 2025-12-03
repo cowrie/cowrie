@@ -86,6 +86,12 @@ Written by Jim Meyering and Paul Eggert.
             self.exit()
             return
 
+        # Handle no arguments
+        if not arglist:
+            self.print_usage_error("missing operand")
+            self.exit()
+            return
+
         if len(self.args) == 1:
             m = re.match(r"(\d+)[mhs]?", self.args[0])
             if m:
