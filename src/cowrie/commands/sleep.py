@@ -12,7 +12,7 @@ import getopt
 import re
 
 from cowrie.shell.command import HoneyPotCommand
-from twisted.internet.reactor import callLater
+from twisted.internet.reactor import callLater  # pylint: disable=no-name-in-module
 
 commands = {}
 
