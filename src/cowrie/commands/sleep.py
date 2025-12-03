@@ -1,4 +1,5 @@
 # Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+#               2025 Filippo Lauria <filippo.lauria@iit.cnr.it>
 # All rights reserved.
 
 """
@@ -11,7 +12,7 @@ import getopt
 import re
 
 from cowrie.shell.command import HoneyPotCommand
-from twisted.internet import reactor
+from twisted.internet.reactor import callLater
 
 commands = {}
 
@@ -55,9 +56,6 @@ There is NO WARRANTY, to the extent permitted by law.
 
 Written by Jim Meyering and Paul Eggert.
 """)
-
-    def done(self) -> None:
-        self.exit()
 
     def start(self) -> None:
         try:
@@ -106,7 +104,7 @@ Written by Jim Meyering and Paul Eggert.
             # Ignore time suffix (s/m/h) and accumulate value as seconds
             _time += int(m.group(1))
 
-        self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
+        self.scheduled = callLater(_time, self.exit)  # type: ignore[attr-defined]
 
 
 commands["/bin/sleep"] = Command_sleep
