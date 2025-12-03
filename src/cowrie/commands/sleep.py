@@ -21,7 +21,7 @@ class Command_sleep(HoneyPotCommand):
     Sleep
     """
 
-    pattern = re.compile(r"(\d+)[mhs]?")
+    pattern = re.compile(r"^(\d+)[mhs]?$")
 
     def print_usage_error(self, error_msg: str = "") -> None:
         """Print usage error message"""
@@ -92,18 +92,21 @@ Written by Jim Meyering and Paul Eggert.
             self.exit()
             return
 
-        if len(self.args) == 1:
-            m = re.match(r"(\d+)[mhs]?", self.args[0])
-            if m:
-                _time = int(m.group(1))
-                # Always sleep in seconds, not minutes or hours
-                self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
-            else:
-                self.write("usage: sleep seconds\n")
+        # Handle multiple arguments
+        # From help: given two or more arguments,
+        # pause for the amount of timespecified by the sum of their values
+        _time = 0
+        for arg in arglist:
+            m = re.match(self.pattern, arg)
+            if not m:
+                self.print_usage_error(f"invalid time interval ‘{arg}’")
                 self.exit()
-        else:
-            self.write("usage: sleep seconds\n")
-            self.exit()
+                return
+
+            # Ignore time suffix (s/m/h) and accumulate value as seconds
+            _time += int(m.group(1))
+
+        self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
 
 
 commands["/bin/sleep"] = Command_sleep
