@@ -45,6 +45,8 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         # only used when simple proxy (no pool) set
         self.backend_ip = None
         self.backend_port = None
+        self.backend_local_ip = None
+        self.backend_local_port = None
 
         self.telnetHandler = TelnetHandler(self)
 
@@ -128,6 +130,10 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         backend_host = backendTransport.transport.getHost()
         backend_peer = backendTransport.transport.getPeer()
 
+        # Cache connecting IP and port for connectionLost logging
+        self.backend_local_ip = backend_host.host
+        self.backend_local_port = backend_host.port
+
         log.msg(
             eventid="cowrie.proxy.backend_connected",
             format="Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
@@ -185,6 +191,17 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         """
         Fires on pre-authentication disconnects
         """
+        if self.backend_ip and self.backend_local_ip:
+            log.msg(
+                eventid="cowrie.proxy.backend_disconnected",
+                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                local_ip=self.backend_local_ip,
+                local_port=self.backend_local_port,
+                protocol="telnet",
+            )
+
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
 
