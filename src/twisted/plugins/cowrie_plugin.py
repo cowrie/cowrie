@@ -228,7 +228,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             factory = cowrie.ssh.factory.CowrieSSHFactory(backend, self.pool_handler)
             factory.tac = self  # type: ignore
 
-            if backend == "shell":
+            if backend in ("shell", "proxy"):
                 factory.portal = portal.Portal(cowrie.shell.realm.HoneyPotRealm())
             elif backend == "llm":
                 factory.portal = portal.Portal(cowrie.llm.realm.HoneyPotRealm())
@@ -255,7 +255,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         if self.enableTelnet:
             f = cowrie.telnet.factory.HoneyPotTelnetFactory(backend, self.pool_handler)
             f.tac = self
-            if backend == "shell":
+            if backend in ("shell", "proxy"):
                 f.portal = portal.Portal(cowrie.shell.realm.HoneyPotRealm())
             elif backend == "llm":
                 f.portal = portal.Portal(cowrie.llm.realm.HoneyPotRealm())
