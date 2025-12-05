@@ -120,6 +120,7 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
             backend_port=self.backend_port,
             error=reason.getErrorMessage(),
             protocol="telnet",
+            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
         self.transport.loseConnection()
 
@@ -135,6 +136,7 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
             local_ip=backend_host.host,
             local_port=backend_host.port,
             protocol="telnet",
+            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
 
         self.startTime = time.time()

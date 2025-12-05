@@ -163,6 +163,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             backend_port=self.backend_port,
             error=reason.getErrorMessage(),
             protocol="ssh",
+            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
         if self.transport:
             self.transport.loseConnection()
@@ -179,6 +180,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             local_ip=backend_host.host,
             local_port=backend_host.port,
             protocol="ssh",
+            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
 
         self.startTime = time.time()
