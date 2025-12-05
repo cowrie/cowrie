@@ -114,12 +114,28 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
 
     def backend_connection_error(self, reason):
         log.msg(
-            f"Connection to honeypot backend refused: {reason.value}. Disconnecting frontend..."
+            eventid="cowrie.proxy.backend_connect_error",
+            format="Connection to honeypot backend %(backend_ip)s:%(backend_port)s refused: %(error)s",
+            backend_ip=self.backend_ip,
+            backend_port=self.backend_port,
+            error=reason.getErrorMessage(),
+            protocol="telnet",
         )
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
-        log.msg("Connected to honeypot backend")
+        backend_host = backendTransport.transport.getHost()
+        backend_peer = backendTransport.transport.getPeer()
+
+        log.msg(
+            eventid="cowrie.proxy.backend_connected",
+            format="Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+            backend_ip=backend_peer.host,
+            backend_port=backend_peer.port,
+            local_ip=backend_host.host,
+            local_port=backend_host.port,
+            protocol="telnet",
+        )
 
         self.startTime = time.time()
         self.setTimeout(
@@ -127,6 +143,10 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         )
 
     def connect_to_backend(self, ip, port):
+        # remember target so we can log consistently on success/failure
+        self.backend_ip = ip.decode() if isinstance(ip, bytes) else ip
+        self.backend_port = port
+
         # connection to the backend starts here
         client_factory = client_transport.BackendTelnetFactory()
         client_factory.server = self
