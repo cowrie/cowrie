@@ -45,6 +45,8 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         # only used when simple proxy (no pool) set
         self.backend_ip = None
         self.backend_port = None
+        self.backend_local_ip = None
+        self.backend_local_port = None
 
         self.telnetHandler = TelnetHandler(self)
 
@@ -114,12 +116,34 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
 
     def backend_connection_error(self, reason):
         log.msg(
-            f"Connection to honeypot backend refused: {reason.value}. Disconnecting frontend..."
+            eventid="cowrie.proxy.backend_connect_error",
+            format="Connection to honeypot backend %(backend_ip)s:%(backend_port)s refused: %(error)s",
+            backend_ip=self.backend_ip,
+            backend_port=self.backend_port,
+            error=reason.getErrorMessage(),
+            protocol="telnet",
+            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
         self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
-        log.msg("Connected to honeypot backend")
+        backend_host = backendTransport.transport.getHost()
+        backend_peer = backendTransport.transport.getPeer()
+
+        # Cache connecting IP and port for connectionLost logging
+        self.backend_local_ip = backend_host.host
+        self.backend_local_port = backend_host.port
+
+        log.msg(
+            eventid="cowrie.proxy.backend_connected",
+            format="Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+            backend_ip=backend_peer.host,
+            backend_port=backend_peer.port,
+            local_ip=backend_host.host,
+            local_port=backend_host.port,
+            protocol="telnet",
+            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
+        )
 
         self.startTime = time.time()
         self.setTimeout(
@@ -127,6 +151,10 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         )
 
     def connect_to_backend(self, ip, port):
+        # remember target so we can log consistently on success/failure
+        self.backend_ip = ip.decode() if isinstance(ip, bytes) else ip
+        self.backend_port = port
+
         # connection to the backend starts here
         client_factory = client_transport.BackendTelnetFactory()
         client_factory.server = self
@@ -163,6 +191,17 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         """
         Fires on pre-authentication disconnects
         """
+        if self.backend_ip and self.backend_local_ip:
+            log.msg(
+                eventid="cowrie.proxy.backend_disconnected",
+                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                local_ip=self.backend_local_ip,
+                local_port=self.backend_local_port,
+                protocol="telnet",
+            )
+
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
 
