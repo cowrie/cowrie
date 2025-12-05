@@ -83,6 +83,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         # only used when simple proxy (no pool) set
         self.backend_ip = None
         self.backend_port = None
+        self.backend_local_ip = None
+        self.backend_local_port = None
 
     def connectionMade(self):
         """
@@ -171,6 +173,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def backend_connection_success(self, backendTransport):
         backend_host = backendTransport.transport.getHost()
         backend_peer = backendTransport.transport.getPeer()
+
+        # Cache resolved endpoints for connectionLost logging
+        self.backend_local_ip = backend_host.host
+        self.backend_local_port = backend_host.port
+        self.backend_ip = backend_peer.host     # Sets backend_ip to its IP if backend_ip was a hostname
+        self.backend_port = backend_peer.port
 
         log.msg(
             eventid="cowrie.proxy.backend_connected",
@@ -377,6 +385,17 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         This seems to be the only reliable place of catching lost connection
         """
+        if self.backend_ip and self.backend_local_ip:
+            log.msg(
+                eventid="cowrie.proxy.backend_disconnected",
+                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                local_ip=self.backend_local_ip,
+                local_port=self.backend_local_port,
+                protocol="ssh",
+            )
+
         self.setTimeout(None)
 
         transport.SSHServerTransport.connectionLost(self, reason)
