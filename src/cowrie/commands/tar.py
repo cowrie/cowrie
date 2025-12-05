@@ -47,7 +47,9 @@ class Command_tar(HoneyPotCommand):
 
         path = self.fs.resolve_path(filename, self.protocol.cwd)
         if not path or not self.protocol.fs.exists(path):
-            self.errorWrite(f"tar: {filename}: Cannot open: No such file or directory\n")
+            self.errorWrite(
+                f"tar: {filename}: Cannot open: No such file or directory\n"
+            )
             self.errorWrite("tar: Error is not recoverable: exiting now\n")
             self.errorWrite("tar: Child returned status 2\n")
             self.errorWrite("tar: Error exit delayed from previous errors\n")
