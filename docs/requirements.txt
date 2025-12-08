@@ -1,4 +1,4 @@
-Sphinx==8.2.3
+Sphinx==9.0.4
 readthedocs-sphinx-search==0.3.2
 setuptools==80.9.0
 sphinx-copybutton==0.5.2
