@@ -140,19 +140,12 @@ class CommandParser:
             if target is None:
                 cleaned.append(raw_token)
                 return 1
-            if not inline_target:
-                ops.append({
-                    "type": "stdin",
-                    "fd": source_fd,
-                    "target": target
-                })
-                return 2
             ops.append({
                 "type": "stdin",
                 "fd": source_fd,
                 "target": target
             })
-            return 1
+            return 1 if inline_target else 2
 
         if op == ">&":
             target = inline_target or next_token
