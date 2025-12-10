@@ -251,8 +251,6 @@ class CommandParser:
                             break
                         else:
                             cmd_expr = cmd_expr + " " + tokkie
-                elif opening_count == closing_count:
-                    result += cmd_expr[pos]
                 pos += 1
 
         return result
