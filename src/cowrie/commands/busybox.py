@@ -3,7 +3,9 @@ from __future__ import annotations
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.honeypot import StdOutStdErrEmulationProtocol
+from cowrie.shell.std_out_std_err_emulation_protocol import (
+    StdOutStdErrEmulationProtocol,
+)
 
 commands = {}
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 import os
 import sys
+from typing import Any
 
 from twisted.python import log
 
@@ -11,7 +12,7 @@ from cowrie.core.config import CowrieConfig
 import backend_pool.util
 
 
-def create_filter(connection):
+def create_filter(connection: Any) -> Any:
     # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
     import libvirt
 
@@ -37,7 +38,7 @@ def create_filter(connection):
         return connection.nwfilterLookupByName("cowrie-default-filter")
 
 
-def create_network(connection, network_table):
+def create_network(connection: Any, network_table: dict[str, str]) -> Any:
     # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
     import libvirt
 
