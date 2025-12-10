@@ -410,7 +410,7 @@ class HoneyPotShell:
                         None,
                         None,
                         self.redirect,
-                        cmd.get("redirects", {}),
+                        cmd.get("redirects", []),
                     )
                     pp = lastpp
                 else:
