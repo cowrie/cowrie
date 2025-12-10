@@ -40,7 +40,7 @@ class StdOutStdErrEmulationProtocol:
         self.redirected_data: bytes = b""
         self.err_data: bytes = b""
         self.protocol = protocol
-        self.redirect = redirect  # dont send to terminal if enabled
+        self.redirect = redirect  # don't send to terminal if enabled
         self.redirections = redirections or []
         
         # FD Table: fd -> (type, value)
