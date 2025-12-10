@@ -427,7 +427,7 @@ class HoneyPotShell:
             else:
                 log.msg(
                     eventid="cowrie.command.failed",
-                    input=" ".join(cmd2),
+                    input=cmd["command"] + " " + " ".join(cmd["rargs"]),
                     format="Command not found: %(input)s",
                 )
                 message = "-bash: {}: command not found\n".format(cmd["command"]).encode(
