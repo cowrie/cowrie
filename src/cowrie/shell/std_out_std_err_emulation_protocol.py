@@ -85,7 +85,7 @@ class StdOutStdErrEmulationProtocol:
                 file_info = self._prepare_output_file(target, append)
                 if file_info:
                     if file_info.get("devnull"):
-                         self.targets[fd] = ("devnull", None)
+                        self.targets[fd] = ("devnull", None)
                     else:
                         self.targets[fd] = ("file", file_info)
                         if fd == 1:
