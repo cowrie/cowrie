@@ -173,15 +173,8 @@ class CommandParser:
                 # However, Cowrie's previous implementation strictly required a digit for `>&`.
                 # If the target is not a digit, we treat it as a normal argument rather than a redirection
                 # to maintain backward compatibility and avoid ambiguous parsing.
-                if not target.isdigit():
-                    cleaned.append(raw_token)
-                    return 1
-                
-                ops.append({
-                    "type": "dup",
-                    "fd": source_fd,
-                    "target": int(target)
-                })
+                cleaned.append(raw_token)
+                return 1
 
             return consume
 
