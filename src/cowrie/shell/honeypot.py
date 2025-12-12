@@ -563,6 +563,9 @@ class HoneyPotShell:
         except Exception:
             return
 
+        if not self.protocol.fs.exists(r):
+            return
+
         files = []
         for x in self.protocol.fs.get_path(r):
             if clue == "":
