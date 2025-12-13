@@ -1,0 +1,107 @@
+# ABOUTME: Automated weekly release workflow that creates a new patch version
+# ABOUTME: if there have been commits since the last release.
+---
+name: Weekly Release
+
+on:  # yamllint disable-line rule:truthy
+  schedule:
+    # Run every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (do not create release)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  weekly-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get latest release tag
+        id: latest_tag
+        run: |
+          # Get the latest tag matching vX.Y.Z pattern
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+          echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          echo "Latest tag: ${LATEST_TAG}"
+
+      - name: Check for changes since last release
+        id: changes
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No previous release tag found"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Count commits since the last tag
+          COMMIT_COUNT=$(git rev-list --count "${LATEST_TAG}..HEAD")
+          echo "Commits since ${LATEST_TAG}: ${COMMIT_COUNT}"
+
+          if [ "$COMMIT_COUNT" -gt 0 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Calculate next version
+        id: next_version
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+
+          if [ -z "$LATEST_TAG" ]; then
+            # No previous tag, start at v0.0.1
+            NEXT_VERSION="v0.0.1"
+          else
+            # Parse version components (remove 'v' prefix)
+            VERSION="${LATEST_TAG#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+            # Increment patch version
+            NEXT_PATCH=$((PATCH + 1))
+            NEXT_VERSION="v${MAJOR}.${MINOR}.${NEXT_PATCH}"
+          fi
+
+          echo "next_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+          echo "Next version: ${NEXT_VERSION}"
+
+      - name: Create release
+        if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEXT_VERSION="${{ steps.next_version.outputs.next_version }}"
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+
+          echo "Creating release ${NEXT_VERSION}"
+
+          # Create release with auto-generated notes
+          gh release create "${NEXT_VERSION}" \
+            --title "${NEXT_VERSION}" \
+            --generate-notes \
+            --notes-start-tag "${LATEST_TAG}"
+
+      - name: Dry run summary
+        if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run == 'true'
+        run: |
+          echo "Dry run - would have created release: ${{ steps.next_version.outputs.next_version }}"
+
+      - name: No changes summary
+        if: steps.changes.outputs.has_changes != 'true'
+        run: |
+          echo "No changes since last release (${{ steps.latest_tag.outputs.tag }}). Skipping release."
