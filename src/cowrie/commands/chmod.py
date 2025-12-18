@@ -57,7 +57,7 @@ class Command_chmod(HoneyPotCommand):
             return
 
         # if --help or --version is present, we don't care about the rest
-        for o in opts:
+        for o, _ in opts:
             if o == "--help":
                 self.errorWrite(CHMOD_HELP)
                 return
