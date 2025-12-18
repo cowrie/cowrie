@@ -180,7 +180,7 @@ class Command_iptables(HoneyPotCommand):
             self.flush("" if opts.flush else opts.flush)
             return
         elif opts.list:
-            self.list("" if opts.list else opts.list)
+            self.list_chains("" if opts.list else opts.list)
             return
         elif opts.list_rules:
             self.list_rules("" if opts.list_rules else opts.list_rules)
@@ -375,7 +375,7 @@ Options:
         else:
             self.no_permission()
 
-    def list(self, chain: str) -> None:
+    def list_chains(self, chain: str) -> None:
         """
         List current rules
         """
