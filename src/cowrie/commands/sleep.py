@@ -12,7 +12,7 @@ import getopt
 import re
 
 from cowrie.shell.command import HoneyPotCommand
-from twisted.internet.reactor import callLater  # pylint: disable=no-name-in-module
+from twisted.internet import reactor
 
 commands = {}
 
@@ -110,7 +110,7 @@ Written by Jim Meyering and Paul Eggert.
             _time += int(m.group(1))
 
         self.running = True
-        self.scheduled = callLater(_time, self.done)  # type: ignore[attr-defined]
+        self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
 
     def handle_CTRL_C(self) -> None:
         if self.running:
