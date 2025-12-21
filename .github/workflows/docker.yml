@@ -25,56 +25,47 @@ on:  # yamllint disable-line rule:truthy
         description: 'Build and publish Docker image'
 
 env:
-  IMAGE_NAME: cowrie
+  REGISTRY_IMAGE: cowrie/cowrie
 
 jobs:
-  # Push image to GitHub Packages.
-  # See also https://docs.docker.com/docker-hub/builds/
-  push:
-    # Ensure test job passes before pushing image.
-    # needs: tox
-
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # Required for cosign OIDC
-
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Install dependencies
-        run: python -m pip install -q --upgrade pip setuptools setuptools-scm wheel
+        run: python3 -m pip install -q --upgrade pip setuptools setuptools-scm wheel
 
       - name: Generate version file
-        run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
+        run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python3 -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
 
       - name: Set SOURCE_DATE_EPOCH
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v4.0.0
-        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Extract Docker image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: cowrie/cowrie
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }} # Tag 'latest' for main branch pushes
-            type=sha,format=short
+          images: ${{ env.REGISTRY_IMAGE }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64
 
       - name: Login to Docker Hub
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
@@ -89,36 +80,107 @@ jobs:
         with:
           push: false
           load: true
-          # use context to access src/cowrie/_version.py we created earlier
           context: .
           tags: cowrie:test
           file: docker/Dockerfile
+          platforms: ${{ matrix.platform }}
 
       - name: Test
         run: |
           docker run -d --rm cowrie:test
 
-      - name: Push Container Image
+      - name: Push Container Image by digest
         id: push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         uses: docker/build-push-action@v6
         with:
           file: docker/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          # use context to access src/cowrie/_version.py we created earlier
+          platforms: ${{ matrix.platform }}
           context: .
           push: true
           load: false
           sbom: true
-          provenance: true
-          tags: ${{ steps.meta.outputs.tags }}
+          provenance: mode=max
           labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true
+
+      - name: Export digest
+        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.push.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
+    needs:
+      - build
+    permissions:
+      id-token: write  # Required for cosign OIDC
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.0.0
 
       - name: Sign the images with GitHub OIDC Token
-        if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
         env:
-          DIGEST: ${{ steps.push.outputs.digest }}
           COSIGN_EXPERIMENTAL: 1
         run: |
-          cosign sign -y cowrie/cowrie@${DIGEST}
-          cosign verify --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' --certificate-identity-regexp 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/.*' cowrie/cowrie@${DIGEST}
+          for tag in $(jq -cr '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON"); do
+            cosign sign -y "${tag}"
+          done
+
+      - name: Verify signatures
+        run: |
+          for tag in $(jq -cr '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON"); do
+            cosign verify \
+              --certificate-oidc-issuer-regexp 'https://token.actions.githubusercontent.com' \
+              --certificate-identity-regexp 'https://github.com/cowrie/cowrie/.github/workflows/docker.yml@refs/.*' \
+              "${tag}"
+          done
