@@ -9,7 +9,7 @@ import configparser
 import errno
 import fnmatch
 import hashlib
-import importlib
+import importlib.resources
 import os
 from pathlib import Path
 import pickle
