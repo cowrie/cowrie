@@ -74,6 +74,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         self.startTime = None
         self.transportId = None
+        self.sessionno: str = ""
 
         self.pool_interface = None
         self.backendConnected = False
@@ -93,6 +94,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.sshParse = ssh.SSH(self)
         self.transportId = uuid.uuid4().hex[:12]
+        self.sessionno = f"S{self.transport.sessionno}"
 
         self.peer_ip = self.transport.getPeer().host
         self.peer_port = self.transport.getPeer().port + 1
@@ -113,7 +115,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             dst_ip=self.local_ip,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno=f"S{self.transport.sessionno}",
+            sessionno=self.sessionno,
             protocol="ssh",
         )
 
@@ -164,8 +166,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             backend_ip=self.backend_ip,
             backend_port=self.backend_port,
             error=reason.getErrorMessage(),
+            session=self.transportId,
+            sessionno=self.sessionno,
             protocol="ssh",
-            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
         if self.transport:
             self.transport.loseConnection()
@@ -187,8 +190,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             backend_port=backend_peer.port,
             local_ip=backend_host.host,
             local_port=backend_host.port,
+            session=self.transportId,
+            sessionno=self.sessionno,
             protocol="ssh",
-            system=f"{self.logPrefix()},{self.transport.sessionno},{self.peer_ip}", # Not sure if there's a better way to do this
         )
 
         self.startTime = time.time()
@@ -388,11 +392,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if self.backend_ip and self.backend_local_ip:
             log.msg(
                 eventid="cowrie.proxy.backend_disconnected",
-                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s (local %(local_ip)s:%(local_port)s)",
                 backend_ip=self.backend_ip,
                 backend_port=self.backend_port,
                 local_ip=self.backend_local_ip,
                 local_port=self.backend_local_port,
+                session=self.transportId,
+                sessionno=self.sessionno,
                 protocol="ssh",
             )
 
