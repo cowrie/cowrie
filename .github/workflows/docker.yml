@@ -113,7 +113,7 @@ jobs:
 
       - name: Upload digest
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: ${{ runner.temp }}/digests/*
