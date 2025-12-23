@@ -173,7 +173,7 @@ class PipeProtocol:
         contents_path = CowrieConfig.get(
             "honeypot", "contents_path", fallback="honeyfs"
         )
-        return p[fs.A_REALFILE].startswith(contents_path)
+        return bool(p[fs.A_REALFILE].startswith(contents_path))
 
     def _create_redirect_target(self, outfile: str) -> str | None:
         """Create a new backing file for a redirected output target."""
