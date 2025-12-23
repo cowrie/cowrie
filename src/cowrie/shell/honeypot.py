@@ -17,10 +17,12 @@ from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-from cowrie.shell.command_parser import CommandParser
-from cowrie.shell.std_out_std_err_emulation_protocol import (
-    StdOutStdErrEmulationProtocol,
-)
+from cowrie.shell.parser import CommandParser
+from cowrie.shell.pipe import PipeProtocol
+
+# Pre-compiled regexes for environment variable expansion
+_ENV_BRACE_RE = re.compile(r"^\${([_a-zA-Z0-9]+)}$")
+_ENV_SIMPLE_RE = re.compile(r"^\$([_a-zA-Z0-9]+)$")
 
 
 class HoneyPotShell:
@@ -36,7 +38,7 @@ class HoneyPotShell:
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.lexer: shlex.shlex | None = None
-        self.parser = CommandParser(self.environ)
+        self.parser = CommandParser()
 
         # this is the first prompt after starting
         self.showPrompt()
@@ -93,22 +95,20 @@ class HoneyPotShell:
                         self.do_subshell_execution(tok)
                     continue
                 elif "$(" in tok or "`" in tok:
-                    tok = self.parser.do_command_substitution(tok, self)
+                    tok = self.do_command_substitution(tok)
                 elif tok.startswith("${"):
-                    envRex = re.compile(r"^\${([_a-zA-Z0-9]+)}$")
-                    envSearch = envRex.search(tok)
+                    envSearch = _ENV_BRACE_RE.search(tok)
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
-                        if envMatch in list(self.environ.keys()):
+                        if envMatch in self.environ:
                             tok = self.environ[envMatch]
                         else:
                             continue
                 elif tok.startswith("$"):
-                    envRex = re.compile(r"^\$([_a-zA-Z0-9]+)$")
-                    envSearch = envRex.search(tok)
+                    envSearch = _ENV_SIMPLE_RE.search(tok)
                     if envSearch is not None:
                         envMatch = envSearch.group(1)
-                        if envMatch in list(self.environ.keys()):
+                        if envMatch in self.environ:
                             tok = self.environ[envMatch]
                         else:
                             continue
@@ -127,7 +127,8 @@ class HoneyPotShell:
         if self.cmdpending:
             # Coalesce fd redirection tokens so we don't treat `2` as a command
             self.cmdpending = [
-                self.parser.merge_redirection_tokens(tokens) for tokens in self.cmdpending
+                self.parser.merge_redirection_tokens(tokens)
+                for tokens in self.cmdpending
             ]
             # if we have a complete command, go and run it
             self.runCommand()
@@ -202,6 +203,65 @@ class HoneyPotShell:
                             else:
                                 cmd_expr = cmd_expr + " " + tokkie
                     pos += 1
+
+    def do_command_substitution(self, start_tok: str) -> str:
+        """
+        Perform command substitution, replacing $(cmd) or `cmd` with output.
+        """
+        result = ""
+        if start_tok[0] == "(":
+            cmd_expr = start_tok
+            pos = 1
+        elif "$(" in start_tok:
+            dollar_pos = start_tok.index("$(")
+            result = start_tok[:dollar_pos]
+            cmd_expr = start_tok[dollar_pos:]
+            pos = 2
+        elif "`" in start_tok:
+            backtick_pos = start_tok.index("`")
+            result = start_tok[:backtick_pos]
+            cmd_expr = start_tok[backtick_pos:]
+            pos = 1
+        else:
+            log.msg(f"failed command substitution: {start_tok}")
+            return start_tok
+
+        opening_count = 1
+        closing_count = 0
+
+        while opening_count > closing_count:
+            if cmd_expr[pos] in (")", "`"):
+                closing_count += 1
+                if opening_count == closing_count:
+                    if cmd_expr[0] == "(":
+                        self.protocol.terminal.write(
+                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
+                        )
+                    else:
+                        result += self.run_subshell_command(cmd_expr[: pos + 1])
+
+                    if pos < len(cmd_expr) - 1:
+                        remainder = cmd_expr[pos + 1 :]
+                        if "$(" in remainder or "`" in remainder:
+                            result = self.do_command_substitution(result + remainder)
+                        else:
+                            result += remainder
+                else:
+                    pos += 1
+            elif cmd_expr[pos : pos + 2] == "$(":
+                opening_count += 1
+                pos += 2
+            else:
+                if opening_count > closing_count and pos == len(cmd_expr) - 1:
+                    if self.lexer:
+                        tokkie = self.lexer.get_token()
+                        if tokkie is None:
+                            break
+                        else:
+                            cmd_expr = cmd_expr + " " + tokkie
+                pos += 1
+
+        return result
 
     def run_subshell_command(self, cmd_expr: str) -> str:
         # extract the command from $(...) or `...` or (...) expression
@@ -283,29 +343,6 @@ class HoneyPotShell:
             else:
                 self.showPrompt()
 
-        def parse_arguments(arguments: list[str]) -> list[str]:
-            parsed_arguments = []
-            for arg in arguments:
-                parsed_arguments.append(arg)
-
-            return parsed_arguments
-
-        def parse_file_arguments(arguments: str) -> list[str]:
-            """
-            Look up arguments in the file system
-            """
-            parsed_arguments = []
-            for arg in arguments:
-                matches = self.protocol.fs.resolve_path_wc(arg, self.protocol.cwd)
-                if matches:
-                    parsed_arguments.extend(matches)
-                else:
-                    parsed_arguments.append(arg)
-
-            return parsed_arguments
-
-
-
         if not self.cmdpending:
             if self.protocol.pp.next_command is None:  # command dont have pipe(s)
                 if self.interactive:
@@ -324,13 +361,11 @@ class HoneyPotShell:
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
-        cmd2 = copy.copy(cmdAndArgs)
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
         cmd_tokens: list[str] = []
-        cmd_array = []
-        cmd: dict[str, Any] = {}
+        cmd_array: list[dict[str, Any]] = []
         while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
             if piece.count("="):
@@ -359,7 +394,7 @@ class HoneyPotShell:
         if not first_args:
             if first_ops:
                 # Handle redirection without command (e.g. > file)
-                pp = StdOutStdErrEmulationProtocol(
+                pp = PipeProtocol(
                     self.protocol,
                     None,
                     [],
@@ -375,7 +410,7 @@ class HoneyPotShell:
         cmd_array.append(
             {
                 "command": first_args.pop(0),
-                "rargs": parse_arguments(first_args),
+                "rargs": first_args,
                 "redirects": first_ops,
             }
         )
@@ -387,7 +422,7 @@ class HoneyPotShell:
             cmd_array.append(
                 {
                     "command": args.pop(0),
-                    "rargs": parse_arguments(args),
+                    "rargs": args,
                     "redirects": ops,
                 }
             )
@@ -403,7 +438,7 @@ class HoneyPotShell:
                     format="Command found: %(input)s",
                 )
                 if index == len(cmd_array) - 1:
-                    lastpp = StdOutStdErrEmulationProtocol(
+                    lastpp = PipeProtocol(
                         self.protocol,
                         cmdclass,
                         cmd["rargs"],
@@ -414,7 +449,7 @@ class HoneyPotShell:
                     )
                     pp = lastpp
                 else:
-                    pp = StdOutStdErrEmulationProtocol(
+                    pp = PipeProtocol(
                         self.protocol,
                         cmdclass,
                         cmd["rargs"],
@@ -430,12 +465,12 @@ class HoneyPotShell:
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
                     format="Command not found: %(input)s",
                 )
-                message = "-bash: {}: command not found\n".format(cmd["command"]).encode(
-                    "utf8"
-                )
+                message = "-bash: {}: command not found\n".format(
+                    cmd["command"]
+                ).encode("utf8")
                 redirects = cmd.get("redirects", [])
                 if redirects:
-                    temp_pp = StdOutStdErrEmulationProtocol(
+                    temp_pp = PipeProtocol(
                         self.protocol,
                         None,
                         [],
@@ -457,8 +492,8 @@ class HoneyPotShell:
                     isinstance(self.protocol, protocol.HoneyPotExecProtocol)
                     and not self.cmdpending
                 ):
-                    stat = failure.Failure(error.ProcessDone(status=""))
-                    self.protocol.terminal.transport.processEnded(stat)
+                    exit_status = failure.Failure(error.ProcessDone(status=""))
+                    self.protocol.terminal.transport.processEnded(exit_status)
 
                 runOrPrompt()
                 pp = None  # Got a error. Don't run any piped commands

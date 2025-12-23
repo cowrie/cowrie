@@ -3,9 +3,7 @@ from __future__ import annotations
 from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.std_out_std_err_emulation_protocol import (
-    StdOutStdErrEmulationProtocol,
-)
+from cowrie.shell.pipe import PipeProtocol
 
 commands = {}
 
@@ -84,7 +82,7 @@ class Command_busybox(HoneyPotCommand):
             )
 
             # prepare command arguments
-            pp = StdOutStdErrEmulationProtocol(
+            pp = PipeProtocol(
                 self.protocol,
                 cmdclass,
                 self.protocol.pp.cmdargs[1:],

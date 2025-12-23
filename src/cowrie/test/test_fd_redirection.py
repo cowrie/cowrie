@@ -1,3 +1,6 @@
+# ABOUTME: Integration tests for shell FD redirection functionality.
+# ABOUTME: Tests stdout/stderr redirections, pipes, file I/O, and FD duplication.
+
 # Copyright (c) 2025 @CoreZen
 # See LICENSE for details.
 from __future__ import annotations
@@ -63,7 +66,9 @@ class ShellFdRedirectionTests(unittest.TestCase):
         )
 
     def test_stdout_overwrite(self) -> None:
-        self.proto.lineReceived(b"echo hi > outoverwrite; echo bye > outoverwrite; cat outoverwrite")
+        self.proto.lineReceived(
+            b"echo hi > outoverwrite; echo bye > outoverwrite; cat outoverwrite"
+        )
         self.assertEqual(self.tr.value(), b"bye\n" + PROMPT)
 
     def test_stdout_overwrite_and_stderr_pipe(self) -> None:
@@ -110,7 +115,9 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.assertIn(b"localhost", output)
 
     def test_append_preserves_existing(self) -> None:
-        self.proto.lineReceived(b"echo first > appendfile; echo second >> appendfile; echo third >> appendfile; cat appendfile")
+        self.proto.lineReceived(
+            b"echo first > appendfile; echo second >> appendfile; echo third >> appendfile; cat appendfile"
+        )
         self.assertEqual(
             self.tr.value(),
             b"first\nsecond\nthird\n" + PROMPT,
@@ -122,7 +129,9 @@ class ShellFdRedirectionTests(unittest.TestCase):
 
     def test_multiple_output_redirections(self) -> None:
         # Last one should win
-        self.proto.lineReceived(b"echo test > file1 > file2; cat file1; echo separator; cat file2")
+        self.proto.lineReceived(
+            b"echo test > file1 > file2; cat file1; echo separator; cat file2"
+        )
         # file1 should be empty (created but not written to?), file2 has content
         # In bash: file1 is empty, file2 has "test"
         self.assertEqual(
@@ -144,21 +153,23 @@ class ShellFdRedirectionTests(unittest.TestCase):
     def test_swap_stdout_stderr(self) -> None:
         # 3>&1 1>&2 2>&3
         # This swaps stdout and stderr.
-        
+
         cmd = b"cat missingfile > out_file 2> err_file 3>&1 1>&2 2>&3; cat out_file; echo SEP; cat err_file"
         self.proto.lineReceived(cmd)
         output = self.tr.value()
-        
+
         # Expected:
         # out_file contains "cat: missingfile: No such file or directory\n"
         # err_file is empty
         # Output should be: cat: missingfile: ...\nSEP\n
-        
+
         self.assertIn(b"cat: missingfile: No such file or directory\nSEP\n", output)
         self.assertTrue(output.endswith(PROMPT))
 
     def test_filename_with_spaces(self) -> None:
-        self.proto.lineReceived(b"echo test > 'file with spaces'; cat 'file with spaces'")
+        self.proto.lineReceived(
+            b"echo test > 'file with spaces'; cat 'file with spaces'"
+        )
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_multiple_redirections_same_file(self) -> None:
@@ -174,3 +185,70 @@ class ShellFdRedirectionTests(unittest.TestCase):
     def test_stdout_to_stderr_to_file(self) -> None:
         self.proto.lineReceived(b"echo test 1>&2 2> file; cat file")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+    def test_redirect_to_nonexistent_dir(self) -> None:
+        # Redirecting to a file in a non-existent directory should error
+        self.proto.lineReceived(b"echo test > /nonexistent/dir/file")
+        self.assertIn(b"No such file or directory", self.tr.value())
+        self.assertTrue(self.tr.value().endswith(PROMPT))
+
+    def test_bad_fd_reference(self) -> None:
+        # Referencing a non-existent FD (99) - should be handled gracefully
+        self.proto.lineReceived(b"echo test 2>&99")
+        # Should still output to stdout since 2>&99 fails silently
+        self.assertIn(b"test", self.tr.value())
+        self.assertTrue(self.tr.value().endswith(PROMPT))
+
+    def test_command_substitution_with_redirect(self) -> None:
+        # Command substitution with internal redirection
+        self.proto.lineReceived(b"echo result=$(cat /etc/passwd 2>/dev/null | head -1)")
+        output = self.tr.value()
+        self.assertIn(b"result=", output)
+        self.assertTrue(output.endswith(PROMPT))
+
+    def test_backtick_substitution(self) -> None:
+        # Backtick style command substitution
+        self.proto.lineReceived(b"echo `echo hello`")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_nested_command_substitution(self) -> None:
+        # Nested $() substitution
+        self.proto.lineReceived(b"echo outer$(echo inner$(echo deep))")
+        self.assertEqual(self.tr.value(), b"outerinnerdeep\n" + PROMPT)
+
+    def test_command_substitution_preserves_prefix(self) -> None:
+        # Text before $() should be preserved
+        self.proto.lineReceived(b"echo prefix$(echo suffix)")
+        self.assertEqual(self.tr.value(), b"prefixsuffix\n" + PROMPT)
+
+    def test_multiple_command_substitutions(self) -> None:
+        # Multiple substitutions in one command
+        self.proto.lineReceived(b"echo $(echo a) $(echo b)")
+        self.assertEqual(self.tr.value(), b"a b\n" + PROMPT)
+
+    def test_existing_env_var_with_redirect(self) -> None:
+        # Test that existing environment variables work with redirects
+        # $HOME should be set in the cowrie environment
+        self.proto.lineReceived(b"echo $HOME > homefile; cat homefile")
+        output = self.tr.value()
+        self.assertTrue(output.endswith(PROMPT))
+        # Should contain a path (home directory)
+        self.assertIn(b"/", output)
+
+    def test_heredoc_style_not_supported(self) -> None:
+        # << is not supported, should not crash
+        self.proto.lineReceived(b"cat << EOF")
+        # Should handle gracefully (may show error or just prompt)
+        self.assertTrue(self.tr.value().endswith(PROMPT))
+
+    def test_redirect_stderr_only_to_pipe(self) -> None:
+        # Only stderr goes to pipe, stdout to terminal
+        self.proto.lineReceived(b"cat missingfile 2>&1 1>/dev/null | cat")
+        output = self.tr.value()
+        self.assertIn(b"No such file or directory", output)
+        self.assertTrue(output.endswith(PROMPT))
+
+    def test_chained_commands_with_redirects(self) -> None:
+        # Multiple commands with different redirects
+        self.proto.lineReceived(b"echo first > f1; echo second > f2; cat f1; cat f2")
+        self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
