@@ -7,6 +7,9 @@ import re
 
 from typing import Any
 
+# Pre-compiled regex for extracting redirection operators
+_REDIR_OP_RE = re.compile(r"^(\d*)(>>|>&|>|<)(.*)$")
+
 
 class CommandParser:
     """
@@ -95,7 +98,7 @@ class CommandParser:
 
     def _extract_redir_op(self, token: str) -> tuple[str | None, int | None, str]:
         """Parse a combined redirection token into (op, fd, inline target)."""
-        match = re.match(r"^(\d*)(>>|>&|>|<)(.*)$", token)
+        match = _REDIR_OP_RE.match(token)
         if not match:
             return None, None, ""
         fd_text, op, inline_target = match.groups()

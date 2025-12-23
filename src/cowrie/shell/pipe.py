@@ -40,7 +40,6 @@ class PipeProtocol:
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
         self.next_command = next_command
-        self.data: bytes = b""
         self.redirected_data: bytes = b""
         self.err_data: bytes = b""
         self.protocol = protocol
@@ -264,7 +263,6 @@ class PipeProtocol:
         """
 
         if self.next_command:
-            # self.next_command.input_data = self.data
             npcmd = self.next_command.cmd
             npcmdargs = self.next_command.cmdargs
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
@@ -297,7 +295,6 @@ class PipeProtocol:
             log.msg("Connection was probably lost. Could not write to terminal")
 
     def write_stdout(self, data: bytes) -> None:
-        self.data = data
         self._write_to_fd(1, data)
 
     def write_stderr(self, data: bytes) -> None:
