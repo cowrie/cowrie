@@ -74,6 +74,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         self.startTime = None
         self.transportId = None
+        self.sessionno: str = ""
 
         self.pool_interface = None
         self.backendConnected = False
@@ -83,6 +84,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         # only used when simple proxy (no pool) set
         self.backend_ip = None
         self.backend_port = None
+        self.backend_local_ip = None
+        self.backend_local_port = None
 
     def connectionMade(self):
         """
@@ -91,6 +94,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.sshParse = ssh.SSH(self)
         self.transportId = uuid.uuid4().hex[:12]
+        self.sessionno = f"S{self.transport.sessionno}"
 
         self.peer_ip = self.transport.getPeer().host
         self.peer_port = self.transport.getPeer().port + 1
@@ -111,7 +115,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             dst_ip=self.local_ip,
             dst_port=self.transport.getHost().port,
             session=self.transportId,
-            sessionno=f"S{self.transport.sessionno}",
+            sessionno=self.sessionno,
             protocol="ssh",
         )
 
@@ -156,12 +160,40 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason: failure.Failure) -> None:
-        log.msg(f"Connection to honeypot backend refused: {reason.value}")
+        log.msg(
+            eventid="cowrie.proxy.backend_connect_error",
+            format="Connection to honeypot backend %(backend_ip)s:%(backend_port)s refused: %(error)s",
+            backend_ip=self.backend_ip,
+            backend_port=self.backend_port,
+            error=reason.getErrorMessage(),
+            session=self.transportId,
+            sessionno=self.sessionno,
+            protocol="ssh",
+        )
         if self.transport:
             self.transport.loseConnection()
 
     def backend_connection_success(self, backendTransport):
-        log.msg("Connected to honeypot backend")
+        backend_host = backendTransport.transport.getHost()
+        backend_peer = backendTransport.transport.getPeer()
+
+        # Cache resolved endpoints for connectionLost logging
+        self.backend_local_ip = backend_host.host
+        self.backend_local_port = backend_host.port
+        self.backend_ip = backend_peer.host     # Sets backend_ip to its IP if backend_ip was a hostname
+        self.backend_port = backend_peer.port
+
+        log.msg(
+            eventid="cowrie.proxy.backend_connected",
+            format="Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+            backend_ip=backend_peer.host,
+            backend_port=backend_peer.port,
+            local_ip=backend_host.host,
+            local_port=backend_host.port,
+            session=self.transportId,
+            sessionno=self.sessionno,
+            protocol="ssh",
+        )
 
         self.startTime = time.time()
 
@@ -171,6 +203,10 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
 
     def connect_to_backend(self, ip, port):
+        # remember target so we can log consistently on success/failure
+        self.backend_ip = ip
+        self.backend_port = port
+
         # connection to the backend starts here
         client_factory = client_transport.BackendSSHFactory()
         client_factory.server = self
@@ -353,6 +389,19 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         This seems to be the only reliable place of catching lost connection
         """
+        if self.backend_ip and self.backend_local_ip:
+            log.msg(
+                eventid="cowrie.proxy.backend_disconnected",
+                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s (local %(local_ip)s:%(local_port)s)",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                local_ip=self.backend_local_ip,
+                local_port=self.backend_local_port,
+                session=self.transportId,
+                sessionno=self.sessionno,
+                protocol="ssh",
+            )
+
         self.setTimeout(None)
 
         transport.SSHServerTransport.connectionLost(self, reason)
