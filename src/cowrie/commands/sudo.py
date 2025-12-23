@@ -2,7 +2,7 @@ from __future__ import annotations
 import getopt
 
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.honeypot import StdOutStdErrEmulationProtocol
+from cowrie.shell.pipe import PipeProtocol
 
 commands = {}
 
@@ -120,7 +120,7 @@ class Command_sudo(HoneyPotCommand):
             cmdclass = self.protocol.getCommand(cmd, self.environ["PATH"].split(":"))
 
             if cmdclass:
-                command = StdOutStdErrEmulationProtocol(
+                command = PipeProtocol(
                     self.protocol, cmdclass, parsed_arguments[1:], None, None
                 )
                 self.protocol.pp.insert_command(command)
