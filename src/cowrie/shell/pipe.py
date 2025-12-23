@@ -24,9 +24,6 @@ FD_FILE = "file"
 FD_FILE_INPUT = "file_input"
 FD_DEVNULL = "devnull"
 
-# Prefix for honeypot filesystem paths that need new backing files
-HONEYFS_PREFIX = "honeyfs"
-
 
 class PipeProtocol:
     def __init__(
@@ -171,9 +168,13 @@ class PipeProtocol:
 
     def _needs_new_backing(self, p: Any) -> bool:
         """Decide whether to create a fresh real file for redirection target."""
-        return (
-            not p or not p[fs.A_REALFILE] or p[fs.A_REALFILE].startswith(HONEYFS_PREFIX)
+        if not p or not p[fs.A_REALFILE]:
+            return True
+        # Don't modify files from the honeyfs - create new backing instead
+        contents_path = CowrieConfig.get(
+            "honeypot", "contents_path", fallback="honeyfs"
         )
+        return p[fs.A_REALFILE].startswith(contents_path)
 
     def _create_redirect_target(self, outfile: str) -> str | None:
         """Create a new backing file for a redirected output target."""
