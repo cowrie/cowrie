@@ -1,0 +1,206 @@
+# ABOUTME: Posts release announcements to the Cowrie LinkedIn page
+# ABOUTME: Triggers automatically when a new GitHub release is published
+---
+name: LinkedIn Release Announcement
+
+on:  # yamllint disable-line rule:truthy
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to announce (e.g., v2.5.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (do not post to LinkedIn)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  linkedin-post:
+    runs-on: ubuntu-latest
+    # Only run on the main repository, not forks
+    if: github.repository == 'cowrie/cowrie'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get release information
+        id: release_info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${{ inputs.release_tag }}"
+          else
+            RELEASE_TAG="${{ github.event.release.tag_name }}"
+          fi
+
+          echo "tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+
+          # Get release information using GitHub CLI
+          RELEASE_NAME=$(gh release view "${RELEASE_TAG}" --json name --jq '.name')
+          RELEASE_URL=$(gh release view "${RELEASE_TAG}" --json url --jq '.url')
+          RELEASE_BODY=$(gh release view "${RELEASE_TAG}" --json body --jq '.body')
+
+          echo "name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+          echo "url=${RELEASE_URL}" >> $GITHUB_OUTPUT
+
+          # Store release body in a file for multi-line handling
+          echo "${RELEASE_BODY}" > /tmp/release_body.md
+
+      - name: Format LinkedIn post
+        id: format_post
+        run: |
+          RELEASE_TAG="${{ steps.release_info.outputs.tag }}"
+          RELEASE_URL="${{ steps.release_info.outputs.url }}"
+
+          # Read and process release notes
+          RELEASE_BODY=$(cat /tmp/release_body.md)
+
+          # Create LinkedIn post content
+          # LinkedIn has a 3000 character limit for posts
+          {
+            echo "🚀 Cowrie ${RELEASE_TAG} Released!"
+            echo ""
+            echo "We're excited to announce a new release of Cowrie, the medium to high interaction SSH and Telnet honeypot."
+          } > /tmp/linkedin_post.txt
+
+          # Add a summary of changes (first 1500 chars of release notes)
+          # Remove markdown links and convert to plain text
+          CLEAN_NOTES=$(echo "${RELEASE_BODY}" | \
+            sed 's/\[([^]]*)\]([^)]*)/\1/g' | \
+            sed 's/#//g' | \
+            sed 's/\*\*//g' | \
+            sed 's/\*//g' | \
+            head -c 1500)
+
+          if [ -n "${CLEAN_NOTES}" ]; then
+            {
+              echo ""
+              echo "What's New:"
+              echo "${CLEAN_NOTES}"
+            } >> /tmp/linkedin_post.txt
+          fi
+
+          # Add footer with links
+          {
+            echo ""
+            echo "📦 Download: ${RELEASE_URL}"
+            echo "📚 Documentation: https://docs.cowrie.org"
+            echo "⭐ GitHub: https://github.com/cowrie/cowrie"
+            echo ""
+            echo "#cybersecurity #honeypot #ssh #telnet #infosec #opensource #cowrie"
+          } >> /tmp/linkedin_post.txt
+
+          # Ensure post is under 3000 characters
+          POST_CONTENT=$(head -c 2900 /tmp/linkedin_post.txt)
+
+          # Escape for JSON
+          POST_JSON=$(echo "${POST_CONTENT}" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')
+
+          echo "post_content=${POST_JSON}" >> $GITHUB_OUTPUT
+
+          echo "=== LinkedIn Post Preview ==="
+          cat /tmp/linkedin_post.txt
+          echo "=== End Preview ==="
+
+      - name: Post to LinkedIn
+        if: ${{ inputs.dry_run != true }}
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_ORGANIZATION_ID: ${{ secrets.LINKEDIN_ORGANIZATION_ID }}
+        run: |
+          if [ -z "${LINKEDIN_ACCESS_TOKEN}" ]; then
+            echo "::error::LINKEDIN_ACCESS_TOKEN secret is not set"
+            exit 1
+          fi
+
+          if [ -z "${LINKEDIN_ORGANIZATION_ID}" ]; then
+            echo "::error::LINKEDIN_ORGANIZATION_ID secret is not set"
+            exit 1
+          fi
+
+          # Create the LinkedIn API payload using Python for proper JSON formatting
+          # Using the LinkedIn Marketing API v2 for organization posts
+          RELEASE_URL="${{ steps.release_info.outputs.url }}"
+          RELEASE_TAG="${{ steps.release_info.outputs.tag }}"
+
+          python3 - "${LINKEDIN_ORGANIZATION_ID}" "${RELEASE_URL}" "${RELEASE_TAG}" << 'PYTHON_SCRIPT' > /tmp/linkedin_payload.json
+          import json
+          import sys
+
+          org_id = sys.argv[1]
+          release_url = sys.argv[2]
+          release_tag = sys.argv[3]
+
+          with open('/tmp/linkedin_post.txt', 'r') as f:
+              post_text = f.read()
+
+          payload = {
+              "author": f"urn:li:organization:{org_id}",
+              "lifecycleState": "PUBLISHED",
+              "specificContent": {
+                  "com.linkedin.ugc.ShareContent": {
+                      "shareCommentary": {
+                          "text": post_text
+                      },
+                      "shareMediaCategory": "ARTICLE",
+                      "media": [
+                          {
+                              "status": "READY",
+                              "originalUrl": release_url,
+                              "title": {
+                                  "text": f"Cowrie {release_tag} Release"
+                              },
+                              "description": {
+                                  "text": "Cowrie SSH/Telnet Honeypot - New Release"
+                              }
+                          }
+                      ]
+                  }
+              },
+              "visibility": {
+                  "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+              }
+          }
+
+          print(json.dumps(payload, indent=2))
+          PYTHON_SCRIPT
+
+          echo "Posting to LinkedIn..."
+
+          # Make the API call to LinkedIn
+          HTTP_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "https://api.linkedin.com/v2/ugcPosts" \
+            -H "Authorization: Bearer ${LINKEDIN_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -H "X-Restli-Protocol-Version: 2.0.0" \
+            -d @/tmp/linkedin_payload.json)
+
+          HTTP_CODE=$(echo "${HTTP_RESPONSE}" | tail -n1)
+          RESPONSE_BODY=$(echo "${HTTP_RESPONSE}" | sed '$d')
+
+          echo "HTTP Status Code: ${HTTP_CODE}"
+          echo "Response: ${RESPONSE_BODY}"
+
+          if [ "${HTTP_CODE}" -ge 200 ] && [ "${HTTP_CODE}" -lt 300 ]; then
+            echo "✅ Successfully posted to LinkedIn!"
+            POST_ID=$(echo "${RESPONSE_BODY}" | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get("id", "unknown"))')
+            echo "Post ID: ${POST_ID}"
+          else
+            echo "::error::Failed to post to LinkedIn. HTTP ${HTTP_CODE}"
+            exit 1
+          fi
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "=== DRY RUN - No post was made to LinkedIn ==="
+          echo "The following content would have been posted:"
+          echo ""
+          cat /tmp/linkedin_post.txt
