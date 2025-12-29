@@ -45,16 +45,17 @@ class Command_yum(HoneyPotCommand):
 
     packages: dict[str, dict[str, Any]]
 
-    def start(self) -> None:
+    @inlineCallbacks
+    def start(self):
+        self.packages = {}
         if len(self.args) == 0:
-            self.do_help()
+            yield self.do_help()
         elif self.args[0] == "version":
-            self.do_version()
+            yield self.do_version()
         elif self.args[0] == "install":
-            self.do_install()
+            yield self.do_install()
         else:
             self.do_locked()
-        self.packages = {}
 
     def sleep(self, time: float, time2: float | None = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()

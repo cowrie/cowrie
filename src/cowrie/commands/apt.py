@@ -38,18 +38,19 @@ class Command_aptget(HoneyPotCommand):
 
     packages: dict[str, dict[str, Any]]
 
-    def start(self) -> None:
+    @inlineCallbacks
+    def start(self):
+        self.packages = {}
         if len(self.args) == 0:
             self.do_help()
         elif self.args[0] == "-v":
             self.do_version()
         elif self.args[0] == "install":
-            self.do_install()
+            yield self.do_install()
         elif self.args[0] == "moo":
             self.do_moo()
         else:
             self.do_locked()
-        self.packages = {}
 
     def sleep(self, time: float, time2: float | None = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()
