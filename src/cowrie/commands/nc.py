@@ -3,6 +3,8 @@ import getopt
 import socket
 import struct
 
+from twisted.internet.defer import inlineCallbacks
+
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed, is_valid_port
 from cowrie.core.rate_limiter import RateLimiter
@@ -113,6 +115,7 @@ class Command_nc(HoneyPotCommand):
         self.errorWrite("\t\t-z\t\tZero-I/O mode [used for scanning]\n")
         self.errorWrite("\tPort numbers can be individual or ranges: lo-hi [inclusive]\n")
 
+    @inlineCallbacks
     def start(self):
         try:
             _optlist, args = getopt.getopt(
@@ -214,7 +217,7 @@ class Command_nc(HoneyPotCommand):
             self.exit()
             return
 
-        allowed = communication_allowed(host)
+        allowed = yield communication_allowed(host)
         if not allowed:
             log.msg(f"nc: blocked connection attempt to {host} (private/reserved IP range)")
             self.exit()
