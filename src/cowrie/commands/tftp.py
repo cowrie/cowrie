@@ -4,7 +4,7 @@ import struct
 from typing import TYPE_CHECKING, Any
 
 from twisted.internet import defer, reactor
-from twisted.internet.defer import CancelledError
+from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import DatagramProtocol
 from twisted.python import log
 
@@ -211,7 +211,8 @@ class Command_tftp(HoneyPotCommand):
     fakeoutfile: str
     udp_port: Any | None = None
 
-    def start(self) -> None:
+    @inlineCallbacks
+    def start(self):
         parser = CustomParser(self)
         parser.prog = "tftp"
         parser.add_argument("hostname", nargs="?", default=None)
@@ -258,7 +259,8 @@ class Command_tftp(HoneyPotCommand):
             self.port = int(port_str)
 
         # Check if communication is allowed
-        if not communication_allowed(self.hostname):
+        allowed = yield communication_allowed(self.hostname)
+        if not allowed:
             self.exit()
             return
 

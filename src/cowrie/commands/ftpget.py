@@ -7,6 +7,7 @@ import os
 from typing import TYPE_CHECKING
 
 from twisted.internet import defer, reactor
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.protocols.ftp import CommandFailed, FTPClient
 from twisted.python import log
@@ -72,7 +73,8 @@ Download a file via FTP
     -P NUM      Port\n\n"""
         )
 
-    def start(self) -> None:
+    @inlineCallbacks
+    def start(self):
         try:
             optlist, args = getopt.getopt(self.args, "cvu:p:P:")
         except getopt.GetoptError:
@@ -125,7 +127,8 @@ Download a file via FTP
             self.exit()
             return
 
-        if not communication_allowed(self.host):
+        allowed = yield communication_allowed(self.host)
+        if not allowed:
             self.exit()
             return
 
