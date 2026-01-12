@@ -38,7 +38,7 @@ class ServerProtocol(protocol.Protocol):
     def __init__(self, dst_ip: str, dst_port: int):
         self.dst_ip: str = dst_ip
         self.dst_port: int = dst_port
-        self.client_protocol: ClientProtocol
+        self.client_protocol: ClientProtocol | None = None
         self.buffer: list[bytes] = []
 
     def connectionMade(self):
@@ -53,13 +53,13 @@ class ServerProtocol(protocol.Protocol):
             reactor.callLater(0.5, self.sendData)  # type: ignore[attr-defined]
             return
 
-        assert self.client_protocol.transport is not None
+        assert self.client_protocol is not None and self.client_protocol.transport is not None
         for packet in self.buffer:
             self.client_protocol.transport.write(packet)
         self.buffer = []
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
-        assert self.client_protocol.transport is not None
+        assert self.client_protocol is not None and self.client_protocol.transport is not None
         self.client_protocol.transport.loseConnection()
 
 
