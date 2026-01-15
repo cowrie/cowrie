@@ -85,7 +85,7 @@ dev = [
 "ruff==0.14.10",
 "setuptools==80.9.0",
 "sphinx-copybutton==0.5.2",
-"sphinx_rtd_theme==3.0.2",
+"sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.5",
 "tox==4.33.0",
 "types-python-dateutil==2.9.0.20251115",
