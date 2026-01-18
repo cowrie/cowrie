@@ -251,6 +251,7 @@ class Command_wget(HoneyPotCommand):
             self.outfile = urldata.path.split("/")[-1]
             if not len(self.outfile.strip()) or not urldata.path.count("/"):
                 self.outfile = "index.html"
+            self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
 
         elif self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
