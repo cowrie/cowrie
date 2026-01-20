@@ -289,3 +289,29 @@ Modifying Cowrie
 
 The pre-login banner can be set by creating the file ``honeyfs/etc/issue.net``.
 The post-login banner can be customized by editing ``honeyfs/etc/motd``.
+
+
+Local testing with SSH
+----------------------
+
+After starting Cowrie locally, you can test it by connecting via SSH.
+
+1. Start Cowrie:
+
+   cowrie start
+
+2. Connect using SSH (Cowrie listens on port 2222 by default):
+
+   ssh -p 2222 root@localhost
+
+3. If authentication fails, check etc/userdb.txt and ensure an allow rule exists.
+   Rules are processed top-to-bottom and stop at the first match.
+
+4. Logs are written to:
+
+   var/log/cowrie/cowrie.log
+
+   This file contains all recorded activity, including login attempts,
+   successful authentications, and commands executed by connected sessions.
+   It is useful for verifying that Cowrie is working and for observing
+   attacker behavior during testing.
