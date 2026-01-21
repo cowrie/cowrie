@@ -292,7 +292,7 @@ The post-login banner can be customized by editing ``honeyfs/etc/motd``.
 
 
 Local testing with SSH
-----------------------
+**********************
 
 After starting Cowrie locally, you can test it by connecting via SSH.
 
