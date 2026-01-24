@@ -153,7 +153,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             option_byte=option_byte,
         )
         # Call parent implementation
-        return TelnetTransport.telnet_WILL(self, option)
+        TelnetTransport.telnet_WILL(self, option)
 
     def telnet_WONT(self, option: bytes) -> None:
         """
@@ -168,7 +168,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             option_name=option_name,
             option_byte=option_byte,
         )
-        return TelnetTransport.telnet_WONT(self, option)
+        TelnetTransport.telnet_WONT(self, option)
 
     def telnet_DO(self, option: bytes) -> None:
         """
@@ -183,7 +183,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             option_name=option_name,
             option_byte=option_byte,
         )
-        return TelnetTransport.telnet_DO(self, option)
+        TelnetTransport.telnet_DO(self, option)
 
     def telnet_DONT(self, option: bytes) -> None:
         """
@@ -198,4 +198,4 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             option_name=option_name,
             option_byte=option_byte,
         )
-        return TelnetTransport.telnet_DONT(self, option)
+        TelnetTransport.telnet_DONT(self, option)
