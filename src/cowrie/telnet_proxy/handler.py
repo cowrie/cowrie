@@ -330,9 +330,29 @@ class TelnetHandler:
         hasNegotiationLogin = negotiationLoginPattern.search(self.currentData)
         if hasNegotiationLogin:
             self.usernameState = hasNegotiationLogin.group(2)
+            username_str = self.usernameState.decode("unicode-escape")
             log.msg(
-                f"Detected username {self.usernameState.decode('unicode-escape')} in negotiation, spoofing for backend..."
+                f"Detected username {username_str} in negotiation, spoofing for backend..."
             )
+
+            # Log the environment variable for consistency with shell mode
+            log.msg(
+                eventid="cowrie.client.var",
+                format="Telnet NEW-ENVIRON: %(name)s=%(value)s",
+                name="USER",
+                value=username_str,
+            )
+
+            # CVE-2026-24061 detection: USER environment variable with -f flag
+            # This exploit bypasses authentication in GNU inetutils telnetd <= 2.7
+            if username_str.startswith("-f"):
+                log.msg(
+                    eventid="cowrie.telnet.exploit_attempt",
+                    format="CVE-2026-24061 exploit attempt detected: USER=%(value)s",
+                    cve="CVE-2026-24061",
+                    name="USER",
+                    value=username_str,
+                )
 
             # spoof username in data sent
             # username is always sent correct, password is the one sent wrong if we don't want to authenticate
