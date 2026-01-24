@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, patch
 from cowrie.telnet.userauth import (
     NEW_ENVIRON,
     NEW_ENVIRON_ESC,
-    NEW_ENVIRON_INFO,
     NEW_ENVIRON_IS,
     NEW_ENVIRON_USERVAR,
     NEW_ENVIRON_VALUE,
