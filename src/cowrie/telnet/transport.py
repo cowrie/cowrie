@@ -18,6 +18,24 @@ from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 
+# Telnet option names for logging (RFC 854, RFC 855, RFC 1572, etc.)
+TELNET_OPTIONS: dict[int, str] = {
+    0: "BINARY",
+    1: "ECHO",
+    3: "SGA",
+    5: "STATUS",
+    6: "TIMING-MARK",
+    24: "TERMINAL-TYPE",
+    31: "NAWS",
+    32: "TERMINAL-SPEED",
+    33: "REMOTE-FLOW-CONTROL",
+    34: "LINEMODE",
+    35: "X-DISPLAY-LOCATION",
+    36: "ENVIRON",
+    39: "NEW-ENVIRON",
+    255: "EXOPL",
+}
+
 
 class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
@@ -112,3 +130,72 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
 
     def _chainNegotiation(self, res, func, option):
         return func(option).addErrback(self._handleNegotiationError, func, option)
+
+    def _get_option_name(self, option: bytes) -> str:
+        """Get human-readable name for a telnet option byte."""
+        if option:
+            option_byte = option[0] if isinstance(option, bytes) else option
+            return TELNET_OPTIONS.get(option_byte, f"UNKNOWN-{option_byte}")
+        return "UNKNOWN"
+
+    def telnet_WILL(self, option: bytes) -> None:
+        """
+        Client indicates willingness to enable an option.
+        Log for security monitoring and CVE detection.
+        """
+        option_name = self._get_option_name(option)
+        option_byte = option[0] if option else 0
+        log.msg(
+            eventid="cowrie.telnet.option",
+            format="Telnet WILL %(option_name)s",
+            command="WILL",
+            option_name=option_name,
+            option_byte=option_byte,
+        )
+        # Call parent implementation
+        TelnetTransport.telnet_WILL(self, option)
+
+    def telnet_WONT(self, option: bytes) -> None:
+        """
+        Client refuses to enable an option.
+        """
+        option_name = self._get_option_name(option)
+        option_byte = option[0] if option else 0
+        log.msg(
+            eventid="cowrie.telnet.option",
+            format="Telnet WONT %(option_name)s",
+            command="WONT",
+            option_name=option_name,
+            option_byte=option_byte,
+        )
+        TelnetTransport.telnet_WONT(self, option)
+
+    def telnet_DO(self, option: bytes) -> None:
+        """
+        Client requests that we enable an option.
+        """
+        option_name = self._get_option_name(option)
+        option_byte = option[0] if option else 0
+        log.msg(
+            eventid="cowrie.telnet.option",
+            format="Telnet DO %(option_name)s",
+            command="DO",
+            option_name=option_name,
+            option_byte=option_byte,
+        )
+        TelnetTransport.telnet_DO(self, option)
+
+    def telnet_DONT(self, option: bytes) -> None:
+        """
+        Client requests that we disable an option.
+        """
+        option_name = self._get_option_name(option)
+        option_byte = option[0] if option else 0
+        log.msg(
+            eventid="cowrie.telnet.option",
+            format="Telnet DONT %(option_name)s",
+            command="DONT",
+            option_name=option_name,
+            option_byte=option_byte,
+        )
+        TelnetTransport.telnet_DONT(self, option)
