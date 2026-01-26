@@ -1,6 +1,6 @@
 Sphinx==9.1.0
 readthedocs-sphinx-search==0.3.2
-setuptools==80.9.0
+setuptools==80.10.2
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.1.0
 sphinxcontrib-googleanalytics==0.5
