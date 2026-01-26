@@ -20,6 +20,8 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
     strategy:
       fail-fast: false
       matrix:
