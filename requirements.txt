@@ -3,7 +3,7 @@ bcrypt==5.0.0
 cryptography==46.0.3
 hyperlink==21.0.0
 idna==3.11
-packaging==25.0
+packaging==26.0
 pyasn1_modules==0.4.2
 requests==2.32.5
 service_identity==24.2.0
