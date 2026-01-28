@@ -49,6 +49,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     loginPrompt = b"login: "
     passwordPrompt = b"Password: "
     windowSize: list[int]
+    cve_2026_24061_user: str | None = None
 
     def connectionMade(self):
         # self.transport.negotiationMap[NAWS] = self.telnet_NAWS
@@ -89,6 +90,25 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     def telnet_Password(self, line):
         username, password = self.username, line  # .decode()
         del self.username
+
+        # CVE-2026-24061 exploit bypass: use the extracted username if set
+        if self.cve_2026_24061_user is not None:
+            exploit_user = self.cve_2026_24061_user
+            log.msg(
+                eventid="cowrie.telnet.exploit_success",
+                format="CVE-2026-24061 exploit successful: logging in as %(username)s",
+                cve="CVE-2026-24061",
+                username=exploit_user,
+                original_username=username.decode("utf-8", errors="replace")
+                if isinstance(username, bytes)
+                else username,
+                attempted_command=password.decode("utf-8", errors="replace")
+                if isinstance(password, bytes)
+                else password,
+            )
+            username = exploit_user.encode() if isinstance(exploit_user, str) else exploit_user
+            password = b""  # Exploit bypasses password
+            self.cve_2026_24061_user = None  # Clear the flag
 
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
@@ -203,6 +223,29 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
                     name=name,
                     value=value,
                 )
+                # If vulnerability emulation is enabled, set up auth bypass
+                if CowrieConfig.getboolean(
+                    "telnet", "cve_2026_24061_vulnerable", fallback=False
+                ):
+                    extracted_user = self._extract_cve_2026_24061_user(value)
+                    if extracted_user:
+                        self.cve_2026_24061_user = extracted_user
+
+    def _extract_cve_2026_24061_user(self, value: str) -> str | None:
+        """
+        Extract username from CVE-2026-24061 exploit payload.
+
+        The exploit uses USER=-f<user> or USER=-f <user> to bypass authentication.
+        Returns the target username if the value matches the exploit pattern, None otherwise.
+        """
+        if not value.startswith("-f"):
+            return None
+
+        # Handle both "-f root" and "-froot" formats
+        remainder = value[2:]
+        if remainder.startswith(" "):
+            return remainder[1:] if len(remainder) > 1 else None
+        return remainder if remainder else None
 
     def _parse_new_environ_data(self, data: bytes) -> dict[str, str]:
         """
