@@ -116,13 +116,17 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                     s.him.onResult.addCallback(self._chainNegotiation, func, option)
                     s.him.onResult.addErrback(self._handleNegotiationError, func, option)
                 else:
-                    self._chainNegotiation(None, func, option)
+                    # Negotiation completed between error and handling - call directly
+                    # without error chaining to avoid infinite recursion
+                    func(option)
             if func in (self.will, self.wont):
                 if s.us.onResult is not None:
                     s.us.onResult.addCallback(self._chainNegotiation, func, option)
                     s.us.onResult.addErrback(self._handleNegotiationError, func, option)
                 else:
-                    self._chainNegotiation(None, func, option)
+                    # Negotiation completed between error and handling - call directly
+                    # without error chaining to avoid infinite recursion
+                    func(option)
         # We only care about AlreadyNegotiating, everything else can be ignored
         # Possible other types include OptionRefused, AlreadyDisabled, AlreadyEnabled, ConnectionDone, ConnectionLost
         elif f.type is AssertionError:
