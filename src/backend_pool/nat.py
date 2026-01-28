@@ -53,13 +53,19 @@ class ServerProtocol(protocol.Protocol):
             reactor.callLater(0.5, self.sendData)  # type: ignore[attr-defined]
             return
 
-        assert self.client_protocol is not None and self.client_protocol.transport is not None
+        assert (
+            self.client_protocol is not None
+            and self.client_protocol.transport is not None
+        )
         for packet in self.buffer:
             self.client_protocol.transport.write(packet)
         self.buffer = []
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
-        assert self.client_protocol is not None and self.client_protocol.transport is not None
+        assert (
+            self.client_protocol is not None
+            and self.client_protocol.transport is not None
+        )
         self.client_protocol.transport.loseConnection()
 
 
@@ -84,7 +90,9 @@ class NATService:
 
     def __init__(self):
         self.bindings: dict[int, Any] = {}
-        self.lock = Lock()  # we need to be thread-safe just in case, this is accessed from multiple clients
+        self.lock = (
+            Lock()
+        )  # we need to be thread-safe just in case, this is accessed from multiple clients
 
     def request_binding(
         self, guest_id: int, dst_ip: str, ssh_port: int, telnet_port: int
@@ -95,20 +103,37 @@ class NATService:
                 # increase connected
                 self.bindings[guest_id][0] += 1
 
-                return (
-                    self.bindings[guest_id][1]._realPortNumber,
-                    self.bindings[guest_id][2]._realPortNumber,
-                )
-            else:
-                nat_ssh = reactor.listenTCP(  # type: ignore[attr-defined]
-                    0, ServerFactory(dst_ip, ssh_port), interface="0.0.0.0"
-                )
-                nat_telnet = reactor.listenTCP(  # type: ignore[attr-defined]
-                    0, ServerFactory(dst_ip, telnet_port), interface="0.0.0.0"
-                )
-                self.bindings[guest_id] = [1, nat_ssh, nat_telnet]
+                # edge case: one of the port listeners were closed/is closed, meaning the _realPortNumer is None
+                # see: https://github.com/twisted/twisted/blob/d1da93654b14ba6870ce77ce77daf584451c2e8f/src/twisted/internet/tcp.py#L1484
+                # causing errors when doing struct.pack
+                port1 = self.bindings[guest_id][1]._realPortNumber
+                port2 = self.bindings[guest_id][2]._realPortNumber
 
-                return nat_ssh._realPortNumber, nat_telnet._realPortNumber
+                if (port1 is not None) and (port2 is not None):
+                    return (
+                        port1,
+                        port2,
+                    )
+                else:
+                    # stop existing listeners
+                    if port1 is not None:
+                        self.bindings[guest_id][1].stopListening()
+                    if port2 is not None:
+                        self.bindings[guest_id][2].stopListening()
+
+                    del self.bindings[guest_id]
+
+                    # let it recreate the bindings on the next step
+
+            nat_ssh = reactor.listenTCP(  # type: ignore[attr-defined]
+                0, ServerFactory(dst_ip, ssh_port), interface="0.0.0.0"
+            )
+            nat_telnet = reactor.listenTCP(  # type: ignore[attr-defined]
+                0, ServerFactory(dst_ip, telnet_port), interface="0.0.0.0"
+            )
+            self.bindings[guest_id] = [1, nat_ssh, nat_telnet]
+
+            return nat_ssh._realPortNumber, nat_telnet._realPortNumber
 
     def free_binding(self, guest_id: int) -> None:
         with self.lock:
@@ -125,3 +150,6 @@ class NATService:
             for guest_id in self.bindings:
                 self.bindings[guest_id][1].stopListening()
                 self.bindings[guest_id][2].stopListening()
+
+            # delete all bindings
+            self.bindings = {}
