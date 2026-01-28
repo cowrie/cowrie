@@ -721,6 +721,12 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 # Source Port to report in logs (useful if you use iptables to forward ports to Cowrie)
 #reported_port = 23
 
+# Emulate CVE-2026-24061 vulnerability (GNU inetutils telnetd authentication bypass)
+# When enabled, attackers using the USER=-f<username> exploit via NEW-ENVIRON
+# will successfully "exploit" the honeypot and get a shell as the specified user.
+# This allows capturing post-exploitation commands.
+# (default: false)
+#cve_2026_24061_vulnerable = false
 
 
 # ============================================================================

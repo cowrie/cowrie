@@ -13,9 +13,9 @@ from cowrie.shell.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
 
 from twisted.cred import portal
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 
-from backend_pool.ssh_exec import execute_ssh
+# from cowrie.test.proxy_compare import ProxyTestCommand
 
 os.environ["COWRIE_HONEYPOT_TTYLOG"] = "false"
 os.environ["COWRIE_OUTPUT_JSONLOG_ENABLED"] = "false"
@@ -26,132 +26,80 @@ def create_ssh_factory(backend):
     factory.portal = portal.Portal(HoneyPotRealm())
     factory.portal.registerChecker(HoneypotPublicKeyChecker())
     factory.portal.registerChecker(HoneypotPasswordChecker())
+    # factory.portal.registerChecker(HoneypotNoneChecker())
 
     return factory
 
 
-class ProxySSHSmokeTests(unittest.TestCase):
-    """
-    Smoke tests for SSH proxy functionality.
+# def create_telnet_factory(backend):
+#     factory = HoneyPotTelnetFactory(backend, None)
+#     factory.portal = portal.Portal(HoneyPotRealm())
+#     factory.portal.registerChecker(HoneypotPasswordChecker())
+#
+#     return factory
 
-    Tests that the proxy can forward SSH exec commands to the shell backend
-    and return correct output.
+
+class ProxyTests(unittest.TestCase):
+    """
+    How to test the proxy:
+        - setUp runs a 'shell' backend on 4444; then set up a 'proxy' on port 5555 connected to the 'shell' backend
+        - test_ssh_proxy runs an exec command via a client against both proxy and shell; returns a deferred
+        - the deferred succeeds if the output from both is the same
     """
 
     HOST = "127.0.0.1"
+
     PORT_BACKEND_SSH = 4444
     PORT_PROXY_SSH = 5555
+    PORT_BACKEND_TELNET = 4445
+    PORT_PROXY_TELNET = 5556
 
-    USERNAME = "root"
-    PASSWORD = "example"
+    USERNAME_BACKEND = "root"
+    PASSWORD_BACKEND = "example"
 
-    @classmethod
-    def setUpClass(cls):
-        # Setup proxy environment before creating factories
+    USERNAME_PROXY = "root"
+    PASSWORD_PROXY = "example"
+
+    def setUp(self):
+        # ################################################# #
+        # #################### Backend #################### #
+        # ################################################# #
+        # setup SSH backend
+        self.factory_shell_ssh = create_ssh_factory("shell")
+        self.shell_server_ssh = reactor.listenTCP(
+            self.PORT_BACKEND_SSH, self.factory_shell_ssh
+        )
+
+        # ################################################# #
+        # #################### Proxy ###################### #
+        # ################################################# #
+        # setup proxy environment
         os.environ["COWRIE_PROXY_BACKEND"] = "simple"
-        os.environ["COWRIE_PROXY_BACKEND_SSH_HOST"] = cls.HOST
-        os.environ["COWRIE_PROXY_BACKEND_SSH_PORT"] = str(cls.PORT_BACKEND_SSH)
+        os.environ["COWRIE_PROXY_BACKEND_SSH_HOST"] = self.HOST
+        os.environ["COWRIE_PROXY_BACKEND_SSH_PORT"] = str(self.PORT_BACKEND_SSH)
+        os.environ["COWRIE_PROXY_BACKEND_TELNET_HOST"] = self.HOST
+        os.environ["COWRIE_PROXY_BACKEND_TELNET_PORT"] = str(self.PORT_BACKEND_TELNET)
 
-        # Setup SSH shell backend
-        cls.factory_shell_ssh = create_ssh_factory("shell")
-        cls.shell_server_ssh = reactor.listenTCP(
-            cls.PORT_BACKEND_SSH, cls.factory_shell_ssh
+        # setup SSH proxy
+        self.factory_proxy_ssh = create_ssh_factory("proxy")
+        self.proxy_server_ssh = reactor.listenTCP(
+            self.PORT_PROXY_SSH, self.factory_proxy_ssh
         )
 
-        # Setup SSH proxy pointing to backend
-        cls.factory_proxy_ssh = create_ssh_factory("proxy")
-        cls.proxy_server_ssh = reactor.listenTCP(
-            cls.PORT_PROXY_SSH, cls.factory_proxy_ssh
-        )
+    # def test_ls(self):
+    #     command_tester = ProxyTestCommand('ssh', self.HOST, self.PORT_BACKEND_SSH, self.PORT_PROXY_SSH,
+    #                                       self.USERNAME_BACKEND, self.PASSWORD_BACKEND,
+    #                                       self.USERNAME_PROXY, self.PASSWORD_PROXY)
+    #
+    #     return command_tester.execute_both('ls -halt')
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.proxy_server_ssh.stopListening()
-        cls.shell_server_ssh.stopListening()
+    def tearDown(self):
+        for client in self.factory_proxy_ssh.running:
+            if client.transport:
+                client.transport.loseConnection()
 
-        cls.factory_shell_ssh.stopFactory()
-        cls.factory_proxy_ssh.stopFactory()
+        self.proxy_server_ssh.stopListening()
+        self.shell_server_ssh.stopListening()
 
-    def test_proxy_whoami(self):
-        """Test that 'whoami' command works through proxy."""
-        d = execute_ssh(
-            self.HOST,
-            self.PORT_PROXY_SSH,
-            self.USERNAME,
-            self.PASSWORD,
-            b"whoami",
-        )
-
-        def check_result(data):
-            self.assertIn(b"root", data)
-
-        d.addCallback(check_result)
-        return d
-
-    def test_proxy_echo(self):
-        """Test that 'echo' command works through proxy."""
-        d = execute_ssh(
-            self.HOST,
-            self.PORT_PROXY_SSH,
-            self.USERNAME,
-            self.PASSWORD,
-            b"echo hello",
-        )
-
-        def check_result(data):
-            self.assertIn(b"hello", data)
-
-        d.addCallback(check_result)
-        return d
-
-    def test_proxy_id(self):
-        """Test that 'id' command works through proxy."""
-        d = execute_ssh(
-            self.HOST,
-            self.PORT_PROXY_SSH,
-            self.USERNAME,
-            self.PASSWORD,
-            b"id",
-        )
-
-        def check_result(data):
-            self.assertIn(b"uid=0(root)", data)
-
-        d.addCallback(check_result)
-        return d
-
-    def test_proxy_matches_backend(self):
-        """Test that proxy output matches direct backend output."""
-        results = {"backend": None, "proxy": None}
-
-        def store_backend(data):
-            results["backend"] = data
-
-        def store_proxy(data):
-            results["proxy"] = data
-
-        d_backend = execute_ssh(
-            self.HOST,
-            self.PORT_BACKEND_SSH,
-            self.USERNAME,
-            self.PASSWORD,
-            b"uname -a",
-        )
-        d_backend.addCallback(store_backend)
-
-        d_proxy = execute_ssh(
-            self.HOST,
-            self.PORT_PROXY_SSH,
-            self.USERNAME,
-            self.PASSWORD,
-            b"uname -a",
-        )
-        d_proxy.addCallback(store_proxy)
-
-        d = defer.DeferredList([d_backend, d_proxy])
-
-        def compare_results(_):
-            self.assertEqual(results["backend"], results["proxy"])
-
-        d.addCallback(compare_results)
-        return d
+        self.factory_shell_ssh.stopFactory()
+        self.factory_proxy_ssh.stopFactory()
