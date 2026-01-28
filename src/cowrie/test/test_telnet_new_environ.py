@@ -9,6 +9,7 @@ that exploits the USER environment variable via NEW-ENVIRON telnet option.
 from __future__ import annotations
 
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 from cowrie.telnet.userauth import (
@@ -20,8 +21,10 @@ from cowrie.telnet.userauth import (
     NEW_ENVIRON_VAR,
     HoneyPotTelnetAuthProtocol,
 )
-from cowrie.core.credentials import UsernamePasswordIP
 from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
+
+if TYPE_CHECKING:
+    from cowrie.core.credentials import UsernamePasswordIP
 
 
 class TestNewEnvironParser(unittest.TestCase):
