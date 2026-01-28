@@ -15,7 +15,9 @@ from cowrie.telnet.transport import CowrieTelnetTransport
 class MockOptionState:
     """Mock for Twisted's _OptionState."""
 
-    def __init__(self, him_result=None, us_result=None):
+    def __init__(
+        self, him_result: MagicMock | None = None, us_result: MagicMock | None = None
+    ) -> None:
         self.him = MagicMock()
         self.him.onResult = him_result
         self.us = MagicMock()
@@ -42,14 +44,14 @@ class TestHandleNegotiationError(unittest.TestCase):
 
         # Mock getOptionState to return state with None onResult
         mock_state = MockOptionState(us_result=None)
-        self.transport.getOptionState = MagicMock(return_value=mock_state)
 
         # This should not raise AttributeError
         # Using self.will as the func (will/wont use s.us.onResult)
-        try:
-            self.transport._handleNegotiationError(f, self.transport.will, b"\x01")
-        except AttributeError as e:
-            self.fail(f"_handleNegotiationError raised AttributeError: {e}")
+        with patch.object(self.transport, "getOptionState", return_value=mock_state):
+            try:
+                self.transport._handleNegotiationError(f, self.transport.will, b"\x01")
+            except AttributeError as e:
+                self.fail(f"_handleNegotiationError raised AttributeError: {e}")
 
     def test_handles_none_him_onResult(self) -> None:
         """Test that _handleNegotiationError handles None onResult for do/dont.
@@ -62,14 +64,14 @@ class TestHandleNegotiationError(unittest.TestCase):
 
         # Mock getOptionState to return state with None onResult
         mock_state = MockOptionState(him_result=None)
-        self.transport.getOptionState = MagicMock(return_value=mock_state)
 
         # This should not raise AttributeError
         # Using self.do as the func (do/dont use s.him.onResult)
-        try:
-            self.transport._handleNegotiationError(f, self.transport.do, b"\x01")
-        except AttributeError as e:
-            self.fail(f"_handleNegotiationError raised AttributeError: {e}")
+        with patch.object(self.transport, "getOptionState", return_value=mock_state):
+            try:
+                self.transport._handleNegotiationError(f, self.transport.do, b"\x01")
+            except AttributeError as e:
+                self.fail(f"_handleNegotiationError raised AttributeError: {e}")
 
     def test_chains_when_onResult_exists(self) -> None:
         """Test that callbacks are properly chained when onResult is not None."""
@@ -81,9 +83,9 @@ class TestHandleNegotiationError(unittest.TestCase):
         mock_deferred.addErrback = MagicMock(return_value=mock_deferred)
 
         mock_state = MockOptionState(us_result=mock_deferred)
-        self.transport.getOptionState = MagicMock(return_value=mock_state)
 
-        self.transport._handleNegotiationError(f, self.transport.will, b"\x01")
+        with patch.object(self.transport, "getOptionState", return_value=mock_state):
+            self.transport._handleNegotiationError(f, self.transport.will, b"\x01")
 
         # Verify callbacks were added
         mock_deferred.addCallback.assert_called_once()

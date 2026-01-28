@@ -20,6 +20,7 @@ from cowrie.telnet.userauth import (
     NEW_ENVIRON_VAR,
     HoneyPotTelnetAuthProtocol,
 )
+from cowrie.core.credentials import UsernamePasswordIP
 from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
 
 
@@ -294,7 +295,8 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         mock_portal = MagicMock()
         self.protocol = HoneyPotTelnetAuthProtocol(mock_portal)
         self.protocol.environ_received = {}
-        self.protocol.transport = MagicMock()
+        self.mock_transport = MagicMock()
+        self.protocol.transport = self.mock_transport
 
     def test_extract_username_from_f_space_root(self) -> None:
         """Test extracting username from '-f root' format."""
@@ -365,8 +367,6 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self, mock_log: MagicMock, mock_config: MagicMock
     ) -> None:
         """Test that auth bypass uses the exploit username instead of entered credentials."""
-        from cowrie.core.credentials import UsernamePasswordIP
-
         # Set up mocks
         mock_config.getboolean.return_value = True
         mock_config.getint.return_value = 300
@@ -374,19 +374,20 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         # Set up transport mock
         mock_peer = MagicMock()
         mock_peer.host = "192.168.1.100"
-        self.protocol.transport.getPeer.return_value = mock_peer
-        self.protocol.transport.options = {}
-        self.protocol.transport.wontChain.return_value = MagicMock()
+        self.mock_transport.getPeer.return_value = mock_peer
+        self.mock_transport.options = {}
+        self.mock_transport.wontChain.return_value = MagicMock()
 
         # Simulate exploit being received
         self.protocol.cve_2026_24061_user = "root"
         self.protocol.username = b"ignored"
 
         # Track what credentials are used
-        captured_creds = []
-        original_login = self.protocol.portal.login
+        captured_creds: list[UsernamePasswordIP] = []
 
-        def capture_login(creds, *args, **kwargs):
+        def capture_login(
+            creds: UsernamePasswordIP, *args: object, **kwargs: object
+        ) -> MagicMock:
             captured_creds.append(creds)
             # Return a deferred-like mock
             d = MagicMock()
@@ -401,8 +402,7 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
 
         # Verify the credentials used the exploit username
         self.assertEqual(len(captured_creds), 1)
-        self.assertEqual(captured_creds[0].username, b"root")
-
+        self.assertEqual(captured_creds[0].username, b"root")  
     @patch("cowrie.telnet.userauth.CowrieConfig")
     @patch("cowrie.telnet.userauth.log")
     def test_exploit_success_is_logged(
@@ -414,19 +414,17 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
 
         mock_peer = MagicMock()
         mock_peer.host = "192.168.1.100"
-        self.protocol.transport.getPeer.return_value = mock_peer
-        self.protocol.transport.options = {}
-        self.protocol.transport.wontChain.return_value = MagicMock()
+        self.mock_transport.getPeer.return_value = mock_peer
+        self.mock_transport.options = {}
+        self.mock_transport.wontChain.return_value = MagicMock()
 
         self.protocol.cve_2026_24061_user = "root"
-        self.protocol.username = b""
-
+        self.protocol.username = b""  
         # Mock portal.login
         d = MagicMock()
         d.addCallback = MagicMock(return_value=d)
         d.addErrback = MagicMock(return_value=d)
-        self.protocol.portal.login = MagicMock(return_value=d)
-
+        self.protocol.portal.login = MagicMock(return_value=d)  
         self.protocol.telnet_Password(b"id")
 
         # Check for exploit success log
