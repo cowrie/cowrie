@@ -9,6 +9,7 @@ that exploits the USER environment variable via NEW-ENVIRON telnet option.
 from __future__ import annotations
 
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 from cowrie.telnet.userauth import (
@@ -21,6 +22,9 @@ from cowrie.telnet.userauth import (
     HoneyPotTelnetAuthProtocol,
 )
 from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
+
+if TYPE_CHECKING:
+    from cowrie.core.credentials import UsernamePasswordIP
 
 
 class TestNewEnvironParser(unittest.TestCase):
@@ -284,6 +288,157 @@ class TestNewEnvironConstants(unittest.TestCase):
         self.assertEqual(NEW_ENVIRON_IS, 0)
         self.assertEqual(NEW_ENVIRON_VALUE, 1)
         self.assertEqual(NEW_ENVIRON_ESC, 2)
+
+
+class TestCVE2026_24061Emulation(unittest.TestCase):
+    """Tests for CVE-2026-24061 vulnerability emulation."""
+
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        mock_portal = MagicMock()
+        self.protocol = HoneyPotTelnetAuthProtocol(mock_portal)
+        self.protocol.environ_received = {}
+        self.mock_transport = MagicMock()
+        self.protocol.transport = self.mock_transport
+
+    def test_extract_username_from_f_space_root(self) -> None:
+        """Test extracting username from '-f root' format."""
+        result = self.protocol._extract_cve_2026_24061_user("-f root")
+        self.assertEqual(result, "root")
+
+    def test_extract_username_from_froot(self) -> None:
+        """Test extracting username from '-froot' format (no space)."""
+        result = self.protocol._extract_cve_2026_24061_user("-froot")
+        self.assertEqual(result, "root")
+
+    def test_extract_username_from_f_admin(self) -> None:
+        """Test extracting username from '-f admin' format."""
+        result = self.protocol._extract_cve_2026_24061_user("-f admin")
+        self.assertEqual(result, "admin")
+
+    def test_extract_returns_none_for_normal_value(self) -> None:
+        """Test that normal USER values return None."""
+        result = self.protocol._extract_cve_2026_24061_user("root")
+        self.assertIsNone(result)
+
+    def test_extract_returns_none_for_other_flags(self) -> None:
+        """Test that other flags don't trigger extraction."""
+        result = self.protocol._extract_cve_2026_24061_user("-p root")
+        self.assertIsNone(result)
+
+    @patch("cowrie.telnet.userauth.CowrieConfig")
+    @patch("cowrie.telnet.userauth.log")
+    def test_exploit_sets_bypass_when_vulnerable(
+        self, mock_log: MagicMock, mock_config: MagicMock
+    ) -> None:
+        """Test that exploit sets bypass flag when vulnerability emulation is enabled."""
+        mock_config.getboolean.return_value = True
+
+        data = [
+            bytes([NEW_ENVIRON_IS]),
+            bytes([NEW_ENVIRON_VAR]),
+            *[bytes([c]) for c in b"USER"],
+            bytes([NEW_ENVIRON_VALUE]),
+            *[bytes([c]) for c in b"-f root"],
+        ]
+        self.protocol.telnet_NEW_ENVIRON(data)
+
+        self.assertEqual(self.protocol.cve_2026_24061_user, "root")
+
+    @patch("cowrie.telnet.userauth.CowrieConfig")
+    @patch("cowrie.telnet.userauth.log")
+    def test_exploit_does_not_set_bypass_when_not_vulnerable(
+        self, mock_log: MagicMock, mock_config: MagicMock
+    ) -> None:
+        """Test that exploit does NOT set bypass flag when vulnerability emulation is disabled."""
+        mock_config.getboolean.return_value = False
+
+        data = [
+            bytes([NEW_ENVIRON_IS]),
+            bytes([NEW_ENVIRON_VAR]),
+            *[bytes([c]) for c in b"USER"],
+            bytes([NEW_ENVIRON_VALUE]),
+            *[bytes([c]) for c in b"-f root"],
+        ]
+        self.protocol.telnet_NEW_ENVIRON(data)
+
+        self.assertIsNone(getattr(self.protocol, "cve_2026_24061_user", None))
+
+    @patch("cowrie.telnet.userauth.CowrieConfig")
+    @patch("cowrie.telnet.userauth.log")
+    def test_auth_bypass_uses_exploit_user(
+        self, mock_log: MagicMock, mock_config: MagicMock
+    ) -> None:
+        """Test that auth bypass uses the exploit username instead of entered credentials."""
+        # Set up mocks
+        mock_config.getboolean.return_value = True
+        mock_config.getint.return_value = 300
+
+        # Set up transport mock
+        mock_peer = MagicMock()
+        mock_peer.host = "192.168.1.100"
+        self.mock_transport.getPeer.return_value = mock_peer
+        self.mock_transport.options = {}
+        self.mock_transport.wontChain.return_value = MagicMock()
+
+        # Simulate exploit being received
+        self.protocol.cve_2026_24061_user = "root"
+        self.protocol.username = b"ignored"
+
+        # Track what credentials are used
+        captured_creds: list[UsernamePasswordIP] = []
+
+        def capture_login(
+            creds: UsernamePasswordIP, *args: object, **kwargs: object
+        ) -> MagicMock:
+            captured_creds.append(creds)
+            # Return a deferred-like mock
+            d = MagicMock()
+            d.addCallback = MagicMock(return_value=d)
+            d.addErrback = MagicMock(return_value=d)
+            return d
+
+        self.protocol.portal.login = capture_login
+
+        # Call telnet_Password with anything - should use exploit user
+        self.protocol.telnet_Password(b"id")
+
+        # Verify the credentials used the exploit username
+        self.assertEqual(len(captured_creds), 1)
+        self.assertEqual(captured_creds[0].username, b"root")  
+    @patch("cowrie.telnet.userauth.CowrieConfig")
+    @patch("cowrie.telnet.userauth.log")
+    def test_exploit_success_is_logged(
+        self, mock_log: MagicMock, mock_config: MagicMock
+    ) -> None:
+        """Test that successful exploit authentication is logged."""
+        mock_config.getboolean.return_value = True
+        mock_config.getint.return_value = 300
+
+        mock_peer = MagicMock()
+        mock_peer.host = "192.168.1.100"
+        self.mock_transport.getPeer.return_value = mock_peer
+        self.mock_transport.options = {}
+        self.mock_transport.wontChain.return_value = MagicMock()
+
+        self.protocol.cve_2026_24061_user = "root"
+        self.protocol.username = b""  
+        # Mock portal.login
+        d = MagicMock()
+        d.addCallback = MagicMock(return_value=d)
+        d.addErrback = MagicMock(return_value=d)
+        self.protocol.portal.login = MagicMock(return_value=d)  
+        self.protocol.telnet_Password(b"id")
+
+        # Check for exploit success log
+        exploit_success_logged = False
+        for call in mock_log.msg.call_args_list:
+            if call[1].get("eventid") == "cowrie.telnet.exploit_success":
+                exploit_success_logged = True
+                self.assertEqual(call[1].get("cve"), "CVE-2026-24061")
+                self.assertEqual(call[1].get("username"), "root")
+                break
+        self.assertTrue(exploit_success_logged, "Exploit success should be logged")
 
 
 if __name__ == "__main__":
