@@ -16,6 +16,7 @@ __all__ = [
     "chpasswd",
     "crontab",
     "curl",
+    "cut",
     "dd",
     "dig",
     "du",
