@@ -127,8 +127,9 @@ pages for more information and options.
     @inlineCallbacks
     def do_install(self, *args):
         if len(self.args) <= 1:
-            msg = "0 upgraded, 0 newly installed, 0 to remove and {0} not upgraded.\n"
-            self.write(msg.format(random.randint(200, 300)))
+            self.write(
+                f"0 upgraded, 0 newly installed, 0 to remove and {random.randint(200, 300)} not upgraded.\n"
+            )
             self.exit()
             return
 
@@ -143,7 +144,7 @@ pages for more information and options.
         self.write("Building dependency tree\n")
         self.write("Reading state information... Done\n")
         self.write("The following NEW packages will be installed:\n")
-        self.write("  {} ".format(" ".join(self.packages)) + "\n")
+        self.write(f"  {' '.join(self.packages)} \n")
         self.write(
             f"0 upgraded, {len(self.packages)} newly installed, 0 to remove and 259 not upgraded.\n"
         )
@@ -154,9 +155,7 @@ pages for more information and options.
         i = 1
         for p in self.packages:
             self.write(
-                "Get:{} http://ftp.debian.org stable/main {} {} [{}.2kB]\n".format(
-                    i, p, self.packages[p]["version"], self.packages[p]["size"]
-                )
+                f"Get:{i} http://ftp.debian.org stable/main {p} {self.packages[p]['version']} [{self.packages[p]['size']}.2kB]\n"
             )
             i += 1
             yield self.sleep(1, 2)
@@ -170,17 +169,13 @@ pages for more information and options.
         yield self.sleep(1, 2)
         for p in self.packages:
             self.write(
-                "Unpacking {} (from .../archives/{}_{}_i386.deb) ...\n".format(
-                    p, p, self.packages[p]["version"]
-                )
+                f"Unpacking {p} (from .../archives/{p}_{self.packages[p]['version']}_i386.deb) ...\n"
             )
             yield self.sleep(1, 2)
         self.write("Processing triggers for man-db ...\n")
         yield self.sleep(2)
         for p in self.packages:
-            self.write(
-                "Setting up {} ({}) ...\n".format(p, self.packages[p]["version"])
-            )
+            self.write(f"Setting up {p} ({self.packages[p]['version']}) ...\n")
             self.fs.mkfile(
                 f"/usr/bin/{p}",
                 self.protocol.user.uid,

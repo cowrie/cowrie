@@ -68,30 +68,27 @@ def formatCef(logentry: dict[str, str]) -> str:
         "proto": "tcp",
     }
 
-    if logentry["eventid"] == "cowrie.session.connect":
-        cefExtensions["spt"] = logentry["src_port"]
-        cefExtensions["dpt"] = logentry["dst_port"]
-        cefExtensions["src"] = logentry["src_ip"]
-        cefExtensions["dst"] = logentry["dst_ip"]
-    elif logentry["eventid"] == "cowrie.login.success":
-        cefExtensions["duser"] = logentry["username"]
-        cefExtensions["outcome"] = "success"
-    elif logentry["eventid"] == "cowrie.login.failed":
-        cefExtensions["duser"] = logentry["username"]
-        cefExtensions["outcome"] = "failed"
-    elif logentry["eventid"] == "cowrie.file.file_download":
-        cefExtensions["filehash"] = logentry["filehash"]
-        cefExtensions["filePath"] = logentry["filename"]
-        cefExtensions["fsize"] = logentry["size"]
-    elif logentry["eventid"] == "cowrie.file.file_upload":
-        cefExtensions["filehash"] = logentry["filehash"]
-        cefExtensions["filePath"] = logentry["filename"]
-        cefExtensions["fsize"] = logentry["size"]
+    match logentry["eventid"]:
+        case "cowrie.session.connect":
+            cefExtensions["spt"] = logentry["src_port"]
+            cefExtensions["dpt"] = logentry["dst_port"]
+            cefExtensions["src"] = logentry["src_ip"]
+            cefExtensions["dst"] = logentry["dst_ip"]
+        case "cowrie.login.success":
+            cefExtensions["duser"] = logentry["username"]
+            cefExtensions["outcome"] = "success"
+        case "cowrie.login.failed":
+            cefExtensions["duser"] = logentry["username"]
+            cefExtensions["outcome"] = "failed"
+        case "cowrie.file.file_download" | "cowrie.file.file_upload":
+            cefExtensions["filehash"] = logentry["filehash"]
+            cefExtensions["filePath"] = logentry["filename"]
+            cefExtensions["fsize"] = logentry["size"]
 
     # 'out' 'outcome'  request, rt
 
     cefList = []
-    for key in list(cefExtensions.keys()):
+    for key in cefExtensions:
         value = str(cefExtensions[key])
         cefList.append(f"{key}={value}")
 

@@ -69,7 +69,7 @@ class Output(cowrie.core.output.Output):
     def write(self, event):
         if self.epoch_timestamp:
             event["epoch"] = int(event["time"] * 1000000 / 1000)
-        for i in list(event.keys()):
+        for i in list(event):
             # Remove twisted 15 legacy keys
             if i.startswith("log_") or i == "time" or i == "system":
                 del event[i]

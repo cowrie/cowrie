@@ -94,19 +94,13 @@ commands["help"] = Command_help
 class Command_w(HoneyPotCommand):
     def call(self) -> None:
         self.write(
-            " {} up {},  1 user,  load average: 0.00, 0.00, 0.00\n".format(
-                time.strftime("%H:%M:%S"), utils.uptime(self.protocol.uptime())
-            )
+            f" {time.strftime('%H:%M:%S')} up {utils.uptime(self.protocol.uptime())},  1 user,  load average: 0.00, 0.00, 0.00\n"
         )
         self.write(
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
         )
         self.write(
-            "{:8s} pts/0    {} {}    0.00s  0.00s  0.00s w\n".format(
-                self.protocol.user.username,
-                self.protocol.clientIP[:17].ljust(17),
-                time.strftime("%H:%M", time.localtime(self.protocol.logintime)),
-            )
+            f"{self.protocol.user.username:8s} pts/0    {self.protocol.clientIP[:17].ljust(17)} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))}    0.00s  0.00s  0.00s w\n"
         )
 
 
@@ -117,12 +111,7 @@ commands["w"] = Command_w
 class Command_who(HoneyPotCommand):
     def call(self) -> None:
         self.write(
-            "{:8s} pts/0        {} {} ({})\n".format(
-                self.protocol.user.username,
-                time.strftime("%Y-%m-%d", time.localtime(self.protocol.logintime)),
-                time.strftime("%H:%M", time.localtime(self.protocol.logintime)),
-                self.protocol.clientIP,
-            )
+            f"{self.protocol.user.username:8s} pts/0        {time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime))} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))} ({self.protocol.clientIP})\n"
         )
 
 
@@ -766,7 +755,7 @@ class Command_ps(HoneyPotCommand):
                     "R+   ",
                     "04:32",
                     "   0:00 ",
-                    "ps {}".format(" ".join(self.args)),
+                    f"ps {' '.join(self.args)}",
                 ),
             ]
 
@@ -965,7 +954,7 @@ commands["history"] = Command_history
 class Command_date(HoneyPotCommand):
     def call(self) -> None:
         time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-        self.write("{}\n".format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
+        self.write(f"{time.strftime('%a %b %d %H:%M:%S UTC %Y')}\n")
 
 
 commands["/bin/date"] = Command_date
@@ -980,7 +969,7 @@ class Command_yes(HoneyPotCommand):
 
     def y(self) -> None:
         if self.args:
-            self.write("{}\n".format(" ".join(self.args)))
+            self.write(f"{' '.join(self.args)}\n")
         else:
             self.write("y\n")
         self.scheduled = reactor.callLater(0.01, self.y)  # type: ignore[attr-defined]
@@ -1087,7 +1076,7 @@ class Command_set(HoneyPotCommand):
     # This will show ALL environ vars, not only the global ones
     # With enhancements it should work like env when -o posix is used
     def call(self) -> None:
-        for i in sorted(list(self.environ.keys())):
+        for i in sorted(self.environ):
             self.write(f"{i}={self.environ[i]}\n")
 
 

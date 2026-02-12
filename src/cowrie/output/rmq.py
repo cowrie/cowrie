@@ -19,14 +19,15 @@ except ImportError:
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, (NamedConstant, ValueConstant)):
-            return str(obj)
-        elif isinstance(obj, (IPv4Address, IPv6Address)):
-            return obj.host  # Extract the IP address as a string
-        elif isinstance(obj, bytes):
-            return obj.decode("utf-8", errors="replace")  # Convert bytes to string
-        else:
-            return super().default(obj)
+        match obj:
+            case NamedConstant() | ValueConstant():
+                return str(obj)
+            case IPv4Address() | IPv6Address():
+                return obj.host  # Extract the IP address as a string
+            case bytes():
+                return obj.decode("utf-8", errors="replace")  # Convert bytes to string
+            case _:
+                return super().default(obj)
 
 
 class Output(cowrie.core.output.Output):

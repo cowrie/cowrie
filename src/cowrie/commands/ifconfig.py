@@ -34,7 +34,7 @@ class Command_ifconfig(HoneyPotCommand):
     def convert_bytes_to_mx(bytes_eth0: int) -> str:
         mb = float(bytes_eth0) / 1000 / 1000
         return f"{mb:.1f}"
-        
+
     def calculate_rx(self) -> tuple[int, str]:
         session_uptime = time.time() - self.protocol.logintime
         session_rx = int(session_uptime * rx_rate)
@@ -65,41 +65,24 @@ class Command_ifconfig(HoneyPotCommand):
         tx_packets = self.calculate_packets(tx_bytes_eth0)
         lo_packets = self.calculate_packets(lo_bytes)
 
-        result = """eth0      Link encap:Ethernet  HWaddr {}
-          inet addr:{}  Bcast:{}.255  Mask:255.255.255.0
-          inet6 addr: {} Scope:Link
+        result = f"""eth0      Link encap:Ethernet  HWaddr {HWaddr}
+          inet addr:{self.protocol.kippoIP}  Bcast:{self.protocol.kippoIP.rsplit(".", 1)[0]}.255  Mask:255.255.255.0
+          inet6 addr: {inet6} Scope:Link
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:{} errors:0 dropped:0 overruns:0 frame:0
-          TX packets:{} errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:{rx_packets} errors:0 dropped:0 overruns:0 frame:0
+          TX packets:{tx_packets} errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000
-          RX bytes:{} ({} MB)  TX bytes:{} ({} MB)
+          RX bytes:{rx_bytes_eth0} ({rx_mb_eth0} MB)  TX bytes:{tx_bytes_eth0} ({tx_mb_eth0} MB)
 
 
 lo        Link encap:Local Loopback
           inet addr:127.0.0.1  Mask:255.0.0.0
           inet6 addr: ::1/128 Scope:Host
           UP LOOPBACK RUNNING  MTU:65536  Metric:1
-          RX packets:{} errors:0 dropped:0 overruns:0 frame:0
-          TX packets:{} errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:{lo_packets} errors:0 dropped:0 overruns:0 frame:0
+          TX packets:{lo_packets} errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:0
-          RX bytes:{} ({} MB)  TX bytes:{} ({} MB)""".format(
-            HWaddr,
-            self.protocol.kippoIP,
-            self.protocol.kippoIP.rsplit(".", 1)[0],
-            inet6,
-            rx_packets,
-            tx_packets,
-            rx_bytes_eth0,
-            rx_mb_eth0,
-            tx_bytes_eth0,
-            tx_mb_eth0,
-            lo_packets,
-            lo_packets,
-            lo_bytes,
-            lo_mb,
-            lo_bytes,
-            lo_mb,
-        )
+          RX bytes:{lo_bytes} ({lo_mb} MB)  TX bytes:{lo_bytes} ({lo_mb} MB)"""
         self.write(f"{result}\n")
 
 

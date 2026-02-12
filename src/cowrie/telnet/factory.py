@@ -47,7 +47,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args["sessionno"] = "T{}".format(str(args["sessionno"]))
+        args["sessionno"] = f"T{args['sessionno']}"
         for output in self.tac.output_plugins:
             output.logDispatch(**args)
 
@@ -55,9 +55,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """ """
         try:
             with open(
-                "{}/etc/issue.net".format(
-                    CowrieConfig.get("honeypot", "contents_path")
-                ),
+                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
                 mode="rb",
             ) as f:
                 self.banner = f.read()

@@ -49,7 +49,7 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, event):
-        for i in list(event.keys()):
+        for i in list(event):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
                 del event[i]
@@ -107,7 +107,7 @@ class Output(cowrie.core.output.Output):
 
         def processResult(result):
             j = json.loads(result)
-            log.msg("SplunkHEC response: {}".format(j["text"]))
+            log.msg(f"SplunkHEC response: {j['text']}")
 
         d.addCallback(cbResponse)
         d.addErrback(cbError)
