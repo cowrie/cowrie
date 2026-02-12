@@ -1221,3 +1221,77 @@ exchange_type = topic
 
 [openai]
 API_KEY = xxxxx
+
+
+# ============================================================================
+# Checkpointed Image Environment Integration
+# ============================================================================
+# Claude Code integration with checkpointed image environments.
+# These are persistent runtime systems where the entire program state
+# (objects, code, data) lives as a mutable world that can be snapshotted
+# and restored.
+#
+# Each environment is configured in a [checkpointed_<name>] section.
+# The 'type' key determines which adapter is used.
+#
+# Supported types:
+#   dgd          - DGD (Dworkin's Game Driver), LPC language
+#   lambdamoo    - LambdaMOO / ToastStunt / mooR, MOO language
+#   smalltalk    - Pharo / Squeak / GNU Smalltalk
+#   lispmachine  - Open Genera / CADR / LambdaDelta / Meroko
+#
+# Type aliases: dworkin, lpc, moo, toaststunt, moor, pharo, squeak,
+#   gnu-smalltalk, gst, genera, open-genera, vlm, cadr, lambda,
+#   lmi-lambda, meroko, explorer
+
+# Global checkpointed settings
+#[checkpointed]
+#default = my_dgd
+
+# DGD example: connects to a DGD instance via the Kernellib wiztool
+#[checkpointed_my_dgd]
+#type = dgd
+#host = localhost
+#port = 6047
+#admin_user = admin
+#admin_password = secret
+#statedump_dir = /path/to/dgd/statedumps
+
+# LambdaMOO example: connects to a MOO server via telnet
+#[checkpointed_my_moo]
+#type = lambdamoo
+#host = localhost
+#port = 7777
+#wizard_name = wizard
+#wizard_password = secret
+# ToastStunt HTTP API port (optional, enables REST access)
+#http_port = 8080
+#use_toaststunt = false
+
+# Smalltalk (Pharo) example: connects via HTTP API or NeoConsole
+#[checkpointed_my_pharo]
+#type = pharo
+#host = localhost
+# NeoConsole telnet port
+#port = 1701
+# PharoSmalltalkInteropServer HTTP port
+#http_port = 8080
+#image_path = /path/to/my.image
+# Variant: pharo, squeak, or gnu
+#variant = pharo
+
+# GNU Smalltalk example: pipe-based evaluation
+#[checkpointed_my_gst]
+#type = gnu-smalltalk
+#gst_binary = /usr/bin/gst
+
+# Lisp Machine (Open Genera) example: telnet to a VLM instance
+#[checkpointed_my_genera]
+#type = genera
+#host = 192.168.2.2
+#port = 23
+# Emulator: genera, cadr, lambda, meroko
+#emulator_type = genera
+#world_dir = /path/to/worlds
+# NFS share between host and Genera (optional, enables file exchange)
+#nfs_share = /nfs/genera
