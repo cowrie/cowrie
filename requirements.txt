@@ -7,7 +7,7 @@ packaging==26.0
 pyasn1_modules==0.4.2
 requests==2.32.5
 service_identity==24.2.0
-tftpy==0.8.6
+tftpy==0.8.7
 treq==25.5.0
 twisted[conch]==25.5.0
 urllib3==2.6.3
