@@ -178,7 +178,7 @@ def to_ja4s(x, debug_stream):
         x['ciphers'] = []
 
     # get extensions in hex in the order they are present (include grease values)
-    x['extensions'] = [ '{:04x}'.format(int(k)) for k in x['extensions'] ]
+    x['extensions'] = [ f'{int(k):04x}' for k in x['extensions'] ]
     ext_len = '{:02d}'.format(min(len(x['extensions']), 99))
     
     if x['extensions']:
@@ -224,7 +224,7 @@ def to_ja4(x, debug_stream):
     if 'ciphers' not in x:
         x['ciphers'] = []
 
-    x['extensions'] = [ '0x{:04x}'.format(int(k)) for k in x['extensions'] ]
+    x['extensions'] = [ f'0x{int(k):04x}' for k in x['extensions'] ]
     ext_len = '{:02d}'.format(min(len([ x for x in x['extensions'] if x not in GREASE_TABLE]), 99))
     cache_update(x, 'client_ciphers', x['ciphers'], debug_stream)
 

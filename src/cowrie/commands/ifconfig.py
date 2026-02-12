@@ -34,7 +34,7 @@ class Command_ifconfig(HoneyPotCommand):
     def convert_bytes_to_mx(bytes_eth0: int) -> str:
         mb = float(bytes_eth0) / 1000 / 1000
         return f"{mb:.1f}"
-        
+
     def calculate_rx(self) -> tuple[int, str]:
         session_uptime = time.time() - self.protocol.logintime
         session_rx = int(session_uptime * rx_rate)

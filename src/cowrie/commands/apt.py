@@ -127,7 +127,9 @@ pages for more information and options.
     @inlineCallbacks
     def do_install(self, *args):
         if len(self.args) <= 1:
-            self.write(f"0 upgraded, 0 newly installed, 0 to remove and {random.randint(200, 300)} not upgraded.\n")
+            self.write(
+                f"0 upgraded, 0 newly installed, 0 to remove and {random.randint(200, 300)} not upgraded.\n"
+            )
             self.exit()
             return
 
@@ -173,9 +175,7 @@ pages for more information and options.
         self.write("Processing triggers for man-db ...\n")
         yield self.sleep(2)
         for p in self.packages:
-            self.write(
-                f"Setting up {p} ({self.packages[p]['version']}) ...\n"
-            )
+            self.write(f"Setting up {p} ({self.packages[p]['version']}) ...\n")
             self.fs.mkfile(
                 f"/usr/bin/{p}",
                 self.protocol.user.uid,

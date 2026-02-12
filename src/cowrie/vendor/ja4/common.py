@@ -110,7 +110,7 @@ def get_hex_sorted(entry, field, sort=True):
 
     c.sort() if sort else None
 
-    return ','.join(c), '{:02d}'.format(actual_length), sha_encode(c)
+    return ','.join(c), f'{actual_length:02d}', sha_encode(c)
 
 def get_supported_version(v):
     if not isinstance(v, list):

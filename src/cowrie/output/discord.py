@@ -30,9 +30,9 @@ EMBED_TITLE_MAX = 256
 EMBED_DESC_MAX = 4096
 EMBED_FIELD_VALUE_MAX = 1024
 EMBED_MAX_FIELDS = 25
-DEFAULT_DELAY = 0.3          # delay between successful sends
-RETRY_DELAY = 2.0            # delay before retrying transient failures
-MAX_RETRIES = 5              # max retry attempts for non-429 errors
+DEFAULT_DELAY = 0.3  # delay between successful sends
+RETRY_DELAY = 2.0  # delay before retrying transient failures
+MAX_RETRIES = 5  # max retry attempts for non-429 errors
 
 
 class Output(cowrie.core.output.Output):
@@ -52,9 +52,15 @@ class Output(cowrie.core.output.Output):
         self._sending: bool = False
         self._stopped: bool = False
         # Runtime tunables (allow override via config if present)
-        self._default_delay: float = CowrieConfig.getfloat("output_discord", "default_delay", fallback=DEFAULT_DELAY)
-        self._retry_delay: float = CowrieConfig.getfloat("output_discord", "retry_delay", fallback=RETRY_DELAY)
-        self._max_retries: int = CowrieConfig.getint("output_discord", "max_retries", fallback=MAX_RETRIES)
+        self._default_delay: float = CowrieConfig.getfloat(
+            "output_discord", "default_delay", fallback=DEFAULT_DELAY
+        )
+        self._retry_delay: float = CowrieConfig.getfloat(
+            "output_discord", "retry_delay", fallback=RETRY_DELAY
+        )
+        self._max_retries: int = CowrieConfig.getint(
+            "output_discord", "max_retries", fallback=MAX_RETRIES
+        )
 
     def stop(self):
         self._stopped = True
@@ -92,7 +98,10 @@ class Output(cowrie.core.output.Output):
         headers = http_headers.Headers({b"Content-Type": [b"application/json"]})
         body_payload = {k: v for k, v in entry.items() if k != "attempts"}
         body_payload["allowed_mentions"] = {"parse": []}
-        body = cast("IBodyProducer", FileBodyProducer(BytesIO(json.dumps(body_payload).encode("utf8"))) )
+        body = cast(
+            "IBodyProducer",
+            FileBodyProducer(BytesIO(json.dumps(body_payload).encode("utf8"))),
+        )
         d = self.agent.request(b"POST", self.url, headers, body)
 
         @defer.inlineCallbacks
@@ -111,14 +120,18 @@ class Output(cowrie.core.output.Output):
 
         return d.addCallback(_unwrap)  # type: ignore[no-any-return]
 
-    def _after_result(self, result: tuple[int, float | None], entry: dict[str, Any]) -> None:
+    def _after_result(
+        self, result: tuple[int, float | None], entry: dict[str, Any]
+    ) -> None:
         status_code, retry_after = result
         attempts = entry.get("attempts", 0)
         # Decide next action
         if status_code == 429:  # rate limit
             self._queue.appendleft(entry)
             delay = retry_after if retry_after is not None else self._retry_delay
-        elif status_code >= 500 and attempts < self._max_retries:  # transient server error
+        elif (
+            status_code >= 500 and attempts < self._max_retries
+        ):  # transient server error
             entry["attempts"] = attempts + 1
             self._queue.append(entry)
             delay = self._retry_delay
@@ -148,20 +161,25 @@ class Output(cowrie.core.output.Output):
         embed = {
             "title": self._clip(eventid, EMBED_TITLE_MAX),
             "description": description,
-            "timestamp":  timestamp,
+            "timestamp": timestamp,
             "color": self._color_from_eventid(eventid),
             "fields": [],
         }
         # Build fields with simple comprehension, clipped and limited.
         keys = [
-            k for k in sorted(event)
-            if k not in self._SKIP_KEYS and not k.startswith(self._LOG_PREFIX) and event.get(k) is not None
+            k
+            for k in sorted(event)
+            if k not in self._SKIP_KEYS
+            and not k.startswith(self._LOG_PREFIX)
+            and event.get(k) is not None
         ]
         if keys:
             embed["fields"] = [
                 {
                     "name": self._clip(str(k), EMBED_TITLE_MAX),
-                    "value": self._clip(self._stringify(event[k]), EMBED_FIELD_VALUE_MAX),
+                    "value": self._clip(
+                        self._stringify(event[k]), EMBED_FIELD_VALUE_MAX
+                    ),
                     "inline": False,
                 }
                 for k in keys[:EMBED_MAX_FIELDS]
@@ -194,4 +212,4 @@ class Output(cowrie.core.output.Output):
 
     def _color_from_eventid(self, eventid: str) -> int:
         # Use CRC32 truncated to 24 bits for a deterministic color.
-        return (_zlib.crc32(eventid.encode("utf8")) & 0xFFFFFF)
+        return _zlib.crc32(eventid.encode("utf8")) & 0xFFFFFF

@@ -30,7 +30,7 @@ def oid_to_hex(oid: str) -> str:
         oid.extend(encode_variable_length_quantity(n))
     oid.insert(0, len(oid))
     oid.insert(0, 0x06)
-    return "".join("{:02x}".format(num) for num in oid)[4:]
+    return "".join(f"{num:02x}" for num in oid)[4:]
 
 def to_ja4x(x, debug_stream=-1):
     # The extensions were stored as arrays of [ [2.5.19.35, 1.3.6.1.1.2], [ 2.5.19.2 ] ]
@@ -77,7 +77,7 @@ def to_ja4x(x, debug_stream=-1):
 
     for idx, i in enumerate(x['extension_lengths']):
         i = int(i)
-        header_len = '{:02d}'.format(i)
+        header_len = f'{i:02d}'
         exts = x['cert_extensions'][:i] if isinstance(x['cert_extensions'], list) else [ x['cert_extensions']  ]
         if isinstance(x['cert_extensions'], list):
             del x['cert_extensions'][:i]
