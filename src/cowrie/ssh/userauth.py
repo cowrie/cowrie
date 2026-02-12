@@ -61,9 +61,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
 
         try:
             with open(
-                "{}/etc/issue.net".format(
-                    CowrieConfig.get("honeypot", "contents_path")
-                ),
+                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
                 encoding="ascii",
             ) as f:
                 banner = f.read()

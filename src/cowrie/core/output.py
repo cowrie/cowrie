@@ -69,21 +69,20 @@ def convert(data):
     """
     This converts a nested dictionary with bytes in it to string
     """
-    if isinstance(data, str):
-        return data
-    if isinstance(data, dict):
-        return {convert(key): convert(value) for key, value in list(data.items())}
-    if isinstance(data, dict):
-        return {convert(key): convert(value) for key, value in list(data.items())}
-    if isinstance(data, list):
-        return [convert(element) for element in data]
-    if isinstance(data, bytes):
-        try:
-            string = data.decode("utf-8")
-        except UnicodeDecodeError:
-            string = repr(data)
-        return string
-    return data
+    match data:
+        case str():
+            return data
+        case dict():
+            return {convert(key): convert(value) for key, value in data.items()}
+        case list():
+            return [convert(element) for element in data]
+        case bytes():
+            try:
+                return data.decode("utf-8")
+            except UnicodeDecodeError:
+                return repr(data)
+        case _:
+            return data
 
 
 class Output(metaclass=abc.ABCMeta):

@@ -174,15 +174,21 @@ class Output(cowrie.core.output.Output):
 
     def _stringify(self, val: Any) -> str:
         try:
-            if isinstance(val, bytes):
-                return val.decode("utf-8", errors="replace")
-            if isinstance(val, (dict, list, tuple, set)):
-                obj = list(val) if isinstance(val, (set, tuple)) else val
-                try:
-                    return json.dumps(obj, ensure_ascii=False, default=str)
-                except Exception:
+            match val:
+                case bytes():
+                    return val.decode("utf-8", errors="replace")
+                case dict() | list():
+                    try:
+                        return json.dumps(val, ensure_ascii=False, default=str)
+                    except Exception:
+                        return str(val)
+                case tuple() | set():
+                    try:
+                        return json.dumps(list(val), ensure_ascii=False, default=str)
+                    except Exception:
+                        return str(val)
+                case _:
                     return str(val)
-            return str(val)
         except Exception:
             return repr(val)
 

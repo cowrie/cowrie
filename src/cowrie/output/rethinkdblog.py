@@ -36,7 +36,7 @@ class Output(cowrie.core.output.Output):
         self.connection.close()
 
     def write(self, event):
-        for i in list(event.keys()):
+        for i in list(event):
             # remove twisted 15 legacy keys
             if i.startswith("log_"):
                 del event[i]

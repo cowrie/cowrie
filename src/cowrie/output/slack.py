@@ -170,7 +170,7 @@ class Output(cowrie.core.output.Output):
         return ""
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in list(event.keys()):
+        for i in list(event):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
                 del event[i]
@@ -198,10 +198,7 @@ class Output(cowrie.core.output.Output):
             message = self._format_simplified_message(event)
         else:
             # Original JSON format for backward compatibility
-            message = "{} {}".format(
-                time.strftime("%Y-%m-%d %H:%M:%S"),
-                json.dumps(event, indent=4, sort_keys=True),
-            )
+            message = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {json.dumps(event, indent=4, sort_keys=True)}"
 
         self.sc.chat_postMessage(
             channel=self.slack_channel,

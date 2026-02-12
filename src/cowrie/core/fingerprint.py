@@ -32,7 +32,7 @@ from cowrie.vendor.ja4.common import sha_encode, GREASE_TABLE, TLS_MAPPER
 
 
 # Convert FoxIO's string-based GREASE table to integer set for our use
-GREASE_VALUES = {int(k, 16) for k in GREASE_TABLE.keys()}
+GREASE_VALUES = {int(k, 16) for k in GREASE_TABLE}
 
 # Convert FoxIO's string-based TLS mapper to integer keys
 TLS_VERSION_MAP = {int(k, 16): v for k, v in TLS_MAPPER.items()}

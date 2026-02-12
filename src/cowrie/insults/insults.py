@@ -61,23 +61,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.startTime = time.time()
 
         if self.ttylogEnabled:
-            self.ttylogFile = "{}/{}-{}-{}{}.log".format(
-                self.ttylogPath,
-                time.strftime("%Y%m%d-%H%M%S"),
-                transportId,
-                channelId,
-                self.type,
-            )
+            self.ttylogFile = f"{self.ttylogPath}/{time.strftime('%Y%m%d-%H%M%S')}-{transportId}-{channelId}{self.type}.log"
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
 
-        self.stdinlogFile = "{}/{}-{}-{}-stdin.log".format(
-            self.downloadPath,
-            time.strftime("%Y%m%d-%H%M%S"),
-            transportId,
-            channelId,
-        )
+        self.stdinlogFile = f"{self.downloadPath}/{time.strftime('%Y%m%d-%H%M%S')}-{transportId}-{channelId}-stdin.log"
 
         if self.type == "e":
             self.stdinlogOpen = True

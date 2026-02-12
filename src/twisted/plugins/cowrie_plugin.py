@@ -138,7 +138,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         if tz != "system":
             os.environ["TZ"] = tz
 
-        log.msg("Python Version {}".format(str(sys.version).replace("\n", "")))
+        log.msg(f"Python Version {str(sys.version).replace(chr(10), '')}")
         log.msg(
             f"Twisted Version {__twisted_version__.major}.{__twisted_version__.minor}.{__twisted_version__.micro}"
         )

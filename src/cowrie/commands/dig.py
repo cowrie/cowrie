@@ -47,33 +47,30 @@ class Command_dig(HoneyPotCommand):
         record_type = "A"
         query_id = secrets.randbelow(9000) + 1000
 
-        if domain == "-v":
-            self.display_version()
-
-        elif domain == "-h" or domain == "-help":
-            self.display_help()
-
-        elif domain.startswith("-"):
-            self.invalid_arg(domain)
-
-        elif not self._is_valid_domain(domain):
-            answer = "help.\t\t585\tIN\tSOA\tns0.centralnic.net. hostmaster.centralnic.net. 1743974120 900 1800 6048000 3600\n\n"
-            status = "NXDOMAIN"
-            self.dns_text(domain, query_id, record_type, answer, status)
-
-        else:
-            # Fake lookup result map
-            mock_dns = {
-                "google.com": "142.250.190.14",
-                "github.com": "140.82.121.4",
-                "example.com": "93.184.216.34",
-                "attacker.com": "185.199.108.153",
-            }
-            status = "NOERROR"
-            # Default fake IP for unknown domains
-            ip = mock_dns.get(domain, self._get_random_ip())
-            answer = f"{domain}.\t\t34\tIN\t{record_type}\t{ip}\n\n"
-            self.dns_text(domain, query_id, record_type, answer, status)
+        match domain:
+            case "-v":
+                self.display_version()
+            case "-h" | "-help":
+                self.display_help()
+            case str(d) if d.startswith("-"):
+                self.invalid_arg(domain)
+            case _ if not self._is_valid_domain(domain):
+                answer = "help.\t\t585\tIN\tSOA\tns0.centralnic.net. hostmaster.centralnic.net. 1743974120 900 1800 6048000 3600\n\n"
+                status = "NXDOMAIN"
+                self.dns_text(domain, query_id, record_type, answer, status)
+            case _:
+                # Fake lookup result map
+                mock_dns = {
+                    "google.com": "142.250.190.14",
+                    "github.com": "140.82.121.4",
+                    "example.com": "93.184.216.34",
+                    "attacker.com": "185.199.108.153",
+                }
+                status = "NOERROR"
+                # Default fake IP for unknown domains
+                ip = mock_dns.get(domain, self._get_random_ip())
+                answer = f"{domain}.\t\t34\tIN\t{record_type}\t{ip}\n\n"
+                self.dns_text(domain, query_id, record_type, answer, status)
 
         self.exit()
         return
