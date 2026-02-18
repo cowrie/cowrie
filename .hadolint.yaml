@@ -1,0 +1,5 @@
+---
+ignored:
+  - DL3007  # distroless base image uses latest by design
+  - DL3008  # builder-stage apt packages are discarded
+  - DL3013  # pip/setuptools/wheel are bootstrap tools, app deps are pinned

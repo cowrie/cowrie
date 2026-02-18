@@ -32,6 +32,14 @@ env:
   REGISTRY_IMAGE: cowrie/cowrie
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: docker/Dockerfile
+
   build:
     runs-on: ${{ matrix.runner }}
     strategy:
