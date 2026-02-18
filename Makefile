@@ -36,6 +36,10 @@ clean: ## Clean temporary files
 	rm -rf _trial_temp build dist src/_trial_temp src/Cowrie.egg-info
 	make -C docs clean
 
+.PHONY: audit
+audit: ## Run dependency security audit
+	tox -e audit
+
 .PHONY: pre-commit
 pre-commit: ## Run pre-commit checks
 	pre-commit run --all-files

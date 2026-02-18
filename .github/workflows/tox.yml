@@ -121,7 +121,7 @@ jobs:
         run: tox
 
       - name: Coverage report
-        run: coverage report
+        run: coverage report --fail-under=50
 
       - name: Upload coverage
         if: ${{ !matrix.experimental }}
