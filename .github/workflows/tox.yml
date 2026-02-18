@@ -43,6 +43,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: ${{ matrix.experimental }}
+          cache: pip
 
       - name: Install dependencies
         run: |
