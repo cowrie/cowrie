@@ -10,9 +10,11 @@ However, a review against established DevOps practices reveals several structura
 the pipeline lacks quality gates between stages, the build/packaging configuration has
 accumulated contradictions, the linting toolchain is fractured across three systems,
 dependency management follows conflicting strategies, and there is no security scanning.
+Most critically, the project is distributed via three channels (git clone, pip, Docker)
+but the packaging configuration doesn't properly serve any of them.
 
 This document covers: pipeline architecture, testing, linting, dependency management,
-releasing, Docker, and general DevOps hygiene.
+Python packaging & distribution, releasing, Docker, and general DevOps hygiene.
 
 ---
 
@@ -325,9 +327,225 @@ problem.
 
 ---
 
-## 5. Releasing
+## 5. Python Packaging & Distribution
 
-### 5.1 Weekly automated releases with no semantic meaning
+Cowrie has three distribution channels, each with different needs:
+
+| Channel | Primary audience | Install method | How it runs |
+|---------|-----------------|----------------|-------------|
+| **Git clone** | Operators customizing the honeypot | `git clone` + `pip install -e .` | `cowrie start` from repo root |
+| **PyPI package** | Quick installs, automation | `pip install cowrie` | `twistd cowrie` |
+| **Docker image** | Containerized deployments | `docker run cowrie/cowrie` | Entrypoint runs twistd directly |
+
+The current packaging configuration tries to serve all three but has fundamental issues
+with each.
+
+### 5.1 The git-clone path works but is fragile
+
+The recommended installation (`INSTALL.rst`) clones the repo and runs `pip install -e .`
+(editable install). The `cowrie start` script then uses `find_cowrie_directory()` which
+walks up from the script's `__file__` to find the repo root:
+
+```python
+def find_cowrie_directory() -> Path:
+    script_path = Path(__file__).resolve()
+    # Go up from scripts/cowrie.py to src/cowrie to root
+    return script_path.parent.parent.parent.parent
+```
+
+All paths in `cowrie.cfg.dist` are **relative to the working directory** (not the package
+install location):
+
+```ini
+log_path = var/log/cowrie
+data_path = src/cowrie/data
+state_path = var/lib/cowrie
+etc_path = etc
+contents_path = honeyfs
+```
+
+And the `cowrie start` command does `os.chdir(cowrie_dir)` before launching twistd. This
+means cowrie **must** run from its repo root. It works for git-clone installs but
+fundamentally ties the application to a specific directory layout.
+
+**This is fine for the primary use case** (git clone operators), but it means:
+- You cannot run cowrie from an arbitrary directory
+- The pip install and Docker paths must recreate this exact layout
+
+### 5.2 The pip install path is incomplete
+
+The README marks pip install as "beta." The actual problems are deeper:
+
+**Problem 1: Missing runtime data files.** The PyPI package needs `honeyfs/`, `etc/`,
+and `var/` at runtime. `MANIFEST.in` includes `honeyfs/` and `etc/cowrie.cfg.dist` in
+the sdist, but these are **not declared in `pyproject.toml`** as package data. When
+building a wheel, only files under `src/` that match `[tool.setuptools.packages.find]`
+are included. The `honeyfs/` directory, `etc/` directory, and `var/` directory structure
+are not in `src/` and are not in any discovered package, so they are **excluded from
+wheels**.
+
+This means:
+- `python -m build` produces an sdist that includes `honeyfs/` (via MANIFEST.in)
+- `python -m build` produces a wheel that **does not** include `honeyfs/`
+- `pip install cowrie` installs from the wheel (preferred), so `honeyfs/` is missing
+- `twistd cowrie` then fails because it can't find `honeyfs/etc/issue.net`, etc.
+
+**Problem 2: The Twisted plugin may not register.** The `src/twisted/plugins/`
+directory contains `cowrie_plugin.py`. This is the classic Twisted namespace-package
+plugin pattern — it needs to be installed into the `twisted` package's namespace.
+`setup.py` explicitly lists `packages=["cowrie", "twisted"]`, but `pyproject.toml` uses
+`[tool.setuptools.packages.find]` with `where = ["src"]`, which discovers both. The risk
+is that `pip install cowrie` puts the plugin in the right place on some systems but not
+others, depending on how the `twisted` namespace is resolved. If Twisted is installed as
+a wheel (which it usually is), the `twisted/plugins/` directory may not be writable or
+discoverable.
+
+**Problem 3: Config path resolution breaks.** `get_config_path()` in
+`src/cowrie/core/config.py` computes the config path relative to `__file__`:
+
+```python
+current_path = abspath(dirname(__file__))
+root = "/".join(current_path.split("/")[:-3])
+```
+
+For an editable install, `__file__` points into the repo and this finds
+`repo/etc/cowrie.cfg.dist`. For a non-editable pip install, `__file__` is in
+`site-packages/cowrie/core/config.py`, so `root` becomes the `site-packages` parent
+directory — and there is no `etc/cowrie.cfg.dist` there.
+
+**Recommendation:** If pip distribution is a goal, the packaging needs a rethink:
+
+1. **Move runtime data into the package.** `honeyfs/` and default configs should be
+   inside `src/cowrie/` (e.g., `src/cowrie/data/honeyfs/`,
+   `src/cowrie/data/cowrie.cfg.dist`) and accessed via `importlib.resources` (Python 3.9+)
+   rather than filesystem path arithmetic.
+
+2. **Use `importlib.resources` for data access.** Replace path-walking with:
+   ```python
+   from importlib.resources import files
+   default_config = files("cowrie.data").joinpath("cowrie.cfg.dist")
+   ```
+   This works regardless of whether the package is installed from a wheel, an editable
+   install, or a zip.
+
+3. **Generate runtime directories on first start.** The `cowrie start` command should
+   create `var/`, `etc/`, and populate `honeyfs/` in a user-specified data directory
+   (e.g., `~/.cowrie/` or `$COWRIE_HOME`) if they don't exist, copying defaults from the
+   installed package data.
+
+4. **Or, explicitly document pip install as unsupported** and remove it from the
+   README/workflows. Publishing to PyPI with a broken install experience is worse than
+   not publishing at all.
+
+### 5.3 Wheel vs. source distribution
+
+Cowrie is **pure Python** (no C extensions, no Rust, no Cython). This means:
+
+- The wheel should be `cowrie-X.Y.Z-py3-none-any.whl` — a universal wheel that works
+  on any platform.
+- There is no need for platform-specific wheels or build matrices for different
+  architectures.
+- The sdist is still useful for users who want to inspect the source before installing.
+
+Currently, `python -m build` produces both sdist and wheel. This is correct. But as noted
+above, the wheel is incomplete because `honeyfs/` and `etc/` are not included.
+
+**Recommendation:** Since cowrie is pure Python, always publish both sdist and wheel. The
+wheel installs faster (no build step) and is the preferred format. But fix the wheel
+contents first (see 5.2).
+
+### 5.4 `setup.py` conflicts with `pyproject.toml`
+
+Both files exist and define overlapping, contradictory metadata:
+
+| Setting | `setup.py` | `pyproject.toml` |
+|---------|-----------|-----------------|
+| packages | `["cowrie", "twisted"]` (hardcoded) | auto-discovered via `find` in `src/` |
+| package_data | `{"": ["*.md"]}` | implicit via `include_package_data = True` |
+| setup_requires | `["click"]` | not applicable (uses build-system.requires) |
+| build backend | implicit (setuptools) | `setuptools.build_meta` |
+
+When both files exist, `pyproject.toml`'s `[build-system]` takes precedence for the
+build backend, but `setup.py` arguments can still influence the build in
+confusing ways. The `packages=["cowrie", "twisted"]` in `setup.py` may override the
+`packages.find` from `pyproject.toml`, depending on the setuptools version.
+
+**Recommendation:** Delete `setup.py`. It is not needed with modern setuptools (>=64)
+and `pyproject.toml`. The `refresh_plugin_cache()` function in `setup.py` is dead code
+anyway. If the Twisted plugin needs special handling, do it in a post-install script or
+the `cowrie start` command.
+
+### 5.5 `MANIFEST.in` is partially redundant and incomplete
+
+```
+include *.rst
+include etc/cowrie.cfg.dist
+recursive-include src/cowrie/data *
+recursive-include src/twisted *.py
+recursive-include src/cowrie *.py
+graft honeyfs
+graft share/cowrie
+```
+
+With `include_package_data = True` (in both `setup.py` and implicitly in `pyproject.toml`
+via `setuptools.packages.find`), all files tracked by version control under `src/` are
+already included. The `recursive-include src/cowrie *.py` line is redundant.
+
+More importantly, `MANIFEST.in` only affects **sdist** (source distribution). It does
+**not** affect wheel contents. So `graft honeyfs` includes `honeyfs/` in the sdist
+tarball but NOT in the wheel. Users who `pip install` get the wheel (which lacks
+`honeyfs/`) rather than the sdist.
+
+**Recommendation:** Once runtime data is moved into the package (section 5.2), the
+`MANIFEST.in` can be simplified or removed entirely. Modern setuptools with
+`include_package_data = True` and proper `pyproject.toml` configuration handles
+everything.
+
+### 5.6 The Twisted plugin namespace pattern needs care
+
+Cowrie installs a Twisted plugin at `src/twisted/plugins/cowrie_plugin.py`. This is the
+classic Twisted pattern where third-party packages inject plugins into Twisted's namespace
+package. It works but has known issues:
+
+- **Wheel installs**: When Twisted is installed as a wheel, the `twisted/plugins/`
+  directory lives inside Twisted's dist-info. A second package installing into the same
+  namespace can cause `DistutilsError` or silent failures depending on the pip version.
+- **dropin.cache**: Twisted uses a `dropin.cache` file to discover plugins. The
+  Dockerfile runs `bin/regen-dropin.cache` explicitly, but pip installs don't.
+- **editable installs**: Work fine because both packages share the filesystem.
+
+This is a known pain point in the Twisted ecosystem. The Dockerfile handles it with the
+explicit cache regeneration step. The git-clone editable install handles it naturally. The
+pip non-editable install is the problematic case.
+
+**Recommendation:** Add a post-install hook or document that users must run
+`python -c "from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin))"`
+after `pip install cowrie` to regenerate the plugin cache. Or migrate to a Twisted plugin
+discovery mechanism that doesn't depend on namespace packages (if Twisted supports one
+for the version you target).
+
+### 5.7 The three distribution channels should be tested in CI
+
+Currently, CI only tests the git-clone editable-install path (via `pip install -e '.[dev]'`
+in tox.yml). Neither the pip-install-from-wheel path nor the Docker path get functional
+testing.
+
+**Recommendation:** Add CI jobs that test each distribution channel:
+
+1. **Wheel install test:** `python -m build`, `pip install dist/*.whl`, then run
+   `twistd --help cowrie` (or a basic smoke test) in a clean venv with no source tree.
+2. **sdist install test:** `pip install dist/*.tar.gz`, same smoke test.
+3. **Docker test:** Already exists but needs to actually verify the container is healthy
+   (see section 6.1).
+
+This catches the category of bugs where the package works in development but fails for
+end users — which is exactly the state cowrie is in today with its pip distribution.
+
+---
+
+## 6. Releasing
+
+### 6.1 Weekly automated releases with no semantic meaning
 
 `weekly-release.yml` increments the patch version every Monday if there are new commits.
 This conflates "time passed" with "release-worthy changes." A week of typo fixes gets
@@ -344,7 +562,7 @@ semver cannot trust the version number.
 - At minimum, add a label-based override (e.g., `release:minor`, `release:major`) that
   the weekly job checks
 
-### 5.2 No changelog automation
+### 6.2 No changelog automation
 
 `CHANGELOG.rst` is manually maintained. The weekly release uses `--generate-notes` which
 produces a raw commit list, but the actual changelog file is not updated. Over time, the
@@ -353,7 +571,7 @@ changelog will drift further from reality.
 **Recommendation:** Either automate changelog generation from conventional commits, or
 have the release workflow update `CHANGELOG.rst` as part of the release PR.
 
-### 5.3 `pypi.yml` smoke test can hang
+### 6.3 `pypi.yml` smoke test can hang
 
 The post-publish verification step runs:
 
@@ -371,7 +589,7 @@ the GHA job-level timeout (6 hours by default).
 If you want a real smoke test, use `timeout 10 twistd -n cowrie` and accept exit code
 124 (timeout) as success.
 
-### 5.4 Sleep-based propagation wait
+### 6.4 Sleep-based propagation wait
 
 ```yaml
 - name: Sleep for publishing
@@ -392,9 +610,9 @@ done
 
 ---
 
-## 6. Docker
+## 7. Docker
 
-### 6.1 Container test is meaningless
+### 7.1 Container test is meaningless
 
 ```yaml
 - name: Test
@@ -418,7 +636,7 @@ crashed immediately after starting.
     docker stop cowrie-test
 ```
 
-### 6.2 `v*` tag pattern is too broad
+### 7.2 `v*` tag pattern is too broad
 
 `docker.yml` triggers on `tags: [v*]` but `pypi.yml` uses the stricter
 `v[0-9]+.[0-9]+.[0-9]+`. A tag like `v2-rc1` or `v2024-experiment` would trigger a
@@ -426,7 +644,7 @@ Docker build but not a PyPI publish, leading to version inconsistency.
 
 **Recommendation:** Use the same tag pattern across all workflows.
 
-### 6.3 No Docker build caching in CI
+### 7.3 No Docker build caching in CI
 
 Each CI build starts from scratch. The Buildx action supports GitHub Actions cache:
 
@@ -439,7 +657,7 @@ Each CI build starts from scratch. The Buildx action supports GitHub Actions cac
 
 This can reduce build times dramatically for incremental changes.
 
-### 6.4 `.dockerignore` is minimal but exists
+### 7.4 `.dockerignore` is minimal but exists
 
 The `.dockerignore` excludes `.direnv`, `.tox`, `.git`, `.github`, `.eggs`. It does not
 exclude `docs/`, `*.md`, `*.rst`, `CHANGELOG.rst`, `Makefile`, `.pre-commit-config.yaml`,
@@ -448,7 +666,7 @@ exclude `docs/`, `*.md`, `*.rst`, `CHANGELOG.rst`, `Makefile`, `.pre-commit-conf
 
 **Recommendation:** Expand `.dockerignore` to exclude everything not needed at runtime.
 
-### 6.5 Hardcoded Python version in Dockerfile
+### 7.5 Hardcoded Python version in Dockerfile
 
 ```dockerfile
 RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.11"]
@@ -466,7 +684,7 @@ RUN [ "python3", "-c", "import sys, compileall; compileall.compile_path(quiet=1)
 
 Or determine the path at build time from the Python version.
 
-### 6.6 Makefile `docker-build` has a broken shell expansion
+### 7.6 Makefile `docker-build` has a broken shell expansion
 
 ```makefile
 docker-build: docker/Dockerfile
@@ -481,7 +699,7 @@ before line 3 executes. The Docker build never receives the version override.
 **Recommendation:** Either chain commands with `&&` in a single line, use `.ONESHELL:`,
 or use Make's `export` directive.
 
-### 6.7 Cosign configuration is outdated
+### 7.7 Cosign configuration is outdated
 
 - `sigstore/cosign-installer@v4.0.0` with `cosign-release: 'v2.4.1'` — both are outdated
 - `COSIGN_EXPERIMENTAL: 1` is deprecated; keyless signing is the default in current
@@ -491,9 +709,9 @@ or use Make's `export` directive.
 
 ---
 
-## 7. Security & DevOps Hygiene
+## 8. Security & DevOps Hygiene
 
-### 7.1 No SAST/security scanning
+### 8.1 No SAST/security scanning
 
 The project has no:
 
@@ -512,20 +730,20 @@ itself could compromise the host.
 - Add Trivy scanning of the Docker image
 - Create a `SECURITY.md` with a vulnerability disclosure policy
 
-### 7.2 No CODEOWNERS
+### 8.2 No CODEOWNERS
 
 There is no `.github/CODEOWNERS` file. For a project with external contributors, this
 means PRs can be merged without review from maintainers if branch protection is not
 configured.
 
-### 7.3 `workflow_dispatch` inputs are unused everywhere
+### 8.3 `workflow_dispatch` inputs are unused everywhere
 
 `tox.yml`, `pypi.yml`, `test-pypi.yml`, and `docker.yml` all define `logLevel` and `tags`
 inputs that are never referenced. This is dead config that confuses contributors.
 
 **Recommendation:** Remove the unused inputs, or wire them up.
 
-### 7.4 Pinned action versions are inconsistent
+### 8.4 Pinned action versions are inconsistent
 
 Some actions use tag versions (`actions/checkout@v6`, `docker/setup-buildx-action@v3`),
 while others use commit hashes (`pypa/gh-action-pypi-publish@ed0c53...`). Hash pinning is
@@ -538,7 +756,7 @@ and can stay on major version tags.
 
 ---
 
-## 8. Summary: Prioritized Recommendations
+## 9. Summary: Prioritized Recommendations
 
 ### Critical (fix immediately)
 
@@ -546,40 +764,45 @@ and can stay on major version tags.
 |---|-------|--------|
 | 1 | Releases are not gated on tests passing | Broken code can be published to PyPI and Docker Hub |
 | 2 | `requires-python` includes Python 2.7 | Users on Python 2.7 or 3.9 will try to install and fail |
-| 3 | No security scanning for a security tool | Honeypot vulnerabilities directly compromise hosts |
+| 3 | Wheel is missing `honeyfs/` and `etc/` — pip install is broken | PyPI users get a non-functional package |
+| 4 | No security scanning for a security tool | Honeypot vulnerabilities directly compromise hosts |
 
 ### High (fix soon)
 
 | # | Issue | Impact |
 |---|-------|--------|
-| 4 | `==` pins in `pyproject.toml` for published package | Dependency conflicts for users |
-| 5 | Three sources of dependency truth (out of sync) | Inconsistent behavior across install methods |
-| 6 | Stale `setup.py` with incorrect metadata | Confusing for contributors, potential build issues |
-| 7 | Consolidate `pypi.yml` / `test-pypi.yml` duplication | Maintenance burden, divergence risk |
-| 8 | `pypi.yml` smoke test can hang the job | Wasted CI minutes, false "still running" status |
+| 5 | `==` pins in `pyproject.toml` for published package | Dependency conflicts for pip users |
+| 6 | Three sources of dependency truth (out of sync) | Inconsistent behavior across install methods |
+| 7 | `setup.py` conflicts with `pyproject.toml` | Confusing for contributors, potential build issues |
+| 8 | Config/data path resolution breaks on non-editable pip install | `get_config_path()` and `find_cowrie_directory()` assume repo layout |
+| 9 | Twisted plugin may not register on pip install (namespace issue) | `twistd cowrie` fails — plugin not found |
+| 10 | Consolidate `pypi.yml` / `test-pypi.yml` duplication | Maintenance burden, divergence risk |
+| 11 | `pypi.yml` smoke test can hang the job | Wasted CI minutes, false "still running" status |
 
 ### Medium (improve quality)
 
 | # | Issue | Impact |
 |---|-------|--------|
-| 9 | Three competing lint/format systems | Contributor confusion, potential conflicts |
-| 10 | Lint results are soft-fail (not enforced) | False sense of code quality |
-| 11 | No test coverage tracking | No visibility into untested code |
-| 12 | `tox.yml` runs on all branches | Wasted CI minutes |
-| 13 | No Docker build caching | Slow CI, wasted compute |
-| 14 | Docker container test is meaningless | False confidence in image health |
-| 15 | Weekly release has no semantic versioning | Versions do not communicate change severity |
-| 16 | Add `concurrency` groups | Race conditions in publishing |
+| 12 | Three competing lint/format systems | Contributor confusion, potential conflicts |
+| 13 | Lint results are soft-fail (not enforced) | False sense of code quality |
+| 14 | No test coverage tracking | No visibility into untested code |
+| 15 | No CI testing of wheel/sdist/Docker install paths | Broken distributions shipped to users |
+| 16 | `tox.yml` runs on all branches | Wasted CI minutes |
+| 17 | No Docker build caching | Slow CI, wasted compute |
+| 18 | Docker container test is meaningless | False confidence in image health |
+| 19 | Weekly release has no semantic versioning | Versions do not communicate change severity |
+| 20 | Add `concurrency` groups | Race conditions in publishing |
 
 ### Low (cleanup)
 
 | # | Issue | Impact |
 |---|-------|--------|
-| 17 | Pre-commit hooks 2+ years stale | Not catching modern Python patterns |
-| 18 | Hardcoded Python 3.11 in Dockerfile compileall | Silent no-op on base image update |
-| 19 | Expand `.dockerignore` | Smaller build context, smaller image |
-| 20 | Unused `workflow_dispatch` inputs everywhere | Dead config clutter |
-| 21 | Makefile docker-build shell expansion is broken | Local Docker builds don't get version info |
-| 22 | Outdated Cosign, deprecated `COSIGN_EXPERIMENTAL` | Deprecation warnings, missing fixes |
-| 23 | No CODEOWNERS file | PRs may lack required reviews |
-| 24 | Inconsistent action version pinning strategy | Uneven supply chain protection |
+| 21 | Pre-commit hooks 2+ years stale | Not catching modern Python patterns |
+| 22 | Hardcoded Python 3.11 in Dockerfile compileall | Silent no-op on base image update |
+| 23 | `MANIFEST.in` partially redundant, only affects sdist | Confusing build config |
+| 24 | Expand `.dockerignore` | Smaller build context, smaller image |
+| 25 | Unused `workflow_dispatch` inputs everywhere | Dead config clutter |
+| 26 | Makefile docker-build shell expansion is broken | Local Docker builds don't get version info |
+| 27 | Outdated Cosign, deprecated `COSIGN_EXPERIMENTAL` | Deprecation warnings, missing fixes |
+| 28 | No CODEOWNERS file | PRs may lack required reviews |
+| 29 | Inconsistent action version pinning strategy | Uneven supply chain protection |
