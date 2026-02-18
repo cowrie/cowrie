@@ -70,6 +70,7 @@ LABEL org.opencontainers.image.vendor="Cowrie"
 LABEL org.opencontainers.image.licenses="BSD-3-Clause"
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
+LABEL org.opencontainers.image.created="${SOURCE_DATE_EPOCH}"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
 LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian13"
 
@@ -112,6 +113,8 @@ ENV PYTHONUNBUFFERED=1
 RUN [ "python3", "/cowrie/cowrie-git/bin/regen-dropin.cache" ]
 
 EXPOSE 2222 2223
+
+STOPSIGNAL SIGTERM
 
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
 CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]

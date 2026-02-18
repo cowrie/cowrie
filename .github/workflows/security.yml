@@ -1,0 +1,69 @@
+---
+name: Security Audit
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+  schedule:
+    # Run weekly on Wednesdays at 06:00 UTC
+    - cron: '0 6 * * 3'
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install pip-audit
+
+      - name: Run pip-audit on core dependencies
+        run: pip-audit -r requirements.txt
+
+      - name: Run pip-audit on output dependencies
+        # Continue on error since output deps may have known issues
+        continue-on-error: true
+        run: pip-audit -r requirements-output.txt
+
+  codeql:
+    name: CodeQL analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
