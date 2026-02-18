@@ -18,7 +18,7 @@ on:  # yamllint disable-line rule:truthy
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   test-pypi-publish:
