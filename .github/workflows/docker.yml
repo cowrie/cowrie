@@ -84,6 +84,8 @@ jobs:
           tags: cowrie:test
           file: docker/Dockerfile
           platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,scope=${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Test
         run: |
@@ -103,6 +105,7 @@ jobs:
           provenance: mode=max
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true
+          cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
 
       - name: Export digest
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
