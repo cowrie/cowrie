@@ -1,16 +1,16 @@
 from __future__ import annotations
+
 import getopt
 import socket
 import struct
 
 from twisted.internet.defer import inlineCallbacks
+from twisted.python import log  # pylint: disable=no-name-in-module
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed, is_valid_port
 from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
-
-from twisted.python import log  # pylint: disable=no-name-in-module
 
 long = int
 

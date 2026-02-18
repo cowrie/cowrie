@@ -24,10 +24,22 @@ on:  # yamllint disable-line rule:truthy
       tags:
         description: 'Build and publish Docker image'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   REGISTRY_IMAGE: cowrie/cowrie
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf  # v3.1.0
+        with:
+          dockerfile: docker/Dockerfile
+
   build:
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -84,6 +96,8 @@ jobs:
           tags: cowrie:test
           file: docker/Dockerfile
           platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,scope=${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Test
         run: |
@@ -103,6 +117,7 @@ jobs:
           provenance: mode=max
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true
+          cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
 
       - name: Export digest
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}

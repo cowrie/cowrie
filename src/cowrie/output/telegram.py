@@ -2,6 +2,7 @@
 
 import treq
 from twisted.python import log
+
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
-import getopt
-from cowrie.shell.command import HoneyPotCommand
 
+import getopt
+
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 

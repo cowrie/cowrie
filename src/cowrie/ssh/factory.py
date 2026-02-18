@@ -7,8 +7,9 @@ This module contains ...
 
 from __future__ import annotations
 
-from configparser import NoOptionError, NoSectionError
 import time
+from configparser import NoOptionError, NoSectionError
+from typing import TYPE_CHECKING
 
 from twisted.conch.openssh_compat import primes
 from twisted.conch.ssh import factory, keys, transport
@@ -21,7 +22,6 @@ from cowrie.ssh import transport as shellTransport
 from cowrie.ssh.userauth import HoneyPotSSHUserAuthServer
 from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from twisted.cred import portal as tp

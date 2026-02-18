@@ -11,7 +11,7 @@ license-files = [ "LICENSE.rst" ]
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 keywords=["ssh", "telnet", "honeypot"]
-requires-python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*, !=3.8.*, !=3.9.*, <4"
+requires-python = ">2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*, !=3.8.*, !=3.9.*, <4"
 readme="README.rst"
 classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -41,6 +41,7 @@ dependencies = [
         "tftpy==0.8.7",
         "treq==25.5.0",
         "twisted[conch]==25.5.0",
+        "urllib3==2.6.3",
 ]
 
 [project.urls]
@@ -172,7 +173,7 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["A", "B", "E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
+lint.select = ["A", "B", "E", "F", "I", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
 lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001"]
 
 exclude = [ "src/cowrie/_version.py", "src/cowrie/vendor/" ]
@@ -198,20 +199,19 @@ version_file = "src/cowrie/_version.py"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,py315t,pypy310,pypy311
+    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,pypy310,pypy311
     deps = -r{toxinidir}/requirements.txt
     skip_missing_interpreters = True
 
     [gh-actions]
     python =
-        3.10: py310, lint, docs, typing, pypi
+        3.10: py310
         3.11: py311
         3.12: py312
         3.13: py313
         3.14: py314
         3.14t: py314t
         3.15: py315
-        3.15t: py315t
         pypy-3.10: pypy310
         pypy-3.11: pypy311
 
@@ -219,9 +219,10 @@ legacy_tox_ini = """
     setenv =
         PYTHONPATH = {toxinidir}/src
         PIP_QUIET = 1
+    deps = coverage
 
     commands =
-        python -m unittest discover src --verbose
+        coverage run -m unittest discover src --verbose
 
     [testenv:pypi]
     extras =

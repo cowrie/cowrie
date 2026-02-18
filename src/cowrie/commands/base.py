@@ -11,13 +11,13 @@ import getopt
 import random
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 from twisted.internet import error, reactor
 from twisted.python import failure, log
 
 from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand
-from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable

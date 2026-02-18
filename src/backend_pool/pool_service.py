@@ -20,20 +20,17 @@ instances)."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
 import time
+from dataclasses import dataclass
 from threading import Lock
 
-from twisted.internet import reactor
-from twisted.internet import threads
+from twisted.internet import reactor, threads
 from twisted.python import log
-
-from cowrie.core.config import CowrieConfig
 
 import backend_pool.libvirt.backend_service
 import backend_pool.util
-
+from cowrie.core.config import CowrieConfig
 
 POOL_STATE_CREATED = "created"
 POOL_STATE_AVAILABLE = "available"

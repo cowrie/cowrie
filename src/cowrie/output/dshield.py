@@ -5,7 +5,6 @@ See https://isc.sans.edu/ssh.html
 
 from __future__ import annotations
 
-
 import base64
 import hashlib
 import hmac
@@ -16,9 +15,7 @@ import dateutil.parser
 
 # TODO: use `treq`
 import requests
-
-from twisted.internet import reactor
-from twisted.internet import threads
+from twisted.internet import reactor, threads
 from twisted.python import log
 
 import cowrie.core.output

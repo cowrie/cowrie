@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import json
 import platform
-
 from io import BytesIO
+
 from twisted.internet import reactor
 from twisted.python import log
 from twisted.web import client, http_headers

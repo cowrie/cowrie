@@ -11,10 +11,8 @@ import os
 from configparser import NoOptionError, NoSectionError
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
 from twisted.conch.ssh import keys
 
 from cowrie.core.config import CowrieConfig

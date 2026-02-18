@@ -6,7 +6,6 @@ import secrets
 import string
 
 import oci
-
 from twisted.python import log
 
 import cowrie.core.output

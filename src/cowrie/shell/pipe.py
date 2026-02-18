@@ -9,7 +9,6 @@ import stat
 import time
 from typing import Any
 
-
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig

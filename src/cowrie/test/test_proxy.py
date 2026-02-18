@@ -8,12 +8,12 @@ from __future__ import annotations
 import os
 import unittest
 
+from twisted.cred import portal
+from twisted.internet import reactor
+
 from cowrie.core.checkers import HoneypotPasswordChecker, HoneypotPublicKeyChecker
 from cowrie.shell.realm import HoneyPotRealm
 from cowrie.ssh.factory import CowrieSSHFactory
-
-from twisted.cred import portal
-from twisted.internet import reactor
 
 # from cowrie.test.proxy_compare import ProxyTestCommand
 

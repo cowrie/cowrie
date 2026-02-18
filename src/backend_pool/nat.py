@@ -1,13 +1,12 @@
 from __future__ import annotations
+
 from threading import Lock
-from typing import Any
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from twisted.python import failure
     from twisted.internet.interfaces import IAddress
-from twisted.internet import protocol
-from twisted.internet import reactor
+    from twisted.python import failure
+from twisted.internet import protocol, reactor
 from twisted.internet.protocol import connectionDone
 
 

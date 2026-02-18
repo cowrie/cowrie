@@ -18,11 +18,10 @@ if TYPE_CHECKING:
 
 from twisted.python import log
 
-from cowrie.core.config import CowrieConfig
-
 import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
 import backend_pool.util
+from cowrie.core.config import CowrieConfig
 
 
 class LibvirtError(Exception):

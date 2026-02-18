@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
-from twisted.internet import defer
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from twisted.internet.protocol import ClientFactory
 from twisted.python import log
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from twisted.internet.interfaces import IAddress

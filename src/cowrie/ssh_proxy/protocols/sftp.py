@@ -31,12 +31,11 @@ from __future__ import annotations
 import hashlib
 import os
 
-from twisted.python import log
 from twisted.conch.ssh import filetransfer
+from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.protocols import base_protocol
-
 
 # PACKETLAYOUT = {
 #     1: "SSH_FXP_INIT",

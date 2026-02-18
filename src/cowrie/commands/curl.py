@@ -2,24 +2,22 @@
 # See the COPYRIGHT file for more information
 
 from __future__ import annotations
-from http.client import responses
 
 import getopt
 import os
+from http.client import responses
 from urllib import parse
 
+import treq
 from twisted.internet import error
 from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
-
-import treq
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
 from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
-
 
 commands = {}
 

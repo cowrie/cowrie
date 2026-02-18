@@ -36,23 +36,20 @@ import base64
 import datetime
 import json
 import os
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlencode, urlparse
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from zope.interface import implementer
-
-from twisted.internet import defer
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.iweb import IBodyProducer, IResponse
+from zope.interface import implementer
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
-
 
 COWRIE_USER_AGENT = "Cowrie Honeypot"
 VTAPI_URL = "https://www.virustotal.com/api/v3/"

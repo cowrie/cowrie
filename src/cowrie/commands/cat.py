@@ -8,7 +8,6 @@ cat command
 
 from __future__ import annotations
 
-
 import getopt
 
 from twisted.python import log

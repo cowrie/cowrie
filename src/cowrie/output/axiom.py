@@ -2,15 +2,13 @@
 
 import json
 
+import treq
 from twisted.internet import defer
 from twisted.python import log
 from twisted.web import http_headers
 
-import treq
-
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
-
 
 AXIOM_URL = "https://api.axiom.co/v1"
 

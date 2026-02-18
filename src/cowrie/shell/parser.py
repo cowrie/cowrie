@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import re
-
 from typing import Any
 
 # Pre-compiled regex for extracting redirection operators

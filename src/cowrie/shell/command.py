@@ -8,7 +8,7 @@ This module contains code to run a command
 from __future__ import annotations
 
 import shlex
-from typing import Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Callable

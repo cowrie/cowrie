@@ -28,12 +28,10 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 import os
 import sys
-from typing import ClassVar, TYPE_CHECKING
-
-from zope.interface import implementer, provider
+from importlib import import_module
+from typing import TYPE_CHECKING, ClassVar
 
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
@@ -43,6 +41,7 @@ from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
+from zope.interface import implementer, provider
 
 import cowrie.core.checkers
 import cowrie.core.uuid
@@ -51,8 +50,8 @@ import cowrie.shell.realm
 import cowrie.ssh.factory
 import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
-from cowrie import core
 from cowrie import __version__ as __cowrie_version__
+from cowrie import core
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler

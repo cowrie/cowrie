@@ -1,10 +1,10 @@
 from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import Any
 
-from pymisp import MISPAttribute, MISPEvent, MISPSighting, MISPObject
-
+from pymisp import MISPAttribute, MISPEvent, MISPObject, MISPSighting
 from twisted.python import log
 
 import cowrie.core.output

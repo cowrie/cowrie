@@ -8,11 +8,12 @@ Responsibilities:
 """
 
 import json
+import zlib as _zlib
 from collections import deque
 from io import BytesIO
-import zlib as _zlib
-from typing import Any, cast, TYPE_CHECKING
-from twisted.internet import reactor, defer
+from typing import TYPE_CHECKING, Any, cast
+
+from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer, readBody

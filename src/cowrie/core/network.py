@@ -1,8 +1,8 @@
-from collections.abc import Generator
 import ipaddress
 import re
+from collections.abc import Generator
 
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.names import client, dns
 from twisted.python import log
 

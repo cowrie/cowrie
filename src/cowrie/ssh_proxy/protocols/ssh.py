@@ -28,12 +28,11 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
-import uuid
-
-from twisted.python import log
 from twisted.conch.ssh import connection, transport, userauth
+from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.protocols import (

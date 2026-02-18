@@ -69,24 +69,23 @@ PLATFORM := linux/amd64,linux/arm64
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG=$(shell git rev-parse --short=8 HEAD)
 
+export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE := $(shell python -m setuptools_scm --force-write-version-files)
+
 
 .PHONY: docker-build
 docker-build: docker/Dockerfile ## Build Docker image
-	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)
 	-$(DOCKER) buildx create --append --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
 	$(DOCKER) buildx build --sbom=true --provenance=true --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-load
 docker-load: docker-build ## Load Docker image
-	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)
 	-$(DOCKER) buildx create --append --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
 	$(DOCKER) buildx build --load -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
 
 .PHONY: docker-build ## Push Docker image
 docker-push:  ## Push Docker image to Docker Hub
-	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)
 	-$(DOCKER) buildx create --append --name cowrie-builder
 	@echo "Pushing image to GitHub Docker Registry...\n"
 	$(DOCKER) buildx use cowrie-builder

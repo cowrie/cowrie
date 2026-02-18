@@ -28,11 +28,10 @@
 
 from __future__ import annotations
 
-
-from zope.interface import implementer
+from typing import TYPE_CHECKING
 
 from twisted.cred.credentials import ICredentials, IUsernamePassword
-from typing import TYPE_CHECKING
+from zope.interface import implementer
 
 if TYPE_CHECKING:
     from collections.abc import Callable

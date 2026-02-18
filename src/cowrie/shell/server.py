@@ -32,12 +32,12 @@ from __future__ import annotations
 import configparser
 import json
 import random
+from typing import TYPE_CHECKING
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from twisted.cred.portal import IRealm

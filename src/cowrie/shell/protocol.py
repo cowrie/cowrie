@@ -4,12 +4,12 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 import importlib
 import socket
 import sys
 import time
 import traceback
+from importlib import import_module
 from typing import ClassVar
 
 from twisted.conch import recvline
@@ -20,9 +20,9 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 import cowrie.commands
+from cowrie import data
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import command, honeypot
-from cowrie import data
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):

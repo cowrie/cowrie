@@ -14,8 +14,8 @@ from cowrie.core.config import CowrieConfig
 from cowrie.core.fingerprint import (
     generate_ja4,
     generate_ja4h,
-    parse_tls_client_hello,
     parse_http_request,
+    parse_tls_client_hello,
 )
 
 

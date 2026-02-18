@@ -8,6 +8,8 @@ on:  # yamllint disable-line rule:truthy
 
   pull_request:
 
+  workflow_call:
+
   workflow_dispatch:
     inputs:
       logLevel:
@@ -17,8 +19,69 @@ on:  # yamllint disable-line rule:truthy
       tags:
         description: 'Tox'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e lint
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e docs
+
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e typing
+
+  test:
     runs-on: ubuntu-latest
     env:
       PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
@@ -29,8 +92,6 @@ jobs:
         experimental: [false]
         include:
           - python-version: "3.15"
-            experimental: true
-          - python-version: "3.15t"
             experimental: true
     continue-on-error: ${{ matrix.experimental }}
     steps:
@@ -43,15 +104,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: ${{ matrix.experimental }}
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
-          python -m pip -q install -e '.[dev]'
-          python -m pip -q install tox-gh-actions
+          python -m pip -q install -e .
+          python -m pip -q install tox tox-gh-actions coverage
 
       - name: Generate version file
         run: python -m setuptools_scm --force-write-version-files
 
       - name: Test with tox
         run: tox
+
+      - name: Coverage report
+        run: coverage report
+
+      - name: Upload coverage
+        if: ${{ !matrix.experimental }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: .coverage
+          include-hidden-files: true
+          retention-days: 1

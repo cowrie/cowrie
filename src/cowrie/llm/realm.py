@@ -28,11 +28,10 @@
 
 from __future__ import annotations
 
-from zope.interface import implementer
-
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.cred.portal import IRealm
+from zope.interface import implementer
 
 from cowrie.llm import avatar as llmavatar
 from cowrie.llm import server as llmserver

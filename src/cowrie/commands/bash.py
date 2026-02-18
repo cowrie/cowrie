@@ -5,12 +5,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from twisted.internet import error
 from twisted.python import failure
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import HoneyPotShell
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable

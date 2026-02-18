@@ -8,7 +8,6 @@ import copy
 import os
 import re
 import shlex
-
 from typing import Any
 
 from twisted.internet import error

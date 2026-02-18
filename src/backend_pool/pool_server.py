@@ -11,16 +11,15 @@ any needed data thereafter.
 from __future__ import annotations
 
 import struct
+from typing import TYPE_CHECKING
 
 from twisted.internet.address import IPv4Address, IPv6Address
 from twisted.internet.protocol import Factory, Protocol
 from twisted.python import log
 
-from cowrie.core.config import CowrieConfig
-
 from backend_pool.nat import NATService
 from backend_pool.pool_service import NoAvailableVMs, PoolService
-from typing import TYPE_CHECKING
+from cowrie.core.config import CowrieConfig
 
 if TYPE_CHECKING:
     from twisted.internet.interfaces import IAddress

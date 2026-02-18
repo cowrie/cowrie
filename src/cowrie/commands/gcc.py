@@ -7,12 +7,12 @@ import os
 import random
 import re
 import time
+from typing import TYPE_CHECKING
 
 from twisted.internet import reactor
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from twisted.internet.defer import Deferred

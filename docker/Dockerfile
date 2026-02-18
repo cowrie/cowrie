@@ -111,7 +111,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN [ "python3", "/cowrie/cowrie-git/bin/regen-dropin.cache" ]
 
+EXPOSE 2222 2223
+
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
 CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "cowrie" ]
-
-EXPOSE 2222 2223

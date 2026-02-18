@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import optparse
-
 from typing import Any
+
 from typing_extensions import Never
 
 from cowrie.shell.command import HoneyPotCommand
