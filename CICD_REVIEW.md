@@ -13,8 +13,9 @@ dependency management follows conflicting strategies, and there is no security s
 Most critically, the project is distributed via three channels (git clone, pip, Docker)
 but the packaging configuration doesn't properly serve any of them.
 
-This document covers: pipeline architecture, testing, linting, dependency management,
-Python packaging & distribution, releasing, Docker, and general DevOps hygiene.
+This document covers: pipeline architecture, testing, linting, tox configuration,
+dependency management, Python packaging & distribution, releasing, Docker, and general
+DevOps hygiene.
 
 ---
 
@@ -219,7 +220,118 @@ locally.
 
 ---
 
-## 4. Dependency Management
+## 4. Tox Configuration
+
+### 4.1 `legacy_tox_ini` is a migration debt
+
+The tox config is embedded in `pyproject.toml` using the `legacy_tox_ini` key:
+
+```toml
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    envlist = lint,docs,typing,...
+"""
+```
+
+This is the migration shim from tox 3 to tox 4. It works, but it means the entire tox
+config is a raw string inside a TOML file — no syntax highlighting, no TOML validation,
+no IDE support. Tox 4 supports a native `[tool.tox]` configuration format that should be
+used instead.
+
+**Recommendation:** Migrate to native tox 4 `pyproject.toml` configuration, or move the
+tox config to a standalone `tox.ini` file. Both are better than the legacy shim.
+
+### 4.2 The Python 3.10 matrix entry is a bottleneck
+
+The `[gh-actions]` mapping concentrates everything on Python 3.10:
+
+```ini
+3.10: py310, lint, docs, typing, pypi
+3.11: py311
+3.12: py312
+```
+
+When CI runs the matrix, the 3.10 job runs **five** tox environments sequentially
+(`py310` + `lint` + `docs` + `typing` + `pypi`), while every other version runs just
+one. The 3.10 job takes dramatically longer than the others, making it the bottleneck
+for the entire matrix.
+
+The `lint` env runs ruff + yamllint + pyright + pylint. The `typing` env runs mypy +
+mypyc + pyre + pyright. The `docs` env builds Sphinx docs. The `pypi` env builds the
+package and runs twine check. That's 10+ tool invocations serialized into a single
+matrix entry.
+
+**Recommendation:** Move lint, docs, typing, and pypi out of the matrix and into
+separate jobs that run in parallel:
+
+```yaml
+jobs:
+  test:
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - run: tox -e py  # only run the test env for this Python version
+
+  lint:
+    steps:
+      - run: tox -e lint
+
+  docs:
+    steps:
+      - run: tox -e docs
+```
+
+This makes each job faster and gives separate GitHub status checks for each concern.
+
+### 4.3 `[testenv]` installs full dev deps but only runs tests
+
+The `tox.yml` workflow does `pip install -e '.[dev]'` for every matrix entry. The `[dev]`
+extra includes ruff, mypy, pylint, sphinx, coverage, build, and 20+ other tools. But
+the `[testenv]` command is just `python -m unittest discover src --verbose` — it doesn't
+use any of those tools.
+
+Only the `lint`, `typing`, `docs`, and `pypi` envs need `[dev]` extras. The test envs
+only need the base package and its runtime dependencies.
+
+**Recommendation:** Remove the `pip install -e '.[dev]'` from the workflow and let tox
+handle dependency installation via its own `deps` and `extras` configuration. The test
+envs should install only `deps = -r{toxinidir}/requirements.txt` (which they already
+configure, though the tox `deps` at the `[tox]` level is not properly scoped). The
+`extras = dev` should only appear in envs that need it (`lint`, `typing`, `docs`, `pypi`).
+
+### 4.4 Consider whether tox adds value in CI
+
+Tox's main purpose is to test across multiple Python versions in isolated environments.
+In GitHub Actions, each matrix entry already runs in an isolated environment with a
+specific Python version. Using tox inside GHA means:
+
+- Two layers of environment creation (GHA sets up Python, then tox creates a venv)
+- The `tox-gh-actions` plugin to bridge the two layers
+- Extra install time for tox itself
+- Complex mapping between matrix versions and tox envs
+
+Many modern Python projects run pytest directly in CI and reserve tox for local
+development:
+
+```yaml
+steps:
+  - uses: actions/setup-python@v6
+    with:
+      python-version: ${{ matrix.python-version }}
+  - run: pip install -e .
+  - run: python -m pytest
+```
+
+**Recommendation:** This is not necessarily a change to make — tox works and the team is
+familiar with it. But if the tox configuration is being reworked anyway, consider whether
+the `tox-gh-actions` bridge layer is adding complexity without proportional value in CI.
+Keep tox for local development; simplify CI to direct tool invocation.
+
+---
+
+## 5. Dependency Management
 
 ### 4.1 Three sources of dependency truth
 
@@ -327,20 +439,22 @@ problem.
 
 ---
 
-## 5. Python Packaging & Distribution
+## 6. Python Packaging & Distribution
 
-Cowrie has three distribution channels, each with different needs:
+Cowrie actually has **four** distribution paths, each with different needs:
 
 | Channel | Primary audience | Install method | How it runs |
 |---------|-----------------|----------------|-------------|
 | **Git clone** | Operators customizing the honeypot | `git clone` + `pip install -e .` | `cowrie start` from repo root |
 | **PyPI package** | Quick installs, automation | `pip install cowrie` | `twistd cowrie` |
 | **Docker image** | Containerized deployments | `docker run cowrie/cowrie` | Entrypoint runs twistd directly |
+| **Raw git clone** | Legacy/simple setups | `git clone` + manual venv + `pip install -r requirements.txt` | `PYTHONPATH=src twistd cowrie` |
 
-The current packaging configuration tries to serve all three but has fundamental issues
-with each.
+The fourth path is what the Dockerfile actually uses internally, and is also how some
+operators run cowrie without `pip install -e .` at all. The current packaging
+configuration tries to serve all four but has fundamental issues with each.
 
-### 5.1 The git-clone path works but is fragile
+### 6.1 The git-clone path works but is fragile
 
 The recommended installation (`INSTALL.rst`) clones the repo and runs `pip install -e .`
 (editable install). The `cowrie start` script then uses `find_cowrie_directory()` which
@@ -372,7 +486,7 @@ fundamentally ties the application to a specific directory layout.
 - You cannot run cowrie from an arbitrary directory
 - The pip install and Docker paths must recreate this exact layout
 
-### 5.2 The pip install path is incomplete
+### 6.2 The pip install path is incomplete
 
 The README marks pip install as "beta." The actual problems are deeper:
 
@@ -437,7 +551,7 @@ directory — and there is no `etc/cowrie.cfg.dist` there.
    README/workflows. Publishing to PyPI with a broken install experience is worse than
    not publishing at all.
 
-### 5.3 Wheel vs. source distribution
+### 6.3 Wheel vs. source distribution
 
 Cowrie is **pure Python** (no C extensions, no Rust, no Cython). This means:
 
@@ -452,9 +566,9 @@ above, the wheel is incomplete because `honeyfs/` and `etc/` are not included.
 
 **Recommendation:** Since cowrie is pure Python, always publish both sdist and wheel. The
 wheel installs faster (no build step) and is the preferred format. But fix the wheel
-contents first (see 5.2).
+contents first (see 6.2).
 
-### 5.4 `setup.py` conflicts with `pyproject.toml`
+### 6.4 `setup.py` conflicts with `pyproject.toml`
 
 Both files exist and define overlapping, contradictory metadata:
 
@@ -475,7 +589,7 @@ and `pyproject.toml`. The `refresh_plugin_cache()` function in `setup.py` is dea
 anyway. If the Twisted plugin needs special handling, do it in a post-install script or
 the `cowrie start` command.
 
-### 5.5 `MANIFEST.in` is partially redundant and incomplete
+### 6.5 `MANIFEST.in` is partially redundant and incomplete
 
 ```
 include *.rst
@@ -501,7 +615,7 @@ tarball but NOT in the wheel. Users who `pip install` get the wheel (which lacks
 `include_package_data = True` and proper `pyproject.toml` configuration handles
 everything.
 
-### 5.6 The Twisted plugin namespace pattern needs care
+### 6.6 The Twisted plugin namespace pattern needs care
 
 Cowrie installs a Twisted plugin at `src/twisted/plugins/cowrie_plugin.py`. This is the
 classic Twisted pattern where third-party packages inject plugins into Twisted's namespace
@@ -524,7 +638,54 @@ after `pip install cowrie` to regenerate the plugin cache. Or migrate to a Twist
 discovery mechanism that doesn't depend on namespace packages (if Twisted supports one
 for the version you target).
 
-### 5.7 The three distribution channels should be tested in CI
+### 6.7 Docker uses a fourth, undocumented install path
+
+The Dockerfile does **not** use `pip install cowrie` or `pip install -e .`. Instead it:
+
+1. Installs dependencies from `requirements.txt` and `requirements-output.txt` into a
+   venv (line 49-54)
+2. Copies the entire source tree into `/cowrie/cowrie-git/` (line 56)
+3. Sets `PYTHONPATH=/cowrie/cowrie-git/src` (line 109)
+4. Runs `twistd cowrie` directly (line 115)
+
+There is even a commented-out line that tried and abandoned `pip install -e`:
+
+```dockerfile
+# RUN . cowrie-env/bin/activate && \
+#     pip install -e ${COWRIE_HOME}/cowrie-git
+```
+
+This means the Docker image bypasses Python packaging entirely. It doesn't use
+`pyproject.toml` metadata, doesn't create entry points, doesn't resolve dependencies
+through pip's resolver (it installs from `requirements.txt` directly), and doesn't
+register the package at all. The code is imported purely through `PYTHONPATH`.
+
+**Why this matters:**
+
+- **The Docker image and the PyPI package are built from different dependency sets.**
+  Docker uses `requirements.txt` + `requirements-output.txt`. PyPI uses
+  `pyproject.toml` `[project].dependencies`. These are out of sync (`urllib3` is pinned
+  in one but not the other). A dependency bug could appear in one channel but not the
+  other.
+- **No package metadata in the container.** `pip list` inside the container won't show
+  cowrie. `pip show cowrie` returns nothing. This makes debugging and vulnerability
+  scanning harder.
+- **The approach works but is fragile.** It depends on the source layout matching what
+  `PYTHONPATH` expects, and on `requirements.txt` being a complete set of dependencies.
+
+**Recommendation:** The Dockerfile should `pip install .` (non-editable install) rather
+than raw source copying. This:
+- Uses the same dependency resolution as PyPI
+- Registers the package (visible in `pip list`, `pip show`)
+- Creates proper entry points
+- Ensures that if the pip install path is broken, Docker builds catch it too
+- Aligns all distribution channels on the same packaging path
+
+If `pip install .` doesn't work in the Docker build (which is why it was likely
+commented out), that's a signal that the packaging is broken and needs to be fixed —
+not worked around.
+
+### 6.8 The four distribution channels should be tested in CI
 
 Currently, CI only tests the git-clone editable-install path (via `pip install -e '.[dev]'`
 in tox.yml). Neither the pip-install-from-wheel path nor the Docker path get functional
@@ -536,16 +697,16 @@ testing.
    `twistd --help cowrie` (or a basic smoke test) in a clean venv with no source tree.
 2. **sdist install test:** `pip install dist/*.tar.gz`, same smoke test.
 3. **Docker test:** Already exists but needs to actually verify the container is healthy
-   (see section 6.1).
+   (see section 8.1).
 
 This catches the category of bugs where the package works in development but fails for
 end users — which is exactly the state cowrie is in today with its pip distribution.
 
 ---
 
-## 6. Releasing
+## 7. Releasing
 
-### 6.1 Weekly automated releases with no semantic meaning
+### 7.1 Weekly automated releases with no semantic meaning
 
 `weekly-release.yml` increments the patch version every Monday if there are new commits.
 This conflates "time passed" with "release-worthy changes." A week of typo fixes gets
@@ -562,7 +723,7 @@ semver cannot trust the version number.
 - At minimum, add a label-based override (e.g., `release:minor`, `release:major`) that
   the weekly job checks
 
-### 6.2 No changelog automation
+### 7.2 No changelog automation
 
 `CHANGELOG.rst` is manually maintained. The weekly release uses `--generate-notes` which
 produces a raw commit list, but the actual changelog file is not updated. Over time, the
@@ -571,7 +732,7 @@ changelog will drift further from reality.
 **Recommendation:** Either automate changelog generation from conventional commits, or
 have the release workflow update `CHANGELOG.rst` as part of the release PR.
 
-### 6.3 `pypi.yml` smoke test can hang
+### 7.3 `pypi.yml` smoke test can hang
 
 The post-publish verification step runs:
 
@@ -589,7 +750,7 @@ the GHA job-level timeout (6 hours by default).
 If you want a real smoke test, use `timeout 10 twistd -n cowrie` and accept exit code
 124 (timeout) as success.
 
-### 6.4 Sleep-based propagation wait
+### 7.4 Sleep-based propagation wait
 
 ```yaml
 - name: Sleep for publishing
@@ -610,9 +771,9 @@ done
 
 ---
 
-## 7. Docker
+## 8. Docker
 
-### 7.1 Container test is meaningless
+### 8.1 Container test is meaningless
 
 ```yaml
 - name: Test
@@ -636,7 +797,7 @@ crashed immediately after starting.
     docker stop cowrie-test
 ```
 
-### 7.2 `v*` tag pattern is too broad
+### 8.2 `v*` tag pattern is too broad
 
 `docker.yml` triggers on `tags: [v*]` but `pypi.yml` uses the stricter
 `v[0-9]+.[0-9]+.[0-9]+`. A tag like `v2-rc1` or `v2024-experiment` would trigger a
@@ -644,7 +805,7 @@ Docker build but not a PyPI publish, leading to version inconsistency.
 
 **Recommendation:** Use the same tag pattern across all workflows.
 
-### 7.3 No Docker build caching in CI
+### 8.3 No Docker build caching in CI
 
 Each CI build starts from scratch. The Buildx action supports GitHub Actions cache:
 
@@ -657,7 +818,7 @@ Each CI build starts from scratch. The Buildx action supports GitHub Actions cac
 
 This can reduce build times dramatically for incremental changes.
 
-### 7.4 `.dockerignore` is minimal but exists
+### 8.4 `.dockerignore` is minimal but exists
 
 The `.dockerignore` excludes `.direnv`, `.tox`, `.git`, `.github`, `.eggs`. It does not
 exclude `docs/`, `*.md`, `*.rst`, `CHANGELOG.rst`, `Makefile`, `.pre-commit-config.yaml`,
@@ -666,7 +827,7 @@ exclude `docs/`, `*.md`, `*.rst`, `CHANGELOG.rst`, `Makefile`, `.pre-commit-conf
 
 **Recommendation:** Expand `.dockerignore` to exclude everything not needed at runtime.
 
-### 7.5 Hardcoded Python version in Dockerfile
+### 8.5 Hardcoded Python version in Dockerfile
 
 ```dockerfile
 RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.11"]
@@ -684,7 +845,7 @@ RUN [ "python3", "-c", "import sys, compileall; compileall.compile_path(quiet=1)
 
 Or determine the path at build time from the Python version.
 
-### 7.6 Makefile `docker-build` has a broken shell expansion
+### 8.6 Makefile `docker-build` has a broken shell expansion
 
 ```makefile
 docker-build: docker/Dockerfile
@@ -699,7 +860,7 @@ before line 3 executes. The Docker build never receives the version override.
 **Recommendation:** Either chain commands with `&&` in a single line, use `.ONESHELL:`,
 or use Make's `export` directive.
 
-### 7.7 Cosign configuration is outdated
+### 8.7 Cosign configuration is outdated
 
 - `sigstore/cosign-installer@v4.0.0` with `cosign-release: 'v2.4.1'` — both are outdated
 - `COSIGN_EXPERIMENTAL: 1` is deprecated; keyless signing is the default in current
@@ -709,9 +870,9 @@ or use Make's `export` directive.
 
 ---
 
-## 8. Security & DevOps Hygiene
+## 9. Security & DevOps Hygiene
 
-### 8.1 No SAST/security scanning
+### 9.1 No SAST/security scanning
 
 The project has no:
 
@@ -730,20 +891,20 @@ itself could compromise the host.
 - Add Trivy scanning of the Docker image
 - Create a `SECURITY.md` with a vulnerability disclosure policy
 
-### 8.2 No CODEOWNERS
+### 9.2 No CODEOWNERS
 
 There is no `.github/CODEOWNERS` file. For a project with external contributors, this
 means PRs can be merged without review from maintainers if branch protection is not
 configured.
 
-### 8.3 `workflow_dispatch` inputs are unused everywhere
+### 9.3 `workflow_dispatch` inputs are unused everywhere
 
 `tox.yml`, `pypi.yml`, `test-pypi.yml`, and `docker.yml` all define `logLevel` and `tags`
 inputs that are never referenced. This is dead config that confuses contributors.
 
 **Recommendation:** Remove the unused inputs, or wire them up.
 
-### 8.4 Pinned action versions are inconsistent
+### 9.4 Pinned action versions are inconsistent
 
 Some actions use tag versions (`actions/checkout@v6`, `docker/setup-buildx-action@v3`),
 while others use commit hashes (`pypa/gh-action-pypi-publish@ed0c53...`). Hash pinning is
@@ -756,7 +917,7 @@ and can stay on major version tags.
 
 ---
 
-## 9. Summary: Prioritized Recommendations
+## 10. Summary: Prioritized Recommendations
 
 ### Critical (fix immediately)
 
@@ -783,26 +944,30 @@ and can stay on major version tags.
 
 | # | Issue | Impact |
 |---|-------|--------|
-| 12 | Three competing lint/format systems | Contributor confusion, potential conflicts |
-| 13 | Lint results are soft-fail (not enforced) | False sense of code quality |
-| 14 | No test coverage tracking | No visibility into untested code |
-| 15 | No CI testing of wheel/sdist/Docker install paths | Broken distributions shipped to users |
-| 16 | `tox.yml` runs on all branches | Wasted CI minutes |
-| 17 | No Docker build caching | Slow CI, wasted compute |
-| 18 | Docker container test is meaningless | False confidence in image health |
-| 19 | Weekly release has no semantic versioning | Versions do not communicate change severity |
-| 20 | Add `concurrency` groups | Race conditions in publishing |
+| 12 | Docker bypasses Python packaging entirely (PYTHONPATH hack) | Docker and pip use different dependency sets, no package metadata |
+| 13 | Three competing lint/format systems | Contributor confusion, potential conflicts |
+| 14 | Lint results are soft-fail (not enforced) | False sense of code quality |
+| 15 | No test coverage tracking | No visibility into untested code |
+| 16 | No CI testing of wheel/sdist/Docker install paths | Broken distributions shipped to users |
+| 17 | Python 3.10 matrix entry is a bottleneck (runs 5 tox envs) | One slow job holds up the entire matrix |
+| 18 | `tox.yml` runs on all branches | Wasted CI minutes |
+| 19 | CI installs full `.[dev]` deps for test-only jobs | Wasted install time in every matrix entry |
+| 20 | No Docker build caching | Slow CI, wasted compute |
+| 21 | Docker container test is meaningless | False confidence in image health |
+| 22 | Weekly release has no semantic versioning | Versions do not communicate change severity |
+| 23 | Add `concurrency` groups | Race conditions in publishing |
 
 ### Low (cleanup)
 
 | # | Issue | Impact |
 |---|-------|--------|
-| 21 | Pre-commit hooks 2+ years stale | Not catching modern Python patterns |
-| 22 | Hardcoded Python 3.11 in Dockerfile compileall | Silent no-op on base image update |
-| 23 | `MANIFEST.in` partially redundant, only affects sdist | Confusing build config |
-| 24 | Expand `.dockerignore` | Smaller build context, smaller image |
-| 25 | Unused `workflow_dispatch` inputs everywhere | Dead config clutter |
-| 26 | Makefile docker-build shell expansion is broken | Local Docker builds don't get version info |
-| 27 | Outdated Cosign, deprecated `COSIGN_EXPERIMENTAL` | Deprecation warnings, missing fixes |
-| 28 | No CODEOWNERS file | PRs may lack required reviews |
-| 29 | Inconsistent action version pinning strategy | Uneven supply chain protection |
+| 24 | `legacy_tox_ini` shim instead of native tox 4 config | No IDE support, raw string in TOML |
+| 25 | Pre-commit hooks 2+ years stale | Not catching modern Python patterns |
+| 26 | Hardcoded Python 3.11 in Dockerfile compileall | Silent no-op on base image update |
+| 27 | `MANIFEST.in` partially redundant, only affects sdist | Confusing build config |
+| 28 | Expand `.dockerignore` | Smaller build context, smaller image |
+| 29 | Unused `workflow_dispatch` inputs everywhere | Dead config clutter |
+| 30 | Makefile docker-build shell expansion is broken | Local Docker builds don't get version info |
+| 31 | Outdated Cosign, deprecated `COSIGN_EXPERIMENTAL` | Deprecation warnings, missing fixes |
+| 32 | No CODEOWNERS file | PRs may lack required reviews |
+| 33 | Inconsistent action version pinning strategy | Uneven supply chain protection |
