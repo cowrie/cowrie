@@ -24,7 +24,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e '.[dev]'
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e lint
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e '.[dev]'
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e docs
+
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e '.[dev]'
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e typing
+
+  test:
     runs-on: ubuntu-latest
     env:
       PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
