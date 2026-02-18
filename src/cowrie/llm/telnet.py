@@ -5,13 +5,12 @@ from __future__ import annotations
 
 import traceback
 
-from zope.interface import implementer
-
 from twisted.conch.ssh import session
 from twisted.conch.telnet import ECHO, SGA, TelnetBootstrapProtocol
 from twisted.internet import interfaces, protocol
 from twisted.internet.protocol import connectionDone
 from twisted.python import failure, log
+from zope.interface import implementer
 
 from cowrie.insults import insults
 from cowrie.llm import protocol as llmproto

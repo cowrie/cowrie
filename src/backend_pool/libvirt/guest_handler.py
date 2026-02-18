@@ -1,17 +1,17 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 from __future__ import annotations
+
 import os
 import sys
 from configparser import NoOptionError
-
 from typing import Any
 
 from twisted.python import log
-from cowrie.core.config import CowrieConfig
 
 import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
+from cowrie.core.config import CowrieConfig
 
 
 class QemuGuestError(Exception):

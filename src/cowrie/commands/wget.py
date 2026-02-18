@@ -5,19 +5,18 @@ from __future__ import annotations
 
 import getopt
 import os
-import time
 import posixpath
+import time
 from typing import Any
 from urllib import parse
 
-from twisted.internet import defer, error, reactor
-from twisted.internet.defer import inlineCallbacks, CancelledError
-from twisted.internet.protocol import ClientCreator, Protocol
-from twisted.python import log
-from twisted.protocols.ftp import CommandFailed, FTPClient
-from twisted.web.iweb import UNKNOWN_LENGTH
-
 import treq
+from twisted.internet import defer, error, reactor
+from twisted.internet.defer import CancelledError, inlineCallbacks
+from twisted.internet.protocol import ClientCreator, Protocol
+from twisted.protocols.ftp import CommandFailed, FTPClient
+from twisted.python import log
+from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig

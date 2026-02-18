@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import BinaryIO, TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO
 
 from twisted.application import internet
 from twisted.internet import endpoints

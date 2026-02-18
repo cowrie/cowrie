@@ -1,15 +1,15 @@
 # Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # See the COPYRIGHT file for more information
 from __future__ import annotations
+
 import os
 import sys
 from typing import Any
 
 from twisted.python import log
 
-from cowrie.core.config import CowrieConfig
-
 import backend_pool.util
+from cowrie.core.config import CowrieConfig
 
 
 def create_filter(connection: Any) -> Any:

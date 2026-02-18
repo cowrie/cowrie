@@ -2,11 +2,11 @@
 Simple remote syslog plugin.
 """
 
-import cowrie.core.output
-
 import logging
 import logging.handlers
 import socket
+
+import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 

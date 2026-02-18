@@ -7,9 +7,11 @@ find command
 """
 
 from __future__ import annotations
-from cowrie.shell.command import HoneyPotCommand
+
 import fnmatch
 import os
+
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 

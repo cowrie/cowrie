@@ -15,15 +15,15 @@ from typing import TYPE_CHECKING
 from twisted.internet import protocol
 from twisted.python import log
 
+from cowrie import data
 from cowrie.core.config import CowrieConfig
 from cowrie.telnet.transport import CowrieTelnetTransport
 from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
-from cowrie import data
 
 if TYPE_CHECKING:
-    from twisted.plugin import IPlugin
     from twisted.cred import portal as tp
+    from twisted.plugin import IPlugin
 
 
 class HoneyPotTelnetFactory(protocol.ServerFactory):

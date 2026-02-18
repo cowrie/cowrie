@@ -4,15 +4,14 @@ import configparser
 import unittest
 from io import StringIO
 
+from twisted.application.service import MultiService
+from twisted.internet import protocol, reactor
+
 from cowrie.core.utils import (
     create_endpoint_services,
     durationHuman,
     get_endpoints_from_section,
 )
-
-from twisted.application.service import MultiService
-from twisted.internet import protocol
-from twisted.internet import reactor
 
 
 def get_config(config_string: str) -> configparser.ConfigParser:

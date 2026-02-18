@@ -33,13 +33,13 @@ from __future__ import annotations
 
 from twisted.python import log
 
-from cowrie.ssh_proxy.protocols import base_protocol
 from cowrie.core.fingerprint import (
     generate_ja4,
     generate_ja4h,
-    parse_tls_client_hello,
     parse_http_request,
+    parse_tls_client_hello,
 )
+from cowrie.ssh_proxy.protocols import base_protocol
 
 
 class PortForward(base_protocol.BaseProtocol):

@@ -4,19 +4,17 @@
 
 from __future__ import annotations
 
-from zope.interface import implementer
-
 from twisted.conch import avatar
 from twisted.conch.error import ConchError
 from twisted.conch.interfaces import IConchUser, ISession, ISFTPServer
 from twisted.conch.ssh import filetransfer as conchfiletransfer
 from twisted.conch.ssh.connection import OPEN_UNKNOWN_CHANNEL_TYPE
 from twisted.python import components, log
+from zope.interface import implementer
 
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import filetransfer, pwd
+from cowrie.shell import filetransfer, pwd, server
 from cowrie.shell import session as shellsession
-from cowrie.shell import server
 from cowrie.ssh import forwarding
 from cowrie.ssh import session as sshsession
 

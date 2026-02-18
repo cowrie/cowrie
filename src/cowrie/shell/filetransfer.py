@@ -9,9 +9,6 @@ from __future__ import annotations
 
 import os
 
-from zope.interface import implementer
-
-import twisted
 import twisted.conch.ls
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
 from twisted.conch.ssh import filetransfer
@@ -25,9 +22,11 @@ from twisted.conch.ssh.filetransfer import (
 )
 from twisted.python import log
 from twisted.python.compat import nativeString
+from zope.interface import implementer
 
-from cowrie.shell import pwd
+import twisted
 from cowrie.core.config import CowrieConfig
+from cowrie.shell import pwd
 
 
 @implementer(ISFTPFile)

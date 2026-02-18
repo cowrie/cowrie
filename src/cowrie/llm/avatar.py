@@ -4,13 +4,12 @@
 
 from __future__ import annotations
 
-from zope.interface import implementer
-
 from twisted.conch import avatar
 from twisted.conch.error import ConchError
 from twisted.conch.interfaces import IConchUser, ISession
 from twisted.conch.ssh.connection import OPEN_UNKNOWN_CHANNEL_TYPE
 from twisted.python import components, log
+from zope.interface import implementer
 
 from cowrie.llm import server
 from cowrie.llm import session as llmsession

@@ -29,8 +29,9 @@
 
 from __future__ import annotations
 
-from twisted.python import log
 from typing import TYPE_CHECKING
+
+from twisted.python import log
 
 if TYPE_CHECKING:
     from twisted.cred.portal import IRealm

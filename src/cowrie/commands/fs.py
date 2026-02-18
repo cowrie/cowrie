@@ -12,12 +12,12 @@ import copy
 import getopt
 import os.path
 import re
+from typing import TYPE_CHECKING
 
 from twisted.python import log
 
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable

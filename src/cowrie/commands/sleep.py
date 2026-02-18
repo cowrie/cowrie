@@ -11,8 +11,9 @@ from __future__ import annotations
 import getopt
 import re
 
-from cowrie.shell.command import HoneyPotCommand
 from twisted.internet import reactor
+
+from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 

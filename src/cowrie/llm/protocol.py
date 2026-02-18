@@ -11,8 +11,7 @@ from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.internet import defer, error
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure
-from twisted.python import log
+from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.llm.llm import LLMClient

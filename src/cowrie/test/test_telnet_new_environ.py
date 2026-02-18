@@ -12,6 +12,7 @@ import unittest
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
+from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
 from cowrie.telnet.userauth import (
     NEW_ENVIRON,
     NEW_ENVIRON_ESC,
@@ -21,7 +22,6 @@ from cowrie.telnet.userauth import (
     NEW_ENVIRON_VAR,
     HoneyPotTelnetAuthProtocol,
 )
-from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
 
 if TYPE_CHECKING:
     from cowrie.core.credentials import UsernamePasswordIP

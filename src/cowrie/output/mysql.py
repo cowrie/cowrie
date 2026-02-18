@@ -4,15 +4,14 @@ MySQL output connector. Writes audit logs to MySQL database
 
 from __future__ import annotations
 
+# For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
+import mysql.connector
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
-
-# For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
-import mysql.connector
 
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):

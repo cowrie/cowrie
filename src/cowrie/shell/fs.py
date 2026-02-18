@@ -11,19 +11,18 @@ import fnmatch
 import hashlib
 import importlib.resources
 import os
-from pathlib import Path
 import pickle
 import re
-import sys
 import stat
+import sys
 import time
+from pathlib import Path
 from typing import Any
 
 from twisted.python import log
 
-from cowrie.core.config import CowrieConfig
 from cowrie import data
-
+from cowrie.core.config import CowrieConfig
 
 (
     A_NAME,

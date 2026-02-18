@@ -28,8 +28,7 @@ import struct
 
 from twisted.python import log
 
-from cowrie.vendor.ja4.common import sha_encode, GREASE_TABLE, TLS_MAPPER
-
+from cowrie.vendor.ja4.common import GREASE_TABLE, TLS_MAPPER, sha_encode
 
 # Convert FoxIO's string-based GREASE table to integer set for our use
 GREASE_VALUES = {int(k, 16) for k in GREASE_TABLE}

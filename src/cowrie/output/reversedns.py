@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from functools import lru_cache
 import ipaddress
+from functools import lru_cache
 
 from twisted.internet import defer
 from twisted.names import client, error

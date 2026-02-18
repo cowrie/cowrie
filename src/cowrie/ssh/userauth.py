@@ -15,12 +15,12 @@ from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.internet import defer
-from twisted.python.failure import Failure
 from twisted.python import log
+from twisted.python.failure import Failure
 
+from cowrie import data
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
-from cowrie import data
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):

@@ -11,7 +11,7 @@ from __future__ import annotations
 import socket
 import time
 
-from prometheus_client import start_http_server, Counter, Gauge, Histogram
+from prometheus_client import Counter, Gauge, Histogram, start_http_server
 from twisted.python import log
 
 import cowrie.core.output

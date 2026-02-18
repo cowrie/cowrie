@@ -7,7 +7,6 @@ This module contains the python commnad
 
 from __future__ import annotations
 
-
 import getopt
 
 from twisted.python import log

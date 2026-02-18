@@ -38,7 +38,6 @@ from urllib.parse import urljoin, urlparse
 # TODO: use `treq`
 import requests
 from requests.auth import HTTPBasicAuth
-
 from twisted.python import log
 
 import cowrie.core.output

@@ -7,7 +7,6 @@ Telnet Transport and Authentication for the Honeypot
 
 from __future__ import annotations
 
-
 import time
 import uuid
 
