@@ -220,9 +220,10 @@ legacy_tox_ini = """
     setenv =
         PYTHONPATH = {toxinidir}/src
         PIP_QUIET = 1
+    deps = coverage
 
     commands =
-        python -m unittest discover src --verbose
+        coverage run -m unittest discover src --verbose
 
     [testenv:pypi]
     extras =

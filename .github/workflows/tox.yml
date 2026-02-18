@@ -62,3 +62,15 @@ jobs:
 
       - name: Test with tox
         run: tox
+
+      - name: Coverage report
+        run: coverage report
+
+      - name: Upload coverage
+        if: ${{ !matrix.experimental }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: .coverage
+          include-hidden-files: true
+          retention-days: 1
