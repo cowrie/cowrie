@@ -24,6 +24,10 @@ on:  # yamllint disable-line rule:truthy
       tags:
         description: 'Build and publish Docker image'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   REGISTRY_IMAGE: cowrie/cowrie
 

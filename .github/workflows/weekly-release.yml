@@ -16,6 +16,10 @@ on:  # yamllint disable-line rule:truthy
         default: 'false'
         type: boolean
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   weekly-release:
     runs-on: ubuntu-latest

@@ -16,6 +16,10 @@ on:  # yamllint disable-line rule:truthy
       tags:
         description: 'pypi upload'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   pypi-publish:
     name: Upload commit to PyPI
