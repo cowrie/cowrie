@@ -93,8 +93,6 @@ jobs:
         include:
           - python-version: "3.15"
             experimental: true
-          - python-version: "3.15t"
-            experimental: true
     continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@v6
