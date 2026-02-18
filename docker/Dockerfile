@@ -3,7 +3,7 @@
 # `runtime` is stripped down.
 
 ARG SOURCE_DATE_EPOCH
-FROM debian:bookworm-slim AS builder
+FROM debian:trixie-slim AS builder
 
 WORKDIR /
 
@@ -58,8 +58,8 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 # RUN . cowrie-env/bin/activate && \
 #     pip install -e ${COWRIE_HOME}/cowrie-git
 
-FROM gcr.io/distroless/python3-debian12:latest AS runtime
-#FROM gcr.io/distroless/python3-debian12:debug AS runtime
+FROM gcr.io/distroless/python3-debian13:latest AS runtime
+#FROM gcr.io/distroless/python3-debian13:debug AS runtime
 
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
@@ -71,7 +71,7 @@ LABEL org.opencontainers.image.licenses="BSD-3-Clause"
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
-LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian12"
+LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian13"
 
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
@@ -98,7 +98,7 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.11"]
+RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.13"]
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
