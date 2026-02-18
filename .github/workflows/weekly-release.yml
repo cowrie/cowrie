@@ -21,7 +21,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    uses: ./.github/workflows/tox.yml
+
   weekly-release:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
