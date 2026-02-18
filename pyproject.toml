@@ -172,7 +172,7 @@ reportUnsupportedDunderAll = "information"
 line-length = 88
 
 # Enable Pyflakes `E` and `F` codes by default.
-lint.select = ["A", "B", "E", "F", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
+lint.select = ["A", "B", "E", "F", "I", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
 lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001"]
 
 exclude = [ "src/cowrie/_version.py", "src/cowrie/vendor/" ]
