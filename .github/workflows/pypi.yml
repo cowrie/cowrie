@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   pypi-publish:
-    name: Upload commit to PyPI
+    name: Upload release to PyPI
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -30,20 +30,19 @@ jobs:
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-      # retrieve your distributions here, need fetch-depth to get metadata for version
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
         with:
-          python-version: 3.13
+          python-version: "3.13"
           cache: pip
 
-      - name: Install dependencies
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build setuptools==80.9.0 setuptools-scm==9.2.0 twine==6.2.0 wheel==0.45.1 packaging==25.0
+          python -m pip install build setuptools setuptools-scm twine wheel
 
       - name: Build and check
         run: |
@@ -65,5 +64,5 @@ jobs:
       - name: Download and test package
         if: ${{ github.repository == 'cowrie/cowrie' }}
         run: |
-           python -m pip install cowrie
-           twistd cowrie
+          python -m pip install cowrie
+          twistd cowrie

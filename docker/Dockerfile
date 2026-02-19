@@ -99,7 +99,11 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.13"]
+RUN python3 -c "import sys; v=f'{sys.version_info.major}.{sys.version_info.minor}'; \
+    import compileall; \
+    compileall.compile_dir('/cowrie/cowrie-git/src', quiet=1); \
+    compileall.compile_dir('/cowrie/cowrie-env/', quiet=1); \
+    compileall.compile_dir(f'/usr/lib/python{v}', quiet=1)"
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
