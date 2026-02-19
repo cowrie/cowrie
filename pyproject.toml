@@ -19,12 +19,18 @@ classifiers=[
         "Framework :: Twisted",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",
         "Operating System :: POSIX",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Security"
 ]
 
@@ -48,13 +54,15 @@ dependencies = [
 homepage = "https://www.cowrie.org/"
 documentation = "https://docs.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
+changelog = "https://github.com/cowrie/cowrie/blob/main/CHANGELOG.rst"
+issues = "https://github.com/cowrie/cowrie/issues"
 
 [project.scripts]
 cowrie = "cowrie.scripts.cowrie:run"
-fsctl = "cowrie.scripts.fsctl:run"
-asciinema = "cowrie.scripts.asciinema:run"
-createfs = "cowrie.scripts.createfs:run"
-playlog = "cowrie.scripts.playlog:run"
+cowrie-fsctl = "cowrie.scripts.fsctl:run"
+cowrie-asciinema = "cowrie.scripts.asciinema:run"
+cowrie-createfs = "cowrie.scripts.createfs:run"
+cowrie-playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
@@ -201,7 +209,6 @@ version_file = "src/cowrie/_version.py"
 legacy_tox_ini = """
     [tox]
     envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,pypy310,pypy311
-    deps = -r{toxinidir}/requirements.txt
     skip_missing_interpreters = True
 
     [gh-actions]
@@ -220,7 +227,9 @@ legacy_tox_ini = """
     setenv =
         PYTHONPATH = {toxinidir}/src
         PIP_QUIET = 1
-    deps = coverage
+    deps =
+        -r{toxinidir}/requirements.txt
+        coverage
 
     commands =
         coverage run -m unittest discover src --verbose
