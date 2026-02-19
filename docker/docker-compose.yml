@@ -5,13 +5,18 @@ volumes:
 
 services:
   cowrie:
-    restart: always
+    restart: unless-stopped
     build:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - "2222:2222"
-      - "2223:2223"
+      - "${COWRIE_SSH_PORT:-2222}:2222"    # SSH honeypot
+      - "${COWRIE_TELNET_PORT:-2223}:2223"  # Telnet honeypot
     volumes:
       - cowrie-etc:/cowrie/cowrie-git/etc
       - cowrie-var:/cowrie/cowrie-git/var
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true

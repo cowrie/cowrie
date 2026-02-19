@@ -15,11 +15,11 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: test
-test:
+test: ## Run tests via tox
 	tox
 
 .PHONY: build
-build:
+build: ## Build Python package
 	python -m build
 
 .PHONY: docs
