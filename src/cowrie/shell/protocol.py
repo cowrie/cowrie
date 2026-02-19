@@ -143,6 +143,69 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         return Command_txtcmd
 
+    def scriptcmd(self, path: str) -> object:
+        """Return a command class that executes a shell script from the virtual filesystem."""
+        import re
+
+        shebang_re = re.compile(r"^#!\s*/bin/(ba|a)?sh")
+        max_depth = 5
+
+        class Command_scriptcmd(command.HoneyPotCommand):
+            def call(self_cmd):
+                depth = getattr(self_cmd.protocol, "_script_depth", 0)
+                if depth >= max_depth:
+                    self_cmd.errorWrite(
+                        f"-bash: {path}: too many levels of recursion\n"
+                    )
+                    return
+
+                try:
+                    contents = self_cmd.fs.file_contents(path)
+                except Exception:
+                    self_cmd.errorWrite(
+                        f"-bash: {path}: No such file or directory\n"
+                    )
+                    return
+
+                # Null bytes indicate actual binary — reject like real bash
+                if b"\x00" in contents:
+                    self_cmd.errorWrite(
+                        f"-bash: {path}: cannot execute binary file: Exec format error\n"
+                    )
+                    return
+
+                lines = contents.decode("utf-8", errors="replace").splitlines()
+
+                if not lines:
+                    return
+
+                # Strip shebang line if it's a shell shebang
+                if shebang_re.match(lines[0]):
+                    lines = lines[1:]
+
+                # Strip comment-only and blank lines
+                lines = [
+                    line
+                    for line in lines
+                    if line.strip() and not line.strip().startswith("#")
+                ]
+
+                if not lines:
+                    return
+
+                self_cmd.protocol._script_depth = depth + 1
+                try:
+                    shell = honeypot.HoneyPotShell(
+                        self_cmd.protocol, interactive=False
+                    )
+                    self_cmd.protocol.cmdstack.append(shell)
+                    shell.lineReceived("; ".join(lines))
+                    self_cmd.protocol.cmdstack.pop()
+                finally:
+                    self_cmd.protocol._script_depth = depth
+
+        return Command_scriptcmd
+
     def isCommand(self, cmd):
         """
         Check if cmd (the argument of a command) is a command, too.
@@ -186,6 +249,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         if path in self.commands:
             return self.commands[path]
+
+        if self.fs.isfile(path):
+            return self.scriptcmd(path)
 
         log.msg(f"Can't find command {cmd}")
         return None
