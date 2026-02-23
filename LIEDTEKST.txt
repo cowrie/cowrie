@@ -1,0 +1,64 @@
+De Honeypot
+(in de stijl van Daniel Lohues, in 't Drents)
+
+Couplet 1:
+'t Is aovend en ik zit achter mien beeldscharm
+De kachel bromt, de koffie is nog warm
+Mien server draeit, zo stil as 't Drentse laand
+En wacht op gasten — ongeneugd, onbekand
+
+Couplet 2:
+Doar komp d'r een, uut verre, uut de nacht
+Hie tikt zien wachtwoord in — hie hef niet dacht
+Dat dit gien echte schure is, gien stal
+Mar 'n honeypot, en ik heur alles wal
+
+Refrein:
+    Cowrie, Cowrie, mien digitale val
+    As 'n spinnerak in 't schemerduuster van 't heelal
+    Ie maggen probeern, ie maggen 't doun
+    Mar dit is mien laand, en hier blief ik woun
+
+Couplet 3:
+Hie typt "ls" en zöcht noar wat hie wil
+"cat /etc/passwd" — ik hol mie stil
+Hie dunkt dat hie de baos is van 't systeem
+Mar alles wat hie dut, dat schrieft ik neem
+
+Couplet 4:
+De logboeken bin vol, de nacht is lang
+Ik ken zien IP, zien tools en zien bedrang
+Hie is gien boer, gien jager uut de streek
+Hie is 'n script kiddie — en zien plan det leek
+
+Refrein:
+    Cowrie, Cowrie, mien digitale val
+    As 'n spinnerak in 't schemerduuster van 't heelal
+    Ie maggen probeern, ie maggen 't doun
+    Mar dit is mien laand, en hier blief ik woun
+
+Brug:
+    (gesproken, rustug, as Daniel dat dut)
+    Wees ie... 't internet is net as 't platteland
+    D'r bin schoapen, en d'r bin wolven
+    En soms... soms moe'j 'n val zetten
+    En dan wachten... met 'n bakkie koffie
+
+Couplet 5:
+De zon komp op, de hacker is vertrokken
+Hie hef niks funnen, niks kapot emaokt
+Mien Cowrie draeit gewoon deur, onverstoord
+As 'n olde eik — die steit waor hie steeds hoort
+
+Laatste refrein:
+    Cowrie, Cowrie, mien digitale val
+    As 'n spinnerak in 't schemerduuster van 't heelal
+    Ie maggen probeern, ie maggen 't doun
+    Mar dit is mien laand, en hier blief ik woun
+
+    Dit is mien laand...
+    En hier blief ik woun.
+
+---
+Akkoorden: G - C - D - Em (rustug ansloan, akoestisch gitaar)
+Tempo: Langzaam, as 'n aovend op de Hondsrug
