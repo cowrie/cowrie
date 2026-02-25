@@ -59,10 +59,10 @@ issues = "https://github.com/cowrie/cowrie/issues"
 
 [project.scripts]
 cowrie = "cowrie.scripts.cowrie:run"
-cowrie-fsctl = "cowrie.scripts.fsctl:run"
-cowrie-asciinema = "cowrie.scripts.asciinema:run"
-cowrie-createfs = "cowrie.scripts.createfs:run"
-cowrie-playlog = "cowrie.scripts.playlog:run"
+fsctl = "cowrie.scripts.fsctl:run"
+asciinema = "cowrie.scripts.asciinema:run"
+createfs = "cowrie.scripts.createfs:run"
+playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
