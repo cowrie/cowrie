@@ -21,6 +21,9 @@ concurrency:
 permissions:
   contents: read
 
+# NOTE: CodeQL is handled by GitHub's default setup (repo settings).
+# Do not add a CodeQL job here — it conflicts with the default configuration.
+
 jobs:
   pip-audit:
     name: Dependency audit
@@ -48,47 +51,3 @@ jobs:
         # Continue on error since output deps may have known issues
         continue-on-error: true
         run: pip-audit -r requirements-output.txt
-
-  codeql:
-    name: CodeQL analysis
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@60d8f0d1f1f8c8d07ef53bd027032705d414ec28  # v3
-        with:
-          languages: python
-          queries: security-and-quality
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@60d8f0d1f1f8c8d07ef53bd027032705d414ec28  # v3
-        with:
-          category: "/language:python"
-          output: codeql-results
-
-      - name: Print CodeQL findings
-        if: always()
-        run: |
-          for f in codeql-results/*.sarif; do
-            echo "=== $(basename "$f") ==="
-            python3 -c "
-          import json, sys
-          sarif = json.load(open('$f'))
-          for run in sarif.get('runs', []):
-              for result in run.get('results', []):
-                  rule = result.get('ruleId', 'unknown')
-                  level = result.get('level', 'warning')
-                  msg = result.get('message', {}).get('text', '')
-                  locs = result.get('locations', [])
-                  for loc in locs:
-                      phys = loc.get('physicalLocation', {})
-                      path = phys.get('artifactLocation', {}).get('uri', '?')
-                      line = phys.get('region', {}).get('startLine', '?')
-                      print(f'::{level} file={path},line={line}::{rule}: {msg}')
-              if not run.get('results'):
-                  print('No findings.')
-          "
-          done
