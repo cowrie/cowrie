@@ -42,6 +42,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientIP: str
         self.realClientPort: int
         self.kippoIP: str
+        self.kippoIPv6: str = ""
         self.clientIP: str
         self.sessionno: int
         self.factory = None
@@ -91,6 +92,19 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     self.kippoIP = s.getsockname()[0]
             except OSError:
                 self.kippoIP = "192.168.0.1"
+
+        # IPv6 GUA of server in user visible reports (can be fake or real)
+        if CowrieConfig.has_option("honeypot", "internet_facing_ip6"):
+            self.kippoIPv6 = CowrieConfig.get("honeypot", "internet_facing_ip6")
+        else:
+            try:
+                with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
+                    s.connect(("2001:4860:4860::8888", 80))
+                    addr = s.getsockname()[0]
+                    # Only use GUA, not link-local
+                    self.kippoIPv6 = addr if not addr.lower().startswith("fe80") else ""
+            except Exception:
+                self.kippoIPv6 = ""
 
     def timeoutConnection(self) -> None:
         """
