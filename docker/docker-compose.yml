@@ -9,6 +9,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      # target: builder
     ports:
       - "2222:2222"
       - "2223:2223"
