@@ -170,6 +170,14 @@ timezone = UTC
 #internet_facing_ip = 9.9.9.9
 
 
+# The IPv6 GUA (Global Unicast Address) on which this machine is reachable
+# from the internet. If set, commands like 'ifconfig' will show this address
+# with Scope:Global. If empty, Cowrie will attempt to auto-detect a GUA;
+# if none is found (e.g. IPv6 not available), no GUA line is shown.
+#
+#internet_facing_ip6 = 2001:db8::1
+
+
 
 # ============================================================================
 # Authentication Specific Options
