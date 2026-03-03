@@ -65,9 +65,13 @@ class Command_ifconfig(HoneyPotCommand):
         tx_packets = self.calculate_packets(tx_bytes_eth0)
         lo_packets = self.calculate_packets(lo_bytes)
 
+        inet6_gua = ""
+        if self.protocol.kippoIPv6:
+            inet6_gua = f"\n          inet6 addr: {self.protocol.kippoIPv6}/64 Scope:Global"
+
         result = f"""eth0      Link encap:Ethernet  HWaddr {HWaddr}
           inet addr:{self.protocol.kippoIP}  Bcast:{self.protocol.kippoIP.rsplit(".", 1)[0]}.255  Mask:255.255.255.0
-          inet6 addr: {inet6} Scope:Link
+          inet6 addr: {inet6} Scope:Link{inet6_gua}
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
           RX packets:{rx_packets} errors:0 dropped:0 overruns:0 frame:0
           TX packets:{tx_packets} errors:0 dropped:0 overruns:0 carrier:0
