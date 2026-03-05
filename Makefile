@@ -15,11 +15,11 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: test
-test:
+test: ## Run tests via tox
 	tox
 
 .PHONY: build
-build:
+build: ## Build Python package
 	python -m build
 
 .PHONY: docs
@@ -35,6 +35,10 @@ lint: ## Run lint checks
 clean: ## Clean temporary files
 	rm -rf _trial_temp build dist src/_trial_temp src/Cowrie.egg-info
 	make -C docs clean
+
+.PHONY: audit
+audit: ## Run dependency security audit
+	tox -e audit
 
 .PHONY: pre-commit
 pre-commit: ## Run pre-commit checks

@@ -1,0 +1,53 @@
+---
+name: Security Audit
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+  schedule:
+    # Run weekly on Wednesdays at 06:00 UTC
+    - cron: '0 6 * * 3'
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# NOTE: CodeQL is handled by GitHub's default setup (repo settings).
+# Do not add a CodeQL job here — it conflicts with the default configuration.
+
+jobs:
+  pip-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install pip-audit
+
+      - name: Run pip-audit on core dependencies
+        run: pip-audit -r requirements.txt
+
+      - name: Run pip-audit on output dependencies
+        # Continue on error since output deps may have known issues
+        continue-on-error: true
+        run: pip-audit -r requirements-output.txt
