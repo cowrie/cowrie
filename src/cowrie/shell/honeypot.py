@@ -16,7 +16,11 @@ from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
-from cowrie.shell.parser import CommandParser
+from cowrie.shell.parser import (
+    REDIRECT_SENTINEL,
+    CommandParser,
+    inject_redirect_sentinels,
+)
 from cowrie.shell.pipe import PipeProtocol
 
 # Pre-compiled regexes for environment variable expansion
@@ -43,10 +47,13 @@ class HoneyPotShell:
         self.showPrompt()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
-        self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
+        # Strip any sentinel bytes that may arrive from subshell re-parsing
+        clean_line = line.replace(REDIRECT_SENTINEL, "")
+        log.msg(eventid="cowrie.command.input", input=clean_line, format="CMD: %(input)s")
+        sentinel_line = inject_redirect_sentinels(clean_line)
+        self.lexer = shlex.shlex(instream=sentinel_line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
-        self.lexer.wordchars += "@%{}=$:+^,()`"
+        self.lexer.wordchars += "@%{}=$:+^,()`" + REDIRECT_SENTINEL
 
         tokens: list[str] = []
 
@@ -280,8 +287,9 @@ class HoneyPotShell:
     def _execute_subshell_with_full_output(self, cmd: str) -> str:
         """Execute subshell commands and capture ALL output, not just the last command."""
         # Split commands by separators and execute each one
-        lexer = shlex.shlex(instream=cmd, punctuation_chars=True, posix=True)
-        lexer.wordchars += "@%{}=$:+^,()`"
+        sentinel_cmd = inject_redirect_sentinels(cmd)
+        lexer = shlex.shlex(instream=sentinel_cmd, punctuation_chars=True, posix=True)
+        lexer.wordchars += "@%{}=$:+^,()`" + REDIRECT_SENTINEL
 
         accumulated_output = ""
         current_cmd_tokens: list[str] = []
