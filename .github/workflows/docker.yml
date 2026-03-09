@@ -77,7 +77,7 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
@@ -151,7 +151,7 @@ jobs:
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Extract Docker image metadata
         id: meta
