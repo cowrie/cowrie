@@ -88,7 +88,7 @@ jobs:
 
       - name: Build Container Image
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: false
           load: true
@@ -106,7 +106,7 @@ jobs:
       - name: Push Container Image by digest
         id: push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           file: docker/Dockerfile
           platforms: ${{ matrix.platform }}
