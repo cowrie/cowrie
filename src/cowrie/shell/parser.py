@@ -9,6 +9,80 @@ from typing import Any
 # Pre-compiled regex for extracting redirection operators
 _REDIR_OP_RE = re.compile(r"^(\d*)(>>|>&|>|<)(.*)$")
 
+# Sentinel byte used to mark adjacent digit-redirect pairs (e.g., 2>/dev/null)
+# so that shlex tokenization preserves the adjacency information.
+REDIRECT_SENTINEL = "\x01"
+
+# Regex to match a single digit immediately followed by a redirect operator
+_ADJACENT_REDIR_RE = re.compile(r"(\d)([<>])")
+
+
+def _find_closing_quote(cmd_string: str, start: int, quote: str) -> int:
+    """Return the index past the closing *quote* character.
+
+    *start* is the index of the opening quote.  Backslash escapes are
+    honoured inside double-quoted strings.  If the closing quote is
+    missing the end of the string is returned.
+    """
+    j = start + 1
+    length = len(cmd_string)
+    while j < length and cmd_string[j] != quote:
+        if cmd_string[j] == "\\" and quote == '"' and j + 1 < length:
+            j += 1  # skip escaped char in double quotes
+        j += 1
+    return j + 1 if j < length else length
+
+
+def inject_redirect_sentinels(cmd_string: str) -> str:
+    """
+    Mark adjacent digit-redirect pairs for the tokenizer.
+
+    Inserts a sentinel byte between a digit [0-9] and an adjacent
+    redirect operator [<>] so that shlex tokenization preserves the
+    adjacency information. Spaced versions (e.g., ``2 >/dev/null``)
+    are not modified.
+
+    Content inside single or double quotes is left untouched so that
+    quoted strings like ``"2>/dev/null"`` are not mistakenly marked
+    as redirections.
+
+    The sentinel must be stripped after tokenization via
+    merge_redirection_tokens().
+
+    Examples:
+        "echo test 2>/dev/null"  -> "echo test 2\\x01>/dev/null"
+        "echo test 2 >/dev/null" -> "echo test 2 >/dev/null"  (unchanged)
+        "cmd 2>&1"               -> "cmd 2\\x01>&1"
+        "cmd 2>>log"             -> "cmd 2\\x01>>log"
+    """
+    # NOTE: The sentinel is an internal tokenization detail. The original
+    # command string (before sentinel injection) must be used for all
+    # logging and event dispatch. See merge_redirection_tokens().
+
+    # Split the string into quoted and unquoted segments, applying the
+    # sentinel substitution only to unquoted portions.
+    result: list[str] = []
+    i = 0
+    length = len(cmd_string)
+    while i < length:
+        ch = cmd_string[i]
+        if ch in ('"', "'"):
+            end = _find_closing_quote(cmd_string, i, ch)
+            result.append(cmd_string[i:end])
+            i = end
+        else:
+            # Collect unquoted text until the next quote
+            j = i
+            while j < length and cmd_string[j] not in ('"', "'"):
+                j += 1
+            result.append(
+                _ADJACENT_REDIR_RE.sub(
+                    r"\1" + REDIRECT_SENTINEL + r"\2", cmd_string[i:j]
+                )
+            )
+            i = j
+    return "".join(result)
+
 
 class CommandParser:
     """
@@ -18,8 +92,14 @@ class CommandParser:
 
     def merge_redirection_tokens(self, tokens: list[str]) -> list[str]:
         """
-        Combine shlex-split redirection tokens back together.
-        Example: ['2', '>', '/dev/null'] -> ['2>', '/dev/null']
+        Combine sentinel-marked fd redirect tokens that shlex split apart.
+
+        Only merges a digit token with a following redirect operator when the
+        digit token ends with the sentinel (meaning they were adjacent in the
+        original input). Tokens without the sentinel (the spaced case) are
+        left as-is: the digit remains a regular command argument.
+
+        All sentinel bytes are stripped from the returned tokens.
         """
         merged: list[str] = []
         i = 0
@@ -31,26 +111,33 @@ class CommandParser:
                 continue
             merged.append(tokens[i])
             i += 1
-        return merged
+        # Defensively strip any remaining sentinel bytes
+        return [t.replace(REDIRECT_SENTINEL, "") for t in merged]
 
     def _combine_redir_sequence(
         self, tokens: list[str], index: int
     ) -> tuple[str | None, int]:
-        """Glue together fd + operator (+ optional ampersand/target) tokens."""
+        """Glue together sentinel-marked fd + operator (+ optional ampersand/target) tokens."""
         tok = tokens[index]
         nxt = tokens[index + 1] if index + 1 < len(tokens) else None
         nxt2 = tokens[index + 2] if index + 2 < len(tokens) else None
         nxt3 = tokens[index + 3] if index + 3 < len(tokens) else None
 
-        if tok.isdigit() and nxt in (">", ">>", ">&"):
-            combined = f"{tok}{nxt}"
-            if nxt == ">&" and nxt2 not in (None, "|", ";", "&&", "||"):
-                return combined + str(nxt2), 3
-            if nxt in (">", ">>") and nxt2 == "&":
-                if nxt3 not in (None, "|", ";", "&&", "||"):
-                    return combined + "&" + str(nxt3), 4
-                return combined + "&", 3
-            return combined, 2
+        # Only merge digit + redirect when the sentinel is present,
+        # meaning they were adjacent in the original input.
+        if tok.endswith(REDIRECT_SENTINEL) and nxt in (">", ">>", ">&", "<", "<<"):
+            fd = tok.rstrip(REDIRECT_SENTINEL)
+            if fd.isdigit():
+                combined = f"{fd}{nxt}"
+                if nxt == ">&" and nxt2 not in (None, "|", ";", "&&", "||"):
+                    return combined + str(nxt2), 3
+                if nxt in (">", ">>") and nxt2 == "&":
+                    if nxt3 not in (None, "|", ";", "&&", "||"):
+                        return combined + "&" + str(nxt3), 4
+                    return combined + "&", 3
+                if nxt in ("<", "<<"):
+                    return combined, 2
+                return combined, 2
 
         if tok in (">", ">>") and nxt == "&":
             return f"{tok}&", 2
@@ -96,11 +183,23 @@ class CommandParser:
         return cleaned, ops
 
     def _extract_redir_op(self, token: str) -> tuple[str | None, int | None, str]:
-        """Parse a combined redirection token into (op, fd, inline target)."""
+        """Parse a combined redirection token into (op, fd, inline target).
+
+        For file-redirect operators (``>``, ``>>``, ``<``), an embedded
+        target means the token came from a quoted string — shlex with
+        ``punctuation_chars=True`` always splits unquoted redirect
+        operators into separate tokens.  Return no-match so the token
+        is kept as a plain argument.
+
+        The ``>&`` operator legitimately carries an inline fd number
+        (e.g. ``2>&1``) after the merge step, so it is not rejected.
+        """
         match = _REDIR_OP_RE.match(token)
         if not match:
             return None, None, ""
         fd_text, op, inline_target = match.groups()
+        if inline_target and op in (">", ">>", "<"):
+            return None, None, ""
         fd = int(fd_text) if fd_text else None
         return op, fd, inline_target
 

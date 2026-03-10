@@ -252,3 +252,63 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # Multiple commands with different redirects
         self.proto.lineReceived(b"echo first > f1; echo second > f2; cat f1; cat f2")
         self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
+
+    def test_adjacent_fd_redirect_echo(self) -> None:
+        # Adjacent 2>/dev/null: fd redirect, '2' is NOT an arg
+        self.proto.lineReceived(b"echo test 2>/dev/null")
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+    def test_spaced_fd_redirect_echo(self) -> None:
+        # Spaced 2 >/dev/null: '2' IS an arg, stdout redirect to file.
+        # Redirect to a file and cat it to prove '2' ended up in echo's args.
+        self.proto.lineReceived(b"echo test 2 > spaced_redir_out; cat spaced_redir_out")
+        self.assertEqual(self.tr.value(), b"test 2\n" + PROMPT)
+
+    def test_spaced_fd_redirect_uname(self) -> None:
+        # Spaced: uname -a 2 - '2' is passed as an arg, causing "extra operand" error
+        # (No redirect so the error is visible on the terminal)
+        self.proto.lineReceived(b"uname -a 2")
+        self.assertIn(b"extra operand", self.tr.value())
+
+    def test_adjacent_fd_redirect_uname(self) -> None:
+        # Adjacent: uname -a 2>/dev/null should succeed silently
+        self.proto.lineReceived(b"uname -a 2>/dev/null")
+        output = self.tr.value()
+        self.assertNotIn(b"extra operand", output)
+
+    def test_adjacent_fd_redirect_cat(self) -> None:
+        # Adjacent: cat /proc/uptime 2>/dev/null - fd redirect, should work
+        self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
+        output = self.tr.value()
+        self.assertNotIn(b"extra operand", output)
+
+    def test_quoted_redirect_is_literal(self) -> None:
+        """Double-quoted "2>/dev/null" should print as literal string."""
+        self.proto.lineReceived(b'echo "2>/dev/null"')
+        self.assertIn(b"2>/dev/null", self.tr.value())
+
+    def test_single_quoted_redirect_is_literal(self) -> None:
+        """Single-quoted '2>/dev/null' should print as literal string."""
+        self.proto.lineReceived(b"echo '2>/dev/null'")
+        self.assertIn(b"2>/dev/null", self.tr.value())
+
+    def test_multiple_adjacent_fd_redirects(self) -> None:
+        """2>/dev/null 1>/dev/null: both fds redirected, nothing on terminal."""
+        self.proto.lineReceived(b"echo test 2>/dev/null 1>/dev/null")
+        output = self.tr.value().replace(PROMPT, b"")
+        # Both stdout and stderr redirected, terminal should be empty
+        self.assertEqual(output.strip(), b"")
+
+    def test_adjacent_append_redirect(self) -> None:
+        """2>>/dev/null: fd 2 append redirect, echo output still visible."""
+        self.proto.lineReceived(b"echo test 2>>/dev/null")
+        self.assertIn(b"test", self.tr.value())
+
+    def test_spaced_append_redirect(self) -> None:
+        """2 >>/dev/null: '2' is arg, stdout append to /dev/null."""
+        # echo test 2 >> /dev/null: output is 'test 2' appended to /dev/null
+        # Terminal shows nothing because stdout is redirected
+        self.proto.lineReceived(b"echo test 2 >>/dev/null")
+        output = self.tr.value().replace(PROMPT, b"")
+        self.assertEqual(output.strip(), b"")
+
