@@ -1,7 +1,7 @@
-# Copyright (c) 2023, FoxIO, LLC.
-# All rights reserved.
-# Patent Pending
-# JA4H is licenced under the FoxIO License 1.1. For full license text, see the repo root.
+# Copyright (C) 2023 FoxIO, LLC.
+# SPDX-FileCopyrightText: 2023 FoxIO, LLC
+#
+# SPDX-License-Identifier: LicenseRef-FoxIO-1.1
 
 from common import sha_encode, cache_update
 

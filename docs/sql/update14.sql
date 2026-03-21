@@ -1,3 +1,7 @@
+-- SPDX-FileCopyrightText: 2023 Michel Oosterhof <michel@oosterhof.net>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+
 CREATE TABLE IF NOT EXISTS `ipforwards` (
   `id` int(11) NOT NULL auto_increment,
   `session` CHAR(32) NOT NULL,

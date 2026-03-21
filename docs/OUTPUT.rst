@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 Output Event Code Reference
 ###########################
 

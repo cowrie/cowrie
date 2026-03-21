@@ -1,3 +1,10 @@
+<!--
+SPDX-FileCopyrightText: 2019 Michel Oosterhof <michel@oosterhof.net>
+SPDX-FileCopyrightText: 2019 Upi Tamminen <desaster@gmail.com>
+
+SPDX-License-Identifier: BSD-3-Clause
+-->
+
 The SSH proxy is divided into a server module (frontend) and a client module (backend).
 When clients (the attackers) connect to Cowrie, we start a connection (using Twisted Conch's client) to a specified server.
 

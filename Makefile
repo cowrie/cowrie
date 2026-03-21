@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # This `Makefile` is intended for Cowrie developers.
 
 # Set default docker binary to docker in path if not specified.

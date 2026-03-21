@@ -1,6 +1,7 @@
-# -*- test-case-name: cowrie.test.utils -*-
-# Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2017 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2018-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from __future__ import annotations

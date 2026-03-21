@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Send SSH logins to SANS DShield.
 See https://isc.sans.edu/ssh.html

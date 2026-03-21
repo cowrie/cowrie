@@ -1,4 +1,7 @@
-# Copyright (c) 2016 Michel Oosterhof <michel@oosterhof.net>
+# Copyright (C) 2016 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2016-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains code to handling saving of honeypot artifacts

@@ -1,5 +1,8 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains code to deal with Cowrie's configuration

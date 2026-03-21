@@ -1,3 +1,8 @@
+-- SPDX-FileCopyrightText: 2010-2013 Upi Tamminen <desaster@gmail.com>
+-- SPDX-FileCopyrightText: 2015-2019 Michel Oosterhof <michel@oosterhof.net>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+
 CREATE TABLE IF NOT EXISTS `auth` (
   `id` int(11) NOT NULL auto_increment,
   `session` char(32) NOT NULL,

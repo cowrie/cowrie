@@ -1,4 +1,8 @@
 ---
+# SPDX-FileCopyrightText: 2018-2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 name: Setup Assistance
 about: Issues with setting up Cowrie
 

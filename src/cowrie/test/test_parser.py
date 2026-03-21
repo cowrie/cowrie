@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Unit tests for the shell command parser.
 # ABOUTME: Tests token merging, redirection parsing, and edge cases.
 

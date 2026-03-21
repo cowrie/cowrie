@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Tests for telnet transport negotiation error handling.
 # ABOUTME: Covers edge cases in telnet option negotiation chaining.
 

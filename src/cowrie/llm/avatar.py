@@ -1,5 +1,7 @@
-# Copyright (c) 2024 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2024 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from __future__ import annotations

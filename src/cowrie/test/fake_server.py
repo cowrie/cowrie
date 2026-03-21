@@ -1,5 +1,7 @@
-# Copyright (c) 2016 Dave Germiquet
-# See LICENSE for details.
+# Copyright (C) 2016 Dave Germiquet
+# SPDX-FileCopyrightText: 2016-2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

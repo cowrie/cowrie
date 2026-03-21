@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Modern Discord webhook output plugin with queued sending.
 
