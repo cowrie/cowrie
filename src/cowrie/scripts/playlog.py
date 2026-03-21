@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-# ABOUTME: CLI utility to replay TTY log files recorded by Cowrie.
-# ABOUTME: Supports playback speed control, input/output filtering, and colorization.
-#
+
 # Copyright (C) 2003-2011 Upi Tamminen <desaster@dragonlight.fi>
+# SPDX-FileCopyrightText: 2003-2011 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2016-2025 Michel Oosterhof <michel@oosterhof.net>
 #
+# SPDX-License-Identifier: BSD-3-Clause
 
 import getopt
 import os

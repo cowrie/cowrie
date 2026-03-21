@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: LLM client for communicating with OpenAI-compatible APIs.
 # ABOUTME: Sends shell commands to an LLM and returns simulated responses.
 

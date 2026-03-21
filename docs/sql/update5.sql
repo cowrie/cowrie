@@ -1,3 +1,8 @@
+-- SPDX-FileCopyrightText: 2010 Upi Tamminen <desaster@gmail.com>
+-- SPDX-FileCopyrightText: 2018 Michel Oosterhof <michel@oosterhof.net>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+
 /* For the asynchronous mysql code, change session to use a 32 character
  * string instead of int(11) */
 

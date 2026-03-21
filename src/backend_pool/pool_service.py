@@ -15,8 +15,10 @@ concurrent requests. The lock protects the _guests_ list, which
 contains references for each VM backend (in our case libvirt/QEMU
 instances)."""
 
-# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

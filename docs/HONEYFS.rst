@@ -1,3 +1,6 @@
+.. SPDX-FileCopyrightText: 2020-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
 
 Changing the Cowrie file system
 ###############################

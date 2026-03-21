@@ -1,5 +1,7 @@
-# Copyright (c) 2020 Peter Sufliarsky
-# See LICENSE for details.
+# Copyright (C) 2020 Peter Sufliarsky
+# SPDX-FileCopyrightText: 2018-2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 from __future__ import annotations
 
 import os

@@ -1,5 +1,7 @@
-# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
-# All rights reserved.
+# Copyright (C) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

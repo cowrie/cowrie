@@ -1,13 +1,10 @@
 # ABOUTME: JA4 and JA4H fingerprinting for TLS and HTTP traffic
 # ABOUTME: Parses TLS Client Hello and HTTP requests to generate fingerprints
 
-# Copyright (c) 2023, FoxIO, LLC.
-# All rights reserved.
-# Patent Pending
-# JA4 is Open-Source, Licensed under BSD 3-Clause
-# JA4+ (JA4S, JA4H, JA4L, JA4X, JA4SSH) are licenced under the FoxIO License 1.1.
+# Copyright (C) 2023 FoxIO, LLC.
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
 #
-# Adapted for Cowrie honeypot by Michel Oosterhof
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 JA4+ Fingerprinting Module

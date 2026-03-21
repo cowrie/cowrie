@@ -1,5 +1,7 @@
-# Copyright (c) 2020 Matej Dujava <mdujava@kocurkovo.cz>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2020 Matej Dujava <mdujava@kocurkovo.cz>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 """
 tee command
 

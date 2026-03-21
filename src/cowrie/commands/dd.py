@@ -1,5 +1,7 @@
-# Copyright (c) 2016 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2016 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2017-2023 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 dd commands

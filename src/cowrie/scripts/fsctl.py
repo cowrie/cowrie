@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# SPDX-FileCopyrightText: 2013 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2015-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 ################################################################
 # This is a command line interpreter used to edit
 # cowrie file system pickle files.

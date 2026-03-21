@@ -1,5 +1,7 @@
-# Copyright (c) 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
+# SPDX-FileCopyrightText: 2021-2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 uniq command

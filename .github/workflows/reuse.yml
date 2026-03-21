@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+---
+name: REUSE
+permissions:
+  contents: read
+
+on:  # yamllint disable-line rule:truthy
+  push:
+
+  pull_request:
+
+jobs:
+  reuse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v5

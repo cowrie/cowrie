@@ -1,3 +1,8 @@
+.. SPDX-FileCopyrightText: 2009-2024 Upi Tamminen <desaster@gmail.com>
+.. SPDX-FileCopyrightText: 2017-2024 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 LICENSE
 #######
 

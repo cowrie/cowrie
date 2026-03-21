@@ -1,5 +1,7 @@
-# Copyright (c) 2014 Peter Reuterås <peter@reuteras.com>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2014 Peter Reuterås <peter@reuteras.com>
+# SPDX-FileCopyrightText: 2015-2023 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

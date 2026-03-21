@@ -1,10 +1,7 @@
-# Copyright (c) 2023, FoxIO, LLC.
-# All rights reserved.
-# Patent Pending
-# JA4 is Open-Source, Licensed under BSD 3-Clause
-# JA4+ (JA4S, JA4H, JA4L, JA4X, JA4SSH) are licenced under the FoxIO License 1.1. For full license text, see the repo root.
+# Copyright (C) 2023 FoxIO, LLC.
+# SPDX-FileCopyrightText: 2023 FoxIO, LLC
 #
-#!/usr/bin/env python3
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os, sys, json
 from hashlib import sha256

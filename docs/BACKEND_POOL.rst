@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2020-2024 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 Backend Pool
 ############
 

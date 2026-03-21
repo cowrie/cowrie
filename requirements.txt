@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2016-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 attrs==25.4.0
 bcrypt==5.0.0
 cryptography==46.0.5

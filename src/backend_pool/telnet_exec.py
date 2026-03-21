@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Based on https://github.com/fjogstad/twisted-telnet-client
 from __future__ import annotations
 

@@ -1,5 +1,7 @@
-# Copyright (c) 2018 Danilo Vargas <danilo.vargas@csiete.org>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2018 Danilo Vargas <danilo.vargas@csiete.org>
+# SPDX-FileCopyrightText: 2018-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

@@ -1,5 +1,7 @@
-# Copyright (c) 2009-2014 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
+# Copyright (C) 2009-2014 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains code for handling SSH direct-tcpip connection requests

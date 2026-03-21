@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Simple remote syslog plugin.
 """

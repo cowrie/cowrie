@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2015-2022 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
 from __future__ import annotations

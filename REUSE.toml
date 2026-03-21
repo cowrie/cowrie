@@ -1,0 +1,136 @@
+version = 1
+SPDX-PackageName = "Cowrie"
+SPDX-PackageSupplier = "Michel Oosterhof <michel@oosterhof.net>"
+SPDX-PackageDownloadLocation = "https://github.com/cowrie/cowrie"
+
+[[annotations]]
+path = "src/cowrie/data/arch/bsd-**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2024 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/arch/linux-**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2024 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/arch/osx-**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2024 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/arch/src/README"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2024 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/cmdoutput.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "docs/sentinel/cowrie_workbook.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2020-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/fs.pickle"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "honeyfs/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "docs/systemd/etc/logrotate.d/cowrie"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "docs/systemd/etc/systemd/system/cowrie.service"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "docs/systemd/etc/systemd/system/cowrie.socket"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "docs/elk/nginx-default"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "**/.gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = ".gitattributes"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = ".dockerignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021-2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = ".pyre_configuration"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021-2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "MANIFEST.in"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021-2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "etc/cowrie.cfg.dist"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "etc/userdb.example"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "bin/createdynamicprocess"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2025 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "bin/regen-dropin.cache"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021-2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import datetime
