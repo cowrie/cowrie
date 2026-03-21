@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2023 Masood Mansoori <masood.mansoori@gmail.com>
 # SPDX-FileCopyrightText: 2023-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

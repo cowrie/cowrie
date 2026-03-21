@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2020 Peter Šufliarsky
 # SPDX-FileCopyrightText: 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
 # SPDX-FileCopyrightText: 2021-2024 Michel Oosterhof <michel@oosterhof.net>
 #

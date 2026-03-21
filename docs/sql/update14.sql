@@ -1,3 +1,4 @@
+-- SPDX-FileCopyrightText: 2019 Guilherme Borges <g.borges@campus.fct.unl.pt>
 -- SPDX-FileCopyrightText: 2023 Michel Oosterhof <michel@oosterhof.net>
 --
 -- SPDX-License-Identifier: BSD-3-Clause

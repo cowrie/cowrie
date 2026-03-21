@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2018 FabiolaBusch
 # SPDX-FileCopyrightText: 2009 Upi Tamminen <desaster@gmail.com>
 # SPDX-FileCopyrightText: 2020-2026 Michel Oosterhof <michel@oosterhof.net>
 #

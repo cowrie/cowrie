@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
 # SPDX-FileCopyrightText: 2021 Michel Oosterhof <michel@oosterhof.net>
 #

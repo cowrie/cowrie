@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024 Ritvik Dayal <ritvik@doxel.ai>
 # SPDX-FileCopyrightText: 2024 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

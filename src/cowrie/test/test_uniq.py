@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2020 Matej Dujava <mdujava@gmail.com>
 # SPDX-FileCopyrightText: 2020 Peter Sufliarsky
 # SPDX-FileCopyrightText: 2020-2024 Michel Oosterhof <michel@oosterhof.net>
 #

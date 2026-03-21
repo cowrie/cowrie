@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # SPDX-FileCopyrightText: 2015, 2016 GoSecure Inc.
 # SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
 #

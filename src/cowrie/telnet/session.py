@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2016 Olivier Bilodeau <obilodeau@gosecure.ca>
 # SPDX-FileCopyrightText: 2015, 2016 GoSecure Inc.
 # SPDX-FileCopyrightText: 2016-2026 Michel Oosterhof <michel@oosterhof.net>
 #

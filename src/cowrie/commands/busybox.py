@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2015 mak <mak@lokahost.pl>
 # SPDX-FileCopyrightText: 1998-2011 Erik Andersen, Rob Landley, Denys Vlasenko
 # SPDX-FileCopyrightText: 2015-2025 Michel Oosterhof <michel@oosterhof.net>
 #
