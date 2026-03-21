@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 1998-2011 Erik Andersen, Rob Landley, Denys Vlasenko
 # SPDX-FileCopyrightText: 2015-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

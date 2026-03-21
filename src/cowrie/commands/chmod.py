@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
+# SPDX-FileCopyrightText: 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
 # SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

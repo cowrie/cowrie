@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Thomas Nicholson <tnnich@googlemail.com>
+# SPDX-FileCopyrightText: 2016 Thomas Nicholson <tnnich@googlemail.com>
 # SPDX-FileCopyrightText: 2021-2024 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

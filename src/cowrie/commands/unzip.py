@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Julius ter Pelkwijk <pelkwijk@gmail.com>
+# SPDX-FileCopyrightText: 2020 Julius ter Pelkwijk <pelkwijk@gmail.com>
 # SPDX-FileCopyrightText: 2020-2024 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

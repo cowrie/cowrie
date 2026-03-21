@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
+# SPDX-FileCopyrightText: 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
 # SPDX-FileCopyrightText: 2015-2022 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

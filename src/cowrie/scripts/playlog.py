@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2003-2011 Upi Tamminen <desaster@dragonlight.fi>
 # SPDX-FileCopyrightText: 2003-2011 Upi Tamminen <desaster@gmail.com>
 # SPDX-FileCopyrightText: 2016-2025 Michel Oosterhof <michel@oosterhof.net>
 #
