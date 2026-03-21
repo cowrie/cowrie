@@ -30,13 +30,13 @@ SPDX-License-Identifier = "BSD-3-Clause"
 [[annotations]]
 path = "src/cowrie/data/txtcmds/**"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "src/cowrie/data/cmdoutput.json"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
@@ -48,13 +48,13 @@ SPDX-License-Identifier = "BSD-3-Clause"
 [[annotations]]
 path = "src/cowrie/data/fs.pickle"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = ["2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "honeyfs/**"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = ["2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
@@ -84,7 +84,7 @@ SPDX-License-Identifier = "BSD-3-Clause"
 [[annotations]]
 path = "**/.gitignore"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
@@ -114,13 +114,13 @@ SPDX-License-Identifier = "BSD-3-Clause"
 [[annotations]]
 path = "etc/cowrie.cfg.dist"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = ["2009-2014 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "etc/userdb.example"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2026 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]

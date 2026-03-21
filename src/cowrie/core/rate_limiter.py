@@ -1,6 +1,5 @@
 # Copyright (C) 2025 Filippo Lauria <filippo.lauria@iit.cnr.it>
 # SPDX-FileCopyrightText: 2025 Michel Oosterhof <michel@oosterhof.net>
-# SPDX-FileCopyrightText: 2025 Upi Tamminen <desaster@gmail.com>
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
