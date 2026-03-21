@@ -114,25 +114,7 @@ SPDX-License-Identifier = "BSD-3-Clause"
 [[annotations]]
 path = "honeyfs/**"
 precedence = "aggregate"
-SPDX-FileCopyrightText = ["2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
-SPDX-License-Identifier = "BSD-3-Clause"
-
-[[annotations]]
-path = "honeyfs/etc/hostname"
-precedence = "aggregate"
-SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
-SPDX-License-Identifier = "BSD-3-Clause"
-
-[[annotations]]
-path = "honeyfs/etc/resolv.conf"
-precedence = "aggregate"
-SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
-SPDX-License-Identifier = "BSD-3-Clause"
-
-[[annotations]]
-path = "honeyfs/proc/version"
-precedence = "aggregate"
-SPDX-FileCopyrightText = ["2014 Katarina Durechova <katarina.durechova@nic.cz>", "2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
