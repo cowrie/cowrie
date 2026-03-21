@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2018 Dave Germiquet <davegermiquet@trulycanadian.net>
 # SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

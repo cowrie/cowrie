@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2016 davegermiquet <davegermiquet@trulycanadian.net>
 # SPDX-FileCopyrightText: 2016-2024 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

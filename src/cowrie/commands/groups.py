@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2023 Masood Mansoori <masood.mansoori@gmail.com>
 # SPDX-FileCopyrightText: 2018 Free Software Foundation, Inc.
 # SPDX-FileCopyrightText: 2023-2026 Michel Oosterhof <michel@oosterhof.net>
 #

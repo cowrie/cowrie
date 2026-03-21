@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
 # SPDX-FileCopyrightText: 2016 Thomas Nicholson <tnnich@googlemail.com>
 # SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
 #

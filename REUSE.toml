@@ -34,9 +34,69 @@ SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
+path = "src/cowrie/data/txtcmds/bin/df"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/bin/ulimit"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/emacs"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/getconf"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/killall"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 Katarina Durechova <katarina.durechova@nic.cz>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/locate"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/nproc"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2020 Matej Dujava <mdujava@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/pico"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/bin/top"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "src/cowrie/data/txtcmds/usr/sbin/vipw"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
 path = "src/cowrie/data/cmdoutput.json"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2009-2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-FileCopyrightText = ["2018 Dave Germiquet <davegermiquet@trulycanadian.net>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
@@ -58,27 +118,45 @@ SPDX-FileCopyrightText = ["2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
+path = "honeyfs/etc/hostname"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "honeyfs/etc/resolv.conf"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 g0tmi1k <have.you.g0tmi1k@gmail.com>", "2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "honeyfs/proc/version"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2014 Katarina Durechova <katarina.durechova@nic.cz>", "2009-2013 Upi Tamminen <desaster@gmail.com>", "2009-2026 Michel Oosterhof <michel@oosterhof.net>"]
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
 path = "docs/systemd/etc/logrotate.d/cowrie"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2018-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-FileCopyrightText = ["2018 Florian Pelgrim", "2018-2021 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "docs/systemd/etc/systemd/system/cowrie.service"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2018-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-FileCopyrightText = ["2018 Florian Pelgrim", "2018-2021 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "docs/systemd/etc/systemd/system/cowrie.socket"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2018-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-FileCopyrightText = ["2018 Florian Pelgrim", "2018-2021 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "docs/elk/nginx-default"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2019-2021 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-FileCopyrightText = ["2020 cryptax <aafortinet@gmail.com>", "2019-2021 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]

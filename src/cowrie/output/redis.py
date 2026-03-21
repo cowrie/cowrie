@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2018 Sami Mokaddem <mokaddem.sami@gmail.com>
 # SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause
