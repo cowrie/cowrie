@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Benjamin Stephens <premier_contact@ben-stephens.net>
+# SPDX-FileCopyrightText: 2020 Benjamin Stephens <premier_contact@ben-stephens.net>
 # SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

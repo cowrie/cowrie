@@ -1,4 +1,3 @@
-# Copyright (C) 2009 Upi Tamminen <desaster@gmail.com>
 # SPDX-FileCopyrightText: 2009-2010 Upi Tamminen <desaster@gmail.com>
 # SPDX-FileCopyrightText: 2015-2024 Michel Oosterhof <michel@oosterhof.net>
 #

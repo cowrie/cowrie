@@ -1,7 +1,7 @@
 # ABOUTME: Integration tests for shell FD redirection functionality.
 # ABOUTME: Tests stdout/stderr redirections, pipes, file I/O, and FD duplication.
 
-# Copyright (C) 2025 @CoreZen
+# SPDX-FileCopyrightText: 2025 @CoreZen
 # SPDX-FileCopyrightText: 2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

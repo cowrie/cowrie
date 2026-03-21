@@ -1,4 +1,4 @@
-# Copyright (C) 2019 Nuno Novais <nuno@noais.me>
+# SPDX-FileCopyrightText: 2019 Nuno Novais <nuno@noais.me>
 # SPDX-FileCopyrightText: 2020-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

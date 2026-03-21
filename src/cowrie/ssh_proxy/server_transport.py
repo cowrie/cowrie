@@ -1,4 +1,4 @@
-# Copyright (C) 2016, 2019 Thomas Nicholson <tnnich@googlemail.com> Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2016, 2019 Thomas Nicholson <tnnich@googlemail.com> Guilherme Borges <guilhermerosasborges@gmail.com>
 # SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

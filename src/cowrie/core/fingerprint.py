@@ -1,7 +1,7 @@
 # ABOUTME: JA4 and JA4H fingerprinting for TLS and HTTP traffic
 # ABOUTME: Parses TLS Client Hello and HTTP requests to generate fingerprints
 
-# Copyright (C) 2023 FoxIO, LLC.
+# SPDX-FileCopyrightText: 2023 FoxIO, LLC.
 # SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

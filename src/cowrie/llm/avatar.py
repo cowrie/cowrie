@@ -1,4 +1,3 @@
-# Copyright (C) 2024 Michel Oosterhof <michel@oosterhof.net>
 # SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause

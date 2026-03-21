@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Filippo Lauria <filippo.lauria@iit.cnr.it>
+# SPDX-FileCopyrightText: 2025 Filippo Lauria <filippo.lauria@iit.cnr.it>
 # SPDX-FileCopyrightText: 2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause
