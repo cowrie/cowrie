@@ -1,3 +1,8 @@
+.. SPDX-FileCopyrightText: 2018 Carter Yagemann
+.. SPDX-FileCopyrightText: 2018-2023 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 Using TCP tunneling with Squid
 #################################
 

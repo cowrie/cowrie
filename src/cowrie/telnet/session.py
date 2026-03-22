@@ -1,4 +1,8 @@
-# Copyright (C) 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2016 Olivier Bilodeau <obilodeau@gosecure.ca>
+# SPDX-FileCopyrightText: 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2016-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Telnet User Session management for the Honeypot
 

@@ -1,1 +1,6 @@
+-- SPDX-FileCopyrightText: 2018 oliveriandrea <oliveriandrea@gmail.com>
+-- SPDX-FileCopyrightText: 2018 Michel Oosterhof <michel@oosterhof.net>
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+
 ALTER TABLE `downloads` MODIFY `outfile` text default NULL;

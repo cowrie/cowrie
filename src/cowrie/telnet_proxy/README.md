@@ -1,3 +1,10 @@
+<!--
+SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+SPDX-FileCopyrightText: 2019 Michel Oosterhof <michel@oosterhof.net>
+
+SPDX-License-Identifier: BSD-3-Clause
+-->
+
 All username credentials, when sent to backend, have the configured username that is known to succeed (i.e. exist in
 the backend). When we spoof the password we decide whether the login is valid or not, and in the second case we send
 an invalid password, thus causing auth to fail.

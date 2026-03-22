@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 FoxIO, LLC
+
+SPDX-License-Identifier: LicenseRef-FoxIO-1.1
+-->
+
 # JA4+ (Python Implementation) <!-- omit from toc -->
 
 This Python tool implements JA4+, a fingerprinting methodology for network traffic analysis. It processes PCAP files and extracts JA4+ fingerprints for multiple protocols, including TLS, HTTP, SSH, TCP, and X.509 certificates. The output is structured in JSON format, providing detailed metadata such as IP addresses, ports, domains, and fingerprintable handshake characteristics. This tool is designed for security research, threat detection, and network traffic investigation.

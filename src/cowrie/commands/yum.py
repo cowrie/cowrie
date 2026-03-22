@@ -1,5 +1,8 @@
-# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2018 FabiolaBusch
+# SPDX-FileCopyrightText: 2009 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2020-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # Modified by Fabiola Buschendorf, https://github.com/FabiolaBusch

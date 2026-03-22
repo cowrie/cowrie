@@ -1,6 +1,6 @@
-# Copyright (c) 2010 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
-# Contributor: Fosocles
+# SPDX-FileCopyrightText: 2020-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 awk command

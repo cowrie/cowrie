@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2017 lelonek1 <lelonek1@umbc.edu>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Include base requirements
 -r requirements.txt
 

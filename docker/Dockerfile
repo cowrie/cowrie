@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # This Dockerfile contains two images, `builder` and `runtime`.
 # `builder` contains all necessary code to build
 # `runtime` is stripped down.

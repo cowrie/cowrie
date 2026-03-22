@@ -1,5 +1,6 @@
-# Copyright (c) 2017 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2017-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains a subclass of SSHChannel with additional logging

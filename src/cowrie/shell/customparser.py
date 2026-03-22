@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2016 Dave Germiquet <davegermiquet@trulycanadian.net>
+# SPDX-FileCopyrightText: 2017-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import argparse

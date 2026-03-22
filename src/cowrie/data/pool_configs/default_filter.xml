@@ -1,3 +1,10 @@
+<!--
+SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+SPDX-FileCopyrightText: 2024 Michel Oosterhof <michel@oosterhof.net>
+
+SPDX-License-Identifier: BSD-3-Clause
+-->
+
 <filter name='cowrie-default-filter'>
     <!-- reference the clean traffic filter to prevent
     MAC, IP and ARP spoofing. By not providing

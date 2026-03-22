@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Emulates the GNU cut command for the honeypot shell.
 # ABOUTME: Supports field selection (-f), custom delimiters (-d), and suppress mode (-s).
 

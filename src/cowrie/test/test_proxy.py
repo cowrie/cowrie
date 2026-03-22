@@ -1,7 +1,9 @@
 # -*- test-case-name: Cowrie Proxy Test Cases -*-
 
-# Copyright (c) 2019 Guilherme Borges
-# See LICENSE for details.
+# SPDX-FileCopyrightText: 2019 Guilherme Borges
+# SPDX-FileCopyrightText: 2020-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

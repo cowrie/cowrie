@@ -1,5 +1,8 @@
-# Copyright (c) 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2020 Peter Šufliarsky
+# SPDX-FileCopyrightText: 2020 Peter Sufliarsky <sufliarskyp@gmail.com>
+# SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

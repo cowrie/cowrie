@@ -1,6 +1,6 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-#               2025 Filippo Lauria <filippo.lauria@iit.cnr.it>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains the sleep command

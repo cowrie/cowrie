@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2019-2024 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 How to send Cowrie output to Graylog
 ####################################
 

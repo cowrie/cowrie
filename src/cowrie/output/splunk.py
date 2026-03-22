@@ -1,4 +1,6 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 Splunk HTTP Event Collector (HEC) Connector.

@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2018 oliveriandrea <oliveriandrea@gmail.com>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import re

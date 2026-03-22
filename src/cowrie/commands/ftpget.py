@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2016 Claud Xiao
+# SPDX-FileCopyrightText: 2017-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Claud Xiao
 
 from __future__ import annotations

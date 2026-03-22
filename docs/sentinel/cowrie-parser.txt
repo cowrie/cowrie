@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020-2023 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 // Cowrie JSON Log Parser
 // By Chris Campbell (@phage_nz)
 // Last Updated Date: June 27,  2020

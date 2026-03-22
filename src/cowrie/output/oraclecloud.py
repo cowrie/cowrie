@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2023 Mattia Moretti <mattia.moretti@oracle.com>
+# SPDX-FileCopyrightText: 2024-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import datetime

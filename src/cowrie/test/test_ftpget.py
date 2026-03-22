@@ -1,5 +1,6 @@
-# Copyright (c) 2018 Michel Oosterhof
-# See LICENSE for details.
+# SPDX-FileCopyrightText: 2018-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 # mypy: disable-error-code="var-annotated,attr-defined,return-value"
 
 from __future__ import annotations
