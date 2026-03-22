@@ -6,7 +6,7 @@ SPDX-PackageDownloadLocation = "https://github.com/cowrie/cowrie"
 [[annotations]]
 path = "src/cowrie/data/arch/**"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2018-2024 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-FileCopyrightText = ["2018 oliveriandrea <oliveriandrea@gmail.com>", "2018-2024 Michel Oosterhof <michel@oosterhof.net>"]
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
