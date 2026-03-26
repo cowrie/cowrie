@@ -114,7 +114,7 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
         ]
         if self.protocol.kippoIPv6:
             rows += [
-                ("::/0", "fe80::1", "UG", "100", "0", "0", "eth0"),
+                ("::/0", "fe80::1", "UG", "100", "0", "0", "eth0"),  # NOSONAR - simulated honeypot routing table entry
                 ("ff00::/8", "::", "U", "256", "0", "0", "eth0"),
             ]
         for dest, nh, flag, met, ref, use, iface in rows:
