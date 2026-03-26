@@ -66,6 +66,24 @@ class UtilsTestCase(unittest.TestCase):
             get_endpoints_from_section(cfg, "ssh", 2223),
         )
 
+    def test_get_endpoints_from_section_ipv6(self) -> None:
+        cfg = get_config("[ssh]\nlisten_addr = ::\n")
+        self.assertEqual(
+            [r"tcp6:2222:interface=\:\:"], get_endpoints_from_section(cfg, "ssh", 2222)
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 2001:db8::1\n")
+        self.assertEqual(
+            [r"tcp6:2222:interface=2001\:db8\:\:1"],
+            get_endpoints_from_section(cfg, "ssh", 2222),
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 0.0.0.0 ::\n")
+        self.assertEqual(
+            [r"tcp:2222:interface=0.0.0.0", r"tcp6:2222:interface=\:\:"],
+            get_endpoints_from_section(cfg, "ssh", 2222),
+        )
+
     def test_create_endpoint_services(self) -> None:
         parent = MultiService()
         create_endpoint_services(
