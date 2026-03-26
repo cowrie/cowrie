@@ -62,7 +62,7 @@ dshield = ["requests"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
 mongodb = ["pymongo"]
-pool = ["libvirt-python==12.0.0"]
+pool = ["libvirt-python==12.1.0"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
@@ -83,8 +83,8 @@ dev = [
 "pyupgrade==3.21.2",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.15.1",
-"setuptools==82.0.0",
+"ruff==0.15.6",
+"setuptools==82.0.1",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.5",
