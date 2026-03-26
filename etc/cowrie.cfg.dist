@@ -175,7 +175,7 @@ timezone = UTC
 # with Scope:Global. If empty, Cowrie will attempt to auto-detect a GUA;
 # if none is found (e.g. IPv6 not available), no GUA line is shown.
 #
-#internet_facing_ip6 = 2001:db8::1
+#internet_facing_ipv6 = 2001:db8::1
 
 
 

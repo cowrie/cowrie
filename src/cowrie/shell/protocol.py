@@ -116,12 +116,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 self.kippoIP = "192.168.0.1"
 
         # IPv6 GUA of server in user visible reports (can be fake or real)
-        if CowrieConfig.has_option("honeypot", "internet_facing_ip6"):
-            self.kippoIPv6 = CowrieConfig.get("honeypot", "internet_facing_ip6")
+        if CowrieConfig.has_option("honeypot", "internet_facing_ipv6"):
+            self.kippoIPv6 = CowrieConfig.get("honeypot", "internet_facing_ipv6")
         else:
             try:
                 with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
-                    s.connect(("2001:4860:4860::8888", 80))
+                    s.connect(("2001:4860:4860::8888", 80))  # NOSONAR - probe target to detect host GUA, not a secret
                     addr = s.getsockname()[0]
                     # Only use GUA, not link-local
                     self.kippoIPv6 = addr if not addr.lower().startswith("fe80") else ""
