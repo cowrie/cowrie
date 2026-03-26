@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 import json
+import os
+import urllib.parse
 from typing import TYPE_CHECKING, Any
 
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.endpoints import HostnameEndpoint
 from twisted.python import failure as tw_failure
 from twisted.python import log
-from twisted.web.client import Agent, HTTPConnectionPool, _HTTP11ClientFactory
+from twisted.web.client import Agent, HTTPConnectionPool, ProxyAgent, _HTTP11ClientFactory
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer, IResponse
 from zope.interface import implementer
@@ -87,7 +90,14 @@ class LLMClient:
         self.temperature = CowrieConfig.getfloat("llm", "temperature", fallback=0.7)
         self.debug = CowrieConfig.getboolean("llm", "debug", fallback=False)
 
-        self.agent = Agent(reactor, pool=self._conn_pool)
+        proxy_url = os.environ.get("https_proxy") or os.environ.get("http_proxy")
+        if proxy_url:
+            parsed = urllib.parse.urlparse(proxy_url)
+            proxy_endpoint = HostnameEndpoint(reactor, parsed.hostname, parsed.port or 8080)
+            self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
+            log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
+        else:
+            self.agent = Agent(reactor, pool=self._conn_pool)
 
         if not self.api_key:
             log.msg("WARNING: No LLM API key configured in [llm] section")
