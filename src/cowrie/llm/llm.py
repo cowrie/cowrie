@@ -90,13 +90,20 @@ class LLMClient:
         self.temperature = CowrieConfig.getfloat("llm", "temperature", fallback=0.7)
         self.debug = CowrieConfig.getboolean("llm", "debug", fallback=False)
 
-        proxy_url = os.environ.get("https_proxy") or os.environ.get("http_proxy")
+        proxy_url = (
+            os.environ.get("https_proxy")
+            or os.environ.get("HTTPS_PROXY")
+            or os.environ.get("http_proxy")
+            or os.environ.get("HTTP_PROXY")
+        )
+        log.msg(f"LLM proxy env: https_proxy={os.environ.get('https_proxy')} HTTPS_PROXY={os.environ.get('HTTPS_PROXY')}")
         if proxy_url:
             parsed = urllib.parse.urlparse(proxy_url)
             proxy_endpoint = HostnameEndpoint(reactor, parsed.hostname, parsed.port or 8080)
             self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
             log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
         else:
+            log.msg("LLM no proxy configured, connecting directly")
             self.agent = Agent(reactor, pool=self._conn_pool)
 
         if not self.api_key:
