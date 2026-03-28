@@ -207,7 +207,7 @@ class LLMClient:
             log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
 
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            content: str = response_json["choices"][0]["message"]["content"]
+            content = response_json["choices"][0]["message"]["content"]
             return content
 
         log.err(f"Unexpected LLM response format: {response}")
