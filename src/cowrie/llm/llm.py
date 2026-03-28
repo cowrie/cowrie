@@ -111,24 +111,33 @@ class LLMClient:
         )
 
     def _format_request_body(self, prompt: list[str]) -> dict:
-        """Structure the request body for OpenAI chat completions API."""
+        """Structure the request body for the LLM API.
+
+        Anthropic Messages API requires the system prompt as a top-level
+        parameter; OpenAI uses a message with role 'system'.
+        """
+        system_prompt = prompt[0] if prompt else ""
         messages = []
-        for i, message in enumerate(prompt):
-            if i == 0:
-                # First message is our system prompt
-                messages.append({"role": "system", "content": message})
-            elif message.startswith("User:"):
-                content = message[5:].strip()
-                messages.append({"role": "user", "content": content})
+        for message in prompt[1:]:
+            if message.startswith("User:"):
+                messages.append({"role": "user", "content": message[5:].strip()})
             elif message.startswith("System:"):
-                content = message[7:].strip()
-                messages.append({"role": "assistant", "content": content})
+                messages.append({"role": "assistant", "content": message[7:].strip()})
             else:
                 messages.append({"role": "user", "content": message})
 
+        if self.is_anthropic:
+            return {
+                "model": self.model,
+                "system": system_prompt,
+                "messages": messages or [{"role": "user", "content": ""}],
+                "max_tokens": self.max_tokens,
+            }
+
+        # OpenAI-compatible format
         return {
             "model": self.model,
-            "messages": messages,
+            "messages": [{"role": "system", "content": system_prompt}, *messages],
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
         }
