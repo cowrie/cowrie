@@ -204,7 +204,7 @@ class LLMClient:
 
         # OpenAI-compatible format
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            content: str = response_json["choices"][0]["message"]["content"]
+            content = response_json["choices"][0]["message"]["content"]
             return content
 
         # Anthropic Messages API format
