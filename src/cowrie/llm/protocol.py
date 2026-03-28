@@ -129,15 +129,27 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Build the system context prompt, using the configured template if present.
         Supports variables: {hostname}, {username}, {ip}, {ip6}, {client_ip}, {cwd}.
+        For exec commands a tighter default is used to suppress conversational output.
         """
-        default = (
-            "You are simulating a Linux server that has been accessed via SSH. "
-            "Respond as if you were the shell on this system. "
-            "Your response should be the output that would be displayed after executing the command. "
-            "Keep responses realistic, including appropriate error messages for invalid commands. "
-            "For file paths, maintain consistent state with previous commands."
-        )
-        template = CowrieConfig.get("llm", "system_prompt", fallback=default)
+        if exec_command:
+            default = (
+                "You are simulating a Linux server that has been accessed via SSH "
+                "with a command to execute. "
+                "Respond with ONLY the output that would be displayed after executing this command. "
+                "Keep responses realistic, including appropriate error messages for invalid commands."
+            )
+            config_key = "system_prompt_exec"
+        else:
+            default = (
+                "You are simulating a Linux server that has been accessed via SSH. "
+                "Respond as if you were the shell on this system. "
+                "Your response should be the output that would be displayed after executing the command. "
+                "Keep responses realistic, including appropriate error messages for invalid commands. "
+                "For file paths, maintain consistent state with previous commands."
+            )
+            config_key = "system_prompt"
+
+        template = CowrieConfig.get("llm", config_key, fallback=default)
         context = template.format_map(
             {
                 "hostname": self.hostname,

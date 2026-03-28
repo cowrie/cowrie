@@ -193,8 +193,14 @@ class LLMClient:
         if self.debug:
             log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
 
+        # OpenAI-compatible format
         if "choices" in response_json and len(response_json["choices"]) > 0:
             content: str = response_json["choices"][0]["message"]["content"]
+            return content
+
+        # Anthropic Messages API format
+        if "content" in response_json and len(response_json["content"]) > 0:
+            content = response_json["content"][0].get("text", "")
             return content
 
         log.err(f"Unexpected LLM response format: {response}")
