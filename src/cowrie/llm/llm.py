@@ -13,7 +13,12 @@ from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.endpoints import HostnameEndpoint
 from twisted.python import failure as tw_failure
 from twisted.python import log
-from twisted.web.client import Agent, HTTPConnectionPool, ProxyAgent, _HTTP11ClientFactory
+from twisted.web.client import (
+    Agent,
+    HTTPConnectionPool,
+    ProxyAgent,
+    _HTTP11ClientFactory,
+)
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer, IResponse
 from zope.interface import implementer
