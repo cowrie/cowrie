@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import os
 import urllib.parse
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
@@ -101,7 +101,7 @@ class LLMClient:
             or os.environ.get("http_proxy")
             or os.environ.get("HTTP_PROXY")
         )
-        self.agent: Agent | ProxyAgent
+        self.agent: Union[Agent, ProxyAgent]
         if proxy_url:
             parsed = urllib.parse.urlparse(proxy_url)
             proxy_endpoint = HostnameEndpoint(
