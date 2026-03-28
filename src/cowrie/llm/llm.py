@@ -88,12 +88,21 @@ class LLMClient:
         self.debug = CowrieConfig.getboolean("llm", "debug", fallback=False)
 
         self.agent = Agent(reactor, pool=self._conn_pool)
+        self.is_anthropic = "anthropic.com" in self.host
 
         if not self.api_key:
             log.msg("WARNING: No LLM API key configured in [llm] section")
 
     def _build_headers(self) -> Headers:
         """Build HTTP headers with authentication."""
+        if self.is_anthropic:
+            return Headers(
+                {
+                    b"Content-Type": [b"application/json"],
+                    b"x-api-key": [self.api_key.encode()],
+                    b"anthropic-version": [b"2023-06-01"],
+                }
+            )
         return Headers(
             {
                 b"Content-Type": [b"application/json"],
