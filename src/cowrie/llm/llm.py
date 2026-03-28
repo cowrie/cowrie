@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import os
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
@@ -101,14 +101,15 @@ class LLMClient:
             or os.environ.get("http_proxy")
             or os.environ.get("HTTP_PROXY")
         )
-        self.agent: Union[Agent, ProxyAgent] = Agent(reactor, pool=self._conn_pool)
         if proxy_url:
             parsed = urllib.parse.urlparse(proxy_url)
             proxy_endpoint = HostnameEndpoint(
                 reactor, parsed.hostname or "localhost", parsed.port or 8080
             )
-            self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
+            self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)  # type: ignore[assignment]
             log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
+        else:
+            self.agent = Agent(reactor, pool=self._conn_pool)
 
         if not self.api_key:
             log.msg("WARNING: No LLM API key configured in [llm] section")
