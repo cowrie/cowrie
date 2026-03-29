@@ -1,4 +1,4 @@
-attrs==25.4.0
+attrs==26.1.0
 bcrypt==5.0.0
 cryptography==46.0.6
 hyperlink==21.0.0
