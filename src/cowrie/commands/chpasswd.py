@@ -1,16 +1,8 @@
-# Copyright (c) 2019 Nuno Novais <nuno@noais.me>
-# All rights reserved.
-# All rights given to Cowrie project
 
-"""
-This module contains the chpasswd command
-"""
+# Copyright (c) 2013 Upi Tamminen <desaster@gmail.com>
+# See the COPYRIGHT file for more information
 
 from __future__ import annotations
-
-import getopt
-
-from twisted.python import log
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -18,97 +10,55 @@ commands = {}
 
 
 class Command_chpasswd(HoneyPotCommand):
-    def help(self) -> None:
-        output = (
-            "Usage: chpasswd [options]",
-            "",
-            "Options:",
-            "  -c, --crypt-method METHOD     the crypt method (one of NONE DES MD5 SHA256 SHA512)",
-            "  -e, --encrypted               supplied passwords are encrypted",
-            "  -h, --help                    display this help message and exit",
-            "  -m, --md5                     encrypt the clear text password using",
-            "                                the MD5 algorithm",
-            "  -R, --root CHROOT_DIR         directory to chroot into",
-            "  -s, --sha-rounds              number of SHA rounds for the SHA*",
-            "                                crypt algorithms",
-        )
-        for line in output:
-            self.write(line + "\n")
+    """
+    chpasswd command simulation
+    """
 
-    def chpasswd_application(self, contents: bytes) -> None:
-        c = 1
-        try:
-            for line in contents.split(b"\n"):
-                if len(line):
-                    if b":" not in line:
-                        self.write(f"chpasswd: line {c}: invalid format\n")
-                    else:
-                        _u, p = line.split(b":", 1)
-
-                        if len(line):
-    if b":" not in line:
-        self.write(f"chpasswd: line {c}: invalid format\n")
-    else:
-        parts = line.split(b":", 1)
-
-        if len(parts) != 2:
-            self.write(f"chpasswd: line {c}: invalid format\n")
-        else:
-            _u, p = parts
-
-            if not p:
-                self.write(f"chpasswd: line {c}: missing new password\n")
-            else:
-                username = _u.decode(errors="ignore")
-
-                log.msg(
-                    eventid="cowrie.command.chpasswd",
-                    realm="chpasswd",
-                    username=username,
-                    format="Password change attempt for %(username)s",
-                )
-                c += 1
-        except Exception:
-            self.write(f"chpasswd: line {c}: missing new password\n")
-
-    def start(self) -> None:
-        try:
-            opts, _args = getopt.getopt(
-                self.args,
-                "c:ehmr:s:",
-                ["crypt-method", "encrypted", "help", "md5", "root", "sha-rounds"],
-            )
-        except getopt.GetoptError:
-            self.help()
-            self.exit()
+    def call(self) -> None:
+        if not self.input_data:
             return
 
-        # Parse options
-        for o, a in opts:
-            if o in "-h":
-                self.help()
-                self.exit()
-                return
-            elif o in "-c":
-                if a not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]:
-                    self.errorWrite(f"chpasswd: unsupported crypt method: {a}\n")
-                    self.help()
-                    self.exit()
+        lines = self.input_data.split(b"\n")
+        c = 0
 
-        if self.input_data:
-            self.chpasswd_application(self.input_data)
-            self.exit()
+        for line in lines:
+            c += 1
+            line = line.strip()
 
-    def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
-            realm="chpasswd",
-            input=line,
-            format="INPUT (%(realm)s): %(input)s",
-        )
-        self.chpasswd_application(line.encode())
+            if not line:
+                continue
 
-    def handle_CTRL_D(self) -> None:
+            parts = line.split(b":")
+
+            if len(parts) != 2:
+                self.write(
+                    f"chpasswd: line {c}: missing new password\n"
+                )
+                continue
+
+            username = parts[0].strip()
+            password = parts[1].strip()
+
+            if not username:
+                self.write(
+                    f"chpasswd: line {c}: missing username\n"
+                )
+                continue
+
+            if not password:
+                self.write(
+                    f"chpasswd: line {c}: missing new password\n"
+                )
+                continue
+
+    def start(self) -> None:
+        self.input_data = b""
+
+    def lineReceived(self, line: bytes) -> None:
+        self.input_data += line + b"\n"
+
+    def eofReceived(self) -> None:
+        self.call()
         self.exit()
 
 
