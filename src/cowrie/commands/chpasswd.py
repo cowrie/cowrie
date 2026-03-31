@@ -3,7 +3,7 @@
 # All rights given to Cowrie project
 
 """
-This module contains the chpasswd commnad
+This module contains the chpasswd command
 """
 
 from __future__ import annotations
@@ -27,9 +27,9 @@ class Command_chpasswd(HoneyPotCommand):
             "  -e, --encrypted               supplied passwords are encrypted",
             "  -h, --help                    display this help message and exit",
             "  -m, --md5                     encrypt the clear text password using",
-            "                                the MD5 algorithm"
-            "  -R, --root CHROOT_DIR         directory to chroot into"
-            "  -s, --sha-rounds              number of SHA rounds for the SHA*"
+            "                                the MD5 algorithm",
+            "  -R, --root CHROOT_DIR         directory to chroot into",
+            "  -s, --sha-rounds              number of SHA rounds for the SHA*",
             "                                crypt algorithms",
         )
         for line in output:
@@ -40,22 +40,24 @@ class Command_chpasswd(HoneyPotCommand):
         try:
             for line in contents.split(b"\n"):
                 if len(line):
-                    _u, p = line.split(b":")
-                    if not len(p):
-                        self.write(f"chpasswd: line {c}: missing new password\n")
+                    if b":" not in line:
+                        self.write(f"chpasswd: line {c}: invalid format\n")
                     else:
-                        username = _u.decode(errors="ignore")
+                        _u, p = line.split(b":", 1)
 
-# Log the attempt
-log.msg(
-    eventid="cowrie.command.chpasswd",
-    realm="chpasswd",
-    username=username,
-    format="Password change attempt for %(username)s",
-)
+                        if not len(p):
+                            self.write(f"chpasswd: line {c}: missing new password\n")
+                        else:
+                            username = _u.decode(errors="ignore")
 
-# Simulate success (silent like real Linux)
-self.write("")
+                            log.msg(
+                                eventid="cowrie.command.chpasswd",
+                                realm="chpasswd",
+                                username=username,
+                                format="Password change attempt for %(username)s",
+                            )
+
+                            self.write("password updated successfully\n")
                 c += 1
         except Exception:
             self.write(f"chpasswd: line {c}: missing new password\n")
@@ -84,9 +86,7 @@ self.write("")
                     self.help()
                     self.exit()
 
-        if not self.input_data:
-            pass
-        else:
+        if self.input_data:
             self.chpasswd_application(self.input_data)
             self.exit()
 
