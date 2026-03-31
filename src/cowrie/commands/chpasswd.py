@@ -44,13 +44,20 @@ class Command_chpasswd(HoneyPotCommand):
                     if not len(p):
                         self.write(f"chpasswd: line {c}: missing new password\n")
                     else:
-                        pass
-                        """
-                        TODO:
-                            - update shadow file
-                            - update userDB.txt (???)
-                            - updte auth_random.json (if in use)
-                        """
+                        username = _u.decode(errors="ignore")
+password = p.decode(errors="ignore")
+
+# Log the attempt
+log.msg(
+    eventid="cowrie.command.chpasswd",
+    realm="chpasswd",
+    username=username,
+    password=password,
+    format="chpasswd attempt: %(username)s:%(password)s",
+)
+
+# Simulate success (silent like real Linux)
+self.write("")
                 c += 1
         except Exception:
             self.write(f"chpasswd: line {c}: missing new password\n")
