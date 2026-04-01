@@ -1,18 +1,19 @@
-
-# Copyright (c) 2013 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
-
 from __future__ import annotations
+
+from typing import Any
 
 from cowrie.shell.command import HoneyPotCommand
 
-commands = {}
+commands: dict[str, Any] = {}
 
 
 class Command_chpasswd(HoneyPotCommand):
     """
     chpasswd command simulation
     """
+
+    input_data: bytes = b""
 
     def call(self) -> None:
         if not self.input_data:
