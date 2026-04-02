@@ -8,10 +8,10 @@
 from hashlib import sha256
 from datetime import datetime
 
-conn_cache = {}
-quic_cache = {}
-http_cache = {}
-ssh_cache = {}
+conn_cache: dict = {}
+quic_cache: dict = {}
+http_cache: dict = {}
+ssh_cache: dict = {}
 
 TLS_MAPPER = {'0x0002': "s2",
               '0x0300': "s3",

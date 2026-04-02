@@ -79,7 +79,7 @@ language = "en"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style: str | None = None
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -119,7 +119,7 @@ htmlhelp_basename = "cowriedoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
-latex_elements = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
