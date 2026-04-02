@@ -18,7 +18,9 @@ class QemuGuestError(Exception):
     pass
 
 
-def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tuple[Any, str]:
+def create_guest(
+    connection: Any, mac_address: str, guest_unique_id: str
+) -> tuple[Any, str]:
     # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
     import libvirt
 

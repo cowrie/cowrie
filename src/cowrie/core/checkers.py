@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from sys import modules
 
+from zope.interface import implementer
+
 from twisted.conch import error
 from twisted.conch.ssh import keys
 from twisted.cred.checkers import ICredentialsChecker
@@ -16,7 +18,6 @@ from twisted.cred.credentials import ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
 from twisted.python import failure, log
-from zope.interface import implementer
 
 import cowrie.core.auth  # noqa: F401
 from cowrie.core import credentials as conchcredentials

@@ -8,6 +8,8 @@ import os
 import urllib.parse
 from typing import TYPE_CHECKING, Any
 
+from zope.interface import implementer
+
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.endpoints import HostnameEndpoint
@@ -21,7 +23,6 @@ from twisted.web.client import (
 )
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer, IResponse
-from zope.interface import implementer
 
 from cowrie.core.config import CowrieConfig
 
@@ -66,7 +67,9 @@ class SimpleResponseReceiver(protocol.Protocol):
     def dataReceived(self, data: bytes) -> None:
         self.buf += data
 
-    def connectionLost(self, reason: tw_failure.Failure = protocol.connectionDone) -> None:
+    def connectionLost(
+        self, reason: tw_failure.Failure = protocol.connectionDone
+    ) -> None:
         self.d.callback((self.status_code, self.buf))
 
 
@@ -106,7 +109,7 @@ class LLMClient:
             proxy_endpoint = HostnameEndpoint(
                 reactor, parsed.hostname or "localhost", parsed.port or 8080
             )
-            self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)  # type: ignore[assignment]
+            self.agent: Agent | ProxyAgent
             log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
         else:
             self.agent = Agent(reactor, pool=self._conn_pool)
@@ -152,9 +155,7 @@ class LLMClient:
         response.deliverBody(SimpleResponseReceiver(response.code, d))
         return d
 
-    def _handle_connection_error(
-        self, err: tw_failure.Failure
-    ) -> tuple[int, bytes]:
+    def _handle_connection_error(self, err: tw_failure.Failure) -> tuple[int, bytes]:
         """Handle connection errors."""
         err.trap(Exception)
         return (500, err.getErrorMessage().encode("utf-8"))
@@ -178,9 +179,7 @@ class LLMClient:
         return d
 
     @inlineCallbacks
-    def get_response(
-        self, prompt: list[str]
-    ) -> Generator[Deferred[Any], Any, str]:
+    def get_response(self, prompt: list[str]) -> Generator[Deferred[Any], Any, str]:
         """
         Get a response from the LLM for the given prompt.
 
@@ -208,7 +207,7 @@ class LLMClient:
 
         if "choices" in response_json and len(response_json["choices"]) > 0:
             content = response_json["choices"][0]["message"]["content"]
-            return content
+            return str(content)
 
         log.err(f"Unexpected LLM response format: {response}")
         return ""

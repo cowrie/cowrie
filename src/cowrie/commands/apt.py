@@ -60,8 +60,7 @@ class Command_aptget(HoneyPotCommand):
         return d
 
     def do_version(self) -> None:
-        self.write(
-            """apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+        self.write("""apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Supported modules:
 *Ver: Standard .deb
 *Pkg:  Debian dpkg interface (Priority 30)
@@ -72,13 +71,11 @@ Supported modules:
  Idx: Debian Package Index
  Idx: Debian Translation Index
  Idx: Debian dpkg status file
- Idx: EDSP scenario file\n"""
-        )
+ Idx: EDSP scenario file\n""")
         self.exit()
 
     def do_help(self) -> None:
-        self.write(
-            """apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
+        self.write("""apt 1.0.9.8.1 for amd64 compiled on Jun 10 2015 09:42:06
 Usage: apt-get [options] command
        apt-get [options] install|remove pkg1 [pkg2 ...]
        apt-get [options] source pkg1 [pkg2 ...]
@@ -120,8 +117,7 @@ Options:
   -o=? Set an arbitrary configuration option, eg -o dir::cache=/tmp
 See the apt-get(8), sources.list(5) and apt.conf(5) manual
 pages for more information and options.
-                       This APT has Super Cow Powers.\n"""
-        )
+                       This APT has Super Cow Powers.\n""")
         self.exit()
 
     @inlineCallbacks

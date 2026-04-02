@@ -8,11 +8,12 @@ import json
 import time
 from io import BytesIO
 
+from zope.interface import implementer
+
 from twisted.internet import reactor, ssl
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
 from twisted.web.iweb import IPolicyForHTTPS
-from zope.interface import implementer
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig

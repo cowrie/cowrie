@@ -7,9 +7,7 @@ from cowrie.shell.pipe import PipeProtocol
 
 commands = {}
 
-busybox_help = (
-    (
-        """
+busybox_help = ("""
 BusyBox v1.20.2 (Debian 1:1.20.0-7) multi-call binary.
 Copyright (C) 1998-2011 Erik Andersen, Rob Landley, Denys Vlasenko
 and others. Licensed under GPLv2.
@@ -48,11 +46,7 @@ Currently defined functions:
     unlzma, unxz, unzip, uptime, usleep, uudecode, uuencode, vconfig, vi,
     watch, watchdog, wc, wget, which, who, whoami, xargs, xz, xzcat, yes,
     zcat
-"""
-    )
-    .strip()
-    .split("\n")
-)
+""").strip().split("\n")
 
 
 class Command_busybox(HoneyPotCommand):

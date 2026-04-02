@@ -133,8 +133,7 @@ class Command_cut(HoneyPotCommand):
         self.exit()
 
     def help(self) -> None:
-        self.write(
-            """Usage: cut OPTION... [FILE]...
+        self.write("""Usage: cut OPTION... [FILE]...
 Print selected parts of lines from each FILE to standard output.
 
 With no FILE, or when FILE is -, read standard input.
@@ -162,8 +161,7 @@ Each range is one of:
 GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
 Full documentation at: <http://www.gnu.org/software/coreutils/cut>
 or available locally via: info '(coreutils) cut invocation'
-"""
-        )
+""")
 
 
 commands["/usr/bin/cut"] = Command_cut

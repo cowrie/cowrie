@@ -101,9 +101,7 @@ class ScriptExecutionTests(unittest.TestCase):
 
     def test_absolute_path_with_shebang(self) -> None:
         """Absolute path /tmp/script.sh with shebang executes."""
-        self.proto.lineReceived(
-            b'printf "#!/bin/sh\\necho absolute\\n" > /tmp/abs.sh'
-        )
+        self.proto.lineReceived(b'printf "#!/bin/sh\\necho absolute\\n" > /tmp/abs.sh')
         self.tr.clear()
         self.proto.lineReceived(b"/tmp/abs.sh")
         self.assertEqual(self.tr.value(), b"absolute\n" + PROMPT)

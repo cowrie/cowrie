@@ -42,11 +42,12 @@ from urllib.parse import urlencode, urlparse
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+from zope.interface import implementer
+
 from twisted.internet import defer, reactor
 from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.iweb import IBodyProducer, IResponse
-from zope.interface import implementer
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -473,9 +474,9 @@ class Output(cowrie.core.output.Output):
         if d:
             # Log success message on successful response
             d.addCallback(
-                lambda _: log.msg("VT scanurl successful: 200 OK")
-                if _ is not None
-                else None
+                lambda _: (
+                    log.msg("VT scanurl successful: 200 OK") if _ is not None else None
+                )
             )
         return d
 

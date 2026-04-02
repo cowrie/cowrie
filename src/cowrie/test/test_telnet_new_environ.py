@@ -103,10 +103,7 @@ class TestNewEnvironParser(unittest.TestCase):
         """Test parsing the exact CVE-2026-24061 exploit payload."""
         # VAR USER VALUE -f root
         data = (
-            bytes([NEW_ENVIRON_VAR])
-            + b"USER"
-            + bytes([NEW_ENVIRON_VALUE])
-            + b"-f root"
+            bytes([NEW_ENVIRON_VAR]) + b"USER" + bytes([NEW_ENVIRON_VALUE]) + b"-f root"
         )
         result = self.protocol._parse_new_environ_data(data)
         self.assertEqual(result, {"USER": "-f root"})
@@ -211,7 +208,9 @@ class TestCVE2026_24061Detection(unittest.TestCase):
             if call[1].get("eventid") == "cowrie.telnet.exploit_attempt":
                 exploit_logged = True
                 break
-        self.assertFalse(exploit_logged, "Normal username should not trigger exploit detection")
+        self.assertFalse(
+            exploit_logged, "Normal username should not trigger exploit detection"
+        )
 
     @patch("cowrie.telnet.userauth.log")
     def test_logs_client_var_event(self, mock_log: MagicMock) -> None:
@@ -405,7 +404,8 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
 
         # Verify the credentials used the exploit username
         self.assertEqual(len(captured_creds), 1)
-        self.assertEqual(captured_creds[0].username, b"root")  
+        self.assertEqual(captured_creds[0].username, b"root")
+
     @patch("cowrie.telnet.userauth.CowrieConfig")
     @patch("cowrie.telnet.userauth.log")
     def test_exploit_success_is_logged(
@@ -422,12 +422,12 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.mock_transport.wontChain.return_value = MagicMock()
 
         self.protocol.cve_2026_24061_user = "root"
-        self.protocol.username = b""  
+        self.protocol.username = b""
         # Mock portal.login
         d = MagicMock()
         d.addCallback = MagicMock(return_value=d)
         d.addErrback = MagicMock(return_value=d)
-        self.protocol.portal.login = MagicMock(return_value=d)  
+        self.protocol.portal.login = MagicMock(return_value=d)
         self.protocol.telnet_Password(b"id")
 
         # Check for exploit success log

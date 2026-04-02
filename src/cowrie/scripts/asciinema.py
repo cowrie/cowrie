@@ -38,7 +38,7 @@ def playlog(fd, settings):
 
     while 1:
         try:
-            (op, tty, length, direction, sec, usec) = struct.unpack(
+            op, tty, length, direction, sec, usec = struct.unpack(
                 "<iLiiLL", fd.read(ssize)
             )
             data = fd.read(length)

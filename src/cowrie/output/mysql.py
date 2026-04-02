@@ -6,6 +6,7 @@ from __future__ import annotations
 
 # For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
 import mysql.connector
+
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log

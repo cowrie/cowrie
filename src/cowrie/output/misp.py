@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from pymisp import MISPAttribute, MISPEvent, MISPObject, MISPSighting
+
 from twisted.python import log
 
 import cowrie.core.output

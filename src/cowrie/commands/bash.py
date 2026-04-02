@@ -65,7 +65,9 @@ class Command_sh(HoneyPotCommand):
         if lines and _SHEBANG_RE.match(lines[0]):
             lines = lines[1:]
         # Strip comment-only lines and blank lines
-        lines = [line for line in lines if line.strip() and not line.strip().startswith("#")]
+        lines = [
+            line for line in lines if line.strip() and not line.strip().startswith("#")
+        ]
 
         if not lines:
             return

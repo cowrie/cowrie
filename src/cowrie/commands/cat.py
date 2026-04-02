@@ -104,8 +104,7 @@ class Command_cat(HoneyPotCommand):
         self.exit()
 
     def help(self) -> None:
-        self.write(
-            """Usage: cat [OPTION]... [FILE]...
+        self.write("""Usage: cat [OPTION]... [FILE]...
 Concatenate FILE(s) to standard output.
 
 With no FILE, or when FILE is -, read standard input.
@@ -130,8 +129,7 @@ Examples:
 GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
 Full documentation at: <http://www.gnu.org/software/coreutils/cat>
 or available locally via: info '(coreutils) cat invocation'
-"""
-        )
+""")
 
 
 commands["/bin/cat"] = Command_cat

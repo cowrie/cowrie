@@ -136,20 +136,24 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         extensions=tls_info["extensions"],
                         has_sni=tls_info["has_sni"],
                         alpn=tls_info["alpn"],
-                        signature_algorithms=tls_info["signature_algorithms"]
+                        signature_algorithms=tls_info["signature_algorithms"],
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4",
                         format="JA4 fingerprint for forwarded TLS to %(dst_ip)s:%(dst_port)s: %(ja4)s",
                         dst_ip=self.hostport[0],
                         dst_port=self.hostport[1],
-                        ja4=ja4
+                        ja4=ja4,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4 fingerprint: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
+        elif (
+            data.startswith(b"GET ")
+            or data.startswith(b"POST ")
+            or data.startswith(b"HEAD ")
+        ):
             http_info = parse_http_request(data)
             if http_info:
                 try:
@@ -159,14 +163,14 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         headers=http_info["headers"],
                         cookies=http_info["cookies"],
                         referer=http_info["referer"],
-                        accept_language=http_info["accept_language"]
+                        accept_language=http_info["accept_language"],
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4h",
                         format="JA4H fingerprint for forwarded HTTP to %(dst_ip)s:%(dst_port)s: %(ja4h)s",
                         dst_ip=self.hostport[0],
                         dst_port=self.hostport[1],
-                        ja4h=ja4h
+                        ja4h=ja4h,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4H fingerprint: {e}")
@@ -220,20 +224,24 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         extensions=tls_info["extensions"],
                         has_sni=tls_info["has_sni"],
                         alpn=tls_info["alpn"],
-                        signature_algorithms=tls_info["signature_algorithms"]
+                        signature_algorithms=tls_info["signature_algorithms"],
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4",
                         format="JA4 fingerprint for tunneled TLS to %(dst_ip)s:%(dst_port)s: %(ja4)s",
                         dst_ip=self.dstport[0],
                         dst_port=self.dstport[1],
-                        ja4=ja4
+                        ja4=ja4,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4 fingerprint in tunnel: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
+        elif (
+            data.startswith(b"GET ")
+            or data.startswith(b"POST ")
+            or data.startswith(b"HEAD ")
+        ):
             http_info = parse_http_request(data)
             if http_info:
                 try:
@@ -243,14 +251,14 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         headers=http_info["headers"],
                         cookies=http_info["cookies"],
                         referer=http_info["referer"],
-                        accept_language=http_info["accept_language"]
+                        accept_language=http_info["accept_language"],
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4h",
                         format="JA4H fingerprint for tunneled HTTP to %(dst_ip)s:%(dst_port)s: %(ja4h)s",
                         dst_ip=self.dstport[0],
                         dst_port=self.dstport[1],
-                        ja4h=ja4h
+                        ja4h=ja4h,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4H fingerprint in tunnel: {e}")

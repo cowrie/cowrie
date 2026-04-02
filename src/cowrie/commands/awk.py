@@ -163,8 +163,7 @@ class Command_awk(HoneyPotCommand):
         self.exit()
 
     def help(self) -> None:
-        self.write(
-            """Usage: awk [POSIX or GNU style options] -f progfile [--] file ...
+        self.write("""Usage: awk [POSIX or GNU style options] -f progfile [--] file ...
 Usage: awk [POSIX or GNU style options] [--] 'program' file ...
 POSIX options:          GNU long options: (standard)
         -f progfile             --file=progfile
@@ -204,12 +203,10 @@ By default it reads standard input and writes standard output.
 Examples:
         gawk '{ sum += $1 }; END { print sum }' file
         gawk -F: '{ print $1 }' /etc/passwd
-"""
-        )
+""")
 
     def version(self) -> None:
-        self.write(
-            """GNU Awk 4.1.4, API: 1.1 (GNU MPFR 4.0.1, GNU MP 6.1.2)
+        self.write("""GNU Awk 4.1.4, API: 1.1 (GNU MPFR 4.0.1, GNU MP 6.1.2)
 Copyright (C) 1989, 1991-2016 Free Software Foundation.
 
 This program is free software; you can redistribute it and/or modify
@@ -224,8 +221,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see http://www.gnu.org/licenses/.
-"""
-        )
+""")
 
 
 commands["/bin/awk"] = Command_awk

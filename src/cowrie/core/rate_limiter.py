@@ -18,8 +18,13 @@ class RateLimiter:
     malware collection and attacker behavior analysis.
     """
 
-    def __init__(self, enabled: bool = True, max_requests: int = 3,
-                 window_seconds: int = 60, max_keys: int = 1000):
+    def __init__(
+        self,
+        enabled: bool = True,
+        max_requests: int = 3,
+        window_seconds: int = 60,
+        max_keys: int = 1000,
+    ):
         """
         Initialize the rate limiter.
 
@@ -60,7 +65,8 @@ class RateLimiter:
 
         # Clean up old requests for this specific key
         self.request_tracker[key] = [
-            ts for ts in self.request_tracker[key]
+            ts
+            for ts in self.request_tracker[key]
             if current_time - ts < self.window_seconds
         ]
 
@@ -85,8 +91,7 @@ class RateLimiter:
         for key, timestamps in self.request_tracker.items():
             # Keep only timestamps within the window
             self.request_tracker[key] = [
-                ts for ts in timestamps
-                if current_time - ts < self.window_seconds
+                ts for ts in timestamps if current_time - ts < self.window_seconds
             ]
             # Mark empty keys for removal
             if not self.request_tracker[key]:

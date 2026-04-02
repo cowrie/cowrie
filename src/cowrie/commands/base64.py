@@ -36,8 +36,7 @@ class Command_base64(HoneyPotCommand):
 
         for opt in optlist:
             if opt[0] == "--help":
-                self.write(
-                    """Usage: base64 [OPTION]... [FILE]
+                self.write("""Usage: base64 [OPTION]... [FILE]
 Base64 encode or decode FILE, or standard input, to standard output.
 
 Mandatory arguments to long options are mandatory for short options too.
@@ -60,21 +59,18 @@ Report base64 bugs to bug-coreutils@gnu.org
 GNU coreutils home page: <http://www.gnu.org/software/coreutils/>
 General help using GNU software: <http://www.gnu.org/gethelp/>
 For complete documentation, run: info coreutils 'base64 invocation'
-"""
-                )
+""")
                 self.exit()
                 return
             elif opt[0] == "--version":
-                self.write(
-                    """base64 (GNU coreutils) 8.21
+                self.write("""base64 (GNU coreutils) 8.21
 Copyright (C) 2013 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
 Written by Simon Josefsson.
-"""
-                )
+""")
                 self.exit()
                 return
             elif opt[0] == "-d" or opt[0] == "--decode":
@@ -93,11 +89,9 @@ Written by Simon Josefsson.
                 return
         else:
             if len(args) > 1:
-                self.errorWrite(
-                    f"""base64: extra operand '{args[0]}'
+                self.errorWrite(f"""base64: extra operand '{args[0]}'
 Try 'base64 --help' for more information.
-"""
-                )
+""")
                 self.exit()
                 return
 
