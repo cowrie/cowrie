@@ -98,14 +98,20 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
                 format="CVE-2026-24061 exploit successful: logging in as %(username)s",
                 cve="CVE-2026-24061",
                 username=exploit_user,
-                original_username=username.decode("utf-8", errors="replace")
-                if isinstance(username, bytes)
-                else username,
-                attempted_command=password.decode("utf-8", errors="replace")
-                if isinstance(password, bytes)
-                else password,
+                original_username=(
+                    username.decode("utf-8", errors="replace")
+                    if isinstance(username, bytes)
+                    else username
+                ),
+                attempted_command=(
+                    password.decode("utf-8", errors="replace")
+                    if isinstance(password, bytes)
+                    else password
+                ),
             )
-            username = exploit_user.encode() if isinstance(exploit_user, str) else exploit_user
+            username = (
+                exploit_user.encode() if isinstance(exploit_user, str) else exploit_user
+            )
             password = b""  # Exploit bypasses password
             self.cve_2026_24061_user = None  # Clear the flag
 

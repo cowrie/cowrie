@@ -59,8 +59,7 @@ class Command_ftpget(HoneyPotCommand):
     ftp_client: FTPClient | None
 
     def help(self) -> None:
-        self.errorWrite(
-            """BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
+        self.errorWrite("""BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
 
 Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
 
@@ -70,8 +69,7 @@ Download a file via FTP
     -v Verbose
     -u USER     Username
     -p PASS     Password
-    -P NUM      Port\n\n"""
-        )
+    -P NUM      Port\n\n""")
 
     @inlineCallbacks
     def start(self):

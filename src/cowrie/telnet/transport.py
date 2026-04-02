@@ -113,7 +113,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             if func in (self.do, self.dont):
                 if s.him.onResult is not None:
                     s.him.onResult.addCallback(self._chainNegotiation, func, option)
-                    s.him.onResult.addErrback(self._handleNegotiationError, func, option)
+                    s.him.onResult.addErrback(
+                        self._handleNegotiationError, func, option
+                    )
                 else:
                     # Negotiation completed between error and handling - call directly
                     # without error chaining to avoid infinite recursion

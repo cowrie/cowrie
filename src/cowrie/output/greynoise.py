@@ -5,6 +5,7 @@ Send attackers IP to GreyNoise
 from __future__ import annotations
 
 import treq
+
 from twisted.internet import defer, error
 from twisted.python import log
 

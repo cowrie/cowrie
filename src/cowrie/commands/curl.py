@@ -9,6 +9,7 @@ from http.client import responses
 from urllib import parse
 
 import treq
+
 from twisted.internet import error
 from twisted.internet.defer import inlineCallbacks
 from twisted.python import log
@@ -23,10 +24,18 @@ commands = {}
 
 # Initialize rate limiter
 curl_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("honeypot", "curl_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("honeypot", "curl_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("honeypot", "curl_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("honeypot", "curl_rate_limit_max_hosts", fallback=1000)
+    enabled=CowrieConfig.getboolean(
+        "honeypot", "curl_rate_limit_enabled", fallback=True
+    ),
+    max_requests=CowrieConfig.getint(
+        "honeypot", "curl_rate_limit_requests", fallback=5
+    ),
+    window_seconds=CowrieConfig.getint(
+        "honeypot", "curl_rate_limit_window", fallback=60
+    ),
+    max_keys=CowrieConfig.getint(
+        "honeypot", "curl_rate_limit_max_hosts", fallback=1000
+    ),
 )
 
 CURL_HELP = """Usage: curl [options...] <url>
@@ -290,7 +299,9 @@ class Command_curl(HoneyPotCommand):
 
         # Check rate limit before proceeding
         if not curl_rate_limiter.check(self.host):
-            log.msg(f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout")
+            log.msg(
+                f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout"
+            )
 
             # Simulate connection timeout
             self.errorWrite(

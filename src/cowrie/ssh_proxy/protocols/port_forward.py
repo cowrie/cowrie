@@ -63,18 +63,22 @@ class PortForward(base_protocol.BaseProtocol):
                         extensions=tls_info["extensions"],
                         has_sni=tls_info["has_sni"],
                         alpn=tls_info["alpn"],
-                        signature_algorithms=tls_info["signature_algorithms"]
+                        signature_algorithms=tls_info["signature_algorithms"],
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4",
                         format="JA4 fingerprint for SSH proxy forwarded TLS: %(ja4)s",
-                        ja4=ja4
+                        ja4=ja4,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4 fingerprint in SSH proxy: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
+        elif (
+            data.startswith(b"GET ")
+            or data.startswith(b"POST ")
+            or data.startswith(b"HEAD ")
+        ):
             http_info = parse_http_request(data)
             if http_info:
                 try:
@@ -84,12 +88,12 @@ class PortForward(base_protocol.BaseProtocol):
                         headers=http_info["headers"],
                         cookies=http_info["cookies"],
                         referer=http_info["referer"],
-                        accept_language=http_info["accept_language"]
+                        accept_language=http_info["accept_language"],
                     )
                     log.msg(
                         eventid="cowrie.direct-tcpip.ja4h",
                         format="JA4H fingerprint for SSH proxy forwarded HTTP: %(ja4h)s",
-                        ja4h=ja4h
+                        ja4h=ja4h,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4H fingerprint in SSH proxy: {e}")

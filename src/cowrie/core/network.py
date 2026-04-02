@@ -23,7 +23,9 @@ BLOCKED_IPS = [
 
 # Valid TCP/UDP port range: 1-65535
 # https://www.debuggex.com/r/jjEFZZQ34aPvCBMA
-PORT_PATTERN = re.compile(r"^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$")
+PORT_PATTERN = re.compile(
+    r"^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$"
+)
 
 
 def is_valid_port(port: str) -> bool:

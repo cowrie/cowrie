@@ -184,7 +184,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def ssh_KEXINIT(self, packet: bytes) -> Any:
         k = getNS(packet[16:], 10)
         strings, _ = k[:-1], k[-1]
-        (kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _) = (
+        kexAlgs, keyAlgs, encCS, _, macCS, _, compCS, _, langCS, _ = (
             s.split(b",") for s in strings
         )
 

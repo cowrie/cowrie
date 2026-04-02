@@ -87,10 +87,8 @@ class Command_ssh(HoneyPotCommand):
             if self.valid_ip(host):
                 self.ip = host
             else:
-                self.write(
-                    f"ssh: Could not resolve hostname {host}: \
-                    Name or service not known\n"
-                )
+                self.write(f"ssh: Could not resolve hostname {host}: \
+                    Name or service not known\n")
                 self.exit()
         else:
             s = hashlib.md5(host.encode()).hexdigest()
@@ -101,22 +99,16 @@ class Command_ssh(HoneyPotCommand):
         self.host = host
         self.user = user
 
-        self.write(
-            f"The authenticity of host '{self.host} ({self.ip})' \
-            can't be established.\n"
-        )
-        self.write(
-            "RSA key fingerprint is \
-            9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.\n"
-        )
+        self.write(f"The authenticity of host '{self.host} ({self.ip})' \
+            can't be established.\n")
+        self.write("RSA key fingerprint is \
+            9d:30:97:8a:9e:48:0d:de:04:8d:76:3a:7b:4b:30:f8.\n")
         self.write("Are you sure you want to continue connecting (yes/no)? ")
         self.callbacks = [self.yesno, self.wait]
 
     def yesno(self, line: str) -> None:
-        self.write(
-            f"Warning: Permanently added '{self.host}' (RSA) to the \
-            list of known hosts.\n"
-        )
+        self.write(f"Warning: Permanently added '{self.host}' (RSA) to the \
+            list of known hosts.\n")
         self.write(f"{self.user}@{self.host}'s password: ")
         self.protocol.password_input = True
 

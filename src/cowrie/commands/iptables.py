@@ -157,7 +157,7 @@ class Command_iptables(HoneyPotCommand):
 
         # Parse options or display no files
         try:
-            (opts, _args) = parser.parse_args(list(self.args))
+            opts, _args = parser.parse_args(list(self.args))
         except OptionParsingError:
             self.bad_argument(self.args[0])
             return
@@ -281,8 +281,7 @@ Perhaps iptables or your kernel needs to be upgraded.\n"""
         Show help and exit
         """
 
-        self.write(
-            f"""{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}'
+        self.write(f"""{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}'
 
 Usage: iptables -[AD] chain rule-specification [options]
        iptables -I chain [rulenum] rule-specification [options]
@@ -344,8 +343,7 @@ Options:
 [!] --fragment -f      match second or further fragments only
   --modprobe=<command>     try to insert modules using this command
   --set-counters PKTS BYTES    set the counter during insert/append
-[!] --version  -V      print package version.\n"""
-        )
+[!] --version  -V      print package version.\n""")
         self.exit()
 
     def list_rules(self, chain: str) -> None:

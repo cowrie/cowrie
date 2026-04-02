@@ -84,10 +84,8 @@ class Command_finger(HoneyPotCommand):
         try:
             _opts, args = getopt.gnu_getopt(self.args, "")
         except getopt.GetoptError as err:
-            self.errorWrite(
-                f"""finger: invalid option -- '{err.opt}'
-usage: finger [-lmps] [login ...]\n"""
-            )
+            self.errorWrite(f"""finger: invalid option -- '{err.opt}'
+usage: finger [-lmps] [login ...]\n""")
             return
 
         # If args given not any predefined, assume is username

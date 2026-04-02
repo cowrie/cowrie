@@ -80,13 +80,11 @@ class Command_dig(HoneyPotCommand):
 
     def invalid_arg(self, domain):
         self.write(f"Invalid option: {domain}\n")
-        self.write(
-            """Usage:  dig [@global-server] [domain] [q-type] [q-class] {q-opt}
+        self.write("""Usage:  dig [@global-server] [domain] [q-type] [q-class] {q-opt}
                         {global-d-opt} host [@local-server] {local-d-opt}
                         [ host [@local-server] {local-d-opt} [...]]
             
-            Use "dig -h" (or "dig -h | more") for complete list of options\n"""
-        )
+            Use "dig -h" (or "dig -h | more") for complete list of options\n""")
 
     def dns_text(self, domain, query_id, record_type, answer, status):
         self.write(f"; <<>> DiG 9.10.6 <<>> {domain}\n")
@@ -113,8 +111,7 @@ class Command_dig(HoneyPotCommand):
         self.write(f";; MSG SIZE  rcvd: {secrets.randbelow(207) + 50}\n")
 
     def display_help(self):
-        self.write(
-            """Usage:  dig [@global-server] [domain] [q-type] [q-class] {q-opt}
+        self.write("""Usage:  dig [@global-server] [domain] [q-type] [q-class] {q-opt}
             {global-d-opt} host [@local-server] {local-d-opt}
             [ host [@local-server] {local-d-opt} [...]]
 Where:  domain	  is in the Domain Name System
@@ -191,8 +188,7 @@ Where:  domain	  is in the Domain Name System
         global d-opts and servers (before host name) affect all queries.
         local d-opts and servers (after host name) affect only that lookup.
         -h                           (print help and exit)
-        -v                           (print version and exit)\n"""
-        )
+        -v                           (print version and exit)\n""")
 
 
 commands["/bin/dig"] = Command_dig

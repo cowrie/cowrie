@@ -124,8 +124,7 @@ class Command_tee(HoneyPotCommand):
         self.exit()
 
     def help(self) -> None:
-        self.write(
-            """Usage: tee [OPTION]... [FILE]...
+        self.write("""Usage: tee [OPTION]... [FILE]...
 Copy standard input to each FILE, and also to standard output.
 
   -a, --append              append to the given FILEs, do not overwrite
@@ -148,8 +147,7 @@ writing to non pipe outputs.
 GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
 Full documentation <https://www.gnu.org/software/coreutils/tee>
 or available locally via: info '(coreutils) tee invocation'
-"""
-        )
+""")
 
 
 commands["/bin/tee"] = Command_tee

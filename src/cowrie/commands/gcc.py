@@ -153,10 +153,8 @@ class Command_gcc(HoneyPotCommand):
         """
         Notify user there are no input files
         """
-        self.write(
-            """gcc: fatal error: no input files
-compilation terminated.\n"""
-        )
+        self.write("""gcc: fatal error: no input files
+compilation terminated.\n""")
 
     def version(self, short: bool) -> None:
         """
@@ -237,8 +235,7 @@ gcc version {version} (Debian {version}-5)"""
         Print help info, and exit
         """
 
-        self.write(
-            """Usage: gcc [options] file...
+        self.write("""Usage: gcc [options] file...
 Options:
   -pass-exit-codes         Exit with highest error code from a phase
   --help                   Display this information
@@ -298,8 +295,7 @@ Options starting with -g, -f, -m, -O, -W, or --param are automatically
 
 For bug reporting instructions, please see:
 <file:///usr/share/doc/gcc-4.7/README.Bugs>.
-"""
-        )
+""")
 
 
 commands["/usr/bin/gcc"] = Command_gcc

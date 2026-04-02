@@ -21,7 +21,7 @@ nc_rate_limiter = RateLimiter(
     enabled=CowrieConfig.getboolean("honeypot", "nc_rate_limit_enabled", fallback=True),
     max_requests=CowrieConfig.getint("honeypot", "nc_rate_limit_requests", fallback=5),
     window_seconds=CowrieConfig.getint("honeypot", "nc_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("honeypot", "nc_rate_limit_max_hosts", fallback=1000)
+    max_keys=CowrieConfig.getint("honeypot", "nc_rate_limit_max_hosts", fallback=1000),
 )
 
 
@@ -69,10 +69,18 @@ class Command_nc(HoneyPotCommand):
         if error_msg:
             self.errorWrite(f"nc: {error_msg}\n")
 
-        self.errorWrite("usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]\n")
-        self.errorWrite("\t  [-m minttl] [-O length] [-P proxy_username] [-p source_port]\n")
-        self.errorWrite("\t  [-q seconds] [-s source] [-T keyword] [-V rtable] [-W recvlimit] [-w timeout]\n")
-        self.errorWrite("\t  [-X proxy_protocol] [-x proxy_address[:port]]\t\t  [destination] [port]\n")
+        self.errorWrite(
+            "usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]\n"
+        )
+        self.errorWrite(
+            "\t  [-m minttl] [-O length] [-P proxy_username] [-p source_port]\n"
+        )
+        self.errorWrite(
+            "\t  [-q seconds] [-s source] [-T keyword] [-V rtable] [-W recvlimit] [-w timeout]\n"
+        )
+        self.errorWrite(
+            "\t  [-X proxy_protocol] [-x proxy_address[:port]]\t\t  [destination] [port]\n"
+        )
 
     def print_help_message(self) -> None:
         self.errorWrite("OpenBSD netcat\n")
@@ -87,7 +95,9 @@ class Command_nc(HoneyPotCommand):
         self.errorWrite("\t\t-F\t\tPass socket fd\n")
         self.errorWrite("\t\t-h\t\tThis help text\n")
         self.errorWrite("\t\t-I length\tTCP receive buffer length\n")
-        self.errorWrite("\t\t-i interval\tDelay interval for lines sent, ports scanned\n")
+        self.errorWrite(
+            "\t\t-i interval\tDelay interval for lines sent, ports scanned\n"
+        )
         self.errorWrite("\t\t-k\t\tKeep inbound sockets open for multiple connects\n")
         self.errorWrite("\t\t-l\t\tListen mode, for inbound connects\n")
         self.errorWrite("\t\t-M ttl\t\tOutgoing TTL / Hop Limit\n")
@@ -107,13 +117,19 @@ class Command_nc(HoneyPotCommand):
         self.errorWrite("\t\t-u\t\tUDP mode\n")
         self.errorWrite("\t\t-V rtable\tSpecify alternate routing table\n")
         self.errorWrite("\t\t-v\t\tVerbose\n")
-        self.errorWrite("\t\t-W recvlimit\tTerminate after receiving a number of packets\n")
+        self.errorWrite(
+            "\t\t-W recvlimit\tTerminate after receiving a number of packets\n"
+        )
         self.errorWrite("\t\t-w timeout\tTimeout for connects and final net reads\n")
-        self.errorWrite("\t\t" '-X proto\tProxy protocol: "4", "5" (SOCKS) or "connect"' "\n")
+        self.errorWrite(
+            "\t\t" '-X proto\tProxy protocol: "4", "5" (SOCKS) or "connect"' "\n"
+        )
         self.errorWrite("\t\t-x addr[:port]\tSpecify proxy address and port\n")
         self.errorWrite("\t\t-Z\t\tDCCP mode\n")
         self.errorWrite("\t\t-z\t\tZero-I/O mode [used for scanning]\n")
-        self.errorWrite("\tPort numbers can be individual or ranges: lo-hi [inclusive]\n")
+        self.errorWrite(
+            "\tPort numbers can be individual or ranges: lo-hi [inclusive]\n"
+        )
 
     @inlineCallbacks
     def start(self):
@@ -211,15 +227,21 @@ class Command_nc(HoneyPotCommand):
 
         # Check rate limit before proceeding
         if not nc_rate_limiter.check(host):
-            log.msg(f"nc: rate limit exceeded for host: {host}. Simulating operation timeout")
+            log.msg(
+                f"nc: rate limit exceeded for host: {host}. Simulating operation timeout"
+            )
             if verbose:
-                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
+                self.errorWrite(
+                    f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n"
+                )
             self.exit()
             return
 
         allowed = yield communication_allowed(host)
         if not allowed:
-            log.msg(f"nc: blocked connection attempt to {host} (private/reserved IP range)")
+            log.msg(
+                f"nc: blocked connection attempt to {host} (private/reserved IP range)"
+            )
             self.exit()
             return
 
@@ -236,7 +258,9 @@ class Command_nc(HoneyPotCommand):
             self.s.connect((host, int(port)))
 
             if verbose:
-                self.errorWrite(f"Connection to {host} {port} port [tcp/*] succeeded!\n")
+                self.errorWrite(
+                    f"Connection to {host} {port} port [tcp/*] succeeded!\n"
+                )
 
             # Zero I/O mode: test connection only, no data transfer
             if zero_io:
@@ -247,11 +271,15 @@ class Command_nc(HoneyPotCommand):
             self.recv_data()
         except TimeoutError:
             if verbose:
-                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n")
+                self.errorWrite(
+                    f"nc: connect to {host} port {port} (tcp) failed: Operation timed out\n"
+                )
             self.exit()
         except OSError:
             if verbose:
-                self.errorWrite(f"nc: connect to {host} port {port} (tcp) failed: Connection refused\n")
+                self.errorWrite(
+                    f"nc: connect to {host} port {port} (tcp) failed: Connection refused\n"
+                )
             self.exit()
         except Exception:
             self.exit()

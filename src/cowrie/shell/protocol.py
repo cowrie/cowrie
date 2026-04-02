@@ -162,9 +162,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 try:
                     contents = self_cmd.fs.file_contents(path)
                 except Exception:
-                    self_cmd.errorWrite(
-                        f"-bash: {path}: No such file or directory\n"
-                    )
+                    self_cmd.errorWrite(f"-bash: {path}: No such file or directory\n")
                     return
 
                 # Null bytes indicate actual binary — reject like real bash
@@ -195,9 +193,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
                 self_cmd.protocol._script_depth = depth + 1
                 try:
-                    shell = honeypot.HoneyPotShell(
-                        self_cmd.protocol, interactive=False
-                    )
+                    shell = honeypot.HoneyPotShell(self_cmd.protocol, interactive=False)
                     self_cmd.protocol.cmdstack.append(shell)
                     shell.lineReceived("; ".join(lines))
                     self_cmd.protocol.cmdstack.pop()

@@ -302,8 +302,7 @@ class Command_rm(HoneyPotCommand):
     """
 
     def help(self) -> None:
-        self.write(
-            """Usage: rm [OPTION]... [FILE]...
+        self.write("""Usage: rm [OPTION]... [FILE]...
 Remove (unlink) the FILE(s).
 
  -f, --force           ignore nonexistent files and arguments, never prompt
@@ -339,8 +338,7 @@ assurance that the contents are truly unrecoverable, consider using shred.
 
 GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
 Full documentation at: <http://www.gnu.org/software/coreutils/rm>
-or available locally via: info '(coreutils) rm invocation'\n"""
-        )
+or available locally via: info '(coreutils) rm invocation'\n""")
 
     def paramError(self) -> None:
         self.errorWrite("Try 'rm --help' for more information\n")

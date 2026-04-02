@@ -11,6 +11,7 @@ from typing import Any
 from urllib import parse
 
 import treq
+
 from twisted.internet import defer, error, reactor
 from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
@@ -28,10 +29,18 @@ commands = {}
 
 # Initialize rate limiter
 wget_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("honeypot", "wget_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("honeypot", "wget_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("honeypot", "wget_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("honeypot", "wget_rate_limit_max_hosts", fallback=1000)
+    enabled=CowrieConfig.getboolean(
+        "honeypot", "wget_rate_limit_enabled", fallback=True
+    ),
+    max_requests=CowrieConfig.getint(
+        "honeypot", "wget_rate_limit_requests", fallback=5
+    ),
+    window_seconds=CowrieConfig.getint(
+        "honeypot", "wget_rate_limit_window", fallback=60
+    ),
+    max_keys=CowrieConfig.getint(
+        "honeypot", "wget_rate_limit_max_hosts", fallback=1000
+    ),
 )
 
 
@@ -98,7 +107,9 @@ class Command_wget(HoneyPotCommand):
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     proglen: int = 0
-    wget_version: str = "1.25.0"  # GNU wget version used in --help and User-Agent header
+    wget_version: str = (
+        "1.25.0"  # GNU wget version used in --help and User-Agent header
+    )
     url: bytes
     host: str
     scheme: str
@@ -123,24 +134,34 @@ class Command_wget(HoneyPotCommand):
         (that are silently ignored for compatibility).
         """
 
-        self.write(f"GNU Wget {self.wget_version}, a non-interactive network retriever.\n")
+        self.write(
+            f"GNU Wget {self.wget_version}, a non-interactive network retriever.\n"
+        )
         self.write("Usage: wget [OPTION]... [URL]...\n\n")
         self.write("Startup:\n")
         self.write("  -h,  --help              print this help\n\n")
         self.write("Download:\n")
-        self.write("  -c,  --continue          resume getting a partially-downloaded file\n")
+        self.write(
+            "  -c,  --continue          resume getting a partially-downloaded file\n"
+        )
         self.write("  -O                       write documents to FILE\n")
         self.write("  -q,  --quiet             quiet (no output)\n")
         self.write("  -T,  --timeout=SECONDS   set all timeout values to SECONDS\n")
         self.write("       --tries=NUMBER      set number of retries to NUMBER\n\n")
         self.write("HTTP options:\n")
         self.write("       --header=STRING     insert STRING among the headers\n")
-        self.write("       --post-data=STRING  use the POST method; send STRING as the data\n")
-        self.write("       --max-redirect=NUM  maximum redirections allowed per page\n\n")
+        self.write(
+            "       --post-data=STRING  use the POST method; send STRING as the data\n"
+        )
+        self.write(
+            "       --max-redirect=NUM  maximum redirections allowed per page\n\n"
+        )
         self.write("Directories:\n")
         self.write("  -P,  --directory-prefix=PREFIX  save files to PREFIX/..\n\n")
         self.write("Email bug reports, questions, discussions to <bug-wget@gnu.org>\n")
-        self.write("and/or open issues at https://savannah.gnu.org/bugs/?func=additem&group=wget.\n")
+        self.write(
+            "and/or open issues at https://savannah.gnu.org/bugs/?func=additem&group=wget.\n"
+        )
 
     @inlineCallbacks
     def start(self):
@@ -221,7 +242,9 @@ class Command_wget(HoneyPotCommand):
 
         # Check rate limit before proceeding
         if not wget_rate_limiter.check(self.host):
-            log.msg(f"wget: rate limit exceeded for host: {self.host}. Simulating connection timeout")
+            log.msg(
+                f"wget: rate limit exceeded for host: {self.host}. Simulating connection timeout"
+            )
 
             # Simulate connection timeout
             self.errorWrite(f"Connecting to {self.host}:{self.port}... ")
@@ -268,7 +291,9 @@ class Command_wget(HoneyPotCommand):
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
             self.errorWrite(f"--{tm}--  {url}\n")
             self.errorWrite(f"Connecting to {self.host}:{self.port}... connected.\n")
-            proto_label = "HTTP" if self.scheme in ("http", "https") else self.scheme.upper()
+            proto_label = (
+                "HTTP" if self.scheme in ("http", "https") else self.scheme.upper()
+            )
             self.errorWrite(f"{proto_label} request sent, awaiting response... ")
 
         if self.scheme == "ftp":
@@ -427,7 +452,11 @@ class Command_wget(HoneyPotCommand):
             else:
                 self.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
 
-            dest = "STDOUT" if self.outfile is None or self.outfile == "-" else self.outfile
+            dest = (
+                "STDOUT"
+                if self.outfile is None or self.outfile == "-"
+                else self.outfile
+            )
             self.errorWrite(f"Saving to: `{dest}'\n\n")
 
         return True
@@ -526,7 +555,11 @@ class Command_wget(HoneyPotCommand):
                 )
             )
             self.errorWrite("\n\n")
-            dest = "stdout" if self.outfile is None or self.outfile == "-" else self.outfile
+            dest = (
+                "stdout"
+                if self.outfile is None or self.outfile == "-"
+                else self.outfile
+            )
             self.errorWrite(
                 "{} ({:3.2f} KB/s) - `{}' saved [{}/{}]\n\n".format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),

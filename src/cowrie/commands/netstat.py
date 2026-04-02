@@ -26,8 +26,7 @@ class Command_netstat(HoneyPotCommand):
         )
 
     def show_help(self) -> None:
-        self.write(
-            """
+        self.write("""
 usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
        netstat [-vWnNcaeol] [<Socket> ...]
        netstat { [-vWeenNac] -i | [-cWnNe] -M | -s }
@@ -61,14 +60,11 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
     inet (DARPA Internet) inet6 (IPv6) ax25 (AMPR AX.25)
     netrom (AMPR NET/ROM) ipx (Novell IPX) ddp (Appletalk DDP)
     x25 (CCITT X.25)
-"""
-        )
+""")
 
     def do_netstat_route(self) -> None:
-        self.write(
-            """Kernel IP routing table
-Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n"""
-        )
+        self.write("""Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n""")
         if self.show_numeric:
             default = "default"
             lgateway = "0.0.0.0"
@@ -89,10 +85,8 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         self.write(f"{l2}\n")
 
     def do_netstat_normal(self) -> None:
-        self.write(
-            """Active Internet connections (w/o servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State\n"""
-        )
+        self.write("""Active Internet connections (w/o servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State\n""")
         s_name = self.protocol.hostname
         c_port = str(self.protocol.realClientPort)
         if self.show_numeric:
@@ -124,10 +118,8 @@ Proto Recv-Q Send-Q Local Address           Foreign Address         State\n"""
             self.write(
                 "tcp6       0      0 [::]:ssh                [::]:*                  LISTEN\n"
             )
-        self.write(
-            """Active UNIX domain sockets (only servers)
-Proto RefCnt Flags       Type       State         I-Node   Path\n"""
-        )
+        self.write("""Active UNIX domain sockets (only servers)
+Proto RefCnt Flags       Type       State         I-Node   Path\n""")
         if self.show_listen:
             self.write(
                 """unix  2      [ ACC ]     STREAM     LISTENING     8969     /var/run/acpid.socket

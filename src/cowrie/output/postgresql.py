@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from psycopg2 import OperationalError
+
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log

@@ -72,7 +72,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.stdinlogOpen = True
             # log the command into ttylog
             if self.ttylogEnabled:
-                (_sess, cmd) = self.protocolArgs
+                _sess, cmd = self.protocolArgs
                 ttylog.ttylog_write(
                     self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd
                 )

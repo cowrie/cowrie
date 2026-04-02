@@ -33,6 +33,8 @@ import sys
 from importlib import import_module
 from typing import TYPE_CHECKING, ClassVar
 
+from zope.interface import implementer, provider
+
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
 from twisted.application.service import IServiceMaker
@@ -41,7 +43,6 @@ from twisted.internet import reactor
 from twisted.logger import ILogObserver, globalLogPublisher
 from twisted.plugin import IPlugin
 from twisted.python import log, usage
-from zope.interface import implementer, provider
 
 import cowrie.core.checkers
 import cowrie.core.uuid
@@ -118,14 +119,12 @@ class CowrieServiceMaker:
         """
 
         if options["help"] is True:
-            print(  # noqa: T201
-                """Usage: twistd [options] cowrie [-h]
+            print("""Usage: twistd [options] cowrie [-h]
 Options:
   -h, --help             print this help message.
 
 Makes a Cowrie SSH/Telnet honeypot.
-"""
-            )
+""")  # noqa: T201
             sys.exit(1)
 
         if os.name == "posix" and os.getuid() == 0:

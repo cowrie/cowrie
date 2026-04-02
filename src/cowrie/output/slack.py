@@ -33,6 +33,7 @@ import time
 from typing import Any
 
 from slack import WebClient
+
 from twisted.python import log
 
 import cowrie.core.output

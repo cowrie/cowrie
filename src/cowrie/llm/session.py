@@ -3,10 +3,11 @@
 
 from __future__ import annotations
 
+from zope.interface import implementer
+
 from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
 from twisted.python import log
-from zope.interface import implementer
 
 from cowrie.insults import insults
 from cowrie.llm import protocol

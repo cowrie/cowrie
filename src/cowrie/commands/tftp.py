@@ -155,7 +155,9 @@ class TFTPClient(DatagramProtocol):
             # Duplicate packet, re-send ACK
             self.sendACK(block_num)
         else:
-            log.msg(f"TFTP: Out of order block {block_num}, expected {self.current_block + 1}")
+            log.msg(
+                f"TFTP: Out of order block {block_num}, expected {self.current_block + 1}"
+            )
 
     def handleERROR(self, packet: bytes) -> None:
         """Handle ERROR packet"""
@@ -269,9 +271,7 @@ class Command_tftp(HoneyPotCommand):
         path = self.fakeoutfile.rsplit("/", 1)[0] if "/" in self.fakeoutfile else "/"
 
         if not self.fs.exists(path) or not self.fs.isdir(path):
-            self.write(
-                f"tftp: {self.file_to_get}: No such file or directory\n"
-            )
+            self.write(f"tftp: {self.file_to_get}: No such file or directory\n")
             self.exit()
             return
 
@@ -360,9 +360,7 @@ class Command_tftp(HoneyPotCommand):
         self.fs.update_realfile(
             self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
         )
-        self.fs.chown(
-            self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid
-        )
+        self.fs.chown(self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
 
         self._safe_exit()
 

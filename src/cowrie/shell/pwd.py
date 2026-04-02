@@ -196,7 +196,7 @@ class Group:
                 if line.startswith("#"):
                     continue
 
-                (gr_name, _, gr_gid, gr_mem) = line.split(":")
+                gr_name, _, gr_gid, gr_mem = line.split(":")
 
                 e: dict[str, str | int] = {}
                 e["gr_name"] = gr_name
