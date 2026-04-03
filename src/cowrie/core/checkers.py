@@ -132,6 +132,8 @@ class HoneypotPasswordChecker:
             )
             authname = getattr(modules[authmodule], "UserDB")
 
+        theauth = authname()
+
         if theauth.checklogin(theusername, thepassword, ip):
             log.msg(
                 eventid="cowrie.login.success",
