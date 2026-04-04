@@ -32,24 +32,18 @@ class Command_chpasswd(HoneyPotCommand):
             parts = line.split(b":")
 
             if len(parts) != 2:
-                self.write(
-                    f"chpasswd: line {c}: missing new password\n"
-                )
+                self.write(f"chpasswd: line {c}: missing new password\n")
                 continue
 
             username = parts[0].strip()
             password = parts[1].strip()
 
             if not username:
-                self.write(
-                    f"chpasswd: line {c}: missing username\n"
-                )
+                self.write(f"chpasswd: line {c}: missing username\n")
                 continue
 
             if not password:
-                self.write(
-                    f"chpasswd: line {c}: missing new password\n"
-                )
+                self.write(f"chpasswd: line {c}: missing new password\n")
                 continue
 
     def start(self) -> None:
