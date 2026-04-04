@@ -90,13 +90,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "pypy-3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "pypy-3.10"]
         experimental: [false]
+        prerelease: [false]
         include:
+          - python-version: "3.15"
+            experimental: false
+            prerelease: true
           - python-version: "3.15t"
             experimental: true
+            prerelease: true
           - python-version: "pypy-3.11"
             experimental: true
+            prerelease: false
     continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@v6
@@ -107,7 +113,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: ${{ matrix.experimental }}
+          allow-prereleases: ${{ matrix.prerelease }}
           cache: pip
 
       - name: Install dependencies
