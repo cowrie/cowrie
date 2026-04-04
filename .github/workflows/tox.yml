@@ -90,10 +90,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "pypy-3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "pypy-3.10"]
         experimental: [false]
         include:
-          - python-version: "3.15"
+          - python-version: "3.15t"
             experimental: true
           - python-version: "pypy-3.11"
             experimental: true
