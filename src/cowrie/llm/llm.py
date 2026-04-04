@@ -103,8 +103,8 @@ class LLMClient:
         )
         if proxy_url:
             parsed = urllib.parse.urlparse(proxy_url)
-            proxy_endpoint = HostnameEndpoint(
-                reactor, parsed.hostname or "localhost", parsed.port or 8080
+            HostnameEndpoint(
+            reactor, parsed.hostname or "localhost", parsed.port or 8080
             )
             self.agent: Agent | ProxyAgent
             log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
