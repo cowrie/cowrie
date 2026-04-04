@@ -101,12 +101,13 @@ class LLMClient:
             or os.environ.get("http_proxy")
             or os.environ.get("HTTP_PROXY")
         )
+        self.agent: Agent | ProxyAgent
         if proxy_url:
             parsed = urllib.parse.urlparse(proxy_url)
             proxy_endpoint = HostnameEndpoint(
                 reactor, parsed.hostname or "localhost", parsed.port or 8080
             )
-            self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)  # type: ignore[assignment]
+            self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
             log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
         else:
             self.agent = Agent(reactor, pool=self._conn_pool)
@@ -207,7 +208,7 @@ class LLMClient:
             log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
 
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            content = response_json["choices"][0]["message"]["content"]
+            content: str = response_json["choices"][0]["message"]["content"]
             return content
 
         log.err(f"Unexpected LLM response format: {response}")
