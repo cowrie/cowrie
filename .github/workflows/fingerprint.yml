@@ -1,0 +1,273 @@
+---
+name: Fingerprint and Honeypot Detection Tests
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+      - gha-fingerprinting
+
+  pull_request:
+
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Run fingerprinting tests'
+
+env:
+  COWRIE_CONTAINER_NAME: cowrie-test
+  COWRIE_SSH_PORT: 2222
+  COWRIE_TELNET_PORT: 2223
+
+jobs:
+  fingerprint-detection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -q --upgrade pip setuptools setuptools-scm wheel
+
+      - name: Generate version file
+        run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Cowrie Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          load: true
+          tags: cowrie:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start Cowrie container
+        run: |
+          docker run -d \
+            --name ${{ env.COWRIE_CONTAINER_NAME }} \
+            -p ${{ env.COWRIE_SSH_PORT }}:2222/tcp \
+            -p ${{ env.COWRIE_TELNET_PORT }}:2223/tcp \
+            cowrie:test
+
+          echo "Waiting for Cowrie to start..."
+          sleep 10
+
+          # Check if container is running
+          docker ps | grep ${{ env.COWRIE_CONTAINER_NAME }}
+
+          # Show logs for debugging
+          docker logs ${{ env.COWRIE_CONTAINER_NAME }}
+
+      - name: Install fingerprinting tools
+        run: |
+          # Install nmap
+          sudo apt-get update
+          sudo apt-get install -y nmap netcat-openbsd
+
+          # Install Python tools for detection
+          pip install paramiko requests
+
+      - name: Clone detection tools
+        run: |
+          mkdir -p tools
+          cd tools
+
+          # Clone detect-kippo-cowrie
+          git clone https://github.com/blazeinfosec/detect-kippo-cowrie.git
+
+          # Clone honeyscanner
+          git clone https://github.com/honeynet/honeyscanner.git
+
+      - name: Install honeyscanner dependencies
+        run: |
+          cd tools/honeyscanner/honeyscanner
+          pip install pipenv
+          pipenv install --system
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Testing SSH connectivity..."
+          for i in {1..30}; do
+            if nc -zv 127.0.0.1 ${{ env.COWRIE_SSH_PORT }} 2>&1 | grep -q succeeded; then
+              echo "SSH port is ready"
+              break
+            fi
+            echo "Waiting for SSH port... ($i/30)"
+            sleep 2
+          done
+
+          echo "Testing Telnet connectivity..."
+          nc -zv 127.0.0.1 ${{ env.COWRIE_TELNET_PORT }} || true
+
+      - name: Run nmap fingerprinting scans
+        id: nmap
+        continue-on-error: true
+        run: |
+          echo "========================================="
+          echo "Running nmap fingerprinting scans"
+          echo "========================================="
+
+          mkdir -p results
+
+          # Service version detection
+          echo -e "\n=== Service Version Detection ==="
+          nmap -sV -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1 | tee results/nmap-version.txt
+
+          # OS detection (requires root, may not work in container)
+          echo -e "\n=== OS Detection Scan ==="
+          sudo nmap -O -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1 2>&1 | tee results/nmap-os.txt || echo "OS detection failed (expected in container)"
+
+          # Aggressive scan
+          echo -e "\n=== Aggressive Scan ==="
+          nmap -A -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} 127.0.0.1 | tee results/nmap-aggressive.txt
+
+          # Script scan for SSH
+          echo -e "\n=== SSH Script Scan ==="
+          nmap -p ${{ env.COWRIE_SSH_PORT }} --script ssh-auth-methods,ssh-hostkey,ssh2-enum-algos 127.0.0.1 | tee results/nmap-ssh-scripts.txt
+
+          # Banner grab
+          echo -e "\n=== Banner Grab ==="
+          nmap -p ${{ env.COWRIE_SSH_PORT }},${{ env.COWRIE_TELNET_PORT }} --script banner 127.0.0.1 | tee results/nmap-banner.txt
+
+      - name: Run detect-kippo-cowrie
+        id: detect-kippo-cowrie
+        continue-on-error: true
+        run: |
+          echo "========================================="
+          echo "Running detect-kippo-cowrie"
+          echo "========================================="
+
+          cd tools/detect-kippo-cowrie
+          python3 detectKippoCowrie.py 127.0.0.1 ${{ env.COWRIE_SSH_PORT }} | tee ../../results/detect-kippo-cowrie.txt
+
+          # Capture exit code
+          DETECT_RESULT=${PIPESTATUS[0]}
+          echo "DETECT_KIPPO_RESULT=$DETECT_RESULT" >> $GITHUB_ENV
+
+      - name: Run honeyscanner
+        id: honeyscanner
+        continue-on-error: true
+        run: |
+          echo "========================================="
+          echo "Running honeyscanner"
+          echo "========================================="
+
+          cd tools/honeyscanner/honeyscanner
+          python3 main.py --target-ip 127.0.0.1 --port ${{ env.COWRIE_SSH_PORT }} 2>&1 | tee ../../../results/honeyscanner.txt || echo "Honeyscanner completed with errors (may be expected)"
+
+      - name: Analyze results and generate report
+        id: analyze
+        run: |
+          echo "========================================="
+          echo "FINGERPRINTING TEST RESULTS"
+          echo "========================================="
+
+          # Initialize detection flags
+          DETECTIONS_FOUND=0
+
+          echo -e "\n## Nmap Analysis"
+          echo "Checking for suspicious patterns in nmap output..."
+
+          # Check for common honeypot indicators in nmap results
+          if grep -qi "kippo\|cowrie" results/nmap-*.txt 2>/dev/null; then
+            echo "⚠️  WARNING: Nmap detected Kippo/Cowrie signatures"
+            DETECTIONS_FOUND=1
+          else
+            echo "✓ No obvious Kippo/Cowrie signatures in nmap scans"
+          fi
+
+          # Check SSH version information
+          if grep -i "ssh" results/nmap-version.txt 2>/dev/null; then
+            echo -e "\nSSH Version Information:"
+            grep -i "ssh" results/nmap-version.txt
+          fi
+
+          echo -e "\n## Detect-Kippo-Cowrie Analysis"
+          if [ -f results/detect-kippo-cowrie.txt ]; then
+            cat results/detect-kippo-cowrie.txt
+
+            # Check if detection was positive
+            if grep -qi "honeypot\|score.*[2-9]" results/detect-kippo-cowrie.txt; then
+              echo "⚠️  WARNING: detect-kippo-cowrie identified this as a honeypot"
+              DETECTIONS_FOUND=1
+            else
+              echo "✓ detect-kippo-cowrie did not identify as honeypot"
+            fi
+          fi
+
+          echo -e "\n## Honeyscanner Analysis"
+          if [ -f results/honeyscanner.txt ]; then
+            # Show summary of honeyscanner results
+            echo "Honeyscanner output (last 50 lines):"
+            tail -n 50 results/honeyscanner.txt
+
+            # Check for vulnerability detections
+            if grep -qi "vulnerable\|detected\|found.*issue" results/honeyscanner.txt; then
+              echo "⚠️  WARNING: Honeyscanner found potential vulnerabilities"
+              DETECTIONS_FOUND=1
+            fi
+          fi
+
+          echo -e "\n========================================="
+          echo "SUMMARY"
+          echo "========================================="
+
+          if [ $DETECTIONS_FOUND -eq 1 ]; then
+            echo "❌ DETECTION FAILURE: Cowrie was identified as a honeypot by one or more tools"
+            echo "This indicates that Cowrie may be easily fingerprinted by attackers."
+            echo "Review the results above to identify what signatures or behaviors are detectable."
+            echo "DETECTIONS_FOUND=true" >> $GITHUB_ENV
+            exit 1
+          else
+            echo "✓ SUCCESS: No obvious honeypot detection signatures found"
+            echo "DETECTIONS_FOUND=false" >> $GITHUB_ENV
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fingerprint-results
+          path: results/
+          retention-days: 30
+
+      - name: Show Cowrie logs
+        if: always()
+        run: |
+          echo "========================================="
+          echo "Cowrie Container Logs"
+          echo "========================================="
+          docker logs ${{ env.COWRIE_CONTAINER_NAME }}
+
+      - name: Stop Cowrie container
+        if: always()
+        run: |
+          docker stop ${{ env.COWRIE_CONTAINER_NAME }} || true
+          docker rm ${{ env.COWRIE_CONTAINER_NAME }} || true
+
+      - name: Report results
+        if: always()
+        run: |
+          if [ "${{ env.DETECTIONS_FOUND }}" = "true" ]; then
+            echo "::error::Honeypot detection tests FAILED - Cowrie was identified as a honeypot"
+            exit 1
+          else
+            echo "::notice::Fingerprinting tests passed - no obvious honeypot signatures detected"
+          fi
