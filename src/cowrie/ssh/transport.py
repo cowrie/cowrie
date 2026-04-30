@@ -60,12 +60,26 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.buf = b""
 
         self.transportId = uuid.uuid4().hex[:12]
-        src_ip: str = self.transport.getPeer().host
+        # Defer cowrie.session.connect until the first dataReceived() call so
+        # that PROXY protocol wrappers (HAProxyWrappingFactory) have a chance
+        # to parse the PROXY header and update getPeer() with the real client IP.
+        self._session_connect_emitted: bool = False
 
+        self.transport.write(self.ourVersionString + b"\r\n")
+        self.currentEncryptions = transport.SSHCiphers(
+            b"none", b"none", b"none", b"none"
+        )
+        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
+
+        self.startTime: float = time.time()
+        self.setTimeout(self.auth_timeout)
+
+    def _emit_session_connect(self) -> None:
+        """Emit cowrie.session.connect with the current (possibly PROXY-updated) peer address."""
+        src_ip: str = self.transport.getPeer().host
         ipv4_search = self.ipv4rex.search(src_ip)
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
-
         log.msg(
             eventid="cowrie.session.connect",
             format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
@@ -77,15 +91,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             sessionno=f"S{self.transport.sessionno}",
             protocol="ssh",
         )
-
-        self.transport.write(self.ourVersionString + b"\r\n")
-        self.currentEncryptions = transport.SSHCiphers(
-            b"none", b"none", b"none", b"none"
-        )
-        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-
-        self.startTime: float = time.time()
-        self.setTimeout(self.auth_timeout)
+        self._session_connect_emitted = True
 
     def sendKexInit(self) -> None:
         """
@@ -110,6 +116,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
+        # Emit session.connect lazily on first data so that PROXY-protocol
+        # wrappers have already updated getPeer() with the real client address.
+        if not self._session_connect_emitted:
+            self._emit_session_connect()
+
         self.buf = self.buf + data
         if not self.gotVersion:
             if b"\n" not in self.buf:
@@ -244,7 +255,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
         transport.SSHServerTransport.connectionLost(self, reason)
-        self.transport.connectionLost(reason)
         self.transport = None
         duration = f"{time.time() - self.startTime:.1f}"
         log.msg(
