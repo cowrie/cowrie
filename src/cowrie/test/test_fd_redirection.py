@@ -35,7 +35,9 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.tr.clear()
 
     def test_redirect_stderr_to_devnull(self) -> None:
-        self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
+        # cat on a missing file writes the error to stderr; 2>/dev/null
+        # should suppress it, leaving an empty session output.
+        self.proto.lineReceived(b"cat missingfile 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_redirect_stderr_into_pipe(self) -> None:

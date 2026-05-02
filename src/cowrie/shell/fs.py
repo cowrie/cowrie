@@ -17,7 +17,7 @@ import stat
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from twisted.python import log
 
@@ -106,6 +106,11 @@ class PermissionDenied(Exception):
 
 
 class HoneyPotFilesystem:
+    # Set by factories at startFactory time so synthesised /proc files
+    # (e.g. /proc/uptime) report a value consistent with the honeypot's
+    # uptime command. Falls back to time.time() when unset (tests).
+    _process_starttime: float | None = None
+
     def __init__(self, arch: str, home: str) -> None:
         self.fs: list[Any]
 
@@ -313,14 +318,31 @@ class HoneyPotFilesystem:
             # cwd = '/'.join((cwd, piece))
         return p
 
+    def _synthesize_proc_uptime(self) -> bytes:
+        # /proc/uptime: "uptime_seconds idle_seconds\n"; both shown as the
+        # same value here. A real kernel tracks idle separately; we don't,
+        # and the difference is not a meaningful fingerprint signal.
+        anchor = (
+            self._process_starttime
+            if self._process_starttime is not None
+            else time.time()
+        )
+        up = max(0.0, time.time() - anchor)
+        return f"{up:.2f} {up:.2f}\n".encode()
+
+    _SYNTHESIZED_PATHS: ClassVar[dict[str, str]] = {
+        "/proc/uptime": "_synthesize_proc_uptime",
+    }
+
     def file_contents(self, target: str) -> bytes:
         """
         Retrieve the content of a file in the honeyfs
         It follows links.
         It retrieves the content in this order
-        1) if there's honeyfs, (A_REALFILE)
-        2) built-in contents (A_CONTENTS) from the pickle file
-        3) a generic binary header
+        1) synthesised content for dynamic /proc files
+        2) if there's honeyfs, (A_REALFILE)
+        3) built-in contents (A_CONTENTS) from the pickle file
+        4) a generic binary header
         """
         path: str = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
@@ -328,6 +350,9 @@ class HoneyPotFilesystem:
         f: Any = self.getfile(path)
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
+        synth = self._SYNTHESIZED_PATHS.get(path)
+        if synth is not None and f[A_TYPE] == T_FILE:
+            return getattr(self, synth)()
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return Path(f[A_REALFILE]).read_bytes()
         if f[A_TYPE] == T_FILE and isinstance(f[A_CONTENTS], bytes):

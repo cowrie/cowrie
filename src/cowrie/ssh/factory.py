@@ -68,6 +68,11 @@ class CowrieSSHFactory(factory.SSHFactory):
     def startFactory(self) -> None:
         # For use by the uptime command
         self.starttime = time.time()
+        # Anchor synthesised /proc files (e.g. /proc/uptime) to the same
+        # process-start time so they agree with the uptime command.
+        from cowrie.shell.fs import HoneyPotFilesystem
+
+        HoneyPotFilesystem._process_starttime = self.starttime
 
         # Load/create keys
         try:
