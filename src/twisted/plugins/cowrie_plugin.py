@@ -128,7 +128,14 @@ Makes a Cowrie SSH/Telnet honeypot.
             )
             sys.exit(1)
 
-        if os.name == "posix" and os.getuid() == 0:
+        # COWRIE_ALLOW_ROOT=1 opts out — see check_root() in
+        # cowrie/scripts/cowrie.py for the rationale.
+        allow_root = os.environ.get("COWRIE_ALLOW_ROOT", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+        if os.name == "posix" and os.getuid() == 0 and not allow_root:
             print("ERROR: You must not run cowrie as root!")  # noqa: T201
             sys.exit(1)
 

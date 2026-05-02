@@ -101,8 +101,14 @@ def python_version_warning() -> None:
 
 
 def check_root() -> None:
-    """Check if running as root and exit if so."""
-    if os.name == "posix" and os.getuid() == 0:
+    """Check if running as root and exit if so.
+
+    Set COWRIE_ALLOW_ROOT=1 to opt out of the refusal — useful for
+    container deployments where the container itself is the security
+    boundary and dropping privileges via setcap is impractical.
+    """
+    allow_root = os.environ.get("COWRIE_ALLOW_ROOT", "").lower() in ("1", "true", "yes")
+    if os.name == "posix" and os.getuid() == 0 and not allow_root:
         print("ERROR: You must not run cowrie as root!")
         sys.exit(1)
 
