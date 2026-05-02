@@ -55,6 +55,22 @@ RUN python3 -m venv cowrie-env && \
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
+# Optional OS-fingerprint flavor (see docker/flavors/README.md). When set, the
+# flavor's cowrie.cfg is dropped into etc/ and its honeyfs/ tree is overlaid
+# onto the base honeyfs/. Empty FLAVOR keeps the upstream defaults.
+ARG FLAVOR=
+RUN if [ -n "${FLAVOR}" ] && [ -d "${COWRIE_HOME}/cowrie-git/docker/flavors/${FLAVOR}" ]; then \
+        if [ -f "${COWRIE_HOME}/cowrie-git/docker/flavors/${FLAVOR}/cowrie.cfg" ]; then \
+            cp "${COWRIE_HOME}/cowrie-git/docker/flavors/${FLAVOR}/cowrie.cfg" \
+               "${COWRIE_HOME}/cowrie-git/etc/cowrie.cfg"; \
+        fi; \
+        if [ -d "${COWRIE_HOME}/cowrie-git/docker/flavors/${FLAVOR}/honeyfs" ]; then \
+            cp -r "${COWRIE_HOME}/cowrie-git/docker/flavors/${FLAVOR}/honeyfs/." \
+                  "${COWRIE_HOME}/cowrie-git/honeyfs/"; \
+        fi; \
+        echo "Built with flavor: ${FLAVOR}"; \
+    fi
+
 # RUN . cowrie-env/bin/activate && \
 #     pip install -e ${COWRIE_HOME}/cowrie-git
 
