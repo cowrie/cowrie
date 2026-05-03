@@ -124,7 +124,13 @@ class HoneypotPasswordChecker:
         if hasattr(modules[authmodule], authclass):
             authname = getattr(modules[authmodule], authclass)
         else:
-            log.msg(f"auth_class: {authclass} not found in {authmodule}")
+            log.msg(
+                eventid="cowrie.error.config",
+                format="auth_class '%(authclass)s' not found in %(authmodule)s, falling back to UserDB",
+                authclass=authclass,
+                authmodule=authmodule,
+            )
+            authname = getattr(modules[authmodule], "UserDB")
 
         theauth = authname()
 
