@@ -423,6 +423,17 @@ log_raw = false
 # (default: false)
 #debug = false
 
+# System prompt template for interactive SSH sessions.
+# Supports variables: {hostname}, {username}, {ip}, {ip6}, {client_ip}, {cwd}
+# Note: hostname, username and cwd are always appended automatically.
+# (default: built-in Linux shell simulation prompt)
+#system_prompt = You are simulating a Linux server at {ip} ({ip6}) accessed via SSH. Respond as if you were the shell on this system. Your response should be the output that would be displayed after executing the command. Keep responses realistic, including appropriate error messages for invalid commands. For file paths, maintain consistent state with previous commands.
+
+# System prompt template for non-interactive exec commands (e.g. ssh host 'cmd').
+# Same variables supported. Defaults to a tighter prompt that suppresses
+# conversational output and asks for raw command output only.
+#system_prompt_exec = You are simulating a Linux server. Respond with ONLY the raw output of the command, no commentary.
+
 
 # ============================================================================
 # Shell Options
