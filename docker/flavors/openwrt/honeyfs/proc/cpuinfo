@@ -1,0 +1,39 @@
+system type		: MediaTek MT7621 ver:1 eco:3
+machine			: GL.iNet GL-MT3000
+processor		: 0
+cpu model		: MIPS 1004Kc V2.15
+BogoMIPS		: 586.13
+wait instruction	: yes
+microsecond timers	: yes
+tlb_entries		: 32
+extra interrupt vector	: yes
+hardware watchpoint	: yes, count: 4, address/irw mask: [0x0ffc, 0x0ffc, 0x0ffb, 0x0ffb]
+isa			: mips1 mips2 mips32r1 mips32r2
+ASEs implemented	: mips16 dsp mt
+Options implemented	: tlb 4kex 4k_cache prefetch mcheck ejtag llsc pindexed_dcache userlocal vint perf_cntr_intr_bit nan_legacy perf
+shadow register sets	: 1
+kscratch registers	: 0
+package			: 0
+core			: 0
+VPE			: 0
+VCED exceptions		: not available
+VCEI exceptions		: not available
+
+processor		: 1
+cpu model		: MIPS 1004Kc V2.15
+BogoMIPS		: 586.13
+wait instruction	: yes
+microsecond timers	: yes
+tlb_entries		: 32
+extra interrupt vector	: yes
+hardware watchpoint	: yes, count: 4, address/irw mask: [0x0ffc, 0x0ffc, 0x0ffb, 0x0ffb]
+isa			: mips1 mips2 mips32r1 mips32r2
+ASEs implemented	: mips16 dsp mt
+Options implemented	: tlb 4kex 4k_cache prefetch mcheck ejtag llsc pindexed_dcache userlocal vint perf_cntr_intr_bit nan_legacy perf
+shadow register sets	: 1
+kscratch registers	: 0
+package			: 0
+core			: 0
+VPE			: 1
+VCED exceptions		: not available
+VCEI exceptions		: not available

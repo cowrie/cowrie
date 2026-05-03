@@ -72,11 +72,30 @@ TAG=$(shell git rev-parse --short=8 HEAD)
 export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE := $(shell python -m setuptools_scm --force-write-version-files)
 
 
+# Optional OS-fingerprint flavor (see docker/flavors/). When FLAVOR is set,
+# the resulting image is tagged ${IMAGE}:${FLAVOR} (and ${IMAGE}:${TAG}-${FLAVOR})
+# instead of :latest. Available: legacy-debian-7, debian-12-bookworm, openwrt.
+FLAVOR ?=
+FLAVOR_ARG = $(if $(FLAVOR),--build-arg FLAVOR=$(FLAVOR))
+FLAVOR_TAGS = $(if $(FLAVOR),-t ${IMAGE}:${TAG}-${FLAVOR} -t ${IMAGE}:${FLAVOR},-t ${IMAGE}:${TAG} -t ${IMAGE}:latest)
+
 .PHONY: docker-build
-docker-build: docker/Dockerfile ## Build Docker image
+docker-build: docker/Dockerfile ## Build Docker image (FLAVOR=<name> for a flavor)
 	-$(DOCKER) buildx create --append --name cowrie-builder
 	$(DOCKER) buildx use cowrie-builder
-	$(DOCKER) buildx build --sbom=true --provenance=true --platform ${PLATFORM} -t ${IMAGE}:${TAG} -t ${IMAGE}:latest --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+	$(DOCKER) buildx build --sbom=true --provenance=true --platform ${PLATFORM} ${FLAVOR_TAGS} ${FLAVOR_ARG} --build-arg BUILD_DATE=${BUILD_DATE} -f docker/Dockerfile .
+
+.PHONY: docker-build-legacy
+docker-build-legacy: ## Build Docker image: legacy Debian 7 surface (current default)
+	$(MAKE) docker-build FLAVOR=legacy-debian-7
+
+.PHONY: docker-build-bookworm
+docker-build-bookworm: ## Build Docker image: Debian 12 bookworm / kernel 6.1
+	$(MAKE) docker-build FLAVOR=debian-12-bookworm
+
+.PHONY: docker-build-openwrt
+docker-build-openwrt: ## Build Docker image: OpenWrt 23.05 / MIPS router
+	$(MAKE) docker-build FLAVOR=openwrt
 
 .PHONY: docker-load
 docker-load: docker-build ## Load Docker image
