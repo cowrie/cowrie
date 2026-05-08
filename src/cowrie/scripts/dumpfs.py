@@ -6,9 +6,9 @@
 # ABOUTME: two rebuilds of the same image diff cleanly.
 #
 # Usage:
-#     bin/dump-fs-pickle.py src/cowrie/data/fs.pickle
-#     diff <(bin/dump-fs-pickle.py --paths src/cowrie/data/fs.pickle) <(bin/dump-fs-pickle.py --paths src/cowrie/data/fs.pickle.new)
-#     bin/dump-fs-pickle.py --paths src/cowrie/data/fs.pickle   # path set only
+#     dumpfs src/cowrie/data/fs.pickle
+#     diff <(dumpfs --paths src/cowrie/data/fs.pickle) <(dumpfs --paths src/cowrie/data/fs.pickle.new)
+#     dumpfs --paths src/cowrie/data/fs.pickle   # path set only
 #
 # Loads pickle data: only run on pickles you produced or trust.
 
@@ -42,7 +42,7 @@ def walk(node: list[Any], parent: str, paths_only: bool, out: list[str]) -> None
             walk(child, child_parent, paths_only, out)
 
 
-def main() -> None:
+def run() -> None:
     ap = argparse.ArgumentParser(description="Dump a cowrie fs.pickle for review.")
     ap.add_argument("pickle", help="path to fs.pickle")
     ap.add_argument("--paths", action="store_true", help="emit only the path list")
@@ -58,4 +58,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run()

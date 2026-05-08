@@ -54,6 +54,7 @@ cowrie = "cowrie.scripts.cowrie:run"
 fsctl = "cowrie.scripts.fsctl:run"
 asciinema = "cowrie.scripts.asciinema:run"
 createfs = "cowrie.scripts.createfs:run"
+dumpfs = "cowrie.scripts.dumpfs:run"
 playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
