@@ -37,7 +37,7 @@ dependencies = [
         "bcrypt==5.0.0",
         "cryptography==46.0.7",
         "hyperlink==21.0.0",
-        "idna==3.11",
+        "idna==3.13",
         "packaging==26.2",
         "pyasn1_modules==0.4.2",
         "requests==2.32.5",
