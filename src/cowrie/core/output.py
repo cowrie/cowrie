@@ -96,8 +96,10 @@ class Output(metaclass=abc.ABCMeta):
         self.sessions: dict[str, str] = {}
         self.ips: dict[str, str] = {}
 
-        # Need these for each individual transport, or else the session numbers overlap
-        self.sshRegex: Pattern[str] = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
+        # Need these for each individual transport, or else the session numbers overlap.
+        # The [^,]* allows for an optional wrapper annotation inserted by
+        # HAProxyWrappingFactory, e.g. "HoneyPotSSHTransport (HAProxyProtocolWrapper),42,x"
+        self.sshRegex: Pattern[str] = re.compile(".*SSHTransport[^,]*,([0-9]+),[0-9a-f:.]+$")
         self.telnetRegex: Pattern[str] = re.compile(
             ".*TelnetTransport,([0-9]+),[0-9a-f:.]+$"
         )
