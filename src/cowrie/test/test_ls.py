@@ -40,7 +40,7 @@ class ShellLsCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"ls /\n")
         self.assertEqual(
             self.tr.value(),
-            b"bin        boot       dev        etc        home       initrd.img lib        \nlost+found media      mnt        opt        proc       root       run        \nsbin       selinux    srv        sys        test2      tmp        usr        \nvar        vmlinuz    \n"
+            b"bin   boot  dev   etc   home  lib   lib64 media mnt   opt   proc  root  run   \nsbin  srv   sys   tmp   usr   var   \n"
             + PROMPT,
         )
 
