@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2017 Jc2k <john.carr@unrouted.co.uk>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Send downloaded/uplaoded files to S3 (or compatible)
 """

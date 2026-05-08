@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2009 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2024-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Implements bash/sh shell command for cowrie honeypot.
 # ABOUTME: Handles -c flags, piped input, script file execution, and interactive shells.
 

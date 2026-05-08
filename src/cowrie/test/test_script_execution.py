@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Tests for shell script execution via bash/sh and path-based invocation.
 # ABOUTME: Covers shebang stripping, binary detection, comment stripping, and recursion depth limits.
 

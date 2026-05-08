@@ -1,4 +1,8 @@
-# Copyright (C) 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Telnet Transport and Authentication for the Honeypot
 

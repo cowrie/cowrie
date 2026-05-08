@@ -5,8 +5,10 @@ always composed of an op-code, a status code (for responses), and
 any needed data thereafter.
 """
 
-# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 

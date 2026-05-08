@@ -1,5 +1,7 @@
-# Copyright (c) 2018 Michel Oosterhof
-# See LICENSE for details.
+# SPDX-FileCopyrightText: 2024 Ritvik Dayal <ritvik@doxel.ai>
+# SPDX-FileCopyrightText: 2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 from __future__ import annotations
 
 import os

@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2020-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import os

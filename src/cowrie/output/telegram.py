@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2022 Louren van Garderen <mail@lourenvangarderen.nl>
+# SPDX-FileCopyrightText: 2023-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Simple Telegram Bot logger
 
 import treq

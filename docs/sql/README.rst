@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2019-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 How to Send Cowrie output to a MySQL or PostgreSQL Database
 ###########################################################
 

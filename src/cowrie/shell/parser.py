@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Parses shell commands including tokenization, redirection operators, and variable expansion.
 # ABOUTME: Handles FD redirections like 2>/dev/null, stdin redirects, and command substitution.
 

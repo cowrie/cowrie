@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Automated weekly release workflow that creates a new patch version
 # ABOUTME: if there have been commits since the last release.
 ---

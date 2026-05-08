@@ -1,5 +1,7 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains authentication code
