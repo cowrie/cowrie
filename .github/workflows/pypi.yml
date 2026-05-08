@@ -52,7 +52,7 @@ jobs:
 
       - name: Publish package distributions to PyPI
         if: ${{ github.repository == 'cowrie/cowrie' }}
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
         with:
           verbose: true
           print-hash: true

@@ -31,10 +31,10 @@ classifiers=[
 dependencies = [
         "attrs==26.1.0",
         "bcrypt==5.0.0",
-        "cryptography==46.0.6",
+        "cryptography==46.0.7",
         "hyperlink==21.0.0",
         "idna==3.11",
-        "packaging==26.0",
+        "packaging==26.2",
         "pyasn1_modules==0.4.2",
         "requests==2.32.5",
         "service_identity==24.2.0",
@@ -54,6 +54,7 @@ cowrie = "cowrie.scripts.cowrie:run"
 fsctl = "cowrie.scripts.fsctl:run"
 asciinema = "cowrie.scripts.asciinema:run"
 createfs = "cowrie.scripts.createfs:run"
+dumpfs = "cowrie.scripts.dumpfs:run"
 playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
@@ -62,13 +63,13 @@ dshield = ["requests"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
 mongodb = ["pymongo"]
-pool = ["libvirt-python==12.1.0"]
+pool = ["libvirt-python==12.3.0"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
 influxdb = ["influxdb"]
 dev = [
-"build==1.4.2",
+"build==1.4.3",
 "coverage==7.10.7",
 "mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
 "mypy-zope==1.0.14; platform_python_implementation=='CPython'",
@@ -78,12 +79,12 @@ dev = [
 "pre-commit==4.5.1",
 "pylint==4.0.4",
 "pyre-check==0.9.25",
-"pyright==1.1.408",
+"pyright==1.1.409",
 "pytype==2024.10.11; platform_python_implementation=='CPython'",
 "pyupgrade==3.21.2",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.15.9",
+"ruff==0.15.12",
 "setuptools==82.0.1",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.1.0",

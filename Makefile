@@ -72,6 +72,10 @@ TAG=$(shell git rev-parse --short=8 HEAD)
 export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE := $(shell python -m setuptools_scm --force-write-version-files)
 
 
+.PHONY: build-fs-pickle
+build-fs-pickle: ## Rebuild src/cowrie/data/fs.pickle from a Debian container
+	DOCKER=$(DOCKER) bin/build-fs-pickle.sh
+
 .PHONY: docker-build
 docker-build: docker/Dockerfile ## Build Docker image
 	-$(DOCKER) buildx create --append --name cowrie-builder
