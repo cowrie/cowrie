@@ -7,8 +7,10 @@ from __future__ import annotations
 import os
 import struct
 import unittest
+from typing import TYPE_CHECKING, cast
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.internet import reactor as _reactor
 from twisted.internet.protocol import DatagramProtocol
 
 from cowrie.commands.tftp import (
@@ -21,6 +23,20 @@ from cowrie.commands.tftp import (
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
+
+if TYPE_CHECKING:
+    from twisted.internet.address import IPv4Address
+    from twisted.internet.interfaces import (
+        IListeningPort,
+        IReactorTime,
+        IReactorUDP,
+    )
+
+    class _Reactor(IReactorTime, IReactorUDP):
+        pass
+
+
+reactor = cast("_Reactor", _reactor)
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
@@ -101,9 +117,9 @@ class ShellTftpCommandTests(unittest.TestCase):
             + PROMPT,
         )
 
-    def test_tftp_insufficient_args(self) -> None:
+    def test_tftp_insufficient_args(self) -> defer.Deferred[None]:
         """Test tftp with only hostname shows usage"""
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def do_test():
             self.proto.lineReceived(b"tftp hostname.com\n")
@@ -118,9 +134,9 @@ class ShellTftpCommandTests(unittest.TestCase):
         reactor.callLater(0, do_test)
         return d
 
-    def test_tftp_invalid_directory(self) -> None:
+    def test_tftp_invalid_directory(self) -> defer.Deferred[None]:
         """Test tftp with invalid local directory"""
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def do_test():
             self.proto.lineReceived(b"tftp -c get /nonexistent/file.txt host.com\n")
@@ -142,7 +158,7 @@ class ShellTftpAsyncTests(unittest.TestCase):
     proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
     tr = FakeTransport("", "31337")
     tftp_port: int
-    tftp_server = None
+    tftp_server: IListeningPort | None = None
     test_content = b"Test file from TFTP server\n"
 
     @classmethod
@@ -151,8 +167,11 @@ class ShellTftpAsyncTests(unittest.TestCase):
 
         # Setup mock TFTP server
         server_protocol = MockTFTPServer(cls.test_content)
-        cls.tftp_server = reactor.listenUDP(0, server_protocol, interface="127.0.0.1")
-        cls.tftp_port = cls.tftp_server.getHost().port
+        server = reactor.listenUDP(
+            0, server_protocol, interface="127.0.0.1", maxPacketSize=8192
+        )
+        cls.tftp_server = server
+        cls.tftp_port = cast("IPv4Address", server.getHost()).port
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -163,12 +182,12 @@ class ShellTftpAsyncTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tr.clear()
 
-    def test_successful_download(self) -> None:
+    def test_successful_download(self) -> defer.Deferred[None]:
         """Test successful TFTP download"""
         cmd = f"tftp -c get /tmp/tftp_test.txt 127.0.0.1:{self.tftp_port}\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -181,12 +200,12 @@ class ShellTftpAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_download_with_r_flag(self) -> None:
+    def test_download_with_r_flag(self) -> defer.Deferred[None]:
         """Test TFTP download with -r flag"""
         cmd = f"tftp -r /tmp/tftp_test2.txt -g 127.0.0.1:{self.tftp_port}\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -197,13 +216,13 @@ class ShellTftpAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_connection_refused(self) -> None:
+    def test_connection_refused(self) -> defer.Deferred[None]:
         """Test TFTP with unreachable host"""
         # Use non-routable IP
         cmd = b"tftp -c get /tmp/test.txt 192.0.2.1\n"
         self.proto.lineReceived(cmd)
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -215,7 +234,7 @@ class ShellTftpAsyncTests(unittest.TestCase):
         reactor.callLater(6.0, check)
         return d
 
-    def test_non_blocking_behavior(self) -> None:
+    def test_non_blocking_behavior(self) -> defer.Deferred[None]:
         """Test that TFTP download doesn't block the reactor"""
         # Start TFTP download
         cmd = f"tftp -c get /tmp/nonblock.txt 127.0.0.1:{self.tftp_port}\n"
@@ -224,7 +243,7 @@ class ShellTftpAsyncTests(unittest.TestCase):
         # Immediately try another command
         self.proto.lineReceived(b"echo test\n")
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -235,20 +254,22 @@ class ShellTftpAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_large_file_download(self) -> None:
+    def test_large_file_download(self) -> defer.Deferred[None]:
         """Test TFTP download of file larger than one block"""
         # Create a larger test file (2 blocks)
         large_content = b"X" * (TFTP_BLOCK_SIZE * 2 + 100)
 
         # Create new server with large content
         server_protocol = MockTFTPServer(large_content)
-        large_server = reactor.listenUDP(0, server_protocol, interface="127.0.0.1")
-        large_port = large_server.getHost().port
+        large_server = reactor.listenUDP(
+            0, server_protocol, interface="127.0.0.1", maxPacketSize=8192
+        )
+        large_port = cast("IPv4Address", large_server.getHost()).port
 
         cmd = f"tftp -c get /tmp/large.txt 127.0.0.1:{large_port}\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()

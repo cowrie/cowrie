@@ -1,22 +1,37 @@
 # SPDX-FileCopyrightText: 2018-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause
-# mypy: disable-error-code="var-annotated,attr-defined,return-value"
 
 from __future__ import annotations
 
 import os
 import tempfile
 import unittest
+from typing import TYPE_CHECKING, cast
 
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
 from twisted.cred.portal import Portal
-from twisted.internet import defer, reactor
+from twisted.internet import defer
+from twisted.internet import reactor as _reactor
 from twisted.protocols.ftp import FTPFactory, FTPRealm
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
+
+if TYPE_CHECKING:
+    from twisted.internet.address import IPv4Address
+    from twisted.internet.interfaces import (
+        IListeningPort,
+        IReactorTCP,
+        IReactorTime,
+    )
+
+    class _Reactor(IReactorTime, IReactorTCP):
+        pass
+
+
+reactor = cast("_Reactor", _reactor)
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
@@ -42,7 +57,7 @@ class ShellFtpGetCommandTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tr.clear()
 
-    def test_help_command(self) -> None:
+    def test_help_command(self) -> defer.Deferred[None]:
         usage = (
             b"BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.\n"
             b"\n"
@@ -56,7 +71,7 @@ class ShellFtpGetCommandTests(unittest.TestCase):
             b"    -p PASS     Password\n"
             b"    -P NUM      Port\n\n"
         )
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def do_test():
             self.proto.lineReceived(b"ftpget\n")
@@ -70,9 +85,9 @@ class ShellFtpGetCommandTests(unittest.TestCase):
         reactor.callLater(0, do_test)
         return d
 
-    def test_insufficient_args(self) -> None:
+    def test_insufficient_args(self) -> defer.Deferred[None]:
         """Test ftpget with only one argument shows help"""
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def do_test():
             self.proto.lineReceived(b"ftpget host.com\n")
@@ -87,9 +102,9 @@ class ShellFtpGetCommandTests(unittest.TestCase):
         reactor.callLater(0, do_test)
         return d
 
-    def test_connection_refused(self) -> None:
+    def test_connection_refused(self) -> defer.Deferred[None]:
         """Test ftpget with invalid host shows connection error"""
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def do_test():
             # Use a non-routable IP to guarantee connection failure
@@ -106,9 +121,9 @@ class ShellFtpGetCommandTests(unittest.TestCase):
         reactor.callLater(0, do_test)
         return d
 
-    def test_invalid_directory(self) -> None:
+    def test_invalid_directory(self) -> defer.Deferred[None]:
         """Test ftpget with invalid local directory"""
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def do_test():
             self.proto.lineReceived(
@@ -132,7 +147,7 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
     proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
     tr = FakeTransport("", "31337")
     ftp_port: int
-    ftp_server = None
+    ftp_server: IListeningPort | None = None
     tmpdir: tempfile.TemporaryDirectory
 
     @classmethod
@@ -155,8 +170,9 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         portal.registerChecker(checker)
 
         factory = FTPFactory(portal)
-        cls.ftp_server = reactor.listenTCP(0, factory, interface="127.0.0.1")
-        cls.ftp_port = cls.ftp_server.getHost().port
+        server = reactor.listenTCP(0, factory, interface="127.0.0.1")
+        cls.ftp_server = server
+        cls.ftp_port = cast("IPv4Address", server.getHost()).port
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -168,12 +184,12 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tr.clear()
 
-    def test_successful_download_anonymous(self) -> None:
+    def test_successful_download_anonymous(self) -> defer.Deferred[None]:
         """Test successful FTP download with anonymous login"""
         cmd = f"ftpget 127.0.0.1 -P {self.ftp_port} /tmp/downloaded.txt test.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -186,12 +202,12 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_successful_download_with_auth(self) -> None:
+    def test_successful_download_with_auth(self) -> defer.Deferred[None]:
         """Test successful FTP download with username/password"""
         cmd = f"ftpget -u testuser -p testpass 127.0.0.1 -P {self.ftp_port} /tmp/downloaded2.txt test.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -202,12 +218,12 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_verbose_output(self) -> None:
+    def test_verbose_output(self) -> defer.Deferred[None]:
         """Test ftpget -v shows FTP commands"""
         cmd = f"ftpget -v 127.0.0.1 -P {self.ftp_port} /tmp/downloaded3.txt test.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -219,12 +235,12 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_file_not_found(self) -> None:
+    def test_file_not_found(self) -> defer.Deferred[None]:
         """Test FTP download of non-existent file"""
         cmd = f"ftpget 127.0.0.1 -P {self.ftp_port} /tmp/notfound.txt nonexistent.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
@@ -235,7 +251,7 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         reactor.callLater(1.0, check)
         return d
 
-    def test_non_blocking_behavior(self) -> None:
+    def test_non_blocking_behavior(self) -> defer.Deferred[None]:
         """Test that FTP download doesn't block the reactor"""
         # Start FTP download
         cmd = f"ftpget 127.0.0.1 -P {self.ftp_port} /tmp/nonblock.txt test.txt\n"
@@ -244,7 +260,7 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         # Immediately try another command
         self.proto.lineReceived(b"echo test\n")
 
-        d = defer.Deferred()
+        d: defer.Deferred[None] = defer.Deferred()
 
         def check():
             output = self.tr.value()
