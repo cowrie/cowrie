@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Stefan Grosser
-# See LICENSE for details.
+
+# SPDX-FileCopyrightText: 2026 Stefan Grosser
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Dump a cowrie fs.pickle as sorted, tab-separated lines for review/diff.
 # ABOUTME: Format is path, type, mode, uid:gid, size, target; mtime is omitted so
 # ABOUTME: two rebuilds of the same image diff cleanly.

@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# SPDX-FileCopyrightText: 2026 Stefan Grosser
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Rebuild src/cowrie/data/fs.pickle from a real Debian container so the
 # emulated filesystem layout matches a current Debian release.
 #
