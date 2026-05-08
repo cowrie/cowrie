@@ -27,3 +27,4 @@ _trial_temp
 .pydevproject
 .idea/
 .tox
+.coverage
