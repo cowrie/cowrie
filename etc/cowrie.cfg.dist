@@ -535,8 +535,8 @@ arch = linux-x64-lsb
 
 # Modify the response of '/bin/uname'
 # Default (uname -a): Linux <hostname> <kernel_version> <kernel_build_string> <hardware_platform> <operating system>
-kernel_version = 3.2.0-4-amd64
-kernel_build_string = #1 SMP Debian 3.2.68-1+deb7u1
+kernel_version = 6.1.0-21-amd64
+kernel_build_string = #1 SMP PREEMPT_DYNAMIC Debian 6.1.90-1 (2024-05-03)
 hardware_platform = x86_64
 operating_system = GNU/Linux
 
