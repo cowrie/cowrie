@@ -40,7 +40,6 @@ dependencies = [
         "idna==3.14",
         "packaging==26.2",
         "pyasn1_modules==0.4.2",
-        "requests==2.34.0",
         "service_identity==24.2.0",
         "tftpy==0.8.7",
         "treq==25.5.0",
@@ -63,7 +62,6 @@ playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
-dshield = ["requests"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
 mongodb = ["pymongo"]
