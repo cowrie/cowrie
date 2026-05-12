@@ -99,7 +99,7 @@ jobs:
         prerelease: [false]
         include:
           - python-version: "3.15"
-            experimental: false
+            experimental: true
             prerelease: true
           - python-version: "3.15t"
             experimental: true
