@@ -69,7 +69,6 @@ class Output(cowrie.core.output.Output):
 
     def write(self, event):
         if event["eventid"] == "cowrie.session.file_download":
-            log.msg("Sending file to Cuckoo")
             p = urlparse(event["url"]).path
             if p == "":
                 fileName = event["shasum"]
@@ -83,7 +82,6 @@ class Output(cowrie.core.output.Output):
             self._maybe_postfile(event["outfile"], fileName)
 
         elif event["eventid"] == "cowrie.session.file_upload":
-            log.msg("Sending file to Cuckoo")
             self._maybe_postfile(event["outfile"], event["filename"])
 
     @defer.inlineCallbacks
@@ -92,6 +90,7 @@ class Output(cowrie.core.output.Output):
             is_dup = yield self.cuckoo_check_if_dup(os.path.basename(outfile))
             if is_dup:
                 return
+        log.msg("Sending file to Cuckoo")
         yield self.postfile(outfile, fileName)
 
     @defer.inlineCallbacks
