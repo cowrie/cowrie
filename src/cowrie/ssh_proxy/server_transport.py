@@ -362,7 +362,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         transport.SSHServerTransport.setService(self, service)
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason=None):
         """
         This seems to be the only reliable place of catching lost connection
         """

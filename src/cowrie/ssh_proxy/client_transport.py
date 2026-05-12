@@ -111,7 +111,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         # backend auth is done, attackers will now be connected to the backend
         self.authDone = True
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason=None):
         if self.factory.server.pool_interface:
             log.msg(
                 eventid="cowrie.proxy.client_disconnect",
