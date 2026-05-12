@@ -12,7 +12,8 @@ from __future__ import annotations
 import os
 from urllib.parse import urlparse
 
-import requests
+import treq
+from twisted.internet import defer, error
 from twisted.python import log
 
 import cowrie.core.output
@@ -24,8 +25,6 @@ HTTP_TIMEOUT = 20
 class Output(cowrie.core.output.Output):
     """
     malshare output
-
-    TODO: use `treq`
     """
 
     apiKey: str
@@ -59,21 +58,33 @@ class Output(cowrie.core.output.Output):
         elif event["eventid"] == "cowrie.session.file_upload":
             self.postfile(event["outfile"], event["filename"])
 
+    @defer.inlineCallbacks
     def postfile(self, artifact, fileName):
         """
         Send a file to MalShare
         """
+        url = (
+            f"https://malshare.com/api.php?api_key={self.apiKey}&action=upload"
+        ).encode()
         try:
-            res = requests.post(
-                "https://malshare.com/api.php?api_key="
-                + self.apiKey
-                + "&action=upload",
-                files={"upload": open(artifact, "rb")},
-                timeout=HTTP_TIMEOUT,
-            )
-            if res and res.ok:
-                log.msg("Submitted to MalShare")
-            else:
-                log.msg(f"MalShare Request failed: {res.status_code}")
+            with open(artifact, "rb") as upload:
+                response = yield treq.post(
+                    url=url,
+                    files={"upload": (fileName, upload)},
+                    timeout=HTTP_TIMEOUT,
+                )
+        except (
+            defer.CancelledError,
+            error.ConnectingCancelledError,
+            error.DNSLookupError,
+        ) as e:
+            log.msg(f"MalShare Request failed: {e}")
+            return
         except Exception as e:
             log.msg(f"MalShare Request failed: {e}")
+            return
+
+        if 200 <= response.code < 300:
+            log.msg("Submitted to MalShare")
+        else:
+            log.msg(f"MalShare Request failed: {response.code}")
