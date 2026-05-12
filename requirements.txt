@@ -9,7 +9,7 @@ hyperlink==21.0.0
 idna==3.14
 packaging==26.2
 pyasn1_modules==0.4.2
-requests==2.32.5
+requests==2.34.0
 service_identity==24.2.0
 tftpy==0.8.7
 treq==25.5.0
