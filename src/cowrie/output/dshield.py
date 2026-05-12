@@ -64,7 +64,7 @@ class Output(cowrie.core.output.Output):
                     "timestamp": int(event["time"]),
                     "source_ip": event["src_ip"],
                     "user": event["username"],
-                    "password": event["password"],
+                    "password": event.get("password", ""),
                     "lastcommand": self.lastcommand,
                     "hassh": self.hassh,
                     "banner": self.banner,
