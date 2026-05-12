@@ -17,10 +17,8 @@ import re
 import time
 
 import dateutil.parser
-
-# TODO: use `treq`
-import requests
-from twisted.internet import reactor, threads
+import treq
+from twisted.internet import defer, error
 from twisted.python import log
 
 import cowrie.core.output
@@ -76,6 +74,7 @@ class Output(cowrie.core.output.Output):
         if len(self.batch) > self.batch_size * 2:
             self.batch = self.batch[-self.batch_size :]
 
+    @defer.inlineCallbacks
     def submit_entries(self, batch):
         """
         Large parts of this method are adapted from kippo-pyshield by jkakavas
@@ -88,7 +87,7 @@ class Output(cowrie.core.output.Output):
         _nonceb64 = "ElWO1arph+Jifqme6eXD8Uj+QTAmijAWxX1msbJzXDM="
 
         log_output = ""
-        for attempt in self.batch:
+        for attempt in batch:
             log_output += "{}\t{}\t{}\t{}\t{}\t{}\n".format(
                 attempt["date"],
                 attempt["time"],
@@ -109,68 +108,77 @@ class Output(cowrie.core.output.Output):
         auth_header = "credentials={} nonce={} userid={}".format(
             digest.decode("ascii"), _nonceb64, self.userid
         )
-        headers = {"X-ISC-Authorization": auth_header, "Content-Type": "text/plain"}
+        headers = {
+            b"X-ISC-Authorization": [auth_header.encode("ascii")],
+            b"Content-Type": [b"text/plain"],
+        }
 
         if self.debug:
             log.msg(f"dshield: posting: {headers!r}")
             log.msg(f"dshield: posting: {log_output}")
 
-        req = threads.deferToThread(
-            requests.request,
-            method="PUT",
-            url="https://secure.dshield.org/api/file/sshlog",
-            headers=headers,
-            timeout=HTTP_TIMEOUT,
-            data=log_output,
-        )
+        try:
+            response = yield treq.put(
+                url=b"https://secure.dshield.org/api/file/sshlog",
+                headers=headers,
+                data=log_output.encode("utf8"),
+                timeout=HTTP_TIMEOUT,
+            )
+            body = yield response.text()
+        except (
+            defer.CancelledError,
+            error.ConnectingCancelledError,
+            error.DNSLookupError,
+        ) as e:
+            log.msg(f"dshield: request failed: {e}")
+            self.transmission_error(batch)
+            return
+        except Exception as e:
+            log.msg(f"dshield: request failed: {e}")
+            self.transmission_error(batch)
+            return
 
-        def check_response(resp):
-            failed = False
-            response = resp.content.decode("utf8")
+        if self.debug:
+            log.msg(f"dshield: status code {response.code}")
+            log.msg(f"dshield: response {body}")
 
-            if self.debug:
-                log.msg(f"dshield: status code {resp.status_code}")
-                log.msg(f"dshield: response {resp.content}")
-
-            if resp.ok:
-                sha1_regex = re.compile(r"<sha1checksum>([^<]+)<\/sha1checksum>")
-                sha1_match = sha1_regex.search(response)
-                sha1_local = hashlib.sha1()
-                sha1_local.update(log_output.encode("utf8"))
-                if sha1_match is None:
-                    log.msg(
-                        f"dshield: ERROR: Could not find sha1checksum in response: {response!r}"
-                    )
-                    failed = True
-                elif sha1_match.group(1) != sha1_local.hexdigest():
-                    log.msg(
-                        f"dshield: ERROR: SHA1 Mismatch {sha1_match.group(1)} {sha1_local.hexdigest()} ."
-                    )
-                    failed = True
-
-                md5_regex = re.compile(r"<md5checksum>([^<]+)<\/md5checksum>")
-                md5_match = md5_regex.search(response)
-                md5_local = hashlib.md5()
-                md5_local.update(log_output.encode("utf8"))
-                if md5_match is None:
-                    log.msg("dshield: ERROR: Could not find md5checksum in response")
-                    failed = True
-                elif md5_match.group(1) != md5_local.hexdigest():
-                    log.msg(
-                        f"dshield: ERROR: MD5 Mismatch {md5_match.group(1)} {md5_local.hexdigest()} ."
-                    )
-                    failed = True
-
+        failed = False
+        if 200 <= response.code < 300:
+            sha1_regex = re.compile(r"<sha1checksum>([^<]+)<\/sha1checksum>")
+            sha1_match = sha1_regex.search(body)
+            sha1_local = hashlib.sha1()
+            sha1_local.update(log_output.encode("utf8"))
+            if sha1_match is None:
                 log.msg(
-                    f"dshield: SUCCESS: Sent {log_output} bytes worth of data to secure.dshield.org"
+                    f"dshield: ERROR: Could not find sha1checksum in response: {body!r}"
                 )
-            else:
-                log.msg(f"dshield ERROR: error {resp.status_code}.")
-                log.msg(f"dshield response was {response}")
+                failed = True
+            elif sha1_match.group(1) != sha1_local.hexdigest():
+                log.msg(
+                    f"dshield: ERROR: SHA1 Mismatch {sha1_match.group(1)} {sha1_local.hexdigest()} ."
+                )
                 failed = True
 
-            if failed:
-                # Something went wrong, we need to add them to batch.
-                reactor.callFromThread(self.transmission_error, batch)
+            md5_regex = re.compile(r"<md5checksum>([^<]+)<\/md5checksum>")
+            md5_match = md5_regex.search(body)
+            md5_local = hashlib.md5()
+            md5_local.update(log_output.encode("utf8"))
+            if md5_match is None:
+                log.msg("dshield: ERROR: Could not find md5checksum in response")
+                failed = True
+            elif md5_match.group(1) != md5_local.hexdigest():
+                log.msg(
+                    f"dshield: ERROR: MD5 Mismatch {md5_match.group(1)} {md5_local.hexdigest()} ."
+                )
+                failed = True
 
-        req.addCallback(check_response)
+            log.msg(
+                f"dshield: SUCCESS: Sent {log_output} bytes worth of data to secure.dshield.org"
+            )
+        else:
+            log.msg(f"dshield ERROR: error {response.code}.")
+            log.msg(f"dshield response was {body}")
+            failed = True
+
+        if failed:
+            self.transmission_error(batch)
