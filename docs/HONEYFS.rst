@@ -41,3 +41,46 @@ Make sure your config picks up custom.pickle, by referencing it in `cowrie.cfg`:
 Or set an environment variable::
 
   $ export COWRIE_SHELL_FILESYSTEM=custom.pickle
+
+Building from a real container
+******************************
+
+For a more realistic surface than hand-curating a directory, ``bin/build-fs-pickle.sh``
+spins up a real container, optionally installs a package set, and runs ``createfs``
+against ``/`` to produce a pickle. This is how ``src/cowrie/data/fs.pickle`` itself
+is regenerated.
+
+The default invocation builds the stock Debian 12 surface::
+
+  $ bin/build-fs-pickle.sh                      # or: make build-fs-pickle
+
+Output goes to ``src/cowrie/data/fs.pickle.new``; review it, then ``mv`` it into
+place.
+
+Override the OS family with ``FAMILY=`` and the base image with ``IMAGE=``. Three
+families are supported:
+
+- ``apt`` (default) — Debian/Ubuntu. Installs ``python3`` plus ``$PACKAGES`` via
+  ``apt-get``.
+- ``opkg`` — OpenWrt rootfs. Installs ``python3-light`` plus ``$PACKAGES`` via
+  ``opkg``. Requires ``IMAGE=`` (e.g. ``openwrt/rootfs:x86-64-23.05.5``).
+- ``none`` — no install step. The image must already contain ``python3``. Useful
+  for prebuilt rootfs images and BusyBox-style targets (e.g. ``IMAGE=python:3-alpine``).
+
+Examples::
+
+  # Custom Debian package set:
+  $ FAMILY=apt PACKAGES="openssh-server vim curl" bin/build-fs-pickle.sh
+
+  # OpenWrt persona:
+  $ FAMILY=opkg IMAGE=openwrt/rootfs:x86-64-23.05.5 \
+        OUT=/path/to/personas/openwrt/fs.pickle.new \
+        bin/build-fs-pickle.sh
+
+  # BusyBox-like persona:
+  $ FAMILY=none IMAGE=python:3-alpine \
+        OUT=/path/to/personas/busybox/fs.pickle.new \
+        bin/build-fs-pickle.sh
+
+``OUT=`` may point anywhere on the host, so the same script can build pickles for
+multiple personas into separate output paths.
