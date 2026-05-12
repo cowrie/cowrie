@@ -45,7 +45,7 @@ dependencies = [
         "tftpy==0.8.7",
         "treq==25.5.0",
         "twisted[conch]==26.4.0",
-        "urllib3==2.6.3",
+        "urllib3==2.7.0",
 ]
 
 [project.urls]
