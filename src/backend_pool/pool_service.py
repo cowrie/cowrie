@@ -348,7 +348,11 @@ class PoolService:
         # replenish pool until full
         to_create = self.max_vm - self.existing_pool_size()
         for _ in range(to_create):
-            dom, snap, guest_ip = self.qemu.create_guest(self.is_ip_free)
+            created = self.qemu.create_guest(self.is_ip_free)
+            if created is None:
+                # backend not ready or libvirt failed; try again next loop
+                continue
+            dom, snap, guest_ip = created
 
             # create guest object
             self.guests.append(
