@@ -11,6 +11,7 @@ See https://isc.sans.edu/ssh.html
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -52,6 +53,27 @@ class Output(cowrie.core.output.Output):
         self.hassh = ""
         self.banner = ""
         self.batch = []  # This is used to store login attempts in batches
+
+        self._warn_if_legacy_auth_key()
+
+    def _warn_if_legacy_auth_key(self) -> None:
+        """
+        The pre-2026 DShield API took a base64-encoded auth_key and decoded
+        it before computing the HMAC. The current submitapi uses the key as
+        a raw string. Warn loudly if the configured key still looks
+        base64-encoded so an operator notices before submissions are
+        silently rejected.
+        """
+        try:
+            base64.b64decode(self.auth_key, validate=True)
+        except (binascii.Error, ValueError):
+            return
+        if "=" in self.auth_key:
+            log.msg(
+                "dshield: auth_key looks base64-encoded but the current "
+                "DShield submit API expects the raw key. Update your "
+                "config if submissions are rejected."
+            )
 
     def stop(self):
         pass
