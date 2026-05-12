@@ -85,11 +85,11 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 HoneyPotTelnetAuthProtocol, self.portal
             )
 
-        protocol.ServerFactory.startFactory(self)
+        super().startFactory()
         log.msg("Ready to accept Telnet connections")
 
     def stopFactory(self) -> None:
         """
         Stop output plugins
         """
-        protocol.ServerFactory.stopFactory(self)
+        super().stopFactory()

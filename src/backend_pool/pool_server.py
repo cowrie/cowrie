@@ -188,7 +188,7 @@ class PoolServer(Protocol):
             self.transport.write(response)
 
 
-class PoolServerFactory(Factory):
+class PoolServerFactory(Factory[PoolServer]):
     """
     Factory for PoolServer
     """
@@ -215,7 +215,8 @@ class PoolServerFactory(Factory):
         if self.pool_service:
             self.pool_service.shutdown_pool()
 
-    def buildProtocol(self, addr: IAddress) -> PoolServer:
+    def buildProtocol(self, addr: IAddress | None) -> PoolServer:
+        assert addr is not None
         assert isinstance(addr, (IPv4Address, IPv6Address))
         log.msg(
             eventid="cowrie.backend_pool.server",

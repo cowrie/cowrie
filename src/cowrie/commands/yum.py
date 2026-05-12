@@ -64,7 +64,7 @@ class Command_yum(HoneyPotCommand):
         d: defer.Deferred = defer.Deferred()
         if time2:
             time = random.randint(int(time * 100), int(time2 * 100)) / 100.0
-        reactor.callLater(time, d.callback, None)  # type: ignore[attr-defined]
+        reactor.callLater(time, d.callback, None)
         return d
 
     @inlineCallbacks

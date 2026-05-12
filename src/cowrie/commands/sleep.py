@@ -111,7 +111,7 @@ Written by Jim Meyering and Paul Eggert.
             _time += int(m.group(1))
 
         self.running = True
-        self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
+        self.scheduled = reactor.callLater(_time, self.done)
 
     def handle_CTRL_C(self) -> None:
         if self.running:

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 from twisted.internet import defer, reactor
+from twisted.internet.protocol import connectionDone
 from twisted.python import log
 from twisted.web import client, http_headers
 from twisted.web.iweb import IBodyProducer, IResponse
@@ -49,7 +50,7 @@ def readBody(response: IResponse) -> defer.Deferred:
         def dataReceived(self, data):
             self.data += data
 
-        def connectionLost(self, reason):
+        def connectionLost(self, reason=connectionDone):
             d.callback(self.data)
 
     collector = BodyCollector()

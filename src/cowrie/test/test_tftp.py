@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 import struct
 import unittest
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from twisted.internet import defer
 from twisted.internet import reactor as _reactor
@@ -52,12 +52,12 @@ class MockTFTPServer(DatagramProtocol):
         self.test_file_content = test_file_content
         self.client_addr: tuple[str, int] | None = None
 
-    def datagramReceived(self, data: bytes, addr: tuple[str, int]) -> None:
+    def datagramReceived(self, datagram: bytes, addr: Any) -> None:
         """Handle TFTP packets"""
-        if len(data) < 2:
+        if len(datagram) < 2:
             return
 
-        opcode = struct.unpack("!H", data[:2])[0]
+        opcode = struct.unpack("!H", datagram[:2])[0]
 
         if opcode == OPCODE_RRQ:
             # Read request - send data back
@@ -65,7 +65,7 @@ class MockTFTPServer(DatagramProtocol):
             self.sendFile()
         elif opcode == OPCODE_ACK:
             # ACK received - if not final ACK, send next block
-            block_num = struct.unpack("!H", data[2:4])[0]
+            block_num = struct.unpack("!H", datagram[2:4])[0]
             self.sendNextBlock(block_num)
 
     def sendFile(self) -> None:

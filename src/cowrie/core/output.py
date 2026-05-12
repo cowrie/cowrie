@@ -90,7 +90,7 @@ class Output(metaclass=abc.ABCMeta):
             self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         # Event trigger so that stop() is called by the reactor when stopping
-        reactor.addSystemEventTrigger("before", "shutdown", self.stop)  # type: ignore
+        reactor.addSystemEventTrigger("before", "shutdown", self.stop)
 
         self.start()
 
