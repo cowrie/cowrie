@@ -153,7 +153,7 @@ class PoolService:
             "backend_pool", "recycle_period", fallback=-1
         )
         if recycle_period > 0:
-            reactor.callLater(recycle_period, self.restart_pool)  # type: ignore[attr-defined]
+            reactor.callLater(recycle_period, self.restart_pool)
 
     def stop_pool(self) -> None:
         # lazy import to avoid exception if not using the backend_pool
@@ -395,7 +395,7 @@ class PoolService:
         self.__producer_mark_available()
 
         # sleep until next iteration
-        self.loop_next_call = reactor.callLater(  # type: ignore[attr-defined]
+        self.loop_next_call = reactor.callLater(
             self.loop_sleep_time, self.producer_loop
         )
 

@@ -95,7 +95,7 @@ class ClientCommandFactory(protocol.ClientFactory):
         self.done_deferred = done_deferred
         self.callback = callback
 
-    def buildProtocol(self, addr: IAddress) -> ClientCommandTransport:
+    def buildProtocol(self, addr: IAddress | None) -> ClientCommandTransport:
         return ClientCommandTransport(
             self.username,
             self.password,

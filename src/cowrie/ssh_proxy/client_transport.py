@@ -45,7 +45,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
     def __init__(self, factory: BackendSSHFactory):
         self.delayedPackets: list[tuple[int, bytes]] = []
-        self.factory: BackendSSHFactory = factory  # type: ignore
+        self.factory: BackendSSHFactory = factory
         self.canAuth: bool = False
         self.authDone: bool = False
 

@@ -123,7 +123,7 @@ class Command_ssh(HoneyPotCommand):
         self.protocol.password_input = True
 
     def wait(self, line: str) -> None:
-        reactor.callLater(2, self.finish, line)  # type: ignore[attr-defined]
+        reactor.callLater(2, self.finish, line)
 
     def finish(self, line: str) -> None:
         self.pause = False
