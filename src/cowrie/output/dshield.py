@@ -40,19 +40,17 @@ class Output(cowrie.core.output.Output):
     userid: str
     batch_size: int
     batch: list
-    lastcommand: str
-    hassh: str
-    banner: str
+    session_state: dict[str, dict[str, str]]
 
     def start(self):
         self.auth_key = CowrieConfig.get("output_dshield", "auth_key")
         self.userid = CowrieConfig.get("output_dshield", "userid")
         self.batch_size = CowrieConfig.getint("output_dshield", "batch_size")
         self.debug = CowrieConfig.getboolean("output_dshield", "debug", fallback=False)
-        self.lastcommand = ""
-        self.hassh = ""
-        self.banner = ""
         self.batch = []  # This is used to store login attempts in batches
+        # Per-session enrichment fields (lastcommand, hassh, banner). Keyed on
+        # session id so concurrent sessions do not stomp each other's state.
+        self.session_state = {}
 
         self._warn_if_legacy_auth_key()
 
@@ -78,18 +76,28 @@ class Output(cowrie.core.output.Output):
     def stop(self):
         pass
 
+    def _state(self, session: str) -> dict[str, str]:
+        state = self.session_state.get(session)
+        if state is None:
+            state = {"lastcommand": "", "hassh": "", "banner": ""}
+            self.session_state[session] = state
+        return state
+
     def write(self, event):
         eventid = event["eventid"]
+        session = event.get("session", "")
+
         if eventid in ("cowrie.login.success", "cowrie.login.failed"):
+            state = self._state(session)
             self.batch.append(
                 {
                     "timestamp": int(event["time"]),
                     "source_ip": event["src_ip"],
                     "user": event["username"],
                     "password": event.get("password", ""),
-                    "lastcommand": self.lastcommand,
-                    "hassh": self.hassh,
-                    "banner": self.banner,
+                    "lastcommand": state["lastcommand"],
+                    "hassh": state["hassh"],
+                    "banner": state["banner"],
                 }
             )
             if self.debug:
@@ -104,11 +112,13 @@ class Output(cowrie.core.output.Output):
                 self.submit_entries(batch_to_send)
                 self.batch = []
         elif eventid == "cowrie.command.input":
-            self.lastcommand = event["input"]
+            self._state(session)["lastcommand"] = event["input"]
         elif eventid == "cowrie.client.kex":
-            self.hassh = event["hassh"]
+            self._state(session)["hassh"] = event["hassh"]
         elif eventid == "cowrie.client.version":
-            self.banner = event["version"]
+            self._state(session)["banner"] = event["version"]
+        elif eventid == "cowrie.session.closed":
+            self.session_state.pop(session, None)
 
     def transmission_error(self, batch):
         self.batch.extend(batch)
