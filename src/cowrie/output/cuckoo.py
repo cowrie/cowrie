@@ -125,6 +125,8 @@ class Output(cowrie.core.output.Output):
             )
             return True
 
+        # Drain the body so the connection returns to the pool.
+        yield response.text()
         return False
 
     @defer.inlineCallbacks
@@ -152,6 +154,7 @@ class Output(cowrie.core.output.Output):
                 )
             )
         else:
+            yield response.text()
             log.msg(f"Cuckoo Request failed: {response.code}")
 
     @defer.inlineCallbacks
@@ -178,4 +181,5 @@ class Output(cowrie.core.output.Output):
                 )
             )
         else:
+            yield response.text()
             log.msg(f"Cuckoo Request failed: {response.code}")

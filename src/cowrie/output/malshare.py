@@ -84,6 +84,9 @@ class Output(cowrie.core.output.Output):
             log.msg(f"MalShare Request failed: {e}")
             return
 
+        # Drain the body so the connection returns to the pool.
+        yield response.text()
+
         if 200 <= response.code < 300:
             log.msg("Submitted to MalShare")
         else:
