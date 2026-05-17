@@ -65,13 +65,14 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             with open(
                 f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
                 encoding="utf-8",
+                errors="replace",
             ) as f:
                 banner = f.read()
         except configparser.Error as e:
             log.msg(f"Loading default /etc/issue.net file: {e!r}")
             resources_path = importlib.resources.files(data)
             banner_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
-            banner = banner_path.read_text(encoding="utf-8")
+            banner = banner_path.read_text(encoding="utf-8", errors="replace")
         except OSError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             return
