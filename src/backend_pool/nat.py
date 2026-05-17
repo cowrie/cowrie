@@ -28,7 +28,7 @@ class ClientProtocol(protocol.Protocol):
         self.server_protocol.transport.loseConnection()
 
 
-class ClientFactory(protocol.ClientFactory[ClientProtocol]):
+class ClientFactory(protocol.ClientFactory):
     def __init__(self, server_protocol: ServerProtocol) -> None:
         self.server_protocol = server_protocol
 
@@ -74,7 +74,7 @@ class ServerProtocol(protocol.Protocol):
         self.client_protocol.transport.loseConnection()
 
 
-class ServerFactory(protocol.Factory[ServerProtocol]):
+class ServerFactory(protocol.Factory):
     def __init__(self, dst_ip: str, dst_port: int) -> None:
         self.dst_ip: str = dst_ip
         self.dst_port: int = dst_port
