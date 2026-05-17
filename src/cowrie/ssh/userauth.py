@@ -64,7 +64,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         try:
             with open(
                 f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
-                encoding="ascii",
+                encoding="utf-8",
             ) as f:
                 banner = f.read()
         except configparser.Error as e:
