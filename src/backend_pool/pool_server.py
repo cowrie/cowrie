@@ -188,7 +188,7 @@ class PoolServer(Protocol):
             self.transport.write(response)
 
 
-class PoolServerFactory(Factory[PoolServer]):
+class PoolServerFactory(Factory):
     """
     Factory for PoolServer
     """
