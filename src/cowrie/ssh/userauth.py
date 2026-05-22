@@ -9,6 +9,7 @@ from __future__ import annotations
 import configparser
 import importlib.resources
 import struct
+from pathlib import Path
 from typing import Any
 
 from twisted.conch import error
@@ -62,16 +63,15 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.bannerSent = True
 
         try:
-            with open(
-                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
-                encoding="ascii",
-            ) as f:
-                banner = f.read()
+            banner_path = Path(
+                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net"
+            )
+            banner = banner_path.read_bytes().decode("utf-8", errors="replace")
         except configparser.Error as e:
             log.msg(f"Loading default /etc/issue.net file: {e!r}")
             resources_path = importlib.resources.files(data)
-            banner_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
-            banner = banner_path.read_text(encoding="utf-8")
+            fallback_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
+            banner = fallback_path.read_bytes().decode("utf-8", errors="replace")
         except OSError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             return
