@@ -9,6 +9,7 @@ import configparser
 import importlib.resources
 import sys
 from binascii import crc32
+from pathlib import Path
 from random import randint, seed
 from typing import Any
 
@@ -26,18 +27,17 @@ class Passwd:
     """
 
     try:
-        with open(
-            "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path")),
-            encoding="ascii",
-        ) as f:
-            passwd_contents = f.read().split("\n")
+        passwd_path = Path(
+            "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path"))
+        )
+        passwd_contents = passwd_path.read_text(encoding="ascii").split("\n")
     except configparser.Error:
         log.msg("Loading default /etc/passwd file from pickle file")
         resources_path = importlib.resources.files(data)
-        config_file_path = (
+        fallback_path = (
             resources_path.joinpath("honeyfs").joinpath("etc").joinpath("passwd")
         )
-        passwd_contents = config_file_path.read_text(encoding="utf-8").split("\n")
+        passwd_contents = fallback_path.read_text(encoding="ascii").split("\n")
     except Exception as e:
         log.err(e, "ERROR: Failed to load /etc/passwd")
         sys.exit(2)
