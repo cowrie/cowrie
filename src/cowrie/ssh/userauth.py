@@ -70,7 +70,9 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         except configparser.Error as e:
             log.msg(f"Loading default /etc/issue.net file: {e!r}")
             resources_path = importlib.resources.files(data)
-            fallback_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
+            fallback_path = (
+                resources_path.joinpath("honeyfs").joinpath("etc").joinpath("issue.net")
+            )
             banner = fallback_path.read_bytes().decode("utf-8", errors="replace")
         except OSError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
