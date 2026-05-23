@@ -7,11 +7,9 @@
 
 from __future__ import annotations
 
-import configparser
 import errno
 import fnmatch
 import hashlib
-import importlib.resources
 import os
 import pickle
 import re
@@ -23,8 +21,8 @@ from typing import Any
 
 from twisted.python import log
 
-from cowrie import data
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import open_data_binary, read_data_bytes
 
 (
     A_NAME,
@@ -111,16 +109,19 @@ class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
         self.fs: list[Any]
 
+        filesystem = CowrieConfig.get("shell", "filesystem", fallback=None)
         try:
-            with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
-                self.fs = pickle.load(f)
-        except UnicodeDecodeError:
-            with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
-                self.fs = pickle.load(f, encoding="utf8")
-        except configparser.NoSectionError:
-            log.msg("Loading default pickle file")
-            with importlib.resources.open_binary(data, "fs.pickle") as f:
-                self.fs = pickle.load(f)
+            if filesystem:
+                try:
+                    with open(filesystem, "rb") as f:
+                        self.fs = pickle.load(f)
+                except UnicodeDecodeError:
+                    with open(filesystem, "rb") as f:
+                        self.fs = pickle.load(f, encoding="utf8")
+            else:
+                log.msg("Loading default pickle file")
+                with open_data_binary("fs.pickle") as f:
+                    self.fs = pickle.load(f)
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
             sys.exit(2)
@@ -340,10 +341,7 @@ class HoneyPotFilesystem:
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
-            with importlib.resources.as_file(
-                importlib.resources.files(data).joinpath("arch").joinpath(self.arch)
-            ) as arch:
-                return arch.read_bytes()
+            return read_data_bytes("arch", self.arch)
         return b""
 
     def mkfile(

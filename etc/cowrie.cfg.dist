@@ -41,12 +41,6 @@ log_path = var/log/cowrie
 download_path = ${honeypot:state_path}/downloads
 
 
-# Directory for static data files
-#
-# (default: src/cowrie/cowrie)
-data_path = src/cowrie/data
-
-
 # Directory for variable state files
 #
 # (default: var/lib/cowrie)
@@ -225,7 +219,7 @@ save_snapshots = false
 snapshot_path = ${honeypot:state_path}/snapshots
 
 # pool xml configs
-config_files_path = ${honeypot:data_path}/pool_configs
+config_files_path = src/cowrie/data/pool_configs
 
 network_config = default_network.xml
 nw_filter_config = default_filter.xml
@@ -448,19 +442,19 @@ log_raw = false
 # but not the file contents. This is created by the bin/createfs utility from
 # a real template linux installation.
 #
-# (default: fs.pickle)
-filesystem = ${honeypot:data_path}/fs.pickle
+# When unset, the bundled fs.pickle that ships with cowrie is used.
+# filesystem = /path/to/custom-fs.pickle
 
 
 # File that contains output for the `ps` command.
 #
-# (default: ${honeypot_data_path}/cmdoutput.json)
-processes = ${honeypot:data_path}/cmdoutput.json
+# When unset, the bundled cmdoutput.json that ships with cowrie is used.
+# processes = /path/to/custom-cmdoutput.json
 
 
 # Fake architectures/OS
-# When Cowrie receive a command like /bin/cat XXXX (where XXXX is an executable)
-# it replies with the content of a dummy executable (located in data_path/arch)
+# When Cowrie receives a command like /bin/cat XXXX (where XXXX is an executable)
+# it replies with the content of a dummy executable bundled with cowrie
 # compiled for an architecture/OS/endian_mode
 # arch can be a comma separated list. When there are multiple elements, a random
 # is chosen at login time.

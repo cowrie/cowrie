@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import importlib
 import socket
 import sys
 import time
@@ -21,8 +20,8 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 import cowrie.commands
-from cowrie import data
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_data_bytes
 from cowrie.shell import command, honeypot
 
 
@@ -247,18 +246,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return None
 
         try:
-            resource_root = importlib.resources.files(data)
-            # Use joinpath instead of / operator to avoid type issues
-            resource_path_in_package = resource_root.joinpath("txtcmds").joinpath(
-                path.lstrip("/")
-            )
-
-            with importlib.resources.as_file(
-                resource_path_in_package
-            ) as binary_file_path:
-                with open(binary_file_path, "rb") as file:
-                    binary_data = file.read()
-                    return self.txtcmd(binary_data)
+            binary_data = read_data_bytes("txtcmds", *path.lstrip("/").split("/"))
+            return self.txtcmd(binary_data)
         except FileNotFoundError:
             pass
 
