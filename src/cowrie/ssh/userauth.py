@@ -6,10 +6,7 @@
 
 from __future__ import annotations
 
-import configparser
-import importlib.resources
 import struct
-from pathlib import Path
 from typing import Any
 
 from twisted.conch import error
@@ -21,9 +18,9 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.python.failure import Failure
 
-from cowrie import data
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_honeyfs_bytes
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -63,18 +60,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.bannerSent = True
 
         try:
-            banner_path = Path(
-                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net"
+            banner = read_honeyfs_bytes("etc/issue.net").decode(
+                "utf-8", errors="replace"
             )
-            banner = banner_path.read_bytes().decode("utf-8", errors="replace")
-        except configparser.Error as e:
-            log.msg(f"Loading default /etc/issue.net file: {e!r}")
-            resources_path = importlib.resources.files(data)
-            fallback_path = (
-                resources_path.joinpath("honeyfs").joinpath("etc").joinpath("issue.net")
-            )
-            banner = fallback_path.read_bytes().decode("utf-8", errors="replace")
-        except OSError as e:
+        except FileNotFoundError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             return
 
