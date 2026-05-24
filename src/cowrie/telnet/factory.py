@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from twisted.internet import protocol
 from twisted.python import log
 
-from cowrie.core.resources import read_honeyfs_bytes
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 from cowrie.telnet.transport import CowrieTelnetTransport
 from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport

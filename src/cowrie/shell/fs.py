@@ -229,6 +229,9 @@ class HoneyPotFilesystem:
         for part in path.split("/"):
             if not part:
                 continue
+            if not isinstance(cwd[A_CONTENTS], list):
+                # walked into a non-directory entry (e.g. a file's bytes)
+                raise FileNotFound
             ok = False
             for c in cwd[A_CONTENTS]:
                 if c[A_NAME] == part:

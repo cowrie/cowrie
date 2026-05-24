@@ -12,7 +12,7 @@ from typing import Any
 
 from twisted.python import log
 
-from cowrie.core.resources import read_honeyfs_bytes
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 
 
 class Passwd:
