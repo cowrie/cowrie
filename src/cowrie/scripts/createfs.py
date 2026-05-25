@@ -45,6 +45,33 @@ T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = range(0, 7)
 PROC = False
 VERBOSE = False
 
+# Virtual paths whose file contents are read into A_CONTENTS during the walk.
+# These are the paths cowrie reads at startup (banner, passwd, group) plus
+# the small text files attackers commonly cat to fingerprint the OS. Files
+# not listed here keep an empty A_CONTENTS to avoid bloating the pickle with
+# every regular file in the source tree.
+EMBED_PATHS: set[str] = {
+    "/etc/debian_version",
+    "/etc/group",
+    "/etc/host.conf",
+    "/etc/hostname",
+    "/etc/hosts",
+    "/etc/inittab",
+    "/etc/issue",
+    "/etc/issue.net",
+    "/etc/motd",
+    "/etc/os-release",
+    "/etc/passwd",
+    "/etc/resolv.conf",
+    "/etc/shadow",
+    "/proc/cpuinfo",
+    "/proc/meminfo",
+    "/proc/modules",
+    "/proc/mounts",
+    "/proc/net/arp",
+    "/proc/version",
+}
+
 blacklist_files = [
     "/root/fs.pickle",
     "/root/createfs",
@@ -124,6 +151,12 @@ def recurse(localroot, root, tree, maxdepth=100):
                 recurse(localroot, fspath, entry[A_CONTENTS], maxdepth - 1)
         elif S_ISREG(s[ST_MODE]):
             entry[A_TYPE] = T_FILE
+            if fspath in EMBED_PATHS:
+                try:
+                    with open(path, "rb") as f:
+                        entry[A_CONTENTS] = f.read()
+                except OSError as e:
+                    logit(f" Cannot read for embed: {path}: {e}\n")
         elif S_ISBLK(s[ST_MODE]):
             entry[A_TYPE] = T_BLK
         elif S_ISCHR(s[ST_MODE]):
