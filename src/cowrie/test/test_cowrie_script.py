@@ -88,6 +88,15 @@ class CowrieInitTests(unittest.TestCase):
             cowrie_script.cowrie_init()
             cowrie_script.check_initialized()  # should not raise
 
+    def test_creates_var_skeleton(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            cowrie_script.cowrie_init()
+
+        for sub in ("var/log/cowrie", "var/lib/cowrie", "var/run"):
+            self.assertTrue(
+                (Path(self.tmpdir) / sub).is_dir(), f"{sub} not created"
+            )
+
     def test_refuses_to_overwrite_existing(self) -> None:
         (Path(self.tmpdir) / "etc").mkdir()
         (Path(self.tmpdir) / "etc" / "cowrie.cfg").write_text("custom")

@@ -243,7 +243,11 @@ def cowrie_shell() -> NoReturn:
 
 
 def cowrie_init() -> None:
-    """Materialise ./etc/cowrie.cfg from the bundled template.
+    """Set up the current directory as a cowrie state directory.
+
+    Writes ./etc/cowrie.cfg from the bundled template and creates the
+    var/ skeleton (log/cowrie, lib/cowrie, run) so the first
+    `cowrie start` does not trip on missing parent directories.
 
     Intended for fresh state directories (pip-install Mode A): the user
     cd's into the directory they want cowrie to run in, runs `cowrie
@@ -258,7 +262,14 @@ def cowrie_init() -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(read_data_bytes("etc", "cowrie.cfg.dist"))
     print(f"Wrote {target}")
-    print("Edit it to customise hostname, ports, etc., then run `cowrie start`.")
+
+    for sub in ("var/log/cowrie", "var/lib/cowrie", "var/run"):
+        Path(sub).mkdir(parents=True, exist_ok=True)
+    print("Created var/log/cowrie, var/lib/cowrie, var/run")
+
+    print(
+        "Edit etc/cowrie.cfg to customise hostname, ports, etc., then run `cowrie start`."
+    )
 
 
 def main() -> NoReturn:
