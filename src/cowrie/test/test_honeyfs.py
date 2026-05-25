@@ -152,6 +152,39 @@ class ReadFileTests(unittest.TestCase):
             honeyfs.read_file("/etc/a")
 
 
+class BundledPickleContentsTests(unittest.TestCase):
+    """Sanity-check that the bundled fs.pickle has embedded bytes for the
+    paths cowrie reads at startup. Guards against accidentally dropping
+    A_CONTENTS bytes in a future pickle regeneration."""
+
+    def setUp(self) -> None:
+        honeyfs._tree.cache_clear()
+        self.addCleanup(honeyfs._tree.cache_clear)
+        self._prior_env = os.environ.pop(ENV_CONTENTS, None)
+        self.addCleanup(self._restore_env)
+        # Force the bundled side of the cascade by clearing contents_path.
+        os.environ[ENV_CONTENTS] = ""
+
+    def _restore_env(self) -> None:
+        if self._prior_env is None:
+            os.environ.pop(ENV_CONTENTS, None)
+        else:
+            os.environ[ENV_CONTENTS] = self._prior_env
+
+    def test_passwd_has_root_entry(self) -> None:
+        data = honeyfs.read_honeyfs_bytes("etc/passwd")
+        self.assertIn(b"root:", data)
+
+    def test_group_has_root_entry(self) -> None:
+        data = honeyfs.read_honeyfs_bytes("etc/group")
+        self.assertIn(b"root:", data)
+
+    def test_issue_net_resolves_without_error(self) -> None:
+        # issue.net intentionally ships as a zero-byte file
+        data = honeyfs.read_honeyfs_bytes("etc/issue.net")
+        self.assertIsInstance(data, bytes)
+
+
 class ReadHoneyfsBytesTests(unittest.TestCase):
     """read_honeyfs_bytes cascades operator override to pickle extraction."""
 
