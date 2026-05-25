@@ -124,12 +124,18 @@ class HoneyPotFilesystem:
         # Keep count of new files, so we can have an artificial limit
         self.newcount: int = 0
 
-        # Get the honeyfs path from the config file and explore it for file
-        # contents:
-        try:
-            self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
-        except Exception as e:
-            log.msg(f"Failed to load honeyfs {e!r}")
+        # If the operator has set contents_path, walk it and mark
+        # A_REALFILE on matching pickle entries so file_contents reads
+        # from disk. When unset (the default), every file is served from
+        # the pickle's A_CONTENTS bytes.
+        contents_path = CowrieConfig.get(
+            "honeypot", "contents_path", fallback=""
+        )
+        if contents_path:
+            try:
+                self.init_honeyfs(contents_path)
+            except Exception as e:
+                log.msg(f"Failed to load honeyfs {e!r}")
 
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """

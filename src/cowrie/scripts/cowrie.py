@@ -263,9 +263,16 @@ def cowrie_init() -> None:
     target.write_bytes(read_data_bytes("etc", "cowrie.cfg.dist"))
     print(f"Wrote {target}")
 
-    for sub in ("var/log/cowrie", "var/lib/cowrie", "var/run"):
+    state_dirs = (
+        "var/log/cowrie",
+        "var/lib/cowrie",
+        "var/lib/cowrie/downloads",
+        "var/lib/cowrie/tty",
+        "var/run",
+    )
+    for sub in state_dirs:
         Path(sub).mkdir(parents=True, exist_ok=True)
-    print("Created var/log/cowrie, var/lib/cowrie, var/run")
+    print(f"Created {', '.join(state_dirs)}")
 
     print(
         "Edit etc/cowrie.cfg to customise hostname, ports, etc., then run `cowrie start`."

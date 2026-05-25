@@ -92,7 +92,13 @@ class CowrieInitTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             cowrie_script.cowrie_init()
 
-        for sub in ("var/log/cowrie", "var/lib/cowrie", "var/run"):
+        for sub in (
+            "var/log/cowrie",
+            "var/lib/cowrie",
+            "var/lib/cowrie/downloads",
+            "var/lib/cowrie/tty",
+            "var/run",
+        ):
             self.assertTrue(
                 (Path(self.tmpdir) / sub).is_dir(), f"{sub} not created"
             )
