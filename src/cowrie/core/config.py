@@ -15,6 +15,8 @@ from os.path import exists
 
 from twisted.python import log
 
+from cowrie.core.resources import read_data_bytes
+
 
 def to_environ_key(key: str) -> str:
     return key.upper()
@@ -43,31 +45,38 @@ class EnvironmentConfigParser(configparser.ConfigParser):
 
 def readConfigFile(cfgfile: list[str] | str) -> configparser.ConfigParser:
     """
-    Read config files and return ConfigParser object
+    Build a ConfigParser by stacking layers:
 
-    @param cfgfile: filename or list of filenames
+      1. Bundled cowrie.cfg.dist from the package (default values).
+      2. The user files listed in cfgfile (overlays; last wins per key).
+
+    @param cfgfile: filename or list of filenames for operator overlays
     @return: ConfigParser object
     """
     parser = EnvironmentConfigParser(interpolation=configparser.ExtendedInterpolation())
+    try:
+        parser.read_string(
+            read_data_bytes("etc", "cowrie.cfg.dist").decode("utf-8")
+        )
+    except FileNotFoundError:
+        log.msg("Bundled cowrie.cfg.dist not found in cowrie.data")
     parser.read(cfgfile)
     return parser
 
 
 def get_config_path() -> list[str]:
     """
-    Locate cowrie configuration files. Search order, cwd-relative except
-    the system-wide path:
+    Locate operator config files. Search order, cwd-relative except the
+    system-wide path:
 
-      1. ./etc/cowrie.cfg.dist  (source-checkout defaults)
-      2. /etc/cowrie/cowrie.cfg (system-wide install)
-      3. ./etc/cowrie.cfg       (operator overrides)
-      4. ./cowrie.cfg           (operator overrides, flat layout)
+      1. /etc/cowrie/cowrie.cfg (system-wide install)
+      2. ./etc/cowrie.cfg       (operator overrides)
+      3. ./cowrie.cfg           (operator overrides, flat layout)
 
-    Returns the absolute paths of all files that exist, in the order
-    configparser should read them (later files override earlier ones).
+    Bundled defaults are loaded separately in readConfigFile; this
+    function only returns operator-owned files. Last file wins per key.
     """
     config_files = [
-        "etc/cowrie.cfg.dist",
         "/etc/cowrie/cowrie.cfg",
         "etc/cowrie.cfg",
         "cowrie.cfg",
@@ -76,10 +85,9 @@ def get_config_path() -> list[str]:
 
     if found_confs:
         log.msg(f"Reading configuration from {found_confs!r}")
-        return found_confs
-
-    log.msg("Config file not found")
-    return []
+    else:
+        log.msg("No operator config file found; using bundled defaults only")
+    return found_confs
 
 
 CowrieConfig = readConfigFile(get_config_path())
