@@ -46,10 +46,15 @@ For most operators, this is the shortest path::
     (cowrie-env) $ $EDITOR etc/cowrie.cfg     # optional
     (cowrie-env) $ cowrie start
 
-``cowrie init`` writes ``./etc/cowrie.cfg`` in the current directory
-from the bundled template. All cowrie state (logs, downloads, host
-keys, ttylogs) lives under this directory — pick whichever path you
-want before running ``init``.
+The pip-install workflow described here requires Cowrie 2.10 or later
+(or the current ``main`` branch). Earlier releases need the source
+checkout path below.
+
+``cowrie init`` writes ``./etc/cowrie.cfg`` from the bundled template.
+On first ``cowrie start`` cowrie creates the rest of the state layout
+(``var/log/cowrie/``, ``var/lib/cowrie/``, ``var/run/``) under the same
+directory and generates SSH host keys. Pick the directory you want
+state to live in before running ``init``.
 
 Read on for system-dependency setup, port-22 listening, and other
 optional pieces.
@@ -57,15 +62,22 @@ optional pieces.
 Step 1: System dependencies
 ***************************
 
-Cowrie itself is pure Python, but a few system packages help with
-cryptography, virtual environments, and (optionally) binding to low
-ports.
+Cowrie itself is pure Python, but several of its dependencies have
+native components (``cryptography``, ``cffi``, ``bcrypt``, optional
+``mysqlclient`` / ``libvirt-python``). On most distros you need
+build-essential plus the OpenSSL and libffi headers for these to
+compile during ``pip install``.
 
 On Debian-based systems (last verified on Debian Bookworm)::
 
     $ sudo apt-get install python3-pip python3-venv libssl-dev libffi-dev build-essential libpython3-dev python3-minimal authbind
 
-Add ``git`` if you plan to do a source checkout.
+For a source checkout, additionally install::
+
+    $ sudo apt-get install git docker.io
+
+(``docker.io`` is only needed if you want to rebuild ``fs.pickle`` from
+a Debian container via ``make build-fs-pickle``.)
 
 Step 2: Create a user account
 *****************************
@@ -93,14 +105,22 @@ Pip install (operators)
 Source checkout (developers)
 ============================
 
-If you plan to modify Cowrie or run against unreleased code::
+If you plan to modify Cowrie or run against unreleased code, you also
+need the development extras (mypy, ruff, pre-commit, tox, sphinx,
+etc.) and a few extra system packages for native builds::
 
+    $ sudo apt-get install git docker.io
     $ git clone https://github.com/cowrie/cowrie
     $ cd cowrie
     $ python3 -m venv cowrie-env
     $ source cowrie-env/bin/activate
     (cowrie-env) $ python -m pip install --upgrade pip
-    (cowrie-env) $ python -m pip install -e .
+    (cowrie-env) $ python -m pip install -e '.[dev]'
+
+``docker.io`` is only required if you want to use ``make
+build-fs-pickle`` to regenerate the bundled filesystem from a Debian
+container. The ``[dev]`` extra brings in the typecheckers, linters,
+test runner, and docs toolchain that match what CI uses.
 
 In source-checkout mode, the repo root *is* the state directory.
 ``cowrie start`` detects this and skips the ``cowrie init`` step.
@@ -121,7 +141,9 @@ this directory::
     Edit it to customise hostname, ports, etc., then run `cowrie start`.
 
 ``cowrie init`` writes ``./etc/cowrie.cfg`` from the bundled template.
-It refuses to overwrite an existing file, so it is safe to run again.
+If the file already exists, ``cowrie init`` refuses with a non-zero exit
+code rather than overwriting your edits — re-running ``cowrie init`` is
+*not* idempotent.
 
 Step 5: Configure
 *****************
@@ -309,12 +331,6 @@ Two possibilities. If there is a Python stack trace, a dependency is
 missing or broken. Without a stack trace, double-check that you
 activated the right virtualenv.
 
-Default file permissions
-========================
-
-To make Cowrie log files public-readable, change the ``--umask 0022``
-behavior; by default cowrie passes ``--umask=0022`` to twistd.
-
 General approach
 ================
 
@@ -323,6 +339,11 @@ you started Cowrie).
 
 Updating Cowrie
 ***************
+
+Cowrie commands operate on the current working directory — the PID
+file, log paths, and state files are all relative to wherever you ran
+``cowrie start`` from. Stop and start commands must be issued from the
+same directory.
 
 Stop your honeypot first::
 
@@ -379,13 +400,25 @@ pickle itself.
 Editing the pickle
 ==================
 
-For a one-off edit (change ``/etc/passwd`` content in place)::
+The bundled ``fs.pickle`` lives inside the installed Cowrie package and
+is read-only from an operator's perspective. To edit it, copy it out
+first and point ``[shell] filesystem`` at your local copy::
 
-    $ fsctl ./var/lib/cowrie/fs.pickle "load /etc/passwd /path/to/your/passwd"
+    (cowrie-env) $ python -c "from cowrie.core.resources import read_data_bytes; \
+        open('var/lib/cowrie/fs.pickle', 'wb').write(read_data_bytes('fs.pickle'))"
+
+Add to ``etc/cowrie.cfg``::
+
+    [shell]
+    filesystem = var/lib/cowrie/fs.pickle
+
+Then edit with ``fsctl``. For a one-off file change::
+
+    $ fsctl var/lib/cowrie/fs.pickle "load /etc/passwd /path/to/your/passwd"
 
 For a bulk update of many files from a local directory::
 
-    $ fsctl ./var/lib/cowrie/fs.pickle "embed /path/to/your/honeyfs"
+    $ fsctl var/lib/cowrie/fs.pickle "embed /path/to/your/honeyfs"
 
 Use ``fsctl <pickle>`` with no command to enter the interactive shell.
 
