@@ -222,7 +222,19 @@ def run():
 
     logit("Processing:\n")
 
-    tree = ["/", T_DIR, 0, 0, 0, 0, 0, [], ""]
+    s = os.stat(localroot)
+    tree = [
+        "/",
+        T_DIR,
+        s.st_uid,
+        s.st_gid,
+        s.st_size,
+        s.st_mode,
+        int(s.st_mtime),
+        [],
+        None,
+        None,
+    ]
     recurse(localroot, "/", tree[A_CONTENTS], maxdepth)
 
     if output:
