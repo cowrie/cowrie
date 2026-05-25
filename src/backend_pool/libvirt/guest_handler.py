@@ -25,11 +25,8 @@ def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tup
     import libvirt
 
     # get guest configurations
-    configuration_file: str = os.path.join(
-        CowrieConfig.get(
-            "backend_pool", "config_files_path", fallback="src/cowrie/data/pool_configs"
-        ),
-        CowrieConfig.get("backend_pool", "guest_config", fallback="default_guest.xml"),
+    guest_xml = backend_pool.util.read_pool_config(
+        CowrieConfig.get("backend_pool", "guest_config", fallback="default_guest.xml")
     )
 
     version_tag: str = CowrieConfig.get("backend_pool", "guest_tag", fallback="guest")
@@ -79,7 +76,6 @@ def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tup
         )
         raise QemuGuestError()
 
-    guest_xml = backend_pool.util.read_file(configuration_file)
     guest_config = guest_xml.format(
         guest_name="cowrie-" + version_tag + "_" + guest_unique_id,
         disk_image=disk_img,

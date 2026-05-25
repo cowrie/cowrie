@@ -219,7 +219,10 @@ save_snapshots = false
 snapshot_path = ${honeypot:state_path}/snapshots
 
 # pool xml configs
-config_files_path = src/cowrie/data/pool_configs
+#
+# When unset, the bundled pool_configs that ship with cowrie are used.
+# Set to a directory of overrides to replace specific XML templates.
+# config_files_path = /opt/cowrie/pool_configs
 
 network_config = default_network.xml
 nw_filter_config = default_filter.xml

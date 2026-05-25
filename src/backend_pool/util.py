@@ -9,10 +9,14 @@ general utility functions
 
 from __future__ import annotations
 
+import configparser
 import os
 import random
 import subprocess
 import time
+
+from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_data_bytes
 
 
 def ping(guest_ip: str) -> int:
@@ -31,6 +35,30 @@ def nmap_port(guest_ip: str, port: int) -> bool:
 def read_file(file_name: str) -> str:
     with open(file_name) as file:
         return file.read()
+
+
+def read_pool_config(name: str) -> str:
+    """Read a pool configuration file by basename.
+
+    Resolution:
+      1. If [backend_pool] config_files_path is set and
+         <config_files_path>/<name> exists on disk, read it.
+      2. Otherwise read the bundled cowrie.data/pool_configs/<name>.
+
+    Raises FileNotFoundError if neither produces a file.
+    """
+    try:
+        override = CowrieConfig.get("backend_pool", "config_files_path")
+    except configparser.Error:
+        override = ""
+
+    if override:
+        path = os.path.join(override, name)
+        if os.path.isfile(path):
+            with open(path) as f:
+                return f.read()
+
+    return read_data_bytes("pool_configs", name).decode("utf-8")
 
 
 def to_byte(n: int) -> str:
