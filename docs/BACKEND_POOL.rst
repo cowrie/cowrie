@@ -118,9 +118,24 @@ VM will take at least ~20MB in storage.
 XML configs (advanced)
 ======================
 
-You can change libvirt's XML configs from the default ones in ``share/cowrie/pool_configs``.
-However, if you're using one of the default images provided, then you probably don't
-need to.
+The default libvirt XML templates (``default_guest.xml``,
+``default_filter.xml``, ``default_network.xml``, plus the architecture-
+specific ``aarch64_guest.xml``, ``wrt_arm_guest.xml``, ``wrt_x86_guest.xml``)
+ship inside the cowrie package at ``src/cowrie/data/pool_configs/``.
+If you are using one of the default images, you most likely do not need
+to change them.
+
+To override one or more of these templates without touching the bundled
+copies, set ``[backend_pool] config_files_path`` in ``cowrie.cfg`` to a
+directory of your choice and drop the files you want to replace into
+it. Cowrie reads each XML by basename:
+
+  1. ``<config_files_path>/<basename>.xml`` if the file exists; else
+  2. the bundled ``src/cowrie/data/pool_configs/<basename>.xml``.
+
+Only the files you actually override need to exist in your directory;
+anything missing falls through to the bundled copy. Leave
+``config_files_path`` unset to use the bundled templates for all of them.
 
 Guest configurations
 ====================
