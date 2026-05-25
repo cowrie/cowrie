@@ -5,8 +5,8 @@
 Release Notes
 #############
 
-Unreleased
-**********
+Release 3.0.0
+*************
 
 **BREAKING CHANGES - ACTION REQUIRED:**
 

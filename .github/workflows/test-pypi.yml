@@ -61,7 +61,6 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
           print-hash: true
-          verify-metadata: false
 
       - name: Sleep for publishing
         run: sleep 60s

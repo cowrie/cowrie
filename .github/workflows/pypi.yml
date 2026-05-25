@@ -60,7 +60,6 @@ jobs:
         with:
           verbose: true
           print-hash: true
-          verify-metadata: false
 
       - name: Sleep for publishing
         run: sleep 60s
