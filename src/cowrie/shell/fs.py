@@ -11,7 +11,6 @@ import errno
 import fnmatch
 import hashlib
 import os
-import pickle
 import re
 import stat
 import sys
@@ -22,7 +21,8 @@ from typing import Any
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
-from cowrie.core.resources import open_data_binary, read_data_bytes
+from cowrie.core.resources import read_data_bytes
+from cowrie.shell import honeyfs
 
 (
     A_NAME,
@@ -107,21 +107,8 @@ class PermissionDenied(Exception):
 
 class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
-        self.fs: list[Any]
-
-        filesystem = CowrieConfig.get("shell", "filesystem", fallback=None)
         try:
-            if filesystem:
-                try:
-                    with open(filesystem, "rb") as f:
-                        self.fs = pickle.load(f)
-                except UnicodeDecodeError:
-                    with open(filesystem, "rb") as f:
-                        self.fs = pickle.load(f, encoding="utf8")
-            else:
-                log.msg("Loading default pickle file")
-                with open_data_binary("fs.pickle") as f:
-                    self.fs = pickle.load(f)
+            self.fs: list[Any] = honeyfs.get_tree()
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
             sys.exit(2)
