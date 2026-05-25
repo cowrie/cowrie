@@ -22,6 +22,8 @@ import time
 from pathlib import Path
 from typing import NoReturn
 
+from cowrie.core.resources import read_data_bytes
+
 
 def get_pid_file() -> Path:
     """Get the path to the PID file (cwd-relative)."""
@@ -240,6 +242,25 @@ def cowrie_shell() -> NoReturn:
     os.execvp(shell, [shell])
 
 
+def cowrie_init() -> None:
+    """Materialise ./etc/cowrie.cfg from the bundled template.
+
+    Intended for fresh state directories (pip-install Mode A): the user
+    cd's into the directory they want cowrie to run in, runs `cowrie
+    init` once, edits the config to taste, then `cowrie start`.
+
+    Refuses to overwrite an existing ./etc/cowrie.cfg.
+    """
+    target = Path("etc/cowrie.cfg")
+    if target.exists():
+        print(f"ERROR: {target} already exists; refusing to overwrite.")
+        sys.exit(1)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(read_data_bytes("etc", "cowrie.cfg.dist"))
+    print(f"Wrote {target}")
+    print("Edit it to customise hostname, ports, etc., then run `cowrie start`.")
+
+
 def main() -> NoReturn:
     """Main entry point for the cowrie management script."""
     check_root()
@@ -247,6 +268,7 @@ def main() -> NoReturn:
     parser.add_argument(
         "command",
         choices=[
+            "init",
             "start",
             "stop",
             "force-stop",
@@ -264,7 +286,10 @@ def main() -> NoReturn:
 
     parsed_args = parser.parse_args()
 
-    if parsed_args.command == "start":
+    if parsed_args.command == "init":
+        cowrie_init()
+        sys.exit(0)
+    elif parsed_args.command == "start":
         cowrie_start(parsed_args.args)
     elif parsed_args.command == "stop":
         cowrie_stop()
