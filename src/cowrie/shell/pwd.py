@@ -22,23 +22,23 @@ class Passwd:
     passwords.
     """
 
-    try:
-        passwd_contents = read_honeyfs_bytes("etc/passwd").decode("ascii").splitlines()
-    except Exception as e:
-        log.err(e, "ERROR: Failed to load /etc/passwd")
-        sys.exit(2)
-
     passwd: list[dict[str, Any]]
 
     def __init__(self) -> None:
+        self.passwd = []
         self.load()
 
     def load(self) -> None:
         """
         Load /etc/passwd
         """
-        self.passwd = []
-        for rawline in self.passwd_contents:
+        try:
+            raw = read_honeyfs_bytes("etc/passwd").decode("ascii")
+        except Exception as err:
+            log.err(err, "ERROR: Failed to load /etc/passwd")
+            sys.exit(2)
+
+        for rawline in raw.splitlines():
             line = rawline.strip()
             if not line:
                 continue
@@ -134,15 +134,21 @@ class Group:
 
     group: list[dict[str, Any]]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        self.group = []
         self.load()
 
     def load(self) -> None:
         """
         Load /etc/group
         """
-        self.group = []
-        for rawline in read_honeyfs_bytes("etc/group").decode("ascii").splitlines():
+        try:
+            raw = read_honeyfs_bytes("etc/group").decode("ascii")
+        except Exception as err:
+            log.err(err, "ERROR: Failed to load /etc/group")
+            sys.exit(2)
+
+        for rawline in raw.splitlines():
             line = rawline.strip()
             if not line:
                 continue
