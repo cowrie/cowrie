@@ -29,13 +29,26 @@ def get_pid_file() -> Path:
 
 
 def check_initialized() -> None:
-    """Refuse to start unless the current directory looks like a cowrie
-    state directory (has ./etc/cowrie.cfg or ./etc/cowrie.cfg.dist)."""
-    if Path("etc/cowrie.cfg").is_file() or Path("etc/cowrie.cfg.dist").is_file():
+    """Refuse to start unless cwd looks like a cowrie state directory or a
+    cowrie source checkout. Marker files (any one of):
+
+      - ./etc/cowrie.cfg           operator config
+      - ./etc/cowrie.cfg.dist      operator-extracted defaults template
+      - ./src/cowrie/data/etc/cowrie.cfg.dist  source-checkout repo root
+    """
+    markers = (
+        Path("etc/cowrie.cfg"),
+        Path("etc/cowrie.cfg.dist"),
+        Path("src/cowrie/data/etc/cowrie.cfg.dist"),
+    )
+    if any(m.is_file() for m in markers):
         return
     print(
         "ERROR: cowrie is not initialised in this directory.\n"
-        "  Expected ./etc/cowrie.cfg or ./etc/cowrie.cfg.dist.\n"
+        "  Expected one of:\n"
+        "    ./etc/cowrie.cfg\n"
+        "    ./etc/cowrie.cfg.dist\n"
+        "    ./src/cowrie/data/etc/cowrie.cfg.dist  (source checkout)\n"
         "  cd into your cowrie state directory before starting."
     )
     sys.exit(1)

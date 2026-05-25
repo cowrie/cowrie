@@ -40,6 +40,13 @@ class CheckInitializedTests(unittest.TestCase):
 
         cowrie_script.check_initialized()  # should not raise
 
+    def test_accepts_source_checkout_layout(self) -> None:
+        bundled = Path(self.tmpdir) / "src" / "cowrie" / "data" / "etc"
+        bundled.mkdir(parents=True)
+        (bundled / "cowrie.cfg.dist").write_text("")
+
+        cowrie_script.check_initialized()  # should not raise
+
     def test_refuses_when_neither_present(self) -> None:
         stderr = io.StringIO()
         with (
