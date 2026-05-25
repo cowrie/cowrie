@@ -53,14 +53,14 @@ state_path = var/lib/cowrie
 etc_path = etc
 
 
-# Directory where virtual file contents are kept in.
+# Directory where operator-provided file contents are kept.
 #
-# This is only used by commands like 'cat' to display the contents of files.
-# Adding files here is not enough for them to appear in the honeypot - the
-# actual virtual filesystem is kept in filesystem_file (see below)
+# Used by commands like 'cat' to display per-file overrides on top of the
+# bundled defaults that ship in fs.pickle. Adding a file here only takes
+# effect if the same path exists in the filesystem pickle (see below).
 #
-# (default: honeyfs)
-contents_path = honeyfs
+# When unset, all file contents come from the bundled pickle.
+# contents_path = /opt/cowrie/honeyfs
 
 
 # Directory for creating simple commands that only output text.
