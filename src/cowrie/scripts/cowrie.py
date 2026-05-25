@@ -23,17 +23,22 @@ from pathlib import Path
 from typing import NoReturn
 
 
-def find_cowrie_directory() -> Path:
-    """Determine the Cowrie directory based on the script location."""
-    script_path = Path(__file__).resolve()
-    # Go up from scripts/cowrie.py to src/cowrie to root
-    return script_path.parent.parent.parent.parent
-
-
 def get_pid_file() -> Path:
-    """Get the path to the PID file."""
-    cowrie_dir = find_cowrie_directory()
-    return cowrie_dir / "var" / "run" / "cowrie.pid"
+    """Get the path to the PID file (cwd-relative)."""
+    return Path("var/run/cowrie.pid")
+
+
+def check_initialized() -> None:
+    """Refuse to start unless the current directory looks like a cowrie
+    state directory (has ./etc/cowrie.cfg or ./etc/cowrie.cfg.dist)."""
+    if Path("etc/cowrie.cfg").is_file() or Path("etc/cowrie.cfg.dist").is_file():
+        return
+    print(
+        "ERROR: cowrie is not initialised in this directory.\n"
+        "  Expected ./etc/cowrie.cfg or ./etc/cowrie.cfg.dist.\n"
+        "  cd into your cowrie state directory before starting."
+    )
+    sys.exit(1)
 
 
 def read_pid() -> int | None:
@@ -77,18 +82,9 @@ def cowrie_status() -> None:
         remove_stale_pidfile()
 
 
-def setup_environment() -> None:
-    """Set up the environment for running Cowrie."""
-    cowrie_dir = find_cowrie_directory()
-    os.chdir(cowrie_dir)
-
-
 def first_time_use() -> None:
-    """Display first-time use message."""
-    cowrie_dir = find_cowrie_directory()
-    log_file = cowrie_dir / "var" / "log" / "cowrie" / "cowrie.log"
-
-    if not log_file.exists():
+    """Display first-time use message (cwd-relative log path)."""
+    if not Path("var/log/cowrie/cowrie.log").exists():
         print()
         print("Join the Cowrie community at: https://www.cowrie.org/slack/")
         print()
@@ -113,7 +109,7 @@ def check_root() -> None:
 
 def cowrie_start(args: list[str]) -> NoReturn:
     """Start the Cowrie service."""
-    setup_environment()
+    check_initialized()
     first_time_use()
     python_version_warning()
 

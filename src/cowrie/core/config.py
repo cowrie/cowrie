@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import configparser
 from os import environ
-from os.path import abspath, dirname, exists, join
+from os.path import exists
 
 from twisted.python import log
 
@@ -55,16 +55,22 @@ def readConfigFile(cfgfile: list[str] | str) -> configparser.ConfigParser:
 
 def get_config_path() -> list[str]:
     """
-    Get absolute path to the config file
-    """
-    current_path = abspath(dirname(__file__))
-    root = "/".join(current_path.split("/")[:-3])
+    Locate cowrie configuration files. Search order, cwd-relative except
+    the system-wide path:
 
+      1. ./etc/cowrie.cfg.dist  (source-checkout defaults)
+      2. /etc/cowrie/cowrie.cfg (system-wide install)
+      3. ./etc/cowrie.cfg       (operator overrides)
+      4. ./cowrie.cfg           (operator overrides, flat layout)
+
+    Returns the absolute paths of all files that exist, in the order
+    configparser should read them (later files override earlier ones).
+    """
     config_files = [
-        join(root, "etc/cowrie.cfg.dist"),
+        "etc/cowrie.cfg.dist",
         "/etc/cowrie/cowrie.cfg",
-        join(root, "etc/cowrie.cfg"),
-        join(root, "cowrie.cfg"),
+        "etc/cowrie.cfg",
+        "cowrie.cfg",
     ]
     found_confs = [path for path in config_files if exists(path)]
 
