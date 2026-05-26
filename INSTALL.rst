@@ -22,7 +22,7 @@ Contents
 * :ref:`Step 1: System dependencies<INSTALL:Step 1: System dependencies>`
 * :ref:`Step 2: Create a user account<INSTALL:Step 2: Create a user account>`
 * :ref:`Step 3: Install Cowrie<INSTALL:Step 3: Install Cowrie>`
-* :ref:`Step 4: Initialise a state directory<INSTALL:Step 4: Initialise a state directory>`
+* :ref:`Step 4: Initialise the state directory<INSTALL:Step 4: Initialise the state directory>`
 * :ref:`Step 5: Configure<INSTALL:Step 5: Configure>`
 * :ref:`Step 6: Start Cowrie<INSTALL:Step 6: Start Cowrie>`
 * :ref:`Step 7: Listening on port 22 (OPTIONAL)<INSTALL:Step 7: Listening on port 22 (OPTIONAL)>`
