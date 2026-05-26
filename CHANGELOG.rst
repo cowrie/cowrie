@@ -60,6 +60,12 @@ Release 3.0.0
   and ``processes`` commented out (each documents how to override).
 * ``data_path`` removed from cfg.dist.
 
+**DEPENDENCIES:**
+
+* ``tftpy`` removed from runtime dependencies. The TFTP client
+  (``cowrie/commands/tftp.py``) uses a Twisted ``DatagramProtocol``
+  implementation; tftpy was never imported.
+
 **INTERNAL:**
 
 * New ``cowrie/shell/honeyfs.py`` module owns the per-process pickle
@@ -75,6 +81,58 @@ Release 3.0.0
   file contents into an already-built pickle.
 * ``Passwd`` and ``Group`` classes moved from class-body load to
   instance ``__init__``.
+* ``backend_pool`` XML config templates now use a bundled-data cascade
+  matching the honeyfs pattern. ``[backend_pool] config_files_path``
+  is optional; unset falls through to bundled defaults via
+  ``importlib.resources``.
+* CI smoke tests for PyPI packages replaced the no-op ``twistd cowrie``
+  invocation with checks that verify the entry point, bundled resources,
+  ``cowrie init`` output, and the init-marker guard on ``cowrie start``.
+
+
+Releases 2.9.1 -- 2.9.20
+*************************
+
+**NEW FEATURES:**
+
+* **New shell commands**: ``cut``.
+* **IPv6 support**: ``ifconfig`` and ``netstat`` now show Global Unicast
+  Addresses; ``get_endpoints_from_section`` detects IPv6 listen addresses.
+* **LLM proxy support**: the LLM backend reads ``HTTP_PROXY`` /
+  ``HTTPS_PROXY`` environment variables for outbound requests.
+* **LLM Anthropic provider**: Claude can now be used as an LLM backend
+  alongside OpenAI. The context prompt sent to the model is configurable.
+* **Shell script execution**: scripts created via output redirection
+  (e.g. ``cat > script.sh``) can now be executed.
+* **CVE-2026-24061 detection**: telnet NEW-ENVIRON exploit attempts are
+  detected and logged; the honeypot emulates the vulnerable response.
+* **OS fingerprint update**: default emulated OS bumped to Debian 12 /
+  kernel 6.1.
+* **SPDX / REUSE compliance**: all source files carry SPDX license
+  headers; ``reuse lint`` passes in CI.
+
+**BUG FIXES:**
+
+* **SSRF protection bypass** in ``ftpget``, ``tftp``, and ``nc`` commands
+  (reserved IP range checks were bypassable).
+* ``chmod --help`` and ``--version`` were broken.
+* ``chattr`` command was shadowed by a no-op stub.
+* ``wget`` saved downloaded files to ``/`` instead of the session's cwd.
+* ``playlog`` now shows output for exec sessions.
+* File-descriptor redirection parsing handles more edge cases.
+* Tab completion no longer errors on non-existing directories.
+* ``backend_pool`` NAT errors in remote mode when the client protocol
+  was not yet initialised or already closed.
+* Telnet infinite recursion when ``onResult`` callback is ``None``.
+* ``nc`` command: more realistic output and abuse-protection limits.
+
+**INFRASTRUCTURE:**
+
+* Docker base image upgraded to Debian 13 (trixie) / Python 3.13.
+* Twisted bumped to 26.4.0 with stricter typing adopted.
+* Malshare and Cuckoo output plugins ported from ``requests`` to ``treq``.
+* Weekly automated release workflow added.
+* Bundled ``fs.pickle`` now embeds file contents (``A_CONTENTS`` bytes).
 
 
 Release 2.9.0

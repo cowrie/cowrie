@@ -53,6 +53,7 @@ class Output(cowrie.core.output.Output):
             self.url,
             data=b"[" + msg + b"]",
             headers=self.headers,
+            allow_redirects=False,
         )
 
         if resp.code != 200:

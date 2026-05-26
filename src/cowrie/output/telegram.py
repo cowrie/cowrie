@@ -66,6 +66,7 @@ class Output(cowrie.core.output.Output):
                     ("parse_mode", "HTML"),
                     ("text", message),
                 ],
+                allow_redirects=False,
             )
         except Exception:
             log.msg("Telegram plugin request error")

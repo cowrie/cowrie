@@ -173,6 +173,7 @@ class Output(cowrie.core.output.Output):
                 headers=headers,
                 data=json.dumps(payload).encode("utf-8"),
                 timeout=HTTP_TIMEOUT,
+                allow_redirects=False,
             )
             body = yield response.text()
         except (

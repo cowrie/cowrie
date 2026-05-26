@@ -73,6 +73,7 @@ class Output(cowrie.core.output.Output):
                     b"Content-Type": [b"application/json"],
                     b"User-Agent": [COWRIE_USER_AGENT],
                 },
+                allow_redirects=False,
             )
             content = yield r.text()
             if self.debug:

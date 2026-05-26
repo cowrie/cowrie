@@ -156,7 +156,7 @@ class Command_echo(HoneyPotCommand):
                 string += "\n"
 
             if escape_decode:
-                data: bytes = codecs.escape_decode(string)[0]  # type: ignore
+                data: bytes = codecs.escape_decode(string)[0]
                 self.writeBytes(data)
             else:
                 self.write(string)
@@ -188,7 +188,7 @@ class Command_printf(HoneyPotCommand):
                 if s.endswith("\\c"):
                     s = s[:-2]
 
-                data: bytes = codecs.escape_decode(s)[0]  # type: ignore
+                data: bytes = codecs.escape_decode(s)[0]
                 self.writeBytes(data)
 
 

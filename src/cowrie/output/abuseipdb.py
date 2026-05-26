@@ -384,6 +384,7 @@ class Reporter:
                 url=ABUSEIP_URL,
                 headers=self.headers,
                 params=params,
+                allow_redirects=False,
             )
 
         except Exception as e:

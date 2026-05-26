@@ -22,7 +22,7 @@ Contents
 * :ref:`Step 1: System dependencies<INSTALL:Step 1: System dependencies>`
 * :ref:`Step 2: Create a user account<INSTALL:Step 2: Create a user account>`
 * :ref:`Step 3: Install Cowrie<INSTALL:Step 3: Install Cowrie>`
-* :ref:`Step 4: Initialise a state directory<INSTALL:Step 4: Initialise a state directory>`
+* :ref:`Step 4: Initialise the state directory<INSTALL:Step 4: Initialise the state directory>`
 * :ref:`Step 5: Configure<INSTALL:Step 5: Configure>`
 * :ref:`Step 6: Start Cowrie<INSTALL:Step 6: Start Cowrie>`
 * :ref:`Step 7: Listening on port 22 (OPTIONAL)<INSTALL:Step 7: Listening on port 22 (OPTIONAL)>`
@@ -38,15 +38,18 @@ Quick start: pip install
 
 For most operators, this is the shortest path::
 
-    $ python3 -m venv ~/cowrie-env
-    $ source ~/cowrie-env/bin/activate
+    $ mkdir ~/my-honeypot && cd ~/my-honeypot
+    $ python3 -m venv cowrie-env
+    $ source cowrie-env/bin/activate
     (cowrie-env) $ pip install cowrie
-    (cowrie-env) $ mkdir ~/my-honeypot && cd ~/my-honeypot
     (cowrie-env) $ cowrie init
     (cowrie-env) $ $EDITOR etc/cowrie.cfg     # optional
     (cowrie-env) $ cowrie start
 
-The pip-install workflow described here requires Cowrie 2.10 or later
+The venv lives inside the honeypot directory alongside ``etc/`` and
+``var/``, keeping each honeypot self-contained.
+
+The pip-install workflow described here requires Cowrie 3.0.0 or later
 (or the current ``main`` branch). Earlier releases need the source
 checkout path below.
 
@@ -95,12 +98,17 @@ Step 3: Install Cowrie
 Pip install (operators)
 =======================
 
-::
+Pick the directory you want cowrie state (logs, downloads, host keys,
+ttylogs) to live in, create the venv inside it, and install::
 
+    $ mkdir ~/my-honeypot && cd ~/my-honeypot
     $ python3 -m venv cowrie-env
     $ source cowrie-env/bin/activate
     (cowrie-env) $ python -m pip install --upgrade pip
     (cowrie-env) $ python -m pip install cowrie
+
+The venv is kept alongside ``etc/`` and ``var/`` so the honeypot
+directory is self-contained.
 
 Source checkout (developers)
 ============================
@@ -125,25 +133,26 @@ test runner, and docs toolchain that match what CI uses.
 In source-checkout mode, the repo root *is* the state directory.
 ``cowrie start`` detects this and skips the ``cowrie init`` step.
 
-Step 4: Initialise a state directory
-************************************
+Step 4: Initialise the state directory
+**************************************
 
 (Skip this step if you are using a source checkout.)
 
-Pick a directory where Cowrie should keep its config and runtime state.
-Cowrie writes logs, downloaded artifacts, ttylogs, and host keys under
-this directory::
+From inside the honeypot directory you created in Step 3, run::
 
-    (cowrie-env) $ mkdir ~/my-honeypot
-    (cowrie-env) $ cd ~/my-honeypot
     (cowrie-env) $ cowrie init
     Wrote etc/cowrie.cfg
-    Edit it to customise hostname, ports, etc., then run `cowrie start`.
+    Created var/log/cowrie, var/lib/cowrie, var/lib/cowrie/downloads, var/lib/cowrie/tty, var/run
+    Edit etc/cowrie.cfg to customise hostname, ports, etc., then run `cowrie start`.
 
-``cowrie init`` writes ``./etc/cowrie.cfg`` from the bundled template.
-If the file already exists, ``cowrie init`` refuses with a non-zero exit
-code rather than overwriting your edits — re-running ``cowrie init`` is
-*not* idempotent.
+``cowrie init`` writes ``./etc/cowrie.cfg`` from the bundled template
+and creates the ``var/`` skeleton so the first ``cowrie start`` has
+somewhere to write logs and a PID file. SSH host keys are generated
+on first start.
+
+If the config already exists, ``cowrie init`` refuses with a non-zero
+exit code rather than overwriting your edits — re-running ``cowrie
+init`` is *not* idempotent.
 
 Step 5: Configure
 *****************
