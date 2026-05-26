@@ -77,7 +77,7 @@ export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE := $(shell python -m setuptools
 
 
 .PHONY: build-fs-pickle
-build-fs-pickle: ## Rebuild src/cowrie/data/fs.pickle from a Debian container
+build-fs-pickle: ## Rebuild src/cowrie/data/fs.pickle from a container (FAMILY=apt|opkg|none, IMAGE=...)
 	DOCKER=$(DOCKER) bin/build-fs-pickle.sh
 
 .PHONY: docker-build
