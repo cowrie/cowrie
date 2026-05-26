@@ -72,6 +72,7 @@ class Output(cowrie.core.output.Output):
                     url=url,
                     files={"upload": (fileName, upload)},
                     timeout=HTTP_TIMEOUT,
+                    allow_redirects=False,
                 )
         except (
             defer.CancelledError,
