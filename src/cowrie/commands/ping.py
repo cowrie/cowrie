@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import getopt
 import hashlib
+import ipaddress
 import random
 import re
 import socket
@@ -38,6 +39,12 @@ class Command_ping(HoneyPotCommand):
             return False
         else:
             return True
+
+    def is_loopback(self, address: str) -> bool:
+        try:
+            return ipaddress.ip_address(address).is_loopback
+        except ValueError:
+            return False
 
     def start(self) -> None:
         self.host = ""
@@ -93,9 +100,16 @@ class Command_ping(HoneyPotCommand):
         self.count = 0
 
     def showreply(self) -> None:
-        ms = 40 + random.random() * 10
+        if self.is_loopback(self.ip):
+            ms = random.uniform(0, 0.5)
+            ttl = 64
+            time_str = f"{ms:.3f}"
+        else:
+            ms = 40 + random.uniform(0, 10)
+            ttl = 50
+            time_str = f"{ms:.1f}"
         self.write(
-            f"64 bytes from {self.host} ({self.ip}): icmp_seq={self.count + 1} ttl=50 time={ms:.1f} ms\n"
+            f"64 bytes from {self.host} ({self.ip}): icmp_seq={self.count + 1} ttl={ttl} time={time_str} ms\n"
         )
         self.count += 1
         if self.count == self.max:
@@ -112,7 +126,10 @@ class Command_ping(HoneyPotCommand):
         self.write(
             f"{self.count} packets transmitted, {self.count} received, 0% packet loss, time 907ms\n"
         )
-        self.write("rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n")
+        if self.is_loopback(self.ip):
+            self.write("rtt min/avg/max/mdev = 0.031/0.045/0.062/0.012 ms\n")
+        else:
+            self.write("rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n")
 
     def handle_CTRL_C(self) -> None:
         if self.running is False:
