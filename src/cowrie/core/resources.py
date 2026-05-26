@@ -15,7 +15,7 @@ from cowrie import data
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from importlib.resources.abc import Traversable  # ty: ignore[unresolved-import]
+    from importlib.abc import Traversable
 
 
 def _data_resource(*parts: str) -> Traversable:

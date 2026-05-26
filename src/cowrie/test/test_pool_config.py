@@ -15,7 +15,6 @@ from pathlib import Path
 
 from backend_pool import util
 
-
 ENV_PATH = "COWRIE_BACKEND_POOL_CONFIG_FILES_PATH"
 
 
