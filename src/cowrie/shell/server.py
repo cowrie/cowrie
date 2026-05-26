@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import open_data_binary
 from cowrie.shell import fs
 
 if TYPE_CHECKING:
@@ -46,24 +47,21 @@ class CowrieServer:
 
         log.msg(f"Initialized emulated server as architecture: {self.arch}")
 
-    def getCommandOutput(self, file):
-        """
-        Reads process output from JSON file.
-        """
-        with open(file, encoding="utf-8") as f:
-            cmdoutput = json.load(f)
-        return cmdoutput
-
     def initFileSystem(self, home: str) -> None:
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(self.arch, home)
 
+        processes = CowrieConfig.get("shell", "processes", fallback=None)
         try:
-            self.process = self.getCommandOutput(
-                CowrieConfig.get("shell", "processes")
-            )["command"]["ps"]
-        except configparser.Error as e:
+            if processes:
+                with open(processes, encoding="utf-8") as f:
+                    cmdoutput = json.load(f)
+            else:
+                with open_data_binary("cmdoutput.json") as f:
+                    cmdoutput = json.load(f)
+            self.process = cmdoutput["command"]["ps"]
+        except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
             log.msg(f"Could not load process list {e!r}")
             self.process = None

@@ -11,17 +11,13 @@ Telnet Transport and Authentication for the Honeypot
 
 from __future__ import annotations
 
-import configparser
-import importlib.resources
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from twisted.internet import protocol
 from twisted.python import log
 
-from cowrie import data
-from cowrie.core.config import CowrieConfig
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 from cowrie.telnet.transport import CowrieTelnetTransport
 from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
@@ -59,22 +55,12 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     def startFactory(self) -> None:
         """ """
         try:
-            banner_path = Path(
-                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net"
-            )
             self.banner = (
-                banner_path.read_bytes().decode("utf-8", errors="replace").encode("utf-8")
+                read_honeyfs_bytes("etc/issue.net")
+                .decode("utf-8", errors="replace")
+                .encode("utf-8")
             )
-        except configparser.Error as e:
-            log.msg(f"Loading default /etc/issue.net file: {e!r}")
-            resources_path = importlib.resources.files(data)
-            fallback_path = (
-                resources_path.joinpath("honeyfs").joinpath("etc").joinpath("issue.net")
-            )
-            self.banner = (
-                fallback_path.read_bytes().decode("utf-8", errors="replace").encode("utf-8")
-            )
-        except OSError as e:
+        except FileNotFoundError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             self.banner = b""
 

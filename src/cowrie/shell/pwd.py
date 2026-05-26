@@ -5,18 +5,14 @@
 
 from __future__ import annotations
 
-import configparser
-import importlib.resources
 import sys
 from binascii import crc32
-from pathlib import Path
 from random import randint, seed
 from typing import Any
 
 from twisted.python import log
 
-from cowrie import data
-from cowrie.core.config import CowrieConfig
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 
 
 class Passwd:
@@ -26,33 +22,23 @@ class Passwd:
     passwords.
     """
 
-    try:
-        passwd_path = Path(
-            "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path"))
-        )
-        passwd_contents = passwd_path.read_text(encoding="ascii").split("\n")
-    except configparser.Error:
-        log.msg("Loading default /etc/passwd file from pickle file")
-        resources_path = importlib.resources.files(data)
-        fallback_path = (
-            resources_path.joinpath("honeyfs").joinpath("etc").joinpath("passwd")
-        )
-        passwd_contents = fallback_path.read_text(encoding="ascii").split("\n")
-    except Exception as e:
-        log.err(e, "ERROR: Failed to load /etc/passwd")
-        sys.exit(2)
-
     passwd: list[dict[str, Any]]
 
     def __init__(self) -> None:
+        self.passwd = []
         self.load()
 
     def load(self) -> None:
         """
         Load /etc/passwd
         """
-        self.passwd = []
-        for rawline in self.passwd_contents:
+        try:
+            raw = read_honeyfs_bytes("etc/passwd").decode("ascii")
+        except Exception as err:
+            log.err(err, "ERROR: Failed to load /etc/passwd")
+            sys.exit(2)
+
+        for rawline in raw.splitlines():
             line = rawline.strip()
             if not line:
                 continue
@@ -146,52 +132,47 @@ class Group:
     /etc/group.
     """
 
-    group_file = "{}/etc/group".format(
-        CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
-    )
     group: list[dict[str, Any]]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        self.group = []
         self.load()
 
     def load(self) -> None:
         """
         Load /etc/group
         """
-        self.group = []
-        with open(self.group_file, encoding="ascii") as f:
-            while True:
-                rawline = f.readline()
-                if not rawline:
-                    break
+        try:
+            raw = read_honeyfs_bytes("etc/group").decode("ascii")
+        except Exception as err:
+            log.err(err, "ERROR: Failed to load /etc/group")
+            sys.exit(2)
 
-                line = rawline.strip()
-                if not line:
-                    continue
+        for rawline in raw.splitlines():
+            line = rawline.strip()
+            if not line:
+                continue
 
-                if line.startswith("#"):
-                    continue
+            if line.startswith("#"):
+                continue
 
-                (gr_name, _, gr_gid, gr_mem) = line.split(":")
+            (gr_name, _, gr_gid, gr_mem) = line.split(":")
 
-                e: dict[str, str | int] = {}
-                e["gr_name"] = gr_name
-                try:
-                    e["gr_gid"] = int(gr_gid)
-                except ValueError:
-                    e["gr_gid"] = 1001
-                e["gr_mem"] = gr_mem
+            e: dict[str, str | int] = {}
+            e["gr_name"] = gr_name
+            try:
+                e["gr_gid"] = int(gr_gid)
+            except ValueError:
+                e["gr_gid"] = 1001
+            e["gr_mem"] = gr_mem
 
-                self.group.append(e)
+            self.group.append(e)
 
     def save(self) -> None:
         """
         Save the group db
         Note: this is subject to races between cowrie instances, but hey ...
         """
-        #        with open(self.group_file, 'w') as f:
-        #            for (login, uid, passwd) in self.userdb:
-        #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
     def getgrnam(self, name: str) -> dict[str, Any]:

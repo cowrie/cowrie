@@ -7,13 +7,10 @@
 
 from __future__ import annotations
 
-import configparser
 import errno
 import fnmatch
 import hashlib
-import importlib.resources
 import os
-import pickle
 import re
 import stat
 import sys
@@ -23,8 +20,9 @@ from typing import Any
 
 from twisted.python import log
 
-from cowrie import data
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_data_bytes
+from cowrie.shell import honeyfs
 
 (
     A_NAME,
@@ -109,18 +107,8 @@ class PermissionDenied(Exception):
 
 class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
-        self.fs: list[Any]
-
         try:
-            with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
-                self.fs = pickle.load(f)
-        except UnicodeDecodeError:
-            with open(CowrieConfig.get("shell", "filesystem"), "rb") as f:
-                self.fs = pickle.load(f, encoding="utf8")
-        except configparser.NoSectionError:
-            log.msg("Loading default pickle file")
-            with importlib.resources.open_binary(data, "fs.pickle") as f:
-                self.fs = pickle.load(f)
+            self.fs: list[Any] = honeyfs.get_tree()
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
             sys.exit(2)
@@ -136,12 +124,18 @@ class HoneyPotFilesystem:
         # Keep count of new files, so we can have an artificial limit
         self.newcount: int = 0
 
-        # Get the honeyfs path from the config file and explore it for file
-        # contents:
-        try:
-            self.init_honeyfs(CowrieConfig.get("honeypot", "contents_path"))
-        except Exception as e:
-            log.msg(f"Failed to load honeyfs {e!r}")
+        # If the operator has set contents_path, walk it and mark
+        # A_REALFILE on matching pickle entries so file_contents reads
+        # from disk. When unset (the default), every file is served from
+        # the pickle's A_CONTENTS bytes.
+        contents_path = CowrieConfig.get(
+            "honeypot", "contents_path", fallback=""
+        )
+        if contents_path:
+            try:
+                self.init_honeyfs(contents_path)
+            except Exception as e:
+                log.msg(f"Failed to load honeyfs {e!r}")
 
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """
@@ -228,6 +222,9 @@ class HoneyPotFilesystem:
         for part in path.split("/"):
             if not part:
                 continue
+            if not isinstance(cwd[A_CONTENTS], list):
+                # walked into a non-directory entry (e.g. a file's bytes)
+                raise FileNotFound
             ok = False
             for c in cwd[A_CONTENTS]:
                 if c[A_NAME] == part:
@@ -340,10 +337,7 @@ class HoneyPotFilesystem:
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
-            with importlib.resources.as_file(
-                importlib.resources.files(data).joinpath("arch").joinpath(self.arch)
-            ) as arch:
-                return arch.read_bytes()
+            return read_data_bytes("arch", self.arch)
         return b""
 
     def mkfile(
