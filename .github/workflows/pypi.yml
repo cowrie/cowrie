@@ -65,8 +65,30 @@ jobs:
         run: sleep 60s
         shell: bash
 
-      - name: Download and test package
+      - name: Smoke-test installed package
         if: ${{ github.repository == 'cowrie/cowrie' }}
         run: |
-           python -m pip install cowrie
-           twistd cowrie
+          set -eu
+          python -m pip install cowrie
+
+          # entry point is registered and on PATH
+          which cowrie
+
+          # bundled package data is reachable via importlib.resources
+          python -c "from cowrie.core.resources import read_data_bytes; assert read_data_bytes('fs.pickle')"
+          python -c "from cowrie.shell.honeyfs import read_honeyfs_bytes; assert b'root:' in read_honeyfs_bytes('etc/passwd')"
+          python -c "from cowrie.core.config import readConfigFile; p = readConfigFile([]); assert 'honeypot' in p.sections()"
+
+          # cowrie init materialises a working state directory
+          mkdir -p /tmp/cowrie-smoke
+          cd /tmp/cowrie-smoke
+          cowrie init
+          test -f etc/cowrie.cfg
+          test -d var/log/cowrie
+          test -d var/lib/cowrie/downloads
+          test -d var/lib/cowrie/tty
+          test -d var/run
+
+          # cowrie start refuses to run from uninitialised dirs
+          rm -rf /tmp/cowrie-empty && mkdir /tmp/cowrie-empty && cd /tmp/cowrie-empty
+          cowrie start 2>&1 | grep -q "not initialised"
