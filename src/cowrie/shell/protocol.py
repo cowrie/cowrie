@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 from importlib import import_module
+from pathlib import Path
 from typing import ClassVar
 
 from twisted.conch import recvline
@@ -245,8 +246,15 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if path is None:
             return None
 
+        relpath = path.lstrip("/")
+        txtcmds_path = CowrieConfig.get("honeypot", "txtcmds_path", fallback="")
+        if txtcmds_path:
+            operator_path = Path(txtcmds_path) / relpath
+            if operator_path.is_file():
+                return self.txtcmd(operator_path.read_bytes())
+
         try:
-            binary_data = read_data_bytes("txtcmds", *path.lstrip("/").split("/"))
+            binary_data = read_data_bytes("txtcmds", *relpath.split("/"))
             return self.txtcmd(binary_data)
         except FileNotFoundError:
             pass
