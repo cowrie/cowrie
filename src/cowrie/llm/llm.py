@@ -107,15 +107,15 @@ class LLMClient:
         )
         self.agent: Agent | ProxyAgent
         if proxy_url:
-            parsed = urllib.parse.urlparse(proxy_url)
-            HostnameEndpoint(
-            reactor, parsed.hostname or "localhost", parsed.port or 8080
-            )
-        self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
-            log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
-        else:
-            self.agent = Agent(reactor, pool=self._conn_pool)
-        self.is_anthropic = "anthropic.com" in self.host
+           parsed = urllib.parse.urlparse(proxy_url)
+           proxy_endpoint = HostnameEndpoint(
+           reactor, parsed.hostname or "localhost", parsed.port or 8080
+           )
+           self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
+           log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
+       else:
+           self.agent = Agent(reactor, pool=self._conn_pool)
+       self.is_anthropic = "anthropic.com" in self.host
 
         if not self.api_key:
             log.msg("WARNING: No LLM API key configured in [llm] section")
