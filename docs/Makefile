@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Minimal makefile for Sphinx documentation
 #
 

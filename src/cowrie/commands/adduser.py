@@ -1,5 +1,7 @@
-# Copyright (c) 2010 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2010 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2015-2023 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
@@ -81,7 +83,7 @@ class Command_adduser(HoneyPotCommand):
             self.schedule_next()
 
     def schedule_next(self) -> None:
-        self.scheduled = reactor.callLater(0.5 + random.random() * 1, self.do_output)  # type: ignore[attr-defined]
+        self.scheduled = reactor.callLater(0.5 + random.random() * 1, self.do_output)
 
     def lineReceived(self, line: str) -> None:
         if self.item + 1 == len(self.output) and line.strip() in ("n", "no"):

@@ -1,4 +1,7 @@
-# Copyright (C) 2026 Anthropic
+# SPDX-FileCopyrightText: 2026 Anthropic
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Tests for telnet NEW-ENVIRON option parsing and CVE-2026-24061 detection.
 

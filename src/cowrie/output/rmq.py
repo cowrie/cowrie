@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import json
@@ -18,16 +22,16 @@ except ImportError:
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        match obj:
+    def default(self, o):
+        match o:
             case NamedConstant() | ValueConstant():
-                return str(obj)
+                return str(o)
             case IPv4Address() | IPv6Address():
-                return obj.host  # Extract the IP address as a string
+                return o.host  # Extract the IP address as a string
             case bytes():
-                return obj.decode("utf-8", errors="replace")  # Convert bytes to string
+                return o.decode("utf-8", errors="replace")  # Convert bytes to string
             case _:
-                return super().default(obj)
+                return super().default(o)
 
 
 class Output(cowrie.core.output.Output):

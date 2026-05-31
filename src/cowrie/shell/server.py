@@ -1,30 +1,6 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. The names of the author(s) may not be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from __future__ import annotations
@@ -37,6 +13,7 @@ from typing import TYPE_CHECKING
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import open_data_binary
 from cowrie.shell import fs
 
 if TYPE_CHECKING:
@@ -70,24 +47,21 @@ class CowrieServer:
 
         log.msg(f"Initialized emulated server as architecture: {self.arch}")
 
-    def getCommandOutput(self, file):
-        """
-        Reads process output from JSON file.
-        """
-        with open(file, encoding="utf-8") as f:
-            cmdoutput = json.load(f)
-        return cmdoutput
-
     def initFileSystem(self, home: str) -> None:
         """
         Do this so we can trigger it later. Not all sessions need file system
         """
         self.fs = fs.HoneyPotFilesystem(self.arch, home)
 
+        processes = CowrieConfig.get("shell", "processes", fallback=None)
         try:
-            self.process = self.getCommandOutput(
-                CowrieConfig.get("shell", "processes")
-            )["command"]["ps"]
-        except configparser.Error as e:
+            if processes:
+                with open(processes, encoding="utf-8") as f:
+                    cmdoutput = json.load(f)
+            else:
+                with open_data_binary("cmdoutput.json") as f:
+                    cmdoutput = json.load(f)
+            self.process = cmdoutput["command"]["ps"]
+        except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
             log.msg(f"Could not load process list {e!r}")
             self.process = None

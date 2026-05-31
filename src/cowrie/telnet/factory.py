@@ -1,4 +1,8 @@
-# Copyright (C) 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2019-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Telnet Transport and Authentication for the Honeypot
 
@@ -7,16 +11,13 @@ Telnet Transport and Authentication for the Honeypot
 
 from __future__ import annotations
 
-import configparser
-import importlib.resources
 import time
 from typing import TYPE_CHECKING
 
 from twisted.internet import protocol
 from twisted.python import log
 
-from cowrie import data
-from cowrie.core.config import CowrieConfig
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 from cowrie.telnet.transport import CowrieTelnetTransport
 from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.telnet_proxy.server_transport import FrontendTelnetTransport
@@ -54,19 +55,12 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     def startFactory(self) -> None:
         """ """
         try:
-            with open(
-                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
-                mode="rb",
-            ) as f:
-                self.banner = f.read()
-        except configparser.Error as e:
-            log.msg(f"Loading default /etc/issue.net file: {e!r}")
-            resources_path = importlib.resources.files(data)
-            config_file_path = (
-                resources_path.joinpath("honeyfs").joinpath("etc").joinpath("issue.net")
+            self.banner = (
+                read_honeyfs_bytes("etc/issue.net")
+                .decode("utf-8", errors="replace")
+                .encode("utf-8")
             )
-            self.banner = config_file_path.read_text(encoding="utf-8").encode()
-        except OSError as e:
+        except FileNotFoundError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             self.banner = b""
 
@@ -81,11 +75,11 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 HoneyPotTelnetAuthProtocol, self.portal
             )
 
-        protocol.ServerFactory.startFactory(self)
+        super().startFactory()
         log.msg("Ready to accept Telnet connections")
 
     def stopFactory(self) -> None:
         """
         Stop output plugins
         """
-        protocol.ServerFactory.stopFactory(self)
+        super().stopFactory()

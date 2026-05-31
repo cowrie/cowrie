@@ -1,5 +1,7 @@
-# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
@@ -43,7 +45,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
     def __init__(self, factory: BackendSSHFactory):
         self.delayedPackets: list[tuple[int, bytes]] = []
-        self.factory: BackendSSHFactory = factory  # type: ignore
+        self.factory: BackendSSHFactory = factory
         self.canAuth: bool = False
         self.authDone: bool = False
 
@@ -109,7 +111,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         # backend auth is done, attackers will now be connected to the backend
         self.authDone = True
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason=None):
         if self.factory.server.pool_interface:
             log.msg(
                 eventid="cowrie.proxy.client_disconnect",

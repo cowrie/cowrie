@@ -1,4 +1,14 @@
 # See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2019 NunoNovais <nuno@novais.me>
+# SPDX-FileCopyrightText: 2019 Nuno Novais <nuno@noais.me>
+# SPDX-FileCopyrightText: 2020-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""
+This module contains the chpasswd commnad
+"""
+
 from __future__ import annotations
 
 from typing import Any

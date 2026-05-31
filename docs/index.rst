@@ -1,3 +1,7 @@
+.. SPDX-FileCopyrightText: 2019-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 .. cowrie documentation master file, created by
    sphinx-quickstart on Sun Dec 30 18:27:51 2018.
    You can adapt this file completely to your liking, but it should at least

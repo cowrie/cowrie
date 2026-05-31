@@ -1,13 +1,15 @@
+# SPDX-FileCopyrightText: 2016-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 attrs==26.1.0
 bcrypt==5.0.0
-cryptography==46.0.6
+cryptography==48.0.0
 hyperlink==21.0.0
-idna==3.11
-packaging==26.0
+idna==3.15
+packaging==26.2
 pyasn1_modules==0.4.2
-requests==2.32.5
 service_identity==24.2.0
-tftpy==0.8.7
 treq==25.5.0
-twisted[conch]==25.5.0
-urllib3==2.6.3
+twisted[conch]==26.4.0
+urllib3==2.7.0

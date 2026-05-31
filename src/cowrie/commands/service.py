@@ -1,5 +1,7 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2016 Γιάννης Παπαϊωάννου <giannispapcod7@gmail.com>
+# SPDX-FileCopyrightText: 2016-2023 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains the service commnad

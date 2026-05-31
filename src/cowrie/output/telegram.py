@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2022 Louren van Garderen <mail@lourenvangarderen.nl>
+# SPDX-FileCopyrightText: 2023-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Simple Telegram Bot logger
 
 import treq
@@ -61,6 +66,7 @@ class Output(cowrie.core.output.Output):
                     ("parse_mode", "HTML"),
                     ("text", message),
                 ],
+                allow_redirects=False,
             )
         except Exception:
             log.msg("Telegram plugin request error")

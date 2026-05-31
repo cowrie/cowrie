@@ -1,30 +1,7 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2017 doomedraven
+# SPDX-FileCopyrightText: 2017-2026 Michel Oosterhof <michel@oosterhof.net>
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. The names of the author(s) may not be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS`` AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 Send downloaded/uplaoded files to Cuckoo
@@ -33,17 +10,35 @@ Send downloaded/uplaoded files to Cuckoo
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
 
-# TODO: use `treq`
-import requests
-from requests.auth import HTTPBasicAuth
+from treq.client import HTTPClient
+from twisted.internet import defer, error, reactor, ssl
 from twisted.python import log
+from twisted.web import client
+from twisted.web.iweb import IPolicyForHTTPS
+from zope.interface import implementer
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
 HTTP_TIMEOUT = 20
+
+
+@implementer(IPolicyForHTTPS)
+class _NoVerifyContextFactory:
+    """
+    Cuckoo deployments are typically local with self-signed certs,
+    so verification is skipped on purpose (matches the old verify=False
+    behaviour of requests).
+    """
+
+    def creatorForNetloc(self, hostname, port):
+        return ssl.CertificateOptions(verify=False)
 
 
 class Output(cowrie.core.output.Output):
@@ -64,6 +59,7 @@ class Output(cowrie.core.output.Output):
         self.api_user = CowrieConfig.get("output_cuckoo", "user")
         self.api_passwd = CowrieConfig.get("output_cuckoo", "passwd", raw=True)
         self.cuckoo_force = int(CowrieConfig.getboolean("output_cuckoo", "force"))
+        self.client = HTTPClient(client.Agent(reactor, _NoVerifyContextFactory()))
 
     def stop(self):
         """
@@ -73,7 +69,6 @@ class Output(cowrie.core.output.Output):
 
     def write(self, event):
         if event["eventid"] == "cowrie.session.file_download":
-            log.msg("Sending file to Cuckoo")
             p = urlparse(event["url"]).path
             if p == "":
                 fileName = event["shasum"]
@@ -84,89 +79,107 @@ class Output(cowrie.core.output.Output):
                 else:
                     fileName = b
 
-            if (
-                self.cuckoo_force
-                or self.cuckoo_check_if_dup(os.path.basename(event["outfile"])) is False
-            ):
-                self.postfile(event["outfile"], fileName)
+            self._maybe_postfile(event["outfile"], fileName)
 
         elif event["eventid"] == "cowrie.session.file_upload":
-            if (
-                self.cuckoo_force
-                or self.cuckoo_check_if_dup(os.path.basename(event["outfile"])) is False
-            ):
-                log.msg("Sending file to Cuckoo")
-                self.postfile(event["outfile"], event["filename"])
+            self._maybe_postfile(event["outfile"], event["filename"])
 
-    def cuckoo_check_if_dup(self, sha256: str) -> bool:
+    @defer.inlineCallbacks
+    def _maybe_postfile(self, outfile, fileName):
+        if not self.cuckoo_force:
+            is_dup = yield self.cuckoo_check_if_dup(os.path.basename(outfile))
+            if is_dup:
+                return
+        log.msg("Sending file to Cuckoo")
+        yield self.postfile(outfile, fileName)
+
+    @defer.inlineCallbacks
+    def cuckoo_check_if_dup(self, sha256: str) -> Generator[Any, Any, bool]:
         """
         Check if file already was analyzed by cuckoo
         """
         try:
             log.msg(f"Looking for tasks for: {sha256}")
-            res = requests.get(
+            response = yield self.client.get(
                 urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode()),
-                verify=False,
-                auth=HTTPBasicAuth(self.api_user, self.api_passwd),
+                auth=(self.api_user, self.api_passwd),
                 timeout=HTTP_TIMEOUT,
             )
-            if res and res.ok:
-                log.msg(
-                    "Sample found in Sandbox, with ID: {}".format(
-                        res.json().get("sample", {}).get("id", 0)
-                    )
-                )
-                return True
+        except (
+            defer.CancelledError,
+            error.ConnectingCancelledError,
+            error.DNSLookupError,
+        ) as e:
+            log.msg(e)
+            return False
         except Exception as e:
             log.msg(e)
+            return False
 
+        if 200 <= response.code < 300:
+            body = yield response.json()
+            log.msg(
+                "Sample found in Sandbox, with ID: {}".format(
+                    body.get("sample", {}).get("id", 0)
+                )
+            )
+            return True
+
+        # Drain the body so the connection returns to the pool.
+        yield response.text()
         return False
 
+    @defer.inlineCallbacks
     def postfile(self, artifact, fileName):
         """
         Send a file to Cuckoo
         """
-        with open(artifact, "rb") as art:
-            files = {"file": (fileName, art.read())}
         try:
-            res = requests.post(
-                urljoin(self.url_base, b"tasks/create/file"),
-                files=files,
-                auth=HTTPBasicAuth(self.api_user, self.api_passwd),
-                verify=False,
-                timeout=HTTP_TIMEOUT,
-            )
-            if res and res.ok:
-                log.msg(
-                    "Cuckoo Request: {}, Task created with ID: {}".format(
-                        res.status_code, res.json()["task_id"]
-                    )
+            with open(artifact, "rb") as art:
+                response = yield self.client.post(
+                    urljoin(self.url_base, b"tasks/create/file"),
+                    files={"file": (fileName, art)},
+                    auth=(self.api_user, self.api_passwd),
+                    timeout=HTTP_TIMEOUT,
                 )
-            else:
-                log.msg(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
             log.msg(f"Cuckoo Request failed: {e}")
+            return
 
+        if 200 <= response.code < 300:
+            body = yield response.json()
+            log.msg(
+                "Cuckoo Request: {}, Task created with ID: {}".format(
+                    response.code, body["task_id"]
+                )
+            )
+        else:
+            yield response.text()
+            log.msg(f"Cuckoo Request failed: {response.code}")
+
+    @defer.inlineCallbacks
     def posturl(self, scanUrl):
         """
         Send a URL to Cuckoo
         """
-        data = {"url": scanUrl}
         try:
-            res = requests.post(
+            response = yield self.client.post(
                 urljoin(self.url_base, b"tasks/create/url"),
-                data=data,
-                auth=HTTPBasicAuth(self.api_user, self.api_passwd),
-                verify=False,
+                data={"url": scanUrl},
+                auth=(self.api_user, self.api_passwd),
                 timeout=HTTP_TIMEOUT,
             )
-            if res and res.ok:
-                log.msg(
-                    "Cuckoo Request: {}, Task created with ID: {}".format(
-                        res.status_code, res.json()["task_id"]
-                    )
-                )
-            else:
-                log.msg(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
             log.msg(f"Cuckoo Request failed: {e}")
+            return
+
+        if 200 <= response.code < 300:
+            body = yield response.json()
+            log.msg(
+                "Cuckoo Request: {}, Task created with ID: {}".format(
+                    response.code, body["task_id"]
+                )
+            )
+        else:
+            yield response.text()
+            log.msg(f"Cuckoo Request failed: {response.code}")

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: LLM client for communicating with OpenAI-compatible APIs.
 # ABOUTME: Sends shell commands to an LLM and returns simulated responses.
 
@@ -101,21 +105,31 @@ class LLMClient:
             or os.environ.get("http_proxy")
             or os.environ.get("HTTP_PROXY")
         )
+        self.agent: Agent | ProxyAgent
         if proxy_url:
             parsed = urllib.parse.urlparse(proxy_url)
             HostnameEndpoint(
             reactor, parsed.hostname or "localhost", parsed.port or 8080
             )
-            self.agent: Agent | ProxyAgent
+        self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
             log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
         else:
             self.agent = Agent(reactor, pool=self._conn_pool)
+        self.is_anthropic = "anthropic.com" in self.host
 
         if not self.api_key:
             log.msg("WARNING: No LLM API key configured in [llm] section")
 
     def _build_headers(self) -> Headers:
         """Build HTTP headers with authentication."""
+        if self.is_anthropic:
+            return Headers(
+                {
+                    b"Content-Type": [b"application/json"],
+                    b"x-api-key": [self.api_key.encode()],
+                    b"anthropic-version": [b"2023-06-01"],
+                }
+            )
         return Headers(
             {
                 b"Content-Type": [b"application/json"],
@@ -124,24 +138,33 @@ class LLMClient:
         )
 
     def _format_request_body(self, prompt: list[str]) -> dict:
-        """Structure the request body for OpenAI chat completions API."""
+        """Structure the request body for the LLM API.
+
+        Anthropic Messages API requires the system prompt as a top-level
+        parameter; OpenAI uses a message with role 'system'.
+        """
+        system_prompt = prompt[0] if prompt else ""
         messages = []
-        for i, message in enumerate(prompt):
-            if i == 0:
-                # First message is our system prompt
-                messages.append({"role": "system", "content": message})
-            elif message.startswith("User:"):
-                content = message[5:].strip()
-                messages.append({"role": "user", "content": content})
+        for message in prompt[1:]:
+            if message.startswith("User:"):
+                messages.append({"role": "user", "content": message[5:].strip()})
             elif message.startswith("System:"):
-                content = message[7:].strip()
-                messages.append({"role": "assistant", "content": content})
+                messages.append({"role": "assistant", "content": message[7:].strip()})
             else:
                 messages.append({"role": "user", "content": message})
 
+        if self.is_anthropic:
+            return {
+                "model": self.model,
+                "system": system_prompt,
+                "messages": messages or [{"role": "user", "content": ""}],
+                "max_tokens": self.max_tokens,
+            }
+
+        # OpenAI-compatible format
         return {
             "model": self.model,
-            "messages": messages,
+            "messages": [{"role": "system", "content": system_prompt}, *messages],
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
         }
@@ -206,9 +229,16 @@ class LLMClient:
         if self.debug:
             log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
 
+        # OpenAI-compatible format
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            content = response_json["choices"][0]["message"]["content"]
-            return str(content)
+
+          content: str = response_json["choices"][0]["message"]["content"]
+        return content
+
+        # Anthropic Messages API format
+        if "content" in response_json and len(response_json["content"]) > 0:
+          content = response_json["content"][0].get("text", "")
+        return content
 
         log.err(f"Unexpected LLM response format: {response}")
         return ""

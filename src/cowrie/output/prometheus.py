@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2025 Erik Belak
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Cowrie Prometheus output.
 
@@ -80,10 +85,11 @@ py_exceptions = Counter(
 class Output(cowrie.core.output.Output):
     def start(self) -> None:
         port = CowrieConfig.getint("output_prometheus", "port", fallback=9000)
+        addr = CowrieConfig.get("output_prometheus", "address", fallback="::")
         self.debug = CowrieConfig.getboolean(
             "output_prometheus", "debug", fallback=False
         )
-        start_http_server(port)
+        start_http_server(port, addr=addr)
 
         if self.debug:
             log.msg(f"[Prometheus] Exporter started on port: {port}")

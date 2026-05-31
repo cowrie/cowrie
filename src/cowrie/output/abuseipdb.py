@@ -1,24 +1,7 @@
-# MIT License
+# SPDX-FileCopyrightText: 2020 Benjamin Stephens <premier_contact@ben-stephens.net>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
 #
-# Copyright (c) 2020 Benjamin Stephens <premier_contact@ben-stephens.net>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 """
@@ -35,7 +18,7 @@ __version__ = "0.3b3"
 
 import pickle
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from time import sleep, time
@@ -380,7 +363,7 @@ class Reporter:
 
     @staticmethod
     def epoch_to_string_utc(t):
-        t_utc = datetime.utcfromtimestamp(t)
+        t_utc = datetime.fromtimestamp(t, timezone.utc)
         return t_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     @staticmethod
@@ -401,6 +384,7 @@ class Reporter:
                 url=ABUSEIP_URL,
                 headers=self.headers,
                 params=params,
+                allow_redirects=False,
             )
 
         except Exception as e:

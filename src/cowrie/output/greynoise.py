@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2019 Mehtab Zafar <mehtab.zafar98@gmail.com>
+# SPDX-FileCopyrightText: 2019-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Send attackers IP to GreyNoise
 """
@@ -65,7 +70,9 @@ class Output(cowrie.core.output.Output):
         headers = {"User-Agent": [COWRIE_USER_AGENT], "key": self.apiKey}
 
         try:
-            response = yield treq.get(url=gn_url, headers=headers, timeout=10)
+            response = yield treq.get(
+                url=gn_url, headers=headers, timeout=10, allow_redirects=False
+            )
         except (
             defer.CancelledError,
             error.ConnectingCancelledError,

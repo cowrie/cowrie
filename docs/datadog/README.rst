@@ -1,3 +1,8 @@
+.. SPDX-FileCopyrightText: 2022 udgover <frederic.baguelin@gmail.com>
+.. SPDX-FileCopyrightText: 2023 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 How to send Cowrie output to Datadog Log Management
 ###################################################
 

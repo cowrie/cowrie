@@ -1,9 +1,11 @@
-# -*- test-case-name: cowrie.test.utils -*-
-# Copyright (c) 2010-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2010-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
+import ipaddress
 from typing import TYPE_CHECKING, BinaryIO
 
 from twisted.application import internet
@@ -121,7 +123,15 @@ def get_endpoints_from_section(
         listen_port = default_port
 
     for i in listen_addr.split():
-        listen_endpoints.append(f"tcp:{listen_port}:interface={i}")
+        try:
+            addr = ipaddress.ip_address(i)
+            if addr.version == 6:
+                escaped = i.replace(":", r"\:")
+                listen_endpoints.append(f"tcp6:{listen_port}:interface={escaped}")
+            else:
+                listen_endpoints.append(f"tcp:{listen_port}:interface={i}")
+        except ValueError:
+            listen_endpoints.append(f"tcp:{listen_port}:interface={i}")
 
     return listen_endpoints
 

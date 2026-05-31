@@ -1,4 +1,7 @@
-# Copyright (c) 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
+# SPDX-FileCopyrightText: 2013 Bas Stottelaar <basstottelaar [AT] gmail [DOT] com>
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
@@ -15,7 +18,7 @@ from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 
 if TYPE_CHECKING:
-    from twisted.internet.defer import Deferred
+    from twisted.internet.interfaces import IDelayedCall
 
 commands = {}
 
@@ -54,7 +57,7 @@ class Command_gcc(HoneyPotCommand):
         b"\x01\x00\x00\x00"
     )
 
-    scheduled: Deferred
+    scheduled: IDelayedCall
 
     def call(self) -> None:
         """
@@ -135,7 +138,7 @@ class Command_gcc(HoneyPotCommand):
             timeout = 0.1 + random.random()
 
             # Schedule call to make it more time consuming and real
-            self.scheduled = reactor.callLater(  # type: ignore[attr-defined]
+            self.scheduled = reactor.callLater(
                 timeout, self.generate_file, (output_file if output_file else "a.out")
             )
         else:

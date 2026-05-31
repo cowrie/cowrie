@@ -1,5 +1,7 @@
-# Copyright (c) 2016 Dave Germiquet
-# See LICENSE for details.
+# SPDX-FileCopyrightText: 2016 Dave Germiquet
+# SPDX-FileCopyrightText: 2016-2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 from __future__ import annotations
 
 import os
@@ -228,7 +230,7 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"\n".join(lines) + PROMPT)
 
     def test_rm_output(self) -> None:
-        self.proto.lineReceived(b"rm /usr/bin/gcc\n")
+        self.proto.lineReceived(b"rm /usr/bin/sed\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_rm_error_output(self) -> None:  # TODO: quotes?..
@@ -240,7 +242,7 @@ class ShellFileCommandsTests(unittest.TestCase):
         )
 
     def test_cp_output(self) -> None:
-        self.proto.lineReceived(b"cp /usr/bin/gcc /tmp\n")
+        self.proto.lineReceived(b"cp /usr/bin/sed /tmp\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_cp_error_output(self) -> None:  # TODO: quotes?..

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Manages stdout/stderr routing for shell command execution and pipelines.
 # ABOUTME: Handles file redirections, FD duplication, and piped command chains.
 

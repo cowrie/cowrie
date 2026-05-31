@@ -1,36 +1,10 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. The names of the author(s) may not be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from __future__ import annotations
 
-import configparser
-import importlib.resources
 import sys
 from binascii import crc32
 from random import randint, seed
@@ -38,8 +12,7 @@ from typing import Any
 
 from twisted.python import log
 
-from cowrie import data
-from cowrie.core.config import CowrieConfig
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 
 
 class Passwd:
@@ -49,34 +22,23 @@ class Passwd:
     passwords.
     """
 
-    try:
-        with open(
-            "{}/etc/passwd".format(CowrieConfig.get("honeypot", "contents_path")),
-            encoding="ascii",
-        ) as f:
-            passwd_contents = f.read().split("\n")
-    except configparser.Error:
-        log.msg("Loading default /etc/passwd file from pickle file")
-        resources_path = importlib.resources.files(data)
-        config_file_path = (
-            resources_path.joinpath("honeyfs").joinpath("etc").joinpath("passwd")
-        )
-        passwd_contents = config_file_path.read_text(encoding="utf-8").split("\n")
-    except Exception as e:
-        log.err(e, "ERROR: Failed to load /etc/passwd")
-        sys.exit(2)
-
     passwd: list[dict[str, Any]]
 
     def __init__(self) -> None:
+        self.passwd = []
         self.load()
 
     def load(self) -> None:
         """
         Load /etc/passwd
         """
-        self.passwd = []
-        for rawline in self.passwd_contents:
+        try:
+            raw = read_honeyfs_bytes("etc/passwd").decode("ascii")
+        except Exception as err:
+            log.err(err, "ERROR: Failed to load /etc/passwd")
+            sys.exit(2)
+
+        for rawline in raw.splitlines():
             line = rawline.strip()
             if not line:
                 continue
@@ -170,52 +132,47 @@ class Group:
     /etc/group.
     """
 
-    group_file = "{}/etc/group".format(
-        CowrieConfig.get("honeypot", "contents_path", fallback="honeyfs")
-    )
     group: list[dict[str, Any]]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        self.group = []
         self.load()
 
     def load(self) -> None:
         """
         Load /etc/group
         """
-        self.group = []
-        with open(self.group_file, encoding="ascii") as f:
-            while True:
-                rawline = f.readline()
-                if not rawline:
-                    break
+        try:
+            raw = read_honeyfs_bytes("etc/group").decode("ascii")
+        except Exception as err:
+            log.err(err, "ERROR: Failed to load /etc/group")
+            sys.exit(2)
 
-                line = rawline.strip()
-                if not line:
-                    continue
+        for rawline in raw.splitlines():
+            line = rawline.strip()
+            if not line:
+                continue
 
-                if line.startswith("#"):
-                    continue
+            if line.startswith("#"):
+                continue
 
-                (gr_name, _, gr_gid, gr_mem) = line.split(":")
+            (gr_name, _, gr_gid, gr_mem) = line.split(":")
 
-                e: dict[str, str | int] = {}
-                e["gr_name"] = gr_name
-                try:
-                    e["gr_gid"] = int(gr_gid)
-                except ValueError:
-                    e["gr_gid"] = 1001
-                e["gr_mem"] = gr_mem
+            e: dict[str, str | int] = {}
+            e["gr_name"] = gr_name
+            try:
+                e["gr_gid"] = int(gr_gid)
+            except ValueError:
+                e["gr_gid"] = 1001
+            e["gr_mem"] = gr_mem
 
-                self.group.append(e)
+            self.group.append(e)
 
     def save(self) -> None:
         """
         Save the group db
         Note: this is subject to races between cowrie instances, but hey ...
         """
-        #        with open(self.group_file, 'w') as f:
-        #            for (login, uid, passwd) in self.userdb:
-        #                f.write('%s:%d:%s\n' % (login, uid, passwd))
         raise NotImplementedError
 
     def getgrnam(self, name: str) -> dict[str, Any]:

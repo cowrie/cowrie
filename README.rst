@@ -1,3 +1,8 @@
+.. SPDX-FileCopyrightText: 2014 Upi Tamminen <desaster@gmail.com>
+.. SPDX-FileCopyrightText: 2014-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 Cowrie
 ######
 
@@ -95,13 +100,10 @@ Software required to run locally:
 Files of interest:
 *****************************************
 
-* `etc/cowrie.cfg` - Cowrie's configuration file.
-* `etc/cowrie.cfg.dist <https://github.com/cowrie/cowrie/blob/main/etc/cowrie.cfg.dist>`_ - default settings, don't change this file
+* `etc/cowrie.cfg` - Cowrie's configuration file (operator-owned). Created by ``cowrie init``.
+* `src/cowrie/data/etc/cowrie.cfg.dist <https://github.com/cowrie/cowrie/blob/main/src/cowrie/data/etc/cowrie.cfg.dist>`_ - bundled defaults, edit your ``etc/cowrie.cfg`` instead
 * `etc/userdb.txt` - credentials to access the honeypot
-* `src/cowrie/data/fs.pickle` - fake filesystem, this only contains metadata (path, uid, gid, size)
-* `honeyfs/ <https://github.com/cowrie/cowrie/tree/main/honeyfs>`_ - contents for the fake filesystem
-* `honeyfs/etc/issue.net` - pre-login banner
-* `honeyfs/etc/motd <https://github.com/cowrie/cowrie/blob/main/honeyfs/etc/issue>`_ - post-login banner
+* `src/cowrie/data/fs.pickle` - fake filesystem; carries both metadata (path, uid, gid, size, mode) and the embedded contents (``A_CONTENTS`` bytes) for the small files attackers commonly cat. Edit via ``fsctl``; rebuild via ``make build-fs-pickle``.
 * `src/cowrie/data/txtcmds/` - output for simple fake commands
 * `var/log/cowrie/cowrie.json` - audit output in JSON format
 * `var/log/cowrie/cowrie.log` - log/debug output

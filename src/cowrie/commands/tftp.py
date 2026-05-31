@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2016 Dave Germiquet <davegermiquet@trulycanadian.net>
+# SPDX-FileCopyrightText: 2016-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import struct
@@ -178,7 +183,7 @@ class TFTPClient(DatagramProtocol):
         if self.timeout_call is not None and self.timeout_call.active():
             self.timeout_call.cancel()
 
-        self.timeout_call = reactor.callLater(TFTP_TIMEOUT, self.handleTimeout)  # type: ignore[attr-defined]
+        self.timeout_call = reactor.callLater(TFTP_TIMEOUT, self.handleTimeout)
 
     def handleTimeout(self) -> None:
         """Handle timeout - retry or fail"""

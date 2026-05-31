@@ -1,5 +1,7 @@
-# Copyright (c) 2024 Michel Oosterhof <michel@oosterhof.net>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
@@ -42,6 +44,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientIP: str
         self.realClientPort: int
         self.kippoIP: str
+        self.kippoIPv6: str = ""
         self.clientIP: str
         self.sessionno: int
         self.factory = None
@@ -92,6 +95,19 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             except OSError:
                 self.kippoIP = "192.168.0.1"
 
+        # IPv6 GUA of server in user visible reports (can be fake or real)
+        if CowrieConfig.has_option("honeypot", "internet_facing_ipv6"):
+            self.kippoIPv6 = CowrieConfig.get("honeypot", "internet_facing_ipv6")
+        else:
+            try:
+                with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
+                    s.connect(("2001:4860:4860::8888", 80))  # NOSONAR - probe target to detect host GUA, not a secret
+                    addr = s.getsockname()[0]
+                    # Only use GUA, not link-local
+                    self.kippoIPv6 = addr if not addr.lower().startswith("fe80") else ""
+            except Exception:
+                self.kippoIPv6 = ""
+
     def timeoutConnection(self) -> None:
         """
         this logs out when connection times out
@@ -125,6 +141,49 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # Use LLM client to get a response
         self._process_command_with_llm(string)
 
+    def _build_system_context(self, exec_command: str = "") -> str:
+        """
+        Build the system context prompt, using the configured template if present.
+        Supports variables: {hostname}, {username}, {ip}, {ip6}, {client_ip}, {cwd}.
+        For exec commands a tighter default is used to suppress conversational output.
+        """
+        if exec_command:
+            default = (
+                "You are simulating a Linux server that has been accessed via SSH "
+                "with a command to execute. "
+                "Respond with ONLY the output that would be displayed after executing this command. "
+                "Keep responses realistic, including appropriate error messages for invalid commands."
+            )
+            config_key = "system_prompt_exec"
+        else:
+            default = (
+                "You are simulating a Linux server that has been accessed via SSH. "
+                "Respond as if you were the shell on this system. "
+                "Your response should be the output that would be displayed after executing the command. "
+                "Keep responses realistic, including appropriate error messages for invalid commands. "
+                "For file paths, maintain consistent state with previous commands."
+            )
+            config_key = "system_prompt"
+
+        template = CowrieConfig.get("llm", config_key, fallback=default)
+        context = template.format_map(
+            {
+                "hostname": self.hostname,
+                "username": self.user.username,
+                "ip": getattr(self, "kippoIP", ""),
+                "ip6": getattr(self, "kippoIPv6", ""),
+                "client_ip": getattr(self, "clientIP", ""),
+                "cwd": self.cwd,
+            }
+        )
+        context += (
+            f" The hostname is '{self.hostname}' and username is '{self.user.username}'."
+            f" The current working directory is '{self.cwd}'."
+        )
+        if exec_command:
+            context += f" The command to execute is: {exec_command}"
+        return context
+
     def _process_command_with_llm(self, command: str) -> None:
         """
         Process a command by sending it to the LLM and writing the response
@@ -138,17 +197,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # Add the command to our history
         self.command_history.append(f"User: {command}")
 
-        # Construct an appropriate prompt for the LLM
-        # We'll include system context to help the LLM respond appropriately
-        system_context = (
-            "You are simulating a Linux server that has been accessed via SSH. "
-            "Respond as if you were the shell on this system. "
-            "Your response should be the output that would be displayed after executing the command. "
-            "Keep responses realistic, including appropriate error messages for invalid commands. "
-            "For file paths, maintain consistent state with previous commands. "
-            f"The hostname is '{self.hostname}' and username is '{self.user.username}'. "
-            f"The current working directory is '{self.cwd}'. "
-        )
+        system_context = self._build_system_context()
 
         # Keep only the last 10 commands for context
         prompt = [system_context, *self.command_history[-10:]]
@@ -245,14 +294,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.command_history = []
 
         # Construct the prompt
-        system_context = (
-            "You are simulating a Linux server that has been accessed via SSH with a command to execute. "
-            "Respond with ONLY the output that would be displayed after executing this command. "
-            "Keep responses realistic, including appropriate error messages for invalid commands. "
-            f"The hostname is '{self.hostname}' and username is '{self.user.username}'. "
-            f"The current working directory is '{self.cwd}'. "
-            "The command to execute is: " + self.execcmd
-        )
+        system_context = self._build_system_context(exec_command=self.execcmd)
 
         prompt = [system_context]
 

@@ -1,5 +1,7 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains authentication code
@@ -12,6 +14,7 @@ import json
 import re
 from collections import OrderedDict
 from os import path
+from pathlib import Path
 from random import randint
 from re import Pattern
 from typing import Any
@@ -19,6 +22,7 @@ from typing import Any
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_data_bytes
 
 _USERDB_DEFAULTS: list[str] = [
     "root:x:!root",
@@ -48,14 +52,23 @@ class UserDB:
 
         dblines: list[str]
         try:
-            with open(
-                "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path")),
-                encoding="ascii",
-            ) as db:
-                dblines = db.readlines()
-        except (OSError, configparser.Error):
-            log.msg("Could not read etc/userdb.txt, default database activated")
-            dblines = _USERDB_DEFAULTS
+            etc_path = CowrieConfig.get("honeypot", "etc_path")
+        except configparser.Error:
+            etc_path = ""
+
+        userdb_path = Path(etc_path) / "userdb.txt" if etc_path else None
+        if userdb_path and userdb_path.is_file():
+            dblines = userdb_path.read_text(encoding="ascii").splitlines()
+        else:
+            try:
+                dblines = (
+                    read_data_bytes("etc", "userdb.example")
+                    .decode("ascii")
+                    .splitlines()
+                )
+            except FileNotFoundError:
+                log.msg("Could not read etc/userdb.txt, default database activated")
+                dblines = _USERDB_DEFAULTS
 
         for user in dblines:
             if not user.startswith("#"):

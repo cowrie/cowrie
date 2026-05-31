@@ -41,12 +41,6 @@ log_path = var/log/cowrie
 download_path = ${honeypot:state_path}/downloads
 
 
-# Directory for static data files
-#
-# (default: src/cowrie/cowrie)
-data_path = src/cowrie/data
-
-
 # Directory for variable state files
 #
 # (default: var/lib/cowrie)
@@ -59,14 +53,14 @@ state_path = var/lib/cowrie
 etc_path = etc
 
 
-# Directory where virtual file contents are kept in.
+# Directory where operator-provided file contents are kept.
 #
-# This is only used by commands like 'cat' to display the contents of files.
-# Adding files here is not enough for them to appear in the honeypot - the
-# actual virtual filesystem is kept in filesystem_file (see below)
+# Used by commands like 'cat' to display per-file overrides on top of the
+# bundled defaults that ship in fs.pickle. Adding a file here only takes
+# effect if the same path exists in the filesystem pickle (see below).
 #
-# (default: honeyfs)
-contents_path = honeyfs
+# When unset, all file contents come from the bundled pickle.
+# contents_path = /opt/cowrie/honeyfs
 
 
 # Directory for creating simple commands that only output text.
@@ -170,6 +164,14 @@ timezone = UTC
 #internet_facing_ip = 9.9.9.9
 
 
+# The IPv6 GUA (Global Unicast Address) on which this machine is reachable
+# from the internet. If set, commands like 'ifconfig' will show this address
+# with Scope:Global. If empty, Cowrie will attempt to auto-detect a GUA;
+# if none is found (e.g. IPv6 not available), no GUA line is shown.
+#
+#internet_facing_ipv6 = 2001:db8::1
+
+
 
 # ============================================================================
 # Authentication Specific Options
@@ -217,7 +219,10 @@ save_snapshots = false
 snapshot_path = ${honeypot:state_path}/snapshots
 
 # pool xml configs
-config_files_path = ${honeypot:data_path}/pool_configs
+#
+# When unset, the bundled pool_configs that ship with cowrie are used.
+# Set to a directory of overrides to replace specific XML templates.
+# config_files_path = /opt/cowrie/pool_configs
 
 network_config = default_network.xml
 nw_filter_config = default_filter.xml
@@ -415,6 +420,17 @@ log_raw = false
 # (default: false)
 #debug = false
 
+# System prompt template for interactive SSH sessions.
+# Supports variables: {hostname}, {username}, {ip}, {ip6}, {client_ip}, {cwd}
+# Note: hostname, username and cwd are always appended automatically.
+# (default: built-in Linux shell simulation prompt)
+#system_prompt = You are simulating a Linux server at {ip} ({ip6}) accessed via SSH. Respond as if you were the shell on this system. Your response should be the output that would be displayed after executing the command. Keep responses realistic, including appropriate error messages for invalid commands. For file paths, maintain consistent state with previous commands.
+
+# System prompt template for non-interactive exec commands (e.g. ssh host 'cmd').
+# Same variables supported. Defaults to a tighter prompt that suppresses
+# conversational output and asks for raw command output only.
+#system_prompt_exec = You are simulating a Linux server. Respond with ONLY the raw output of the command, no commentary.
+
 
 # ============================================================================
 # Shell Options
@@ -429,19 +445,19 @@ log_raw = false
 # but not the file contents. This is created by the bin/createfs utility from
 # a real template linux installation.
 #
-# (default: fs.pickle)
-filesystem = ${honeypot:data_path}/fs.pickle
+# When unset, the bundled fs.pickle that ships with cowrie is used.
+# filesystem = /path/to/custom-fs.pickle
 
 
 # File that contains output for the `ps` command.
 #
-# (default: ${honeypot_data_path}/cmdoutput.json)
-processes = ${honeypot:data_path}/cmdoutput.json
+# When unset, the bundled cmdoutput.json that ships with cowrie is used.
+# processes = /path/to/custom-cmdoutput.json
 
 
 # Fake architectures/OS
-# When Cowrie receive a command like /bin/cat XXXX (where XXXX is an executable)
-# it replies with the content of a dummy executable (located in data_path/arch)
+# When Cowrie receives a command like /bin/cat XXXX (where XXXX is an executable)
+# it replies with the content of a dummy executable bundled with cowrie
 # compiled for an architecture/OS/endian_mode
 # arch can be a comma separated list. When there are multiple elements, a random
 # is chosen at login time.
@@ -516,8 +532,8 @@ arch = linux-x64-lsb
 
 # Modify the response of '/bin/uname'
 # Default (uname -a): Linux <hostname> <kernel_version> <kernel_build_string> <hardware_platform> <operating system>
-kernel_version = 3.2.0-4-amd64
-kernel_build_string = #1 SMP Debian 3.2.68-1+deb7u1
+kernel_version = 6.1.0-21-amd64
+kernel_build_string = #1 SMP PREEMPT_DYNAMIC Debian 6.1.90-1 (2024-05-03)
 hardware_platform = x86_64
 operating_system = GNU/Linux
 

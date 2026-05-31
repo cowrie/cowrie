@@ -1,7 +1,11 @@
+# SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 Sphinx==9.1.0
 readthedocs-sphinx-search==0.3.2
 setuptools==82.0.1
 sphinx-copybutton==0.5.2
 sphinx_rtd_theme==3.1.0
 sphinxcontrib-googleanalytics==0.5
-twisted==25.5.0
+twisted==26.4.0

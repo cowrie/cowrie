@@ -1,7 +1,12 @@
+# SPDX-FileCopyrightText: 2015-2022 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Based on work by Peter Reuteras (https://bitbucket.org/reuteras/kippo/)
 
 from __future__ import annotations
 
+import ipaddress
 import socket
 
 from cowrie.shell.command import HoneyPotCommand
@@ -65,9 +70,15 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
         )
 
     def do_netstat_route(self) -> None:
+        if not self.show_ipv6 or self.show_ipv4:
+            self._do_netstat_route4()
+        if self.show_ipv6:
+            self._do_netstat_route6()
+
+    def _do_netstat_route4(self) -> None:
         self.write(
-            """Kernel IP routing table
-Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n"""
+            "Kernel IP routing table\n"
+            "Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n"
         )
         if self.show_numeric:
             default = "default"
@@ -87,6 +98,33 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface\n
         )
         self.write(f"{l1}\n")
         self.write(f"{l2}\n")
+
+    def _do_netstat_route6(self) -> None:
+        self.write(
+            "Kernel IPv6 routing table\n"
+            "Destination                    Next Hop                   Flag Met Ref  Use If\n"
+        )
+        rows = []
+        if self.protocol.kippoIPv6:
+            net = ipaddress.IPv6Network(
+                f"{self.protocol.kippoIPv6}/64", strict=False
+            )
+            rows += [
+                (str(net), "::", "U", "100", "0", "0", "eth0"),
+                ("fe80::/64", "::", "U", "100", "0", "0", "eth0"),
+            ]
+        rows += [
+            ("::1/128", "::", "U", "256", "2", "0", "lo"),
+        ]
+        if self.protocol.kippoIPv6:
+            rows += [
+                ("::/0", "fe80::1", "UG", "100", "0", "0", "eth0"),  # NOSONAR - simulated honeypot routing table entry
+                ("ff00::/8", "::", "U", "256", "0", "0", "eth0"),
+            ]
+        for dest, nh, flag, met, ref, use, iface in rows:
+            self.write(
+                f"{dest:<31}{nh:<27}{flag:<5}{met:<4}{ref:<5}{use:<4}{iface}\n"
+            )
 
     def do_netstat_normal(self) -> None:
         self.write(
@@ -184,6 +222,8 @@ unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\
         self.show_all = False
         self.show_numeric = False
         self.show_listen = False
+        self.show_ipv4 = False
+        self.show_ipv6 = False
         func = self.do_netstat_normal
         for x in self.args:
             if x.startswith("-") and x.count("a"):
@@ -198,6 +238,10 @@ unix  3      [ ]         STREAM     CONNECTED     8619     @/com/ubuntu/upstart\
                 func = self.show_help
             if x.startswith("-") and x.count("V"):
                 func = self.show_version
+            if x == "-4":
+                self.show_ipv4 = True
+            if x == "-6":
+                self.show_ipv6 = True
         func()
 
 

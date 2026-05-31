@@ -1,5 +1,139 @@
+.. SPDX-FileCopyrightText: 2014-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 Release Notes
 #############
+
+Release 3.0.0
+*************
+
+**BREAKING CHANGES - ACTION REQUIRED:**
+
+* **State directory layout is now cwd-driven.** ``cowrie start`` no
+  longer ``chdir``\s to a script-derived "root" path. The current
+  working directory is the cowrie state directory: ``./etc/cowrie.cfg``
+  is the config, ``./var/log/cowrie/`` holds logs, ``./var/run/`` holds
+  the PID file. Run all cowrie commands (``start``, ``stop``, ``restart``,
+  ``status``) from the same directory.
+
+* **New ``cowrie init`` command.** Pip-install operators run ``cowrie
+  init`` once in their chosen state directory to materialise
+  ``./etc/cowrie.cfg`` from the bundled template and create the
+  ``var/{log/cowrie,lib/cowrie,run}`` skeleton. Source-checkout users
+  unaffected — the repo root counts as initialised via
+  ``src/cowrie/data/etc/cowrie.cfg.dist``.
+
+* **``cowrie start`` refuses to run without an init marker.** Looks
+  for one of ``./etc/cowrie.cfg``, ``./etc/cowrie.cfg.dist``, or
+  ``./src/cowrie/data/etc/cowrie.cfg.dist``. Prevents accidentally
+  polluting the wrong directory with state files.
+
+* **Top-level ``honeyfs/`` directory removed.** Its contents are now
+  embedded in ``src/cowrie/data/fs.pickle`` as ``A_CONTENTS`` bytes.
+  Operators with local customisations: keep your honeyfs files in a
+  directory of your choice and set ``[honeypot] contents_path`` to it
+  in ``cowrie.cfg``; per-file overrides still cascade on top of the
+  bundled defaults.
+
+* **Bundled ``cowrie.cfg.dist`` moved into the package.** The
+  template is now at ``src/cowrie/data/etc/cowrie.cfg.dist`` and is
+  loaded as the defaults layer automatically. Your operator config
+  (``etc/cowrie.cfg``) only needs to contain the keys you want to
+  override.
+
+* **``[honeypot] data_path`` config key removed.** Settings that
+  used ``${honeypot:data_path}/...`` (``filesystem``, ``processes``,
+  ``config_files_path``) now read their bundled defaults from the
+  package directly when left unset. Operators who set ``data_path``
+  in their cowrie.cfg should set each derived path individually
+  instead.
+
+* **``[honeypot] contents_path`` is now unset by default.** Previously
+  defaulted to ``honeyfs`` (the removed top-level directory). Leaving
+  it unset serves all file contents from the pickle. Set it only when
+  you want per-file overrides.
+
+**CONFIGURATION CHANGES:**
+
+* Bundled ``cowrie.cfg.dist`` has ``contents_path``, ``filesystem``,
+  and ``processes`` commented out (each documents how to override).
+* ``data_path`` removed from cfg.dist.
+
+**DEPENDENCIES:**
+
+* ``tftpy`` removed from runtime dependencies. The TFTP client
+  (``cowrie/commands/tftp.py``) uses a Twisted ``DatagramProtocol``
+  implementation; tftpy was never imported.
+
+**INTERNAL:**
+
+* New ``cowrie/shell/honeyfs.py`` module owns the per-process pickle
+  cache. ``HoneyPotFilesystem`` instances now share a single
+  ``pickle.load`` via ``honeyfs.get_tree()`` (deepcopied per session)
+  instead of re-reading from disk on every connection.
+* New ``cowrie/core/resources.py`` provides ``read_data_bytes`` and
+  ``open_data_binary`` for accessing bundled ``cowrie.data``
+  resources via ``importlib.resources``.
+* ``createfs.py`` grew an ``EMBED_PATHS`` constant — paths whose
+  bytes are baked into ``A_CONTENTS`` during the recursive walk.
+* ``fsctl`` gained an ``embed <local-dir>`` command for bulk-loading
+  file contents into an already-built pickle.
+* ``Passwd`` and ``Group`` classes moved from class-body load to
+  instance ``__init__``.
+* ``backend_pool`` XML config templates now use a bundled-data cascade
+  matching the honeyfs pattern. ``[backend_pool] config_files_path``
+  is optional; unset falls through to bundled defaults via
+  ``importlib.resources``.
+* CI smoke tests for PyPI packages replaced the no-op ``twistd cowrie``
+  invocation with checks that verify the entry point, bundled resources,
+  ``cowrie init`` output, and the init-marker guard on ``cowrie start``.
+
+
+Releases 2.9.1 -- 2.9.20
+*************************
+
+**NEW FEATURES:**
+
+* **New shell commands**: ``cut``.
+* **IPv6 support**: ``ifconfig`` and ``netstat`` now show Global Unicast
+  Addresses; ``get_endpoints_from_section`` detects IPv6 listen addresses.
+* **LLM proxy support**: the LLM backend reads ``HTTP_PROXY`` /
+  ``HTTPS_PROXY`` environment variables for outbound requests.
+* **LLM Anthropic provider**: Claude can now be used as an LLM backend
+  alongside OpenAI. The context prompt sent to the model is configurable.
+* **Shell script execution**: scripts created via output redirection
+  (e.g. ``cat > script.sh``) can now be executed.
+* **CVE-2026-24061 detection**: telnet NEW-ENVIRON exploit attempts are
+  detected and logged; the honeypot emulates the vulnerable response.
+* **OS fingerprint update**: default emulated OS bumped to Debian 12 /
+  kernel 6.1.
+* **SPDX / REUSE compliance**: all source files carry SPDX license
+  headers; ``reuse lint`` passes in CI.
+
+**BUG FIXES:**
+
+* **SSRF protection bypass** in ``ftpget``, ``tftp``, and ``nc`` commands
+  (reserved IP range checks were bypassable).
+* ``chmod --help`` and ``--version`` were broken.
+* ``chattr`` command was shadowed by a no-op stub.
+* ``wget`` saved downloaded files to ``/`` instead of the session's cwd.
+* ``playlog`` now shows output for exec sessions.
+* File-descriptor redirection parsing handles more edge cases.
+* Tab completion no longer errors on non-existing directories.
+* ``backend_pool`` NAT errors in remote mode when the client protocol
+  was not yet initialised or already closed.
+* Telnet infinite recursion when ``onResult`` callback is ``None``.
+* ``nc`` command: more realistic output and abuse-protection limits.
+
+**INFRASTRUCTURE:**
+
+* Docker base image upgraded to Debian 13 (trixie) / Python 3.13.
+* Twisted bumped to 26.4.0 with stricter typing adopted.
+* Malshare and Cuckoo output plugins ported from ``requests`` to ``treq``.
+* Weekly automated release workflow added.
+* Bundled ``fs.pickle`` now embeds file contents (``A_CONTENTS`` bytes).
+
 
 Release 2.9.0
 *************

@@ -1,5 +1,7 @@
-# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2009-2010 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
@@ -87,7 +89,7 @@ class Command_ping(HoneyPotCommand):
 
         self.running = True
         self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
-        self.scheduled = reactor.callLater(0.2, self.showreply)  # type: ignore[attr-defined]
+        self.scheduled = reactor.callLater(0.2, self.showreply)
         self.count = 0
 
     def showreply(self) -> None:
@@ -103,7 +105,7 @@ class Command_ping(HoneyPotCommand):
             self.exit()
             return
         else:
-            self.scheduled = reactor.callLater(1, self.showreply)  # type: ignore[attr-defined]
+            self.scheduled = reactor.callLater(1, self.showreply)
 
     def printstatistics(self) -> None:
         self.write(f"--- {self.host} ping statistics ---\n")

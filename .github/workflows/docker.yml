@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 ---
 name: Docker Build and Publish
 
@@ -81,14 +85,14 @@ jobs:
 
       - name: Login to Docker Hub
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Container Image
         id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.1.0
         with:
           push: false
           load: true
@@ -106,7 +110,7 @@ jobs:
       - name: Push Container Image by digest
         id: push
         if: ${{ (github.event_name != 'pull_request') && (github.repository == 'cowrie/cowrie') }}
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.1.0
         with:
           file: docker/Dockerfile
           platforms: ${{ matrix.platform }}
@@ -165,7 +169,7 @@ jobs:
             type=sha,format=short
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -181,7 +185,7 @@ jobs:
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v4.1.0
+        uses: sigstore/cosign-installer@v4.1.2
         with:
           cosign-release: 'v2.4.1'
 

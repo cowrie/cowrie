@@ -1,6 +1,6 @@
-# Copyright (c) 2015 Michel Oosterhof <michel@oosterhof.net>
-#               2025 Filippo Lauria <filippo.lauria@iit.cnr.it>
-# All rights reserved.
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module contains the sleep command
@@ -111,7 +111,7 @@ Written by Jim Meyering and Paul Eggert.
             _time += int(m.group(1))
 
         self.running = True
-        self.scheduled = reactor.callLater(_time, self.done)  # type: ignore[attr-defined]
+        self.scheduled = reactor.callLater(_time, self.done)
 
     def handle_CTRL_C(self) -> None:
         if self.running:

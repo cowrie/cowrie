@@ -1,11 +1,11 @@
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from __future__ import annotations
 
-import configparser
-import importlib.resources
 import struct
 from typing import Any
 
@@ -18,9 +18,9 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.python.failure import Failure
 
-from cowrie import data
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
+from cowrie.shell.honeyfs import read_honeyfs_bytes
 
 
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
@@ -60,17 +60,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         self.bannerSent = True
 
         try:
-            with open(
-                f"{CowrieConfig.get('honeypot', 'contents_path')}/etc/issue.net",
-                encoding="ascii",
-            ) as f:
-                banner = f.read()
-        except configparser.Error as e:
-            log.msg(f"Loading default /etc/issue.net file: {e!r}")
-            resources_path = importlib.resources.files(data)
-            banner_path = resources_path.joinpath("honeyfs", "etc", "issue.net")
-            banner = banner_path.read_text(encoding="utf-8")
-        except OSError as e:
+            banner = read_honeyfs_bytes("etc/issue.net").decode(
+                "utf-8", errors="replace"
+            )
+        except FileNotFoundError as e:
             log.err(e, "ERROR: Failed to load /etc/issue.net")
             return
 

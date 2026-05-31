@@ -1,5 +1,7 @@
-# Copyright (c) 2018 Michel Oosterhof
-# See LICENSE for details.
+# SPDX-FileCopyrightText: 2024 Ritvik Dayal <ritvik@doxel.ai>
+# SPDX-FileCopyrightText: 2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 from __future__ import annotations
 
 import os
@@ -40,7 +42,7 @@ class ShellLsCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"ls /\n")
         self.assertEqual(
             self.tr.value(),
-            b"bin        boot       dev        etc        home       initrd.img lib        \nlost+found media      mnt        opt        proc       root       run        \nsbin       selinux    srv        sys        test2      tmp        usr        \nvar        vmlinuz    \n"
+            b"bin   boot  dev   etc   home  lib   lib64 media mnt   opt   proc  root  run   \nsbin  srv   sys   tmp   usr   var   \n"
             + PROMPT,
         )
 

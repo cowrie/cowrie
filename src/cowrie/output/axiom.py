@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Simple Telegram Bot logger
 
 import json
@@ -49,6 +53,7 @@ class Output(cowrie.core.output.Output):
             self.url,
             data=b"[" + msg + b"]",
             headers=self.headers,
+            allow_redirects=False,
         )
 
         if resp.code != 200:

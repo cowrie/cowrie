@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 [build-system]
 requires = ["setuptools>=80", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
@@ -11,7 +15,7 @@ license-files = [ "LICENSE.rst" ]
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 keywords=["ssh", "telnet", "honeypot"]
-requires-python = ">2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*, !=3.8.*, !=3.9.*, <4"
+requires-python = ">=3.10, <4"
 readme="README.rst"
 classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -31,17 +35,15 @@ classifiers=[
 dependencies = [
         "attrs==26.1.0",
         "bcrypt==5.0.0",
-        "cryptography==46.0.6",
+        "cryptography==48.0.0",
         "hyperlink==21.0.0",
-        "idna==3.11",
-        "packaging==26.0",
+        "idna==3.15",
+        "packaging==26.2",
         "pyasn1_modules==0.4.2",
-        "requests==2.32.5",
         "service_identity==24.2.0",
-        "tftpy==0.8.7",
         "treq==25.5.0",
-        "twisted[conch]==25.5.0",
-        "urllib3==2.6.3",
+        "twisted[conch]==26.4.0",
+        "urllib3==2.7.0",
 ]
 
 [project.urls]
@@ -54,45 +56,44 @@ cowrie = "cowrie.scripts.cowrie:run"
 fsctl = "cowrie.scripts.fsctl:run"
 asciinema = "cowrie.scripts.asciinema:run"
 createfs = "cowrie.scripts.createfs:run"
+dumpfs = "cowrie.scripts.dumpfs:run"
 playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
-dshield = ["requests"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
 mongodb = ["pymongo"]
-pool = ["libvirt-python==12.1.0"]
+pool = ["libvirt-python==12.3.0"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
 influxdb = ["influxdb"]
 dev = [
-"build==1.4.0",
-"coverage==7.10.7",
+"build==1.5.0",
+"coverage==7.14.0",
 "mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
-"mypy-zope==1.0.14; platform_python_implementation=='CPython'",
-"mypy==1.19.1; platform_python_implementation=='CPython'",
-"pathspec==1.0.4",
-"pipdeptree==2.28.0",
+"mypy-zope==1.0.15; platform_python_implementation=='CPython'",
+"mypy==2.1.0; platform_python_implementation=='CPython'",
+"pathspec==1.1.1",
+"pipdeptree==2.35.2",
 "pre-commit==4.5.1",
 "pylint==4.0.4",
 "pyre-check==0.9.25",
-"pyright==1.1.408",
+"pyright==1.1.409",
 "pytype==2024.10.11; platform_python_implementation=='CPython'",
 "pyupgrade==3.21.2",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.15.7",
+"ruff==0.15.12",
 "setuptools==82.0.1",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.5",
 "tox==4.33.0",
-"types-python-dateutil==2.9.0.20260124",
 "types-redis==4.6.0.20241004",
-"types-requests==2.32.4.20260107",
-"yamllint==1.37.1",
+"types-requests==2.33.0.20260513",
+"yamllint==1.38.0",
 ]
 
 
@@ -169,6 +170,17 @@ reportOptionalOperand = "information"
 reportPossiblyUnboundVariable = "information"
 reportUnsupportedDunderAll = "information"
 
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+exclude = ["src/cowrie/vendor/**"]
+
+[[tool.ty.overrides]]
+include = ["src/cowrie/output/**", "src/backend_pool/**"]
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
+
 [tool.ruff]
 line-length = 88
 
@@ -199,7 +211,7 @@ version_file = "src/cowrie/_version.py"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,pypy310,pypy311
+    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,py315t,pypy311
     deps = -r{toxinidir}/requirements.txt
     skip_missing_interpreters = True
 
@@ -212,7 +224,7 @@ legacy_tox_ini = """
         3.14: py314
         3.14t: py314t
         3.15: py315
-        pypy-3.10: pypy310
+        3.15t: py315t
         pypy-3.11: pypy311
 
     [testenv]

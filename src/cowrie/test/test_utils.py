@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2016-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from __future__ import annotations
 
 import configparser
@@ -64,6 +68,24 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(
             ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=1.1.1.1"],
             get_endpoints_from_section(cfg, "ssh", 2223),
+        )
+
+    def test_get_endpoints_from_section_ipv6(self) -> None:
+        cfg = get_config("[ssh]\nlisten_addr = ::\n")
+        self.assertEqual(
+            [r"tcp6:2222:interface=\:\:"], get_endpoints_from_section(cfg, "ssh", 2222)
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 2001:db8::1\n")
+        self.assertEqual(
+            [r"tcp6:2222:interface=2001\:db8\:\:1"],
+            get_endpoints_from_section(cfg, "ssh", 2222),
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 0.0.0.0 ::\n")
+        self.assertEqual(
+            [r"tcp:2222:interface=0.0.0.0", r"tcp6:2222:interface=\:\:"],
+            get_endpoints_from_section(cfg, "ssh", 2222),
         )
 
     def test_create_endpoint_services(self) -> None:

@@ -15,8 +15,10 @@ concurrent requests. The lock protects the _guests_ list, which
 contains references for each VM backend (in our case libvirt/QEMU
 instances)."""
 
-# Copyright (c) 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
@@ -151,7 +153,7 @@ class PoolService:
             "backend_pool", "recycle_period", fallback=-1
         )
         if recycle_period > 0:
-            reactor.callLater(recycle_period, self.restart_pool)  # type: ignore[attr-defined]
+            reactor.callLater(recycle_period, self.restart_pool)
 
     def stop_pool(self) -> None:
         # lazy import to avoid exception if not using the backend_pool
@@ -346,7 +348,11 @@ class PoolService:
         # replenish pool until full
         to_create = self.max_vm - self.existing_pool_size()
         for _ in range(to_create):
-            dom, snap, guest_ip = self.qemu.create_guest(self.is_ip_free)
+            created = self.qemu.create_guest(self.is_ip_free)
+            if created is None:
+                # backend not ready or libvirt failed; try again next loop
+                continue
+            dom, snap, guest_ip = created
 
             # create guest object
             self.guests.append(
@@ -393,7 +399,7 @@ class PoolService:
         self.__producer_mark_available()
 
         # sleep until next iteration
-        self.loop_next_call = reactor.callLater(  # type: ignore[attr-defined]
+        self.loop_next_call = reactor.callLater(
             self.loop_sleep_time, self.producer_loop
         )
 

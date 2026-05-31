@@ -1,5 +1,7 @@
-# Copyright (c) 2009 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 # coding=utf-8
 
@@ -154,7 +156,7 @@ class Command_echo(HoneyPotCommand):
                 string += "\n"
 
             if escape_decode:
-                data: bytes = codecs.escape_decode(string)[0]  # type: ignore
+                data: bytes = codecs.escape_decode(string)[0]
                 self.writeBytes(data)
             else:
                 self.write(string)
@@ -186,7 +188,7 @@ class Command_printf(HoneyPotCommand):
                 if s.endswith("\\c"):
                     s = s[:-2]
 
-                data: bytes = codecs.escape_decode(s)[0]  # type: ignore
+                data: bytes = codecs.escape_decode(s)[0]
                 self.writeBytes(data)
 
 
@@ -884,7 +886,7 @@ class Command_shutdown(HoneyPotCommand):
             )
             self.write("\n")
             self.write("The system is going down for maintenance NOW!\n")
-            reactor.callLater(3, self.finish)  # type: ignore[attr-defined]
+            reactor.callLater(3, self.finish)
         elif (
             len(self.args) > 1
             and self.args[0].strip().count("-r")
@@ -896,7 +898,7 @@ class Command_shutdown(HoneyPotCommand):
             )
             self.write("\n")
             self.write("The system is going down for reboot NOW!\n")
-            reactor.callLater(3, self.finish)  # type: ignore[attr-defined]
+            reactor.callLater(3, self.finish)
         else:
             self.write("Try `shutdown --help' for more information.\n")
             self.exit()
@@ -921,7 +923,7 @@ class Command_reboot(HoneyPotCommand):
             f"Broadcast message from root@{self.protocol.hostname} (pts/0) ({time.ctime()}):\n\n"
         )
         self.write("The system is going down for reboot NOW!\n")
-        reactor.callLater(3, self.finish)  # type: ignore[attr-defined]
+        reactor.callLater(3, self.finish)
 
     def finish(self) -> None:
         stat = failure.Failure(error.ProcessDone(status=""))
@@ -972,7 +974,7 @@ class Command_yes(HoneyPotCommand):
             self.write(f"{' '.join(self.args)}\n")
         else:
             self.write("y\n")
-        self.scheduled = reactor.callLater(0.01, self.y)  # type: ignore[attr-defined]
+        self.scheduled = reactor.callLater(0.01, self.y)
 
     def handle_CTRL_C(self) -> None:
         self.scheduled.cancel()

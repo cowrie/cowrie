@@ -1,10 +1,10 @@
-# -*- test-case-name: cowrie.test.protocol -*-
-# Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
-# See the COPYRIGHT file for more information
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 from __future__ import annotations
 
-import importlib
 import socket
 import sys
 import time
@@ -20,8 +20,8 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 import cowrie.commands
-from cowrie import data
 from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_data_bytes
 from cowrie.shell import command, honeypot
 
 
@@ -57,6 +57,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientIP: str
         self.realClientPort: int
         self.kippoIP: str
+        self.kippoIPv6: str = ""
         self.clientIP: str
         self.sessionno: int
         self.factory = None
@@ -113,6 +114,19 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     self.kippoIP = s.getsockname()[0]
             except Exception:
                 self.kippoIP = "192.168.0.1"
+
+        # IPv6 GUA of server in user visible reports (can be fake or real)
+        if CowrieConfig.has_option("honeypot", "internet_facing_ipv6"):
+            self.kippoIPv6 = CowrieConfig.get("honeypot", "internet_facing_ipv6")
+        else:
+            try:
+                with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
+                    s.connect(("2001:4860:4860::8888", 80))  # NOSONAR - probe target to detect host GUA, not a secret
+                    addr = s.getsockname()[0]
+                    # Only use GUA, not link-local
+                    self.kippoIPv6 = addr if not addr.lower().startswith("fe80") else ""
+            except Exception:
+                self.kippoIPv6 = ""
 
     def timeoutConnection(self) -> None:
         """
@@ -232,18 +246,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return None
 
         try:
-            resource_root = importlib.resources.files(data)
-            # Use joinpath instead of / operator to avoid type issues
-            resource_path_in_package = resource_root.joinpath("txtcmds").joinpath(
-                path.lstrip("/")
-            )
-
-            with importlib.resources.as_file(
-                resource_path_in_package
-            ) as binary_file_path:
-                with open(binary_file_path, "rb") as file:
-                    binary_data = file.read()
-                    return self.txtcmd(binary_data)
+            binary_data = read_data_bytes("txtcmds", *path.lstrip("/").split("/"))
+            return self.txtcmd(binary_data)
         except FileNotFoundError:
             pass
 

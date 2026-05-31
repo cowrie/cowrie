@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Cowrie Crashreport
 
@@ -69,6 +73,7 @@ class Output(cowrie.core.output.Output):
                     b"Content-Type": [b"application/json"],
                     b"User-Agent": [COWRIE_USER_AGENT],
                 },
+                allow_redirects=False,
             )
             content = yield r.text()
             if self.debug:
