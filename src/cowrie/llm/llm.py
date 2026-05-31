@@ -106,16 +106,20 @@ class LLMClient:
             or os.environ.get("HTTP_PROXY")
         )
         self.agent: Agent | ProxyAgent
-        if proxy_url:
+       if proxy_url:
            parsed = urllib.parse.urlparse(proxy_url)
+
            proxy_endpoint = HostnameEndpoint(
            reactor, parsed.hostname or "localhost", parsed.port or 8080
-           )
-           self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
-           log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
-       else:
-           self.agent = Agent(reactor, pool=self._conn_pool)
-       self.is_anthropic = "anthropic.com" in self.host
+       )
+
+          self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
+
+          log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
+      else:
+          self.agent = Agent(reactor, pool=self._conn_pool)
+
+      self.is_anthropic = "anthropic.com" in self.host
 
         if not self.api_key:
             log.msg("WARNING: No LLM API key configured in [llm] section")
@@ -230,10 +234,18 @@ class LLMClient:
             log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
 
         # OpenAI-compatible format
+        
         if "choices" in response_json and len(response_json["choices"]) > 0:
+            content: str = response_json["choices"][0]["message"]["content"]
+            return content
 
-          content: str = response_json["choices"][0]["message"]["content"]
-        return content
+        # Anthropic Messages API format
+       if "content" in response_json and len(response_json["content"]) > 0:
+           content = response_json["content"][0].get("text", "")
+           return content
+
+       log.err(f"Unexpected LLM response format: {response}")
+       return ""
 
         # Anthropic Messages API format
         if "content" in response_json and len(response_json["content"]) > 0:
