@@ -71,7 +71,9 @@ etc_path = etc
 # The contents of the file will be the output of the command when run inside
 # the honeypot.
 #
-# In addition to this, the file must exist in the virtual filesystem
+# In addition to this, the file must exist in the virtual filesystem.
+# If a command does not exist under txtcmds_path, Cowrie falls back to the
+# bundled cowrie.data/txtcmds command output.
 #
 # (default: txtcmds)
 txtcmds_path = txtcmds

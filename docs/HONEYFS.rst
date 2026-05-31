@@ -41,3 +41,23 @@ Make sure your config picks up custom.pickle, by referencing it in `cowrie.cfg`:
 Or set an environment variable::
 
   $ export COWRIE_SHELL_FILESYSTEM=custom.pickle
+
+Customizing text command output
+*******************************
+
+Some commands in Cowrie are implemented as simple text output files under
+``txtcmds``. Operators can point Cowrie at a custom directory with
+``[honeypot] txtcmds_path``::
+
+  [honeypot]
+  txtcmds_path = /opt/cowrie/txtcmds
+
+The command path below that directory must match the path in the virtual
+filesystem. For example, to customize ``/usr/bin/lscpu`` output, create::
+
+  /opt/cowrie/txtcmds/usr/bin/lscpu
+
+The command still needs an entry in the virtual filesystem pickle, the same
+way files in ``honeyfs`` need matching metadata. If a command is not present
+under ``txtcmds_path``, Cowrie falls back to the bundled ``cowrie.data/txtcmds``
+output.
