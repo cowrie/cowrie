@@ -92,7 +92,7 @@ dev = [
 "sphinxcontrib-googleanalytics==0.5",
 "tox==4.33.0",
 "types-redis==4.6.0.20241004",
-"types-requests==2.33.0.20260513",
+"types-requests==2.33.0.20260518",
 "yamllint==1.38.0",
 ]
 
