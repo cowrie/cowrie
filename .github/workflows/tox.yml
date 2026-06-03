@@ -33,7 +33,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v6
@@ -52,7 +52,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v6
@@ -71,7 +71,7 @@ jobs:
   typing:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v6
@@ -109,7 +109,7 @@ jobs:
             prerelease: false
     continue-on-error: ${{ matrix.experimental }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
