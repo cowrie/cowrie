@@ -14,7 +14,6 @@ _TEST_CREDENTIAL = "test-credential-value"
 
 
 class SignalOutputTests(unittest.TestCase):
-
     """Test suite for Signal messenger output plugin."""
 
     def setUp(self) -> None:
