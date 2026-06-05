@@ -34,12 +34,13 @@ class Output(cowrie.core.output.Output):
         self.recipients = [r.strip() for r in recipients_raw.split(",") if r.strip()]
 
     def stop(self) -> None:
+        # Nothing to clean up; treq requests are fire-and-forget
         pass
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in list(event):
-            if i.startswith("log_"):
-                del event[i]
+        log_keys = [k for k in event if k.startswith("log_")]
+        for k in log_keys:
+            del event[k]
 
         msgtxt = f"[Cowrie {event['sensor']}]\nEvent: {event['eventid']}\nSource: {event['src_ip']}\nSession: {event['session']}"
 

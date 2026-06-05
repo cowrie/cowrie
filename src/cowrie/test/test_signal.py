@@ -10,6 +10,8 @@ from unittest.mock import MagicMock, patch
 
 from cowrie.output.signal import Output
 
+_TEST_CREDENTIAL = "test-credential-value"
+
 
 class SignalOutputTests(unittest.TestCase):
     """Test suite for Signal messenger output plugin."""
@@ -25,7 +27,7 @@ class SignalOutputTests(unittest.TestCase):
         return {
             "eventid": eventid,
             "sensor": "test-sensor",
-            "src_ip": "10.0.0.1",
+            "src_ip": "192.0.2.1",  # RFC 5737 TEST-NET, safe for tests
             "session": "abc123",
         }
 
@@ -34,7 +36,7 @@ class SignalOutputTests(unittest.TestCase):
         event = {
             **self._base_event("cowrie.login.success"),
             "username": "root",
-            "password": "hunter2",
+            "password": _TEST_CREDENTIAL,
         }
         self.output.write(event)
 
@@ -45,7 +47,7 @@ class SignalOutputTests(unittest.TestCase):
         self.assertIn(b'"number"', kwargs["data"])
         self.assertIn(b'"recipients"', kwargs["data"])
         self.assertIn(b"root", kwargs["data"])
-        self.assertIn(b"hunter2", kwargs["data"])
+        self.assertIn(_TEST_CREDENTIAL.encode(), kwargs["data"])
 
     @patch("treq.post")
     def test_command_input_sends_notification(self, mock_post: MagicMock) -> None:
@@ -110,7 +112,7 @@ class SignalOutputTests(unittest.TestCase):
         event = {
             **self._base_event("cowrie.login.success"),
             "username": "admin",
-            "password": "admin",
+            "password": _TEST_CREDENTIAL,
         }
         self.output.write(event)
 
@@ -126,7 +128,7 @@ class SignalOutputTests(unittest.TestCase):
         event = {
             **self._base_event("cowrie.login.success"),
             "username": "u",
-            "password": "p",
+            "password": _TEST_CREDENTIAL,
         }
         self.output.write(event)
 
@@ -143,7 +145,7 @@ class SignalOutputTests(unittest.TestCase):
         event = {
             **self._base_event("cowrie.login.success"),
             "username": "root",
-            "password": "toor",
+            "password": _TEST_CREDENTIAL,
         }
         # Must not raise
         try:
@@ -156,7 +158,7 @@ class SignalOutputTests(unittest.TestCase):
         event = {
             **self._base_event("cowrie.login.success"),
             "username": "root",
-            "password": "toor",
+            "password": _TEST_CREDENTIAL,
             "log_legacy": "should be removed",
             "log_text": "also removed",
         }
