@@ -9,7 +9,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 import treq
 from twisted.python import log  # pylint: disable=no-name-in-module
