@@ -1181,6 +1181,20 @@ retry_delay = 2
 max_retries = 5
 
 
+# Send notifications via Signal messenger using signal-cli-rest-api
+# https://github.com/bbernhard/signal-cli-rest-api
+# Self-host signal-cli-rest-api, register your sender number, then set:
+#  - api_url:    Base URL of your signal-cli-rest-api instance
+#  - sender:     Registered Signal phone number to send from (E.164 format)
+#  - recipients: Comma-separated list of recipient phone numbers (E.164 format)
+# N.b. only notifies on cowrie.login.success, cowrie.command.input/.failed,
+# and cowrie.session.file_download to prevent spam.
+[output_signal]
+enabled = false
+api_url = http://localhost:8080
+sender = +1234567890
+recipients = +0987654321
+
 # Datadog output module
 # sends JSON directly to Datadog
 # mandatory field: api_key
