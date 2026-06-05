@@ -19,7 +19,6 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-
     """Signal messenger output plugin."""
 
     def start(self) -> None:
