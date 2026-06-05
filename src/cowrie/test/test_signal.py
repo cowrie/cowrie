@@ -14,7 +14,7 @@ _TEST_CREDENTIAL = "test-credential-value"
 
 
 class SignalOutputTests(unittest.TestCase):
-    """Test suite for Signal messenger output plugin."""
+    """Tests for Signal messenger output plugin."""
 
     def setUp(self) -> None:
         self.output = Output()
@@ -77,7 +77,7 @@ class SignalOutputTests(unittest.TestCase):
     def test_file_download_sends_notification(self, mock_post: MagicMock) -> None:
         event = {
             **self._base_event("cowrie.session.file_download"),
-            "url": "http://evil.example.com/malware.sh",
+            "url": "https://evil.example.com/malware.sh",
         }
         self.output.write(event)
 

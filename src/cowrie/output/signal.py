@@ -19,13 +19,7 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-    """
-    Signal messenger output plugin.
-
-    Sends Cowrie event notifications via a self-hosted signal-cli-rest-api instance.
-    Only notifies on login success, command input/failure, and file downloads
-    to avoid flooding the recipient.
-    """
+    """Signal messenger output plugin."""
 
     def start(self) -> None:
         self.api_url = CowrieConfig.get("output_signal", "api_url").rstrip("/")
