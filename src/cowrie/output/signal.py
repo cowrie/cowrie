@@ -9,10 +9,6 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any
 
 import treq
 from twisted.python import log  # pylint: disable=no-name-in-module
@@ -34,7 +30,7 @@ class Output(cowrie.core.output.Output):
         # Nothing to clean up; treq requests are fire-and-forget
         pass
 
-    def write(self, event: dict[str, Any]) -> None:
+    def write(self, event: dict) -> None:
         log_keys = [k for k in event if k.startswith("log_")]
         for k in log_keys:
             del event[k]
