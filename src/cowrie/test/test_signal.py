@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -14,6 +15,7 @@ _TEST_CREDENTIAL = "test-credential-value"
 
 
 class SignalOutputTests(unittest.TestCase):
+
     """Tests for Signal messenger output plugin."""
 
     def setUp(self) -> None:
@@ -131,8 +133,6 @@ class SignalOutputTests(unittest.TestCase):
             "password": _TEST_CREDENTIAL,
         }
         self.output.write(event)
-
-        import json
 
         _, kwargs = mock_post.call_args
         payload = json.loads(kwargs["data"].decode("utf-8"))
