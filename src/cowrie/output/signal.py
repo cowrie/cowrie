@@ -12,15 +12,15 @@ import json
 from typing import Any
 
 import treq
-from twisted.python import log
+from twisted.python import log  # pylint: disable=no-name-in-module
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
-    """
-    Signal messenger output plugin.
+
+    """Signal messenger output plugin.
 
     Sends Cowrie event notifications via a self-hosted signal-cli-rest-api instance.
     Only notifies on login success, command input/failure, and file downloads

@@ -1191,7 +1191,7 @@ max_retries = 5
 # and cowrie.session.file_download to prevent spam.
 [output_signal]
 enabled = false
-api_url = http://localhost:8080
+api_url = https://localhost:8080
 sender = +1234567890
 recipients = +0987654321
 

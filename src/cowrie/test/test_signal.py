@@ -14,12 +14,13 @@ _TEST_CREDENTIAL = "test-credential-value"
 
 
 class SignalOutputTests(unittest.TestCase):
+
     """Test suite for Signal messenger output plugin."""
 
     def setUp(self) -> None:
         self.output = Output()
         # Override with test values after start() reads from bundled cfg.dist defaults
-        self.output.api_url = "http://localhost:8080"
+        self.output.api_url = "https://localhost:8080"
         self.output.sender = "+1234567890"
         self.output.recipients = ["+0987654321"]
 
@@ -42,7 +43,7 @@ class SignalOutputTests(unittest.TestCase):
 
         mock_post.assert_called_once()
         args, kwargs = mock_post.call_args
-        self.assertEqual(args[0], "http://localhost:8080/v2/send")
+        self.assertEqual(args[0], "https://localhost:8080/v2/send")
         self.assertIn(b'"message"', kwargs["data"])
         self.assertIn(b'"number"', kwargs["data"])
         self.assertIn(b'"recipients"', kwargs["data"])
