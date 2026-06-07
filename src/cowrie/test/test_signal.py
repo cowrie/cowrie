@@ -118,9 +118,7 @@ class SignalOutputTests(unittest.TestCase):
         self.output.write(event)
 
         _, kwargs = mock_post.call_args
-        self.assertEqual(
-            kwargs["headers"], {b"Content-Type": [b"application/json"]}
-        )
+        self.assertEqual(kwargs["headers"], {b"Content-Type": [b"application/json"]})
 
     @patch("treq.post")
     def test_payload_contains_sender_and_recipients(self, mock_post: MagicMock) -> None:
@@ -139,18 +137,17 @@ class SignalOutputTests(unittest.TestCase):
         self.assertIn("+2222222222", payload["recipients"])
         self.assertIn("+3333333333", payload["recipients"])
 
-    @patch("treq.post", side_effect=Exception("connection refused"))
-    def test_send_exception_does_not_propagate(self, mock_post: MagicMock) -> None:
+    @patch("treq.post")
+    def test_send_attaches_errback(self, mock_post: MagicMock) -> None:
+        mock_deferred = MagicMock()
+        mock_post.return_value = mock_deferred
         event = {
             **self._base_event("cowrie.login.success"),
             "username": "root",
             "password": _TEST_CREDENTIAL,
         }
-        # Must not raise
-        try:
-            self.output.write(event)
-        except Exception:
-            self.fail("write() raised an exception on network error")
+        self.output.write(event)
+        mock_deferred.addErrback.assert_called_once()
 
     @patch("treq.post")
     def test_log_keys_stripped_before_send(self, mock_post: MagicMock) -> None:
