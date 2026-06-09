@@ -52,27 +52,6 @@ class Output(cowrie.core.output.Output):
         # session id so concurrent sessions do not stomp each other's state.
         self.session_state = {}
 
-        self._warn_if_legacy_auth_key()
-
-    def _warn_if_legacy_auth_key(self) -> None:
-        """
-        The pre-2026 DShield API took a base64-encoded auth_key and decoded
-        it before computing the HMAC. The current submitapi uses the key as
-        a raw string. Warn loudly if the configured key still looks
-        base64-encoded so an operator notices before submissions are
-        silently rejected.
-        """
-        try:
-            base64.b64decode(self.auth_key, validate=True)
-        except (binascii.Error, ValueError):
-            return
-        if "=" in self.auth_key:
-            log.msg(
-                "dshield: auth_key looks base64-encoded but the current "
-                "DShield submit API expects the raw key. Update your "
-                "config if submissions are rejected."
-            )
-
     def stop(self):
         pass
 
@@ -87,7 +66,7 @@ class Output(cowrie.core.output.Output):
         eventid = event["eventid"]
         session = event.get("session", "")
 
-        if eventid in ("cowrie.login.success", "cowrie.login.failed"):
+        if eventid == "cowrie.session.closed":
             state = self._state(session)
             self.batch.append(
                 {
@@ -111,14 +90,13 @@ class Output(cowrie.core.output.Output):
                 batch_to_send = self.batch
                 self.submit_entries(batch_to_send)
                 self.batch = []
+            self.session_state.pop(session, None)
         elif eventid == "cowrie.command.input":
             self._state(session)["lastcommand"] = event["input"]
         elif eventid == "cowrie.client.kex":
             self._state(session)["hassh"] = event["hassh"]
         elif eventid == "cowrie.client.version":
             self._state(session)["banner"] = event["version"]
-        elif eventid == "cowrie.session.closed":
-            self.session_state.pop(session, None)
 
     def transmission_error(self, batch):
         self.batch.extend(batch)
