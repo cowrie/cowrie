@@ -86,7 +86,7 @@ class Output(cowrie.core.output.Output):
                 "username": "",
                 "password": "",
                 "src_ip": "",
-                "timestamp": 0,
+                "timestamp": "",
             }
             self.session_state[session] = state
         return state
@@ -98,7 +98,7 @@ class Output(cowrie.core.output.Output):
         if eventid == "cowrie.session.closed":
             self.batch.append(
                 {
-                    "timestamp": int(event["time"]),
+                    "timestamp": event["time"],
                     "source_ip": event["src_ip"],
                     "user": state["username"],
                     "password": state["password"],
