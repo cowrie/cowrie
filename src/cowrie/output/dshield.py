@@ -133,8 +133,6 @@ class Output(cowrie.core.output.Output):
             self._state(session)["hassh"] = event["hassh"]
         elif eventid == "cowrie.client.version":
             self._state(session)["banner"] = event["version"]
-        elif eventid == "cowrie.session.closed":
-            self.session_state.pop(session, None)
 
     def transmission_error(self, batch):
         self.batch.extend(batch)
