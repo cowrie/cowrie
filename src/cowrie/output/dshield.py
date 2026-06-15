@@ -79,7 +79,15 @@ class Output(cowrie.core.output.Output):
     def _state(self, session: str) -> dict[str, str]:
         state = self.session_state.get(session)
         if state is None:
-            state = {"lastcommand": "", "hassh": "", "banner": "", "username": "", "password": "", "src_ip": "", "timestamp": 0}
+            state = {
+                "lastcommand": "",
+                "hassh": "",
+                "banner": "",
+                "username": "",
+                "password": "",
+                "src_ip": "",
+                "timestamp": 0,
+            }
             self.session_state[session] = state
         return state
 
@@ -87,7 +95,7 @@ class Output(cowrie.core.output.Output):
         eventid = event["eventid"]
         session = event.get("session", "")
         state = self._state(session)
-        if eventid == 'cowrie.session.closed':
+        if eventid == "cowrie.session.closed":
             self.batch.append(
                 {
                     "timestamp": int(event["time"]),
@@ -112,12 +120,12 @@ class Output(cowrie.core.output.Output):
                 self.batch = []
         elif eventid in ("cowrie.login.success", "cowrie.login.failed"):
             log.msg("dshield: cowrie.login.success or cowrie.login.failed")
-            self._state(session)["username"] = event.get("username","")
-            self._state(session)["password"] = event.get("password","")
-            log.msg(f'dshield: {state["username"]} {state["password"]}')
-        elif eventid == 'cowrie.direct-tcpip.request':
-            log.msg("dshield: cowrie.direct-tcpip.request")            
-            self._state(session)["lastcommand"] = event.get("message","")
+            self._state(session)["username"] = event.get("username", "")
+            self._state(session)["password"] = event.get("password", "")
+            log.msg(f"dshield: {state['username']} {state['password']}")
+        elif eventid == "cowrie.direct-tcpip.request":
+            log.msg("dshield: cowrie.direct-tcpip.request")
+            self._state(session)["lastcommand"] = event.get("message", "")
         elif eventid == "cowrie.command.input":
             log.msg("dshield: cowrie.command.input")
             self._state(session)["lastcommand"] = event["input"]
@@ -152,8 +160,7 @@ class Output(cowrie.core.output.Output):
         ).digest()
         hash64 = base64.b64encode(digest).decode("ascii")
         auth_header = (
-            f"ISC-HMAC-SHA256 Credentials={hash64} "
-            f"Userid={self.userid} Nonce={nonce}"
+            f"ISC-HMAC-SHA256 Credentials={hash64} Userid={self.userid} Nonce={nonce}"
         )
         if self.debug:
             log.msg(f"dshield: authentication header {auth_header}")
