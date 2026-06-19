@@ -98,10 +98,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             # Exec channel: no PTY was allocated, so write raw bytes without
             # the \n -> \r\n translation that insults.ServerProtocol.write()
             # performs (which is only appropriate for PTY sessions).
-            if data:
-                if not isinstance(data, bytes):
-                    data = data.encode("utf-8")
-                self.transport.write(data)
+            self.transport.write(data)
         else:
             insults.ServerProtocol.write(self, data)
 
