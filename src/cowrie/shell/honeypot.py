@@ -267,6 +267,17 @@ class HoneyPotShell:
         closing_count = 0
 
         while opening_count > closing_count:
+            if pos >= len(cmd_expr):
+                # The current lexer token ended before the expression was
+                # closed; pull the next token and keep scanning.
+                if self.lexer:
+                    tokkie = self.lexer.get_token()
+                    if tokkie is None:
+                        break
+                    cmd_expr = cmd_expr + " " + tokkie
+                    continue
+                else:
+                    break
             if cmd_expr[pos] in (")", "`"):
                 closing_count += 1
                 if opening_count == closing_count:
@@ -288,14 +299,12 @@ class HoneyPotShell:
             elif cmd_expr[pos : pos + 2] == "$(":
                 opening_count += 1
                 pos += 2
+            elif cmd_expr[pos] == "(":
+                # A bare ( opens a nested subshell inside $(...); count it so the
+                # first ) does not falsely close the outer $(...).
+                opening_count += 1
+                pos += 1
             else:
-                if opening_count > closing_count and pos == len(cmd_expr) - 1:
-                    if self.lexer:
-                        tokkie = self.lexer.get_token()
-                        if tokkie is None:
-                            break
-                        else:
-                            cmd_expr = cmd_expr + " " + tokkie
                 pos += 1
 
         return result
