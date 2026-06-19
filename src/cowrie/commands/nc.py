@@ -284,7 +284,7 @@ class Command_nc(HoneyPotCommand):
             self.s.close()
         self.exit()
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         if hasattr(self, "s"):
             self.s.close()
         self.exit()

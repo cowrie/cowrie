@@ -110,7 +110,7 @@ class Command_grep(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
 
@@ -182,7 +182,7 @@ class Command_tail(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
 
@@ -259,7 +259,7 @@ class Command_head(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
 

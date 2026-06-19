@@ -77,7 +77,7 @@ class Command_uniq(HoneyPotCommand):
         )
         self.grep_input(line.encode())
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
     def grep_input(self, line: bytes) -> None:

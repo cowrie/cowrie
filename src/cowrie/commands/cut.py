@@ -133,7 +133,7 @@ class Command_cut(HoneyPotCommand):
         )
         self._process(line.encode("utf-8"))
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
     def help(self) -> None:

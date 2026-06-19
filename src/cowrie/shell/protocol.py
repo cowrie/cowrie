@@ -306,7 +306,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 and getattr(parent, "interactive", False)
             )
             if not terminal_stdin:
-                obj.handle_CTRL_D()
+                obj.eofReceived()
 
     def uptime(self):
         """
@@ -317,12 +317,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         return r
 
     def eofReceived(self) -> None:
-        # Shell received EOF, nicely exit
         """
-        TODO: this should probably not go through transport, but use processprotocol to close stdin
+        EOF on stdin, from a terminal CTRL-D or a closed SSH channel. Deliver it
+        to the command currently reading stdin; with no command running the
+        shell handles it (logout). If the cmdstack is gone, end the session.
         """
-        ret = failure.Failure(error.ProcessTerminated(exitCode=0))
-        self.terminal.transport.processEnded(ret)
+        if self.cmdstack:
+            self.cmdstack[-1].eofReceived()
+        else:
+            ret = failure.Failure(error.ProcessTerminated(exitCode=0))
+            self.terminal.transport.processEnded(ret)
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
@@ -443,8 +447,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.cmdstack[-1].handle_CTRL_C()
 
     def handle_CTRL_D(self) -> None:
-        if self.cmdstack:
-            self.cmdstack[-1].handle_CTRL_D()
+        # CTRL-D at the terminal signals end-of-file on stdin.
+        self.eofReceived()
 
     def handle_TAB(self) -> None:
         if self.cmdstack:

@@ -177,7 +177,7 @@ class Command_scp(HoneyPotCommand):
 
         return data
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         if (
             self.protocol.terminal.stdinlogOpen
             and self.protocol.terminal.stdinlogFile

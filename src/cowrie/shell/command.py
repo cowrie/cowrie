@@ -128,7 +128,11 @@ class HoneyPotCommand:
     def handle_TAB(self) -> None:
         pass
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
+        """
+        EOF on stdin. Commands that read stdin override this to terminate; the
+        default ignores it (the command does not read stdin).
+        """
         pass
 
     def __repr__(self) -> str:

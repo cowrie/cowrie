@@ -103,3 +103,30 @@ class InteractiveStdinPreservedTests(unittest.TestCase):
         self.proto.lineReceived(b"test\n")
         self.proto.handle_CTRL_D()
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+
+class EofRoutingTests(unittest.TestCase):
+    """Terminal CTRL-D and SSH channel EOF both deliver stdin EOF to the
+    command currently reading, regardless of which source it came from."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def test_ctrl_d_keystroke_exits_parked_command(self) -> None:
+        """A terminal CTRL-D exits the command reading stdin, back to a prompt."""
+        self.proto.lineReceived(b"tee\n")
+        self.assertEqual(len(self.proto.cmdstack), 2)
+        self.proto.handle_CTRL_D()
+        self.assertEqual(len(self.proto.cmdstack), 1)
+        self.assertTrue(self.tr.value().endswith(PROMPT))
+
+    def test_channel_eof_exits_parked_command(self) -> None:
+        """A closed SSH channel (eofReceived) exits the command reading stdin
+        instead of tearing down the whole session."""
+        self.proto.lineReceived(b"tee\n")
+        self.assertEqual(len(self.proto.cmdstack), 2)
+        self.proto.eofReceived()
+        self.assertEqual(len(self.proto.cmdstack), 1)
