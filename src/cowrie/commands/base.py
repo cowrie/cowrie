@@ -1085,14 +1085,52 @@ class Command_set(HoneyPotCommand):
 commands["set"] = Command_set
 
 
+class Command_export(HoneyPotCommand):
+    """
+    Mark shell variables for export so they appear in the environment of
+    child processes. With no operands, list the exported variables.
+    """
+
+    def call(self) -> None:
+        args = [a for a in self.args if a != "-p"]
+        if not args:
+            for name in sorted(self.exported):
+                self.write(f'declare -x {name}="{self.environ.get(name, "")}"\n')
+            return
+        for arg in args:
+            if "=" in arg:
+                key, val = arg.split("=", 1)
+                self.environ[key] = val
+                self.exported.add(key)
+            else:
+                self.exported.add(arg)
+
+
+commands["export"] = Command_export
+
+
+class Command_unset(HoneyPotCommand):
+    """
+    Remove variables from both the shell and the exported environment.
+    """
+
+    def call(self) -> None:
+        for arg in self.args:
+            if arg.startswith("-"):
+                continue
+            self.environ.pop(arg, None)
+            self.exported.discard(arg)
+
+
+commands["unset"] = Command_unset
+
+
 class Command_nop(HoneyPotCommand):
     def call(self) -> None:
         pass
 
 
 commands["umask"] = Command_nop
-commands["unset"] = Command_nop
-commands["export"] = Command_nop
 commands["alias"] = Command_nop
 commands["jobs"] = Command_nop
 commands["kill"] = Command_nop

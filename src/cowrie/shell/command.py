@@ -28,6 +28,7 @@ class HoneyPotCommand:
         self.protocol = protocol
         self.args = list(args)
         self.environ = self.protocol.cmdstack[-1].environ
+        self.exported = self.protocol.cmdstack[-1].exported
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
         self.input_data: None | (

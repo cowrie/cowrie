@@ -21,9 +21,8 @@ from cowrie.shell import fs
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import PipeProtocol
 
-# Pre-compiled regexes for environment variable expansion
-_ENV_BRACE_RE = re.compile(r"^\${([_a-zA-Z0-9]+)}$")
-_ENV_SIMPLE_RE = re.compile(r"^\$([_a-zA-Z0-9]+)$")
+# Matches a ${VAR} or $VAR reference anywhere inside a token
+_ENV_VAR_RE = re.compile(r"\$\{([_a-zA-Z0-9]+)\}|\$([_a-zA-Z0-9]+)")
 
 
 class HoneyPotShell:
@@ -34,7 +33,17 @@ class HoneyPotShell:
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
         self.cmdpending: list[list[str]] = []
-        self.environ: dict[str, str] = copy.copy(protocol.environ)
+        # A nested shell (e.g. a command substitution) inherits the live
+        # environment of whichever shell is currently running; the very first
+        # shell of a session falls back to the login environment, all of which
+        # is exported.
+        if protocol.cmdstack:
+            parent = protocol.cmdstack[-1]
+            self.environ: dict[str, str] = copy.copy(parent.environ)
+            self.exported: set[str] = copy.copy(parent.exported)
+        else:
+            self.environ = copy.copy(protocol.environ)
+            self.exported = set(protocol.environ.keys())
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
@@ -46,6 +55,12 @@ class HoneyPotShell:
 
     def lineReceived(self, line: str) -> None:
         log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
+        # posix=True makes the lexer strip quotes as it tokenizes, so by the
+        # time a token reaches variable expansion we can no longer tell whether
+        # a reference was single-quoted ('$1', literal) or double-quoted
+        # ("$1", expanded). expand_variables() works around this by only
+        # expanding variables that are set; a proper lexer/parser that preserves
+        # quoting context per token would let us expand correctly in both cases.
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += "@%{}=$:+^,()`"
@@ -97,22 +112,19 @@ class HoneyPotShell:
                     continue
                 elif "$(" in tok or "`" in tok:
                     tok = self.do_command_substitution(tok)
-                elif tok.startswith("${"):
-                    envSearch = _ENV_BRACE_RE.search(tok)
-                    if envSearch is not None:
-                        envMatch = envSearch.group(1)
-                        if envMatch in self.environ:
-                            tok = self.environ[envMatch]
-                        else:
+                elif "$" in tok:
+                    whole = _ENV_VAR_RE.fullmatch(tok)
+                    if whole is not None:
+                        # The token is exactly $VAR or ${VAR}. An unset or empty
+                        # variable yields no word, like an unquoted empty
+                        # expansion in a real shell.
+                        name = whole.group(1) or whole.group(2)
+                        value = self.environ.get(name)
+                        if not value:
                             continue
-                elif tok.startswith("$"):
-                    envSearch = _ENV_SIMPLE_RE.search(tok)
-                    if envSearch is not None:
-                        envMatch = envSearch.group(1)
-                        if envMatch in self.environ:
-                            tok = self.environ[envMatch]
-                        else:
-                            continue
+                        tok = value
+                    else:
+                        tok = self.expand_variables(tok)
 
                 tokens.append(tok)
             except Exception as e:
@@ -136,6 +148,30 @@ class HoneyPotShell:
         else:
             # if there's no command, display a prompt again
             self.showPrompt()
+
+    def expand_variables(self, tok: str) -> str:
+        """
+        Replace ${VAR} or $VAR references embedded in a token with their value.
+
+        Only variables that are currently set are expanded; an unknown
+        reference is left verbatim so that field references in quoted awk, sed
+        and perl programs (e.g. $1, $0, $NF) survive, since the lexer has
+        already discarded the single/double quoting that would tell them apart.
+
+        This is a deliberate compromise, not correct shell behaviour: a real
+        shell expands "$1" (double-quoted) but not '$1' (single-quoted). We
+        cannot honour that distinction until the lexer preserves quoting per
+        token. Once a proper lexer/parser is in place, expand every reference
+        according to its quoting and let unset variables expand to empty.
+        """
+
+        def replace(match: re.Match[str]) -> str:
+            name = match.group(1) or match.group(2)
+            if name in self.environ:
+                return self.environ[name]
+            return match.group(0)
+
+        return _ENV_VAR_RE.sub(replace, tok)
 
     def do_subshell_execution_from_lexer(self) -> None:
         """
@@ -377,6 +413,10 @@ class HoneyPotShell:
             break
 
         if not cmd_tokens:
+            # A statement of only assignments (no command) persists those
+            # variables for the rest of the session. They are shell variables,
+            # not exported, so self.exported is left untouched.
+            self.environ = environ
             runOrPrompt()
             return
 

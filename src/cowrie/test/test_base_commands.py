@@ -137,7 +137,14 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_export_command(self) -> None:
         self.proto.lineReceived(b"export\n")
-        self.assertEqual(self.tr.value(), PROMPT)
+        self.assertEqual(
+            self.tr.value(),
+            b'declare -x HOME="/root"\n'
+            b'declare -x LOGNAME="root"\n'
+            b'declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"\n'
+            b'declare -x TMOUT="1800"\n'
+            b'declare -x USER="root"\n' + PROMPT,
+        )
 
     def test_alias_command(self) -> None:
         self.proto.lineReceived(b"alias\n")
