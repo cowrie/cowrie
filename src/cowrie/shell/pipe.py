@@ -43,6 +43,10 @@ class PipeProtocol:
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
         self.next_command = next_command
+        # True once an upstream command has been wired to write to this
+        # command's stdin via a pipe; used to decide whether stdin should be
+        # closed (EOF) when no terminal will ever feed it.
+        self.stdin_from_pipe: bool = False
         self.redirected_data: bytes = b""
         self.err_data: bytes = b""
         self.protocol = protocol
@@ -268,6 +272,9 @@ class PipeProtocol:
         if self.next_command:
             npcmd = self.next_command.cmd
             npcmdargs = self.next_command.cmdargs
+            # This command is done writing, so the downstream command's stdin
+            # is now closed; mark it so call_command delivers EOF.
+            self.next_command.stdin_from_pipe = True
             self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
     def errConnectionLost(self) -> None:

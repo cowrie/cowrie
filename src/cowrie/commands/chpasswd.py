@@ -96,7 +96,7 @@ class Command_chpasswd(HoneyPotCommand):
         )
         self.chpasswd_application(line.encode())
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
 

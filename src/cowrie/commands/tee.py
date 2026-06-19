@@ -119,7 +119,7 @@ class Command_tee(HoneyPotCommand):
             self.write("^C\n")
             self.exit()
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         """
         ctrl-d is end-of-file, time to terminate
         """

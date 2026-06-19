@@ -128,7 +128,7 @@ class Command_python(HoneyPotCommand):
             format="INPUT (%(realm)s): %(input)s",
         )
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
 

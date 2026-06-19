@@ -93,8 +93,15 @@ class Command_sh(HoneyPotCommand):
         self.protocol.cmdstack.pop()
 
     def interactive_shell(self) -> None:
-        shell = HoneyPotShell(self.protocol, interactive=True)
         parentshell = self.protocol.cmdstack[-2]
+        # A sub-shell launched from a non-interactive parent (pipe, redirect, or
+        # command substitution) will never have a terminal feeding its stdin, so
+        # spawning an interactive shell would leak it on the cmdstack and write a
+        # prompt into captured output via showPrompt(). Behave like EOF instead.
+        if not getattr(parentshell, "interactive", True):
+            self.exit()
+            return
+        shell = HoneyPotShell(self.protocol, interactive=True)
         # TODO: copy more variables, but only exported variables
         try:
             shell.environ["SHLVL"] = str(int(parentshell.environ["SHLVL"]) + 1)

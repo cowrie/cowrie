@@ -293,6 +293,21 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.pp:
             self.pp.outConnectionLost()
 
+        # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
+        # waiting for stdin but nothing will ever write to it, signal EOF so it
+        # terminates instead of leaking on the cmdstack. Stdin is only left open
+        # for a command reading from a live terminal: an interactive shell that
+        # is not being fed by a pipe.
+        if self.cmdstack and self.cmdstack[-1] is obj:
+            parent = self.cmdstack[-2] if len(self.cmdstack) >= 2 else None
+            terminal_stdin = (
+                not getattr(pp, "stdin_from_pipe", False)
+                and parent is not None
+                and getattr(parent, "interactive", False)
+            )
+            if not terminal_stdin:
+                obj.eofReceived()
+
     def uptime(self):
         """
         Uptime
@@ -302,12 +317,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         return r
 
     def eofReceived(self) -> None:
-        # Shell received EOF, nicely exit
         """
-        TODO: this should probably not go through transport, but use processprotocol to close stdin
+        EOF on stdin, from a terminal CTRL-D or a closed SSH channel. Deliver it
+        to the command currently reading stdin; with no command running the
+        shell handles it (logout). If the cmdstack is gone, end the session.
         """
-        ret = failure.Failure(error.ProcessTerminated(exitCode=0))
-        self.terminal.transport.processEnded(ret)
+        if self.cmdstack:
+            self.cmdstack[-1].eofReceived()
+        else:
+            ret = failure.Failure(error.ProcessTerminated(exitCode=0))
+            self.terminal.transport.processEnded(ret)
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
@@ -428,8 +447,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
             self.cmdstack[-1].handle_CTRL_C()
 
     def handle_CTRL_D(self) -> None:
-        if self.cmdstack:
-            self.cmdstack[-1].handle_CTRL_D()
+        # CTRL-D at the terminal signals end-of-file on stdin.
+        self.eofReceived()
 
     def handle_TAB(self) -> None:
         if self.cmdstack:

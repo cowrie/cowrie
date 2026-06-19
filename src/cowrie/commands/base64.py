@@ -148,7 +148,7 @@ Try 'base64 --help' for more information.
 
         self.dojob(line.encode("ascii"))
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         self.exit()
 
 

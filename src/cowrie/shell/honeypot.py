@@ -543,22 +543,17 @@ class HoneyPotShell:
 
     def eofReceived(self) -> None:
         """
-        this should probably not go through ctrl-d, but use processprotocol to close stdin
+        EOF with the shell as the active reader (no command running) logs out.
         """
-        log.msg("received eof, sending ctrl-d to command")
-        if self.protocol.cmdstack:
-            self.protocol.cmdstack[-1].handle_CTRL_D()
+        log.msg("received eof, logging out")
+        status = failure.Failure(error.ProcessDone(status=""))
+        self.protocol.terminal.transport.processEnded(status)
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []
         self.protocol.lineBufferIndex = 0
         self.protocol.terminal.write(b"\n")
         self.showPrompt()
-
-    def handle_CTRL_D(self) -> None:
-        log.msg("Received CTRL-D, exiting..")
-        status = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(status)
 
     def handle_TAB(self) -> None:
         """

@@ -99,7 +99,7 @@ class Command_cat(HoneyPotCommand):
 
         self.output(line.encode("utf-8"))
 
-    def handle_CTRL_D(self) -> None:
+    def eofReceived(self) -> None:
         """
         ctrl-d is end-of-file, time to terminate
         """
