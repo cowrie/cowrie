@@ -293,6 +293,21 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.pp:
             self.pp.outConnectionLost()
 
+        # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
+        # waiting for stdin but nothing will ever write to it, signal EOF so it
+        # terminates instead of leaking on the cmdstack. Stdin is only left open
+        # for a command reading from a live terminal: an interactive shell that
+        # is not being fed by a pipe.
+        if self.cmdstack and self.cmdstack[-1] is obj:
+            parent = self.cmdstack[-2] if len(self.cmdstack) >= 2 else None
+            terminal_stdin = (
+                not getattr(pp, "stdin_from_pipe", False)
+                and parent is not None
+                and getattr(parent, "interactive", False)
+            )
+            if not terminal_stdin:
+                obj.handle_CTRL_D()
+
     def uptime(self):
         """
         Uptime
