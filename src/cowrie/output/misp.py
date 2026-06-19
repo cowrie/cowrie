@@ -103,7 +103,7 @@ class Output(cowrie.core.output.Output):
                     "client_details": {},
                     "event_created": False,
                     "end_time": None,
-                    "duration": None,
+                    "duration_ms": None,
                 }
 
                 # Track client details for SSH sessions
@@ -221,8 +221,10 @@ class Output(cowrie.core.output.Output):
                 # Set end time and calculate duration
                 self.session_tracking[session_id]["end_time"] = timestamp
 
-                if "duration" in event:
-                    self.session_tracking[session_id]["duration"] = event["duration"]
+                if "duration_ms" in event:
+                    self.session_tracking[session_id]["duration_ms"] = event[
+                        "duration_ms"
+                    ]
 
                 # Only create events for sessions with meaningful activity
                 if not self.session_tracking[session_id].get("event_created", False):
@@ -335,10 +337,10 @@ class Output(cowrie.core.output.Output):
                 object_relation="end-time",
             )
 
-        if session_data.get("duration"):
+        if session_data.get("duration_ms"):
             session_object.add_attribute(
                 type="text",
-                value=str(session_data["duration"]),
+                value=str(session_data["duration_ms"]),
                 object_relation="duration",
             )
 
@@ -546,7 +548,7 @@ class Output(cowrie.core.output.Output):
             f"Source IP: {session_data.get('src_ip', 'unknown')}",
             f"Start Time: {session_data.get('start_time', 'unknown')}",
             f"End Time: {session_data.get('end_time', 'unknown')}",
-            f"Duration: {session_data.get('duration', 'unknown')} seconds",
+            f"Duration: {session_data.get('duration_ms', 'unknown')} milliseconds",
             f"Authentication Success: {session_data.get('auth_success', False)}",
             f"Usernames Attempted: {', '.join(session_data.get('usernames', ['none']))}",
             f"Number of Commands: {len(session_data.get('commands', []))}",

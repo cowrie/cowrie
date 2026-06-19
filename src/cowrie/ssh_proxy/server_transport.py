@@ -157,7 +157,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         # Cache resolved endpoints for connectionLost logging
         self.backend_local_ip = backend_host.host
         self.backend_local_port = backend_host.port
-        self.backend_ip = backend_peer.host     # Sets backend_ip to its IP if backend_ip was a hostname
+        self.backend_ip = (
+            backend_peer.host
+        )  # Sets backend_ip to its IP if backend_ip was a hostname
         self.backend_port = backend_peer.port
 
         log.msg(
@@ -404,11 +406,11 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.pool_interface.transport.loseConnection()
 
         if self.startTime is not None:  # startTime is not set when auth fails
-            duration = time.time() - self.startTime
+            duration_ms = round((time.time() - self.startTime) * 1000)
             log.msg(
                 eventid="cowrie.session.closed",
-                format="Connection lost after %(duration)d seconds",
-                duration=duration,
+                format="Connection lost after %(duration_ms)d milliseconds",
+                duration_ms=duration_ms,
             )
 
     def sendDisconnect(self, reason, desc):

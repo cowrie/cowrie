@@ -1,0 +1,64 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# ABOUTME: Tests that cowrie.session.closed reports duration_ms as an integer.
+# ABOUTME: Guards against type drift between SSH and telnet session events.
+
+from __future__ import annotations
+
+import time
+import unittest
+from unittest.mock import MagicMock, patch
+
+from cowrie.ssh import transport as ssh_transport
+from cowrie.telnet import transport as telnet_transport
+
+
+class TestSessionDuration(unittest.TestCase):
+    """cowrie.session.closed must emit an integer duration_ms field."""
+
+    def _closed_event(self, mock_msg: MagicMock) -> dict[str, object]:
+        for call in mock_msg.call_args_list:
+            if call.kwargs.get("eventid") == "cowrie.session.closed":
+                return dict(call.kwargs)
+        self.fail("no cowrie.session.closed event was emitted")
+
+    def test_ssh_duration_ms_is_int(self) -> None:
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = MagicMock()
+        t.startTime = time.time() - 5
+
+        with (
+            patch.object(ssh_transport.log, "msg") as mock_msg,
+            patch.object(ssh_transport.HoneyPotSSHTransport, "setTimeout"),
+            patch("twisted.conch.ssh.transport.SSHServerTransport.connectionLost"),
+        ):
+            t.connectionLost()
+
+        event = self._closed_event(mock_msg)
+        ms = event["duration_ms"]
+        assert isinstance(ms, int)
+        self.assertNotIn("duration", event)
+        self.assertGreaterEqual(ms, 5000)
+
+    def test_telnet_duration_ms_is_int(self) -> None:
+        t = telnet_transport.CowrieTelnetTransport()
+        t.startTime = time.time() - 5
+
+        with (
+            patch.object(telnet_transport.log, "msg") as mock_msg,
+            patch.object(telnet_transport.CowrieTelnetTransport, "setTimeout"),
+            patch("twisted.conch.telnet.TelnetTransport.connectionLost"),
+        ):
+            t.connectionLost()
+
+        event = self._closed_event(mock_msg)
+        ms = event["duration_ms"]
+        assert isinstance(ms, int)
+        self.assertNotIn("duration", event)
+        self.assertGreaterEqual(ms, 5000)
+
+
+if __name__ == "__main__":
+    unittest.main()

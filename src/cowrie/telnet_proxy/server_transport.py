@@ -230,11 +230,11 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
             self.pool_interface.transport.loseConnection()
 
         if self.startTime is not None:  # startTime is not set when auth fails
-            duration = time.time() - self.startTime
+            duration_ms = round((time.time() - self.startTime) * 1000)
             log.msg(
                 eventid="cowrie.session.closed",
-                format="Connection lost after %(duration)d seconds",
-                duration=duration,
+                format="Connection lost after %(duration_ms)d milliseconds",
+                duration_ms=duration_ms,
             )
 
     def packet_buffer(self, payload):

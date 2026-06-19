@@ -248,11 +248,11 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         transport.SSHServerTransport.connectionLost(self, reason)
         self.transport.connectionLost(reason)
         self.transport = None
-        duration = f"{time.time() - self.startTime:.1f}"
+        duration_ms = round((time.time() - self.startTime) * 1000)
         log.msg(
             eventid="cowrie.session.closed",
-            format="Connection lost after %(duration)s seconds",
-            duration=duration,
+            format="Connection lost after %(duration_ms)d milliseconds",
+            duration_ms=duration_ms,
         )
 
     def sendDisconnect(self, reason, desc):

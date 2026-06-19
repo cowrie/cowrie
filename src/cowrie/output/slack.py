@@ -114,7 +114,7 @@ class Output(cowrie.core.output.Output):
             ),
             "cowrie.session.closed": lambda: (
                 ":red_circle: *LOGOUT* :red_circle: Session closed - "
-                + f"Total duration: `{event.get('duration', 'unknown')}` seconds"
+                + f"Total duration: `{event.get('duration_ms', 'unknown')}` milliseconds"
             ),
             "cowrie.command.input": lambda: _format_command(event.get("input", "")),
             "cowrie.session.file_download": lambda: _format_download(event),

@@ -157,7 +157,7 @@ Session closed
 
 Attributes:
 
-    * duration
+    * `duration_ms`: duration of session in milliseconds
 
 cowrie.session.params
 =====================
