@@ -94,7 +94,13 @@ class LoggingServerProtocol(insults.ServerProtocol):
             )
             self.ttylogSize += len(data)
 
-        insults.ServerProtocol.write(self, data)
+        if self.type == "e":
+            # Exec channel: no PTY was allocated, so write raw bytes without
+            # the \n -> \r\n translation that insults.ServerProtocol.write()
+            # performs (which is only appropriate for PTY sessions).
+            self.transport.write(data)
+        else:
+            insults.ServerProtocol.write(self, data)
 
     def dataReceived(self, data: bytes) -> None:
         """
