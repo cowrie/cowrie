@@ -223,3 +223,24 @@ class ShellEchoCommandTests(unittest.TestCase):
         """Test command substitution in middle with multiple commands"""
         self.proto.lineReceived(b"echo before $(echo first; echo second) after")
         self.assertEqual(self.tr.value(), b"before first\nsecond after\n" + PROMPT)
+
+    def test_command_substitution_space_after_paren(self) -> None:
+        """Test command substitution with a space after $( - regression for #40164"""
+        self.proto.lineReceived(b"echo $( echo hello)")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_command_substitution_nested_subshell(self) -> None:
+        """Nested subshell in command substitution must not crash or drop later
+        commands - regression for #40164"""
+        self.proto.lineReceived(b"x=$( (echo hello) ); echo done")
+        output = self.tr.value()
+        self.assertNotIn(b"syntax error", output)
+        self.assertIn(b"done", output)
+
+    def test_command_substitution_nested_subshell_pipe(self) -> None:
+        """Nested subshell piped inside command substitution must not crash or
+        drop later commands - regression for #40164"""
+        self.proto.lineReceived(b"cpus=$( (echo 4) | head -1 ); echo done")
+        output = self.tr.value()
+        self.assertNotIn(b"syntax error", output)
+        self.assertIn(b"done", output)
