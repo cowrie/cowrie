@@ -23,7 +23,7 @@ mysql-connector-python==9.7.0
 pymongo==4.17.0
 
 # postgresql
-# psycopg2==2.9.10
+psycopg2-binary==2.9.10
 
 # rethinkdblog
 rethinkdb==2.4.10.post1
