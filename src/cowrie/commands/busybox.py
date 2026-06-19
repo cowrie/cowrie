@@ -78,7 +78,9 @@ class Command_busybox(HoneyPotCommand):
 
         line = " ".join(self.args)
         cmd = self.args[0]
-        cmdclass = self.protocol.getCommand(cmd, self.environ["PATH"].split(":"))
+        cmdclass = self.protocol.getCommand(
+            cmd, self.environ.get("PATH", "").split(":")
+        )
         if cmdclass:
             # log found command
             log.msg(

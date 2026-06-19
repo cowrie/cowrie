@@ -471,7 +471,7 @@ class HoneyPotShell:
         lastpp = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
             cmdclass = self.protocol.getCommand(
-                cmd["command"], environ["PATH"].split(":")
+                cmd["command"], environ.get("PATH", "").split(":")
             )
             if cmdclass:
                 log.msg(

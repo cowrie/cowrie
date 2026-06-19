@@ -100,6 +100,12 @@ class ShellVariableTests(unittest.TestCase):
         self.proto.lineReceived(b"export x")
         self.assertIn(b"x=hi", self.run_line(b"env"))
 
+    # unset PATH must not crash later command dispatch
+    def test_unset_path_does_not_crash(self) -> None:
+        self.proto.lineReceived(b"unset PATH")
+        self.assertEqual(self.run_line(b"whoami"), b"root\n")
+        self.assertIn(b"command not found", self.run_line(b"definitelynotacommand"))
+
     # unset removes a variable from both scopes; once unknown its embedded
     # reference is left verbatim, like any other unset name
     def test_unset_removes_variable(self) -> None:

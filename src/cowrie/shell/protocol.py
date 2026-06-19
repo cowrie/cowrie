@@ -238,7 +238,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             if not self.fs.exists(path):
                 return None
         else:
-            for i in [f"{self.fs.resolve_path(x, self.cwd)}/{cmd}" for x in paths]:
+            for i in [
+                f"{self.fs.resolve_path(x, self.cwd)}/{cmd}" for x in paths if x
+            ]:
                 if self.fs.exists(i):
                     path = i
                     break
