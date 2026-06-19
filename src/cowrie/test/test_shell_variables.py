@@ -37,7 +37,7 @@ class ShellVariableTests(unittest.TestCase):
         """Send one line, return only the bytes it produced (prompt stripped)."""
         self.tr.clear()
         self.proto.lineReceived(line)
-        out = self.tr.value()
+        out: bytes = self.tr.value()
         if out.endswith(PROMPT):
             out = out[: -len(PROMPT)]
         return out
