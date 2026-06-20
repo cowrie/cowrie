@@ -167,7 +167,7 @@ class Output(cowrie.core.output.Output):
             )
 
         elif eventid == "cowrie.session.closed":
-            m["fields"].update({"duration": event["duration"]})
+            m["fields"].update({"duration_ms": event["duration_ms"]})
 
         elif eventid == "cowrie.client.version":
             m["fields"].update(

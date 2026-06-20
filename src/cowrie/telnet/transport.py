@@ -92,11 +92,11 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
-        duration = time.time() - self.startTime
+        duration_ms = round((time.time() - self.startTime) * 1000)
         log.msg(
             eventid="cowrie.session.closed",
-            format="Connection lost after %(duration)d seconds",
-            duration=duration,
+            format="Connection lost after %(duration_ms)d milliseconds",
+            duration_ms=duration_ms,
         )
 
     def willChain(self, option):
@@ -117,7 +117,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             if func in (self.do, self.dont):
                 if s.him.onResult is not None:
                     s.him.onResult.addCallback(self._chainNegotiation, func, option)
-                    s.him.onResult.addErrback(self._handleNegotiationError, func, option)
+                    s.him.onResult.addErrback(
+                        self._handleNegotiationError, func, option
+                    )
                 else:
                     # Negotiation completed between error and handling - call directly
                     # without error chaining to avoid infinite recursion
