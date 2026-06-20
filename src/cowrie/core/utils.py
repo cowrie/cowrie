@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import ipaddress
 from typing import TYPE_CHECKING, BinaryIO
 
@@ -143,3 +144,13 @@ def create_endpoint_services(reactor, parent, listen_endpoints, factory):
         service = internet.StreamServerEndpointService(endpoint, factory)
         # FIXME: Use addService on parent ?
         service.setServiceParent(parent)
+
+
+def calculate_hash(filepath: str, algorithm: str = "md5") -> str:
+    h = hashlib.new(algorithm)
+
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+
+    return h.hexdigest()

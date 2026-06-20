@@ -14,6 +14,7 @@ from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
+from cowrie.core.utils import calculate_hash
 
 try:
     from pymisp import ExpandedPyMISP as PyMISP
@@ -131,16 +132,12 @@ class Output(cowrie.core.output.Output):
                 }
                 self.session_tracking[session_id]["downloads"].append(download_info)
 
-                # Option 1: Create immediate malware events as in the old script
-                # This gives instant malware upload without waiting for session to end
-                file_sha_attrib = self.find_attribute(
-                    "malware-sample", f"*|{event['shasum']}"
-                )
+                md5_hash = calculate_hash(event["outfile"])
+                file_sha_attrib = self.find_attribute("malware-sample", md5_hash)
                 if file_sha_attrib:
                     if self.debug:
                         log.msg("MISP: File known, add sighting")
                     self.add_sighting(event, file_sha_attrib)
-                # Don't create immediate event - let the session event handle it
 
             elif event["eventid"] == "cowrie.session.file_upload":
                 # Track file uploads in session data
@@ -460,9 +457,7 @@ class Output(cowrie.core.output.Output):
                 if "outfile" in download and download["shasum"] != "unknown":
                     malware_attr = MISPAttribute()
                     malware_attr.type = "malware-sample"
-                    malware_attr.value = (
-                        os.path.basename(download["outfile"]) + "|" + download["shasum"]
-                    )
+                    malware_attr.value = (download["shasum"])
                     malware_attr.data = Path(
                         download["outfile"]
                     )  # This uploads the actual binary
