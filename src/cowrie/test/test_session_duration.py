@@ -34,7 +34,7 @@ class TestSessionDuration(unittest.TestCase):
         t.startTime = time.time() - 5
 
         with (
-            patch.object(ssh_transport.log, "msg") as mock_msg,
+            patch("cowrie.ssh.transport.log.msg") as mock_msg,
             patch.object(ssh_transport.HoneyPotSSHTransport, "setTimeout"),
             patch("twisted.conch.ssh.transport.SSHServerTransport.connectionLost"),
         ):
@@ -51,7 +51,7 @@ class TestSessionDuration(unittest.TestCase):
         t.startTime = time.time() - 5
 
         with (
-            patch.object(telnet_transport.log, "msg") as mock_msg,
+            patch("cowrie.telnet.transport.log.msg") as mock_msg,
             patch.object(telnet_transport.CowrieTelnetTransport, "setTimeout"),
             patch("twisted.conch.telnet.TelnetTransport.connectionLost"),
         ):
@@ -69,8 +69,8 @@ class TestSessionDuration(unittest.TestCase):
         ch.startTime = time.time() - 5
 
         with (
-            patch.object(ssh_channel.log, "msg") as mock_msg,
-            patch.object(ssh_channel.ttylog, "ttylog_close"),
+            patch("cowrie.ssh.channel.log.msg") as mock_msg,
+            patch("cowrie.ssh.channel.ttylog.ttylog_close"),
             patch("twisted.conch.ssh.channel.SSHChannel.closed"),
         ):
             ch.closed()
