@@ -221,12 +221,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
             log.msg(
                 eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration)s seconds",
+                format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
                 ttylog=shasumfile,
                 size=self.ttylogSize,
                 shasum=shasum,
                 duplicate=duplicate,
-                duration=f"{time.time() - self.startTime:.1f}",
+                duration_ms=round((time.time() - self.startTime) * 1000),
             )
 
         insults.ServerProtocol.connectionLost(self, reason)

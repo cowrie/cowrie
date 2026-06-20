@@ -73,10 +73,10 @@ class ExecTerm(base_protocol.BaseProtocol):
 
             log.msg(
                 eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration)d seconds",
+                format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
                 ttylog=shasumfile,
                 size=self.ttylogSize,
                 shasum=shasum,
                 duplicate=duplicate,
-                duration=time.time() - self.startTime,
+                duration_ms=round((time.time() - self.startTime) * 1000),
             )

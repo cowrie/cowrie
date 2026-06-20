@@ -175,7 +175,7 @@ TTY Log closed
 
 Attributes:
 
-    * `duration`: duration of session in seconds
+    * `duration_ms`: duration of session in milliseconds
     * `ttylog`: filename of session log that can be replayed with ``bin/playlog``
     * `size`: size in bytes
     * `shasum`: SHA256 checksum of the attacker input only (honeypot generated output is not included)

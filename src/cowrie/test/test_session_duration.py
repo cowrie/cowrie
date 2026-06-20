@@ -11,18 +11,22 @@ import time
 import unittest
 from unittest.mock import MagicMock, patch
 
+from cowrie.ssh import channel as ssh_channel
 from cowrie.ssh import transport as ssh_transport
 from cowrie.telnet import transport as telnet_transport
 
 
 class TestSessionDuration(unittest.TestCase):
-    """cowrie.session.closed must emit an integer duration_ms field."""
+    """Session events must report duration as an integer duration_ms field."""
+
+    def _event(self, mock_msg: MagicMock, eventid: str) -> dict[str, object]:
+        for call in mock_msg.call_args_list:
+            if call.kwargs.get("eventid") == eventid:
+                return dict(call.kwargs)
+        self.fail(f"no {eventid} event was emitted")
 
     def _closed_event(self, mock_msg: MagicMock) -> dict[str, object]:
-        for call in mock_msg.call_args_list:
-            if call.kwargs.get("eventid") == "cowrie.session.closed":
-                return dict(call.kwargs)
-        self.fail("no cowrie.session.closed event was emitted")
+        return self._event(mock_msg, "cowrie.session.closed")
 
     def test_ssh_duration_ms_is_int(self) -> None:
         t = ssh_transport.HoneyPotSSHTransport()
@@ -54,6 +58,24 @@ class TestSessionDuration(unittest.TestCase):
             t.connectionLost()
 
         event = self._closed_event(mock_msg)
+        ms = event["duration_ms"]
+        assert isinstance(ms, int)
+        self.assertNotIn("duration", event)
+        self.assertGreaterEqual(ms, 5000)
+
+    def test_log_closed_duration_ms_is_int(self) -> None:
+        ch = ssh_channel.CowrieSSHChannel()
+        ch.ttylogFile = "/dev/null"
+        ch.startTime = time.time() - 5
+
+        with (
+            patch.object(ssh_channel.log, "msg") as mock_msg,
+            patch.object(ssh_channel.ttylog, "ttylog_close"),
+            patch("twisted.conch.ssh.channel.SSHChannel.closed"),
+        ):
+            ch.closed()
+
+        event = self._event(mock_msg, "cowrie.log.closed")
         ms = event["duration_ms"]
         assert isinstance(ms, int)
         self.assertNotIn("duration", event)

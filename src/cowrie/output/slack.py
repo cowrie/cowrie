@@ -159,6 +159,7 @@ class Output(cowrie.core.output.Output):
             "type",
             "fingerprint",
             "duration",
+            "duration_ms",
             "outfile",
             "shasum",
             "src_ip",
