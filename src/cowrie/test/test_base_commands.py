@@ -112,6 +112,21 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"php -v\n")
         self.assertEqual(self.tr.value(), Command_php.VERSION.encode() + PROMPT)
 
+    def test_run_directory_as_command(self) -> None:
+        self.proto.lineReceived(b"./\n")
+        self.assertEqual(self.tr.value(), b"-bash: ./: Is a directory\n" + PROMPT)
+
+    def test_run_absolute_directory_as_command(self) -> None:
+        self.proto.lineReceived(b"/etc\n")
+        self.assertEqual(self.tr.value(), b"-bash: /etc: Is a directory\n" + PROMPT)
+
+    def test_run_nonexistent_command(self) -> None:
+        self.proto.lineReceived(b"definitelynotacommand\n")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: definitelynotacommand: command not found\n" + PROMPT,
+        )
+
     def test_chattr_command(self) -> None:
         self.proto.lineReceived(b"chattr\n")
         self.assertEqual(

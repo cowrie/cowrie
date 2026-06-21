@@ -516,9 +516,7 @@ class HoneyPotShell:
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
                     format="Command not found: %(input)s",
                 )
-                message = "-bash: {}: command not found\n".format(
-                    cmd["command"]
-                ).encode("utf8")
+                message = self.command_not_found_message(cmd["command"]).encode("utf8")
                 redirects = cmd.get("redirects", [])
                 if redirects:
                     temp_pp = PipeProtocol(
@@ -555,6 +553,19 @@ class HoneyPotShell:
 
         if pp:
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
+
+    def command_not_found_message(self, cmd: str) -> str:
+        """
+        Build the error a real shell prints when a command cannot be run.
+        A path-like command (one starting with "." or "/") that resolves to an
+        existing directory yields "Is a directory", matching bash's EISDIR; any
+        other unresolved command yields "command not found".
+        """
+        if cmd[:1] in (".", "/"):
+            path = self.protocol.fs.resolve_path(cmd, self.protocol.cwd)
+            if self.protocol.fs.isdir(path):
+                return f"-bash: {cmd}: Is a directory\n"
+        return f"-bash: {cmd}: command not found\n"
 
     def resume(self) -> None:
         if self.interactive:
