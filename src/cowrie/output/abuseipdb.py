@@ -56,7 +56,9 @@ class Output(output.Output):
         self.reporter = Reporter(self.logbook, self.tolerance_attempts)
 
         # We store the LogBook state any time a shutdown occurs. The rest of
-        # our start-up is just for loading and cleaning the previous state
+        # our start-up is just for loading and cleaning the previous state.
+        # Default to the current setting so a missing state needs no resize.
+        tolerated = self.tolerance_attempts
         try:
             with open(self.state_dump, "rb") as f:
                 self.logbook.update(pickle.load(f))

@@ -25,10 +25,18 @@ commands = {}
 
 # Initialize rate limiter
 curl_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("honeypot", "curl_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("honeypot", "curl_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("honeypot", "curl_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("honeypot", "curl_rate_limit_max_hosts", fallback=1000)
+    enabled=CowrieConfig.getboolean(
+        "honeypot", "curl_rate_limit_enabled", fallback=True
+    ),
+    max_requests=CowrieConfig.getint(
+        "honeypot", "curl_rate_limit_requests", fallback=5
+    ),
+    window_seconds=CowrieConfig.getint(
+        "honeypot", "curl_rate_limit_window", fallback=60
+    ),
+    max_keys=CowrieConfig.getint(
+        "honeypot", "curl_rate_limit_max_hosts", fallback=1000
+    ),
 )
 
 CURL_HELP = """Usage: curl [options...] <url>
@@ -231,10 +239,10 @@ class Command_curl(HoneyPotCommand):
             elif opt[0] == "-I" or opt[0] == "--head":
                 self.head_request = True
 
-        if len(args):
-            if args[0] is not None:
-                url = str(args[0]).strip()
-        else:
+        url = ""
+        if len(args) and args[0] is not None:
+            url = str(args[0]).strip()
+        if not url:
             self.errorWrite(
                 "curl: try 'curl --help' or 'curl --manual' for more information\n"
             )
@@ -261,8 +269,7 @@ class Command_curl(HoneyPotCommand):
 
         if self.outfile:
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
-            if self.outfile:
-                path = os.path.dirname(self.outfile)
+            path = os.path.dirname(self.outfile) if self.outfile else ""
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
                     f"curl: {self.outfile}: Cannot open: No such file or directory\n"
@@ -273,8 +280,7 @@ class Command_curl(HoneyPotCommand):
         self.url = url.encode("ascii")
 
         parsed = parse.urlparse(url)
-        if parsed.scheme:
-            scheme = parsed.scheme
+        scheme = parsed.scheme
         if scheme != "http" and scheme != "https":
             self.errorWrite(
                 f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
@@ -292,7 +298,9 @@ class Command_curl(HoneyPotCommand):
 
         # Check rate limit before proceeding
         if not curl_rate_limiter.check(self.host):
-            log.msg(f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout")
+            log.msg(
+                f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout"
+            )
 
             # Simulate connection timeout
             self.errorWrite(
@@ -478,6 +486,7 @@ class Command_curl(HoneyPotCommand):
         # error.ConnectingCancelledError,
 
         log.msg(response.printTraceback())
+        errormsg = ""
         if hasattr(response, "getErrorMessage"):  # Exceptions
             errormsg = response.getErrorMessage()
         log.msg(errormsg)
