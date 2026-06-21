@@ -119,11 +119,14 @@ class HoneypotPasswordChecker:
         # Is the auth_class defined in the config file?
         authclass = CowrieConfig.get("honeypot", "auth_class", fallback="UserDB")
 
-        # Check if authclass exists in the auth module
+        # Check if authclass exists in the auth module, fall back to UserDB
         if hasattr(auth, authclass):
             authname = getattr(auth, authclass)
         else:
-            log.msg(f"auth_class: {authclass} not found in cowrie.core.auth")
+            log.msg(
+                f"auth_class: {authclass} not found in cowrie.core.auth, using UserDB"
+            )
+            authname = auth.UserDB
 
         theauth = authname()
 
