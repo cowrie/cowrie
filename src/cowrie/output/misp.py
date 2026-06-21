@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,16 @@ try:
     from pymisp import ExpandedPyMISP as PyMISP
 except ImportError:
     from pymisp import PyMISP as PyMISP
+
+
+def file_md5(path: str) -> str:
+    """Return the MD5 hex digest of the file at ``path``.
+
+    MISP stores ``malware-sample`` attribute values as ``filename|md5``, so
+    MD5 is the hash used to correlate samples and register sightings.
+    """
+    with open(path, "rb") as handle:
+        return hashlib.md5(handle.read(), usedforsecurity=False).hexdigest()
 
 
 class Output(cowrie.core.output.Output):
@@ -131,16 +142,16 @@ class Output(cowrie.core.output.Output):
                 }
                 self.session_tracking[session_id]["downloads"].append(download_info)
 
-                # Option 1: Create immediate malware events as in the old script
-                # This gives instant malware upload without waiting for session to end
-                file_sha_attrib = self.find_attribute(
-                    "malware-sample", f"*|{event['shasum']}"
-                )
-                if file_sha_attrib:
-                    if self.debug:
-                        log.msg("MISP: File known, add sighting")
-                    self.add_sighting(event, file_sha_attrib)
-                # Don't create immediate event - let the session event handle it
+                # malware-sample values are filename|md5, so look up by MD5.
+                outfile = event.get("outfile")
+                if outfile and os.path.exists(outfile):
+                    malware_attrib = self.find_attribute(
+                        "malware-sample", file_md5(outfile)
+                    )
+                    if malware_attrib:
+                        if self.debug:
+                            log.msg("MISP: File known, add sighting")
+                        self.add_sighting(event, malware_attrib)
 
             elif event["eventid"] == "cowrie.session.file_upload":
                 # Track file uploads in session data
@@ -457,15 +468,20 @@ class Output(cowrie.core.output.Output):
         if session_data.get("downloads"):
             for download in session_data["downloads"]:
                 # Add the actual malware sample as a separate attribute to the event (not part of an object)
-                if "outfile" in download and download["shasum"] != "unknown":
+                outfile = download.get("outfile")
+                if (
+                    outfile
+                    and download.get("shasum", "unknown") != "unknown"
+                    and os.path.exists(outfile)
+                ):
                     malware_attr = MISPAttribute()
                     malware_attr.type = "malware-sample"
+                    # MISP malware-sample values are filename|md5; match that so
+                    # the attribute correlates with the file_download lookup.
                     malware_attr.value = (
-                        os.path.basename(download["outfile"]) + "|" + download["shasum"]
+                        f"{os.path.basename(outfile)}|{file_md5(outfile)}"
                     )
-                    malware_attr.data = Path(
-                        download["outfile"]
-                    )  # This uploads the actual binary
+                    malware_attr.data = Path(outfile)  # This uploads the actual binary
                     malware_attr.expand = "binary"
                     malware_attr.comment = (
                         f"File downloaded to Cowrie honeypot in session {session_id}"
