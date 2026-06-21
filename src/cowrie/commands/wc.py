@@ -93,6 +93,8 @@ class Command_wc(HoneyPotCommand):
             self.exit()
             return
 
+        optlist: list[tuple[str, str]] = []
+        args = self.args
         if self.args[0] == ">":
             pass
         else:

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-__all__ = [
+command_modules = [
     "adduser",
     "apt",
     "awk",

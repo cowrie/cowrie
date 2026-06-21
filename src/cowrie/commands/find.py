@@ -82,7 +82,7 @@ class Command_find(HoneyPotCommand):
         self.exit()
 
     def find_recursive(self, path: str, depth: int) -> None:
-        if self.maxdepth is not None and depth > self.maxdepth:
+        if depth > self.maxdepth:
             return
         try:
             if not self.fs.exists(path):

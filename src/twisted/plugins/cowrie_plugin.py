@@ -19,15 +19,13 @@ from twisted.plugin import IPlugin
 from twisted.python import log, usage
 from zope.interface import implementer, provider
 
-import cowrie.core.checkers
-import cowrie.core.uuid
 import cowrie.llm.realm
 import cowrie.shell.realm
 import cowrie.ssh.factory
 import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
 from cowrie import __version__ as __cowrie_version__
-from cowrie import core
+from cowrie.core import checkers, uuid
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
@@ -85,7 +83,7 @@ class CowrieServiceMaker:
             "backend_pool", "pool_only", fallback=False
         )
 
-        self.uuid = core.uuid.get_uuid()
+        self.uuid = uuid.get_uuid()
         CowrieConfig.set("honeypot", "uuid", str(self.uuid))
 
     def makeService(self, options: dict) -> service.Service:
@@ -210,11 +208,11 @@ Makes a Cowrie SSH/Telnet honeypot.
             else:
                 raise ValueError(backend)
 
-            factory.portal.registerChecker(core.checkers.HoneypotPublicKeyChecker())
-            factory.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
+            factory.portal.registerChecker(checkers.HoneypotPublicKeyChecker())
+            factory.portal.registerChecker(checkers.HoneypotPasswordChecker())
 
             if CowrieConfig.getboolean("ssh", "auth_none_enabled", fallback=False):
-                factory.portal.registerChecker(core.checkers.HoneypotNoneChecker())
+                factory.portal.registerChecker(checkers.HoneypotNoneChecker())
 
             if CowrieConfig.has_section("ssh"):
                 listen_endpoints = get_endpoints_from_section(CowrieConfig, "ssh", 2222)
@@ -237,7 +235,7 @@ Makes a Cowrie SSH/Telnet honeypot.
             else:
                 raise ValueError(backend)
 
-            f.portal.registerChecker(core.checkers.HoneypotPasswordChecker())
+            f.portal.registerChecker(checkers.HoneypotPasswordChecker())
 
             listen_endpoints = get_endpoints_from_section(CowrieConfig, "telnet", 2223)
             create_endpoint_services(reactor, self.topService, listen_endpoints, f)

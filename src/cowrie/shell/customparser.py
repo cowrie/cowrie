@@ -9,18 +9,18 @@ import argparse
 
 
 class OptionNotFound(Exception):
-    def __init__(self, value):
+    def __init__(self, value: str | None = None) -> None:
         self.value = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self.value)
 
 
 class ExitException(Exception):
-    def __init__(self, value):
+    def __init__(self, value: str | None = None) -> None:
         self.value = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self.value)
 
 
@@ -58,11 +58,11 @@ class CustomParser(argparse.ArgumentParser):
         )
 
     def exit(self, status=0, message=None):
-        raise ExitException
+        raise ExitException(message)
 
     def _print_message(self, message, file=None):
         super()._print_message(message, self.protocol)
 
     def error(self, message):
         self.print_usage(self.protocol)
-        raise OptionNotFound
+        raise OptionNotFound(message)

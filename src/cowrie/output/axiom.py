@@ -48,6 +48,7 @@ class Output(cowrie.core.output.Output):
             msg = json.dumps(event, separators=(",", ":")).encode()
         except TypeError:
             log.err("jsonlog: Can't serialize: '" + repr(event) + "'")
+            return
 
         resp = yield treq.post(
             self.url,

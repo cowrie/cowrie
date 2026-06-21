@@ -66,6 +66,8 @@ class Command_grep(HoneyPotCommand):
             return
 
         self.n = 10
+        optlist: list[tuple[str, str]] = []
+        args = self.args
         if self.args[0] == ">":
             pass
         else:
@@ -278,6 +280,7 @@ class Command_cd(HoneyPotCommand):
             pname = self.protocol.user.avatar.home
         else:
             pname = self.args[0]
+        newpath = ""
         try:
             newpath = self.fs.resolve_path(pname, self.protocol.cwd)
             inode = self.fs.getfile(newpath)
