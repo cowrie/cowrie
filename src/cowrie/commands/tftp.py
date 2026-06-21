@@ -17,7 +17,7 @@ from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import communication_allowed
 from cowrie.shell.command import HoneyPotCommand
-from cowrie.shell.customparser import CustomParser, OptionNotFound
+from cowrie.shell.customparser import CustomParser, ExitException, OptionNotFound
 
 if TYPE_CHECKING:
     from twisted.internet.interfaces import IDelayedCall
@@ -160,7 +160,9 @@ class TFTPClient(DatagramProtocol):
             # Duplicate packet, re-send ACK
             self.sendACK(block_num)
         else:
-            log.msg(f"TFTP: Out of order block {block_num}, expected {self.current_block + 1}")
+            log.msg(
+                f"TFTP: Out of order block {block_num}, expected {self.current_block + 1}"
+            )
 
     def handleERROR(self, packet: bytes) -> None:
         """Handle ERROR packet"""
@@ -229,9 +231,7 @@ class Command_tftp(HoneyPotCommand):
 
         try:
             args = parser.parse_args(self.args)
-        except (OptionNotFound, TypeError):
-            # CustomParser.error() raises OptionNotFound incorrectly (missing value arg)
-            # Catch both OptionNotFound and TypeError to handle the bug
+        except (OptionNotFound, ExitException):
             self.exit()
             return
 
@@ -274,9 +274,7 @@ class Command_tftp(HoneyPotCommand):
         path = self.fakeoutfile.rsplit("/", 1)[0] if "/" in self.fakeoutfile else "/"
 
         if not self.fs.exists(path) or not self.fs.isdir(path):
-            self.write(
-                f"tftp: {self.file_to_get}: No such file or directory\n"
-            )
+            self.write(f"tftp: {self.file_to_get}: No such file or directory\n")
             self.exit()
             return
 
@@ -365,9 +363,7 @@ class Command_tftp(HoneyPotCommand):
         self.fs.update_realfile(
             self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
         )
-        self.fs.chown(
-            self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid
-        )
+        self.fs.chown(self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
 
         self._safe_exit()
 
