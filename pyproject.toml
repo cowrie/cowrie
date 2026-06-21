@@ -170,6 +170,11 @@ reportOptionalOperand = "information"
 reportPossiblyUnboundVariable = "information"
 reportUnsupportedDunderAll = "information"
 
+# Tests legitimately exercise protected methods of the code under test.
+[[tool.pyright.executionEnvironments]]
+root = "src/cowrie/test"
+reportPrivateUsage = "none"
+
 [tool.ty.environment]
 python-version = "3.10"
 

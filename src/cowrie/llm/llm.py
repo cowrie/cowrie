@@ -21,7 +21,7 @@ from twisted.web.client import (
     Agent,
     HTTPConnectionPool,
     ProxyAgent,
-    _HTTP11ClientFactory,
+    _HTTP11ClientFactory,  # pyright: ignore[reportPrivateUsage]
 )
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer, IResponse
@@ -70,7 +70,9 @@ class SimpleResponseReceiver(protocol.Protocol):
     def dataReceived(self, data: bytes) -> None:
         self.buf += data
 
-    def connectionLost(self, reason: tw_failure.Failure = protocol.connectionDone) -> None:
+    def connectionLost(
+        self, reason: tw_failure.Failure = protocol.connectionDone
+    ) -> None:
         self.d.callback((self.status_code, self.buf))
 
 
@@ -89,7 +91,7 @@ class LLMClient:
 
     def __init__(self) -> None:
         self._conn_pool = HTTPConnectionPool(reactor)
-        self._conn_pool._factory = QuietHTTP11ClientFactory
+        self._conn_pool._factory = QuietHTTP11ClientFactory  # pyright: ignore[reportPrivateUsage]
 
         self.api_key = CowrieConfig.get("llm", "api_key", fallback="")
         self.model = CowrieConfig.get("llm", "model", fallback="gpt-4o-mini")
@@ -175,9 +177,7 @@ class LLMClient:
         response.deliverBody(SimpleResponseReceiver(response.code, d))
         return d
 
-    def _handle_connection_error(
-        self, err: tw_failure.Failure
-    ) -> tuple[int, bytes]:
+    def _handle_connection_error(self, err: tw_failure.Failure) -> tuple[int, bytes]:
         """Handle connection errors."""
         err.trap(Exception)
         return (500, err.getErrorMessage().encode("utf-8"))
@@ -201,9 +201,7 @@ class LLMClient:
         return d
 
     @inlineCallbacks
-    def get_response(
-        self, prompt: list[str]
-    ) -> Generator[Deferred[Any], Any, str]:
+    def get_response(self, prompt: list[str]) -> Generator[Deferred[Any], Any, str]:
         """
         Get a response from the LLM for the given prompt.
 
