@@ -9,8 +9,6 @@ This module contains ...
 
 from __future__ import annotations
 
-from sys import modules
-
 from twisted.conch import error
 from twisted.conch.ssh import keys
 from twisted.cred.checkers import ICredentialsChecker
@@ -20,7 +18,7 @@ from twisted.internet import defer
 from twisted.python import failure, log
 from zope.interface import implementer
 
-import cowrie.core.auth  # noqa: F401
+from cowrie.core import auth
 from cowrie.core import credentials as conchcredentials
 from cowrie.core.config import CowrieConfig
 
@@ -120,13 +118,12 @@ class HoneypotPasswordChecker:
     def checkUserPass(self, theusername: bytes, thepassword: bytes, ip: str) -> bool:
         # Is the auth_class defined in the config file?
         authclass = CowrieConfig.get("honeypot", "auth_class", fallback="UserDB")
-        authmodule = "cowrie.core.auth"
 
-        # Check if authclass exists in this module
-        if hasattr(modules[authmodule], authclass):
-            authname = getattr(modules[authmodule], authclass)
+        # Check if authclass exists in the auth module
+        if hasattr(auth, authclass):
+            authname = getattr(auth, authclass)
         else:
-            log.msg(f"auth_class: {authclass} not found in {authmodule}")
+            log.msg(f"auth_class: {authclass} not found in cowrie.core.auth")
 
         theauth = authname()
 
