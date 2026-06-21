@@ -478,6 +478,7 @@ class HoneyPotShell:
             )
 
         lastpp = None
+        cmdclass = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
             cmdclass = self.protocol.getCommand(
                 cmd["command"], environ.get("PATH", "").split(":")

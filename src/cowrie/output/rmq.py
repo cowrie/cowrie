@@ -19,6 +19,7 @@ try:
 except ImportError:
     log.err("Missing dependency: pika")
     pika = None
+    AMQPConnectionError = Exception
 
 
 class CustomJSONEncoder(json.JSONEncoder):
