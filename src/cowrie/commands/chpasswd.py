@@ -46,26 +46,16 @@ class Command_chpasswd(HoneyPotCommand):
                         self.write(f"chpasswd: line {c}: invalid format\n")
                     else:
                         _u, p = line.split(b":", 1)
-if len(line):
-                if b":" not in line:
-                    self.write(f"chpasswd: line {c}: invalid format\n")
-                else:
-                    _u, p = line.split(b":", 1)
-                    if not len(p):
-                        self.write(f"chpasswd: line {c}: missing new password\n")
-                    else:
-                        username = _u.decode(errors="ignore")
-            if not p:
-                self.write(f"chpasswd: line {c}: missing new password\n")
-            else:
-                username = _u.decode(errors="ignore")
-
-                log.msg(
-                    eventid="cowrie.command.chpasswd",
-                    realm="chpasswd",
-                    username=username,
-                    format="Password change attempt for %(username)s",
-                )
+                        if not len(p):
+                            self.write(f"chpasswd: line {c}: missing new password\n")
+                        else:
+                            username = _u.decode(errors="ignore")
+                            log.msg(
+                                eventid="cowrie.command.chpasswd",
+                                realm="chpasswd",
+                                username=username,
+                                format="Password change attempt for %(username)s",
+                            )
                 c += 1
         except Exception:
             self.write(f"chpasswd: line {c}: missing new password\n")
