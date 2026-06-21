@@ -687,6 +687,6 @@ class HoneyPotShell:
                 self.protocol.terminal.write(b"\n")
                 self.showPrompt()
 
-        self.protocol.lineBuffer = [y for x, y in enumerate(iterbytes(newbyt))]
+        self.protocol.lineBuffer = list(iterbytes(newbyt))
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
         self.protocol.terminal.write(newbyt)

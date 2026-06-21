@@ -171,7 +171,7 @@ class FakeTransport(proto_helpers.StringTransport):
         self.eraseDisplay()
 
     def eraseDisplay(self):
-        self.lines = [self._emptyLine(self.width) for i in range(self.height)]
+        self.lines = [self._emptyLine(self.width) for _ in range(self.height)]
 
     def _currentFormattingState(self):
         return True
@@ -180,4 +180,4 @@ class FakeTransport(proto_helpers.StringTransport):
         return True
 
     def _emptyLine(self, width):
-        return [(self.void, self._currentFormattingState()) for i in range(width)]
+        return [(self.void, self._currentFormattingState()) for _ in range(width)]

@@ -71,7 +71,7 @@ class Output(cowrie.core.output.Output):
         user = CowrieConfig.get("output_xmpp", "user")
         password = CowrieConfig.get("output_xmpp", "password")
         muc = CowrieConfig.get("output_xmpp", "muc")
-        resource = "".join([choice(string.ascii_letters) for i in range(8)])
+        resource = "".join([choice(string.ascii_letters) for _ in range(8)])
         jidstr = user + "/" + resource
         application = service.Application("honeypot")
         self.run(application, jidstr, password, JID(None, [muc, server, None]), server)
