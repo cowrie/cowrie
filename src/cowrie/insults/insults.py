@@ -161,8 +161,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         shasum=shasum,
                         destfile="",
                     )
-            except OSError:
-                pass
+            except OSError as e:
+                log.msg(f"Failed to save stdin contents: {e}")
             finally:
                 self.stdinlogOpen = False
 

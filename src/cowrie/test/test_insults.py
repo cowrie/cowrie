@@ -12,6 +12,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+from twisted.python import log
+
 from cowrie.insults.insults import LoggingServerProtocol
 
 
@@ -83,3 +85,34 @@ class ConnectionLostStdinTestCase(unittest.TestCase):
             self.assertNotIn(lsp.stdinlogFile, opened)
             self.assertFalse(lsp.stdinlogOpen)
             self.assertFalse(os.path.exists(lsp.stdinlogFile))
+
+    def test_failure_saving_existing_stdin_log_is_logged(self) -> None:
+        """A genuine I/O failure on an existing stdin log must not be silent.
+
+        The missing-file case is now skipped, so any OSError that reaches the
+        handler is unexpected and must be logged rather than swallowed.
+        """
+        with tempfile.TemporaryDirectory() as downloadPath:
+            lsp = make_protocol("e")
+            lsp.stdinlogOpen = True
+            lsp.stdinlogFile = os.path.join(downloadPath, "stdin.log")
+            lsp.downloadPath = downloadPath
+            lsp.redirFiles = None
+            lsp.terminalProtocol = None
+            with open(lsp.stdinlogFile, "wb") as f:
+                f.write(b"id\n")
+
+            def failing_open(*args, **kwargs):  # type: ignore[no-untyped-def]
+                raise OSError
+
+            events: list[dict] = []
+            log.addObserver(events.append)
+            try:
+                with mock.patch("builtins.open", failing_open):
+                    lsp.connectionLost()
+            finally:
+                log.removeObserver(events.append)
+
+            messages = [log.textFromEventDict(e) or "" for e in events]
+            self.assertTrue(any("Failed to save stdin contents" in m for m in messages))
+            self.assertFalse(lsp.stdinlogOpen)
