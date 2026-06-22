@@ -55,10 +55,10 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     cve_2026_24061_user: str | None = None
 
     def connectionMade(self):
-        # self.transport.negotiationMap[NAWS] = self.telnet_NAWS
-        # Initial option negotation. Want something at least for Mirai
-        # for opt in (NAWS,):
-        #    self.transport.doChain(opt).addErrback(log.err)
+        self.transport.negotiationMap[NAWS] = self.telnet_NAWS
+        # Initial option negotiation. Want something at least for Mirai
+        for opt in (NAWS,):
+            self.transport.doChain(opt).addErrback(log.err)
 
         # Register NEW-ENVIRON subnegotiation handler for CVE-2026-24061 detection
         self.transport.negotiationMap[NEW_ENVIRON] = self.telnet_NEW_ENVIRON
