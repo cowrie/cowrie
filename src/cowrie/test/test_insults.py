@@ -69,13 +69,13 @@ class ConnectionLostStdinTestCase(unittest.TestCase):
             lsp.stdinlogOpen = True
             lsp.stdinlogFile = os.path.join(downloadPath, "never-written-stdin.log")
             lsp.downloadPath = downloadPath
-            lsp.redirFiles = None
+            lsp.redirFiles = set()
             lsp.terminalProtocol = None
 
             opened: list[str] = []
             real_open = open
 
-            def tracking_open(path, *args, **kwargs):  # type: ignore[no-untyped-def]
+            def tracking_open(path, *args, **kwargs):
                 opened.append(path)
                 return real_open(path, *args, **kwargs)
 
@@ -97,12 +97,12 @@ class ConnectionLostStdinTestCase(unittest.TestCase):
             lsp.stdinlogOpen = True
             lsp.stdinlogFile = os.path.join(downloadPath, "stdin.log")
             lsp.downloadPath = downloadPath
-            lsp.redirFiles = None
+            lsp.redirFiles = set()
             lsp.terminalProtocol = None
             with open(lsp.stdinlogFile, "wb") as f:
                 f.write(b"id\n")
 
-            def failing_open(*args, **kwargs):  # type: ignore[no-untyped-def]
+            def failing_open(*args, **kwargs):
                 raise OSError
 
             events: list[dict] = []
