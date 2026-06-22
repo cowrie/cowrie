@@ -97,9 +97,8 @@ class Command_scp(HoneyPotCommand):
         self.drop_tmp_file(data, fname)
 
         if os.path.exists(self.safeoutfile):
-            with open(self.safeoutfile, "rb"):
-                shasum = hashlib.sha256(data).hexdigest()
-                hash_path = os.path.join(self.download_path_uniq, shasum)
+            shasum = hashlib.sha256(data).hexdigest()
+            hash_path = os.path.join(self.download_path_uniq, shasum)
 
             # If we have content already, delete temp file
             if not os.path.exists(hash_path):
@@ -120,9 +119,13 @@ class Command_scp(HoneyPotCommand):
                 destfile=fname,
             )
 
-            # Update the honeyfs to point to downloaded file
-            self.fs.update_realfile(self.fs.getfile(fname), hash_path)
-            self.fs.chown(fname, self.protocol.user.uid, self.protocol.user.gid)
+            # Update the honeyfs to point to downloaded file. The entry is
+            # absent when mkfile could not create it (e.g. the filesystem is at
+            # its new-file quota), in which case there is nothing to point at.
+            f = self.fs.getfile(fname)
+            if f:
+                self.fs.update_realfile(f, hash_path)
+                self.fs.chown(fname, self.protocol.user.uid, self.protocol.user.gid)
 
     def parse_scp_data(self, data: bytes) -> bytes:
         # scp data format:
@@ -159,12 +162,16 @@ class Command_scp(HoneyPotCommand):
                             outfile,
                             self.protocol.user.uid,
                             self.protocol.user.gid,
-                            r.group(2),
-                            r.group(1),
+                            int(r.group(2)),
+                            int(r.group(1), 8),
                         )
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.
                         self.errorWrite(f"-scp: {outfile}: No such file or directory\n")
+                        return b""
+                    except fs.PermissionDenied:
+                        # The outfile locates in a protected path (e.g. /proc).
+                        self.errorWrite(f"-scp: {outfile}: Permission denied\n")
                         return b""
 
                     self.save_file(d, outfile)
@@ -178,22 +185,24 @@ class Command_scp(HoneyPotCommand):
         return data
 
     def eofReceived(self) -> None:
+        terminal = self.protocol.terminal
         if (
-            self.protocol.terminal.stdinlogOpen
-            and self.protocol.terminal.stdinlogFile
-            and os.path.exists(self.protocol.terminal.stdinlogFile)
+            terminal.stdinlogOpen
+            and terminal.stdinlogFile
+            and os.path.exists(terminal.stdinlogFile)
         ):
-            with open(self.protocol.terminal.stdinlogFile, "rb") as f:
+            with open(terminal.stdinlogFile, "rb") as f:
                 data: bytes = f.read()
-                header: bytes = data[: data.find(b"\n")]
-                if re.match(rb"C0[\d]{3} [\d]+ [^\s]+", header):
-                    content = data[data.find(b"\n") + 1 :]
-                else:
-                    content = b""
 
-            if content:
-                with open(self.protocol.terminal.stdinlogFile, "wb") as f:
-                    f.write(content)
+            # Decode the SCP wire protocol into the uploaded file(s), each saved
+            # as content only. The raw stdin log still holds the framing (header,
+            # body and trailing ACK), so remove it to avoid saving it again as a
+            # download.
+            while data:
+                data = self.parse_scp_data(data)
+
+            terminal.stdinlogOpen = False
+            os.remove(terminal.stdinlogFile)
 
         self.exit()
 
