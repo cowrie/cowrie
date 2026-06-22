@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pymisp import MISPAttribute, MISPEvent, MISPObject, MISPSighting
 from twisted.python import log
@@ -16,10 +16,13 @@ from twisted.python import log
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-try:
-    from pymisp import ExpandedPyMISP as PyMISP
-except ImportError:
-    from pymisp import PyMISP as PyMISP
+if TYPE_CHECKING:
+    from pymisp import PyMISP
+else:
+    try:
+        from pymisp import ExpandedPyMISP as PyMISP
+    except ImportError:
+        from pymisp import PyMISP
 
 
 def file_md5(path: str) -> str:
