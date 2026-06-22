@@ -38,15 +38,16 @@ class TestFileMd5(unittest.TestCase):
 class TestMispMalwareSample(unittest.TestCase):
     """A downloaded file must be looked up in MISP by its MD5 hash."""
 
-    def _make_output(self) -> Output:
+    def _make_output(self) -> tuple[Output, MagicMock]:
         # Bypass start(), which would connect to a live MISP server.
         output = Output.__new__(Output)
-        output.misp_api = MagicMock()
+        misp_api = MagicMock()
+        output.misp_api = misp_api
         output.session_tracking = {}
         output.debug = False
         output.handle_sessions = True
         output.publish = False
-        return output
+        return output, misp_api
 
     def test_file_download_lookup_uses_md5(self) -> None:
         data = b"malicious payload"
@@ -55,8 +56,8 @@ class TestMispMalwareSample(unittest.TestCase):
             outfile = f.name
         self.addCleanup(os.remove, outfile)
 
-        output = self._make_output()
-        output.misp_api.search.return_value = {"Attribute": []}
+        output, misp_api = self._make_output()
+        misp_api.search.return_value = {"Attribute": []}
 
         output.write(
             {
@@ -68,13 +69,13 @@ class TestMispMalwareSample(unittest.TestCase):
             }
         )
 
-        output.misp_api.search.assert_called_once()
-        kwargs = output.misp_api.search.call_args.kwargs
+        misp_api.search.assert_called_once()
+        kwargs = misp_api.search.call_args.kwargs
         self.assertEqual(kwargs["type_attribute"], "malware-sample")
         self.assertEqual(kwargs["value"], hashlib.md5(data).hexdigest())
 
     def test_missing_outfile_skips_lookup(self) -> None:
-        output = self._make_output()
+        output, misp_api = self._make_output()
 
         output.write(
             {
@@ -86,7 +87,7 @@ class TestMispMalwareSample(unittest.TestCase):
             }
         )
 
-        output.misp_api.search.assert_not_called()
+        misp_api.search.assert_not_called()
 
 
 if __name__ == "__main__":
