@@ -45,6 +45,12 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     CowrieTelnetTransport
     """
 
+    # Set while the connection is being torn down. Telnet.connectionLost()
+    # iterates self.options and errbacks pending negotiations; our retry
+    # machinery must not re-enter negotiation during that iteration, since
+    # that would mutate self.options mid-iteration and leak failed Deferreds.
+    _closing: bool = False
+
     def connectionMade(self):
         self.transportId: str = uuid.uuid4().hex[:12]
         sessionno = self.transport.sessionno
@@ -90,6 +96,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         Fires on pre-authentication disconnects
         """
+        self._closing = True
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
         duration_ms = round((time.time() - self.startTime) * 1000)
@@ -112,26 +119,24 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         return self._chainNegotiation(None, self.dont, option)
 
     def _handleNegotiationError(self, f, func, option):
+        # The connection is going away; Telnet.connectionLost() is iterating
+        # self.options. Do not retry negotiation, which would mutate that dict.
+        if self._closing:
+            return
         if f.type is AlreadyNegotiating:
             s = self.getOptionState(option)
-            if func in (self.do, self.dont):
-                if s.him.onResult is not None:
-                    s.him.onResult.addCallback(self._chainNegotiation, func, option)
-                    s.him.onResult.addErrback(
-                        self._handleNegotiationError, func, option
-                    )
-                else:
-                    # Negotiation completed between error and handling - call directly
-                    # without error chaining to avoid infinite recursion
-                    func(option)
-            if func in (self.will, self.wont):
-                if s.us.onResult is not None:
-                    s.us.onResult.addCallback(self._chainNegotiation, func, option)
-                    s.us.onResult.addErrback(self._handleNegotiationError, func, option)
-                else:
-                    # Negotiation completed between error and handling - call directly
-                    # without error chaining to avoid infinite recursion
-                    func(option)
+            # do/dont negotiate the remote side (him); will/wont negotiate ours (us).
+            side = s.him if func in (self.do, self.dont) else s.us
+            if side.onResult is not None:
+                side.onResult.addCallback(self._chainNegotiation, func, option)
+                side.onResult.addErrback(self._handleNegotiationError, func, option)
+            else:
+                # The pending negotiation cleared before we could chain onto it.
+                # Retry once; func() returns a failed Deferred (e.g.
+                # AlreadyNegotiating) when it still cannot proceed, so swallow
+                # that rather than leaving it as an unhandled Deferred. Do not
+                # chain back into _handleNegotiationError, which would recurse.
+                func(option).addErrback(lambda _: None)
         # We only care about AlreadyNegotiating, everything else can be ignored
         # Possible other types include OptionRefused, AlreadyDisabled, AlreadyEnabled, ConnectionDone, ConnectionLost
         elif f.type is AssertionError:
@@ -144,6 +149,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             # but does handle client-initiated negotiation at any time.
 
     def _chainNegotiation(self, res, func, option):
+        # See _handleNegotiationError: never re-drive negotiation during teardown.
+        if self._closing:
+            return None
         return func(option).addErrback(self._handleNegotiationError, func, option)
 
     def _get_option_name(self, option: bytes) -> str:
