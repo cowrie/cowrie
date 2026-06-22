@@ -6,12 +6,41 @@
 from __future__ import annotations
 
 from twisted.conch.interfaces import ISession
-from twisted.conch.ssh import session
+from twisted.internet.protocol import connectionDone
 from twisted.python import log
 from zope.interface import implementer
 
 from cowrie.insults import insults
 from cowrie.shell import protocol
+
+
+class ProtocolTransport:
+    """Adapt a terminal protocol so the SSH session can drive it as its
+    process transport, firing the protocol's connectionLost exactly once.
+
+    The session machinery calls loseConnection more than once per close
+    (from both SSHSession.loseConnection and SSHSession.closed), so the close
+    is guarded to deliver connectionLost a single time.
+    """
+
+    def __init__(self, proto):
+        self.proto = proto
+        self._lost = False
+
+    def dataReceived(self, data: bytes) -> None:
+        self.proto.transport.write(data)
+
+    def write(self, data: bytes) -> None:
+        self.proto.dataReceived(data)
+
+    def writeSequence(self, seq: list[bytes]) -> None:
+        self.write(b"".join(seq))
+
+    def loseConnection(self) -> None:
+        if self._lost:
+            return
+        self._lost = True
+        self.proto.connectionLost(connectionDone)
 
 
 @implementer(ISession)
@@ -58,7 +87,7 @@ class SSHSessionForCowrieUser:
             protocol.HoneyPotInteractiveProtocol, self
         )
         self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
+        processprotocol.makeConnection(ProtocolTransport(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
         self.environ["TERM"] = terminal.decode("utf-8")
@@ -75,16 +104,15 @@ class SSHSessionForCowrieUser:
             protocol.HoneyPotExecProtocol, self, cmd
         )
         self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(session.wrapProtocol(self.protocol))
+        processprotocol.makeConnection(ProtocolTransport(self.protocol))
 
     def closed(self) -> None:
         """
-        this is reliably called on both logout and disconnect
-        we notify the protocol here we lost the connection
+        Reliably called on both logout and disconnect. The protocol's
+        connectionLost is delivered by the session transport, so here we only
+        drop our reference to it.
         """
-        if self.protocol:
-            self.protocol.connectionLost("disconnected")
-            self.protocol = None
+        self.protocol = None
 
     def eofReceived(self) -> None:
         if self.protocol:

@@ -137,8 +137,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
-        FIXME: this method is called 4 times on logout....
-        it's called once from Avatar.closed() if disconnected
+        Finalize the session: hash and store any captured stdin, redirected
+        files, and the TTY log, then drop references to the terminal.
         """
         if self.stdinlogOpen:
             try:
