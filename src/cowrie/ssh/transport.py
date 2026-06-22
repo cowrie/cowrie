@@ -95,6 +95,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         if not self.gotVersion:
             return
+        # A client that sends a second KEXINIT before the first key exchange
+        # completes drives the base sendKexInit into raising a RuntimeError.
+        # Disconnect such a protocol violation cleanly instead.
+        if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
+            log.msg("Duplicate KEXINIT during key exchange, disconnecting")
+            self.transport.loseConnection()
+            return
         transport.SSHServerTransport.sendKexInit(self)
 
     def _unsupportedVersionReceived(self, remoteVersion: bytes) -> None:
