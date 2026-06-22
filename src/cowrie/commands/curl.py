@@ -450,6 +450,10 @@ class Command_curl(HoneyPotCommand):
         """
         handle any exceptions
         """
+        # Close the artifact so a failed download leaves no orphaned temp file.
+        # Artifact.close() removes the empty temp file backing the download.
+        if getattr(self, "artifact", None) is not None:
+            self.artifact.close()
 
         self.protocol.logDispatch(
             eventid="cowrie.session.file_download.failed",
