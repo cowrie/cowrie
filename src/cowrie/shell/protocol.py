@@ -379,6 +379,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
         self.keyHandlers.update(
             {
+                b"\x00": self.handle_NUL,  # NUL (NVT line ending, keepalive padding)
                 b"\x01": self.handle_HOME,  # CTRL-A
                 b"\x02": self.handle_LEFT,  # CTRL-B
                 b"\x03": self.handle_CTRL_C,  # CTRL-C
@@ -447,6 +448,13 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
                 self.historyLines.append(b"".join(self.lineBuffer))
             self.historyPosition = len(self.historyLines)
         recvline.RecvLine.handle_RETURN(self)
+
+    def handle_NUL(self) -> None:
+        """
+        Ignore NUL bytes. They are routine NVT traffic: telnet clients send
+        CR NUL as the line ending per RFC 854, and some clients send stray NUL
+        bytes as keepalive padding.
+        """
 
     def handle_CTRL_C(self) -> None:
         if self.cmdstack:
