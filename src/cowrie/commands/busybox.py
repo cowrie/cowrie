@@ -89,13 +89,17 @@ class Command_busybox(HoneyPotCommand):
                 format="Command found: %(input)s",
             )
 
-            # prepare command arguments
+            # prepare command arguments, passing through the redirections the
+            # shell parsed for the outer busybox command so the dispatched
+            # applet's output is redirected the same as a direct invocation
             pp = PipeProtocol(
                 self.protocol,
                 cmdclass,
                 self.protocol.pp.cmdargs[1:],
                 self.input_data,
                 None,
+                redirect=self.protocol.pp.redirect,
+                redirections=self.protocol.pp.redirections,
             )
 
             # insert the command as we do when chaining commands with pipes

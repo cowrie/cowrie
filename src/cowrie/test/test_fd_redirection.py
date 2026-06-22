@@ -218,6 +218,25 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo outer$(echo inner$(echo deep))")
         self.assertEqual(self.tr.value(), b"outerinnerdeep\n" + PROMPT)
 
+    def test_busybox_applet_redirect_to_file(self) -> None:
+        # A busybox-dispatched applet must honour the redirection from the
+        # original command line instead of leaking output to the terminal.
+        self.proto.lineReceived(b"busybox echo hello > bboutfile")
+        self.assertEqual(self.tr.value(), PROMPT)
+        self.tr.clear()
+        self.proto.lineReceived(b"cat bboutfile")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_busybox_applet_append_accumulates(self) -> None:
+        # Successive `busybox echo ... >> file` commands accumulate into the
+        # same backing file, like the real Mirai payload-building pattern.
+        self.proto.lineReceived(b"busybox echo one >> bbappendfile")
+        self.proto.lineReceived(b"busybox echo two >> bbappendfile")
+        self.assertEqual(self.tr.value(), PROMPT + PROMPT)
+        self.tr.clear()
+        self.proto.lineReceived(b"cat bbappendfile")
+        self.assertEqual(self.tr.value(), b"one\ntwo\n" + PROMPT)
+
     def test_command_substitution_preserves_prefix(self) -> None:
         # Text before $() should be preserved
         self.proto.lineReceived(b"echo prefix$(echo suffix)")
