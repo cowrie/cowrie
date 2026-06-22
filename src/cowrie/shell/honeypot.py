@@ -557,14 +557,17 @@ class HoneyPotShell:
     def command_not_found_message(self, cmd: str) -> str:
         """
         Build the error a real shell prints when a command cannot be run.
-        A path-like command (one starting with "." or "/") that resolves to an
-        existing directory yields "Is a directory", matching bash's EISDIR; any
-        other unresolved command yields "command not found".
+        For a path-like command (one starting with "." or "/") match bash's
+        errno-based messages: an existing directory yields "Is a directory"
+        (EISDIR) and a path that does not exist yields "No such file or
+        directory" (ENOENT). Anything else yields "command not found".
         """
         if cmd[:1] in (".", "/"):
             path = self.protocol.fs.resolve_path(cmd, self.protocol.cwd)
             if self.protocol.fs.isdir(path):
                 return f"-bash: {cmd}: Is a directory\n"
+            if not self.protocol.fs.exists(path):
+                return f"-bash: {cmd}: No such file or directory\n"
         return f"-bash: {cmd}: command not found\n"
 
     def resume(self) -> None:

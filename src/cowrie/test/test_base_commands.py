@@ -127,6 +127,12 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
             b"-bash: definitelynotacommand: command not found\n" + PROMPT,
         )
 
+    def test_run_nonexistent_path_command(self) -> None:
+        self.proto.lineReceived(b"./nope\n")
+        self.assertEqual(
+            self.tr.value(), b"-bash: ./nope: No such file or directory\n" + PROMPT
+        )
+
     def test_chattr_command(self) -> None:
         self.proto.lineReceived(b"chattr\n")
         self.assertEqual(
