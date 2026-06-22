@@ -293,17 +293,25 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
         # waiting for stdin but nothing will ever write to it, signal EOF so it
-        # terminates instead of leaking on the cmdstack. Stdin is only left open
-        # for a command reading from a live terminal: an interactive shell that
-        # is not being fed by a pipe.
+        # terminates instead of leaking on the cmdstack. Stdin is left open when
+        # a live source will deliver its own EOF later: an interactive terminal,
+        # or the SSH exec channel feeding the top-level command (e.g. `scp -t`,
+        # whose pushed bytes arrive after the command has started). A piped
+        # command reads buffered output, so it gets EOF here.
         if self.cmdstack and self.cmdstack[-1] is obj:
             parent = self.cmdstack[-2] if len(self.cmdstack) >= 2 else None
-            terminal_stdin = (
+            live_stdin = (
                 not getattr(pp, "stdin_from_pipe", False)
                 and parent is not None
-                and getattr(parent, "interactive", False)
+                and (
+                    getattr(parent, "interactive", False)
+                    or (
+                        isinstance(self, HoneyPotExecProtocol)
+                        and parent is self.cmdstack[0]
+                    )
+                )
             )
-            if not terminal_stdin:
+            if not live_stdin:
                 obj.eofReceived()
 
     def uptime(self):
