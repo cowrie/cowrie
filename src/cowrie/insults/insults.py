@@ -142,26 +142,27 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         if self.stdinlogOpen:
             try:
-                with open(self.stdinlogFile, "rb") as f:
-                    shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = os.path.join(self.downloadPath, shasum)
-                    if os.path.exists(shasumfile):
-                        os.remove(self.stdinlogFile)
-                        duplicate = True
-                    else:
-                        os.rename(self.stdinlogFile, shasumfile)
-                        duplicate = False
+                if os.path.exists(self.stdinlogFile):
+                    with open(self.stdinlogFile, "rb") as f:
+                        shasum = hashlib.sha256(f.read()).hexdigest()
+                        shasumfile = os.path.join(self.downloadPath, shasum)
+                        if os.path.exists(shasumfile):
+                            os.remove(self.stdinlogFile)
+                            duplicate = True
+                        else:
+                            os.rename(self.stdinlogFile, shasumfile)
+                            duplicate = False
 
-                log.msg(
-                    eventid="cowrie.session.file_download",
-                    format="Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
-                    duplicate=duplicate,
-                    outfile=shasumfile,
-                    shasum=shasum,
-                    destfile="",
-                )
-            except OSError:
-                pass
+                    log.msg(
+                        eventid="cowrie.session.file_download",
+                        format="Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
+                        duplicate=duplicate,
+                        outfile=shasumfile,
+                        shasum=shasum,
+                        destfile="",
+                    )
+            except OSError as e:
+                log.msg(f"Failed to save stdin contents: {e}")
             finally:
                 self.stdinlogOpen = False
 
