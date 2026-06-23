@@ -19,10 +19,31 @@ operators — are emitted as their own string tokens so the existing
 The grammar deliberately models only the subset of bash that Cowrie already
 emulates: lists separated by ``;`` / ``&&`` / ``||``, pipelines, simple
 redirections, single/double quoting, ``$VAR`` / ``${VAR}`` expansion, command
-substitution (``$(...)`` and backticks) and subshells (``(...)``). Constructs
-outside that subset (here-docs, arithmetic expansion, process substitution)
-are intentionally unsupported and surface as a syntax error, exactly as the
-previous implementation degraded on input it could not handle.
+substitution (``$(...)`` and backticks) and subshells (``(...)``).
+
+Known deviations from standard bash (most are shared with the old shlex path
+and predate this parser; none are emulated yet):
+
+* ``&&`` / ``||`` do not short-circuit -- they are split like ``;`` and every
+  command runs regardless of exit status. ``$?`` is always ``0``.
+* A trailing ``&`` is treated as a literal argument, not a background job.
+* No word expansions beyond ``$VAR`` / ``${VAR}``: tilde (``~``), brace
+  (``{a,b}`` / ``{1..3}``), arithmetic (``$((...))``), the parameter
+  expansion operators (``${x:-y}``, ``${#x}``, ``${x/a/b}`` ...), and ANSI-C
+  quoting (``$'...'``) are all passed through literally.
+* Pathname expansion (globbing of ``*`` / ``?`` / ``[...]``) is left to the
+  individual command implementations, not done by the parser.
+* Here-documents (``<<EOF``) and here-strings (``<<<``) are not supported; the
+  operators are tokenised as plain ``<`` redirections.
+* ``{ ...; }`` command grouping and reserved words (``for``/``if``/``while``
+  ...) are parsed as ordinary commands, so the shell does not run loops or
+  conditionals.
+* An unset variable reference embedded in a larger word is left verbatim
+  rather than expanding to empty (see ``_expand_embedded``).
+
+Input the grammar cannot parse at all (e.g. an unterminated quote) surfaces as
+a syntax error, exactly as the previous implementation degraded on input it
+could not handle.
 """
 
 from __future__ import annotations
@@ -124,7 +145,12 @@ class Subshell:
 
 @dataclass
 class SyntaxError_:
-    """A bash-style syntax error to report verbatim."""
+    """A bash-style syntax error to report verbatim.
+
+    TODO: the trailing underscore avoids shadowing the builtin SyntaxError.
+    Consider renaming to ParseError for clarity (touches honeypot.py and the
+    tests).
+    """
 
     token: str
 
@@ -189,6 +215,11 @@ class BashParser:
         # and writes straight to the terminal; anything piped after it is
         # ignored, matching the shlex path. A subshell anywhere else is a
         # syntax error reported on the "(" token, as bash does.
+        # TODO: support a subshell as a real pipeline stage, e.g.
+        # `(echo a) | wc -c`. We currently run the subshell and discard the
+        # rest of the pipeline (parity with the shlex path) instead of feeding
+        # its output into the pipe. bash also allows a subshell in the middle
+        # or end of a pipeline (`x | (cmd)`), which we reject as a syntax error.
         subshell_idx = next(
             (
                 i
@@ -301,6 +332,16 @@ class BashParser:
         A set variable expands to its value (empty included); an unset
         reference is left verbatim so quoted awk/sed field references survive,
         matching the previous implementation's deliberate compromise.
+
+        TODO: this is not how bash behaves and the Lark grammar now records the
+        quoting context that would let us do it correctly. bash expands an
+        unset reference to the empty string when it is unquoted or
+        double-quoted ("$nope" -> "") and only leaves it literal inside single
+        quotes ('$nope' -> "$nope"). Single quotes are already handled (they
+        never reach here), so the remaining work is to pass whether the
+        reference was double-quoted and expand unset double-quoted references
+        to "" instead of verbatim. Doing so changes observable behaviour, so it
+        needs its own test updates (see test_shell_variables).
         """
         name, special = self._var_name(node)
         if special == "?":

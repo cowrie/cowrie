@@ -71,6 +71,12 @@ class HoneyPotShell:
 
     def command_substitution(self, source: str) -> str:
         """Run ``source`` as a command substitution and return its stdout."""
+        # TODO: _execute_command_substitution still splits the inner source on
+        # ;/&&/|| with its own shlex lexer (see _execute_subshell_with_full_output)
+        # before re-running each command, which re-enters the Lark path. Once the
+        # Lark parser owns separators end to end, drive substitution from the
+        # parsed statements instead of re-lexing here so the inner parse is pure
+        # Lark too.
         return self._execute_command_substitution(source)
 
     def lineReceived(self, line: str) -> None:
