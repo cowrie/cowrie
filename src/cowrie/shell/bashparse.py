@@ -236,9 +236,11 @@ class BashParser:
             None,
         )
         if subshell_idx is not None:
+            subshell = units[subshell_idx]
+            assert isinstance(subshell, Tree)
             if subshell_idx == 0:
-                return Subshell(source=self._group_source(line, units[0]))
-            return SyntaxError_(token=self._error_token(line, units[subshell_idx]))
+                return Subshell(source=self._group_source(line, subshell))
+            return SyntaxError_(token=self._error_token(line, subshell))
 
         tokens: list[str] = []
         for unit in units:
@@ -273,7 +275,7 @@ class BashParser:
                 if special == "?":
                     return "0"
                 if special is not None:
-                    return only.children[0].value  # verbatim, e.g. $@
+                    return self._leaf_value(only)  # verbatim, e.g. $@
                 value = self.context.get_variable(name)
                 if not value:
                     return None
@@ -286,15 +288,13 @@ class BashParser:
 
     def _eval_atom(self, line: str, atom: Tree | Token) -> str:
         if isinstance(atom, Token):
-            if atom.type == "LITERAL" or atom.type == "BARE_DOLLAR":
-                return atom.value
             if atom.type == "ESC":
                 # Unquoted backslash escape: the backslash is removed.
-                return atom.value[1:]
-            return atom.value
+                return str(atom.value)[1:]
+            return str(atom.value)
 
         if atom.data == "sq":
-            return atom.children[0].value[1:-1]  # strip surrounding quotes
+            return self._leaf_value(atom)[1:-1]  # strip surrounding quotes
         if atom.data == "dq":
             return self._eval_dquoted(line, atom)
         if atom.data == "dollar_var" or atom.data == "dollar_brace":
@@ -354,20 +354,28 @@ class BashParser:
         if special == "?":
             return "0"
         if special is not None:
-            return node.children[0].value
+            return self._leaf_value(node)
         value = self.context.get_variable(name)
         if value is None:
-            return node.children[0].value  # verbatim, e.g. "$nope"
+            return self._leaf_value(node)  # verbatim, e.g. "$nope"
         return value
+
+    def _leaf_value(self, node: Tree) -> str:
+        """Return the string value of a node's single leaf token."""
+        token = node.children[0]
+        assert isinstance(token, Token)
+        return str(token)
 
     def _var_name(self, node: Tree) -> tuple[str, str | None]:
         """Return (name, special) for a dollar_var/dollar_brace node."""
         if node.data == "dollar_brace":
-            return node.children[0].value, None
+            return self._leaf_value(node), None
         tok = node.children[0]
+        assert isinstance(tok, Token)
+        text = str(tok)
         if tok.type == "DOLLAR_SPECIAL":
-            return tok.value, tok.value[1:]
-        return tok.value[1:], None  # DOLLAR_NAME: strip leading $
+            return text, text[1:]
+        return text[1:], None  # DOLLAR_NAME: strip leading $
 
     # -- source slicing for substitution / subshells ------------------------
 
