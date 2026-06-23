@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Tests for the su (switch user) command.
 # ABOUTME: Tests user switching, password prompts, and effective user tracking.
 

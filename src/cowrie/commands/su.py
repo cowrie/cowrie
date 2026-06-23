@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Implements the su (switch user) command for the honeypot.
 # ABOUTME: Allows switching to another user identity with password prompting.
 
