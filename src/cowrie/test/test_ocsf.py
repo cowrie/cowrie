@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 2026 JustSamAgain justsamagain@proton.me
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
