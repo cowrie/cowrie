@@ -29,11 +29,16 @@ from cowrie.shell.pipe import PipeProtocol
 
 class HoneyPotShell:
     def __init__(
-        self, protocol: Any, interactive: bool = True, redirect: bool = False
+        self,
+        protocol: Any,
+        interactive: bool = True,
+        redirect: bool = False,
+        effective_user: dict[str, Any] | None = None,
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
+        self.effective_user = effective_user  # For su: {uid, gid, username, home}
         self.cmdpending: list[list[str]] = []
         # A nested shell (e.g. a command substitution) inherits the live
         # environment of whichever shell is currently running; the very first
@@ -334,20 +339,27 @@ class HoneyPotShell:
             prompt = CowrieConfig.get("honeypot", "prompt")
             prompt += " "
         else:
+            # Use effective_user if set (from su), otherwise use session user
+            if self.effective_user:
+                username = self.effective_user["username"]
+                uid = self.effective_user["uid"]
+                home = self.effective_user["home"]
+            else:
+                username = self.protocol.user.username
+                uid = self.protocol.user.uid
+                home = self.protocol.user.avatar.home
+
             cwd = self.protocol.cwd
-            homelen = len(self.protocol.user.avatar.home)
-            if cwd == self.protocol.user.avatar.home:
+            homelen = len(home)
+            if cwd == home:
                 cwd = "~"
-            elif (
-                len(cwd) > (homelen + 1)
-                and cwd[: (homelen + 1)] == self.protocol.user.avatar.home + "/"
-            ):
+            elif len(cwd) > (homelen + 1) and cwd[: (homelen + 1)] == home + "/":
                 cwd = "~" + cwd[homelen:]
 
             # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
             # Example: root@svr03:~#     (More of a "Debian" feel)
-            prompt = f"{self.protocol.user.username}@{self.protocol.hostname}:{cwd}"
-            if not self.protocol.user.uid:
+            prompt = f"{username}@{self.protocol.hostname}:{cwd}"
+            if not uid:
                 prompt += "# "  # "Root" user
             else:
                 prompt += "$ "  # "Non-Root" user

@@ -24,6 +24,26 @@ class HoneyPotCommand:
     This is the super class for all commands in cowrie/commands
     """
 
+    @property
+    def current_user(self) -> dict[str, str | int]:
+        """
+        Get the current effective user info.
+        Returns effective_user from the nearest shell in cmdstack (set by su)
+        if present, otherwise returns the session user's info.
+        """
+        # Search cmdstack for a shell with effective_user (from su)
+        # Walk from top to bottom of stack
+        for item in reversed(self.protocol.cmdstack):
+            if hasattr(item, "effective_user") and item.effective_user:
+                return dict(item.effective_user)
+        # Fall back to session user
+        return {
+            "uid": self.protocol.user.uid,
+            "gid": self.protocol.user.gid,
+            "username": self.protocol.user.username,
+            "home": self.protocol.user.avatar.home,
+        }
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)

@@ -48,6 +48,7 @@ command_modules = [
     "service",
     "sleep",
     "ssh",
+    "su",
     "sudo",
     "tar",
     "tee",
