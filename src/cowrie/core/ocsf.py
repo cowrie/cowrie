@@ -125,8 +125,8 @@ def _authentication(
     ocsf["activity_name"] = activity_name
     # type_uid = class_uid * 100 + activity_id
     ocsf["type_uid"] = ocsf["class_uid"] * 100 + activity_id
-    # Login attempts warrant Medium severity (3) rather than the default Info.
-    ocsf["severity_id"] = 3
+    # A successful login is Medium severity (3); a failed attempt is Info (1).
+    ocsf["severity_id"] = 3 if success else 1
     # Cowrie only ever sees remote logins.
     ocsf["is_remote"] = True
     ocsf["status"] = "Success" if success else "Failure"
@@ -303,6 +303,9 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.login.success":
             # activity_id 1 = "Logon".
             _authentication(ocsf, logentry, 1, "Logon", success=True)
+        case "cowrie.login.failed":
+            # activity_id 1 = "Logon"; failure is conveyed via status_id.
+            _authentication(ocsf, logentry, 1, "Logon", success=False)
         case "cowrie.session.closed":
             # activity_id 2 = "Close" (the session ended).
             _ssh_activity(ocsf, logentry, 2, "Close")
