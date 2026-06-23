@@ -303,6 +303,11 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.login.success":
             # activity_id 1 = "Logon".
             _authentication(ocsf, logentry, 1, "Logon", success=True)
+        case "cowrie.session.closed":
+            # activity_id 2 = "Close" (the session ended).
+            _ssh_activity(ocsf, logentry, 2, "Close")
+            # Cowrie reports duration in seconds (as a string); OCSF wants ms.
+            ocsf["duration"] = int(float(logentry["duration"]) * 1000)
         case "cowrie.command.input":
             # activity_id 1 = "Launch".
             _process_activity(ocsf, logentry, 1, "Launch")
