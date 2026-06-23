@@ -76,8 +76,10 @@ class PipeProtocol:
         self.targets[1] = (FD_PIPE, None) if self.next_command else (FD_TERMINAL, None)
         self.targets[2] = (FD_TERMINAL, None)
 
-        # If redirect is True (command substitution), stdout default is capture
-        if self.redirect:
+        # If redirect is True (command substitution), the *last* stage's stdout
+        # is captured. An earlier pipe stage must keep writing to the pipe, or
+        # the downstream command gets no input (`$(echo x | cat)` -> "x").
+        if self.redirect and not self.next_command:
             self.targets[1] = (FD_CAPTURE, None)
 
         # Defer stdin reading until after all redirections are processed
