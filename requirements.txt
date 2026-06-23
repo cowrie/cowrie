@@ -4,7 +4,7 @@
 
 attrs==26.1.0
 bcrypt==5.0.0
-cryptography==48.0.1
+cryptography==49.0.0
 hyperlink==21.0.0
 idna==3.18
 packaging==26.2
