@@ -210,6 +210,7 @@ class Command_su(HoneyPotCommand):
 
         self.protocol.cmdstack.append(shell)
         self.protocol.cmdstack.remove(self)
+        shell.showPrompt()
 
 
 commands["su"] = Command_su
