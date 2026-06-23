@@ -6,8 +6,8 @@
 # ABOUTME: of statements (token lists, subshells, syntax errors) for the shell.
 
 """
-A small Lark grammar and evaluator that replaces the ``shlex`` based
-tokenisation and the hand-rolled command-substitution / subshell scanning in
+A small Lark grammar and evaluator that tokenises a command line and resolves
+its quoting, redirection, command substitution and subshells for the shell in
 ``honeypot.py``.
 
 The parser produces a flat list of :class:`Statement` objects. Words are fully
@@ -21,8 +21,7 @@ emulates: lists separated by ``;`` / ``&&`` / ``||``, pipelines, simple
 redirections, single/double quoting, ``$VAR`` / ``${VAR}`` expansion, command
 substitution (``$(...)`` and backticks) and subshells (``(...)``).
 
-Known deviations from standard bash (most are shared with the old shlex path
-and predate this parser; none are emulated yet):
+Known deviations from standard bash (none are emulated yet):
 
 * ``&&`` / ``||`` do not short-circuit -- they are split like ``;`` and every
   command runs regardless of exit status. ``$?`` is always ``0``.
@@ -84,9 +83,13 @@ SQ: /'[^']*'/
 dollar_brace: "${" BRACE_NAME "}"
 BRACE_NAME: /[_a-zA-Z0-9]+/
 
+// Higher priority than the bare BARE_DOLLAR so a "$" that begins a variable
+// reference is lexed as one "$VAR" token even when it directly follows literal
+// text in the same word ("got=$x", "$PATH:/x"), rather than splitting into a
+// bare "$" plus a "VAR" literal.
 dollar_var: DOLLAR_NAME | DOLLAR_SPECIAL
-DOLLAR_NAME: /\$[_a-zA-Z0-9]+/
-DOLLAR_SPECIAL: /\$[?@$#!*]/
+DOLLAR_NAME.2: /\$[_a-zA-Z0-9]+/
+DOLLAR_SPECIAL.2: /\$[?@$#!*]/
 
 ESC: /\\./
 
@@ -138,7 +141,11 @@ class Command:
 
 @dataclass
 class Subshell:
-    """A ``(...)`` group whose raw inner source is run as its own shell."""
+    """A ``(...)`` group; its raw inner source is parsed and run in sequence.
+
+    Cowrie does not emulate a subshell's isolated environment, so the caller
+    runs the inner commands in order with the surrounding line.
+    """
 
     source: str
 
@@ -212,14 +219,14 @@ class BashParser:
         self, line: str, units: list[Tree | Token]
     ) -> Statement | None:
         # A subshell is valid only at the start of a statement. There it runs
-        # and writes straight to the terminal; anything piped after it is
-        # ignored, matching the shlex path. A subshell anywhere else is a
-        # syntax error reported on the "(" token, as bash does.
+        # in sequence with the surrounding line; anything piped after it is
+        # ignored. A subshell anywhere else is a syntax error reported on the
+        # "(" token, as bash does.
         # TODO: support a subshell as a real pipeline stage, e.g.
         # `(echo a) | wc -c`. We currently run the subshell and discard the
-        # rest of the pipeline (parity with the shlex path) instead of feeding
-        # its output into the pipe. bash also allows a subshell in the middle
-        # or end of a pipeline (`x | (cmd)`), which we reject as a syntax error.
+        # rest of the pipeline instead of feeding its output into the pipe.
+        # bash also allows a subshell in the middle or end of a pipeline
+        # (`x | (cmd)`), which we reject as a syntax error.
         subshell_idx = next(
             (
                 i
@@ -330,11 +337,11 @@ class BashParser:
         """Expand a ``$VAR`` reference that is embedded in a larger word.
 
         A set variable expands to its value (empty included); an unset
-        reference is left verbatim so quoted awk/sed field references survive,
-        matching the previous implementation's deliberate compromise.
+        reference is left verbatim so quoted awk/sed field references survive.
+        This is a deliberate compromise, not bash behaviour.
 
-        TODO: this is not how bash behaves and the Lark grammar now records the
-        quoting context that would let us do it correctly. bash expands an
+        TODO: the Lark grammar records the quoting context that would let us do
+        this correctly. bash expands an
         unset reference to the empty string when it is unquoted or
         double-quoted ("$nope" -> "") and only leaves it literal inside single
         quotes ('$nope' -> "$nope"). Single quotes are already handled (they

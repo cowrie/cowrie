@@ -56,6 +56,11 @@ class ShellVariableTests(unittest.TestCase):
         self.proto.lineReceived(b"x=hi")
         self.assertEqual(self.run_line(b"echo a${x}b"), b"ahib\n")
 
+    # A bare $VAR directly after literal text expands (e.g. PATH=$PATH:/x)
+    def test_expand_unquoted_after_literal(self) -> None:
+        self.proto.lineReceived(b"x=hi")
+        self.assertEqual(self.run_line(b"echo got=$x"), b"got=hi\n")
+
     # Cause 3: command substitution sees the live shell's variables
     def test_command_substitution_sees_variable(self) -> None:
         self.proto.lineReceived(b"x=hi")
@@ -67,9 +72,7 @@ class ShellVariableTests(unittest.TestCase):
         self.assertEqual(self.run_line(b'echo "X:$nope"'), b"X:$nope\n")
 
     def test_awk_field_reference_survives(self) -> None:
-        self.assertEqual(
-            self.run_line(b'echo "a b" | awk \'{print $1}\''), b"a\n"
-        )
+        self.assertEqual(self.run_line(b"echo \"a b\" | awk '{print $1}'"), b"a\n")
 
     # A bare unset reference drops the word (no spurious spaces)
     def test_unset_whole_token_dropped(self) -> None:

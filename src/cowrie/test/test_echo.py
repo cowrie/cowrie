@@ -115,8 +115,10 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"test_test_test_test_test\n" + PROMPT)
 
     def test_echo_command_022(self) -> None:
-        self.proto.lineReceived(b"echo test; (echo test)")
-        self.assertEqual(self.tr.value(), b"test\ntest\n" + PROMPT)
+        # A subshell runs in sequence with the surrounding line: the preceding
+        # command's output comes first, like bash (`echo b; (echo a)` -> b, a).
+        self.proto.lineReceived(b"echo b; (echo a)")
+        self.assertEqual(self.tr.value(), b"b\na\n" + PROMPT)
 
     def test_echo_command_023(self) -> None:
         self.proto.lineReceived(b"echo `echo test`")
@@ -186,11 +188,9 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertIn(b"syntax error near unexpected token", output)
 
     def test_subshell_parentheses_007(self) -> None:
-        """Test valid subshell after semicolon should work"""
+        """A subshell after a semicolon runs in order, like bash."""
         self.proto.lineReceived(b"echo first; (echo second)")
-        output = self.tr.value()
-        self.assertIn(b"first", output)
-        self.assertIn(b"second", output)
+        self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
 
     def test_subshell_parentheses_008(self) -> None:
         """Test subshell with different command separators"""
@@ -213,6 +213,11 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertIn(b"one", output)
         self.assertIn(b"two", output)
         self.assertIn(b"three", output)
+
+    def test_subshell_ordering(self) -> None:
+        """A subshell between two commands keeps bash's output order."""
+        self.proto.lineReceived(b"echo a; (echo b; echo c); echo d")
+        self.assertEqual(self.tr.value(), b"a\nb\nc\nd\n" + PROMPT)
 
     def test_command_substitution_multiple_commands(self) -> None:
         """Test command substitution with multiple commands"""

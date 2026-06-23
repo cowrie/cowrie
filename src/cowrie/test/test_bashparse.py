@@ -96,6 +96,12 @@ class BashParseVariableTests(unittest.TestCase):
         self.assertEqual(self._tokens('echo "X:$x"'), ["echo", "X:hi"])
         self.assertEqual(self._tokens("echo a${x}b"), ["echo", "ahib"])
 
+    def test_unquoted_variable_after_literal_expands(self) -> None:
+        # A bare $VAR directly after literal text must still expand, e.g.
+        # PATH=$PATH:/x or url=$x/p.
+        self.assertEqual(self._tokens("echo got=$x"), ["echo", "got=hi"])
+        self.assertEqual(self._tokens("echo $x/p"), ["echo", "hi/p"])
+
     def test_bare_unset_variable_drops_word(self) -> None:
         self.assertEqual(self._tokens("echo $nope end"), ["echo", "end"])
 
