@@ -105,6 +105,74 @@ def _ssh_activity(
         ]
 
 
+def _authentication(
+    ocsf: dict[str, Any],
+    logentry: dict[str, Any],
+    activity_id: int,
+    activity_name: str,
+    success: bool,
+) -> None:
+    """
+    Fill in the OCSF 'Authentication' (class_uid 3002) scaffolding for Cowrie
+    login attempts. This is the Identity & Access Management category, not
+    Network Activity, so it does not share the SSH Activity scaffolding.
+    """
+    ocsf["category_uid"] = 3
+    ocsf["category_name"] = "Identity & Access Management"
+    ocsf["class_uid"] = 3002
+    ocsf["class_name"] = "Authentication"
+    ocsf["activity_id"] = activity_id
+    ocsf["activity_name"] = activity_name
+    # type_uid = class_uid * 100 + activity_id
+    ocsf["type_uid"] = ocsf["class_uid"] * 100 + activity_id
+    # Login attempts warrant Medium severity (3) rather than the default Info.
+    ocsf["severity_id"] = 3
+    # Cowrie only ever sees remote logins.
+    ocsf["is_remote"] = True
+    ocsf["status"] = "Success" if success else "Failure"
+    ocsf["status_id"] = 1 if success else 2
+
+    # The attacker side; include only the fields this event actually carries.
+    src_endpoint: dict[str, Any] = {}
+    if "src_ip" in logentry:
+        src_endpoint["ip"] = logentry["src_ip"]
+    if "src_port" in logentry:
+        src_endpoint["port"] = logentry["src_port"]
+    if src_endpoint:
+        ocsf["src_endpoint"] = src_endpoint
+
+    # The honeypot side; sensor name is the listening host.
+    dst_endpoint: dict[str, Any] = {}
+    if "sensor" in logentry:
+        dst_endpoint["hostname"] = logentry["sensor"]
+    if "dst_ip" in logentry:
+        dst_endpoint["ip"] = logentry["dst_ip"]
+    if "dst_port" in logentry:
+        dst_endpoint["port"] = logentry["dst_port"]
+    if dst_endpoint:
+        ocsf["dst_endpoint"] = dst_endpoint
+
+    # The account targeted by the login. type_id 2 = Admin, 1 = User.
+    # NOTE: heuristic - privileged-looking names map to Admin, others to User.
+    username = logentry["username"]
+    ocsf["user"] = {
+        "name": username,
+        "type_id": 2 if username in ("root", "admin") else 1,
+    }
+
+    # Observables: source IP (type_id 2) and the attempted username (type_id 4).
+    observables: list[dict[str, Any]] = []
+    if "src_ip" in logentry:
+        observables.append(
+            {"name": "src_endpoint.ip", "type_id": 2, "value": logentry["src_ip"]}
+        )
+    observables.append({"name": "user.name", "type_id": 4, "value": username})
+    ocsf["observables"] = observables
+
+    # Password is recorded but has no dedicated OCSF home.
+    ocsf["unmapped"]["password"] = logentry["password"]
+
+
 def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
     """
     Take a Cowrie logentry and turn it into an OCSF event (a dict ready to be
@@ -170,5 +238,8 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
                     "value": logentry["hassh"],
                 },
             }
+        case "cowrie.login.success":
+            # activity_id 1 = "Logon".
+            _authentication(ocsf, logentry, 1, "Logon", success=True)
 
     return ocsf
