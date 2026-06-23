@@ -13,6 +13,7 @@
 #  cowrie.login.success              -> Authentication      3002 / Logon         (300201)
 #  cowrie.login.failed               -> Authentication      3002 / Logon         (300201)
 #  cowrie.command.input              -> Process Activity    1007 / Launch        (100701)
+#  cowrie.command.failed             -> Process Activity    1007 / Launch        (100701)
 #  cowrie.log.closed                 -> File System Activity 1001 / Close        (100199)
 #  cowrie.session.file_download      -> File System Activity 1001 / Create       (100101)
 #  cowrie.session.file_upload        -> File System Activity 1001 / Create       (100101)
@@ -177,12 +178,15 @@ def _process_activity(
     logentry: dict[str, Any],
     activity_id: int,
     activity_name: str,
+    success: bool = True,
 ) -> None:
     """
     Fill in the OCSF 'Process Activity' (class_uid 1007) scaffolding for
     commands the attacker runs in the shell. This is the System Activity
     category; it carries no network endpoints (the source IP survives only in
     raw_data), just the device and the process that was launched.
+
+    success=False (a command-not-found) adds the failure status.
     """
     ocsf["category_uid"] = 1
     ocsf["category_name"] = "System Activity"
@@ -194,6 +198,10 @@ def _process_activity(
     ocsf["type_uid"] = ocsf["class_uid"] * 100 + activity_id
     # Command execution warrants Low severity (2).
     ocsf["severity_id"] = 2
+
+    if not success:
+        ocsf["status"] = "Failure"
+        ocsf["status_id"] = 2
 
     # The honeypot the command ran on. type_id 1 = Server.
     ocsf["device"] = {"hostname": logentry["sensor"], "type_id": 1}
@@ -379,6 +387,9 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.command.input":
             # activity_id 1 = "Launch".
             _process_activity(ocsf, logentry, 1, "Launch")
+        case "cowrie.command.failed":
+            # A command that was not found; "Launch" with a failure status.
+            _process_activity(ocsf, logentry, 1, "Launch", success=False)
         case "cowrie.log.closed":
             # activity_id 99 = "Other"; the TTY session log file being closed.
             _filesystem_activity(ocsf, logentry, 99, "Close")
