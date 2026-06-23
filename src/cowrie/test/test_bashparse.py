@@ -154,6 +154,10 @@ class BashParseRedirectionTests(unittest.TestCase):
     def test_append(self) -> None:
         self.assertEqual(self._tokens("cmd >> log"), ["cmd", ">>", "log"])
 
+    def test_redirect_both_stdout_stderr(self) -> None:
+        self.assertEqual(self._tokens("cmd &>/dev/null"), ["cmd", "&>", "/dev/null"])
+        self.assertEqual(self._tokens("cmd &>> log"), ["cmd", "&>>", "log"])
+
     def test_missing_redirect_target_is_syntax_error(self) -> None:
         # A redirect with no target is a bash syntax error (issue #2920).
         for line in ("echo test >", "echo test 2>", "cmd >>"):

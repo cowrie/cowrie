@@ -110,7 +110,7 @@ AMP: "&"
 // argument. A digit separated by whitespace ("2 >") stays an ordinary word,
 // which is how bash tells the two apart.
 IO_REDIR.5: /\d+(?:>>|>&|>|<)/
-REDIR.2: />>|>&|&>|>|</
+REDIR.2: />>|>&|&>>|&>|>|</
 
 LPAR: "("
 RPAR: ")"

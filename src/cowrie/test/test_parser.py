@@ -118,6 +118,29 @@ class ParseRedirectionsTests(unittest.TestCase):
         self.assertEqual(cleaned, ["cmd", ">&file"])
         self.assertEqual(ops, [])
 
+    def test_redirect_both_stdout_stderr(self) -> None:
+        # &>file sends both stdout and stderr to the file (== >file 2>&1)
+        cleaned, ops = self.parser.parse_redirections(["cmd", "&>", "file"])
+        self.assertEqual(cleaned, ["cmd"])
+        self.assertEqual(
+            ops,
+            [
+                {"type": "file", "fd": 1, "target": "file", "append": False},
+                {"type": "dup", "fd": 2, "target": 1},
+            ],
+        )
+
+    def test_redirect_both_append(self) -> None:
+        cleaned, ops = self.parser.parse_redirections(["cmd", "&>>", "file"])
+        self.assertEqual(cleaned, ["cmd"])
+        self.assertEqual(ops[0]["append"], True)
+        self.assertEqual(ops[1], {"type": "dup", "fd": 2, "target": 1})
+
+    def test_redirect_both_inline_target(self) -> None:
+        cleaned, ops = self.parser.parse_redirections(["cmd", "&>file"])
+        self.assertEqual(cleaned, ["cmd"])
+        self.assertEqual(ops[0]["target"], "file")
+
     def test_order_preserved(self) -> None:
         # Redirection order matters for FD duplication
         args = ["cmd", "2>&1", ">", "file"]

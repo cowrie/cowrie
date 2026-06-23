@@ -32,14 +32,22 @@ class CommandParser:
         i = 0
         while i < len(arguments):
             tok = arguments[i]
+            next_token = arguments[i + 1] if (i + 1) < len(arguments) else None
+
+            amp = self._amp_redirect(tok)
+            if amp is not None:
+                consumed = self._apply_amp_redirection(
+                    amp, next_token, ops, cleaned, tok
+                )
+                i += consumed
+                continue
+
             op, fd, inline_target = self._extract_redir_op(tok)
-            consume = 1
 
             if not op and tok in (">", ">>", "<", ">&"):
                 op = tok
 
             if op:
-                next_token = arguments[i + 1] if (i + 1) < len(arguments) else None
                 consumed = self._apply_redirection(
                     op,
                     fd,
@@ -54,9 +62,39 @@ class CommandParser:
                     continue
 
             cleaned.append(tok)
-            i += consume
+            i += 1
 
         return cleaned, ops
+
+    def _amp_redirect(self, token: str) -> tuple[bool, str] | None:
+        """Parse a ``&>`` / ``&>>`` token into (append, inline target).
+
+        Returns None if the token is not an ``&>`` redirection. ``&>`` truncates
+        and ``&>>`` appends; both send stdout and stderr to the target.
+        """
+        if token.startswith("&>>"):
+            return True, token[3:]
+        if token.startswith("&>"):
+            return False, token[2:]
+        return None
+
+    def _apply_amp_redirection(
+        self,
+        amp: tuple[bool, str],
+        next_token: str | None,
+        ops: list[dict[str, Any]],
+        cleaned: list[str],
+        raw_token: str,
+    ) -> int:
+        """Redirect both stdout and stderr (``&>file`` == ``>file 2>&1``)."""
+        append_flag, inline_target = amp
+        target = inline_target or next_token
+        if target is None:
+            cleaned.append(raw_token)
+            return 1
+        ops.append({"type": "file", "fd": 1, "target": target, "append": append_flag})
+        ops.append({"type": "dup", "fd": 2, "target": 1})
+        return 1 if inline_target else 2
 
     def _extract_redir_op(self, token: str) -> tuple[str | None, int | None, str]:
         """Parse a combined redirection token into (op, fd, inline target)."""

@@ -55,6 +55,21 @@ class ShellFdRedirectionTests(unittest.TestCase):
             b"-bash: syntax error near unexpected token `newline'\n" + PROMPT,
         )
 
+    def test_redirect_both_stdout_stderr_to_file(self) -> None:
+        # &>file sends both stdout and stderr to the file (issue #2919): the
+        # error from a failed cat must land in the file, not the terminal.
+        self.proto.lineReceived(b"cat missingfile &> ampfile; cat ampfile")
+        self.assertEqual(
+            self.tr.value(),
+            b"cat: missingfile: No such file or directory\n" + PROMPT,
+        )
+
+    def test_redirect_both_append(self) -> None:
+        self.proto.lineReceived(
+            b"echo one &>> ampappend; echo two &>> ampappend; cat ampappend"
+        )
+        self.assertEqual(self.tr.value(), b"one\ntwo\n" + PROMPT)
+
     def test_redirect_stderr_into_pipe(self) -> None:
         self.proto.lineReceived(b"cat missingfile 2>&1 | grep 'No such file'")
         self.assertEqual(
