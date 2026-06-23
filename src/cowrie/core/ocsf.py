@@ -1,23 +1,22 @@
-# SPDX-FileCopyrightText: 2016-2026 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-FileCopyrightText: 
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-#  cowrie.client.fingerprint
-#  cowrie.client.size
-#  cowrie.client.var
-#  cowrie.client.version
-#  cowrie.command.failed
-#  cowrie.command.success
-#  cowrie.direct-tcpip.data
-#  cowrie.direct-tcpip.request
-#  cowrie.log.closed
-#  cowrie.login.failed
-#  cowrie.login.success
-#  cowrie.session.closed
-#  cowrie.session.connect
-#  cowrie.session.file_download
-#  cowrie.session.file_upload
+# Cowrie eventid -> OCSF class / activity (type_uid) mapping implemented below.
+# Events not listed here fall through to the common fields only (no class).
+#
+#  cowrie.session.connect            -> SSH Activity        4007 / Open          (400701)
+#  cowrie.session.closed             -> SSH Activity        4007 / Close         (400702)
+#  cowrie.client.version             -> SSH Activity        4007 / Client Banner (400799)
+#  cowrie.client.kex                 -> SSH Activity        4007 / Key Exchange  (400799)
+#  cowrie.login.success              -> Authentication      3002 / Logon         (300201)
+#  cowrie.login.failed               -> Authentication      3002 / Logon         (300201)
+#  cowrie.command.input              -> Process Activity    1007 / Launch        (100701)
+#  cowrie.log.closed                 -> File System Activity 1001 / Close        (100199)
+#  cowrie.session.file_download      -> File System Activity 1001 / Create       (100101)
+#  cowrie.session.file_upload        -> File System Activity 1001 / Create       (100101)
+#  cowrie.session.file_download.failed -> File System Activity 1001 / Create     (100101)
 
 from __future__ import annotations
 
@@ -240,6 +239,7 @@ def _file_transfer(
     logentry: dict[str, Any],
     activity_id: int,
     activity_name: str,
+    success: bool = True,
 ) -> None:
     """
     Map a Cowrie file_download / file_upload event onto File System Activity.
@@ -247,9 +247,15 @@ def _file_transfer(
     Both events result in a new file written to the honeypot (fetched from a
     URL, or pushed via scp/sftp), so they share this mapping; they differ only
     in which Cowrie fields are present (downloads have no filename; uploads add
-    duplicate/destfile). Fields are read defensively via .get().
+    duplicate/destfile). A failed download (success=False) carries only a url,
+    so its file object is minimal and status reflects the failure. Fields are
+    read defensively via .get().
     """
     _filesystem_activity(ocsf, logentry, activity_id, activity_name)
+
+    if not success:
+        ocsf["status"] = "Failure"
+        ocsf["status_id"] = 2
 
     shasum = logentry.get("shasum")
     outfile = logentry.get("outfile")
@@ -406,5 +412,8 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.session.file_download" | "cowrie.session.file_upload":
             # A new file written to the honeypot filesystem -> "Create".
             _file_transfer(ocsf, logentry, 1, "Create")
+        case "cowrie.session.file_download.failed":
+            # Attempted file creation that failed (e.g. URL unreachable).
+            _file_transfer(ocsf, logentry, 1, "Create", success=False)
 
     return ocsf
