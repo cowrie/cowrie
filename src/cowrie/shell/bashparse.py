@@ -57,9 +57,17 @@ from lark.exceptions import LarkError
 # separator, so it is matched explicitly rather than ignored: adjacent atoms
 # with no whitespace between them form a single word ("a"$x'b' -> one word).
 _GRAMMAR = r"""
-start: _WS? (_unit (_WS? _unit)*)? _WS?
-
-_unit: SEP | PIPE | AMP | REDIR | _COMMENT | subshell | word
+// A line is whitespace-separated content (words and subshells) broken up by the
+// control operators. Whitespace is REQUIRED between two content words, so a run
+// of atoms with no spaces is a single word (a"b"$c -> one word) while operators
+// stay self-delimiting (echo a|b is three tokens). Requiring the space is also
+// what keeps "$(...)" one command-substitution word instead of letting it be
+// re-read as a bare "$" next to a "(...)" subshell.
+start: _WS? _line? _WS?
+_line: _run (_WS? _op _WS? _run)*
+_run: (_content (_WS _content)*)?
+_content: subshell | word | _COMMENT
+_op: SEP | PIPE | AMP | REDIR
 
 subshell: LPAR start RPAR
 

@@ -181,6 +181,17 @@ class BashParseStatementTests(unittest.TestCase):
         statements = self.parser.parse("echo `id`")
         self.assertEqual(statements[0].tokens, ["echo", "<id>"])  # type: ignore[union-attr]
 
+    def test_command_substitution_as_whole_statement(self) -> None:
+        # A command substitution that is the entire statement, or an assignment
+        # value, parses as one command word -- not a misparsed bare "$" next to
+        # a "(...)" subshell (which used to be a syntax error).
+        self.assertEqual(self.parser.parse("$(id)")[0].tokens, ["<id>"])  # type: ignore[union-attr]
+        self.assertEqual(self.parser.parse("x=$(id)")[0].tokens, ["x=<id>"])  # type: ignore[union-attr]
+        self.assertEqual(
+            self.parser.parse("var=$( (echo a; echo b) )")[0].tokens,  # type: ignore[union-attr]
+            ["var=<(echo a; echo b)>"],
+        )
+
     def test_nested_substitution_source(self) -> None:
         # The inner $(...) source is handed to the context verbatim; the nested
         # shell parses it recursively rather than the grammar flattening it.
