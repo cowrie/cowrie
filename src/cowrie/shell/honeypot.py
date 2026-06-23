@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import copy
 import os
-import re
-import shlex
 from typing import Any
 
 from twisted.internet import error
@@ -18,11 +16,15 @@ from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+from cowrie.shell.bashparse import (
+    BashParser,
+    Command,
+    Statement,
+    Subshell,
+    SyntaxError_,
+)
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import PipeProtocol
-
-# Matches a ${VAR} or $VAR reference anywhere inside a token
-_ENV_VAR_RE = re.compile(r"\$\{([_a-zA-Z0-9]+)\}|\$([_a-zA-Z0-9]+)")
 
 
 class HoneyPotShell:
@@ -47,330 +49,83 @@ class HoneyPotShell:
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
-        self.lexer: shlex.shlex | None = None
         self.parser = CommandParser()
+        self.bashparser = BashParser(self)
 
-        # this is the first prompt after starting
-        self.showPrompt()
+    # -- bashparse.ShellContext interface -----------------------------------
+
+    def get_variable(self, name: str) -> str | None:
+        """Look up a shell variable for the Lark word evaluator."""
+        return self.environ.get(name)
+
+    def command_substitution(self, source: str) -> str:
+        """Run ``source`` as a command substitution and return its captured
+        stdout with trailing newlines stripped.
+
+        The inner source is parsed with the same Lark grammar as a top-level
+        line; each command runs in its own output-capturing subshell and a
+        nested ``(...)`` group recurses.
+        """
+        return self._capture_statements(self.bashparser.parse(source)).rstrip("\n")
+
+    def _capture_statements(self, statements: list[Statement]) -> str:
+        """Run statements in capture mode, concatenating their stdout."""
+        output = ""
+        for statement in statements:
+            if isinstance(statement, Command):
+                output += self._capture_command(statement.tokens)
+            elif isinstance(statement, Subshell):
+                output += self._capture_statements(statement.statements)
+        return output
 
     def lineReceived(self, line: str) -> None:
+        """Parse a command line with the Lark grammar and run the result."""
         log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
-        # posix=True makes the lexer strip quotes as it tokenizes, so by the
-        # time a token reaches variable expansion we can no longer tell whether
-        # a reference was single-quoted ('$1', literal) or double-quoted
-        # ("$1", expanded). expand_variables() works around this by only
-        # expanding variables that are set; a proper lexer/parser that preserves
-        # quoting context per token would let us expand correctly in both cases.
-        self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
-        # Add these special characters that are not in the default lexer
-        self.lexer.wordchars += "@%{}=$:+^,()`"
+        self._queue_statements(self.bashparser.parse(line))
+        self._advance()
 
-        tokens: list[str] = []
+    def _queue_statements(self, statements: list[Statement]) -> bool:
+        """Append parsed statements to ``cmdpending`` for sequential execution.
 
-        while True:
-            try:
-                tokkie: str | None = self.lexer.get_token()
-                # log.msg("tok: %s" % (repr(tok)))
+        A subshell's inner statements are flattened into the queue in place so
+        they run in order with the surrounding commands. Cowrie does not
+        emulate a subshell's isolated environment (``cwd`` and friends live on
+        the protocol, not the shell), so flattening matches bash's output
+        ordering without a separate captured-output pass.
 
-                if tokkie is None:  # self.lexer.eof put None for mypy
-                    if tokens:
-                        self.cmdpending.append(tokens)
-                    break
+        Returns False to stop queueing after a syntax error: commands already
+        queued before the error still run, as in bash.
+        """
+        for statement in statements:
+            if isinstance(statement, Command):
+                self.cmdpending.append(statement.tokens)
+            elif isinstance(statement, Subshell):
+                if not self._queue_statements(statement.statements):
+                    return False
+            elif isinstance(statement, SyntaxError_):
+                if statement.token:
+                    self.protocol.terminal.write(
+                        f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
+                    )
                 else:
-                    tok: str = tokkie
+                    self.protocol.terminal.write(
+                        b"-bash: syntax error: unexpected end of file\n"
+                    )
+                return False
+        return True
 
-                # For now, treat && and || same as ;, just execute without checking return code
-                if tok == "&&" or tok == "||":
-                    if tokens:
-                        self.cmdpending.append(tokens)
-                        tokens = []
-                        continue
-                    else:
-                        self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
-                        )
-                        break
-                elif tok == ";":
-                    if tokens:
-                        self.cmdpending.append(tokens)
-                        tokens = []
-                    continue
-                elif tok == "$?":
-                    tok = "0"
-                elif tok == "(" or (tok.startswith("(") and not tok.startswith("$(")):
-                    # Parentheses can only appear at the start of a command, not in the middle
-                    if tokens:
-                        # Parentheses in the middle of a command line is a syntax error
-                        self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\\n".encode()
-                        )
-                        break
-                    if tok == "(":
-                        self.do_subshell_execution_from_lexer()
-                    else:
-                        self.do_subshell_execution(tok)
-                    continue
-                elif "$(" in tok or "`" in tok:
-                    tok = self.do_command_substitution(tok)
-                elif "$" in tok:
-                    whole = _ENV_VAR_RE.fullmatch(tok)
-                    if whole is not None:
-                        # The token is exactly $VAR or ${VAR}. An unset or empty
-                        # variable yields no word, like an unquoted empty
-                        # expansion in a real shell.
-                        name = whole.group(1) or whole.group(2)
-                        value = self.environ.get(name)
-                        if not value:
-                            continue
-                        tok = value
-                    else:
-                        tok = self.expand_variables(tok)
+    def _capture_command(self, tokens: list[str]) -> str:
+        """Run one parsed command in an output-capturing subshell and return
+        its stdout.
 
-                tokens.append(tok)
-            except Exception as e:
-                self.protocol.terminal.write(
-                    b"-bash: syntax error: unexpected end of file\n"
-                )
-                # Could run runCommand here, but i'll just clear the list instead
-                log.msg(f"exception: {e}")
-                self.cmdpending = []
-                self.showPrompt()
-                return
-
-        if self.cmdpending:
-            # Coalesce fd redirection tokens so we don't treat `2` as a command
-            self.cmdpending = [
-                self.parser.merge_redirection_tokens(tokens)
-                for tokens in self.cmdpending
-            ]
-            # if we have a complete command, go and run it
-            self.runCommand()
-        else:
-            # if there's no command, display a prompt again
-            self.showPrompt()
-
-    def expand_variables(self, tok: str) -> str:
+        Used for command substitution, where the output becomes a word instead
+        of reaching the terminal. The already-parsed tokens run directly, so no
+        quoting or expansion is repeated.
         """
-        Replace ${VAR} or $VAR references embedded in a token with their value.
-
-        Only variables that are currently set are expanded; an unknown
-        reference is left verbatim so that field references in quoted awk, sed
-        and perl programs (e.g. $1, $0, $NF) survive, since the lexer has
-        already discarded the single/double quoting that would tell them apart.
-
-        This is a deliberate compromise, not correct shell behaviour: a real
-        shell expands "$1" (double-quoted) but not '$1' (single-quoted). We
-        cannot honour that distinction until the lexer preserves quoting per
-        token. Once a proper lexer/parser is in place, expand every reference
-        according to its quoting and let unset variables expand to empty.
-        """
-
-        def replace(match: re.Match[str]) -> str:
-            name = match.group(1) or match.group(2)
-            if name in self.environ:
-                return self.environ[name]
-            return match.group(0)
-
-        return _ENV_VAR_RE.sub(replace, tok)
-
-    def do_subshell_execution_from_lexer(self) -> None:
-        """
-        Execute a subshell command reading tokens from the lexer until matching closing parenthesis.
-        Output goes directly to the terminal.
-        """
-        cmd_tokens = []
-        opening_count = 1
-        closing_count = 0
-
-        while opening_count > closing_count:
-            if self.lexer is None:
-                break
-            tok = self.lexer.get_token()
-            if tok is None:
-                break
-
-            if tok == ")":
-                closing_count += 1
-                if opening_count == closing_count:
-                    break
-                else:
-                    cmd_tokens.append(tok)
-            elif tok == "(":
-                opening_count += 1
-                cmd_tokens.append(tok)
-            else:
-                cmd_tokens.append(tok)
-
-        # execute the command and print to terminal
-        cmd_str = " ".join(cmd_tokens)
-        self.protocol.terminal.write(self.run_subshell_command(f"({cmd_str})").encode())
-
-    def do_subshell_execution(self, start_tok: str) -> None:
-        """
-        Execute a subshell command (command) without output substitution.
-        Output goes directly to the terminal.
-        """
-        if start_tok[0] == "(":
-            cmd_expr = start_tok
-            pos = 1
-            opening_count = 1
-            closing_count = 0
-
-            # parse the remaining tokens to find the matching closing parenthesis
-            while opening_count > closing_count:
-                if cmd_expr[pos] == ")":
-                    closing_count += 1
-                    if opening_count == closing_count:
-                        # execute the command in () and print to terminal
-                        self.protocol.terminal.write(
-                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
-                        )
-                        break
-                    else:
-                        pos += 1
-                elif cmd_expr[pos] == "(":
-                    opening_count += 1
-                    pos += 1
-                else:
-                    if opening_count > closing_count and pos == len(cmd_expr) - 1:
-                        if self.lexer:
-                            tokkie = self.lexer.get_token()
-                            if tokkie is None:  # self.lexer.eof put None for mypy
-                                break
-                            else:
-                                cmd_expr = cmd_expr + " " + tokkie
-                    pos += 1
-
-    def do_command_substitution(self, start_tok: str) -> str:
-        """
-        Perform command substitution, replacing $(cmd) or `cmd` with output.
-        """
-        result = ""
-        if start_tok[0] == "(":
-            cmd_expr = start_tok
-            pos = 1
-        elif "$(" in start_tok:
-            dollar_pos = start_tok.index("$(")
-            result = start_tok[:dollar_pos]
-            cmd_expr = start_tok[dollar_pos:]
-            pos = 2
-        elif "`" in start_tok:
-            backtick_pos = start_tok.index("`")
-            result = start_tok[:backtick_pos]
-            cmd_expr = start_tok[backtick_pos:]
-            pos = 1
-        else:
-            log.msg(f"failed command substitution: {start_tok}")
-            return start_tok
-
-        opening_count = 1
-        closing_count = 0
-
-        while opening_count > closing_count:
-            if pos >= len(cmd_expr):
-                # The current lexer token ended before the expression was
-                # closed; pull the next token and keep scanning.
-                if self.lexer:
-                    tokkie = self.lexer.get_token()
-                    if tokkie is None:
-                        break
-                    cmd_expr = cmd_expr + " " + tokkie
-                    continue
-                else:
-                    break
-            if cmd_expr[pos] in (")", "`"):
-                closing_count += 1
-                if opening_count == closing_count:
-                    if cmd_expr[0] == "(":
-                        self.protocol.terminal.write(
-                            self.run_subshell_command(cmd_expr[: pos + 1]).encode()
-                        )
-                    else:
-                        result += self.run_subshell_command(cmd_expr[: pos + 1])
-
-                    if pos < len(cmd_expr) - 1:
-                        remainder = cmd_expr[pos + 1 :]
-                        if "$(" in remainder or "`" in remainder:
-                            result = self.do_command_substitution(result + remainder)
-                        else:
-                            result += remainder
-                else:
-                    pos += 1
-            elif cmd_expr[pos : pos + 2] == "$(":
-                opening_count += 1
-                pos += 2
-            elif cmd_expr[pos] == "(":
-                # A bare ( opens a nested subshell inside $(...); count it so the
-                # first ) does not falsely close the outer $(...).
-                opening_count += 1
-                pos += 1
-            else:
-                pos += 1
-
-        return result
-
-    def run_subshell_command(self, cmd_expr: str) -> str:
-        # extract the command from $(...) or `...` or (...) expression
-        if cmd_expr.startswith("$("):
-            cmd = cmd_expr[2:-1]
-        else:
-            cmd = cmd_expr[1:-1]
-
-        # For subshells with multiple commands, we need to capture all output
-        # Create a custom output accumulator
-        if cmd_expr.startswith("("):
-            return self._execute_subshell_with_full_output(cmd)
-        else:
-            # Command substitution - use existing method
-            return self._execute_command_substitution(cmd)
-
-    def _execute_subshell_with_full_output(self, cmd: str) -> str:
-        """Execute subshell commands and capture ALL output, not just the last command."""
-        # Split commands by separators and execute each one
-        lexer = shlex.shlex(instream=cmd, punctuation_chars=True, posix=True)
-        lexer.wordchars += "@%{}=$:+^,()`"
-
-        accumulated_output = ""
-        current_cmd_tokens: list[str] = []
-
-        while True:
-            tok = lexer.get_token()
-            if tok is None:
-                # Process final command
-                if current_cmd_tokens:
-                    cmd_str = " ".join(current_cmd_tokens)
-                    output = self._execute_single_command_with_redirect(cmd_str)
-                    accumulated_output += output
-                break
-            elif tok in (";", "&&", "||"):
-                # Process current command and start new one
-                if current_cmd_tokens:
-                    cmd_str = " ".join(current_cmd_tokens)
-                    output = self._execute_single_command_with_redirect(cmd_str)
-                    accumulated_output += output
-                    current_cmd_tokens = []
-                # Note: We're ignoring && and || conditional logic for now
-            else:
-                current_cmd_tokens.append(tok)
-
-        return accumulated_output
-
-    def _execute_command_substitution(self, cmd: str) -> str:
-        """Execute command substitution - should capture all output."""
-        # Command substitution should also capture all output from multiple commands
-        output = self._execute_subshell_with_full_output(cmd)
-        # trailing newlines are stripped for command substitution
-        return output.rstrip("\n")
-
-    def _execute_single_command_with_redirect(self, cmd: str) -> str:
-        """Execute a single command and return its output."""
-        # instantiate new shell with redirect output
-        self.protocol.cmdstack.append(
-            HoneyPotShell(self.protocol, interactive=False, redirect=True)
-        )
-        # call lineReceived method that indicates that we have some commands to parse
-        self.protocol.cmdstack[-1].lineReceived(cmd)
-        # and remove the shell
+        shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
+        self.protocol.cmdstack.append(shell)
+        shell.cmdpending.append(tokens)
+        shell.runCommand()
         res = self.protocol.cmdstack.pop()
 
         try:
@@ -380,30 +135,35 @@ class HoneyPotShell:
         else:
             return output
 
+    def _finish(self) -> None:
+        """The command queue is drained: do the shell's idle action.
+
+        An interactive shell shows the next prompt. A top-level non-interactive
+        shell (an exec session) ends the process. A nested non-interactive shell
+        (a pipe stage or a command-substitution capture) just returns so its
+        parent can carry on.
+        """
+        if self.interactive:
+            self.showPrompt()
+        elif len(self.protocol.cmdstack) == 1:
+            ret = failure.Failure(error.ProcessDone(status=""))
+            self.protocol.terminal.transport.processEnded(ret)
+
+    def _advance(self) -> None:
+        """Run the next queued command, or finish when the queue is drained."""
+        if self.cmdpending:
+            self.runCommand()
+        else:
+            self._finish()
+
     def runCommand(self):
         pp = None
 
-        def runOrPrompt() -> None:
-            if self.cmdpending:
-                self.runCommand()
-            else:
-                self.showPrompt()
-
         if not self.cmdpending:
-            if self.protocol.pp.next_command is None:  # command dont have pipe(s)
-                if self.interactive:
-                    self.showPrompt()
-                else:
-                    # when commands passed to a shell via PIPE, we spawn a HoneyPotShell in none interactive mode
-                    # if there are another shells on stack (cmdstack), let's just exit our new shell
-                    # else close connection
-                    if len(self.protocol.cmdstack) == 1:
-                        ret = failure.Failure(error.ProcessDone(status=""))
-                        self.protocol.terminal.transport.processEnded(ret)
-                    else:
-                        return
-            else:
-                pass  # command with pipes
+            # Reached after a command completed. Stay quiet mid-pipeline (the
+            # pipe machinery drives the rest); otherwise the queue is drained.
+            if self.protocol.pp.next_command is None:
+                self._finish()
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
@@ -426,7 +186,7 @@ class HoneyPotShell:
             # variables for the rest of the session. They are shell variables,
             # not exported, so self.exported is left untouched.
             self.environ = environ
-            runOrPrompt()
+            self._advance()
             return
 
         pipe_indices = [i for i, x in enumerate(cmd_tokens) if x == "|"]
@@ -454,7 +214,7 @@ class HoneyPotShell:
                     first_ops,
                 )
                 # This triggers _setup_redirections which creates files
-            runOrPrompt()
+            self._advance()
             return
 
         cmd_array.append(
@@ -534,21 +294,11 @@ class HoneyPotShell:
                 else:
                     self.protocol.terminal.write(message)
 
-                # Import here to avoid circular dependency with protocol module
-                from cowrie.shell import protocol
-
-                if (
-                    isinstance(self.protocol, protocol.HoneyPotExecProtocol)
-                    and not self.cmdpending
-                ):
-                    exit_status = failure.Failure(error.ProcessDone(status=""))
-                    self.protocol.terminal.transport.processEnded(exit_status)
-
-                runOrPrompt()
+                self._advance()
                 pp = None  # Got a error. Don't run any piped commands
                 break
         if pp and getattr(pp, "has_redirection_error", False):
-            runOrPrompt()
+            self._advance()
             return
 
         if pp:

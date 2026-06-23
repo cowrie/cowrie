@@ -40,6 +40,36 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
+    def test_spaced_fd_is_argument(self) -> None:
+        # A space before ">" makes the digit a plain argument, not a file
+        # descriptor: echo writes "hi 2" to the file via stdout (issue #2917).
+        self.proto.lineReceived(b"echo hi 2 > spacedfd; cat spacedfd")
+        self.assertEqual(self.tr.value(), b"hi 2\n" + PROMPT)
+
+    def test_missing_redirect_target_is_syntax_error(self) -> None:
+        # A trailing redirect with no target is a syntax error, not output,
+        # matching bash (issue #2920).
+        self.proto.lineReceived(b"echo test >")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: syntax error near unexpected token `newline'\n" + PROMPT,
+        )
+
+    def test_redirect_both_stdout_stderr_to_file(self) -> None:
+        # &>file sends both stdout and stderr to the file (issue #2919): the
+        # error from a failed cat must land in the file, not the terminal.
+        self.proto.lineReceived(b"cat missingfile &> ampfile; cat ampfile")
+        self.assertEqual(
+            self.tr.value(),
+            b"cat: missingfile: No such file or directory\n" + PROMPT,
+        )
+
+    def test_redirect_both_append(self) -> None:
+        self.proto.lineReceived(
+            b"echo one &>> ampappend; echo two &>> ampappend; cat ampappend"
+        )
+        self.assertEqual(self.tr.value(), b"one\ntwo\n" + PROMPT)
+
     def test_redirect_stderr_into_pipe(self) -> None:
         self.proto.lineReceived(b"cat missingfile 2>&1 | grep 'No such file'")
         self.assertEqual(

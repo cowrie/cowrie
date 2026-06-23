@@ -376,6 +376,8 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         recvline.HistoricRecvLine.connectionMade(self)
 
         self.cmdstack = [honeypot.HoneyPotShell(self)]
+        # Show the first prompt now that the interactive shell is on the stack.
+        self.cmdstack[0].showPrompt()
 
         self.keyHandlers.update(
             {

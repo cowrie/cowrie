@@ -63,7 +63,7 @@ class PipeEofTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     output,
-                    b"X:$x\n" + PROMPT,
+                    b"X:\n" + PROMPT,
                     f"unexpected output for {tail_cmd!r}: {output!r}",
                 )
 
