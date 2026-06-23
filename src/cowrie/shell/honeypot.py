@@ -39,7 +39,9 @@ class HoneyPotShell:
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
         self.effective_user = effective_user  # For su: {uid, gid, username, home}
-        self.cmdpending: list[list[str]] = []
+        # Parsed-but-not-yet-evaluated statements; each is expanded against the
+        # live environment only when it is about to run (see runCommand).
+        self.cmdpending: list[Command] = []
         # A nested shell (e.g. a command substitution) inherits the live
         # environment of whichever shell is currently running; the very first
         # shell of a session falls back to the login environment, all of which
@@ -78,7 +80,7 @@ class HoneyPotShell:
         output = ""
         for statement in statements:
             if isinstance(statement, Command):
-                output += self._capture_command(statement.tokens)
+                output += self._capture_command(statement)
             elif isinstance(statement, Subshell):
                 output += self._capture_statements(statement.statements)
         return output
@@ -103,9 +105,14 @@ class HoneyPotShell:
         """
         for statement in statements:
             if isinstance(statement, Command):
-                self.cmdpending.append(statement.tokens)
+                self.cmdpending.append(statement)
             elif isinstance(statement, Subshell):
-                if not self._queue_statements(statement.statements):
+                # The group's join operator (e.g. the || in `x || (a; b)`) gates
+                # the whole group, so it applies to the first inner statement.
+                inner = statement.statements
+                if inner and isinstance(inner[0], (Command, Subshell)):
+                    inner[0].op = statement.op
+                if not self._queue_statements(inner):
                     return False
             elif isinstance(statement, SyntaxError_):
                 if statement.token:
@@ -119,17 +126,17 @@ class HoneyPotShell:
                 return False
         return True
 
-    def _capture_command(self, tokens: list[str]) -> str:
+    def _capture_command(self, command: Command) -> str:
         """Run one parsed command in an output-capturing subshell and return
         its stdout.
 
         Used for command substitution, where the output becomes a word instead
-        of reaching the terminal. The already-parsed tokens run directly, so no
-        quoting or expansion is repeated.
+        of reaching the terminal. The command's words are expanded in the
+        capture shell, so it sees the inherited environment.
         """
         shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
         self.protocol.cmdstack.append(shell)
-        shell.cmdpending.append(tokens)
+        shell.cmdpending.append(command)
         shell.runCommand()
         res = self.protocol.cmdstack.pop()
 
@@ -171,7 +178,9 @@ class HoneyPotShell:
                 self._finish()
             return
 
-        cmdAndArgs = self.cmdpending.pop(0)
+        # Expand the next statement's words against the *current* environment,
+        # just before it runs, so a same-line `x=hi; echo $x` sees the value.
+        cmdAndArgs = self.bashparser.evaluate(self.cmdpending.pop(0))
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)

@@ -88,9 +88,11 @@ class Command_dd(HoneyPotCommand):
 
     def exit(self, success: bool = True) -> None:
         if success is True:
-            self.write("0+0 records in\n")
-            self.write("0+0 records out\n")
-            self.write("0 bytes transferred in 0.695821 secs (0 bytes/sec)\n")
+            # Real dd writes its transfer statistics to stderr, not stdout, so
+            # they do not pollute a command substitution that captures stdout.
+            self.errorWrite("0+0 records in\n")
+            self.errorWrite("0+0 records out\n")
+            self.errorWrite("0 bytes transferred in 0.695821 secs (0 bytes/sec)\n")
         HoneyPotCommand.exit(self)
 
     def lineReceived(self, line: str) -> None:

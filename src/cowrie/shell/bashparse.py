@@ -147,20 +147,33 @@ class ShellContext(Protocol):
 
 @dataclass
 class Command:
-    """A simple command / pipeline: a flat token list with operators kept."""
+    """A simple command / pipeline, structure only.
 
-    tokens: list[str] = field(default_factory=list)
+    ``items`` keeps the ordered word trees (still unevaluated) interleaved with
+    the control operator strings (``|``, ``>``, ``2>`` ...). Words are expanded
+    against the live shell by :meth:`BashParser.evaluate` only when the command
+    is about to run, so a same-line ``x=hi; echo $x`` sees the assignment.
+    ``op`` is the operator that joins this statement to the previous one
+    (``None`` / ``;`` / ``&&`` / ``||``); ``line`` is the source the word trees
+    point into.
+    """
+
+    items: list[str | Tree] = field(default_factory=list)
+    line: str = ""
+    op: str | None = None
 
 
 @dataclass
 class Subshell:
-    """A ``(...)`` group, holding its already-parsed inner statements.
+    """A ``(...)`` group, holding its parsed (still unevaluated) inner statements.
 
     Cowrie does not emulate a subshell's isolated environment, so the caller
-    runs these statements in order with the surrounding line.
+    runs these statements in order with the surrounding line. ``op`` joins this
+    group to the previous statement.
     """
 
     statements: list[Statement] = field(default_factory=list)
+    op: str | None = None
 
 
 @dataclass
@@ -204,15 +217,16 @@ class BashParser:
     def _split_statements(self, line: str, tree: Tree) -> list[Statement]:
         statements: list[Statement] = []
         units: list[Tree | Token] = []
+        # The operator joining the statement currently being accumulated to the
+        # previous one: None for the first, then ; / && / || as seen.
+        current_op: str | None = None
 
         def flush() -> bool:
             """Turn the accumulated units into a statement. Return False to stop."""
             if not units:
                 return True
-            stmt = self._build_statement(line, units)
+            stmt = self._build_statement(line, units, current_op)
             units.clear()
-            if stmt is None:
-                return True
             statements.append(stmt)
             return not isinstance(stmt, SyntaxError_)
 
@@ -223,14 +237,15 @@ class BashParser:
                     return statements
                 if not flush():
                     return statements
+                current_op = child.value
                 continue
             units.append(child)
         flush()
         return statements
 
     def _build_statement(
-        self, line: str, units: list[Tree | Token]
-    ) -> Statement | None:
+        self, line: str, units: list[Tree | Token], op: str | None
+    ) -> Statement:
         # A subshell is valid only at the start of a statement. There it runs
         # in sequence with the surrounding line; anything piped after it is
         # ignored. A subshell anywhere else is a syntax error reported on the
@@ -252,7 +267,9 @@ class BashParser:
             subshell = units[subshell_idx]
             assert isinstance(subshell, Tree)
             if subshell_idx == 0:
-                return Subshell(statements=self._subshell_statements(line, subshell))
+                return Subshell(
+                    statements=self._subshell_statements(line, subshell), op=op
+                )
             return SyntaxError_(token=self._error_token(line, subshell))
 
         # A redirection operator must be followed by a target word. A redirect at
@@ -266,20 +283,32 @@ class BashParser:
                 if isinstance(target, Token):
                     return SyntaxError_(token=target.value)
 
-        tokens: list[str] = []
-        for unit in units:
-            if isinstance(unit, Token):
-                # SEP never reaches here; PIPE / AMP / REDIR pass through.
-                tokens.append(unit.value)
-                continue
-            value = self._eval_word(line, unit)
-            if value is not None:
-                tokens.append(value)
-        if not tokens:
-            return None
-        return Command(tokens=tokens)
+        # Keep the structure; words are evaluated later by evaluate(). An
+        # operator token (PIPE / AMP / REDIR / IO_REDIR) is a fixed string;
+        # SEP never reaches here.
+        items: list[str | Tree] = [
+            unit.value if isinstance(unit, Token) else unit for unit in units
+        ]
+        return Command(items=items, line=line, op=op)
 
     # -- word evaluation ----------------------------------------------------
+
+    def evaluate(self, command: Command) -> list[str]:
+        """Expand a command's words against the live context, now.
+
+        Operator strings pass through; each word tree is evaluated against the
+        current shell (variables, command substitution), and a word that
+        resolves to nothing (an unquoted unset reference) is dropped.
+        """
+        tokens: list[str] = []
+        for item in command.items:
+            if isinstance(item, str):
+                tokens.append(item)
+                continue
+            value = self._eval_word(command.line, item)
+            if value is not None:
+                tokens.append(value)
+        return tokens
 
     def _eval_word(self, line: str, word: Tree) -> str | None:
         """Evaluate a word to its final string, or None if it should be dropped.
