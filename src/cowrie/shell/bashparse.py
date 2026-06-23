@@ -255,6 +255,17 @@ class BashParser:
                 return Subshell(statements=self._subshell_statements(line, subshell))
             return SyntaxError_(token=self._error_token(line, subshell))
 
+        # A redirection operator must be followed by a target word. A redirect at
+        # the end of a statement, or directly before another operator, is a bash
+        # syntax error (e.g. `echo >` reports the unexpected token `newline').
+        for i, unit in enumerate(units):
+            if isinstance(unit, Token) and unit.type in ("REDIR", "IO_REDIR"):
+                target = units[i + 1] if i + 1 < len(units) else None
+                if target is None:
+                    return SyntaxError_(token="newline")
+                if isinstance(target, Token):
+                    return SyntaxError_(token=target.value)
+
         tokens: list[str] = []
         for unit in units:
             if isinstance(unit, Token):

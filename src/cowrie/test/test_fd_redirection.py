@@ -46,6 +46,15 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo hi 2 > spacedfd; cat spacedfd")
         self.assertEqual(self.tr.value(), b"hi 2\n" + PROMPT)
 
+    def test_missing_redirect_target_is_syntax_error(self) -> None:
+        # A trailing redirect with no target is a syntax error, not output,
+        # matching bash (issue #2920).
+        self.proto.lineReceived(b"echo test >")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: syntax error near unexpected token `newline'\n" + PROMPT,
+        )
+
     def test_redirect_stderr_into_pipe(self) -> None:
         self.proto.lineReceived(b"cat missingfile 2>&1 | grep 'No such file'")
         self.assertEqual(
