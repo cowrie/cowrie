@@ -214,5 +214,29 @@ class BashParseStatementTests(unittest.TestCase):
         self.assertEqual(self.parser.parse("   \t  "), [])
 
 
+class BashParseCommentTests(unittest.TestCase):
+    """A "#" starts a comment only at a word boundary, like bash."""
+
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def _tokens(self, line: str) -> list[str]:
+        statement = self.parser.parse(line)[0]
+        assert isinstance(statement, Command)
+        return statement.tokens
+
+    def test_trailing_comment_dropped(self) -> None:
+        self.assertEqual(self._tokens("echo foo #comment"), ["echo", "foo"])
+
+    def test_hash_inside_word_kept(self) -> None:
+        self.assertEqual(self._tokens("echo a#b"), ["echo", "a#b"])
+
+    def test_whole_line_comment_yields_nothing(self) -> None:
+        self.assertEqual(self.parser.parse("# just a comment"), [])
+
+    def test_hash_in_quotes_not_a_comment(self) -> None:
+        self.assertEqual(self._tokens('echo "a # b"'), ["echo", "a # b"])
+
+
 if __name__ == "__main__":
     unittest.main()

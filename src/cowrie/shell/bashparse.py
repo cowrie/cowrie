@@ -39,7 +39,7 @@ from lark.exceptions import LarkError
 _GRAMMAR = r"""
 start: _WS? (_unit (_WS? _unit)*)? _WS?
 
-_unit: SEP | PIPE | AMP | REDIR | subshell | word
+_unit: SEP | PIPE | AMP | REDIR | _COMMENT | subshell | word
 
 subshell: LPAR start RPAR
 
@@ -81,6 +81,11 @@ RPAR: ")"
 BARE_DOLLAR: "$"
 LITERAL: /[^ \t\r\n|&;<>()$`'"\\]+/
 
+// A "#" starts a comment only at a word boundary (higher priority than the
+// LITERAL that would otherwise begin a word with "#"); a "#" inside a word
+// such as "a#b" stays part of the LITERAL.
+_COMMENT.2: /#[^\r\n]*/
+
 _WS: /[ \t\r\n]+/
 """
 
@@ -91,11 +96,6 @@ _parser = Lark(
     lexer="dynamic",
     propagate_positions=True,
 )
-
-# Sentinel returned by word evaluation when an unquoted bare reference to an
-# unset/empty variable should drop the whole word (like ``echo $unset`` which
-# yields no argument at all in a real shell).
-_DROP = object()
 
 
 class ShellContext(Protocol):
@@ -199,7 +199,7 @@ class BashParser:
         )
         if subshell_idx is not None:
             if subshell_idx == 0:
-                return Subshell(source=self._subshell_source(line, units[0]))
+                return Subshell(source=self._group_source(line, units[0]))
             return SyntaxError_(token=self._error_token(line, units[subshell_idx]))
 
         tokens: list[str] = []
@@ -209,15 +209,21 @@ class BashParser:
                 tokens.append(unit.value)
                 continue
             value = self._eval_word(line, unit)
-            if value is not _DROP:
-                tokens.append(value)  # type: ignore[arg-type]
+            if value is not None:
+                tokens.append(value)
         if not tokens:
             return None
         return Command(tokens=tokens)
 
     # -- word evaluation ----------------------------------------------------
 
-    def _eval_word(self, line: str, word: Tree) -> str | object:
+    def _eval_word(self, line: str, word: Tree) -> str | None:
+        """Evaluate a word to its final string, or None if it should be dropped.
+
+        A word is dropped when it is exactly an unquoted reference to an unset
+        or empty variable, like ``echo $unset`` which yields no argument at all
+        in a real shell.
+        """
         atoms = word.children
 
         # Whole-word bare reference: ``$x`` / ``${x}`` as the entire,
@@ -232,7 +238,7 @@ class BashParser:
                     return only.children[0].value  # verbatim, e.g. $@
                 value = self.context.get_variable(name)
                 if not value:
-                    return _DROP
+                    return None
                 return value
 
         parts: list[str] = []
@@ -256,7 +262,7 @@ class BashParser:
         if atom.data == "dollar_var" or atom.data == "dollar_brace":
             return self._expand_embedded(atom)
         if atom.data == "cmdsub":
-            return self.context.command_substitution(self._inner_source(line, atom))
+            return self.context.command_substitution(self._group_source(line, atom))
         if atom.data == "backtick":
             return self.context.command_substitution(self._backtick_source(line, atom))
         return ""
@@ -274,7 +280,7 @@ class BashParser:
                 parts.append(self._expand_embedded(part))
             elif part.data == "cmdsub":
                 parts.append(
-                    self.context.command_substitution(self._inner_source(line, part))
+                    self.context.command_substitution(self._group_source(line, part))
                 )
             elif part.data == "backtick":
                 parts.append(
@@ -317,8 +323,8 @@ class BashParser:
 
     # -- source slicing for substitution / subshells ------------------------
 
-    def _inner_source(self, line: str, node: Tree) -> str:
-        """Raw source inside ``$(...)`` (the inner ``start`` tree)."""
+    def _group_source(self, line: str, node: Tree) -> str:
+        """Raw source of the inner ``start`` tree of a ``$(...)`` or ``(...)``."""
         for child in node.children:
             if isinstance(child, Tree) and child.data == "start":
                 if child.meta.empty:
@@ -329,17 +335,8 @@ class BashParser:
     def _backtick_source(self, line: str, node: Tree) -> str:
         if node.meta.empty:
             return ""
-        # Strip the surrounding backticks from the matched span.
-        raw = line[node.meta.start_pos : node.meta.end_pos]
-        return raw.strip("`")
-
-    def _subshell_source(self, line: str, node: Tree) -> str:
-        for child in node.children:
-            if isinstance(child, Tree) and child.data == "start":
-                if child.meta.empty:
-                    return ""
-                return line[child.meta.start_pos : child.meta.end_pos]
-        return ""
+        # Drop the surrounding backtick delimiters from the matched span.
+        return line[node.meta.start_pos + 1 : node.meta.end_pos - 1]
 
     def _error_token(self, line: str, subshell: Tree) -> str:
         """Reconstruct bash's reported token for a misplaced ``(``.
