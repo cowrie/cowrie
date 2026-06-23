@@ -82,13 +82,6 @@ class HoneyPotShell:
         """Parse a command line with the Lark grammar and run the result."""
         log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
         self._queue_statements(self.bashparser.parse(line))
-
-        if self.cmdpending:
-            # Coalesce fd redirection tokens so we don't treat `2` as a command.
-            self.cmdpending = [
-                self.parser.merge_redirection_tokens(tokens)
-                for tokens in self.cmdpending
-            ]
         self._advance()
 
     def _queue_statements(self, statements: list[Statement]) -> bool:
@@ -131,7 +124,7 @@ class HoneyPotShell:
         """
         shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
         self.protocol.cmdstack.append(shell)
-        shell.cmdpending.append(self.parser.merge_redirection_tokens(tokens))
+        shell.cmdpending.append(tokens)
         shell.runCommand()
         res = self.protocol.cmdstack.pop()
 

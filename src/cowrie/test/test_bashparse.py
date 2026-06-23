@@ -140,12 +140,16 @@ class BashParseRedirectionTests(unittest.TestCase):
         self.assertEqual(self._tokens("echo a > f"), ["echo", "a", ">", "f"])
 
     def test_inline_stderr_redirect(self) -> None:
-        self.assertEqual(
-            self._tokens("cmd 2>/dev/null"), ["cmd", "2", ">", "/dev/null"]
-        )
+        # A file descriptor attached to the operator is one token.
+        self.assertEqual(self._tokens("cmd 2>/dev/null"), ["cmd", "2>", "/dev/null"])
+
+    def test_spaced_fd_is_an_argument(self) -> None:
+        # Whitespace before ">" makes the digit a plain argument, not an fd
+        # (bash: "echo 2 > f" writes "2" to f via stdout). See issue #2917.
+        self.assertEqual(self._tokens("echo 2 > f"), ["echo", "2", ">", "f"])
 
     def test_fd_dup(self) -> None:
-        self.assertEqual(self._tokens("cmd 2>&1"), ["cmd", "2", ">&", "1"])
+        self.assertEqual(self._tokens("cmd 2>&1"), ["cmd", "2>&", "1"])
 
     def test_append(self) -> None:
         self.assertEqual(self._tokens("cmd >> log"), ["cmd", ">>", "log"])

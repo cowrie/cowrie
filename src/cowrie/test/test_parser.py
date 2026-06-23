@@ -3,85 +3,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Unit tests for the shell command parser.
-# ABOUTME: Tests token merging, redirection parsing, and edge cases.
+# ABOUTME: Tests redirection parsing of the tokens the grammar produces.
 
 from __future__ import annotations
 
 import unittest
 
 from cowrie.shell.parser import CommandParser
-
-
-class MergeRedirectionTokensTests(unittest.TestCase):
-    """Unit tests for CommandParser.merge_redirection_tokens()"""
-
-    def setUp(self) -> None:
-        self.parser = CommandParser()
-
-    def test_no_redirections(self) -> None:
-        tokens = ["echo", "hello", "world"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["echo", "hello", "world"])
-
-    def test_simple_stdout_redirect(self) -> None:
-        # ['echo', 'test', '>', 'file'] stays as is (no FD prefix)
-        tokens = ["echo", "test", ">", "file"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["echo", "test", ">", "file"])
-
-    def test_stderr_redirect_split(self) -> None:
-        # ['2', '>', '/dev/null'] -> ['2>', '/dev/null']
-        tokens = ["cat", "file", "2", ">", "/dev/null"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cat", "file", "2>", "/dev/null"])
-
-    def test_stderr_append_split(self) -> None:
-        # ['2', '>>', 'log'] -> ['2>>', 'log']
-        tokens = ["cmd", "2", ">>", "log"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", "2>>", "log"])
-
-    def test_fd_dup_split(self) -> None:
-        # ['2', '>&', '1'] -> ['2>&1']
-        tokens = ["cmd", "2", ">&", "1"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", "2>&1"])
-
-    def test_fd_dup_with_ampersand_split(self) -> None:
-        # ['1', '>', '&', '2'] -> ['1>&2']
-        tokens = ["cmd", "1", ">", "&", "2"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", "1>&2"])
-
-    def test_stdout_stderr_merge(self) -> None:
-        # ['>', '&'] -> ['>&']
-        tokens = ["cmd", ">", "&", "file"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", ">&", "file"])
-
-    def test_multiple_redirections(self) -> None:
-        # Multiple redirections in one command
-        tokens = ["cat", "2", ">", "/dev/null", "1", ">", "out"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cat", "2>", "/dev/null", "1>", "out"])
-
-    def test_fd_before_pipe(self) -> None:
-        # FD followed by pipe should not merge
-        tokens = ["cmd", "2", "|", "other"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", "2", "|", "other"])
-
-    def test_fd_at_end(self) -> None:
-        # FD at end with no operator
-        tokens = ["cmd", "2"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", "2"])
-
-    def test_complex_fd_chain(self) -> None:
-        # ['3', '>&', '1', '1', '>&', '2', '2', '>&', '3']
-        tokens = ["cmd", "3", ">&", "1", "1", ">&", "2", "2", ">&", "3"]
-        result = self.parser.merge_redirection_tokens(tokens)
-        self.assertEqual(result, ["cmd", "3>&1", "1>&2", "2>&3"])
 
 
 class ParseRedirectionsTests(unittest.TestCase):

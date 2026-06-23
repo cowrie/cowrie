@@ -40,6 +40,12 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
+    def test_spaced_fd_is_argument(self) -> None:
+        # A space before ">" makes the digit a plain argument, not a file
+        # descriptor: echo writes "hi 2" to the file via stdout (issue #2917).
+        self.proto.lineReceived(b"echo hi 2 > spacedfd; cat spacedfd")
+        self.assertEqual(self.tr.value(), b"hi 2\n" + PROMPT)
+
     def test_redirect_stderr_into_pipe(self) -> None:
         self.proto.lineReceived(b"cat missingfile 2>&1 | grep 'No such file'")
         self.assertEqual(

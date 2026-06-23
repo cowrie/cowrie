@@ -67,7 +67,7 @@ start: _WS? _line? _WS?
 _line: _run (_WS? _op _WS? _run)*
 _run: (_content (_WS _content)*)?
 _content: subshell | word | _COMMENT
-_op: SEP | PIPE | AMP | REDIR
+_op: SEP | PIPE | AMP | IO_REDIR | REDIR
 
 subshell: LPAR start RPAR
 
@@ -105,6 +105,11 @@ ESC: /\\./
 SEP.2: "&&" | "||" | ";"
 PIPE: "|"
 AMP: "&"
+// A redirection with a file descriptor directly attached to it ("2>", "2>&",
+// "1>>"): one high-priority token so the digit is a file descriptor, not an
+// argument. A digit separated by whitespace ("2 >") stays an ordinary word,
+// which is how bash tells the two apart.
+IO_REDIR.5: /\d+(?:>>|>&|>|<)/
 REDIR.2: />>|>&|&>|>|</
 
 LPAR: "("
