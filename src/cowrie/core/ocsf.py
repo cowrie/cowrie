@@ -235,6 +235,65 @@ def _filesystem_activity(
     ocsf["device"] = {"hostname": logentry["sensor"], "type_id": 1}
 
 
+def _file_transfer(
+    ocsf: dict[str, Any],
+    logentry: dict[str, Any],
+    activity_id: int,
+    activity_name: str,
+) -> None:
+    """
+    Map a Cowrie file_download / file_upload event onto File System Activity.
+
+    Both events result in a new file written to the honeypot (fetched from a
+    URL, or pushed via scp/sftp), so they share this mapping; they differ only
+    in which Cowrie fields are present (downloads have no filename; uploads add
+    duplicate/destfile). Fields are read defensively via .get().
+    """
+    _filesystem_activity(ocsf, logentry, activity_id, activity_name)
+
+    shasum = logentry.get("shasum")
+    outfile = logentry.get("outfile")
+    # type_id 1 = Regular File.
+    file_obj: dict[str, Any] = {"type_id": 1}
+    if shasum:
+        # algorithm_id 3 = SHA-256.
+        file_obj["hashes"] = [
+            {"algorithm": "SHA-256", "algorithm_id": 3, "value": shasum}
+        ]
+    if outfile:
+        file_obj["path"] = outfile
+    # name is the attacker-supplied filename (uploads) when present, otherwise
+    # the on-disk basename (downloads are stored under their digest).
+    name = logentry.get("filename")
+    if not name and outfile:
+        name = outfile.rsplit("/", 1)[-1]
+    if name:
+        file_obj["name"] = name
+    # Downloads/uploads don't report a size today, but map it if that changes.
+    if "size" in logentry:
+        file_obj["size"] = logentry["size"]
+    ocsf["file"] = file_obj
+
+    observables: list[dict[str, Any]] = []
+    if shasum:
+        observables.append(
+            {"name": "file.hashes[0].value", "type_id": 8, "value": shasum}
+        )
+    # The source URL is a useful IOC. type_id 6 = URL String. Only real URLs
+    # (downloads) qualify; on scp/sftp uploads Cowrie's "url" is just the local
+    # filename, already captured as file.name.
+    url = logentry.get("url")
+    if url and "://" in url:
+        observables.append({"name": "url.text", "type_id": 6, "value": url})
+    if observables:
+        ocsf["observables"] = observables
+
+    # Cowrie-specific fields with no dedicated OCSF home.
+    for key in ("src_ip", "duplicate", "destfile"):
+        if key in logentry:
+            ocsf["unmapped"][key] = logentry[key]
+
+
 def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
     """
     Take a Cowrie logentry and turn it into an OCSF event (a dict ready to be
@@ -344,5 +403,8 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
             ]
             ocsf["unmapped"]["duplicate"] = logentry["duplicate"]
             ocsf["unmapped"]["src_ip"] = logentry["src_ip"]
+        case "cowrie.session.file_download" | "cowrie.session.file_upload":
+            # A new file written to the honeypot filesystem -> "Create".
+            _file_transfer(ocsf, logentry, 1, "Create")
 
     return ocsf
