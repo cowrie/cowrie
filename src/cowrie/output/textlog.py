@@ -28,6 +28,8 @@ class Output(cowrie.core.output.Output):
         if self.format == "cef":
             self.outfile.write("{} ".format(event["timestamp"]))
             self.outfile.write(f"{cowrie.core.cef.formatCef(event)}\n")
+        elif self.format == "ocsf":
+            self.outfile.write(f"{cowrie.core.ocsf.formatOCSF(event)}\n")
         else:
             self.outfile.write("{} ".format(event["timestamp"]))
             self.outfile.write("{} ".format(event["session"]))

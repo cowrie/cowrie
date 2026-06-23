@@ -868,7 +868,7 @@ format = text
 # This writes audit log entries to a text file
 #
 # Format can be:
-# text, cef
+# text, cef, ocsf
 #
 [output_textlog]
 enabled = false
