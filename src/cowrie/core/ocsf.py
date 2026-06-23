@@ -33,6 +33,22 @@ OCSF_VERSION = "1.8.0"
 PRODUCT_NAME = "Cowrie Honeypot"
 VENDOR_NAME = "Cowrie"
 
+def _raw_data(logentry: dict[str, Any]) -> str:
+    """
+    Serialize the original Cowrie event to a compact JSON string for OCSF's
+    raw_data field. The live event from Twisted carries internal bookkeeping
+    keys (log_level is a NamedConstant, plus log_*/time/system) that are not
+    part of the Cowrie event and are not JSON serializable, so they are
+    stripped; default=str is a final safety net so a stray non-serializable
+    value can never crash the output observer.
+    """
+    raw = {
+        key: value
+        for key, value in logentry.items()
+        if not key.startswith("log_") and key not in ("time", "system")
+    }
+    return json.dumps(raw, sort_keys=True, separators=(",", ":"), default=str)
+
 
 def _epoch_ms(timestamp: str) -> int:
     """
@@ -182,8 +198,8 @@ def _process_activity(
     """
     Fill in the OCSF 'Process Activity' (class_uid 1007) scaffolding for
     commands the attacker runs in the shell. This is the System Activity
-    category; it carries no network endpoints (the source IP survives only in
-    raw_data), just the device and the process that was launched.
+    category; it carries no network endpoints, so the source IP is preserved in
+    unmapped, alongside the device and the process that was launched.
 
     success=False (a command-not-found) adds the failure status.
     """
@@ -213,6 +229,10 @@ def _process_activity(
         "cmd_line": cmd,
         "name": tokens[0] if tokens else cmd,
     }
+
+    # Process Activity has no endpoint; keep the attacker IP in unmapped.
+    if "src_ip" in logentry:
+        ocsf["unmapped"]["src_ip"] = logentry["src_ip"]
 
 
 def _filesystem_activity(
@@ -341,8 +361,6 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         "time": _epoch_ms(logentry["timestamp"]),
         # 1 = Informational. Tune per-event below if some warrant higher.
         "severity_id": 1,
-        # Preserve the untouched original event for lossless downstream use.
-        "raw_data": json.dumps(logentry, sort_keys=True, separators=(",", ":")),
         # Cowrie keys that have no dedicated OCSF home go here.
         "unmapped": {
             "eventid": eventid,
@@ -362,8 +380,7 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
             # activity_id 99 = "Other"; the client's key-exchange offer.
             _ssh_activity(ocsf, logentry, 99, "Key Exchange")
             # OCSF HASSH object: the algorithm string plus its MD5 fingerprint.
-            # algorithm_id 1 = MD5 (hassh is an MD5 digest). The individual
-            # kex/key/enc/mac/comp algorithm lists are left in raw_data only.
+            # algorithm_id 1 = MD5 (hassh is an MD5 digest).
             ocsf["client_hassh"] = {
                 "algorithm": logentry["hasshAlgorithms"],
                 "fingerprint": {
@@ -372,6 +389,18 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
                     "value": logentry["hassh"],
                 },
             }
+            # The individual algorithm lists have no native OCSF home; keep the
+            # ones present so the full client offer survives without raw_data.
+            for key in (
+                "kexAlgs",
+                "keyAlgs",
+                "encCS",
+                "macCS",
+                "compCS",
+                "langCS",
+            ):
+                if key in logentry:
+                    ocsf["unmapped"][key] = logentry[key]
         case "cowrie.login.success":
             # activity_id 1 = "Logon".
             _authentication(ocsf, logentry, 1, "Logon", success=True)
@@ -426,10 +455,12 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
             # Attempted file creation that failed (e.g. URL unreachable).
             _file_transfer(ocsf, logentry, 1, "Create", success=False)
         case _:
-            # No OCSF class mapping for this event. The full event is preserved
-            # losslessly in raw_data and unmapped.eventid so nothing is lost;
-            # downstream consumers can filter on the absence of class_uid.
+            # No OCSF class mapping for this event. Mapped events capture their
+            # fields in dedicated OCSF objects, but here there is no mapping, so
+            # the full event is preserved losslessly in raw_data; downstream
+            # consumers can filter on the absence of class_uid.
             ocsf["severity_id"] = 0  # Unknown
             ocsf["severity"] = "Unknown"
+            ocsf["raw_data"] = _raw_data(logentry)
 
     return ocsf

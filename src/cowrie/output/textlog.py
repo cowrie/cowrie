@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import cowrie.core.cef
+import cowrie.core.ocsf
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 

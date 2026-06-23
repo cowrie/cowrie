@@ -199,14 +199,13 @@ class OCSFCommonTests(unittest.TestCase):
                 self.assertEqual(out["metadata"]["product"]["uid"], event["uuid"])
                 self.assertEqual(out["metadata"]["labels"], ["honeypot"])
 
-    def test_raw_data_is_compact_sorted_json(self) -> None:
+    def test_mapped_events_have_no_raw_data(self) -> None:
+        # raw_data is reserved for unmapped events (the match fallback); every
+        # mapped event captures its fields in dedicated OCSF objects instead.
         for eventid, event in EVENTS.items():
             with self.subTest(eventid=eventid):
                 out = formatOCSF(event)
-                self.assertEqual(
-                    out["raw_data"],
-                    json.dumps(event, sort_keys=True, separators=(",", ":")),
-                )
+                self.assertNotIn("raw_data", out)
 
     def test_time_is_epoch_milliseconds(self) -> None:
         # 2026-06-23T14:15:26.253618Z -> 1782224126253
@@ -268,6 +267,10 @@ class OCSFSSHActivityTests(unittest.TestCase):
             },
         )
         self.assertEqual(out["client_hassh"]["algorithm"], "kex;enc;mac;comp")
+        # The raw algorithm lists have no native OCSF home; they are preserved
+        # in unmapped so the full client offer survives without raw_data.
+        self.assertEqual(out["unmapped"]["kexAlgs"], ["curve25519-sha256"])
+        self.assertEqual(out["unmapped"]["encCS"], ["aes128-ctr"])
 
 
 class OCSFAuthenticationTests(unittest.TestCase):
@@ -321,6 +324,8 @@ class OCSFProcessActivityTests(unittest.TestCase):
         # Process Activity carries no network endpoints / observables.
         self.assertNotIn("src_endpoint", out)
         self.assertNotIn("observables", out)
+        # The source IP has no endpoint to live in, so it is kept in unmapped.
+        self.assertEqual(out["unmapped"]["src_ip"], "127.0.0.1")
         # A successful command carries no failure status.
         self.assertNotIn("status", out)
 
