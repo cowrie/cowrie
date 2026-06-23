@@ -179,11 +179,16 @@ class HoneyPotShell:
     def runCommand(self):
         pp = None
 
+        # Mid-pipeline: an earlier stage just finished but a downstream command
+        # has not run yet. Let the pipe machinery drive the rest before touching
+        # the next statement -- otherwise `a | b; c` would run c before b and
+        # drop b's output.
+        if self.protocol.pp is not None and self.protocol.pp.next_command is not None:
+            return
+
         if not self.cmdpending:
-            # Reached after a command completed. Stay quiet mid-pipeline (the
-            # pipe machinery drives the rest); otherwise the queue is drained.
-            if self.protocol.pp.next_command is None:
-                self._finish()
+            # The queue is drained.
+            self._finish()
             return
 
         command = self.cmdpending.pop(0)

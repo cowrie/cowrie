@@ -76,10 +76,13 @@ class ExitStatusTests(unittest.TestCase):
 
     def test_pipeline_status_is_last_stage(self) -> None:
         # A pipeline's status is its last stage's.
-        self.run_line(b"true | false")
-        self.assertEqual(self.run_line(b"echo $?"), b"1\n")
-        self.run_line(b"false | true")
-        self.assertEqual(self.run_line(b"echo $?"), b"0\n")
+        self.assertEqual(self.run_line(b"true | false; echo $?"), b"1\n")
+        self.assertEqual(self.run_line(b"false | true; echo $?"), b"0\n")
+
+    def test_statement_after_pipeline_runs_in_order(self) -> None:
+        # A statement after a pipeline runs after the pipeline finishes, and the
+        # pipeline's output is not dropped.
+        self.assertEqual(self.run_line(b"echo a | cat; echo done"), b"a\ndone\n")
 
 
 if __name__ == "__main__":
