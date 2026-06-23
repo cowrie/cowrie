@@ -209,6 +209,32 @@ def _process_activity(
     }
 
 
+def _filesystem_activity(
+    ocsf: dict[str, Any],
+    logentry: dict[str, Any],
+    activity_id: int,
+    activity_name: str,
+) -> None:
+    """
+    Fill in the shared OCSF 'File System Activity' (class_uid 1001) scaffolding.
+    The acting process is always Cowrie itself; the per-event file object is
+    filled in by the caller.
+    """
+    ocsf["category_uid"] = 1
+    ocsf["category_name"] = "System Activity"
+    ocsf["class_uid"] = 1001
+    ocsf["class_name"] = "File System Activity"
+    ocsf["activity_id"] = activity_id
+    ocsf["activity_name"] = activity_name
+    # type_uid = class_uid * 100 + activity_id
+    ocsf["type_uid"] = ocsf["class_uid"] * 100 + activity_id
+
+    # Cowrie is the process touching the file.
+    ocsf["actor"] = {"process": {"name": "cowrie", "uid": "cowrie"}}
+    # The honeypot the file lives on. type_id 1 = Server.
+    ocsf["device"] = {"hostname": logentry["sensor"], "type_id": 1}
+
+
 def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
     """
     Take a Cowrie logentry and turn it into an OCSF event (a dict ready to be
@@ -280,5 +306,35 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.command.input":
             # activity_id 1 = "Launch".
             _process_activity(ocsf, logentry, 1, "Launch")
+        case "cowrie.log.closed":
+            # activity_id 99 = "Other"; the TTY session log file being closed.
+            _filesystem_activity(ocsf, logentry, 99, "Close")
+            # Cowrie reports duration in seconds (as a string); OCSF wants ms.
+            ocsf["duration"] = int(float(logentry["duration"]) * 1000)
+            path = logentry["ttylog"]
+            shasum = logentry["shasum"]
+            ocsf["file"] = {
+                # algorithm_id 3 = SHA-256.
+                "hashes": [
+                    {"algorithm": "SHA-256", "algorithm_id": 3, "value": shasum}
+                ],
+                # TTY logs are named after their SHA-256 digest, so the file
+                # name is the basename of the path.
+                "name": path.rsplit("/", 1)[-1],
+                "path": path,
+                "size": logentry["size"],
+                # type_id 1 = Regular File.
+                "type_id": 1,
+            }
+            # Observable is the file hash. type_id 8 = Hash.
+            ocsf["observables"] = [
+                {
+                    "name": "file.hashes[0].value",
+                    "type_id": 8,
+                    "value": shasum,
+                }
+            ]
+            ocsf["unmapped"]["duplicate"] = logentry["duplicate"]
+            ocsf["unmapped"]["src_ip"] = logentry["src_ip"]
 
     return ocsf
