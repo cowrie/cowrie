@@ -135,6 +135,14 @@ timezone = UTC
 # Beware that the path won't be included in your prompt any longer
 # prompt = hello>
 
+# Command-line parser used by the emulated shell.
+# `shlex` (default) uses the historical shlex-based tokeniser.
+# `lark` uses an experimental Lark grammar that parses quoting, redirection,
+# command substitution and subshells from a single grammar. Selecting `lark`
+# requires the optional `lark` dependency to be installed.
+# (default: shlex)
+# parser = shlex
+
 
 # ============================================================================
 # Network Specific Options

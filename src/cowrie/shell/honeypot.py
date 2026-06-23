@@ -49,12 +49,35 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.lexer: shlex.shlex | None = None
         self.parser = CommandParser()
+        # Selects the command-line parser: the default "shlex" tokeniser or the
+        # Lark grammar in bashparse. Kept configurable while the Lark path is
+        # being validated against the shlex implementation.
+        self.use_lark: bool = (
+            CowrieConfig.get("honeypot", "parser", fallback="shlex") == "lark"
+        )
+        if self.use_lark:
+            from cowrie.shell.bashparse import BashParser
+
+            self.bashparser = BashParser(self)
 
         # this is the first prompt after starting
         self.showPrompt()
 
+    # -- bashparse.ShellContext interface -----------------------------------
+
+    def get_variable(self, name: str) -> str | None:
+        """Look up a shell variable for the Lark word evaluator."""
+        return self.environ.get(name)
+
+    def command_substitution(self, source: str) -> str:
+        """Run ``source`` as a command substitution and return its stdout."""
+        return self._execute_command_substitution(source)
+
     def lineReceived(self, line: str) -> None:
         log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
+        if self.use_lark:
+            self.lineReceivedLark(line)
+            return
         # posix=True makes the lexer strip quotes as it tokenizes, so by the
         # time a token reaches variable expansion we can no longer tell whether
         # a reference was single-quoted ('$1', literal) or double-quoted
@@ -147,6 +170,47 @@ class HoneyPotShell:
             self.runCommand()
         else:
             # if there's no command, display a prompt again
+            self.showPrompt()
+
+    def lineReceivedLark(self, line: str) -> None:
+        """
+        Parse a command line with the Lark grammar (bashparse) instead of the
+        shlex lexer. Produces the same self.cmdpending token lists the shlex
+        path builds, so runCommand consumes the result unchanged.
+        """
+        from cowrie.shell.bashparse import Command, Subshell, SyntaxError_
+
+        for statement in self.bashparser.parse(line):
+            if isinstance(statement, Command):
+                self.cmdpending.append(statement.tokens)
+            elif isinstance(statement, Subshell):
+                # Subshells run immediately and write straight to the terminal,
+                # mirroring the shlex path's do_subshell_execution.
+                self.protocol.terminal.write(
+                    self.run_subshell_command(f"({statement.source})").encode()
+                )
+            elif isinstance(statement, SyntaxError_):
+                if statement.token:
+                    # NB: the literal "\\n" (backslash-n) mirrors the existing
+                    # shlex path's byte-for-byte output for this message.
+                    self.protocol.terminal.write(
+                        f"-bash: syntax error near unexpected token `{statement.token}'\\n".encode()
+                    )
+                else:
+                    self.protocol.terminal.write(
+                        b"-bash: syntax error: unexpected end of file\n"
+                    )
+                # Stop after a syntax error; any commands already queued before
+                # it still run, matching the shlex path's behaviour.
+                break
+
+        if self.cmdpending:
+            self.cmdpending = [
+                self.parser.merge_redirection_tokens(tokens)
+                for tokens in self.cmdpending
+            ]
+            self.runCommand()
+        else:
             self.showPrompt()
 
     def expand_variables(self, tok: str) -> str:
