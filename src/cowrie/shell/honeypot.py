@@ -89,9 +89,7 @@ class HoneyPotShell:
                 self.parser.merge_redirection_tokens(tokens)
                 for tokens in self.cmdpending
             ]
-            self.runCommand()
-        else:
-            self.showPrompt()
+        self._advance()
 
     def _queue_statements(self, statements: list[Statement]) -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
@@ -144,30 +142,35 @@ class HoneyPotShell:
         else:
             return output
 
+    def _finish(self) -> None:
+        """The command queue is drained: do the shell's idle action.
+
+        An interactive shell shows the next prompt. A top-level non-interactive
+        shell (an exec session) ends the process. A nested non-interactive shell
+        (a pipe stage or a command-substitution capture) just returns so its
+        parent can carry on.
+        """
+        if self.interactive:
+            self.showPrompt()
+        elif len(self.protocol.cmdstack) == 1:
+            ret = failure.Failure(error.ProcessDone(status=""))
+            self.protocol.terminal.transport.processEnded(ret)
+
+    def _advance(self) -> None:
+        """Run the next queued command, or finish when the queue is drained."""
+        if self.cmdpending:
+            self.runCommand()
+        else:
+            self._finish()
+
     def runCommand(self):
         pp = None
 
-        def runOrPrompt() -> None:
-            if self.cmdpending:
-                self.runCommand()
-            else:
-                self.showPrompt()
-
         if not self.cmdpending:
-            if self.protocol.pp.next_command is None:  # command dont have pipe(s)
-                if self.interactive:
-                    self.showPrompt()
-                else:
-                    # when commands passed to a shell via PIPE, we spawn a HoneyPotShell in none interactive mode
-                    # if there are another shells on stack (cmdstack), let's just exit our new shell
-                    # else close connection
-                    if len(self.protocol.cmdstack) == 1:
-                        ret = failure.Failure(error.ProcessDone(status=""))
-                        self.protocol.terminal.transport.processEnded(ret)
-                    else:
-                        return
-            else:
-                pass  # command with pipes
+            # Reached after a command completed. Stay quiet mid-pipeline (the
+            # pipe machinery drives the rest); otherwise the queue is drained.
+            if self.protocol.pp.next_command is None:
+                self._finish()
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
@@ -190,7 +193,7 @@ class HoneyPotShell:
             # variables for the rest of the session. They are shell variables,
             # not exported, so self.exported is left untouched.
             self.environ = environ
-            runOrPrompt()
+            self._advance()
             return
 
         pipe_indices = [i for i, x in enumerate(cmd_tokens) if x == "|"]
@@ -218,7 +221,7 @@ class HoneyPotShell:
                     first_ops,
                 )
                 # This triggers _setup_redirections which creates files
-            runOrPrompt()
+            self._advance()
             return
 
         cmd_array.append(
@@ -298,21 +301,11 @@ class HoneyPotShell:
                 else:
                     self.protocol.terminal.write(message)
 
-                # Import here to avoid circular dependency with protocol module
-                from cowrie.shell import protocol
-
-                if (
-                    isinstance(self.protocol, protocol.HoneyPotExecProtocol)
-                    and not self.cmdpending
-                ):
-                    exit_status = failure.Failure(error.ProcessDone(status=""))
-                    self.protocol.terminal.transport.processEnded(exit_status)
-
-                runOrPrompt()
+                self._advance()
                 pp = None  # Got a error. Don't run any piped commands
                 break
         if pp and getattr(pp, "has_redirection_error", False):
-            runOrPrompt()
+            self._advance()
             return
 
         if pp:
