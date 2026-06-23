@@ -109,6 +109,7 @@ class Command_sh(HoneyPotCommand):
             shell.environ["SHLVL"] = "1"
         self.protocol.cmdstack.append(shell)
         self.protocol.cmdstack.remove(self)
+        shell.showPrompt()
 
 
 commands["/bin/bash"] = Command_sh

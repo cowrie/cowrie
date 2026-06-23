@@ -52,9 +52,6 @@ class HoneyPotShell:
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
 
-        # this is the first prompt after starting
-        self.showPrompt()
-
     # -- bashparse.ShellContext interface -----------------------------------
 
     def get_variable(self, name: str) -> str | None:
