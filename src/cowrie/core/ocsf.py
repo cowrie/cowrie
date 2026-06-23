@@ -44,6 +44,67 @@ def _epoch_ms(timestamp: str) -> int:
     return int(dt.timestamp() * 1000)
 
 
+def _ssh_activity(
+    ocsf: dict[str, Any],
+    logentry: dict[str, Any],
+    activity_id: int,
+    activity_name: str,
+) -> None:
+    """
+    Fill in the shared OCSF 'SSH Activity' (class_uid 4007) scaffolding.
+
+    Endpoints are built from whatever address keys are present in the event:
+    e.g. a client.version event carries no dst_ip/dst_port, so dst_endpoint
+    ends up with just the hostname.
+    """
+    ocsf["category_uid"] = 4
+    ocsf["category_name"] = "Network Activity"
+    ocsf["class_uid"] = 4007
+    ocsf["class_name"] = "SSH Activity"
+    ocsf["activity_id"] = activity_id
+    ocsf["activity_name"] = activity_name
+    # type_uid = class_uid * 100 + activity_id
+    ocsf["type_uid"] = ocsf["class_uid"] * 100 + activity_id
+
+    # The attacker side; include only the fields this event actually carries.
+    src_endpoint: dict[str, Any] = {}
+    if "src_ip" in logentry:
+        src_endpoint["ip"] = logentry["src_ip"]
+    if "src_port" in logentry:
+        src_endpoint["port"] = logentry["src_port"]
+    if src_endpoint:
+        ocsf["src_endpoint"] = src_endpoint
+
+    # The honeypot side; sensor name is the listening host.
+    dst_endpoint: dict[str, Any] = {}
+    if "sensor" in logentry:
+        dst_endpoint["hostname"] = logentry["sensor"]
+    if "dst_ip" in logentry:
+        dst_endpoint["ip"] = logentry["dst_ip"]
+    if "dst_port" in logentry:
+        dst_endpoint["port"] = logentry["dst_port"]
+    if dst_endpoint:
+        ocsf["dst_endpoint"] = dst_endpoint
+
+    ocsf["connection_info"] = {
+        # 1 = Inbound (attacker -> honeypot).
+        "direction_id": 1,
+        "protocol_name": logentry.get("protocol"),
+        # Cowrie session id doubles as the connection uid.
+        "uid": logentry.get("session"),
+    }
+
+    # Surface the source IP as a searchable observable. type_id 2 = IP.
+    if "src_ip" in logentry:
+        ocsf["observables"] = [
+            {
+                "name": "src_endpoint.ip",
+                "type_id": 2,
+                "value": logentry["src_ip"],
+            }
+        ]
+
+
 def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
     """
     Take a Cowrie logentry and turn it into an OCSF event (a dict ready to be
@@ -89,42 +150,25 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
 
     match eventid:
         case "cowrie.session.connect":
-            # OCSF "SSH Activity" (class_uid 4007) in the "Network Activity"
-            # category (category_uid 4). activity_id 1 = "Open" (new session).
-            ocsf["category_uid"] = 4
-            ocsf["category_name"] = "Network Activity"
-            ocsf["class_uid"] = 4007
-            ocsf["class_name"] = "SSH Activity"
-            ocsf["activity_id"] = 1
-            ocsf["activity_name"] = "Open"
-            # type_uid = class_uid * 100 + activity_id -> 400701
-            ocsf["type_uid"] = ocsf["class_uid"] * 100 + ocsf["activity_id"]
-
-            # The attacker side of the connection.
-            ocsf["src_endpoint"] = {
-                "ip": logentry["src_ip"],
-                "port": logentry["src_port"],
+            # activity_id 1 = "Open" (a new session is established).
+            _ssh_activity(ocsf, logentry, 1, "Open")
+        case "cowrie.client.version":
+            # activity_id 99 = "Other"; the client's SSH version banner.
+            _ssh_activity(ocsf, logentry, 99, "Client Banner")
+            ocsf["unmapped"]["client_version"] = logentry["version"]
+        case "cowrie.client.kex":
+            # activity_id 99 = "Other"; the client's key-exchange offer.
+            _ssh_activity(ocsf, logentry, 99, "Key Exchange")
+            # OCSF HASSH object: the algorithm string plus its MD5 fingerprint.
+            # algorithm_id 1 = MD5 (hassh is an MD5 digest). The individual
+            # kex/key/enc/mac/comp algorithm lists are left in raw_data only.
+            ocsf["client_hassh"] = {
+                "algorithm": logentry["hasshAlgorithms"],
+                "fingerprint": {
+                    "algorithm": "MD5",
+                    "algorithm_id": 1,
+                    "value": logentry["hassh"],
+                },
             }
-            # The honeypot side; sensor name is the listening host.
-            ocsf["dst_endpoint"] = {
-                "hostname": logentry["sensor"],
-                "ip": logentry["dst_ip"],
-                "port": logentry["dst_port"],
-            }
-            ocsf["connection_info"] = {
-                # 1 = Inbound (attacker -> honeypot).
-                "direction_id": 1,
-                "protocol_name": logentry.get("protocol"),
-                # Cowrie session id doubles as the connection uid.
-                "uid": logentry.get("session"),
-            }
-            # Surface the source IP as a searchable observable. type_id 2 = IP.
-            ocsf["observables"] = [
-                {
-                    "name": "src_endpoint.ip",
-                    "type_id": 2,
-                    "value": logentry["src_ip"],
-                }
-            ]
 
     return ocsf
