@@ -141,13 +141,13 @@ class Command:
 
 @dataclass
 class Subshell:
-    """A ``(...)`` group; its raw inner source is parsed and run in sequence.
+    """A ``(...)`` group, holding its already-parsed inner statements.
 
     Cowrie does not emulate a subshell's isolated environment, so the caller
-    runs the inner commands in order with the surrounding line.
+    runs these statements in order with the surrounding line.
     """
 
-    source: str
+    statements: list[Statement] = field(default_factory=list)
 
 
 @dataclass
@@ -239,7 +239,7 @@ class BashParser:
             subshell = units[subshell_idx]
             assert isinstance(subshell, Tree)
             if subshell_idx == 0:
-                return Subshell(source=self._group_source(line, subshell))
+                return Subshell(statements=self._subshell_statements(line, subshell))
             return SyntaxError_(token=self._error_token(line, subshell))
 
         tokens: list[str] = []
@@ -378,6 +378,13 @@ class BashParser:
         return text[1:], None  # DOLLAR_NAME: strip leading $
 
     # -- source slicing for substitution / subshells ------------------------
+
+    def _subshell_statements(self, line: str, subshell: Tree) -> list[Statement]:
+        """Parse the inner ``start`` tree of a ``(...)`` group into statements."""
+        for child in subshell.children:
+            if isinstance(child, Tree) and child.data == "start":
+                return self._split_statements(line, child)
+        return []
 
     def _group_source(self, line: str, node: Tree) -> str:
         """Raw source of the inner ``start`` tree of a ``$(...)`` or ``(...)``."""

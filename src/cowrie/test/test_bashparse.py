@@ -189,12 +189,23 @@ class BashParseStatementTests(unittest.TestCase):
         statements = self.parser.parse("(echo one; echo two)")
         self.assertEqual(len(statements), 1)
         self.assertIsInstance(statements[0], Subshell)
-        self.assertEqual(statements[0].source, "echo one; echo two")  # type: ignore[union-attr]
+        inner = statements[0].statements  # type: ignore[union-attr]
+        self.assertEqual(
+            [s.tokens for s in inner],  # type: ignore[union-attr]
+            [["echo", "one"], ["echo", "two"]],
+        )
 
     def test_subshell_after_semicolon(self) -> None:
         statements = self.parser.parse("echo first; (echo second)")
         self.assertIsInstance(statements[0], Command)
         self.assertIsInstance(statements[1], Subshell)
+
+    def test_subshell_inner_substitution_runs_in_source_order(self) -> None:
+        # A subshell's inner statements are parsed up front, so a command
+        # substitution inside it is evaluated in source order with the rest of
+        # the line rather than deferred.
+        self.parser.parse("(echo $(a)); echo $(b)")
+        self.assertEqual(self.ctx.substitutions, ["a", "b"])
 
     def test_subshell_in_middle_is_syntax_error(self) -> None:
         statements = self.parser.parse("echo before (echo middle) after")

@@ -69,13 +69,17 @@ class HoneyPotShell:
         line; each command runs in its own output-capturing subshell and a
         nested ``(...)`` group recurses.
         """
+        return self._capture_statements(self.bashparser.parse(source)).rstrip("\n")
+
+    def _capture_statements(self, statements: list[Statement]) -> str:
+        """Run statements in capture mode, concatenating their stdout."""
         output = ""
-        for statement in self.bashparser.parse(source):
+        for statement in statements:
             if isinstance(statement, Command):
                 output += self._capture_command(statement.tokens)
             elif isinstance(statement, Subshell):
-                output += self.command_substitution(statement.source)
-        return output.rstrip("\n")
+                output += self._capture_statements(statement.statements)
+        return output
 
     def lineReceived(self, line: str) -> None:
         """Parse a command line with the Lark grammar and run the result."""
@@ -108,7 +112,7 @@ class HoneyPotShell:
             if isinstance(statement, Command):
                 self.cmdpending.append(statement.tokens)
             elif isinstance(statement, Subshell):
-                if not self._queue_statements(self.bashparser.parse(statement.source)):
+                if not self._queue_statements(statement.statements):
                     return False
             elif isinstance(statement, SyntaxError_):
                 if statement.token:
