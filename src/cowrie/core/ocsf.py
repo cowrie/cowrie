@@ -425,5 +425,11 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.session.file_download.failed":
             # Attempted file creation that failed (e.g. URL unreachable).
             _file_transfer(ocsf, logentry, 1, "Create", success=False)
+        case _:
+            # No OCSF class mapping for this event. The full event is preserved
+            # losslessly in raw_data and unmapped.eventid so nothing is lost;
+            # downstream consumers can filter on the absence of class_uid.
+            ocsf["severity_id"] = 0  # Unknown
+            ocsf["severity"] = "Unknown"
 
     return ocsf

@@ -400,5 +400,41 @@ class OCSFFileSystemActivityTests(unittest.TestCase):
         self.assertEqual(out["file"], {"type_id": 1})
 
 
+class OCSFUnmappedTests(unittest.TestCase):
+    """Events with no OCSF class mapping are returned gracefully."""
+
+    _UNKNOWN_EVENT = {
+        "eventid": "cowrie.client.fingerprint",
+        "src_ip": "127.0.0.1",
+        "session": "0000000000000001",
+        "sensor": "honeypot-01",
+        "uuid": "00000000-0000-0000-0000-000000000000",
+        "timestamp": "2026-01-01T00:00:00.000000Z",
+        "message": "SSH client fingerprint",
+    }
+
+    def test_unknown_event_returns_dict(self):
+        out = formatOCSF(self._UNKNOWN_EVENT)
+        self.assertIsInstance(out, dict)
+
+    def test_unknown_event_no_class_uid(self):
+        out = formatOCSF(self._UNKNOWN_EVENT)
+        self.assertNotIn("class_uid", out)
+
+    def test_unknown_event_severity_unknown(self):
+        out = formatOCSF(self._UNKNOWN_EVENT)
+        self.assertEqual(out["severity_id"], 0)
+        self.assertEqual(out["severity"], "Unknown")
+
+    def test_unknown_event_raw_data_preserved(self):
+        out = formatOCSF(self._UNKNOWN_EVENT)
+        raw = json.loads(out["raw_data"])
+        self.assertEqual(raw["eventid"], "cowrie.client.fingerprint")
+
+    def test_unknown_event_id_in_unmapped(self):
+        out = formatOCSF(self._UNKNOWN_EVENT)
+        self.assertEqual(out["unmapped"]["eventid"], "cowrie.client.fingerprint")
+
+
 if __name__ == "__main__":
     unittest.main()
