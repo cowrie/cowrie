@@ -19,6 +19,17 @@ from twisted.internet import error
 from twisted.python import failure, log
 
 
+def process_status(code: int) -> failure.Failure:
+    """A process-end reason carrying an exit status.
+
+    ``ProcessDone`` for 0 (a clean exit) and ``ProcessTerminated`` otherwise, so
+    the SSH session relays the right ``exit-status`` to the client.
+    """
+    if code == 0:
+        return failure.Failure(error.ProcessDone(status=""))
+    return failure.Failure(error.ProcessTerminated(exitCode=code))
+
+
 class HoneyPotCommand:
     """
     This is the super class for all commands in cowrie/commands
@@ -131,7 +142,7 @@ class HoneyPotCommand:
                 self.protocol.cmdstack[-1].last_exit_code = self.exit_code
                 self.protocol.cmdstack[-1].resume()
         else:
-            ret = failure.Failure(error.ProcessDone(status=""))
+            ret = process_status(self.exit_code)
             # The session could be disconnected already, when his happens .transport is gone
             try:
                 self.protocol.terminal.transport.processEnded(ret)

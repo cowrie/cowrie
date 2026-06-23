@@ -11,10 +11,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from twisted.internet import error
-from twisted.python import failure
-
-from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand, process_status
 from cowrie.shell.fs import FileNotFound
 from cowrie.shell.honeypot import HoneyPotShell
 
@@ -70,7 +67,9 @@ class Command_sh(HoneyPotCommand):
         if lines and _SHEBANG_RE.match(lines[0]):
             lines = lines[1:]
         # Strip comment-only lines and blank lines
-        lines = [line for line in lines if line.strip() and not line.strip().startswith("#")]
+        lines = [
+            line for line in lines if line.strip() and not line.strip().startswith("#")
+        ]
 
         if not lines:
             return
@@ -120,11 +119,20 @@ commands["sh"] = Command_sh
 
 class Command_exit(HoneyPotCommand):
     def call(self) -> None:
+        # `exit [N]` exits with N, or the last command's status ($?) by default.
+        code = getattr(self.protocol.cmdstack[-2], "last_exit_code", 0)
+        if self.args:
+            try:
+                code = int(self.args[0]) & 0xFF
+            except ValueError:
+                self.errorWrite(
+                    f"-bash: exit: {self.args[0]}: numeric argument required\n"
+                )
+                code = 2
         # this removes the second last command, which is the shell
         self.protocol.cmdstack.pop(-2)
         if len(self.protocol.cmdstack) < 2:
-            stat = failure.Failure(error.ProcessDone(status=""))
-            self.protocol.terminal.transport.processEnded(stat)
+            self.protocol.terminal.transport.processEnded(process_status(code))
 
 
 commands["exit"] = Command_exit

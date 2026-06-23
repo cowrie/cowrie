@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import os
 import unittest
+from types import SimpleNamespace
 
+from cowrie.insults import insults
+from cowrie.shell import protocol
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -83,6 +86,54 @@ class ExitStatusTests(unittest.TestCase):
         # A statement after a pipeline runs after the pipeline finishes, and the
         # pipeline's output is not dropped.
         self.assertEqual(self.run_line(b"echo a | cat; echo done"), b"a\ndone\n")
+
+
+def run_exec(cmd: bytes) -> int:
+    """Run `cmd` over an exec channel and return the exit status the session
+    would report to the SSH client via processEnded."""
+    captured: dict[str, int] = {}
+
+    def process_ended(reason: object = None) -> None:
+        value = getattr(reason, "value", None)
+        captured["code"] = getattr(value, "exitCode", 0) if value is not None else 0
+
+    peer = SimpleNamespace(host="1.1.1.1", port=2222)
+    inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
+    factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
+    conn_transport = SimpleNamespace(transportId="t", factory=factory, transport=inner)
+    session = SimpleNamespace(
+        id="chan0", conn=SimpleNamespace(transport=conn_transport)
+    )
+    transport = SimpleNamespace(
+        session=session, write=lambda data: None, processEnded=process_ended
+    )
+
+    avatar = FakeAvatar(FakeServer())
+    avatar.server.initFileSystem = lambda home: None
+    lsp = insults.LoggingServerProtocol(protocol.HoneyPotExecProtocol, avatar, cmd)
+    lsp.makeConnection(transport)
+    return captured.get("code", 0)
+
+
+class ExecExitStatusTests(unittest.TestCase):
+    """The exec channel reports a real exit-status to the client."""
+
+    def test_exec_success(self) -> None:
+        self.assertEqual(run_exec(b"true"), 0)
+        self.assertEqual(run_exec(b"echo hi"), 0)
+
+    def test_exec_failure(self) -> None:
+        self.assertEqual(run_exec(b"false"), 1)
+
+    def test_exec_not_found(self) -> None:
+        self.assertEqual(run_exec(b"nosuchcmd"), 127)
+
+    def test_exec_status_is_last_statement(self) -> None:
+        self.assertEqual(run_exec(b"false; true"), 0)
+        self.assertEqual(run_exec(b"true; false"), 1)
+
+    def test_exec_explicit_exit_code(self) -> None:
+        self.assertEqual(run_exec(b"exit 7"), 7)
 
 
 if __name__ == "__main__":

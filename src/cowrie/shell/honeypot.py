@@ -23,6 +23,7 @@ from cowrie.shell.bashparse import (
     Subshell,
     SyntaxError_,
 )
+from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import PipeProtocol
 
@@ -166,8 +167,12 @@ class HoneyPotShell:
         if self.interactive:
             self.showPrompt()
         elif len(self.protocol.cmdstack) == 1:
-            ret = failure.Failure(error.ProcessDone(status=""))
-            self.protocol.terminal.transport.processEnded(ret)
+            # Top-level non-interactive shell (an exec session): end the process
+            # with the last command's status so the SSH channel reports a real
+            # exit-status to the client.
+            self.protocol.terminal.transport.processEnded(
+                process_status(self.last_exit_code)
+            )
 
     def _advance(self) -> None:
         """Run the next queued command, or finish when the queue is drained."""
