@@ -125,7 +125,7 @@ class HoneyPotShell:
                     if tokens:
                         # Parentheses in the middle of a command line is a syntax error
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\\n".encode()
+                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
                         )
                         break
                     if tok == "(":
@@ -191,10 +191,8 @@ class HoneyPotShell:
                 )
             elif isinstance(statement, SyntaxError_):
                 if statement.token:
-                    # NB: the literal "\\n" (backslash-n) mirrors the existing
-                    # shlex path's byte-for-byte output for this message.
                     self.protocol.terminal.write(
-                        f"-bash: syntax error near unexpected token `{statement.token}'\\n".encode()
+                        f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
                     )
                 else:
                     self.protocol.terminal.write(

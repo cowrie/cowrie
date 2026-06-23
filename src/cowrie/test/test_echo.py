@@ -169,7 +169,7 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo before (echo middle) after")
         self.assertEqual(
             self.tr.value(),
-            b"-bash: syntax error near unexpected token `(echo'\\n" + PROMPT,
+            b"-bash: syntax error near unexpected token `(echo'\n" + PROMPT,
         )
 
     def test_subshell_parentheses_005(self) -> None:
