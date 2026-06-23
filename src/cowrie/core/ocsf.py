@@ -173,6 +173,42 @@ def _authentication(
     ocsf["unmapped"]["password"] = logentry["password"]
 
 
+def _process_activity(
+    ocsf: dict[str, Any],
+    logentry: dict[str, Any],
+    activity_id: int,
+    activity_name: str,
+) -> None:
+    """
+    Fill in the OCSF 'Process Activity' (class_uid 1007) scaffolding for
+    commands the attacker runs in the shell. This is the System Activity
+    category; it carries no network endpoints (the source IP survives only in
+    raw_data), just the device and the process that was launched.
+    """
+    ocsf["category_uid"] = 1
+    ocsf["category_name"] = "System Activity"
+    ocsf["class_uid"] = 1007
+    ocsf["class_name"] = "Process Activity"
+    ocsf["activity_id"] = activity_id
+    ocsf["activity_name"] = activity_name
+    # type_uid = class_uid * 100 + activity_id
+    ocsf["type_uid"] = ocsf["class_uid"] * 100 + activity_id
+    # Command execution warrants Low severity (2).
+    ocsf["severity_id"] = 2
+
+    # The honeypot the command ran on. type_id 1 = Server.
+    ocsf["device"] = {"hostname": logentry["sensor"], "type_id": 1}
+
+    # The launched process. cmd_line is the full input; name is the program,
+    # i.e. the first whitespace-separated token (e.g. "ls" from "ls -la").
+    cmd = logentry["input"]
+    tokens = cmd.split()
+    ocsf["process"] = {
+        "cmd_line": cmd,
+        "name": tokens[0] if tokens else cmd,
+    }
+
+
 def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
     """
     Take a Cowrie logentry and turn it into an OCSF event (a dict ready to be
@@ -241,5 +277,8 @@ def formatOCSF(logentry: dict[str, Any]) -> dict[str, Any]:
         case "cowrie.login.success":
             # activity_id 1 = "Logon".
             _authentication(ocsf, logentry, 1, "Logon", success=True)
+        case "cowrie.command.input":
+            # activity_id 1 = "Launch".
+            _process_activity(ocsf, logentry, 1, "Launch")
 
     return ocsf
