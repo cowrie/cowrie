@@ -63,7 +63,7 @@ class Command_groups(HoneyPotCommand):
     def output(self, file_content, username):
         groups_string = bytes("", encoding="utf-8")
         if not username:
-            username = self.protocol.user.username
+            username = str(self.current_user["username"])
         else:
             if not self.check_valid_user(username):
                 self.write(f"groups: '{username}': no such user\n")

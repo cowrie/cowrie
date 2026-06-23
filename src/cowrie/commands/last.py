@@ -25,7 +25,7 @@ class Command_last(HoneyPotCommand):
 
         self.write(
             "{:8s} {:12s} {:16s} {}   still logged in\n".format(
-                self.protocol.user.username,
+                self.current_user["username"],
                 "pts/0",
                 self.protocol.clientIP,
                 time.strftime(

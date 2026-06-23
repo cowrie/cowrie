@@ -421,8 +421,8 @@ class Command_curl(HoneyPotCommand):
         if self.outfile and self.protocol.user:
             self.fs.mkfile(
                 self.outfile,
-                self.protocol.user.uid,
-                self.protocol.user.gid,
+                self.current_user["uid"],
+                self.current_user["gid"],
                 self.currentlength,
                 33188,
             )

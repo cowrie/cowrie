@@ -42,8 +42,8 @@ class Command_git(HoneyPotCommand):
                 else:
                     self.fs.mkdir(
                         pname,
-                        self.protocol.user.uid,
-                        self.protocol.user.gid,
+                        self.current_user["uid"],
+                        self.current_user["gid"],
                         4096,
                         16877,
                     )
@@ -51,8 +51,8 @@ class Command_git(HoneyPotCommand):
                     initialize_git = self.fs.resolve_path(".git", path + "/" + repo)
                     self.fs.mkdir(
                         initialize_git,
-                        self.protocol.user.uid,
-                        self.protocol.user.gid,
+                        self.current_user["uid"],
+                        self.current_user["gid"],
                         4096,
                         16877,
                     )
@@ -77,7 +77,7 @@ class Command_git(HoneyPotCommand):
                 )
             else:
                 self.fs.mkdir(
-                    pname, self.protocol.user.uid, self.protocol.user.gid, 4096, 16877
+                    pname, self.current_user["uid"], self.current_user["gid"], 4096, 16877
                 )
                 self.write(f"Initialized empty Git repository in {path}/.git/\n")
 

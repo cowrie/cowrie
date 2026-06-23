@@ -353,8 +353,8 @@ class Command_tftp(HoneyPotCommand):
         size = self.tftp_client.bytes_received if self.tftp_client else 0
         self.fs.mkfile(
             self.fakeoutfile,
-            self.protocol.user.uid,
-            self.protocol.user.gid,
+            self.current_user["uid"],
+            self.current_user["gid"],
             size,
             33188,
         )
@@ -363,7 +363,9 @@ class Command_tftp(HoneyPotCommand):
         self.fs.update_realfile(
             self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
         )
-        self.fs.chown(self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
+        self.fs.chown(
+            self.fakeoutfile, self.current_user["uid"], self.current_user["gid"]
+        )
 
         self._safe_exit()
 
