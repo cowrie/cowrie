@@ -1145,3 +1145,14 @@ commands["chgrp"] = Command_nop
 commands[":"] = Command_nop
 commands["do"] = Command_nop
 commands["done"] = Command_nop
+commands["true"] = Command_nop
+commands["/bin/true"] = Command_nop
+
+
+class Command_false(HoneyPotCommand):
+    def call(self) -> None:
+        self.exit_code = 1
+
+
+commands["false"] = Command_false
+commands["/bin/false"] = Command_false

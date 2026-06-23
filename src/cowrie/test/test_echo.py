@@ -200,11 +200,10 @@ class ShellEchoCommandTests(unittest.TestCase):
         self.assertIn(b"second", output)
 
     def test_subshell_parentheses_009(self) -> None:
-        """Test subshell with OR operator"""
+        """`||` short-circuits: the first command succeeds, so the second is
+        skipped (like bash)."""
         self.proto.lineReceived(b"(echo first || echo second)")
-        output = self.tr.value()
-        self.assertIn(b"first", output)
-        self.assertIn(b"second", output)
+        self.assertEqual(self.tr.value(), b"first\n" + PROMPT)
 
     def test_subshell_parentheses_010(self) -> None:
         """Test subshell with multiple semicolons"""

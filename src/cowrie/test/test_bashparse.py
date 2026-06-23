@@ -23,9 +23,13 @@ class FakeContext:
     def __init__(self, env: dict[str, str] | None = None) -> None:
         self.env = env or {}
         self.substitutions: list[str] = []
+        self.status = "0"
 
     def get_variable(self, name: str) -> str | None:
         return self.env.get(name)
+
+    def get_status(self) -> str:
+        return self.status
 
     def command_substitution(self, source: str) -> str:
         self.substitutions.append(source)

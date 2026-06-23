@@ -58,12 +58,19 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
+        # Exit status of the most recent command in this shell, for $? and the
+        # && / || short-circuit logic.
+        self.last_exit_code: int = 0
 
     # -- bashparse.ShellContext interface -----------------------------------
 
     def get_variable(self, name: str) -> str | None:
         """Look up a shell variable for the Lark word evaluator."""
         return self.environ.get(name)
+
+    def get_status(self) -> str:
+        """Return $? -- the last command's exit status as a string."""
+        return str(self.last_exit_code)
 
     def command_substitution(self, source: str) -> str:
         """Run ``source`` as a command substitution and return its captured
@@ -123,6 +130,7 @@ class HoneyPotShell:
                     self.protocol.terminal.write(
                         b"-bash: syntax error: unexpected end of file\n"
                     )
+                self.last_exit_code = 2  # bash uses 2 for a syntax error
                 return False
         return True
 
@@ -178,9 +186,19 @@ class HoneyPotShell:
                 self._finish()
             return
 
-        # Expand the next statement's words against the *current* environment,
-        # just before it runs, so a same-line `x=hi; echo $x` sees the value.
-        cmdAndArgs = self.bashparser.evaluate(self.cmdpending.pop(0))
+        command = self.cmdpending.pop(0)
+
+        # && / || short-circuit: skip this statement based on the previous
+        # command's exit status, leaving $? unchanged.
+        if (command.op == "&&" and self.last_exit_code != 0) or (
+            command.op == "||" and self.last_exit_code == 0
+        ):
+            self._advance()
+            return
+
+        # Expand the statement's words against the *current* environment, just
+        # before it runs, so a same-line `x=hi; echo $x` sees the value.
+        cmdAndArgs = self.bashparser.evaluate(command)
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
@@ -198,8 +216,10 @@ class HoneyPotShell:
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
             # variables for the rest of the session. They are shell variables,
-            # not exported, so self.exported is left untouched.
+            # not exported, so self.exported is left untouched. A bare
+            # assignment succeeds, so $? is 0.
             self.environ = environ
+            self.last_exit_code = 0
             self._advance()
             return
 
@@ -308,6 +328,7 @@ class HoneyPotShell:
                 else:
                     self.protocol.terminal.write(message)
 
+                self.last_exit_code = 127  # command not found
                 self._advance()
                 pp = None  # Got a error. Don't run any piped commands
                 break

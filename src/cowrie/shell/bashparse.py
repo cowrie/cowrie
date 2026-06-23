@@ -10,11 +10,14 @@ A small Lark grammar and evaluator that tokenises a command line and resolves
 its quoting, redirection, command substitution and subshells for the shell in
 ``honeypot.py``.
 
-The parser produces a flat list of :class:`Statement` objects. Words are fully
-evaluated (variable expansion and command substitution applied), while the
-control operators a real shell cares about — ``|`` and the redirection
-operators — are emitted as their own string tokens so the existing
-``CommandParser`` / ``runCommand`` machinery can consume the result unchanged.
+The parser produces a flat list of :class:`Statement` objects carrying the
+joining operator (``;`` / ``&&`` / ``||``) and the still-unevaluated word trees.
+Words are expanded only when a statement is about to run (see
+:meth:`BashParser.evaluate`), so the shell can interleave parsing and execution
+like a real shell. The control operators a real shell cares about — ``|`` and
+the redirection operators — pass through as their own string tokens so the
+existing ``CommandParser`` / ``runCommand`` machinery consumes the result
+unchanged.
 
 The grammar deliberately models only the subset of bash that Cowrie already
 emulates: lists separated by ``;`` / ``&&`` / ``||``, pipelines, simple
@@ -23,8 +26,6 @@ substitution (``$(...)`` and backticks) and subshells (``(...)``).
 
 Known deviations from standard bash (none are emulated yet):
 
-* ``&&`` / ``||`` do not short-circuit -- they are split like ``;`` and every
-  command runs regardless of exit status. ``$?`` is always ``0``.
 * A trailing ``&`` is treated as a literal argument, not a background job.
 * No word expansions beyond ``$VAR`` / ``${VAR}``: tilde (``~``), brace
   (``{a,b}`` / ``{1..3}``), arithmetic (``$((...))``), the parameter
@@ -38,7 +39,7 @@ Known deviations from standard bash (none are emulated yet):
   ...) are parsed as ordinary commands, so the shell does not run loops or
   conditionals.
 * The special parameters ``$@`` / ``$#`` / ``$*`` (and friends other than
-  ``$?``, which is ``0``) are passed through literally rather than expanded.
+  ``$?``) are passed through literally rather than expanded.
 
 Input the grammar cannot parse at all (e.g. an unterminated quote) surfaces as
 a syntax error, exactly as the previous implementation degraded on input it
@@ -140,6 +141,9 @@ class ShellContext(Protocol):
 
     def get_variable(self, name: str) -> str | None:
         """Return the value of a shell variable, or None if unset."""
+
+    def get_status(self) -> str:
+        """Return ``$?`` -- the last command's exit status, as a string."""
 
     def command_substitution(self, source: str) -> str:
         """Execute ``source`` and return its captured stdout (newlines stripped)."""
@@ -326,7 +330,7 @@ class BashParser:
             if only.data in ("dollar_var", "dollar_brace"):
                 name, special = self._var_name(only)
                 if special == "?":
-                    return "0"
+                    return self.context.get_status()
                 if special is not None:
                     return self._leaf_value(only)  # verbatim, e.g. $@
                 value = self.context.get_variable(name)
@@ -397,7 +401,7 @@ class BashParser:
         """
         name, special = self._var_name(node)
         if special == "?":
-            return "0"
+            return self.context.get_status()
         if special is not None:
             return self._leaf_value(node)
         value = self.context.get_variable(name)
