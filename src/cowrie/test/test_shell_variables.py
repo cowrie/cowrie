@@ -66,11 +66,12 @@ class ShellVariableTests(unittest.TestCase):
         self.proto.lineReceived(b"x=hi")
         self.assertEqual(self.run_line(b"echo $(echo $x)"), b"hi\n")
 
-    # An unknown reference embedded in a token is left verbatim, so quoted
-    # awk/sed/perl field references survive (quoting is lost by the lexer)
-    def test_unknown_embedded_left_verbatim(self) -> None:
-        self.assertEqual(self.run_line(b'echo "X:$nope"'), b"X:$nope\n")
+    # An unset reference embedded in a token expands to empty, like bash.
+    def test_unknown_embedded_expands_empty(self) -> None:
+        self.assertEqual(self.run_line(b'echo "X:$nope"'), b"X:\n")
 
+    # Single quotes keep the reference literal, so awk/sed/perl field
+    # references still survive (the grammar preserves the quoting).
     def test_awk_field_reference_survives(self) -> None:
         self.assertEqual(self.run_line(b"echo \"a b\" | awk '{print $1}'"), b"a\n")
 
@@ -109,8 +110,8 @@ class ShellVariableTests(unittest.TestCase):
         self.assertEqual(self.run_line(b"whoami"), b"root\n")
         self.assertIn(b"command not found", self.run_line(b"definitelynotacommand"))
 
-    # unset removes a variable from both scopes; once unknown its embedded
-    # reference is left verbatim, like any other unset name
+    # unset removes a variable from both scopes; afterwards a bare reference to
+    # it drops the word, like any other unset name
     def test_unset_removes_variable(self) -> None:
         self.proto.lineReceived(b"export y=bye")
         self.proto.lineReceived(b"unset y")

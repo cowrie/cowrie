@@ -37,8 +37,8 @@ Known deviations from standard bash (none are emulated yet):
 * ``{ ...; }`` command grouping and reserved words (``for``/``if``/``while``
   ...) are parsed as ordinary commands, so the shell does not run loops or
   conditionals.
-* An unset variable reference embedded in a larger word is left verbatim
-  rather than expanding to empty (see ``_expand_embedded``).
+* The special parameters ``$@`` / ``$#`` / ``$*`` (and friends other than
+  ``$?``, which is ``0``) are passed through literally rather than expanded.
 
 Input the grammar cannot parse at all (e.g. an unterminated quote) surfaces as
 a syntax error, exactly as the previous implementation degraded on input it
@@ -337,18 +337,10 @@ class BashParser:
         """Expand a ``$VAR`` reference that is embedded in a larger word.
 
         A set variable expands to its value (empty included); an unset
-        reference is left verbatim so quoted awk/sed field references survive.
-        This is a deliberate compromise, not bash behaviour.
-
-        TODO: the Lark grammar records the quoting context that would let us do
-        this correctly. bash expands an
-        unset reference to the empty string when it is unquoted or
-        double-quoted ("$nope" -> "") and only leaves it literal inside single
-        quotes ('$nope' -> "$nope"). Single quotes are already handled (they
-        never reach here), so the remaining work is to pass whether the
-        reference was double-quoted and expand unset double-quoted references
-        to "" instead of verbatim. Doing so changes observable behaviour, so it
-        needs its own test updates (see test_shell_variables).
+        reference expands to the empty string, as bash does for an unquoted or
+        double-quoted reference. A single-quoted reference is kept literal by
+        the grammar (it never reaches here), so quoted awk/sed field references
+        still survive.
         """
         name, special = self._var_name(node)
         if special == "?":
@@ -357,7 +349,7 @@ class BashParser:
             return self._leaf_value(node)
         value = self.context.get_variable(name)
         if value is None:
-            return self._leaf_value(node)  # verbatim, e.g. "$nope"
+            return ""
         return value
 
     def _leaf_value(self, node: Tree) -> str:

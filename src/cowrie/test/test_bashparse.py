@@ -105,10 +105,13 @@ class BashParseVariableTests(unittest.TestCase):
     def test_bare_unset_variable_drops_word(self) -> None:
         self.assertEqual(self._tokens("echo $nope end"), ["echo", "end"])
 
-    def test_embedded_unset_variable_kept_verbatim(self) -> None:
-        # Deliberate compromise (see bashparse._expand_embedded): unset
-        # references embedded in a token survive so quoted field references do.
-        self.assertEqual(self._tokens('echo "X:$nope"'), ["echo", "X:$nope"])
+    def test_embedded_unset_variable_expands_empty(self) -> None:
+        # An embedded unset reference expands to empty, like bash. Single-quoted
+        # refs stay literal (handled by the grammar), so awk/sed field idioms
+        # still survive without a verbatim compromise.
+        self.assertEqual(self._tokens('echo "X:$nope"'), ["echo", "X:"])
+        self.assertEqual(self._tokens("echo a$nope"), ["echo", "a"])
+        self.assertEqual(self._tokens("echo a${nope}b"), ["echo", "ab"])
 
     def test_single_quotes_never_expand(self) -> None:
         # Correctness improvement over the shlex path, which loses quoting and
