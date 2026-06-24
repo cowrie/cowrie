@@ -253,7 +253,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         try:
             binary_data = read_data_bytes("txtcmds", *relpath.split("/"))
             return self.txtcmd(binary_data)
-        except FileNotFoundError:
+        except (FileNotFoundError, IsADirectoryError):
+            # No txtcmd at this path. IsADirectoryError happens when the command
+            # resolves to a directory (e.g. `/` -> empty relpath -> the txtcmds
+            # directory itself); fall through so the caller reports "Is a
+            # directory" instead of crashing the session.
             pass
 
         if path in self.commands:
