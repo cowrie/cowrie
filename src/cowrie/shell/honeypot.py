@@ -284,7 +284,10 @@ class HoneyPotShell:
         first_args, first_ops = self.parser.parse_redirections(multipleCmdArgs.pop(0))
         if not first_args:
             if first_ops:
-                # Handle redirection without command (e.g. > file)
+                # Handle redirection without command (e.g. > file). This
+                # creates the backing files via _setup_redirections; register
+                # them so they are hashed/renamed or removed at session close
+                # instead of being orphaned in the download directory.
                 pp = PipeProtocol(
                     self.protocol,
                     None,
@@ -294,7 +297,8 @@ class HoneyPotShell:
                     self.redirect,
                     first_ops,
                 )
-                # This triggers _setup_redirections which creates files
+                for real_path, virtual_path in pp.redirect_real_files:
+                    self.protocol.terminal.redirFiles.add((real_path, virtual_path))
             self._advance()
             return
 
