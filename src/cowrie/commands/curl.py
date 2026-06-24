@@ -295,11 +295,10 @@ class Command_curl(HoneyPotCommand):
         if parsed.hostname:
             self.host = parsed.hostname
         else:
-            self.errorWrite(
-                f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
-            )
-            self.exit_code = 1
+            self.errorWrite("curl: (3) URL using bad/illegal format or missing URL\n")
+            self.exit_code = 3
             self.exit()
+            return
         self.port = parsed.port or (443 if scheme == "https" else 80)
 
         # Check rate limit before proceeding

@@ -68,3 +68,11 @@ class CurlArtifactCleanupTests(unittest.TestCase):
             "failed download left an orphaned temp file behind",
         )
         self.assertEqual(os.listdir(self.tmpdir), [])
+
+    def test_missing_host_reports_error_without_crashing(self) -> None:
+        # A URL with no host must report an error and stop, not fall through
+        # to the download path and crash on the unset self.host.
+        self.proto.lineReceived(b"curl http://; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"curl: (3)", out)
+        self.assertIn(b"rc=3", out)
