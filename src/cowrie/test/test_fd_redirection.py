@@ -310,3 +310,33 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # Multiple commands with different redirects
         self.proto.lineReceived(b"echo first > f1; echo second > f2; cat f1; cat f2")
         self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
+
+    def test_out_of_range_fd_reports_bad_file_descriptor(self) -> None:
+        # An fd above the open-file limit is rejected with bash's error, but the
+        # command still runs (its stdout is unaffected). Issue #2921.
+        self.proto.lineReceived(b"echo test 9999>/dev/null")
+        self.assertEqual(
+            self.tr.value(), b"bash: 9999: Bad file descriptor\ntest\n" + PROMPT
+        )
+
+    def test_in_range_fd_has_no_error(self) -> None:
+        # Multi-digit fds below the limit are valid and produce no error.
+        self.proto.lineReceived(b"echo test 255>/dev/null")
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+    def test_fd_at_limit_is_bad(self) -> None:
+        # The limit itself (1024) is the first invalid fd; 1023 is still valid.
+        self.proto.lineReceived(b"echo a 1023>/dev/null")
+        self.assertEqual(self.tr.value(), b"a\n" + PROMPT)
+        self.tr.clear()
+        self.proto.lineReceived(b"echo b 1024>/dev/null")
+        self.assertEqual(
+            self.tr.value(), b"bash: 1024: Bad file descriptor\nb\n" + PROMPT
+        )
+
+    def test_dup_from_out_of_range_fd_reports_error(self) -> None:
+        # Duplicating from an out-of-range fd reports that fd. Issue #2921.
+        self.proto.lineReceived(b"echo hi 2>&9999")
+        self.assertEqual(
+            self.tr.value(), b"bash: 9999: Bad file descriptor\nhi\n" + PROMPT
+        )
