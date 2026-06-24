@@ -307,6 +307,20 @@ class OCSFAuthenticationTests(unittest.TestCase):
         out = formatOCSF(event)
         self.assertEqual(out["user"], {"name": "bob", "type_id": 1})
 
+    def test_public_key_login_has_no_password(self) -> None:
+        # Public-key attempts carry no 'password' field; formatting must not
+        # raise and must simply omit the unmapped password.
+        event = {
+            key: value
+            for key, value in EVENTS["cowrie.login.failed"].items()
+            if key != "password"
+        }
+        event["fingerprint"] = "cd:15:47:80:10:9a:de:d0"
+        out = formatOCSF(event)
+        self.assertEqual(out["type_uid"], 300201)
+        self.assertEqual(out["status"], "Failure")
+        self.assertNotIn("password", out["unmapped"])
+
 
 class OCSFProcessActivityTests(unittest.TestCase):
     """Process Activity, class_uid 1007 (System Activity)."""

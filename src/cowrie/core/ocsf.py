@@ -184,8 +184,10 @@ def _authentication(
     observables.append({"name": "user.name", "type_id": 4, "value": username})
     ocsf["observables"] = observables
 
-    # Password is recorded but has no dedicated OCSF home.
-    ocsf["unmapped"]["password"] = logentry["password"]
+    # Password is recorded but has no dedicated OCSF home. Public-key login
+    # attempts carry no password field, so guard the lookup.
+    if "password" in logentry:
+        ocsf["unmapped"]["password"] = logentry["password"]
 
 
 def _process_activity(
