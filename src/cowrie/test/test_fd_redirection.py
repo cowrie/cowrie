@@ -40,6 +40,36 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
+    def test_spaced_fd_is_argument(self) -> None:
+        # A space before ">" makes the digit a plain argument, not a file
+        # descriptor: echo writes "hi 2" to the file via stdout (issue #2917).
+        self.proto.lineReceived(b"echo hi 2 > spacedfd; cat spacedfd")
+        self.assertEqual(self.tr.value(), b"hi 2\n" + PROMPT)
+
+    def test_missing_redirect_target_is_syntax_error(self) -> None:
+        # A trailing redirect with no target is a syntax error, not output,
+        # matching bash (issue #2920).
+        self.proto.lineReceived(b"echo test >")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: syntax error near unexpected token `newline'\n" + PROMPT,
+        )
+
+    def test_redirect_both_stdout_stderr_to_file(self) -> None:
+        # &>file sends both stdout and stderr to the file (issue #2919): the
+        # error from a failed cat must land in the file, not the terminal.
+        self.proto.lineReceived(b"cat missingfile &> ampfile; cat ampfile")
+        self.assertEqual(
+            self.tr.value(),
+            b"cat: missingfile: No such file or directory\n" + PROMPT,
+        )
+
+    def test_redirect_both_append(self) -> None:
+        self.proto.lineReceived(
+            b"echo one &>> ampappend; echo two &>> ampappend; cat ampappend"
+        )
+        self.assertEqual(self.tr.value(), b"one\ntwo\n" + PROMPT)
+
     def test_redirect_stderr_into_pipe(self) -> None:
         self.proto.lineReceived(b"cat missingfile 2>&1 | grep 'No such file'")
         self.assertEqual(
@@ -208,6 +238,13 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.assertIn(b"result=", output)
         self.assertTrue(output.endswith(PROMPT))
 
+    def test_command_substitution_through_pipe(self) -> None:
+        # The captured value is the last pipe stage's output. A capture used to
+        # force every stage's stdout to the capture buffer, breaking the pipe so
+        # the downstream command got no input.
+        self.proto.lineReceived(b"echo r=$(echo piped | cat | cat)")
+        self.assertEqual(self.tr.value(), b"r=piped\n" + PROMPT)
+
     def test_backtick_substitution(self) -> None:
         # Backtick style command substitution
         self.proto.lineReceived(b"echo `echo hello`")
@@ -273,3 +310,49 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # Multiple commands with different redirects
         self.proto.lineReceived(b"echo first > f1; echo second > f2; cat f1; cat f2")
         self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
+
+    def test_bare_redirection_registers_backing_file(self) -> None:
+        # A redirection with no command still creates a real backing file; it
+        # must be registered for cleanup so it is not orphaned in the download
+        # directory at session close (issue #40217).
+        target = "/tmp/bare_redir_40217"
+        before = set(self.proto.terminal.redirFiles)
+        self.proto.lineReceived(b">/tmp/bare_redir_40217")
+        new = self.proto.terminal.redirFiles - before
+        self.assertTrue(
+            any(virtual == target for _real, virtual in new),
+            f"backing file for {target} was not registered: {new}",
+        )
+        for real, _virtual in new:
+            if os.path.exists(real):
+                os.remove(real)
+
+    def test_out_of_range_fd_reports_bad_file_descriptor(self) -> None:
+        # An fd above the open-file limit is rejected with bash's error, but the
+        # command still runs (its stdout is unaffected). Issue #2921.
+        self.proto.lineReceived(b"echo test 9999>/dev/null")
+        self.assertEqual(
+            self.tr.value(), b"bash: 9999: Bad file descriptor\ntest\n" + PROMPT
+        )
+
+    def test_in_range_fd_has_no_error(self) -> None:
+        # Multi-digit fds below the limit are valid and produce no error.
+        self.proto.lineReceived(b"echo test 255>/dev/null")
+        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
+
+    def test_fd_at_limit_is_bad(self) -> None:
+        # The limit itself (1024) is the first invalid fd; 1023 is still valid.
+        self.proto.lineReceived(b"echo a 1023>/dev/null")
+        self.assertEqual(self.tr.value(), b"a\n" + PROMPT)
+        self.tr.clear()
+        self.proto.lineReceived(b"echo b 1024>/dev/null")
+        self.assertEqual(
+            self.tr.value(), b"bash: 1024: Bad file descriptor\nb\n" + PROMPT
+        )
+
+    def test_dup_from_out_of_range_fd_reports_error(self) -> None:
+        # Duplicating from an out-of-range fd reports that fd. Issue #2921.
+        self.proto.lineReceived(b"echo hi 2>&9999")
+        self.assertEqual(
+            self.tr.value(), b"bash: 9999: Bad file descriptor\nhi\n" + PROMPT
+        )

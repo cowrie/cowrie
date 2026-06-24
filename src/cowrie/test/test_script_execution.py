@@ -76,6 +76,28 @@ class ScriptExecutionTests(unittest.TestCase):
         output = self.tr.value()
         self.assertIn(b"cannot execute binary file", output)
 
+    def test_sh_rejects_binary_file(self) -> None:
+        """sh <ELF binary> rejects it instead of splitting its bytes into
+        commands and flooding the log (issue #40215)."""
+        self.proto.lineReceived(
+            b'printf "\\x7fELF\\x01\\x01\\x00\\nGARBAGE\\n" > /tmp/payload.x86'
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/payload.x86")
+        output = self.tr.value()
+        self.assertIn(b"cannot execute binary file", output)
+        self.assertNotIn(b"GARBAGE", output)
+
+    def test_bash_rejects_binary_file(self) -> None:
+        self.proto.lineReceived(
+            b'printf "\\x7fELF\\x01\\x01\\x00\\nGARBAGE\\n" > /tmp/payload2.x86'
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b"bash /tmp/payload2.x86")
+        output = self.tr.value()
+        self.assertIn(b"cannot execute binary file", output)
+        self.assertNotIn(b"GARBAGE", output)
+
     def test_shebang_line_stripped(self) -> None:
         """Shebang line is not echoed or executed as a command."""
         self.proto.lineReceived(

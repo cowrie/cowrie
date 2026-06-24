@@ -106,6 +106,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
         """
         Input received from user
         """
+        if self.terminalProtocol is None:
+            # connectionLost() has already run and Twisted's ServerProtocol has
+            # cleared terminalProtocol. A final data packet delivered in the same
+            # reactor iteration is discarded rather than crashing in
+            # ServerProtocol.dataReceived with 'NoneType' has no attribute
+            # 'keystrokeReceived'.
+            return
+
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             log.msg(format="Data upload limit reached")

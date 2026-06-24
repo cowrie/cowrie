@@ -84,7 +84,11 @@ def resolve_cname(
                     # We found an AAAA record (IPv6 address), return it immediately
                     return str(rr.payload.dottedQuad())
     except Exception as e:
-        log.err(e)
+        # A failed lookup (NXDOMAIN for an attacker's single-word hostname, a
+        # timeout, ...) is routine and handled here by returning None. Log it at
+        # informational level; log.err would format it as an "Unhandled Error"
+        # with a traceback, which is misleading for a caught exception.
+        log.msg(f"DNS lookup failed for {address!r}: {e}")
         return None  # In case of any failure, return None
 
     log.msg("no valid a or cname record")

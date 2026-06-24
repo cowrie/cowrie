@@ -47,6 +47,18 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"logout\n")
         self.assertEqual(self.tr.value(), b"")
 
+    def test_directory_as_command_reports_is_a_directory(self) -> None:
+        # Typing a directory path as a command must report "Is a directory"
+        # like bash, not crash the session. `/` resolves to an empty txtcmd
+        # path that pointed at the txtcmds directory itself and raised an
+        # uncaught IsADirectoryError, disconnecting the client.
+        self.proto.lineReceived(b"/\n")
+        self.assertEqual(self.tr.value(), b"-bash: /: Is a directory\n" + PROMPT)
+
+    def test_subdirectory_as_command_reports_is_a_directory(self) -> None:
+        self.proto.lineReceived(b"/bin\n")
+        self.assertEqual(self.tr.value(), b"-bash: /bin: Is a directory\n" + PROMPT)
+
     def test_clear_command(self) -> None:
         self.proto.lineReceived(b"clear\n")
         self.assertEqual(self.tr.value(), PROMPT)

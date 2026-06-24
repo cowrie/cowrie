@@ -27,6 +27,11 @@ FD_FILE = "file"
 FD_FILE_INPUT = "file_input"
 FD_DEVNULL = "devnull"
 
+# Soft limit on open file descriptors (ulimit -n). A redirection naming an fd at
+# or above this is rejected by bash with "Bad file descriptor"; valid fds are
+# 0 .. MAX_OPEN_FILES - 1.
+MAX_OPEN_FILES = 1024
+
 
 class PipeProtocol:
     def __init__(
@@ -69,6 +74,22 @@ class PipeProtocol:
         )
         self.has_redirections = bool(self.redirections)
 
+    def _out_of_range_fd(self, op: dict[str, Any]) -> int | None:
+        """Return the first file descriptor in ``op`` that exceeds the open-file
+        limit, which bash rejects with "Bad file descriptor", or None.
+
+        A redirection like ``9999>file`` parses fine but names an fd the process
+        cannot open; ``2>&9999`` likewise duplicates from one. Only a ``dup``'s
+        ``target`` is an fd (a ``file`` / ``stdin`` target is a path).
+        """
+        candidates = [op["fd"]]
+        if op["type"] == "dup":
+            candidates.append(op["target"])
+        for fd in candidates:
+            if isinstance(fd, int) and fd >= MAX_OPEN_FILES:
+                return fd
+        return None
+
     def _setup_redirections(self) -> None:
         """Process redirection operations to build the FD table."""
         # Initialize default FDs
@@ -76,8 +97,10 @@ class PipeProtocol:
         self.targets[1] = (FD_PIPE, None) if self.next_command else (FD_TERMINAL, None)
         self.targets[2] = (FD_TERMINAL, None)
 
-        # If redirect is True (command substitution), stdout default is capture
-        if self.redirect:
+        # If redirect is True (command substitution), the *last* stage's stdout
+        # is captured. An earlier pipe stage must keep writing to the pipe, or
+        # the downstream command gets no input (`$(echo x | cat)` -> "x").
+        if self.redirect and not self.next_command:
             self.targets[1] = (FD_CAPTURE, None)
 
         # Defer stdin reading until after all redirections are processed
@@ -86,6 +109,15 @@ class PipeProtocol:
         pending_stdin_target: str | None = None
 
         for op in self.redirections:
+            bad_fd = self._out_of_range_fd(op)
+            if bad_fd is not None:
+                # bash reports the offending fd and drops the redirection, but
+                # still runs the command -- its other fds are unaffected.
+                self._write_to_terminal(
+                    f"bash: {bad_fd}: Bad file descriptor\n".encode()
+                )
+                continue
+
             if op["type"] == "file":
                 fd = op["fd"]
                 target = op["target"]

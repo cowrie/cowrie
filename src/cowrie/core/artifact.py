@@ -71,6 +71,10 @@ class Artifact:
         return self.fp.fileno()
 
     def close(self, keepEmpty: bool = False) -> tuple[str, str] | None:
+        if self.closed:
+            # Closing is idempotent: a command can close on its normal path and
+            # again on exit() without the second call failing on the closed file.
+            return None
         size: int = self.fp.tell()
         if size == 0 and not keepEmpty:
             self.fp.close()

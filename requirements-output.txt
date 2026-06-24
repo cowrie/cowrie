@@ -46,7 +46,7 @@ influxdb==5.3.2
 pymisp==2.5.34.1
 
 # redis
-redis==7.4.0
+redis==8.0.0
 
 # Oracle Cloud
 # Disabled 2024-10-31 because downgrades our cryptography package to vulnerable version

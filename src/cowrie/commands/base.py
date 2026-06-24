@@ -15,11 +15,11 @@ import re
 import time
 from typing import TYPE_CHECKING, Any
 
-from twisted.internet import error, reactor
-from twisted.python import failure, log
+from twisted.internet import reactor
+from twisted.python import log
 
 from cowrie.core import utils
-from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand, process_status
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -29,7 +29,7 @@ commands: dict[str, Callable] = {}
 
 class Command_whoami(HoneyPotCommand):
     def call(self) -> None:
-        self.write(f"{self.protocol.user.username}\n")
+        self.write(f"{self.current_user['username']}\n")
 
 
 commands["/usr/bin/whoami"] = Command_whoami
@@ -102,7 +102,7 @@ class Command_w(HoneyPotCommand):
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
         )
         self.write(
-            f"{self.protocol.user.username:8s} pts/0    {self.protocol.clientIP[:17].ljust(17)} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))}    0.00s  0.00s  0.00s w\n"
+            f"{self.current_user['username']:8s} pts/0    {self.protocol.clientIP[:17].ljust(17)} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))}    0.00s  0.00s  0.00s w\n"
         )
 
 
@@ -113,7 +113,7 @@ commands["w"] = Command_w
 class Command_who(HoneyPotCommand):
     def call(self) -> None:
         self.write(
-            f"{self.protocol.user.username:8s} pts/0        {time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime))} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))} ({self.protocol.clientIP})\n"
+            f"{self.current_user['username']:8s} pts/0        {time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime))} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))} ({self.protocol.clientIP})\n"
         )
 
 
@@ -210,7 +210,7 @@ commands["reset"] = Command_clear
 class Command_hostname(HoneyPotCommand):
     def call(self) -> None:
         if self.args:
-            if self.protocol.user.username == "root":
+            if self.current_user["uid"] == 0:
                 self.protocol.hostname = self.args[0]
             else:
                 self.write("hostname: you must be root to change the host name\n")
@@ -224,7 +224,7 @@ commands["hostname"] = Command_hostname
 
 class Command_ps(HoneyPotCommand):
     def call(self) -> None:
-        user = self.protocol.user.username
+        user = str(self.current_user["username"])
         args = ""
         if self.args:
             args = self.args[0].strip()
@@ -806,9 +806,9 @@ commands["ps"] = Command_ps
 
 class Command_id(HoneyPotCommand):
     def call(self) -> None:
-        u = self.protocol.user
+        u = self.current_user
         self.write(
-            f"uid={u.uid}({u.username}) gid={u.gid}({u.username}) groups={u.gid}({u.username})\n"
+            f"uid={u['uid']}({u['username']}) gid={u.get('gid', u['uid'])}({u['username']}) groups={u.get('gid', u['uid'])}({u['username']})\n"
         )
 
 
@@ -904,8 +904,7 @@ class Command_shutdown(HoneyPotCommand):
             self.exit()
 
     def finish(self) -> None:
-        stat = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(stat)
+        self.protocol.terminal.transport.processEnded(process_status(0))
 
 
 commands["/sbin/shutdown"] = Command_shutdown
@@ -926,8 +925,7 @@ class Command_reboot(HoneyPotCommand):
         reactor.callLater(3, self.finish)
 
     def finish(self) -> None:
-        stat = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(stat)
+        self.protocol.terminal.transport.processEnded(process_status(0))
 
 
 commands["/sbin/reboot"] = Command_reboot
@@ -1138,8 +1136,6 @@ commands["/bin/kill"] = Command_nop
 commands["/bin/pkill"] = Command_nop
 commands["/bin/killall"] = Command_nop
 commands["/bin/killall5"] = Command_nop
-commands["/bin/su"] = Command_nop
-commands["su"] = Command_nop
 commands["/bin/chown"] = Command_nop
 commands["chown"] = Command_nop
 commands["/bin/chgrp"] = Command_nop
@@ -1147,3 +1143,14 @@ commands["chgrp"] = Command_nop
 commands[":"] = Command_nop
 commands["do"] = Command_nop
 commands["done"] = Command_nop
+commands["true"] = Command_nop
+commands["/bin/true"] = Command_nop
+
+
+class Command_false(HoneyPotCommand):
+    def call(self) -> None:
+        self.exit_code = 1
+
+
+commands["false"] = Command_false
+commands["/bin/false"] = Command_false
