@@ -1169,6 +1169,33 @@ commands["false"] = Command_false
 commands["/bin/false"] = Command_false
 
 
+class Command_break(HoneyPotCommand):
+    """``break`` -- stop the innermost enclosing for/while/until loop.
+
+    Signals the nearest shell that is currently running a loop; the loop's
+    executor consumes the signal at the end of the current body. Outside any
+    loop it is a no-op, matching how the honeypot tolerates stray builtins.
+    """
+
+    signal = "break"
+
+    def call(self) -> None:
+        for item in reversed(self.protocol.cmdstack):
+            if getattr(item, "_loop_depth", 0) > 0:
+                item._loop_signal = self.signal
+                return
+
+
+class Command_continue(Command_break):
+    """``continue`` -- skip to the next iteration of the innermost loop."""
+
+    signal = "continue"
+
+
+commands["break"] = Command_break
+commands["continue"] = Command_continue
+
+
 class _TestError(Exception):
     """A malformed test expression; ``test`` reports it and exits 2.
 
