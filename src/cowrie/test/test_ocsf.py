@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from typing import ClassVar
 
 from cowrie.core.ocsf import formatOCSF
 
@@ -428,7 +429,7 @@ class OCSFFileSystemActivityTests(unittest.TestCase):
 class OCSFUnmappedTests(unittest.TestCase):
     """Events with no OCSF class mapping are returned gracefully."""
 
-    _UNKNOWN_EVENT = {
+    _UNKNOWN_EVENT: ClassVar[dict[str, str]] = {
         "eventid": "cowrie.client.fingerprint",
         "src_ip": "127.0.0.1",
         "session": "0000000000000001",
