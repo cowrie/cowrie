@@ -10,11 +10,14 @@ A small Lark grammar and evaluator that tokenises a command line and resolves
 its quoting, redirection, command substitution and subshells for the shell in
 ``honeypot.py``.
 
-The parser produces a flat list of :class:`Statement` objects. Words are fully
-evaluated (variable expansion and command substitution applied), while the
-control operators a real shell cares about — ``|`` and the redirection
-operators — are emitted as their own string tokens so the existing
-``CommandParser`` / ``runCommand`` machinery can consume the result unchanged.
+The parser produces a flat list of :class:`Statement` objects carrying the
+joining operator (``;`` / ``&&`` / ``||``) and the still-unevaluated word trees.
+Words are expanded only when a statement is about to run (see
+:meth:`BashParser.evaluate`), so the shell can interleave parsing and execution
+like a real shell. The control operators a real shell cares about — ``|`` and
+the redirection operators — pass through as their own string tokens so the
+existing ``CommandParser`` / ``runCommand`` machinery consumes the result
+unchanged.
 
 The grammar deliberately models only the subset of bash that Cowrie already
 emulates: lists separated by ``;`` / ``&&`` / ``||``, pipelines, simple
@@ -23,8 +26,6 @@ substitution (``$(...)`` and backticks) and subshells (``(...)``).
 
 Known deviations from standard bash (none are emulated yet):
 
-* ``&&`` / ``||`` do not short-circuit -- they are split like ``;`` and every
-  command runs regardless of exit status. ``$?`` is always ``0``.
 * A trailing ``&`` is treated as a literal argument, not a background job.
 * No word expansions beyond ``$VAR`` / ``${VAR}``: tilde (``~``), brace
   (``{a,b}`` / ``{1..3}``), arithmetic (``$((...))``), the parameter
@@ -38,7 +39,7 @@ Known deviations from standard bash (none are emulated yet):
   ...) are parsed as ordinary commands, so the shell does not run loops or
   conditionals.
 * The special parameters ``$@`` / ``$#`` / ``$*`` (and friends other than
-  ``$?``, which is ``0``) are passed through literally rather than expanded.
+  ``$?``) are passed through literally rather than expanded.
 
 Input the grammar cannot parse at all (e.g. an unterminated quote) surfaces as
 a syntax error, exactly as the previous implementation degraded on input it
@@ -141,26 +142,42 @@ class ShellContext(Protocol):
     def get_variable(self, name: str) -> str | None:
         """Return the value of a shell variable, or None if unset."""
 
+    def get_status(self) -> str:
+        """Return ``$?`` -- the last command's exit status, as a string."""
+
     def command_substitution(self, source: str) -> str:
         """Execute ``source`` and return its captured stdout (newlines stripped)."""
 
 
 @dataclass
 class Command:
-    """A simple command / pipeline: a flat token list with operators kept."""
+    """A simple command / pipeline, structure only.
 
-    tokens: list[str] = field(default_factory=list)
+    ``items`` keeps the ordered word trees (still unevaluated) interleaved with
+    the control operator strings (``|``, ``>``, ``2>`` ...). Words are expanded
+    against the live shell by :meth:`BashParser.evaluate` only when the command
+    is about to run, so a same-line ``x=hi; echo $x`` sees the assignment.
+    ``op`` is the operator that joins this statement to the previous one
+    (``None`` / ``;`` / ``&&`` / ``||``); ``line`` is the source the word trees
+    point into.
+    """
+
+    items: list[str | Tree] = field(default_factory=list)
+    line: str = ""
+    op: str | None = None
 
 
 @dataclass
 class Subshell:
-    """A ``(...)`` group, holding its already-parsed inner statements.
+    """A ``(...)`` group, holding its parsed (still unevaluated) inner statements.
 
     Cowrie does not emulate a subshell's isolated environment, so the caller
-    runs these statements in order with the surrounding line.
+    runs these statements in order with the surrounding line. ``op`` joins this
+    group to the previous statement.
     """
 
     statements: list[Statement] = field(default_factory=list)
+    op: str | None = None
 
 
 @dataclass
@@ -204,15 +221,16 @@ class BashParser:
     def _split_statements(self, line: str, tree: Tree) -> list[Statement]:
         statements: list[Statement] = []
         units: list[Tree | Token] = []
+        # The operator joining the statement currently being accumulated to the
+        # previous one: None for the first, then ; / && / || as seen.
+        current_op: str | None = None
 
         def flush() -> bool:
             """Turn the accumulated units into a statement. Return False to stop."""
             if not units:
                 return True
-            stmt = self._build_statement(line, units)
+            stmt = self._build_statement(line, units, current_op)
             units.clear()
-            if stmt is None:
-                return True
             statements.append(stmt)
             return not isinstance(stmt, SyntaxError_)
 
@@ -223,14 +241,15 @@ class BashParser:
                     return statements
                 if not flush():
                     return statements
+                current_op = child.value
                 continue
             units.append(child)
         flush()
         return statements
 
     def _build_statement(
-        self, line: str, units: list[Tree | Token]
-    ) -> Statement | None:
+        self, line: str, units: list[Tree | Token], op: str | None
+    ) -> Statement:
         # A subshell is valid only at the start of a statement. There it runs
         # in sequence with the surrounding line; anything piped after it is
         # ignored. A subshell anywhere else is a syntax error reported on the
@@ -252,7 +271,9 @@ class BashParser:
             subshell = units[subshell_idx]
             assert isinstance(subshell, Tree)
             if subshell_idx == 0:
-                return Subshell(statements=self._subshell_statements(line, subshell))
+                return Subshell(
+                    statements=self._subshell_statements(line, subshell), op=op
+                )
             return SyntaxError_(token=self._error_token(line, subshell))
 
         # A redirection operator must be followed by a target word. A redirect at
@@ -266,20 +287,32 @@ class BashParser:
                 if isinstance(target, Token):
                     return SyntaxError_(token=target.value)
 
-        tokens: list[str] = []
-        for unit in units:
-            if isinstance(unit, Token):
-                # SEP never reaches here; PIPE / AMP / REDIR pass through.
-                tokens.append(unit.value)
-                continue
-            value = self._eval_word(line, unit)
-            if value is not None:
-                tokens.append(value)
-        if not tokens:
-            return None
-        return Command(tokens=tokens)
+        # Keep the structure; words are evaluated later by evaluate(). An
+        # operator token (PIPE / AMP / REDIR / IO_REDIR) is a fixed string;
+        # SEP never reaches here.
+        items: list[str | Tree] = [
+            unit.value if isinstance(unit, Token) else unit for unit in units
+        ]
+        return Command(items=items, line=line, op=op)
 
     # -- word evaluation ----------------------------------------------------
+
+    def evaluate(self, command: Command) -> list[str]:
+        """Expand a command's words against the live context, now.
+
+        Operator strings pass through; each word tree is evaluated against the
+        current shell (variables, command substitution), and a word that
+        resolves to nothing (an unquoted unset reference) is dropped.
+        """
+        tokens: list[str] = []
+        for item in command.items:
+            if isinstance(item, str):
+                tokens.append(item)
+                continue
+            value = self._eval_word(command.line, item)
+            if value is not None:
+                tokens.append(value)
+        return tokens
 
     def _eval_word(self, line: str, word: Tree) -> str | None:
         """Evaluate a word to its final string, or None if it should be dropped.
@@ -291,16 +324,15 @@ class BashParser:
         atoms = word.children
 
         # Whole-word bare reference: ``$x`` / ``${x}`` as the entire,
-        # unquoted word. An unset or empty value drops the word; ``$?`` is 0.
+        # unquoted word. An unset or empty value drops the word; a special
+        # parameter like ``$?`` expands via _special_param.
         if len(atoms) == 1 and isinstance(atoms[0], Tree):
             only = atoms[0]
             if only.data in ("dollar_var", "dollar_brace"):
-                name, special = self._var_name(only)
-                if special == "?":
-                    return "0"
+                special = self._special_param(only)
                 if special is not None:
-                    return self._leaf_value(only)  # verbatim, e.g. $@
-                value = self.context.get_variable(name)
+                    return special
+                value = self.context.get_variable(self._var_name(only)[0])
                 if not value:
                     return None
                 return value
@@ -366,15 +398,26 @@ class BashParser:
         the grammar (it never reaches here), so quoted awk/sed field references
         still survive.
         """
-        name, special = self._var_name(node)
-        if special == "?":
-            return "0"
+        special = self._special_param(node)
         if special is not None:
-            return self._leaf_value(node)
-        value = self.context.get_variable(name)
+            return special
+        value = self.context.get_variable(self._var_name(node)[0])
         if value is None:
             return ""
         return value
+
+    def _special_param(self, node: Tree) -> str | None:
+        """Expand a special parameter ($?, $@, $#, ...) to its string value, or
+        None for an ordinary ``$name`` reference the caller should look up.
+
+        ``$?`` is the last exit status; the other specials are kept verbatim.
+        """
+        _, special = self._var_name(node)
+        if special is None:
+            return None
+        if special == "?":
+            return self.context.get_status()
+        return self._leaf_value(node)
 
     def _leaf_value(self, node: Tree) -> str:
         """Return the string value of a node's single leaf token."""

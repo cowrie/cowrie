@@ -112,6 +112,7 @@ class Command_wget(HoneyPotCommand):
 
     def print_usage_error(self, error_msg: str = "") -> None:
         """Print usage error message"""
+        self.exit_code = 1
         if error_msg:
             self.errorWrite(f"wget: {error_msg}\n")
         self.errorWrite("Usage: wget [OPTION]... [URL]...\n\n")
@@ -230,7 +231,7 @@ class Command_wget(HoneyPotCommand):
             self.errorWrite("failed: Connection timed out.\n")
             self.errorWrite("Retrying.\n\n")
 
-            self.exit()
+            self.exit(1)
             return
 
         allowed = yield communication_allowed(self.host)
@@ -243,7 +244,7 @@ class Command_wget(HoneyPotCommand):
                     f"Resolving {self.host} ({self.host})... failed: Temporary failure in name resolution.\n"
                 )
             self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
-            self.exit()
+            self.exit(1)
             return None
 
         self.url = url.encode("utf8")
@@ -261,7 +262,7 @@ class Command_wget(HoneyPotCommand):
                 self.errorWrite(
                     f"wget: {self.outfile}: Cannot open: No such file or directory\n"
                 )
-                self.exit()
+                self.exit(1)
                 return
 
         self.artifact = Artifact("wget-download")
@@ -311,7 +312,7 @@ class Command_wget(HoneyPotCommand):
 
         if not remote_path or remote_path.endswith("/"):
             self.errorWrite("wget: unsupported directory target in FTP URL\n")
-            self.exit()
+            self.exit(1)
             return None
 
         self.ftp_remote_dir = posixpath.dirname(remote_path)
@@ -319,7 +320,7 @@ class Command_wget(HoneyPotCommand):
 
         if not self.ftp_remote_file:
             self.errorWrite("wget: missing remote filename in FTP URL\n")
-            self.exit()
+            self.exit(1)
             return None
 
         self.ftp_client = None
@@ -436,7 +437,7 @@ class Command_wget(HoneyPotCommand):
 
     def handle_CTRL_C(self) -> None:
         self.write("^C\n")
-        self.exit()
+        self.exit(130)  # 128 + SIGINT
 
     def success(self, response):
         """
@@ -572,6 +573,7 @@ class Command_wget(HoneyPotCommand):
         """
         handle errors
         """
+        self.exit_code = 1
         # Close the artifact so a failed download leaves no orphaned temp file.
         # Artifact.close() removes the empty temp file backing the download.
         if getattr(self, "artifact", None) is not None:

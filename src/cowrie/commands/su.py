@@ -165,6 +165,8 @@ class Command_su(HoneyPotCommand):
 
         self.protocol.cmdstack.append(shell)
         shell.lineReceived(command)
+        # `su -c '...'` exits with the status of the command it ran.
+        self.exit_code = shell.last_exit_code
         self.protocol.cmdstack.pop()
         self.exit()
 

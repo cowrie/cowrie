@@ -34,11 +34,11 @@ class Command_dd(HoneyPotCommand):
         for arg in self.args:
             if arg.find("=") == -1:
                 self.write(f"unknown operand: {arg}")
-                HoneyPotCommand.exit(self)
+                self._finish(success=False)
             operand, value = arg.split("=")
             if operand not in ("if", "bs", "of", "count"):
                 self.write(f"unknown operand: {operand}")
-                self.exit(success=False)
+                self._finish(success=False)
             self.ddargs[operand] = value
 
         if self.input_data:
@@ -84,14 +84,18 @@ class Command_dd(HoneyPotCommand):
                         self.errorWrite(f"dd: {iname}: No such file or directory\n")
                         bSuccess = False
 
-                self.exit(success=bSuccess)
+                self._finish(success=bSuccess)
 
-    def exit(self, success: bool = True) -> None:
-        if success is True:
-            self.write("0+0 records in\n")
-            self.write("0+0 records out\n")
-            self.write("0 bytes transferred in 0.695821 secs (0 bytes/sec)\n")
-        HoneyPotCommand.exit(self)
+    def _finish(self, success: bool = True) -> None:
+        if success:
+            # Real dd writes its transfer statistics to stderr, not stdout, so
+            # they do not pollute a command substitution that captures stdout.
+            self.errorWrite("0+0 records in\n")
+            self.errorWrite("0+0 records out\n")
+            self.errorWrite("0 bytes transferred in 0.695821 secs (0 bytes/sec)\n")
+            self.exit(0)
+        else:
+            self.exit(1)
 
     def lineReceived(self, line: str) -> None:
         log.msg(
@@ -102,7 +106,7 @@ class Command_dd(HoneyPotCommand):
         )
 
     def eofReceived(self) -> None:
-        self.exit()
+        self._finish()
 
 
 def parse_size(param: str) -> int:

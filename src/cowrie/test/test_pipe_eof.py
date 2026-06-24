@@ -61,9 +61,11 @@ class PipeEofTests(unittest.TestCase):
                     before,
                     f"cmdstack leaked for {tail_cmd!r}: {before} -> {after}",
                 )
-                self.assertEqual(
-                    output,
-                    b"X:\n" + PROMPT,
+                # The capture must be empty, so the line ends in `X:` then a
+                # newline. (dd writes its stats to stderr, which legitimately
+                # reaches the terminal ahead of the echo, hence endswith.)
+                self.assertTrue(
+                    output.endswith(b"X:\n" + PROMPT),
                     f"unexpected output for {tail_cmd!r}: {output!r}",
                 )
 

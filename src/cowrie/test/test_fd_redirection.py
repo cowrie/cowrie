@@ -238,6 +238,13 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.assertIn(b"result=", output)
         self.assertTrue(output.endswith(PROMPT))
 
+    def test_command_substitution_through_pipe(self) -> None:
+        # The captured value is the last pipe stage's output. A capture used to
+        # force every stage's stdout to the capture buffer, breaking the pipe so
+        # the downstream command got no input.
+        self.proto.lineReceived(b"echo r=$(echo piped | cat | cat)")
+        self.assertEqual(self.tr.value(), b"r=piped\n" + PROMPT)
+
     def test_backtick_substitution(self) -> None:
         # Backtick style command substitution
         self.proto.lineReceived(b"echo `echo hello`")

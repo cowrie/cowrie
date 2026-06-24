@@ -239,7 +239,7 @@ class Command_tftp(HoneyPotCommand):
             if len(args.c) > 1:
                 self.file_to_get = args.c[1]
                 if args.hostname is None:
-                    self.exit()
+                    self.exit(1)
                     return
                 self.hostname = args.hostname
         elif args.r:
@@ -250,11 +250,11 @@ class Command_tftp(HoneyPotCommand):
             self.write(
                 "usage: tftp [-h] [-c C C] [-l L] [-g G] [-p P] [-r R] [hostname]\n"
             )
-            self.exit()
+            self.exit(1)
             return
 
         if self.hostname is None:
-            self.exit()
+            self.exit(1)
             return
 
         # Parse port from hostname if provided
@@ -266,7 +266,7 @@ class Command_tftp(HoneyPotCommand):
         # Check if communication is allowed
         allowed = yield communication_allowed(self.hostname)
         if not allowed:
-            self.exit()
+            self.exit(1)
             return
 
         # Resolve local file path
@@ -275,7 +275,7 @@ class Command_tftp(HoneyPotCommand):
 
         if not self.fs.exists(path) or not self.fs.isdir(path):
             self.write(f"tftp: {self.file_to_get}: No such file or directory\n")
-            self.exit()
+            self.exit(1)
             return
 
         # Initialize artifact
@@ -383,6 +383,7 @@ class Command_tftp(HoneyPotCommand):
             # User cancelled with CTRL-C, exit silently (^C already printed)
             return
 
+        self.exit_code = 1
         error_msg = failure.getErrorMessage()
         url = f"tftp://{self.hostname}:{self.port}/{self.file_to_get.lstrip('/')}"
 
@@ -432,7 +433,7 @@ class Command_tftp(HoneyPotCommand):
                 self.tftp_client.deferred.cancel()
 
         self.write("^C")
-        self.exit()
+        self.exit(130)  # 128 + SIGINT
 
 
 commands["/usr/bin/tftp"] = Command_tftp

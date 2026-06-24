@@ -23,9 +23,13 @@ class FakeContext:
     def __init__(self, env: dict[str, str] | None = None) -> None:
         self.env = env or {}
         self.substitutions: list[str] = []
+        self.status = "0"
 
     def get_variable(self, name: str) -> str | None:
         return self.env.get(name)
+
+    def get_status(self) -> str:
+        return self.status
 
     def command_substitution(self, source: str) -> str:
         self.substitutions.append(source)
@@ -41,10 +45,9 @@ class BashParseTokenTests(unittest.TestCase):
         self.parser = BashParser(self.ctx)
 
     def _tokens(self, line: str) -> list[str]:
-        statements = self.parser.parse(line)
-        self.assertEqual(len(statements), 1)
-        self.assertIsInstance(statements[0], Command)
-        return statements[0].tokens  # type: ignore[union-attr]
+        statement = self.parser.parse(line)[0]
+        assert isinstance(statement, Command)
+        return self.parser.evaluate(statement)
 
     def test_simple_words(self) -> None:
         self.assertEqual(self._tokens("echo hello world"), ["echo", "hello", "world"])
@@ -84,7 +87,7 @@ class BashParseVariableTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return statement.tokens
+        return self.parser.evaluate(statement)
 
     def test_bare_variable_expands(self) -> None:
         self.assertEqual(self._tokens("echo $LOGNAME"), ["echo", "root"])
@@ -134,7 +137,7 @@ class BashParseRedirectionTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return statement.tokens
+        return self.parser.evaluate(statement)
 
     def test_stdout_redirect(self) -> None:
         self.assertEqual(self._tokens("echo a > f"), ["echo", "a", ">", "f"])
@@ -178,37 +181,41 @@ class BashParseStatementTests(unittest.TestCase):
         self.ctx = FakeContext({"x": "hi"})
         self.parser = BashParser(self.ctx)
 
+    def _eval(self, statement: object) -> list[str]:
+        assert isinstance(statement, Command)
+        return self.parser.evaluate(statement)
+
     def test_semicolon_splits(self) -> None:
         statements = self.parser.parse("echo a; echo b")
         self.assertEqual(
-            [s.tokens for s in statements],  # type: ignore[union-attr]
+            [self._eval(s) for s in statements],
             [["echo", "a"], ["echo", "b"]],
         )
 
     def test_and_or_split_like_semicolon(self) -> None:
         statements = self.parser.parse("a && b || c")
         self.assertEqual(
-            [s.tokens for s in statements],  # type: ignore[union-attr]
+            [self._eval(s) for s in statements],
             [["a"], ["b"], ["c"]],
         )
 
     def test_command_substitution_captures_source(self) -> None:
         statements = self.parser.parse("echo $(echo inner)")
-        self.assertEqual(statements[0].tokens, ["echo", "<echo inner>"])  # type: ignore[union-attr]
+        self.assertEqual(self._eval(statements[0]), ["echo", "<echo inner>"])
         self.assertEqual(self.ctx.substitutions, ["echo inner"])
 
     def test_backtick_substitution(self) -> None:
         statements = self.parser.parse("echo `id`")
-        self.assertEqual(statements[0].tokens, ["echo", "<id>"])  # type: ignore[union-attr]
+        self.assertEqual(self._eval(statements[0]), ["echo", "<id>"])
 
     def test_command_substitution_as_whole_statement(self) -> None:
         # A command substitution that is the entire statement, or an assignment
         # value, parses as one command word -- not a misparsed bare "$" next to
         # a "(...)" subshell (which used to be a syntax error).
-        self.assertEqual(self.parser.parse("$(id)")[0].tokens, ["<id>"])  # type: ignore[union-attr]
-        self.assertEqual(self.parser.parse("x=$(id)")[0].tokens, ["x=<id>"])  # type: ignore[union-attr]
+        self.assertEqual(self._eval(self.parser.parse("$(id)")[0]), ["<id>"])
+        self.assertEqual(self._eval(self.parser.parse("x=$(id)")[0]), ["x=<id>"])
         self.assertEqual(
-            self.parser.parse("var=$( (echo a; echo b) )")[0].tokens,  # type: ignore[union-attr]
+            self._eval(self.parser.parse("var=$( (echo a; echo b) )")[0]),
             ["var=<(echo a; echo b)>"],
         )
 
@@ -216,8 +223,8 @@ class BashParseStatementTests(unittest.TestCase):
         # The inner $(...) source is handed to the context verbatim; the nested
         # shell parses it recursively rather than the grammar flattening it.
         statements = self.parser.parse("echo $(echo $(echo deep))")
+        self.assertEqual(self._eval(statements[0]), ["echo", "<echo $(echo deep)>"])
         self.assertEqual(self.ctx.substitutions, ["echo $(echo deep)"])
-        self.assertEqual(statements[0].tokens, ["echo", "<echo $(echo deep)>"])  # type: ignore[union-attr]
 
     def test_subshell_alone(self) -> None:
         statements = self.parser.parse("(echo one; echo two)")
@@ -225,7 +232,7 @@ class BashParseStatementTests(unittest.TestCase):
         self.assertIsInstance(statements[0], Subshell)
         inner = statements[0].statements  # type: ignore[union-attr]
         self.assertEqual(
-            [s.tokens for s in inner],  # type: ignore[union-attr]
+            [self._eval(s) for s in inner],
             [["echo", "one"], ["echo", "two"]],
         )
 
@@ -234,11 +241,13 @@ class BashParseStatementTests(unittest.TestCase):
         self.assertIsInstance(statements[0], Command)
         self.assertIsInstance(statements[1], Subshell)
 
-    def test_subshell_inner_substitution_runs_in_source_order(self) -> None:
-        # A subshell's inner statements are parsed up front, so a command
-        # substitution inside it is evaluated in source order with the rest of
-        # the line rather than deferred.
-        self.parser.parse("(echo $(a)); echo $(b)")
+    def test_substitution_is_lazy(self) -> None:
+        # Command substitutions run when a statement is evaluated, not at parse
+        # time; evaluating in order hits them in source order.
+        statements = self.parser.parse("echo $(a); echo $(b)")
+        self.assertEqual(self.ctx.substitutions, [])
+        for statement in statements:
+            self._eval(statement)
         self.assertEqual(self.ctx.substitutions, ["a", "b"])
 
     def test_subshell_in_middle_is_syntax_error(self) -> None:
@@ -255,7 +264,7 @@ class BashParseStatementTests(unittest.TestCase):
         # A syntax error stops parsing but earlier statements still run.
         statements = self.parser.parse("echo ok ; uname -a (bad) | tr a b")
         self.assertIsInstance(statements[0], Command)
-        self.assertEqual(statements[0].tokens, ["echo", "ok"])  # type: ignore[union-attr]
+        self.assertEqual(self._eval(statements[0]), ["echo", "ok"])
         self.assertIsInstance(statements[1], SyntaxError_)
 
     def test_empty_line(self) -> None:
@@ -274,7 +283,7 @@ class BashParseCommentTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return statement.tokens
+        return self.parser.evaluate(statement)
 
     def test_trailing_comment_dropped(self) -> None:
         self.assertEqual(self._tokens("echo foo #comment"), ["echo", "foo"])

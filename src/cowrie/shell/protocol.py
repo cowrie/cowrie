@@ -15,7 +15,6 @@ from typing import ClassVar
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
-from twisted.internet import error
 from twisted.internet.protocol import connectionDone
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
@@ -135,7 +134,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         this logs out when connection times out
         """
-        ret = failure.Failure(error.ProcessTerminated(exitCode=1))
+        ret = command.process_status(1)
         self.terminal.transport.processEnded(ret)
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
@@ -278,7 +277,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cmdstack[-1].lineReceived(string)
         else:
             log.msg(f"discarding input {string}")
-            stat = failure.Failure(error.ProcessDone(status=""))
+            stat = command.process_status(0)
             self.terminal.transport.processEnded(stat)
 
     def call_command(self, pp, cmd, *args):
@@ -331,7 +330,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.cmdstack:
             self.cmdstack[-1].eofReceived()
         else:
-            ret = failure.Failure(error.ProcessTerminated(exitCode=0))
+            ret = command.process_status(0)
             self.terminal.transport.processEnded(ret)
 
 

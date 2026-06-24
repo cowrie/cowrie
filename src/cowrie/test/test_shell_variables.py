@@ -47,6 +47,13 @@ class ShellVariableTests(unittest.TestCase):
         self.proto.lineReceived(b"x=hi")
         self.assertEqual(self.run_line(b"echo $x"), b"hi\n")
 
+    # Each statement's words are expanded just before it runs, so a same-line
+    # assignment is visible to a later statement on the same line.
+    def test_same_line_assignment_is_seen(self) -> None:
+        self.assertEqual(self.run_line(b"x=hey; echo $x"), b"hey\n")
+        self.assertEqual(self.run_line(b'y=ho; echo "$y"'), b"ho\n")
+        self.assertEqual(self.run_line(b"a=1; b=2; echo $a$b"), b"12\n")
+
     # Cause 2: $VAR expands inside a larger token
     def test_expand_embedded_in_token(self) -> None:
         self.proto.lineReceived(b"x=hi")

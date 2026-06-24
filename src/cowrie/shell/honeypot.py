@@ -10,8 +10,7 @@ import copy
 import os
 from typing import Any
 
-from twisted.internet import error
-from twisted.python import failure, log
+from twisted.python import log
 from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
@@ -23,6 +22,7 @@ from cowrie.shell.bashparse import (
     Subshell,
     SyntaxError_,
 )
+from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import PipeProtocol
 
@@ -39,7 +39,11 @@ class HoneyPotShell:
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
         self.effective_user = effective_user  # For su: {uid, gid, username, home}
-        self.cmdpending: list[list[str]] = []
+        # Parsed-but-not-yet-evaluated statements; each is expanded against the
+        # live environment only when it is about to run (see runCommand). A
+        # subshell stays a single unit here so its &&/|| gate covers the whole
+        # group; runCommand splices its statements in only when it runs.
+        self.cmdpending: list[Command | Subshell] = []
         # A nested shell (e.g. a command substitution) inherits the live
         # environment of whichever shell is currently running; the very first
         # shell of a session falls back to the login environment, all of which
@@ -56,6 +60,9 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
+        # Exit status of the most recent command in this shell, for $? and the
+        # && / || short-circuit logic.
+        self.last_exit_code: int = 0
 
     # -- bashparse.ShellContext interface -----------------------------------
 
@@ -63,24 +70,43 @@ class HoneyPotShell:
         """Look up a shell variable for the Lark word evaluator."""
         return self.environ.get(name)
 
+    def get_status(self) -> str:
+        """Return $? -- the last command's exit status as a string."""
+        return str(self.last_exit_code)
+
     def command_substitution(self, source: str) -> str:
         """Run ``source`` as a command substitution and return its captured
         stdout with trailing newlines stripped.
 
-        The inner source is parsed with the same Lark grammar as a top-level
-        line; each command runs in its own output-capturing subshell and a
-        nested ``(...)`` group recurses.
+        The inner source runs in a single capture subshell with the same
+        sequencing as a top-level line: a same-line assignment is visible to
+        later statements, ``$?`` carries across them, and ``&&`` / ``||``
+        short-circuit. A nested ``(...)`` group recurses. Output is captured
+        instead of reaching the terminal.
         """
-        return self._capture_statements(self.bashparser.parse(source)).rstrip("\n")
+        shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
+        self.protocol.cmdstack.append(shell)
+        try:
+            return shell._capture_statements(
+                self.bashparser.parse(source)
+            ).rstrip("\n")
+        finally:
+            self.protocol.cmdstack.pop()
 
     def _capture_statements(self, statements: list[Statement]) -> str:
-        """Run statements in capture mode, concatenating their stdout."""
+        """Run statements in this capture shell, concatenating their stdout and
+        honoring &&/|| short-circuit between them (a subshell's gate covers the
+        whole group)."""
         output = ""
         for statement in statements:
-            if isinstance(statement, Command):
-                output += self._capture_command(statement.tokens)
-            elif isinstance(statement, Subshell):
+            if not isinstance(statement, (Command, Subshell)):
+                continue  # ignore a syntax error inside a substitution
+            if self._short_circuit(statement.op):
+                continue
+            if isinstance(statement, Subshell):
                 output += self._capture_statements(statement.statements)
+            else:
+                output += self._capture_command(statement)
         return output
 
     def lineReceived(self, line: str) -> None:
@@ -92,53 +118,66 @@ class HoneyPotShell:
     def _queue_statements(self, statements: list[Statement]) -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
 
-        A subshell's inner statements are flattened into the queue in place so
-        they run in order with the surrounding commands. Cowrie does not
+        A subshell is queued as one unit so its join operator (e.g. the || in
+        `x || (a; b)`) gates the whole group; runCommand splices the inner
+        statements in only when the group actually runs. Cowrie does not
         emulate a subshell's isolated environment (``cwd`` and friends live on
-        the protocol, not the shell), so flattening matches bash's output
-        ordering without a separate captured-output pass.
+        the protocol, not the shell), so the inner statements then run in the
+        parent shell.
 
         Returns False to stop queueing after a syntax error: commands already
         queued before the error still run, as in bash.
         """
         for statement in statements:
-            if isinstance(statement, Command):
-                self.cmdpending.append(statement.tokens)
-            elif isinstance(statement, Subshell):
-                if not self._queue_statements(statement.statements):
-                    return False
-            elif isinstance(statement, SyntaxError_):
-                if statement.token:
-                    self.protocol.terminal.write(
-                        f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
-                    )
-                else:
-                    self.protocol.terminal.write(
-                        b"-bash: syntax error: unexpected end of file\n"
-                    )
+            if isinstance(statement, SyntaxError_):
+                self._report_syntax_error(statement)
+                return False
+            if isinstance(statement, Subshell) and not self._reject_inner_error(
+                statement.statements
+            ):
+                return False
+            self.cmdpending.append(statement)
+        return True
+
+    def _reject_inner_error(self, statements: list[Statement]) -> bool:
+        """Report a syntax error nested anywhere inside a subshell, since the
+        whole line is rejected at parse time. Returns False once reported."""
+        for statement in statements:
+            if isinstance(statement, SyntaxError_):
+                self._report_syntax_error(statement)
+                return False
+            if isinstance(statement, Subshell) and not self._reject_inner_error(
+                statement.statements
+            ):
                 return False
         return True
 
-    def _capture_command(self, tokens: list[str]) -> str:
-        """Run one parsed command in an output-capturing subshell and return
-        its stdout.
-
-        Used for command substitution, where the output becomes a word instead
-        of reaching the terminal. The already-parsed tokens run directly, so no
-        quoting or expansion is repeated.
-        """
-        shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
-        self.protocol.cmdstack.append(shell)
-        shell.cmdpending.append(tokens)
-        shell.runCommand()
-        res = self.protocol.cmdstack.pop()
-
-        try:
-            output: str = res.protocol.pp.redirected_data.decode()
-        except AttributeError:
-            return ""
+    def _report_syntax_error(self, statement: SyntaxError_) -> None:
+        """Write the message bash prints for a syntax error and set $? to 2."""
+        if statement.token:
+            self.protocol.terminal.write(
+                f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
+            )
         else:
-            return output
+            self.protocol.terminal.write(
+                b"-bash: syntax error: unexpected end of file\n"
+            )
+        self.last_exit_code = 2  # bash uses 2 for a syntax error
+
+    def _capture_command(self, command: Command) -> str:
+        """Run one command in this capture shell and return its captured stdout.
+
+        The command's words are expanded against the capture shell's live
+        environment, so it sees inherited and same-substitution variables.
+        ``protocol.pp`` is cleared first so a statement that builds no pipe
+        (a bare assignment, or a command-not-found) reads as empty output
+        rather than re-reading the previous statement's capture.
+        """
+        self.protocol.pp = None
+        self.cmdpending.append(command)
+        self.runCommand()
+        pp = self.protocol.pp
+        return pp.redirected_data.decode() if pp is not None else ""
 
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
@@ -151,8 +190,20 @@ class HoneyPotShell:
         if self.interactive:
             self.showPrompt()
         elif len(self.protocol.cmdstack) == 1:
-            ret = failure.Failure(error.ProcessDone(status=""))
-            self.protocol.terminal.transport.processEnded(ret)
+            # Top-level non-interactive shell (an exec session): end the process
+            # with the last command's status so the SSH channel reports a real
+            # exit-status to the client.
+            self.protocol.terminal.transport.processEnded(
+                process_status(self.last_exit_code)
+            )
+
+    def _short_circuit(self, op: str | None) -> bool:
+        """Whether a statement joined by ``op`` should be skipped given the last
+        command's exit status: ``&&`` after a failure, ``||`` after a success.
+        """
+        return (op == "&&" and self.last_exit_code != 0) or (
+            op == "||" and self.last_exit_code == 0
+        )
 
     def _advance(self) -> None:
         """Run the next queued command, or finish when the queue is drained."""
@@ -164,14 +215,37 @@ class HoneyPotShell:
     def runCommand(self):
         pp = None
 
-        if not self.cmdpending:
-            # Reached after a command completed. Stay quiet mid-pipeline (the
-            # pipe machinery drives the rest); otherwise the queue is drained.
-            if self.protocol.pp.next_command is None:
-                self._finish()
+        # Mid-pipeline: an earlier stage just finished but a downstream command
+        # has not run yet. Let the pipe machinery drive the rest before touching
+        # the next statement -- otherwise `a | b; c` would run c before b and
+        # drop b's output.
+        if self.protocol.pp is not None and self.protocol.pp.next_command is not None:
             return
 
-        cmdAndArgs = self.cmdpending.pop(0)
+        if not self.cmdpending:
+            # The queue is drained.
+            self._finish()
+            return
+
+        command = self.cmdpending.pop(0)
+
+        # && / || short-circuit: skip this statement (or whole group) based on
+        # the previous command's exit status, leaving $? unchanged.
+        if self._short_circuit(command.op):
+            self._advance()
+            return
+
+        if isinstance(command, Subshell):
+            # The group runs: splice its statements to the front so they run in
+            # order. The group's own gate was checked above; each inner
+            # statement keeps its own &&/|| relative to its siblings.
+            self.cmdpending[0:0] = command.statements
+            self._advance()
+            return
+
+        # Expand the statement's words against the *current* environment, just
+        # before it runs, so a same-line `x=hi; echo $x` sees the value.
+        cmdAndArgs = self.bashparser.evaluate(command)
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
@@ -189,8 +263,10 @@ class HoneyPotShell:
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
             # variables for the rest of the session. They are shell variables,
-            # not exported, so self.exported is left untouched.
+            # not exported, so self.exported is left untouched. A bare
+            # assignment succeeds, so $? is 0.
             self.environ = environ
+            self.last_exit_code = 0
             self._advance()
             return
 
@@ -299,6 +375,7 @@ class HoneyPotShell:
                 else:
                     self.protocol.terminal.write(message)
 
+                self.last_exit_code = 127  # command not found
                 self._advance()
                 pp = None  # Got a error. Don't run any piped commands
                 break
@@ -372,8 +449,7 @@ class HoneyPotShell:
         EOF with the shell as the active reader (no command running) logs out.
         """
         log.msg("received eof, logging out")
-        status = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(status)
+        self.protocol.terminal.transport.processEnded(process_status(0))
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []

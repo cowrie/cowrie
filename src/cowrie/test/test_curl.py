@@ -53,7 +53,7 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         cmd = Command_curl.__new__(Command_curl)
         cmd.protocol = self.proto
         cmd.errorWritefn = lambda _data: None
-        cmd.exit = lambda: None  # type: ignore[method-assign]  # process teardown is unrelated here
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]  # process teardown is unrelated here
         cmd.url = b"http://no.such.host/file"
         cmd.host = "no.such.host"
         cmd.port = 80
@@ -68,3 +68,11 @@ class CurlArtifactCleanupTests(unittest.TestCase):
             "failed download left an orphaned temp file behind",
         )
         self.assertEqual(os.listdir(self.tmpdir), [])
+
+    def test_missing_host_reports_error_without_crashing(self) -> None:
+        # A URL with no host must report an error and stop, not fall through
+        # to the download path and crash on the unset self.host.
+        self.proto.lineReceived(b"curl http://; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"curl: (3)", out)
+        self.assertIn(b"rc=3", out)

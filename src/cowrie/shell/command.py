@@ -19,6 +19,17 @@ from twisted.internet import error
 from twisted.python import failure, log
 
 
+def process_status(code: int) -> failure.Failure:
+    """A process-end reason carrying an exit status.
+
+    ``ProcessDone`` for 0 (a clean exit) and ``ProcessTerminated`` otherwise, so
+    the SSH session relays the right ``exit-status`` to the client.
+    """
+    if code == 0:
+        return failure.Failure(error.ProcessDone(status=""))
+    return failure.Failure(error.ProcessTerminated(exitCode=code))
+
+
 class HoneyPotCommand:
     """
     This is the super class for all commands in cowrie/commands
@@ -47,6 +58,9 @@ class HoneyPotCommand:
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
+        # Exit status, propagated to the owning shell on exit() for $? and
+        # && / || . Commands set this (default 0 = success).
+        self.exit_code: int = 0
         self.environ = self.protocol.cmdstack[-1].environ
         self.exported = self.protocol.cmdstack[-1].exported
         self.fs = self.protocol.fs
@@ -106,10 +120,16 @@ class HoneyPotCommand:
     def call(self) -> None:
         self.write(f"Hello World! [{self.args!r}]\n")
 
-    def exit(self) -> None:
+    def exit(self, code: int | None = None) -> None:
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
+
+        ``code`` sets this command's exit status (``$?`` for the shell that ran
+        it). When omitted, the existing ``exit_code`` is kept, so a command that
+        set it earlier (e.g. in an error callback) can just call ``exit()``.
         """
+        if code is not None:
+            self.exit_code = code
         if (
             self.protocol
             and self.protocol.terminal
@@ -123,9 +143,12 @@ class HoneyPotCommand:
             self.protocol.cmdstack.remove(self)
 
             if len(self.protocol.cmdstack):
+                # Hand the exit status to the shell that ran us, for $? and the
+                # && / || logic in runCommand.
+                self.protocol.cmdstack[-1].last_exit_code = self.exit_code
                 self.protocol.cmdstack[-1].resume()
         else:
-            ret = failure.Failure(error.ProcessDone(status=""))
+            ret = process_status(self.exit_code)
             # The session could be disconnected already, when his happens .transport is gone
             try:
                 self.protocol.terminal.transport.processEnded(ret)
@@ -135,7 +158,7 @@ class HoneyPotCommand:
     def handle_CTRL_C(self) -> None:
         log.msg("Received CTRL-C, exiting..")
         self.write("^C\n")
-        self.exit()
+        self.exit(130)  # 128 + SIGINT, like a real shell
 
     def lineReceived(self, line: str) -> None:
         log.msg(f"QUEUED INPUT: {line}")
