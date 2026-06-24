@@ -62,6 +62,17 @@ class Command_sh(HoneyPotCommand):
             self.errorWrite(f"bash: {filename}: No such file or directory\n")
             return
 
+        # A binary file (e.g. an ELF payload a bot falls back to running with
+        # `sh payload`) must be rejected, not parsed: its newline bytes would
+        # otherwise be split into "commands" and flood the log with raw binary.
+        # bash treats a file as binary when a NUL byte appears before the first
+        # newline (check_binary_file); an ELF (\x7fELF...\x00) trips this.
+        if b"\x00" in contents[:80].split(b"\n", 1)[0]:
+            self.errorWrite(
+                f"bash: {filename}: cannot execute binary file: Exec format error\n"
+            )
+            return
+
         lines = contents.decode("utf-8", errors="replace").splitlines()
         # Strip shebang line
         if lines and _SHEBANG_RE.match(lines[0]):
