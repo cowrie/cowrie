@@ -120,6 +120,25 @@ class ExitStatusTests(unittest.TestCase):
         # The group is skipped, but a `;`-joined statement after it still runs.
         self.assertEqual(self.run_line(b"true || (echo a); echo c"), b"c\n")
 
+    def test_substitution_carries_status_across_statements(self) -> None:
+        # The whole substitution runs in one shell, so a later statement's $?
+        # sees the earlier statement's status.
+        self.assertEqual(self.run_line(b"echo $(false; echo $?)"), b"1\n")
+
+    def test_substitution_short_circuits(self) -> None:
+        # &&/|| short-circuit inside a substitution like a top-level line.
+        self.assertEqual(self.run_line(b"echo $(true || echo x)"), b"\n")
+        self.assertEqual(self.run_line(b"echo $(false || echo y)"), b"y\n")
+
+    def test_substitution_assignment_visible_to_later_statement(self) -> None:
+        # A same-substitution assignment is visible to a later statement.
+        self.assertEqual(self.run_line(b"echo $(x=hi; echo $x)"), b"hi\n")
+
+    def test_substitution_assignment_only_statement_adds_no_output(self) -> None:
+        # A trailing assignment-only statement must not re-emit the previous
+        # statement's captured output.
+        self.assertEqual(self.run_line(b"echo $(echo a; z=1)"), b"a\n")
+
     def test_statement_after_pipeline_runs_in_order(self) -> None:
         # A statement after a pipeline runs after the pipeline finishes, and the
         # pipeline's output is not dropped.

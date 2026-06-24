@@ -79,20 +79,35 @@ class HoneyPotShell:
         """Run ``source`` as a command substitution and return its captured
         stdout with trailing newlines stripped.
 
-        The inner source is parsed with the same Lark grammar as a top-level
-        line; each command runs in its own output-capturing subshell and a
-        nested ``(...)`` group recurses.
+        The inner source runs in a single capture subshell with the same
+        sequencing as a top-level line: a same-line assignment is visible to
+        later statements, ``$?`` carries across them, and ``&&`` / ``||``
+        short-circuit. A nested ``(...)`` group recurses. Output is captured
+        instead of reaching the terminal.
         """
-        return self._capture_statements(self.bashparser.parse(source)).rstrip("\n")
+        shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
+        self.protocol.cmdstack.append(shell)
+        try:
+            return shell._capture_statements(
+                self.bashparser.parse(source)
+            ).rstrip("\n")
+        finally:
+            self.protocol.cmdstack.pop()
 
     def _capture_statements(self, statements: list[Statement]) -> str:
-        """Run statements in capture mode, concatenating their stdout."""
+        """Run statements in this capture shell, concatenating their stdout and
+        honoring &&/|| short-circuit between them (a subshell's gate covers the
+        whole group)."""
         output = ""
         for statement in statements:
-            if isinstance(statement, Command):
-                output += self._capture_command(statement)
-            elif isinstance(statement, Subshell):
+            if not isinstance(statement, (Command, Subshell)):
+                continue  # ignore a syntax error inside a substitution
+            if self._short_circuit(statement.op):
+                continue
+            if isinstance(statement, Subshell):
                 output += self._capture_statements(statement.statements)
+            else:
+                output += self._capture_command(statement)
         return output
 
     def lineReceived(self, line: str) -> None:
@@ -151,25 +166,19 @@ class HoneyPotShell:
         self.last_exit_code = 2  # bash uses 2 for a syntax error
 
     def _capture_command(self, command: Command) -> str:
-        """Run one parsed command in an output-capturing subshell and return
-        its stdout.
+        """Run one command in this capture shell and return its captured stdout.
 
-        Used for command substitution, where the output becomes a word instead
-        of reaching the terminal. The command's words are expanded in the
-        capture shell, so it sees the inherited environment.
+        The command's words are expanded against the capture shell's live
+        environment, so it sees inherited and same-substitution variables.
+        ``protocol.pp`` is cleared first so a statement that builds no pipe
+        (a bare assignment, or a command-not-found) reads as empty output
+        rather than re-reading the previous statement's capture.
         """
-        shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
-        self.protocol.cmdstack.append(shell)
-        shell.cmdpending.append(command)
-        shell.runCommand()
-        res = self.protocol.cmdstack.pop()
-
-        try:
-            output: str = res.protocol.pp.redirected_data.decode()
-        except AttributeError:
-            return ""
-        else:
-            return output
+        self.protocol.pp = None
+        self.cmdpending.append(command)
+        self.runCommand()
+        pp = self.protocol.pp
+        return pp.redirected_data.decode() if pp is not None else ""
 
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
@@ -188,6 +197,14 @@ class HoneyPotShell:
             self.protocol.terminal.transport.processEnded(
                 process_status(self.last_exit_code)
             )
+
+    def _short_circuit(self, op: str | None) -> bool:
+        """Whether a statement joined by ``op`` should be skipped given the last
+        command's exit status: ``&&`` after a failure, ``||`` after a success.
+        """
+        return (op == "&&" and self.last_exit_code != 0) or (
+            op == "||" and self.last_exit_code == 0
+        )
 
     def _advance(self) -> None:
         """Run the next queued command, or finish when the queue is drained."""
@@ -215,9 +232,7 @@ class HoneyPotShell:
 
         # && / || short-circuit: skip this statement (or whole group) based on
         # the previous command's exit status, leaving $? unchanged.
-        if (command.op == "&&" and self.last_exit_code != 0) or (
-            command.op == "||" and self.last_exit_code == 0
-        ):
+        if self._short_circuit(command.op):
             self._advance()
             return
 
