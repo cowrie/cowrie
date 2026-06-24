@@ -1332,19 +1332,19 @@ class Command_test(HoneyPotCommand):
         path = self.fs.resolve_path(operand, self.protocol.cwd)
         if op in ("-L", "-h"):
             try:
-                return self.fs.islink(path)
+                return bool(self.fs.islink(path))
             except Exception:
                 return False
         if op == "-d":
-            return self.fs.isdir(path)
+            return bool(self.fs.isdir(path))
         if op == "-f":
-            return self.fs.isfile(path)
+            return bool(self.fs.isfile(path))
         if op == "-e":
-            return self.fs.exists(path)
+            return bool(self.fs.exists(path))
         if op in ("-r", "-w"):
             # No per-user permission model; treat any existing path as readable
             # and writable, which is true for the honeypot's root sessions.
-            return self.fs.exists(path)
+            return bool(self.fs.exists(path))
         if op == "-x":
             return self._has_mode(path, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         if op == "-s":
@@ -1361,9 +1361,10 @@ class Command_test(HoneyPotCommand):
 
     def _stat(self, path: str) -> list[Any] | None:
         try:
-            return self.fs.getfile(path)
+            entry: list[Any] | None = self.fs.getfile(path)
         except Exception:
             return None
+        return entry
 
     def _has_mode(self, path: str, mask: int) -> bool:
         entry = self._stat(path)

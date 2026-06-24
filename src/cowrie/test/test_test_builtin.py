@@ -37,7 +37,7 @@ class TestTrueFalseTests(unittest.TestCase):
         """Run ``line`` then return what ``echo $?`` prints (without the prompt)."""
         self.tr.clear()
         self.proto.lineReceived(f"{line}; echo $?".encode())
-        return self.tr.value()[: -len(PROMPT)]
+        return bytes(self.tr.value())[: -len(PROMPT)]
 
     # -- true / false -------------------------------------------------------
 

@@ -76,7 +76,7 @@ class HoneyPotShell:
         # live environment only when it is about to run (see runCommand). A
         # subshell stays a single unit here so its &&/|| gate covers the whole
         # group; runCommand splices its statements in only when it runs.
-        self.cmdpending: list[Command | Subshell] = []
+        self.cmdpending: list[Statement | _Continuation] = []
         # A nested shell (e.g. a command substitution) inherits the live
         # environment of whichever shell is currently running; the very first
         # shell of a session falls back to the login environment, all of which

@@ -36,7 +36,7 @@ class FlowControlTests(unittest.TestCase):
     def _run(self, line: str) -> bytes:
         self.tr.clear()
         self.proto.lineReceived(line.encode())
-        value = self.tr.value()
+        value = bytes(self.tr.value())
         if value.endswith(PROMPT):
             value = value[: -len(PROMPT)]
         return value

@@ -401,7 +401,7 @@ class BashParser:
         ``;``, a newline and ``&`` all sequence without gating."""
         if self._token_type(node) == "SEP":
             assert isinstance(node, Token)
-            return node.value
+            return str(node.value)
         return ";"  # NEWLINE
 
     def _word_literal(self, node: Tree | Token | None) -> str | None:
@@ -434,8 +434,8 @@ class BashParser:
             # Consume the separators between statements, tracking the operator
             # that will join the next statement to the previous one.
             while self._is_separator(cursor.peek()):
-                node = cursor.next()
-                value = self._separator_op(node)
+                separator = cursor.next()
+                value = self._separator_op(separator)
                 if value in ("&&", "||"):
                     if not seen:
                         # A leading && / || is a bash syntax error.
@@ -505,7 +505,7 @@ class BashParser:
             # of a command -- a bash syntax error reported on the "(" token.
             if isinstance(node, Tree) and node.data == "subshell":
                 return SyntaxError_(token=self._error_token(line, node))
-            if self._token_type(node) == "LPAR":
+            if isinstance(node, Token) and node.type == "LPAR":
                 return SyntaxError_(token=self._error_token_at(line, node))
             units.append(cursor.next())
         return self._make_command(line, units, op)
