@@ -206,7 +206,7 @@ class VirusTotalOutputTests(unittest.TestCase):
             self.output.postcomment = Mock(return_value=defer.succeed(True))  # type: ignore
 
             # Call postfile
-            self.output.postfile(tmp_path, "test-file.exe")
+            self.output.postfile(tmp_path, "test-file.exe", "abc123sha256")
 
             # Verify request was made correctly
             self.output.agent.request.assert_called_once()
@@ -226,6 +226,40 @@ class VirusTotalOutputTests(unittest.TestCase):
         finally:
             # Clean up temporary file
             os.unlink(tmp_path)
+
+    def test_upload_comments_and_collects_by_file_hash(self) -> None:
+        """A fresh upload must comment on and add to the collection by the
+        file's sha256, not the analysis id the upload returns."""
+        self.output.comment = True
+        self.output.commenttext = "Test comment"
+        self.output.collection_name = "test-collection"
+        self.output.collection_id = "test-collection-id"
+
+        captured: dict = {}
+
+        def fake_make_request(*args, **kwargs):
+            captured["process_response"] = kwargs.get("process_response")
+            return defer.succeed(None)
+
+        self.output._make_request = fake_make_request  # type: ignore[method-assign]
+        self.output._post_comment = Mock(return_value=defer.succeed(True))  # type: ignore[method-assign]
+        self.output._add_to_collection = Mock(return_value=defer.succeed(True))  # type: ignore[method-assign]
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(b"payload")
+            tmp_path = tmp.name
+        try:
+            self.output.postfile(tmp_path, "payload.exe", "HASH256")
+            # The v3 upload response carries an analysis id, not the file hash.
+            captured["process_response"](
+                json.dumps({"data": {"id": "analysis-xyz", "type": "analysis"}}).encode()
+            )
+        finally:
+            os.unlink(tmp_path)
+
+        self.output._post_comment.assert_called_once_with("files", "HASH256", "Comment")
+        self.output._add_to_collection.assert_called_once()
+        self.assertEqual(self.output._add_to_collection.call_args[0][1], "HASH256")
 
     def test_postcomment_v3_format(self) -> None:
         """Test comment posting using v3 API format"""
