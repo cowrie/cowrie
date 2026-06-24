@@ -328,12 +328,10 @@ class BashParser:
         if len(atoms) == 1 and isinstance(atoms[0], Tree):
             only = atoms[0]
             if only.data in ("dollar_var", "dollar_brace"):
-                name, special = self._var_name(only)
-                if special == "?":
-                    return self.context.get_status()
+                special = self._special_param(only)
                 if special is not None:
-                    return self._leaf_value(only)  # verbatim, e.g. $@
-                value = self.context.get_variable(name)
+                    return special
+                value = self.context.get_variable(self._var_name(only)[0])
                 if not value:
                     return None
                 return value
@@ -399,15 +397,26 @@ class BashParser:
         the grammar (it never reaches here), so quoted awk/sed field references
         still survive.
         """
-        name, special = self._var_name(node)
-        if special == "?":
-            return self.context.get_status()
+        special = self._special_param(node)
         if special is not None:
-            return self._leaf_value(node)
-        value = self.context.get_variable(name)
+            return special
+        value = self.context.get_variable(self._var_name(node)[0])
         if value is None:
             return ""
         return value
+
+    def _special_param(self, node: Tree) -> str | None:
+        """Expand a special parameter ($?, $@, $#, ...) to its string value, or
+        None for an ordinary ``$name`` reference the caller should look up.
+
+        ``$?`` is the last exit status; the other specials are kept verbatim.
+        """
+        _, special = self._var_name(node)
+        if special is None:
+            return None
+        if special == "?":
+            return self.context.get_status()
+        return self._leaf_value(node)
 
     def _leaf_value(self, node: Tree) -> str:
         """Return the string value of a node's single leaf token."""

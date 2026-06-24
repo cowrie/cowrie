@@ -10,8 +10,7 @@ import copy
 import os
 from typing import Any
 
-from twisted.internet import error
-from twisted.python import failure, log
+from twisted.python import log
 from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
@@ -450,8 +449,7 @@ class HoneyPotShell:
         EOF with the shell as the active reader (no command running) logs out.
         """
         log.msg("received eof, logging out")
-        status = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(status)
+        self.protocol.terminal.transport.processEnded(process_status(0))
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []

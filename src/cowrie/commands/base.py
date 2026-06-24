@@ -15,11 +15,11 @@ import re
 import time
 from typing import TYPE_CHECKING, Any
 
-from twisted.internet import error, reactor
-from twisted.python import failure, log
+from twisted.internet import reactor
+from twisted.python import log
 
 from cowrie.core import utils
-from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.command import HoneyPotCommand, process_status
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -904,8 +904,7 @@ class Command_shutdown(HoneyPotCommand):
             self.exit()
 
     def finish(self) -> None:
-        stat = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(stat)
+        self.protocol.terminal.transport.processEnded(process_status(0))
 
 
 commands["/sbin/shutdown"] = Command_shutdown
@@ -926,8 +925,7 @@ class Command_reboot(HoneyPotCommand):
         reactor.callLater(3, self.finish)
 
     def finish(self) -> None:
-        stat = failure.Failure(error.ProcessDone(status=""))
-        self.protocol.terminal.transport.processEnded(stat)
+        self.protocol.terminal.transport.processEnded(process_status(0))
 
 
 commands["/sbin/reboot"] = Command_reboot
