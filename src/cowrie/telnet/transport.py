@@ -53,6 +53,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
 
     def connectionMade(self):
         self.transportId: str = uuid.uuid4().hex[:12]
+        # (command, option_byte) pairs already logged, to suppress a scanner
+        # flooding the same option negotiation (see _log_negotiation).
+        self._logged_options: set[tuple[str, int]] = set()
         sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(
@@ -161,64 +164,44 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             return TELNET_OPTIONS.get(option_byte, f"UNKNOWN-{option_byte}")
         return "UNKNOWN"
 
-    def telnet_WILL(self, option: bytes) -> None:
+    def _log_negotiation(self, command: str, option: bytes) -> None:
+        """Log a telnet option negotiation once per (command, option) per
+        connection.
+
+        Logged for security monitoring and CVE detection. A scanner can blast
+        the same negotiation (e.g. ``WONT NAWS``) hundreds of times; logging
+        each one floods the log, so identical repeats within a connection are
+        suppressed after the first.
         """
-        Client indicates willingness to enable an option.
-        Log for security monitoring and CVE detection.
-        """
-        option_name = self._get_option_name(option)
         option_byte = option[0] if option else 0
+        key = (command, option_byte)
+        if key in self._logged_options:
+            return
+        self._logged_options.add(key)
         log.msg(
             eventid="cowrie.telnet.option",
-            format="Telnet WILL %(option_name)s",
-            command="WILL",
-            option_name=option_name,
+            format=f"Telnet {command} %(option_name)s",
+            command=command,
+            option_name=self._get_option_name(option),
             option_byte=option_byte,
         )
-        # Call parent implementation
+
+    def telnet_WILL(self, option: bytes) -> None:
+        """Client indicates willingness to enable an option."""
+        self._log_negotiation("WILL", option)
         TelnetTransport.telnet_WILL(self, option)
 
     def telnet_WONT(self, option: bytes) -> None:
-        """
-        Client refuses to enable an option.
-        """
-        option_name = self._get_option_name(option)
-        option_byte = option[0] if option else 0
-        log.msg(
-            eventid="cowrie.telnet.option",
-            format="Telnet WONT %(option_name)s",
-            command="WONT",
-            option_name=option_name,
-            option_byte=option_byte,
-        )
+        """Client refuses to enable an option."""
+        self._log_negotiation("WONT", option)
         TelnetTransport.telnet_WONT(self, option)
 
     def telnet_DO(self, option: bytes) -> None:
-        """
-        Client requests that we enable an option.
-        """
-        option_name = self._get_option_name(option)
-        option_byte = option[0] if option else 0
-        log.msg(
-            eventid="cowrie.telnet.option",
-            format="Telnet DO %(option_name)s",
-            command="DO",
-            option_name=option_name,
-            option_byte=option_byte,
-        )
+        """Client requests that we enable an option."""
+        self._log_negotiation("DO", option)
         TelnetTransport.telnet_DO(self, option)
 
     def telnet_DONT(self, option: bytes) -> None:
-        """
-        Client requests that we disable an option.
-        """
-        option_name = self._get_option_name(option)
-        option_byte = option[0] if option else 0
-        log.msg(
-            eventid="cowrie.telnet.option",
-            format="Telnet DONT %(option_name)s",
-            command="DONT",
-            option_name=option_name,
-            option_byte=option_byte,
-        )
+        """Client requests that we disable an option."""
+        self._log_negotiation("DONT", option)
         TelnetTransport.telnet_DONT(self, option)

@@ -251,7 +251,9 @@ class Output(cowrie.core.output.Output):
                         fileName = event["shasum"]
 
                     if self.upload:
-                        return self.postfile(event["outfile"], fileName)
+                        return self.postfile(
+                            event["outfile"], fileName, event["shasum"]
+                        )
                 else:
                     log.msg(
                         f"VT: Error - {j['error']['code']}: {j['error']['message']}"
@@ -301,9 +303,13 @@ class Output(cowrie.core.output.Output):
             error_prefix="VT scanfile",
         )
 
-    def postfile(self, artifact, fileName):
+    def postfile(self, artifact, fileName, sha256):
         """
-        Send a file to VirusTotal
+        Send a file to VirusTotal.
+
+        ``sha256`` is the file's hash. The upload response only carries an
+        *analysis* id, but the comment and collection endpoints expect the file
+        identifier, so they are addressed by the hash instead.
         """
         vtUrl = f"{VTAPI_URL}files".encode()
         fields = {}  # v3 API doesn't need apikey in form data
@@ -330,18 +336,16 @@ class Output(cowrie.core.output.Output):
                 )
                 return
 
-            # Process successful upload response
+            # Process successful upload response. The response id is an analysis
+            # id, not the file hash, so comment/collection use the sha256.
             if "data" in j:
                 data = j["data"]
-                file_id = data.get("id")
-                if file_id:
+                if data.get("id"):
                     log.msg("VT: File uploaded successfully")
-                    # Add to collection if enabled
                     if self.collection_name:
-                        self._add_to_collection("files", file_id, f"file {file_id}")
-                    # Post comment if enabled
+                        self._add_to_collection("files", sha256, f"file {sha256}")
                     if self.comment:
-                        return self._post_comment("files", file_id, "Comment")
+                        return self._post_comment("files", sha256, "Comment")
                 else:
                     log.msg("VT: Upload successful but no file ID returned")
             else:
@@ -477,16 +481,20 @@ class Output(cowrie.core.output.Output):
                 )
                 return
 
-            # Process successful submission response
+            # Process successful submission response. The response id is an
+            # analysis id; comment/collection want the v3 URL identifier
+            # (base64 of the URL with padding stripped), as in scanurl.
             if "data" in j:
                 data = j["data"]
-                url_id = data.get("id")
-                if url_id:
+                if data.get("id"):
                     log.msg("VT: URL submitted successfully for scanning")
-                    # Add to collection if enabled
+                    url_id = (
+                        base64.urlsafe_b64encode(event["url"].encode())
+                        .decode()
+                        .rstrip("=")
+                    )
                     if self.collection_name:
                         self._add_to_collection("urls", url_id, f"URL {url_id}")
-                    # Post comment if enabled (this is a new URL submission)
                     if self.comment:
                         return self._post_comment("urls", url_id, "URL comment")
                 else:
