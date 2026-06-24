@@ -324,7 +324,8 @@ class BashParser:
         atoms = word.children
 
         # Whole-word bare reference: ``$x`` / ``${x}`` as the entire,
-        # unquoted word. An unset or empty value drops the word; ``$?`` is 0.
+        # unquoted word. An unset or empty value drops the word; a special
+        # parameter like ``$?`` expands via _special_param.
         if len(atoms) == 1 and isinstance(atoms[0], Tree):
             only = atoms[0]
             if only.data in ("dollar_var", "dollar_brace"):
