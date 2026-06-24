@@ -10,12 +10,14 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from twisted.internet import error
 from twisted.python.failure import Failure
 
 from cowrie.commands.curl import Command_curl
 from cowrie.core.artifact import Artifact
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -76,3 +78,25 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         out = self.tr.value()
         self.assertIn(b"curl: (3)", out)
         self.assertIn(b"rc=3", out)
+
+    def test_exit_removes_empty_artifact(self) -> None:
+        # An aborted download (CTRL-C, HEAD request, size limit) reaches exit()
+        # with an empty artifact; exit() must remove its temp file (#40216).
+        cmd = Command_curl.__new__(Command_curl)
+        cmd.protocol = self.proto
+        cmd.exit_code = 0
+        cmd.artifact = Artifact("curl-download")
+        temp_filename = cmd.artifact.tempFilename
+        self.assertTrue(os.path.exists(temp_filename))
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd.exit()
+        self.assertFalse(
+            os.path.exists(temp_filename),
+            "early exit left an orphaned temp file behind",
+        )
+
+    def test_artifact_close_is_idempotent(self) -> None:
+        # The normal path closes the artifact and exit() closes it again.
+        artifact = Artifact("curl-download")
+        artifact.close()
+        artifact.close()  # must not raise on the already-closed file

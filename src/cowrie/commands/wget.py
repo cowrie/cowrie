@@ -439,6 +439,16 @@ class Command_wget(HoneyPotCommand):
         self.write("^C\n")
         self.exit(130)  # 128 + SIGINT
 
+    def exit(self, code: int | None = None) -> None:
+        # Close the download artifact on every exit path so an aborted download
+        # (CTRL-C, size limit, ...) does not leave its empty temp file behind in
+        # the download directory. close() is idempotent and removes an empty
+        # artifact, so the normal success/error paths are unaffected.
+        artifact = getattr(self, "artifact", None)
+        if artifact is not None:
+            artifact.close()
+        HoneyPotCommand.exit(self, code)
+
     def success(self, response):
         """
         successful treq get

@@ -10,12 +10,14 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from twisted.internet import error
 from twisted.python.failure import Failure
 
 from cowrie.commands.wget import Command_wget
 from cowrie.core.artifact import Artifact
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -68,3 +70,19 @@ class WgetArtifactCleanupTests(unittest.TestCase):
             "failed download left an orphaned temp file behind",
         )
         self.assertEqual(os.listdir(self.tmpdir), [])
+
+    def test_exit_removes_empty_artifact(self) -> None:
+        # An aborted download (CTRL-C, size limit) reaches exit() with an empty
+        # artifact; exit() must remove its temp file (#40216).
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.protocol = self.proto
+        cmd.exit_code = 0
+        cmd.artifact = Artifact("wget-download")
+        temp_filename = cmd.artifact.tempFilename
+        self.assertTrue(os.path.exists(temp_filename))
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd.exit()
+        self.assertFalse(
+            os.path.exists(temp_filename),
+            "early exit left an orphaned temp file behind",
+        )
