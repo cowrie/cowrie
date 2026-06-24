@@ -9,14 +9,24 @@ from __future__ import annotations
 
 import gc
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-from twisted.conch.telnet import ECHO, AlreadyNegotiating, ITelnetProtocol
+from twisted.conch.telnet import (
+    ECHO,
+    NAWS,
+    AlreadyNegotiating,
+    ITelnetProtocol,
+    TelnetTransport,
+)
 from twisted.internet.error import ConnectionDone
 from twisted.python import failure, log
 from zope.interface import implementer
 
 from cowrie.telnet.transport import CowrieTelnetTransport
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class MockOptionState:
@@ -225,6 +235,48 @@ class TestNegotiationDuringConnectionLost(unittest.TestCase):
             "willChain mutated self.options during teardown",
         )
         self.assertEqual(self.tcp.data, b"")
+
+
+class TestOptionLoggingDeduplication(unittest.TestCase):
+    """A scanner flooding the same option negotiation is logged once."""
+
+    def setUp(self) -> None:
+        self.transport = CowrieTelnetTransport()
+        self.transport.transport = MagicMock()
+        # Normally initialised in connectionMade.
+        self.transport._logged_options = set()
+
+    def _capture(self, run: Callable[[], None]) -> list[dict]:
+        events: list[dict] = []
+        log.addObserver(events.append)
+        try:
+            run()
+        finally:
+            log.removeObserver(events.append)
+        return [e for e in events if e.get("eventid") == "cowrie.telnet.option"]
+
+    def test_repeated_negotiation_logged_once(self) -> None:
+        def run() -> None:
+            for _ in range(5):
+                self.transport.telnet_WONT(NAWS)
+
+        with patch.object(TelnetTransport, "telnet_WONT"):
+            logs = self._capture(run)
+        self.assertEqual(len(logs), 1)
+        self.assertEqual(logs[0]["command"], "WONT")
+
+    def test_distinct_negotiations_each_logged(self) -> None:
+        def run() -> None:
+            self.transport.telnet_WONT(NAWS)
+            self.transport.telnet_WONT(NAWS)
+            self.transport.telnet_WILL(NAWS)
+
+        with (
+            patch.object(TelnetTransport, "telnet_WONT"),
+            patch.object(TelnetTransport, "telnet_WILL"),
+        ):
+            logs = self._capture(run)
+        self.assertEqual(sorted(e["command"] for e in logs), ["WILL", "WONT"])
 
 
 if __name__ == "__main__":
