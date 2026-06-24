@@ -9,7 +9,11 @@ This module contains ...
 
 from __future__ import annotations
 
+import errno
+import functools
 import os
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 import twisted.conch.ls
 from twisted.conch.interfaces import ISFTPFile, ISFTPServer
@@ -29,6 +33,34 @@ from zope.interface import implementer
 import twisted
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import pwd
+from cowrie.shell.fs import FileNotFound, PermissionDenied
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def translate_fs_errors(method: F) -> F:
+    """Translate the emulated filesystem's exceptions into ``OSError`` at the
+    SFTP boundary.
+
+    ``HoneyPotFilesystem`` raises ``FileNotFound`` / ``PermissionDenied`` for
+    some operations (a missing parent directory, a write under ``/proc`` ...).
+    The conch SFTP server only understands ``OSError`` / ``SFTPError``; a bare
+    cowrie exception reaches it as an unexpected error, logged as a critical
+    traceback and reported to the client as a generic failure. Mapping them to
+    the matching errno lets conch return ``FX_NO_SUCH_FILE`` /
+    ``FX_PERMISSION_DENIED`` instead.
+    """
+
+    @functools.wraps(method)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return method(*args, **kwargs)
+        except FileNotFound:
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT)) from None
+        except PermissionDenied:
+            raise OSError(errno.EACCES, os.strerror(errno.EACCES)) from None
+
+    return cast("F", wrapper)
 
 
 @implementer(ISFTPFile)
@@ -178,32 +210,39 @@ class SFTPServerForCowrieUser:
     def gotVersion(self, otherVersion, extData):
         return {}
 
+    @translate_fs_errors
     def openFile(self, filename, flags, attrs):
         log.msg(f"SFTP openFile: {filename}")
         return CowrieSFTPFile(self, self._absPath(filename), flags, attrs)
 
+    @translate_fs_errors
     def removeFile(self, filename):
         log.msg(f"SFTP removeFile: {filename}")
         return self.fs.remove(self._absPath(filename))
 
+    @translate_fs_errors
     def renameFile(self, oldpath, newpath):
         log.msg(f"SFTP renameFile: {oldpath} {newpath}")
         return self.fs.rename(self._absPath(oldpath), self._absPath(newpath))
 
+    @translate_fs_errors
     def makeDirectory(self, path, attrs):
         log.msg(f"SFTP makeDirectory: {path}")
         path = self._absPath(path)
         self.fs.mkdir2(path)
         self._setAttrs(path, attrs)
 
+    @translate_fs_errors
     def removeDirectory(self, path):
         log.msg(f"SFTP removeDirectory: {path}")
         return self.fs.rmdir(self._absPath(path))
 
+    @translate_fs_errors
     def openDirectory(self, path):
         log.msg(f"SFTP OpenDirectory: {path}")
         return CowrieSFTPDirectory(self, self._absPath(path))
 
+    @translate_fs_errors
     def getAttrs(self, path, followLinks):
         log.msg(f"SFTP getAttrs: {path}")
         path = self._absPath(path)
@@ -213,11 +252,13 @@ class SFTPServerForCowrieUser:
             s = self.fs.lstat(path)
         return self._getAttrs(s)
 
+    @translate_fs_errors
     def setAttrs(self, path, attrs):
         log.msg(f"SFTP setAttrs: {path}")
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
+    @translate_fs_errors
     def readLink(self, path):
         log.msg(f"SFTP readLink: {path}")
         path = self._absPath(path)
