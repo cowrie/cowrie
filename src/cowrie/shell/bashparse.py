@@ -550,7 +550,8 @@ class BashParser:
                 if self._keyword(node) == "do":
                     break
                 if isinstance(node, Tree) and node.data == "word":
-                    words.append(cursor.next())  # type: ignore[arg-type]
+                    cursor.next()
+                    words.append(node)
                     continue
                 break
 
@@ -614,7 +615,8 @@ class BashParser:
             if node is None or self._keyword(node) == "in" or self._is_separator(node):
                 break
             if isinstance(node, Tree) and node.data == "word":
-                word_trees.append(cursor.next())  # type: ignore[arg-type]
+                cursor.next()
+                word_trees.append(node)
                 continue
             break
         if self._keyword(cursor.peek()) != "in":

@@ -289,6 +289,21 @@ class HoneyPotShell:
         self._loop_depth -= 1
         self._advance()
 
+    def _loop_body_end(self, step: Callable[[], None]) -> _Continuation:
+        """The continuation appended after a loop body. It consumes a pending
+        break / continue (break ends the loop; continue and a normal pass both
+        run ``step`` again to take the next iteration)."""
+
+        def loop_cont() -> None:
+            signal = self._loop_signal
+            self._loop_signal = None
+            if signal == "break":
+                self._end_loop()
+            else:
+                step()
+
+        return _Continuation(loop_cont, is_loop_cont=True)
+
     def _run_for(self, node: ForClause) -> None:
         """``for VAR in WORDS; do BODY; done`` over the expanded word list."""
         values = self.bashparser.evaluate(node.items) if node.items else []
@@ -300,40 +315,31 @@ class HoneyPotShell:
             return
 
         self._loop_depth += 1
-        state = {"index": 0}
+        index = 0
 
         def step() -> None:
-            if state["index"] >= len(values):
+            nonlocal index
+            if index >= len(values):
                 self._end_loop()
                 return
-            self.environ[node.var] = values[state["index"]]
-            state["index"] += 1
-            self.cmdpending[0:0] = [
-                *node.body,
-                _Continuation(loop_cont, is_loop_cont=True),
-            ]
+            self.environ[node.var] = values[index]
+            index += 1
+            self.cmdpending[0:0] = [*node.body, self._loop_body_end(step)]
             self._advance()
-
-        def loop_cont() -> None:
-            signal = self._loop_signal
-            self._loop_signal = None
-            if signal == "break":
-                self._end_loop()
-                return
-            step()  # a continue, or a normal pass, moves to the next value
 
         step()
 
     def _run_while(self, node: WhileClause) -> None:
         """``while COND; do BODY; done`` (``until`` inverts the test)."""
         self._loop_depth += 1
-        state = {"iterations": 0}
+        iterations = 0
 
         def test() -> None:
-            if state["iterations"] >= MAX_WHILE_ITERATIONS:
+            nonlocal iterations
+            if iterations >= MAX_WHILE_ITERATIONS:
                 self._end_loop()
                 return
-            state["iterations"] += 1
+            iterations += 1
             self.cmdpending[0:0] = [*node.condition, _Continuation(decide)]
             self._advance()
 
@@ -343,19 +349,8 @@ class HoneyPotShell:
             if not run_body:
                 self._end_loop()
                 return
-            self.cmdpending[0:0] = [
-                *node.body,
-                _Continuation(loop_cont, is_loop_cont=True),
-            ]
+            self.cmdpending[0:0] = [*node.body, self._loop_body_end(test)]
             self._advance()
-
-        def loop_cont() -> None:
-            signal = self._loop_signal
-            self._loop_signal = None
-            if signal == "break":
-                self._end_loop()
-                return
-            test()  # a continue, or a normal pass, re-evaluates the condition
 
         test()
 
