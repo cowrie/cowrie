@@ -90,6 +90,14 @@ class ExitStatusTests(unittest.TestCase):
         out = self.run_line(b"dd if=/nonexistentfile && echo ran")
         self.assertNotIn(b"ran", out)
 
+    def test_download_command_failure_sets_nonzero_status(self) -> None:
+        # A download command that fails validation reports a non-zero status,
+        # so a following && short-circuits.
+        for cmd in (b"wget", b"curl", b"tftp", b"ftpget"):
+            out = self.run_line(cmd + b"; echo rc=$?")
+            self.assertNotIn(b"rc=0", out, cmd)
+            self.assertNotIn(b"OK", self.run_line(cmd + b" && echo OK"), cmd)
+
     def test_syntax_error_is_2(self) -> None:
         self.run_line(b"echo x >")
         self.assertEqual(self.run_line(b"echo $?"), b"2\n")

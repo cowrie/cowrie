@@ -84,11 +84,13 @@ Download a file via FTP
             optlist, args = getopt.getopt(self.args, "cvu:p:P:")
         except getopt.GetoptError:
             self.help()
+            self.exit_code = 1
             self.exit()
             return
 
         if len(args) < 2:
             self.help()
+            self.exit_code = 1
             self.exit()
             return
 
@@ -129,11 +131,13 @@ Download a file via FTP
             self.errorWrite(
                 f"ftpget: can't open '{self.local_file}': No such file or directory"
             )
+            self.exit_code = 1
             self.exit()
             return
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
+            self.exit_code = 1
             self.exit()
             return
 
@@ -159,6 +163,7 @@ Download a file via FTP
             d.addErrback(self._download_error)
         else:
             self.artifactFile.close()
+            self.exit_code = 1
             self.exit()
 
     def ftp_download_async(self) -> defer.Deferred[None] | None:
@@ -282,6 +287,7 @@ Download a file via FTP
         """
         Called when download fails
         """
+        self.exit_code = 1
         self.artifactFile.close()
 
         error_msg = "Connection error"
