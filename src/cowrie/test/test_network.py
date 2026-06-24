@@ -3,10 +3,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import unittest
+from unittest import mock
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import fail, inlineCallbacks
+from twisted.names import error as names_error
+from twisted.python import log
 
-from cowrie.core.network import communication_allowed
+from cowrie.core.network import communication_allowed, resolve_cname
 
 # The communication_allowed function and other dependencies would already be imported here
 
@@ -82,6 +85,31 @@ class TestCommunicationAllowed(unittest.TestCase):
         # Test with a CNAME that resolves to a blocked IP (e.g., 127.0.0.1)
         allowed = yield communication_allowed("localhost")  # Should be blocked
         self.assertFalse(allowed)
+
+
+class TestResolveCnameLogging(unittest.TestCase):
+    """A failed DNS lookup is handled, so it must not be logged as an error."""
+
+    def test_failed_lookup_logged_without_unhandled_error(self) -> None:
+        events: list[dict] = []
+        log.addObserver(events.append)
+        try:
+            failed = fail(names_error.DNSNameError("bin"))
+            with mock.patch(
+                "cowrie.core.network.client.lookupAddress", return_value=failed
+            ):
+                results: list = []
+                resolve_cname("bin", set()).addBoth(results.append)
+        finally:
+            log.removeObserver(events.append)
+
+        # The lookup fails synchronously, so resolve_cname returns None.
+        self.assertEqual(results, [None])
+        # log.err marks events with isError=1 and prints "Unhandled Error"; the
+        # caught failure must instead be an informational message.
+        self.assertFalse(any(e.get("isError") for e in events))
+        messages = [log.textFromEventDict(e) or "" for e in events]
+        self.assertTrue(any("DNS lookup failed for 'bin'" in m for m in messages))
 
 
 if __name__ == "__main__":
