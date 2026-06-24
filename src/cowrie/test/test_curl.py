@@ -53,7 +53,7 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         cmd = Command_curl.__new__(Command_curl)
         cmd.protocol = self.proto
         cmd.errorWritefn = lambda _data: None
-        cmd.exit = lambda: None  # type: ignore[method-assign]  # process teardown is unrelated here
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]  # process teardown is unrelated here
         cmd.url = b"http://no.such.host/file"
         cmd.host = "no.such.host"
         cmd.port = 80
