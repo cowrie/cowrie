@@ -231,8 +231,7 @@ class Command_wget(HoneyPotCommand):
             self.errorWrite("failed: Connection timed out.\n")
             self.errorWrite("Retrying.\n\n")
 
-            self.exit_code = 1
-            self.exit()
+            self.exit(1)
             return
 
         allowed = yield communication_allowed(self.host)
@@ -245,8 +244,7 @@ class Command_wget(HoneyPotCommand):
                     f"Resolving {self.host} ({self.host})... failed: Temporary failure in name resolution.\n"
                 )
             self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
-            self.exit_code = 1
-            self.exit()
+            self.exit(1)
             return None
 
         self.url = url.encode("utf8")
@@ -264,8 +262,7 @@ class Command_wget(HoneyPotCommand):
                 self.errorWrite(
                     f"wget: {self.outfile}: Cannot open: No such file or directory\n"
                 )
-                self.exit_code = 1
-                self.exit()
+                self.exit(1)
                 return
 
         self.artifact = Artifact("wget-download")
@@ -315,8 +312,7 @@ class Command_wget(HoneyPotCommand):
 
         if not remote_path or remote_path.endswith("/"):
             self.errorWrite("wget: unsupported directory target in FTP URL\n")
-            self.exit_code = 1
-            self.exit()
+            self.exit(1)
             return None
 
         self.ftp_remote_dir = posixpath.dirname(remote_path)
@@ -324,8 +320,7 @@ class Command_wget(HoneyPotCommand):
 
         if not self.ftp_remote_file:
             self.errorWrite("wget: missing remote filename in FTP URL\n")
-            self.exit_code = 1
-            self.exit()
+            self.exit(1)
             return None
 
         self.ftp_client = None
@@ -442,8 +437,7 @@ class Command_wget(HoneyPotCommand):
 
     def handle_CTRL_C(self) -> None:
         self.write("^C\n")
-        self.exit_code = 130  # 128 + SIGINT
-        self.exit()
+        self.exit(130)  # 128 + SIGINT
 
     def success(self, response):
         """

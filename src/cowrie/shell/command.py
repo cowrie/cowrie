@@ -120,10 +120,16 @@ class HoneyPotCommand:
     def call(self) -> None:
         self.write(f"Hello World! [{self.args!r}]\n")
 
-    def exit(self) -> None:
+    def exit(self, code: int | None = None) -> None:
         """
         Sometimes client is disconnected and command exits after. So cmdstack is gone
+
+        ``code`` sets this command's exit status (``$?`` for the shell that ran
+        it). When omitted, the existing ``exit_code`` is kept, so a command that
+        set it earlier (e.g. in an error callback) can just call ``exit()``.
         """
+        if code is not None:
+            self.exit_code = code
         if (
             self.protocol
             and self.protocol.terminal
@@ -152,8 +158,7 @@ class HoneyPotCommand:
     def handle_CTRL_C(self) -> None:
         log.msg("Received CTRL-C, exiting..")
         self.write("^C\n")
-        self.exit_code = 130  # 128 + SIGINT, like a real shell
-        self.exit()
+        self.exit(130)  # 128 + SIGINT, like a real shell
 
     def lineReceived(self, line: str) -> None:
         log.msg(f"QUEUED INPUT: {line}")

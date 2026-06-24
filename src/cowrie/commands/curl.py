@@ -226,8 +226,7 @@ class Command_curl(HoneyPotCommand):
             self.errorWrite(
                 "curl: try 'curl --help' or 'curl --manual' for more information\n"
             )
-            self.exit_code = 2
-            self.exit()
+            self.exit(2)
             return
 
         for opt in optlist:
@@ -247,8 +246,7 @@ class Command_curl(HoneyPotCommand):
             self.errorWrite(
                 "curl: try 'curl --help' or 'curl --manual' for more information\n"
             )
-            self.exit_code = 2
-            self.exit()
+            self.exit(2)
             return
 
         if "://" not in url:
@@ -266,8 +264,7 @@ class Command_curl(HoneyPotCommand):
                     or not urldata.path.count("/")
                 ):
                     self.errorWrite("curl: Remote file name has no length!\n")
-                    self.exit_code = 23
-                    self.exit()
+                    self.exit(23)
                     return
 
         if self.outfile:
@@ -277,8 +274,7 @@ class Command_curl(HoneyPotCommand):
                 self.errorWrite(
                     f"curl: {self.outfile}: Cannot open: No such file or directory\n"
                 )
-                self.exit_code = 23
-                self.exit()
+                self.exit(23)
                 return
 
         self.url = url.encode("ascii")
@@ -289,15 +285,13 @@ class Command_curl(HoneyPotCommand):
             self.errorWrite(
                 f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
             )
-            self.exit_code = 1
-            self.exit()
+            self.exit(1)
             return
         if parsed.hostname:
             self.host = parsed.hostname
         else:
             self.errorWrite("curl: (3) URL using bad/illegal format or missing URL\n")
-            self.exit_code = 3
-            self.exit()
+            self.exit(3)
             return
         self.port = parsed.port or (443 if scheme == "https" else 80)
 
@@ -311,16 +305,14 @@ class Command_curl(HoneyPotCommand):
             self.errorWrite(
                 f"curl: (7) Failed to connect to {self.host} port {self.port}: Operation timed out\n"
             )
-            self.exit_code = 7
-            self.exit()
+            self.exit(7)
             return
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
             log.msg("Attempt to access blocked network address")
             self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
-            self.exit_code = 6
-            self.exit()
+            self.exit(6)
             return None
 
         self.artifact = Artifact("curl-download")
