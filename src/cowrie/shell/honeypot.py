@@ -41,8 +41,10 @@ class HoneyPotShell:
         self.redirect: bool = redirect  # to support output redirection
         self.effective_user = effective_user  # For su: {uid, gid, username, home}
         # Parsed-but-not-yet-evaluated statements; each is expanded against the
-        # live environment only when it is about to run (see runCommand).
-        self.cmdpending: list[Command] = []
+        # live environment only when it is about to run (see runCommand). A
+        # subshell stays a single unit here so its &&/|| gate covers the whole
+        # group; runCommand splices its statements in only when it runs.
+        self.cmdpending: list[Command | Subshell] = []
         # A nested shell (e.g. a command substitution) inherits the live
         # environment of whichever shell is currently running; the very first
         # shell of a session falls back to the login environment, all of which
@@ -102,38 +104,51 @@ class HoneyPotShell:
     def _queue_statements(self, statements: list[Statement]) -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
 
-        A subshell's inner statements are flattened into the queue in place so
-        they run in order with the surrounding commands. Cowrie does not
+        A subshell is queued as one unit so its join operator (e.g. the || in
+        `x || (a; b)`) gates the whole group; runCommand splices the inner
+        statements in only when the group actually runs. Cowrie does not
         emulate a subshell's isolated environment (``cwd`` and friends live on
-        the protocol, not the shell), so flattening matches bash's output
-        ordering without a separate captured-output pass.
+        the protocol, not the shell), so the inner statements then run in the
+        parent shell.
 
         Returns False to stop queueing after a syntax error: commands already
         queued before the error still run, as in bash.
         """
         for statement in statements:
-            if isinstance(statement, Command):
-                self.cmdpending.append(statement)
-            elif isinstance(statement, Subshell):
-                # The group's join operator (e.g. the || in `x || (a; b)`) gates
-                # the whole group, so it applies to the first inner statement.
-                inner = statement.statements
-                if inner and isinstance(inner[0], (Command, Subshell)):
-                    inner[0].op = statement.op
-                if not self._queue_statements(inner):
-                    return False
-            elif isinstance(statement, SyntaxError_):
-                if statement.token:
-                    self.protocol.terminal.write(
-                        f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
-                    )
-                else:
-                    self.protocol.terminal.write(
-                        b"-bash: syntax error: unexpected end of file\n"
-                    )
-                self.last_exit_code = 2  # bash uses 2 for a syntax error
+            if isinstance(statement, SyntaxError_):
+                self._report_syntax_error(statement)
+                return False
+            if isinstance(statement, Subshell) and not self._reject_inner_error(
+                statement.statements
+            ):
+                return False
+            self.cmdpending.append(statement)
+        return True
+
+    def _reject_inner_error(self, statements: list[Statement]) -> bool:
+        """Report a syntax error nested anywhere inside a subshell, since the
+        whole line is rejected at parse time. Returns False once reported."""
+        for statement in statements:
+            if isinstance(statement, SyntaxError_):
+                self._report_syntax_error(statement)
+                return False
+            if isinstance(statement, Subshell) and not self._reject_inner_error(
+                statement.statements
+            ):
                 return False
         return True
+
+    def _report_syntax_error(self, statement: SyntaxError_) -> None:
+        """Write the message bash prints for a syntax error and set $? to 2."""
+        if statement.token:
+            self.protocol.terminal.write(
+                f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
+            )
+        else:
+            self.protocol.terminal.write(
+                b"-bash: syntax error: unexpected end of file\n"
+            )
+        self.last_exit_code = 2  # bash uses 2 for a syntax error
 
     def _capture_command(self, command: Command) -> str:
         """Run one parsed command in an output-capturing subshell and return
@@ -198,11 +213,19 @@ class HoneyPotShell:
 
         command = self.cmdpending.pop(0)
 
-        # && / || short-circuit: skip this statement based on the previous
-        # command's exit status, leaving $? unchanged.
+        # && / || short-circuit: skip this statement (or whole group) based on
+        # the previous command's exit status, leaving $? unchanged.
         if (command.op == "&&" and self.last_exit_code != 0) or (
             command.op == "||" and self.last_exit_code == 0
         ):
+            self._advance()
+            return
+
+        if isinstance(command, Subshell):
+            # The group runs: splice its statements to the front so they run in
+            # order. The group's own gate was checked above; each inner
+            # statement keeps its own &&/|| relative to its siblings.
+            self.cmdpending[0:0] = command.statements
             self._advance()
             return
 

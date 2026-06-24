@@ -73,6 +73,23 @@ class ExitStatusTests(unittest.TestCase):
         # The `&&` branch is skipped, so $? stays at false's 1.
         self.assertEqual(self.run_line(b"false && echo x; echo $?"), b"1\n")
 
+    def test_nested_shell_propagates_exit_code(self) -> None:
+        # `bash -c '...'` exits with the status of its last command.
+        self.assertEqual(self.run_line(b"bash -c false; echo $?"), b"1\n")
+        self.assertEqual(self.run_line(b"bash -c true; echo $?"), b"0\n")
+
+    def test_nested_shell_status_gates_and(self) -> None:
+        # A failing nested shell short-circuits a following &&.
+        self.assertEqual(self.run_line(b"bash -c false && echo ran"), b"")
+
+    def test_failing_command_sets_nonzero_status(self) -> None:
+        # dd on a missing input file fails, so $? is non-zero and a following
+        # && does not run.
+        out = self.run_line(b"dd if=/nonexistentfile; echo $?")
+        self.assertTrue(out.endswith(b"1\n"), out)
+        out = self.run_line(b"dd if=/nonexistentfile && echo ran")
+        self.assertNotIn(b"ran", out)
+
     def test_syntax_error_is_2(self) -> None:
         self.run_line(b"echo x >")
         self.assertEqual(self.run_line(b"echo $?"), b"2\n")
@@ -81,6 +98,27 @@ class ExitStatusTests(unittest.TestCase):
         # A pipeline's status is its last stage's.
         self.assertEqual(self.run_line(b"true | false; echo $?"), b"1\n")
         self.assertEqual(self.run_line(b"false | true; echo $?"), b"0\n")
+
+    def test_subshell_group_runs_in_order(self) -> None:
+        # A group with no gate runs all its statements.
+        self.assertEqual(self.run_line(b"(echo a; echo b)"), b"a\nb\n")
+
+    def test_or_short_circuits_whole_group(self) -> None:
+        # true succeeds -> || skips the entire group, not just its first
+        # statement.
+        self.assertEqual(self.run_line(b"true || (echo a; echo b)"), b"")
+
+    def test_and_short_circuits_whole_group(self) -> None:
+        # false fails -> && skips the entire group.
+        self.assertEqual(self.run_line(b"false && (echo a; echo b)"), b"")
+
+    def test_or_runs_whole_group_on_failure(self) -> None:
+        # false fails -> || runs the whole group.
+        self.assertEqual(self.run_line(b"false || (echo a; echo b)"), b"a\nb\n")
+
+    def test_statement_after_group_runs_when_group_skipped(self) -> None:
+        # The group is skipped, but a `;`-joined statement after it still runs.
+        self.assertEqual(self.run_line(b"true || (echo a); echo c"), b"c\n")
 
     def test_statement_after_pipeline_runs_in_order(self) -> None:
         # A statement after a pipeline runs after the pipeline finishes, and the

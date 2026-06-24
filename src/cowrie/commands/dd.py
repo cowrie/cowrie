@@ -34,7 +34,7 @@ class Command_dd(HoneyPotCommand):
         for arg in self.args:
             if arg.find("=") == -1:
                 self.write(f"unknown operand: {arg}")
-                HoneyPotCommand.exit(self)
+                self.exit(success=False)
             operand, value = arg.split("=")
             if operand not in ("if", "bs", "of", "count"):
                 self.write(f"unknown operand: {operand}")
@@ -93,6 +93,8 @@ class Command_dd(HoneyPotCommand):
             self.errorWrite("0+0 records in\n")
             self.errorWrite("0+0 records out\n")
             self.errorWrite("0 bytes transferred in 0.695821 secs (0 bytes/sec)\n")
+        else:
+            self.exit_code = 1
         HoneyPotCommand.exit(self)
 
     def lineReceived(self, line: str) -> None:

@@ -83,10 +83,14 @@ class Command_sh(HoneyPotCommand):
     def execute_commands(self, cmds: str) -> None:
         # self.input_data holds commands passed via PIPE
         # create new HoneyPotShell for our a new 'sh' shell
-        self.protocol.cmdstack.append(HoneyPotShell(self.protocol, interactive=False))
+        shell = HoneyPotShell(self.protocol, interactive=False)
+        self.protocol.cmdstack.append(shell)
 
         # call lineReceived method that indicates that we have some commands to parse
-        self.protocol.cmdstack[-1].lineReceived(cmds)
+        shell.lineReceived(cmds)
+
+        # `bash -c '...'` exits with the status of the last command it ran.
+        self.exit_code = shell.last_exit_code
 
         # remove the shell
         self.protocol.cmdstack.pop()
