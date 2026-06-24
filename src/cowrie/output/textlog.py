@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+import json
+
 import cowrie.core.cef
+import cowrie.core.ocsf
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
@@ -28,6 +31,9 @@ class Output(cowrie.core.output.Output):
         if self.format == "cef":
             self.outfile.write("{} ".format(event["timestamp"]))
             self.outfile.write(f"{cowrie.core.cef.formatCef(event)}\n")
+        elif self.format == "ocsf":
+            ocsf_event = cowrie.core.ocsf.formatOCSF(event)
+            self.outfile.write(f"{json.dumps(ocsf_event)}\n")
         else:
             self.outfile.write("{} ".format(event["timestamp"]))
             self.outfile.write("{} ".format(event["session"]))
