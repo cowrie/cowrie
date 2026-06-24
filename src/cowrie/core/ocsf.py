@@ -184,10 +184,16 @@ def _authentication(
     observables.append({"name": "user.name", "type_id": 4, "value": username})
     ocsf["observables"] = observables
 
-    # Password is recorded but has no dedicated OCSF home. Public-key login
-    # attempts carry no password field, so guard the lookup.
+    # A login attempt carries either a password or an offered public key,
+    # never both. Neither has a dedicated OCSF home, so the credential is
+    # preserved in unmapped. For public-key attempts that means the key
+    # fingerprint, the key blob and its algorithm (key type varies:
+    # ssh-ed25519, ecdsa-sha2-nistp521, ssh-rsa, ...).
     if "password" in logentry:
         ocsf["unmapped"]["password"] = logentry["password"]
+    for field in ("fingerprint", "key", "type"):
+        if field in logentry:
+            ocsf["unmapped"][field] = logentry[field]
 
 
 def _process_activity(
