@@ -53,6 +53,22 @@ class WriteLineEndingTestCase(unittest.TestCase):
         self.assertEqual(lsp.transport.written, b"Linux server01 5.10.0 armv7l\r\n")
 
 
+class DataReceivedAfterTeardownTestCase(unittest.TestCase):
+    """dataReceived must discard data once the terminal protocol is gone."""
+
+    def test_data_after_teardown_is_discarded(self) -> None:
+        # connectionLost() clears terminalProtocol; a final data packet
+        # delivered in the same reactor iteration must be dropped rather than
+        # crashing in ServerProtocol.dataReceived (issue #40225).
+        lsp = make_protocol("i")
+        lsp.terminalProtocol = None
+        lsp.stdinlogOpen = False
+        lsp.bytesReceived = 0
+        lsp.dataReceived(b"late keystrokes")  # must not raise
+        # Discarded before being counted or delegated to the parent.
+        self.assertEqual(lsp.bytesReceived, 0)
+
+
 class ConnectionLostStdinTestCase(unittest.TestCase):
     """Tests for stdin-log cleanup in LoggingServerProtocol.connectionLost()."""
 
