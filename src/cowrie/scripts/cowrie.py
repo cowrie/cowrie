@@ -85,6 +85,7 @@ def remove_stale_pidfile() -> None:
 
 def cowrie_status() -> None:
     """Print the current status of Cowrie."""
+    check_initialized()
     pid = read_pid()
     if pid is None:
         print("cowrie is not running.")
@@ -179,6 +180,7 @@ def cowrie_start(args: list[str]) -> NoReturn:
 
 def cowrie_stop() -> None:
     """Stop the Cowrie service."""
+    check_initialized()
     pid = read_pid()
     if pid is None:
         print("cowrie is not running.")
@@ -199,6 +201,7 @@ def cowrie_stop() -> None:
 
 def cowrie_force_stop() -> None:
     """Force stop the Cowrie service."""
+    check_initialized()
     pid = read_pid()
     if pid is None:
         print("cowrie is not running.")
