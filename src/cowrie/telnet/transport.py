@@ -86,6 +86,33 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         self.transport.write(data.replace(b"\r\n", b"\n"))
 
+    def dataReceived(self, data: bytes) -> None:
+        """
+        Twisted's Telnet.dataReceived() raises ValueError on an unrecognised
+        byte following IAC (e.g. a scanner sending IAC 0x01 outside a WILL/DO
+        envelope). Unhandled, that escapes into the reactor as an "Unhandled
+        Error" and drops the transport without the normal connectionLost()
+        cleanup. Catch it, log the protocol error, and lose the connection so
+        the usual teardown runs.
+
+        Telnet.dataReceived() also re-enters the application stack
+        (applicationDataReceived -> protocol.dataReceived, negotiate,
+        commandReceived), so a ValueError raised by downstream honeypot code is
+        caught here too. Log the full traceback as well so a genuine bug is not
+        silently reduced to a one-line protocol error.
+        """
+        try:
+            TelnetTransport.dataReceived(self, data)
+        except ValueError as e:
+            log.msg(
+                eventid="cowrie.telnet.error",
+                format="Telnet protocol error %(error)s; dropping connection",
+                error=str(e),
+            )
+            log.err()
+            if self.transport:
+                self.transport.loseConnection()
+
     def timeoutConnection(self) -> None:
         """
         Make sure all sessions time out eventually.
