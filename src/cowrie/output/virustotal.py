@@ -13,7 +13,7 @@ import datetime
 import json
 import os
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlencode, urlparse
+from urllib.parse import quote, urlencode, urlparse
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -561,10 +561,48 @@ class Output(cowrie.core.output.Output):
 
     def _init_collection(self) -> None:
         """
-        Initialize collection - create if doesn't exist or get ID if exists
-        This is called during start() if collection is configured
+        Resolve the collection id: look up an existing collection with this name
+        and reuse it, otherwise create one. Called during start() if a
+        collection is configured.
+
+        Looking up by name first reuses the server-assigned id across restarts
+        (it is not derivable from the name) and avoids creating a duplicate
+        collection on every start.
         """
-        # Try to create the collection (it's idempotent - won't duplicate if exists)
+        query = quote(f"name:{self.collection_name} owner:me")
+        vtUrl = f"{VTAPI_URL}collections?filter={query}&limit=40".encode()
+        headers = self._build_headers()
+
+        def process_response(body_bytes):
+            if self.debug:
+                log.msg(f"VT find collection result: {body_bytes}")
+            j = json.loads(body_bytes.decode("utf8"))
+            # The name filter may be loose, so match the name exactly.
+            if "error" not in j:
+                for item in j.get("data", []):
+                    attributes = item.get("attributes", {})
+                    if (
+                        attributes.get("name") == self.collection_name
+                        and item.get("id")
+                    ):
+                        self.collection_id = item["id"]
+                        log.msg(
+                            f"VT: Using existing collection '{self.collection_name}' with ID: {item['id']}"
+                        )
+                        return
+            # No existing collection found (or the search errored): create it.
+            self._create_collection()
+
+        self._make_request(
+            b"GET",
+            vtUrl,
+            headers,
+            process_response=process_response,
+            error_prefix="VT find collection",
+        )
+
+    def _create_collection(self) -> None:
+        """Create the configured collection and store its server-assigned id."""
         vtUrl = f"{VTAPI_URL}collections".encode()
         collection_data = {
             "data": {
@@ -581,29 +619,17 @@ class Output(cowrie.core.output.Output):
         def process_response(body_bytes):
             if self.debug:
                 log.msg(f"VT create collection result: {body_bytes}")
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            j = json.loads(body_bytes.decode("utf8"))
 
-            # Check for errors in v3 API response
             if "error" in j:
-                error_code = j["error"].get("code")
-                # AlreadyExistsError means collection exists - that's OK
-                if error_code == "AlreadyExistsError":
-                    log.msg(
-                        f"VT: Collection '{self.collection_name}' already exists - will use existing"
-                    )
-                    # We'll get the ID from the error details if available
-                    # Otherwise we'll get it on first add operation
-                else:
-                    log.msg(
-                        f"VT: Collection creation error - {j['error']['code']}: {j['error'].get('message', 'Unknown error')}"
-                    )
+                log.msg(
+                    f"VT: Collection creation error - {j['error'].get('code')}: "
+                    f"{j['error'].get('message', 'Unknown error')}"
+                )
                 return
 
-            # Process successful creation response
             if "data" in j:
-                data = j["data"]
-                collection_id = data.get("id")
+                collection_id = j["data"].get("id")
                 if collection_id:
                     self.collection_id = collection_id
                     log.msg(

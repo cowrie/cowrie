@@ -440,37 +440,77 @@ class VirusTotalOutputTests(unittest.TestCase):
                 # Reset mock for next test
                 self.output.agent.request.reset_mock()
 
-    def test_collection_initialization(self) -> None:
-        """Test collection initialization"""
-        # Create output plugin with collection configured
+    def test_create_collection_request(self) -> None:
+        """Creating a collection POSTs the v3 collection body."""
         output = Output()
         output.apiKey = "test-api-key"
         output.debug = True
         output.collection_name = "test-collection"
 
-        # Mock agent
         mock_agent = Mock()
         output.agent = mock_agent
 
-        # Initialize collection
-        output._init_collection()
+        output._create_collection()
 
-        # Verify request was made
         self.assertTrue(mock_agent.request.called)
-        call_args = mock_agent.request.call_args
-        method, url, _headers, body = call_args[0]
-
-        # Check method and URL
+        method, url, _headers, body = mock_agent.request.call_args[0]
         self.assertEqual(method, b"POST")
         self.assertEqual(url, b"https://www.virustotal.com/api/v3/collections")
-
-        # Check body format
-        body_content = body.body.decode()
-        collection_data = json.loads(body_content)
+        collection_data = json.loads(body.body.decode())
         self.assertEqual(collection_data["data"]["type"], "collection")
         self.assertEqual(
             collection_data["data"]["attributes"]["name"], "test-collection"
         )
+
+    def test_init_collection_reuses_existing(self) -> None:
+        """An existing collection found by name is reused without creating."""
+        self.output.collection_name = "cowrie"
+
+        captured: dict = {}
+
+        def fake_make_request(method, *args, **kwargs):
+            captured["method"] = method
+            captured["process_response"] = kwargs.get("process_response")
+            return defer.succeed(None)
+
+        self.output._make_request = fake_make_request  # type: ignore[method-assign]
+        self.output._create_collection = Mock()  # type: ignore[method-assign]
+
+        self.output._init_collection()
+        # The lookup is a GET against /collections.
+        self.assertEqual(captured["method"], b"GET")
+        captured["process_response"](
+            json.dumps(
+                {"data": [{"id": "EXISTING-ID", "attributes": {"name": "cowrie"}}]}
+            ).encode()
+        )
+
+        self.assertEqual(self.output.collection_id, "EXISTING-ID")
+        self.output._create_collection.assert_not_called()
+
+    def test_init_collection_creates_when_absent(self) -> None:
+        """When no collection matches the name, one is created."""
+        self.output.collection_name = "cowrie"
+
+        captured: dict = {}
+
+        def fake_make_request(method, *args, **kwargs):
+            captured["process_response"] = kwargs.get("process_response")
+            return defer.succeed(None)
+
+        self.output._make_request = fake_make_request  # type: ignore[method-assign]
+        self.output._create_collection = Mock()  # type: ignore[method-assign]
+
+        self.output._init_collection()
+        # A different collection is returned; the name does not match.
+        captured["process_response"](
+            json.dumps(
+                {"data": [{"id": "OTHER-ID", "attributes": {"name": "something-else"}}]}
+            ).encode()
+        )
+
+        self.assertIsNone(self.output.collection_id)
+        self.output._create_collection.assert_called_once()
 
     def test_add_file_to_collection(self) -> None:
         """Test adding a file to a collection"""
