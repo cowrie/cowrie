@@ -282,6 +282,43 @@ class ShellTftpAsyncTests(unittest.TestCase):
         return d
 
 
+class TFTPArtifactCloseTests(unittest.TestCase):
+    """Tests for the artifact close sequence used by the download callbacks"""
+
+    def test_close_safety_net_hashes_artifact(self) -> None:
+        """The download close safety-net must hash and store the artifact.
+
+        The success/error callbacks read ``artifactFile.shasum`` and
+        ``shasumFilename`` to log the download and dispatch the
+        ``file_download`` event. If the close sequence fails to hash the
+        artifact, those fields stay empty and downstream consumers (e.g. the
+        VirusTotal output) receive an empty path.
+        """
+        import hashlib
+
+        from cowrie.commands.tftp import Command_tftp
+        from cowrie.core.artifact import Artifact
+
+        content = b"tftp artifact hashing regression\n"
+        expected_sha = hashlib.sha256(content).hexdigest()
+
+        cmd = Command_tftp.__new__(Command_tftp)
+        cmd.artifactFile = Artifact("tftp-download")
+        cmd.artifactFile.write(content)
+
+        cmd._ensure_artifact_closed(None)
+
+        self.assertEqual(cmd.artifactFile.shasum, expected_sha)
+        self.assertTrue(cmd.artifactFile.shasumFilename)
+        self.assertTrue(
+            os.path.exists(cmd.artifactFile.shasumFilename),
+            f"artifact not stored at {cmd.artifactFile.shasumFilename}",
+        )
+        with open(cmd.artifactFile.shasumFilename, "rb") as f:
+            self.assertEqual(f.read(), content)
+        os.remove(cmd.artifactFile.shasumFilename)
+
+
 class TFTPProtocolTests(unittest.TestCase):
     """Tests for TFTP protocol implementation"""
 
