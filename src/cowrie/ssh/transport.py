@@ -26,6 +26,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.utils import escape_nonprintable
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
@@ -126,9 +127,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString: bytes = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=self.otherVersionString.decode(
-                    "utf-8", errors="backslashreplace"
-                ),
+                version=escape_nonprintable(self.otherVersionString),
                 format="Remote SSH version: %(version)s",
             )
             m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
@@ -199,10 +198,16 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         # hassh SSH client fingerprint
         # https://github.com/salesforce/hassh
-        ckexAlgs = ",".join([alg.decode("utf-8") for alg in kexAlgs])
-        cencCS = ",".join([alg.decode("utf-8") for alg in encCS])
-        cmacCS = ",".join([alg.decode("utf-8") for alg in macCS])
-        ccompCS = ",".join([alg.decode("utf-8") for alg in compCS])
+        # backslashreplace, not escape_nonprintable: for every byte sequence
+        # that decodes as valid UTF-8 (all real clients) this is identical to a
+        # plain decode, so the hassh fingerprint is unchanged; it only avoids
+        # crashing on a malformed name-list that is not valid UTF-8.
+        ckexAlgs = ",".join(
+            [alg.decode("utf-8", "backslashreplace") for alg in kexAlgs]
+        )
+        cencCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in encCS])
+        cmacCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in macCS])
+        ccompCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in compCS])
         hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
         hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 

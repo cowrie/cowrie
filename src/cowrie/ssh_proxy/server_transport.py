@@ -20,6 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.utils import escape_nonprintable
 from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
 
@@ -227,9 +228,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=self.otherVersionString.decode(
-                    "utf-8", errors="backslashreplace"
-                ),
+                version=escape_nonprintable(self.otherVersionString),
                 format="Remote SSH version: %(version)s",
             )
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
