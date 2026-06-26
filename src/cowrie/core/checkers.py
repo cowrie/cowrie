@@ -21,6 +21,7 @@ from zope.interface import implementer
 from cowrie.core import auth
 from cowrie.core import credentials as conchcredentials
 from cowrie.core.config import CowrieConfig
+from cowrie.core.utils import escape_nonprintable
 
 
 @implementer(ICredentialsChecker)
@@ -36,7 +37,7 @@ class HoneypotPublicKeyChecker:
         log.msg(
             eventid="cowrie.client.fingerprint",
             format="public key attempt for user %(username)s of type %(type)s with fingerprint %(fingerprint)s",
-            username=credentials.username,
+            username=escape_nonprintable(credentials.username),
             fingerprint=_pubKey.fingerprint(),
             key=_pubKey.toString("OPENSSH"),
             type=_pubKey.sshType(),
@@ -46,7 +47,7 @@ class HoneypotPublicKeyChecker:
             log.msg(
                 eventid="cowrie.login.success",
                 format="public key login attempt for [%(username)s] succeeded",
-                username=credentials.username,
+                username=escape_nonprintable(credentials.username),
                 fingerprint=_pubKey.fingerprint(),
                 key=_pubKey.toString("OPENSSH"),
                 type=_pubKey.sshType(),
@@ -56,7 +57,7 @@ class HoneypotPublicKeyChecker:
             log.msg(
                 eventid="cowrie.login.failed",
                 format="public key login attempt for [%(username)s] failed",
-                username=credentials.username,
+                username=escape_nonprintable(credentials.username),
                 fingerprint=_pubKey.fingerprint(),
                 key=_pubKey.toString("OPENSSH"),
                 type=_pubKey.sshType(),
@@ -76,7 +77,7 @@ class HoneypotNoneChecker:
         log.msg(
             eventid="cowrie.login.success",
             format="login attempt [%(username)s] succeeded",
-            username=credentials.username,
+            username=escape_nonprintable(credentials.username),
         )
         return defer.succeed(credentials.username)
 
@@ -134,15 +135,15 @@ class HoneypotPasswordChecker:
             log.msg(
                 eventid="cowrie.login.success",
                 format="login attempt [%(username)s/%(password)s] succeeded",
-                username=theusername,
-                password=thepassword,
+                username=escape_nonprintable(theusername),
+                password=escape_nonprintable(thepassword),
             )
             return True
 
         log.msg(
             eventid="cowrie.login.failed",
             format="login attempt [%(username)s/%(password)s] failed",
-            username=theusername,
-            password=thepassword,
+            username=escape_nonprintable(theusername),
+            password=escape_nonprintable(thepassword),
         )
         return False
