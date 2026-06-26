@@ -112,6 +112,14 @@ class FlowControlTests(unittest.TestCase):
         output = self._run("while true; do echo x; done")
         self.assertEqual(output.count(b"x\n"), MAX_WHILE_ITERATIONS)
 
+    def test_while_false_condition_exit_status(self) -> None:
+        # A while whose body never runs exits 0, not the failing condition's
+        # status. The condition must not leak into $?.
+        self.assertEqual(self._run("while false; do echo x; done; echo $?"), b"0\n")
+
+    def test_until_true_condition_exit_status(self) -> None:
+        self.assertEqual(self._run("until true; do echo x; done; echo $?"), b"0\n")
+
     # -- break / continue ---------------------------------------------------
 
     def test_break_stops_loop(self) -> None:

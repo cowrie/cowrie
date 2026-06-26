@@ -333,10 +333,17 @@ class HoneyPotShell:
         """``while COND; do BODY; done`` (``until`` inverts the test)."""
         self._loop_depth += 1
         iterations = 0
+        # A loop's exit status is its body's last command, or 0 if the body
+        # never ran -- never the condition's. Each condition test overwrites $?,
+        # so snapshot the body's status before re-testing and restore it on exit.
+        body_status = 0
 
         def test() -> None:
-            nonlocal iterations
+            nonlocal iterations, body_status
+            if iterations:
+                body_status = self.last_exit_code
             if iterations >= MAX_WHILE_ITERATIONS:
+                self.last_exit_code = body_status
                 self._end_loop()
                 return
             iterations += 1
@@ -347,6 +354,7 @@ class HoneyPotShell:
             succeeded = self.last_exit_code == 0
             run_body = (not succeeded) if node.until else succeeded
             if not run_body:
+                self.last_exit_code = body_status
                 self._end_loop()
                 return
             self.cmdpending[0:0] = [*node.body, self._loop_body_end(test)]
