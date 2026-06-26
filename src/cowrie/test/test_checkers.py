@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import unittest
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from twisted.python import log
@@ -16,6 +16,9 @@ from twisted.python import log
 from cowrie.core import auth
 from cowrie.core.checkers import HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TestHoneypotPasswordChecker(unittest.TestCase):
