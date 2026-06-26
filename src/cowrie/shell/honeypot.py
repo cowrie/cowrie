@@ -417,7 +417,13 @@ class HoneyPotShell:
         return pattern
 
     def _call_function(self, name: str, args: list[str]) -> None:
-        """Run a function body with $1.. , $#, $@ and $* bound to ``args``."""
+        """Run a function body with $1.. , $#, $@ and $* bound to ``args``.
+
+        Only the positional parameters for this call ($1..$len(args)) are saved
+        and restored. bash also unsets any higher-numbered parameters on entry,
+        so a function called with fewer arguments than its caller would still
+        see the caller's $2.. here; emulating that needs per-call param scoping.
+        """
         body = self.functions[name]
         params = [str(i) for i in range(1, len(args) + 1)] + ["#", "@", "*"]
         saved = {key: self.environ.get(key) for key in params}

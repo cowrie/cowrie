@@ -1175,6 +1175,11 @@ class Command_break(HoneyPotCommand):
     Signals the nearest shell that is currently running a loop; the loop's
     executor consumes the signal at the end of the current body. Outside any
     loop it is a no-op, matching how the honeypot tolerates stray builtins.
+
+    Loop state is tracked per shell, not per function call, so a ``break`` in a
+    function body still targets an enclosing loop in the same shell. Real bash
+    ignores a ``break`` that is not lexically inside a loop in the running
+    function; emulating that would need a per-function loop scope.
     """
 
     signal = "break"
