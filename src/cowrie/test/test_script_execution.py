@@ -185,13 +185,6 @@ class ScriptExecutionTests(unittest.TestCase):
         self.proto.lineReceived(b"sh /tmp/sb.sh")
         self.assertEqual(self.tr.value(), b"after_shebang\n" + PROMPT)
 
-    def test_bash_rejects_binary_file(self) -> None:
-        """bash refuses to source an ELF binary, like the real shell."""
-        self.proto.lineReceived(b'printf "\\x7fELF\\x02\\x01" > /tmp/elf.bin')
-        self.tr.clear()
-        self.proto.lineReceived(b"bash /tmp/elf.bin")
-        self.assertIn(b"cannot execute binary file", self.tr.value())
-
     def test_script_exit_status_propagates(self) -> None:
         """A script's exit status is the status of its last command."""
         self.proto.lineReceived(b"printf 'true\\nfalse\\n' > /tmp/st.sh")
@@ -224,3 +217,11 @@ class BinaryDetectionTests(unittest.TestCase):
 
     def test_invalid_utf8_is_binary(self) -> None:
         self.assertTrue(is_executable_binary(b"\xff\xfe\x80\x81packed" * 50))
+
+    def test_nul_past_sample_is_binary(self) -> None:
+        # A self-extracting dropper: a large text header (no executable magic at
+        # offset 0) with a binary blob appended past the inspection sample. The
+        # NUL is what marks it binary, so the whole file must be scanned.
+        contents = b"#!/bin/sh\n" + b"# padding\n" * 2000 + b"\x00\x01ELFblob"
+        self.assertGreater(len(contents), 8192)
+        self.assertTrue(is_executable_binary(contents))

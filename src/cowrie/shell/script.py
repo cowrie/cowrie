@@ -46,7 +46,9 @@ _BINARY_MAGIC = (
     b"\xce\xfa\xed\xfe",  # Mach-O 32-bit (LE)
 )
 
-# How much of the file to inspect for NUL bytes / decodability.
+# How much of the file to inspect for non-UTF-8 decodability. The NUL scan
+# covers the whole file (see below); the UTF-8 check samples the head, which is
+# enough to tell a text script from packed/encrypted bytes.
 _SAMPLE_BYTES = 8192
 
 
@@ -57,18 +59,21 @@ def is_executable_binary(contents: bytes) -> bool:
     a known executable magic number, a NUL byte, or bytes that are not valid
     UTF-8 is treated as a binary -- which covers ELF/PE/Mach-O droppers and
     packed payloads while leaving non-ASCII (e.g. UTF-8 comment) scripts alone.
+
+    The NUL scan looks at the whole file, not just the head: a self-extracting
+    dropper is a text header with a binary blob appended, so the NUL that gives
+    it away can sit well past any sampled prefix.
     """
     if not contents:
         return False
     if contents.startswith(_BINARY_MAGIC):
         return True
 
-    sample = contents[:_SAMPLE_BYTES]
-    if b"\x00" in sample:
+    if b"\x00" in contents:
         return True
 
     try:
-        sample.decode("utf-8")
+        contents[:_SAMPLE_BYTES].decode("utf-8")
     except UnicodeDecodeError:
         return True
     return False
