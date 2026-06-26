@@ -396,6 +396,10 @@ class HoneyPotShell:
         for patterns, body in node.items:
             for pattern in patterns:
                 if fnmatch.fnmatchcase(word, self._strip_quotes(pattern)):
+                    # A matched body's status is its last command, or 0 when the
+                    # body is empty; the prior command's status must not leak.
+                    if not body:
+                        self.last_exit_code = 0
                     self.cmdpending[0:0] = list(body)
                     self._advance()
                     return

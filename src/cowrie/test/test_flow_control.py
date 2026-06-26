@@ -169,6 +169,11 @@ class FlowControlTests(unittest.TestCase):
             b"BC\n",
         )
 
+    def test_case_matched_empty_body_status(self) -> None:
+        # A matched but empty case body resets $? to 0; the prior command's
+        # status must not leak through.
+        self.assertEqual(self._run("false; case x in x) ;; esac; echo $?"), b"0\n")
+
     # -- brace group --------------------------------------------------------
 
     def test_brace_group(self) -> None:
