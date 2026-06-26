@@ -312,13 +312,17 @@ class Command_tftp(HoneyPotCommand):
         return self.tftp_client.deferred
 
     def _ensure_artifact_closed(self, result: Any) -> Any:
-        """Ensure artifact file handle is closed - called via addBoth"""
-        # Close the underlying file handle if still open
-        if hasattr(self.artifactFile, "fp") and not self.artifactFile.fp.closed:
-            try:
-                self.artifactFile.fp.close()
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+        """Hash and store the artifact on every exit path - called via addBoth.
+
+        Artifact.close() computes the sha256 and renames the temp file to its
+        content-addressed name. The success/error callbacks read shasum and
+        shasumFilename, so close() must run before them; it is idempotent, so
+        their own close() calls become no-ops.
+        """
+        try:
+            self.artifactFile.close()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
         return result
 
     def _download_success(self, _result: None) -> None:
@@ -419,15 +423,9 @@ class Command_tftp(HoneyPotCommand):
             if self.tftp_client.timeout_call.active():
                 self.tftp_client.timeout_call.cancel()
 
-        # Close artifact file
-        if hasattr(self, "artifactFile"):
-            try:
-                if hasattr(self.artifactFile, "fp") and not self.artifactFile.fp.closed:
-                    self.artifactFile.fp.close()
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
-
-        # Cancel the deferred - this will trigger cleanup callback which stops UDP port
+        # Cancel the deferred - this triggers the cleanup callback (stops the UDP
+        # port) and _ensure_artifact_closed, which closes and removes the partial
+        # artifact.
         if self.tftp_client:
             if self.tftp_client.deferred and not self.tftp_client.deferred.called:
                 self.tftp_client.deferred.cancel()
