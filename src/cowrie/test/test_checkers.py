@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import unittest
+from collections.abc import Callable
 from unittest.mock import patch
 
 from twisted.python import log
@@ -41,7 +42,7 @@ class TestHoneypotPasswordChecker(unittest.TestCase):
         self.assertFalse(result)
         mock_userdb.assert_called_once()
 
-    def _capture_login(self, run) -> list[dict]:
+    def _capture_login(self, run: Callable[[], object]) -> list[dict]:
         events: list[dict] = []
         log.addObserver(events.append)
         try:
