@@ -14,6 +14,7 @@ from twisted.internet import protocol, reactor
 from cowrie.core.utils import (
     create_endpoint_services,
     durationHuman,
+    escape_nonprintable,
     get_endpoints_from_section,
 )
 
@@ -87,6 +88,19 @@ class UtilsTestCase(unittest.TestCase):
             [r"tcp:2222:interface=0.0.0.0", r"tcp6:2222:interface=\:\:"],
             get_endpoints_from_section(cfg, "ssh", 2222),
         )
+
+    def test_escape_nonprintable(self) -> None:
+        # Printable ASCII passes through unchanged.
+        self.assertEqual(
+            escape_nonprintable(b"SSH-2.0-OpenSSH_9.6"), "SSH-2.0-OpenSSH_9.6"
+        )
+        # Control characters are escaped, not emitted raw (log injection guard).
+        self.assertEqual(escape_nonprintable(b"a\r\n\x1b[2Jb"), "a\\x0d\\x0a\\x1b[2Jb")
+        # Invalid-UTF8 / high bytes are escaped.
+        self.assertEqual(escape_nonprintable(b"/*\xe0Cookie"), "/*\\xe0Cookie")
+        # The backslash itself is escaped so the output is unambiguous.
+        self.assertEqual(escape_nonprintable(b"a\\xff"), "a\\\\xff")
+        self.assertEqual(escape_nonprintable(b""), "")
 
     def test_create_endpoint_services(self) -> None:
         parent = MultiService()

@@ -15,6 +15,25 @@ if TYPE_CHECKING:
     import configparser
 
 
+def escape_nonprintable(data: bytes) -> str:
+    """Return a log-safe printable representation of arbitrary bytes.
+
+    Bytes outside printable US-ASCII (0x20-0x7e) are rendered as ``\\xNN`` so
+    control characters and invalid UTF-8 from untrusted input cannot inject
+    newlines, terminal escape sequences, or other artifacts into log output.
+    The backslash itself is escaped so the representation is unambiguous.
+    """
+    out: list[str] = []
+    for b in data:
+        if b == 0x5C:  # backslash
+            out.append("\\\\")
+        elif 0x20 <= b <= 0x7E:
+            out.append(chr(b))
+        else:
+            out.append(f"\\x{b:02x}")
+    return "".join(out)
+
+
 def durationHuman(duration: float) -> str:
     """
     Turn number of seconds into human readable string
