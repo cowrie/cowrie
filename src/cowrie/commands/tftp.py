@@ -326,14 +326,11 @@ class Command_tftp(HoneyPotCommand):
         return result
 
     def _download_success(self, _result: None) -> None:
-        """Called when download completes successfully"""
-        # Artifact.close() processes the file (hashing, renaming)
-        # The file handle is already closed by _ensure_artifact_closed
-        try:
-            self.artifactFile.close()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass  # Already closed or empty file
+        """Called when download completes successfully.
 
+        The artifact is already hashed and stored by _ensure_artifact_closed,
+        so shasum and shasumFilename are populated here.
+        """
         url = f"tftp://{self.hostname}:{self.port}/{self.file_to_get.lstrip('/')}"
 
         # Log to cowrie.log
@@ -374,14 +371,11 @@ class Command_tftp(HoneyPotCommand):
         self._safe_exit()
 
     def _download_error(self, failure: Failure) -> None:
-        """Called when download fails"""
-        # File handle already closed by _ensure_artifact_closed
-        # Just clean up the temp file if it exists
-        try:
-            self.artifactFile.close()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass  # Already closed or empty file
+        """Called when download fails.
 
+        The partial artifact is already closed and removed by
+        _ensure_artifact_closed.
+        """
         # Check if this is a cancellation (from CTRL-C)
         if failure.check(CancelledError):
             # User cancelled with CTRL-C, exit silently (^C already printed)
