@@ -13,6 +13,7 @@ from twisted.conch.ssh import connection, transport, userauth
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.utils import escape_nonprintable
 from cowrie.ssh_proxy.protocols import (
     base_protocol,
     exec_term,
@@ -304,13 +305,17 @@ class SSH(base_protocol.BaseProtocol):
                     # UNKNOWN SUBSYSTEM
                     log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}")
                     log.msg(
-                        "[SSH] Unknown Subsystem Type Detected - " + subsystem.decode()
+                        "[SSH] Unknown Subsystem Type Detected - "
+                        + escape_nonprintable(subsystem)
                     )
             elif channel_type == b"env":
                 _ = self.extract_bool()
                 var = self.extract_string()
                 value = self.extract_string()
-                log.msg(f"MSG_CHANNEL_REQUEST: env: {var.decode()}={value.decode()}")
+                log.msg(
+                    f"MSG_CHANNEL_REQUEST: env: "
+                    f"{escape_nonprintable(var)}={escape_nonprintable(value)}"
+                )
 
             else:
                 # UNKNOWN CHANNEL REQUEST TYPE
@@ -321,7 +326,8 @@ class SSH(base_protocol.BaseProtocol):
                     b"exit-signal",
                 ]:
                     log.msg(
-                        f"[SSH] Unknown Channel Request Type Detected - {channel_type.decode()}"
+                        "[SSH] Unknown Channel Request Type Detected - "
+                        + escape_nonprintable(channel_type)
                     )
 
         elif message_num == connection.MSG_CHANNEL_FAILURE:

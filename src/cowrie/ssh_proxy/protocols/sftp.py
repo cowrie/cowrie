@@ -13,6 +13,7 @@ from twisted.conch.ssh import filetransfer
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.utils import escape_nonprintable
 from cowrie.ssh_proxy.protocols import base_protocol
 
 # PACKETLAYOUT = {
@@ -126,7 +127,9 @@ class SFTP(base_protocol.BaseProtocol):
         elif sftp_num == filetransfer.FXP_REALPATH:
             self.path = self.extract_string()
             self.command = b"cd " + self.path
-            log.msg(parent + "[SFTP] Entered Command: " + self.command.decode())
+            log.msg(
+                parent + "[SFTP] Entered Command: " + escape_nonprintable(self.command)
+            )
 
         elif sftp_num == filetransfer.FXP_OPEN:
             self.path = self.extract_string()
@@ -144,7 +147,9 @@ class SFTP(base_protocol.BaseProtocol):
                     parent + f"[SFTP] New SFTP pflag detected: {pflags!r} {self.data!r}"
                 )
 
-            log.msg(parent + " [SFTP] Entered Command: " + self.command.decode())
+            log.msg(
+                parent + " [SFTP] Entered Command: " + escape_nonprintable(self.command)
+            )
 
         elif sftp_num == filetransfer.FXP_READ:
             pass
@@ -184,18 +189,24 @@ class SFTP(base_protocol.BaseProtocol):
                 )
 
         elif sftp_num == filetransfer.FXP_EXTENDED_REPLY:
-            log.msg(parent + " [SFTP] Entered Command: " + self.command.decode())
+            log.msg(
+                parent + " [SFTP] Entered Command: " + escape_nonprintable(self.command)
+            )
             # self.out.command_entered(self.uuid, self.command)
 
         elif sftp_num == filetransfer.FXP_CLOSE:
             if self.handle == self.extract_string():
                 if b"get" in self.command:
                     log.msg(
-                        parent + " [SFTP] Finished Downloading: " + self.path.decode()
+                        parent
+                        + " [SFTP] Finished Downloading: "
+                        + escape_nonprintable(self.path)
                     )
                 elif b"put" in self.command:
                     log.msg(
-                        parent + " [SFTP] Finished Uploading: " + self.path.decode()
+                        parent
+                        + " [SFTP] Finished Uploading: "
+                        + escape_nonprintable(self.path)
                     )
 
                     # TODO: should use artifact functions
@@ -249,16 +260,18 @@ class SFTP(base_protocol.BaseProtocol):
                 if code in [0, 1]:
                     if b"get" not in self.command and b"put" not in self.command:
                         log.msg(
-                            parent + " [SFTP] Entered Command: " + self.command.decode()
+                            parent
+                            + " [SFTP] Entered Command: "
+                            + escape_nonprintable(self.command)
                         )
                 else:
                     message = self.extract_string()
                     log.msg(
                         parent
                         + " [SFTP] Failed Command: "
-                        + self.command.decode()
+                        + escape_nonprintable(self.command)
                         + " Reason: "
-                        + message.decode()
+                        + escape_nonprintable(message)
                     )
         else:
             log.msg("[SFTP] Unhandled packet: {sftp_num}")
