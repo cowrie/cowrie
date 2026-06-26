@@ -125,6 +125,17 @@ class TestTrueFalseTests(unittest.TestCase):
     def test_or_combiner(self) -> None:
         self.assertEqual(self._status("[ -f /no/such -o -d /etc ]"), b"0\n")
 
+    def test_three_arg_and(self) -> None:
+        # `test STR1 -a STR2`: true when both strings are non-empty (deprecated
+        # but still used). The 3-arg form must not be read as a binary operator.
+        self.assertEqual(self._status("[ a -a b ]"), b"0\n")
+
+    def test_three_arg_and_empty_is_false(self) -> None:
+        self.assertEqual(self._status("[ '' -a b ]"), b"1\n")
+
+    def test_three_arg_or(self) -> None:
+        self.assertEqual(self._status("[ '' -o b ]"), b"0\n")
+
     # -- malformed ----------------------------------------------------------
 
     def test_bracket_missing_close(self) -> None:

@@ -1282,6 +1282,12 @@ class Command_test(HoneyPotCommand):
         if n == 2:
             return self._unary(args[0], args[1])
         if n == 3:
+            # `STR1 -a STR2` / `STR1 -o STR2` combine two single-argument
+            # (non-empty) tests; otherwise the middle word is a binary operator.
+            if args[1] == "-a":
+                return self._eval(args[:1]) and self._eval(args[2:])
+            if args[1] == "-o":
+                return self._eval(args[:1]) or self._eval(args[2:])
             return self._binary(args[0], args[1], args[2])
         if n == 4 and args[0] == "(" and args[3] == ")":
             return self._eval(args[1:3])
