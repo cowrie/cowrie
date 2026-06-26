@@ -237,6 +237,49 @@ class TestNegotiationDuringConnectionLost(unittest.TestCase):
         self.assertEqual(self.tcp.data, b"")
 
 
+class TestInvalidIACSequence(unittest.TestCase):
+    """Regression test for issue #40218.
+
+    Twisted's Telnet.dataReceived() raises ValueError("Stumped", b) when a
+    client sends a byte after IAC (0xFF) that is not a recognised command --
+    e.g. a scanner sending IAC 0x01 outside a WILL/DO envelope. Inherited
+    unchanged, this propagates into the reactor as an "Unhandled Error" and
+    tears the transport down without the normal connectionLost() cleanup. The
+    override must catch it, log a telnet error, and drop the connection
+    cleanly.
+    """
+
+    def setUp(self) -> None:
+        self.transport = CowrieTelnetTransport()
+        self.tcp = MagicMock()
+        self.transport.transport = self.tcp
+
+    def _capture(self, run: Callable[[], None]) -> list[dict]:
+        events: list[dict] = []
+        log.addObserver(events.append)
+        try:
+            run()
+        finally:
+            log.removeObserver(events.append)
+        return [e for e in events if e.get("eventid") == "cowrie.telnet.error"]
+
+    def test_invalid_iac_byte_dropped_cleanly(self) -> None:
+        # IAC (0xFF) followed by 0x01, which is not a valid IAC command byte.
+        errors = self._capture(lambda: self.transport.dataReceived(b"\xff\x01"))
+
+        self.tcp.loseConnection.assert_called_once_with()
+        self.assertEqual(len(errors), 1)
+
+    def test_valid_data_still_delivered(self) -> None:
+        # A well-formed stream must pass through untouched.
+        self.transport.protocol = MagicMock()
+        errors = self._capture(lambda: self.transport.dataReceived(b"hello"))
+
+        self.transport.protocol.dataReceived.assert_called_once_with(b"hello")
+        self.tcp.loseConnection.assert_not_called()
+        self.assertEqual(errors, [])
+
+
 class TestOptionLoggingDeduplication(unittest.TestCase):
     """A scanner flooding the same option negotiation is logged once."""
 
