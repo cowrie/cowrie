@@ -161,60 +161,22 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def scriptcmd(self, path: str) -> object:
         """Return a command class that executes a shell script from the virtual filesystem."""
-        import re
-
-        shebang_re = re.compile(r"^#!\s*/bin/(ba|a)?sh")
-        max_depth = 5
+        from cowrie.shell.script import run_script_file
 
         class Command_scriptcmd(command.HoneyPotCommand):
             def call(self_cmd):
-                depth = getattr(self_cmd.protocol, "_script_depth", 0)
-                if depth >= max_depth:
-                    self_cmd.errorWrite(
-                        f"-bash: {path}: too many levels of recursion\n"
-                    )
-                    return
-
-                try:
-                    contents = self_cmd.fs.file_contents(path)
-                except Exception:
-                    self_cmd.errorWrite(f"-bash: {path}: No such file or directory\n")
-                    return
-
-                # Null bytes indicate actual binary — reject like real bash
-                if b"\x00" in contents:
-                    self_cmd.errorWrite(
-                        f"-bash: {path}: cannot execute binary file: Exec format error\n"
-                    )
-                    return
-
-                lines = contents.decode("utf-8", errors="replace").splitlines()
-
-                if not lines:
-                    return
-
-                # Strip shebang line if it's a shell shebang
-                if shebang_re.match(lines[0]):
-                    lines = lines[1:]
-
-                # Strip comment-only and blank lines
-                lines = [
-                    line
-                    for line in lines
-                    if line.strip() and not line.strip().startswith("#")
-                ]
-
-                if not lines:
-                    return
-
-                self_cmd.protocol._script_depth = depth + 1
-                try:
-                    shell = honeypot.HoneyPotShell(self_cmd.protocol, interactive=False)
-                    self_cmd.protocol.cmdstack.append(shell)
-                    shell.lineReceived("; ".join(lines))
-                    self_cmd.protocol.cmdstack.pop()
-                finally:
-                    self_cmd.protocol._script_depth = depth
+                # Running ./file or /path/file: the kernel rejects a binary with
+                # ENOEXEC ("cannot execute binary file"); a shell script is run
+                # through the parser (the shebang is parsed as a comment).
+                run_script_file(
+                    self_cmd,
+                    path,
+                    not_found_message=f"-bash: {path}: No such file or directory\n",
+                    binary_message=(
+                        f"-bash: {path}: cannot execute binary file: "
+                        "Exec format error\n"
+                    ),
+                )
 
         return Command_scriptcmd
 
@@ -359,9 +321,9 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         HoneyPotBaseProtocol.connectionMade(self)
         self.setTimeout(60)
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
-        # TODO: quick and dirty fix to deal with \n separated commands
-        # HoneypotShell() needs a rewrite to better work with pending input
-        self.cmdstack[0].lineReceived("; ".join(self.execcmd.strip().split("\n")))
+        # The parser treats newlines as statement separators, so a multi-line
+        # exec payload (including loops/conditionals) is run as written.
+        self.cmdstack[0].lineReceived(self.execcmd)
 
     def keystrokeReceived(self, keyID, modifier):
         self.input_data += keyID

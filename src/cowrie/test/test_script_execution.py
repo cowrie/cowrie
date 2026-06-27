@@ -11,6 +11,7 @@ import os
 import unittest
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.shell.script import is_executable_binary
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -143,3 +144,84 @@ class ScriptExecutionTests(unittest.TestCase):
         """Existing piped input functionality still works."""
         self.proto.lineReceived(b"echo echo piped | bash")
         self.assertEqual(self.tr.value(), b"piped\n" + PROMPT)
+
+    # -- multi-line flow control from a script file -------------------------
+
+    def test_script_with_for_loop(self) -> None:
+        """A for loop spanning multiple lines in a script file runs each pass."""
+        self.proto.lineReceived(
+            b"printf 'for i in 1 2 3\\ndo\\necho got $i\\ndone\\n' > /tmp/loop.sh"
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/loop.sh")
+        self.assertEqual(self.tr.value(), b"got 1\ngot 2\ngot 3\n" + PROMPT)
+
+    def test_script_with_if(self) -> None:
+        """A multi-line if/else in a script file picks the right branch."""
+        self.proto.lineReceived(
+            b"printf 'if [ -f /etc/passwd ]\\nthen\\necho found\\n"
+            b"else\\necho missing\\nfi\\n' > /tmp/cond.sh"
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b"bash /tmp/cond.sh")
+        self.assertEqual(self.tr.value(), b"found\n" + PROMPT)
+
+    def test_script_downloader_retry_idiom(self) -> None:
+        """The try-each-mirror-until-one-works loop, run from a file."""
+        self.proto.lineReceived(
+            b"printf 'for u in a b c\\ndo\\necho fetch $u && break\\ndone\\n'"
+            b" > /tmp/dl.sh"
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/dl.sh")
+        self.assertEqual(self.tr.value(), b"fetch a\n" + PROMPT)
+
+    def test_shebang_is_comment_not_executed(self) -> None:
+        """The shebang line is treated as a comment and produces no output."""
+        self.proto.lineReceived(
+            b"printf '#!/bin/sh\\necho after_shebang\\n' > /tmp/sb.sh"
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/sb.sh")
+        self.assertEqual(self.tr.value(), b"after_shebang\n" + PROMPT)
+
+    def test_script_exit_status_propagates(self) -> None:
+        """A script's exit status is the status of its last command."""
+        self.proto.lineReceived(b"printf 'true\\nfalse\\n' > /tmp/st.sh")
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/st.sh; echo rc=$?")
+        self.assertEqual(self.tr.value(), b"rc=1\n" + PROMPT)
+
+
+class BinaryDetectionTests(unittest.TestCase):
+    """is_executable_binary distinguishes binaries from text scripts."""
+
+    def test_elf_is_binary(self) -> None:
+        self.assertTrue(is_executable_binary(b"\x7fELF\x02\x01\x01\x00rest"))
+
+    def test_pe_is_binary(self) -> None:
+        self.assertTrue(is_executable_binary(b"MZ\x90\x00\x03"))
+
+    def test_nul_byte_is_binary(self) -> None:
+        self.assertTrue(is_executable_binary(b"#!/bin/sh\nrun\x00me"))
+
+    def test_plain_script_is_text(self) -> None:
+        self.assertFalse(is_executable_binary(b"#!/bin/sh\necho hello\n"))
+
+    def test_utf8_script_is_text(self) -> None:
+        # Non-ASCII UTF-8 (a comment in another language) is still a script.
+        self.assertFalse(is_executable_binary("# café\necho hi\n".encode()))
+
+    def test_empty_is_not_binary(self) -> None:
+        self.assertFalse(is_executable_binary(b""))
+
+    def test_invalid_utf8_is_binary(self) -> None:
+        self.assertTrue(is_executable_binary(b"\xff\xfe\x80\x81packed" * 50))
+
+    def test_nul_past_sample_is_binary(self) -> None:
+        # A self-extracting dropper: a large text header (no executable magic at
+        # offset 0) with a binary blob appended past the inspection sample. The
+        # NUL is what marks it binary, so the whole file must be scanned.
+        contents = b"#!/bin/sh\n" + b"# padding\n" * 2000 + b"\x00\x01ELFblob"
+        self.assertGreater(len(contents), 8192)
+        self.assertTrue(is_executable_binary(contents))

@@ -8,20 +8,16 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
 from cowrie.shell.command import HoneyPotCommand, process_status
-from cowrie.shell.fs import FileNotFound
 from cowrie.shell.honeypot import HoneyPotShell
+from cowrie.shell.script import run_script_file
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 commands: dict[str, Callable] = {}
-
-MAX_SCRIPT_DEPTH = 5
-_SHEBANG_RE = re.compile(r"^#!\s*/bin/(ba)?sh")
 
 
 class Command_sh(HoneyPotCommand):
@@ -50,46 +46,17 @@ class Command_sh(HoneyPotCommand):
             self.interactive_shell()
 
     def execute_script_file(self, filename: str) -> None:
-        depth = getattr(self.protocol, "_script_depth", 0)
-        if depth >= MAX_SCRIPT_DEPTH:
-            self.errorWrite(f"-bash: {filename}: too many levels of recursion\n")
-            return
-
+        # bash refuses to run a binary file and reports it the same way for a
+        # missing one; the script contents otherwise go straight to the parser.
         path = self.fs.resolve_path(filename, self.protocol.cwd)
-        try:
-            contents = self.fs.file_contents(path)
-        except (FileNotFound, FileNotFoundError):
-            self.errorWrite(f"bash: {filename}: No such file or directory\n")
-            return
-
-        # A binary file (e.g. an ELF payload a bot falls back to running with
-        # `sh payload`) must be rejected, not parsed: its newline bytes would
-        # otherwise be split into "commands" and flood the log with raw binary.
-        # bash treats a file as binary when a NUL byte appears before the first
-        # newline (check_binary_file); an ELF (\x7fELF...\x00) trips this.
-        if b"\x00" in contents[:80].split(b"\n", 1)[0]:
-            self.errorWrite(
+        run_script_file(
+            self,
+            path,
+            not_found_message=f"bash: {filename}: No such file or directory\n",
+            binary_message=(
                 f"bash: {filename}: cannot execute binary file: Exec format error\n"
-            )
-            return
-
-        lines = contents.decode("utf-8", errors="replace").splitlines()
-        # Strip shebang line
-        if lines and _SHEBANG_RE.match(lines[0]):
-            lines = lines[1:]
-        # Strip comment-only lines and blank lines
-        lines = [
-            line for line in lines if line.strip() and not line.strip().startswith("#")
-        ]
-
-        if not lines:
-            return
-
-        self.protocol._script_depth = depth + 1
-        try:
-            self.execute_commands("; ".join(lines))
-        finally:
-            self.protocol._script_depth = depth
+            ),
+        )
 
     def execute_commands(self, cmds: str) -> None:
         # self.input_data holds commands passed via PIPE

@@ -7,8 +7,14 @@
 from __future__ import annotations
 
 import copy
+import enum
+import fnmatch
 import os
-from typing import Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from twisted.python import log
 from twisted.python.compat import iterbytes
@@ -17,14 +23,53 @@ from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.bashparse import (
     BashParser,
+    BraceGroup,
+    CaseClause,
     Command,
+    ForClause,
+    FunctionDef,
+    IfClause,
     Statement,
     Subshell,
     SyntaxError_,
+    WhileClause,
 )
 from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import PipeProtocol
+
+# Honeypot safety caps. A loop in an uploaded script must never hang or exhaust
+# the process: bound the number of iterations a single loop runs. Real malware
+# downloaders loop a handful of times (over a few URLs or architectures); these
+# ceilings are far above that yet keep a `while true` from running forever.
+MAX_WHILE_ITERATIONS = 1000
+MAX_FOR_ITEMS = 10000
+
+
+class LoopSignal(enum.Enum):
+    """A pending ``break`` / ``continue`` for the innermost running loop.
+
+    Set on the shell by the ``break`` / ``continue`` builtins and consumed by
+    that shell's innermost loop continuation.
+    """
+
+    BREAK = "break"
+    CONTINUE = "continue"
+
+
+@dataclass
+class _Continuation:
+    """An internal queue entry that runs a Python callback when reached.
+
+    Flow control schedules these between the statements it splices into
+    ``cmdpending`` so it can react to a condition's exit status or step a loop.
+    ``is_loop_cont`` marks the continuation that closes one loop-body iteration,
+    which is where a pending ``break`` / ``continue`` is consumed.
+    """
+
+    fn: Callable[[], None]
+    is_loop_cont: bool = False
+    op: str | None = None
 
 
 class HoneyPotShell:
@@ -43,7 +88,7 @@ class HoneyPotShell:
         # live environment only when it is about to run (see runCommand). A
         # subshell stays a single unit here so its &&/|| gate covers the whole
         # group; runCommand splices its statements in only when it runs.
-        self.cmdpending: list[Command | Subshell] = []
+        self.cmdpending: list[Statement | _Continuation] = []
         # A nested shell (e.g. a command substitution) inherits the live
         # environment of whichever shell is currently running; the very first
         # shell of a session falls back to the login environment, all of which
@@ -63,6 +108,16 @@ class HoneyPotShell:
         # Exit status of the most recent command in this shell, for $? and the
         # && / || short-circuit logic.
         self.last_exit_code: int = 0
+        # Shell functions defined in this shell, name -> body statements.
+        self.functions: dict[str, list[Statement]] = {}
+        # Flow-control state: how many loops are currently running (so break /
+        # continue only act inside a loop) and a pending loop signal consumed by
+        # the innermost loop continuation.
+        self._loop_depth: int = 0
+        self._loop_signal: LoopSignal | None = None
+        # Trampoline state for _advance (see its docstring).
+        self._advancing: bool = False
+        self._advance_pending: bool = False
 
     # -- bashparse.ShellContext interface -----------------------------------
 
@@ -206,11 +261,201 @@ class HoneyPotShell:
         )
 
     def _advance(self) -> None:
-        """Run the next queued command, or finish when the queue is drained."""
-        if self.cmdpending:
-            self.runCommand()
-        else:
-            self._finish()
+        """Run the next queued command, or finish when the queue is drained.
+
+        This is a trampoline. A command that completes synchronously calls
+        ``exit() -> resume() -> _advance()`` again before the original call
+        returns, so a naive recursive design would grow the Python stack by one
+        frame per command -- a long ``;`` list, or any loop, would overflow it.
+        Instead a re-entrant ``_advance`` just flags that more work is pending
+        and unwinds; the outermost call drives a flat loop. A command that
+        instead pauses on a Deferred (e.g. wget) unwinds normally and its later
+        ``resume`` starts a fresh drive.
+        """
+        if self._advancing:
+            self._advance_pending = True
+            return
+        self._advancing = True
+        try:
+            running = True
+            while running:
+                self._advance_pending = False
+                if self.cmdpending:
+                    self.runCommand()
+                else:
+                    self._finish()
+                running = self._advance_pending
+        finally:
+            self._advancing = False
+
+    # -- flow control -------------------------------------------------------
+    #
+    # Compound commands are driven through the same cmdpending queue as simple
+    # commands. A handler splices its body statements to the front and, where it
+    # must observe a result (a loop test, the next iteration), appends a
+    # _Continuation callback that runs once the spliced statements have finished
+    # -- which works whether those statements complete synchronously or pause on
+    # a Deferred (e.g. wget) and resume later.
+
+    def _end_loop(self) -> None:
+        self._loop_depth -= 1
+        self._advance()
+
+    def _loop_body_end(self, step: Callable[[], None]) -> _Continuation:
+        """The continuation appended after a loop body. It consumes a pending
+        break / continue (break ends the loop; continue and a normal pass both
+        run ``step`` again to take the next iteration)."""
+
+        def loop_cont() -> None:
+            signal = self._loop_signal
+            self._loop_signal = None
+            if signal is LoopSignal.BREAK:
+                self._end_loop()
+            else:
+                step()
+
+        return _Continuation(loop_cont, is_loop_cont=True)
+
+    def _run_for(self, node: ForClause) -> None:
+        """``for VAR in WORDS; do BODY; done`` over the expanded word list."""
+        values = self.bashparser.evaluate(node.items) if node.items else []
+        values = values[:MAX_FOR_ITEMS]
+        if not values:
+            # A loop over an empty list runs the body zero times and succeeds.
+            self.last_exit_code = 0
+            self._advance()
+            return
+
+        self._loop_depth += 1
+        index = 0
+
+        def step() -> None:
+            nonlocal index
+            if index >= len(values):
+                self._end_loop()
+                return
+            self.environ[node.var] = values[index]
+            index += 1
+            self.cmdpending[0:0] = [*node.body, self._loop_body_end(step)]
+            self._advance()
+
+        step()
+
+    def _run_while(self, node: WhileClause) -> None:
+        """``while COND; do BODY; done`` (``until`` inverts the test)."""
+        self._loop_depth += 1
+        iterations = 0
+        # A loop's exit status is its body's last command, or 0 if the body
+        # never ran -- never the condition's. Each condition test overwrites $?,
+        # so snapshot the body's status before re-testing and restore it on exit.
+        body_status = 0
+
+        def test() -> None:
+            nonlocal iterations, body_status
+            if iterations:
+                body_status = self.last_exit_code
+            if iterations >= MAX_WHILE_ITERATIONS:
+                self.last_exit_code = body_status
+                self._end_loop()
+                return
+            iterations += 1
+            self.cmdpending[0:0] = [*node.condition, _Continuation(decide)]
+            self._advance()
+
+        def decide() -> None:
+            succeeded = self.last_exit_code == 0
+            run_body = (not succeeded) if node.until else succeeded
+            if not run_body:
+                self.last_exit_code = body_status
+                self._end_loop()
+                return
+            self.cmdpending[0:0] = [*node.body, self._loop_body_end(test)]
+            self._advance()
+
+        test()
+
+    def _run_if(self, node: IfClause) -> None:
+        """``if COND; then BODY; [elif ...] [else ...] fi``."""
+
+        def try_branch(index: int) -> None:
+            if index >= len(node.branches):
+                if node.else_body is not None:
+                    self.cmdpending[0:0] = list(node.else_body)
+                else:
+                    # No branch ran: an if with no matching arm succeeds.
+                    self.last_exit_code = 0
+                self._advance()
+                return
+            condition, body = node.branches[index]
+            self.cmdpending[0:0] = [
+                *condition,
+                _Continuation(lambda: decide(index, body)),
+            ]
+            self._advance()
+
+        def decide(index: int, body: list[Statement]) -> None:
+            if self.last_exit_code == 0:
+                self.cmdpending[0:0] = list(body)
+                self._advance()
+            else:
+                try_branch(index + 1)
+
+        try_branch(0)
+
+    def _run_case(self, node: CaseClause) -> None:
+        """``case WORD in PATTERN) BODY ;; ... esac`` -- first match wins."""
+        word = " ".join(self.bashparser.evaluate(node.word)) if node.word else ""
+        for patterns, body in node.items:
+            for pattern in patterns:
+                if fnmatch.fnmatchcase(word, self._strip_quotes(pattern)):
+                    # A matched body's status is its last command, or 0 when the
+                    # body is empty; the prior command's status must not leak.
+                    if not body:
+                        self.last_exit_code = 0
+                    self.cmdpending[0:0] = list(body)
+                    self._advance()
+                    return
+        # No pattern matched: the case succeeds.
+        self.last_exit_code = 0
+        self._advance()
+
+    @staticmethod
+    def _strip_quotes(pattern: str) -> str:
+        """Drop a single pair of surrounding quotes from a case pattern so a
+        quoted literal like ``'x86_64'`` matches; glob metacharacters in an
+        unquoted pattern are left untouched for fnmatch."""
+        if len(pattern) >= 2 and pattern[0] == pattern[-1] and pattern[0] in "\"'":
+            return pattern[1:-1]
+        return pattern
+
+    def _call_function(self, name: str, args: list[str]) -> None:
+        """Run a function body with $1.. , $#, $@ and $* bound to ``args``.
+
+        Only the positional parameters for this call ($1..$len(args)) are saved
+        and restored. bash also unsets any higher-numbered parameters on entry,
+        so a function called with fewer arguments than its caller would still
+        see the caller's $2.. here; emulating that needs per-call param scoping.
+        """
+        body = self.functions[name]
+        params = [str(i) for i in range(1, len(args) + 1)] + ["#", "@", "*"]
+        saved = {key: self.environ.get(key) for key in params}
+
+        for i, value in enumerate(args, start=1):
+            self.environ[str(i)] = value
+        self.environ["#"] = str(len(args))
+        self.environ["@"] = " ".join(args)
+        self.environ["*"] = " ".join(args)
+
+        def restore() -> None:
+            for key, value in saved.items():
+                if value is None:
+                    self.environ.pop(key, None)
+                else:
+                    self.environ[key] = value
+            self._advance()
+
+        self.cmdpending[0:0] = [*body, _Continuation(restore)]
+        self._advance()
 
     def runCommand(self):
         pp = None
@@ -222,12 +467,36 @@ class HoneyPotShell:
         if self.protocol.pp is not None and self.protocol.pp.next_command is not None:
             return
 
+        # A pending break / continue: drop the rest of the current loop body up
+        # to the innermost loop continuation, which consumes the signal.
+        if self._loop_signal is not None:
+            while self.cmdpending:
+                node = self.cmdpending[0]
+                if isinstance(node, _Continuation) and node.is_loop_cont:
+                    break
+                self.cmdpending.pop(0)
+            if not self.cmdpending:
+                # break / continue with no enclosing loop body left: ignore it.
+                self._loop_signal = None
+
         if not self.cmdpending:
             # The queue is drained.
             self._finish()
             return
 
         command = self.cmdpending.pop(0)
+
+        # Internal flow-control continuations run their callback and return; they
+        # carry no exit status and are never short-circuited.
+        if isinstance(command, _Continuation):
+            command.fn()
+            return
+
+        # A syntax error nested in a compound body surfaces here when reached.
+        if isinstance(command, SyntaxError_):
+            self._report_syntax_error(command)
+            self._advance()
+            return
 
         # && / || short-circuit: skip this statement (or whole group) based on
         # the previous command's exit status, leaving $? unchanged.
@@ -241,6 +510,35 @@ class HoneyPotShell:
             # statement keeps its own &&/|| relative to its siblings.
             self.cmdpending[0:0] = command.statements
             self._advance()
+            return
+
+        if isinstance(command, BraceGroup):
+            # A { ...; } group runs its statements in the current shell.
+            self.cmdpending[0:0] = command.statements
+            self._advance()
+            return
+
+        if isinstance(command, FunctionDef):
+            # Defining a function records its body and succeeds.
+            self.functions[command.name] = command.body
+            self.last_exit_code = 0
+            self._advance()
+            return
+
+        if isinstance(command, ForClause):
+            self._run_for(command)
+            return
+
+        if isinstance(command, IfClause):
+            self._run_if(command)
+            return
+
+        if isinstance(command, WhileClause):
+            self._run_while(command)
+            return
+
+        if isinstance(command, CaseClause):
+            self._run_case(command)
             return
 
         # Expand the statement's words against the *current* environment, just
@@ -268,6 +566,13 @@ class HoneyPotShell:
             self.environ = environ
             self.last_exit_code = 0
             self._advance()
+            return
+
+        # A call to a shell function defined earlier runs its body with the
+        # positional parameters bound to the call arguments. A pipeline that
+        # includes the function name is left to the normal command machinery.
+        if cmd_tokens[0] in self.functions and "|" not in cmd_tokens:
+            self._call_function(cmd_tokens[0], cmd_tokens[1:])
             return
 
         pipe_indices = [i for i, x in enumerate(cmd_tokens) if x == "|"]
@@ -409,7 +714,9 @@ class HoneyPotShell:
     def resume(self) -> None:
         if self.interactive:
             self.protocol.setInsertMode()
-        self.runCommand()
+        # Go through the _advance trampoline so a command that resumes us
+        # synchronously does not deepen the Python stack (see _advance).
+        self._advance()
 
     def showPrompt(self) -> None:
         if not self.interactive:

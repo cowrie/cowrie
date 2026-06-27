@@ -11,9 +11,15 @@ import unittest
 
 from cowrie.shell.bashparse import (
     BashParser,
+    BraceGroup,
+    CaseClause,
     Command,
+    ForClause,
+    FunctionDef,
+    IfClause,
     Subshell,
     SyntaxError_,
+    WhileClause,
 )
 
 
@@ -296,6 +302,91 @@ class BashParseCommentTests(unittest.TestCase):
 
     def test_hash_in_quotes_not_a_comment(self) -> None:
         self.assertEqual(self._tokens('echo "a # b"'), ["echo", "a # b"])
+
+
+class BashParseCompoundTests(unittest.TestCase):
+    """Compound commands parse into their structured AST nodes."""
+
+    def setUp(self) -> None:
+        self.ctx = FakeContext({"x": "hi"})
+        self.parser = BashParser(self.ctx)
+
+    def _one(self, line: str) -> object:
+        statements = self.parser.parse(line)
+        self.assertEqual(len(statements), 1)
+        return statements[0]
+
+    def _eval(self, command: object) -> list[str]:
+        assert isinstance(command, Command)
+        return self.parser.evaluate(command)
+
+    def test_for_clause(self) -> None:
+        node = self._one("for i in a b c; do echo $i; done")
+        assert isinstance(node, ForClause)
+        self.assertEqual(node.var, "i")
+        self.assertEqual(self._eval(node.items), ["a", "b", "c"])
+        self.assertEqual(len(node.body), 1)
+
+    def test_for_multiline(self) -> None:
+        node = self._one("for i in a b\ndo\n echo $i\ndone")
+        assert isinstance(node, ForClause)
+        self.assertEqual(self._eval(node.items), ["a", "b"])
+
+    def test_if_clause(self) -> None:
+        node = self._one("if true; then echo a; elif false; then echo b; else echo c; fi")
+        assert isinstance(node, IfClause)
+        self.assertEqual(len(node.branches), 2)
+        self.assertIsNotNone(node.else_body)
+
+    def test_while_clause(self) -> None:
+        node = self._one("while true; do echo x; done")
+        assert isinstance(node, WhileClause)
+        self.assertFalse(node.until)
+
+    def test_until_clause(self) -> None:
+        node = self._one("until false; do echo x; done")
+        assert isinstance(node, WhileClause)
+        self.assertTrue(node.until)
+
+    def test_case_clause(self) -> None:
+        node = self._one("case $x in a) echo 1;; b|c) echo 2;; *) echo 3;; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual([pats for pats, _ in node.items], [["a"], ["b", "c"], ["*"]])
+
+    def test_brace_group(self) -> None:
+        node = self._one("{ echo a; echo b; }")
+        assert isinstance(node, BraceGroup)
+        self.assertEqual(len(node.statements), 2)
+
+    def test_function_paren_form(self) -> None:
+        node = self._one("f() { echo hi; }")
+        assert isinstance(node, FunctionDef)
+        self.assertEqual(node.name, "f")
+
+    def test_function_keyword_form(self) -> None:
+        node = self._one("function g { echo g; }")
+        assert isinstance(node, FunctionDef)
+        self.assertEqual(node.name, "g")
+
+    def test_newline_separates_statements(self) -> None:
+        statements = self.parser.parse("echo a\necho b\necho c")
+        self.assertEqual(len(statements), 3)
+        self.assertEqual(self._eval(statements[0]), ["echo", "a"])
+
+    def test_reserved_word_as_argument(self) -> None:
+        # "done" outside a loop is an ordinary argument, not a keyword.
+        node = self._one("echo done")
+        self.assertEqual(self._eval(node), ["echo", "done"])
+
+    def test_compound_join_operator(self) -> None:
+        statements = self.parser.parse("true && for i in 1; do echo $i; done")
+        self.assertIsInstance(statements[0], Command)
+        self.assertIsInstance(statements[1], ForClause)
+        self.assertEqual(statements[1].op, "&&")  # type: ignore[union-attr]
+
+    def test_unterminated_for_is_error(self) -> None:
+        node = self._one("for i in 1 2 3; do echo $i")
+        self.assertIsInstance(node, SyntaxError_)
 
 
 if __name__ == "__main__":
