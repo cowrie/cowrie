@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import copy
+import enum
 import fnmatch
 import os
 from dataclasses import dataclass
@@ -43,6 +44,17 @@ from cowrie.shell.pipe import PipeProtocol
 # ceilings are far above that yet keep a `while true` from running forever.
 MAX_WHILE_ITERATIONS = 1000
 MAX_FOR_ITEMS = 10000
+
+
+class LoopSignal(enum.Enum):
+    """A pending ``break`` / ``continue`` for the innermost running loop.
+
+    Set on the shell by the ``break`` / ``continue`` builtins and consumed by
+    that shell's innermost loop continuation.
+    """
+
+    BREAK = "break"
+    CONTINUE = "continue"
 
 
 @dataclass
@@ -102,7 +114,7 @@ class HoneyPotShell:
         # continue only act inside a loop) and a pending loop signal consumed by
         # the innermost loop continuation.
         self._loop_depth: int = 0
-        self._loop_signal: str | None = None
+        self._loop_signal: LoopSignal | None = None
         # Trampoline state for _advance (see its docstring).
         self._advancing: bool = False
         self._advance_pending: bool = False
@@ -297,7 +309,7 @@ class HoneyPotShell:
         def loop_cont() -> None:
             signal = self._loop_signal
             self._loop_signal = None
-            if signal == "break":
+            if signal is LoopSignal.BREAK:
                 self._end_loop()
             else:
                 step()

@@ -22,6 +22,7 @@ from twisted.python import log
 from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand, process_status
 from cowrie.shell.fs import A_MODE, A_SIZE
+from cowrie.shell.honeypot import LoopSignal
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -1150,8 +1151,8 @@ commands["done"] = Command_nop
 class Command_true(HoneyPotCommand):
     """The ``true`` utility: do nothing, successfully (exit 0)."""
 
-    def call(self) -> None:
-        self.exit_code = 0
+    def start(self) -> None:
+        self.exit(0)
 
 
 commands["true"] = Command_true
@@ -1161,8 +1162,8 @@ commands["/bin/true"] = Command_true
 class Command_false(HoneyPotCommand):
     """The ``false`` utility: do nothing, unsuccessfully (exit 1)."""
 
-    def call(self) -> None:
-        self.exit_code = 1
+    def start(self) -> None:
+        self.exit(1)
 
 
 commands["false"] = Command_false
@@ -1182,7 +1183,7 @@ class Command_break(HoneyPotCommand):
     function; emulating that would need a per-function loop scope.
     """
 
-    signal = "break"
+    signal = LoopSignal.BREAK
 
     def call(self) -> None:
         for item in reversed(self.protocol.cmdstack):
@@ -1194,7 +1195,7 @@ class Command_break(HoneyPotCommand):
 class Command_continue(Command_break):
     """``continue`` -- skip to the next iteration of the innermost loop."""
 
-    signal = "continue"
+    signal = LoopSignal.CONTINUE
 
 
 commands["break"] = Command_break
