@@ -272,10 +272,11 @@ class TestInvalidIACSequence(unittest.TestCase):
 
     def test_valid_data_still_delivered(self) -> None:
         # A well-formed stream must pass through untouched.
-        self.transport.protocol = MagicMock()
+        protocol = MagicMock()
+        self.transport.protocol = protocol  # type: ignore[assignment]
         errors = self._capture(lambda: self.transport.dataReceived(b"hello"))
 
-        self.transport.protocol.dataReceived.assert_called_once_with(b"hello")
+        protocol.dataReceived.assert_called_once_with(b"hello")
         self.tcp.loseConnection.assert_not_called()
         self.assertEqual(errors, [])
 
