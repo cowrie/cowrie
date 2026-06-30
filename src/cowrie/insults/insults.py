@@ -153,13 +153,13 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 if os.path.exists(self.stdinlogFile):
                     with open(self.stdinlogFile, "rb") as f:
                         shasum = hashlib.sha256(f.read()).hexdigest()
-                        shasumfile = os.path.join(self.downloadPath, shasum)
-                        if os.path.exists(shasumfile):
-                            os.remove(self.stdinlogFile)
-                            duplicate = True
-                        else:
-                            os.rename(self.stdinlogFile, shasumfile)
-                            duplicate = False
+                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    if os.path.exists(shasumfile):
+                        os.remove(self.stdinlogFile)
+                        duplicate = True
+                    else:
+                        os.rename(self.stdinlogFile, shasumfile)
+                        duplicate = False
 
                     log.msg(
                         eventid="cowrie.session.file_download",
@@ -193,13 +193,13 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
                     with open(rf, "rb") as f:
                         shasum = hashlib.sha256(f.read()).hexdigest()
-                        shasumfile = os.path.join(self.downloadPath, shasum)
-                        if os.path.exists(shasumfile):
-                            os.remove(rf)
-                            duplicate = True
-                        else:
-                            os.rename(rf, shasumfile)
-                            duplicate = False
+                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    if os.path.exists(shasumfile):
+                        os.remove(rf)
+                        duplicate = True
+                    else:
+                        os.rename(rf, shasumfile)
+                        duplicate = False
                     log.msg(
                         eventid="cowrie.session.file_download",
                         format="Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
