@@ -77,6 +77,14 @@ class TestTrueFalseTests(unittest.TestCase):
     def test_bracket_file_exists(self) -> None:
         self.assertEqual(self._status("[ -f /etc/passwd ]"), b"0\n")
 
+    def test_file_test_empty_operand_is_false(self) -> None:
+        # An empty path is not any kind of file. Matching bash, every file test
+        # on "" is false; it must not crash resolving the empty path (an
+        # attacker's `[ -w "$mnt" ]` with an unset variable hit an IndexError).
+        for op in ("-e", "-f", "-d", "-w", "-r", "-x", "-L", "-s"):
+            with self.subTest(op=op):
+                self.assertEqual(self._status(f'[ {op} "" ]'), b"1\n")
+
     # -- string tests -------------------------------------------------------
 
     def test_string_equal(self) -> None:

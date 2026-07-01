@@ -164,7 +164,7 @@ class HoneyPotFilesystem:
 
         pieces = path.rstrip("/").split("/")
 
-        if path[0] == "/":
+        if path.startswith("/"):
             cwdpieces = []
         else:
             cwdpieces = [x for x in cwd.split("/") if len(x)]
