@@ -28,6 +28,20 @@ class ReadDataBytesTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             resources.read_data_bytes("arch", "no-such-arch")
 
+    def test_raises_file_not_found_for_directory(self) -> None:
+        # A resource that resolves to a directory (e.g. `/` -> the txtcmds
+        # directory itself) must raise FileNotFoundError on every platform,
+        # not the platform-dependent IsADirectoryError / PermissionError that
+        # opening a directory produces.
+        with self.assertRaises(FileNotFoundError):
+            resources.read_data_bytes("txtcmds")
+
+    def test_raises_file_not_found_for_directory_via_empty_subpath(self) -> None:
+        # The exact `/` command path: relpath "" -> "".split("/") == [""] ->
+        # read_data_bytes("txtcmds", "") resolves to the txtcmds directory.
+        with self.assertRaises(FileNotFoundError):
+            resources.read_data_bytes("txtcmds", "")
+
 
 class OpenDataBinaryTests(unittest.TestCase):
     """open_data_binary() — bundled-only binary stream."""
@@ -41,4 +55,12 @@ class OpenDataBinaryTests(unittest.TestCase):
     def test_raises_file_not_found_for_missing_resource(self) -> None:
         with self.assertRaises(FileNotFoundError):
             with resources.open_data_binary("does-not-exist"):
+                pass
+
+    def test_raises_file_not_found_for_directory(self) -> None:
+        # Opening a resource that resolves to a directory must raise
+        # FileNotFoundError on every platform, not IsADirectoryError /
+        # PermissionError.
+        with self.assertRaises(FileNotFoundError):
+            with resources.open_data_binary("txtcmds"):
                 pass

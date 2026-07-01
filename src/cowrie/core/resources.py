@@ -34,9 +34,15 @@ def _data_resource(*parts: str) -> Traversable:
 def read_data_bytes(*parts: str) -> bytes:
     """Read bundled cowrie.data/<parts> as bytes.
 
-    Raises FileNotFoundError if the resource does not exist.
+    Raises FileNotFoundError if the resource does not exist or is not a
+    regular file (e.g. it resolves to a directory). Checking is_file() keeps
+    the error consistent across platforms: opening a directory raises
+    IsADirectoryError on POSIX but PermissionError on Windows.
     """
-    return _data_resource(*parts).read_bytes()
+    resource = _data_resource(*parts)
+    if not resource.is_file():
+        raise FileNotFoundError(str(resource))
+    return resource.read_bytes()
 
 
 @contextmanager
@@ -44,7 +50,11 @@ def open_data_binary(*parts: str) -> Generator[IO[bytes], None, None]:
     """Open bundled cowrie.data/<parts> as a binary stream.
 
     Use for pickle.load, json.load, or anything that wants a file object.
-    Raises FileNotFoundError if the resource does not exist.
+    Raises FileNotFoundError if the resource does not exist or is not a
+    regular file (e.g. it resolves to a directory); see read_data_bytes().
     """
-    with _data_resource(*parts).open("rb") as fh:
+    resource = _data_resource(*parts)
+    if not resource.is_file():
+        raise FileNotFoundError(str(resource))
+    with resource.open("rb") as fh:
         yield fh
