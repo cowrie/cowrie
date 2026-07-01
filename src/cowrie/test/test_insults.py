@@ -68,6 +68,37 @@ class DataReceivedAfterTeardownTestCase(unittest.TestCase):
         # Discarded before being counted or delegated to the parent.
         self.assertEqual(lsp.bytesReceived, 0)
 
+    def test_teardown_during_iteration_is_discarded(self) -> None:
+        # A keystroke handler can synchronously tear the session down (in-process
+        # session channels close without a reactor round-trip), clearing
+        # terminalProtocol mid-way through the parent's byte-by-byte loop. The
+        # next byte then dereferences None inside ServerProtocol.dataReceived
+        # (issue #40248). The top-of-method guard cannot catch this because the
+        # reference is still set on entry.
+        lsp = make_protocol("i")
+        lsp.stdinlogOpen = False
+        lsp.bytesReceived = 0
+        lsp.state = b"data"  # parent loop's initial state
+
+        class _TeardownOnFirstKeystroke:
+            """Nulls terminalProtocol on the first keystroke, as an in-process
+            channel teardown does."""
+
+            def __init__(self) -> None:
+                self.received: list[bytes] = []
+
+            def keystrokeReceived(self, ch: bytes, modifier: object) -> None:
+                self.received.append(ch)
+                lsp.terminalProtocol = None
+
+        term = _TeardownOnFirstKeystroke()
+        lsp.terminalProtocol = term
+
+        lsp.dataReceived(b"ab")  # must not raise on the second byte
+
+        self.assertEqual(term.received, [b"a"])
+        self.assertIsNone(lsp.terminalProtocol)
+
 
 class ConnectionLostStdinTestCase(unittest.TestCase):
     """Tests for stdin-log cleanup in LoggingServerProtocol.connectionLost()."""
