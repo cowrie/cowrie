@@ -11,6 +11,7 @@ cat command
 from __future__ import annotations
 
 import getopt
+import os
 
 from twisted.python import log
 
@@ -103,6 +104,24 @@ class Command_cat(HoneyPotCommand):
         """
         ctrl-d is end-of-file, time to terminate
         """
+        terminal = self.protocol.terminal
+        if (
+            self.input_data is None
+            and getattr(terminal, "stdinlogOpen", False)
+            and getattr(terminal, "stdinlogFile", "")
+            and os.path.exists(terminal.stdinlogFile)
+        ):
+            # Live exec-channel stdin (e.g. `cat > file`): the bytes were
+            # streamed to the stdin log rather than buffered as input_data, so
+            # start() left us parked for EOF. Emit them now, verbatim unless
+            # line numbering was requested, so a redirect target is not left
+            # empty.
+            with open(terminal.stdinlogFile, "rb") as f:
+                data = f.read()
+            if self.number:
+                self.output(data)
+            else:
+                self.writeBytes(data)
         self.exit()
 
     def help(self) -> None:
