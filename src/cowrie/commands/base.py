@@ -1341,6 +1341,10 @@ class Command_test(HoneyPotCommand):
         raise _TestError("binary", op)
 
     def _file_test(self, op: str, operand: str) -> bool:
+        if not operand:
+            # An empty path is not any kind of file: bash reports every file
+            # test on "" as false. Short-circuit before resolving it.
+            return False
         path = self.fs.resolve_path(operand, self.protocol.cwd)
         if op in ("-L", "-h"):
             try:
