@@ -12,6 +12,7 @@ from hashlib import md5
 from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh.common import NS
+from twisted.conch.ssh.transport import MSG_SERVICE_REQUEST
 
 from cowrie.ssh import transport as ssh_transport
 
@@ -72,6 +73,36 @@ class TestKexInitEscaping(unittest.TestCase):
 
         self.assertEqual(event["hasshAlgorithms"], expected_algs)
         self.assertEqual(event["hassh"], expected_hassh)
+
+
+class TestMalformedPacket(unittest.TestCase):
+    """A truncated message body must be logged and dropped, not crash."""
+
+    def test_truncated_message_disconnects_and_logs(self) -> None:
+        # A SERVICE_REQUEST whose body is too short for getNS()'s leading
+        # uint32 underflows struct.unpack inside the handler. dispatchMessage
+        # must catch that, emit a malformed_packet event, and drop the
+        # connection (as OpenSSH does) rather than letting it escape.
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = MagicMock()
+
+        with patch("cowrie.ssh.transport.log.msg") as mock_msg:
+            t.dispatchMessage(MSG_SERVICE_REQUEST, b"\x00\x00\x00")
+
+        t.transport.loseConnection.assert_called_once()
+
+        event = next(
+            (
+                dict(c.kwargs)
+                for c in mock_msg.call_args_list
+                if c.kwargs.get("eventid") == "cowrie.client.malformed_packet"
+            ),
+            None,
+        )
+        self.assertIsNotNone(event, "no malformed_packet event was emitted")
+        assert event is not None
+        self.assertEqual(event["messagenum"], MSG_SERVICE_REQUEST)
+        self.assertEqual(event["datalen"], 3)
 
 
 if __name__ == "__main__":
