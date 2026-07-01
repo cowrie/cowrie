@@ -121,6 +121,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
             return
 
         if self.stdinlogOpen:
+            # Exec channels never reach characterReceived(), so their idle
+            # timeout is otherwise a hard cap on the whole session. Reset it on
+            # every inbound packet so a slow upload is not killed mid-transfer.
+            self.terminalProtocol.resetTimeout()
             with open(self.stdinlogFile, "ab") as f:
                 f.write(data)
         elif self.ttylogEnabled and self.ttylogOpen:
