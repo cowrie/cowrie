@@ -154,7 +154,24 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             packet = self.getPacket()
 
     def dispatchMessage(self, messageNum: int, payload: bytes) -> None:
-        transport.SSHServerTransport.dispatchMessage(self, messageNum, payload)
+        try:
+            transport.SSHServerTransport.dispatchMessage(self, messageNum, payload)
+        except struct.error:
+            # A truncated or garbage message body underflows getNS()/struct
+            # parsing inside a handler (any message type: service-request,
+            # userauth, channel ops, ...). Real OpenSSH treats this as a fatal
+            # protocol error, logging server-side and dropping the connection
+            # without a SSH_MSG_DISCONNECT; match that (which also avoids a
+            # cowrie-specific disconnect string), and record the probe -- these
+            # malformed pre-auth packets are a common exploit/scanner signal.
+            log.msg(
+                eventid="cowrie.client.malformed_packet",
+                format="Malformed SSH packet (message %(messagenum)d, %(datalen)d bytes); disconnecting",
+                messagenum=messageNum,
+                datalen=len(payload),
+                data=payload[:256].hex(),
+            )
+            self.transport.loseConnection()
 
     def sendPacket(self, messageType: int, payload: bytes) -> None:
         """
