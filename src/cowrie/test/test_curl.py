@@ -100,3 +100,38 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         artifact = Artifact("curl-download")
         artifact.close()
         artifact.close()  # must not raise on the already-closed file
+
+    def test_late_download_callbacks_after_exit_are_inert(self) -> None:
+        # The command can exit while treq is still delivering the body (size
+        # limit in collect(), CTRL-C). The late callbacks must not write to the
+        # closed artifact, dispatch file_download events for a dead command, or
+        # exit again.
+        cmd = Command_curl.__new__(Command_curl)
+        cmd.protocol = self.proto
+        cmd.writefn = lambda _data: None
+        cmd.errorWritefn = lambda _data: None
+        cmd.exit_code = 0
+        cmd.url = b"http://198.51.100.1/binary"
+        cmd.host = "198.51.100.1"
+        cmd.port = 80
+        cmd.artifact = Artifact("curl-download")
+        events: list[dict] = []
+        self.proto.logDispatch = lambda **kw: events.append(kw)  # type: ignore[method-assign]
+        self.proto.cmdstack.append(cmd)
+
+        cmd.artifact.write(b"partial data")
+        cmd.exit(130)  # CTRL-C while the transfer is still in flight
+
+        cmd.collect(b"late chunk")
+        cmd.collectioncomplete(None)
+        cmd.error(Failure(error.ConnectionDone()))
+
+        self.assertEqual(
+            [
+                ev
+                for ev in events
+                if str(ev.get("eventid", "")).startswith("cowrie.session.file_download")
+            ],
+            [],
+            "late download callbacks reported events for an exited command",
+        )
