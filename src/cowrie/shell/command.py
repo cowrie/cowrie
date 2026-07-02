@@ -35,6 +35,12 @@ class HoneyPotCommand:
     This is the super class for all commands in cowrie/commands
     """
 
+    # True once exit() has run. An async callback firing after the command
+    # already exited (a download completing after an abort) checks this so a
+    # late exit() is a no-op. Class-level so it holds even for instances
+    # created without __init__ (tests).
+    exited: bool = False
+
     @property
     def current_user(self) -> dict[str, str | int]:
         """
@@ -127,7 +133,14 @@ class HoneyPotCommand:
         ``code`` sets this command's exit status (``$?`` for the shell that ran
         it). When omitted, the existing ``exit_code`` is kept, so a command that
         set it earlier (e.g. in an error callback) can just call ``exit()``.
+
+        Exiting twice is safe: a second call (a download callback firing after
+        the command already exited) returns without touching the cmdstack, so
+        the shell is not resumed again.
         """
+        if self.exited:
+            return
+        self.exited = True
         if code is not None:
             self.exit_code = code
         if (
