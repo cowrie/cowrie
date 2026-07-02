@@ -126,6 +126,10 @@ def run_script_file(
         # spans lines is emulated rather than joined onto one line.
         shell.lineReceived(text)
         command.exit_code = shell.last_exit_code
-        protocol.cmdstack.pop()
+        # The script shell removes itself from cmdstack in _finish() once its
+        # queue is drained -- which may be now (all-synchronous script) or later
+        # (an async wget/curl in the script keeps it mid-stack until it resumes
+        # and drains). A pop() here would remove whatever is on top, which is the
+        # in-flight async command, not this shell.
     finally:
         protocol._script_depth = depth

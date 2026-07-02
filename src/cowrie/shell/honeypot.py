@@ -142,9 +142,7 @@ class HoneyPotShell:
         shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
         self.protocol.cmdstack.append(shell)
         try:
-            return shell._capture_statements(
-                self.bashparser.parse(source)
-            ).rstrip("\n")
+            return shell._capture_statements(self.bashparser.parse(source)).rstrip("\n")
         finally:
             self.protocol.cmdstack.pop()
 
@@ -239,8 +237,11 @@ class HoneyPotShell:
 
         An interactive shell shows the next prompt. A top-level non-interactive
         shell (an exec session) ends the process. A nested non-interactive shell
-        (a pipe stage or a command-substitution capture) just returns so its
-        parent can carry on.
+        that runs a script or ``-c`` commands (sh/bash/su) removes itself from
+        the cmdstack and resumes the command that launched it -- this is what
+        hands control back once the script's async commands (wget/curl) have all
+        finished. A command-substitution / redirect capture shell is left alone:
+        its creator pops it in a finally when capture returns.
         """
         if self.interactive:
             self.showPrompt()
@@ -251,6 +252,16 @@ class HoneyPotShell:
             self.protocol.terminal.transport.processEnded(
                 process_status(self.last_exit_code)
             )
+        elif not self.redirect and self.protocol.cmdstack[-1] is self:
+            # Nested script / `-c` shell whose queue is drained: unwind it and
+            # let the launching command carry on. Done here rather than with an
+            # unconditional pop() at the call site because an async command
+            # (wget/curl) leaves this shell mid-stack until it later resumes and
+            # drains us. A redirect/command-substitution capture shell is
+            # excluded -- it is popped by its own creator in a finally.
+            self.protocol.cmdstack.remove(self)
+            if self.protocol.cmdstack:
+                self.protocol.cmdstack[-1].resume()
 
     def _short_circuit(self, op: str | None) -> bool:
         """Whether a statement joined by ``op`` should be skipped given the last

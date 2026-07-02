@@ -167,7 +167,10 @@ class Command_su(HoneyPotCommand):
         shell.lineReceived(command)
         # `su -c '...'` exits with the status of the command it ran.
         self.exit_code = shell.last_exit_code
-        self.protocol.cmdstack.pop()
+        # The shell removes itself from cmdstack in _finish() once its queue is
+        # drained. A pop() here would remove whatever is on top instead, which
+        # for a `-c` command that launched an async wget/curl is the in-flight
+        # command, not this shell.
         self.exit()
 
     def interactive_shell_as_user(
