@@ -29,8 +29,6 @@ import os
 import tempfile
 from typing import TYPE_CHECKING, Any
 
-from twisted.python import log
-
 from cowrie.core.config import CowrieConfig
 
 if TYPE_CHECKING:
@@ -51,6 +49,7 @@ class Artifact:
 
         self.shasum: str = ""
         self.shasumFilename: str = ""
+        self.duplicate: bool = False
 
     def __enter__(self) -> Any:
         return self.fp
@@ -94,12 +93,16 @@ class Artifact:
         self.shasumFilename = os.path.join(self.artifactDir, self.shasum)
 
         if os.path.exists(self.shasumFilename):
-            log.msg("Not storing duplicate content " + self.shasum)
+            # Content already captured; drop the temp copy. The dedup outcome is
+            # reported once, congruently, on the caller's file_download event
+            # (duplicate=True) rather than as a separate log line here.
             os.remove(self.fp.name)
+            self.duplicate = True
         else:
             os.rename(self.fp.name, self.shasumFilename)
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(self.shasumFilename, 0o666 & ~umask)
+            self.duplicate = False
 
         return self.shasum, self.shasumFilename

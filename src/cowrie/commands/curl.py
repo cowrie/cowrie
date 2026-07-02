@@ -446,6 +446,7 @@ class Command_curl(HoneyPotCommand):
             url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
+            duplicate=self.artifact.duplicate,
         )
         log.msg(
             eventid="cowrie.session.file_download",
@@ -453,6 +454,7 @@ class Command_curl(HoneyPotCommand):
             url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
+            duplicate=self.artifact.duplicate,
         )
         self.exit()
 

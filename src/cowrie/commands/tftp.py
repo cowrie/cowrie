@@ -339,6 +339,7 @@ class Command_tftp(HoneyPotCommand):
             url=url,
             outfile=self.artifactFile.shasumFilename,
             shasum=self.artifactFile.shasum,
+            duplicate=self.artifactFile.duplicate,
         )
 
         self.protocol.logDispatch(
@@ -348,6 +349,7 @@ class Command_tftp(HoneyPotCommand):
             outfile=self.artifactFile.shasumFilename,
             shasum=self.artifactFile.shasum,
             destfile=self.file_to_get,
+            duplicate=self.artifactFile.duplicate,
         )
 
         # Update honeyfs
