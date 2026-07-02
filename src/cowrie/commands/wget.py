@@ -312,7 +312,9 @@ class Command_wget(HoneyPotCommand):
         """
         Download `url`
         """
-        headers = {"User-Agent": [f"Wget/{self.wget_version} (linux-gnu)"]}
+        headers: dict[bytes | str, list[bytes | str]] = {
+            "User-Agent": [f"Wget/{self.wget_version} (linux-gnu)"]
+        }
 
         # TODO: use designated outbound interface
         # out_addr = None

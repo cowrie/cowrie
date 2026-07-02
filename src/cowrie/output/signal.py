@@ -56,10 +56,13 @@ class Output(cowrie.core.output.Output):
                 "message": message,
             }
         ).encode("utf-8")
+        headers: dict[bytes | str, list[bytes | str]] = {
+            b"Content-Type": [b"application/json"]
+        }
         d = treq.post(
             f"{self.api_url}/v2/send",
             data=payload,
-            headers={b"Content-Type": [b"application/json"]},
+            headers=headers,
             allow_redirects=False,
         )
         d.addErrback(log.err, "Signal plugin request failed")
