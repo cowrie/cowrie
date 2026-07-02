@@ -252,6 +252,7 @@ Download a file via FTP
             url=self.url_log,
             outfile=self.artifactFile.shasumFilename,
             shasum=self.artifactFile.shasum,
+            duplicate=self.artifactFile.duplicate,
         )
 
         self.protocol.logDispatch(
@@ -261,6 +262,7 @@ Download a file via FTP
             outfile=self.artifactFile.shasumFilename,
             shasum=self.artifactFile.shasum,
             destfile=self.local_file,
+            duplicate=self.artifactFile.duplicate,
         )
 
         # Update the honeyfs to point to downloaded file
