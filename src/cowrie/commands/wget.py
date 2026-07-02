@@ -525,7 +525,12 @@ class Command_wget(HoneyPotCommand):
 
         self.artifact.write(data)
 
-        self.speed = self.currentlength / (time.time() - self.started)
+        # Clamp elapsed to 1 microsecond: on a localhost transfer the first
+        # chunk can arrive within the same time.time() tick as self.started,
+        # which would divide by zero. 1e-6 is below any real network RTT, so it
+        # does not distort the reported speed on genuine connections.
+        elapsed = max(time.time() - self.started, 1e-6)
+        self.speed = self.currentlength / elapsed
         if self.totallength != 0:
             percent = int(self.currentlength / self.totallength * 100)
             spercent = f"{percent}%"
