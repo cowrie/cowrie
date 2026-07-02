@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import os
 import unittest
+from typing import ClassVar
 
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.shell.script import is_executable_binary
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -128,9 +130,7 @@ class ScriptExecutionTests(unittest.TestCase):
 
     def test_absolute_path_with_shebang(self) -> None:
         """Absolute path /tmp/script.sh with shebang executes."""
-        self.proto.lineReceived(
-            b'printf "#!/bin/sh\\necho absolute\\n" > /tmp/abs.sh'
-        )
+        self.proto.lineReceived(b'printf "#!/bin/sh\\necho absolute\\n" > /tmp/abs.sh')
         self.tr.clear()
         self.proto.lineReceived(b"/tmp/abs.sh")
         self.assertEqual(self.tr.value(), b"absolute\n" + PROMPT)
@@ -225,3 +225,64 @@ class BinaryDetectionTests(unittest.TestCase):
         contents = b"#!/bin/sh\n" + b"# padding\n" * 2000 + b"\x00\x01ELFblob"
         self.assertGreater(len(contents), 8192)
         self.assertTrue(is_executable_binary(contents))
+
+
+class _AsyncCommand(HoneyPotCommand):
+    """A command that pauses like wget/curl: start() launches and returns
+    without exiting; the test fires completion by calling finish()."""
+
+    pending: ClassVar[list[_AsyncCommand]] = []
+
+    def start(self) -> None:
+        _AsyncCommand.pending.append(self)
+
+    def finish(self) -> None:
+        self.exit()
+
+
+class AsyncScriptExecutionTests(unittest.TestCase):
+    """A script containing async commands (wget/curl) must run them one at a
+    time and hand the prompt back when done (issue #40269)."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        _AsyncCommand.pending = []
+        # Shadow the shared command table with a copy carrying our fake command.
+        self.proto.commands = dict(self.proto.commands)
+        self.proto.commands["asyncdl"] = _AsyncCommand
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_sh_script_with_async_commands(self) -> None:
+        self.proto.lineReceived(b"printf 'asyncdl\\nasyncdl\\n' > /tmp/a.sh")
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/a.sh")
+
+        # Sequential: only the first command has started; the second waits.
+        self.assertEqual(len(_AsyncCommand.pending), 1)
+
+        # Completing the first must not raise (the premature cmdstack.pop() left
+        # it off the stack, so exit()'s remove() raised ValueError) and must
+        # start the second.
+        _AsyncCommand.pending[0].finish()
+        self.assertEqual(len(_AsyncCommand.pending), 2)
+
+        _AsyncCommand.pending[1].finish()
+
+        # The script shell is gone and the interactive prompt is back, rather
+        # than the session hanging on a stranded nested shell.
+        self.assertEqual(len(self.proto.cmdstack), 1)
+        self.assertTrue(self.proto.cmdstack[0].interactive)
+        self.assertTrue(self.tr.value().endswith(PROMPT))
+
+    def test_su_c_with_async_command(self) -> None:
+        # su -c '<async>' takes the same nested-shell path as sh/bash.
+        self.proto.lineReceived(b"su -c asyncdl")
+        self.assertEqual(len(_AsyncCommand.pending), 1)
+        _AsyncCommand.pending[0].finish()  # must not raise
+        self.assertEqual(len(self.proto.cmdstack), 1)
+        self.assertTrue(self.tr.value().endswith(PROMPT))
