@@ -78,6 +78,12 @@ class ExitStatusTests(unittest.TestCase):
         self.assertEqual(self.run_line(b"bash -c false; echo $?"), b"1\n")
         self.assertEqual(self.run_line(b"bash -c true; echo $?"), b"0\n")
 
+    def test_exit_code_propagates_from_nested_shell(self) -> None:
+        # `exit N` is the dying shell's status, which sh -c reports as its own.
+        self.assertEqual(self.run_line(b'sh -c "exit 5"; echo $?'), b"5\n")
+        # A bare `exit` reports the last command's status.
+        self.assertEqual(self.run_line(b'sh -c "false; exit"; echo $?'), b"1\n")
+
     def test_nested_shell_status_gates_and(self) -> None:
         # A failing nested shell short-circuits a following &&.
         self.assertEqual(self.run_line(b"bash -c false && echo ran"), b"")
