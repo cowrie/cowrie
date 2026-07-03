@@ -144,7 +144,12 @@ class HoneyPotShell:
         try:
             return shell._capture_statements(self.bashparser.parse(source)).rstrip("\n")
         finally:
-            self.protocol.cmdstack.pop()
+            # Remove the capture shell by identity: an `exit` inside the
+            # substitution already removed it (ending the subshell), and a
+            # blind pop() would remove the real shell instead, leaving the
+            # cmdstack empty and crashing the next command's instantiation.
+            if shell in self.protocol.cmdstack:
+                self.protocol.cmdstack.remove(shell)
 
     def _capture_statements(self, statements: list[Statement]) -> str:
         """Run statements in this capture shell, concatenating their stdout and
@@ -152,6 +157,10 @@ class HoneyPotShell:
         whole group)."""
         output = ""
         for statement in statements:
+            if self not in self.protocol.cmdstack:
+                # An `exit` in the substitution ended this subshell; the
+                # remaining statements never run, as in bash.
+                break
             if not isinstance(statement, (Command, Subshell)):
                 continue  # ignore a syntax error inside a substitution
             if self._short_circuit(statement.op):

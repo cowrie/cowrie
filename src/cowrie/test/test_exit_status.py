@@ -153,6 +153,46 @@ class ExitStatusTests(unittest.TestCase):
         self.assertEqual(self.run_line(b"echo a | cat; echo done"), b"a\ndone\n")
 
 
+class ExitInSubstitutionTests(unittest.TestCase):
+    """`exit` inside $( ) ends only that subshell, as in bash (#40275).
+
+    It removes the capture shell from the cmdstack; the substitution's cleanup
+    must not then pop the real shell, or the emptied cmdstack crashes the next
+    command's instantiation with IndexError.
+    """
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def run_line(self, line: bytes) -> bytes:
+        self.tr.clear()
+        self.proto.lineReceived(line)
+        out: bytes = self.tr.value()
+        return out[: -len(PROMPT)] if out.endswith(PROMPT) else out
+
+    def test_exit_in_substitution_keeps_session_alive(self) -> None:
+        shell = self.proto.cmdstack[0]
+        self.assertEqual(self.run_line(b"echo $(exit)"), b"\n")
+        self.assertEqual(self.proto.cmdstack, [shell])
+        # The session must still run commands afterwards.
+        self.assertEqual(self.run_line(b"echo ok"), b"ok\n")
+
+    def test_exit_stops_remaining_substitution_statements(self) -> None:
+        # `exit` ends the subshell; a later statement in the same substitution
+        # never runs.
+        self.assertEqual(self.run_line(b"echo a$(exit; echo b)"), b"a\n")
+
+    def test_plain_exit_still_ends_session(self) -> None:
+        self.proto.lineReceived(b"exit")
+        self.assertEqual(self.proto.cmdstack, [])
+
+
 def run_exec(cmd: bytes) -> int:
     """Run `cmd` over an exec channel and return the exit status the session
     would report to the SSH client via processEnded."""
