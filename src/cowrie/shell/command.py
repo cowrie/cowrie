@@ -142,14 +142,17 @@ class HoneyPotCommand:
         if len(self.protocol.cmdstack):
             self.protocol.cmdstack.remove(self)
 
-            if len(self.protocol.cmdstack):
-                # Hand the exit status to the shell that ran us, for $? and the
-                # && / || logic in runCommand.
-                self.protocol.cmdstack[-1].last_exit_code = self.exit_code
-                self.protocol.cmdstack[-1].resume()
+        if len(self.protocol.cmdstack):
+            # Hand the exit status to the shell that ran us, for $? and the
+            # && / || logic in runCommand.
+            self.protocol.cmdstack[-1].last_exit_code = self.exit_code
+            self.protocol.cmdstack[-1].resume()
         else:
+            # No shell left to return to: either an `exit` builtin removed the
+            # shell before this command finished, or the session is being torn
+            # down. End the process with this command's status.
             ret = process_status(self.exit_code)
-            # The session could be disconnected already, when his happens .transport is gone
+            # The session could be disconnected already, when this happens .transport is gone
             try:
                 self.protocol.terminal.transport.processEnded(ret)
             except AttributeError:

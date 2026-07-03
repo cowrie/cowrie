@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from cowrie.shell.command import HoneyPotCommand, process_status
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.honeypot import HoneyPotShell
 from cowrie.shell.script import run_script_file
 
@@ -104,7 +104,8 @@ commands["sh"] = Command_sh
 class Command_exit(HoneyPotCommand):
     def call(self) -> None:
         # `exit [N]` exits with N, or the last command's status ($?) by default.
-        code = getattr(self.protocol.cmdstack[-2], "last_exit_code", 0)
+        shell = self.protocol.cmdstack[-2]
+        code = getattr(shell, "last_exit_code", 0)
         if self.args:
             try:
                 code = int(self.args[0]) & 0xFF
@@ -113,10 +114,14 @@ class Command_exit(HoneyPotCommand):
                     f"-bash: exit: {self.args[0]}: numeric argument required\n"
                 )
                 code = 2
-        # this removes the second last command, which is the shell
-        self.protocol.cmdstack.pop(-2)
-        if len(self.protocol.cmdstack) < 2:
-            self.protocol.terminal.transport.processEnded(process_status(code))
+        # The code is the dying shell's final status: whoever launched the
+        # shell (sh -c, su -c, a substitution) reads it from last_exit_code.
+        shell.last_exit_code = code
+        self.exit_code = code
+        self.protocol.cmdstack.remove(shell)
+        # start() follows with exit(); with the shell gone that either resumes
+        # the command that launched it (nested shell) or, on an empty cmdstack
+        # (top-level shell), ends the session with this exit_code.
 
 
 commands["exit"] = Command_exit
