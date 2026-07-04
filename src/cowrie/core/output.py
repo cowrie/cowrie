@@ -211,8 +211,15 @@ class Output(metaclass=abc.ABCMeta):
         if ev["eventid"] == "cowrie.session.connect":
             self.sessions[sessionno] = ev["session"]
             self.ips[sessionno] = ev["src_ip"]
-        else:
+        elif sessionno in self.sessions:
             ev["session"] = self.sessions[sessionno]
+        else:
+            # A late event for a session that already closed: an async
+            # callback (e.g. a download completing or failing) can fire after
+            # connectionLost removed the session. The event can no longer be
+            # attributed to a session, so drop it, like the 'session' branch
+            # above does for an unknown session id.
+            return
 
         if sessionno[0] == "S":
             ev["protocol"] = "ssh"
