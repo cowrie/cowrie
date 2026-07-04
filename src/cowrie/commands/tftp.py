@@ -352,23 +352,24 @@ class Command_tftp(HoneyPotCommand):
             duplicate=self.artifactFile.duplicate,
         )
 
-        # Update honeyfs
-        size = self.tftp_client.bytes_received if self.tftp_client else 0
-        self.fs.mkfile(
-            self.fakeoutfile,
-            self.current_user["uid"],
-            self.current_user["gid"],
-            size,
-            33188,
-        )
-
-        # Update the honeyfs to point to downloaded file
-        self.fs.update_realfile(
-            self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
-        )
-        self.fs.chown(
-            self.fakeoutfile, self.current_user["uid"], self.current_user["gid"]
-        )
+        # Update the honeyfs to point to the downloaded file, unless the
+        # session already closed (a transfer completing after connectionLost
+        # has no user left to own the file).
+        if self.protocol.user:
+            size = self.tftp_client.bytes_received if self.tftp_client else 0
+            self.fs.mkfile(
+                self.fakeoutfile,
+                self.current_user["uid"],
+                self.current_user["gid"],
+                size,
+                33188,
+            )
+            self.fs.update_realfile(
+                self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
+            )
+            self.fs.chown(
+                self.fakeoutfile, self.current_user["uid"], self.current_user["gid"]
+            )
 
         self._safe_exit()
 
@@ -399,7 +400,10 @@ class Command_tftp(HoneyPotCommand):
             url=url,
         )
 
-        self.write(f"tftp: {error_msg}\n")
+        # A failure reported after the session closed has no terminal to
+        # write to; writing anyway logs "Connection was probably lost".
+        if self.protocol.terminal:
+            self.write(f"tftp: {error_msg}\n")
         self._safe_exit()
 
     def _safe_exit(self) -> None:
