@@ -186,12 +186,21 @@ session's identity once::
 
 The transport owns it (``self.events = EventLog(...)``); the protocol and
 commands reach it through the objects they already hold
-(``self.protocol.events``). A download command's deferred callbacks close
-over the command instance, so a transfer that completes after
-``connectionLost`` still holds the ``EventLog`` and its event arrives fully
-attributed -- fixing defect 2 by construction rather than by table lifecycle.
-Events dispatched after the session emitted ``cowrie.session.closed`` carry
-an additional ``late: true`` attribute so consumers can distinguish them.
+(``self.protocol.events``), and ``connectionLost`` leaves the reference in
+place. A download command's deferred callbacks close over the command
+instance, so a transfer that completes after ``connectionLost`` still holds
+the ``EventLog`` and its event arrives fully attributed -- fixing defect 2 by
+construction rather than by table lifecycle. Events dispatched after the
+session emitted ``cowrie.session.closed`` carry an additional ``late: true``
+attribute so consumers can distinguish them.
+
+``dispatch()`` also emits the console log line, stamping the session's
+``system`` log-context prefix explicitly rather than inheriting whatever
+context the caller runs in. Today a download callback's console lines appear
+under ``[HTTP11ClientProtocol,client]``, which makes concurrent sessions
+indistinguishable in ``cowrie.log``; with the prefix bound to the session,
+operator-facing lines are correctly attributed no matter where the code
+runs.
 
 ``EventDispatcher`` -- single fan-out
 =====================================
@@ -220,6 +229,77 @@ with whatever identity they have. The current pipeline drops most of them
 anyway (they match no regex); making them first-class is deliberately left
 until the main migration is done.
 
+Output plugins themselves emit no events (verified against the tree), so
+plugins remain pure sinks and need no emission path.
+
+Calling patterns
+================
+
+Transport, at ``connectionMade()`` -- identity is bound exactly once::
+
+    self.events = EventLog(
+        self.factory.tac.dispatcher,
+        session=self.transportId,
+        protocol="telnet",
+        src_ip=self.transport.getPeer().host,
+        src_port=self.transport.getPeer().port,
+        dst_ip=self.transport.getHost().host,
+        dst_port=self.transport.getHost().port,
+    )
+    self.events.dispatch(
+        "cowrie.session.connect",
+        "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s)"
+        " [session: %(session)s]",
+    )
+
+A shell emitter such as command input. Before, in ``shell/honeypot.py``,
+attributed by log-context regex and lost when running inside a download
+callback::
+
+    log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
+
+After -- attributed by the bound identity, delivered from any context::
+
+    self.protocol.events.dispatch("cowrie.command.input", "CMD: %(input)s",
+                                  input=line)
+
+A download command's completion callback. Before, in ``commands/wget.py``,
+the event is emitted twice (``logDispatch`` for the plugins, ``log.msg`` for
+the console) and crashes or is dropped when the transfer outlives the
+session. After -- one call, correct in both cases::
+
+    def collectioncomplete(self, data: None) -> None:
+        ...
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download",
+            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+            url=self.url.decode(),
+            outfile=self.artifact.shasumFilename,
+            shasum=self.artifact.shasum,
+            duplicate=self.artifact.duplicate,
+        )
+
+If this fires after the attacker disconnected, the event arrives with
+``late: true`` and full session attribution, and the console line still
+carries the session's log prefix.
+
+A transport-level event, e.g. the SSH client version string::
+
+    self.events.dispatch(
+        "cowrie.client.version",
+        "Remote SSH version: %(version)s",
+        version=self.otherVersionString,
+    )
+
+A session-less emitter (backend pool), calling the dispatcher directly::
+
+    self.tac.dispatcher.dispatch(
+        {
+            "eventid": "cowrie.pool.vm_error",
+            "message": f"Backend VM {vm_id} unreachable",
+        }
+    )
+
 Event flow after the change
 ===========================
 
@@ -236,6 +316,90 @@ Event flow after the change
       |  enrich once
       v
     plugin.write()  x N, error-isolated
+
+Operational considerations
+**************************
+
+No configuration changes
+    Plugin selection, loading, and configuration are untouched;
+    ``cowrie_plugin.py`` builds the same plugin list and hands it to the
+    dispatcher instead of registering observers. An upgrade is a restart.
+
+Plugin failure handling
+    ``write()`` exceptions are caught per plugin. Error logging must be
+    rate-limited per plugin (first failure, then periodic summaries): an
+    unreachable database otherwise turns every attacker keystroke into an
+    error line and floods ``cowrie.log``. Today the same outage aborts the
+    dispatch loop mid-way, so plugins listed after the failing one silently
+    lose the event.
+
+Pipeline observability
+    The dispatcher is one natural place to count events dispatched, events
+    dropped, per-plugin deliveries, and per-plugin errors. Exposing these
+    counters (to the prometheus plugin, or the status command) turns "is my
+    ELK feed complete?" from guesswork into a metric. The current design has
+    no such point; losses are invisible by construction.
+
+Blocking plugins
+    ``write()`` is called synchronously in the reactor thread, exactly as
+    today -- a plugin doing blocking I/O stalls the honeypot either way. The
+    dispatcher is the single place a delivery queue or thread pool could be
+    added later; that change is deliberately out of scope here.
+
+Shutdown
+    Plugin ``stop()`` keeps its reactor shutdown trigger. The dispatcher
+    tolerates dispatch-after-stop (drop and count) so a late deferred firing
+    during shutdown cannot raise into the reactor teardown.
+
+Log volume
+    ``cowrie.log`` content is unchanged: one console line per event, plus
+    diagnostics as before. Plugins stop scanning every Twisted log line, so
+    per-event plugin work drops from (all log lines x N plugins) to
+    (events x N plugins).
+
+Security considerations
+***********************
+
+Audit-trail integrity
+    Per-plugin error isolation means a plugin crash -- including one
+    triggered by crafted attacker input -- can no longer suppress delivery
+    of that event to the remaining plugins, and a plugin that raises no
+    longer desynchronizes its private session table (there is none). Today
+    both are possible, and the second is permanent for the process lifetime.
+
+Attacker-controlled data
+    Event fields (commands, URLs, filenames, version strings) are attacker
+    input. The dispatcher's enrichment step is the single choke point where
+    the *console* rendering can strip control characters and escape
+    sequences (log-injection via ``\n`` or ANSI codes in a command line),
+    while the structured event delivered to plugins keeps the raw bytes for
+    forensics. Today every plugin and the console formatter each interpolate
+    raw attacker strings independently.
+
+Bounding late events
+    Late events exist only while some live object (a pending deferred's
+    command instance) still references the session's ``EventLog``; when the
+    last reference is collected, no further events can be emitted for that
+    session. The bound is therefore the lifetime of in-flight work, not wall
+    time -- an attacker cannot keep a closed session emitting indefinitely
+    without also keeping a transfer open, which existing timeouts already
+    bound (treq ``timeout=10``, TFTP retry caps).
+
+Event floods
+    An attacker spamming commands generates events at line rate, unchanged
+    from today. The dispatcher's counters provide the detection hook;
+    rate-limiting event *generation* stays with the emitting subsystems
+    (e.g. the download rate limiter).
+
+Testing
+*******
+
+``EventLog`` and ``EventDispatcher`` are plain objects with no dependency on
+the global Twisted log, so unit tests inject a capturing fake plugin and
+assert on delivered dictionaries -- no log-observer fixtures, no regex
+setup. Each phase-3 file conversion gets a test that the emitter delivers an
+attributed event from a deferred context (the case the old pipeline fails).
+The emit-site census (July 2026) doubles as the conversion checklist.
 
 Migration plan
 **************
@@ -263,19 +427,20 @@ Phase 4 -- delete
     Remove the ``log.addObserver(plugin.emit)`` registration, the regexes,
     the per-plugin tables, and the attribution half of ``Output.emit()``.
     Third-party plugins that only implement ``start``/``stop``/``write``
-    are unaffected throughout.
+    are unaffected throughout; ones that override ``emit()`` or
+    ``logDispatch()`` themselves would break here and must be checked for
+    before this phase (none in-tree do).
 
 Open questions
 **************
 
-* Should ``late`` events be delivered indefinitely, or bounded (e.g. only
-  while the command's deferred is pending)? Unbounded matches "never lose a
-  download record"; a bound protects consumers that assume session recency.
 * Ordering: plugins currently see events in global log order. The dispatcher
   preserves per-session ordering trivially; is cross-session ordering worth
   guaranteeing? (No known consumer depends on it.)
 * Whether ``sessionno`` should be dropped from the delivered event once
   nothing derives from it, or kept for operators who grep by transport
   number.
+* Whether the dispatcher's counters ship in phase 1 (cheap, immediately
+  useful for validating the migration itself) or as a follow-up.
 
 .. |rarr| unicode:: 0x2192
