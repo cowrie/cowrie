@@ -126,6 +126,29 @@ class EventDispatcherTests(unittest.TestCase):
             "a mutating sink corrupted the event for the next sink",
         )
 
+    def test_sinks_do_not_share_nested_containers(self) -> None:
+        class NestedMutatingSink:
+            def write(self, event: dict[str, Any]) -> None:
+                event["algs"].append("mutated")
+
+        after = CapturingSink()
+        dispatcher = EventDispatcher(
+            [NestedMutatingSink(), after], logmsg=lambda msg, **kw: None
+        )
+        dispatcher.dispatch(
+            {
+                "eventid": "cowrie.client.kex",
+                "format": "kex",
+                "algs": ["curve25519-sha256"],
+                "session": "s",
+            }
+        )
+        self.assertEqual(
+            after.events[0]["algs"],
+            ["curve25519-sha256"],
+            "a sink mutating a nested list corrupted the next sink's event",
+        )
+
     def test_timestamp_format_follows_timezone_convention(self) -> None:
         # Same convention as Output: the Z suffix only when TZ is UTC,
         # otherwise a numeric offset -- a non-UTC time must not claim Zulu.
@@ -160,6 +183,22 @@ class EventLogTests(unittest.TestCase):
         self.assertEqual(ev["src_ip"], "192.0.2.1")
         self.assertEqual(ev["message"], "CMD: uname -a")
         self.assertNotIn("late", ev)
+
+    def test_fields_cannot_override_bound_attribution(self) -> None:
+        # Emitter fields may carry protocol-supplied values named like the
+        # identity (a direct-tcpip request's claimed originator); attribution
+        # must stay the connection's own.
+        self.events.dispatch(
+            "cowrie.direct-tcpip.request",
+            "request from %(src_ip)s",
+            src_ip="6.6.6.6",
+            session="spoofed",
+            protocol="fake",
+        )
+        ev = self.sink.events[0]
+        self.assertEqual(ev["src_ip"], "192.0.2.1")
+        self.assertEqual(ev["session"], "abcd0123")
+        self.assertEqual(ev["protocol"], "ssh")
 
     def test_late_after_close(self) -> None:
         self.events.close()
@@ -237,3 +276,17 @@ class ConsoleRendererTests(unittest.TestCase):
             }
         )
         self.assertEqual(lines, [("CMD: ls", "telnet,abcd0123,192.0.2.1")])
+
+    def test_skips_events_without_message(self) -> None:
+        lines: list[tuple[str, str]] = []
+        renderer = ConsoleRenderer(
+            logmsg=lambda msg, system: lines.append((msg, system))
+        )
+        renderer.write(
+            {
+                "eventid": "cowrie.session.params",
+                "message": "",
+                "session": "abcd0123",
+            }
+        )
+        self.assertEqual(lines, [])

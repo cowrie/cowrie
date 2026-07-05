@@ -204,11 +204,11 @@ class SSH(base_protocol.BaseProtocol):
                         self.server.events.dispatch(
                             "cowrie.direct-tcpip.request",
                             "direct-tcp connection request to %(dst_ip)s:%(dst_port)s "
-                            "from %(src_ip)s:%(src_port)s",
+                            "from %(orig_ip)s:%(orig_port)s",
                             dst_ip=dst_ip,
                             dst_port=dst_port,
-                            src_ip=src_ip,
-                            src_port=src_port,
+                            orig_ip=src_ip,
+                            orig_port=src_port,
                         )
 
                     the_uuid = uuid.uuid4().hex

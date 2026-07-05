@@ -87,10 +87,12 @@ class EventDispatcher:
         self.dispatched += 1
         for sink in self.sinks:
             try:
-                # Each sink owns its copy: several output plugins mutate the
-                # event they receive (del event[i]), which must not corrupt
-                # what the sinks after them see.
-                sink.write(dict(ev))
+                # Each sink owns its copy, nested containers included:
+                # several output plugins mutate the event they receive,
+                # which must not corrupt what the sinks after them see.
+                # convert() rebuilds dicts and lists recursively, so it
+                # doubles as the per-sink deep copy.
+                sink.write(convert(ev))
             except Exception as e:  # one sink must not stop the rest
                 count = self.failures.get(id(sink), 0) + 1
                 self.failures[id(sink)] = count
@@ -119,9 +121,17 @@ class EventLog:
         self._closed: bool = False
         self._root: EventLog = self
 
+    # Attribution keys the bound identity always wins over emitter fields:
+    # attacker-influenced values (a direct-tcpip request's claimed
+    # originator) must not masquerade as the connection's source.
+    AUTHORITATIVE = ("session", "src_ip", "protocol")
+
     def dispatch(self, eventid: str, fmt: str, **fields: Any) -> None:
         event: dict[str, Any] = dict(self.identity)
         event.update(fields)
+        for key in self.AUTHORITATIVE:
+            if key in self.identity:
+                event[key] = self.identity[key]
         event["eventid"] = eventid
         event["format"] = fmt
         if self._root._closed:
@@ -156,9 +166,14 @@ class ConsoleRenderer:
         self.logmsg = logmsg
 
     def write(self, event: dict[str, Any]) -> None:
+        message = event.get("message", "")
+        if not message:
+            # Some events (cowrie.session.params) carry data only; a blank
+            # line per session is just log noise.
+            return
         system = "{},{},{}".format(
             event.get("protocol", "-"),
             event.get("session", "-"),
             event.get("src_ip", "-"),
         )
-        self.logmsg(event.get("message", ""), system=system)
+        self.logmsg(message, system=system)

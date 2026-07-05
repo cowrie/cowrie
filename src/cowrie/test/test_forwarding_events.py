@@ -57,6 +57,11 @@ class ForwardingEventTests(unittest.TestCase):
         self.assertEqual(requests[0]["dst_ip"], "198.51.100.7")
         self.assertEqual(requests[0]["dst_port"], 443)
         self.assertEqual(requests[0]["session"], "test0000")
+        # The originator in the packet is attacker-controlled; it must not
+        # replace the connection's source address.
+        self.assertEqual(requests[0]["src_ip"], "1.2.3.4")
+        self.assertEqual(requests[0]["orig_ip"], "10.0.0.1")
+        self.assertEqual(requests[0]["orig_port"], 50000)
 
     def test_discarded_data_dispatches_with_session_identity(self) -> None:
         events, dispatched = capture_eventlog()
