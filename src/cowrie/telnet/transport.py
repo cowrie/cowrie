@@ -20,7 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
-from cowrie.core.events import EventLog
+from cowrie.core.events import EventLog, transport_events
 
 # Telnet option names for logging (RFC 854, RFC 855, RFC 1572, etc.)
 TELNET_OPTIONS: dict[int, str] = {
@@ -67,17 +67,12 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
 
-        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
-        if dispatcher is not None:
-            self.events = EventLog(
-                dispatcher,
-                session=self.transportId,
-                protocol="telnet",
-                src_ip=self.transport.getPeer().host,
-                src_port=self.transport.getPeer().port,
-                dst_ip=self.transport.getHost().host,
-                dst_port=self.transport.getHost().port,
-            )
+        self.events = transport_events(
+            self.factory,
+            self.transport,
+            session=self.transportId,
+            protocol="telnet",
+        )
 
         log.msg(
             eventid="cowrie.session.connect",

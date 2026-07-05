@@ -155,6 +155,34 @@ class EventLog:
         self._root._closed = True
 
 
+def transport_events(
+    factory: Any,
+    transport: Any,
+    *,
+    session: str,
+    protocol: str,
+    src_ip: str | None = None,
+) -> EventLog | None:
+    """The session EventLog for a listening transport, bound to the
+    connection's endpoints, or None when the running application provides
+    no dispatcher. src_ip defaults to the connection peer; the SSH
+    transport passes its IPv4-normalized form instead."""
+    dispatcher = getattr(getattr(factory, "tac", None), "dispatcher", None)
+    if dispatcher is None:
+        return None
+    peer = transport.getPeer()
+    host = transport.getHost()
+    return EventLog(
+        dispatcher,
+        session=session,
+        protocol=protocol,
+        src_ip=src_ip if src_ip is not None else peer.host,
+        src_port=peer.port,
+        dst_ip=host.host,
+        dst_port=host.port,
+    )
+
+
 class ConsoleRenderer:
     """
     Renders each event's message into the diagnostic log, prefixed with the

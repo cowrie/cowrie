@@ -26,7 +26,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
-from cowrie.core.events import EventLog
+from cowrie.core.events import EventLog, transport_events
 from cowrie.core.utils import escape_nonprintable
 
 
@@ -73,17 +73,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
 
-        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
-        if dispatcher is not None:
-            self.events = EventLog(
-                dispatcher,
-                session=self.transportId,
-                protocol="ssh",
-                src_ip=src_ip,
-                src_port=self.transport.getPeer().port,
-                dst_ip=self.transport.getHost().host,
-                dst_port=self.transport.getHost().port,
-            )
+        self.events = transport_events(
+            self.factory,
+            self.transport,
+            session=self.transportId,
+            protocol="ssh",
+            src_ip=src_ip,
+        )
 
         log.msg(
             eventid="cowrie.session.connect",

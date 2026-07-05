@@ -20,7 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
-from cowrie.core.events import EventLog
+from cowrie.core.events import EventLog, transport_events
 from cowrie.core.utils import escape_nonprintable
 from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
@@ -83,17 +83,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
 
-        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
-        if dispatcher is not None:
-            self.events = EventLog(
-                dispatcher,
-                session=self.transportId,
-                protocol="ssh",
-                src_ip=self.peer_ip,
-                src_port=self.transport.getPeer().port,
-                dst_ip=self.local_ip,
-                dst_port=self.transport.getHost().port,
-            )
+        self.events = transport_events(
+            self.factory,
+            self.transport,
+            session=self.transportId,
+            protocol="ssh",
+        )
 
         self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
