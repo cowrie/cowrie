@@ -79,6 +79,49 @@ class TestHoneypotPasswordChecker(unittest.TestCase):
         self.assertEqual(events[0]["session"], "test0000")
 
 
+class TestHoneypotPublicKeyChecker(unittest.TestCase):
+    def test_pubkey_attempt_dispatches_fingerprint_and_login_failed(self) -> None:
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+        from twisted.conch.ssh import keys
+        from twisted.cred.credentials import SSHPrivateKey
+
+        from cowrie.core.checkers import HoneypotPublicKeyChecker
+
+        events, dispatched = capture_eventlog(protocol="ssh")
+        blob = keys.Key(ed25519.Ed25519PrivateKey.generate()).public().blob()
+        creds = SSHPrivateKey(b"root", b"ssh-ed25519", blob, None, None)
+        creds.events = events  # type: ignore[attr-defined]
+
+        HoneypotPublicKeyChecker().requestAvatarId(creds)
+
+        fingerprints = [
+            e for e in dispatched if e["eventid"] == "cowrie.client.fingerprint"
+        ]
+        self.assertEqual(len(fingerprints), 1)
+        self.assertEqual(fingerprints[0]["username"], "root")
+        self.assertEqual(fingerprints[0]["session"], "test0000")
+        failed = login_events(dispatched)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["eventid"], "cowrie.login.failed")
+
+
+class TestEventsAttachingPortal(unittest.TestCase):
+    def test_login_attaches_events_to_credentials(self) -> None:
+        from types import SimpleNamespace
+
+        from cowrie.ssh.userauth import EventsAttachingPortal
+
+        seen: list[Any] = []
+        inner = SimpleNamespace(
+            login=lambda creds, mind, *interfaces: seen.append(creds)
+        )
+        events, _ = capture_eventlog(protocol="ssh")
+        creds = SimpleNamespace()
+        EventsAttachingPortal(inner, events).login(creds, None, object)
+        self.assertEqual(seen, [creds])
+        self.assertIs(creds.events, events)
+
+
 class TestHoneypotNoneChecker(unittest.TestCase):
     def test_none_auth_dispatches_login_success(self) -> None:
         events, dispatched = capture_eventlog(protocol="ssh")

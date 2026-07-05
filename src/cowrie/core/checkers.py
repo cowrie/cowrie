@@ -39,34 +39,40 @@ class HoneypotPublicKeyChecker:
 
     def requestAvatarId(self, credentials):
         _pubKey = keys.Key.fromString(credentials.blob)
-        log.msg(
-            eventid="cowrie.client.fingerprint",
-            format="public key attempt for user %(username)s of type %(type)s with fingerprint %(fingerprint)s",
-            username=escape_nonprintable(credentials.username),
-            fingerprint=_pubKey.fingerprint(),
-            key=_pubKey.toString("OPENSSH"),
-            type=_pubKey.sshType(),
-        )
+        # Twisted constructs this credential; the userauth service attaches
+        # the transport's emitter before portal.login.
+        events = getattr(credentials, "events", None)
+        if events:
+            events.dispatch(
+                "cowrie.client.fingerprint",
+                "public key attempt for user %(username)s of type %(type)s with fingerprint %(fingerprint)s",
+                username=escape_nonprintable(credentials.username),
+                fingerprint=_pubKey.fingerprint(),
+                key=_pubKey.toString("OPENSSH"),
+                type=_pubKey.sshType(),
+            )
 
         if CowrieConfig.getboolean("ssh", "auth_publickey_allow_any", fallback=False):
-            log.msg(
-                eventid="cowrie.login.success",
-                format="public key login attempt for [%(username)s] succeeded",
-                username=escape_nonprintable(credentials.username),
-                fingerprint=_pubKey.fingerprint(),
-                key=_pubKey.toString("OPENSSH"),
-                type=_pubKey.sshType(),
-            )
+            if events:
+                events.dispatch(
+                    "cowrie.login.success",
+                    "public key login attempt for [%(username)s] succeeded",
+                    username=escape_nonprintable(credentials.username),
+                    fingerprint=_pubKey.fingerprint(),
+                    key=_pubKey.toString("OPENSSH"),
+                    type=_pubKey.sshType(),
+                )
             return defer.succeed(credentials.username)
         else:
-            log.msg(
-                eventid="cowrie.login.failed",
-                format="public key login attempt for [%(username)s] failed",
-                username=escape_nonprintable(credentials.username),
-                fingerprint=_pubKey.fingerprint(),
-                key=_pubKey.toString("OPENSSH"),
-                type=_pubKey.sshType(),
-            )
+            if events:
+                events.dispatch(
+                    "cowrie.login.failed",
+                    "public key login attempt for [%(username)s] failed",
+                    username=escape_nonprintable(credentials.username),
+                    fingerprint=_pubKey.fingerprint(),
+                    key=_pubKey.toString("OPENSSH"),
+                    type=_pubKey.sshType(),
+                )
             return failure.Failure(error.ConchError("Incorrect signature"))
 
 

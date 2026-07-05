@@ -23,6 +23,20 @@ from cowrie.core.config import CowrieConfig
 from cowrie.shell.honeyfs import read_honeyfs_bytes
 
 
+class EventsAttachingPortal:
+    """Attaches a session's EventLog to credentials before delegating to the
+    real portal, for the credential objects Twisted builds internally
+    (public key auth) that cannot carry the emitter from construction."""
+
+    def __init__(self, portal: Any, events: Any) -> None:
+        self.portal = portal
+        self.events = events
+
+    def login(self, credentials: Any, mind: Any, *interfaces: Any) -> Any:
+        credentials.events = self.events
+        return self.portal.login(credentials, mind, *interfaces)
+
+
 class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     """
     This contains modifications to the authentication system to do:
@@ -91,6 +105,22 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     #                           with {} algorithm".format(algName))
     #         return defer.fail(error.ConchError("Incorrect signature"))
     #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
+
+    def auth_publickey(self, packet: bytes) -> Any:
+        """
+        Overridden to attach the session's EventLog to the credential that
+        the base implementation constructs, so the public-key checker can
+        dispatch attributed events.
+        """
+        original = self.portal
+        self.portal = EventsAttachingPortal(
+            original,
+            self.transport.events,  # type: ignore[union-attr]
+        )
+        try:
+            return userauth.SSHUserAuthServer.auth_publickey(self, packet)
+        finally:
+            self.portal = original
 
     def auth_none(self, _packet: bytes) -> Any:
         """
