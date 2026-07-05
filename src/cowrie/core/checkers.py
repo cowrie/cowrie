@@ -79,11 +79,12 @@ class HoneypotNoneChecker:
     credentialInterfaces = (conchcredentials.IUsername,)
 
     def requestAvatarId(self, credentials):
-        credentials.events.dispatch(
-            "cowrie.login.success",
-            "login attempt [%(username)s] succeeded",
-            username=escape_nonprintable(credentials.username),
-        )
+        if credentials.events:
+            credentials.events.dispatch(
+                "cowrie.login.success",
+                "login attempt [%(username)s] succeeded",
+                username=escape_nonprintable(credentials.username),
+            )
         return defer.succeed(credentials.username)
 
 
@@ -128,7 +129,11 @@ class HoneypotPasswordChecker:
         return defer.fail(UnauthorizedLogin())
 
     def checkUserPass(
-        self, theusername: bytes, thepassword: bytes, ip: str, events: EventLog
+        self,
+        theusername: bytes,
+        thepassword: bytes,
+        ip: str,
+        events: EventLog | None,
     ) -> bool:
         # Is the auth_class defined in the config file?
         authclass = CowrieConfig.get("honeypot", "auth_class", fallback="UserDB")
@@ -145,18 +150,20 @@ class HoneypotPasswordChecker:
         theauth = authname()
 
         if theauth.checklogin(theusername, thepassword, ip):
+            if events:
+                events.dispatch(
+                    "cowrie.login.success",
+                    "login attempt [%(username)s/%(password)s] succeeded",
+                    username=escape_nonprintable(theusername),
+                    password=escape_nonprintable(thepassword),
+                )
+            return True
+
+        if events:
             events.dispatch(
-                "cowrie.login.success",
-                "login attempt [%(username)s/%(password)s] succeeded",
+                "cowrie.login.failed",
+                "login attempt [%(username)s/%(password)s] failed",
                 username=escape_nonprintable(theusername),
                 password=escape_nonprintable(thepassword),
             )
-            return True
-
-        events.dispatch(
-            "cowrie.login.failed",
-            "login attempt [%(username)s/%(password)s] failed",
-            username=escape_nonprintable(theusername),
-            password=escape_nonprintable(thepassword),
-        )
         return False
