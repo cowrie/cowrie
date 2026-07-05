@@ -154,16 +154,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(honey_ip, ssh_port)
 
     def backend_connection_error(self, reason: failure.Failure) -> None:
-        log.msg(
-            eventid="cowrie.proxy.backend_connect_error",
-            format="Connection to honeypot backend %(backend_ip)s:%(backend_port)s refused: %(error)s",
-            backend_ip=self.backend_ip,
-            backend_port=self.backend_port,
-            error=reason.getErrorMessage(),
-            session=self.transportId,
-            sessionno=self.sessionno,
-            protocol="ssh",
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.proxy.backend_connect_error",
+                "Connection to honeypot backend %(backend_ip)s:%(backend_port)s refused: %(error)s",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                error=reason.getErrorMessage(),
+            )
         if self.transport:
             self.transport.loseConnection()
 
@@ -179,17 +177,15 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )  # Sets backend_ip to its IP if backend_ip was a hostname
         self.backend_port = backend_peer.port
 
-        log.msg(
-            eventid="cowrie.proxy.backend_connected",
-            format="Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
-            backend_ip=backend_peer.host,
-            backend_port=backend_peer.port,
-            local_ip=backend_host.host,
-            local_port=backend_host.port,
-            session=self.transportId,
-            sessionno=self.sessionno,
-            protocol="ssh",
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.proxy.backend_connected",
+                "Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+                backend_ip=backend_peer.host,
+                backend_port=backend_peer.port,
+                local_ip=backend_host.host,
+                local_port=backend_host.port,
+            )
 
         self.startTime = time.time()
 
@@ -242,11 +238,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             if b"\n" not in self.buf:
                 return
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
-            log.msg(
-                eventid="cowrie.client.version",
-                version=escape_nonprintable(self.otherVersionString),
-                format="Remote SSH version: %(version)s",
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.client.version",
+                    "Remote SSH version: %(version)s",
+                    version=escape_nonprintable(self.otherVersionString),
+                )
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
@@ -337,18 +334,19 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
         hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 
-        log.msg(
-            eventid="cowrie.client.kex",
-            format="SSH client hassh fingerprint: %(hassh)s",
-            hassh=hassh,
-            hasshAlgorithms=hasshAlgorithms,
-            kexAlgs=kexAlgs,
-            keyAlgs=keyAlgs,
-            encCS=encCS,
-            macCS=macCS,
-            compCS=compCS,
-            langCS=langCS,
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.client.kex",
+                "SSH client hassh fingerprint: %(hassh)s",
+                hassh=hassh,
+                hasshAlgorithms=hasshAlgorithms,
+                kexAlgs=kexAlgs,
+                keyAlgs=keyAlgs,
+                encCS=encCS,
+                macCS=macCS,
+                compCS=compCS,
+                langCS=langCS,
+            )
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
@@ -383,17 +381,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         This seems to be the only reliable place of catching lost connection
         """
-        if self.backend_ip and self.backend_local_ip:
-            log.msg(
-                eventid="cowrie.proxy.backend_disconnected",
-                format="Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s (local %(local_ip)s:%(local_port)s)",
+        if self.backend_ip and self.backend_local_ip and self.events:
+            self.events.dispatch(
+                "cowrie.proxy.backend_disconnected",
+                "Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s (local %(local_ip)s:%(local_port)s)",
                 backend_ip=self.backend_ip,
                 backend_port=self.backend_port,
                 local_ip=self.backend_local_ip,
                 local_port=self.backend_local_port,
-                session=self.transportId,
-                sessionno=self.sessionno,
-                protocol="ssh",
             )
 
         self.setTimeout(None)

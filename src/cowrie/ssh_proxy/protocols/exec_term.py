@@ -20,12 +20,14 @@ class ExecTerm(base_protocol.BaseProtocol):
     def __init__(self, uuid, channelName, ssh, channelId, command):
         super().__init__(uuid, channelName, ssh)
 
+        self.events = ssh.server.events
         try:
-            log.msg(
-                eventid="cowrie.command.input",
-                input=command.decode("utf8"),
-                format="CMD: %(input)s",
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.command.input",
+                    "CMD: %(input)s",
+                    input=command.decode("utf8"),
+                )
         except UnicodeDecodeError:
             log.err(f"Unusual execcmd: {command!r}")
 
@@ -71,12 +73,13 @@ class ExecTerm(base_protocol.BaseProtocol):
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            log.msg(
-                eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
-                ttylog=shasumfile,
-                size=self.ttylogSize,
-                shasum=shasum,
-                duplicate=duplicate,
-                duration_ms=round((time.time() - self.startTime) * 1000),
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.log.closed",
+                    "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+                    ttylog=shasumfile,
+                    size=self.ttylogSize,
+                    shasum=shasum,
+                    duplicate=duplicate,
+                    duration_ms=round((time.time() - self.startTime) * 1000),
+                )

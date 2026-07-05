@@ -112,21 +112,21 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         self.authDone = True
 
     def connectionLost(self, reason=None):
-        if self.factory.server.pool_interface:
-            log.msg(
-                eventid="cowrie.proxy.client_disconnect",
-                format="Lost connection with the pool backend: id %(vm_id)s",
-                vm_id=self.factory.server.pool_interface.vm_id,
-                protocol="ssh",
-            )
-        else:
-            log.msg(
-                eventid="cowrie.proxy.client_disconnect",
-                format="Lost connection with the proxy's backend: %(honey_ip)s:%(honey_port)s",
-                honey_ip=self.factory.server.backend_ip,
-                honey_port=self.factory.server.backend_port,
-                protocol="ssh",
-            )
+        events = self.factory.server.events
+        if events:
+            if self.factory.server.pool_interface:
+                events.dispatch(
+                    "cowrie.proxy.client_disconnect",
+                    "Lost connection with the pool backend: id %(vm_id)s",
+                    vm_id=self.factory.server.pool_interface.vm_id,
+                )
+            else:
+                events.dispatch(
+                    "cowrie.proxy.client_disconnect",
+                    "Lost connection with the proxy's backend: %(honey_ip)s:%(honey_port)s",
+                    honey_ip=self.factory.server.backend_ip,
+                    honey_port=self.factory.server.backend_port,
+                )
 
         self.transport.connectionLost(reason)
         self.transport = None

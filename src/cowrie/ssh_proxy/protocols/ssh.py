@@ -98,14 +98,13 @@ class SSH(base_protocol.BaseProtocol):
         else:
             direction = "BACKEND -> PROXY"
 
-        if self.log_raw:
-            log.msg(
-                eventid="cowrie.proxy.ssh",
-                format="%(direction)s - %(packet)s - %(payload)s",
+        if self.log_raw and self.server.events:
+            self.server.events.dispatch(
+                "cowrie.proxy.ssh",
+                "%(direction)s - %(packet)s - %(payload)s",
                 direction=direction,
                 packet=PACKETLAYOUT[message_num].ljust(37),
                 payload=repr(payload),
-                protocol="ssh",
             )
 
         if message_num == transport.MSG_SERVICE_REQUEST:
@@ -201,15 +200,16 @@ class SSH(base_protocol.BaseProtocol):
                 src_port = self.extract_int(4)
 
                 if CowrieConfig.getboolean("ssh", "forwarding"):
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.request",
-                        format="direct-tcp connection request to %(dst_ip)s:%(dst_port)s "
-                        "from %(src_ip)s:%(src_port)s",
-                        dst_ip=dst_ip,
-                        dst_port=dst_port,
-                        src_ip=src_ip,
-                        src_port=src_port,
-                    )
+                    if self.server.events:
+                        self.server.events.dispatch(
+                            "cowrie.direct-tcpip.request",
+                            "direct-tcp connection request to %(dst_ip)s:%(dst_port)s "
+                            "from %(src_ip)s:%(src_port)s",
+                            dst_ip=dst_ip,
+                            dst_port=dst_port,
+                            src_ip=src_ip,
+                            src_port=src_port,
+                        )
 
                     the_uuid = uuid.uuid4().hex
                     self.create_channel(parent, channel_id, channel_type)
@@ -229,12 +229,13 @@ class SSH(base_protocol.BaseProtocol):
 
                 else:
                     log.msg("[SSH] Detected Port Forwarding Channel - Disabling!")
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.data",
-                        format="discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s ",
-                        dst_ip=dst_ip,
-                        dst_port=dst_port,
-                    )
+                    if self.server.events:
+                        self.server.events.dispatch(
+                            "cowrie.direct-tcpip.data",
+                            "discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s ",
+                            dst_ip=dst_ip,
+                            dst_port=dst_port,
+                        )
 
                     self.sendOn = False
                     self.send_back(
@@ -379,14 +380,14 @@ class SSH(base_protocol.BaseProtocol):
         else:
             direction = "PROXY -> BACKEND"
 
-            log.msg(
-                eventid="cowrie.proxy.ssh",
-                format="%(direction)s - %(packet)s - %(payload)s",
-                direction=direction,
-                packet=PACKETLAYOUT[message_num].ljust(37),
-                payload=repr(payload),
-                protocol="ssh",
-            )
+            if self.server.events:
+                self.server.events.dispatch(
+                    "cowrie.proxy.ssh",
+                    "%(direction)s - %(packet)s - %(payload)s",
+                    direction=direction,
+                    packet=PACKETLAYOUT[message_num].ljust(37),
+                    payload=repr(payload),
+                )
 
         if parent == "[SERVER]":
             self.server.sendPacket(message_num, payload)
