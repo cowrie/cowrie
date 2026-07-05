@@ -11,7 +11,7 @@ import time
 import traceback
 from importlib import import_module
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
@@ -24,11 +24,17 @@ from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
 from cowrie.shell import command, honeypot
 
+if TYPE_CHECKING:
+    from cowrie.core.events import EventLog
+
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
     """
+
+    # The session's event emitter, set from the transport in connectionMade.
+    events: EventLog | None = None
 
     commands: ClassVar[dict] = {}
     for c in cowrie.commands.command_modules:
@@ -89,6 +95,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         pt = self.getProtoTransport()
 
         self.factory = pt.factory
+        # The session's event emitter, owned by the transport. Kept across
+        # connectionLost so a command's deferred callback that outlives the
+        # session (a download completing after disconnect) can still emit an
+        # attributed, late-flagged event.
+        self.events = getattr(pt, "events", None)
         self.sessionno = pt.transport.sessionno
         self.realClientIP = pt.transport.getPeer().host
         self.realClientPort = pt.transport.getPeer().port

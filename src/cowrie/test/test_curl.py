@@ -19,6 +19,7 @@ from cowrie.commands.curl import Command_curl
 from cowrie.core.artifact import Artifact
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -34,8 +35,7 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
-        # The fake factory has no logDispatch; error() dispatches a log event.
-        self.proto.logDispatch = lambda **_kw: None  # type: ignore[method-assign]
+        self.events = capture_events(self.proto)
 
         self.tmpdir = tempfile.mkdtemp()
         self._orig_artifact_dir = Artifact.artifactDir

@@ -333,18 +333,9 @@ class Command_tftp(HoneyPotCommand):
         """
         url = f"tftp://{self.hostname}:{self.port}/{self.file_to_get.lstrip('/')}"
 
-        # Log to cowrie.log
-        log.msg(
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
-            url=url,
-            outfile=self.artifactFile.shasumFilename,
-            shasum=self.artifactFile.shasum,
-            duplicate=self.artifactFile.duplicate,
-        )
-
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download",
+            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
             url=url,
             outfile=self.artifactFile.shasumFilename,
             shasum=self.artifactFile.shasum,
@@ -388,16 +379,11 @@ class Command_tftp(HoneyPotCommand):
         error_msg = failure.getErrorMessage()
         url = f"tftp://{self.hostname}:{self.port}/{self.file_to_get.lstrip('/')}"
 
-        log.msg(
-            format="Attempt to download file(s) from URL (%(url)s) failed: %(error)s",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download.failed",
+            "Attempt to download file(s) from URL (%(url)s) failed: %(error)s",
             url=url,
             error=error_msg,
-        )
-
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download.failed",
-            format="Attempt to download file(s) from URL (%(url)s) failed",
-            url=url,
         )
 
         # A failure reported after the session closed has no terminal to
