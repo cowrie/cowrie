@@ -312,8 +312,14 @@ with whatever identity they have. The current pipeline drops most of them
 anyway (they match no regex); making them first-class is deliberately left
 until the main migration is done.
 
-Output plugins themselves emit no events (verified against the tree), so
-plugins remain pure sinks and need no emission path.
+Output plugins are not pure sinks: virustotal, reversedns, and greynoise
+emit session-attributed enrichment events (``cowrie.virustotal.scanfile``,
+``cowrie.reversedns.connect``, ...) through the legacy log path, attributed
+by the per-plugin session-table reverse lookup, and abuseipdb emits
+session-less operational events. Deleting the log observers would silently
+drop all of them, so before phase 4 these plugins need an emission path --
+a dispatcher reference for enrichment events, or reclassification as
+diagnostics -- decided per plugin.
 
 Calling patterns
 ================
@@ -589,7 +595,14 @@ Phase 2 -- convert the bleeding edges
 Phase 3 -- sweep
     Convert the remaining ``log.msg(eventid=...)`` sites file by file
     (~45 files, mechanical). Each conversion moves that emitter from
-    context-regex attribution to bound identity.
+    context-regex attribution to bound identity. ``cowrie.session.connect``
+    and ``cowrie.session.closed`` are the one exception: they stay on the
+    log path throughout this phase, because every plugin's ``emit()`` still
+    builds its session table from ``connect`` -- converting them starves
+    attribution for anything not yet converted (including the plugin-emitted
+    enrichment events above). They convert atomically with phase 4. The
+    public-key checker also stays legacy: Twisted constructs its credential
+    object, so it carries no emitter.
 
 Phase 4 -- delete
     Remove the ``log.addObserver(plugin.emit)`` registration, the regexes,
