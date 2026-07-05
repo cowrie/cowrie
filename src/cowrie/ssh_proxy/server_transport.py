@@ -96,12 +96,6 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
         self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
 
-        if self.events:
-            self.events.dispatch(
-                "cowrie.session.connect",
-                "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            )
-
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
         # when pool is set we can just test self.pool_interface to the same effect of getting the CowrieConfig
         proxy_backend = CowrieConfig.get("proxy", "backend", fallback="simple")
@@ -407,11 +401,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if self.startTime is not None:  # startTime is not set when auth fails
             duration_ms = round((time.time() - self.startTime) * 1000)
             if self.events is not None:
-                self.events.dispatch(
-                    "cowrie.session.closed",
-                    "Connection lost after %(duration_ms)d milliseconds",
-                    duration_ms=duration_ms,
-                )
+                self.events.session_closed(duration_ms)
         if self.events is not None:
             self.events.close()
 

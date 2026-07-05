@@ -76,12 +76,6 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
             protocol="telnet",
         )
 
-        if self.events:
-            self.events.dispatch(
-                "cowrie.session.connect",
-                "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            )
-
         TelnetTransport.connectionMade(self)
 
         # if we have a pool connect to it and later request a backend, else just connect to a simple backend
@@ -231,11 +225,7 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         if self.startTime is not None:  # startTime is not set when auth fails
             duration_ms = round((time.time() - self.startTime) * 1000)
             if self.events is not None:
-                self.events.dispatch(
-                    "cowrie.session.closed",
-                    "Connection lost after %(duration_ms)d milliseconds",
-                    duration_ms=duration_ms,
-                )
+                self.events.session_closed(duration_ms)
         if self.events is not None:
             self.events.close()
 

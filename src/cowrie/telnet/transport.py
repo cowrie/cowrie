@@ -73,11 +73,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             protocol="telnet",
         )
 
-        if self.events:
-            self.events.dispatch(
-                "cowrie.session.connect",
-                "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            )
         TelnetTransport.connectionMade(self)
 
     def write(self, data):
@@ -137,12 +132,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         TelnetTransport.connectionLost(self, reason)
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
-            self.events.dispatch(
-                "cowrie.session.closed",
-                "Connection lost after %(duration_ms)d milliseconds",
-                duration_ms=duration_ms,
-            )
-            self.events.close()
+            self.events.session_closed(duration_ms)
 
     def willChain(self, option):
         return self._chainNegotiation(None, self.will, option)

@@ -81,12 +81,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             src_ip=src_ip,
         )
 
-        if self.events:
-            self.events.dispatch(
-                "cowrie.session.connect",
-                "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            )
-
         self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
             b"none", b"none", b"none", b"none"
@@ -288,12 +282,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport = None
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
-            self.events.dispatch(
-                "cowrie.session.closed",
-                "Connection lost after %(duration_ms)d milliseconds",
-                duration_ms=duration_ms,
-            )
-            self.events.close()
+            self.events.session_closed(duration_ms)
 
     def sendDisconnect(self, reason, desc):
         """
