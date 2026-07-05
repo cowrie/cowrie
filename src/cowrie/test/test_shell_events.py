@@ -92,10 +92,10 @@ class SessionParamsEventTests(unittest.TestCase):
 
 class ClientSizeEventTests(unittest.TestCase):
     """getPty dispatches the client's terminal size on both session types."""
+
     def make_session(self, sessionclass: type) -> tuple[Any, list[dict[str, Any]]]:
         events, dispatched = capture_eventlog()
         server = FakeServer()
-        server.initFileSystem = lambda home: None
         avatar = SimpleNamespace(
             server=server,
             uid=0,

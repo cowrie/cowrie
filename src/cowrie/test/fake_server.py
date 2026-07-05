@@ -22,6 +22,10 @@ class FakeServer:
         self.fs = fs.HoneyPotFilesystem("arch", "/root")
         self.process = None
 
+    def initFileSystem(self, home: str) -> None:
+        """The filesystem is already created in __init__; sessions call this
+        before use."""
+
 
 class FakeAvatar:
     """FakeAvatar class.
