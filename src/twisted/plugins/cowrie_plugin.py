@@ -154,9 +154,10 @@ Makes a Cowrie SSH/Telnet honeypot.
         # dispatcher to the output plugins and the console renderer
         # (see docs/EVENT_PIPELINE.rst).
         self.dispatcher = EventDispatcher([*self.output_plugins, ConsoleRenderer()])
-        reactor.addSystemEventTrigger(  # type: ignore[attr-defined]
-            "before", "shutdown", self.dispatcher.stop
-        )
+        # Stop only after reactor teardown: connections closed during
+        # shutdown still emit their final events (ttylog closed, stdin
+        # capture); the guard exists for deferreds firing later than that.
+        reactor.addSystemEventTrigger("after", "shutdown", self.dispatcher.stop)
 
         self.topService = service.MultiService()
         application = service.Application("cowrie")
