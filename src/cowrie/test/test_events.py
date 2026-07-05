@@ -253,6 +253,55 @@ class TelnetTransportEventLogTests(unittest.TestCase):
         )
 
 
+class OutputDispatchTests(unittest.TestCase):
+    """Output plugins emit enrichment events through the dispatcher they are
+    handed, into the same fan-out as every other event."""
+
+    def test_plugin_dispatch_reaches_sinks(self) -> None:
+        from cowrie.core.output import Output
+
+        class EnrichingPlugin(Output):
+            def start(self) -> None:
+                pass
+
+            def stop(self) -> None:
+                pass
+
+            def write(self, event: dict[str, Any]) -> None:
+                pass
+
+        plugin = EnrichingPlugin()
+        sink = CaptureSink()
+        plugin.dispatcher = EventDispatcher([sink], logmsg=lambda msg, **kw: None)
+        plugin.dispatch(
+            eventid="cowrie.virustotal.scanfile",
+            format="VT: New file %(sha256)s",
+            session="abcd0123",
+            src_ip="192.0.2.1",
+            sha256="cafe",
+        )
+        self.assertEqual(len(sink.events), 1)
+        ev = sink.events[0]
+        self.assertEqual(ev["eventid"], "cowrie.virustotal.scanfile")
+        self.assertEqual(ev["message"], "VT: New file cafe")
+        self.assertEqual(ev["session"], "abcd0123")
+
+    def test_plugin_dispatch_without_dispatcher_is_dropped(self) -> None:
+        from cowrie.core.output import Output
+
+        class EnrichingPlugin(Output):
+            def start(self) -> None:
+                pass
+
+            def stop(self) -> None:
+                pass
+
+            def write(self, event: dict[str, Any]) -> None:
+                pass
+
+        EnrichingPlugin().dispatch(eventid="cowrie.test", format="no pipeline")
+
+
 class ConsoleRendererTests(unittest.TestCase):
     def test_renders_with_session_prefix(self) -> None:
         lines: list[tuple[str, str]] = []

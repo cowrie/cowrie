@@ -52,16 +52,20 @@ class Output(cowrie.core.output.Output):
 
         def message(query):
             if query["noise"]:
-                log.msg(
+                self.dispatch(
                     eventid="cowrie.greynoise.result",
                     session=event["session"],
+                    src_ip=event["src_ip"],
+                    protocol=event["protocol"],
                     format=f"GreyNoise: {query['ip']} has been observed scanning the Internet. GreyNoise "
                     f"classification is {query['classification']} and the believed owner is {query['name']}",
                 )
             if query["riot"]:
-                log.msg(
+                self.dispatch(
                     eventid="cowrie.greynoise.result",
                     session=event["session"],
+                    src_ip=event["src_ip"],
+                    protocol=event["protocol"],
                     format=f"GreyNoise: {query['ip']} belongs to a benign service or provider. "
                     f"The owner is {query['name']}.",
                 )

@@ -236,10 +236,12 @@ class Output(cowrie.core.output.Output):
             if "error" in j:
                 if j["error"]["code"] == "NotFoundError":
                     log.msg("VT: New file - not found in database")
-                    log.msg(
+                    self.dispatch(
                         eventid="cowrie.virustotal.scanfile",
                         format="VT: New file %(sha256)s",
                         session=event["session"],
+                        src_ip=event["src_ip"],
+                        protocol=event["protocol"],
                         sha256=event["shasum"],
                         is_new="true",
                     )
@@ -276,11 +278,13 @@ class Output(cowrie.core.output.Output):
                 total_count = sum(stats.values())
                 scan_date = attributes.get("last_analysis_date", "unknown")
 
-                log.msg(
+                self.dispatch(
                     eventid="cowrie.virustotal.scanfile",
                     format="VT: Binary file with sha256 %(sha256)s was found malicious "
                     "by %(positives)s out of %(total)s feeds (scanned on %(scan_date)s)",
                     session=event["session"],
+                    src_ip=event["src_ip"],
+                    protocol=event["protocol"],
                     positives=malicious_count,
                     total=total_count,
                     scan_date=scan_date,
@@ -393,10 +397,12 @@ class Output(cowrie.core.output.Output):
             if "error" in j:
                 if j["error"]["code"] == "NotFoundError":
                     log.msg("VT: New URL - not found in database")
-                    log.msg(
+                    self.dispatch(
                         eventid="cowrie.virustotal.scanurl",
                         format="VT: New URL %(url)s",
                         session=event["session"],
+                        src_ip=event["src_ip"],
+                        protocol=event["protocol"],
                         url=event["url"],
                         is_new="true",
                     )
@@ -428,11 +434,13 @@ class Output(cowrie.core.output.Output):
                 total_count = sum(stats.values())
                 scan_date = attributes.get("last_analysis_date", "unknown")
 
-                log.msg(
+                self.dispatch(
                     eventid="cowrie.virustotal.scanurl",
                     format="VT: URL %(url)s was found malicious by "
                     "%(positives)s out of %(total)s feeds (scanned on %(scan_date)s)",
                     session=event["session"],
+                    src_ip=event["src_ip"],
+                    protocol=event["protocol"],
                     positives=malicious_count,
                     total=total_count,
                     scan_date=scan_date,
@@ -454,9 +462,9 @@ class Output(cowrie.core.output.Output):
         if d:
             # Log success message on successful response
             d.addCallback(
-                lambda _: log.msg("VT scanurl successful: 200 OK")
-                if _ is not None
-                else None
+                lambda _: (
+                    log.msg("VT scanurl successful: 200 OK") if _ is not None else None
+                )
             )
         return d
 
@@ -581,9 +589,8 @@ class Output(cowrie.core.output.Output):
             if "error" not in j:
                 for item in j.get("data", []):
                     attributes = item.get("attributes", {})
-                    if (
-                        attributes.get("name") == self.collection_name
-                        and item.get("id")
+                    if attributes.get("name") == self.collection_name and item.get(
+                        "id"
                     ):
                         self.collection_id = item["id"]
                         log.msg(

@@ -10,12 +10,15 @@ import socket
 import time
 from os import environ
 from re import Pattern
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from twisted.internet import reactor
 from twisted.logger import formatTime
 
 from cowrie.core.config import CowrieConfig
+
+if TYPE_CHECKING:
+    from cowrie.core.events import EventDispatcher
 
 # Events:
 #  cowrie.client.fingerprint
@@ -68,6 +71,10 @@ class Output(metaclass=abc.ABCMeta):
     methods: stop, start and write
     """
 
+    # The event pipeline for plugins that emit enrichment events of their
+    # own (virustotal, reversedns, ...), set by the application container.
+    dispatcher: EventDispatcher | None = None
+
     def __init__(self) -> None:
         self.sessions: dict[str, str] = {}
         self.ips: dict[str, str] = {}
@@ -102,6 +109,12 @@ class Output(metaclass=abc.ABCMeta):
         ev = kw
         # ev["message"] = msg
         self.emit(ev)
+
+    def dispatch(self, **event: Any) -> None:
+        """Emit an enrichment event into the event pipeline, carrying
+        whatever attribution (session, src_ip) the plugin has."""
+        if self.dispatcher:
+            self.dispatcher.dispatch(event)
 
     @abc.abstractmethod
     def start(self) -> None:

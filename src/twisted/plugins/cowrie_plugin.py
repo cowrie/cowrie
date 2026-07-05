@@ -32,7 +32,8 @@ from cowrie.core.utils import create_endpoint_services, get_endpoints_from_secti
 from cowrie.pool_interface.handler import PoolHandler
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+
+    from cowrie.core.output import Output
 
 
 class Options(usage.Options):
@@ -63,7 +64,7 @@ class CowrieServiceMaker:
     tapname: ClassVar[str] = "cowrie"
     description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
-    output_plugins: list[Callable]
+    output_plugins: list[Output]
     topService: service.Service
 
     def __init__(self) -> None:
@@ -154,6 +155,8 @@ Makes a Cowrie SSH/Telnet honeypot.
         # dispatcher to the output plugins and the console renderer
         # (see docs/EVENT_PIPELINE.rst).
         self.dispatcher = EventDispatcher([*self.output_plugins, ConsoleRenderer()])
+        for plugin in self.output_plugins:
+            plugin.dispatcher = self.dispatcher
         # Stop only after reactor teardown: connections closed during
         # shutdown still emit their final events (ttylog closed, stdin
         # capture); the guard exists for deferreds firing later than that.
