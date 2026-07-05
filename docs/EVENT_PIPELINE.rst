@@ -24,6 +24,15 @@ session
     (``transportId``, e.g. ``ce8abc71b984``). This is the key output
     consumers correlate on.
 
+channel
+    One terminal, exec, subsystem, or forwarding stream within a
+    connection. SSH multiplexes: a single transport can carry several
+    channels, concurrently or in sequence. Cowrie already captures ttylogs
+    and stdin per channel (``insults.py`` keys them by
+    ``(transportId, channelId)``), but events carry only the per-transport
+    ``session``, so activity on concurrent channels is indistinguishable in
+    the event stream. Telnet has exactly one channel per connection.
+
 sessionno
     A transport counter with an ``S`` (SSH) or ``T`` (Telnet) prefix, e.g.
     ``T1475``. An internal artifact of the current pipeline; not part of the
@@ -202,6 +211,29 @@ indistinguishable in ``cowrie.log``; with the prefix bound to the session,
 operator-facing lines are correctly attributed no matter where the code
 runs.
 
+Channels: one transport, many terminals
+=======================================
+
+An SSH transport can carry multiple channels -- several exec or shell
+sessions, SFTP, port forwards -- concurrently or in sequence. The transport
+owns the root ``EventLog``; a channel derives a child emitter that adds its
+identity to every event it dispatches::
+
+    def channelOpened(self):
+        self.events = self.conn.transport.events.child(channel=self.id)
+
+``child()`` returns a lightweight view sharing the dispatcher and the bound
+connection identity, overlaying extra fields -- the same idea as a
+structlog ``bind()``. Commands keep reaching their emitter through
+``self.protocol.events`` and need not know whether it is the root or a
+child. ``session`` remains the per-connection correlation key, so nothing
+changes for existing consumers; ``channel`` is an additive attribute that
+finally lets the event stream distinguish what the per-channel ttylog and
+stdin artifacts already distinguish, and lets file-transfer events (SCP,
+SFTP) name the channel they arrived on. A channel closing does not end the
+session: ``late`` refers to the *connection* having closed, not the
+channel.
+
 ``EventDispatcher`` -- single fan-out
 =====================================
 
@@ -316,6 +348,48 @@ Event flow after the change
       |  enrich once
       v
     plugin.write()  x N, error-isolated
+
+Relationship to Twisted, and alternatives considered
+****************************************************
+
+Cowrie emits through Twisted's *legacy* logging API (``twisted.python.log``);
+the attribution regexes parse that API's context prefixes. Twisted's own
+answer to structured events is the modern ``twisted.logger`` package:
+``Logger`` objects emitting keyword-structured events into observer chains,
+with ``FilteringLogObserver`` and predicates for routing. Three alternatives
+were considered against the proposed design:
+
+``twisted.logger`` with a filtered observer
+    Convert emitters to ``twisted.logger.Logger`` and register *one*
+    observer that filters on ``eventid`` and fans out to plugins. This fixes
+    the fan-out duplication (defect 4) idiomatically, but not attribution:
+    ``twisted.logger`` has no bound context that survives a deferred hop, so
+    the two-thirds of emitters that rely on execution context stay broken.
+    It is the right modernization for Cowrie's *diagnostic* logging, and can
+    happen independently of this design at any time.
+
+``contextvars``
+    Twisted (21.2+) runs deferred callbacks in the context captured when the
+    callback was added, so a ``ContextVar`` holding the current session's
+    emitter would follow download callbacks correctly with no explicit
+    references. Rejected: every reactor entry point (``dataReceived``,
+    ``connectionMade``, timers) must set the variable, and one missed entry
+    point *misattributes* events silently. In a security event stream, a
+    loud ``AttributeError`` on a missing ``self.events`` is preferable to
+    quietly wrong data.
+
+Status quo with patched tables
+    Tombstoning the per-plugin session tables and guarding the lookups fixes
+    the crashes but none of the attribution, duplication, or isolation
+    defects.
+
+The chosen design -- an explicit emitter object delivered through a single
+publisher -- is not how Twisted routes its own logs, and that is deliberate:
+security events are domain data with delivery guarantees, not diagnostics.
+It does follow Twisted's shape where it matters: ``EventDispatcher`` is
+structurally a domain-specific ``LogPublisher``, including its per-observer
+error isolation, which Twisted's publisher has and Cowrie's current dispatch
+loop lacks.
 
 Operational considerations
 **************************
