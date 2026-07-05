@@ -84,8 +84,9 @@ class Output(metaclass=abc.ABCMeta):
         else:
             self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-        # Event trigger so that stop() is called by the reactor when stopping
-        reactor.addSystemEventTrigger("before", "shutdown", self.stop)
+        # Stop only after reactor teardown, so the final events of sessions
+        # closed during shutdown deliver before the sink's resources close.
+        reactor.addSystemEventTrigger("after", "shutdown", self.stop)
 
         self.start()
 

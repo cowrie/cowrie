@@ -85,14 +85,24 @@ class EventDispatcher:
                 ev["message"] = ev["format"]
 
         self.dispatched += 1
-        for sink in self.sinks:
+        # Output plugins' write() assumes session attribution (every event
+        # in the OUTPUT schema carries one); operational events without a
+        # session go only to sinks that accept them (the console renderer).
+        sessionless = "session" not in ev
+        sinks = [
+            sink
+            for sink in self.sinks
+            if not sessionless or getattr(sink, "accepts_sessionless", False)
+        ]
+        for i, sink in enumerate(sinks):
             try:
                 # Each sink owns its copy, nested containers included:
                 # several output plugins mutate the event they receive,
                 # which must not corrupt what the sinks after them see.
                 # convert() rebuilds dicts and lists recursively, so it
-                # doubles as the per-sink deep copy.
-                sink.write(convert(ev))
+                # doubles as the per-sink deep copy; the last sink takes
+                # the enriched event itself, which no one else holds.
+                sink.write(ev if i == len(sinks) - 1 else convert(ev))
             except Exception as e:  # one sink must not stop the rest
                 count = self.failures.get(id(sink), 0) + 1
                 self.failures[id(sink)] = count
@@ -101,6 +111,12 @@ class EventDispatcher:
                         f"Event sink {sink.__class__.__name__} failed"
                         f" ({count} failures): {e}"
                     )
+
+    def registerShutdown(self, reactor: Any) -> None:
+        """Stop only after reactor teardown: connections closed during
+        shutdown still emit their final events (ttylog closed, stdin
+        capture); the stopped-guard is for deferreds firing later still."""
+        reactor.addSystemEventTrigger("after", "shutdown", self.stop)
 
     def stop(self) -> None:
         """Drop events dispatched during shutdown instead of raising into
@@ -145,6 +161,15 @@ class EventLog:
         derived._root = self._root
         return derived
 
+    def session_closed(self, duration_ms: int) -> None:
+        """Announce the connection's end and mark the emitter closed."""
+        self.dispatch(
+            "cowrie.session.closed",
+            "Connection lost after %(duration_ms)d milliseconds",
+            duration_ms=duration_ms,
+        )
+        self.close()
+
     def close(self) -> None:
         """The connection ended: events dispatched from now on are late.
 
@@ -164,15 +189,16 @@ def transport_events(
     src_ip: str | None = None,
 ) -> EventLog | None:
     """The session EventLog for a listening transport, bound to the
-    connection's endpoints, or None when the running application provides
-    no dispatcher. src_ip defaults to the connection peer; the SSH
-    transport passes its IPv4-normalized form instead."""
+    connection's endpoints and announcing it with cowrie.session.connect,
+    or None when the running application provides no dispatcher. src_ip
+    defaults to the connection peer; the SSH transport passes its
+    IPv4-normalized form instead."""
     dispatcher = getattr(getattr(factory, "tac", None), "dispatcher", None)
     if dispatcher is None:
         return None
     peer = transport.getPeer()
     host = transport.getHost()
-    return EventLog(
+    events = EventLog(
         dispatcher,
         session=session,
         protocol=protocol,
@@ -181,6 +207,12 @@ def transport_events(
         dst_ip=host.host,
         dst_port=host.port,
     )
+    events.dispatch(
+        "cowrie.session.connect",
+        "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s)"
+        " [session: %(session)s]",
+    )
+    return events
 
 
 class ConsoleRenderer:
@@ -189,6 +221,9 @@ class ConsoleRenderer:
     session's identity so the line is attributable no matter which execution
     context emitted the event.
     """
+
+    # Session-less operational events still deserve their log line.
+    accepts_sessionless = True
 
     def __init__(self, logmsg: Callable[..., None] = log.msg) -> None:
         self.logmsg = logmsg

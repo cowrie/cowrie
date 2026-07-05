@@ -142,6 +142,34 @@ class EventDispatcherTests(unittest.TestCase):
             "a sink mutating a nested list corrupted the next sink's event",
         )
 
+    def test_sessionless_events_skip_plugin_sinks(self) -> None:
+        # Output plugins' write() assumes session attribution (the OUTPUT
+        # schema); an operational event without a session must not reach
+        # them, only sinks that declare they accept everything.
+        plugin = CaptureSink()
+        renderer = CaptureSink()
+        renderer.accepts_sessionless = True  # type: ignore[attr-defined]
+        dispatcher = EventDispatcher([plugin, renderer], logmsg=lambda msg, **kw: None)
+        dispatcher.dispatch(
+            {
+                "eventid": "cowrie.abuseipdb.reportedip",
+                "format": "reported %(IP)s",
+                "IP": "192.0.2.1",
+            }
+        )
+        self.assertEqual(plugin.events, [])
+        self.assertEqual(len(renderer.events), 1)
+
+    def test_shutdown_registration_is_after_reactor_teardown(self) -> None:
+        # Events emitted while connections are torn down (during shutdown)
+        # must still deliver; the dispatcher stops only afterwards.
+        calls: list[tuple[str, str]] = []
+        reactor = SimpleNamespace(
+            addSystemEventTrigger=lambda phase, event, f: calls.append((phase, event))
+        )
+        self.dispatcher.registerShutdown(reactor)
+        self.assertEqual(calls, [("after", "shutdown")])
+
     def test_timestamp_format_follows_timezone_convention(self) -> None:
         # Same convention as Output: the Z suffix only when TZ is UTC,
         # otherwise a numeric offset -- a non-UTC time must not claim Zulu.
@@ -285,6 +313,63 @@ class OutputDispatchTests(unittest.TestCase):
         self.assertEqual(ev["eventid"], "cowrie.virustotal.scanfile")
         self.assertEqual(ev["message"], "VT: New file cafe")
         self.assertEqual(ev["session"], "abcd0123")
+
+    def test_plugin_dispatch_from_start_reaches_sinks(self) -> None:
+        # Plugins dispatch from start(), which runs during construction --
+        # the dispatcher must already be reachable then (it is installed as
+        # a class attribute before the plugins are instantiated). The started
+        # notice is session-less, so it lands in the console renderer's kind
+        # of sink.
+        from cowrie.core.output import Output
+
+        sink = CaptureSink()
+        sink.accepts_sessionless = True  # type: ignore[attr-defined]
+        dispatcher = EventDispatcher([sink], logmsg=lambda msg, **kw: None)
+
+        class AnnouncingPlugin(Output):
+            def start(self) -> None:
+                self.dispatch(
+                    eventid="cowrie.abuseipdb.started",
+                    format="plugin started",
+                )
+
+            def stop(self) -> None:
+                pass
+
+            def write(self, event: dict[str, Any]) -> None:
+                pass
+
+        old = Output.dispatcher
+        Output.dispatcher = dispatcher
+        try:
+            AnnouncingPlugin()
+        finally:
+            Output.dispatcher = old
+        self.assertEqual(len(sink.events), 1)
+        self.assertEqual(sink.events[0]["eventid"], "cowrie.abuseipdb.started")
+
+    def test_plugin_stop_runs_after_reactor_teardown(self) -> None:
+        # A plugin's stop() must not close its resources before the final
+        # events of in-flight sessions (emitted during teardown) deliver.
+        from unittest.mock import patch
+
+        from cowrie.core import output
+
+        class QuietPlugin(output.Output):
+            def start(self) -> None:
+                pass
+
+            def stop(self) -> None:
+                pass
+
+            def write(self, event: dict[str, Any]) -> None:
+                pass
+
+        with patch.object(output, "reactor") as reactor:
+            plugin = QuietPlugin()
+        reactor.addSystemEventTrigger.assert_called_once_with(
+            "after", "shutdown", plugin.stop
+        )
 
     def test_plugin_dispatch_without_dispatcher_is_dropped(self) -> None:
         from cowrie.core.output import Output
