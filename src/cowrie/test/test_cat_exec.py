@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 from twisted.internet.protocol import connectionDone
 
+from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.insults import insults
 from cowrie.shell import protocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -30,9 +31,15 @@ def _make_exec_transport() -> SimpleNamespace:
     """Build the transport.session.conn.transport chain insults expects."""
     peer = SimpleNamespace(host="1.1.1.1", port=2222)
     inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
-    factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
+    factory = SimpleNamespace(starttime=0)
+    events = EventLog(
+        EventDispatcher([], logmsg=lambda *args, **kwargs: None),
+        session="testexec",
+        protocol="ssh",
+        src_ip="1.1.1.1",
+    )
     conn_transport = SimpleNamespace(
-        transportId="testexec", factory=factory, transport=inner
+        transportId="testexec", factory=factory, transport=inner, events=events
     )
     conn = SimpleNamespace(transport=conn_transport)
     session = SimpleNamespace(id="chan0", conn=conn)

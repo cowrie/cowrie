@@ -45,18 +45,25 @@ class CommandInputEventTests(unittest.TestCase):
     def assert_input_event(
         self, command: bytes, eventid: str, realm: str, line: bytes = b"stdin line"
     ) -> None:
-        self.proto.lineReceived(command + b"\n")
-        self.proto.lineReceived(line)
-        events = [e for e in self.tr.dispatchedEvents if e["eventid"] == eventid]
-        self.assertEqual(
-            len(events), 1, f"expected one {eventid} event, got {events!r}"
-        )
-        ev = events[0]
-        self.assertEqual(ev["realm"], realm)
-        self.assertEqual(ev["input"], line.decode())
-        self.assertEqual(ev["session"], "test-suite")
-        self.proto.handle_CTRL_C()
-        self.tr.clear()
+        # The realm filter separates the command's stdin event from the
+        # shell's own CMD event, which shares the cowrie.command.input id.
+        try:
+            self.proto.lineReceived(command + b"\n")
+            self.proto.lineReceived(line)
+            events = [
+                e
+                for e in self.tr.dispatchedEvents
+                if e["eventid"] == eventid and e.get("realm") == realm
+            ]
+            self.assertEqual(
+                len(events), 1, f"expected one {eventid} event, got {events!r}"
+            )
+            ev = events[0]
+            self.assertEqual(ev["input"], line.decode())
+            self.assertEqual(ev["session"], "test-suite")
+        finally:
+            self.proto.handle_CTRL_C()
+            self.tr.clear()
 
     def make_command(self, cmdclass: type[T], *args: str) -> T:
         """Instantiate a command outside the shell; commands need the
@@ -99,18 +106,20 @@ class CommandInputEventTests(unittest.TestCase):
         )
 
     def test_chpasswd_password_change_event(self) -> None:
-        self.proto.lineReceived(b"chpasswd\n")
-        self.proto.lineReceived(b"root:hunter2\n")
-        events = [
-            e
-            for e in self.tr.dispatchedEvents
-            if e["eventid"] == "cowrie.command.chpasswd"
-        ]
-        self.assertEqual(len(events), 1)
-        self.assertEqual(events[0]["username"], "root")
-        self.assertEqual(events[0]["session"], "test-suite")
-        self.proto.handle_CTRL_C()
-        self.tr.clear()
+        try:
+            self.proto.lineReceived(b"chpasswd\n")
+            self.proto.lineReceived(b"root:hunter2\n")
+            events = [
+                e
+                for e in self.tr.dispatchedEvents
+                if e["eventid"] == "cowrie.command.chpasswd"
+            ]
+            self.assertEqual(len(events), 1)
+            self.assertEqual(events[0]["username"], "root")
+            self.assertEqual(events[0]["session"], "test-suite")
+        finally:
+            self.proto.handle_CTRL_C()
+            self.tr.clear()
 
     def test_crontab_input_event(self) -> None:
         self.assert_input_event(b"crontab -", "cowrie.command.input", "crontab")

@@ -34,7 +34,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
 
     # The session's event emitter, set from the transport in connectionMade.
-    events: EventLog | None = None
+    events: EventLog
 
     commands: ClassVar[dict] = {}
     for c in cowrie.commands.command_modules:
@@ -92,13 +92,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # connectionLost so a command's deferred callback that outlives the
         # session (a download completing after disconnect) can still emit an
         # attributed, late-flagged event.
-        self.events = getattr(pt, "events", None)
+        self.events = pt.events
         self.sessionno = pt.transport.sessionno
         self.realClientIP = pt.transport.getPeer().host
         self.realClientPort = pt.transport.getPeer().port
         self.logintime = time.time()
 
-        log.msg(eventid="cowrie.session.params", arch=self.user.server.arch)
+        self.events.dispatch("cowrie.session.params", "", arch=self.user.server.arch)
 
         idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
         self.setTimeout(idle_timeout)

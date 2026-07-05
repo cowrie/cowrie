@@ -11,6 +11,7 @@ import os
 import unittest
 from types import SimpleNamespace
 
+from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.insults import insults
 from cowrie.shell import protocol
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
@@ -210,8 +211,16 @@ def run_exec(cmd: bytes) -> int:
 
     peer = SimpleNamespace(host="1.1.1.1", port=2222)
     inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
-    factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
-    conn_transport = SimpleNamespace(transportId="t", factory=factory, transport=inner)
+    factory = SimpleNamespace(starttime=0)
+    events = EventLog(
+        EventDispatcher([], logmsg=lambda *args, **kwargs: None),
+        session="t",
+        protocol="ssh",
+        src_ip="1.1.1.1",
+    )
+    conn_transport = SimpleNamespace(
+        transportId="t", factory=factory, transport=inner, events=events
+    )
     session = SimpleNamespace(
         id="chan0", conn=SimpleNamespace(transport=conn_transport)
     )

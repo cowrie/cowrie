@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 import socket
 import time
+from typing import TYPE_CHECKING
 
 from twisted.conch import recvline
 from twisted.conch.insults import insults
@@ -17,6 +18,9 @@ from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.llm.llm import LLMClient
+
+if TYPE_CHECKING:
+    from cowrie.core.events import EventLog
 
 
 def strip_markdown(text: str) -> str:
@@ -34,6 +38,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
     """
+
+    # The session's event emitter, set from the transport in connectionMade.
+    events: EventLog
 
     def __init__(self, avatar):
         self.user = avatar
@@ -64,6 +71,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         pt = self.getProtoTransport()
 
         self.factory = pt.factory
+        # The session's event emitter, owned by the transport. Kept across
+        # connectionLost so work that outlives the session can still emit an
+        # attributed, late-flagged event.
+        self.events = pt.events
         self.sessionno = pt.transport.sessionno
         self.realClientIP = pt.transport.getPeer().host
         self.realClientPort = pt.transport.getPeer().port
@@ -94,7 +105,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         else:
             try:
                 with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
-                    s.connect(("2001:4860:4860::8888", 80))  # NOSONAR - probe target to detect host GUA, not a secret
+                    s.connect(
+                        ("2001:4860:4860::8888", 80)
+                    )  # NOSONAR - probe target to detect host GUA, not a secret
                     addr = s.getsockname()[0]
                     # Only use GUA, not link-local
                     self.kippoIPv6 = addr if not addr.lower().startswith("fe80") else ""
@@ -129,7 +142,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         string = line.decode("utf8")
 
-        log.msg(eventid="cowrie.command.input", input=string, format="CMD: %(input)s")
+        self.events.dispatch("cowrie.command.input", "CMD: %(input)s", input=string)
 
         # Use LLM client to get a response
         self._process_command_with_llm(string)

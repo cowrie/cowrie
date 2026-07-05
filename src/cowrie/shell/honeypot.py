@@ -173,7 +173,9 @@ class HoneyPotShell:
 
     def lineReceived(self, line: str) -> None:
         """Parse a command line with the Lark grammar and run the result."""
-        log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
+        self.protocol.events.dispatch(
+            "cowrie.command.input", "CMD: %(input)s", input=line
+        )
         self._queue_statements(self.bashparser.parse(line))
         self._advance()
 
@@ -681,10 +683,10 @@ class HoneyPotShell:
                     )
                     lastpp = pp
             else:
-                log.msg(
-                    eventid="cowrie.command.failed",
+                self.protocol.events.dispatch(
+                    "cowrie.command.failed",
+                    "Command not found: %(input)s",
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
-                    format="Command not found: %(input)s",
                 )
                 message = self.command_not_found_message(cmd["command"]).encode("utf8")
                 redirects = cmd.get("redirects", [])
