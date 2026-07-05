@@ -20,6 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog
 from cowrie.core.utils import escape_nonprintable
 from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
@@ -36,6 +37,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     buf: bytes
     ourVersionString: bytes
     gotVersion: bool
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
 
     # TODO merge this with HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin)
     # maybe create a parent class with common methods for the two
@@ -78,6 +82,18 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.peer_port = self.transport.getPeer().port + 1
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
+
+        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
+        if dispatcher is not None:
+            self.events = EventLog(
+                dispatcher,
+                session=self.transportId,
+                protocol="ssh",
+                src_ip=self.peer_ip,
+                src_port=self.transport.getPeer().port,
+                dst_ip=self.local_ip,
+                dst_port=self.transport.getHost().port,
+            )
 
         self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
@@ -411,6 +427,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 format="Connection lost after %(duration_ms)d milliseconds",
                 duration_ms=duration_ms,
             )
+        if self.events is not None:
+            self.events.close()
 
     def sendDisconnect(self, reason, desc):
         """

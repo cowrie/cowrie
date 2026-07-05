@@ -96,8 +96,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         """
         Allow every login
         """
-        c = credentials.Username(self.user)
         srcIp: str = self.transport.transport.getPeer().host  # type: ignore
+        c = credentials.Username(self.user, events=self.transport.events)  # type: ignore[union-attr]
         return self.portal.login(c, srcIp, IConchUser)
 
     def auth_password(self, packet: bytes) -> Any:
@@ -108,7 +108,12 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
         if password == b"\x00":
             return None  # sshamble
         srcIp = self.transport.transport.getPeer().host  # type: ignore
-        c = credentials.UsernamePasswordIP(self.user, password, srcIp)
+        c = credentials.UsernamePasswordIP(
+            self.user,
+            password,
+            srcIp,
+            events=self.transport.events,  # type: ignore[union-attr]
+        )
         return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
 
     def auth_keyboard_interactive(self, _packet: bytes) -> Any:
@@ -128,7 +133,10 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             return defer.fail(error.IgnoreAuthentication())
         src_ip = self.transport.transport.getPeer().host  # type: ignore
         c = credentials.PluggableAuthenticationModulesIP(
-            self.user, self._pamConv, src_ip
+            self.user,
+            self._pamConv,
+            src_ip,
+            events=self.transport.events,  # type: ignore[union-attr]
         )
         return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
 

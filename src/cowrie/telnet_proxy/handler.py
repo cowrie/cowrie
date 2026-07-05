@@ -290,7 +290,7 @@ class TelnetHandler:
             # the login failed prompt
             src_ip = self.server.transport.getPeer().host
             if HoneypotPasswordChecker().checkUserPass(
-                self.usernameState, self.passwordState, src_ip
+                self.usernameState, self.passwordState, src_ip, self.server.events
             ):
                 passwordToSend = self.backendPassword
                 self.authDone = True

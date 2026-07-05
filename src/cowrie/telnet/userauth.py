@@ -123,7 +123,9 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         def login(ignored):
             self.src_ip = self.transport.getPeer().host
-            creds = UsernamePasswordIP(username, password, self.src_ip)
+            creds = UsernamePasswordIP(
+                username, password, self.src_ip, events=self.transport.events
+            )
             d = self.portal.login(creds, self.src_ip, ITelnetProtocol)
             d.addCallback(self._cbLogin)
             d.addErrback(self._ebLogin)

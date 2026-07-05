@@ -21,12 +21,17 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog
 from cowrie.telnet_proxy import client_transport
 from cowrie.telnet_proxy.handler import TelnetHandler
 
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
 class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
+
     def __init__(self):
         super().__init__()
 
@@ -63,6 +68,18 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         self.peer_port = self.transport.getPeer().port + 1
         self.local_ip = self.transport.getHost().host
         self.local_port = self.transport.getHost().port
+
+        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
+        if dispatcher is not None:
+            self.events = EventLog(
+                dispatcher,
+                session=self.transportId,
+                protocol="telnet",
+                src_ip=self.transport.getPeer().host,
+                src_port=self.transport.getPeer().port,
+                dst_ip=self.transport.getHost().host,
+                dst_port=self.transport.getHost().port,
+            )
 
         log.msg(
             eventid="cowrie.session.connect",
@@ -236,6 +253,8 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
                 format="Connection lost after %(duration_ms)d milliseconds",
                 duration_ms=duration_ms,
             )
+        if self.events is not None:
+            self.events.close()
 
     def packet_buffer(self, payload):
         """

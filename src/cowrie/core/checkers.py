@@ -9,6 +9,8 @@ This module contains ...
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from twisted.conch import error
 from twisted.conch.ssh import keys
 from twisted.cred.checkers import ICredentialsChecker
@@ -22,6 +24,9 @@ from cowrie.core import auth
 from cowrie.core import credentials as conchcredentials
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import escape_nonprintable
+
+if TYPE_CHECKING:
+    from cowrie.core.events import EventLog
 
 
 @implementer(ICredentialsChecker)
@@ -74,9 +79,9 @@ class HoneypotNoneChecker:
     credentialInterfaces = (conchcredentials.IUsername,)
 
     def requestAvatarId(self, credentials):
-        log.msg(
-            eventid="cowrie.login.success",
-            format="login attempt [%(username)s] succeeded",
+        credentials.events.dispatch(
+            "cowrie.login.success",
+            "login attempt [%(username)s] succeeded",
             username=escape_nonprintable(credentials.username),
         )
         return defer.succeed(credentials.username)
@@ -96,27 +101,35 @@ class HoneypotPasswordChecker:
     def requestAvatarId(self, credentials):
         if hasattr(credentials, "password"):
             if self.checkUserPass(
-                credentials.username, credentials.password, credentials.ip
+                credentials.username,
+                credentials.password,
+                credentials.ip,
+                credentials.events,
             ):
                 return defer.succeed(credentials.username)
             return defer.fail(UnauthorizedLogin())
         if hasattr(credentials, "pamConversion"):
             return self.checkPamUser(
-                credentials.username, credentials.pamConversion, credentials.ip
+                credentials.username,
+                credentials.pamConversion,
+                credentials.ip,
+                credentials.events,
             )
         return defer.fail(UnhandledCredentials())
 
-    def checkPamUser(self, username, pamConversion, ip):
+    def checkPamUser(self, username, pamConversion, ip, events):
         r = pamConversion((("Password:", 1),))
-        return r.addCallback(self.cbCheckPamUser, username, ip)
+        return r.addCallback(self.cbCheckPamUser, username, ip, events)
 
-    def cbCheckPamUser(self, responses, username, ip):
+    def cbCheckPamUser(self, responses, username, ip, events):
         for response, _ in responses:
-            if self.checkUserPass(username, response, ip):
+            if self.checkUserPass(username, response, ip, events):
                 return defer.succeed(username)
         return defer.fail(UnauthorizedLogin())
 
-    def checkUserPass(self, theusername: bytes, thepassword: bytes, ip: str) -> bool:
+    def checkUserPass(
+        self, theusername: bytes, thepassword: bytes, ip: str, events: EventLog
+    ) -> bool:
         # Is the auth_class defined in the config file?
         authclass = CowrieConfig.get("honeypot", "auth_class", fallback="UserDB")
 
@@ -132,17 +145,17 @@ class HoneypotPasswordChecker:
         theauth = authname()
 
         if theauth.checklogin(theusername, thepassword, ip):
-            log.msg(
-                eventid="cowrie.login.success",
-                format="login attempt [%(username)s/%(password)s] succeeded",
+            events.dispatch(
+                "cowrie.login.success",
+                "login attempt [%(username)s/%(password)s] succeeded",
                 username=escape_nonprintable(theusername),
                 password=escape_nonprintable(thepassword),
             )
             return True
 
-        log.msg(
-            eventid="cowrie.login.failed",
-            format="login attempt [%(username)s/%(password)s] failed",
+        events.dispatch(
+            "cowrie.login.failed",
+            "login attempt [%(username)s/%(password)s] failed",
             username=escape_nonprintable(theusername),
             password=escape_nonprintable(thepassword),
         )
