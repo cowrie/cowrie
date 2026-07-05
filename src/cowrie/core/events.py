@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import socket
 import time
+from os import environ
 from typing import TYPE_CHECKING, Any
 
 from twisted.logger import formatTime
@@ -51,7 +52,13 @@ class EventDispatcher:
             "honeypot", "sensor_name", fallback=socket.gethostname()
         )
         self.uuid: str = CowrieConfig.get("honeypot", "uuid", fallback="unknown")
-        self.timeFormat: str = "%Y-%m-%dT%H:%M:%S.%fZ"
+        # The Z suffix (Zulu) only when running in UTC; a local-time
+        # timestamp carries its numeric offset instead.
+        self.timeFormat: str
+        if environ.get("TZ") == "UTC":
+            self.timeFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
+        else:
+            self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
         self.stopped: bool = False
         # Delivery bookkeeping, also the hook for pipeline observability.
         self.dispatched: int = 0
@@ -80,7 +87,10 @@ class EventDispatcher:
         self.dispatched += 1
         for sink in self.sinks:
             try:
-                sink.write(ev)
+                # Each sink owns its copy: several output plugins mutate the
+                # event they receive (del event[i]), which must not corrupt
+                # what the sinks after them see.
+                sink.write(dict(ev))
             except Exception as e:  # one sink must not stop the rest
                 count = self.failures.get(id(sink), 0) + 1
                 self.failures[id(sink)] = count
@@ -126,7 +136,12 @@ class EventLog:
         return derived
 
     def close(self) -> None:
-        """The connection ended: events dispatched from now on are late."""
+        """The connection ended: events dispatched from now on are late.
+
+        This closes the whole connection's emitter, including on a child:
+        only the owning transport calls it. A channel closing is not a
+        session end and needs no call here.
+        """
         self._root._closed = True
 
 

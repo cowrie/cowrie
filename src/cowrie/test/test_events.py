@@ -100,6 +100,42 @@ class EventDispatcherTests(unittest.TestCase):
         self.dispatch_one()
         self.assertEqual(self.sink.events, [])
 
+    def test_sinks_do_not_share_a_mutable_event(self) -> None:
+        # Several output plugins mutate the event they receive (jsonlog,
+        # mongodb, graylog... all `del event[i]`); one sink's mutation must
+        # not corrupt what later sinks see.
+        class MutatingSink:
+            def write(self, event: dict[str, Any]) -> None:
+                del event["input"]
+
+        after = CapturingSink()
+        dispatcher = EventDispatcher(
+            [MutatingSink(), after], logmsg=lambda msg, **kw: None
+        )
+        dispatcher.dispatch(
+            {
+                "eventid": "cowrie.command.input",
+                "format": "CMD: %(input)s",
+                "input": "ls",
+                "session": "s",
+            }
+        )
+        self.assertEqual(
+            after.events[0]["input"],
+            "ls",
+            "a mutating sink corrupted the event for the next sink",
+        )
+
+    def test_timestamp_format_follows_timezone_convention(self) -> None:
+        # Same convention as Output: the Z suffix only when TZ is UTC,
+        # otherwise a numeric offset -- a non-UTC time must not claim Zulu.
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, {"TZ": "UTC"}):
+            self.assertTrue(EventDispatcher([]).timeFormat.endswith("Z"))
+        with mock.patch.dict(os.environ, {"TZ": "Europe/Amsterdam"}):
+            self.assertTrue(EventDispatcher([]).timeFormat.endswith("%z"))
+
 
 class EventLogTests(unittest.TestCase):
     def setUp(self) -> None:
