@@ -266,5 +266,5 @@ class LoggingTelnetServerProtocol(LoggingServerProtocol):
         return (transportId, sn)
 
     def getEventLog(self) -> EventLog:
-        events: EventLog = self.transport.session.events
+        events: EventLog = self.transport.session.transport.events
         return events
