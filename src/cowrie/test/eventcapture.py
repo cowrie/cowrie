@@ -23,24 +23,26 @@ class CaptureSink:
         self.events.append(event)
 
 
+def _capture_pipeline(sink: CaptureSink, **identity: Any) -> EventLog:
+    """An EventLog delivering only to ``sink``, with test identity defaults."""
+    bound = {"session": "test0000", "protocol": "test", "src_ip": "1.2.3.4"}
+    bound.update(identity)
+    return EventLog(
+        EventDispatcher([sink], logmsg=lambda *args, **kwargs: None), **bound
+    )
+
+
 def capture_eventlog(**identity: Any) -> tuple[EventLog, list[dict[str, Any]]]:
     """An EventLog whose dispatched events land in the returned list."""
     sink = CaptureSink()
-    bound = {"session": "test0000", "protocol": "test", "src_ip": "1.2.3.4"}
-    bound.update(identity)
-    events = EventLog(
-        EventDispatcher([sink], logmsg=lambda *args, **kwargs: None), **bound
-    )
-    return events, sink.events
+    return _capture_pipeline(sink, **identity), sink.events
 
 
 def capture_events(protocol: Any, **identity: Any) -> list[dict[str, Any]]:
     """Install a capturing EventLog on ``protocol`` and return the list its
     events land in. The console renderer is omitted so nothing reaches the
     Twisted log during tests."""
-    bound = {"session": "test0000", "protocol": "test", "src_ip": "203.0.113.1"}
-    bound.update(identity)
-    events, dispatched = capture_eventlog(**bound)
+    events, dispatched = capture_eventlog(**identity)
     protocol.events = events
     return dispatched
 
@@ -55,11 +57,8 @@ def make_exec_transport(sink: CaptureSink, processEnded: Any = None) -> SimpleNa
     peer = SimpleNamespace(host="1.1.1.1", port=2222)
     inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
     factory = SimpleNamespace(starttime=0)
-    events = EventLog(
-        EventDispatcher([sink], logmsg=lambda *args, **kwargs: None),
-        session="testexec",
-        protocol="ssh",
-        src_ip="1.1.1.1",
+    events = _capture_pipeline(
+        sink, session="testexec", protocol="ssh", src_ip="1.1.1.1"
     )
     conn_transport = SimpleNamespace(
         transportId="testexec", factory=factory, transport=inner, events=events

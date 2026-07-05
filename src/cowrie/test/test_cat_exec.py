@@ -33,7 +33,6 @@ def run_exec_cat_redirect(payload: bytes) -> bytes:
     the session teardown finalizes it.
     """
     avatar = FakeAvatar(FakeServer())
-    avatar.server.initFileSystem = lambda home: None
 
     lsp = insults.LoggingServerProtocol(
         protocol.HoneyPotExecProtocol, avatar, b"cat > /tmp/cowrietest"

@@ -211,7 +211,6 @@ def run_exec(cmd: bytes) -> int:
     transport = make_exec_transport(CaptureSink(), processEnded=process_ended)
 
     avatar = FakeAvatar(FakeServer())
-    avatar.server.initFileSystem = lambda home: None
     lsp = insults.LoggingServerProtocol(protocol.HoneyPotExecProtocol, avatar, cmd)
     lsp.makeConnection(transport)
     return captured.get("code", 0)

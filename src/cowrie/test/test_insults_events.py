@@ -39,7 +39,6 @@ class StdinCaptureEventTests(unittest.TestCase):
     def run_exec(self, cmd: bytes, payload: bytes) -> list[dict[str, Any]]:
         sink = CaptureSink()
         avatar = FakeAvatar(FakeServer())
-        avatar.server.initFileSystem = lambda home: None
         lsp = insults.LoggingServerProtocol(protocol.HoneyPotExecProtocol, avatar, cmd)
         lsp.makeConnection(make_exec_transport(sink))
         lsp.dataReceived(payload)

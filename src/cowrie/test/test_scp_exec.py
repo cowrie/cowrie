@@ -45,7 +45,6 @@ def run_exec_scp_push(
     """
     sink = CaptureSink()
     avatar = FakeAvatar(FakeServer())
-    avatar.server.initFileSystem = lambda home: None
     if fs_newcount is not None:
         avatar.server.fs.newcount = fs_newcount
 
