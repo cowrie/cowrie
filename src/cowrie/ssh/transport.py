@@ -26,6 +26,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog
 from cowrie.core.utils import escape_nonprintable
 
 
@@ -34,6 +35,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     gotVersion: bool = False
     buf: bytes
     transportId: str
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
     auth_timeout: int = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
@@ -68,6 +72,18 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         ipv4_search = self.ipv4rex.search(src_ip)
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
+
+        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
+        if dispatcher is not None:
+            self.events = EventLog(
+                dispatcher,
+                session=self.transportId,
+                protocol="ssh",
+                src_ip=src_ip,
+                src_port=self.transport.getPeer().port,
+                dst_ip=self.transport.getHost().host,
+                dst_port=self.transport.getHost().port,
+            )
 
         log.msg(
             eventid="cowrie.session.connect",
@@ -283,6 +299,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             format="Connection lost after %(duration_ms)d milliseconds",
             duration_ms=duration_ms,
         )
+        if self.events is not None:
+            self.events.close()
 
     def sendDisconnect(self, reason, desc):
         """

@@ -27,6 +27,7 @@ from backend_pool.pool_server import PoolServerFactory
 from cowrie import __version__ as __cowrie_version__
 from cowrie.core import checkers, uuid
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import ConsoleRenderer, EventDispatcher
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
 
@@ -148,6 +149,14 @@ Makes a Cowrie SSH/Telnet honeypot.
             except Exception:
                 log.err()
                 log.msg(f"Failed to load output engine: {engine}")
+
+        # The event pipeline: session EventLogs deliver through this
+        # dispatcher to the output plugins and the console renderer
+        # (see docs/EVENT_PIPELINE.rst).
+        self.dispatcher = EventDispatcher([*self.output_plugins, ConsoleRenderer()])
+        reactor.addSystemEventTrigger(  # type: ignore[attr-defined]
+            "before", "shutdown", self.dispatcher.stop
+        )
 
         self.topService = service.MultiService()
         application = service.Application("cowrie")

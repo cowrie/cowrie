@@ -20,6 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog
 
 # Telnet option names for logging (RFC 854, RFC 855, RFC 1572, etc.)
 TELNET_OPTIONS: dict[int, str] = {
@@ -45,6 +46,10 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     CowrieTelnetTransport
     """
 
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
+
     # Set while the connection is being torn down. Telnet.connectionLost()
     # iterates self.options and errbacks pending negotiations; our retry
     # machinery must not re-enter negotiation during that iteration, since
@@ -61,6 +66,18 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self.setTimeout(
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
+
+        dispatcher = getattr(getattr(self.factory, "tac", None), "dispatcher", None)
+        if dispatcher is not None:
+            self.events = EventLog(
+                dispatcher,
+                session=self.transportId,
+                protocol="telnet",
+                src_ip=self.transport.getPeer().host,
+                src_port=self.transport.getPeer().port,
+                dst_ip=self.transport.getHost().host,
+                dst_port=self.transport.getHost().port,
+            )
 
         log.msg(
             eventid="cowrie.session.connect",
@@ -135,6 +152,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             format="Connection lost after %(duration_ms)d milliseconds",
             duration_ms=duration_ms,
         )
+        if self.events is not None:
+            self.events.close()
 
     def willChain(self, option):
         return self._chainNegotiation(None, self.will, option)
