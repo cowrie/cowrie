@@ -203,8 +203,9 @@ Non-goals:
 * No changes to the event schema in :doc:`OUTPUT`; plugins keep receiving the
   same dictionaries through the same ``write()`` method.
 * No changes to the human-readable ``cowrie.log`` format.
-* Operational/diagnostic logging (``log.msg`` without an ``eventid``) is out
-  of scope and remains plain Twisted logging.
+* Diagnostic logging keeps its own channel, but converts from the legacy
+  ``twisted.python.log`` API to ``twisted.logger`` once the event migration
+  frees the log stream from being parsed (see below).
 
 Proposed design
 ***************
@@ -399,6 +400,48 @@ Event flow after the change
       +--> plugin.write()  x N, error-isolated       |
       +--> console renderer -- one line per event ---+
 
+The diagnostic stream: converting to ``twisted.logger``
+*******************************************************
+
+Once no plugin parses the log stream, the diagnostic side gets its own
+modernization: from the legacy ``twisted.python.log`` API (~490 ``log.msg``
+/ ``log.err`` call sites) to ``twisted.logger``. The observer side is
+already there -- ``python/logfile.py`` writes ``cowrie.log`` through
+``textFileLogObserver`` and the twistd plugin registers ``ILogObserver``
+providers; legacy emissions reach them through Twisted's built-in adapter.
+Only the emitters are legacy.
+
+What the conversion buys:
+
+Levels and namespaces
+    Per-class ``Logger`` instances give every line a namespace
+    (``cowrie.ssh.transport``, ``cowrie.commands.wget``) and a real level.
+    Combined with ``LogLevelFilterPredicate`` this yields per-subsystem
+    verbosity control from configuration -- debug a single subsystem in
+    production without drowning in the rest. Today the log has exactly one
+    volume setting: everything.
+
+Lazy formatting
+    ``self._log.debug("block {n} received", n=num)`` costs nearly nothing
+    when filtered out, so debug statements can stay in the code permanently
+    instead of being commented in and out during development.
+
+Failures
+    ``self._log.failure("wget transfer failed")`` replaces ``log.err``
+    with explicit tracebacks attached as structured data.
+
+The console renderer emits through a ``Logger`` as well (namespace
+``cowrie.events``), so rendered event lines carry a namespace and level like
+every other line and obey the same filtering.
+
+Sequencing constraint: an ``eventid``-carrying ``log.msg`` must *not* be
+converted to ``twisted.logger`` while plugins still observe the legacy
+stream -- the adapter presents converted events with a different ``system``
+view, the attribution regexes miss them, and the event is lost silently.
+A file's diagnostics therefore convert only after its events have moved to
+``EventLog``; the bulk of the sweep lands after the observers are gone
+(phase 5). Files that emit no events can convert at any time.
+
 Relationship to Twisted, and alternatives considered
 ****************************************************
 
@@ -415,8 +458,8 @@ were considered against the proposed design:
     the fan-out duplication (defect 4) idiomatically, but not attribution:
     ``twisted.logger`` has no bound context that survives a deferred hop, so
     the two-thirds of emitters that rely on execution context stay broken.
-    It is the right modernization for Cowrie's *diagnostic* logging, and can
-    happen independently of this design at any time.
+    It is the right modernization for Cowrie's *diagnostic* logging, which
+    this plan adopts as phase 5.
 
 ``contextvars``
     Twisted (21.2+) runs deferred callbacks in the context captured when the
@@ -555,6 +598,14 @@ Phase 4 -- delete
     are unaffected throughout; ones that override ``emit()`` or
     ``logDispatch()`` themselves would break here and must be checked for
     before this phase (none in-tree do).
+
+Phase 5 -- modernize diagnostics
+    Convert the remaining legacy ``log.msg`` / ``log.err`` call sites to
+    per-class ``twisted.logger.Logger`` instances with namespaces and
+    levels, and add per-namespace level filtering to the configuration.
+    Safe to do wholesale only now: no consumer parses the log stream
+    anymore, so the emitted ``system`` view is free to change. Files with
+    no event emitters can convert earlier at will.
 
 Open questions
 **************
