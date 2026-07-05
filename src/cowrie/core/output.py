@@ -5,15 +5,11 @@
 from __future__ import annotations
 
 import abc
-import re
 import socket
-import time
 from os import environ
-from re import Pattern
 from typing import TYPE_CHECKING, Any
 
 from twisted.internet import reactor
-from twisted.logger import formatTime
 
 from cowrie.core.config import CowrieConfig
 
@@ -76,14 +72,6 @@ class Output(metaclass=abc.ABCMeta):
     dispatcher: EventDispatcher | None = None
 
     def __init__(self) -> None:
-        self.sessions: dict[str, str] = {}
-        self.ips: dict[str, str] = {}
-
-        # Need these for each individual transport, or else the session numbers overlap
-        self.sshRegex: Pattern[str] = re.compile(".*SSHTransport,([0-9]+),[0-9a-f:.]+$")
-        self.telnetRegex: Pattern[str] = re.compile(
-            ".*TelnetTransport,([0-9]+),[0-9a-f:.]+$"
-        )
         self.sensor: str = CowrieConfig.get(
             "honeypot", "sensor_name", fallback=socket.gethostname()
         )
@@ -100,15 +88,6 @@ class Output(metaclass=abc.ABCMeta):
         reactor.addSystemEventTrigger("before", "shutdown", self.stop)
 
         self.start()
-
-    def logDispatch(self, **kw: str) -> None:
-        """
-        Use logDispatch when the HoneypotTransport prefix is not available.
-        Here you can explicitly set the sessionIds to tie the sessions together
-        """
-        ev = kw
-        # ev["message"] = msg
-        self.emit(ev)
 
     def dispatch(self, **event: Any) -> None:
         """Emit an enrichment event into the event pipeline, carrying
@@ -136,107 +115,3 @@ class Output(metaclass=abc.ABCMeta):
         Handle a general event within the output plugin
         """
         pass
-
-    def emit(self, event: dict) -> None:
-        """
-        This is the main emit() hook that gets called by the the Twisted logging
-
-        To make this work with Cowrie, the event dictionary needs the following keys:
-        - 'eventid'
-        - 'sessionno' or 'session'
-        - 'message' or 'format'
-        """
-        sessionno: str
-
-        # Ignore stdout and stderr in output plugins
-        if "printed" in event:
-            return
-
-        # Ignore anything without eventid
-        if "eventid" not in event:
-            return
-
-        # Ignore anything without session information
-        if (
-            "sessionno" not in event
-            and "session" not in event
-            and "system" not in event
-        ):
-            return
-
-        # Ignore anything without message
-        if "message" not in event and "format" not in event:
-            return
-
-        ev: dict[str, any] = convert(event)  # type: ignore
-        ev["sensor"] = self.sensor
-        ev["uuid"] = self.uuid
-
-        ev.pop("isError", None)
-
-        # Add ISO timestamp and sensor data
-        if "time" not in ev:
-            ev["time"] = time.time()
-        ev["timestamp"] = formatTime(ev["time"], timeFormat=self.timeFormat)
-
-        if "format" in ev and ("message" not in ev or ev["message"] == ()):
-            try:
-                ev["message"] = ev["format"] % ev  # type: ignore
-                del ev["format"]
-            except Exception:
-                pass
-
-        # Explicit sessionno (from logDispatch) overrides from 'system'
-        if "sessionno" in ev:
-            sessionno = ev["sessionno"]
-            del ev["sessionno"]
-        # Maybe it's passed explicitly
-        elif "session" in ev:
-            # reverse engineer sessionno
-            try:
-                sessionno = next(
-                    key
-                    for key, value in self.sessions.items()
-                    if value == ev["session"]
-                )
-            except StopIteration:
-                return
-        # Extract session id from the twisted log prefix
-        elif "system" in ev:
-            sessionno = "0"
-            telnetmatch = self.telnetRegex.match(ev["system"])
-            if telnetmatch:
-                sessionno = f"T{telnetmatch.groups()[0]}"
-            else:
-                sshmatch = self.sshRegex.match(ev["system"])
-                if sshmatch:
-                    sessionno = f"S{sshmatch.groups()[0]}"
-            if sessionno == "0":
-                return
-        else:
-            print(f"Can't determine sessionno: {ev!r}")  # noqa: T201
-            return
-
-        if sessionno in self.ips:
-            ev["src_ip"] = self.ips[sessionno]
-
-        # Connection event is special. adds to session list
-        if ev["eventid"] == "cowrie.session.connect":
-            self.sessions[sessionno] = ev["session"]
-            self.ips[sessionno] = ev["src_ip"]
-        else:
-            ev["session"] = self.sessions[sessionno]
-
-        if sessionno[0] == "S":
-            ev["protocol"] = "ssh"
-        elif sessionno[0] == "T":
-            ev["protocol"] = "telnet"
-        else:
-            ev["protocol"] = "unknown"
-
-        self.write(ev)
-
-        # Disconnect is special, remove cached data
-        if ev["eventid"] == "cowrie.session.closed":
-            del self.sessions[sessionno]
-            del self.ips[sessionno]

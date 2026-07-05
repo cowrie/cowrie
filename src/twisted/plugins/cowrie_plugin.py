@@ -32,7 +32,6 @@ from cowrie.core.utils import create_endpoint_services, get_endpoints_from_secti
 from cowrie.pool_interface.handler import PoolHandler
 
 if TYPE_CHECKING:
-
     from cowrie.core.output import Output
 
 
@@ -137,7 +136,6 @@ Makes a Cowrie SSH/Telnet honeypot.
             engine: str = x.split("_")[1]
             try:
                 output = import_module(f"cowrie.output.{engine}").Output()
-                log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg(f"Loaded output engine: {engine}")
             except ImportError as e:

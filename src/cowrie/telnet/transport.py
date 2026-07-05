@@ -61,7 +61,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         # (command, option_byte) pairs already logged, to suppress a scanner
         # flooding the same option negotiation (see _log_negotiation).
         self._logged_options: set[tuple[str, int]] = set()
-        sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
@@ -74,17 +73,11 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             protocol="telnet",
         )
 
-        log.msg(
-            eventid="cowrie.session.connect",
-            format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            src_ip=self.transport.getPeer().host,
-            src_port=self.transport.getPeer().port,
-            dst_ip=self.transport.getHost().host,
-            dst_port=self.transport.getHost().port,
-            session=self.transportId,
-            sessionno=f"T{sessionno!s}",
-            protocol="telnet",
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.session.connect",
+                "New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
+            )
         TelnetTransport.connectionMade(self)
 
     def write(self, data):
@@ -143,12 +136,12 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
         duration_ms = round((time.time() - self.startTime) * 1000)
-        log.msg(
-            eventid="cowrie.session.closed",
-            format="Connection lost after %(duration_ms)d milliseconds",
-            duration_ms=duration_ms,
-        )
         if self.events is not None:
+            self.events.dispatch(
+                "cowrie.session.closed",
+                "Connection lost after %(duration_ms)d milliseconds",
+                duration_ms=duration_ms,
+            )
             self.events.close()
 
     def willChain(self, option):
