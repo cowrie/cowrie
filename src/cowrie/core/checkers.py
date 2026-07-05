@@ -42,14 +42,18 @@ class HoneypotPublicKeyChecker:
         # Twisted constructs this credential; the userauth service attaches
         # the transport's emitter before portal.login.
         events = getattr(credentials, "events", None)
+        # Every pubkey event carries the same attacker key material.
+        keyfields = {
+            "username": escape_nonprintable(credentials.username),
+            "fingerprint": _pubKey.fingerprint(),
+            "key": _pubKey.toString("OPENSSH"),
+            "type": _pubKey.sshType(),
+        }
         if events:
             events.dispatch(
                 "cowrie.client.fingerprint",
                 "public key attempt for user %(username)s of type %(type)s with fingerprint %(fingerprint)s",
-                username=escape_nonprintable(credentials.username),
-                fingerprint=_pubKey.fingerprint(),
-                key=_pubKey.toString("OPENSSH"),
-                type=_pubKey.sshType(),
+                **keyfields,
             )
 
         if CowrieConfig.getboolean("ssh", "auth_publickey_allow_any", fallback=False):
@@ -57,10 +61,7 @@ class HoneypotPublicKeyChecker:
                 events.dispatch(
                     "cowrie.login.success",
                     "public key login attempt for [%(username)s] succeeded",
-                    username=escape_nonprintable(credentials.username),
-                    fingerprint=_pubKey.fingerprint(),
-                    key=_pubKey.toString("OPENSSH"),
-                    type=_pubKey.sshType(),
+                    **keyfields,
                 )
             return defer.succeed(credentials.username)
         else:
@@ -68,10 +69,7 @@ class HoneypotPublicKeyChecker:
                 events.dispatch(
                     "cowrie.login.failed",
                     "public key login attempt for [%(username)s] failed",
-                    username=escape_nonprintable(credentials.username),
-                    fingerprint=_pubKey.fingerprint(),
-                    key=_pubKey.toString("OPENSSH"),
-                    type=_pubKey.sshType(),
+                    **keyfields,
                 )
             return failure.Failure(error.ConchError("Incorrect signature"))
 
