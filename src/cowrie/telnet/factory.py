@@ -43,7 +43,6 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         self.pool_handler = pool_handler
         super().__init__()
 
-
     def startFactory(self) -> None:
         """ """
         try:

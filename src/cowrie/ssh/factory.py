@@ -59,7 +59,6 @@ class CowrieSSHFactory(factory.SSHFactory):
         }
         super().__init__()
 
-
     def startFactory(self) -> None:
         # For use by the uptime command
         self.starttime = time.time()
