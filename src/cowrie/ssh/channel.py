@@ -25,6 +25,12 @@ if TYPE_CHECKING:
 class CowrieSSHChannel(channel.SSHChannel):
     """
     This is an SSH channel with built-in logging
+
+    Not wired into the SSH service: the session channel is
+    HoneyPotSSHSession and the forwarding channels subclass conch's
+    forwarding channel, so no production code instantiates this class;
+    only tests do. Its ttylog duplicates what
+    insults.LoggingServerProtocol records.
     """
 
     ttylogFile: str = ""

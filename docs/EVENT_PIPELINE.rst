@@ -316,10 +316,11 @@ Output plugins are not pure sinks: virustotal, reversedns, and greynoise
 emit session-attributed enrichment events (``cowrie.virustotal.scanfile``,
 ``cowrie.reversedns.connect``, ...) through the legacy log path, attributed
 by the per-plugin session-table reverse lookup, and abuseipdb emits
-session-less operational events. Deleting the log observers would silently
-drop all of them, so before phase 4 these plugins need an emission path --
-a dispatcher reference for enrichment events, or reclassification as
-diagnostics -- decided per plugin.
+session-less operational events. These are events, not diagnostics: they
+must keep reaching every configured sink. In phase 4 plugins receive a
+reference to the ``EventDispatcher`` so an enrichment event is emitted
+once, session-attributed, into the same fan-out as everything else --
+deleting the log observers before that would silently drop them.
 
 Calling patterns
 ================
