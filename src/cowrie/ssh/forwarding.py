@@ -26,10 +26,11 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
     or will log the request and do nothing
     """
     remoteHP, origHP = forwarding.unpackOpen_direct_tcpip(data)
+    events = avatar.conn.transport.events
 
-    log.msg(
-        eventid="cowrie.direct-tcpip.request",
-        format="direct-tcp connection request to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s",
+    events.dispatch(
+        "cowrie.direct-tcpip.request",
+        "direct-tcp connection request to %(dst_ip)s:%(dst_port)s from %(src_ip)s:%(src_port)s",
         dst_ip=remoteHP[0],
         dst_port=remoteHP[1],
         src_ip=origHP[0],
@@ -50,9 +51,9 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
                 redirects[int(destPort)] = (redirectHP[0], int(redirectHP[1]))
         if remoteHP[1] in redirects:
             remoteHPNew = redirects[remoteHP[1]]
-            log.msg(
-                eventid="cowrie.direct-tcpip.redirect",
-                format="redirected direct-tcp connection request from %(src_ip)s:%(src_port)"
+            events.dispatch(
+                "cowrie.direct-tcpip.redirect",
+                "redirected direct-tcp connection request from %(src_ip)s:%(src_port)"
                 + "d to %(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d",
                 new_ip=remoteHPNew[0],
                 new_port=remoteHPNew[1],
@@ -79,9 +80,9 @@ def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avata
                 tunnels[int(destPort)] = (tunnelHP[0], int(tunnelHP[1]))
         if remoteHP[1] in tunnels:
             remoteHPNew = tunnels[remoteHP[1]]
-            log.msg(
-                eventid="cowrie.direct-tcpip.tunnel",
-                format="tunneled direct-tcp connection request %(src_ip)s:%(src_port)"
+            events.dispatch(
+                "cowrie.direct-tcpip.tunnel",
+                "tunneled direct-tcp connection request %(src_ip)s:%(src_port)"
                 + "d->%(dst_ip)s:%(dst_port)d to %(new_ip)s:%(new_port)d",
                 new_ip=remoteHPNew[0],
                 new_port=remoteHPNew[1],
@@ -137,20 +138,24 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         extensions=tls_info["extensions"],
                         has_sni=tls_info["has_sni"],
                         alpn=tls_info["alpn"],
-                        signature_algorithms=tls_info["signature_algorithms"]
+                        signature_algorithms=tls_info["signature_algorithms"],
                     )
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.ja4",
-                        format="JA4 fingerprint for forwarded TLS to %(dst_ip)s:%(dst_port)s: %(ja4)s",
+                    self.conn.transport.events.dispatch(
+                        "cowrie.direct-tcpip.ja4",
+                        "JA4 fingerprint for forwarded TLS to %(dst_ip)s:%(dst_port)s: %(ja4)s",
                         dst_ip=self.hostport[0],
                         dst_port=self.hostport[1],
-                        ja4=ja4
+                        ja4=ja4,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4 fingerprint: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
+        elif (
+            data.startswith(b"GET ")
+            or data.startswith(b"POST ")
+            or data.startswith(b"HEAD ")
+        ):
             http_info = parse_http_request(data)
             if http_info:
                 try:
@@ -160,21 +165,21 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         headers=http_info["headers"],
                         cookies=http_info["cookies"],
                         referer=http_info["referer"],
-                        accept_language=http_info["accept_language"]
+                        accept_language=http_info["accept_language"],
                     )
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.ja4h",
-                        format="JA4H fingerprint for forwarded HTTP to %(dst_ip)s:%(dst_port)s: %(ja4h)s",
+                    self.conn.transport.events.dispatch(
+                        "cowrie.direct-tcpip.ja4h",
+                        "JA4H fingerprint for forwarded HTTP to %(dst_ip)s:%(dst_port)s: %(ja4h)s",
                         dst_ip=self.hostport[0],
                         dst_port=self.hostport[1],
-                        ja4h=ja4h
+                        ja4h=ja4h,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4H fingerprint: {e}")
 
-        log.msg(
-            eventid="cowrie.direct-tcpip.data",
-            format="discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s",
+        self.conn.transport.events.dispatch(
+            "cowrie.direct-tcpip.data",
+            "discarded direct-tcp forward request %(id)s to %(dst_ip)s:%(dst_port)s with data %(data)s",
             dst_ip=self.hostport[0],
             dst_port=self.hostport[1],
             data=repr(data),
@@ -221,20 +226,24 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         extensions=tls_info["extensions"],
                         has_sni=tls_info["has_sni"],
                         alpn=tls_info["alpn"],
-                        signature_algorithms=tls_info["signature_algorithms"]
+                        signature_algorithms=tls_info["signature_algorithms"],
                     )
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.ja4",
-                        format="JA4 fingerprint for tunneled TLS to %(dst_ip)s:%(dst_port)s: %(ja4)s",
+                    self.conn.transport.events.dispatch(
+                        "cowrie.direct-tcpip.ja4",
+                        "JA4 fingerprint for tunneled TLS to %(dst_ip)s:%(dst_port)s: %(ja4)s",
                         dst_ip=self.dstport[0],
                         dst_port=self.dstport[1],
-                        ja4=ja4
+                        ja4=ja4,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4 fingerprint in tunnel: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
+        elif (
+            data.startswith(b"GET ")
+            or data.startswith(b"POST ")
+            or data.startswith(b"HEAD ")
+        ):
             http_info = parse_http_request(data)
             if http_info:
                 try:
@@ -244,21 +253,21 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                         headers=http_info["headers"],
                         cookies=http_info["cookies"],
                         referer=http_info["referer"],
-                        accept_language=http_info["accept_language"]
+                        accept_language=http_info["accept_language"],
                     )
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.ja4h",
-                        format="JA4H fingerprint for tunneled HTTP to %(dst_ip)s:%(dst_port)s: %(ja4h)s",
+                    self.conn.transport.events.dispatch(
+                        "cowrie.direct-tcpip.ja4h",
+                        "JA4H fingerprint for tunneled HTTP to %(dst_ip)s:%(dst_port)s: %(ja4h)s",
                         dst_ip=self.dstport[0],
                         dst_port=self.dstport[1],
-                        ja4h=ja4h
+                        ja4h=ja4h,
                     )
                 except Exception as e:
                     log.msg(f"Error generating JA4H fingerprint in tunnel: {e}")
 
-        log.msg(
-            eventid="cowrie.tunnelproxy-tcpip.data",
-            format="sending via tunnel proxy %(data)s",
+        self.conn.transport.events.dispatch(
+            "cowrie.tunnelproxy-tcpip.data",
+            "sending via tunnel proxy %(data)s",
             data=repr(data),
         )
         forwarding.SSHConnectForwardingChannel.dataReceived(self, data)
