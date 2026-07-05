@@ -10,15 +10,13 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
-from types import SimpleNamespace
 
 from twisted.internet.protocol import connectionDone
 
 from cowrie.commands import scp
-from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.insults import insults
 from cowrie.shell import protocol
-from cowrie.test.eventcapture import CaptureSink
+from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -31,30 +29,6 @@ _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_scp_exec_")
 insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
 scp.Command_scp.download_path = _DOWNLOAD_DIR
 scp.Command_scp.download_path_uniq = _DOWNLOAD_DIR
-
-
-def _make_exec_transport(sink: CaptureSink) -> SimpleNamespace:
-    """Build the transport.session.conn.transport chain insults expects, with
-    an EventLog whose events land in ``sink``."""
-    peer = SimpleNamespace(host="1.1.1.1", port=2222)
-    inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
-    factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
-    events = EventLog(
-        EventDispatcher([sink], logmsg=lambda *a, **kw: None),
-        session="testexec",
-        protocol="ssh",
-        src_ip="1.1.1.1",
-    )
-    conn_transport = SimpleNamespace(
-        transportId="testexec", factory=factory, transport=inner, events=events
-    )
-    conn = SimpleNamespace(transport=conn_transport)
-    session = SimpleNamespace(id="chan0", conn=conn)
-    return SimpleNamespace(
-        session=session,
-        write=lambda data: None,
-        processEnded=lambda reason=None: None,
-    )
 
 
 def run_exec_scp_push(
@@ -78,7 +52,7 @@ def run_exec_scp_push(
     lsp = insults.LoggingServerProtocol(
         protocol.HoneyPotExecProtocol, avatar, b"scp -t /tmp"
     )
-    lsp.makeConnection(_make_exec_transport(sink))
+    lsp.makeConnection(make_exec_transport(sink))
 
     live_stdinlog = lsp.stdinlogFile
     if chunk_size:

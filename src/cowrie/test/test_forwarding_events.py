@@ -10,37 +10,20 @@ from __future__ import annotations
 import os
 import unittest
 from types import SimpleNamespace
-from typing import Any
 from unittest.mock import patch
 
 from twisted.conch.ssh import forwarding as conchforwarding
 
-from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.ssh import forwarding
-from cowrie.test.eventcapture import CaptureSink
+from cowrie.test.eventcapture import capture_eventlog, events_of
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 
-def capture_eventlog() -> tuple[EventLog, list[dict[str, Any]]]:
-    sink = CaptureSink()
-    events = EventLog(
-        EventDispatcher([sink], logmsg=lambda *args, **kwargs: None),
-        session="test0000",
-        protocol="ssh",
-        src_ip="1.2.3.4",
-    )
-    return events, sink.events
-
-
-def events_of(events: list[dict[str, Any]], eventid: str) -> list[dict[str, Any]]:
-    return [e for e in events if e["eventid"] == eventid]
-
-
 class ForwardingEventTests(unittest.TestCase):
     def test_request_dispatches_with_session_identity(self) -> None:
-        events, dispatched = capture_eventlog()
+        events, dispatched = capture_eventlog(protocol="ssh")
         avatar = SimpleNamespace(
             conn=SimpleNamespace(transport=SimpleNamespace(events=events))
         )
@@ -64,7 +47,7 @@ class ForwardingEventTests(unittest.TestCase):
         self.assertEqual(requests[0]["orig_port"], 50000)
 
     def test_discarded_data_dispatches_with_session_identity(self) -> None:
-        events, dispatched = capture_eventlog()
+        events, dispatched = capture_eventlog(protocol="ssh")
         channel = forwarding.FakeForwardingChannel(("198.51.100.7", 80))
         channel.conn = SimpleNamespace(transport=SimpleNamespace(events=events))
         channel.id = 0

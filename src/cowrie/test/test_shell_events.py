@@ -15,9 +15,8 @@ from typing import Any
 
 from twisted.conch.ssh.filetransfer import FXF_CREAT, FXF_WRITE
 
-from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
-from cowrie.test.eventcapture import CaptureSink
+from cowrie.test.eventcapture import capture_eventlog, events_of
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -26,21 +25,6 @@ os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.mkdtemp(
     prefix="cowrie_shell_events_"
 )
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
-
-
-def capture_eventlog() -> tuple[EventLog, list[dict[str, Any]]]:
-    sink = CaptureSink()
-    events = EventLog(
-        EventDispatcher([sink], logmsg=lambda *args, **kwargs: None),
-        session="test-suite",
-        protocol="test",
-        src_ip="1.1.1.1",
-    )
-    return events, sink.events
-
-
-def events_of(events: list[dict[str, Any]], eventid: str) -> list[dict[str, Any]]:
-    return [e for e in events if e["eventid"] == eventid]
 
 
 class ShellEventTests(unittest.TestCase):
@@ -94,7 +78,7 @@ class ClientSizeEventTests(unittest.TestCase):
     """getPty dispatches the client's terminal size on both session types."""
 
     def make_session(self, sessionclass: type) -> tuple[Any, list[dict[str, Any]]]:
-        events, dispatched = capture_eventlog()
+        events, dispatched = capture_eventlog(session="test-suite", src_ip="1.1.1.1")
         server = FakeServer()
         avatar = SimpleNamespace(
             server=server,
@@ -133,7 +117,7 @@ class SftpUploadEventTests(unittest.TestCase):
         from cowrie.shell import fs
         from cowrie.shell.filetransfer import SFTPServerForCowrieUser
 
-        events, dispatched = capture_eventlog()
+        events, dispatched = capture_eventlog(session="test-suite", src_ip="1.1.1.1")
         server = SFTPServerForCowrieUser.__new__(SFTPServerForCowrieUser)
         server.fs = fs.HoneyPotFilesystem("linux-x64-lsb", "/root")
         server.fs.events = events

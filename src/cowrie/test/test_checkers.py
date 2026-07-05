@@ -15,19 +15,7 @@ from cowrie.core import auth
 from cowrie.core.checkers import HoneypotNoneChecker, HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
 from cowrie.core.credentials import Username, UsernamePasswordIP
-from cowrie.core.events import EventDispatcher, EventLog
-from cowrie.test.eventcapture import CaptureSink
-
-
-def capture_eventlog() -> tuple[EventLog, list[dict[str, Any]]]:
-    sink = CaptureSink()
-    events = EventLog(
-        EventDispatcher([sink], logmsg=lambda *args, **kwargs: None),
-        session="test0000",
-        protocol="ssh",
-        src_ip="1.2.3.4",
-    )
-    return events, sink.events
+from cowrie.test.eventcapture import capture_eventlog
 
 
 def login_events(dispatched: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -46,7 +34,7 @@ class TestHoneypotPasswordChecker(unittest.TestCase):
         self._old = (
             CowrieConfig.get("honeypot", "auth_class") if self._had_option else None
         )
-        self.events, self.dispatched = capture_eventlog()
+        self.events, self.dispatched = capture_eventlog(protocol="ssh")
 
     def tearDown(self) -> None:
         if self._had_option:
@@ -93,7 +81,7 @@ class TestHoneypotPasswordChecker(unittest.TestCase):
 
 class TestHoneypotNoneChecker(unittest.TestCase):
     def test_none_auth_dispatches_login_success(self) -> None:
-        events, dispatched = capture_eventlog()
+        events, dispatched = capture_eventlog(protocol="ssh")
         checker = HoneypotNoneChecker()
         checker.requestAvatarId(Username(b"root", events=events))
 

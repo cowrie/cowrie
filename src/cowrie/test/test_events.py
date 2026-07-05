@@ -13,17 +13,10 @@ from types import SimpleNamespace
 from typing import Any
 
 from cowrie.core.events import ConsoleRenderer, EventDispatcher, EventLog
+from cowrie.test.eventcapture import CaptureSink
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
-
-
-class CapturingSink:
-    def __init__(self) -> None:
-        self.events: list[dict[str, Any]] = []
-
-    def write(self, event: dict[str, Any]) -> None:
-        self.events.append(event)
 
 
 class SinkFailure(Exception):
@@ -38,7 +31,7 @@ class RaisingSink:
 
 class EventDispatcherTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.sink = CapturingSink()
+        self.sink = CaptureSink()
         self.logged: list[str] = []
         self.dispatcher = EventDispatcher(
             [self.sink], logmsg=lambda msg, **kw: self.logged.append(msg)
@@ -69,7 +62,7 @@ class EventDispatcherTests(unittest.TestCase):
         self.assertEqual(ev["session"], "abcd0123")
 
     def test_sink_failure_is_isolated(self) -> None:
-        good = CapturingSink()
+        good = CaptureSink()
         dispatcher = EventDispatcher(
             [RaisingSink(), good], logmsg=lambda msg, **kw: self.logged.append(msg)
         )
@@ -108,7 +101,7 @@ class EventDispatcherTests(unittest.TestCase):
             def write(self, event: dict[str, Any]) -> None:
                 del event["input"]
 
-        after = CapturingSink()
+        after = CaptureSink()
         dispatcher = EventDispatcher(
             [MutatingSink(), after], logmsg=lambda msg, **kw: None
         )
@@ -131,7 +124,7 @@ class EventDispatcherTests(unittest.TestCase):
             def write(self, event: dict[str, Any]) -> None:
                 event["algs"].append("mutated")
 
-        after = CapturingSink()
+        after = CaptureSink()
         dispatcher = EventDispatcher(
             [NestedMutatingSink(), after], logmsg=lambda msg, **kw: None
         )
@@ -162,7 +155,7 @@ class EventDispatcherTests(unittest.TestCase):
 
 class EventLogTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.sink = CapturingSink()
+        self.sink = CaptureSink()
         self.dispatcher = EventDispatcher([self.sink], logmsg=lambda msg, **kw: None)
         self.events = EventLog(
             self.dispatcher,
@@ -224,12 +217,12 @@ class EventLogTests(unittest.TestCase):
 class TelnetTransportEventLogTests(unittest.TestCase):
     """The telnet transport binds an EventLog for the connection's lifetime."""
 
-    def make_transport(self) -> tuple[Any, CapturingSink]:
+    def make_transport(self) -> tuple[Any, CaptureSink]:
         from twisted.test.proto_helpers import StringTransport
 
         from cowrie.telnet.transport import CowrieTelnetTransport
 
-        sink = CapturingSink()
+        sink = CaptureSink()
         dispatcher = EventDispatcher([sink], logmsg=lambda msg, **kw: None)
         transport = CowrieTelnetTransport()
         transport.factory = SimpleNamespace(tac=SimpleNamespace(dispatcher=dispatcher))
