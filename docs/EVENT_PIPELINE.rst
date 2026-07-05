@@ -42,6 +42,39 @@ output plugin
     A subclass of ``cowrie.core.output.Output`` (jsonlog, mysql, s3, ...)
     that receives finished events through its ``write()`` method.
 
+Two streams on one channel
+**************************
+
+Cowrie produces two fundamentally different kinds of output that today share
+one channel, the Twisted log:
+
+diagnostic logging
+    Everything Cowrie has to say about itself: debug statements, development
+    traces, protocol negotiation detail, factories starting and stopping,
+    tracebacks, plugin trouble. Its audience is the developer and the
+    operator; its semantics are log semantics (levels, verbosity,
+    best-effort, human-formatted). This stream is by nature the larger one:
+    most of what it carries never becomes an event.
+
+events
+    The curated subset: structured records of attacker behavior (logins,
+    commands, downloads) whose audience is downstream consumers --
+    databases, SIEMs, jsonlog. Their semantics are data semantics:
+    guaranteed attribution, stable schema, reliable delivery to every
+    configured sink.
+
+Today the *derivation runs the wrong way*: the curated stream is extracted
+from the diagnostic one, by every plugin observing the global log and
+regex-parsing context prefixes out of it -- and consequently every debug
+line also passes through every plugin's filter. Most of the defects below
+are consequences of deriving data from logs. The design inverts the
+derivation for attacker activity: the structured event is primary, and its
+human-readable line in ``cowrie.log`` is rendered *from* it; purely
+diagnostic content -- the bulk of the log -- stays plain Twisted logging
+and never touches the event path. ``cowrie.log`` remains the superset it is
+today: all diagnostics, plus one rendered line per event, merged
+chronologically.
+
 Current architecture
 ********************
 
@@ -160,7 +193,9 @@ Design goals
 * Late events (callbacks that outlive their session) keep full attribution
   and are delivered, not dropped.
 * Attribution, enrichment, and lifecycle live in exactly one place.
-* One emission call produces both the console log line and the plugin event.
+* Events and diagnostic logging are separate streams; one emission call per
+  event, with the ``cowrie.log`` rendering produced by a sink, not by the
+  emitter.
 * A plugin failure affects only that plugin.
 
 Non-goals:
@@ -203,13 +238,10 @@ construction rather than by table lifecycle. Events dispatched after the
 session emitted ``cowrie.session.closed`` carry an additional ``late: true``
 attribute so consumers can distinguish them.
 
-``dispatch()`` also emits the console log line, stamping the session's
-``system`` log-context prefix explicitly rather than inheriting whatever
-context the caller runs in. Today a download callback's console lines appear
-under ``[HTTP11ClientProtocol,client]``, which makes concurrent sessions
-indistinguishable in ``cowrie.log``; with the prefix bound to the session,
-operator-facing lines are correctly attributed no matter where the code
-runs.
+``dispatch()`` emits the event and nothing else -- it does not write to the
+diagnostic log. The familiar event lines in ``cowrie.log`` come from the
+console renderer described below, so the event path has no dependency on the
+logging system at all.
 
 Channels: one transport, many terminals
 =======================================
@@ -251,6 +283,24 @@ Plugin exceptions are caught, logged, and do not affect other plugins or the
 emitting session. The per-plugin ``sessions``/``ips`` tables, the regexes,
 and the global log observer registration are deleted at the end of the
 migration; ``Output`` shrinks to ``start()``/``stop()``/``write()``.
+
+The console renderer -- events back into ``cowrie.log``
+========================================================
+
+Developers and operators read one merged, chronological ``cowrie.log`` in
+which event lines sit among the (far more numerous) diagnostic lines; that
+experience is preserved by a small built-in sink that renders each event's
+``format`` into a log line and hands it to the diagnostic stream, stamping
+the session's ``system`` prefix explicitly. This fixes a long-standing operator pain: a
+download callback's lines currently appear under
+``[HTTP11ClientProtocol,client]``, making concurrent sessions
+indistinguishable in the log; rendered from the attributed event, the line
+carries its session no matter where the emitting code ran. Rendering
+events is thereby just another consumer -- jsonlog renders to JSON, the
+console renderer renders to the diagnostic log -- rather than something the
+emitter does as a side effect. Because the renderer only prints dispatcher
+events and unconverted emitters still print through their own ``log.msg``,
+every event line appears exactly once throughout the migration.
 
 Events without a session
 ========================
@@ -312,8 +362,8 @@ session. After -- one call, correct in both cases::
         )
 
 If this fires after the attacker disconnected, the event arrives with
-``late: true`` and full session attribution, and the console line still
-carries the session's log prefix.
+``late: true`` and full session attribution, and the console renderer prints
+it under the session's log prefix rather than the HTTP client's.
 
 A transport-level event, e.g. the SSH client version string::
 
@@ -337,17 +387,17 @@ Event flow after the change
 
 ::
 
-    command / protocol / transport
-      |
-      |  self.protocol.events.dispatch(eventid=..., ...)
-      v
-    EventLog (identity bound at connectionMade)
-      |                       \
-      v                        v
-    EventDispatcher          console log line (once)
-      |  enrich once
-      v
-    plugin.write()  x N, error-isolated
+    command / protocol / transport                 diagnostics
+      |                                              |
+      |  self.protocol.events.dispatch(...)          |  log.msg(...)
+      v                                              v
+    EventLog (identity bound at connectionMade)    Twisted log --> cowrie.log
+      |                                              ^
+      v                                              |
+    EventDispatcher -- enrich once                   |
+      |                                              |
+      +--> plugin.write()  x N, error-isolated       |
+      +--> console renderer -- one line per event ---+
 
 Relationship to Twisted, and alternatives considered
 ****************************************************
@@ -482,8 +532,9 @@ The old and new pipelines can run side by side; an event travels exactly one
 of them, so nothing is double-delivered.
 
 Phase 1 -- introduce
-    Add ``EventLog`` and ``EventDispatcher``; transports create the
-    ``EventLog`` and keep emitting the old way. No behavior change.
+    Add ``EventLog``, ``EventDispatcher``, and the console renderer;
+    transports create the ``EventLog`` and keep emitting the old way. No
+    behavior change (the renderer has nothing to render yet).
 
 Phase 2 -- convert the bleeding edges
     Convert the download commands (wget, curl, tftp, ftpget, scp) and the
