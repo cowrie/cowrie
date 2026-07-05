@@ -10,8 +10,6 @@ uniq command
 
 from __future__ import annotations
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -69,11 +67,11 @@ class Command_uniq(HoneyPotCommand):
             self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="uniq",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
         self.grep_input(line.encode())
 

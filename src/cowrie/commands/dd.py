@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import re
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
 
@@ -98,11 +96,11 @@ class Command_dd(HoneyPotCommand):
             self.exit(1)
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.session.input",
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="dd",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
     def eofReceived(self) -> None:

@@ -16,8 +16,6 @@ import os.path
 import re
 from typing import TYPE_CHECKING
 
-from twisted.python import log
-
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
@@ -105,11 +103,11 @@ class Command_grep(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="grep",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
     def eofReceived(self) -> None:
@@ -177,11 +175,11 @@ class Command_tail(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="tail",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
     def eofReceived(self) -> None:
@@ -254,11 +252,11 @@ class Command_head(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="head",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
     def eofReceived(self) -> None:

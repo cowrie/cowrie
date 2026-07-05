@@ -13,8 +13,6 @@ from __future__ import annotations
 import getopt
 import os
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
 
@@ -91,11 +89,11 @@ class Command_cat(HoneyPotCommand):
         """
         This function logs standard input from the user send to cat
         """
-        log.msg(
-            eventid="cowrie.session.input",
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="cat",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
         self.output(line.encode("utf-8"))

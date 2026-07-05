@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import getopt
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -125,11 +123,11 @@ class Command_cut(HoneyPotCommand):
             self.write(self.delimiter.join(selected) + "\n")
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="cut",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
         self._process(line.encode("utf-8"))
 
