@@ -32,9 +32,9 @@ class HoneyPotSSHSession(session.SSHSession):
             log.msg(f"Extra data in request_env: {rest!r}")
             return 1
 
-        log.msg(
-            eventid="cowrie.client.var",
-            format="request_env: %(name)s=%(value)s",
+        self.conn.transport.events.dispatch(
+            "cowrie.client.var",
+            "request_env: %(name)s=%(value)s",
             name=name.decode("utf-8"),
             value=value.decode("utf-8"),
         )

@@ -141,11 +141,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             if b"\n" not in self.buf:
                 return
             self.otherVersionString: bytes = self.buf.split(b"\n")[0].strip()
-            log.msg(
-                eventid="cowrie.client.version",
-                version=escape_nonprintable(self.otherVersionString),
-                format="Remote SSH version: %(version)s",
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.client.version",
+                    "Remote SSH version: %(version)s",
+                    version=escape_nonprintable(self.otherVersionString),
+                )
             m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
@@ -180,13 +181,14 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             # without a SSH_MSG_DISCONNECT; match that (which also avoids a
             # cowrie-specific disconnect string), and record the probe -- these
             # malformed pre-auth packets are a common exploit/scanner signal.
-            log.msg(
-                eventid="cowrie.client.malformed_packet",
-                format="Malformed SSH packet (message %(messagenum)d, %(datalen)d bytes); disconnecting",
-                messagenum=messageNum,
-                datalen=len(payload),
-                data=payload[:256].hex(),
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.client.malformed_packet",
+                    "Malformed SSH packet (message %(messagenum)d, %(datalen)d bytes); disconnecting",
+                    messagenum=messageNum,
+                    datalen=len(payload),
+                    data=payload[:256].hex(),
+                )
             self.transport.loseConnection()
 
     def sendPacket(self, messageType: int, payload: bytes) -> None:
@@ -244,18 +246,19 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
         hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 
-        log.msg(
-            eventid="cowrie.client.kex",
-            format="SSH client hassh fingerprint: %(hassh)s",
-            hassh=hassh,
-            hasshAlgorithms=hasshAlgorithms,
-            kexAlgs=kexAlgs,
-            keyAlgs=keyAlgs,
-            encCS=encCS,
-            macCS=macCS,
-            compCS=compCS,
-            langCS=langCS,
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.client.kex",
+                "SSH client hassh fingerprint: %(hassh)s",
+                hassh=hassh,
+                hasshAlgorithms=hasshAlgorithms,
+                kexAlgs=kexAlgs,
+                keyAlgs=keyAlgs,
+                encCS=encCS,
+                macCS=macCS,
+                compCS=compCS,
+                langCS=langCS,
+            )
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 

@@ -15,6 +15,7 @@ from twisted.conch.ssh.common import NS
 from twisted.conch.ssh.transport import MSG_SERVICE_REQUEST
 
 from cowrie.ssh import transport as ssh_transport
+from cowrie.test.eventcapture import capture_events
 
 
 def _kexinit_payload(kex_algs: list[bytes]) -> bytes:
@@ -45,14 +46,12 @@ class TestKexInitEscaping(unittest.TestCase):
     def _kex_event(self, packet: bytes) -> dict:
         t = ssh_transport.HoneyPotSSHTransport()
         t.transport = MagicMock()
-        with (
-            patch("cowrie.ssh.transport.log.msg") as mock_msg,
-            patch("twisted.conch.ssh.transport.SSHServerTransport.ssh_KEXINIT"),
-        ):
+        dispatched = capture_events(t)
+        with patch("twisted.conch.ssh.transport.SSHServerTransport.ssh_KEXINIT"):
             t.ssh_KEXINIT(packet)
-        for call in mock_msg.call_args_list:
-            if call.kwargs.get("eventid") == "cowrie.client.kex":
-                return dict(call.kwargs)
+        for event in dispatched:
+            if event.get("eventid") == "cowrie.client.kex":
+                return event
         self.fail("no cowrie.client.kex event was emitted")
 
     def test_invalid_utf8_algorithm_name_does_not_crash(self) -> None:
@@ -85,17 +84,17 @@ class TestMalformedPacket(unittest.TestCase):
         # connection (as OpenSSH does) rather than letting it escape.
         t = ssh_transport.HoneyPotSSHTransport()
         t.transport = MagicMock()
+        dispatched = capture_events(t)
 
-        with patch("cowrie.ssh.transport.log.msg") as mock_msg:
-            t.dispatchMessage(MSG_SERVICE_REQUEST, b"\x00\x00\x00")
+        t.dispatchMessage(MSG_SERVICE_REQUEST, b"\x00\x00\x00")
 
         t.transport.loseConnection.assert_called_once()
 
         event = next(
             (
-                dict(c.kwargs)
-                for c in mock_msg.call_args_list
-                if c.kwargs.get("eventid") == "cowrie.client.malformed_packet"
+                e
+                for e in dispatched
+                if e.get("eventid") == "cowrie.client.malformed_packet"
             ),
             None,
         )

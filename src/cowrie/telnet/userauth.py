@@ -12,6 +12,7 @@ Telnet Transport and Authentication for the Honeypot
 from __future__ import annotations
 
 import struct
+from typing import TYPE_CHECKING, cast
 
 from twisted.conch.telnet import (
     ECHO,
@@ -26,6 +27,9 @@ from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.credentials import UsernamePasswordIP
+
+if TYPE_CHECKING:
+    from cowrie.telnet.transport import CowrieTelnetTransport
 
 # NEW-ENVIRON telnet option (RFC 1572)
 # Used for environment variable exchange and targeted by CVE-2026-24061
@@ -97,19 +101,23 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         # CVE-2026-24061 exploit bypass: use the extracted username if set
         if self.cve_2026_24061_user is not None:
             exploit_user = self.cve_2026_24061_user
-            log.msg(
-                eventid="cowrie.telnet.exploit_success",
-                format="CVE-2026-24061 exploit successful: logging in as %(username)s",
-                cve="CVE-2026-24061",
-                username=exploit_user,
-                original_username=username.decode("utf-8", errors="replace")
-                if isinstance(username, bytes)
-                else username,
-                attempted_command=password.decode("utf-8", errors="replace")
-                if isinstance(password, bytes)
-                else password,
+            events = cast("CowrieTelnetTransport", self.transport).events
+            if events:
+                events.dispatch(
+                    "cowrie.telnet.exploit_success",
+                    "CVE-2026-24061 exploit successful: logging in as %(username)s",
+                    cve="CVE-2026-24061",
+                    username=exploit_user,
+                    original_username=username.decode("utf-8", errors="replace")
+                    if isinstance(username, bytes)
+                    else username,
+                    attempted_command=password.decode("utf-8", errors="replace")
+                    if isinstance(password, bytes)
+                    else password,
+                )
+            username = (
+                exploit_user.encode() if isinstance(exploit_user, str) else exploit_user
             )
-            username = exploit_user.encode() if isinstance(exploit_user, str) else exploit_user
             password = b""  # Exploit bypasses password
             self.cve_2026_24061_user = None  # Clear the flag
 
@@ -202,6 +210,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
 
         # Parse the environment variables
         env_vars = self._parse_new_environ_data(raw_data[1:])
+        events = cast("CowrieTelnetTransport", self.transport).events
 
         # Log each environment variable
         for name, value in env_vars.items():
@@ -209,23 +218,25 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
             self.environ_received[name] = value
 
             # Log the environment variable (matches SSH cowrie.client.var pattern)
-            log.msg(
-                eventid="cowrie.client.var",
-                format="Telnet NEW-ENVIRON: %(name)s=%(value)s",
-                name=name,
-                value=value,
-            )
+            if events:
+                events.dispatch(
+                    "cowrie.client.var",
+                    "Telnet NEW-ENVIRON: %(name)s=%(value)s",
+                    name=name,
+                    value=value,
+                )
 
             # CVE-2026-24061 detection: USER environment variable with -f flag
             # This exploit bypasses authentication in GNU inetutils telnetd <= 2.7
             if name.upper() == "USER" and value.startswith("-f"):
-                log.msg(
-                    eventid="cowrie.telnet.exploit_attempt",
-                    format="CVE-2026-24061 exploit attempt detected: USER=%(value)s",
-                    cve="CVE-2026-24061",
-                    name=name,
-                    value=value,
-                )
+                if events:
+                    events.dispatch(
+                        "cowrie.telnet.exploit_attempt",
+                        "CVE-2026-24061 exploit attempt detected: USER=%(value)s",
+                        cve="CVE-2026-24061",
+                        name=name,
+                        value=value,
+                    )
                 # If vulnerability emulation is enabled, set up auth bypass
                 if CowrieConfig.getboolean(
                     "telnet", "cve_2026_24061_vulnerable", fallback=False

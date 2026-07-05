@@ -121,11 +121,12 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         try:
             TelnetTransport.dataReceived(self, data)
         except ValueError as e:
-            log.msg(
-                eventid="cowrie.telnet.error",
-                format="Telnet protocol error %(error)s; dropping connection",
-                error=str(e),
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.telnet.error",
+                    "Telnet protocol error %(error)s; dropping connection",
+                    error=str(e),
+                )
             log.err()
             if self.transport:
                 self.transport.loseConnection()
@@ -224,13 +225,14 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         if key in self._logged_options:
             return
         self._logged_options.add(key)
-        log.msg(
-            eventid="cowrie.telnet.option",
-            format=f"Telnet {command} %(option_name)s",
-            command=command,
-            option_name=self._get_option_name(option),
-            option_byte=option_byte,
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.telnet.option",
+                f"Telnet {command} %(option_name)s",
+                command=command,
+                option_name=self._get_option_name(option),
+                option_byte=option_byte,
+            )
 
     def telnet_WILL(self, option: bytes) -> None:
         """Client indicates willingness to enable an option."""

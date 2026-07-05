@@ -24,6 +24,7 @@ from twisted.python import failure, log
 from zope.interface import implementer
 
 from cowrie.telnet.transport import CowrieTelnetTransport
+from cowrie.test.eventcapture import capture_events
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -253,15 +254,11 @@ class TestInvalidIACSequence(unittest.TestCase):
         self.transport = CowrieTelnetTransport()
         self.tcp = MagicMock()
         self.transport.transport = self.tcp
+        self.dispatched = capture_events(self.transport)
 
     def _capture(self, run: Callable[[], None]) -> list[dict]:
-        events: list[dict] = []
-        log.addObserver(events.append)
-        try:
-            run()
-        finally:
-            log.removeObserver(events.append)
-        return [e for e in events if e.get("eventid") == "cowrie.telnet.error"]
+        run()
+        return [e for e in self.dispatched if e.get("eventid") == "cowrie.telnet.error"]
 
     def test_invalid_iac_byte_dropped_cleanly(self) -> None:
         # IAC (0xFF) followed by 0x01, which is not a valid IAC command byte.
@@ -289,15 +286,13 @@ class TestOptionLoggingDeduplication(unittest.TestCase):
         self.transport.transport = MagicMock()
         # Normally initialised in connectionMade.
         self.transport._logged_options = set()
+        self.dispatched = capture_events(self.transport)
 
     def _capture(self, run: Callable[[], None]) -> list[dict]:
-        events: list[dict] = []
-        log.addObserver(events.append)
-        try:
-            run()
-        finally:
-            log.removeObserver(events.append)
-        return [e for e in events if e.get("eventid") == "cowrie.telnet.option"]
+        run()
+        return [
+            e for e in self.dispatched if e.get("eventid") == "cowrie.telnet.option"
+        ]
 
     def test_repeated_negotiation_logged_once(self) -> None:
         def run() -> None:

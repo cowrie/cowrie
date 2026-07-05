@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 from cowrie.ssh import channel as ssh_channel
 from cowrie.ssh import transport as ssh_transport
 from cowrie.telnet import transport as telnet_transport
+from cowrie.test.eventcapture import capture_events
 
 
 class TestSessionDuration(unittest.TestCase):
@@ -67,15 +68,19 @@ class TestSessionDuration(unittest.TestCase):
         ch = ssh_channel.CowrieSSHChannel()
         ch.ttylogFile = "/dev/null"
         ch.startTime = time.time() - 5
+        dispatched = capture_events(ch)
 
         with (
-            patch("cowrie.ssh.channel.log.msg") as mock_msg,
             patch("cowrie.ssh.channel.ttylog.ttylog_close"),
             patch("twisted.conch.ssh.channel.SSHChannel.closed"),
         ):
             ch.closed()
 
-        event = self._event(mock_msg, "cowrie.log.closed")
+        event = next(
+            (e for e in dispatched if e.get("eventid") == "cowrie.log.closed"), None
+        )
+        self.assertIsNotNone(event, "no cowrie.log.closed event was dispatched")
+        assert event is not None
         ms = event["duration_ms"]
         assert isinstance(ms, int)
         self.assertNotIn("duration", event)
