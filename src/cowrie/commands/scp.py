@@ -108,9 +108,9 @@ class Command_scp(HoneyPotCommand):
                 os.remove(self.safeoutfile)
                 duplicate = True
 
-            log.msg(
-                format='SCP Uploaded file "%(filename)s" to %(outfile)s',
-                eventid="cowrie.session.file_upload",
+            self.protocol.events.dispatch(
+                "cowrie.session.file_upload",
+                'SCP Uploaded file "%(filename)s" to %(outfile)s',
                 filename=os.path.basename(fname),
                 duplicate=duplicate,
                 url=fname,

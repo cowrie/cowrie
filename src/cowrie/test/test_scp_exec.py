@@ -13,11 +13,12 @@ import unittest
 from types import SimpleNamespace
 
 from twisted.internet.protocol import connectionDone
-from twisted.python import log
 
 from cowrie.commands import scp
+from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.insults import insults
 from cowrie.shell import protocol
+from cowrie.test.eventcapture import CaptureSink
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -32,13 +33,20 @@ scp.Command_scp.download_path = _DOWNLOAD_DIR
 scp.Command_scp.download_path_uniq = _DOWNLOAD_DIR
 
 
-def _make_exec_transport() -> SimpleNamespace:
-    """Build the transport.session.conn.transport chain insults expects."""
+def _make_exec_transport(sink: CaptureSink) -> SimpleNamespace:
+    """Build the transport.session.conn.transport chain insults expects, with
+    an EventLog whose events land in ``sink``."""
     peer = SimpleNamespace(host="1.1.1.1", port=2222)
     inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
     factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
+    events = EventLog(
+        EventDispatcher([sink], logmsg=lambda *a, **kw: None),
+        session="testexec",
+        protocol="ssh",
+        src_ip="1.1.1.1",
+    )
     conn_transport = SimpleNamespace(
-        transportId="testexec", factory=factory, transport=inner
+        transportId="testexec", factory=factory, transport=inner, events=events
     )
     conn = SimpleNamespace(transport=conn_transport)
     session = SimpleNamespace(id="chan0", conn=conn)
@@ -59,31 +67,28 @@ def run_exec_scp_push(
     non-zero chunk_size splits the stdin across multiple dataReceived calls, as
     happens for a large transfer. fs_newcount pre-loads the filesystem's
     new-file counter to drive it over its quota. Returns the contents of every
-    saved download file and the captured log events.
+    saved download file and the captured events.
     """
-    events: list[dict] = []
-    log.addObserver(events.append)
-    try:
-        avatar = FakeAvatar(FakeServer())
-        avatar.server.initFileSystem = lambda home: None
-        if fs_newcount is not None:
-            avatar.server.fs.newcount = fs_newcount
+    sink = CaptureSink()
+    avatar = FakeAvatar(FakeServer())
+    avatar.server.initFileSystem = lambda home: None
+    if fs_newcount is not None:
+        avatar.server.fs.newcount = fs_newcount
 
-        lsp = insults.LoggingServerProtocol(
-            protocol.HoneyPotExecProtocol, avatar, b"scp -t /tmp"
-        )
-        lsp.makeConnection(_make_exec_transport())
+    lsp = insults.LoggingServerProtocol(
+        protocol.HoneyPotExecProtocol, avatar, b"scp -t /tmp"
+    )
+    lsp.makeConnection(_make_exec_transport(sink))
 
-        live_stdinlog = lsp.stdinlogFile
-        if chunk_size:
-            for i in range(0, len(framed_stdin), chunk_size):
-                lsp.dataReceived(framed_stdin[i : i + chunk_size])
-        else:
-            lsp.dataReceived(framed_stdin)
-        lsp.eofReceived()
-        lsp.connectionLost(connectionDone)
-    finally:
-        log.removeObserver(events.append)
+    live_stdinlog = lsp.stdinlogFile
+    if chunk_size:
+        for i in range(0, len(framed_stdin), chunk_size):
+            lsp.dataReceived(framed_stdin[i : i + chunk_size])
+    else:
+        lsp.dataReceived(framed_stdin)
+    lsp.eofReceived()
+    lsp.connectionLost(connectionDone)
+    events = sink.events
 
     saved = []
     for name in os.listdir(_DOWNLOAD_DIR):
