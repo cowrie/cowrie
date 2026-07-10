@@ -143,7 +143,13 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         here SSH is doing signal handling, I don't think telnet supports that so
         I'm simply going to bail out
         """
-        log.msg(f"Process ended. Telnet Session disconnected: {reason}")
+        exit_code = getattr(reason.value, "exitCode", None) if reason else None
+        if exit_code is not None:
+            log.msg(
+                f"Process ended with exit code {exit_code}. Telnet session disconnected"
+            )
+        else:
+            log.msg("Process ended. Telnet session disconnected")
         self.session.loseConnection()
 
     def getHost(self):
