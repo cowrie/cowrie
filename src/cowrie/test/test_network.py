@@ -5,7 +5,8 @@
 import unittest
 from unittest import mock
 
-from twisted.internet.defer import fail, inlineCallbacks
+from twisted.internet.defer import fail, inlineCallbacks, succeed
+from twisted.names import dns
 from twisted.names import error as names_error
 from twisted.python import log
 
@@ -85,6 +86,58 @@ class TestCommunicationAllowed(unittest.TestCase):
         # Test with a CNAME that resolves to a blocked IP (e.g., 127.0.0.1)
         allowed = yield communication_allowed("localhost")  # Should be blocked
         self.assertFalse(allowed)
+
+
+def _fake_lookup(records: dict[str, list[dns.RRHeader]]):
+    """A lookupAddress double serving canned answers. It enforces the same
+    argument contract as twisted's resolver: only str or bytes are accepted."""
+
+    def lookup(name):
+        if not isinstance(name, (bytes, str)):
+            raise TypeError(f"Expected bytes or str but found {type(name)!r}")
+        if name in records:
+            return succeed((records[name], [], []))
+        return fail(names_error.DNSNameError(name))
+
+    return lookup
+
+
+def _cname(target: str) -> dns.RRHeader:
+    return dns.RRHeader(type=dns.CNAME, payload=dns.Record_CNAME(target.encode()))
+
+
+def _a(address: str) -> dns.RRHeader:
+    return dns.RRHeader(type=dns.A, payload=dns.Record_A(address))
+
+
+class TestResolveCnameChain(unittest.TestCase):
+    """resolve_cname must follow CNAME chains to the final address record
+    (issue #40283) and read AAAA records with the IPv6 API."""
+
+    def _resolve(self, records: dict[str, list[dns.RRHeader]], name: str):
+        with mock.patch(
+            "cowrie.core.network.client.lookupAddress",
+            side_effect=_fake_lookup(records),
+        ):
+            results: list = []
+            resolve_cname(name, set()).addBoth(results.append)
+        self.assertEqual(len(results), 1)
+        return results[0]
+
+    def test_cname_chain_resolves_to_a_record(self) -> None:
+        records = {
+            "cdn.example.com": [_cname("edge.example.net")],
+            "edge.example.net": [_cname("origin.example.org")],
+            "origin.example.org": [_a("203.0.113.7")],
+        }
+        self.assertEqual(self._resolve(records, "cdn.example.com"), "203.0.113.7")
+
+    def test_cname_cycle_returns_none(self) -> None:
+        records = {
+            "a.example.com": [_cname("b.example.com")],
+            "b.example.com": [_cname("a.example.com")],
+        }
+        self.assertIsNone(self._resolve(records, "a.example.com"))
 
 
 class TestResolveCnameLogging(unittest.TestCase):
