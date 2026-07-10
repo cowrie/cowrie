@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import os
 import unittest
-from types import SimpleNamespace
 
 from cowrie.insults import insults
 from cowrie.shell import protocol
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -208,19 +208,9 @@ def run_exec(cmd: bytes) -> int:
         value = getattr(reason, "value", None)
         captured["code"] = getattr(value, "exitCode", 0) if value is not None else 0
 
-    peer = SimpleNamespace(host="1.1.1.1", port=2222)
-    inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
-    factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
-    conn_transport = SimpleNamespace(transportId="t", factory=factory, transport=inner)
-    session = SimpleNamespace(
-        id="chan0", conn=SimpleNamespace(transport=conn_transport)
-    )
-    transport = SimpleNamespace(
-        session=session, write=lambda data: None, processEnded=process_ended
-    )
+    transport = make_exec_transport(CaptureSink(), processEnded=process_ended)
 
     avatar = FakeAvatar(FakeServer())
-    avatar.server.initFileSystem = lambda home: None
     lsp = insults.LoggingServerProtocol(protocol.HoneyPotExecProtocol, avatar, cmd)
     lsp.makeConnection(transport)
     return captured.get("code", 0)

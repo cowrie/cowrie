@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from twisted.conch.interfaces import ISession
 from twisted.conch.ssh import session
-from twisted.python import log
 from zope.interface import implementer
 
 from cowrie.insults import insults
@@ -38,11 +37,11 @@ class SSHSessionForCowrieUser:
 
     def getPty(self, terminal, windowSize, attrs):
         self.environ["TERM"] = terminal.decode("utf-8")
-        log.msg(
-            eventid="cowrie.client.size",
+        self.avatar.conn.transport.events.dispatch(
+            "cowrie.client.size",
+            "Terminal Size: %(width)s %(height)s",
             width=windowSize[1],
             height=windowSize[0],
-            format="Terminal Size: %(width)s %(height)s",
         )
         self.windowSize = windowSize
 

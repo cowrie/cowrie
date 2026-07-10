@@ -27,6 +27,7 @@ class Term(base_protocol.BaseProtocol):
 
         self.transportId: int = ssh.server.transportId
         self.channelId: int = channelId
+        self.events = ssh.server.events
 
         self.startTime: float = time.time()
         self.ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path")
@@ -57,15 +58,16 @@ class Term(base_protocol.BaseProtocol):
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            log.msg(
-                eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
-                ttylog=shasumfile,
-                size=self.ttylogSize,
-                shasum=shasum,
-                duplicate=duplicate,
-                duration_ms=round((time.time() - self.startTime) * 1000),
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.log.closed",
+                    "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+                    ttylog=shasumfile,
+                    size=self.ttylogSize,
+                    shasum=shasum,
+                    duplicate=duplicate,
+                    duration_ms=round((time.time() - self.startTime) * 1000),
+                )
 
     def parse_packet(self, parent: str, data: bytes) -> None:
         self.data: bytes = data
@@ -97,11 +99,11 @@ class Term(base_protocol.BaseProtocol):
                     self.data = self.data[1:]
 
                     try:
-                        if self.command != b"":
-                            log.msg(
-                                eventid="cowrie.command.input",
+                        if self.command != b"" and self.events:
+                            self.events.dispatch(
+                                "cowrie.command.input",
+                                "CMD: %(input)s",
                                 input=self.command.decode("utf8"),
-                                format="CMD: %(input)s",
                             )
                     except UnicodeDecodeError:
                         log.err(f"Unusual execcmd: {self.command!r}")

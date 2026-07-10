@@ -10,6 +10,7 @@ and session size limiting
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from twisted.conch.ssh import channel
 from twisted.python import log
@@ -17,15 +18,26 @@ from twisted.python import log
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
 
+if TYPE_CHECKING:
+    from cowrie.core.events import EventLog
+
 
 class CowrieSSHChannel(channel.SSHChannel):
     """
     This is an SSH channel with built-in logging
+
+    Not wired into the SSH service: the session channel is
+    HoneyPotSSHSession and the forwarding channels subclass conch's
+    forwarding channel, so no production code instantiates this class;
+    only tests do. Its ttylog duplicates what
+    insults.LoggingServerProtocol records.
     """
 
     ttylogFile: str = ""
     bytesReceived: int = 0
     bytesWritten: int = 0
+    # The session's event emitter, bound from the transport in channelOpen.
+    events: EventLog
     name: bytes = b"cowrie-ssh-channel"
     startTime: float = 0.0
     ttylogPath: str = CowrieConfig.get("honeypot", "log_path", fallback=".")
@@ -52,24 +64,25 @@ class CowrieSSHChannel(channel.SSHChannel):
 
     def channelOpen(self, specificData: bytes) -> None:
         self.startTime = time.time()
+        self.events = self.conn.transport.events
         self.ttylogFile = "{}/tty/{}-{}-{}.log".format(
             self.ttylogPath,
             time.strftime("%Y%m%d-%H%M%S"),
             self.conn.transport.transportId,
             self.id,
         )
-        log.msg(
-            eventid="cowrie.log.open",
+        self.events.dispatch(
+            "cowrie.log.open",
+            "Opening TTY Log: %(ttylog)s",
             ttylog=self.ttylogFile,
-            format="Opening TTY Log: %(ttylog)s",
         )
         ttylog.ttylog_open(self.ttylogFile, time.time())
         channel.SSHChannel.channelOpen(self, specificData)
 
     def closed(self) -> None:
-        log.msg(
-            eventid="cowrie.log.closed",
-            format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+        self.events.dispatch(
+            "cowrie.log.closed",
+            "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
             ttylog=self.ttylogFile,
             size=self.bytesReceived + self.bytesWritten,
             duration_ms=round((time.time() - self.startTime) * 1000),

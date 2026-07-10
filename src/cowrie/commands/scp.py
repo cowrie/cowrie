@@ -10,8 +10,6 @@ import os
 import re
 import time
 
-from twisted.python import log
-
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
@@ -72,11 +70,11 @@ class Command_scp(HoneyPotCommand):
         self.write("\x00")
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.session.file_download",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download",
+            "INPUT (%(realm)s): %(input)s",
             realm="scp",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
         self.protocol.terminal.write("\x00")
 
@@ -108,9 +106,9 @@ class Command_scp(HoneyPotCommand):
                 os.remove(self.safeoutfile)
                 duplicate = True
 
-            log.msg(
-                format='SCP Uploaded file "%(filename)s" to %(outfile)s',
-                eventid="cowrie.session.file_upload",
+            self.protocol.events.dispatch(
+                "cowrie.session.file_upload",
+                'SCP Uploaded file "%(filename)s" to %(outfile)s',
                 filename=os.path.basename(fname),
                 duplicate=duplicate,
                 url=fname,

@@ -12,6 +12,8 @@ from zope.interface import implementer
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from cowrie.core.events import EventLog
+
 
 class IUsername(ICredentials):
     """
@@ -49,16 +51,24 @@ class PluggableAuthenticationModulesIP:
     Twisted removed IPAM in 15, adding in Cowrie now
     """
 
-    def __init__(self, username: bytes, pamConversion: Callable, ip: str) -> None:
+    def __init__(
+        self,
+        username: bytes,
+        pamConversion: Callable,
+        ip: str,
+        events: EventLog | None = None,
+    ) -> None:
         self.username: bytes = username
         self.pamConversion: Callable = pamConversion
         self.ip: str = ip
+        self.events: EventLog | None = events
 
 
 @implementer(IUsername)
 class Username:
-    def __init__(self, username: bytes):
+    def __init__(self, username: bytes, events: EventLog | None = None):
         self.username: bytes = username
+        self.events: EventLog | None = events
 
 
 @implementer(IUsernamePasswordIP)
@@ -67,10 +77,17 @@ class UsernamePasswordIP:
     This credential interface also provides an IP address
     """
 
-    def __init__(self, username: bytes, password: bytes, ip: str) -> None:
+    def __init__(
+        self,
+        username: bytes,
+        password: bytes,
+        ip: str,
+        events: EventLog | None = None,
+    ) -> None:
         self.username: bytes = username
         self.password: bytes = password
         self.ip: str = ip
+        self.events: EventLog | None = events
 
     def checkPassword(self, password: bytes) -> bool:
         return self.password == password

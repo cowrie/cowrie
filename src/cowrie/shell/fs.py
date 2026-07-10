@@ -16,13 +16,16 @@ import stat
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
 from cowrie.shell import honeyfs
+
+if TYPE_CHECKING:
+    from cowrie.core.events import EventLog
 
 (
     A_NAME,
@@ -106,6 +109,10 @@ class PermissionDenied(Exception):
 
 
 class HoneyPotFilesystem:
+    # The session's event emitter, bound by the SFTP adapter; file writes
+    # reaching close() only arrive through SFTP.
+    events: EventLog
+
     def __init__(self, arch: str, home: str) -> None:
         try:
             self.fs: list[Any] = honeyfs.get_tree()
@@ -498,9 +505,9 @@ class HoneyPotFilesystem:
             else:
                 os.rename(self.tempfiles[fd], shasumfile)
             self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
-            log.msg(
-                format='SFTP Uploaded file "%(filename)s" to %(outfile)s',
-                eventid="cowrie.session.file_upload",
+            self.events.dispatch(
+                "cowrie.session.file_upload",
+                'SFTP Uploaded file "%(filename)s" to %(outfile)s',
                 filename=os.path.basename(self.filenames[fd]),
                 outfile=shasumfile,
                 shasum=shasum,

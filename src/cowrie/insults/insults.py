@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from twisted.conch.insults import insults
 from twisted.internet.protocol import connectionDone
@@ -17,6 +17,9 @@ from twisted.python import failure, log
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
+
+if TYPE_CHECKING:
+    from cowrie.core.events import EventLog
 
 
 class LoggingServerProtocol(insults.ServerProtocol):
@@ -58,8 +61,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
         channelId = self.transport.session.id
         return (transportId, channelId)
 
+    def getEventLog(self) -> EventLog:
+        events: EventLog = self.transport.session.conn.transport.events
+        return events
+
     def connectionMade(self) -> None:
         transportId, channelId = self.getSessionId()
+        # The session's event emitter, owned by the transport. Kept across
+        # connectionLost so the artifacts finalized there arrive attributed.
+        self.events = self.getEventLog()
         self.startTime = time.time()
 
         if self.ttylogEnabled:
@@ -165,9 +175,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         os.rename(self.stdinlogFile, shasumfile)
                         duplicate = False
 
-                    log.msg(
-                        eventid="cowrie.session.file_download",
-                        format="Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
+                    self.events.dispatch(
+                        "cowrie.session.file_download",
+                        "Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
                         duplicate=duplicate,
                         outfile=shasumfile,
                         shasum=shasum,
@@ -204,9 +214,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     else:
                         os.rename(rf, shasumfile)
                         duplicate = False
-                    log.msg(
-                        eventid="cowrie.session.file_download",
-                        format="Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
+                    self.events.dispatch(
+                        "cowrie.session.file_download",
+                        "Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
                         duplicate=duplicate,
                         outfile=shasumfile,
                         shasum=shasum,
@@ -232,9 +242,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
 
-            log.msg(
-                eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+            self.events.dispatch(
+                "cowrie.log.closed",
+                "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
                 ttylog=shasumfile,
                 size=self.ttylogSize,
                 shasum=shasum,
@@ -254,3 +264,7 @@ class LoggingTelnetServerProtocol(LoggingServerProtocol):
         transportId = self.transport.session.transportId
         sn = self.transport.session.transport.transport.sessionno
         return (transportId, sn)
+
+    def getEventLog(self) -> EventLog:
+        events: EventLog = self.transport.session.transport.events
+        return events

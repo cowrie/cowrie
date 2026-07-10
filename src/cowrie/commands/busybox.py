@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.pipe import PipeProtocol
 
@@ -83,10 +81,10 @@ class Command_busybox(HoneyPotCommand):
         )
         if cmdclass:
             # log found command
-            log.msg(
-                eventid="cowrie.command.success",
+            self.protocol.events.dispatch(
+                "cowrie.command.success",
+                "Command found: %(input)s",
                 input=line,
-                format="Command found: %(input)s",
             )
 
             # prepare command arguments, passing through the redirections the

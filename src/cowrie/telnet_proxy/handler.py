@@ -128,15 +128,16 @@ class TelnetHandler:
                 False  # do not close again if function called after closing
             )
 
-            log.msg(
-                eventid="cowrie.log.closed",
-                format="Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
-                ttylog=shasumfile,
-                size=self.ttylogSize,
-                shasum=shasum,
-                duplicate=duplicate,
-                duration_ms=round((time.time() - self.startTime) * 1000),
-            )
+            if self.server.events:
+                self.server.events.dispatch(
+                    "cowrie.log.closed",
+                    "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+                    ttylog=shasumfile,
+                    size=self.ttylogSize,
+                    shasum=shasum,
+                    duplicate=duplicate,
+                    duration_ms=round((time.time() - self.startTime) * 1000),
+                )
 
     def sendBackend(self, data: bytes) -> None:
         self.backend_buffer.append(data)
@@ -212,11 +213,11 @@ class TelnetHandler:
 
             # check if a command has terminated
             if b"\r" in data:
-                if len(self.currentCommand) > 0:
-                    log.msg(
-                        eventid="cowrie.command.input",
+                if len(self.currentCommand) > 0 and self.server.events:
+                    self.server.events.dispatch(
+                        "cowrie.command.input",
+                        "CMD: %(input)s",
                         input=self.currentCommand,
-                        format="CMD: %(input)s",
                     )
                 self.currentCommand = b""
 
@@ -290,7 +291,7 @@ class TelnetHandler:
             # the login failed prompt
             src_ip = self.server.transport.getPeer().host
             if HoneypotPasswordChecker().checkUserPass(
-                self.usernameState, self.passwordState, src_ip
+                self.usernameState, self.passwordState, src_ip, self.server.events
             ):
                 passwordToSend = self.backendPassword
                 self.authDone = True
@@ -342,19 +343,20 @@ class TelnetHandler:
             )
 
             # Log the environment variable for consistency with shell mode
-            log.msg(
-                eventid="cowrie.client.var",
-                format="Telnet NEW-ENVIRON: %(name)s=%(value)s",
-                name="USER",
-                value=username_str,
-            )
+            if self.server.events:
+                self.server.events.dispatch(
+                    "cowrie.client.var",
+                    "Telnet NEW-ENVIRON: %(name)s=%(value)s",
+                    name="USER",
+                    value=username_str,
+                )
 
             # CVE-2026-24061 detection: USER environment variable with -f flag
             # This exploit bypasses authentication in GNU inetutils telnetd <= 2.7
-            if username_str.startswith("-f"):
-                log.msg(
-                    eventid="cowrie.telnet.exploit_attempt",
-                    format="CVE-2026-24061 exploit attempt detected: USER=%(value)s",
+            if username_str.startswith("-f") and self.server.events:
+                self.server.events.dispatch(
+                    "cowrie.telnet.exploit_attempt",
+                    "CVE-2026-24061 exploit attempt detected: USER=%(value)s",
                     cve="CVE-2026-24061",
                     name="USER",
                     value=username_str,

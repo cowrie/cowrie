@@ -22,6 +22,7 @@ from cowrie.ssh_proxy.protocols import base_protocol
 class PortForward(base_protocol.BaseProtocol):
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)
+        self.events = ssh.server.events
 
     def parse_packet(self, parent: str, data: bytes) -> None:
         """
@@ -40,18 +41,23 @@ class PortForward(base_protocol.BaseProtocol):
                         extensions=tls_info["extensions"],
                         has_sni=tls_info["has_sni"],
                         alpn=tls_info["alpn"],
-                        signature_algorithms=tls_info["signature_algorithms"]
+                        signature_algorithms=tls_info["signature_algorithms"],
                     )
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.ja4",
-                        format="JA4 fingerprint for SSH proxy forwarded TLS: %(ja4)s",
-                        ja4=ja4
-                    )
+                    if self.events:
+                        self.events.dispatch(
+                            "cowrie.direct-tcpip.ja4",
+                            "JA4 fingerprint for SSH proxy forwarded TLS: %(ja4)s",
+                            ja4=ja4,
+                        )
                 except Exception as e:
                     log.msg(f"Error generating JA4 fingerprint in SSH proxy: {e}")
 
         # Check for HTTP request
-        elif data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"HEAD "):
+        elif (
+            data.startswith(b"GET ")
+            or data.startswith(b"POST ")
+            or data.startswith(b"HEAD ")
+        ):
             http_info = parse_http_request(data)
             if http_info:
                 try:
@@ -61,12 +67,13 @@ class PortForward(base_protocol.BaseProtocol):
                         headers=http_info["headers"],
                         cookies=http_info["cookies"],
                         referer=http_info["referer"],
-                        accept_language=http_info["accept_language"]
+                        accept_language=http_info["accept_language"],
                     )
-                    log.msg(
-                        eventid="cowrie.direct-tcpip.ja4h",
-                        format="JA4H fingerprint for SSH proxy forwarded HTTP: %(ja4h)s",
-                        ja4h=ja4h
-                    )
+                    if self.events:
+                        self.events.dispatch(
+                            "cowrie.direct-tcpip.ja4h",
+                            "JA4H fingerprint for SSH proxy forwarded HTTP: %(ja4h)s",
+                            ja4h=ja4h,
+                        )
                 except Exception as e:
                     log.msg(f"Error generating JA4H fingerprint in SSH proxy: {e}")

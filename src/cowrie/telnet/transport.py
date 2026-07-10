@@ -20,6 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog, transport_events
 
 # Telnet option names for logging (RFC 854, RFC 855, RFC 1572, etc.)
 TELNET_OPTIONS: dict[int, str] = {
@@ -45,6 +46,10 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     CowrieTelnetTransport
     """
 
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
+
     # Set while the connection is being torn down. Telnet.connectionLost()
     # iterates self.options and errbacks pending negotiations; our retry
     # machinery must not re-enter negotiation during that iteration, since
@@ -56,23 +61,18 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         # (command, option_byte) pairs already logged, to suppress a scanner
         # flooding the same option negotiation (see _log_negotiation).
         self._logged_options: set[tuple[str, int]] = set()
-        sessionno = self.transport.sessionno
         self.startTime = time.time()
         self.setTimeout(
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
 
-        log.msg(
-            eventid="cowrie.session.connect",
-            format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            src_ip=self.transport.getPeer().host,
-            src_port=self.transport.getPeer().port,
-            dst_ip=self.transport.getHost().host,
-            dst_port=self.transport.getHost().port,
+        self.events = transport_events(
+            self.factory,
+            self.transport,
             session=self.transportId,
-            sessionno=f"T{sessionno!s}",
             protocol="telnet",
         )
+
         TelnetTransport.connectionMade(self)
 
     def write(self, data):
@@ -104,11 +104,12 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         try:
             TelnetTransport.dataReceived(self, data)
         except ValueError as e:
-            log.msg(
-                eventid="cowrie.telnet.error",
-                format="Telnet protocol error %(error)s; dropping connection",
-                error=str(e),
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.telnet.error",
+                    "Telnet protocol error %(error)s; dropping connection",
+                    error=str(e),
+                )
             log.err()
             if self.transport:
                 self.transport.loseConnection()
@@ -130,11 +131,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
         duration_ms = round((time.time() - self.startTime) * 1000)
-        log.msg(
-            eventid="cowrie.session.closed",
-            format="Connection lost after %(duration_ms)d milliseconds",
-            duration_ms=duration_ms,
-        )
+        if self.events is not None:
+            self.events.session_closed(duration_ms)
 
     def willChain(self, option):
         return self._chainNegotiation(None, self.will, option)
@@ -205,13 +203,14 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         if key in self._logged_options:
             return
         self._logged_options.add(key)
-        log.msg(
-            eventid="cowrie.telnet.option",
-            format=f"Telnet {command} %(option_name)s",
-            command=command,
-            option_name=self._get_option_name(option),
-            option_byte=option_byte,
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.telnet.option",
+                f"Telnet {command} %(option_name)s",
+                command=command,
+                option_name=self._get_option_name(option),
+                option_byte=option_byte,
+            )
 
     def telnet_WILL(self, option: bytes) -> None:
         """Client indicates willingness to enable an option."""

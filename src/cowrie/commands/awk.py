@@ -14,8 +14,6 @@ import getopt
 import re
 from re import Match
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
 
@@ -147,11 +145,11 @@ class Command_awk(HoneyPotCommand):
         """
         This function logs standard input from the user send to awk
         """
-        log.msg(
-            eventid="cowrie.session.input",
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="awk",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
         self.output(line.encode())

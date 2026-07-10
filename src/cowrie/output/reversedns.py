@@ -52,9 +52,10 @@ class Output(cowrie.core.output.Output):
                 return
 
             payload = result[0][0].payload
-            log.msg(
+            self.dispatch(
                 eventid="cowrie.reversedns.connect",
                 session=event["session"],
+                protocol=event["protocol"],
                 format="reversedns: PTR record for IP %(src_ip)s is %(ptr)s"
                 " ttl=%(ttl)i",
                 src_ip=event["src_ip"],
@@ -69,9 +70,11 @@ class Output(cowrie.core.output.Output):
             if result is None:
                 return
             payload = result[0][0].payload
-            log.msg(
+            self.dispatch(
                 eventid="cowrie.reversedns.forward",
                 session=event["session"],
+                src_ip=event["src_ip"],
+                protocol=event["protocol"],
                 format="reversedns: PTR record for IP %(dst_ip)s is %(ptr)s"
                 " ttl=%(ttl)i",
                 dst_ip=event["dst_ip"],

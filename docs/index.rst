@@ -26,6 +26,7 @@ Welcome to Cowrie's documentation!
    BACKEND_POOL.rst
    SNAPSHOTS.rst
    OUTPUT.rst
+   EVENT_PIPELINE.rst
    datadog/README.rst
    docker/README.rst
    elk/README.rst

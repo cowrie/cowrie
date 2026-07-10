@@ -602,17 +602,9 @@ class Command_wget(HoneyPotCommand):
                 self.fs.getfile(self.outfile), self.artifact.shasumFilename
             )
 
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
-            url=self.url.decode(),
-            outfile=self.artifact.shasumFilename,
-            shasum=self.artifact.shasum,
-            duplicate=self.artifact.duplicate,
-        )
-        log.msg(
-            eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download",
+            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
             url=self.url.decode(),
             outfile=self.artifact.shasumFilename,
             shasum=self.artifact.shasum,
@@ -630,9 +622,9 @@ class Command_wget(HoneyPotCommand):
         if getattr(self, "artifact", None) is not None:
             self.artifact.close()
 
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download.failed",
-            format="Attempt to download file(s) from URL (%(url)s) failed",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download.failed",
+            "Attempt to download file(s) from URL (%(url)s) failed",
             url=self.url.decode(),
         )
 

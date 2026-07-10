@@ -10,12 +10,12 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
-from types import SimpleNamespace
 
 from twisted.internet.protocol import connectionDone
 
 from cowrie.insults import insults
 from cowrie.shell import protocol
+from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 
 _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_cat_exec_")
@@ -26,23 +26,6 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
 
 
-def _make_exec_transport() -> SimpleNamespace:
-    """Build the transport.session.conn.transport chain insults expects."""
-    peer = SimpleNamespace(host="1.1.1.1", port=2222)
-    inner = SimpleNamespace(sessionno=1, getPeer=lambda: peer)
-    factory = SimpleNamespace(starttime=0, logDispatch=lambda **kw: None)
-    conn_transport = SimpleNamespace(
-        transportId="testexec", factory=factory, transport=inner
-    )
-    conn = SimpleNamespace(transport=conn_transport)
-    session = SimpleNamespace(id="chan0", conn=conn)
-    return SimpleNamespace(
-        session=session,
-        write=lambda data: None,
-        processEnded=lambda reason=None: None,
-    )
-
-
 def run_exec_cat_redirect(payload: bytes) -> bytes:
     """Drive `cat > /tmp/cowrietest` over an exec channel with piped stdin.
 
@@ -50,12 +33,11 @@ def run_exec_cat_redirect(payload: bytes) -> bytes:
     the session teardown finalizes it.
     """
     avatar = FakeAvatar(FakeServer())
-    avatar.server.initFileSystem = lambda home: None
 
     lsp = insults.LoggingServerProtocol(
         protocol.HoneyPotExecProtocol, avatar, b"cat > /tmp/cowrietest"
     )
-    lsp.makeConnection(_make_exec_transport())
+    lsp.makeConnection(make_exec_transport(CaptureSink()))
 
     lsp.dataReceived(payload)
     lsp.eofReceived()

@@ -25,6 +25,7 @@ from cowrie.telnet.userauth import (
     NEW_ENVIRON_VAR,
     HoneyPotTelnetAuthProtocol,
 )
+from cowrie.test.eventcapture import capture_events
 
 if TYPE_CHECKING:
     from cowrie.core.credentials import UsernamePasswordIP
@@ -106,10 +107,7 @@ class TestNewEnvironParser(unittest.TestCase):
         """Test parsing the exact CVE-2026-24061 exploit payload."""
         # VAR USER VALUE -f root
         data = (
-            bytes([NEW_ENVIRON_VAR])
-            + b"USER"
-            + bytes([NEW_ENVIRON_VALUE])
-            + b"-f root"
+            bytes([NEW_ENVIRON_VAR]) + b"USER" + bytes([NEW_ENVIRON_VALUE]) + b"-f root"
         )
         result = self.protocol._parse_new_environ_data(data)
         self.assertEqual(result, {"USER": "-f root"})
@@ -132,8 +130,9 @@ class TestCVE2026_24061Detection(unittest.TestCase):
         self.protocol = HoneyPotTelnetAuthProtocol(mock_portal)
         self.protocol.environ_received = {}
 
-        # Mock the transport
+        # Mock the transport, with a capturing event pipeline
         self.protocol.transport = MagicMock()
+        self.dispatched = capture_events(self.protocol.transport)
 
     @patch("cowrie.telnet.userauth.log")
     def test_detect_exploit_f_root(self, mock_log: MagicMock) -> None:
@@ -150,11 +149,11 @@ class TestCVE2026_24061Detection(unittest.TestCase):
 
         # Check that exploit was detected
         exploit_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.telnet.exploit_attempt":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.telnet.exploit_attempt":
                 exploit_logged = True
-                self.assertEqual(call[1].get("cve"), "CVE-2026-24061")
-                self.assertEqual(call[1].get("value"), "-f root")
+                self.assertEqual(call.get("cve"), "CVE-2026-24061")
+                self.assertEqual(call.get("value"), "-f root")
                 break
         self.assertTrue(exploit_logged, "CVE-2026-24061 exploit should be detected")
 
@@ -171,10 +170,10 @@ class TestCVE2026_24061Detection(unittest.TestCase):
         self.protocol.telnet_NEW_ENVIRON(data)
 
         exploit_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.telnet.exploit_attempt":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.telnet.exploit_attempt":
                 exploit_logged = True
-                self.assertEqual(call[1].get("cve"), "CVE-2026-24061")
+                self.assertEqual(call.get("cve"), "CVE-2026-24061")
                 break
         self.assertTrue(exploit_logged, "CVE-2026-24061 variant should be detected")
 
@@ -191,8 +190,8 @@ class TestCVE2026_24061Detection(unittest.TestCase):
         self.protocol.telnet_NEW_ENVIRON(data)
 
         exploit_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.telnet.exploit_attempt":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.telnet.exploit_attempt":
                 exploit_logged = True
                 break
         self.assertTrue(exploit_logged, "Lowercase 'user' should also be detected")
@@ -210,11 +209,13 @@ class TestCVE2026_24061Detection(unittest.TestCase):
         self.protocol.telnet_NEW_ENVIRON(data)
 
         exploit_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.telnet.exploit_attempt":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.telnet.exploit_attempt":
                 exploit_logged = True
                 break
-        self.assertFalse(exploit_logged, "Normal username should not trigger exploit detection")
+        self.assertFalse(
+            exploit_logged, "Normal username should not trigger exploit detection"
+        )
 
     @patch("cowrie.telnet.userauth.log")
     def test_logs_client_var_event(self, mock_log: MagicMock) -> None:
@@ -229,11 +230,11 @@ class TestCVE2026_24061Detection(unittest.TestCase):
         self.protocol.telnet_NEW_ENVIRON(data)
 
         var_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.client.var":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.client.var":
                 var_logged = True
-                self.assertEqual(call[1].get("name"), "TERM")
-                self.assertEqual(call[1].get("value"), "xterm")
+                self.assertEqual(call.get("name"), "TERM")
+                self.assertEqual(call.get("value"), "xterm")
                 break
         self.assertTrue(var_logged, "Environment variable should be logged")
 
@@ -250,8 +251,8 @@ class TestCVE2026_24061Detection(unittest.TestCase):
 
         # Should not log anything since SEND is ignored
         var_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.client.var":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.client.var":
                 var_logged = True
                 break
         self.assertFalse(var_logged, "SEND command should be ignored")
@@ -303,6 +304,7 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.protocol.environ_received = {}
         self.mock_transport = MagicMock()
         self.protocol.transport = self.mock_transport
+        self.dispatched = capture_events(self.mock_transport)
 
     def test_extract_username_from_f_space_root(self) -> None:
         """Test extracting username from '-f root' format."""
@@ -408,7 +410,8 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
 
         # Verify the credentials used the exploit username
         self.assertEqual(len(captured_creds), 1)
-        self.assertEqual(captured_creds[0].username, b"root")  
+        self.assertEqual(captured_creds[0].username, b"root")
+
     @patch("cowrie.telnet.userauth.CowrieConfig")
     @patch("cowrie.telnet.userauth.log")
     def test_exploit_success_is_logged(
@@ -425,21 +428,21 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.mock_transport.wontChain.return_value = MagicMock()
 
         self.protocol.cve_2026_24061_user = "root"
-        self.protocol.username = b""  
+        self.protocol.username = b""
         # Mock portal.login
         d = MagicMock()
         d.addCallback = MagicMock(return_value=d)
         d.addErrback = MagicMock(return_value=d)
-        self.protocol.portal.login = MagicMock(return_value=d)  
+        self.protocol.portal.login = MagicMock(return_value=d)
         self.protocol.telnet_Password(b"id")
 
         # Check for exploit success log
         exploit_success_logged = False
-        for call in mock_log.msg.call_args_list:
-            if call[1].get("eventid") == "cowrie.telnet.exploit_success":
+        for call in self.dispatched:
+            if call.get("eventid") == "cowrie.telnet.exploit_success":
                 exploit_success_logged = True
-                self.assertEqual(call[1].get("cve"), "CVE-2026-24061")
-                self.assertEqual(call[1].get("username"), "root")
+                self.assertEqual(call.get("cve"), "CVE-2026-24061")
+                self.assertEqual(call.get("username"), "root")
                 break
         self.assertTrue(exploit_success_logged, "Exploit success should be logged")
 

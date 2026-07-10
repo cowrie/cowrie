@@ -21,6 +21,7 @@ from cowrie.commands.tftp import (
     TFTP_BLOCK_SIZE,
 )
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -104,6 +105,7 @@ class ShellTftpCommandTests(unittest.TestCase):
         self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
+        capture_events(self.proto)
 
     def tearDown(self) -> None:
         self.proto.connectionLost()
@@ -164,6 +166,7 @@ class ShellTftpAsyncTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.proto.makeConnection(cls.tr)
+        capture_events(cls.proto)
 
         # Setup mock TFTP server
         server_protocol = MockTFTPServer(cls.test_content)

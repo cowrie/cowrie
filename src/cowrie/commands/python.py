@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import getopt
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -121,11 +119,11 @@ class Command_python(HoneyPotCommand):
             pass
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="python",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
     def eofReceived(self) -> None:

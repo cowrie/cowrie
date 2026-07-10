@@ -843,11 +843,11 @@ class Command_passwd(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.success",
+        self.protocol.events.dispatch(
+            "cowrie.command.success",
+            "INPUT (%(realm)s): %(input)s",
             realm="passwd",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
         self.password = line.strip()
         self.callbacks.pop(0)(line)
@@ -1039,11 +1039,11 @@ class Command_php(HoneyPotCommand):
             self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.success",
+        self.protocol.events.dispatch(
+            "cowrie.command.success",
+            "INPUT (%(realm)s): %(input)s",
             realm="php",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
     def eofReceived(self) -> None:

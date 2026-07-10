@@ -15,7 +15,6 @@ from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.protocols.ftp import CommandFailed, FTPClient
-from twisted.python import log
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
@@ -247,17 +246,9 @@ Download a file via FTP
         self.artifactFile.close()
 
         # log to cowrie.log
-        log.msg(
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
-            url=self.url_log,
-            outfile=self.artifactFile.shasumFilename,
-            shasum=self.artifactFile.shasum,
-            duplicate=self.artifactFile.duplicate,
-        )
-
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download",
-            format="Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download",
+            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
             url=self.url_log,
             outfile=self.artifactFile.shasumFilename,
             shasum=self.artifactFile.shasum,
@@ -296,16 +287,11 @@ Download a file via FTP
             # Network/connection error
             error_msg = f"Connection failed: {failure.getErrorMessage()}"
 
-        log.msg(
-            format="Attempt to download file(s) from URL (%(url)s) failed: %(error)s",
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download.failed",
+            "Attempt to download file(s) from URL (%(url)s) failed: %(error)s",
             url=self.url_log,
             error=error_msg,
-        )
-
-        self.protocol.logDispatch(
-            eventid="cowrie.session.file_download.failed",
-            format="Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url_log,
         )
 
         self.errorWrite(f"ftpget: {error_msg}\n")

@@ -26,6 +26,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure, log, randbytes
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog, transport_events
 from cowrie.core.utils import escape_nonprintable
 
 
@@ -34,6 +35,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     gotVersion: bool = False
     buf: bytes
     transportId: str
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
     auth_timeout: int = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
@@ -69,16 +73,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
 
-        log.msg(
-            eventid="cowrie.session.connect",
-            format="New connection: %(src_ip)s:%(src_port)s (%(dst_ip)s:%(dst_port)s) [session: %(session)s]",
-            src_ip=src_ip,
-            src_port=self.transport.getPeer().port,
-            dst_ip=self.transport.getHost().host,
-            dst_port=self.transport.getHost().port,
+        self.events = transport_events(
+            self.factory,
+            self.transport,
             session=self.transportId,
-            sessionno=f"S{self.transport.sessionno}",
             protocol="ssh",
+            src_ip=src_ip,
         )
 
         self.transport.write(self.ourVersionString + b"\r\n")
@@ -125,11 +125,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             if b"\n" not in self.buf:
                 return
             self.otherVersionString: bytes = self.buf.split(b"\n")[0].strip()
-            log.msg(
-                eventid="cowrie.client.version",
-                version=escape_nonprintable(self.otherVersionString),
-                format="Remote SSH version: %(version)s",
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.client.version",
+                    "Remote SSH version: %(version)s",
+                    version=escape_nonprintable(self.otherVersionString),
+                )
             m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
@@ -164,13 +165,14 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             # without a SSH_MSG_DISCONNECT; match that (which also avoids a
             # cowrie-specific disconnect string), and record the probe -- these
             # malformed pre-auth packets are a common exploit/scanner signal.
-            log.msg(
-                eventid="cowrie.client.malformed_packet",
-                format="Malformed SSH packet (message %(messagenum)d, %(datalen)d bytes); disconnecting",
-                messagenum=messageNum,
-                datalen=len(payload),
-                data=payload[:256].hex(),
-            )
+            if self.events:
+                self.events.dispatch(
+                    "cowrie.client.malformed_packet",
+                    "Malformed SSH packet (message %(messagenum)d, %(datalen)d bytes); disconnecting",
+                    messagenum=messageNum,
+                    datalen=len(payload),
+                    data=payload[:256].hex(),
+                )
             self.transport.loseConnection()
 
     def sendPacket(self, messageType: int, payload: bytes) -> None:
@@ -228,18 +230,19 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
         hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
 
-        log.msg(
-            eventid="cowrie.client.kex",
-            format="SSH client hassh fingerprint: %(hassh)s",
-            hassh=hassh,
-            hasshAlgorithms=hasshAlgorithms,
-            kexAlgs=kexAlgs,
-            keyAlgs=keyAlgs,
-            encCS=encCS,
-            macCS=macCS,
-            compCS=compCS,
-            langCS=langCS,
-        )
+        if self.events:
+            self.events.dispatch(
+                "cowrie.client.kex",
+                "SSH client hassh fingerprint: %(hassh)s",
+                hassh=hassh,
+                hasshAlgorithms=hasshAlgorithms,
+                kexAlgs=kexAlgs,
+                keyAlgs=keyAlgs,
+                encCS=encCS,
+                macCS=macCS,
+                compCS=compCS,
+                langCS=langCS,
+            )
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
@@ -278,11 +281,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.transport.connectionLost(reason)
         self.transport = None
         duration_ms = round((time.time() - self.startTime) * 1000)
-        log.msg(
-            eventid="cowrie.session.closed",
-            format="Connection lost after %(duration_ms)d milliseconds",
-            duration_ms=duration_ms,
-        )
+        if self.events is not None:
+            self.events.session_closed(duration_ms)
 
     def sendDisconnect(self, reason, desc):
         """

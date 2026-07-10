@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 import sys
 from importlib import import_module
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from twisted._version import __version__ as __twisted_version__
 from twisted.application import service
@@ -27,11 +27,10 @@ from backend_pool.pool_server import PoolServerFactory
 from cowrie import __version__ as __cowrie_version__
 from cowrie.core import checkers, uuid
 from cowrie.core.config import CowrieConfig
+from cowrie.core.events import ConsoleRenderer, EventDispatcher
+from cowrie.core.output import Output
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class Options(usage.Options):
@@ -62,7 +61,7 @@ class CowrieServiceMaker:
     tapname: ClassVar[str] = "cowrie"
     description: ClassVar[str] = "She sells sea shells by the sea shore."
     options = Options
-    output_plugins: list[Callable]
+    output_plugins: list[Output]
     topService: service.Service
 
     def __init__(self) -> None:
@@ -125,6 +124,16 @@ Makes a Cowrie SSH/Telnet honeypot.
             )
             sys.exit(1)
 
+        # The event pipeline: session EventLogs deliver through this
+        # dispatcher to the output plugins and the console renderer
+        # (see docs/EVENT_PIPELINE.rst). It exists before the plugins so
+        # events they dispatch from start() are delivered; the plugin
+        # sinks join the fan-out once loading is complete.
+        renderer = ConsoleRenderer()
+        self.dispatcher = EventDispatcher([renderer])
+        self.dispatcher.registerShutdown(reactor)
+        Output.dispatcher = self.dispatcher
+
         # Load output modules
         self.output_plugins = []
         for x in CowrieConfig.sections():
@@ -135,7 +144,6 @@ Makes a Cowrie SSH/Telnet honeypot.
             engine: str = x.split("_")[1]
             try:
                 output = import_module(f"cowrie.output.{engine}").Output()
-                log.addObserver(output.emit)
                 self.output_plugins.append(output)
                 log.msg(f"Loaded output engine: {engine}")
             except ImportError as e:
@@ -148,6 +156,8 @@ Makes a Cowrie SSH/Telnet honeypot.
             except Exception:
                 log.err()
                 log.msg(f"Failed to load output engine: {engine}")
+
+        self.dispatcher.sinks = [*self.output_plugins, renderer]
 
         self.topService = service.MultiService()
         application = service.Application("cowrie")

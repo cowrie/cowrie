@@ -184,6 +184,8 @@ class SFTPServerForCowrieUser:
         self.avatar = avatar
         self.avatar.server.initFileSystem(self.avatar.home)
         self.fs = self.avatar.server.fs
+        # Bind the session's event emitter so SFTP uploads are attributed.
+        self.fs.events = self.avatar.conn.transport.events
 
     def _absPath(self, path):
         home = self.avatar.home

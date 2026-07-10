@@ -104,11 +104,11 @@ class Command_tee(HoneyPotCommand):
         """
         This function logs standard input from the user send to tee
         """
-        log.msg(
-            eventid="cowrie.session.input",
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="tee",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
         self.output(line.encode("utf-8"))

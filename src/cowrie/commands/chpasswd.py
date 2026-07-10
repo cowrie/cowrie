@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import getopt
 
-from twisted.python import log
-
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -50,11 +48,11 @@ class Command_chpasswd(HoneyPotCommand):
                             self.write(f"chpasswd: line {c}: missing new password\n")
                         else:
                             username = _u.decode(errors="ignore")
-                            log.msg(
-                                eventid="cowrie.command.chpasswd",
+                            self.protocol.events.dispatch(
+                                "cowrie.command.chpasswd",
+                                "Password change attempt for %(username)s",
                                 realm="chpasswd",
                                 username=username,
-                                format="Password change attempt for %(username)s",
                             )
                 c += 1
         except Exception:
@@ -88,11 +86,11 @@ class Command_chpasswd(HoneyPotCommand):
             self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.command.input",
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="chpasswd",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
         self.chpasswd_application(line.encode())
 

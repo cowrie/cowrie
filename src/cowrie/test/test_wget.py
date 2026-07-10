@@ -19,6 +19,7 @@ from cowrie.commands.wget import Command_wget
 from cowrie.core.artifact import Artifact
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -34,8 +35,7 @@ class WgetArtifactCleanupTests(unittest.TestCase):
         self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
         self.tr.clear()
-        # The fake factory has no logDispatch; error() dispatches a log event.
-        self.proto.logDispatch = lambda **_kw: None  # type: ignore[method-assign]
+        self.events = capture_events(self.proto)
 
         self.tmpdir = tempfile.mkdtemp()
         self._orig_artifact_dir = Artifact.artifactDir
@@ -70,6 +70,30 @@ class WgetArtifactCleanupTests(unittest.TestCase):
             "failed download left an orphaned temp file behind",
         )
         self.assertEqual(os.listdir(self.tmpdir), [])
+
+    def test_failed_download_emits_attributed_event(self) -> None:
+        # error() runs in a deferred callback; the event it emits must carry
+        # the session identity (bound on the EventLog) even though it fires
+        # outside the transport's execution context.
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.protocol = self.proto
+        cmd.errorWritefn = lambda _data: None
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.url = b"http://no.such.host/file"
+        cmd.host = "no.such.host"
+        cmd.port = 80
+        cmd.artifact = Artifact("wget-download")
+
+        cmd.error(Failure(error.DNSLookupError()))
+
+        failed = [
+            e
+            for e in self.events
+            if e["eventid"] == "cowrie.session.file_download.failed"
+        ]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["session"], "test0000")
+        self.assertEqual(failed[0]["url"], "http://no.such.host/file")
 
     def test_exit_removes_empty_artifact(self) -> None:
         # An aborted download (CTRL-C, size limit) reaches exit() with an empty

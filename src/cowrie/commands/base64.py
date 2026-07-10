@@ -139,11 +139,11 @@ Try 'base64 --help' for more information.
                 self.errorWrite("base64: invalid input\n")
 
     def lineReceived(self, line: str) -> None:
-        log.msg(
-            eventid="cowrie.session.input",
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
             realm="base64",
             input=line,
-            format="INPUT (%(realm)s): %(input)s",
         )
 
         self.dojob(line.encode("ascii"))
