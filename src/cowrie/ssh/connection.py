@@ -42,3 +42,22 @@ class CowrieSSHConnection(connection.SSHConnection):
             d.addCallback(self._cbChannelRequest, localChannel)
             d.addErrback(self._ebChannelRequest, localChannel)
         return d
+
+    # Some clients (observed: libssh2) send CHANNEL_EOF / CHANNEL_CLOSE for a
+    # channel whose close handshake already completed, often alongside the
+    # final DISCONNECT. Twisted's handlers look the channel up unguarded and
+    # raise KeyError to the reactor; ignore the stale message instead.
+
+    def ssh_CHANNEL_EOF(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            log.msg(f"Ignoring CHANNEL_EOF for unknown channel {localChannel}")
+            return
+        connection.SSHConnection.ssh_CHANNEL_EOF(self, packet)
+
+    def ssh_CHANNEL_CLOSE(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            log.msg(f"Ignoring CHANNEL_CLOSE for unknown channel {localChannel}")
+            return
+        connection.SSHConnection.ssh_CHANNEL_CLOSE(self, packet)
