@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 from twisted.conch.insults import insults
 from twisted.internet.protocol import connectionDone
 from twisted.python import failure, log
+from twisted.python.compat import iterbytes
 
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
@@ -142,7 +143,18 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data
             )
 
-        insults.ServerProtocol.dataReceived(self, data)
+        # Feed the parent one byte at a time so terminalProtocol can be
+        # re-checked between bytes. ServerProtocol.dataReceived loops over the
+        # buffer calling terminalProtocol.keystrokeReceived() per byte without
+        # re-checking; a keystroke handler can synchronously tear the session
+        # down (in-process session channels close without a reactor round-trip),
+        # clearing terminalProtocol mid-buffer, and the next byte would then
+        # dereference None. Its parser state lives on self, so splitting the
+        # call is behaviour-identical.
+        for ch in iterbytes(data):
+            if self.terminalProtocol is None:
+                break
+            insults.ServerProtocol.dataReceived(self, ch)
 
     def eofReceived(self) -> None:
         """
