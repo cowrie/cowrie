@@ -179,6 +179,17 @@ class HoneyPotShell:
         self._queue_statements(self.bashparser.parse(line))
         self._advance()
 
+    def queue_line(self, line: str) -> None:
+        """Queue a line that arrived while a command holds the terminal.
+
+        The statements are parsed now but run only when this shell resumes
+        after the command exits, like tty input read by the next reader.
+        """
+        self.protocol.events.dispatch(
+            "cowrie.command.input", "CMD: %(input)s", input=line
+        )
+        self._queue_statements(self.bashparser.parse(line))
+
     def _queue_statements(self, statements: list[Statement]) -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
 
