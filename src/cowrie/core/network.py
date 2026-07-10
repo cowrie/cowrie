@@ -4,6 +4,7 @@
 
 import ipaddress
 import re
+import socket
 from collections.abc import Generator
 
 from twisted.internet.defer import Deferred, inlineCallbacks
@@ -27,7 +28,9 @@ BLOCKED_IPS = [
 
 # Valid TCP/UDP port range: 1-65535
 # https://www.debuggex.com/r/jjEFZZQ34aPvCBMA
-PORT_PATTERN = re.compile(r"^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$")
+PORT_PATTERN = re.compile(
+    r"^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$"
+)
 
 
 def is_valid_port(port: str) -> bool:
@@ -73,16 +76,20 @@ def resolve_cname(
             # Iterate through the DNS records to find CNAME or A/AAAA record
             for rr in headers:
                 if isinstance(rr.payload, dns.Record_CNAME):
-                    # It's a CNAME, resolve the target domain recursively
-                    resolved_ip = yield resolve_cname(rr.payload.name, visited)
+                    # It's a CNAME, resolve the target domain recursively.
+                    # rr.payload.name is a dns.Name; lookupAddress only accepts
+                    # str or bytes, and the visited set holds str.
+                    resolved_ip = yield resolve_cname(str(rr.payload.name), visited)
                     if resolved_ip:
                         return resolved_ip
                 elif isinstance(rr.payload, dns.Record_A):
                     # We found an A record (IPv4 address), return it immediately
                     return str(rr.payload.dottedQuad())
                 elif isinstance(rr.payload, dns.Record_AAAA):
-                    # We found an AAAA record (IPv6 address), return it immediately
-                    return str(rr.payload.dottedQuad())
+                    # We found an AAAA record (IPv6 address), return it
+                    # immediately. Record_AAAA has no dottedQuad(); its
+                    # address field holds the packed 16-byte value.
+                    return socket.inet_ntop(socket.AF_INET6, rr.payload.address)
     except Exception as e:
         # A failed lookup (NXDOMAIN for an attacker's single-word hostname, a
         # timeout, ...) is routine and handled here by returning None. Log it at
