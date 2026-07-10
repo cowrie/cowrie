@@ -516,6 +516,11 @@ class Command_wget(HoneyPotCommand):
         """
         partial collect
         """
+        if self.exited:
+            # The command exited while the transfer was still in flight (size
+            # limit, CTRL-C); drop late chunks instead of writing to the
+            # closed artifact.
+            return
         eta: float
         self.currentlength += len(data)
         if self.limit_size > 0 and self.currentlength > self.limit_size:
@@ -561,6 +566,11 @@ class Command_wget(HoneyPotCommand):
         """
         this gets called once collection is complete
         """
+        if self.exited:
+            # The command exited while the transfer was still in flight; the
+            # partial artifact was already handled by exit(), so don't report
+            # a download for a dead command or exit again.
+            return
         self.artifact.close()
 
         self.totallength = self.currentlength
@@ -616,6 +626,10 @@ class Command_wget(HoneyPotCommand):
         """
         handle errors
         """
+        if self.exited:
+            # The command exited while the transfer was still in flight; a
+            # late failure of that transfer is not this command's outcome.
+            return
         self.exit_code = 1
         # Close the artifact so a failed download leaves no orphaned temp file.
         # Artifact.close() removes the empty temp file backing the download.
