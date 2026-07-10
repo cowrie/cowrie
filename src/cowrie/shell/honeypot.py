@@ -493,6 +493,30 @@ class HoneyPotShell:
         self.cmdpending[0:0] = [*body, _Continuation(restore)]
         self._advance()
 
+    def _strip_exec(self, tokens: list[str]) -> tuple[bool, bool]:
+        """Consume a leading ``exec`` and its options from ``tokens`` in place.
+
+        Returns ``(exec_seen, replaces_shell)``. ``exec cmd`` runs the remaining
+        command through the normal machinery and, when it replaces the shell,
+        the shell terminates once the command finishes. exec's own options do
+        not change what runs (``-a NAME`` supplies argv[0], ``-c`` cleans the
+        environment, ``-l`` makes it a login shell), so they are dropped. A
+        pipeline stage and a backgrounded (``&``) command run in a subshell, so
+        ``exec`` there never replaces this shell; a bare ``exec`` (possibly with
+        only redirections) runs no command and the shell survives it.
+        """
+        if not tokens or tokens[0] != "exec":
+            return False, False
+        tokens.pop(0)
+        while tokens and tokens[0].startswith("-"):
+            opt = tokens.pop(0)
+            if opt == "--":
+                break
+            if "a" in opt and tokens:
+                tokens.pop(0)
+        replaces = bool(tokens) and "|" not in tokens and tokens[-1] != "&"
+        return True, replaces
+
     def runCommand(self):
         pp = None
 
@@ -594,27 +618,7 @@ class HoneyPotShell:
             cmd_tokens = [piece, *cmdAndArgs]
             break
 
-        # `exec cmd` replaces the shell with cmd: the command runs through the
-        # normal machinery and the shell terminates when it finishes. exec's
-        # own options do not change what runs (-a NAME supplies argv[0], -c
-        # cleans the environment, -l makes it a login shell), so they are
-        # dropped. A pipeline stage and a backgrounded (&) command run in a
-        # subshell, so `exec` there never replaces this shell. A bare `exec`
-        # (possibly with only redirections) runs no command and the shell
-        # survives it.
-        exec_seen = bool(cmd_tokens) and cmd_tokens[0] == "exec"
-        exec_replace = False
-        if exec_seen:
-            cmd_tokens.pop(0)
-            while cmd_tokens and cmd_tokens[0].startswith("-"):
-                opt = cmd_tokens.pop(0)
-                if opt == "--":
-                    break
-                if "a" in opt and cmd_tokens:
-                    cmd_tokens.pop(0)
-            exec_replace = (
-                bool(cmd_tokens) and "|" not in cmd_tokens and cmd_tokens[-1] != "&"
-            )
+        exec_seen, exec_replace = self._strip_exec(cmd_tokens)
 
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
