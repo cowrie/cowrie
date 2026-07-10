@@ -50,8 +50,10 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_") or i == "time" or i == "system":
                 del event[i]
         try:
-            json.dump(event, self.outfile, separators=(",", ":"))
-            self.outfile.write("\n")
+            # Serialize to a string first and write the line in one call: a
+            # rotating logfile checks for rotation on every write, so chunked
+            # writes could rotate mid-event and split the line across files.
+            self.outfile.write(json.dumps(event, separators=(",", ":")) + "\n")
             self.outfile.flush()
         except TypeError:
             log.err("jsonlog: Can't serialize: '" + repr(event) + "'")
