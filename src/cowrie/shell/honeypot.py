@@ -185,6 +185,9 @@ class HoneyPotShell:
         The statements are parsed now but run only when this shell resumes
         after the command exits, like tty input read by the next reader.
         """
+        self.protocol.events.dispatch(
+            "cowrie.command.input", "CMD: %(input)s", input=line
+        )
         self._queue_statements(self.bashparser.parse(line))
 
     def _queue_statements(self, statements: list[Statement]) -> bool:

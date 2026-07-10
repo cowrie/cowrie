@@ -51,6 +51,21 @@ class QueuedInputTests(unittest.TestCase):
         self._finish_sleep()
         self.assertEqual(self.tr.value(), b"one\ntwo\n" + PROMPT)
 
+    def test_queued_line_dispatches_input_event(self) -> None:
+        self.proto.lineReceived(b"sleep 100\n")
+        self.proto.lineReceived(b"echo hello\n")
+        self._finish_sleep()
+        events = [
+            e
+            for e in self.tr.dispatchedEvents
+            if e["eventid"] == "cowrie.command.input"
+            and e["input"].strip() == "echo hello"
+        ]
+        self.assertEqual(
+            len(events), 1, f"expected one CMD event for the queued line: {events!r}"
+        )
+        self.assertEqual(events[0]["session"], "test-suite")
+
     def test_queued_exit_ends_session_without_error(self) -> None:
         self.proto.lineReceived(b"sleep 100\n")
         self.proto.lineReceived(b"echo bye\n")
