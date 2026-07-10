@@ -118,6 +118,9 @@ class HoneyPotShell:
         # Trampoline state for _advance (see its docstring).
         self._advancing: bool = False
         self._advance_pending: bool = False
+        # True once `exec` has replaced this shell with the command now
+        # running: when that command finishes, the shell is gone (see resume).
+        self._exec_replaced: bool = False
 
     # -- bashparse.ShellContext interface -----------------------------------
 
@@ -591,6 +594,24 @@ class HoneyPotShell:
             cmd_tokens = [piece, *cmdAndArgs]
             break
 
+        # `exec cmd` replaces the shell with cmd: the command runs through the
+        # normal machinery and the shell terminates when it finishes. exec's
+        # own options do not change what runs (-a NAME supplies argv[0], -c
+        # cleans the environment, -l makes it a login shell), so they are
+        # dropped. In a pipeline each stage runs in a subshell, so `exec`
+        # there never replaces this shell. A bare `exec` (possibly with only
+        # redirections) runs no command and the shell survives it.
+        exec_replace = False
+        if cmd_tokens and cmd_tokens[0] == "exec":
+            cmd_tokens.pop(0)
+            while cmd_tokens and cmd_tokens[0].startswith("-"):
+                opt = cmd_tokens.pop(0)
+                if opt == "--":
+                    break
+                if "a" in opt and cmd_tokens:
+                    cmd_tokens.pop(0)
+            exec_replace = bool(cmd_tokens) and "|" not in cmd_tokens
+
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
             # variables for the rest of the session. They are shell variables,
@@ -604,7 +625,12 @@ class HoneyPotShell:
         # A call to a shell function defined earlier runs its body with the
         # positional parameters bound to the call arguments. A pipeline that
         # includes the function name is left to the normal command machinery.
-        if cmd_tokens[0] in self.functions and "|" not in cmd_tokens:
+        # `exec` never sees functions: it only runs files.
+        if (
+            not exec_replace
+            and cmd_tokens[0] in self.functions
+            and "|" not in cmd_tokens
+        ):
             self._call_function(cmd_tokens[0], cmd_tokens[1:])
             return
 
@@ -699,7 +725,12 @@ class HoneyPotShell:
                     "Command not found: %(input)s",
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
                 )
-                message = self.command_not_found_message(cmd["command"]).encode("utf8")
+                if exec_replace:
+                    message = f"-bash: exec: {cmd['command']}: not found\n".encode()
+                else:
+                    message = self.command_not_found_message(cmd["command"]).encode(
+                        "utf8"
+                    )
                 redirects = cmd.get("redirects", [])
                 if redirects:
                     temp_pp = PipeProtocol(
@@ -718,6 +749,11 @@ class HoneyPotShell:
                     self.protocol.terminal.write(message)
 
                 self.last_exit_code = 127  # command not found
+                if exec_replace and not self.interactive:
+                    # A failed exec ends a non-interactive shell with 127; an
+                    # interactive one survives it (bash without execfail).
+                    self._terminate(127)
+                    return
                 self._advance()
                 pp = None  # Got a error. Don't run any piped commands
                 break
@@ -726,6 +762,7 @@ class HoneyPotShell:
             return
 
         if pp:
+            self._exec_replaced = exec_replace
             self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
 
     def command_not_found_message(self, cmd: str) -> str:
@@ -745,11 +782,37 @@ class HoneyPotShell:
         return f"-bash: {cmd}: command not found\n"
 
     def resume(self) -> None:
+        if self._exec_replaced:
+            # The command that replaced this shell via `exec` has finished;
+            # there is no shell to come back to.
+            self._terminate(self.last_exit_code)
+            return
         if self.interactive:
             self.protocol.setInsertMode()
         # Go through the _advance trampoline so a command that resumes us
         # synchronously does not deepen the Python stack (see _advance).
         self._advance()
+
+    def _terminate(self, code: int) -> None:
+        """End this shell, as when `exec` replaces it: unwind to whatever ran
+        it, or end the process with ``code`` when nothing else is running.
+
+        This mirrors the `exit` builtin's teardown: the shell leaves the
+        cmdstack and either the launching command carries on (nested shell) or,
+        with the cmdstack empty, the process ends and the SSH channel reports
+        ``code`` to the client.
+        """
+        self.last_exit_code = code
+        if self in self.protocol.cmdstack:
+            self.protocol.cmdstack.remove(self)
+        if self.protocol.cmdstack:
+            self.protocol.cmdstack[-1].resume()
+        else:
+            # The client may already be disconnected, leaving no transport.
+            try:
+                self.protocol.terminal.transport.processEnded(process_status(code))
+            except AttributeError:
+                pass
 
     def showPrompt(self) -> None:
         if not self.interactive:
