@@ -4,6 +4,7 @@
 
 import ipaddress
 import re
+import socket
 from collections.abc import Generator
 
 from twisted.internet.defer import Deferred, inlineCallbacks
@@ -85,8 +86,10 @@ def resolve_cname(
                     # We found an A record (IPv4 address), return it immediately
                     return str(rr.payload.dottedQuad())
                 elif isinstance(rr.payload, dns.Record_AAAA):
-                    # We found an AAAA record (IPv6 address), return it immediately
-                    return str(rr.payload.dottedQuad())
+                    # We found an AAAA record (IPv6 address), return it
+                    # immediately. Record_AAAA has no dottedQuad(); its
+                    # address field holds the packed 16-byte value.
+                    return socket.inet_ntop(socket.AF_INET6, rr.payload.address)
     except Exception as e:
         # A failed lookup (NXDOMAIN for an attacker's single-word hostname, a
         # timeout, ...) is routine and handled here by returning None. Log it at

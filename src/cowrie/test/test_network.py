@@ -3,9 +3,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import unittest
+from collections.abc import Callable
+from typing import Any
 from unittest import mock
 
-from twisted.internet.defer import fail, inlineCallbacks, succeed
+from twisted.internet.defer import Deferred, fail, inlineCallbacks, succeed
 from twisted.names import dns
 from twisted.names import error as names_error
 from twisted.python import log
@@ -88,13 +90,15 @@ class TestCommunicationAllowed(unittest.TestCase):
         self.assertFalse(allowed)
 
 
-def _fake_lookup(records: dict[str, list[dns.RRHeader]]):
+def _fake_lookup(
+    records: dict[str, list[dns.RRHeader]],
+) -> Callable[[Any], Deferred]:
     """A lookupAddress double serving canned answers. It enforces the same
     argument contract as twisted's resolver: only str or bytes are accepted."""
 
-    def lookup(name):
+    def lookup(name: Any) -> Deferred:
         if not isinstance(name, (bytes, str)):
-            raise TypeError(f"Expected bytes or str but found {type(name)!r}")
+            raise TypeError(type(name).__name__)
         if name in records:
             return succeed((records[name], [], []))
         return fail(names_error.DNSNameError(name))
@@ -110,16 +114,20 @@ def _a(address: str) -> dns.RRHeader:
     return dns.RRHeader(type=dns.A, payload=dns.Record_A(address))
 
 
+def _aaaa(address: str) -> dns.RRHeader:
+    return dns.RRHeader(type=dns.AAAA, payload=dns.Record_AAAA(address))
+
+
 class TestResolveCnameChain(unittest.TestCase):
     """resolve_cname must follow CNAME chains to the final address record
     (issue #40283) and read AAAA records with the IPv6 API."""
 
-    def _resolve(self, records: dict[str, list[dns.RRHeader]], name: str):
+    def _resolve(self, records: dict[str, list[dns.RRHeader]], name: str) -> str | None:
         with mock.patch(
             "cowrie.core.network.client.lookupAddress",
             side_effect=_fake_lookup(records),
         ):
-            results: list = []
+            results: list[str | None] = []
             resolve_cname(name, set()).addBoth(results.append)
         self.assertEqual(len(results), 1)
         return results[0]
@@ -131,6 +139,10 @@ class TestResolveCnameChain(unittest.TestCase):
             "origin.example.org": [_a("203.0.113.7")],
         }
         self.assertEqual(self._resolve(records, "cdn.example.com"), "203.0.113.7")
+
+    def test_aaaa_record_resolves(self) -> None:
+        records = {"v6.example.com": [_aaaa("2001:db8::1")]}
+        self.assertEqual(self._resolve(records, "v6.example.com"), "2001:db8::1")
 
     def test_cname_cycle_returns_none(self) -> None:
         records = {
