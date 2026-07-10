@@ -66,6 +66,17 @@ class QueuedInputTests(unittest.TestCase):
         )
         self.assertEqual(events[0]["session"], "test-suite")
 
+    def test_queued_line_reaches_active_subshell(self) -> None:
+        # With a persistent sub-shell (`sh`) active, input sent while a
+        # command runs must queue on that sub-shell: queued on the root
+        # shell it would never run, since the root only resumes once the
+        # sub-shell exits.
+        self.proto.lineReceived(b"sh\n")
+        self.proto.lineReceived(b"sleep 100\n")
+        self.proto.lineReceived(b"echo hello\n")
+        self._finish_sleep()
+        self.assertIn(b"hello\n", self.tr.value())
+
     def test_queued_exit_ends_session_without_error(self) -> None:
         self.proto.lineReceived(b"sleep 100\n")
         self.proto.lineReceived(b"echo bye\n")

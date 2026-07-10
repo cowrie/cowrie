@@ -177,7 +177,13 @@ class HoneyPotCommand:
 
     def lineReceived(self, line: str) -> None:
         log.msg(f"QUEUED INPUT: {line}")
-        self.protocol.cmdstack[0].queue_line(line)
+        # Queue on the innermost shell, the next stdin reader once this
+        # command exits: an outer shell only resumes after the shells above
+        # it unwind, so a line queued there would wait on the whole stack.
+        for item in reversed(self.protocol.cmdstack):
+            if hasattr(item, "queue_line"):
+                item.queue_line(line)
+                return
 
     def resume(self) -> None:
         pass
