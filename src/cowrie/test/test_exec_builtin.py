@@ -78,6 +78,20 @@ class ExecInteractiveTests(unittest.TestCase):
         self.assertIn(shell, self.proto.cmdstack)
         self.assertEqual(self.run_line(b"echo $?"), b"127\n")
 
+    def test_exec_backgrounded_keeps_shell(self) -> None:
+        # `exec cmd &` replaces a backgrounded subshell, not this shell. The
+        # parser passes a trailing `&` through as a literal argument.
+        shell = self.proto.cmdstack[0]
+        self.assertEqual(self.run_line(b"exec echo hi &"), b"hi &\n")
+        self.assertIn(shell, self.proto.cmdstack)
+
+    def test_exec_backgrounded_not_found_keeps_shell(self) -> None:
+        shell = self.proto.cmdstack[0]
+        out = self.run_line(b"exec nosuchcmd &")
+        self.assertEqual(out, b"-bash: exec: nosuchcmd: not found\n")
+        self.assertIn(shell, self.proto.cmdstack)
+        self.assertEqual(self.run_line(b"echo $?"), b"127\n")
+
     def test_exec_in_pipeline_keeps_shell(self) -> None:
         # A pipeline stage runs in a subshell, so `exec` there does not
         # replace the interactive shell.
@@ -143,6 +157,11 @@ class ExecChannelTests(unittest.TestCase):
     def test_exec_skips_following_statement(self) -> None:
         # The `false` after exec never runs; the status is echo's.
         self.assertEqual(run_exec(b"exec echo hi; false"), 0)
+
+    def test_backgrounded_exec_failure_does_not_end_shell(self) -> None:
+        # The failed exec ends only the backgrounded subshell; the script
+        # carries on and reports the last statement's status.
+        self.assertEqual(run_exec(b"exec nosuchcmd &\ntrue"), 0)
 
 
 if __name__ == "__main__":

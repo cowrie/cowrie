@@ -598,11 +598,13 @@ class HoneyPotShell:
         # normal machinery and the shell terminates when it finishes. exec's
         # own options do not change what runs (-a NAME supplies argv[0], -c
         # cleans the environment, -l makes it a login shell), so they are
-        # dropped. In a pipeline each stage runs in a subshell, so `exec`
-        # there never replaces this shell. A bare `exec` (possibly with only
-        # redirections) runs no command and the shell survives it.
+        # dropped. A pipeline stage and a backgrounded (&) command run in a
+        # subshell, so `exec` there never replaces this shell. A bare `exec`
+        # (possibly with only redirections) runs no command and the shell
+        # survives it.
+        exec_seen = bool(cmd_tokens) and cmd_tokens[0] == "exec"
         exec_replace = False
-        if cmd_tokens and cmd_tokens[0] == "exec":
+        if exec_seen:
             cmd_tokens.pop(0)
             while cmd_tokens and cmd_tokens[0].startswith("-"):
                 opt = cmd_tokens.pop(0)
@@ -610,7 +612,9 @@ class HoneyPotShell:
                     break
                 if "a" in opt and cmd_tokens:
                     cmd_tokens.pop(0)
-            exec_replace = bool(cmd_tokens) and "|" not in cmd_tokens
+            exec_replace = (
+                bool(cmd_tokens) and "|" not in cmd_tokens and cmd_tokens[-1] != "&"
+            )
 
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
@@ -725,7 +729,9 @@ class HoneyPotShell:
                     "Command not found: %(input)s",
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
                 )
-                if exec_replace:
+                if exec_seen and index == 0:
+                    # exec applies to the first pipeline segment only; it
+                    # reports a failed lookup as its own error.
                     message = f"-bash: exec: {cmd['command']}: not found\n".encode()
                 else:
                     message = self.command_not_found_message(cmd["command"]).encode(
