@@ -115,8 +115,6 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         cmd.host = "198.51.100.1"
         cmd.port = 80
         cmd.artifact = Artifact("curl-download")
-        events: list[dict] = []
-        self.proto.logDispatch = lambda **kw: events.append(kw)  # type: ignore[method-assign]
         self.proto.cmdstack.append(cmd)
 
         cmd.artifact.write(b"partial data")
@@ -129,7 +127,7 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         self.assertEqual(
             [
                 ev
-                for ev in events
+                for ev in self.events
                 if str(ev.get("eventid", "")).startswith("cowrie.session.file_download")
             ],
             [],
