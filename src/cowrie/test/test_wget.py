@@ -128,8 +128,6 @@ class WgetArtifactCleanupTests(unittest.TestCase):
         cmd.quiet = True
         cmd.started = time.time()
         cmd.artifact = Artifact("wget-download")
-        events: list[dict] = []
-        self.proto.logDispatch = lambda **kw: events.append(kw)  # type: ignore[method-assign]
         self.proto.cmdstack.append(cmd)
 
         cmd.artifact.write(b"partial data")
@@ -142,7 +140,7 @@ class WgetArtifactCleanupTests(unittest.TestCase):
         self.assertEqual(
             [
                 ev
-                for ev in events
+                for ev in self.events
                 if str(ev.get("eventid", "")).startswith("cowrie.session.file_download")
             ],
             [],
