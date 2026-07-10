@@ -120,6 +120,15 @@ jobs:
           allow-prereleases: ${{ matrix.prerelease }}
           cache: pip
 
+      # bcrypt 5.0.0 has no free-threaded 3.15 wheel and its vendored pyo3
+      # 0.26 refuses to build past 3.14; git main builds with pyo3 0.29,
+      # which supports 3.15, and still reports version 5.0.0 so it
+      # satisfies the requirements pin. Remove once the next bcrypt
+      # release ships.
+      - name: Install bcrypt from git for free-threaded 3.15
+        if: matrix.python-version == '3.15t'
+        run: python -m pip -q install "bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40"
+
       - name: Install dependencies
         run: |
           python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
