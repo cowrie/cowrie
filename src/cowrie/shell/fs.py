@@ -395,6 +395,34 @@ class HoneyPotFilesystem:
         )
         self.newcount += 1
 
+    def provision_home(self, home: str, uid: int, gid: int) -> None:
+        """Ensure the session user's home directory and ``~/.ssh`` exist.
+
+        A user allowed in by a wildcard credential often has a home the
+        filesystem image never created; without it ``cd ~`` and any write into
+        the home fail. Pre-creating ``~/.ssh`` (mode 0700) lets an attacker's
+        ``echo key > ~/.ssh/authorized_keys`` succeed, so the installed key is
+        captured instead of lost to a "No such file or directory" error.
+
+        Idempotent: existing directories (and their contents) are left intact.
+        """
+        if not home.startswith("/"):
+            return
+        try:
+            self._ensure_dir(home, uid, gid, 0o755)
+            self._ensure_dir(f"{home}/.ssh", uid, gid, 0o700)
+        except OSError as e:
+            log.msg(f"Could not provision home {home}: {e}")
+
+    def _ensure_dir(self, path: str, uid: int, gid: int, perm: int) -> None:
+        """Create ``path`` (and any missing parents) as a directory if absent."""
+        if self.isdir(path):
+            return
+        parent = os.path.dirname(path)
+        if parent and parent != "/" and not self.isdir(parent):
+            self._ensure_dir(parent, uid, gid, 0o755)
+        self.mkdir(path, uid, gid, 4096, stat.S_IFDIR | perm)
+
     def isfile(self, path: str) -> bool:
         """
         Return True if path is an existing regular file. This follows symbolic
