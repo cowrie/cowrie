@@ -249,12 +249,13 @@ class AsyncScriptExecutionTests(unittest.TestCase):
         self.tr = FakeTransport("", "31337")
         self.proto.makeConnection(self.tr)
         _AsyncCommand.pending = []
-        # Shadow the shared command table with a copy carrying our fake command.
-        self.proto.commands = dict(self.proto.commands)
+        # Register the fake command in the shared class-level command table;
+        # tearDown removes it again.
         self.proto.commands["asyncdl"] = _AsyncCommand
         self.tr.clear()
 
     def tearDown(self) -> None:
+        del self.proto.commands["asyncdl"]
         self.proto.connectionLost()
 
     def test_sh_script_with_async_commands(self) -> None:
