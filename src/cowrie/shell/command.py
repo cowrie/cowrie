@@ -9,7 +9,6 @@ This module contains code to run a command
 
 from __future__ import annotations
 
-import shlex
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
@@ -165,9 +164,7 @@ class HoneyPotCommand:
 
     def lineReceived(self, line: str) -> None:
         log.msg(f"QUEUED INPUT: {line}")
-        # FIXME: naive command parsing, see lineReceived below
-        # line = "".join(line)
-        self.protocol.cmdstack[0].cmdpending.append(shlex.split(line, posix=True))
+        self.protocol.cmdstack[0].queue_line(line)
 
     def resume(self) -> None:
         pass
