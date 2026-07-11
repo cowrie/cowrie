@@ -13,6 +13,7 @@ import struct
 
 from twisted.conch.ssh import common, connection
 from twisted.internet import defer
+from twisted.logger import Logger
 from twisted.python import log
 
 
@@ -21,6 +22,8 @@ class CowrieSSHConnection(connection.SSHConnection):
     Subclass this for a workaround for the Granados SSH library.
     Channel request for openshell needs to return success immediatly
     """
+
+    _log = Logger()
 
     def ssh_CHANNEL_REQUEST(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
@@ -51,13 +54,19 @@ class CowrieSSHConnection(connection.SSHConnection):
     def ssh_CHANNEL_EOF(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
         if localChannel not in self.channels:
-            log.msg(f"Ignoring CHANNEL_EOF for unknown channel {localChannel}")
+            self._log.info(
+                "Ignoring CHANNEL_EOF for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
             return
         connection.SSHConnection.ssh_CHANNEL_EOF(self, packet)
 
     def ssh_CHANNEL_CLOSE(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
         if localChannel not in self.channels:
-            log.msg(f"Ignoring CHANNEL_CLOSE for unknown channel {localChannel}")
+            self._log.info(
+                "Ignoring CHANNEL_CLOSE for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
             return
         connection.SSHConnection.ssh_CHANNEL_CLOSE(self, packet)

@@ -9,7 +9,7 @@ import base64
 import getopt
 import sys
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -20,6 +20,8 @@ class Command_base64(HoneyPotCommand):
     """
     author: Ivan Korolev (@fe7ch)
     """
+
+    _log = Logger()
 
     mode: str
     ignore: bool
@@ -110,8 +112,8 @@ Try 'base64 --help' for more information.
             if not self.fs.isdir(pname):
                 try:
                     self.dojob(self.fs.file_contents(pname))
-                except Exception as e:
-                    log.err(str(e))
+                except Exception:
+                    self._log.failure("base64: failed to read file")
                     self.errorWrite(f"base64: {args[0]}: No such file or directory\n")
             else:
                 self.errorWrite("base64: read error: Is a directory\n")

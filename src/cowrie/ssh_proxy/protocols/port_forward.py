@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.fingerprint import (
     generate_ja4,
@@ -20,6 +20,8 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 
 class PortForward(base_protocol.BaseProtocol):
+    _log = Logger()
+
     def __init__(self, uuid, chan_name, ssh):
         super().__init__(uuid, chan_name, ssh)
         self.events = ssh.server.events
@@ -50,7 +52,10 @@ class PortForward(base_protocol.BaseProtocol):
                             ja4=ja4,
                         )
                 except Exception as e:
-                    log.msg(f"Error generating JA4 fingerprint in SSH proxy: {e}")
+                    self._log.info(
+                        "Error generating JA4 fingerprint in SSH proxy: {error}",
+                        error=e,
+                    )
 
         # Check for HTTP request
         elif (
@@ -76,4 +81,7 @@ class PortForward(base_protocol.BaseProtocol):
                             ja4h=ja4h,
                         )
                 except Exception as e:
-                    log.msg(f"Error generating JA4H fingerprint in SSH proxy: {e}")
+                    self._log.info(
+                        "Error generating JA4H fingerprint in SSH proxy: {error}",
+                        error=e,
+                    )

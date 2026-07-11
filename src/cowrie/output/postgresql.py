@@ -8,7 +8,7 @@ from __future__ import annotations
 from psycopg2 import OperationalError
 from twisted.enterprise import adbapi
 from twisted.internet import defer
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -20,6 +20,8 @@ class ReconnectingPostgreSQLConnectionPool(adbapi.ConnectionPool):
 
     This handles reconnections on known transient errors like server disconnects or deadlocks.
     """
+
+    _log = Logger()
 
     def _runInteraction(self, interaction, *args, **kw):
         try:
@@ -36,7 +38,10 @@ class ReconnectingPostgreSQLConnectionPool(adbapi.ConnectionPool):
             if e.pgcode not in transient_errors:
                 raise
 
-            log.msg(f"output_postgresql: transient error {e!r}, retrying interaction")
+            self._log.info(
+                "output_postgresql: transient error {error!r}, retrying interaction",
+                error=e,
+            )
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             return super()._runInteraction(interaction, *args, **kw)
@@ -46,6 +51,8 @@ class Output(cowrie.core.output.Output):
     """
     PostgreSQL output for Cowrie
     """
+
+    _log = Logger()
 
     debug: bool = False
 
@@ -67,13 +74,19 @@ class Output(cowrie.core.output.Output):
                 cp_max=1,
             )
         except Exception as e:
-            log.msg(f"output_mysql: Error {e.args[0]}: {e.args[1]}")
+            self._log.info(
+                "output_mysql: Error {errno}: {errmsg}",
+                errno=e.args[0],
+                errmsg=e.args[1],
+            )
 
     def stop(self):
         self.db.close()
 
     def sqlerror(self, error):
-        log.msg(f"output_postgresql: PostgreSQL Error: {error.value.args!r}")
+        self._log.info(
+            "output_postgresql: PostgreSQL Error: {args!r}", args=error.value.args
+        )
 
     def simpleQuery(self, sql, args):
         if (
@@ -84,7 +97,11 @@ class Output(cowrie.core.output.Output):
             sql += " RETURNING id"
 
         if self.debug:
-            log.msg(f"output_postgresql: PostgreSQL query: {sql} {args!r}")
+            self._log.info(
+                "output_postgresql: PostgreSQL query: {sql} {args!r}",
+                sql=sql,
+                args=args,
+            )
 
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
@@ -93,8 +110,9 @@ class Output(cowrie.core.output.Output):
     def write(self, event):
         if event["eventid"] == "cowrie.session.connect":
             if self.debug:
-                log.msg(
-                    f"output_postgresql: SELECT id FROM sensors WHERE ip = '{self.sensor}'"
+                self._log.info(
+                    "output_postgresql: SELECT id FROM sensors WHERE ip = '{sensor}'",
+                    sensor=self.sensor,
                 )
             r = yield self.db.runQuery(
                 "SELECT id FROM sensors WHERE ip = %s",
@@ -104,8 +122,9 @@ class Output(cowrie.core.output.Output):
                 sensorid = r[0][0]
             else:
                 if self.debug:
-                    log.msg(
-                        f"output_postgresql: INSERT INTO sensors (ip) VALUES ('{self.sensor}')"
+                    self._log.info(
+                        "output_postgresql: INSERT INTO sensors (ip) VALUES ('{sensor}')",
+                        sensor=self.sensor,
                     )
                 yield self.db.runQuery(
                     "INSERT INTO sensors (ip) VALUES (%s) ",

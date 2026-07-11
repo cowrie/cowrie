@@ -9,7 +9,7 @@ This module contains code for handling SSH direct-tcpip connection requests
 from __future__ import annotations
 
 from twisted.conch.ssh import forwarding
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.fingerprint import (
@@ -122,6 +122,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
     This channel does not forward, but just logs requests.
     """
 
+    _log = Logger()
     name = b"cowrie-discarded-direct-tcpip"
 
     def channelOpen(self, specificData: bytes) -> None:
@@ -153,7 +154,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                             ja4=ja4,
                         )
                 except Exception as e:
-                    log.msg(f"Error generating JA4 fingerprint: {e}")
+                    self._log.info("Error generating JA4 fingerprint: {error}", error=e)
 
         # Check for HTTP request
         elif (
@@ -181,7 +182,9 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
                             ja4h=ja4h,
                         )
                 except Exception as e:
-                    log.msg(f"Error generating JA4H fingerprint: {e}")
+                    self._log.info(
+                        "Error generating JA4H fingerprint: {error}", error=e
+                    )
 
         if events:
             events.dispatch(
@@ -200,6 +203,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
     This class modifies the original to perform TCP tunneling via the CONNECT method
     """
 
+    _log = Logger()
     name = b"cowrie-tunneled-direct-tcpip"
 
     def __init__(self, hostport, dstport, *args, **kw):
@@ -245,7 +249,9 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                             ja4=ja4,
                         )
                 except Exception as e:
-                    log.msg(f"Error generating JA4 fingerprint in tunnel: {e}")
+                    self._log.info(
+                        "Error generating JA4 fingerprint in tunnel: {error}", error=e
+                    )
 
         # Check for HTTP request
         elif (
@@ -273,7 +279,9 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
                             ja4h=ja4h,
                         )
                 except Exception as e:
-                    log.msg(f"Error generating JA4H fingerprint in tunnel: {e}")
+                    self._log.info(
+                        "Error generating JA4H fingerprint in tunnel: {error}", error=e
+                    )
 
         if events:
             events.dispatch(
@@ -292,11 +300,11 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             try:
                 res_code = int(data.split(b" ")[1], 10)
             except ValueError:
-                log.err("Failed to parse TCP tunnel response code")
+                self._log.error("Failed to parse TCP tunnel response code")
                 self._close("Connection refused")
                 return
             if res_code != 200:
-                log.err(f"Unexpected response code: {res_code}")
+                self._log.error("Unexpected response code: {code}", code=res_code)
                 self._close("Connection refused")
             # Strip off rest of packet
             eop = data.find(b"\r\n\r\n")

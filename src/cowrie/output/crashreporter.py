@@ -16,8 +16,8 @@ import json
 
 import treq
 from twisted.internet import defer
+from twisted.logger import Logger
 from twisted.logger._levels import LogLevel
-from twisted.python import log
 
 import cowrie.core.output
 from cowrie._version import __version__
@@ -31,6 +31,8 @@ class Output(cowrie.core.output.Output):
     """
     Cowrie Crashreporter output
     """
+
+    _log = Logger()
 
     def start(self):
         """
@@ -77,6 +79,6 @@ class Output(cowrie.core.output.Output):
             )
             content = yield r.text()
             if self.debug:
-                log.msg("crashreport: " + content)
+                self._log.info("crashreport: {content}", content=content)
         except Exception as e:
-            log.msg("crashreporter failed" + repr(e))
+            self._log.info("crashreporter failed{error!r}", error=e)

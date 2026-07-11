@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 from twisted.internet import defer, reactor
 from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import DatagramProtocol
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
@@ -57,6 +57,8 @@ class TFTPClient(DatagramProtocol):
     Async TFTP client using Twisted's DatagramProtocol
     Implements RFC 1350 TFTP protocol
     """
+
+    _log = Logger()
 
     def __init__(self, host: str, port: int, filename: str, artifact: Artifact):
         self.host = host
@@ -107,7 +109,7 @@ class TFTPClient(DatagramProtocol):
     def datagramReceived(self, datagram: bytes, addr: tuple[str, int]) -> None:
         """Handle received TFTP packet"""
         if len(datagram) < 4:
-            log.msg("TFTP: Received malformed packet (too short)")
+            self._log.info("TFTP: Received malformed packet (too short)")
             return
 
         # Extract opcode
@@ -127,13 +129,13 @@ class TFTPClient(DatagramProtocol):
         elif opcode == OPCODE_ERROR:
             self.handleERROR(datagram)
         else:
-            log.msg(f"TFTP: Unexpected opcode {opcode}")
+            self._log.info("TFTP: Unexpected opcode {opcode}", opcode=opcode)
 
     def handleDATA(self, packet: bytes) -> None:
         """Handle DATA packet"""
         # DATA format: opcode(2) block#(2) data(0-512 bytes)
         if len(packet) < 4:
-            log.msg("TFTP: Malformed DATA packet")
+            self._log.info("TFTP: Malformed DATA packet")
             return
 
         block_num = struct.unpack("!H", packet[2:4])[0]
@@ -160,15 +162,17 @@ class TFTPClient(DatagramProtocol):
             # Duplicate packet, re-send ACK
             self.sendACK(block_num)
         else:
-            log.msg(
-                f"TFTP: Out of order block {block_num}, expected {self.current_block + 1}"
+            self._log.debug(
+                "TFTP: Out of order block {block}, expected {expected}",
+                block=block_num,
+                expected=self.current_block + 1,
             )
 
     def handleERROR(self, packet: bytes) -> None:
         """Handle ERROR packet"""
         # ERROR format: opcode(2) errorcode(2) errmsg(string) 0
         if len(packet) < 5:
-            log.msg("TFTP: Malformed ERROR packet")
+            self._log.info("TFTP: Malformed ERROR packet")
             return
 
         error_code = struct.unpack("!H", packet[2:4])[0]
@@ -208,6 +212,8 @@ class Command_tftp(HoneyPotCommand):
     """
     TFTP command - async implementation using Twisted
     """
+
+    _log = Logger()
 
     port: int = 69
     hostname: str | None = None
@@ -402,7 +408,7 @@ class Command_tftp(HoneyPotCommand):
 
     def handle_CTRL_C(self) -> None:
         """Handle CTRL-C interruption - cancel TFTP transfer"""
-        log.msg("TFTP: Received CTRL-C, canceling transfer")
+        self._log.info("TFTP: Received CTRL-C, canceling transfer")
 
         # Cancel timeout if active
         if self.tftp_client and self.tftp_client.timeout_call:

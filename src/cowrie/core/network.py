@@ -8,8 +8,10 @@ import socket
 from collections.abc import Generator
 
 from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.logger import Logger
 from twisted.names import client, dns
-from twisted.python import log
+
+_log = Logger()
 
 BLOCKED_IPS = [
     "0.0.0.0/8",  # Current IP range 0.0.0.0 - 10.255.255.255
@@ -60,7 +62,7 @@ def resolve_cname(
     or None if not resolvable. `visited` is a set that tracks the domains we've already resolved to prevent cycles.
     """
 
-    log.msg(f"resolve_cname({address})")
+    _log.debug("resolve_cname({address})", address=address)
 
     # Prevent cyclic resolution (avoid infinite loops)
     if address in visited:
@@ -95,10 +97,12 @@ def resolve_cname(
         # timeout, ...) is routine and handled here by returning None. Log it at
         # informational level; log.err would format it as an "Unhandled Error"
         # with a traceback, which is misleading for a caught exception.
-        log.msg(f"DNS lookup failed for {address!r}: {e}")
+        _log.info(
+            "DNS lookup failed for {address!r}: {error}", address=address, error=e
+        )
         return None  # In case of any failure, return None
 
-    log.msg("no valid a or cname record")
+    _log.info("no valid a or cname record")
     return None  # No valid A or CNAME records were found
 
 

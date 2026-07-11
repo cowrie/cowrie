@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -44,6 +44,8 @@ class Command_yum(HoneyPotCommand):
     suppports only the 'install PACKAGE' command & 'moo'.
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
+
+    _log = Logger()
 
     packages: dict[str, dict[str, Any]]
 
@@ -258,7 +260,7 @@ Options:
 
     @inlineCallbacks
     def lineReceived(self, line):
-        log.msg("INPUT (yum):", line)
+        self._log.info("INPUT (yum): {line}", line=line)
 
         self.write("Downloading packages:\n")
         yield self.sleep(0.5, 1)

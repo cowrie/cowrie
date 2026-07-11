@@ -13,21 +13,27 @@ from __future__ import annotations
 
 import time
 import uuid
+from typing import TYPE_CHECKING
 
 from twisted.conch.telnet import TelnetTransport
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
 from cowrie.telnet_proxy import client_transport
 from cowrie.telnet_proxy.handler import TelnetHandler
 
+if TYPE_CHECKING:
+    from twisted.python import failure
+
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
 class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
+    _log = Logger()
+
     # The session's event emitter, bound in connectionMade when the running
     # application provides a dispatcher.
     events: EventLog | None = None
@@ -94,13 +100,14 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason):
-        log.msg(
-            f"Connection to backend pool refused: {reason.value}. Disconnecting frontend..."
+        self._log.info(
+            "Connection to backend pool refused: {reason}. Disconnecting frontend...",
+            reason=reason.value,
         )
         self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
-        log.msg("Connected to backend pool")
+        self._log.info("Connected to backend pool")
 
         self.pool_interface = pool_interface
         self.pool_interface.set_parent(self)
@@ -114,8 +121,12 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
             snapshot = data[1]
             telnet_port = data[3]
 
-            log.msg(f"Got backend data from pool: {honey_ip.decode()}:{telnet_port}")
-            log.msg(f"Snapshot file: {snapshot.decode()}")
+            self._log.info(
+                "Got backend data from pool: {honey_ip}:{telnet_port}",
+                honey_ip=honey_ip.decode(),
+                telnet_port=telnet_port,
+            )
+            self._log.info("Snapshot file: {snapshot}", snapshot=snapshot.decode())
 
             self.connect_to_backend(honey_ip, telnet_port)
 
@@ -179,7 +190,7 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg("Timeout reached in FrontendTelnetTransport")
+        self._log.info("Timeout reached in FrontendTelnetTransport")
 
         # close transports on both sides
         if self.transport:
@@ -236,7 +247,9 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         """
         if not self.client.backendConnected:
             # wait till backend connects to send packets to them
-            log.msg("Connection to backend not ready, buffering packet from frontend")
+            self._log.info(
+                "Connection to backend not ready, buffering packet from frontend"
+            )
             self.delayedPacketsToBackend.append(payload)
         else:
             if len(self.delayedPacketsToBackend) > 0:

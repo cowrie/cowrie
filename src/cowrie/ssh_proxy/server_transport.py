@@ -16,8 +16,9 @@ from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log, randbytes
+from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
@@ -34,6 +35,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     After both sides are authenticated, forward all things from one side to another.
     """
 
+    _log = Logger()
     buf: bytes
     ourVersionString: bytes
     gotVersion: bool
@@ -112,12 +114,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.connect_to_backend(backend_ip, backend_port)
 
     def pool_connection_error(self, reason: failure.Failure) -> None:
-        log.msg(f"Connection to backend pool refused: {reason.value}")
+        self._log.info(
+            "Connection to backend pool refused: {error}", error=reason.value
+        )
         if self.transport:
             self.transport.loseConnection()
 
     def pool_connection_success(self, pool_interface):
-        log.msg("Connected to backend pool")
+        self._log.info("Connected to backend pool")
 
         self.pool_interface = pool_interface
         self.pool_interface.set_parent(self)
@@ -131,8 +135,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             snapshot = data[1]
             ssh_port = data[2]
 
-            log.msg(f"Got backend data from pool: {honey_ip.decode()}:{ssh_port}")
-            log.msg(f"Snapshot file: {snapshot.decode()}")
+            self._log.info(
+                "Got backend data from pool: {honey_ip}:{ssh_port}",
+                honey_ip=honey_ip.decode(),
+                ssh_port=ssh_port,
+            )
+            self._log.info("Snapshot file: {snapshot}", snapshot=snapshot.decode())
 
             self.connect_to_backend(honey_ip, ssh_port)
 
@@ -229,8 +237,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 )
             m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
-                log.msg(
-                    f"Bad protocol version identification: {self.otherVersionString!r}"
+                self._log.info(
+                    "Bad protocol version identification: {version!r}",
+                    version=self.otherVersionString,
                 )
                 if self.transport:
                     self.transport.write(b"Protocol mismatch.\n")
@@ -338,7 +347,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg("Timeout reached in FrontendSSHTransport")
+        self._log.info("Timeout reached in FrontendSSHTransport")
 
         if self.transport:
             self.transport.loseConnection()
@@ -421,7 +430,11 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
             self.transport.write(b"Packet corrupt\n")
-            log.msg(f"Disconnecting with error, code {reason}\nreason: {desc}")
+            self._log.info(
+                "Disconnecting with error, code {code}\nreason: {desc}",
+                code=reason,
+                desc=desc,
+            )
             self.transport.loseConnection()
 
     def receiveError(self, reasonCode: str, description: str) -> None:
@@ -436,7 +449,11 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg(f"Got remote error, code {reasonCode} reason: {description}")
+        self._log.info(
+            "Got remote error, code {code} reason: {description}",
+            code=reasonCode,
+            description=description,
+        )
 
     def packet_buffer(self, messageNum: int, payload: bytes) -> None:
         """
@@ -445,7 +462,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         if not self.backendConnected:
             # wait till backend connects to send packets to them
-            log.msg("Connection to backend not ready, buffering packet from frontend")
+            self._log.debug(
+                "Connection to backend not ready, buffering packet from frontend"
+            )
             self.delayedPackets.append([messageNum, payload])
         else:
             if len(self.delayedPackets) > 0:

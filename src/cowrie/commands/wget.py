@@ -16,8 +16,8 @@ import treq
 from twisted.internet import defer, error, reactor
 from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
+from twisted.logger import Logger
 from twisted.protocols.ftp import CommandFailed, FTPClient
-from twisted.python import log
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
@@ -97,6 +97,8 @@ class Command_wget(HoneyPotCommand):
     """
     wget command
     """
+
+    _log = Logger()
 
     limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
     quiet: bool = False
@@ -244,8 +246,9 @@ class Command_wget(HoneyPotCommand):
 
         # Check rate limit before proceeding
         if not wget_rate_limiter.check(self.host):
-            log.msg(
-                f"wget: rate limit exceeded for host: {self.host}. Simulating connection timeout"
+            self._log.info(
+                "wget: rate limit exceeded for host: {host}. Simulating connection timeout",
+                host=self.host,
             )
 
             # Simulate connection timeout
@@ -258,7 +261,7 @@ class Command_wget(HoneyPotCommand):
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
-            log.msg("Attempt to access blocked network address")
+            self._log.info("Attempt to access blocked network address")
             if not self.quiet:
                 tm = time.strftime("%Y-%m-%d %H:%M:%S")
                 self.errorWrite(f"--{tm}--  {url}\n")
@@ -380,12 +383,15 @@ class Command_wget(HoneyPotCommand):
                     quit_deferred = self.ftp_client.quit()
                     if isinstance(quit_deferred, defer.Deferred):
                         quit_deferred.addErrback(
-                            lambda failure: log.msg(
-                                f"FTP quit failed during abort: {failure.getErrorMessage()}"
+                            lambda f: self._log.info(
+                                "FTP quit failed during abort: {error}",
+                                error=f.getErrorMessage(),
                             )
                         )
                 except Exception as e:  # pragma: no cover - defensive
-                    log.msg(f"FTP quit raised exception during abort: {e!s}")
+                    self._log.info(
+                        "FTP quit raised exception during abort: {error}", error=e
+                    )
                 finally:
                     self.ftp_client = None
             return defer.succeed(None)
@@ -407,12 +413,12 @@ class Command_wget(HoneyPotCommand):
                 quit_deferred = self.ftp_client.quit()
                 if isinstance(quit_deferred, defer.Deferred):
                     quit_deferred.addErrback(
-                        lambda failure: log.msg(
-                            f"FTP quit failed: {failure.getErrorMessage()}"
+                        lambda f: self._log.info(
+                            "FTP quit failed: {error}", error=f.getErrorMessage()
                         )
                     )
             except Exception as e:  # pragma: no cover - defensive
-                log.msg(f"FTP quit raised exception: {e!s}")
+                self._log.info("FTP quit raised exception: {error}", error=e)
             finally:
                 self.ftp_client = None
 
@@ -435,8 +441,11 @@ class Command_wget(HoneyPotCommand):
             and self.limit_size > 0
             and self.totallength > self.limit_size
         ):
-            log.msg(
-                f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
+            self._log.info(
+                "Not saving URL ({url}) (size: {size}) exceeds file size limit ({limit})",
+                url=self.url.decode(),
+                size=self.totallength,
+                limit=self.limit_size,
             )
             self.exit()
             return False
@@ -524,8 +533,11 @@ class Command_wget(HoneyPotCommand):
         eta: float
         self.currentlength += len(data)
         if self.limit_size > 0 and self.currentlength > self.limit_size:
-            log.msg(
-                f"Not saving URL ({self.url.decode()}) (size: {self.currentlength}) exceeds file size limit ({self.limit_size})"
+            self._log.info(
+                "Not saving URL ({url}) (size: {size}) exceeds file size limit ({limit})",
+                url=self.url.decode(),
+                size=self.currentlength,
+                limit=self.limit_size,
             )
             self.exit()
             return
@@ -674,7 +686,7 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        log.err(response, "Unhandled wget error")
+        self._log.failure("Unhandled wget error", failure=response)
         self.errorWrite("\n")
         self.exit()
 

@@ -15,7 +15,7 @@ from urllib.parse import urljoin, urlparse
 
 from treq.client import HTTPClient
 from twisted.internet import defer, error, reactor, ssl
-from twisted.python import log
+from twisted.logger import Logger
 from twisted.web import client
 from twisted.web.iweb import IPolicyForHTTPS
 from zope.interface import implementer
@@ -45,6 +45,8 @@ class Output(cowrie.core.output.Output):
     """
     cuckoo output
     """
+
+    _log = Logger()
 
     api_user: str
     api_passwd: str
@@ -90,7 +92,7 @@ class Output(cowrie.core.output.Output):
             is_dup = yield self.cuckoo_check_if_dup(os.path.basename(outfile))
             if is_dup:
                 return
-        log.msg("Sending file to Cuckoo")
+        self._log.info("Sending file to Cuckoo")
         yield self.postfile(outfile, fileName)
 
     @defer.inlineCallbacks
@@ -99,7 +101,7 @@ class Output(cowrie.core.output.Output):
         Check if file already was analyzed by cuckoo
         """
         try:
-            log.msg(f"Looking for tasks for: {sha256}")
+            self._log.info("Looking for tasks for: {sha256}", sha256=sha256)
             response = yield self.client.get(
                 urljoin(self.url_base, f"/files/view/sha256/{sha256}".encode()),
                 auth=(self.api_user, self.api_passwd),
@@ -110,18 +112,17 @@ class Output(cowrie.core.output.Output):
             error.ConnectingCancelledError,
             error.DNSLookupError,
         ) as e:
-            log.msg(e)
+            self._log.info("{error}", error=e)
             return False
         except Exception as e:
-            log.msg(e)
+            self._log.info("{error}", error=e)
             return False
 
         if 200 <= response.code < 300:
             body = yield response.json()
-            log.msg(
-                "Sample found in Sandbox, with ID: {}".format(
-                    body.get("sample", {}).get("id", 0)
-                )
+            self._log.info(
+                "Sample found in Sandbox, with ID: {sample_id}",
+                sample_id=body.get("sample", {}).get("id", 0),
             )
             return True
 
@@ -143,19 +144,19 @@ class Output(cowrie.core.output.Output):
                     timeout=HTTP_TIMEOUT,
                 )
         except Exception as e:
-            log.msg(f"Cuckoo Request failed: {e}")
+            self._log.info("Cuckoo Request failed: {error}", error=e)
             return
 
         if 200 <= response.code < 300:
             body = yield response.json()
-            log.msg(
-                "Cuckoo Request: {}, Task created with ID: {}".format(
-                    response.code, body["task_id"]
-                )
+            self._log.info(
+                "Cuckoo Request: {code}, Task created with ID: {task_id}",
+                code=response.code,
+                task_id=body["task_id"],
             )
         else:
             yield response.text()
-            log.msg(f"Cuckoo Request failed: {response.code}")
+            self._log.info("Cuckoo Request failed: {code}", code=response.code)
 
     @defer.inlineCallbacks
     def posturl(self, scanUrl):
@@ -170,16 +171,16 @@ class Output(cowrie.core.output.Output):
                 timeout=HTTP_TIMEOUT,
             )
         except Exception as e:
-            log.msg(f"Cuckoo Request failed: {e}")
+            self._log.info("Cuckoo Request failed: {error}", error=e)
             return
 
         if 200 <= response.code < 300:
             body = yield response.json()
-            log.msg(
-                "Cuckoo Request: {}, Task created with ID: {}".format(
-                    response.code, body["task_id"]
-                )
+            self._log.info(
+                "Cuckoo Request: {code}, Task created with ID: {task_id}",
+                code=response.code,
+                task_id=body["task_id"],
             )
         else:
             yield response.text()
-            log.msg(f"Cuckoo Request failed: {response.code}")
+            self._log.info("Cuckoo Request failed: {code}", code=response.code)

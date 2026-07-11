@@ -12,7 +12,7 @@ from __future__ import annotations
 import getopt
 import os
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
@@ -24,6 +24,8 @@ class Command_tee(HoneyPotCommand):
     """
     tee command
     """
+
+    _log = Logger()
 
     append = False
     teeFiles: list[str]
@@ -115,7 +117,7 @@ class Command_tee(HoneyPotCommand):
 
     def handle_CTRL_C(self) -> None:
         if not self.ignoreInterupts:
-            log.msg("Received CTRL-C, exiting..")
+            self._log.info("Received CTRL-C, exiting..")
             self.write("^C\n")
             self.exit()
 

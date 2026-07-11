@@ -10,7 +10,7 @@ from binascii import crc32
 from random import randint, seed
 from typing import Any
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.honeyfs import read_honeyfs_bytes
 
@@ -21,6 +21,8 @@ class Passwd:
     /etc/passwd. Note that contrary to the name, it does not handle any
     passwords.
     """
+
+    _log = Logger()
 
     passwd: list[dict[str, Any]]
 
@@ -34,8 +36,8 @@ class Passwd:
         """
         try:
             raw = read_honeyfs_bytes("etc/passwd").decode("ascii")
-        except Exception as err:
-            log.err(err, "ERROR: Failed to load /etc/passwd")
+        except Exception:
+            self._log.failure("ERROR: Failed to load /etc/passwd")
             sys.exit(2)
 
         for rawline in raw.splitlines():
@@ -47,7 +49,9 @@ class Passwd:
                 continue
 
             if len(line.split(":")) != 7:
-                log.msg("Error parsing line `" + line + "` in <honeyfs>/etc/passwd")
+                self._log.info(
+                    "Error parsing line `{line}` in <honeyfs>/etc/passwd", line=line
+                )
                 continue
 
             (
@@ -132,6 +136,8 @@ class Group:
     /etc/group.
     """
 
+    _log = Logger()
+
     group: list[dict[str, Any]]
 
     def __init__(self) -> None:
@@ -144,8 +150,8 @@ class Group:
         """
         try:
             raw = read_honeyfs_bytes("etc/group").decode("ascii")
-        except Exception as err:
-            log.err(err, "ERROR: Failed to load /etc/group")
+        except Exception:
+            self._log.failure("ERROR: Failed to load /etc/group")
             sys.exit(2)
 
         for rawline in raw.splitlines():

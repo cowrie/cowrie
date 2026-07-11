@@ -17,7 +17,8 @@ from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import ISSHPrivateKey
 from twisted.cred.error import UnauthorizedLogin, UnhandledCredentials
 from twisted.internet import defer
-from twisted.python import failure, log
+from twisted.logger import Logger
+from twisted.python import failure
 from zope.interface import implementer
 
 from cowrie.core import auth
@@ -98,6 +99,8 @@ class HoneypotPasswordChecker:
     Checker that accepts "keyboard-interactive" and "password"
     """
 
+    _log = Logger()
+
     credentialInterfaces = (
         conchcredentials.IUsernamePasswordIP,
         conchcredentials.IPluggableAuthenticationModulesIP,
@@ -146,8 +149,9 @@ class HoneypotPasswordChecker:
         if hasattr(auth, authclass):
             authname = getattr(auth, authclass)
         else:
-            log.msg(
-                f"auth_class: {authclass} not found in cowrie.core.auth, using UserDB"
+            self._log.info(
+                "auth_class: {authclass} not found in cowrie.core.auth, using UserDB",
+                authclass=authclass,
             )
             authname = auth.UserDB
 

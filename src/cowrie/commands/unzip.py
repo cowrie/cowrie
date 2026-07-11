@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import zipfile
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import A_REALFILE
@@ -17,6 +17,8 @@ commands = {}
 
 
 class Command_unzip(HoneyPotCommand):
+    _log = Logger()
+
     def mkfullpath(self, path: str) -> None:
         components, d = path.split("/"), []
         while len(components):
@@ -114,7 +116,11 @@ class Command_unzip(HoneyPotCommand):
                 continue
             if f.is_dir():
                 self.fs.mkdir(
-                    dest, self.current_user["uid"], self.current_user["gid"], 4096, 33188
+                    dest,
+                    self.current_user["uid"],
+                    self.current_user["gid"],
+                    4096,
+                    33188,
                 )
             elif not f.is_dir():
                 self.mkfullpath(os.path.dirname(dest))
@@ -126,7 +132,7 @@ class Command_unzip(HoneyPotCommand):
                     33188,
                 )
             else:
-                log.msg(f"  skipping: {f.filename}\n")
+                self._log.info("  skipping: {filename}\n", filename=f.filename)
 
 
 commands["/bin/unzip"] = Command_unzip

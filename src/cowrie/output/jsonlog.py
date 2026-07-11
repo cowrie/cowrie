@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 import cowrie.python.logfile
@@ -19,6 +19,8 @@ class Output(cowrie.core.output.Output):
     """
     jsonlog output
     """
+
+    _log = Logger()
 
     def start(self):
         self.epoch_timestamp = CowrieConfig.getboolean(
@@ -56,4 +58,4 @@ class Output(cowrie.core.output.Output):
             self.outfile.write(json.dumps(event, separators=(",", ":")) + "\n")
             self.outfile.flush()
         except TypeError:
-            log.err("jsonlog: Can't serialize: '" + repr(event) + "'")
+            self._log.error("jsonlog: Can't serialize: '{event!r}'", event=event)

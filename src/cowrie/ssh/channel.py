@@ -13,7 +13,7 @@ import time
 from typing import TYPE_CHECKING
 
 from twisted.conch.ssh import channel
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
@@ -33,6 +33,7 @@ class CowrieSSHChannel(channel.SSHChannel):
     insults.LoggingServerProtocol records.
     """
 
+    _log = Logger()
     ttylogFile: str = ""
     bytesReceived: int = 0
     bytesWritten: int = 0
@@ -99,7 +100,10 @@ class CowrieSSHChannel(channel.SSHChannel):
         """
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg(f"Data upload limit reached for channel {self.id}")
+            self._log.info(
+                "Data upload limit reached for channel {channel_id}",
+                channel_id=self.id,
+            )
             self.eofReceived()
             return
 

@@ -14,7 +14,7 @@ import time
 from typing import TYPE_CHECKING
 
 from twisted.internet import reactor
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
@@ -40,6 +40,8 @@ class Command_ssh(HoneyPotCommand):
     """
     ssh
     """
+
+    _log = Logger()
 
     host: str
     callbacks: list[Callable]
@@ -145,7 +147,7 @@ class Command_ssh(HoneyPotCommand):
         self.exit()
 
     def lineReceived(self, line: str) -> None:
-        log.msg("INPUT (ssh):", line)
+        self._log.info("INPUT (ssh): {line}", line=line)
         if len(self.callbacks):
             self.callbacks.pop(0)(line)
 

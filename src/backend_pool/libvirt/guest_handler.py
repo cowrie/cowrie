@@ -9,18 +9,22 @@ import sys
 from configparser import NoOptionError
 from typing import Any
 
-from twisted.python import log
+from twisted.logger import Logger
 
 import backend_pool.libvirt.snapshot_handler
 import backend_pool.util
 from cowrie.core.config import CowrieConfig
+
+_log = Logger()
 
 
 class QemuGuestError(Exception):
     pass
 
 
-def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tuple[Any, str]:
+def create_guest(
+    connection: Any, mac_address: str, guest_unique_id: str
+) -> tuple[Any, str]:
     # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
     import libvirt
 
@@ -41,10 +45,8 @@ def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tup
 
     # check if base image exists
     if not os.path.isfile(base_image):
-        log.msg(
-            eventid="cowrie.backend_pool.guest_handler",
-            format="Base image provided was not found: %(base_image)s",
-            base_image=base_image,
+        _log.error(
+            "Base image provided was not found: {base_image}", base_image=base_image
         )
         os._exit(1)
 
@@ -70,10 +72,7 @@ def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tup
     if not backend_pool.libvirt.snapshot_handler.create_disk_snapshot(
         base_image, disk_img
     ):
-        log.msg(
-            eventid="cowrie.backend_pool.guest_handler",
-            format="There was a problem creating the disk snapshot.",
-        )
+        _log.error("There was a problem creating the disk snapshot.")
         raise QemuGuestError()
 
     guest_config = guest_xml.format(
@@ -91,21 +90,10 @@ def create_guest(connection: Any, mac_address: str, guest_unique_id: str) -> tup
     try:
         dom = connection.createXML(guest_config, 0)
         if dom is None:
-            log.err(
-                eventid="cowrie.backend_pool.guest_handler",
-                format="Failed to create a domain from an XML definition.",
-            )
+            _log.error("Failed to create a domain from an XML definition.")
             sys.exit(1)
-    except libvirt.libvirtError as e:
-        log.err(
-            eventid="cowrie.backend_pool.guest_handler",
-            format="Error booting guest: %(error)s",
-            error=e,
-        )
+    except libvirt.libvirtError:
+        _log.failure("Error booting guest")
         raise
-    log.msg(
-        eventid="cowrie.backend_pool.guest_handler",
-        format="Guest %(name)s has booted",
-        name=dom.name(),
-    )
+    _log.info("Guest {name} has booted", name=dom.name())
     return dom, disk_img

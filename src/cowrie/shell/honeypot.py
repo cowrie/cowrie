@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from twisted.python import log
+from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
@@ -73,6 +73,8 @@ class _Continuation:
 
 
 class HoneyPotShell:
+    _log = Logger()
+
     def __init__(
         self,
         protocol: Any,
@@ -667,9 +669,9 @@ class HoneyPotShell:
                 cmd["command"], environ.get("PATH", "").split(":")
             )
             if cmdclass:
-                log.msg(
+                self._log.info(
+                    "Command found: {input}",
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
-                    format="Command found: %(input)s",
                 )
                 if index == len(cmd_array) - 1:
                     lastpp = PipeProtocol(
@@ -792,7 +794,7 @@ class HoneyPotShell:
         """
         EOF with the shell as the active reader (no command running) logs out.
         """
-        log.msg("received eof, logging out")
+        self._log.info("received eof, logging out")
         self.protocol.terminal.transport.processEnded(process_status(0))
 
     def handle_CTRL_C(self) -> None:

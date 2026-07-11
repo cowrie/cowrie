@@ -134,7 +134,7 @@ class TestCVE2026_24061Detection(unittest.TestCase):
         self.protocol.transport = MagicMock()
         self.dispatched = capture_events(self.protocol.transport)
 
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_detect_exploit_f_root(self, mock_log: MagicMock) -> None:
         """Test detection of USER=-f root exploit."""
         # Simulate receiving IS VAR USER VALUE -f root
@@ -157,7 +157,7 @@ class TestCVE2026_24061Detection(unittest.TestCase):
                 break
         self.assertTrue(exploit_logged, "CVE-2026-24061 exploit should be detected")
 
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_detect_exploit_froot_no_space(self, mock_log: MagicMock) -> None:
         """Test detection of USER=-froot (no space) variant."""
         data = [
@@ -177,7 +177,7 @@ class TestCVE2026_24061Detection(unittest.TestCase):
                 break
         self.assertTrue(exploit_logged, "CVE-2026-24061 variant should be detected")
 
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_detect_exploit_lowercase_user(self, mock_log: MagicMock) -> None:
         """Test detection with lowercase 'user' variable name."""
         data = [
@@ -196,7 +196,7 @@ class TestCVE2026_24061Detection(unittest.TestCase):
                 break
         self.assertTrue(exploit_logged, "Lowercase 'user' should also be detected")
 
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_no_false_positive_normal_user(self, mock_log: MagicMock) -> None:
         """Test that normal USER values don't trigger exploit detection."""
         data = [
@@ -217,7 +217,7 @@ class TestCVE2026_24061Detection(unittest.TestCase):
             exploit_logged, "Normal username should not trigger exploit detection"
         )
 
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_logs_client_var_event(self, mock_log: MagicMock) -> None:
         """Test that environment variables are logged as cowrie.client.var."""
         data = [
@@ -238,7 +238,7 @@ class TestCVE2026_24061Detection(unittest.TestCase):
                 break
         self.assertTrue(var_logged, "Environment variable should be logged")
 
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_ignores_send_command(self, mock_log: MagicMock) -> None:
         """Test that SEND command (server requesting values) is ignored."""
         # SEND command - server asking client for values, not client sending
@@ -332,7 +332,7 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.assertIsNone(result)
 
     @patch("cowrie.telnet.userauth.CowrieConfig")
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_exploit_sets_bypass_when_vulnerable(
         self, mock_log: MagicMock, mock_config: MagicMock
     ) -> None:
@@ -351,7 +351,7 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.assertEqual(self.protocol.cve_2026_24061_user, "root")
 
     @patch("cowrie.telnet.userauth.CowrieConfig")
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_exploit_does_not_set_bypass_when_not_vulnerable(
         self, mock_log: MagicMock, mock_config: MagicMock
     ) -> None:
@@ -370,7 +370,7 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.assertIsNone(getattr(self.protocol, "cve_2026_24061_user", None))
 
     @patch("cowrie.telnet.userauth.CowrieConfig")
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_auth_bypass_uses_exploit_user(
         self, mock_log: MagicMock, mock_config: MagicMock
     ) -> None:
@@ -413,7 +413,7 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         self.assertEqual(captured_creds[0].username, b"root")
 
     @patch("cowrie.telnet.userauth.CowrieConfig")
-    @patch("cowrie.telnet.userauth.log")
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_exploit_success_is_logged(
         self, mock_log: MagicMock, mock_config: MagicMock
     ) -> None:

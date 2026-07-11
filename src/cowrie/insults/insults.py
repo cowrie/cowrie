@@ -12,13 +12,15 @@ from typing import TYPE_CHECKING, Any
 
 from twisted.conch.insults import insults
 from twisted.internet.protocol import connectionDone
-from twisted.python import failure, log
+from twisted.logger import Logger
 
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
 
 if TYPE_CHECKING:
+    from twisted.python import failure
+
     from cowrie.core.events import EventLog
 
 
@@ -26,6 +28,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
     """
     Wrapper for ServerProtocol that implements TTY logging
     """
+
+    _log = Logger()
 
     ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path", fallback=".")
     downloadPath: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
@@ -126,7 +130,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         self.bytesReceived += len(data)
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
-            log.msg(format="Data upload limit reached")
+            self._log.info("Data upload limit reached")
             self.eofReceived()
             return
 
@@ -184,7 +188,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         destfile="",
                     )
             except OSError as e:
-                log.msg(f"Failed to save stdin contents: {e}")
+                self._log.error("Failed to save stdin contents: {error}", error=e)
             finally:
                 self.stdinlogOpen = False
 

@@ -15,7 +15,7 @@ from twisted.conch.ssh import userauth
 from twisted.conch.ssh.common import NS, getNS
 from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
 from twisted.internet import defer
-from twisted.python import log
+from twisted.logger import Logger
 from twisted.python.failure import Failure
 
 from cowrie.core import credentials
@@ -46,6 +46,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
     * IP based authentication
     """
 
+    _log = Logger()
     bannerSent: bool = False
     user: bytes
     _pamDeferred: defer.Deferred | None
@@ -77,8 +78,8 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             banner = read_honeyfs_bytes("etc/issue.net").decode(
                 "utf-8", errors="replace"
             )
-        except FileNotFoundError as e:
-            log.err(e, "ERROR: Failed to load /etc/issue.net")
+        except FileNotFoundError:
+            self._log.failure("ERROR: Failed to load /etc/issue.net")
             return
 
         if not banner or not banner.strip():
@@ -223,7 +224,11 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
                 response, packet = getNS(packet)
                 resp.append((response, 0))
             if packet:
-                log.msg(f"PAM Response: {len(packet):d} extra bytes: {packet!r}")
+                self._log.info(
+                    "PAM Response: {extra:d} extra bytes: {packet!r}",
+                    extra=len(packet),
+                    packet=packet,
+                )
         except Exception as e:
             d.errback(Failure(e))
         else:

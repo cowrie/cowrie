@@ -7,17 +7,19 @@ from __future__ import annotations
 import json
 
 from twisted.internet.address import IPv4Address, IPv6Address
-from twisted.python import log
+from twisted.logger import Logger
 from twisted.python.constants import NamedConstant, ValueConstant
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
+_log = Logger()
+
 try:
     import pika
     from pika.exceptions import AMQPConnectionError
 except ImportError:
-    log.err("Missing dependency: pika")
+    _log.error("Missing dependency: pika")
     pika = None
     AMQPConnectionError = Exception
 
@@ -41,12 +43,14 @@ class Output(cowrie.core.output.Output):
     with reconnection logic.
     """
 
+    _log = Logger()
+
     def start(self):
         """
         Initialize the RabbitMQ connection and declare the exchange.
         """
         if not pika:
-            log.err("Pika module is not installed, RabbitMQ output disabled")
+            self._log.error("Pika module is not installed, RabbitMQ output disabled")
             return
 
         self.host = CowrieConfig.get("output_rmq", "host", fallback="localhost")
@@ -82,9 +86,9 @@ class Output(cowrie.core.output.Output):
                 exchange_type=self.exchange_type,
                 durable=True,
             )
-            log.msg("Connected to RabbitMQ")
+            self._log.info("Connected to RabbitMQ")
         except Exception as e:
-            log.err(f"Failed to connect to RabbitMQ: {e}")
+            self._log.failure("Failed to connect to RabbitMQ: {error}", error=e)
             self.connection = None
             self.channel = None
 
@@ -94,7 +98,7 @@ class Output(cowrie.core.output.Output):
         """
         if self.connection:
             self.connection.close()
-            log.msg("Disconnected from RabbitMQ")
+            self._log.info("Disconnected from RabbitMQ")
 
     def write(self, event):
         """
@@ -114,10 +118,12 @@ class Output(cowrie.core.output.Output):
         while attempt < 2:  # Try at most twice
             try:
                 if not self.connection or self.connection.is_closed:
-                    log.msg("RabbitMQ connection is closed, attempting to reconnect")
+                    self._log.info(
+                        "RabbitMQ connection is closed, attempting to reconnect"
+                    )
                     self._connect()
                     if not self.connection or self.connection.is_closed:
-                        log.err("Failed to reconnect to RabbitMQ")
+                        self._log.error("Failed to reconnect to RabbitMQ")
                         break  # Exit loop if reconnection fails
 
                 self.channel.basic_publish(
@@ -126,15 +132,18 @@ class Output(cowrie.core.output.Output):
                     body=message.encode("utf-8"),
                     properties=properties,
                 )
-                log.msg(f"Published event to RabbitMQ: {routing_key}")
+                self._log.info(
+                    "Published event to RabbitMQ: {routing_key}",
+                    routing_key=routing_key,
+                )
                 break  # Exit loop on success
 
             except (AMQPConnectionError, pika.exceptions.StreamLostError) as e:
-                log.err(f"AMQPConnectionError: {e}")
+                self._log.failure("AMQPConnectionError: {error}", error=e)
                 self.connection = None  # Force reconnection on next attempt
                 attempt += 1  # Increment attempt counter to retry
                 continue  # Retry after reconnection
 
             except Exception as e:
-                log.err(f"Error publishing to RabbitMQ: {e}")
+                self._log.failure("Error publishing to RabbitMQ: {error}", error=e)
                 break  # Exit loop on non-recoverable error

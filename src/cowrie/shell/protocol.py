@@ -6,9 +6,7 @@
 from __future__ import annotations
 
 import socket
-import sys
 import time
-import traceback
 from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
@@ -16,8 +14,8 @@ from typing import TYPE_CHECKING, ClassVar
 from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.internet.protocol import connectionDone
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log
 
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
@@ -25,6 +23,8 @@ from cowrie.core.resources import read_data_bytes
 from cowrie.shell import command, honeypot
 
 if TYPE_CHECKING:
+    from twisted.python import failure
+
     from cowrie.core.events import EventLog
 
 
@@ -32,6 +32,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
     """
+
+    _log = Logger()
 
     # The session's event emitter, set from the transport in connectionMade.
     events: EventLog
@@ -41,17 +43,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         try:
             module = import_module(f"cowrie.commands.{c}")
             commands.update(module.commands)
-        except ImportError as e:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            log.err(
-                "Failed to import command {}: {}: {}".format(
-                    c,
-                    e,
-                    "".join(
-                        traceback.format_exception(exc_type, exc_value, exc_traceback)
-                    ),
-                )
-            )
+        except ImportError:
+            _log.failure("Failed to import command {cmd}", cmd=c)
 
     def __init__(self, avatar):
         self.user = avatar
@@ -233,7 +226,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.fs.isfile(path):
             return self.scriptcmd(path)
 
-        log.msg(f"Can't find command {cmd}")
+        self._log.info("Can't find command {cmd}", cmd=cmd)
         return None
 
     def lineReceived(self, line: bytes) -> None:
@@ -247,7 +240,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.cmdstack:
             self.cmdstack[-1].lineReceived(string)
         else:
-            log.msg(f"discarding input {string}")
+            self._log.info("discarding input {input}", input=string)
             stat = command.process_status(0)
             self.terminal.transport.processEnded(stat)
 
@@ -306,6 +299,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
+    _log = Logger()
+
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
@@ -318,7 +313,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         try:
             self.execcmd = execcmd.decode("utf8")
         except UnicodeDecodeError:
-            log.err(f"Unusual execcmd: {execcmd!r}")
+            self._log.error("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 

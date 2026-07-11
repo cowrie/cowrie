@@ -13,14 +13,18 @@ from __future__ import annotations
 
 import time
 import uuid
+from typing import TYPE_CHECKING
 
 from twisted.conch.telnet import AlreadyNegotiating, TelnetTransport
 from twisted.internet.protocol import connectionDone
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+
+if TYPE_CHECKING:
+    from twisted.python import failure
 
 # Telnet option names for logging (RFC 854, RFC 855, RFC 1572, etc.)
 TELNET_OPTIONS: dict[int, str] = {
@@ -45,6 +49,8 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     """
     CowrieTelnetTransport
     """
+
+    _log = Logger()
 
     # The session's event emitter, bound in connectionMade when the running
     # application provides a dispatcher.
@@ -110,7 +116,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                     "Telnet protocol error %(error)s; dropping connection",
                     error=str(e),
                 )
-            log.err()
+            self._log.failure("Telnet protocol error; dropping connection")
             if self.transport:
                 self.transport.loseConnection()
 
@@ -119,7 +125,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg("Timeout reached in CowrieTelnetTransport")
+        self._log.info("Timeout reached in CowrieTelnetTransport")
         if self.transport:
             self.transport.loseConnection()
 
@@ -168,7 +174,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         # We only care about AlreadyNegotiating, everything else can be ignored
         # Possible other types include OptionRefused, AlreadyDisabled, AlreadyEnabled, ConnectionDone, ConnectionLost
         elif f.type is AssertionError:
-            log.msg(
+            self._log.info(
                 "Client tried to illegally refuse to disable an option; ignoring, but undefined behavior may result"
             )
             # TODO: Is ignoring this violation of the protocol the proper behavior?

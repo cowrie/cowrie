@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import time
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core import ttylog
 from cowrie.core.config import CowrieConfig
@@ -17,6 +17,8 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 
 class Term(base_protocol.BaseProtocol):
+    _log = Logger()
+
     def __init__(self, uuid, chan_name, ssh, channelId):
         super().__init__(uuid, chan_name, ssh)
 
@@ -106,7 +108,9 @@ class Term(base_protocol.BaseProtocol):
                                 input=self.command.decode("utf8"),
                             )
                     except UnicodeDecodeError:
-                        log.err(f"Unusual execcmd: {self.command!r}")
+                        self._log.error(
+                            "Unusual execcmd: {command!r}", command=self.command
+                        )
 
                     self.command = b""
                     self.pointer = 0

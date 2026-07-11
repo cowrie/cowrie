@@ -151,7 +151,9 @@ def cowrie_start(args: list[str]) -> NoReturn:
         twisted_args.extend(["--pidfile", str(pid_file)])
         twisted_args.extend(["--logger", "cowrie.python.logfile.logger"])
     else:
-        twisted_args.extend(["-n", "-l", "-"])
+        # The same filtered, session-prefixed rendering as cowrie.log,
+        # on stdout, so [honeypot] log_level applies in foreground mode.
+        twisted_args.extend(["-n", "--logger", "cowrie.python.logfile.stdoutLogger"])
 
     # Add any additional arguments passed to the script
     twisted_args.extend(args)

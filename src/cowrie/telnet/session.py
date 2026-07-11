@@ -12,20 +12,26 @@ Telnet User Session management for the Honeypot
 from __future__ import annotations
 
 import traceback
+from typing import TYPE_CHECKING
 
 from twisted.conch.ssh import session
 from twisted.conch.telnet import ECHO, SGA, TelnetBootstrapProtocol
 from twisted.internet import interfaces, protocol
 from twisted.internet.protocol import connectionDone
-from twisted.python import failure, log
+from twisted.logger import Logger
 from zope.interface import implementer
 
 from cowrie.insults import insults
 from cowrie.shell import protocol as cproto
 from cowrie.shell import pwd
 
+if TYPE_CHECKING:
+    from twisted.python import failure
+
 
 class HoneyPotTelnetSession(TelnetBootstrapProtocol):
+    _log = Logger()
+
     id = 0  # telnet can only have 1 simultaneous session, unlike SSH
 
     def __init__(self, username, server):
@@ -85,7 +91,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
             self.protocol.makeConnection(processprotocol)
             processprotocol.makeConnection(session.wrapProtocol(self.protocol))
         except Exception:
-            log.msg(traceback.format_exc())
+            self._log.info("{traceback}", traceback=traceback.format_exc())
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         TelnetBootstrapProtocol.connectionLost(self, reason)
@@ -94,7 +100,7 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         self.protocol = None
 
     def logout(self) -> None:
-        log.msg(f"avatar {self.username} logging out")
+        self._log.info("avatar {username} logging out", username=self.username)
 
 
 # Taken and adapted from
@@ -107,6 +113,8 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
     local subsystem.
     """
 
+    _log = Logger()
+
     def __init__(self, sess):
         self.session = sess
         self.lostOutOrErrFlag = False
@@ -115,7 +123,7 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         self.session.write(data)
 
     def errReceived(self, data: bytes) -> None:
-        log.msg(f"Error received: {data.decode()}")
+        self._log.info("Error received: {data}", data=data.decode())
         # EXTENDED_DATA_STDERR is from ssh, no equivalent in telnet?
         # self.session.writeExtended(connection.EXTENDED_DATA_STDERR, err)
 
@@ -145,11 +153,12 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
         """
         exit_code = getattr(reason.value, "exitCode", None) if reason else None
         if exit_code is not None:
-            log.msg(
-                f"Process ended with exit code {exit_code}. Telnet session disconnected"
+            self._log.info(
+                "Process ended with exit code {exit_code}. Telnet session disconnected",
+                exit_code=exit_code,
             )
         else:
-            log.msg("Process ended. Telnet session disconnected")
+            self._log.info("Process ended. Telnet session disconnected")
         self.session.loseConnection()
 
     def getHost(self):

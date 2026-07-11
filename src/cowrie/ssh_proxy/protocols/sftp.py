@@ -10,7 +10,7 @@ import hashlib
 import os
 
 from twisted.conch.ssh import filetransfer
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import escape_nonprintable
@@ -54,6 +54,7 @@ from cowrie.ssh_proxy.protocols import base_protocol
 
 
 class SFTP(base_protocol.BaseProtocol):
+    _log = Logger()
     prevID: int = 0
     ID: int = 0
     handle: bytes = b""
@@ -128,8 +129,10 @@ class SFTP(base_protocol.BaseProtocol):
         elif sftp_num == filetransfer.FXP_REALPATH:
             self.path = self.extract_string()
             self.command = b"cd " + self.path
-            log.msg(
-                parent + "[SFTP] Entered Command: " + escape_nonprintable(self.command)
+            self._log.info(
+                "{parent}[SFTP] Entered Command: {command}",
+                parent=parent,
+                command=escape_nonprintable(self.command),
             )
 
         elif sftp_num == filetransfer.FXP_OPEN:
@@ -143,13 +146,19 @@ class SFTP(base_protocol.BaseProtocol):
             elif pflags[7] == "1":
                 self.command = b"get " + self.path
             else:
-                # Unknown PFlag
-                log.msg(
-                    parent + f"[SFTP] New SFTP pflag detected: {pflags!r} {self.data!r}"
+                # Unknown PFlag: novel attacker behaviour, keep visible
+                # at the default log level.
+                self._log.info(
+                    "{parent}[SFTP] New SFTP pflag detected: {pflags!r} {data!r}",
+                    parent=parent,
+                    pflags=pflags,
+                    data=self.data,
                 )
 
-            log.msg(
-                parent + " [SFTP] Entered Command: " + escape_nonprintable(self.command)
+            self._log.info(
+                "{parent} [SFTP] Entered Command: {command}",
+                parent=parent,
+                command=escape_nonprintable(self.command),
             )
 
         elif sftp_num == filetransfer.FXP_READ:
@@ -183,31 +192,36 @@ class SFTP(base_protocol.BaseProtocol):
             elif cmd == b"posix-rename@openssh.com":
                 self.command = b"mv " + self.path + b" " + self.extract_string()
             else:
-                # UNKNOWN COMMAND
-                log.msg(
-                    parent
-                    + f"[SFTP] New SFTP Extended Command detected: {cmd!r} {self.data!r}"
+                # UNKNOWN COMMAND: novel attacker behaviour, keep visible
+                # at the default log level.
+                self._log.info(
+                    "{parent}[SFTP] New SFTP Extended Command detected: {cmd!r} {data!r}",
+                    parent=parent,
+                    cmd=cmd,
+                    data=self.data,
                 )
 
         elif sftp_num == filetransfer.FXP_EXTENDED_REPLY:
-            log.msg(
-                parent + " [SFTP] Entered Command: " + escape_nonprintable(self.command)
+            self._log.info(
+                "{parent} [SFTP] Entered Command: {command}",
+                parent=parent,
+                command=escape_nonprintable(self.command),
             )
             # self.out.command_entered(self.uuid, self.command)
 
         elif sftp_num == filetransfer.FXP_CLOSE:
             if self.handle == self.extract_string():
                 if b"get" in self.command:
-                    log.msg(
-                        parent
-                        + " [SFTP] Finished Downloading: "
-                        + escape_nonprintable(self.path)
+                    self._log.info(
+                        "{parent} [SFTP] Finished Downloading: {path}",
+                        parent=parent,
+                        path=escape_nonprintable(self.path),
                     )
                 elif b"put" in self.command:
-                    log.msg(
-                        parent
-                        + " [SFTP] Finished Uploading: "
-                        + escape_nonprintable(self.path)
+                    self._log.info(
+                        "{parent} [SFTP] Finished Uploading: {path}",
+                        parent=parent,
+                        path=escape_nonprintable(self.path),
                     )
 
                     # TODO: should use artifact functions
@@ -261,22 +275,21 @@ class SFTP(base_protocol.BaseProtocol):
                 code = self.extract_int(4)
                 if code in [0, 1]:
                     if b"get" not in self.command and b"put" not in self.command:
-                        log.msg(
-                            parent
-                            + " [SFTP] Entered Command: "
-                            + escape_nonprintable(self.command)
+                        self._log.info(
+                            "{parent} [SFTP] Entered Command: {command}",
+                            parent=parent,
+                            command=escape_nonprintable(self.command),
                         )
                 else:
-                    message = self.extract_string()
-                    log.msg(
-                        parent
-                        + " [SFTP] Failed Command: "
-                        + escape_nonprintable(self.command)
-                        + " Reason: "
-                        + escape_nonprintable(message)
+                    reason = self.extract_string()
+                    self._log.info(
+                        "{parent} [SFTP] Failed Command: {command} Reason: {reason}",
+                        parent=parent,
+                        command=escape_nonprintable(self.command),
+                        reason=escape_nonprintable(reason),
                     )
         else:
-            log.msg("[SFTP] Unhandled packet: {sftp_num}")
+            self._log.debug("[SFTP] Unhandled packet: {sftp_num}", sftp_num=sftp_num)
 
     def extract_attrs(self) -> bytes:
         cmd: str = ""

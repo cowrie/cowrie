@@ -13,9 +13,11 @@ import configparser
 from os import environ
 from os.path import exists
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.resources import read_data_bytes
+
+_log = Logger()
 
 
 def to_environ_key(key: str) -> str:
@@ -55,11 +57,9 @@ def readConfigFile(cfgfile: list[str] | str) -> configparser.ConfigParser:
     """
     parser = EnvironmentConfigParser(interpolation=configparser.ExtendedInterpolation())
     try:
-        parser.read_string(
-            read_data_bytes("etc", "cowrie.cfg.dist").decode("utf-8")
-        )
+        parser.read_string(read_data_bytes("etc", "cowrie.cfg.dist").decode("utf-8"))
     except FileNotFoundError:
-        log.msg("Bundled cowrie.cfg.dist not found in cowrie.data")
+        _log.warn("Bundled cowrie.cfg.dist not found in cowrie.data")
     parser.read(cfgfile)
     return parser
 
@@ -84,9 +84,9 @@ def get_config_path() -> list[str]:
     found_confs = [path for path in config_files if exists(path)]
 
     if found_confs:
-        log.msg(f"Reading configuration from {found_confs!r}")
+        _log.info("Reading configuration from {files!r}", files=found_confs)
     else:
-        log.msg("No operator config file found; using bundled defaults only")
+        _log.info("No operator config file found; using bundled defaults only")
     return found_confs
 
 

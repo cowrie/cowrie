@@ -59,6 +59,14 @@ Release 3.0.0
 * Bundled ``cowrie.cfg.dist`` has ``contents_path``, ``filesystem``,
   and ``processes`` commented out (each documents how to override).
 * ``data_path`` removed from cfg.dist.
+* New ``[honeypot] log_level`` option sets the diagnostic verbosity of
+  ``cowrie.log`` -- and of stdout in foreground/Docker mode -- (default
+  ``info``), with per-subsystem overrides via ``log_level_<namespace>``
+  (e.g. ``log_level_cowrie.ssh = debug``) or the matching
+  ``COWRIE_HONEYPOT_LOG_LEVEL_*`` environment variables. Rendered
+  attacker-event lines (``cowrie.events``) keep an ``info`` floor unless
+  explicitly overridden. Structured event output (cowrie.json,
+  databases) is unaffected.
 
 **DEPENDENCIES:**
 
@@ -68,6 +76,14 @@ Release 3.0.0
 
 **INTERNAL:**
 
+* Diagnostic logging converted from the legacy ``twisted.python.log``
+  API to per-class ``twisted.logger.Logger`` instances with namespaces
+  and levels; messages are lazy PEP-3101 format strings with runtime
+  values passed as data (see docs/EVENT_PIPELINE.rst). The backend
+  pool's session-less emitters dropped their vestigial ``eventid=``
+  markers and are plain diagnostics: pool bookkeeping is
+  infrastructure, not attacker behavior, and never reached the output
+  plugins.
 * New ``cowrie/shell/honeyfs.py`` module owns the per-process pickle
   cache. ``HoneyPotFilesystem`` instances now share a single
   ``pickle.load`` via ``honeyfs.get_tree()`` (deepcopied per session)

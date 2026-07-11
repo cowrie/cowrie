@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pymisp import MISPAttribute, MISPEvent, MISPObject, MISPSighting
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -46,6 +46,8 @@ class Output(cowrie.core.output.Output):
 
     Events are now consolidated to create one comprehensive event per session
     """
+
+    _log = Logger()
 
     def start(self) -> None:
         """
@@ -153,7 +155,7 @@ class Output(cowrie.core.output.Output):
                     )
                     if malware_attrib:
                         if self.debug:
-                            log.msg("MISP: File known, add sighting")
+                            self._log.info("MISP: File known, add sighting")
                         self.add_sighting(event, malware_attrib)
 
             elif event["eventid"] == "cowrie.session.file_upload":
@@ -169,7 +171,7 @@ class Output(cowrie.core.output.Output):
                 file_sha_attrib = self.find_attribute("sha256", event["shasum"])
                 if file_sha_attrib:
                     if self.debug:
-                        log.msg("MISP: File known, add sighting")
+                        self._log.info("MISP: File known, add sighting")
                     self.add_sighting(event, file_sha_attrib)
 
             # Handle login attempts (both failed and successful)
@@ -228,7 +230,10 @@ class Output(cowrie.core.output.Output):
                         cmd_details
                     )
                     if self.debug:
-                        log.msg(f"MISP: Dangerous command detected: {command}")
+                        self._log.info(
+                            "MISP: Dangerous command detected: {command}",
+                            command=command,
+                        )
 
             # When a session closes, create a comprehensive event
             elif event["eventid"] == "cowrie.session.closed":
@@ -289,9 +294,12 @@ class Output(cowrie.core.output.Output):
         try:
             self.misp_api.add_sighting(sighting, attribute)
             if self.debug:
-                log.msg(f"MISP: Added sighting to attribute {attribute['id']}")
+                self._log.info(
+                    "MISP: Added sighting to attribute {attribute_id}",
+                    attribute_id=attribute["id"],
+                )
         except Exception as e:
-            log.msg(f"MISP: Error adding sighting: {e}")
+            self._log.info("MISP: Error adding sighting: {error}", error=e)
 
     def create_session_event(self, session_id, session_data):
         """
@@ -611,6 +619,10 @@ class Output(cowrie.core.output.Output):
         result = self.misp_api.add_event(misp_event)
 
         if self.debug:
-            log.msg(f"MISP: Session event creation result for {session_id}: {result}")
+            self._log.info(
+                "MISP: Session event creation result for {session}: {result}",
+                session=session_id,
+                result=result,
+            )
 
         return result

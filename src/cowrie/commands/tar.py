@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import tarfile
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import A_REALFILE
@@ -17,6 +17,8 @@ commands = {}
 
 
 class Command_tar(HoneyPotCommand):
+    _log = Logger()
+
     def mkfullpath(self, path: str, f: tarfile.TarInfo) -> None:
         components, d = path.split("/"), []
         while len(components):
@@ -98,7 +100,7 @@ class Command_tar(HoneyPotCommand):
                     f.mtime,
                 )
             else:
-                log.msg(f"tar: skipping [{f.name}]")
+                self._log.info("tar: skipping [{name}]", name=f.name)
 
 
 commands["/bin/tar"] = Command_tar

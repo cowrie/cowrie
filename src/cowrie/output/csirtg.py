@@ -9,14 +9,16 @@ import os
 import sys
 from datetime import datetime
 
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
+_log = Logger()
+
 token = CowrieConfig.get("output_csirtg", "token", fallback="a1b2c3d4")
 if token == "a1b2c3d4":
-    log.msg("output_csirtg: token not found in configuration file")
+    _log.info("output_csirtg: token not found in configuration file")
     sys.exit(1)
 
 os.environ["CSIRTG_TOKEN"] = token
@@ -27,6 +29,8 @@ class Output(cowrie.core.output.Output):
     """
     CSIRTG output
     """
+
+    _log = Logger()
 
     def start(self):
         """
@@ -95,11 +99,16 @@ class Output(cowrie.core.output.Output):
         }
 
         if self.debug is True:
-            log.msg(f"output_csirtg: Submitting {i!r} to CSIRTG")
+            self._log.info(
+                "output_csirtg: Submitting {indicator!r} to CSIRTG", indicator=i
+            )
 
         ind = csirtgsdk.indicator.Indicator(i).submit()
 
         if self.debug is True:
-            log.msg(f"output_csirtg: Submitted {ind!r} to CSIRTG")
+            self._log.info("output_csirtg: Submitted {result!r} to CSIRTG", result=ind)
 
-        log.msg("output_csirtg: submitted to csirtg at {} ".format(ind["location"]))
+        self._log.info(
+            "output_csirtg: submitted to csirtg at {location} ",
+            location=ind["location"],
+        )

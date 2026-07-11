@@ -122,6 +122,28 @@ backend = shell
 # This affects both `cowrie.log` and `cowrie.json`
 logtype = rotating
 
+# Verbosity of the diagnostic log (`cowrie.log`, or stdout in
+# foreground/Docker mode). Valid levels, most to least verbose:
+# debug, info, warn, error, critical. Lines below the level stay out
+# of the log; the structured event output (cowrie.json, databases) is
+# not affected.
+# (default: info)
+#log_level = info
+
+# Per-subsystem overrides: append the logging namespace (the emitting
+# module path, lowercase) to `log_level_`. A prefix covers everything
+# beneath it, so `log_level_cowrie.ssh` covers all of the SSH
+# subsystem. The same keys work as environment variables
+# (COWRIE_HONEYPOT_LOG_LEVEL_COWRIE.SSH=debug).
+#
+# Rendered attacker-event lines (logins, commands, downloads) log
+# under the `cowrie.events` namespace and keep an `info` floor even
+# when `log_level` is raised, so quieting diagnostics does not erase
+# the attack record; set `log_level_cowrie.events` explicitly to
+# change that.
+#log_level_cowrie.ssh = debug
+#log_level_cowrie.commands = debug
+
 # Timezone Cowrie uses for logging
 # This can be any valid timezone for the TZ environment variable
 # The special value `system` will let Cowrie use the system time zone

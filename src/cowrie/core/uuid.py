@@ -8,9 +8,11 @@ from __future__ import annotations
 import os
 import uuid
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
+
+_log = Logger()
 
 
 def create_uuid() -> uuid.UUID:
@@ -40,19 +42,24 @@ def get_uuid() -> str:
         try:
             uuid.UUID(uuid_from_file)  # Will raise ValueError if invalid format
         except ValueError:
-            log.msg(f"UUID read from file {uuidpath} is invalid: '{uuid_from_file}'")
+            _log.info(
+                "UUID read from file {uuidpath} is invalid: '{uuid_from_file}'",
+                uuidpath=uuidpath,
+                uuid_from_file=uuid_from_file,
+            )
         else:
             return uuid_from_file
     except FileNotFoundError:
         # First run
         pass
-    except PermissionError as e:
-        log.err(
-            f"Permission denied when attempting to read uuid from {uuidpath}: {e!r}"
+    except PermissionError:
+        _log.failure(
+            "Permission denied when attempting to read uuid from {uuidpath}",
+            uuidpath=uuidpath,
         )
-    except OSError as e:
+    except OSError:
         # Catch other I/O errors (e.g., directory not found, device error)
-        log.err(f"I/O error when reading uuid from {uuidpath}: {e!r}")
+        _log.failure("I/O error when reading uuid from {uuidpath}", uuidpath=uuidpath)
 
     new_uuid_str = str(create_uuid())
 
@@ -60,9 +67,12 @@ def get_uuid() -> str:
         os.makedirs(os.path.dirname(uuidpath), exist_ok=True)
         with open(uuidpath, "w", encoding="ascii") as f:
             f.write(f"{new_uuid_str}\n")
-    except PermissionError as e:
-        log.err(f"Permission denied when attempting to write uuid to {uuidpath}: {e!r}")
-    except OSError as e:
-        log.err(f"I/O error when writing uuid to {uuidpath}: {e!r}")
+    except PermissionError:
+        _log.failure(
+            "Permission denied when attempting to write uuid to {uuidpath}",
+            uuidpath=uuidpath,
+        )
+    except OSError:
+        _log.failure("I/O error when writing uuid to {uuidpath}", uuidpath=uuidpath)
 
     return new_uuid_str
