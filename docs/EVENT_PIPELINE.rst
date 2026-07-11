@@ -342,38 +342,68 @@ helpers in ``cowrie.test.eventcapture`` (``capture_eventlog``,
 pipeline onto a protocol or transport; the shell tests' ``FakeTransport``
 carries one so command tests can assert on ``tr.dispatchedEvents``.
 
-Future work: diagnostics to ``twisted.logger``
-**********************************************
+Diagnostics on ``twisted.logger``
+*********************************
 
-The event side is complete; the diagnostic side is still on the legacy
-``twisted.python.log`` API (~490 ``log.msg`` / ``log.err`` call sites). Now
-that no consumer parses the log stream, those can convert to per-class
-``twisted.logger.Logger`` instances. The observer side is already there --
-``python/logfile.py`` writes ``cowrie.log`` through ``textFileLogObserver``
-and the twistd plugin registers ``ILogObserver`` providers -- so only the
-emitters need converting. What the conversion buys:
+The diagnostic side runs on per-class ``twisted.logger.Logger`` instances:
+each emitting class carries ``_log = Logger()`` (modules with free functions
+carry one at module level), giving every line a namespace derived from its
+origin (``cowrie.ssh.transport.HoneyPotSSHTransport``,
+``cowrie.commands.wget``) and a real level. The legacy
+``twisted.python.log`` API is no longer used for diagnostics.
 
 Levels and namespaces
-    Per-class ``Logger`` instances give every line a namespace
-    (``cowrie.ssh.transport``, ``cowrie.commands.wget``) and a real level.
-    Combined with ``LogLevelFilterPredicate`` this yields per-subsystem
-    verbosity control from configuration -- debug a single subsystem in
-    production without drowning in the rest. Today the log has exactly one
-    volume setting: everything.
+    ``python/logfile.py`` wraps the log observer -- ``cowrie.log``, or
+    stdout in foreground and Docker mode -- in a ``FilteringLogObserver``
+    driven by configuration: ``[honeypot] log_level`` sets the default
+    (info), and ``log_level_<namespace>`` options (or the equivalent
+    ``COWRIE_HONEYPOT_LOG_LEVEL_*`` environment variables) override per
+    subsystem by dotted prefix -- debug a single subsystem in production
+    without drowning in the rest (``log_level_cowrie.ssh = debug``).
+    Overrides work at module granularity: configparser lowercases option
+    names, so a class-qualified namespace cannot be targeted, but the
+    module prefix above it covers it. Filtering happens at the observer,
+    so test observers and any future sinks still see everything.
+
+Session prefixes
+    ``twisted.logger`` does not read the reactor's ``ILogContext``, which
+    is where legacy ``log.msg`` lines inherited their
+    ``[HoneyPotSSHTransport,3,1.2.3.4]`` prefix. The observer in
+    ``python/logfile.py`` restores it: a diagnostic emitted inside a
+    connection's context is stamped with that system prefix (keeping it
+    correlatable to a session in the log), while lines outside any
+    connection context render their ``namespace#level``. Level filtering
+    uses the namespace either way.
 
 Lazy formatting
-    ``self._log.debug("block {n} received", n=num)`` costs nearly nothing
-    when filtered out, so debug statements can stay in the code permanently
-    instead of being commented in and out during development.
+    Diagnostic messages are PEP-3101 format strings with the runtime values
+    passed as keywords: ``self._log.debug("block {n} received", n=num)``
+    costs nearly nothing when filtered out, so debug statements can stay in
+    the code permanently. Runtime values are never interpolated into the
+    format string itself -- attacker-controlled text (commands, URLs,
+    version strings) may contain braces and must stay data, the same rule
+    the event pipeline applies to its authoritative fields.
 
 Failures
-    ``self._log.failure("wget transfer failed")`` replaces ``log.err`` with
-    explicit tracebacks attached as structured data.
+    ``self._log.failure("wget transfer failed")`` replaces ``log.err``,
+    capturing the active exception with its traceback as structured data.
 
-A small number of session-less emitters (backend pool, proxy backend
-bookkeeping) also remain on ``log.msg(eventid=...)``; they never reached the
-output plugins historically, and making them first-class events is a separate
-follow-up.
+Console event lines
+    The console renderer emits through a ``Logger`` under the
+    ``cowrie.events`` namespace, stamping the session's
+    ``protocol,session,src_ip`` prefix via ``log_system``. That namespace
+    keeps an explicit ``info`` floor: raising the global ``log_level``
+    quiets diagnostics without silently erasing the attack record from
+    the log, preserving ``cowrie.log`` as the superset. Operators who do
+    want event lines filtered set ``log_level_cowrie.events`` explicitly.
+
+The backend pool's session-less emitters historically carried
+``eventid=`` markers on the legacy API without ever reaching the output
+plugins; they are deliberately plain diagnostics, converted like the
+rest -- pool bookkeeping is about the honeypot's own infrastructure,
+not attacker behavior, so it does not become events. The SSH connection
+service keeps the last legacy import in product code, for
+``log.callWithLogger``, which is not a diagnostic emitter.
 
 Why not ``twisted.logger`` for events too
 =========================================

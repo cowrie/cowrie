@@ -19,7 +19,7 @@ import os
 
 import treq
 from twisted.internet import defer, error
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -35,6 +35,8 @@ class Output(cowrie.core.output.Output):
     """
     dshield output
     """
+
+    _log = Logger()
 
     debug: bool = False
     userid: str
@@ -67,7 +69,7 @@ class Output(cowrie.core.output.Output):
         except (binascii.Error, ValueError):
             return
         if "=" in self.auth_key:
-            log.msg(
+            self._log.warn(
                 "dshield: auth_key looks base64-encoded but the current "
                 "DShield submit API expects the raw key. Update your "
                 "config if submissions are rejected."
@@ -108,26 +110,32 @@ class Output(cowrie.core.output.Output):
                 }
             )
             if self.debug:
-                log.msg(
-                    f"dshield: log appended, batch size {len(self.batch)} max size {self.batch_size}"
+                self._log.info(
+                    "dshield: log appended, batch size {batch_len} max size {batch_size}",
+                    batch_len=len(self.batch),
+                    batch_size=self.batch_size,
                 )
 
             if len(self.batch) >= self.batch_size:
                 if self.debug:
-                    log.msg("dshield: batch size reached, submitting")
+                    self._log.info("dshield: batch size reached, submitting")
                 batch_to_send = self.batch
                 self.submit_entries(batch_to_send)
                 self.batch = []
         elif eventid in ("cowrie.login.success", "cowrie.login.failed"):
-            log.msg("dshield: cowrie.login.success or cowrie.login.failed")
+            self._log.info("dshield: cowrie.login.success or cowrie.login.failed")
             self._state(session)["username"] = event.get("username", "")
             self._state(session)["password"] = event.get("password", "")
-            log.msg(f"dshield: {state['username']} {state['password']}")
+            self._log.info(
+                "dshield: {username} {password}",
+                username=state["username"],
+                password=state["password"],
+            )
         elif eventid == "cowrie.direct-tcpip.request":
-            log.msg("dshield: cowrie.direct-tcpip.request")
+            self._log.info("dshield: cowrie.direct-tcpip.request")
             self._state(session)["lastcommand"] = event.get("message", "")
         elif eventid == "cowrie.command.input":
-            log.msg("dshield: cowrie.command.input")
+            self._log.info("dshield: cowrie.command.input")
             self._state(session)["lastcommand"] = event["input"]
         elif eventid == "cowrie.client.kex":
             self._state(session)["hassh"] = event["hassh"]
@@ -147,7 +155,7 @@ class Output(cowrie.core.output.Output):
         """
         url = DEBUG_SUBMIT_URL if self.debug else SUBMIT_URL
         if self.debug:
-            log.msg(f"dshield: using debug url {url!r}")
+            self._log.info("dshield: using debug url {url!r}", url=url)
 
         # Build authentication header
         nonce = base64.b64encode(os.urandom(8)).decode("ascii")
@@ -161,7 +169,9 @@ class Output(cowrie.core.output.Output):
             f"ISC-HMAC-SHA256 Credentials={hash64} Userid={self.userid} Nonce={nonce}"
         )
         if self.debug:
-            log.msg(f"dshield: authentication header {auth_header}")
+            self._log.info(
+                "dshield: authentication header {auth_header}", auth_header=auth_header
+            )
 
         payload = {
             "type": "cowrie",
@@ -177,8 +187,8 @@ class Output(cowrie.core.output.Output):
         }
 
         if self.debug:
-            log.msg(f"dshield: posting headers {headers!r}")
-            log.msg(f"dshield: posting payload {payload!r}")
+            self._log.info("dshield: posting headers {headers!r}", headers=headers)
+            self._log.info("dshield: posting payload {payload!r}", payload=payload)
 
         try:
             response = yield treq.post(
@@ -194,20 +204,22 @@ class Output(cowrie.core.output.Output):
             error.ConnectingCancelledError,
             error.DNSLookupError,
         ) as e:
-            log.msg(f"dshield: request failed: {e}")
+            self._log.info("dshield: request failed: {error}", error=e)
             self.transmission_error(batch)
             return
         except Exception as e:
-            log.msg(f"dshield: request failed: {e}")
+            self._log.info("dshield: request failed: {error}", error=e)
             self.transmission_error(batch)
             return
 
         if self.debug:
-            log.msg(f"dshield: status code {response.code}")
-            log.msg(f"dshield: response {body}")
+            self._log.info("dshield: status code {code}", code=response.code)
+            self._log.info("dshield: response {body}", body=body)
 
         if 200 <= response.code < 300:
-            log.msg(f"dshield: submit response {body}")
+            self._log.info("dshield: submit response {body}", body=body)
         else:
-            log.msg(f"dshield: ERROR status {response.code}: {body}")
+            self._log.error(
+                "dshield: ERROR status {code}: {body}", code=response.code, body=body
+            )
             self.transmission_error(batch)

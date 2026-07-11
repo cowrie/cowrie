@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING
 from twisted.conch import recvline
 from twisted.conch.insults import insults
 from twisted.internet import defer, error
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log
+from twisted.python import failure
 
 from cowrie.core.config import CowrieConfig
 from cowrie.llm.llm import LLMClient
@@ -38,6 +39,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
     """
+
+    _log = Logger()
 
     # The session's event emitter, set from the transport in connectionMade.
     events: EventLog
@@ -232,7 +235,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Handle errors from the LLM client.
         """
-        log.err(f"LLM error: {err}")
+        self._log.failure("LLM error", failure=err)
         if self.terminal is None:
             return
         # Show nothing - just the prompt, as if the command produced no output
@@ -268,6 +271,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
+    _log = Logger()
+
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
@@ -280,7 +285,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         try:
             self.execcmd = execcmd.decode("utf8")
         except UnicodeDecodeError:
-            log.err(f"Unusual execcmd: {execcmd!r}")
+            self._log.failure("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 
@@ -328,7 +333,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         """
         Handle errors from the LLM client during exec.
         """
-        log.err(f"LLM exec error: {exec_failure}")
+        self._log.failure("LLM exec error", failure=exec_failure)
         if self.terminal is None:
             return
 

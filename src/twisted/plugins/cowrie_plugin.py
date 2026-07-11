@@ -14,9 +14,9 @@ from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.cred import portal
 from twisted.internet import reactor
-from twisted.logger import ILogObserver, globalLogPublisher
+from twisted.logger import ILogObserver, Logger, globalLogPublisher
 from twisted.plugin import IPlugin
-from twisted.python import log, usage
+from twisted.python import usage
 from zope.interface import implementer, provider
 
 import cowrie.llm.realm
@@ -32,6 +32,11 @@ from cowrie.core.output import Output
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
 
+# Explicit namespace: this module lives under twisted.plugins, but its
+# lines are Cowrie startup diagnostics and must answer to the operator's
+# log_level_cowrie configuration like every other cowrie.* namespace.
+_log = Logger(namespace="cowrie.plugin")
+
 
 class Options(usage.Options):
     """
@@ -45,11 +50,16 @@ class Options(usage.Options):
 
 @provider(ILogObserver)
 def importFailureObserver(event: dict) -> None:
-    if "failure" in event and event["failure"].type is ImportError:
-        log.err(
-            "ERROR: {}. Please run `pip install -U -r requirements.txt` "
+    # Legacy log.err events carry "failure"; twisted.logger failures
+    # carry "log_failure". Critical so the hint still reaches stderr
+    # before logging starts.
+    error = event.get("failure", event.get("log_failure"))
+    if error is not None and error.type is ImportError:
+        _log.critical(
+            "ERROR: {error}. Please run `pip install -U -r requirements.txt` "
             "from Cowrie's install directory and virtualenv to install "
-            "the new dependency".format(event["failure"].value.message)
+            "the new dependency",
+            error=str(error.value),
         )
 
 
@@ -110,12 +120,17 @@ Makes a Cowrie SSH/Telnet honeypot.
         if tz != "system":
             os.environ["TZ"] = tz
 
-        log.msg(f"Python Version {str(sys.version).replace(chr(10), '')}")
-        log.msg(
-            f"Twisted Version {__twisted_version__.major}.{__twisted_version__.minor}.{__twisted_version__.micro}"
+        _log.info(
+            "Python Version {version}", version=str(sys.version).replace(chr(10), "")
         )
-        log.msg(f"Cowrie Version {__cowrie_version__.__version__}")
-        log.msg(f"Sensor UUID: {self.uuid}")
+        _log.info(
+            "Twisted Version {major}.{minor}.{micro}",
+            major=__twisted_version__.major,
+            minor=__twisted_version__.minor,
+            micro=__twisted_version__.micro,
+        )
+        _log.info("Cowrie Version {version}", version=__cowrie_version__.__version__)
+        _log.info("Sensor UUID: {uuid}", uuid=self.uuid)
 
         # check configurations
         if not self.enableTelnet and not self.enableSSH and not self.pool_only:
@@ -145,17 +160,18 @@ Makes a Cowrie SSH/Telnet honeypot.
             try:
                 output = import_module(f"cowrie.output.{engine}").Output()
                 self.output_plugins.append(output)
-                log.msg(f"Loaded output engine: {engine}")
-            except ImportError as e:
-                log.err(
-                    f"Failed to load output engine: {engine} due to ImportError: {e}"
+                _log.info("Loaded output engine: {engine}", engine=engine)
+            except ImportError:
+                _log.failure(
+                    "Failed to load output engine: {engine} due to ImportError",
+                    engine=engine,
                 )
-                log.msg(
-                    f"Please install the dependencies for {engine} listed in requirements-output.txt"
+                _log.info(
+                    "Please install the dependencies for {engine} listed in requirements-output.txt",
+                    engine=engine,
                 )
             except Exception:
-                log.err()
-                log.msg(f"Failed to load output engine: {engine}")
+                _log.failure("Failed to load output engine: {engine}", engine=engine)
 
         self.dispatcher.sinks = [*self.output_plugins, renderer]
 

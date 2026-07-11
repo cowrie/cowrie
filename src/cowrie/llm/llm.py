@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING, Any
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.endpoints import HostnameEndpoint
-from twisted.python import failure as tw_failure
-from twisted.python import log
+from twisted.logger import Logger
 from twisted.web.client import (
     Agent,
     HTTPConnectionPool,
@@ -31,6 +30,8 @@ from cowrie.core.config import CowrieConfig
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    from twisted.python import failure as tw_failure
 
 
 @implementer(IBodyProducer)
@@ -89,6 +90,8 @@ class LLMClient:
     Client for communicating with OpenAI-compatible LLM APIs.
     """
 
+    _log = Logger()
+
     def __init__(self) -> None:
         self._conn_pool = HTTPConnectionPool(reactor)
         self._conn_pool._factory = QuietHTTP11ClientFactory  # pyright: ignore[reportPrivateUsage]
@@ -114,13 +117,15 @@ class LLMClient:
                 reactor, parsed.hostname or "localhost", parsed.port or 8080
             )
             self.agent = ProxyAgent(proxy_endpoint, reactor, pool=self._conn_pool)
-            log.msg(f"LLM using proxy: {parsed.hostname}:{parsed.port}")
+            self._log.info(
+                "LLM using proxy: {host}:{port}", host=parsed.hostname, port=parsed.port
+            )
         else:
             self.agent = Agent(reactor, pool=self._conn_pool)
         self.is_anthropic = "anthropic.com" in self.host
 
         if not self.api_key:
-            log.msg("WARNING: No LLM API key configured in [llm] section")
+            self._log.warn("WARNING: No LLM API key configured in [llm] section")
 
     def _build_headers(self) -> Headers:
         """Build HTTP headers with authentication."""
@@ -187,7 +192,9 @@ class LLMClient:
         request_body = self._format_request_body(prompt)
 
         if self.debug:
-            log.msg(f"LLM request: {json.dumps(request_body, indent=2)}")
+            self._log.info(
+                "LLM request: {request}", request=json.dumps(request_body, indent=2)
+            )
 
         url = f"{self.host}{self.path}"
         d: Deferred[Any] = self.agent.request(
@@ -215,17 +222,24 @@ class LLMClient:
         status_code, response = yield self._send_request(prompt)
 
         if status_code != 200:
-            log.err(f"LLM API error (status {status_code}): {response.decode('utf-8')}")
+            self._log.error(
+                "LLM API error (status {status}): {response}",
+                status=status_code,
+                response=response.decode("utf-8"),
+            )
             return ""
 
         try:
             response_json = json.loads(response)
-        except json.JSONDecodeError as e:
-            log.err(f"Failed to parse LLM response: {e}")
+        except json.JSONDecodeError:
+            self._log.failure("Failed to parse LLM response")
             return ""
 
         if self.debug:
-            log.msg(f"LLM response: {json.dumps(response_json, indent=2)}")
+            self._log.info(
+                "LLM response: {response}",
+                response=json.dumps(response_json, indent=2),
+            )
 
         # OpenAI-compatible format
         if "choices" in response_json and len(response_json["choices"]) > 0:
@@ -237,5 +251,5 @@ class LLMClient:
             content = response_json["content"][0].get("text", "")
             return content
 
-        log.err(f"Unexpected LLM response format: {response}")
+        self._log.error("Unexpected LLM response format: {response}", response=response)
         return ""

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from twisted.conch.telnet import StatefulTelnetProtocol, TelnetTransport
 from twisted.internet import defer, reactor
 from twisted.internet.protocol import ClientFactory
-from twisted.python import log
+from twisted.logger import Logger
 
 if TYPE_CHECKING:
     from twisted.internet.interfaces import IAddress
@@ -109,6 +109,8 @@ class TelnetClient(StatefulTelnetProtocol):
 
 
 class TelnetFactory(ClientFactory):
+    _log = Logger()
+
     def __init__(self, username, password, prompt, command, done_deferred, callback):
         self.username = username
         self.password = password
@@ -125,7 +127,7 @@ class TelnetFactory(ClientFactory):
         return transport
 
     def clientConnectionFailed(self, connector, reason):
-        log.err(f"Telnet connection failed. Reason: {reason}")
+        self._log.failure("Telnet connection failed.", failure=reason)
 
 
 class TelnetClientCommand:

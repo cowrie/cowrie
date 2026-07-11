@@ -17,7 +17,7 @@ import socket
 import time
 
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -83,6 +83,8 @@ py_exceptions = Counter(
 
 
 class Output(cowrie.core.output.Output):
+    _log = Logger()
+
     def start(self) -> None:
         port = CowrieConfig.getint("output_prometheus", "port", fallback=9000)
         addr = CowrieConfig.get("output_prometheus", "address", fallback="::")
@@ -92,8 +94,8 @@ class Output(cowrie.core.output.Output):
         start_http_server(port, addr=addr)
 
         if self.debug:
-            log.msg(f"[Prometheus] Exporter started on port: {port}")
-            log.msg(f"[Prometheus] Host label: {HOST_LABEL}")
+            self._log.info("[Prometheus] Exporter started on port: {port}", port=port)
+            self._log.info("[Prometheus] Host label: {label}", label=HOST_LABEL)
 
         # Helper structures
         self._start_times: dict[str, float] = {}
@@ -112,7 +114,7 @@ class Output(cowrie.core.output.Output):
             eid = event["eventid"]
 
             if self.debug:
-                log.msg(f"[Prometheus] Event: {eid}")
+                self._log.info("[Prometheus] Event: {eventid}", eventid=eid)
 
             if eid == "cowrie.session.connect":
                 self._on_session_connect(event)
@@ -140,7 +142,7 @@ class Output(cowrie.core.output.Output):
 
         except Exception as e:
             if self.debug:
-                log.msg(f"[Prometheus] Exception: {e!s}")
+                self._log.info("[Prometheus] Exception: {error}", error=e)
             py_exceptions.labels(exception=e.__class__.__name__).inc()
 
     def _on_session_connect(self, ev: dict) -> None:

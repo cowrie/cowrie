@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from twisted.python import log
+from twisted.logger import Logger
 
 import backend_pool.libvirt.guest_handler
 import backend_pool.libvirt.network_handler
@@ -31,6 +31,8 @@ class LibvirtError(Exception):
 
 
 class LibvirtBackendService:
+    _log = Logger()
+
     def __init__(self) -> None:
         # lazy import to avoid exception if not using the backend_pool
         # and libvirt not installed (#1185)
@@ -43,10 +45,8 @@ class LibvirtBackendService:
         # open connection to libvirt
         self.conn: Any = libvirt.open(libvirt_uri)
         if self.conn is None:
-            log.msg(
-                eventid="cowrie.backend_pool.libvirtd",
-                format="Failed to open connection to libvirtd at %(uri)s",
-                uri=libvirt_uri,
+            self._log.error(
+                "Failed to open connection to libvirtd at {uri}", uri=libvirt_uri
             )
             raise LibvirtError()
 
@@ -60,11 +60,7 @@ class LibvirtBackendService:
         seed: int = random.randint(0, sys.maxsize)
         self.network_table = backend_pool.util.generate_network_table(seed)
 
-        log.msg(
-            eventid="cowrie.backend_pool.libvirtd",
-            format="Connection to libvirtd established at %(uri)s",
-            uri=libvirt_uri,
-        )
+        self._log.info("Connection to libvirtd established at {uri}", uri=libvirt_uri)
 
     def start_backend(self) -> None:
         """
@@ -83,10 +79,7 @@ class LibvirtBackendService:
         self.ready = True
 
     def stop_backend(self) -> None:
-        log.msg(
-            eventid="cowrie.backend_pool.libvirtd",
-            format="Doing libvirtd clean shutdown...",
-        )
+        self._log.info("Doing libvirtd clean shutdown...")
 
         self.ready = False
 
@@ -95,10 +88,7 @@ class LibvirtBackendService:
     def shutdown_backend(self) -> None:
         self.conn.close()  # close libvirt connection
 
-        log.msg(
-            eventid="cowrie.backend_pool.libvirtd",
-            format="Connection to libvirtd closed successfully",
-        )
+        self._log.info("Connection to libvirtd closed successfully")
 
     def get_mac_ip(self, ip_tester: Callable[[str], bool]) -> tuple[str, str]:
         """
@@ -134,9 +124,7 @@ class LibvirtBackendService:
             self.conn, guest_mac, guest_unique_id
         )
         if dom is None:
-            log.msg(
-                eventid="cowrie.backend_pool.libvirtd", format="Failed to create guest"
-            )
+            self._log.error("Failed to create guest")
             return None
 
         return dom, snapshot, guest_ip
@@ -164,12 +152,8 @@ class LibvirtBackendService:
                 and os.path.isfile(snapshot)
             ):
                 os.remove(snapshot)  # destroy its disk snapshot
-        except Exception as error:
-            log.err(
-                eventid="cowrie.backend_pool.libvirtd",
-                format="Error destroying guest: %(error)s",
-                error=error,
-            )
+        except Exception:
+            self._log.failure("Error destroying guest")
 
     def __destroy_all_guests(self) -> None:
         domains = self.conn.listDomainsID()

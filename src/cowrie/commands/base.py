@@ -17,7 +17,7 @@ import time
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from twisted.internet import reactor
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core import utils
 from cowrie.shell.command import HoneyPotCommand, process_status
@@ -125,6 +125,8 @@ commands["who"] = Command_who
 
 
 class Command_echo(HoneyPotCommand):
+    _log = Logger()
+
     def call(self) -> None:
         newline = True
         escape_decode = False
@@ -165,7 +167,7 @@ class Command_echo(HoneyPotCommand):
                 self.write(string)
 
         except ValueError:
-            log.msg("echo command received Python incorrect hex escape")
+            self._log.info("echo command received Python incorrect hex escape")
 
 
 commands["/bin/echo"] = Command_echo

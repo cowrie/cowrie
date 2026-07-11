@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 
 import treq
-from twisted.python import log  # pylint: disable=no-name-in-module
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -19,6 +19,8 @@ from cowrie.core.config import CowrieConfig
 
 class Output(cowrie.core.output.Output):
     """Signal messenger output plugin."""
+
+    _log = Logger()
 
     def start(self) -> None:
         self.api_url = CowrieConfig.get("output_signal", "api_url").rstrip("/")
@@ -48,7 +50,7 @@ class Output(cowrie.core.output.Output):
             self._send(msgtxt)
 
     def _send(self, message: str) -> None:
-        log.msg("Signal plugin sending notification")
+        self._log.info("Signal plugin sending notification")
         payload = json.dumps(
             {
                 "number": self.sender,
@@ -65,4 +67,6 @@ class Output(cowrie.core.output.Output):
             headers=headers,
             allow_redirects=False,
         )
-        d.addErrback(log.err, "Signal plugin request failed")
+        d.addErrback(
+            lambda f: self._log.failure("Signal plugin request failed", failure=f)
+        )

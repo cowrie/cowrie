@@ -26,7 +26,7 @@ from twisted.conch.ssh.filetransfer import (
     FXF_TRUNC,
     FXF_WRITE,
 )
-from twisted.python import log
+from twisted.logger import Logger
 from twisted.python.compat import nativeString
 from zope.interface import implementer
 
@@ -180,6 +180,8 @@ class CowrieSFTPDirectory:
 
 @implementer(ISFTPServer)
 class SFTPServerForCowrieUser:
+    _log = Logger()
+
     def __init__(self, avatar):
         self.avatar = avatar
         self.avatar.server.initFileSystem(self.avatar.home)
@@ -214,39 +216,41 @@ class SFTPServerForCowrieUser:
 
     @translate_fs_errors
     def openFile(self, filename, flags, attrs):
-        log.msg(f"SFTP openFile: {filename}")
+        self._log.info("SFTP openFile: {filename}", filename=filename)
         return CowrieSFTPFile(self, self._absPath(filename), flags, attrs)
 
     @translate_fs_errors
     def removeFile(self, filename):
-        log.msg(f"SFTP removeFile: {filename}")
+        self._log.info("SFTP removeFile: {filename}", filename=filename)
         return self.fs.remove(self._absPath(filename))
 
     @translate_fs_errors
     def renameFile(self, oldpath, newpath):
-        log.msg(f"SFTP renameFile: {oldpath} {newpath}")
+        self._log.info(
+            "SFTP renameFile: {oldpath} {newpath}", oldpath=oldpath, newpath=newpath
+        )
         return self.fs.rename(self._absPath(oldpath), self._absPath(newpath))
 
     @translate_fs_errors
     def makeDirectory(self, path, attrs):
-        log.msg(f"SFTP makeDirectory: {path}")
+        self._log.info("SFTP makeDirectory: {path}", path=path)
         path = self._absPath(path)
         self.fs.mkdir2(path)
         self._setAttrs(path, attrs)
 
     @translate_fs_errors
     def removeDirectory(self, path):
-        log.msg(f"SFTP removeDirectory: {path}")
+        self._log.info("SFTP removeDirectory: {path}", path=path)
         return self.fs.rmdir(self._absPath(path))
 
     @translate_fs_errors
     def openDirectory(self, path):
-        log.msg(f"SFTP OpenDirectory: {path}")
+        self._log.info("SFTP OpenDirectory: {path}", path=path)
         return CowrieSFTPDirectory(self, self._absPath(path))
 
     @translate_fs_errors
     def getAttrs(self, path, followLinks):
-        log.msg(f"SFTP getAttrs: {path}")
+        self._log.info("SFTP getAttrs: {path}", path=path)
         path = self._absPath(path)
         if followLinks:
             s = self.fs.stat(path)
@@ -256,18 +260,22 @@ class SFTPServerForCowrieUser:
 
     @translate_fs_errors
     def setAttrs(self, path, attrs):
-        log.msg(f"SFTP setAttrs: {path}")
+        self._log.info("SFTP setAttrs: {path}", path=path)
         path = self._absPath(path)
         return self._setAttrs(path, attrs)
 
     @translate_fs_errors
     def readLink(self, path):
-        log.msg(f"SFTP readLink: {path}")
+        self._log.info("SFTP readLink: {path}", path=path)
         path = self._absPath(path)
         return self.fs.readlink(path)
 
     def makeLink(self, linkPath, targetPath):
-        log.msg(f"SFTP makeLink: {linkPath} {targetPath}")
+        self._log.info(
+            "SFTP makeLink: {linkPath} {targetPath}",
+            linkPath=linkPath,
+            targetPath=targetPath,
+        )
         linkPath = self._absPath(linkPath)
         targetPath = self._absPath(targetPath)
         return self.fs.symlink(targetPath, linkPath)

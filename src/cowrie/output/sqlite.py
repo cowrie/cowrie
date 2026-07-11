@@ -9,7 +9,7 @@ from typing import Any
 
 from twisted.enterprise import adbapi
 from twisted.internet import defer
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -19,6 +19,8 @@ class Output(cowrie.core.output.Output):
     """
     sqlite output
     """
+
+    _log = Logger()
 
     db: Any
 
@@ -34,7 +36,7 @@ class Output(cowrie.core.output.Output):
                 "sqlite3", database=sqliteFilename, check_same_thread=False
             )
         except sqlite3.OperationalError as e:
-            log.msg(e)
+            self._log.info("{error}", error=e)
 
         self.db.start()
 
@@ -45,8 +47,7 @@ class Output(cowrie.core.output.Output):
         self.db.close()
 
     def sqlerror(self, error):
-        log.err("sqlite error")
-        error.printTraceback()
+        self._log.failure("sqlite error", failure=error)
 
     def simpleQuery(self, sql, args):
         """

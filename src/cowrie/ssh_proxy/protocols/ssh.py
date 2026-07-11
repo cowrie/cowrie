@@ -10,7 +10,7 @@ import uuid
 from typing import Any
 
 from twisted.conch.ssh import connection, transport, userauth
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.utils import escape_nonprintable
@@ -70,6 +70,8 @@ PACKETLAYOUT = (
 
 
 class SSH(base_protocol.BaseProtocol):
+    _log = Logger()
+
     def __init__(self, server):
         super().__init__()
 
@@ -118,8 +120,10 @@ class SSH(base_protocol.BaseProtocol):
         elif message_num == transport.MSG_EXT_INFO:
             extensioncount: int = self.extract_int(4)
             for _ in range(extensioncount):
-                log.msg(
-                    f"SSH_MSG_EXT_INFO: {self.extract_string()!r}={self.extract_string()!r}"
+                self._log.debug(
+                    "SSH_MSG_EXT_INFO: {name!r}={value!r}",
+                    name=self.extract_string(),
+                    value=self.extract_string(),
                 )
             self.sendOn = False
 
@@ -144,7 +148,7 @@ class SSH(base_protocol.BaseProtocol):
             auth_list = self.extract_string()
 
             if b"publickey" in auth_list:
-                log.msg("[SSH] Detected Public Key Auth - Disabling!")
+                self._log.info("[SSH] Detected Public Key Auth - Disabling!")
                 payload = string_to_hex("password") + chr(0).encode()
                 # self.server.sendPacket(51, payload)
 
@@ -179,7 +183,9 @@ class SSH(base_protocol.BaseProtocol):
             channel_type = self.extract_string()
             channel_id = self.extract_int(4)
 
-            log.msg(f"got channel {channel_type!r} request")
+            self._log.debug(
+                "got channel {channel_type!r} request", channel_type=channel_type
+            )
 
             if channel_type == b"session":
                 # if using an interactive session reset frontend timeout
@@ -228,7 +234,9 @@ class SSH(base_protocol.BaseProtocol):
                     )
 
                 else:
-                    log.msg("[SSH] Detected Port Forwarding Channel - Disabling!")
+                    self._log.info(
+                        "[SSH] Detected Port Forwarding Channel - Disabling!"
+                    )
                     if self.server.events:
                         self.server.events.dispatch(
                             "cowrie.direct-tcpip.data",
@@ -249,7 +257,10 @@ class SSH(base_protocol.BaseProtocol):
             else:
                 # UNKNOWN CHANNEL TYPE
                 if channel_type not in [b"exit-status"]:
-                    log.msg(f"[SSH Unknown Channel Type Detected - {channel_type!r}")
+                    self._log.info(
+                        "[SSH Unknown Channel Type Detected - {channel_type!r}",
+                        channel_type=channel_type,
+                    )
 
         elif message_num == connection.MSG_CHANNEL_OPEN_CONFIRMATION:
             channel = self.get_channel(self.extract_int(4), parent)
@@ -277,7 +288,9 @@ class SSH(base_protocol.BaseProtocol):
                 channel["session"] = term.Term(
                     the_uuid, channel["name"], self, channel["clientID"]
                 )
-                log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}")
+                self._log.debug(
+                    "MSG_CHANNEL_REQUEST: {channel_type!r}", channel_type=channel_type
+                )
 
             elif channel_type == b"exec":
                 channel["name"] = "[EXEC" + str(channel["serverID"]) + "]"
@@ -286,12 +299,20 @@ class SSH(base_protocol.BaseProtocol):
                 channel["session"] = exec_term.ExecTerm(
                     the_uuid, channel["name"], self, channel["serverID"], command
                 )
-                log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {command!r}")
+                self._log.debug(
+                    "MSG_CHANNEL_REQUEST: {channel_type!r}: {command!r}",
+                    channel_type=channel_type,
+                    command=command,
+                )
 
             elif channel_type == b"subsystem":
                 self.extract_bool()
                 subsystem = self.extract_string()
-                log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}")
+                self._log.debug(
+                    "MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}",
+                    channel_type=channel_type,
+                    subsystem=subsystem,
+                )
 
                 if subsystem == b"sftp":
                     if CowrieConfig.getboolean("ssh", "sftp_enabled"):
@@ -304,18 +325,25 @@ class SSH(base_protocol.BaseProtocol):
                         self.send_back(parent, 100, int_to_hex(channel["serverID"]))
                 else:
                     # UNKNOWN SUBSYSTEM
-                    log.msg(f"MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}")
-                    log.msg(
-                        "[SSH] Unknown Subsystem Type Detected - "
-                        + escape_nonprintable(subsystem)
+                    self._log.debug(
+                        "MSG_CHANNEL_REQUEST: {channel_type!r}: {subsystem!r}",
+                        channel_type=channel_type,
+                        subsystem=subsystem,
+                    )
+                    self._log.info(
+                        "[SSH] Unknown Subsystem Type Detected - {subsystem}",
+                        subsystem=escape_nonprintable(subsystem),
                     )
             elif channel_type == b"env":
                 _ = self.extract_bool()
                 var = self.extract_string()
                 value = self.extract_string()
-                log.msg(
-                    f"MSG_CHANNEL_REQUEST: env: "
-                    f"{escape_nonprintable(var)}={escape_nonprintable(value)}"
+                # Attacker-supplied environment variables are a signal,
+                # not protocol trace; keep visible at the default level.
+                self._log.info(
+                    "MSG_CHANNEL_REQUEST: env: {var}={value}",
+                    var=escape_nonprintable(var),
+                    value=escape_nonprintable(value),
                 )
 
             else:
@@ -326,9 +354,9 @@ class SSH(base_protocol.BaseProtocol):
                     b"exit-status",
                     b"exit-signal",
                 ]:
-                    log.msg(
-                        "[SSH] Unknown Channel Request Type Detected - "
-                        + escape_nonprintable(channel_type)
+                    self._log.info(
+                        "[SSH] Unknown Channel Request Type Detected - {channel_type}",
+                        channel_type=escape_nonprintable(channel_type),
                     )
 
         elif message_num == connection.MSG_CHANNEL_FAILURE:
@@ -342,7 +370,7 @@ class SSH(base_protocol.BaseProtocol):
             if "[SERVER]" in channel and "[CLIENT]" in channel:
                 # CHANNEL CLOSED
                 if channel["session"] is not None:
-                    log.msg("remote close")
+                    self._log.debug("remote close")
                     channel["session"].channel_closed()
 
                 self.channels.remove(channel)
@@ -366,7 +394,9 @@ class SSH(base_protocol.BaseProtocol):
                     self.send_back(parent, 82, b"")
 
         else:
-            log.msg(f"Unhandled SSH packet: {message_num}")
+            self._log.debug(
+                "Unhandled SSH packet: {message_num}", message_num=message_num
+            )
 
         if self.sendOn:
             if parent == "[SERVER]":

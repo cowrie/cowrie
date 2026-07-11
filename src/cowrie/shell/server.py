@@ -10,7 +10,7 @@ import json
 import random
 from typing import TYPE_CHECKING
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import open_data_binary
@@ -30,6 +30,8 @@ class CowrieServer:
     multiple Cowrie connections
     """
 
+    _log = Logger()
+
     def __init__(self, realm: IRealm) -> None:
         self.fs: fs.HoneyPotFilesystem | None = None
         self.process = None
@@ -45,7 +47,9 @@ class CowrieServer:
         except configparser.Error:
             self.arch = "linux-x64-lsb"
 
-        log.msg(f"Initialized emulated server as architecture: {self.arch}")
+        self._log.info(
+            "Initialized emulated server as architecture: {arch}", arch=self.arch
+        )
 
     def initFileSystem(self, home: str) -> None:
         """
@@ -63,5 +67,5 @@ class CowrieServer:
                     cmdoutput = json.load(f)
             self.process = cmdoutput["command"]["ps"]
         except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
-            log.msg(f"Could not load process list {e!r}")
+            self._log.info("Could not load process list {error!r}", error=e)
             self.process = None

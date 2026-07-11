@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import pymongo
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -17,11 +17,13 @@ class Output(cowrie.core.output.Output):
     mongodb output
     """
 
+    _log = Logger()
+
     def insert_one(self, collection, event):
         try:
             object_id = collection.insert_one(event).inserted_id
         except Exception as e:
-            log.msg(f"mongo error - {e}")
+            self._log.info("mongo error - {error}", error=e)
         else:
             return object_id
 
@@ -29,7 +31,7 @@ class Output(cowrie.core.output.Output):
         try:
             object_id = collection.update_one({"session": session}, {"$set": doc})
         except Exception as e:
-            log.msg(f"mongo error - {e}")
+            self._log.info("mongo error - {error}", error=e)
         else:
             return object_id
 
@@ -53,7 +55,7 @@ class Output(cowrie.core.output.Output):
             self.col_ipforwards = self.mongo_db["ipforwards"]
             self.col_ipforwardsdata = self.mongo_db["ipforwardsdata"]
         except Exception as e:
-            log.msg(f"output_mongodb: Error: {e!s}")
+            self._log.info("output_mongodb: Error: {error}", error=e)
 
     def stop(self):
         self.mongo_client.close()
@@ -76,7 +78,7 @@ class Output(cowrie.core.output.Output):
                 event["endtime"] = None
                 event["sshversion"] = None
                 event["termsize"] = None
-                log.msg("Session Created")
+                self._log.info("Session Created")
                 self.insert_one(self.col_sessions, event)
 
             case "cowrie.login.success" | "cowrie.login.failed":

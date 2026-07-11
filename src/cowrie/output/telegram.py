@@ -6,7 +6,7 @@
 # Simple Telegram Bot logger
 
 import treq
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -16,6 +16,8 @@ class Output(cowrie.core.output.Output):
     """
     telegram output
     """
+
+    _log = Logger()
 
     def start(self):
         self.bot_token = CowrieConfig.get("output_telegram", "bot_token")
@@ -57,7 +59,7 @@ class Output(cowrie.core.output.Output):
             self.send_message(msgtxt)
 
     def send_message(self, message):
-        log.msg("Telegram plugin will try to call TelegramBot")
+        self._log.info("Telegram plugin will try to call TelegramBot")
         try:
             treq.get(
                 "https://api.telegram.org/bot" + self.bot_token + "/sendMessage",
@@ -69,4 +71,4 @@ class Output(cowrie.core.output.Output):
                 allow_redirects=False,
             )
         except Exception:
-            log.msg("Telegram plugin request error")
+            self._log.info("Telegram plugin request error")

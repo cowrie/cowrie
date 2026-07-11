@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from twisted.python import log
+from twisted.logger import Logger
 
 if TYPE_CHECKING:
     from twisted.cred.portal import IRealm
@@ -19,13 +19,17 @@ class CowrieServer:
     multiple Cowrie connections
     """
 
+    _log = Logger()
+
     def __init__(self, realm: IRealm) -> None:
         from cowrie.core.config import CowrieConfig
 
-        log.msg("Initialized LLM backend server")
+        self._log.info("Initialized LLM backend server")
         # Get hostname from config or use default
         self.hostname = CowrieConfig.get("honeypot", "hostname", fallback="svr04")
-        log.msg(f"LLM backend server using hostname: {self.hostname}")
+        self._log.info(
+            "LLM backend server using hostname: {hostname}", hostname=self.hostname
+        )
 
         # We don't need a virtual filesystem for the LLM backend
         # The LLM will simulate all filesystem interactions

@@ -11,7 +11,7 @@ import secrets
 import string
 
 import oci
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -21,6 +21,8 @@ class Output(cowrie.core.output.Output):
     """
     Oracle Cloud output
     """
+
+    _log = Logger()
 
     def generate_random_log_id(self):
         charset = string.ascii_letters + string.digits
@@ -60,12 +62,14 @@ class Output(cowrie.core.output.Output):
                 ),
             )
         except oci.exceptions.ServiceError as ex:
-            log.err(
-                f"Oracle Cloud plugin Error: {ex.message}\n"
-                + f"Oracle Cloud plugin Status Code: {ex.status}\n"
+            self._log.failure(
+                "Oracle Cloud plugin Error: {msg}\n"
+                "Oracle Cloud plugin Status Code: {status}\n",
+                msg=ex.message,
+                status=ex.status,
             )
         except Exception as ex:
-            log.err(f"Oracle Cloud plugin Error: {ex}")
+            self._log.failure("Oracle Cloud plugin Error: {error}", error=ex)
             raise
 
     def start(self):
@@ -102,7 +106,7 @@ class Output(cowrie.core.output.Output):
                 config_with_key_content
             )
         else:
-            log.msg(
+            self._log.info(
                 "output_oraclecloud.authtype must be instance_principals or user_principals"
             )
             raise ValueError()

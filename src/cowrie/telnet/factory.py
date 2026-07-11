@@ -15,7 +15,7 @@ import time
 from typing import TYPE_CHECKING
 
 from twisted.internet import protocol
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.shell.honeyfs import read_honeyfs_bytes
 from cowrie.telnet.transport import CowrieTelnetTransport
@@ -32,6 +32,8 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
     This factory creates HoneyPotTelnetAuthProtocol instances
     They listen directly to the TCP port
     """
+
+    _log = Logger()
 
     tac: IPlugin
     banner: bytes
@@ -51,8 +53,8 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
                 .decode("utf-8", errors="replace")
                 .encode("utf-8")
             )
-        except FileNotFoundError as e:
-            log.err(e, "ERROR: Failed to load /etc/issue.net")
+        except FileNotFoundError:
+            self._log.failure("ERROR: Failed to load /etc/issue.net")
             self.banner = b""
 
         # For use by the uptime command
@@ -67,7 +69,7 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
             )
 
         super().startFactory()
-        log.msg("Ready to accept Telnet connections")
+        self._log.info("Ready to accept Telnet connections")
 
     def stopFactory(self) -> None:
         """

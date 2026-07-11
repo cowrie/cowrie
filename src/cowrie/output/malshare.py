@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 import treq
 from twisted.internet import defer, error
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -26,6 +26,8 @@ class Output(cowrie.core.output.Output):
     """
     malshare output
     """
+
+    _log = Logger()
 
     apiKey: str
 
@@ -79,16 +81,16 @@ class Output(cowrie.core.output.Output):
             error.ConnectingCancelledError,
             error.DNSLookupError,
         ) as e:
-            log.msg(f"MalShare Request failed: {e}")
+            self._log.info("MalShare Request failed: {error}", error=e)
             return
         except Exception as e:
-            log.msg(f"MalShare Request failed: {e}")
+            self._log.info("MalShare Request failed: {error}", error=e)
             return
 
         # Drain the body so the connection returns to the pool.
         yield response.text()
 
         if 200 <= response.code < 300:
-            log.msg("Submitted to MalShare")
+            self._log.info("Submitted to MalShare")
         else:
-            log.msg(f"MalShare Request failed: {response.code}")
+            self._log.info("MalShare Request failed: {code}", code=response.code)

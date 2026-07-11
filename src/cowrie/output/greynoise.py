@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import treq
 from twisted.internet import defer, error
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -24,6 +24,8 @@ class Output(cowrie.core.output.Output):
     """
     greynoise output
     """
+
+    _log = Logger()
 
     def start(self):
         """
@@ -82,24 +84,26 @@ class Output(cowrie.core.output.Output):
             error.ConnectingCancelledError,
             error.DNSLookupError,
         ):
-            log.msg("GreyNoise requests timeout")
+            self._log.info("GreyNoise requests timeout")
             return
 
         if response.code == 404:
             rsp = yield response.json()
-            log.err(f"GreyNoise: {rsp['ip']} - {rsp['message']}")
+            self._log.error("GreyNoise: {ip} - {msg}", ip=rsp["ip"], msg=rsp["message"])
             return
 
         if response.code != 200:
             rsp = yield response.text()
-            log.err(f"GreyNoise: got error {rsp}")
+            self._log.error("GreyNoise: got error {response}", response=rsp)
             return
 
         j = yield response.json()
         if self.debug:
-            log.msg("GreyNoise: debug: " + repr(j))
+            self._log.info("GreyNoise: debug: {response!r}", response=j)
 
         if j["message"] == "Success":
             message(j)
         else:
-            log.msg("GreyNoise: no results for for IP {}".format(event["src_ip"]))
+            self._log.info(
+                "GreyNoise: no results for for IP {src_ip}", src_ip=event["src_ip"]
+            )

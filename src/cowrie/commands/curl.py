@@ -13,7 +13,7 @@ from urllib import parse
 import treq
 from twisted.internet import error
 from twisted.internet.defer import inlineCallbacks
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
@@ -201,6 +201,8 @@ class Command_curl(HoneyPotCommand):
     curl command
     """
 
+    _log = Logger()
+
     limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
     outfile: str | None = None  # outfile is the file saved inside the honeypot
     artifact: (
@@ -297,8 +299,9 @@ class Command_curl(HoneyPotCommand):
 
         # Check rate limit before proceeding
         if not curl_rate_limiter.check(self.host):
-            log.msg(
-                f"curl: rate limit exceeded for host: {self.host}. Simulating connection timeout"
+            self._log.info(
+                "curl: rate limit exceeded for host: {host}. Simulating connection timeout",
+                host=self.host,
             )
 
             # Simulate connection timeout
@@ -310,7 +313,7 @@ class Command_curl(HoneyPotCommand):
 
         allowed = yield communication_allowed(self.host)
         if not allowed:
-            log.msg("Attempt to access blocked network address")
+            self._log.info("Attempt to access blocked network address")
             self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
             self.exit(6)
             return None
@@ -378,8 +381,11 @@ class Command_curl(HoneyPotCommand):
             return
 
         if self.limit_size > 0 and self.totallength > self.limit_size:
-            log.msg(
-                f"Not saving URL ({self.url.decode()}) (size: {self.totallength}) exceeds file size limit ({self.limit_size})"
+            self._log.info(
+                "Not saving URL ({url}) (size: {size}) exceeds file size limit ({limit})",
+                url=self.url.decode(),
+                size=self.totallength,
+                limit=self.limit_size,
             )
             self.exit()
             return
@@ -407,8 +413,11 @@ class Command_curl(HoneyPotCommand):
             return
         self.currentlength += len(data)
         if self.limit_size > 0 and self.currentlength > self.limit_size:
-            log.msg(
-                f"Not saving URL ({self.url.decode()}) (size: {self.currentlength}) exceeds file size limit ({self.limit_size})"
+            self._log.info(
+                "Not saving URL ({url}) (size: {size}) exceeds file size limit ({limit})",
+                url=self.url.decode(),
+                size=self.currentlength,
+                limit=self.limit_size,
             )
             self.exit()
             return
@@ -503,11 +512,7 @@ class Command_curl(HoneyPotCommand):
         # defer.CancelledError,
         # error.ConnectingCancelledError,
 
-        log.msg(response.printTraceback())
-        errormsg = ""
-        if hasattr(response, "getErrorMessage"):  # Exceptions
-            errormsg = response.getErrorMessage()
-        log.msg(errormsg)
+        self._log.failure("Unhandled curl error", failure=response)
         self.write("\n")
 
         self.exit()

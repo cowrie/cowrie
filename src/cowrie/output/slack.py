@@ -9,7 +9,7 @@ import time
 from typing import Any
 
 from slack import WebClient
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -19,6 +19,8 @@ class Output(cowrie.core.output.Output):
     """
     slack output
     """
+
+    _log = Logger()
 
     def start(self) -> None:
         self.name = "slack output engine"
@@ -32,9 +34,10 @@ class Output(cowrie.core.output.Output):
         )
         self.verbose = CowrieConfig.getboolean("output_slack", "verbose", fallback=True)
         if not self.show_timestamp and not self.simplified:
-            log.msg(
-                f"{self.name}: setting 'timestamp=false' is only effective when "
-                + "'simplified' mode is enabled, this will be ignored."
+            self._log.warn(
+                "{name}: setting 'timestamp=false' is only effective when "
+                "'simplified' mode is enabled, this will be ignored.",
+                name=self.name,
             )
 
     def stop(self) -> None:

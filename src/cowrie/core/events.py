@@ -20,8 +20,7 @@ import time
 from os import environ
 from typing import TYPE_CHECKING, Any
 
-from twisted.logger import formatTime
-from twisted.python import log
+from twisted.logger import Logger, formatTime
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.output import convert
@@ -29,10 +28,29 @@ from cowrie.core.output import convert
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+# Pipeline diagnostics (sink failures) log under this module's namespace;
+# the rendered event lines carry their own so operators can control their
+# verbosity independently (log_level_cowrie.events).
+_log = Logger()
+_console_log = Logger(namespace="cowrie.events")
+
 # Log every FAILURE_LOG_INTERVAL'th delivery failure per sink after the
 # first, so an unreachable database does not turn every event into an
 # error line.
 FAILURE_LOG_INTERVAL = 100
+
+
+def _sink_failure_line(message: str) -> None:
+    """Default diagnostic emitter for sink failures. The message is data,
+    not a format string: exception text may contain braces."""
+    _log.error("{log_message}", log_message=message)
+
+
+def _console_line(message: str, system: str = "-") -> None:
+    """Default emitter for rendered event lines: the diagnostic log, with
+    the session identity as the line's system prefix. The message is data,
+    not a format string: it interpolates attacker-controlled fields."""
+    _console_log.info("{log_message}", log_message=message, log_system=system)
 
 
 class EventDispatcher:
@@ -44,7 +62,7 @@ class EventDispatcher:
     def __init__(
         self,
         sinks: list[Any],
-        logmsg: Callable[..., None] = log.msg,
+        logmsg: Callable[..., None] = _sink_failure_line,
     ) -> None:
         self.sinks = sinks
         self.logmsg = logmsg
@@ -225,7 +243,7 @@ class ConsoleRenderer:
     # Session-less operational events still deserve their log line.
     accepts_sessionless = True
 
-    def __init__(self, logmsg: Callable[..., None] = log.msg) -> None:
+    def __init__(self, logmsg: Callable[..., None] = _console_line) -> None:
         self.logmsg = logmsg
 
     def write(self, event: dict[str, Any]) -> None:

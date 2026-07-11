@@ -22,8 +22,9 @@ from typing import Any
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.internet.protocol import connectionDone
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import failure, log, randbytes
+from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
@@ -31,6 +32,7 @@ from cowrie.core.utils import escape_nonprintable
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
+    _log = Logger()
     startTime: float = 0.0
     gotVersion: bool = False
     buf: bytes
@@ -100,7 +102,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         # completes drives the base sendKexInit into raising a RuntimeError.
         # Disconnect such a protocol violation cleanly instead.
         if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
-            log.msg("Duplicate KEXINIT during key exchange, disconnecting")
+            self._log.info("Duplicate KEXINIT during key exchange, disconnecting")
             self.transport.loseConnection()
             return
         transport.SSHServerTransport.sendKexInit(self)
@@ -133,8 +135,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 )
             m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
-                log.msg(
-                    f"Bad protocol version identification: {self.otherVersionString!r}"
+                self._log.info(
+                    "Bad protocol version identification: {version!r}",
+                    version=self.otherVersionString,
                 )
                 # OpenSSH sending the same message
                 self.transport.write(b"Invalid SSH identification string.\n")
@@ -251,7 +254,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg("Timeout reached in HoneyPotSSHTransport")
+        self._log.info("Timeout reached in HoneyPotSSHTransport")
         self.transport.loseConnection()
 
     def setService(self, service):
@@ -300,8 +303,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         else:
             # this message is used to detect Cowrie behaviour
             # self.transport.write(b"Packet corrupt\n")
-            log.msg(
-                f"[SERVER] - Disconnecting with error, code {reason} reason: {desc}"
+            self._log.info(
+                "[SERVER] - Disconnecting with error, code {code} reason: {desc}",
+                code=reason,
+                desc=desc,
             )
             self.transport.loseConnection()
 
@@ -316,4 +321,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                             disconnection.
         @type description: L{str}
         """
-        log.msg(f"Got remote error, code {reasonCode} reason: {description}")
+        self._log.info(
+            "Got remote error, code {code} reason: {description}",
+            code=reasonCode,
+            description=description,
+        )

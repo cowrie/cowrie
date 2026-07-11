@@ -11,12 +11,15 @@ import os
 import re
 import stat
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from twisted.python import failure, log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+
+if TYPE_CHECKING:
+    from twisted.python import failure
 
 # FD target type constants
 FD_STDIN = "stdin"
@@ -34,6 +37,8 @@ MAX_OPEN_FILES = 1024
 
 
 class PipeProtocol:
+    _log = Logger()
+
     def __init__(
         self,
         protocol: Any,
@@ -261,7 +266,11 @@ class PipeProtocol:
                 self.protocol.fs.update_size(outfile, 0)
                 start_size = 0
             except OSError as e:
-                log.msg(f"Failed to truncate redirect target {safeoutfile}: {e}")
+                self._log.info(
+                    "Failed to truncate redirect target {outfile}: {error}",
+                    outfile=safeoutfile,
+                    error=e,
+                )
                 return None
         return safeoutfile, start_size
 
@@ -271,7 +280,7 @@ class PipeProtocol:
         try:
             self.protocol.terminal.write(message.encode("utf8"))
         except Exception:
-            log.msg(message)
+            self._log.info("{msg}", msg=message)
 
     def connectionMade(self) -> None:
         if self.input_data is None:
@@ -313,10 +322,18 @@ class PipeProtocol:
         pass
 
     def processExited(self, reason: failure.Failure) -> None:
-        log.msg(f"processExited for {self.cmd}, status {reason.value.exitCode}")
+        self._log.info(
+            "processExited for {cmd}, status {status}",
+            cmd=self.cmd,
+            status=reason.value.exitCode,
+        )
 
     def processEnded(self, reason: failure.Failure) -> None:
-        log.msg(f"processEnded for {self.cmd}, status {reason.value.exitCode}")
+        self._log.info(
+            "processEnded for {cmd}, status {status}",
+            cmd=self.cmd,
+            status=reason.value.exitCode,
+        )
 
     def _pipe_to_next(self, data: bytes) -> bool:
         """
@@ -334,7 +351,7 @@ class PipeProtocol:
         if self.protocol is not None and self.protocol.terminal is not None:
             self.protocol.terminal.write(data)
         else:
-            log.msg("Connection was probably lost. Could not write to terminal")
+            self._log.info("Connection was probably lost. Could not write to terminal")
 
     def write_stdout(self, data: bytes) -> None:
         self._write_to_fd(1, data)
@@ -370,7 +387,7 @@ class PipeProtocol:
             with open(real_path, "ab") as f:
                 f.write(data)
         except OSError as e:
-            log.msg(f"Failed to write redirected output: {e}")
+            self._log.info("Failed to write redirected output: {error}", error=e)
             return
 
         if is_stdout:

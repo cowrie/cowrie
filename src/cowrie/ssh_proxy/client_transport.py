@@ -9,8 +9,8 @@ from typing import Any
 
 from twisted.conch.ssh import transport
 from twisted.internet import defer, protocol
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import log
 
 from cowrie.core.config import CowrieConfig
 from cowrie.ssh_proxy.util import bin_string_to_hex, string_to_hex
@@ -43,6 +43,8 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
     authentication to that server, and sending messages it gets to the handler.
     """
 
+    _log = Logger()
+
     def __init__(self, factory: BackendSSHFactory):
         self.delayedPackets: list[tuple[int, bytes]] = []
         self.factory: BackendSSHFactory = factory
@@ -54,7 +56,9 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         self.frontendTriedPassword = None
 
     def connectionMade(self):
-        log.msg(f"Connected to SSH backend at {self.transport.getPeer().host}")
+        self._log.info(
+            "Connected to SSH backend at {host}", host=self.transport.getPeer().host
+        )
         self.factory.server.client = self
         self.factory.server.sshParse.set_client(self)
         transport.SSHClientTransport.connectionMade(self)
@@ -63,7 +67,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         return defer.succeed(True)
 
     def connectionSecure(self):
-        log.msg("Backend Connection Secured")
+        self._log.info("Backend Connection Secured")
         self.canAuth = True
         self.authenticateBackend()
 
@@ -88,7 +92,11 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         # so these credentials from the config may not be needed after all
         username = CowrieConfig.get("proxy", "backend_user")
         password = CowrieConfig.get("proxy", "backend_pass")
-        log.msg(f"Will auth with backend: {username}/{password}")
+        self._log.info(
+            "Will auth with backend: {username}/{password}",
+            username=username,
+            password=password,
+        )
 
         self.sendPacket(5, bin_string_to_hex(b"ssh-userauth"))
         payload = (
@@ -140,7 +148,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg("Timeout reached in BackendSSHTransport")
+        self._log.info("Timeout reached in BackendSSHTransport")
         self.transport.loseConnection()
         self.factory.server.transport.loseConnection()
 
@@ -156,7 +164,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
             if message == b"exit-status":
                 pointer += leng + 1  # also boolean ignored
                 exit_status = get_int(payload[pointer:])
-                log.msg(f"exitCode: {exit_status}")
+                self._log.debug("exitCode: {exit_status}", exit_status=exit_status)
 
         if transport.SSHClientTransport.isEncrypted(self, "both"):
             self.packet_buffer(messageNum, payload)
@@ -170,7 +178,9 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
         """
         if not self.factory.server.frontendAuthenticated:
             # wait till frontend connects and authenticates to send packets to them
-            log.msg("Connection to client not ready, buffering packet from backend")
+            self._log.debug(
+                "Connection to client not ready, buffering packet from backend"
+            )
             self.delayedPackets.append((message_num, payload))
         else:
             if len(self.delayedPackets) > 0:

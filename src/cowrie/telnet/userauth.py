@@ -23,12 +23,14 @@ from twisted.conch.telnet import (
     ITelnetProtocol,
 )
 from twisted.internet.protocol import connectionDone
-from twisted.python import failure, log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.credentials import UsernamePasswordIP
 
 if TYPE_CHECKING:
+    from twisted.python import failure
+
     from cowrie.telnet.transport import CowrieTelnetTransport
 
 # NEW-ENVIRON telnet option (RFC 1572)
@@ -53,6 +55,8 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     protocol is replaced with HoneyPotTelnetSession.
     """
 
+    _log = Logger()
+
     loginPrompt = b"login: "
     passwordPrompt = b"Password: "
     windowSize: list[int]
@@ -62,7 +66,11 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         self.transport.negotiationMap[NAWS] = self.telnet_NAWS
         # Initial option negotiation. Want something at least for Mirai
         for opt in (NAWS,):
-            self.transport.doChain(opt).addErrback(log.err)
+            self.transport.doChain(opt).addErrback(
+                lambda f: self._log.failure(
+                    "Telnet option negotiation failed", failure=f
+                )
+            )
 
         # Register NEW-ENVIRON subnegotiation handler for CVE-2026-24061 detection
         self.transport.negotiationMap[NEW_ENVIRON] = self.telnet_NEW_ENVIRON
@@ -183,7 +191,7 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
             width, height = struct.unpack("!HH", b"".join(data))
             self.windowSize = [height, width]
         else:
-            log.msg("Wrong number of NAWS bytes")
+            self._log.info("Wrong number of NAWS bytes")
 
     def telnet_NEW_ENVIRON(self, data: list[bytes]) -> None:
         """

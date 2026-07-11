@@ -9,7 +9,7 @@ import os
 import re
 import time
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core import ttylog
 from cowrie.core.checkers import HoneypotPasswordChecker
@@ -42,6 +42,8 @@ def remove_all(original_string: bytes, remove_list: list[bytes]) -> bytes:
 
 
 class TelnetHandler:
+    _log = Logger()
+
     def __init__(self, server):
         # holds packet data; useful to manipulate it across functions as needed
         self.currentData: bytes = b""
@@ -149,7 +151,9 @@ class TelnetHandler:
             self.client.transport.write(packet)
             # log raw packets if user sets so
             if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
-                log.msg("to_backend - " + data.decode("unicode-escape"))
+                self._log.info(
+                    "to_backend - {data}", data=data.decode("unicode-escape")
+                )
 
             if self.ttylogEnabled and self.authStarted:
                 cleanData = data.replace(
@@ -171,7 +175,7 @@ class TelnetHandler:
 
         # log raw packets if user sets so
         if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
-            log.msg("to_frontend - " + data.decode("unicode-escape"))
+            self._log.info("to_frontend - {data}", data=data.decode("unicode-escape"))
 
         if self.ttylogEnabled and self.authStarted:
             ttylog.ttylog_write(
@@ -251,7 +255,10 @@ class TelnetHandler:
             # cleanup
             self.usernameState = process_backspaces(self.usernameState)
 
-            log.msg(f"User input login: {self.usernameState.decode('unicode-escape')}")
+            self._log.info(
+                "User input login: {username}",
+                username=self.usernameState.decode("unicode-escape"),
+            )
             self.inputingLogin = False
 
             # actually send to backend
@@ -281,8 +288,9 @@ class TelnetHandler:
             # cleanup
             self.passwordState = process_backspaces(self.passwordState)
 
-            log.msg(
-                f"User input password: {self.passwordState.decode('unicode-escape')}"
+            self._log.info(
+                "User input password: {password}",
+                password=self.passwordState.decode("unicode-escape"),
             )
             self.inputingPassword = False
 
@@ -299,7 +307,7 @@ class TelnetHandler:
                     CowrieConfig.getint("honeypot", "idle_timeout", fallback=300)
                 )
             else:
-                log.msg("Sending invalid auth to backend")
+                self._log.info("Sending invalid auth to backend")
                 passwordToSend = self.backendPassword + b"fake"
 
             # actually send to backend
@@ -314,14 +322,14 @@ class TelnetHandler:
         """
         hasPassword = re.search(self.passwordPromptRegex, self.currentData)
         if hasPassword:
-            log.msg("Password prompt from backend")
+            self._log.info("Password prompt from backend")
             self.authStarted = True
             self.inputingPassword = True
             self.passwordState = b""
 
         hasLogin = re.search(self.usernamePromptRegex, self.currentData)
         if hasLogin:
-            log.msg("Login prompt from backend")
+            self._log.info("Login prompt from backend")
             self.authStarted = True
             self.inputingLogin = True
             self.usernameState = b""
@@ -338,8 +346,9 @@ class TelnetHandler:
         if hasNegotiationLogin:
             self.usernameState = hasNegotiationLogin.group(2)
             username_str = self.usernameState.decode("unicode-escape")
-            log.msg(
-                f"Detected username {username_str} in negotiation, spoofing for backend..."
+            self._log.info(
+                "Detected username {username} in negotiation, spoofing for backend...",
+                username=username_str,
             )
 
             # Log the environment variable for consistency with shell mode

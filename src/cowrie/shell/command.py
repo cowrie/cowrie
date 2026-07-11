@@ -15,7 +15,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 from twisted.internet import error
-from twisted.python import failure, log
+from twisted.logger import Logger
+from twisted.python import failure
 
 
 def process_status(code: int) -> failure.Failure:
@@ -33,6 +34,8 @@ class HoneyPotCommand:
     """
     This is the super class for all commands in cowrie/commands
     """
+
+    _log = Logger()
 
     # True once exit() has run. An async callback firing after the command
     # already exited (a download completing after an abort) checks this so a
@@ -171,12 +174,12 @@ class HoneyPotCommand:
                 pass
 
     def handle_CTRL_C(self) -> None:
-        log.msg("Received CTRL-C, exiting..")
+        self._log.info("Received CTRL-C, exiting..")
         self.write("^C\n")
         self.exit(130)  # 128 + SIGINT, like a real shell
 
     def lineReceived(self, line: str) -> None:
-        log.msg(f"QUEUED INPUT: {line}")
+        self._log.info("QUEUED INPUT: {line}", line=line)
         # Queue on the innermost shell, the next stdin reader once this
         # command exits: an outer shell only resumes after the shells above
         # it unwind, so a line queued there would wait on the whole stack.

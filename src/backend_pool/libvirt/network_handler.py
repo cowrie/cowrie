@@ -7,10 +7,12 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-from twisted.python import log
+from twisted.logger import Logger
 
 import backend_pool.util
 from cowrie.core.config import CowrieConfig
+
+_log = Logger()
 
 
 def create_filter(connection: Any) -> Any:
@@ -25,12 +27,8 @@ def create_filter(connection: Any) -> Any:
 
     try:
         return connection.nwfilterDefineXML(filter_xml)
-    except libvirt.libvirtError as e:
-        log.err(
-            eventid="cowrie.backend_pool.network_handler",
-            format="Filter already exists: %(error)s",
-            error=e,
-        )
+    except libvirt.libvirtError:
+        _log.failure("Filter already exists")
         return connection.nwfilterLookupByName("cowrie-default-filter")
 
 
@@ -71,22 +69,15 @@ def create_network(connection: Any, network_table: dict[str, str]) -> Any:
     try:
         net = connection.networkCreateXML(network_config)
         if net is None:
-            log.msg(
-                eventid="cowrie.backend_pool.network_handler",
-                format="Failed to define a virtual network",
-            )
+            _log.error("Failed to define a virtual network")
             sys.exit(1)
 
         # set the network active
         # not needed since apparently transient networks are created as active; uncomment if persistent
         # net.create()
 
-    except libvirt.libvirtError as e:
-        log.err(
-            eventid="cowrie.backend_pool.network_handler",
-            format="Network already exists: %(error)s",
-            error=e,
-        )
+    except libvirt.libvirtError:
+        _log.failure("Network already exists")
         return connection.networkLookupByName("cowrie")
 
     return net

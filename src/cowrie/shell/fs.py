@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
@@ -109,6 +109,8 @@ class PermissionDenied(Exception):
 
 
 class HoneyPotFilesystem:
+    _log = Logger()
+
     # The session's event emitter, bound by the SFTP adapter; file writes
     # reaching close() only arrive through SFTP.
     events: EventLog
@@ -116,8 +118,8 @@ class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
         try:
             self.fs: list[Any] = honeyfs.get_tree()
-        except Exception as e:
-            log.err(e, "ERROR: Failed to load filesystem")
+        except Exception:
+            self._log.failure("ERROR: Failed to load filesystem")
             sys.exit(2)
 
         # Keep track of arch so we can return appropriate binary
@@ -140,7 +142,7 @@ class HoneyPotFilesystem:
             try:
                 self.init_honeyfs(contents_path)
             except Exception as e:
-                log.msg(f"Failed to load honeyfs {e!r}")
+                self._log.info("Failed to load honeyfs {error!r}", error=e)
 
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """

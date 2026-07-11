@@ -12,7 +12,7 @@ from __future__ import annotations
 import mysql.connector
 from twisted.enterprise import adbapi
 from twisted.internet import defer
-from twisted.python import log
+from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -36,6 +36,8 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
     http://twistedmatrix.com/pipermail/twisted-python/2009-July/020007.html
     """
 
+    _log = Logger()
+
     def _runInteraction(self, interaction, *args, **kw):
         try:
             return adbapi.ConnectionPool._runInteraction(self, interaction, *args, **kw)
@@ -49,7 +51,9 @@ class ReconnectingConnectionPool(adbapi.ConnectionPool):
             ):
                 raise
 
-            log.msg(f"output_mysql: got error {e!r}, retrying operation")
+            self._log.info(
+                "output_mysql: got error {error!r}, retrying operation", error=e
+            )
             conn = self.connections.get(self.threadID())
             self.disconnect(conn)
             # Try the interaction again
@@ -60,6 +64,8 @@ class Output(cowrie.core.output.Output):
     """
     MySQL output
     """
+
+    _log = Logger()
 
     debug: bool = False
 
@@ -82,7 +88,11 @@ class Output(cowrie.core.output.Output):
             )
         # except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
         except Exception as e:
-            log.msg(f"output_mysql: Error {e.args[0]}: {e.args[1]}")
+            self._log.info(
+                "output_mysql: Error {errno}: {errmsg}",
+                errno=e.args[0],
+                errmsg=e.args[1],
+            )
 
     def stop(self):
         self.db.close()
@@ -93,19 +103,21 @@ class Output(cowrie.core.output.Output):
         1406, "Data too long for column '...' at row ..."
         """
         if error.value.args[0] in (1146, 1406):
-            log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
-            log.msg(
+            self._log.info("output_mysql: MySQL Error: {args!r}", args=error.value.args)
+            self._log.info(
                 "output_mysql: MySQL schema maybe misconfigured, doublecheck database!"
             )
         else:
-            log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
+            self._log.info("output_mysql: MySQL Error: {args!r}", args=error.value.args)
 
     def simpleQuery(self, sql, args):
         """
         Just run a deferred sql query, only care about errors
         """
         if self.debug:
-            log.msg(f"output_mysql: MySQL query: {sql} {args!r}")
+            self._log.info(
+                "output_mysql: MySQL query: {sql} {args!r}", sql=sql, args=args
+            )
         d = self.db.runQuery(sql, args)
         d.addErrback(self.sqlerror)
 
@@ -113,8 +125,9 @@ class Output(cowrie.core.output.Output):
     def write(self, event):
         if event["eventid"] == "cowrie.session.connect":
             if self.debug:
-                log.msg(
-                    f"output_mysql: SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
+                self._log.info(
+                    "output_mysql: SELECT `id` FROM `sensors` WHERE `ip` = '{sensor}'",
+                    sensor=self.sensor,
                 )
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `sensors` WHERE `ip` = %s",
@@ -124,8 +137,9 @@ class Output(cowrie.core.output.Output):
                 sensorid = r[0][0]
             else:
                 if self.debug:
-                    log.msg(
-                        f"output_mysql: INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
+                    self._log.info(
+                        "output_mysql: INSERT INTO `sensors` (`ip`) VALUES ('{sensor}')",
+                        sensor=self.sensor,
                     )
                 yield self.db.runQuery(
                     "INSERT INTO `sensors` (`ip`) VALUES (%s)",

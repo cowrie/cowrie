@@ -7,11 +7,13 @@ from __future__ import annotations
 
 from twisted.conch.telnet import TelnetTransport
 from twisted.internet import protocol
+from twisted.logger import Logger
 from twisted.protocols.policies import TimeoutMixin
-from twisted.python import log
 
 
 class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
+    _log = Logger()
+
     def __init__(self):
         # self.delayedPacketsToFrontend = []
         self.backendConnected = False
@@ -19,7 +21,9 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
         super().__init__()
 
     def connectionMade(self):
-        log.msg(f"Connected to Telnet backend at {self.transport.getPeer().host}")
+        self._log.info(
+            "Connected to Telnet backend at {host}", host=self.transport.getPeer().host
+        )
         self.telnetHandler = self.factory.server.telnetHandler
         self.telnetHandler.setClient(self)
 
@@ -45,7 +49,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
         Make sure all sessions time out eventually.
         Timeout is reset when authentication succeeds.
         """
-        log.msg("Timeout reached in BackendTelnetTransport")
+        self._log.info("Timeout reached in BackendTelnetTransport")
 
         # close transports on both sides
         self.transport.loseConnection()

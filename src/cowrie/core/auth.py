@@ -19,7 +19,7 @@ from random import randint
 from re import Pattern
 from typing import Any
 
-from twisted.python import log
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
@@ -38,6 +38,8 @@ class UserDB:
     """
     By Walter de Jong <walter@sara.nl>
     """
+
+    _log = Logger()
 
     def __init__(self) -> None:
         self.userdb: dict[
@@ -67,7 +69,9 @@ class UserDB:
                     .splitlines()
                 )
             except FileNotFoundError:
-                log.msg("Could not read etc/userdb.txt, default database activated")
+                self._log.info(
+                    "Could not read etc/userdb.txt, default database activated"
+                )
                 dblines = _USERDB_DEFAULTS
 
         for user in dblines:
@@ -139,6 +143,8 @@ class AuthRandom:
     Users will be authenticated after a random number of attempts.
     """
 
+    _log = Logger()
+
     def __init__(self) -> None:
         # Default values
         self.mintry: int
@@ -158,7 +164,9 @@ class AuthRandom:
 
         if self.maxtry < self.mintry:
             self.maxtry = self.mintry + 1
-            log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
+            self._log.info(
+                "maxtry < mintry, adjusting maxtry to: {maxtry}", maxtry=self.maxtry
+            )
 
         self.uservar: dict[Any, Any] = {}
         self.uservar_file: str = "{}/auth_random.json".format(
@@ -210,7 +218,11 @@ class AuthRandom:
             ipinfo = self.uservar[src_ip]
             ipinfo["try"] = 0
             if userpass in cache:
-                log.msg(f"first time for {src_ip}, found cached: {userpass}")
+                self._log.info(
+                    "first time for {src_ip}, found cached: {userpass}",
+                    src_ip=src_ip,
+                    userpass=userpass,
+                )
                 ipinfo["max"] = 1
                 ipinfo["user"] = str(thelogin)
                 ipinfo["pw"] = str(thepasswd)
@@ -218,11 +230,15 @@ class AuthRandom:
                 self.savevars()
                 return auth
             ipinfo["max"] = randint(self.mintry, self.maxtry)
-            log.msg("first time for {}, need: {}".format(src_ip, ipinfo["max"]))
+            self._log.info(
+                "first time for {src_ip}, need: {need}",
+                src_ip=src_ip,
+                need=ipinfo["max"],
+            )
         else:
             if userpass in cache:
                 ipinfo = self.uservar[src_ip]
-                log.msg(f"Found cached: {userpass}")
+                self._log.info("Found cached: {userpass}", userpass=userpass)
                 ipinfo["max"] = 1
                 ipinfo["user"] = str(thelogin)
                 ipinfo["pw"] = str(thepasswd)
@@ -242,14 +258,14 @@ class AuthRandom:
 
         # Don't count repeated username/password combinations
         if userpass in ipinfo["tried"]:
-            log.msg("already tried this combination")
+            self._log.info("already tried this combination")
             self.savevars()
             return auth
 
         ipinfo["try"] += 1
         attempts: int = ipinfo["try"]
         need: int = ipinfo["max"]
-        log.msg(f"login attempt: {attempts}")
+        self._log.info("login attempt: {attempts}", attempts=attempts)
 
         # Check if enough login attempts are tried
         if attempts < need:
@@ -264,12 +280,14 @@ class AuthRandom:
         # Returning after successful login
         elif attempts > need:
             if "user" not in ipinfo or "pw" not in ipinfo:
-                log.msg("return, but username or password not set!!!")
+                self._log.info("return, but username or password not set!!!")
                 ipinfo["tried"].append(userpass)
                 ipinfo["try"] = 1
             else:
-                log.msg(
-                    "login return, expect: [{}/{}]".format(ipinfo["user"], ipinfo["pw"])
+                self._log.info(
+                    "login return, expect: [{user}/{pw}]",
+                    user=ipinfo["user"],
+                    pw=ipinfo["pw"],
                 )
                 if thelogin == ipinfo["user"] and str(thepasswd) == ipinfo["pw"]:
                     auth = True
