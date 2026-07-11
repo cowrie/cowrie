@@ -126,12 +126,10 @@ class Output(cowrie.core.output.Output):
                         "output_postgresql: INSERT INTO sensors (ip) VALUES ('{sensor}')",
                         sensor=self.sensor,
                     )
-                yield self.db.runQuery(
-                    "INSERT INTO sensors (ip) VALUES (%s) ",
+                r = yield self.db.runQuery(
+                    "INSERT INTO sensors (ip) VALUES (%s) RETURNING id",
                     (self.sensor,),
                 )
-
-                r = yield self.db.runQuery("SELECT LASTVAL()")
                 sensorid = int(r[0][0])
             self.simpleQuery(
                 "INSERT INTO sessions (id, starttime, sensor, ip) "
@@ -234,12 +232,10 @@ class Output(cowrie.core.output.Output):
             if r:
                 clientid = int(r[0][0])
             else:
-                yield self.db.runQuery(
-                    "INSERT INTO clients (version) VALUES (%s)",
+                r = yield self.db.runQuery(
+                    "INSERT INTO clients (version) VALUES (%s) RETURNING id",
                     (event["version"],),
                 )
-
-                r = yield self.db.runQuery("SELECT LASTVAL()")
                 clientid = int(r[0][0])
             self.simpleQuery(
                 "UPDATE sessions SET client = %s WHERE id = %s",
