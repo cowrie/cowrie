@@ -86,7 +86,7 @@ dev = [
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
 "ruff==0.15.20",
-"setuptools==82.0.1",
+"setuptools==83.0.0",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.5",
