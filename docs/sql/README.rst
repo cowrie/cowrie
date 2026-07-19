@@ -135,6 +135,7 @@ Create a Cowrie user account for the database and grant access privileges::
     \c cowrie
     GRANT USAGE ON SCHEMA public TO cowrie;
     GRANT INSERT, SELECT, UPDATE ON ALL TABLES IN SCHEMA public TO cowrie;
+    GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO cowrie;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT INSERT, SELECT, UPDATE ON TABLES TO cowrie;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO cowrie;
     \q
