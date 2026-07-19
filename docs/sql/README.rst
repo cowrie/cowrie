@@ -136,12 +136,13 @@ Create a Cowrie user account for the database and grant access privileges::
     GRANT USAGE ON SCHEMA public TO cowrie;
     GRANT INSERT, SELECT, UPDATE ON ALL TABLES IN SCHEMA public TO cowrie;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT INSERT, SELECT, UPDATE ON TABLES TO cowrie;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO cowrie;
     \q
 
-Log into the PostgreSQL database using the Cowrie account to verify proper access privileges and load the database schema provided in the ``docs/sql/`` directory::
+Log into the PostgreSQL database using a superuser account (e.g., ``postgres``) and load the database schema provided in the ``docs/sql/`` directory::
 
     $ cd ~/cowrie/docs/sql/
-    $ psql -U cowrie -d cowrie -f postgres.sql
+    $ psql -U postgres -d cowrie -f postgres.sql
 
 PostgreSQL Schema Update for Boolean Compatibility
 ==================================================
