@@ -25,8 +25,53 @@ BLOCKED_IPS = [
     "224.0.0.0/4",  # Multicast addresses
     "240.0.0.0/4",  # Reserved addresses
     "255.255.255.255",  # Limited broadcast address
-    "::1",  # IPv6 loopback range
+    "::1",  # IPv6 loopback
+    "fe80::/10",  # IPv6 link-local
+    "fc00::/7",  # IPv6 unique-local (private)
+    "ff00::/8",  # IPv6 multicast
 ]
+
+# NAT64 well-known prefix (RFC 6052): 64:ff9b::/96 embeds an IPv4 address in
+# its low 32 bits, just like an IPv4-mapped address does.
+_NAT64_PREFIX = ipaddress.ip_network("64:ff9b::/96")
+
+
+def _embedded_ipv4(
+    ip: ipaddress.IPv6Address,
+) -> ipaddress.IPv4Address | None:
+    """
+    Return the IPv4 address embedded in an IPv6 address, or None if there is
+    none. Covers IPv4-mapped (``::ffff:0:0/96``), 6to4 (``2002::/16``), and
+    NAT64 (``64:ff9b::/96``) forms, all of which can reach an IPv4 target
+    through an IPv6 wrapper.
+    """
+    if ip.ipv4_mapped is not None:
+        return ip.ipv4_mapped
+    if ip.sixtofour is not None:
+        return ip.sixtofour
+    if ip in _NAT64_PREFIX:
+        return ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
+    return None
+
+
+def _is_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """
+    Return True if the address falls within any blocked range. An IPv6
+    address that embeds an IPv4 address is also checked as that IPv4 address,
+    so a private or metadata target cannot be reached through an IPv6 wrapper.
+    """
+    candidates: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = [ip]
+    if isinstance(ip, ipaddress.IPv6Address):
+        embedded = _embedded_ipv4(ip)
+        if embedded is not None:
+            candidates.append(embedded)
+
+    for candidate in candidates:
+        for blocked in BLOCKED_IPS:
+            if candidate in ipaddress.ip_network(blocked, strict=False):
+                return True
+    return False
+
 
 # Valid TCP/UDP port range: 1-65535
 # https://www.debuggex.com/r/jjEFZZQ34aPvCBMA
@@ -130,12 +175,10 @@ def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
     # At this point, resolved_ip should always be a valid string (IPv4 or IPv6)
     try:
         ip = ipaddress.ip_address(resolved_ip)
-
-        # Check if the resolved IP falls within any blocked IP ranges
-        for blocked in BLOCKED_IPS:
-            if ip in ipaddress.ip_network(blocked, strict=False):
-                return False  # Blocked IP found
     except ValueError:
         return False  # If the resolved IP is not a valid IP address, return False
+
+    if _is_blocked(ip):
+        return False  # Blocked IP found
 
     return True  # Communication is allowed
