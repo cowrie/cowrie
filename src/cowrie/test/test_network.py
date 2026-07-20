@@ -78,6 +78,42 @@ class TestCommunicationAllowed(unittest.TestCase):
         self.assertFalse(allowed)
 
     @inlineCallbacks
+    def test_ipv4_mapped_loopback_blocked(self):
+        # ::ffff:127.0.0.1 embeds a loopback IPv4 address and must be blocked.
+        allowed = yield communication_allowed("::ffff:127.0.0.1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv4_mapped_private_blocked(self):
+        # ::ffff:10.0.0.1 embeds a private IPv4 address and must be blocked.
+        allowed = yield communication_allowed("::ffff:10.0.0.1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv4_mapped_metadata_blocked(self):
+        # ::ffff:169.254.169.254 embeds the cloud metadata IP and must be blocked.
+        allowed = yield communication_allowed("::ffff:169.254.169.254")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv6_link_local_blocked(self):
+        # fe80::/10 link-local addresses must be blocked.
+        allowed = yield communication_allowed("fe80::1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv6_unique_local_blocked(self):
+        # fc00::/7 unique-local (private) addresses must be blocked.
+        allowed = yield communication_allowed("fc00::1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv6_mapped_public_allowed(self):
+        # An IPv4-mapped public address stays allowed.
+        allowed = yield communication_allowed("::ffff:8.8.8.8")
+        self.assertTrue(allowed)
+
+    @inlineCallbacks
     def test_cname_resolution(self):
         # Test with a CNAME that resolves to an allowed IP
         allowed = yield communication_allowed("www.google.com")
