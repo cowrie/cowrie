@@ -114,6 +114,18 @@ class TestCommunicationAllowed(unittest.TestCase):
         self.assertTrue(allowed)
 
     @inlineCallbacks
+    def test_cgnat_blocked(self):
+        # 100.64.0.0/10 carrier-grade NAT space is not globally routable.
+        allowed = yield communication_allowed("100.64.0.1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_benchmarking_range_blocked(self):
+        # 198.18.0.0/15 benchmarking space is not globally routable.
+        allowed = yield communication_allowed("198.18.0.1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
     def test_cname_resolution(self):
         # Test with a CNAME that resolves to an allowed IP
         allowed = yield communication_allowed("www.google.com")

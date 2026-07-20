@@ -56,9 +56,15 @@ def _embedded_ipv4(
 
 def _is_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     """
-    Return True if the address falls within any blocked range. An IPv6
-    address that embeds an IPv4 address is also checked as that IPv4 address,
-    so a private or metadata target cannot be reached through an IPv6 wrapper.
+    Return True if the address must not be contacted. An IPv6 address that
+    embeds an IPv4 address is also checked as that IPv4 address, so a private
+    or metadata target cannot be reached through an IPv6 wrapper.
+
+    A candidate is blocked if it is not globally routable or if it falls
+    within an explicit blocked range. The explicit list stays authoritative
+    for targets that are not globally routable yet not covered by is_global
+    (e.g. the Alibaba metadata IP) and guards against interpreter versions
+    whose is_global misclassifies IPv4-mapped addresses.
     """
     candidates: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = [ip]
     if isinstance(ip, ipaddress.IPv6Address):
@@ -67,6 +73,8 @@ def _is_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
             candidates.append(embedded)
 
     for candidate in candidates:
+        if not candidate.is_global:
+            return True
         for blocked in BLOCKED_IPS:
             if candidate in ipaddress.ip_network(blocked, strict=False):
                 return True
