@@ -392,6 +392,22 @@ class SSH(base_protocol.BaseProtocol):
                 if not CowrieConfig.getboolean("ssh", "forwarding"):
                     self.sendOn = False
                     self.send_back(parent, 82, b"")
+            elif channel_type == b"hostkeys-00@openssh.com":
+                # The backend advertises its host keys for OpenSSH host-key
+                # rotation (UpdateHostKeys). The proxy cannot relay this: the
+                # prove-ownership signatures are bound to the backend's session
+                # id, which differs from the frontend's, so the attacker's
+                # client reports "bad signature" for each host key. Drop the
+                # advertisement so rotation is never attempted.
+                self.sendOn = False
+            elif channel_type == b"hostkeys-prove-00@openssh.com":
+                # A client that still asks the server to prove key ownership:
+                # drop it and fail the request if a reply was expected, so the
+                # client does not wait on a proof the proxy cannot produce.
+                want_reply = self.extract_bool()
+                self.sendOn = False
+                if want_reply:
+                    self.send_back(parent, 82, b"")
 
         else:
             self._log.debug(
