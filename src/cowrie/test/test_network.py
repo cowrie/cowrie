@@ -114,6 +114,25 @@ class TestCommunicationAllowed(unittest.TestCase):
         self.assertTrue(allowed)
 
     @inlineCallbacks
+    def test_ipv4_compatible_loopback_blocked(self):
+        # ::127.0.0.1 is the deprecated IPv4-compatible form (::a.b.c.d); it
+        # embeds a loopback IPv4 address and must be blocked like ::ffff:127.0.0.1.
+        allowed = yield communication_allowed("::127.0.0.1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv4_compatible_private_blocked(self):
+        # ::10.0.0.1 embeds a private IPv4 address and must be blocked.
+        allowed = yield communication_allowed("::10.0.0.1")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
+    def test_ipv4_compatible_metadata_blocked(self):
+        # ::169.254.169.254 embeds the cloud metadata IP and must be blocked.
+        allowed = yield communication_allowed("::169.254.169.254")
+        self.assertFalse(allowed)
+
+    @inlineCallbacks
     def test_cgnat_blocked(self):
         # 100.64.0.0/10 carrier-grade NAT space is not globally routable.
         allowed = yield communication_allowed("100.64.0.1")
