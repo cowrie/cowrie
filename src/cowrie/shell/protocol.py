@@ -234,8 +234,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         IMPORTANT
         Before this, all data is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
+
+        Invalid UTF-8 (binary piped or pasted into the shell) becomes
+        replacement characters: the line must not raise out of the protocol
+        and kill the session.
         """
-        string = line.decode("utf8")
+        string = line.decode("utf8", errors="replace")
 
         if self.cmdstack:
             self.cmdstack[-1].lineReceived(string)
@@ -304,6 +308,11 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
+    # Longest accepted stdin line in line mode, bash's per-argument limit
+    # (MAX_ARG_STRLEN). Bytes beyond it are dropped so an endless
+    # unterminated stream cannot grow memory without bound.
+    STDIN_LINE_MAX = 131072
+
     def __init__(self, avatar, execcmd):
         """
         IMPORTANT
@@ -345,12 +354,21 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         if keyID == b"\n" and last_cr:
             # The \n of a \r\n pair; the \r already dispatched the line.
             return
+        # Control bytes are handled as a tty would, which is only strictly
+        # right when the client requested a pty; in a plain pipe they are
+        # rare enough that the difference does not matter.
         if keyID in (b"\r", b"\n"):
             self._dispatch_stdin_line()
         elif keyID == b"\x04" and not self._stdin_line:
             # CTRL-D on an empty line is EOF for the shell reading stdin.
             HoneyPotBaseProtocol.eofReceived(self)
-        else:
+        elif keyID in (b"\x08", b"\x7f"):
+            # Backspace / delete: drop the last byte of the pending line.
+            del self._stdin_line[-1:]
+        elif keyID == b"\x03":
+            # CTRL-C: discard the pending line.
+            self._stdin_line.clear()
+        elif len(self._stdin_line) < self.STDIN_LINE_MAX:
             self._stdin_line += keyID
 
     def _dispatch_stdin_line(self) -> None:

@@ -138,6 +138,35 @@ class ExecShellStdinTests(unittest.TestCase):
         lsp.eofReceived()
         self.assertEqual(ended.get("code"), 1)
 
+    def test_binary_garbage_does_not_kill_session(self) -> None:
+        # Invalid UTF-8 piped into the shell must not raise out of the
+        # protocol; the shell reports garbage and keeps reading.
+        lsp, out, ended = self.drive(b"bash")
+        lsp.dataReceived(b"\xff\xfe\x01garbage\n")
+        self.assertEqual(ended, {})
+        out.clear()
+        lsp.dataReceived(b"echo ok\n")
+        self.assertEqual(bytes(out), b"ok\n")
+
+    def test_backspace_edits_line(self) -> None:
+        lsp, out, _ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"echo hix\x7f\r")
+        self.assertEqual(bytes(out), b"hi\n" + PROMPT)
+
+    def test_ctrl_c_discards_pending_line(self) -> None:
+        lsp, out, _ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"echo dropped\x03echo kept\r")
+        self.assertEqual(bytes(out), b"kept\n" + PROMPT)
+
+    def test_overlong_line_is_capped(self) -> None:
+        cap = protocol.HoneyPotExecProtocol.STDIN_LINE_MAX
+        lsp, out, ended = self.drive(b"bash")
+        lsp.dataReceived(b"echo " + b"A" * cap + b"\n")
+        self.assertEqual(ended, {})
+        self.assertEqual(bytes(out), b"A" * (cap - len(b"echo ")) + b"\n")
+
 
 if __name__ == "__main__":
     unittest.main()
