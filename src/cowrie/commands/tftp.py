@@ -75,7 +75,15 @@ class TFTPClient(DatagramProtocol):
 
     def startProtocol(self) -> None:
         """Called when protocol starts - send initial RRQ"""
-        self.sendRRQ()
+        try:
+            self.sendRRQ()
+        except Exception as e:
+            # Twisted's UDP transport raises synchronously here for a bad
+            # destination (e.g. a hostname). startProtocol() runs inside
+            # listenUDP(), before the caller has wired the transfer callbacks,
+            # so route the failure through the deferred instead of letting it
+            # escape and orphan the download.
+            self.deferred.errback(e)
 
     def stopProtocol(self) -> None:
         """Called when protocol stops"""
@@ -217,6 +225,7 @@ class Command_tftp(HoneyPotCommand):
 
     port: int = 69
     hostname: str | None = None
+    host_ip: str
     file_to_get: str
     limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
     artifactFile: Artifact
@@ -275,6 +284,17 @@ class Command_tftp(HoneyPotCommand):
             self.exit(1)
             return
 
+        # Resolve the hostname to a numeric IP before any UDP I/O: Twisted's UDP
+        # transport rejects hostnames and raises InvalidAddressError. Done before
+        # the artifact is created so a resolution failure leaves nothing behind.
+        try:
+            self.host_ip = yield reactor.resolve(self.hostname)
+        except Exception:
+            self._log.info("TFTP: could not resolve host {host}", host=self.hostname)
+            self.write(f"tftp: {self.hostname}: Name or service not known\n")
+            self.exit(1)
+            return
+
         # Resolve local file path
         self.fakeoutfile = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
         path = self.fakeoutfile.rsplit("/", 1)[0] if "/" in self.fakeoutfile else "/"
@@ -300,9 +320,10 @@ class Command_tftp(HoneyPotCommand):
         """
         assert self.hostname is not None  # Checked in start()
 
-        # Create TFTP client
+        # Create TFTP client. host_ip is the numeric address resolved in
+        # start(); the UDP transport requires it (a hostname would be rejected).
         self.tftp_client = TFTPClient(
-            self.hostname, self.port, self.file_to_get, self.artifactFile
+            self.host_ip, self.port, self.file_to_get, self.artifactFile
         )
 
         # Listen on random UDP port
