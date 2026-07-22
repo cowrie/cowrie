@@ -15,7 +15,7 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
-class OptionParsingError(RuntimeError):
+class OptionParsingError(Exception):
     def __init__(self, msg: str) -> None:
         self.msg = msg
 
