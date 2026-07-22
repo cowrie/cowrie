@@ -695,6 +695,11 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
+        if response.check(error.TCPTimedOutError) is not None:
+            self.errorWrite("failed: Connection timed out.\n")
+            self.exit()
+            return
+
         self._log.failure("Unhandled wget error", failure=response)
         self.errorWrite("\n")
         self.exit()

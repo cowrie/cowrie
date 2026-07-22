@@ -71,6 +71,27 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         )
         self.assertEqual(os.listdir(self.tmpdir), [])
 
+    def test_tcp_timeout_reports_connection_timed_out(self) -> None:
+        # A TCP connect that times out yields TCPTimedOutError, built by the
+        # reactor (so its Failure has no traceback frames). error() must report
+        # a curl-style timeout message and exit cleanly, not fall through to the
+        # CRITICAL "Unhandled curl error" branch that writes a bare newline
+        # (issue #40335).
+        cmd = Command_curl.__new__(Command_curl)
+        cmd.protocol = self.proto
+        writes: list[bytes] = []
+        cmd.writefn = lambda data: writes.append(data)
+        cmd.errorWritefn = lambda data: writes.append(data)
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.url = b"http://192.0.2.1/file"
+        cmd.host = "192.0.2.1"
+        cmd.port = 80
+        cmd.artifact = Artifact("curl-download")
+
+        cmd.error(Failure(error.TCPTimedOutError()))
+
+        self.assertIn(b"Connection timed out", b"".join(writes))
+
     def test_missing_host_reports_error_without_crashing(self) -> None:
         # A URL with no host must report an error and stop, not fall through
         # to the download path and crash on the unset self.host.

@@ -63,6 +63,26 @@ class WgetArtifactCleanupTests(unittest.TestCase):
             "shell never resumed: the command hung instead of exiting",
         )
 
+    def test_tcp_timeout_reports_connection_timed_out(self) -> None:
+        # A TCP connect that times out yields TCPTimedOutError, built by the
+        # reactor (so its Failure has no traceback frames). error() must report
+        # a wget-style timeout message and exit cleanly, not fall through to the
+        # CRITICAL "Unhandled wget error" branch that writes a bare newline
+        # (issue #40335).
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.protocol = self.proto
+        writes: list[bytes] = []
+        cmd.errorWritefn = lambda data: writes.append(data)
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.url = b"http://192.0.2.1/file"
+        cmd.host = "192.0.2.1"
+        cmd.port = 80
+        cmd.artifact = Artifact("wget-download")
+
+        cmd.error(Failure(error.TCPTimedOutError()))
+
+        self.assertIn(b"Connection timed out", b"".join(writes))
+
     def test_failed_download_removes_temp_artifact(self) -> None:
         # Bypass HoneyPotCommand.__init__: its stdout/stderr wiring needs a
         # running process protocol (self.protocol.pp), which is irrelevant to
