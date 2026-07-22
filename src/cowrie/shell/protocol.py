@@ -346,14 +346,18 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
             # The \n of a \r\n pair; the \r already dispatched the line.
             return
         if keyID in (b"\r", b"\n"):
-            line = bytes(self._stdin_line)
-            self._stdin_line = bytearray()
-            self.lineReceived(line)
+            self._dispatch_stdin_line()
         elif keyID == b"\x04" and not self._stdin_line:
             # CTRL-D on an empty line is EOF for the shell reading stdin.
             HoneyPotBaseProtocol.eofReceived(self)
         else:
             self._stdin_line += keyID
+
+    def _dispatch_stdin_line(self) -> None:
+        """Run the accumulated stdin line through the command stack."""
+        line = bytes(self._stdin_line)
+        self._stdin_line.clear()
+        self.lineReceived(line)
 
     def setInsertMode(self) -> None:
         """Insert-mode toggle requested when an interactive shell resumes; an
@@ -364,12 +368,8 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
             if self._stdin_line:
                 # A final line without a terminator still runs, as bash does
                 # when its stdin ends without a newline.
-                line = bytes(self._stdin_line)
-                self._stdin_line = bytearray()
-                self.lineReceived(line)
-            if not any(
-                getattr(item, "reads_stdin", False) for item in self.cmdstack
-            ):
+                self._dispatch_stdin_line()
+            if not any(getattr(item, "reads_stdin", False) for item in self.cmdstack):
                 # The stdin-reading shell already exited (e.g. `exit`) and
                 # ended the process; nothing is left to deliver EOF to.
                 return

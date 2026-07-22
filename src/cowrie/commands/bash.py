@@ -75,16 +75,24 @@ class Command_sh(HoneyPotCommand):
         # for a `-c` command that launched an async wget/curl is the in-flight
         # command, not this shell.
 
-    def interactive_shell(self) -> None:
+    def exec_channel_stdin(self) -> bool:
+        """Whether this shell is the SSH exec command itself, with the live
+        channel as its stdin: nothing on the cmdstack beneath it but the exec
+        parser shell, and no pipe or buffered input feeding it."""
+        # Imported here: cowrie.shell.protocol loads the command modules while
+        # its module body is still executing, so a top-level import is circular.
         from cowrie.shell.protocol import HoneyPotExecProtocol
 
-        parentshell = self.protocol.cmdstack[-2]
-        if (
+        return (
             isinstance(self.protocol, HoneyPotExecProtocol)
             and len(self.protocol.cmdstack) == 2
             and self.input_data is None
             and not getattr(self.protocol.pp, "stdin_from_pipe", False)
-        ):
+        )
+
+    def interactive_shell(self) -> None:
+        parentshell = self.protocol.cmdstack[-2]
+        if self.exec_channel_stdin():
             # The shell was exec'd as the SSH command (`ssh host bash`): its
             # stdin is the live channel, so keep reading command lines from it
             # until EOF. A pty request (TERM set by getPty) makes the shell

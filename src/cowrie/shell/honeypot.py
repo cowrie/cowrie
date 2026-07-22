@@ -279,6 +279,7 @@ class HoneyPotShell:
         if self.interactive:
             self.showPrompt()
         elif self.reads_stdin:
+            # Idle, not done: the channel will deliver more lines or EOF.
             pass
         elif len(self.protocol.cmdstack) == 1:
             # Top-level non-interactive shell (an exec session): end the process
