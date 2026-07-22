@@ -10,12 +10,12 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from typing import Any
 from unittest import mock
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
 
-from cowrie.commands import curl as curl_module
 from cowrie.commands.curl import Command_curl
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
@@ -179,17 +179,17 @@ class CurlOutboundBindTests(unittest.TestCase):
     def tearDown(self) -> None:
         CowrieConfig.remove_option("honeypot", "out_addr")
 
-    def _capture_agent(self, head_request: bool, verb: str) -> object:
+    def _capture_agent(self, head_request: bool, verb: str) -> Any:
         cmd = Command_curl.__new__(Command_curl)
         cmd.head_request = head_request
 
-        captured: dict[str, object] = {}
+        captured: dict[str, Any] = {}
 
-        def fake_verb(url: str, agent: object = None, **kwargs: object) -> object:
+        def fake_verb(url: str, agent: Any = None, **kwargs: Any) -> Any:
             captured["agent"] = agent
             return defer.succeed(None)
 
-        with mock.patch.object(curl_module.treq, verb, fake_verb):
+        with mock.patch(f"cowrie.commands.curl.treq.{verb}", fake_verb):
             cmd.treqDownload("http://198.51.100.1/x")
 
         return captured["agent"]
