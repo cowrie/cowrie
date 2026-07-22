@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import os
 import struct
+import tempfile
 import unittest
 from typing import TYPE_CHECKING, Any, cast
 
 from twisted.internet import defer
 from twisted.internet import reactor as _reactor
 from twisted.internet.protocol import DatagramProtocol
+from twisted.python.failure import Failure
 
 from cowrie.commands.tftp import (
     OPCODE_ACK,
@@ -19,7 +21,9 @@ from cowrie.commands.tftp import (
     OPCODE_ERROR,
     OPCODE_RRQ,
     TFTP_BLOCK_SIZE,
+    Command_tftp,
 )
+from cowrie.core.artifact import Artifact
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -320,6 +324,74 @@ class TFTPArtifactCloseTests(unittest.TestCase):
         with open(cmd.artifactFile.shasumFilename, "rb") as f:
             self.assertEqual(f.read(), content)
         os.remove(cmd.artifactFile.shasumFilename)
+
+
+class TFTPHostnameResolutionTests(unittest.TestCase):
+    """The TFTP client must feed a numeric IP to the UDP transport.
+
+    Twisted's UDP transport raises InvalidAddressError synchronously when
+    handed a hostname, and that raise happens inside listenUDP() -> startProtocol()
+    before start() has wired the download callbacks, orphaning the artifact and
+    producing an unhandled Deferred error (issue #40297).
+    """
+
+    def setUp(self) -> None:
+        self.tmpdir = tempfile.mkdtemp()
+        self._orig_artifact_dir = Artifact.artifactDir
+        Artifact.artifactDir = self.tmpdir
+
+    def tearDown(self) -> None:
+        Artifact.artifactDir = self._orig_artifact_dir
+        for name in os.listdir(self.tmpdir):
+            os.remove(os.path.join(self.tmpdir, name))
+        os.rmdir(self.tmpdir)
+
+    def _make_command(self, host_ip: str) -> Command_tftp:
+        cmd = Command_tftp.__new__(Command_tftp)
+        cmd.hostname = "hostname.example.com"
+        cmd.host_ip = host_ip
+        cmd.port = 69
+        cmd.file_to_get = "test.sh"
+        cmd.artifactFile = Artifact("tftp-download")
+        return cmd
+
+    def test_transport_address_error_fails_cleanly(self) -> None:
+        # A non-numeric address reaching transport.write must not raise out of
+        # tftp_download_async(); it must surface as a failed transfer Deferred
+        # and leave no orphaned temp file.
+        cmd = self._make_command(host_ip="hostname.example.com")
+        temp = cmd.artifactFile.tempFilename
+        self.assertTrue(os.path.exists(temp))
+
+        d = cmd.tftp_download_async()  # must NOT raise
+        results: list[Any] = []
+        d.addBoth(results.append)
+        d.addBoth(cmd._ensure_artifact_closed)
+
+        self.assertEqual(len(results), 1)
+        self.assertIsInstance(results[0], Failure)
+        self.assertFalse(
+            os.path.exists(temp), "artifact orphaned on transport address error"
+        )
+
+    def test_download_uses_resolved_numeric_ip(self) -> None:
+        # When a numeric IP is supplied (as hostname resolution produces), the
+        # client contacts that IP and startProtocol does not raise.
+        cmd = self._make_command(host_ip="127.0.0.1")
+
+        d = cmd.tftp_download_async()  # must NOT raise
+        client = cmd.tftp_client
+        try:
+            assert client is not None
+            self.assertEqual(client.host, "127.0.0.1")
+        finally:
+            if client and client.timeout_call and client.timeout_call.active():
+                client.timeout_call.cancel()
+            if cmd.udp_port:
+                cmd.udp_port.stopListening()
+            d.addErrback(lambda _f: None)
+            d.cancel()
+            cmd.artifactFile.close()
 
 
 class TFTPProtocolTests(unittest.TestCase):
