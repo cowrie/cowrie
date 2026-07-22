@@ -874,10 +874,13 @@ class HoneyPotShell:
 
     def eofReceived(self) -> None:
         """
-        EOF with the shell as the active reader (no command running) logs out.
+        EOF with the shell as the active reader (no command running) logs out,
+        exiting with the last command's status ($?) as bash does.
         """
         self._log.info("received eof, logging out")
-        self.protocol.terminal.transport.processEnded(process_status(0))
+        self.protocol.terminal.transport.processEnded(
+            process_status(self.last_exit_code)
+        )
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []

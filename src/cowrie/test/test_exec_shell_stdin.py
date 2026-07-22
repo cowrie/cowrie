@@ -131,6 +131,13 @@ class ExecShellStdinTests(unittest.TestCase):
         self.assertEqual(bytes(out), b"hi\n")
         self.assertEqual(ended.get("code"), 0)
 
+    def test_eof_reports_last_command_status(self) -> None:
+        # bash exits with the last command's status when stdin hits EOF.
+        lsp, _out, ended = self.drive(b"bash")
+        lsp.dataReceived(b"false\n")
+        lsp.eofReceived()
+        self.assertEqual(ended.get("code"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
