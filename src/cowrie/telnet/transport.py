@@ -92,6 +92,30 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         """
         self.transport.write(data.replace(b"\r\n", b"\n"))
 
+    def _in_login_phase(self) -> bool:
+        """True until the login succeeds and the interactive session protocol
+        replaces the authentication protocol (see HoneyPotTelnetAuthProtocol.
+        _cbLogin). The CR handling below is scoped to login so the session's
+        raw keystroke input is left untouched."""
+        from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
+
+        return isinstance(self.protocol, HoneyPotTelnetAuthProtocol)
+
+    def applicationDataReceived(self, data: bytes) -> None:
+        """
+        Deliver line-based login input the way a real telnetd does.
+
+        The login is read by a LineReceiver that only breaks on LF. Twisted's
+        NVT layer turns CR LF into LF but leaves any other carriage return as a
+        literal CR (CR NUL, or CR before the next line), so a client that ends
+        a line with a bare CR -- PuTTY with "Return sends ^M" -- would never
+        deliver the LF the login waits for (issue #1461). During login, treat a
+        CR as the line terminator too.
+        """
+        if self._in_login_phase():
+            data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        TelnetTransport.applicationDataReceived(self, data)
+
     def dataReceived(self, data: bytes) -> None:
         """
         Twisted's Telnet.dataReceived() raises ValueError on an unrecognised
@@ -119,6 +143,15 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             self._log.failure("Telnet protocol error; dropping connection")
             if self.transport:
                 self.transport.loseConnection()
+            return
+
+        # A line ending in a bare CR leaves Twisted parked in the "newline"
+        # state with the CR pending, so no terminator reaches the login reader
+        # until the next byte arrives. Flush it now as a newline so the prompt
+        # advances immediately, as a real telnetd does (issue #1461).
+        if self.state == "newline" and self._in_login_phase():
+            self.state = "data"
+            self.applicationDataReceived(b"\n")
 
     def timeoutConnection(self) -> None:
         """
