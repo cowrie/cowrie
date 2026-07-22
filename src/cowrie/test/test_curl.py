@@ -10,13 +10,15 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from typing import Any
 from unittest import mock
 
-from twisted.internet import error
+from twisted.internet import defer, error
 from twisted.python.failure import Failure
 
 from cowrie.commands.curl import Command_curl
 from cowrie.core.artifact import Artifact
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
@@ -168,3 +170,40 @@ class CurlArtifactCleanupTests(unittest.TestCase):
             [],
             "late download callbacks reported events for an exited command",
         )
+
+
+class CurlOutboundBindTests(unittest.TestCase):
+    """Downloads must bind to the configured out_addr so they do not leak the
+    honeypot's real interface IP (issue #752)."""
+
+    def tearDown(self) -> None:
+        CowrieConfig.remove_option("honeypot", "out_addr")
+
+    def _capture_agent(self, head_request: bool, verb: str) -> Any:
+        cmd = Command_curl.__new__(Command_curl)
+        cmd.head_request = head_request
+
+        captured: dict[str, Any] = {}
+
+        def fake_verb(url: str, agent: Any = None, **kwargs: Any) -> Any:
+            captured["agent"] = agent
+            return defer.succeed(None)
+
+        with mock.patch(f"cowrie.commands.curl.treq.{verb}", fake_verb):
+            cmd.treqDownload("http://198.51.100.1/x")
+
+        return captured["agent"]
+
+    def test_get_binds_agent_to_out_addr(self) -> None:
+        CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
+        agent = self._capture_agent(head_request=False, verb="get")
+        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+
+    def test_head_binds_agent_to_out_addr(self) -> None:
+        CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
+        agent = self._capture_agent(head_request=True, verb="head")
+        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+
+    def test_default_bind_is_wildcard(self) -> None:
+        agent = self._capture_agent(head_request=False, verb="get")
+        self.assertEqual(agent._endpointFactory._bindAddress, ("0.0.0.0", 0))

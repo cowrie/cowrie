@@ -15,7 +15,7 @@ from twisted.logger import Logger
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed
+from cowrie.core.network import communication_allowed, outbound_bind_address
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.customparser import CustomParser, ExitException, OptionNotFound
 
@@ -326,8 +326,11 @@ class Command_tftp(HoneyPotCommand):
             self.host_ip, self.port, self.file_to_get, self.artifactFile
         )
 
-        # Listen on random UDP port
-        self.udp_port = reactor.listenUDP(0, self.tftp_client)  # type: ignore[attr-defined]
+        # Listen on a random UDP port, bound to the configured outbound source
+        # address so the transfer does not leak the honeypot's real IP.
+        self.udp_port = reactor.listenUDP(  # type: ignore[attr-defined]
+            0, self.tftp_client, interface=outbound_bind_address()
+        )
 
         # Clean up port when done
         def cleanup(result: Any) -> Any:

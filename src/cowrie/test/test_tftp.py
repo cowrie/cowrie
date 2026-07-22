@@ -24,6 +24,7 @@ from cowrie.commands.tftp import (
     Command_tftp,
 )
 from cowrie.core.artifact import Artifact
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -392,6 +393,36 @@ class TFTPHostnameResolutionTests(unittest.TestCase):
             d.addErrback(lambda _f: None)
             d.cancel()
             cmd.artifactFile.close()
+
+    def _bound_host(self, cmd: Command_tftp) -> str:
+        d = cmd.tftp_download_async()
+        try:
+            assert cmd.udp_port is not None
+            host: str = cmd.udp_port.getHost().host
+            return host
+        finally:
+            client = cmd.tftp_client
+            if client and client.timeout_call and client.timeout_call.active():
+                client.timeout_call.cancel()
+            if cmd.udp_port:
+                cmd.udp_port.stopListening()
+            d.addErrback(lambda _f: None)
+            d.cancel()
+            cmd.artifactFile.close()
+
+    def test_download_binds_to_out_addr(self) -> None:
+        # The UDP socket must bind to the configured out_addr so the transfer
+        # does not leak the honeypot's real interface IP (issue #752).
+        self.addCleanup(CowrieConfig.remove_option, "honeypot", "out_addr")
+        CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
+        cmd = self._make_command(host_ip="127.0.0.1")
+        self.assertEqual(self._bound_host(cmd), "127.0.0.1")
+
+    def test_download_defaults_to_wildcard_bind(self) -> None:
+        # With no out_addr configured, the OS chooses the source address.
+        CowrieConfig.remove_option("honeypot", "out_addr")
+        cmd = self._make_command(host_ip="127.0.0.1")
+        self.assertEqual(self._bound_host(cmd), "0.0.0.0")
 
 
 class TFTPProtocolTests(unittest.TestCase):

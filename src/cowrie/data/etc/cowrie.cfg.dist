@@ -163,8 +163,9 @@ timezone = UTC
 # ============================================================================
 
 
-# IP address to bind to when opening outgoing connections. Used by wget and
-# curl commands.
+# IP address to bind to when opening outgoing connections. Used by the wget,
+# curl, tftp and nc commands. Binding to a dedicated address keeps the
+# honeypot's real interface IP out of outbound traffic that would leak it.
 #
 # (default: not specified)
 #out_addr = 0.0.0.0
