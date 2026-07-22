@@ -315,6 +315,13 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         except UnicodeDecodeError:
             self._log.error("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
 
+        # When the exec'd command is a shell reading commands from the channel
+        # (`ssh host bash`), stdin is delivered to the cmdstack line by line
+        # instead of being buffered raw in input_data.
+        self.stdin_line_mode: bool = False
+        self._stdin_line = bytearray()
+        self._stdin_last_cr: bool = False
+
         HoneyPotBaseProtocol.__init__(self, avatar)
 
     def connectionMade(self) -> None:
@@ -326,7 +333,47 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack[0].lineReceived(self.execcmd)
 
     def keystrokeReceived(self, keyID, modifier):
-        self.input_data += keyID
+        if not self.stdin_line_mode:
+            self.input_data += keyID
+            return
+        if not isinstance(keyID, bytes):
+            # A function key parsed from an escape sequence has no place in a
+            # line-based stdin stream.
+            return
+        last_cr = self._stdin_last_cr
+        self._stdin_last_cr = keyID == b"\r"
+        if keyID == b"\n" and last_cr:
+            # The \n of a \r\n pair; the \r already dispatched the line.
+            return
+        if keyID in (b"\r", b"\n"):
+            line = bytes(self._stdin_line)
+            self._stdin_line = bytearray()
+            self.lineReceived(line)
+        elif keyID == b"\x04" and not self._stdin_line:
+            # CTRL-D on an empty line is EOF for the shell reading stdin.
+            HoneyPotBaseProtocol.eofReceived(self)
+        else:
+            self._stdin_line += keyID
+
+    def setInsertMode(self) -> None:
+        """Insert-mode toggle requested when an interactive shell resumes; an
+        exec channel has no recvline editor, so there is no mode to switch."""
+
+    def eofReceived(self) -> None:
+        if self.stdin_line_mode:
+            if self._stdin_line:
+                # A final line without a terminator still runs, as bash does
+                # when its stdin ends without a newline.
+                line = bytes(self._stdin_line)
+                self._stdin_line = bytearray()
+                self.lineReceived(line)
+            if not any(
+                getattr(item, "reads_stdin", False) for item in self.cmdstack
+            ):
+                # The stdin-reading shell already exited (e.g. `exit`) and
+                # ended the process; nothing is left to deliver EOF to.
+                return
+        HoneyPotBaseProtocol.eofReceived(self)
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):

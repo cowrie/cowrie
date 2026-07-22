@@ -76,15 +76,36 @@ class Command_sh(HoneyPotCommand):
         # command, not this shell.
 
     def interactive_shell(self) -> None:
+        from cowrie.shell.protocol import HoneyPotExecProtocol
+
         parentshell = self.protocol.cmdstack[-2]
-        # A sub-shell launched from a non-interactive parent (pipe, redirect, or
-        # command substitution) will never have a terminal feeding its stdin, so
-        # spawning an interactive shell would leak it on the cmdstack and write a
-        # prompt into captured output via showPrompt(). Behave like EOF instead.
-        if not getattr(parentshell, "interactive", True):
+        if (
+            isinstance(self.protocol, HoneyPotExecProtocol)
+            and len(self.protocol.cmdstack) == 2
+            and self.input_data is None
+            and not getattr(self.protocol.pp, "stdin_from_pipe", False)
+        ):
+            # The shell was exec'd as the SSH command (`ssh host bash`): its
+            # stdin is the live channel, so keep reading command lines from it
+            # until EOF. A pty request (TERM set by getPty) makes the shell
+            # interactive, with a prompt.
+            interactive = "TERM" in self.protocol.environ
+            reads_stdin = True
+            self.protocol.stdin_line_mode = True
+        elif not getattr(parentshell, "interactive", True):
+            # A sub-shell launched from a non-interactive parent (pipe,
+            # redirect, or command substitution) will never have a terminal
+            # feeding its stdin, so spawning an interactive shell would leak it
+            # on the cmdstack and write a prompt into captured output via
+            # showPrompt(). Behave like EOF instead.
             self.exit()
             return
-        shell = HoneyPotShell(self.protocol, interactive=True)
+        else:
+            interactive = True
+            reads_stdin = False
+        shell = HoneyPotShell(
+            self.protocol, interactive=interactive, reads_stdin=reads_stdin
+        )
         # TODO: copy more variables, but only exported variables
         try:
             shell.environ["SHLVL"] = str(int(parentshell.environ["SHLVL"]) + 1)
