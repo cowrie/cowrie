@@ -18,6 +18,7 @@ from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.logger import Logger
 from twisted.protocols.ftp import CommandFailed, FTPClient
+from twisted.python import failure
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
@@ -301,15 +302,23 @@ class Command_wget(HoneyPotCommand):
             )
             self.errorWrite(f"{proto_label} request sent, awaiting response... ")
 
-        if self.scheme == "ftp":
-            self.deferred = self.ftpDownload(urldata)
-            if self.deferred:
-                self.deferred.addErrback(self.error)
-        else:
-            self.deferred = self.httpDownload(url)
-            if self.deferred:
-                self.deferred.addCallback(self.success)
-                self.deferred.addErrback(self.error)
+        # treq.get() can raise synchronously before returning a Deferred (e.g.
+        # idna.core.InvalidCodepoint for an IPv4-embedded IPv6 URL literal such
+        # as [::ffff:8.8.8.8]). Route that raise through error() so the command
+        # exits instead of being orphaned on the cmdstack until session timeout.
+        try:
+            if self.scheme == "ftp":
+                self.deferred = self.ftpDownload(urldata)
+                if self.deferred:
+                    self.deferred.addErrback(self.error)
+            else:
+                self.deferred = self.httpDownload(url)
+                if self.deferred:
+                    self.deferred.addCallback(self.success)
+                    self.deferred.addErrback(self.error)
+        except Exception:
+            self.error(failure.Failure())
+            return
 
     def httpDownload(self, url: str) -> Any:
         """
