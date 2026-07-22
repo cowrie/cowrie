@@ -517,6 +517,13 @@ class Command_curl(HoneyPotCommand):
             self.exit()
             return
 
+        elif response.check(error.TCPTimedOutError) is not None:
+            self.errorWrite(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Connection timed out\n"
+            )
+            self.exit()
+            return
+
         # possible errors:
         # defer.CancelledError,
         # error.ConnectingCancelledError,
