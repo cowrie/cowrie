@@ -81,10 +81,14 @@ class HoneyPotShell:
         interactive: bool = True,
         redirect: bool = False,
         effective_user: dict[str, Any] | None = None,
+        reads_stdin: bool = False,
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
         self.redirect: bool = redirect  # to support output redirection
+        # The shell's commands arrive over a live stdin (an SSH exec channel
+        # running `bash`): a drained queue means idle, not done, until EOF.
+        self.reads_stdin: bool = reads_stdin
         self.effective_user = effective_user  # For su: {uid, gid, username, home}
         # Parsed-but-not-yet-evaluated statements; each is expanded against the
         # live environment only when it is about to run (see runCommand). A
@@ -262,16 +266,21 @@ class HoneyPotShell:
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
 
-        An interactive shell shows the next prompt. A top-level non-interactive
-        shell (an exec session) ends the process. A nested non-interactive shell
-        that runs a script or ``-c`` commands (sh/bash/su) removes itself from
-        the cmdstack and resumes the command that launched it -- this is what
-        hands control back once the script's async commands (wget/curl) have all
-        finished. A command-substitution / redirect capture shell is left alone:
-        its creator pops it in a finally when capture returns.
+        An interactive shell shows the next prompt. A shell reading commands
+        from live stdin stays resident awaiting the next line or EOF. A
+        top-level non-interactive shell (an exec session) ends the process. A
+        nested non-interactive shell that runs a script or ``-c`` commands
+        (sh/bash/su) removes itself from the cmdstack and resumes the command
+        that launched it -- this is what hands control back once the script's
+        async commands (wget/curl) have all finished. A command-substitution /
+        redirect capture shell is left alone: its creator pops it in a finally
+        when capture returns.
         """
         if self.interactive:
             self.showPrompt()
+        elif self.reads_stdin:
+            # Idle, not done: the channel will deliver more lines or EOF.
+            pass
         elif len(self.protocol.cmdstack) == 1:
             # Top-level non-interactive shell (an exec session): end the process
             # with the last command's status so the SSH channel reports a real
@@ -865,10 +874,13 @@ class HoneyPotShell:
 
     def eofReceived(self) -> None:
         """
-        EOF with the shell as the active reader (no command running) logs out.
+        EOF with the shell as the active reader (no command running) logs out,
+        exiting with the last command's status ($?) as bash does.
         """
         self._log.info("received eof, logging out")
-        self.protocol.terminal.transport.processEnded(process_status(0))
+        self.protocol.terminal.transport.processEnded(
+            process_status(self.last_exit_code)
+        )
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []

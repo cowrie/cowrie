@@ -234,8 +234,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         IMPORTANT
         Before this, all data is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
+
+        Invalid UTF-8 (binary piped or pasted into the shell) becomes
+        replacement characters: the line must not raise out of the protocol
+        and kill the session.
         """
-        string = line.decode("utf8")
+        string = line.decode("utf8", errors="replace")
 
         if self.cmdstack:
             self.cmdstack[-1].lineReceived(string)
@@ -304,6 +308,11 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
+    # Longest accepted stdin line in line mode, bash's per-argument limit
+    # (MAX_ARG_STRLEN). Bytes beyond it are dropped so an endless
+    # unterminated stream cannot grow memory without bound.
+    STDIN_LINE_MAX = 131072
+
     def __init__(self, avatar, execcmd):
         """
         IMPORTANT
@@ -314,6 +323,13 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
             self.execcmd = execcmd.decode("utf8")
         except UnicodeDecodeError:
             self._log.error("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
+
+        # When the exec'd command is a shell reading commands from the channel
+        # (`ssh host bash`), stdin is delivered to the cmdstack line by line
+        # instead of being buffered raw in input_data.
+        self.stdin_line_mode: bool = False
+        self._stdin_line = bytearray()
+        self._stdin_last_cr: bool = False
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 
@@ -326,7 +342,56 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack[0].lineReceived(self.execcmd)
 
     def keystrokeReceived(self, keyID, modifier):
-        self.input_data += keyID
+        if not self.stdin_line_mode:
+            self.input_data += keyID
+            return
+        if not isinstance(keyID, bytes):
+            # A function key parsed from an escape sequence has no place in a
+            # line-based stdin stream.
+            return
+        last_cr = self._stdin_last_cr
+        self._stdin_last_cr = keyID == b"\r"
+        if keyID == b"\n" and last_cr:
+            # The \n of a \r\n pair; the \r already dispatched the line.
+            return
+        # Control bytes are handled as a tty would, which is only strictly
+        # right when the client requested a pty; in a plain pipe they are
+        # rare enough that the difference does not matter.
+        if keyID in (b"\r", b"\n"):
+            self._dispatch_stdin_line()
+        elif keyID == b"\x04" and not self._stdin_line:
+            # CTRL-D on an empty line is EOF for the shell reading stdin.
+            HoneyPotBaseProtocol.eofReceived(self)
+        elif keyID in (b"\x08", b"\x7f"):
+            # Backspace / delete: drop the last byte of the pending line.
+            del self._stdin_line[-1:]
+        elif keyID == b"\x03":
+            # CTRL-C: discard the pending line.
+            self._stdin_line.clear()
+        elif len(self._stdin_line) < self.STDIN_LINE_MAX:
+            self._stdin_line += keyID
+
+    def _dispatch_stdin_line(self) -> None:
+        """Run the accumulated stdin line through the command stack."""
+        line = bytes(self._stdin_line)
+        self._stdin_line.clear()
+        self.lineReceived(line)
+
+    def setInsertMode(self) -> None:
+        """Insert-mode toggle requested when an interactive shell resumes; an
+        exec channel has no recvline editor, so there is no mode to switch."""
+
+    def eofReceived(self) -> None:
+        if self.stdin_line_mode:
+            if self._stdin_line:
+                # A final line without a terminator still runs, as bash does
+                # when its stdin ends without a newline.
+                self._dispatch_stdin_line()
+            if not any(getattr(item, "reads_stdin", False) for item in self.cmdstack):
+                # The stdin-reading shell already exited (e.g. `exit`) and
+                # ended the process; nothing is left to deliver EOF to.
+                return
+        HoneyPotBaseProtocol.eofReceived(self)
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
