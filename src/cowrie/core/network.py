@@ -11,6 +11,8 @@ from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.logger import Logger
 from twisted.names import client, dns
 
+from cowrie.core.config import CowrieConfig
+
 _log = Logger()
 
 BLOCKED_IPS = [
@@ -96,6 +98,16 @@ PORT_PATTERN = re.compile(
 def is_valid_port(port: str) -> bool:
     """Check if port string is a valid TCP/UDP port number (1-65535)"""
     return bool(PORT_PATTERN.match(port))
+
+
+def outbound_bind_address() -> str:
+    """Source IP to bind outbound connections to, from ``[honeypot] out_addr``.
+
+    Defaults to ``0.0.0.0`` (let the OS pick the source address). Binding
+    downloads (wget, curl, tftp) to a configured address keeps the honeypot's
+    real interface IP out of traffic that would otherwise reveal it.
+    """
+    return CowrieConfig.get("honeypot", "out_addr", fallback="0.0.0.0")
 
 
 def is_ip_address(

@@ -11,14 +11,15 @@ from http.client import responses
 from urllib import parse
 
 import treq
-from twisted.internet import error
+from twisted.internet import error, reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from twisted.python import failure
+from twisted.web.client import Agent
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed
+from cowrie.core.network import communication_allowed, outbound_bind_address
 from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
@@ -340,17 +341,16 @@ class Command_curl(HoneyPotCommand):
         """
         headers = {"User-Agent": ["curl/7.38.0"]}
 
-        # TODO: use designated outbound interface
-        # out_addr = None
-        # if CowrieConfig.has_option("honeypot", "out_addr"):
-        #     out_addr = (CowrieConfig.get("honeypot", "out_addr"), 0)
+        # Bind the outbound connection to the configured source address so the
+        # download does not leak the honeypot's real interface IP.
+        agent = Agent(reactor, bindAddress=(outbound_bind_address(), 0))
         if self.head_request:
             deferred = treq.head(
-                url=url, allow_redirects=False, headers=headers, timeout=10
+                url=url, agent=agent, allow_redirects=False, headers=headers, timeout=10
             )
         else:
             deferred = treq.get(
-                url=url, allow_redirects=False, headers=headers, timeout=10
+                url=url, agent=agent, allow_redirects=False, headers=headers, timeout=10
             )
         return deferred
 

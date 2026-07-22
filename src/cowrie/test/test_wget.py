@@ -13,11 +13,13 @@ import time
 import unittest
 from unittest import mock
 
-from twisted.internet import error
+from twisted.internet import defer, error
 from twisted.python.failure import Failure
 
+from cowrie.commands import wget as wget_module
 from cowrie.commands.wget import Command_wget
 from cowrie.core.artifact import Artifact
+from cowrie.core.config import CowrieConfig
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
@@ -180,3 +182,67 @@ class WgetArtifactCleanupTests(unittest.TestCase):
             [],
             "late download callbacks reported events for an exited command",
         )
+
+
+class WgetOutboundBindTests(unittest.TestCase):
+    """Downloads must bind to the configured out_addr so they do not leak the
+    honeypot's real interface IP (issue #752)."""
+
+    def tearDown(self) -> None:
+        CowrieConfig.remove_option("honeypot", "out_addr")
+
+    def test_http_download_binds_agent_to_out_addr(self) -> None:
+        CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
+        cmd = Command_wget.__new__(Command_wget)
+
+        captured: dict[str, object] = {}
+
+        def fake_get(url: str, agent: object = None, **kwargs: object) -> object:
+            captured["agent"] = agent
+            return defer.succeed(None)
+
+        with mock.patch.object(wget_module.treq, "get", fake_get):
+            cmd.httpDownload("http://198.51.100.1/x")
+
+        # The agent's endpoint factory carries the source address it binds to.
+        agent = captured["agent"]
+        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+
+    def test_http_download_default_bind_is_wildcard(self) -> None:
+        cmd = Command_wget.__new__(Command_wget)
+
+        captured: dict[str, object] = {}
+
+        def fake_get(url: str, agent: object = None, **kwargs: object) -> object:
+            captured["agent"] = agent
+            return defer.succeed(None)
+
+        with mock.patch.object(wget_module.treq, "get", fake_get):
+            cmd.httpDownload("http://198.51.100.1/x")
+
+        agent = captured["agent"]
+        self.assertEqual(agent._endpointFactory._bindAddress, ("0.0.0.0", 0))
+
+    def test_ftp_download_binds_to_out_addr(self) -> None:
+        CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.host = "198.51.100.1"
+        cmd.port = 21
+
+        captured: dict[str, object] = {}
+
+        class FakeCreator:
+            def __init__(self, *a: object, **k: object) -> None:
+                pass
+
+            def connectTCP(self, host: str, port: int, **kwargs: object) -> object:
+                captured["bindAddress"] = kwargs.get("bindAddress")
+                # A pending Deferred: capture the bind address without driving
+                # the FTP callback chain (which would need a live client).
+                return defer.Deferred()
+
+        urldata = wget_module.parse.urlparse("ftp://198.51.100.1/dir/file")
+        with mock.patch.object(wget_module, "ClientCreator", FakeCreator):
+            cmd.ftpDownload(urldata)
+
+        self.assertEqual(captured["bindAddress"], ("127.0.0.1", 0))
