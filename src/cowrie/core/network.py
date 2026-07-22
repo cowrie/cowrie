@@ -35,21 +35,26 @@ BLOCKED_IPS = [
 # its low 32 bits, just like an IPv4-mapped address does.
 _NAT64_PREFIX = ipaddress.ip_network("64:ff9b::/96")
 
+# IPv4-compatible prefix (::a.b.c.d, deprecated by RFC 4291): also embeds an
+# IPv4 address in its low 32 bits. ::/96 also contains ::1 and ::, whose
+# embedded 0.0.0.x values are non-global and stay blocked.
+_IPV4_COMPATIBLE_PREFIX = ipaddress.ip_network("::/96")
+
 
 def _embedded_ipv4(
     ip: ipaddress.IPv6Address,
 ) -> ipaddress.IPv4Address | None:
     """
     Return the IPv4 address embedded in an IPv6 address, or None if there is
-    none. Covers IPv4-mapped (``::ffff:0:0/96``), 6to4 (``2002::/16``), and
-    NAT64 (``64:ff9b::/96``) forms, all of which can reach an IPv4 target
-    through an IPv6 wrapper.
+    none. Covers IPv4-mapped (``::ffff:0:0/96``), 6to4 (``2002::/16``), NAT64
+    (``64:ff9b::/96``), and IPv4-compatible (``::/96``) forms, all of which can
+    reach an IPv4 target through an IPv6 wrapper.
     """
     if ip.ipv4_mapped is not None:
         return ip.ipv4_mapped
     if ip.sixtofour is not None:
         return ip.sixtofour
-    if ip in _NAT64_PREFIX:
+    if ip in _NAT64_PREFIX or ip in _IPV4_COMPATIBLE_PREFIX:
         return ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
     return None
 

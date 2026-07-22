@@ -101,6 +101,20 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         artifact.close()
         artifact.close()  # must not raise on the already-closed file
 
+    def test_embedded_ipv6_url_does_not_hang(self) -> None:
+        # An IPv4-embedded IPv6 URL literal such as [::ffff:8.8.8.8] passes the
+        # network guard (globally routable) but makes treq.get() raise
+        # idna.core.InvalidCodepoint synchronously. That raise must be caught so
+        # the command exits, instead of orphaning it on the cmdstack (a session
+        # hang / DoS) until the session times out.
+        self.proto.lineReceived(b"curl -s 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(
+            b"rc=",
+            out,
+            "shell never resumed: the command hung instead of exiting",
+        )
+
     def test_late_download_callbacks_after_exit_are_inert(self) -> None:
         # The command can exit while treq is still delivering the body (size
         # limit in collect(), CTRL-C). The late callbacks must not write to the

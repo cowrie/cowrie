@@ -49,6 +49,20 @@ class WgetArtifactCleanupTests(unittest.TestCase):
             os.remove(os.path.join(self.tmpdir, name))
         os.rmdir(self.tmpdir)
 
+    def test_embedded_ipv6_url_does_not_hang(self) -> None:
+        # An IPv4-embedded IPv6 URL literal such as [::ffff:8.8.8.8] passes the
+        # network guard (globally routable) but makes treq.get() raise
+        # idna.core.InvalidCodepoint synchronously. That raise must be caught so
+        # the command exits, instead of orphaning it on the cmdstack (a session
+        # hang / DoS) until the session times out.
+        self.proto.lineReceived(b"wget -q 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(
+            b"rc=",
+            out,
+            "shell never resumed: the command hung instead of exiting",
+        )
+
     def test_failed_download_removes_temp_artifact(self) -> None:
         # Bypass HoneyPotCommand.__init__: its stdout/stderr wiring needs a
         # running process protocol (self.protocol.pp), which is irrelevant to

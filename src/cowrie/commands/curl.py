@@ -14,6 +14,7 @@ import treq
 from twisted.internet import error
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
+from twisted.python import failure
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
@@ -320,7 +321,15 @@ class Command_curl(HoneyPotCommand):
 
         self.artifact = Artifact("curl-download")
 
-        self.deferred = self.treqDownload(url)
+        # treq.get() can raise synchronously before returning a Deferred (e.g.
+        # idna.core.InvalidCodepoint for an IPv4-embedded IPv6 URL literal such
+        # as [::ffff:8.8.8.8]). Route that raise through error() so the command
+        # exits instead of being orphaned on the cmdstack until session timeout.
+        try:
+            self.deferred = self.treqDownload(url)
+        except Exception:
+            self.error(failure.Failure())
+            return
         if self.deferred:
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error)
