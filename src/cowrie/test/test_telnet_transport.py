@@ -278,6 +278,30 @@ class TestInvalidIACSequence(unittest.TestCase):
         self.tcp.loseConnection.assert_not_called()
         self.assertEqual(errors, [])
 
+    def test_protocol_error_logs_no_traceback(self) -> None:
+        # A byte the telnet parser rejects after IAC is expected garbage from a
+        # non-telnet client (scanners). The error event records it; a full
+        # traceback would just be log noise, so none is logged.
+        self.transport._log = MagicMock()
+        errors = self._capture(lambda: self.transport.dataReceived(b"\xff\x18"))
+
+        self.assertEqual(len(errors), 1)
+        self.tcp.loseConnection.assert_called_once_with()
+        self.transport._log.failure.assert_not_called()
+
+    def test_unexpected_valueerror_logs_traceback(self) -> None:
+        # A ValueError from downstream honeypot code (not the telnet parser) is
+        # a genuine bug and must still be logged with a full traceback.
+        self.transport._log = MagicMock()
+        protocol = MagicMock()
+        protocol.dataReceived.side_effect = ValueError("boom")
+        self.transport.protocol = protocol  # type: ignore[assignment]
+
+        self.transport.dataReceived(b"hello")
+
+        self.transport._log.failure.assert_called_once()
+        self.tcp.loseConnection.assert_called_once_with()
+
 
 class TestOptionLoggingDeduplication(unittest.TestCase):
     """A scanner flooding the same option negotiation is logged once."""
