@@ -24,6 +24,7 @@ from twisted.python import failure, log
 from zope.interface import implementer
 
 from cowrie.telnet.transport import CowrieTelnetTransport
+from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 from cowrie.test.eventcapture import capture_events
 
 if TYPE_CHECKING:
@@ -316,6 +317,93 @@ class TestOptionLoggingDeduplication(unittest.TestCase):
         ):
             logs = self._capture(run)
         self.assertEqual(sorted(e["command"] for e in logs), ["WILL", "WONT"])
+
+
+class TestLoginLineEndings(unittest.TestCase):
+    """Login must accept the line endings a real telnetd does (issue #1461).
+
+    Twisted's NVT layer only turns CR LF into a newline; a client that ends a
+    line with a bare CR (PuTTY's "Return sends ^M"), CR NUL, or CR followed by
+    the next line never delivers the LF the login LineReceiver waits for, so
+    the login would stall at ``login:``.
+    """
+
+    def _harness(
+        self,
+    ) -> tuple[CowrieTelnetTransport, HoneyPotTelnetAuthProtocol, list[bytes]]:
+        transport = CowrieTelnetTransport()
+        transport.transport = MagicMock()
+        capture_events(transport)
+        auth = HoneyPotTelnetAuthProtocol(MagicMock())
+        auth.transport = transport  # type: ignore[assignment]
+        auth.factory = MagicMock()
+        auth.factory.banner = b"banner\n"
+        transport.protocol = auth  # type: ignore[assignment]
+        auth.state = "User"
+        lines: list[bytes] = []
+
+        def spy_user(line: bytes) -> str:
+            lines.append(line)
+            return "Password"
+
+        auth.telnet_User = spy_user  # type: ignore[method-assign]
+        return transport, auth, lines
+
+    def test_crlf_still_delivers_clean_line(self) -> None:
+        transport, _auth, lines = self._harness()
+        transport.dataReceived(b"root\r\n")
+        self.assertEqual(lines, [b"root"])
+
+    def test_bare_cr_delivers_clean_line(self) -> None:
+        transport, _auth, lines = self._harness()
+        transport.dataReceived(b"root\r")
+        self.assertEqual(lines, [b"root"])
+
+    def test_cr_nul_delivers_clean_line(self) -> None:
+        transport, _auth, lines = self._harness()
+        transport.dataReceived(b"root\r\x00")
+        self.assertEqual(lines, [b"root"])
+
+    def test_bare_cr_split_across_packets(self) -> None:
+        # A bare CR arriving in its own packet (character-at-a-time telnet)
+        # must terminate the line immediately, not wait for the next keystroke.
+        transport, _auth, lines = self._harness()
+        for byte in b"root":
+            transport.dataReceived(bytes([byte]))
+        self.assertEqual(lines, [])
+        transport.dataReceived(b"\r")
+        self.assertEqual(lines, [b"root"])
+
+    def test_full_login_with_bare_cr(self) -> None:
+        transport, auth, lines = self._harness()
+        passwords: list[bytes] = []
+
+        def spy_password(line: bytes) -> str:
+            passwords.append(line)
+            return "Discard"
+
+        auth.telnet_Password = spy_password  # type: ignore[method-assign]
+
+        transport.dataReceived(b"root\r")
+        auth.state = "Password"
+        transport.dataReceived(b"secret\r")
+        self.assertEqual(lines, [b"root"])
+        self.assertEqual(passwords, [b"secret"])
+
+    def test_held_cr_not_flushed_after_login(self) -> None:
+        # The CR handling is scoped to login. Once the interactive session
+        # protocol is in place, a bare CR is left for Twisted's normal NVT
+        # handling so the session's raw keystroke input is unaffected.
+        transport = CowrieTelnetTransport()
+        transport.transport = MagicMock()
+        capture_events(transport)
+        session = MagicMock()
+        transport.protocol = session  # type: ignore[assignment]
+
+        transport.dataReceived(b"x\r")
+
+        self.assertEqual(transport.state, "newline")
+        session.dataReceived.assert_called_once_with(b"x")
 
 
 if __name__ == "__main__":
