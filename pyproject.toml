@@ -69,6 +69,7 @@ rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
 influxdb = ["influxdb"]
+kafka = ["aiokafka==0.14"]
 dev = [
 "build==1.5.0",
 "coverage==7.15.1",
