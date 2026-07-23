@@ -128,8 +128,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         Telnet.dataReceived() also re-enters the application stack
         (applicationDataReceived -> protocol.dataReceived, negotiate,
         commandReceived), so a ValueError raised by downstream honeypot code is
-        caught here too. Log the full traceback as well so a genuine bug is not
-        silently reduced to a one-line protocol error.
+        caught here too. That is a genuine bug, so log the full traceback for
+        it -- but not for the parser's own protocol error, which is expected
+        garbage traffic (see below).
         """
         try:
             TelnetTransport.dataReceived(self, data)
@@ -140,7 +141,20 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                     "Telnet protocol error %(error)s; dropping connection",
                     error=str(e),
                 )
-            self._log.failure("Telnet protocol error; dropping connection")
+            # Twisted's parser raises ValueError("Stumped", byte) for a byte
+            # that is not a valid command after IAC: a non-telnet or malformed
+            # client (scanners, binary garbage) probing the port. That is
+            # expected honeypot traffic, already recorded by the event above,
+            # so drop it without a traceback. Any other ValueError comes from
+            # re-entrant honeypot code and is a real bug worth the traceback.
+            stumped = bool(e.args) and e.args[0] == "Stumped"
+            if not stumped:
+                self._log.failure("Telnet protocol error; dropping connection")
+            elif not self.events:
+                self._log.info(
+                    "Telnet protocol error {error}; dropping connection",
+                    error=str(e),
+                )
             if self.transport:
                 self.transport.loseConnection()
             return
