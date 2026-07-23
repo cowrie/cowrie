@@ -61,6 +61,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.sessionno: int
         self.factory = None
 
+        self.fs.provision_home(
+            self.user.avatar.home, self.user.avatar.uid, self.user.avatar.gid
+        )
         if self.fs.exists(self.user.avatar.home):
             self.cwd = self.user.avatar.home
         else:
