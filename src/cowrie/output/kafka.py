@@ -9,6 +9,7 @@ import json
 from typing import Any, cast
 
 from twisted.internet import asyncioreactor, reactor
+from twisted.internet.defer import Deferred
 from twisted.logger import Logger
 
 import cowrie.core.output
@@ -31,6 +32,9 @@ class Output(cowrie.core.output.Output):
     """
 
     _log = Logger()
+
+    # How long shutdown may wait for pending events to reach the broker.
+    FLUSH_TIMEOUT: float = 5.0
 
     def start(self) -> None:
         self._enabled: bool = False
@@ -64,6 +68,12 @@ class Output(cowrie.core.output.Output):
 
         self._enabled = True
 
+        # Flush before reactor shutdown: Twisted waits for Deferreds from
+        # "before" shutdown triggers while the asyncio loop still runs. By
+        # the time the base class calls stop() (after shutdown) the loop no
+        # longer executes tasks, so nothing can be delivered there.
+        reactor.addSystemEventTrigger("before", "shutdown", self._flush)
+
         # Producer initialization must be delayed - it requires an asyncio
         # loop to be running, which only happens after the reactor starts.
         reactor.callLater(0, self._start)
@@ -91,17 +101,35 @@ class Output(cowrie.core.output.Output):
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
 
-    def stop(self) -> None:
-        producer = self._producer
-        if not producer:
-            return
+    def _flush(self) -> Deferred[None] | None:
+        if self._producer is None:
+            return None
+        return Deferred.fromFuture(asyncio.ensure_future(self._shutdown_flush()))
 
-        async def _do_stop() -> None:
+    async def _shutdown_flush(self) -> None:
+        """
+        Wait for pending sends, then stop the producer, which flushes its
+        internal buffer. Bounded so an unreachable broker can't hang shutdown.
+        """
+        producer = self._producer
+
+        async def _drain() -> None:
+            if self._background_tasks:
+                await asyncio.gather(*self._background_tasks, return_exceptions=True)
             await producer.stop()
 
-        task = asyncio.ensure_future(_do_stop())
-        self._background_tasks.add(task)
-        task.add_done_callback(self._background_tasks.discard)
+        try:
+            await asyncio.wait_for(_drain(), timeout=self.FLUSH_TIMEOUT)
+        except Exception as e:
+            self._log.error(f"kafka: Can't flush on shutdown: {e}")
+        finally:
+            self._producer = None
+
+    def stop(self) -> None:
+        """
+        Producer teardown happens in _flush before reactor shutdown; once
+        this runs (after shutdown) the asyncio loop no longer executes tasks.
+        """
 
     def write(self, event: dict[str, Any]) -> None:
         if not self._enabled:
