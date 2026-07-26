@@ -10,6 +10,7 @@ import copy
 import enum
 import fnmatch
 import os
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -70,6 +71,12 @@ class _Continuation:
     fn: Callable[[], None]
     is_loop_cont: bool = False
     op: str | None = None
+
+
+# A leading word only counts as a variable assignment when a valid shell
+# identifier precedes the "=", matching bash's assignment-word grammar. A bare
+# "=" (or "1=x") is a command name, not an assignment.
+ASSIGNMENT_WORD = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
 
 class HoneyPotShell:
@@ -622,7 +629,7 @@ class HoneyPotShell:
         cmd_array: list[dict[str, Any]] = []
         while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
-            if piece.count("="):
+            if ASSIGNMENT_WORD.match(piece):
                 key, val = piece.split("=", 1)
                 environ[key] = val
                 continue

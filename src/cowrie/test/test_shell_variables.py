@@ -111,6 +111,14 @@ class ShellVariableTests(unittest.TestCase):
         self.proto.lineReceived(b"export x")
         self.assertIn(b"x=hi", self.run_line(b"env"))
 
+    # A word is only an assignment when a valid identifier precedes the "=";
+    # bash reports a bare "=" (or a non-identifier name) as a command instead.
+    def test_bare_equals_is_a_command(self) -> None:
+        self.assertIn(b"=: command not found", self.run_line(b"="))
+
+    def test_non_identifier_assignment_is_a_command(self) -> None:
+        self.assertIn(b"1=x: command not found", self.run_line(b"1=x"))
+
     # unset PATH must not crash later command dispatch
     def test_unset_path_does_not_crash(self) -> None:
         self.proto.lineReceived(b"unset PATH")
