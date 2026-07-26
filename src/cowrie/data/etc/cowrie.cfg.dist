@@ -1104,6 +1104,11 @@ port = 8086
 database_name = cowrie
 retention_policy_duration = 12w
 
+# Kafka output. Requires Twisted to run the asyncio reactor:
+#   cowrie start -- --reactor=asyncio
+# The plugin disables itself with an error when another reactor is in use.
+# Connections are plaintext and unauthenticated (no TLS/SASL support),
+# so only use a broker on a trusted network.
 [output_kafka]
 enabled = false
 host = 127.0.0.1
