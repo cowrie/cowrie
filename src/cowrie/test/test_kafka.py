@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# ABOUTME: Tests for the kafka output plugin: reactor gating, and the
-# ABOUTME: shutdown flush that delivers pending events before the loop stops.
+# ABOUTME: Tests for the kafka output plugin: reactor gating, the shutdown
+# ABOUTME: flush of pending events, broker reconnection and write buffering.
 
 from __future__ import annotations
 
@@ -103,3 +103,57 @@ class KafkaShutdownFlushTests(unittest.TestCase):
         self.assertIsNone(output._producer)
         self.assertEqual(len(output._log.errors), 1)
         self.assertIn("flush", output._log.errors[0])
+
+
+class KafkaReconnectTests(unittest.TestCase):
+    """A broker that is down at startup must not kill the plugin: connecting
+    retries until it succeeds, and writes buffer up to a bounded backlog."""
+
+    def test_connect_retries_until_broker_available(self) -> None:
+        output = make_output()
+        attempts: list[object] = []
+
+        class FlakyProducer:
+            def __init__(self, ok: bool) -> None:
+                self.ok = ok
+
+            async def start(self) -> None:
+                if not self.ok:
+                    raise ConnectionError
+
+            async def stop(self) -> None:
+                pass
+
+        def create() -> FlakyProducer:
+            attempts.append(object())
+            return FlakyProducer(ok=len(attempts) >= 3)
+
+        output._create_producer = create
+        output.RECONNECT_INTERVAL = 0
+        asyncio.run(output._connect())
+
+        self.assertEqual(len(attempts), 3)
+        self.assertTrue(output._ready.is_set())
+        self.assertIsNotNone(output._producer)
+        self.assertEqual(len(output._log.errors), 2)
+        for message in output._log.errors:
+            self.assertIn("Can't connect", message)
+
+    def test_write_drops_events_when_backlog_is_full(self) -> None:
+        output = make_output()
+
+        async def scenario() -> None:
+            output._enabled = True
+            output.MAX_PENDING = 2
+            for n in range(5):
+                output.write({"eventid": "cowrie.test", "n": n})
+
+            self.assertEqual(len(output._background_tasks), 2)
+            self.assertEqual(output._dropped, 3)
+
+            for task in list(output._background_tasks):
+                task.cancel()
+
+        asyncio.run(scenario())
+        self.assertEqual(len(output._log.errors), 1)
+        self.assertIn("dropped", output._log.errors[0])

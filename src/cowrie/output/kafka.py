@@ -35,6 +35,11 @@ class Output(cowrie.core.output.Output):
 
     # How long shutdown may wait for pending events to reach the broker.
     FLUSH_TIMEOUT: float = 5.0
+    # Delay between connection attempts while the broker is unreachable.
+    RECONNECT_INTERVAL: float = 30.0
+    # Events buffer while disconnected (or the broker is slow); beyond
+    # this backlog, writes are dropped and counted.
+    MAX_PENDING: int = 1000
 
     def start(self) -> None:
         self._enabled: bool = False
@@ -45,6 +50,7 @@ class Output(cowrie.core.output.Output):
         # https://docs.astral.sh/ruff/rules/asyncio-dangling-task/
         self._background_tasks: set[asyncio.Task[None]] = set()
         self._ready = asyncio.Event()
+        self._dropped: int = 0
 
         # The reactor's static type is an interface; widen it so mypy
         # accepts the concrete-class check.
@@ -80,26 +86,34 @@ class Output(cowrie.core.output.Output):
 
     def _start(self) -> None:
         """
-        Initialize the Kafka producer in a background task.
+        Start connecting in a background task.
         Must be called when the asyncio loop is already running.
         """
-
-        async def _do_start() -> None:
-            try:
-                self._producer = AIOKafkaProducer(
-                    bootstrap_servers=f"{self._host}:{self._port}"
-                )
-                await self._producer.start()
-            except Exception as e:
-                self._log.error(f"kafka: Can't connect: {e}")
-            finally:
-                # Set the event even in case of failure to unblock waiting tasks.
-                # They'll fail anyway, but at least they won't build up.
-                self._ready.set()
-
-        task = asyncio.ensure_future(_do_start())
+        task = asyncio.ensure_future(self._connect())
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
+
+    async def _connect(self) -> None:
+        """
+        Connect the producer, retrying while the broker is unreachable.
+        Writes buffer against _ready until the connection succeeds.
+        """
+        while self._producer is None:
+            producer = self._create_producer()
+            try:
+                await producer.start()
+            except Exception as e:
+                self._log.error(
+                    f"kafka: Can't connect, retrying in {self.RECONNECT_INTERVAL}s: {e}"
+                )
+                await producer.stop()
+                await asyncio.sleep(self.RECONNECT_INTERVAL)
+                continue
+            self._producer = producer
+            self._ready.set()
+
+    def _create_producer(self) -> Any:
+        return AIOKafkaProducer(bootstrap_servers=f"{self._host}:{self._port}")
 
     def _flush(self) -> Deferred[None] | None:
         if self._producer is None:
@@ -133,6 +147,14 @@ class Output(cowrie.core.output.Output):
 
     def write(self, event: dict[str, Any]) -> None:
         if not self._enabled:
+            return
+
+        if len(self._background_tasks) >= self.MAX_PENDING:
+            self._dropped += 1
+            if self._dropped == 1 or self._dropped % 100 == 0:
+                self._log.error(
+                    f"kafka: backlog full, {self._dropped} events dropped so far"
+                )
             return
 
         for i in list(event):
