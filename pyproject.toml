@@ -72,7 +72,7 @@ influxdb = ["influxdb"]
 kafka = ["aiokafka"]
 dev = [
 "build==1.5.0",
-"coverage==7.15.1",
+"coverage==7.15.2",
 "mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
 "mypy-zope==1.0.16; platform_python_implementation=='CPython'",
 "mypy==2.3.0; platform_python_implementation=='CPython'",
