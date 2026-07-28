@@ -173,6 +173,22 @@ reportOptionalOperand = "information"
 reportPossiblyUnboundVariable = "information"
 reportUnsupportedDunderAll = "information"
 
+# Twisted/zope base classes are untyped (mypy uses the mypy-zope plugin;
+# pyright has no equivalent), so in strict mode every attribute access on a
+# Twisted subclass resolves to "Unknown". That noise (~89% of all findings)
+# buries the checks that are actually useful on the pure-Python parts of the
+# codebase, so silence the Unknown/untyped-decorator/missing-annotation
+# families and keep the rest of strict mode.
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportUnknownLambdaType = "none"
+reportMissingParameterType = "none"
+reportMissingTypeArgument = "none"
+reportUntypedClassDecorator = "none"
+reportUntypedFunctionDecorator = "none"
+
 # Tests legitimately exercise protected methods of the code under test.
 [[tool.pyright.executionEnvironments]]
 root = "src/cowrie/test"
