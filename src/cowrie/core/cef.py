@@ -60,6 +60,8 @@ def formatCef(logentry: dict[str, str]) -> str:
             cefExtensions["filehash"] = logentry["filehash"]
             cefExtensions["filePath"] = logentry["filename"]
             cefExtensions["fsize"] = logentry["size"]
+        case _:
+            pass
 
     # 'out' 'outcome'  request, rt
 
