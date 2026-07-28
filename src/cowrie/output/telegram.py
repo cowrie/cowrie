@@ -60,15 +60,21 @@ class Output(cowrie.core.output.Output):
 
     def send_message(self, message):
         self._log.info("Telegram plugin will try to call TelegramBot")
-        try:
-            treq.get(
-                "https://api.telegram.org/bot" + self.bot_token + "/sendMessage",
-                params=[
-                    ("chat_id", str(self.chat_id)),
-                    ("parse_mode", "HTML"),
-                    ("text", message),
-                ],
-                allow_redirects=False,
-            )
-        except Exception:
-            self._log.info("Telegram plugin request error")
+        # treq.get returns a Deferred; a network failure surfaces there, not as
+        # a synchronous exception, so it needs an errback rather than a
+        # try/except to avoid an unhandled Deferred error.
+        d = treq.get(
+            "https://api.telegram.org/bot" + self.bot_token + "/sendMessage",
+            params=[
+                ("chat_id", str(self.chat_id)),
+                ("parse_mode", "HTML"),
+                ("text", message),
+            ],
+            allow_redirects=False,
+        )
+        d.addErrback(self._request_failed)
+
+    def _request_failed(self, failure):
+        self._log.info(
+            "Telegram plugin request error: {error}", error=failure.getErrorMessage()
+        )
