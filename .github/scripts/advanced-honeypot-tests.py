@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2023-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # ABOUTME: Advanced honeypot detection tests for Cowrie
 # ABOUTME: Tests command responses, timing, and behavioral fingerprints
 
