@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import errno
-import fnmatch
 import hashlib
 import os
 import re
@@ -191,35 +190,6 @@ class HoneyPotFilesystem:
             cwdpieces.append(piece)
 
         return "/{}".format("/".join(cwdpieces))
-
-    def resolve_path_wc(self, path: str, cwd: str) -> list[str]:
-        """
-        Resolve_path with wildcard support (globbing)
-        """
-        pieces: list[str] = path.rstrip("/").split("/")
-        cwdpieces: list[str]
-        if len(pieces[0]):
-            cwdpieces = [x for x in cwd.split("/") if len(x)]
-            path = path[1:]
-        else:
-            cwdpieces, pieces = [], pieces[1:]
-        found: list[str] = []
-
-        def foo(p, cwd):
-            if not p:
-                found.append("/{}".format("/".join(cwd)))
-            elif p[0] == ".":
-                foo(p[1:], cwd)
-            elif p[0] == "..":
-                foo(p[1:], cwd[:-1])
-            else:
-                names = [x[A_NAME] for x in self.get_path("/".join(cwd))]
-                matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
-                for match in matches:
-                    foo(p[1:], [*cwd, match])
-
-        foo(pieces, cwdpieces)
-        return found
 
     def get_path(self, path: str, follow_symlinks: bool = True) -> Any:
         """
