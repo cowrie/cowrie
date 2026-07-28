@@ -181,12 +181,15 @@ class ShellContext(Protocol):
 
     def get_variable(self, name: str) -> str | None:
         """Return the value of a shell variable, or None if unset."""
+        ...
 
     def get_status(self) -> str:
         """Return ``$?`` -- the last command's exit status, as a string."""
+        ...
 
     def command_substitution(self, source: str) -> str:
         """Execute ``source`` and return its captured stdout (newlines stripped)."""
+        ...
 
 
 @dataclass
