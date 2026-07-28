@@ -50,10 +50,10 @@ jobs:
         run: echo "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python -m setuptools_scm --force-write-version-files)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4.2.0
 
       - name: Build Cowrie Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.3.0
         with:
           context: .
           file: docker/Dockerfile
@@ -258,7 +258,7 @@ jobs:
           fi
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: fingerprint-results
