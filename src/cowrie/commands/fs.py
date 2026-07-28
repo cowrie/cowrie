@@ -30,6 +30,9 @@ class Command_grep(HoneyPotCommand):
     grep command
     """
 
+    interactive: bool = False
+    matched: bool = False
+
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
             contents = self.fs.file_contents(filename)
@@ -39,10 +42,10 @@ class Command_grep(HoneyPotCommand):
 
     def grep_application(self, contents: bytes, match: str) -> None:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
-        matches = re.compile(bmatch)
-        contentsplit = contents.split(b"\n")
-        for line in contentsplit:
-            if matches.search(line):
+        matcher = re.compile(bmatch)
+        for line in contents.split(b"\n"):
+            if matcher.search(line):
+                self.matched = True
                 self.writeBytes(line + b"\n")
 
     def help(self) -> None:
@@ -63,44 +66,49 @@ class Command_grep(HoneyPotCommand):
             self.exit()
             return
 
-        self.n = 10
-        optlist: list[tuple[str, str]] = []
-        args = self.args
-        if self.args[0] == ">":
-            pass
-        else:
-            try:
-                optlist, args = getopt.getopt(
-                    self.args,
-                    "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:",
-                    [
-                        "binary-files=",
-                        "color=",
-                        "color",
-                        "context=",
-                        "directories=",
-                        "label",
-                        "line-buffered",
-                    ],
-                )
-            except getopt.GetoptError as err:
-                self.errorWrite(f"grep: invalid option -- {err.opt}\n")
+        try:
+            optlist, args = getopt.getopt(
+                self.args,
+                "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:",
+                [
+                    "binary-files=",
+                    "color=",
+                    "color",
+                    "context=",
+                    "directories=",
+                    "label",
+                    "line-buffered",
+                ],
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(f"grep: invalid option -- {err.opt}\n")
+            self.help()
+            self.exit()
+            return
+
+        for opt, _arg in optlist:
+            if opt == "-h":
                 self.help()
-                self.exit()
-                return
 
-            for opt, _arg in optlist:
-                if opt == "-h":
-                    self.help()
+        if not args:
+            # Options only, no pattern (e.g. `grep -h`).
+            self.exit()
+            return
 
-        if not self.input_data:
-            files = self.check_arguments("grep", args[1:])
-            for pname in files:
-                self.grep_get_contents(pname, args[0])
+        self.match = args[0]
+        files = args[1:]
+
+        if self.input_data is not None:
+            self.grep_application(self.input_data, self.match)
+        elif files:
+            for pname in self.check_arguments("grep", files):
+                self.grep_get_contents(pname, self.match)
         else:
-            self.grep_application(self.input_data, args[0])
+            # No file and no pipe: read stdin until EOF.
+            self.interactive = True
+            return
 
-        self.exit()
+        self.exit(0 if self.matched else 1)
 
     def lineReceived(self, line: str) -> None:
         self.protocol.events.dispatch(
@@ -109,9 +117,23 @@ class Command_grep(HoneyPotCommand):
             realm="grep",
             input=line,
         )
+        if self.interactive:
+            self.grep_application(line.encode("utf8"), self.match)
 
     def eofReceived(self) -> None:
-        self.exit()
+        if self.interactive:
+            terminal = self.protocol.terminal
+            if (
+                getattr(terminal, "stdinlogOpen", False)
+                and getattr(terminal, "stdinlogFile", "")
+                and os.path.exists(terminal.stdinlogFile)
+            ):
+                # Live exec-channel stdin (e.g. `grep foo < file` over an ssh
+                # exec): the bytes were streamed to the stdin log rather than
+                # arriving via lineReceived, so match against them now.
+                with open(terminal.stdinlogFile, "rb") as f:
+                    self.grep_application(f.read(), self.match)
+        self.exit(0 if self.matched else 1)
 
 
 commands["/bin/grep"] = Command_grep
