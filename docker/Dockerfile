@@ -105,6 +105,9 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
+# Exec form runs python directly with no shell; the -c argument is Python,
+# not shell, so ShellCheck's SC1088 parse error on its parentheses is spurious.
+# hadolint ignore=SC1088
 RUN [ "python3", "-c", "import sys, compileall; v=str(sys.version_info.major)+'.'+str(sys.version_info.minor); compileall.compile_dir('/cowrie/cowrie-git/src', quiet=1); compileall.compile_dir('/cowrie/cowrie-env/', quiet=1); compileall.compile_dir('/usr/lib/python'+v, quiet=1)" ]
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
