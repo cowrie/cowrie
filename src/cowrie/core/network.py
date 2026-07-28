@@ -6,12 +6,18 @@ import ipaddress
 import re
 import socket
 from collections.abc import Generator
+from typing import TYPE_CHECKING, cast
 
 from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.protocol import Protocol
 from twisted.logger import Logger
 from twisted.names import client, dns
+from twisted.web.iweb import IResponse
 
 from cowrie.core.config import CowrieConfig
+
+if TYPE_CHECKING:
+    from twisted.internet.interfaces import IPushProducer
 
 _log = Logger()
 
@@ -207,3 +213,34 @@ def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
         return False  # Blocked IP found
 
     return True  # Communication is allowed
+
+
+class DownloadLimitExceeded(Exception):
+    """A transfer exceeded the configured download_limit_size.
+
+    Raised from a treq collector: treq closes the connection when the
+    collector raises, so raising this aborts the transfer instead of
+    silently draining the rest of the body.
+    """
+
+
+class _BodyAbort(Protocol):
+    """Connects to a response body only to stop its producer."""
+
+    def connectionMade(self) -> None:
+        # The body transport deliverBody connects is a producer proxy for the
+        # HTTP connection; stopping it forcibly closes that connection.
+        producer = cast("IPushProducer", self.transport)
+        producer.stopProducing()
+
+
+def abort_body(response: IResponse) -> None:
+    """
+    Abort an HTTP response body without reading it.
+
+    An undelivered body is buffered in memory by twisted while the server
+    keeps sending. Stopping the body transport's producer forcibly closes
+    the connection, so an unwanted transfer (e.g. one over
+    download_limit_size) stops instead of downloading to completion.
+    """
+    response.deliverBody(_BodyAbort())
