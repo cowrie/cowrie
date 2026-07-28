@@ -402,31 +402,24 @@ or available locally via: info '(coreutils) rm invocation'\n"""
 
         for f in args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
-            try:
-                # verify path to file exists
-                directory = self.fs.get_path("/".join(pname.split("/")[:-1]))
-                # verify that the file itself exists
-                self.fs.get_path(pname)
-            except (IndexError, fs.FileNotFound):
+            node = self.fs.getfile(pname, follow_symlinks=False)
+            if node is None:
                 if not force:
                     self.errorWrite(
                         f"rm: cannot remove `{f}': No such file or directory\n"
                     )
                 continue
-            basename = pname.split("/")[-1]
-            for i in directory[:]:
-                if i[fs.A_NAME] == basename:
-                    if i[fs.A_TYPE] == fs.T_DIR and not recursive:
-                        self.errorWrite(
-                            f"rm: cannot remove `{i[fs.A_NAME]}': Is a directory\n"
-                        )
-                    else:
-                        directory.remove(i)
-                        if verbose:
-                            if i[fs.A_TYPE] == fs.T_DIR:
-                                self.write(f"removed directory '{i[fs.A_NAME]}'\n")
-                            else:
-                                self.write(f"removed '{i[fs.A_NAME]}'\n")
+            if node[fs.A_TYPE] == fs.T_DIR and not recursive:
+                self.errorWrite(
+                    f"rm: cannot remove `{node[fs.A_NAME]}': Is a directory\n"
+                )
+                continue
+            self.fs.remove(pname)
+            if verbose:
+                if node[fs.A_TYPE] == fs.T_DIR:
+                    self.write(f"removed directory '{node[fs.A_NAME]}'\n")
+                else:
+                    self.write(f"removed '{node[fs.A_NAME]}'\n")
 
 
 commands["/bin/rm"] = Command_rm
@@ -495,15 +488,13 @@ class Command_cp(HoneyPotCommand):
                 continue
             s = copy.deepcopy(self.fs.getfile(resolv(src)))
             if isdir:
-                directory = self.fs.get_path(resolv(dest))
+                destdir = resolv(dest)
                 outfile = os.path.basename(src)
             else:
-                directory = self.fs.get_path(os.path.dirname(resolv(dest)))
+                destdir = os.path.dirname(resolv(dest))
                 outfile = os.path.basename(dest.rstrip("/"))
-            if outfile in [x[fs.A_NAME] for x in directory]:
-                directory.remove(next(x for x in directory if x[fs.A_NAME] == outfile))
             s[fs.A_NAME] = outfile
-            directory.append(s)
+            self.fs.link_entry(s, destdir)
 
 
 commands["/bin/cp"] = Command_cp
@@ -561,23 +552,15 @@ class Command_mv(HoneyPotCommand):
                 return
 
         for src in sources:
-            if not self.fs.exists(resolv(src)):
+            srcpath = resolv(src)
+            if not self.fs.exists(srcpath):
                 self.errorWrite(f"mv: cannot stat `{src}': No such file or directory\n")
                 continue
-            s = self.fs.getfile(resolv(src))
             if isdir:
-                directory = self.fs.get_path(resolv(dest))
-                outfile = os.path.basename(src)
+                destpath = os.path.join(resolv(dest), os.path.basename(src))
             else:
-                directory = self.fs.get_path(os.path.dirname(resolv(dest)))
-                outfile = os.path.basename(dest)
-            if directory != os.path.dirname(resolv(src)):
-                s[fs.A_NAME] = outfile
-                directory.append(s)
-                sdir = self.fs.get_path(os.path.dirname(resolv(src)))
-                sdir.remove(s)
-            else:
-                s[fs.A_NAME] = outfile
+                destpath = resolv(dest)
+            self.fs.rename(srcpath, destpath)
 
 
 commands["/bin/mv"] = Command_mv

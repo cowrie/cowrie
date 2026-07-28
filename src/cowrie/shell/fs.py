@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
+import copy
 import errno
-import fnmatch
 import hashlib
 import os
 import re
@@ -16,7 +16,7 @@ import stat
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from twisted.logger import Logger
 
@@ -40,6 +40,11 @@ if TYPE_CHECKING:
     A_REALFILE,
 ) = list(range(0, 10))
 T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
+
+# A filesystem entry: the positional 10-field list indexed by the A_* constants
+# above — [name, type, uid, gid, size, mode, ctime, contents, target, realfile].
+# contents is a list of child Nodes for a directory, or bytes for a file.
+Node: TypeAlias = list[Any]
 
 
 SPECIAL_PATHS: list[str] = ["/sys", "/proc", "/dev/pts"]
@@ -117,10 +122,13 @@ class HoneyPotFilesystem:
 
     def __init__(self, arch: str, home: str) -> None:
         try:
-            self.fs: list[Any] = honeyfs.get_tree()
+            # Shared with every other session until this session first mutates
+            # the tree, at which point _ensure_private_fs() copies it.
+            self.fs: Node = honeyfs.get_tree()
         except Exception:
             self._log.failure("ERROR: Failed to load filesystem")
             sys.exit(2)
+        self._private_fs: bool = False
 
         # Keep track of arch so we can return appropriate binary
         self.arch: str = arch
@@ -144,18 +152,29 @@ class HoneyPotFilesystem:
             except Exception as e:
                 self._log.info("Failed to load honeyfs {error!r}", error=e)
 
+    def _ensure_private_fs(self) -> None:
+        """Copy the shared base tree the first time this session mutates it.
+
+        Every mutating method calls this before fetching the node it will
+        change, so writes land on a private copy and the base tree stays
+        pristine for other sessions. Read-only sessions never copy.
+        """
+        if not self._private_fs:
+            self.fs = copy.deepcopy(self.fs)
+            self._private_fs = True
+
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """
         Explore the honeyfs at 'honeyfs_path' and set all A_REALFILE attributes on
         the virtual filesystem.
         """
-
+        self._ensure_private_fs()
         for path, _directories, filenames in os.walk(honeyfs_path):
             for filename in filenames:
                 realfile_path: str = os.path.join(path, filename)
                 virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)
 
-                f: list[Any] | None = self.getfile(virtual_path, follow_symlinks=False)
+                f: Node | None = self.getfile(virtual_path, follow_symlinks=False)
                 if f and f[A_TYPE] == T_FILE:
                     self.update_realfile(f, realfile_path)
 
@@ -192,70 +211,22 @@ class HoneyPotFilesystem:
 
         return "/{}".format("/".join(cwdpieces))
 
-    def resolve_path_wc(self, path: str, cwd: str) -> list[str]:
+    def get_path(self, path: str, follow_symlinks: bool = True) -> Node:
         """
-        Resolve_path with wildcard support (globbing)
+        This returns the children of the directory node at path. Raises
+        FileNotFound if the path does not resolve.
         """
-        pieces: list[str] = path.rstrip("/").split("/")
-        cwdpieces: list[str]
-        if len(pieces[0]):
-            cwdpieces = [x for x in cwd.split("/") if len(x)]
-            path = path[1:]
-        else:
-            cwdpieces, pieces = [], pieces[1:]
-        found: list[str] = []
-
-        def foo(p, cwd):
-            if not p:
-                found.append("/{}".format("/".join(cwd)))
-            elif p[0] == ".":
-                foo(p[1:], cwd)
-            elif p[0] == "..":
-                foo(p[1:], cwd[:-1])
-            else:
-                names = [x[A_NAME] for x in self.get_path("/".join(cwd))]
-                matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
-                for match in matches:
-                    foo(p[1:], [*cwd, match])
-
-        foo(pieces, cwdpieces)
-        return found
-
-    def get_path(self, path: str, follow_symlinks: bool = True) -> Any:
-        """
-        This returns the Cowrie file system objects for a directory
-        """
-        cwd: list[Any] = self.fs
-        for part in path.split("/"):
-            if not part:
-                continue
-            if not isinstance(cwd[A_CONTENTS], list):
-                # walked into a non-directory entry (e.g. a file's bytes)
-                raise FileNotFound
-            ok = False
-            for c in cwd[A_CONTENTS]:
-                if c[A_NAME] == part:
-                    if c[A_TYPE] == T_LINK:
-                        f = self.getfile(c[A_TARGET], follow_symlinks=follow_symlinks)
-                        if f is None:
-                            ok = False
-                            break
-                        else:
-                            cwd = f
-                    else:
-                        cwd = c
-                    ok = True
-                    break
-            if not ok:
-                raise FileNotFound
-        return cwd[A_CONTENTS]
+        node = self.getfile(path, follow_symlinks=follow_symlinks)
+        if node is None:
+            raise FileNotFound
+        return node[A_CONTENTS]  # type: ignore[no-any-return]
 
     def exists(self, path: str) -> bool:
         """
         Return True if path refers to an existing path.
         Returns False for broken symbolic links.
         """
-        f: list[Any] | None = self.getfile(path, follow_symlinks=True)
+        f: Node | None = self.getfile(path, follow_symlinks=True)
         if f is not None:
             return True
         return False
@@ -265,12 +236,14 @@ class HoneyPotFilesystem:
         Return True if path refers to an existing path.
         Returns True for broken symbolic links.
         """
-        f: list[Any] | None = self.getfile(path, follow_symlinks=False)
+        f: Node | None = self.getfile(path, follow_symlinks=False)
         if f is not None:
             return True
         return False
 
-    def update_realfile(self, f: Any, realfile: str) -> None:
+    def update_realfile(self, f: Node | None, realfile: str) -> None:
+        if f is None:
+            return
         if (
             not f[A_REALFILE]
             and os.path.exists(realfile)
@@ -280,17 +253,18 @@ class HoneyPotFilesystem:
         ):
             f[A_REALFILE] = realfile
 
-    def getfile(self, path: str, follow_symlinks: bool = True) -> list[Any] | None:
+    def getfile(self, path: str, follow_symlinks: bool = True) -> Node | None:
         """
         This returns the Cowrie file system object for a path
         """
         if path == "/":
             return self.fs
-        pieces: list[str] = path.strip("/").split("/")
+        pieces: list[str] = [piece for piece in path.strip("/").split("/") if piece]
         cwd: str = ""
-        p: list[Any] | None = self.fs
+        p: Node | None = self.fs
         for piece in pieces:
-            if not isinstance(p, list):
+            if not isinstance(p, list) or not isinstance(p[A_CONTENTS], list):
+                # missing, or an attempt to descend into a non-directory
                 return None
             if piece not in [x[A_NAME] for x in p[A_CONTENTS]]:
                 return None
@@ -331,7 +305,9 @@ class HoneyPotFilesystem:
         path: str = self.resolve_path(target, os.path.dirname(target))
         if not path or not self.exists(path):
             raise FileNotFound
-        f: Any = self.getfile(path)
+        f: Node | None = self.getfile(path)
+        if f is None:
+            raise FileNotFound
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
@@ -346,6 +322,26 @@ class HoneyPotFilesystem:
         if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return read_data_bytes("arch", self.arch)
         return b""
+
+    def link_entry(self, entry: Node, dirpath: str) -> None:
+        """Insert entry into the directory at dirpath, replacing any existing
+        entry with the same name so a directory never holds two entries under
+        one name.
+
+        The caller owns entry: it must not still be linked elsewhere in the
+        tree (move callers unlink_entry it from its old parent first).
+        """
+        self._ensure_private_fs()
+        directory = self.get_path(dirpath)
+        name = entry[A_NAME]
+        for existing in [x for x in directory if x[A_NAME] == name]:
+            directory.remove(existing)
+        directory.append(entry)
+
+    def unlink_entry(self, entry: Node, dirpath: str) -> None:
+        """Remove entry from the directory at dirpath."""
+        self._ensure_private_fs()
+        self.get_path(dirpath).remove(entry)
 
     def mkfile(
         self,
@@ -365,6 +361,7 @@ class HoneyPotFilesystem:
         if any([_path.startswith(_p) for _p in SPECIAL_PATHS]):
             raise PermissionDenied
 
+        self._ensure_private_fs()
         _dir = self.get_path(_path)
         outfile: str = os.path.basename(path)
         if outfile in [x[A_NAME] for x in _dir]:
@@ -388,6 +385,7 @@ class HoneyPotFilesystem:
             ctime = time.time()
         if not path.strip("/"):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+        self._ensure_private_fs()
         try:
             directory = self.get_path(os.path.dirname(path.strip("/")))
         except (IndexError, FileNotFound):
@@ -403,7 +401,7 @@ class HoneyPotFilesystem:
         links, so both islink() and isfile() can be true for the same path.
         """
         try:
-            f: list[Any] | None = self.getfile(path)
+            f: Node | None = self.getfile(path)
         except Exception:
             return False
         if f is None:
@@ -418,7 +416,7 @@ class HoneyPotFilesystem:
         link.
         """
         try:
-            f: list[Any] | None = self.getfile(path)
+            f: Node | None = self.getfile(path)
         except Exception:
             return False
         if f is None:
@@ -527,7 +525,7 @@ class HoneyPotFilesystem:
         """
         FIXME mkdir() name conflicts with existing mkdir
         """
-        directory: list[Any] | None = self.getfile(path)
+        directory: Node | None = self.getfile(path)
         if directory:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         self.mkdir(path, 0, 0, 4096, 16877)
@@ -536,13 +534,14 @@ class HoneyPotFilesystem:
         p: str = path.rstrip("/")
         name: str = os.path.basename(p)
         parent: str = os.path.dirname(p)
-        directory: Any = self.getfile(p, follow_symlinks=False)
+        directory: Node | None = self.getfile(p, follow_symlinks=False)
         if not directory:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), p)
         if directory[A_TYPE] != T_DIR:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), p)
         if len(self.get_path(p)) > 0:
             raise OSError(errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), p)
+        self._ensure_private_fs()
         pdir = self.get_path(parent, follow_symlinks=True)
         for i in pdir[:]:
             if i[A_NAME] == name:
@@ -551,19 +550,22 @@ class HoneyPotFilesystem:
         return False
 
     def utime(self, path: str, _atime: float, mtime: float) -> None:
-        p: list[Any] | None = self.getfile(path)
+        self._ensure_private_fs()
+        p: Node | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_CTIME] = mtime
 
     def chmod(self, path: str, perm: int) -> None:
-        p: list[Any] | None = self.getfile(path)
+        self._ensure_private_fs()
+        p: Node | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
 
     def chown(self, path: str, uid: int, gid: int) -> None:
-        p: list[Any] | None = self.getfile(path)
+        self._ensure_private_fs()
+        p: Node | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if uid != -1:
@@ -572,13 +574,14 @@ class HoneyPotFilesystem:
             p[A_GID] = gid
 
     def remove(self, path: str) -> None:
-        p: list[Any] | None = self.getfile(path, follow_symlinks=False)
+        self._ensure_private_fs()
+        p: Node | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        self.get_path(os.path.dirname(path)).remove(p)
+        self.unlink_entry(p, os.path.dirname(path))
 
     def readlink(self, path: str) -> str:
-        p: list[Any] | None = self.getfile(path, follow_symlinks=False)
+        p: Node | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         if not p[A_MODE] & stat.S_IFLNK:
@@ -589,16 +592,16 @@ class HoneyPotFilesystem:
         raise NotImplementedError
 
     def rename(self, oldpath: str, newpath: str) -> None:
-        old: list[Any] | None = self.getfile(oldpath)
+        """Move oldpath to newpath, replacing newpath if it already exists —
+        the rename(2) semantics real mv(1) and the SFTP client rely on.
+        """
+        self._ensure_private_fs()
+        old: Node | None = self.getfile(oldpath)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        new = self.getfile(newpath)
-        if new:
-            raise OSError(errno.EEXIST, os.strerror(errno.EEXIST))
-
-        self.get_path(os.path.dirname(oldpath)).remove(old)
+        self.unlink_entry(old, os.path.dirname(oldpath))
         old[A_NAME] = os.path.basename(newpath)
-        self.get_path(os.path.dirname(newpath)).append(old)
+        self.link_entry(old, os.path.dirname(newpath))
 
     def listdir(self, path: str) -> list[str]:
         names: list[str] = [x[A_NAME] for x in self.get_path(path)]
@@ -608,7 +611,7 @@ class HoneyPotFilesystem:
         return self.stat(path, follow_symlinks=False)
 
     def stat(self, path: str, follow_symlinks: bool = True) -> _statobj:
-        p: list[Any] | None
+        p: Node | None
         if path == "/":
             p = ["/", T_DIR, 0, 0, 4096, 16877, time.time(), [], None, None]
         else:
@@ -634,7 +637,8 @@ class HoneyPotFilesystem:
         return path
 
     def update_size(self, filename: str, size: int) -> None:
-        f: list[Any] | None = self.getfile(filename)
+        self._ensure_private_fs()
+        f: Node | None = self.getfile(filename)
         if not f:
             return
         if f[A_TYPE] != T_FILE:

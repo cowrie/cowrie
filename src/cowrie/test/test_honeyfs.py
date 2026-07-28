@@ -41,18 +41,15 @@ def _root(children: list) -> list:
 
 
 class GetTreeTests(unittest.TestCase):
-    """get_tree() returns a deep copy of the cached tree."""
+    """get_tree() returns the shared cached tree; HoneyPotFilesystem copies
+    it on first write rather than get_tree() copying per call."""
 
     def test_returns_a_list(self) -> None:
         tree = honeyfs.get_tree()
         self.assertIsInstance(tree, list)
 
-    def test_returns_fresh_copy_each_call(self) -> None:
-        first = honeyfs.get_tree()
-        second = honeyfs.get_tree()
-        self.assertIsNot(first, second)
-        first.append("mutation")
-        self.assertNotIn("mutation", second)
+    def test_returns_the_same_shared_tree_each_call(self) -> None:
+        self.assertIs(honeyfs.get_tree(), honeyfs.get_tree())
 
 
 class ReadFileTests(unittest.TestCase):
