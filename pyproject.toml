@@ -50,6 +50,8 @@ dependencies = [
 homepage = "https://www.cowrie.org/"
 documentation = "https://docs.cowrie.org/"
 repository = "https://github.com/cowrie/cowrie"
+changelog = "https://github.com/cowrie/cowrie/blob/main/CHANGELOG.rst"
+issues = "https://github.com/cowrie/cowrie/issues"
 
 [project.scripts]
 cowrie = "cowrie.scripts.cowrie:run"
