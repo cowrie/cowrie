@@ -27,6 +27,7 @@ import cmd
 import copy
 import os
 import pickle
+import subprocess
 import sys
 import time
 from stat import (
@@ -837,7 +838,7 @@ class fseditCmd(cmd.Cmd):
         """
         Clears the screen
         """
-        os.system("clear")
+        subprocess.run(["clear"], check=False)
 
     def emptyline(self) -> bool:
         """

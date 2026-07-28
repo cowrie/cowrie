@@ -73,9 +73,8 @@ class HoneyPotCommand:
         self.exported = self.protocol.cmdstack[-1].exported
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
-        self.input_data: None | (
-            bytes
-        ) = None  # used to store STDIN data passed via PIPE
+        # used to store STDIN data passed via PIPE
+        self.input_data: bytes | None = None
         pp: Any = getattr(self.protocol, "pp", None)
         self.writefn: Callable[[bytes], None]
         self.errorWritefn: Callable[[bytes], None]

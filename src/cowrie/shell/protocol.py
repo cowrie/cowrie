@@ -167,12 +167,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         from cowrie.shell.script import run_script_file
 
         class Command_scriptcmd(command.HoneyPotCommand):
-            def call(self_cmd):
+            def call(self):
                 # Running ./file or /path/file: the kernel rejects a binary with
                 # ENOEXEC ("cannot execute binary file"); a shell script is run
                 # through the parser (the shebang is parsed as a comment).
                 run_script_file(
-                    self_cmd,
+                    self,
                     path,
                     not_found_message=f"-bash: {path}: No such file or directory\n",
                     binary_message=(

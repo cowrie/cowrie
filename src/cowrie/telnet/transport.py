@@ -272,7 +272,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     def _get_option_name(self, option: bytes) -> str:
         """Get human-readable name for a telnet option byte."""
         if option:
-            option_byte = option[0] if isinstance(option, bytes) else option
+            option_byte = option[0]
             return TELNET_OPTIONS.get(option_byte, f"UNKNOWN-{option_byte}")
         return "UNKNOWN"
 

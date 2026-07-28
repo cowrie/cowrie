@@ -267,11 +267,7 @@ class Command_curl(HoneyPotCommand):
                 self.outfile = opt[1]
             if opt[0] == "-O":
                 self.outfile = urldata.path.split("/")[-1]
-                if (
-                    self.outfile is None
-                    or not len(self.outfile.strip())
-                    or not urldata.path.count("/")
-                ):
+                if not len(self.outfile.strip()) or not urldata.path.count("/"):
                     self.errorWrite("curl: Remote file name has no length!\n")
                     self.exit(23)
                     return
