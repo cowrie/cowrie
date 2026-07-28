@@ -468,6 +468,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.delayedPackets.append([messageNum, payload])
         else:
             if len(self.delayedPackets) > 0:
+                # Flush the queued packets in order, then this one; leaving them
+                # queued would strand a frontend request (e.g. the channel open
+                # that follows login) and hang the session. Mirrors the backend
+                # side in BackendSSHTransport.packet_buffer.
                 self.delayedPackets.append([messageNum, payload])
+                for packet in self.delayedPackets:
+                    self.sshParse.parse_num_packet("[SERVER]", packet[0], packet[1])
+                self.delayedPackets = []
             else:
                 self.sshParse.parse_num_packet("[SERVER]", messageNum, payload)
