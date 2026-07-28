@@ -273,6 +273,10 @@ class HoneyPotFilesystem:
                     if piece == pieces[-1] and not follow_symlinks:
                         p = x
                     elif x[A_TYPE] == T_LINK:
+                        if not x[A_TARGET]:
+                            # Empty target (e.g. a /proc/<pid>/cwd link
+                            # captured with no destination): a broken link.
+                            return None
                         if x[A_TARGET][0] == "/":
                             # Absolute link
                             fileobj = self.getfile(
