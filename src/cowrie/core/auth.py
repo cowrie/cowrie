@@ -206,7 +206,12 @@ class AuthRandom:
         """
 
         auth: bool = False
-        userpass: str = str(thelogin) + ":" + str(thepasswd)
+        # Decode once and store/compare the text form everywhere, so an
+        # attacker's stored credentials always match on return (and the JSON
+        # state file stays readable instead of holding "b'root'").
+        login: str = thelogin.decode("utf-8", errors="replace")
+        passwd: str = thepasswd.decode("utf-8", errors="replace")
+        userpass: str = login + ":" + passwd
 
         if "cache" not in self.uservar:
             self.uservar["cache"] = []
@@ -224,8 +229,8 @@ class AuthRandom:
                     userpass=userpass,
                 )
                 ipinfo["max"] = 1
-                ipinfo["user"] = str(thelogin)
-                ipinfo["pw"] = str(thepasswd)
+                ipinfo["user"] = login
+                ipinfo["pw"] = passwd
                 auth = True
                 self.savevars()
                 return auth
@@ -240,8 +245,8 @@ class AuthRandom:
                 ipinfo = self.uservar[src_ip]
                 self._log.info("Found cached: {userpass}", userpass=userpass)
                 ipinfo["max"] = 1
-                ipinfo["user"] = str(thelogin)
-                ipinfo["pw"] = str(thepasswd)
+                ipinfo["user"] = login
+                ipinfo["pw"] = passwd
                 auth = True
                 self.savevars()
                 return auth
@@ -271,8 +276,8 @@ class AuthRandom:
         if attempts < need:
             self.uservar[src_ip]["tried"].append(userpass)
         elif attempts == need:
-            ipinfo["user"] = str(thelogin)
-            ipinfo["pw"] = str(thepasswd)
+            ipinfo["user"] = login
+            ipinfo["pw"] = passwd
             cache.append(userpass)
             if len(cache) > self.maxcache:
                 cache.pop(0)
@@ -289,7 +294,7 @@ class AuthRandom:
                     user=ipinfo["user"],
                     pw=ipinfo["pw"],
                 )
-                if thelogin == ipinfo["user"] and str(thepasswd) == ipinfo["pw"]:
+                if login == ipinfo["user"] and passwd == ipinfo["pw"]:
                     auth = True
         self.savevars()
         return auth
