@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
 
     steps:
       - name: Checkout
@@ -108,6 +109,18 @@ jobs:
             --title "${NEXT_VERSION}" \
             --generate-notes \
             --notes-start-tag "${LATEST_TAG}"
+
+      - name: Publish release artifacts
+        if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEXT_VERSION="${{ steps.next_version.outputs.next_version }}"
+
+          # Tags created with GITHUB_TOKEN do not trigger tag-push
+          # workflows, so dispatch the publish workflows explicitly.
+          gh workflow run docker.yml --ref "${NEXT_VERSION}"
+          gh workflow run pypi.yml --ref "${NEXT_VERSION}"
 
       - name: Dry run summary
         if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run == 'true'
