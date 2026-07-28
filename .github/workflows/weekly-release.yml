@@ -9,8 +9,9 @@ name: Weekly Release
 
 on:  # yamllint disable-line rule:truthy
   schedule:
-    # Run every Monday at 09:00 UTC
-    - cron: '0 9 * * 1'
+    # Run every Monday at 00:00 UTC.
+    # First stage of the weekly cycle: release, then audit, then Dependabot.
+    - cron: '0 0 * * 1'
 
   workflow_dispatch:
     inputs:

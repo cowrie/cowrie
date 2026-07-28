@@ -79,6 +79,7 @@ dev = [
 "mypy-zope==1.0.16; platform_python_implementation=='CPython'",
 "mypy==2.3.0; platform_python_implementation=='CPython'",
 "pathspec==1.1.1",
+"pip-audit==2.10.1",
 "pipdeptree==4.0.0",
 "pre-commit==4.6.0",
 "pylint==4.0.6",
@@ -304,6 +305,13 @@ legacy_tox_ini = """
         - pyre --noninteractive analyze
         - pyright {posargs:src}
     basepython = python3.10
+
+    [testenv:audit]
+    description = run dependency security audit
+    extras =
+        dev
+    commands =
+        pip-audit -r {toxinidir}/requirements.txt
 
     [testenv:coverage-report]
     deps = coverage
