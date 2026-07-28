@@ -674,6 +674,12 @@ compression = zlib@openssh.com,zlib,none
 # Listening on multiple endpoints is supported with a single space separator
 # e.g listen_endpoints = "tcp:2222:interface=0.0.0.0 tcp:1022:interface=0.0.0.0" will result listening both on ports 2222 and 1022
 # use authbind for port numbers under 1024
+# When Cowrie sits behind a load balancer or proxy that speaks the HAProxy
+# PROXY protocol (HAProxy, AWS/GCP network load balancers, ...), prefix the
+# endpoint with "haproxy:" so the real client address is recorded instead of
+# the proxy's, e.g. listen_endpoints = haproxy:tcp:2222:interface=0.0.0.0
+# Every connection must then be prefixed with a PROXY header; a direct
+# connection without one is dropped.
 
 listen_endpoints = tcp:2222:interface=0.0.0.0
 
@@ -755,6 +761,9 @@ enabled = false
 # Listening on multiple endpoints is supported with a single space separator
 # e.g "listen_endpoints = tcp:2223:interface=0.0.0.0 tcp:2323:interface=0.0.0.0" will result listening both on ports 2223 and 2323
 # use authbind for port numbers under 1024
+# To accept the HAProxy PROXY protocol behind a load balancer or proxy,
+# prefix the endpoint with "haproxy:", e.g.
+# listen_endpoints = haproxy:tcp:2223:interface=0.0.0.0
 
 listen_endpoints = tcp:2223:interface=0.0.0.0
 

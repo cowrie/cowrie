@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from twisted.conch.telnet import AlreadyNegotiating, TelnetTransport
 from twisted.internet.protocol import connectionDone
 from twisted.logger import Logger
-from twisted.protocols.policies import TimeoutMixin
+from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
@@ -52,9 +52,14 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
 
     _log = Logger()
 
-    # The session's event emitter, bound in connectionMade when the running
-    # application provides a dispatcher.
+    # The session's event emitter, bound in connectionMade (or, under the
+    # PROXY protocol, on the first dataReceived) when the running application
+    # provides a dispatcher.
     events: EventLog | None = None
+    # Set when running behind a PROXY-protocol proxy: cowrie.session.connect is
+    # held back until the PROXY header has been parsed and getPeer() reflects
+    # the real client.
+    _emit_connect_pending: bool = False
 
     # Set while the connection is being torn down. Telnet.connectionLost()
     # iterates self.options and errbacks pending negotiations; our retry
@@ -72,14 +77,29 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
 
+        if isinstance(self.transport, ProtocolWrapper):
+            # A protocol wrapper in front of us (the haproxy: endpoint's PROXY
+            # parser) only resolves the real client address once it has read
+            # the header, which happens on the first dataReceived(). Defer
+            # cowrie.session.connect until then so it carries the real IP
+            # rather than the proxy's.
+            self._emit_connect_pending = True
+        else:
+            self._emit_connect()
+
+        TelnetTransport.connectionMade(self)
+
+    def _emit_connect(self) -> None:
+        """
+        Bind the session event log and announce cowrie.session.connect using
+        the current (possibly PROXY-resolved) peer address.
+        """
         self.events = transport_events(
             self.factory,
             self.transport,
             session=self.transportId,
             protocol="telnet",
         )
-
-        TelnetTransport.connectionMade(self)
 
     def write(self, data):
         """
@@ -132,6 +152,13 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         it -- but not for the parser's own protocol error, which is expected
         garbage traffic (see below).
         """
+        if self._emit_connect_pending:
+            # First bytes have arrived, which under the PROXY protocol means
+            # the header has been parsed and getPeer() now reflects the real
+            # client. Announce the connection before processing the data.
+            self._emit_connect_pending = False
+            self._emit_connect()
+
         try:
             TelnetTransport.dataReceived(self, data)
         except ValueError as e:
@@ -183,6 +210,13 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self._closing = True
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
+        if self._emit_connect_pending:
+            # A proxied connection whose PROXY header carried no trailing data
+            # never reached dataReceived(), so the deferred announce never
+            # fired. getPeer() is resolved by now; announce it before closing
+            # so the connection is still logged (as a direct one would be).
+            self._emit_connect_pending = False
+            self._emit_connect()
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
             self.events.session_closed(duration_ms)
