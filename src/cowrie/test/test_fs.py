@@ -182,6 +182,12 @@ class WalkerTests(unittest.TestCase):
     def test_getfile_broken_symlink_returns_none(self) -> None:
         self.assertIsNone(self.fs.getfile("/broken"))
 
+    def test_getfile_empty_target_symlink_returns_none(self) -> None:
+        # Some /proc/<pid>/cwd links ship with an empty target; resolving them
+        # must not crash on target[0] (issue: IndexError in getfile).
+        self.fs.fs[fs.A_CONTENTS].append(_link_entry("emptylink", ""))
+        self.assertIsNone(self.fs.getfile("/emptylink"))
+
     def test_getfile_follows_intermediate_symlink(self) -> None:
         self.assertEqual(self._getfile("/dirlink/passwd")[fs.A_CONTENTS], b"root:x")
 
