@@ -12,6 +12,7 @@ from __future__ import annotations
 import treq
 from twisted.internet import defer, error
 from twisted.logger import Logger
+from twisted.web.client import ResponseFailed
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -83,8 +84,12 @@ class Output(cowrie.core.output.Output):
             defer.CancelledError,
             error.ConnectingCancelledError,
             error.DNSLookupError,
+            ResponseFailed,
         ):
-            self._log.info("GreyNoise requests timeout")
+            # ResponseFailed (its subclass ResponseNeverReceived wraps the
+            # CancelledError treq raises on a request timeout) would otherwise
+            # escape as an unhandled Deferred error (issue #1711).
+            self._log.info("GreyNoise request failed (timeout or connection error)")
             return
 
         if response.code == 404:
