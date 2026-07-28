@@ -208,15 +208,15 @@ jobs:
           if [ -f results/detect-kippo-cowrie.txt ]; then
             cat results/detect-kippo-cowrie.txt
 
-            # Check if detection was positive
-            # Score >= 2 means likely honeypot, score 0 means not a honeypot
-            if grep -q "is not a honeypot" results/detect-kippo-cowrie.txt; then
-              echo "✓ detect-kippo-cowrie: NOT identified as honeypot"
-            elif grep -Eq "score.*[2-9]|is.*honeypot" results/detect-kippo-cowrie.txt | grep -v "not a honeypot"; then
+            # detect-kippo-cowrie prints an explicit verdict: score >= 2 is a
+            # honeypot, score 1 is inconclusive, score 0 is not a honeypot.
+            if grep -q "is definitely a Kippo/Cowrie honeypot" results/detect-kippo-cowrie.txt; then
               echo "⚠️  WARNING: detect-kippo-cowrie identified this as a honeypot"
               DETECTIONS_FOUND=1
-            elif grep -Eq "score.*1[^0-9]" results/detect-kippo-cowrie.txt; then
+            elif grep -q "may be a Kippo/Cowrie honeypot" results/detect-kippo-cowrie.txt; then
               echo "⚠️  WARNING: detect-kippo-cowrie score 1 - possibly honeypot or misconfigured"
+            elif grep -q "is not a honeypot" results/detect-kippo-cowrie.txt; then
+              echo "✓ detect-kippo-cowrie: NOT identified as honeypot"
             else
               echo "✓ detect-kippo-cowrie did not identify as honeypot"
             fi
