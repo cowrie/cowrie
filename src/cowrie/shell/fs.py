@@ -223,32 +223,14 @@ class HoneyPotFilesystem:
 
     def get_path(self, path: str, follow_symlinks: bool = True) -> Any:
         """
-        This returns the Cowrie file system objects for a directory
+        This returns the contents of the Cowrie filesystem node at path — a
+        list of child entries for a directory, or the embedded bytes for a
+        file. Raises FileNotFound if the path does not resolve.
         """
-        cwd: list[Any] = self.fs
-        for part in path.split("/"):
-            if not part:
-                continue
-            if not isinstance(cwd[A_CONTENTS], list):
-                # walked into a non-directory entry (e.g. a file's bytes)
-                raise FileNotFound
-            ok = False
-            for c in cwd[A_CONTENTS]:
-                if c[A_NAME] == part:
-                    if c[A_TYPE] == T_LINK:
-                        f = self.getfile(c[A_TARGET], follow_symlinks=follow_symlinks)
-                        if f is None:
-                            ok = False
-                            break
-                        else:
-                            cwd = f
-                    else:
-                        cwd = c
-                    ok = True
-                    break
-            if not ok:
-                raise FileNotFound
-        return cwd[A_CONTENTS]
+        node = self.getfile(path, follow_symlinks=follow_symlinks)
+        if node is None:
+            raise FileNotFound
+        return node[A_CONTENTS]
 
     def exists(self, path: str) -> bool:
         """
@@ -286,11 +268,12 @@ class HoneyPotFilesystem:
         """
         if path == "/":
             return self.fs
-        pieces: list[str] = path.strip("/").split("/")
+        pieces: list[str] = [piece for piece in path.strip("/").split("/") if piece]
         cwd: str = ""
         p: list[Any] | None = self.fs
         for piece in pieces:
-            if not isinstance(p, list):
+            if not isinstance(p, list) or not isinstance(p[A_CONTENTS], list):
+                # missing, or an attempt to descend into a non-directory
                 return None
             if piece not in [x[A_NAME] for x in p[A_CONTENTS]]:
                 return None

@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# ABOUTME: tests for cowrie/shell/fs.py path resolution and directory-entry linking
-# ABOUTME: covers resolve_path normalization, empty-path robustness, link/unlink_entry
+# ABOUTME: tests for cowrie/shell/fs.py path resolution, tree walking and mutation
+# ABOUTME: covers resolve_path, getfile/get_path, link/unlink_entry, rename/remove
 
 from __future__ import annotations
 
@@ -17,9 +17,19 @@ os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 
-def _file_entry(name: str) -> list[Any]:
+def _file_entry(name: str, contents: bytes = b"") -> list[Any]:
     """Build a minimal T_FILE directory entry."""
-    return [name, fs.T_FILE, 0, 0, 0, 0o644, 0, b"", None, None]
+    return [name, fs.T_FILE, 0, 0, len(contents), 0o644, 0, contents, None, None]
+
+
+def _dir_entry(name: str, children: list[Any]) -> list[Any]:
+    """Build a T_DIR directory entry."""
+    return [name, fs.T_DIR, 0, 0, 0, 0o755, 0, children, None, None]
+
+
+def _link_entry(name: str, target: str) -> list[Any]:
+    """Build a T_LINK entry pointing at an absolute in-tree path."""
+    return [name, fs.T_LINK, 0, 0, 0, 0o777, 0, [], target, None]
 
 
 class ResolvePathTests(unittest.TestCase):
@@ -113,6 +123,90 @@ class RenameRemoveTests(unittest.TestCase):
     def test_remove_missing_raises(self) -> None:
         with self.assertRaises(OSError):
             self.fs.remove("/tmp/not_here_xyz")
+
+
+class WalkerTests(unittest.TestCase):
+    """getfile() resolves a path to a node; get_path() returns that node's
+    contents. Both must agree on missing paths, walking through a file, and
+    symlink resolution."""
+
+    def setUp(self) -> None:
+        self.fs = fs.HoneyPotFilesystem("arch", "/root")
+        self.fs.fs = _dir_entry(
+            "/",
+            [
+                _dir_entry(
+                    "etc",
+                    [
+                        _file_entry("passwd", b"root:x"),
+                        _link_entry("plink", "/etc/passwd"),
+                    ],
+                ),
+                _dir_entry("tmp", []),
+                _link_entry("dirlink", "/etc"),
+                _link_entry("broken", "/nope"),
+            ],
+        )
+
+    def _getfile(self, path: str, follow_symlinks: bool = True) -> list[Any]:
+        """getfile() that asserts a node was found, for tests that inspect it."""
+        node = self.fs.getfile(path, follow_symlinks=follow_symlinks)
+        assert node is not None
+        return node
+
+    # --- getfile ---
+    def test_getfile_returns_file_node(self) -> None:
+        self.assertEqual(self._getfile("/etc/passwd")[fs.A_CONTENTS], b"root:x")
+
+    def test_getfile_missing_returns_none(self) -> None:
+        self.assertIsNone(self.fs.getfile("/etc/nope"))
+
+    def test_getfile_through_a_file_returns_none(self) -> None:
+        # Descending past a regular file must not crash — it is not a directory.
+        self.assertIsNone(self.fs.getfile("/etc/passwd/foo"))
+
+    def test_getfile_empty_path_is_root(self) -> None:
+        self.assertIs(self.fs.getfile(""), self.fs.fs)
+
+    def test_getfile_double_slash_is_ignored(self) -> None:
+        self.assertEqual(self._getfile("/etc//passwd")[fs.A_CONTENTS], b"root:x")
+
+    def test_getfile_follows_terminal_symlink(self) -> None:
+        self.assertEqual(self._getfile("/etc/plink")[fs.A_CONTENTS], b"root:x")
+
+    def test_getfile_no_follow_returns_link_node(self) -> None:
+        node = self._getfile("/etc/plink", follow_symlinks=False)
+        self.assertEqual(node[fs.A_TYPE], fs.T_LINK)
+
+    def test_getfile_broken_symlink_returns_none(self) -> None:
+        self.assertIsNone(self.fs.getfile("/broken"))
+
+    def test_getfile_follows_intermediate_symlink(self) -> None:
+        self.assertEqual(self._getfile("/dirlink/passwd")[fs.A_CONTENTS], b"root:x")
+
+    # --- get_path ---
+    def test_get_path_returns_directory_children(self) -> None:
+        names = [c[fs.A_NAME] for c in self.fs.get_path("/etc")]
+        self.assertEqual(sorted(names), ["passwd", "plink"])
+
+    def test_get_path_of_file_returns_its_bytes(self) -> None:
+        self.assertEqual(self.fs.get_path("/etc/passwd"), b"root:x")
+
+    def test_get_path_missing_raises(self) -> None:
+        with self.assertRaises(fs.FileNotFound):
+            self.fs.get_path("/etc/nope")
+
+    def test_get_path_through_a_file_raises(self) -> None:
+        with self.assertRaises(fs.FileNotFound):
+            self.fs.get_path("/etc/passwd/foo")
+
+    def test_get_path_empty_is_root_children(self) -> None:
+        names = [c[fs.A_NAME] for c in self.fs.get_path("")]
+        self.assertEqual(sorted(names), ["broken", "dirlink", "etc", "tmp"])
+
+    def test_get_path_follows_symlink_to_directory(self) -> None:
+        names = [c[fs.A_NAME] for c in self.fs.get_path("/dirlink")]
+        self.assertEqual(sorted(names), ["passwd", "plink"])
 
 
 if __name__ == "__main__":
