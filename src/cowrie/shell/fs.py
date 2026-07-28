@@ -494,26 +494,23 @@ class HoneyPotFilesystem:
     def close(self, fd: int) -> None:
         if not fd:
             return
-        if self.tempfiles[fd] is not None:
-            with open(self.tempfiles[fd], "rb") as f:
-                shasum: str = hashlib.sha256(f.read()).hexdigest()
-            shasumfile: str = (
-                CowrieConfig.get("honeypot", "download_path") + "/" + shasum
-            )
-            if os.path.exists(shasumfile):
-                os.remove(self.tempfiles[fd])
-            else:
-                os.rename(self.tempfiles[fd], shasumfile)
-            self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
-            self.events.dispatch(
-                "cowrie.session.file_upload",
-                'SFTP Uploaded file "%(filename)s" to %(outfile)s',
-                filename=os.path.basename(self.filenames[fd]),
-                outfile=shasumfile,
-                shasum=shasum,
-            )
-            del self.tempfiles[fd]
-            del self.filenames[fd]
+        with open(self.tempfiles[fd], "rb") as f:
+            shasum: str = hashlib.sha256(f.read()).hexdigest()
+        shasumfile: str = CowrieConfig.get("honeypot", "download_path") + "/" + shasum
+        if os.path.exists(shasumfile):
+            os.remove(self.tempfiles[fd])
+        else:
+            os.rename(self.tempfiles[fd], shasumfile)
+        self.update_realfile(self.getfile(self.filenames[fd]), shasumfile)
+        self.events.dispatch(
+            "cowrie.session.file_upload",
+            'SFTP Uploaded file "%(filename)s" to %(outfile)s',
+            filename=os.path.basename(self.filenames[fd]),
+            outfile=shasumfile,
+            shasum=shasum,
+        )
+        del self.tempfiles[fd]
+        del self.filenames[fd]
         os.close(fd)
 
     def lseek(self, fd: int, offset: int, whence: int) -> int:

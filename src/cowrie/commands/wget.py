@@ -401,13 +401,12 @@ class Command_wget(HoneyPotCommand):
             if self.ftp_client:
                 try:
                     quit_deferred = self.ftp_client.quit()
-                    if isinstance(quit_deferred, defer.Deferred):
-                        quit_deferred.addErrback(
-                            lambda f: self._log.info(
-                                "FTP quit failed during abort: {error}",
-                                error=f.getErrorMessage(),
-                            )
+                    quit_deferred.addErrback(
+                        lambda f: self._log.info(
+                            "FTP quit failed during abort: {error}",
+                            error=f.getErrorMessage(),
                         )
+                    )
                 except Exception as e:  # pragma: no cover - defensive
                     self._log.info(
                         "FTP quit raised exception during abort: {error}", error=e
@@ -431,12 +430,11 @@ class Command_wget(HoneyPotCommand):
         if self.ftp_client:
             try:
                 quit_deferred = self.ftp_client.quit()
-                if isinstance(quit_deferred, defer.Deferred):
-                    quit_deferred.addErrback(
-                        lambda f: self._log.info(
-                            "FTP quit failed: {error}", error=f.getErrorMessage()
-                        )
+                quit_deferred.addErrback(
+                    lambda f: self._log.info(
+                        "FTP quit failed: {error}", error=f.getErrorMessage()
                     )
+                )
             except Exception as e:  # pragma: no cover - defensive
                 self._log.info("FTP quit raised exception: {error}", error=e)
             finally:
