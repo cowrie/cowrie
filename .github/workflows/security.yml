@@ -13,8 +13,9 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
 
   schedule:
-    # Run weekly on Wednesdays at 06:00 UTC
-    - cron: '0 6 * * 3'
+    # Run every Monday at 03:00 UTC, after the weekly release and before
+    # Dependabot, so audit warnings arrive early in the week.
+    - cron: '0 3 * * 1'
 
   workflow_dispatch:
 

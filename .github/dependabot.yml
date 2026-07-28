@@ -14,23 +14,31 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
     cooldown:
       default-days: 7
   - package-ecosystem: "pip"
     directory: "/docs"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
     cooldown:
       default-days: 7
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
     cooldown:
       default-days: 7
   - package-ecosystem: "docker"
     directory: "/docker"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
     cooldown:
       default-days: 7
