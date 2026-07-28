@@ -593,7 +593,7 @@ class HoneyPotFilesystem:
         p: list[Any] | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        self.get_path(os.path.dirname(path)).remove(p)
+        self.unlink_entry(p, os.path.dirname(path))
 
     def readlink(self, path: str) -> str:
         p: list[Any] | None = self.getfile(path, follow_symlinks=False)
@@ -607,16 +607,15 @@ class HoneyPotFilesystem:
         raise NotImplementedError
 
     def rename(self, oldpath: str, newpath: str) -> None:
+        """Move oldpath to newpath, replacing newpath if it already exists —
+        the rename(2) semantics real mv(1) and the SFTP client rely on.
+        """
         old: list[Any] | None = self.getfile(oldpath)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        new = self.getfile(newpath)
-        if new:
-            raise OSError(errno.EEXIST, os.strerror(errno.EEXIST))
-
-        self.get_path(os.path.dirname(oldpath)).remove(old)
+        self.unlink_entry(old, os.path.dirname(oldpath))
         old[A_NAME] = os.path.basename(newpath)
-        self.get_path(os.path.dirname(newpath)).append(old)
+        self.link_entry(old, os.path.dirname(newpath))
 
     def listdir(self, path: str) -> list[str]:
         names: list[str] = [x[A_NAME] for x in self.get_path(path)]

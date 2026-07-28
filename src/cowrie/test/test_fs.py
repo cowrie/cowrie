@@ -73,5 +73,47 @@ class EntryLinkingTests(unittest.TestCase):
         self.assertIn("in_tmp", self.fs.listdir("/tmp"))
 
 
+class RenameRemoveTests(unittest.TestCase):
+    """fs.rename/fs.remove model the rename(2)/unlink(2) syscalls and back
+    both the shell (mv, rm) and the SFTP server."""
+
+    def setUp(self) -> None:
+        self.fs = fs.HoneyPotFilesystem("arch", "/root")
+
+    def test_rename_moves_file_to_new_name(self) -> None:
+        self.fs.link_entry(_file_entry("r_old"), "/tmp")
+        self.fs.rename("/tmp/r_old", "/tmp/r_new")
+        names = self.fs.listdir("/tmp")
+        self.assertNotIn("r_old", names)
+        self.assertIn("r_new", names)
+
+    def test_rename_overwrites_existing_destination(self) -> None:
+        self.fs.link_entry(_file_entry("r_src"), "/tmp")
+        self.fs.link_entry(_file_entry("r_dst"), "/tmp")
+        self.fs.rename("/tmp/r_src", "/tmp/r_dst")
+        names = self.fs.listdir("/tmp")
+        self.assertNotIn("r_src", names)
+        self.assertEqual(names.count("r_dst"), 1)
+
+    def test_rename_across_directories(self) -> None:
+        self.fs.link_entry(_file_entry("x_move"), "/tmp")
+        self.fs.rename("/tmp/x_move", "/root/x_moved")
+        self.assertNotIn("x_move", self.fs.listdir("/tmp"))
+        self.assertIn("x_moved", self.fs.listdir("/root"))
+
+    def test_rename_missing_source_raises(self) -> None:
+        with self.assertRaises(OSError):
+            self.fs.rename("/tmp/nope_src_xyz", "/tmp/whatever")
+
+    def test_remove_deletes_file(self) -> None:
+        self.fs.link_entry(_file_entry("rm_me"), "/tmp")
+        self.fs.remove("/tmp/rm_me")
+        self.assertNotIn("rm_me", self.fs.listdir("/tmp"))
+
+    def test_remove_missing_raises(self) -> None:
+        with self.assertRaises(OSError):
+            self.fs.remove("/tmp/not_here_xyz")
+
+
 if __name__ == "__main__":
     unittest.main()
