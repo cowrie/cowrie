@@ -10,6 +10,7 @@ import copy
 import enum
 import fnmatch
 import os
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -44,6 +45,10 @@ from cowrie.shell.pipe import PipeProtocol
 # ceilings are far above that yet keep a `while true` from running forever.
 MAX_WHILE_ITERATIONS = 1000
 MAX_FOR_ITEMS = 10000
+
+# A word is a variable assignment only when a valid shell identifier precedes
+# the =; bash treats words like "=", "=foo" or "1x=5" as command names.
+ASSIGNMENT_WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 
 
 class LoopSignal(enum.Enum):
@@ -622,7 +627,7 @@ class HoneyPotShell:
         cmd_array: list[dict[str, Any]] = []
         while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
-            if piece.count("="):
+            if ASSIGNMENT_WORD.match(piece):
                 key, val = piece.split("=", 1)
                 environ[key] = val
                 continue
