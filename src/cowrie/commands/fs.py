@@ -571,9 +571,9 @@ class Command_mv(HoneyPotCommand):
                 destdir = os.path.dirname(resolv(dest))
                 outfile = os.path.basename(dest)
             srcdir = os.path.dirname(resolv(src))
-            s[fs.A_NAME] = outfile
-            self.fs.link_entry(s, destdir, replace=False)
             self.fs.unlink_entry(s, srcdir)
+            s[fs.A_NAME] = outfile
+            self.fs.link_entry(s, destdir)
 
 
 commands["/bin/mv"] = Command_mv

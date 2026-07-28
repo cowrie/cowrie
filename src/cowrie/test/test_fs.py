@@ -56,15 +56,11 @@ class EntryLinkingTests(unittest.TestCase):
         self.assertIn("cowrie_test_file", self.fs.listdir("/"))
         self.assertIsNotNone(self.fs.getfile("/cowrie_test_file"))
 
-    def test_link_entry_replaces_same_name_by_default(self) -> None:
+    def test_link_entry_replaces_same_name(self) -> None:
+        # A directory can never hold two entries under one name.
         self.fs.link_entry(_file_entry("dup"), "/")
         self.fs.link_entry(_file_entry("dup"), "/")
         self.assertEqual(self.fs.listdir("/").count("dup"), 1)
-
-    def test_link_entry_without_replace_allows_duplicate(self) -> None:
-        self.fs.link_entry(_file_entry("dup2"), "/", replace=False)
-        self.fs.link_entry(_file_entry("dup2"), "/", replace=False)
-        self.assertEqual(self.fs.listdir("/").count("dup2"), 2)
 
     def test_unlink_entry_removes_file(self) -> None:
         entry = _file_entry("to_remove")
