@@ -402,9 +402,10 @@ or available locally via: info '(coreutils) rm invocation'\n"""
 
         for f in args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
+            parent = "/".join(pname.split("/")[:-1])
             try:
                 # verify path to file exists
-                directory = self.fs.get_path("/".join(pname.split("/")[:-1]))
+                directory = self.fs.get_path(parent)
                 # verify that the file itself exists
                 self.fs.get_path(pname)
             except (IndexError, fs.FileNotFound):
@@ -421,7 +422,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                             f"rm: cannot remove `{i[fs.A_NAME]}': Is a directory\n"
                         )
                     else:
-                        directory.remove(i)
+                        self.fs.unlink_entry(i, parent)
                         if verbose:
                             if i[fs.A_TYPE] == fs.T_DIR:
                                 self.write(f"removed directory '{i[fs.A_NAME]}'\n")
@@ -495,15 +496,13 @@ class Command_cp(HoneyPotCommand):
                 continue
             s = copy.deepcopy(self.fs.getfile(resolv(src)))
             if isdir:
-                directory = self.fs.get_path(resolv(dest))
+                destdir = resolv(dest)
                 outfile = os.path.basename(src)
             else:
-                directory = self.fs.get_path(os.path.dirname(resolv(dest)))
+                destdir = os.path.dirname(resolv(dest))
                 outfile = os.path.basename(dest.rstrip("/"))
-            if outfile in [x[fs.A_NAME] for x in directory]:
-                directory.remove(next(x for x in directory if x[fs.A_NAME] == outfile))
             s[fs.A_NAME] = outfile
-            directory.append(s)
+            self.fs.link_entry(s, destdir)
 
 
 commands["/bin/cp"] = Command_cp
@@ -566,18 +565,15 @@ class Command_mv(HoneyPotCommand):
                 continue
             s = self.fs.getfile(resolv(src))
             if isdir:
-                directory = self.fs.get_path(resolv(dest))
+                destdir = resolv(dest)
                 outfile = os.path.basename(src)
             else:
-                directory = self.fs.get_path(os.path.dirname(resolv(dest)))
+                destdir = os.path.dirname(resolv(dest))
                 outfile = os.path.basename(dest)
-            if directory != os.path.dirname(resolv(src)):
-                s[fs.A_NAME] = outfile
-                directory.append(s)
-                sdir = self.fs.get_path(os.path.dirname(resolv(src)))
-                sdir.remove(s)
-            else:
-                s[fs.A_NAME] = outfile
+            srcdir = os.path.dirname(resolv(src))
+            s[fs.A_NAME] = outfile
+            self.fs.link_entry(s, destdir, replace=False)
+            self.fs.unlink_entry(s, srcdir)
 
 
 commands["/bin/mv"] = Command_mv

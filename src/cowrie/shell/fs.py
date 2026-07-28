@@ -347,6 +347,28 @@ class HoneyPotFilesystem:
             return read_data_bytes("arch", self.arch)
         return b""
 
+    def link_entry(self, entry: list[Any], dirpath: str, replace: bool = True) -> None:
+        """Insert entry into the directory at dirpath.
+
+        When replace is True (the default) any existing entry with the same
+        name is removed first, so directory names stay unique — cp semantics.
+        When False the entry is appended unconditionally, which can leave two
+        entries sharing a name; this preserves mv's historical behaviour.
+
+        The caller owns entry: it must not still be linked elsewhere in the
+        tree (move callers unlink_entry it from its old parent).
+        """
+        directory = self.get_path(dirpath)
+        if replace:
+            name = entry[A_NAME]
+            for existing in [x for x in directory if x[A_NAME] == name]:
+                directory.remove(existing)
+        directory.append(entry)
+
+    def unlink_entry(self, entry: list[Any], dirpath: str) -> None:
+        """Remove entry from the directory at dirpath."""
+        self.get_path(dirpath).remove(entry)
+
     def mkfile(
         self,
         path: str,
