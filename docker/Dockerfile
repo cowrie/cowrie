@@ -65,6 +65,8 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 FROM gcr.io/distroless/python3-debian13:latest AS runtime
 #FROM gcr.io/distroless/python3-debian13:debug AS runtime
 
+ARG SOURCE_DATE_EPOCH
+
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
 LABEL org.opencontainers.image.documentation="https://docs.cowrie.org"
@@ -74,6 +76,7 @@ LABEL org.opencontainers.image.vendor="Cowrie"
 LABEL org.opencontainers.image.licenses="BSD-3-Clause"
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
+LABEL org.opencontainers.image.created="${SOURCE_DATE_EPOCH}"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
 LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian13"
 
@@ -102,7 +105,7 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.13"]
+RUN [ "python3", "-c", "import sys, compileall; v=str(sys.version_info.major)+'.'+str(sys.version_info.minor); compileall.compile_dir('/cowrie/cowrie-git/src', quiet=1); compileall.compile_dir('/cowrie/cowrie-env/', quiet=1); compileall.compile_dir('/usr/lib/python'+v, quiet=1)" ]
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
@@ -116,6 +119,8 @@ ENV PYTHONUNBUFFERED=1
 RUN [ "python3", "/cowrie/cowrie-git/bin/regen-dropin.cache" ]
 
 EXPOSE 2222 2223
+
+STOPSIGNAL SIGTERM
 
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
 CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "--logger", "cowrie.python.logfile.stdoutLogger", "cowrie" ]
