@@ -24,7 +24,12 @@ from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed, outbound_bind_address
+from cowrie.core.network import (
+    DownloadLimitExceeded,
+    abort_body,
+    communication_allowed,
+    outbound_bind_address,
+)
 from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
@@ -530,6 +535,9 @@ class Command_wget(HoneyPotCommand):
             total_length = None
 
         if not self._begin_download(total_length, contenttype, status_line):
+            # Stop the transfer; an undelivered body would otherwise keep
+            # downloading and buffering in memory.
+            abort_body(response)
             return None
 
         deferred = treq.collect(response, self.collect)
@@ -555,7 +563,10 @@ class Command_wget(HoneyPotCommand):
                 limit=self.limit_size,
             )
             self.exit()
-            return
+            # treq closes the connection when the collector raises, aborting
+            # the transfer instead of draining the rest of the body. The
+            # errback this triggers is inert because the command has exited.
+            raise DownloadLimitExceeded
 
         self.artifact.write(data)
 
