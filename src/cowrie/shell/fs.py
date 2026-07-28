@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import copy
 import errno
 import hashlib
 import os
@@ -121,10 +122,13 @@ class HoneyPotFilesystem:
 
     def __init__(self, arch: str, home: str) -> None:
         try:
+            # Shared with every other session until this session first mutates
+            # the tree, at which point _ensure_private_fs() copies it.
             self.fs: Node = honeyfs.get_tree()
         except Exception:
             self._log.failure("ERROR: Failed to load filesystem")
             sys.exit(2)
+        self._private_fs: bool = False
 
         # Keep track of arch so we can return appropriate binary
         self.arch: str = arch
@@ -148,12 +152,23 @@ class HoneyPotFilesystem:
             except Exception as e:
                 self._log.info("Failed to load honeyfs {error!r}", error=e)
 
+    def _ensure_private_fs(self) -> None:
+        """Copy the shared base tree the first time this session mutates it.
+
+        Every mutating method calls this before fetching the node it will
+        change, so writes land on a private copy and the base tree stays
+        pristine for other sessions. Read-only sessions never copy.
+        """
+        if not self._private_fs:
+            self.fs = copy.deepcopy(self.fs)
+            self._private_fs = True
+
     def init_honeyfs(self, honeyfs_path: str) -> None:
         """
         Explore the honeyfs at 'honeyfs_path' and set all A_REALFILE attributes on
         the virtual filesystem.
         """
-
+        self._ensure_private_fs()
         for path, _directories, filenames in os.walk(honeyfs_path):
             for filename in filenames:
                 realfile_path: str = os.path.join(path, filename)
@@ -316,6 +331,7 @@ class HoneyPotFilesystem:
         The caller owns entry: it must not still be linked elsewhere in the
         tree (move callers unlink_entry it from its old parent first).
         """
+        self._ensure_private_fs()
         directory = self.get_path(dirpath)
         name = entry[A_NAME]
         for existing in [x for x in directory if x[A_NAME] == name]:
@@ -324,6 +340,7 @@ class HoneyPotFilesystem:
 
     def unlink_entry(self, entry: Node, dirpath: str) -> None:
         """Remove entry from the directory at dirpath."""
+        self._ensure_private_fs()
         self.get_path(dirpath).remove(entry)
 
     def mkfile(
@@ -344,6 +361,7 @@ class HoneyPotFilesystem:
         if any([_path.startswith(_p) for _p in SPECIAL_PATHS]):
             raise PermissionDenied
 
+        self._ensure_private_fs()
         _dir = self.get_path(_path)
         outfile: str = os.path.basename(path)
         if outfile in [x[A_NAME] for x in _dir]:
@@ -367,6 +385,7 @@ class HoneyPotFilesystem:
             ctime = time.time()
         if not path.strip("/"):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+        self._ensure_private_fs()
         try:
             directory = self.get_path(os.path.dirname(path.strip("/")))
         except (IndexError, FileNotFound):
@@ -522,6 +541,7 @@ class HoneyPotFilesystem:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), p)
         if len(self.get_path(p)) > 0:
             raise OSError(errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), p)
+        self._ensure_private_fs()
         pdir = self.get_path(parent, follow_symlinks=True)
         for i in pdir[:]:
             if i[A_NAME] == name:
@@ -530,18 +550,21 @@ class HoneyPotFilesystem:
         return False
 
     def utime(self, path: str, _atime: float, mtime: float) -> None:
+        self._ensure_private_fs()
         p: Node | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_CTIME] = mtime
 
     def chmod(self, path: str, perm: int) -> None:
+        self._ensure_private_fs()
         p: Node | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         p[A_MODE] = stat.S_IFMT(p[A_MODE]) | perm
 
     def chown(self, path: str, uid: int, gid: int) -> None:
+        self._ensure_private_fs()
         p: Node | None = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -551,6 +574,7 @@ class HoneyPotFilesystem:
             p[A_GID] = gid
 
     def remove(self, path: str) -> None:
+        self._ensure_private_fs()
         p: Node | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -571,6 +595,7 @@ class HoneyPotFilesystem:
         """Move oldpath to newpath, replacing newpath if it already exists —
         the rename(2) semantics real mv(1) and the SFTP client rely on.
         """
+        self._ensure_private_fs()
         old: Node | None = self.getfile(oldpath)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -612,6 +637,7 @@ class HoneyPotFilesystem:
         return path
 
     def update_size(self, filename: str, size: int) -> None:
+        self._ensure_private_fs()
         f: Node | None = self.getfile(filename)
         if not f:
             return

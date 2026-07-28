@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import configparser
-import copy
 import functools
 import pickle
 from pathlib import Path
@@ -96,13 +95,14 @@ def _tree() -> list[Any]:
 
 
 def get_tree() -> list[Any]:
-    """Return a fresh deep copy of the cached filesystem tree.
+    """Return the shared cached filesystem tree.
 
-    Each HoneyPotFilesystem instance gets its own copy so per-session
-    mutations (mkfile, init_honeyfs A_REALFILE markers, etc.) don't leak
-    across sessions.
+    Callers MUST NOT mutate the returned tree — it is shared by every
+    session. HoneyPotFilesystem deep-copies it on its first write
+    (see HoneyPotFilesystem._ensure_private_fs), so read-only sessions
+    never pay the copy.
     """
-    return copy.deepcopy(_tree())
+    return _tree()
 
 
 def read_file(virtual_path: str) -> bytes:

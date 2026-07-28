@@ -7,11 +7,12 @@
 
 from __future__ import annotations
 
+import copy
 import os
 import unittest
 from typing import Any
 
-from cowrie.shell import fs
+from cowrie.shell import fs, honeyfs
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
@@ -207,6 +208,44 @@ class WalkerTests(unittest.TestCase):
     def test_get_path_follows_symlink_to_directory(self) -> None:
         names = [c[fs.A_NAME] for c in self.fs.get_path("/dirlink")]
         self.assertEqual(sorted(names), ["passwd", "plink"])
+
+
+class CopyOnWriteTests(unittest.TestCase):
+    """Sessions share the base tree until they mutate it, then copy it once.
+    The shared base must never be mutated by a session."""
+
+    def setUp(self) -> None:
+        honeyfs._tree.cache_clear()
+        self.addCleanup(honeyfs._tree.cache_clear)
+
+    def test_new_session_shares_the_base_tree(self) -> None:
+        session = fs.HoneyPotFilesystem("arch", "/root")
+        self.assertIs(session.fs, honeyfs.get_tree())
+
+    def test_two_sessions_share_until_one_mutates(self) -> None:
+        a = fs.HoneyPotFilesystem("arch", "/root")
+        b = fs.HoneyPotFilesystem("arch", "/root")
+        self.assertIs(a.fs, b.fs)
+        a.mkfile("/tmp/only_in_a", 0, 0, 0, 0o644)
+        self.assertIsNot(a.fs, b.fs)
+        self.assertIn("only_in_a", a.listdir("/tmp"))
+        self.assertNotIn("only_in_a", b.listdir("/tmp"))
+
+    def test_second_mutation_does_not_copy_again(self) -> None:
+        a = fs.HoneyPotFilesystem("arch", "/root")
+        a.mkfile("/tmp/one", 0, 0, 0, 0o644)
+        private = a.fs
+        a.mkfile("/tmp/two", 0, 0, 0, 0o644)
+        self.assertIs(a.fs, private)
+
+    def test_base_tree_is_never_mutated(self) -> None:
+        base = honeyfs.get_tree()
+        snapshot = copy.deepcopy(base)
+        a = fs.HoneyPotFilesystem("arch", "/root")
+        a.mkfile("/tmp/x", 0, 0, 0, 0o644)
+        a.chmod("/etc/passwd", 0o600)
+        a.remove("/tmp/x")
+        self.assertEqual(base, snapshot)
 
 
 if __name__ == "__main__":
