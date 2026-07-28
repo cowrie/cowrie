@@ -10,7 +10,7 @@ find command
 from __future__ import annotations
 
 import fnmatch
-import os
+import posixpath
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -94,13 +94,13 @@ class Command_find(HoneyPotCommand):
                 for entry in self.fs.listdir(path):
                     if entry in (".", ".."):
                         continue
-                    full_path = os.path.join(path, entry)
+                    full_path = posixpath.join(path, entry)
                     self.find_recursive(full_path, depth + 1)
         except Exception as e:
             self.errorWrite(f"find: error accessing {path}: {e}\n")
 
     def _match(self, path: str) -> bool:
-        basename = os.path.basename(path)
+        basename = posixpath.basename(path)
 
         if self.name_pattern and not fnmatch.fnmatch(basename, self.name_pattern):
             return False

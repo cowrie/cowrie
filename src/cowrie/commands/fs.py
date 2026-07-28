@@ -13,6 +13,7 @@ from __future__ import annotations
 import copy
 import getopt
 import os.path
+import posixpath
 import re
 from typing import TYPE_CHECKING
 
@@ -471,7 +472,7 @@ class Command_cp(HoneyPotCommand):
             isdir = True
         else:
             isdir = False
-            parent = os.path.dirname(resolv(dest))
+            parent = posixpath.dirname(resolv(dest))
             if not self.fs.exists(parent):
                 self.errorWrite(
                     "cp: cannot create regular file "
@@ -489,10 +490,10 @@ class Command_cp(HoneyPotCommand):
             s = copy.deepcopy(self.fs.getfile(resolv(src)))
             if isdir:
                 destdir = resolv(dest)
-                outfile = os.path.basename(src)
+                outfile = posixpath.basename(src)
             else:
-                destdir = os.path.dirname(resolv(dest))
-                outfile = os.path.basename(dest.rstrip("/"))
+                destdir = posixpath.dirname(resolv(dest))
+                outfile = posixpath.basename(dest.rstrip("/"))
             s[fs.A_NAME] = outfile
             self.fs.link_entry(s, destdir)
 
@@ -543,7 +544,7 @@ class Command_mv(HoneyPotCommand):
             isdir = True
         else:
             isdir = False
-            parent = os.path.dirname(resolv(dest))
+            parent = posixpath.dirname(resolv(dest))
             if not self.fs.exists(parent):
                 self.errorWrite(
                     "mv: cannot create regular file "
@@ -557,7 +558,7 @@ class Command_mv(HoneyPotCommand):
                 self.errorWrite(f"mv: cannot stat `{src}': No such file or directory\n")
                 continue
             if isdir:
-                destpath = os.path.join(resolv(dest), os.path.basename(src))
+                destpath = posixpath.join(resolv(dest), posixpath.basename(src))
             else:
                 destpath = resolv(dest)
             self.fs.rename(srcpath, destpath)
@@ -610,7 +611,7 @@ class Command_rmdir(HoneyPotCommand):
                 directory = self.fs.get_path("/".join(pname.split("/")[:-1]))
             except (IndexError, fs.FileNotFound):
                 directory = None
-            fname = os.path.basename(f)
+            fname = posixpath.basename(f)
             if not directory or fname not in [x[fs.A_NAME] for x in directory]:
                 self.errorWrite(
                     f"rmdir: failed to remove `{f}': No such file or directory\n"
@@ -656,7 +657,7 @@ class Command_touch(HoneyPotCommand):
             return
         for f in self.args:
             pname = self.fs.resolve_path(f, self.protocol.cwd)
-            if not self.fs.exists(os.path.dirname(pname)):
+            if not self.fs.exists(posixpath.dirname(pname)):
                 self.errorWrite(
                     f"touch: cannot touch `{pname}`: No such file or directory\n"
                 )

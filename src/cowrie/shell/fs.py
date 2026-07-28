@@ -11,6 +11,7 @@ import copy
 import errno
 import hashlib
 import os
+import posixpath
 import re
 import stat
 import sys
@@ -302,7 +303,7 @@ class HoneyPotFilesystem:
         2) built-in contents (A_CONTENTS) from the pickle file
         3) a generic binary header
         """
-        path: str = self.resolve_path(target, os.path.dirname(target))
+        path: str = self.resolve_path(target, posixpath.dirname(target))
         if not path or not self.exists(path):
             raise FileNotFound
         f: Node | None = self.getfile(path)
@@ -356,14 +357,14 @@ class HoneyPotFilesystem:
             return False
         if ctime is None:
             ctime = time.time()
-        _path: str = os.path.dirname(path)
+        _path: str = posixpath.dirname(path)
 
         if any([_path.startswith(_p) for _p in SPECIAL_PATHS]):
             raise PermissionDenied
 
         self._ensure_private_fs()
         _dir = self.get_path(_path)
-        outfile: str = os.path.basename(path)
+        outfile: str = posixpath.basename(path)
         if outfile in [x[A_NAME] for x in _dir]:
             _dir.remove(next(x for x in _dir if x[A_NAME] == outfile))
         _dir.append([outfile, T_FILE, uid, gid, size, mode, ctime, [], None, None])
@@ -387,11 +388,22 @@ class HoneyPotFilesystem:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
         self._ensure_private_fs()
         try:
-            directory = self.get_path(os.path.dirname(path.strip("/")))
+            directory = self.get_path(posixpath.dirname(path.strip("/")))
         except (IndexError, FileNotFound):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path) from None
         directory.append(
-            [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None]
+            [
+                posixpath.basename(path),
+                T_DIR,
+                uid,
+                gid,
+                size,
+                mode,
+                ctime,
+                [],
+                None,
+                None,
+            ]
         )
         self.newcount += 1
 
@@ -505,7 +517,7 @@ class HoneyPotFilesystem:
         self.events.dispatch(
             "cowrie.session.file_upload",
             'SFTP Uploaded file "%(filename)s" to %(outfile)s',
-            filename=os.path.basename(self.filenames[fd]),
+            filename=posixpath.basename(self.filenames[fd]),
             outfile=shasumfile,
             shasum=shasum,
         )
@@ -529,8 +541,8 @@ class HoneyPotFilesystem:
 
     def rmdir(self, path: str) -> bool:
         p: str = path.rstrip("/")
-        name: str = os.path.basename(p)
-        parent: str = os.path.dirname(p)
+        name: str = posixpath.basename(p)
+        parent: str = posixpath.dirname(p)
         directory: Node | None = self.getfile(p, follow_symlinks=False)
         if not directory:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), p)
@@ -575,7 +587,7 @@ class HoneyPotFilesystem:
         p: Node | None = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        self.unlink_entry(p, os.path.dirname(path))
+        self.unlink_entry(p, posixpath.dirname(path))
 
     def readlink(self, path: str) -> str:
         p: Node | None = self.getfile(path, follow_symlinks=False)
@@ -596,9 +608,9 @@ class HoneyPotFilesystem:
         old: Node | None = self.getfile(oldpath)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        self.unlink_entry(old, os.path.dirname(oldpath))
-        old[A_NAME] = os.path.basename(newpath)
-        self.link_entry(old, os.path.dirname(newpath))
+        self.unlink_entry(old, posixpath.dirname(oldpath))
+        old[A_NAME] = posixpath.basename(newpath)
+        self.link_entry(old, posixpath.dirname(newpath))
 
     def listdir(self, path: str) -> list[str]:
         names: list[str] = [x[A_NAME] for x in self.get_path(path)]

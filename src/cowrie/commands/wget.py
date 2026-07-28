@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import getopt
-import os
 import posixpath
 import time
 from typing import Any
@@ -289,7 +288,7 @@ class Command_wget(HoneyPotCommand):
 
         elif self.outfile != "-":
             self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
-            path = os.path.dirname(self.outfile)
+            path = posixpath.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
                     f"wget: {self.outfile}: Cannot open: No such file or directory\n"

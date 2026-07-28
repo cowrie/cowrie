@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import getopt
 import os
+import posixpath
 from typing import TYPE_CHECKING
 
 from twisted.internet import defer, reactor
@@ -117,13 +118,13 @@ Download a file via FTP
         elif len(args) >= 3:
             self.host, self.local_file, self.remote_path = args[:3]
 
-        self.remote_dir = os.path.dirname(self.remote_path)
-        self.remote_file = os.path.basename(self.remote_path)
+        self.remote_dir = posixpath.dirname(self.remote_path)
+        self.remote_file = posixpath.basename(self.remote_path)
         if not self.local_file:
             self.local_file = self.remote_file
 
         fakeoutfile = self.fs.resolve_path(self.local_file, self.protocol.cwd)
-        path = os.path.dirname(fakeoutfile)
+        path = posixpath.dirname(fakeoutfile)
         if not path or not self.fs.exists(path) or not self.fs.isdir(path):
             self.errorWrite(
                 f"ftpget: can't open '{self.local_file}': No such file or directory"

@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 import enum
 import fnmatch
-import os
+import posixpath
 import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -908,7 +908,7 @@ class HoneyPotShell:
 
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
-        basedir = os.path.dirname(clue)
+        basedir = posixpath.dirname(clue)
         if basedir and basedir[-1] != "/":
             basedir += "/"
 
@@ -930,7 +930,7 @@ class HoneyPotShell:
             if clue == "":
                 files.append(x)
                 continue
-            if not x[fs.A_NAME].startswith(os.path.basename(clue)):
+            if not x[fs.A_NAME].startswith(posixpath.basename(clue)):
                 continue
             files.append(x)
 
@@ -953,8 +953,8 @@ class HoneyPotShell:
                 newbuf += " "
             newbyt = newbuf.encode("utf8")
         else:
-            if os.path.basename(clue):
-                prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
+            if posixpath.basename(clue):
+                prefix = posixpath.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ""
             first = line.decode("utf8").split(" ")[:-1]

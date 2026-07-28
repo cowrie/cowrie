@@ -12,6 +12,7 @@ from __future__ import annotations
 import errno
 import functools
 import os
+import posixpath
 from collections.abc import Callable
 from typing import Any, TypeVar, cast
 
@@ -166,8 +167,10 @@ class CowrieSFTPDirectory:
             attrs = self.server._getAttrs(s)
             return (f, longname, attrs)
         else:
-            s = self.server.fs.lstat(os.path.join(self.dir, f))
-            s2 = self.server.fs.lstat(os.path.join(self.dir, f))
+            # Virtual (emulated-Linux) paths always join with "/", never the
+            # host separator — os.path.join would use "\" on Windows.
+            s = self.server.fs.lstat(posixpath.join(self.dir, f))
+            s2 = self.server.fs.lstat(posixpath.join(self.dir, f))
             s2.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
             s2.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s2)
@@ -191,7 +194,9 @@ class SFTPServerForCowrieUser:
 
     def _absPath(self, path):
         home = self.avatar.home
-        return os.path.abspath(os.path.join(nativeString(home), nativeString(path)))
+        # Emulated-Linux path: normalise with posix semantics so the host OS
+        # separator (e.g. "\" on Windows) never leaks into a virtual path.
+        return posixpath.abspath(posixpath.join(nativeString(home), nativeString(path)))
 
     def _setAttrs(self, path, attrs):
         if "uid" in attrs and "gid" in attrs:

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import os
+import posixpath
 import tarfile
 
 from twisted.logger import Logger
@@ -90,7 +90,7 @@ class Command_tar(HoneyPotCommand):
                     f.mtime,
                 )
             elif f.isfile():
-                self.mkfullpath(os.path.dirname(dest), f)
+                self.mkfullpath(posixpath.dirname(dest), f)
                 self.fs.mkfile(
                     dest,
                     self.current_user["uid"],
