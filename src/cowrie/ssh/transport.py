@@ -23,7 +23,7 @@ from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.internet.protocol import connectionDone
 from twisted.logger import Logger
-from twisted.protocols.policies import TimeoutMixin
+from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
 from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
@@ -37,9 +37,14 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     gotVersion: bool = False
     buf: bytes
     transportId: str
-    # The session's event emitter, bound in connectionMade when the running
-    # application provides a dispatcher.
+    # The session's event emitter, bound in connectionMade (or, under the
+    # PROXY protocol, on the first dataReceived) when the running application
+    # provides a dispatcher.
     events: EventLog | None = None
+    # Set when running behind a PROXY-protocol proxy: cowrie.session.connect is
+    # held back until the PROXY header has been parsed and getPeer() reflects
+    # the real client.
+    _emit_connect_pending: bool = False
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
     auth_timeout: int = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
@@ -69,8 +74,32 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.buf = b""
 
         self.transportId = uuid.uuid4().hex[:12]
-        src_ip: str = self.transport.getPeer().host
 
+        if isinstance(self.transport, ProtocolWrapper):
+            # A protocol wrapper in front of us (the haproxy: endpoint's PROXY
+            # parser) only resolves the real client address once it has read
+            # the header, which happens on the first dataReceived(). Defer
+            # cowrie.session.connect until then so it carries the real IP
+            # rather than the proxy's.
+            self._emit_connect_pending = True
+        else:
+            self._emit_connect()
+
+        self.transport.write(self.ourVersionString + b"\r\n")
+        self.currentEncryptions = transport.SSHCiphers(
+            b"none", b"none", b"none", b"none"
+        )
+        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
+
+        self.startTime = time.time()
+        self.setTimeout(self.auth_timeout)
+
+    def _emit_connect(self) -> None:
+        """
+        Bind the session event log and announce cowrie.session.connect using
+        the current (possibly PROXY-resolved) peer address.
+        """
+        src_ip: str = self.transport.getPeer().host
         ipv4_search = self.ipv4rex.search(src_ip)
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
@@ -82,15 +111,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             protocol="ssh",
             src_ip=src_ip,
         )
-
-        self.transport.write(self.ourVersionString + b"\r\n")
-        self.currentEncryptions = transport.SSHCiphers(
-            b"none", b"none", b"none", b"none"
-        )
-        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-
-        self.startTime: float = time.time()
-        self.setTimeout(self.auth_timeout)
 
     def sendKexInit(self) -> None:
         """
@@ -122,6 +142,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
+        if self._emit_connect_pending:
+            # First bytes have arrived, which under the PROXY protocol means
+            # the header has been parsed and getPeer() now reflects the real
+            # client. Announce the connection before processing the data.
+            self._emit_connect_pending = False
+            self._emit_connect()
+
         self.buf = self.buf + data
         if not self.gotVersion:
             if b"\n" not in self.buf:
@@ -283,7 +310,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
         transport.SSHServerTransport.connectionLost(self, reason)
-        self.transport.connectionLost(reason)
+        if self._emit_connect_pending:
+            # A proxied connection whose PROXY header carried no trailing data
+            # never reached dataReceived(), so the deferred announce never
+            # fired. getPeer() is resolved by now; announce it before closing
+            # so the connection is still logged (as a direct one would be).
+            self._emit_connect_pending = False
+            self._emit_connect()
         self.transport = None
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
