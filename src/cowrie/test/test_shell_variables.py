@@ -117,6 +117,22 @@ class ShellVariableTests(unittest.TestCase):
         self.assertEqual(self.run_line(b"whoami"), b"root\n")
         self.assertIn(b"command not found", self.run_line(b"definitelynotacommand"))
 
+    # A word only counts as an assignment when a valid identifier precedes the
+    # =; bash treats "=", "=foo" and "1x=5" as command names and reports them
+    # as not found
+    def test_bare_equals_is_command_not_found(self) -> None:
+        self.assertEqual(self.run_line(b"="), b"-bash: =: command not found\n")
+
+    def test_equals_prefixed_word_is_command_not_found(self) -> None:
+        self.assertEqual(self.run_line(b"=foo"), b"-bash: =foo: command not found\n")
+
+    def test_invalid_identifier_assignment_is_command_not_found(self) -> None:
+        self.assertEqual(self.run_line(b"1x=5"), b"-bash: 1x=5: command not found\n")
+
+    def test_underscore_identifier_assignment_persists(self) -> None:
+        self.proto.lineReceived(b"_x=hi")
+        self.assertEqual(self.run_line(b"echo $_x"), b"hi\n")
+
     # unset removes a variable from both scopes; afterwards a bare reference to
     # it drops the word, like any other unset name
     def test_unset_removes_variable(self) -> None:
