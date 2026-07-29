@@ -7,7 +7,9 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
+from unittest import mock
 
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
 from twisted.cred.portal import Portal
@@ -15,6 +17,7 @@ from twisted.internet import defer
 from twisted.internet import reactor as _reactor
 from twisted.protocols.ftp import FTPFactory, FTPRealm
 
+from cowrie.commands.ftpget import FTPFileReceiver, ftpget_rate_limiter
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -26,6 +29,8 @@ if TYPE_CHECKING:
         IReactorTCP,
         IReactorTime,
     )
+
+    from cowrie.core.artifact import Artifact
 
     class _Reactor(IReactorTime, IReactorTCP):
         pass
@@ -56,6 +61,8 @@ class ShellFtpGetCommandTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tr.clear()
+        # The limiter is a module-level singleton; keep tests isolated.
+        ftpget_rate_limiter.reset()
 
     def test_help_command(self) -> defer.Deferred[None]:
         usage = (
@@ -141,6 +148,35 @@ class ShellFtpGetCommandTests(unittest.TestCase):
         return d
 
 
+class FTPFileReceiverSizeLimitTests(unittest.TestCase):
+    """The receiver must stop writing and abort the data connection once the
+    download exceeds download_limit_size, so a rogue server can't write
+    unbounded data to disk."""
+
+    def _make(self, limit: int) -> tuple[FTPFileReceiver, list[bytes]]:
+        written: list[bytes] = []
+        artifact = SimpleNamespace(write=written.append)
+        receiver = FTPFileReceiver(cast("Artifact", artifact), limit_size=limit)
+        receiver.makeConnection(mock.Mock())
+        return receiver, written
+
+    def test_aborts_and_stops_writing_past_the_limit(self) -> None:
+        receiver, written = self._make(10)
+        receiver.dataReceived(b"12345")
+        self.assertFalse(receiver.limit_exceeded)
+        receiver.dataReceived(b"67890AB")  # total 12 > 10
+        self.assertTrue(receiver.limit_exceeded)
+        cast("mock.Mock", receiver.transport).loseConnection.assert_called_once()
+        receiver.dataReceived(b"dropped")  # ignored once over the limit
+        self.assertEqual(b"".join(written), b"1234567890AB")
+
+    def test_no_limit_writes_everything(self) -> None:
+        receiver, written = self._make(0)
+        receiver.dataReceived(b"x" * 5000)
+        self.assertFalse(receiver.limit_exceeded)
+        self.assertEqual(len(b"".join(written)), 5000)
+
+
 class ShellFtpGetAsyncTests(unittest.TestCase):
     """Async tests for ftpget with mock FTP server"""
 
@@ -183,6 +219,8 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tr.clear()
+        # The limiter is a module-level singleton; keep tests isolated.
+        ftpget_rate_limiter.reset()
 
     def test_successful_download_anonymous(self) -> defer.Deferred[None]:
         """Test successful FTP download with anonymous login"""
