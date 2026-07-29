@@ -31,17 +31,13 @@ commands = {}
 # Per-host limiter on outbound FTP connections, matching wget/curl.
 ftpget_rate_limiter = RateLimiter(
     enabled=CowrieConfig.getboolean(
-        "honeypot", "ftpget_rate_limit_enabled", fallback=True
+        "shell", "ftpget_rate_limit_enabled", fallback=True
     ),
-    max_requests=CowrieConfig.getint(
-        "honeypot", "ftpget_rate_limit_requests", fallback=5
-    ),
+    max_requests=CowrieConfig.getint("shell", "ftpget_rate_limit_requests", fallback=5),
     window_seconds=CowrieConfig.getint(
-        "honeypot", "ftpget_rate_limit_window", fallback=60
+        "shell", "ftpget_rate_limit_window", fallback=60
     ),
-    max_keys=CowrieConfig.getint(
-        "honeypot", "ftpget_rate_limit_max_hosts", fallback=1000
-    ),
+    max_keys=CowrieConfig.getint("shell", "ftpget_rate_limit_max_hosts", fallback=1000),
 )
 
 
