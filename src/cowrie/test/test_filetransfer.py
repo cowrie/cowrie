@@ -58,5 +58,23 @@ class SFTPErrorTranslationTests(unittest.TestCase):
         self.assertEqual(ctx.exception.errno, errno.ENOENT)
 
 
+class SFTPPathJoinTests(unittest.TestCase):
+    """Virtual SFTP paths must be joined with "/" regardless of host OS;
+    os.path.join would use "\\" on Windows (issue #40388)."""
+
+    def setUp(self) -> None:
+        self.server = SFTPServerForCowrieUser.__new__(SFTPServerForCowrieUser)
+        self.server.fs = fs.HoneyPotFilesystem("linux-x64-lsb", "/root")
+        self.server.avatar = SimpleNamespace(home="/home/phil")
+
+    def test_abspath_joins_with_forward_slash(self) -> None:
+        result = self.server._absPath("file.txt")
+        self.assertEqual(result, "/home/phil/file.txt")
+        self.assertNotIn("\\", result)
+
+    def test_abspath_of_absolute_path_is_unchanged(self) -> None:
+        self.assertEqual(self.server._absPath("/etc/passwd"), "/etc/passwd")
+
+
 if __name__ == "__main__":
     unittest.main()

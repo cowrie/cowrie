@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import os
+import posixpath
 import zipfile
 
 from twisted.logger import Logger
@@ -123,7 +123,7 @@ class Command_unzip(HoneyPotCommand):
                     33188,
                 )
             elif not f.is_dir():
-                self.mkfullpath(os.path.dirname(dest))
+                self.mkfullpath(posixpath.dirname(dest))
                 self.fs.mkfile(
                     dest,
                     self.current_user["uid"],

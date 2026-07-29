@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import getopt
-import os.path
+import posixpath
 import stat
 import time
 
@@ -81,7 +81,7 @@ class Command_ls(HoneyPotCommand):
                     dot = self.protocol.fs.getfile(path)[:]
                     dot[fs.A_NAME] = "."
                     files.append(dot)
-                    dotdot = self.protocol.fs.getfile(os.path.split(path)[0])[:]
+                    dotdot = self.protocol.fs.getfile(posixpath.split(path)[0])[:]
                     if not dotdot:
                         dotdot = self.protocol.fs.getfile(path)[:]
                     dotdot[fs.A_NAME] = ".."

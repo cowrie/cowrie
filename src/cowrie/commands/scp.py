@@ -7,6 +7,7 @@ from __future__ import annotations
 import getopt
 import hashlib
 import os
+import posixpath
 import re
 import time
 
@@ -109,7 +110,7 @@ class Command_scp(HoneyPotCommand):
             self.protocol.events.dispatch(
                 "cowrie.session.file_upload",
                 'SCP Uploaded file "%(filename)s" to %(outfile)s',
-                filename=os.path.basename(fname),
+                filename=posixpath.basename(fname),
                 duplicate=duplicate,
                 url=fname,
                 outfile=shasum,
@@ -149,7 +150,7 @@ class Command_scp(HoneyPotCommand):
                     d = data[pos:dend]
 
                     if self.out_dir:
-                        fname = os.path.join(self.out_dir, r.group(3).decode())
+                        fname = posixpath.join(self.out_dir, r.group(3).decode())
                     else:
                         fname = r.group(3).decode()
 

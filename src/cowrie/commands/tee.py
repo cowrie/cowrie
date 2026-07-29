@@ -10,7 +10,7 @@ tee command
 from __future__ import annotations
 
 import getopt
-import os
+import posixpath
 
 from twisted.logger import Logger
 
@@ -62,7 +62,7 @@ class Command_tee(HoneyPotCommand):
                 self.errorWrite(f"tee: {arg}: Is a directory\n")
                 continue
 
-            folder_path = os.path.dirname(pname)
+            folder_path = posixpath.dirname(pname)
             fname = self.fs.resolve_path(folder_path, self.protocol.cwd)
             if not self.fs.isdir(fname):
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
