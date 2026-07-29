@@ -54,6 +54,10 @@ class RateLimiter:
         if not self.enabled:
             return True
 
+        # Hostnames (and IPv6 hex) are case-insensitive, so normalise the key;
+        # otherwise case variants of one host each get their own allowance.
+        key = key.lower()
+
         current_time = time.time()
 
         # Periodic global cleanup
