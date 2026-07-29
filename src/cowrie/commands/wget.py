@@ -36,18 +36,10 @@ commands = {}
 
 # Initialize rate limiter
 wget_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean(
-        "honeypot", "wget_rate_limit_enabled", fallback=True
-    ),
-    max_requests=CowrieConfig.getint(
-        "honeypot", "wget_rate_limit_requests", fallback=5
-    ),
-    window_seconds=CowrieConfig.getint(
-        "honeypot", "wget_rate_limit_window", fallback=60
-    ),
-    max_keys=CowrieConfig.getint(
-        "honeypot", "wget_rate_limit_max_hosts", fallback=1000
-    ),
+    enabled=CowrieConfig.getboolean("shell", "wget_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("shell", "wget_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("shell", "wget_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("shell", "wget_rate_limit_max_hosts", fallback=1000),
 )
 
 

@@ -565,12 +565,25 @@ operating_system = GNU/Linux
 # SSH Version as printed by "ssh -V" in shell emulation
 ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 
-# Rate limiting for outbound FTP connections made by the ftpget command.
-# Limits the number of connections per unique host within a time window.
-# ftpget_rate_limit_enabled: enable/disable the rate limiter (default: true)
-# ftpget_rate_limit_requests: max connections per host per window (default: 5)
-# ftpget_rate_limit_window: window length in seconds (default: 60)
-# ftpget_rate_limit_max_hosts: max hosts tracked simultaneously (default: 1000)
+# Rate limiting for outbound connections made by the wget, curl, nc and
+# ftpget commands. Limits the number of connections per unique host within a
+# time window.
+# *_rate_limit_enabled: enable/disable the rate limiter (default: true)
+# *_rate_limit_requests: max connections per host per window (default: 5)
+# *_rate_limit_window: window length in seconds (default: 60)
+# *_rate_limit_max_hosts: max hosts tracked simultaneously (default: 1000)
+#wget_rate_limit_enabled = true
+#wget_rate_limit_requests = 5
+#wget_rate_limit_window = 60
+#wget_rate_limit_max_hosts = 1000
+#curl_rate_limit_enabled = true
+#curl_rate_limit_requests = 5
+#curl_rate_limit_window = 60
+#curl_rate_limit_max_hosts = 1000
+#nc_rate_limit_enabled = true
+#nc_rate_limit_requests = 5
+#nc_rate_limit_window = 60
+#nc_rate_limit_max_hosts = 1000
 #ftpget_rate_limit_enabled = true
 #ftpget_rate_limit_requests = 5
 #ftpget_rate_limit_window = 60

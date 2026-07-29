@@ -32,18 +32,10 @@ commands = {}
 
 # Initialize rate limiter
 curl_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean(
-        "honeypot", "curl_rate_limit_enabled", fallback=True
-    ),
-    max_requests=CowrieConfig.getint(
-        "honeypot", "curl_rate_limit_requests", fallback=5
-    ),
-    window_seconds=CowrieConfig.getint(
-        "honeypot", "curl_rate_limit_window", fallback=60
-    ),
-    max_keys=CowrieConfig.getint(
-        "honeypot", "curl_rate_limit_max_hosts", fallback=1000
-    ),
+    enabled=CowrieConfig.getboolean("shell", "curl_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("shell", "curl_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("shell", "curl_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("shell", "curl_rate_limit_max_hosts", fallback=1000),
 )
 
 CURL_HELP = """Usage: curl [options...] <url>
