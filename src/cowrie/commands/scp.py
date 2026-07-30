@@ -9,8 +9,8 @@ import hashlib
 import os
 import posixpath
 import re
-import time
 
+from cowrie.core.artifact import temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
@@ -85,21 +85,14 @@ class Command_scp(HoneyPotCommand):
         )
         self.protocol.terminal.write("\x00")
 
-    def drop_tmp_file(self, data: bytes, name: str) -> None:
-        tmp_fname = "{}-{}-{}-scp_{}".format(
-            time.strftime("%Y%m%d-%H%M%S"),
-            self.protocol.getProtoTransport().transportId,
-            self.protocol.terminal.transport.session.id,
-            re.sub("[^A-Za-z0-9]", "_", name),
-        )
-
-        self.safeoutfile = os.path.join(self.download_path, tmp_fname)
+    def drop_tmp_file(self, data: bytes) -> None:
+        self.safeoutfile = temp_download_path("scp")
 
         with open(self.safeoutfile, "wb+") as f:
             f.write(data)
 
     def save_file(self, data: bytes, fname: str) -> None:
-        self.drop_tmp_file(data, fname)
+        self.drop_tmp_file(data)
 
         if os.path.exists(self.safeoutfile):
             shasum = hashlib.sha256(data).hexdigest()

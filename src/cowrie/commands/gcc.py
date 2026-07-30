@@ -6,15 +6,12 @@
 from __future__ import annotations
 
 import getopt
-import os
 import random
-import re
-import time
 from typing import TYPE_CHECKING
 
 from twisted.internet import reactor
 
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import temp_download_path
 from cowrie.shell.command import HoneyPotCommand
 
 if TYPE_CHECKING:
@@ -190,15 +187,7 @@ gcc version {version} (Debian {version}-5)"""
     def generate_file(self, outfile: str) -> None:
         data = b""
         # TODO: make sure it is written to temp file, not downloads
-        tmp_fname = "{}_{}_{}_{}".format(
-            time.strftime("%Y%m%d%H%M%S"),
-            self.protocol.getProtoTransport().transportId,
-            self.protocol.terminal.transport.session.id,
-            re.sub("[^A-Za-z0-9]", "_", outfile),
-        )
-        safeoutfile = os.path.join(
-            CowrieConfig.get("honeypot", "download_path", fallback="."), tmp_fname
-        )
+        safeoutfile = temp_download_path("gcc")
 
         # Data contains random garbage from an actual file, so when
         # catting the file, you'll see some 'real' compiled data
