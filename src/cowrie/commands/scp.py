@@ -189,7 +189,23 @@ class Command_scp(HoneyPotCommand):
                         self.errorWrite(f"-scp: {outfile}: Permission denied\n")
                         return b""
 
-                    self.save_file(d, outfile)
+                    try:
+                        self.save_file(d, outfile)
+                    except OSError as e:
+                        # A real filesystem failure (disk full, missing or
+                        # unwritable download_path) while writing the temp
+                        # file or renaming it into place. Log it and stop the
+                        # upload cleanly instead of raising out of
+                        # eofReceived() and leaving the temp file behind.
+                        self._log.error(
+                            "scp: error saving upload {fname}: {error!r}",
+                            fname=fname,
+                            error=e,
+                        )
+                        safeoutfile = getattr(self, "safeoutfile", None)
+                        if safeoutfile and os.path.exists(safeoutfile):
+                            os.remove(safeoutfile)
+                        return b""
 
                     data = data[dend + 1 :]  # cut saved data + \x00
             else:
