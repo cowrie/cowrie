@@ -35,16 +35,16 @@ class Output(cowrie.core.output.Output):
             self.db = adbapi.ConnectionPool(
                 "sqlite3", database=sqliteFilename, check_same_thread=False
             )
+            self.db.start()
         except sqlite3.OperationalError as e:
             self._log.info("{error}", error=e)
-
-        self.db.start()
 
     def stop(self):
         """
         Close connection to db
         """
-        self.db.close()
+        if hasattr(self, "db"):
+            self.db.close()
 
     def sqlerror(self, error):
         self._log.failure("sqlite error", failure=error)
@@ -141,7 +141,7 @@ class Output(cowrie.core.output.Output):
             self.simpleQuery(
                 "INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) "
                 "VALUES (?, ?, ?, ?, ?)",
-                (event["session"], event["timestamp"], event["url"], "NULL", "NULL"),
+                (event["session"], event["timestamp"], event["url"], None, None),
             )
 
         elif event["eventid"] == "cowrie.client.version":
