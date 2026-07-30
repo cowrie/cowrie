@@ -16,10 +16,9 @@ insecure machines (such as your honeypot). Therefore, we limit any access to the
 Internet via a network filter, which you can configure as you see fit.
 
 The VMs in the backend pool, and all infrastructure (snapshots, networking and filtering)
-are backed-up by Qemu/libvirt. We provide two example VM images (for Ubuntu Server 18.04
-and OpenWRT 18.06.4) whose configurations are already set and ready to be deployed.
-Further below in this guide we'll discuss how to create your own images and customise
-libvirt's XML configuration files.
+are backed by Qemu/libvirt. The default configuration ships example settings for an
+Ubuntu Server image and an OpenWRT image. Further below in this guide we'll discuss
+how to create your own images and customize libvirt's XML configuration files.
 
 First of all, install the needed dependencies for the pool, as explained in
 `the installation steps <https://docs.cowrie.org/en/latest/INSTALL.html>`_.
@@ -33,22 +32,19 @@ Add your cowrie user to the ``libvirt`` group to ensure you have permission to r
 
     sudo usermod -aG libvirt "COWRIE_USER_HERE"
 
-Provided images
-***************
+Guest images
+************
 
-To allow for a simple setup, we provide two VM images to use with the backend pool: Ubuntu 18.04
-and OpenWRT. You can download them below, and then edit ``cowrie.cfg``'s ``guest_image_path`` to match the path of the images.
-In the case of OpenWRT you will need two different files. Note that a separate set of configs is provided
-for each image in the default configuration. Choose the one you want to use and comment the other as needed.
+The pool needs a base VM image to boot guests from. Build one as described in
+`Creating VM images`_ below, then set ``guest_image_path`` in ``cowrie.cfg`` to
+its path. The default configuration ships separate example config blocks for an
+Ubuntu image and an OpenWRT image (OpenWRT needs both a disk and a kernel
+image); enable the block that matches your image and comment out the other.
 
-* `Ubuntu 18.04 <https://drive.google.com/open?id=1ZNE57lzaGWR427XxynqUVJ_2anTKmFmh>`_.
-* `OpenWRT disk image <https://drive.google.com/open?id=1oBAJc3FX82AkrIwv_GV0uO5R0SMl_i9Q>`_.
-* `OpenWRT kernel image <https://drive.google.com/open?id=17-UARwAd0aNB4Ogc4GvO2GsUSOSg0aaD>`_.
-
-Backend Pool initialisation
+Backend Pool initialization
 ***************************
 
-Depending on the machine that will be running the backend pool, initialisation times for VMs can vary greatly.
+Depending on the machine that will be running the backend pool, initialization times for VMs can vary greatly.
 If the pool is correctly configured, you will get the `PoolServerFactory starting on 6415` message on your log.
 
 After a while, VMs will start to boot and, when ready to be used, a message of the form
@@ -65,12 +61,12 @@ These are:
 
 * **pool_max_vms**: the number of VMs to be kept running in the pool
 
-* **pool_vm_unused_timeout**: how much time (seconds) a used VM is kept running (so that
-  an attacker that reconnects is served the same VM.
+* **pool_vm_unused_timeout**: how much time (seconds) a used VM is kept running, so that
+  an attacker that reconnects is served the same VM
 
-* **apool_share_guests**: what to do if no "pristine" VMs are available (i.e., all have
-  been connected to); if set to true we serve a random one from the used, if false we
-  throw an exception.
+* **pool_share_guests**: what to do if no "pristine" VMs are available (i.e., all have
+  been connected to); if set to true we serve a random used VM, if false we
+  refuse the connection.
 
 
 Backend Pool configuration
@@ -78,10 +74,10 @@ Backend Pool configuration
 
 In this section we'll discuss the ``[backend_pool]`` section of the configuration file.
 
-The backend pool can be run in the same machine as the rest of Cowrie, or in a separate
-one. In the former case, you'd be running Cowrie with
+The backend pool can run on the same machine as the rest of Cowrie, or on a separate
+one. To run everything on one machine, configure Cowrie with
 
-.. code-block:: python
+.. code-block:: ini
 
     [backend_pool]
     pool_only = false
@@ -90,9 +86,9 @@ one. In the former case, you'd be running Cowrie with
     backend = pool
     pool = local
 
-If you want to deploy the backend pool in a different machine, then you'll need to
-invert the configuration: the pool machine has ``pool_only = true`` (SSH and Telnet
-are disabled), and the proxy machine has ``pool = remote``.
+To run the backend pool on a different machine, invert the configuration: the
+pool machine has ``pool_only = true`` (SSH and Telnet are disabled), and the
+proxy machine has ``pool = remote``.
 
 **Note:** The communication protocol used between the proxy and the backend pool
 is unencrypted. Although no sensitive data should be passed, we recommend you to
@@ -110,8 +106,8 @@ Snapshots
 =========
 
 VMs running in the pool are based on a base image that is kept unchanged. When booting,
-each VM creates a snaphost that keeps track of differences between the base image and
-snapshot. If you want to analyse snapshots and see any changes made in the VMs, set
+each VM creates a snapshot that keeps track of differences between the base image and
+snapshot. If you want to analyze snapshots and see any changes made in the VMs, set
 ``save_snapshots`` to true. If set to true be mindful of space concerns, each new
 VM will take at least ~20MB in storage.
 
@@ -170,7 +166,7 @@ from a different machine (i.e., running the backend pool remotely), then an exte
 IP (as defined in ``nat_public_ip``) is needed for the proxy to connect to.
 
 For this purpose, we provide a simple form of NAT that, for each VM request, and if enabled,
-starts a TCP proxy to forward data from a publicly-acessible IP to the internal libvirt interface.
+starts a TCP proxy to forward data from a publicly accessible IP to the internal libvirt interface.
 
 Creating VM images
 ******************
@@ -184,8 +180,8 @@ To create a disk image issue
 
     sudo qemu-img create -f qcow2 image-name.qcow2 8G
 
-(the qcow2 format is needed to ensure create snapshots, thus providing isolation between
-each VM instance; you can specify the size you want for the disk)
+(the qcow2 format is needed so snapshots can be created, providing isolation between
+VM instances; you can specify the size you want for the disk)
 
 Then you'll have to install an OS into it
 
@@ -222,10 +218,10 @@ Steps used in Ubuntu, can be useful in other distros
     printf "pts/0\npts/1\npts/2\npts/3\npts/4\npts/5\npts/6\npts/7\npts/8\npts/9" >> /etc/securetty
     service xinetd start
 
-Customising XML configs
+Customizing XML configs
 =======================
 
-If you want, you can customise libvirt's XML configurations.
+If you want, you can customize libvirt's XML configurations.
 
 The main configuration for a guest is located in ``default_guest.xml``. This defines the virtual
 CPU, available memory, and devices available on the guest. Most of these configurations are
@@ -266,10 +262,10 @@ of the form
     </rule>
 
 Each rule specifies a type of traffic (TCP, UDP...) and direction, whether to accept or drop
-that traffic, and the destiantion of traffic. The default filter provided allows inbound SSH
-and Telnet connections (without which the VM would be unusable, outbound ICMP traffic (to allow
-pinging) and outbound DNS querying. All other traffic is dropped as per the last rule, thus
-forbidding any download or tunnelling.
+that traffic, and the destination of the traffic. The default filter allows inbound SSH
+and Telnet connections (without which the VM would be unusable), outbound ICMP traffic (to allow
+pinging), and outbound DNS queries. All other traffic is dropped by the last rule, thus
+forbidding any download or tunneling.
 
 **VERY IMPORTANT NOTE:** some attacks consist of downloading malicious software or accessing
 illegal content through insecure machines (such as your honeypot). Our provided filter restricts

@@ -9,8 +9,12 @@ MySQL/PostgreSQL Output Plugin Prerequisites
 ============================================
 
 * Working Cowrie installation
-* Working MySQL installation
-* Working PostgreSQL installation
+* Working MySQL or PostgreSQL installation, depending on which database you
+  want to use
+
+The schema files referenced below live in the ``docs/sql/`` directory of the
+source tree. If you installed Cowrie with pip, download them from
+`GitHub <https://github.com/cowrie/cowrie/tree/main/docs/sql>`_.
 
 MySQL Installation
 ==================
@@ -67,10 +71,9 @@ Add the following entries to ``etc/cowrie.cfg`` under the Output Plugins section
     debug = false
     enabled = true
 
-Restart Cowrie::
+Restart Cowrie from your honeypot state directory::
 
-    $ cd ~/cowrie/bin/
-    $ ./cowrie restart
+    (cowrie-env) $ cowrie restart
 
 Verify that the MySQL Output Engine Has Been Loaded
 
@@ -87,17 +90,17 @@ Example expected output::
     ...
     2017-11-27T22:19:58-0600 [-] Ready to accept SSH connections
 
-## Confirm that events are logged to the MySQL Database
+Confirm That Events are Logged to the MySQL Database
+=====================================================
 
-Wait for a new login attempt to occur. Use tail like before to quickly check if any activity has
-been recorded in the cowrie.log file.
+Wait for a new login attempt to occur. Use ``tail`` like before to quickly check if any activity has
+been recorded in the ``cowrie.log`` file.
 
 Once a login event has occurred, log back into the MySQL database and verify that the event was recorded::
 
     $ mysql -u cowrie -p
     USE cowrie;
     SELECT * FROM auth;
-    ``
 
 Example output::
 
@@ -163,10 +166,9 @@ Add the following entries in ``etc/cowrie.cfg`` under the Output Plugins section
     port = 5432
     debug = false
 
-Restart Cowrie::
+Restart Cowrie from your honeypot state directory::
 
-    $ cd ~/cowrie/bin/
-    $ ./cowrie restart
+    (cowrie-env) $ cowrie restart
 
 Verify That the PostgreSQL Output Engine Has Been Loaded
 ========================================================

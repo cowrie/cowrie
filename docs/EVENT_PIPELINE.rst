@@ -5,10 +5,13 @@
 Event Pipeline Design
 #####################
 
-This document describes how Cowrie events travel from the code that observes
-attacker activity to the output plugins: a session-scoped event log feeding a
-single central dispatcher. The event *schema* (the event ids and their
-attributes) is documented in :doc:`OUTPUT`.
+This document is for Cowrie developers and contributors: it describes the
+internal design that carries events from the code observing attacker
+activity to the output plugins — a session-scoped event log feeding a
+single central dispatcher. Operators consuming Cowrie's output do not need
+it; the event *schema* (the event ids and their attributes) is documented
+in :doc:`OUTPUT`, and the integration guides cover shipping events to
+external systems.
 
 Terminology
 ***********

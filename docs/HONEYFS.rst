@@ -18,17 +18,17 @@ file, which mostly holds metadata for the files (filename, directory,
 permissions, owner, size, file type, etc) but has contents for a
 few files. Most files have no content.
 
-The `honeyfs` directory holds user created file contents, this overrides
-content from the pickle file and is a quick way to have custom content
+The `honeyfs` directory holds user created file contents. It overrides
+content from the pickle file and is a quick way to have custom content.
 
-To show the contents of the file, it needs both a meta data entry (pickle)
+To show the contents of a file, it needs both a metadata entry (pickle)
 and a honeyfs file.
 
 Creating a new pickle file
 **************************
 
-Create a directory where you put all files you'd like to be show in your filesystem
-Create the pickle file::
+Create a directory holding all files you'd like to show in your filesystem,
+then create the pickle file::
 
   $ source cowrie-env/bin/activate
   (cowrie-env) $ createfs -l YOUR-DIR -d DEPTH -o custom.pickle
