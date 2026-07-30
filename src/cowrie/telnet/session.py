@@ -166,14 +166,20 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
 
     def getHost(self):
         """
-        Return the host from my session's transport.
+        Return the host from my session's transport, or None once
+        connectionLost() has cleared the session.
         """
+        if self.session is None:
+            return None
         return self.session.transport.getHost()
 
     def getPeer(self):
         """
-        Return the peer from my session's transport.
+        Return the peer from my session's transport, or None once
+        connectionLost() has cleared the session.
         """
+        if self.session is None:
+            return None
         return self.session.transport.getPeer()
 
     def write(self, data):

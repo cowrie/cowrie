@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import os
 import unittest
+from unittest.mock import MagicMock
 
-from cowrie.telnet.session import HoneyPotTelnetSession
+from cowrie.telnet.session import HoneyPotTelnetSession, TelnetSessionProcessProtocol
 from cowrie.test.fake_server import FakeServer
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -24,6 +25,17 @@ class TelnetSessionUsernameTests(unittest.TestCase):
         session = HoneyPotTelnetSession(b"admin\xff", FakeServer())
 
         self.assertEqual(session.username, "admin�")
+
+
+class TelnetSessionProcessProtocolTests(unittest.TestCase):
+    def test_getpeer_gethost_after_connection_lost(self) -> None:
+        """connectionLost() clears the session; getPeer()/getHost() must then
+        return None instead of raising AttributeError."""
+        pp = TelnetSessionProcessProtocol(MagicMock())
+        pp.connectionLost(None)
+
+        self.assertIsNone(pp.getPeer())
+        self.assertIsNone(pp.getHost())
 
 
 if __name__ == "__main__":
