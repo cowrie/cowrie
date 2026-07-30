@@ -18,10 +18,27 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.llm.llm import get_shared_client
 
 if TYPE_CHECKING:
     from cowrie.core.events import EventLog
+
+
+# Every command in LLM mode is a real, metered call to a paid provider,
+# unlike the shell backend's free local simulation, so bound how fast one
+# attacker can drive it. Keyed on the real client IP, not fake_addr, so a
+# configured fake address cannot collapse every session into one bucket.
+llm_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("llm", "rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("llm", "rate_limit_requests", fallback=20),
+    window_seconds=CowrieConfig.getint("llm", "rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("llm", "rate_limit_max_hosts", fallback=1000),
+)
+
+# Ceiling on one command line before it reaches the prompt and the running
+# command history.
+MAX_COMMAND_LENGTH = CowrieConfig.getint("llm", "max_command_length", fallback=4096)
 
 
 # Told to the model on every command. Attacker-typed text reaches the prompt
@@ -240,6 +257,17 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.llm_client = get_shared_client()
             self.command_history = []
 
+        if not llm_rate_limiter.check(getattr(self, "realClientIP", "")):
+            self._log.info(
+                "LLM rate limit exceeded for {src_ip}, not calling the API",
+                src_ip=getattr(self, "realClientIP", ""),
+            )
+            self._show_prompt()
+            return
+
+        if len(command) > MAX_COMMAND_LENGTH:
+            command = command[:MAX_COMMAND_LENGTH]
+
         # Add the command to our history
         self.command_history.append(f"User: {command}")
 
@@ -340,6 +368,18 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         """
         self.llm_client = get_shared_client()
         self.command_history = []
+
+        if not llm_rate_limiter.check(getattr(self, "realClientIP", "")):
+            self._log.info(
+                "LLM rate limit exceeded for {src_ip}, not calling the API",
+                src_ip=getattr(self, "realClientIP", ""),
+            )
+            ret = failure.Failure(error.ProcessTerminated(exitCode=0))
+            self.terminal.transport.processEnded(ret)
+            return
+
+        if len(self.execcmd) > MAX_COMMAND_LENGTH:
+            self.execcmd = self.execcmd[:MAX_COMMAND_LENGTH]
 
         # Construct the prompt
         system_context = self._build_system_context(exec_command=self.execcmd)

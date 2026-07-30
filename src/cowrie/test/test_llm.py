@@ -11,6 +11,11 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
+from twisted.internet import defer
+
+from cowrie.core.config import CowrieConfig
+from cowrie.core.rate_limiter import RateLimiter
+
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
@@ -57,7 +62,7 @@ class SystemContextTests(unittest.TestCase):
         """A typo in the operator's own prompt template must not break every
         command in the session."""
         proto = self._proto()
-        with patch.object(llm_protocol.CowrieConfig, "get", return_value="hi {nope}"):
+        with patch.object(CowrieConfig, "get", return_value="hi {nope}"):
             context = proto._build_system_context()
 
         self.assertIn("svr04", context)
@@ -66,7 +71,7 @@ class SystemContextTests(unittest.TestCase):
         """An unmatched brace raises ValueError rather than KeyError; it must
         be tolerated the same way."""
         proto = self._proto()
-        with patch.object(llm_protocol.CowrieConfig, "get", return_value="hi {"):
+        with patch.object(CowrieConfig, "get", return_value="hi {"):
             context = proto._build_system_context()
 
         self.assertIn("svr04", context)
@@ -74,7 +79,7 @@ class SystemContextTests(unittest.TestCase):
     def test_supported_placeholders_still_substituted(self) -> None:
         proto = self._proto()
         with patch.object(
-            llm_protocol.CowrieConfig, "get", return_value="host={hostname} cwd={cwd}"
+            CowrieConfig, "get", return_value="host={hostname} cwd={cwd}"
         ):
             context = proto._build_system_context()
 
@@ -133,10 +138,10 @@ class AnthropicDetectionTests(unittest.TestCase):
             return host if option == "host" else ""
 
         with (
-            patch.object(llm_module.CowrieConfig, "get", fake_get),
-            patch.object(llm_module.CowrieConfig, "getint", return_value=500),
-            patch.object(llm_module.CowrieConfig, "getfloat", return_value=0.5),
-            patch.object(llm_module.CowrieConfig, "getboolean", return_value=False),
+            patch.object(CowrieConfig, "get", fake_get),
+            patch.object(CowrieConfig, "getint", return_value=500),
+            patch.object(CowrieConfig, "getfloat", return_value=0.5),
+            patch.object(CowrieConfig, "getboolean", return_value=False),
         ):
             return llm_module.LLMClient()
 
@@ -159,6 +164,59 @@ class AnthropicDetectionTests(unittest.TestCase):
         body = client._format_request_body(["system", "User: id"])
 
         self.assertEqual(body["temperature"], 0.5)
+
+
+class RateLimitTests(unittest.TestCase):
+    """Unlike the shell backend's free local simulation, every command in LLM
+    mode is a metered API call, so the pace and size are bounded."""
+
+    def _proto(self) -> llm_protocol.HoneyPotBaseProtocol:
+        proto = llm_protocol.HoneyPotBaseProtocol(_avatar())
+        proto.realClientIP = "203.0.113.9"
+        proto.terminal = MagicMock()
+        self.client = MagicMock()
+        self.client.get_response.return_value = defer.succeed("")
+        proto.llm_client = self.client
+        proto.command_history = []
+        return proto
+
+    def test_commands_are_rate_limited(self) -> None:
+        limiter = RateLimiter(max_requests=2, window_seconds=60)
+        proto = self._proto()
+        with patch.object(llm_protocol, "llm_rate_limiter", limiter):
+            for _ in range(5):
+                proto._process_command_with_llm("id")
+
+        self.assertEqual(self.client.get_response.call_count, 2)
+
+    def test_exec_commands_are_rate_limited(self) -> None:
+        limiter = RateLimiter(max_requests=1, window_seconds=60)
+        client = MagicMock()
+        client.get_response.return_value = defer.succeed("")
+        with (
+            patch.object(llm_protocol, "llm_rate_limiter", limiter),
+            patch.object(llm_protocol, "get_shared_client", return_value=client),
+        ):
+            for _ in range(3):
+                proto = llm_protocol.HoneyPotExecProtocol(_avatar(), b"id")
+                proto.realClientIP = "203.0.113.10"
+                proto.terminal = MagicMock()
+                proto._process_exec_with_llm()
+
+        self.assertEqual(client.get_response.call_count, 1)
+
+    def test_long_command_is_truncated(self) -> None:
+        """An overlong line must not be sent to the API or grow the history
+        without bound."""
+        proto = self._proto()
+        with (
+            patch.object(llm_protocol, "MAX_COMMAND_LENGTH", 10),
+            patch.object(llm_protocol, "llm_rate_limiter", RateLimiter(max_requests=5)),
+        ):
+            proto._process_command_with_llm("x" * 50)
+
+        prompt = self.client.get_response.call_args[0][0]
+        self.assertEqual(prompt[-1], "User: " + "x" * 10)
 
 
 if __name__ == "__main__":
