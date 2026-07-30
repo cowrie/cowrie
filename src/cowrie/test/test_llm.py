@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
@@ -44,6 +44,48 @@ class ExecCommandDecodeTests(unittest.TestCase):
         proto.lineReceived(b"echo \xff")
 
         self.assertEqual(sent, ["echo �"])
+
+
+class SystemContextTests(unittest.TestCase):
+    def _proto(self) -> llm_protocol.HoneyPotBaseProtocol:
+        proto = llm_protocol.HoneyPotBaseProtocol(_avatar())
+        proto.cwd = "/root"
+        return proto
+
+    def test_unknown_template_placeholder(self) -> None:
+        """A typo in the operator's own prompt template must not break every
+        command in the session."""
+        proto = self._proto()
+        with patch.object(llm_protocol.CowrieConfig, "get", return_value="hi {nope}"):
+            context = proto._build_system_context()
+
+        self.assertIn("svr04", context)
+
+    def test_unbalanced_brace_in_template(self) -> None:
+        """An unmatched brace raises ValueError rather than KeyError; it must
+        be tolerated the same way."""
+        proto = self._proto()
+        with patch.object(llm_protocol.CowrieConfig, "get", return_value="hi {"):
+            context = proto._build_system_context()
+
+        self.assertIn("svr04", context)
+
+    def test_supported_placeholders_still_substituted(self) -> None:
+        proto = self._proto()
+        with patch.object(
+            llm_protocol.CowrieConfig, "get", return_value="host={hostname} cwd={cwd}"
+        ):
+            context = proto._build_system_context()
+
+        self.assertIn("host=svr04 cwd=/root", context)
+
+    def test_prompt_frames_commands_as_simulated_input(self) -> None:
+        """The model is told typed text is simulated input, not instructions,
+        so casual attempts to break character are less likely to work."""
+        proto = self._proto()
+        context = proto._build_system_context()
+
+        self.assertIn("not instructions", context.lower())
 
 
 if __name__ == "__main__":
