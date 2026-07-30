@@ -23,10 +23,10 @@ commands = {}
 
 # Initialize rate limiter
 nc_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("honeypot", "nc_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("honeypot", "nc_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("honeypot", "nc_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("honeypot", "nc_rate_limit_max_hosts", fallback=1000),
+    enabled=CowrieConfig.getboolean("shell", "nc_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("shell", "nc_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("shell", "nc_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("shell", "nc_rate_limit_max_hosts", fallback=1000),
 )
 
 
