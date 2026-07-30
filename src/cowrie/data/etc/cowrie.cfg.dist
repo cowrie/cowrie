@@ -594,8 +594,8 @@ operating_system = GNU/Linux
 # SSH Version as printed by "ssh -V" in shell emulation
 ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 
-# Rate limiting for outbound connections made by the wget, curl, nc and
-# ftpget commands. Limits the number of connections per unique host within a
+# Rate limiting for outbound connections made by the wget, curl, nc, ftpget
+# and tftp commands. Limits the number of connections per unique host within a
 # time window.
 # *_rate_limit_enabled: enable/disable the rate limiter (default: true)
 # *_rate_limit_requests: max connections per host per window (default: 5)
@@ -617,6 +617,10 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 #ftpget_rate_limit_requests = 5
 #ftpget_rate_limit_window = 60
 #ftpget_rate_limit_max_hosts = 1000
+#tftp_rate_limit_enabled = true
+#tftp_rate_limit_requests = 5
+#tftp_rate_limit_window = 60
+#tftp_rate_limit_max_hosts = 1000
 
 # Maximum number of files one scp upload session will save. Every uploaded
 # file costs a real temp-file write, a sha256 hash and a rename on the host
