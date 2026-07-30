@@ -78,12 +78,12 @@ class Command_scp(HoneyPotCommand):
 
     def lineReceived(self, line: str) -> None:
         self.protocol.events.dispatch(
-            "cowrie.session.file_download",
+            "cowrie.session.input",
             "INPUT (%(realm)s): %(input)s",
             realm="scp",
             input=line,
         )
-        self.protocol.terminal.write("\x00")
+        self.write("\x00")
 
     def drop_tmp_file(self, data: bytes, name: str) -> None:
         tmp_fname = "{}-{}-{}-scp_{}".format(
