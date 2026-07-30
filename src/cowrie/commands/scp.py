@@ -142,17 +142,33 @@ class Command_scp(HoneyPotCommand):
                 r = re.search(rb"C(0[\d]{3}) ([\d]+) ([^\s]+)", header)
 
                 if r and r.group(1) and r.group(2) and r.group(3):
-                    dend = pos + int(r.group(2))
+                    # Both fields are attacker-controlled: the filesize can
+                    # exceed int()'s digit limit (~4300, the CVE-2020-10735
+                    # mitigation) and the permissions regex admits non-octal
+                    # digits. Treat either conversion failing as a malformed
+                    # header rather than raising out of eofReceived().
+                    try:
+                        filesize = int(r.group(2))
+                        fileperm = int(r.group(1), 8)
+                    except ValueError:
+                        return b""
+
+                    dend = pos + filesize
 
                     if dend > len(data):
                         dend = len(data)
 
                     d = data[pos:dend]
 
+                    # The filename is attacker-controlled and need not be
+                    # valid UTF-8; still capture the upload under a
+                    # best-effort name.
+                    scpname = r.group(3).decode(errors="replace")
+
                     if self.out_dir:
-                        fname = posixpath.join(self.out_dir, r.group(3).decode())
+                        fname = posixpath.join(self.out_dir, scpname)
                     else:
-                        fname = r.group(3).decode()
+                        fname = scpname
 
                     outfile = self.fs.resolve_path(fname, self.protocol.cwd)
 
@@ -161,8 +177,8 @@ class Command_scp(HoneyPotCommand):
                             outfile,
                             self.current_user["uid"],
                             self.current_user["gid"],
-                            int(r.group(2)),
-                            int(r.group(1), 8),
+                            filesize,
+                            fileperm,
                         )
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.

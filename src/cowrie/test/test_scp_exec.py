@@ -156,5 +156,77 @@ class ScpExecPushTests(unittest.TestCase):
         self.assertIn("cowrie.session.file_upload", [e.get("eventid") for e in events])
 
 
+class ScpExecHardeningTests(unittest.TestCase):
+    """Malformed or abusive SCP wire data must not crash the upload handler."""
+
+    def setUp(self) -> None:
+        for name in os.listdir(_DOWNLOAD_DIR):
+            full = os.path.join(_DOWNLOAD_DIR, name)
+            if os.path.isfile(full):
+                os.remove(full)
+
+    def test_oversized_filesize_header(self) -> None:
+        """A filesize field longer than int()'s digit limit (~4300) must be
+        treated as a malformed header, not raise ValueError out of the EOF
+        handler."""
+        framed = b"C0644 " + b"9" * 5000 + b" evil.txt\n" + b"x" * 16 + b"\x00"
+
+        saved, _events = run_exec_scp_push(framed)
+
+        self.assertEqual(saved, [])
+
+    def test_non_octal_permissions_header(self) -> None:
+        """The permissions regex admits non-octal digits; int('0999', 8) must
+        be treated as a malformed header, not raise ValueError."""
+        framed = b"C0999 1 f\n" + b"x\x00"
+
+        saved, _events = run_exec_scp_push(framed)
+
+        self.assertEqual(saved, [])
+
+    def test_undecodable_filename_still_captured(self) -> None:
+        """A filename that is not valid UTF-8 must not raise
+        UnicodeDecodeError; the upload content is still captured."""
+        body = b"payload"
+        framed = b"C0644 %d \xff\xfe\n" % len(body) + body + b"\x00"
+
+        saved, events = run_exec_scp_push(framed)
+
+        self.assertEqual(saved, [body])
+        self.assertIn("cowrie.session.file_upload", [e.get("eventid") for e in events])
+
+    def test_max_files_per_session_caps_saves(self) -> None:
+        """One session must not be able to force an unbounded number of real
+        file writes by uploading many tiny files."""
+        orig = scp.Command_scp.max_files_per_session
+        scp.Command_scp.max_files_per_session = 3
+        self.addCleanup(setattr, scp.Command_scp, "max_files_per_session", orig)
+
+        framed = b"".join(
+            b"C0644 1 f%d\n%d\x00" % (i, i)
+            for i in range(10)  # distinct bodies
+        )
+
+        saved, _events = run_exec_scp_push(framed)
+
+        self.assertEqual(len(saved), 3)
+
+    def test_unwritable_download_path_does_not_crash(self) -> None:
+        """A real filesystem error while saving the upload (download_path
+        missing) must be handled, not raise OSError out of the EOF handler."""
+        orig = scp.Command_scp.download_path
+        scp.Command_scp.download_path = os.path.join(_DOWNLOAD_DIR, "missing", "dir")
+        self.addCleanup(setattr, scp.Command_scp, "download_path", orig)
+
+        framed = b"C0644 1 f\n" + b"x\x00"
+
+        saved, events = run_exec_scp_push(framed)
+
+        self.assertEqual(saved, [])
+        self.assertNotIn(
+            "cowrie.session.file_upload", [e.get("eventid") for e in events]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
