@@ -56,10 +56,9 @@ def formatCef(logentry: dict[str, str]) -> str:
         case "cowrie.login.failed":
             cefExtensions["duser"] = logentry["username"]
             cefExtensions["outcome"] = "failed"
-        case "cowrie.file.file_download" | "cowrie.file.file_upload":
-            cefExtensions["filehash"] = logentry["filehash"]
-            cefExtensions["filePath"] = logentry["filename"]
-            cefExtensions["fsize"] = logentry["size"]
+        case "cowrie.session.file_download" | "cowrie.session.file_upload":
+            cefExtensions["filehash"] = logentry["shasum"]
+            cefExtensions["filePath"] = logentry["outfile"]
         case _:
             pass
 
