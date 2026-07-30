@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
 from cowrie.telnet.userauth import (
+    MAX_NEW_ENVIRON_SIZE,
     NEW_ENVIRON,
     NEW_ENVIRON_ESC,
     NEW_ENVIRON_IS,
@@ -256,6 +257,51 @@ class TestCVE2026_24061Detection(unittest.TestCase):
                 var_logged = True
                 break
         self.assertFalse(var_logged, "SEND command should be ignored")
+
+
+class TestNewEnvironSizeCap(unittest.TestCase):
+    """An oversized NEW-ENVIRON subnegotiation must be ignored, not parsed."""
+
+    def setUp(self) -> None:
+        mock_portal = MagicMock()
+        self.protocol = HoneyPotTelnetAuthProtocol(mock_portal)
+        self.protocol.environ_received = {}
+        self.protocol.transport = MagicMock()
+        self.dispatched = capture_events(self.protocol.transport)
+
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
+    def test_oversized_subnegotiation_ignored(self, mock_log: MagicMock) -> None:
+        """A payload larger than MAX_NEW_ENVIRON_SIZE must be dropped before
+        any per-byte parsing work, storing and logging nothing."""
+        payload = (
+            bytes([NEW_ENVIRON_IS, NEW_ENVIRON_VAR])
+            + b"USER"
+            + bytes([NEW_ENVIRON_VALUE])
+            + b"A" * (MAX_NEW_ENVIRON_SIZE + 1)
+        )
+        self.protocol.telnet_NEW_ENVIRON([payload])
+
+        self.assertEqual(self.protocol.environ_received, {})
+        self.assertEqual(
+            [e for e in self.dispatched if e.get("eventid") == "cowrie.client.var"],
+            [],
+        )
+
+    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
+    def test_payload_at_limit_still_parsed(self, mock_log: MagicMock) -> None:
+        """A payload exactly at the limit is still parsed normally."""
+        prefix = (
+            bytes([NEW_ENVIRON_IS, NEW_ENVIRON_VAR])
+            + b"USER"
+            + bytes([NEW_ENVIRON_VALUE])
+        )
+        payload = prefix + b"A" * (MAX_NEW_ENVIRON_SIZE - len(prefix))
+        self.protocol.telnet_NEW_ENVIRON([payload])
+
+        self.assertEqual(
+            self.protocol.environ_received,
+            {"USER": "A" * (MAX_NEW_ENVIRON_SIZE - len(prefix))},
+        )
 
 
 class TestTelnetOptionLogging(unittest.TestCase):

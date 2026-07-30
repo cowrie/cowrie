@@ -38,7 +38,10 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # to be populated by HoneyPotTelnetAuthProtocol after auth
         self.transportId = None
         self.windowSize = [40, 80]
-        self.username = username.decode()
+        # The username is raw attacker input from the login prompt and need
+        # not be valid UTF-8; decode it the same way the login flow already
+        # decodes attacker-supplied credentials.
+        self.username = username.decode("utf-8", errors="replace")
         self.server = server
 
         try:
@@ -163,14 +166,20 @@ class TelnetSessionProcessProtocol(protocol.ProcessProtocol):
 
     def getHost(self):
         """
-        Return the host from my session's transport.
+        Return the host from my session's transport, or None once
+        connectionLost() has cleared the session.
         """
+        if self.session is None:
+            return None
         return self.session.transport.getHost()
 
     def getPeer(self):
         """
-        Return the peer from my session's transport.
+        Return the peer from my session's transport, or None once
+        connectionLost() has cleared the session.
         """
+        if self.session is None:
+            return None
         return self.session.transport.getPeer()
 
     def write(self, data):

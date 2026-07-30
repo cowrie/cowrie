@@ -48,6 +48,12 @@ NEW_ENVIRON_VALUE = 1  # Variable value follows
 NEW_ENVIRON_ESC = 2  # Escape byte for literal VAR/VALUE/USERVAR bytes in data
 NEW_ENVIRON_USERVAR = 3  # User-defined variable name follows
 
+# The subnegotiation payload is attacker-controlled and Twisted buffers it
+# between IAC SB and IAC SE without a length limit of its own, so bound how
+# much of it the per-byte environment parser will accept. Real clients send
+# at most a few hundred bytes of environment variables.
+MAX_NEW_ENVIRON_SIZE = 4096
+
 
 class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
     """
@@ -208,6 +214,13 @@ class HoneyPotTelnetAuthProtocol(AuthenticatingTelnetProtocol):
         # Join the data bytes
         raw_data = b"".join(data)
         if len(raw_data) < 1:
+            return
+
+        if len(raw_data) > MAX_NEW_ENVIRON_SIZE:
+            self._log.info(
+                "Telnet NEW-ENVIRON subnegotiation too large ({size} bytes), ignoring",
+                size=len(raw_data),
+            )
             return
 
         command = raw_data[0]

@@ -285,7 +285,10 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         each one floods the log, so identical repeats within a connection are
         suppressed after the first.
         """
-        option_byte = option[0] if option else 0
+        # -1 is a sentinel distinct from every real option byte: 0 is the
+        # real BINARY option, so using it for an empty option made the two
+        # collide in the log line and in the dedup key below.
+        option_byte = option[0] if option else -1
         key = (command, option_byte)
         if key in self._logged_options:
             return
