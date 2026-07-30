@@ -75,13 +75,12 @@ class Output(cowrie.core.output.Output):
             )
         except Exception as e:
             self._log.info(
-                "output_mysql: Error {errno}: {errmsg}",
-                errno=e.args[0],
-                errmsg=e.args[1],
+                "output_postgresql: Error connecting to database: {error!r}", error=e
             )
 
     def stop(self):
-        self.db.close()
+        if hasattr(self, "db"):
+            self.db.close()
 
     def sqlerror(self, error):
         self._log.info(
