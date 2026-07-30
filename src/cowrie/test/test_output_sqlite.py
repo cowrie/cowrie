@@ -13,6 +13,7 @@ import unittest
 from typing import Any
 from unittest.mock import Mock, patch
 
+from twisted.enterprise import adbapi
 from twisted.internet import defer
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -37,7 +38,7 @@ class OutputSqliteHardeningTests(unittest.TestCase):
         with (
             patch.object(sqlite_output, "CowrieConfig", config),
             patch.object(
-                sqlite_output.adbapi,
+                adbapi,
                 "ConnectionPool",
                 side_effect=sqlite3.OperationalError(),
             ),
