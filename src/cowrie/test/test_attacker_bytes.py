@@ -200,7 +200,7 @@ class ProxyModeTests(unittest.TestCase):
         t = proxy_transport.FrontendSSHTransport.__new__(
             proxy_transport.FrontendSSHTransport
         )
-        capture_events(t)
+        dispatched = capture_events(t)
         with patch.object(
             SSHServerTransport,
             "ssh_KEXINIT",
@@ -225,6 +225,13 @@ class ProxyModeTests(unittest.TestCase):
                 )
                 + b"\x00\x00\x00\x00\x00"
             )
+
+        kex = [e for e in dispatched if e["eventid"] == "cowrie.client.kex"]
+        self.assertEqual(len(kex), 1)
+        self.assertEqual(
+            kex[0]["hasshAlgorithms"],
+            "curve25519-sha256\\xff;aes128-ctr\\xff;hmac-sha2-256\\xff;none\\xff",
+        )
 
     def test_sftp_upload_non_utf8_command(self) -> None:
         """The sftp command line is client bytes; deriving the uploaded

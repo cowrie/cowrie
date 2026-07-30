@@ -16,7 +16,6 @@ import struct
 import time
 import uuid
 import zlib
-from hashlib import md5
 from typing import Any
 
 from twisted.conch.ssh import transport
@@ -28,7 +27,7 @@ from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
-from cowrie.core.utils import escape_nonprintable
+from cowrie.core.utils import escape_nonprintable, hassh_client
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
@@ -247,20 +246,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             s.split(b",") for s in strings
         )
 
-        # hassh SSH client fingerprint
-        # https://github.com/salesforce/hassh
-        # backslashreplace, not escape_nonprintable: for every byte sequence
-        # that decodes as valid UTF-8 (all real clients) this is identical to a
-        # plain decode, so the hassh fingerprint is unchanged; it only avoids
-        # crashing on a malformed name-list that is not valid UTF-8.
-        ckexAlgs = ",".join(
-            [alg.decode("utf-8", "backslashreplace") for alg in kexAlgs]
-        )
-        cencCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in encCS])
-        cmacCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in macCS])
-        ccompCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in compCS])
-        hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
-        hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
+        hasshAlgorithms, hassh = hassh_client(kexAlgs, encCS, macCS, compCS)
 
         if self.events:
             self.events.dispatch(
