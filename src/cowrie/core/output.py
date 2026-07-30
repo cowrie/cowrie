@@ -16,24 +16,9 @@ from cowrie.core.config import CowrieConfig
 if TYPE_CHECKING:
     from cowrie.core.events import EventDispatcher
 
-# Events:
-#  cowrie.client.fingerprint
-#  cowrie.client.size
-#  cowrie.client.var
-#  cowrie.client.version
-#  cowrie.command.input
-#  cowrie.command.failed
-#  cowrie.command.success (deprecated)
-#  cowrie.direct-tcpip.data
-#  cowrie.direct-tcpip.request
-#  cowrie.log.closed
-#  cowrie.login.failed
-#  cowrie.login.success
-#  cowrie.session.closed
-#  cowrie.session.connect
-#  cowrie.session.file_download
-#  cowrie.session.file_upload
-
+# ABOUTME: Base class for output plugins: config wiring, sensor naming, and
+# ABOUTME: the write()/dispatch() contract every plugin implements.
+# The event ids and their attributes are documented in docs/OUTPUT.rst.
 
 # The time is available in two formats in each event, as key 'time'
 # in epoch format and in key 'timestamp' as a ISO compliant string

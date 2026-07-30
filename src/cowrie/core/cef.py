@@ -3,21 +3,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-#  cowrie.client.fingerprint
-#  cowrie.client.size
-#  cowrie.client.var
-#  cowrie.client.version
-#  cowrie.command.failed
-#  cowrie.command.success
-#  cowrie.direct-tcpip.data
-#  cowrie.direct-tcpip.request
-#  cowrie.log.closed
-#  cowrie.login.failed
-#  cowrie.login.success
-#  cowrie.session.closed
-#  cowrie.session.connect
-#  cowrie.session.file_download
-#  cowrie.session.file_upload
+# ABOUTME: Formats Cowrie events as CEF (Common Event Format) strings for
+# ABOUTME: the localsyslog and textlog output plugins.
+# The event ids and their attributes are documented in docs/OUTPUT.rst.
 
 from __future__ import annotations
 
