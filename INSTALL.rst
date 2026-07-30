@@ -306,15 +306,14 @@ Configure Additional Output Plugins (OPTIONAL)
 
 Cowrie automatically outputs event data to text and JSON log files in
 ``./var/log/cowrie``. Additional output plugins can record the data
-elsewhere. Supported plugins include:
+elsewhere: every ``[output_*]`` section in the bundled ``cowrie.cfg.dist``
+is one plugin, covering SQL databases, SIEMs, chat notifications, threat
+intelligence services, and more.
 
-* Cuckoo
-* ELK (Elastic) Stack
-* Graylog
-* Splunk
-* SQL (MySQL, SQLite3, RethinkDB)
-
-See ``docs/[Output Plugin]/README.rst`` for details.
+Setup guides for several of them are in the documentation at
+`docs.cowrie.org <https://docs.cowrie.org/>`_ (the ``docs/`` directory of
+the source tree): Datadog, ELK (Elastic) Stack, Graylog, Prometheus,
+Azure Sentinel, Splunk, SQL (MySQL/PostgreSQL), and VirusTotal.
 
 Troubleshooting
 ***************
