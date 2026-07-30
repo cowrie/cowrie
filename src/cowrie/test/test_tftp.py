@@ -502,6 +502,119 @@ class TFTPTargetHandlingTests(unittest.TestCase):
         self.assertIn(PROMPT, output)
 
 
+class TFTPDownloadLimitTests(unittest.TestCase):
+    """download_limit_size must actually stop a transfer.
+
+    The limit was declared on the command but never reached the client that
+    receives the data, so transfers were unbounded in practice (issue #40394).
+    """
+
+    def setUp(self) -> None:
+        self.tmpdir = tempfile.mkdtemp()
+        self._orig_artifact_dir = Artifact.artifactDir
+        Artifact.artifactDir = self.tmpdir
+        self._artifacts: list[Artifact] = []
+
+    def tearDown(self) -> None:
+        # Close artifacts while artifactDir still points at the scratch dir,
+        # so close() renames into it rather than the configured download path.
+        for artifact in self._artifacts:
+            artifact.close()
+        Artifact.artifactDir = self._orig_artifact_dir
+        for name in os.listdir(self.tmpdir):
+            os.remove(os.path.join(self.tmpdir, name))
+        os.rmdir(self.tmpdir)
+
+    def _client(self, limit_size: int) -> Any:
+        from cowrie.commands.tftp import TFTPClient
+
+        artifact = Artifact("tftp-limit")
+        self._artifacts.append(artifact)
+        client = TFTPClient("127.0.0.1", 69, "f", artifact, limit_size=limit_size)
+        # A real transport is only needed for ACKs; record writes instead.
+        client.transport = cast("Any", _FakeUDPTransport())
+        return client
+
+    def _data_packet(self, block: int, payload: bytes) -> bytes:
+        return struct.pack("!HH", OPCODE_DATA, block) + payload
+
+    def test_transfer_over_limit_fails(self) -> None:
+        client = self._client(limit_size=600)
+        results: list[Any] = []
+        client.deferred.addBoth(results.append)
+
+        # Two full blocks: 1024 bytes received against a 600-byte limit.
+        client.datagramReceived(
+            self._data_packet(1, b"A" * TFTP_BLOCK_SIZE), ("127.0.0.1", 69)
+        )
+        client.datagramReceived(
+            self._data_packet(2, b"B" * TFTP_BLOCK_SIZE), ("127.0.0.1", 69)
+        )
+
+        self.assertEqual(len(results), 1, "transfer over the limit did not stop")
+        self.assertIsInstance(results[0], Failure)
+        self.assertIn("limit", results[0].getErrorMessage().lower())
+
+    def test_transfer_under_limit_completes(self) -> None:
+        client = self._client(limit_size=10000)
+        results: list[Any] = []
+        client.deferred.addBoth(results.append)
+
+        # A short final block completes the transfer.
+        client.datagramReceived(self._data_packet(1, b"A" * 10), ("127.0.0.1", 69))
+
+        self.assertEqual(results, [None])
+
+    def test_zero_limit_means_unlimited(self) -> None:
+        client = self._client(limit_size=0)
+        results: list[Any] = []
+        client.deferred.addBoth(results.append)
+
+        client.datagramReceived(
+            self._data_packet(1, b"A" * TFTP_BLOCK_SIZE), ("127.0.0.1", 69)
+        )
+        # Still running: no result yet, and the block was kept.
+        self.assertEqual(results, [])
+        self.assertEqual(client.bytes_received, TFTP_BLOCK_SIZE)
+        if client.timeout_call and client.timeout_call.active():
+            client.timeout_call.cancel()
+
+    def test_command_threads_limit_to_client(self) -> None:
+        # The command must hand its configured limit to the client, otherwise
+        # the enforcement above never runs in production.
+        cmd = Command_tftp.__new__(Command_tftp)
+        cmd.hostname = "127.0.0.1"
+        cmd.host_ip = "127.0.0.1"
+        cmd.port = 69
+        cmd.file_to_get = "test.sh"
+        cmd.limit_size = 1234
+        cmd.artifactFile = Artifact("tftp-download")
+
+        d = cmd.tftp_download_async()
+        client = cmd.tftp_client
+        try:
+            assert client is not None
+            self.assertEqual(client.limit_size, 1234)
+        finally:
+            if client and client.timeout_call and client.timeout_call.active():
+                client.timeout_call.cancel()
+            if cmd.udp_port:
+                cmd.udp_port.stopListening()
+            d.addErrback(lambda _f: None)
+            d.cancel()
+            cmd.artifactFile.close()
+
+
+class _FakeUDPTransport:
+    """Records datagrams instead of sending them."""
+
+    def __init__(self) -> None:
+        self.written: list[tuple[bytes, Any]] = []
+
+    def write(self, data: bytes, addr: Any = None) -> None:
+        self.written.append((data, addr))
+
+
 class TFTPProtocolTests(unittest.TestCase):
     """Tests for TFTP protocol implementation"""
 

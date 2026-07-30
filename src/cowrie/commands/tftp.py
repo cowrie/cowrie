@@ -16,6 +16,7 @@ from twisted.logger import Logger
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import (
+    DownloadLimitExceeded,
     communication_allowed,
     is_valid_port,
     outbound_bind_address,
@@ -96,11 +97,20 @@ class TFTPClient(DatagramProtocol):
 
     _log = Logger()
 
-    def __init__(self, host: str, port: int, filename: str, artifact: Artifact):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        filename: str,
+        artifact: Artifact,
+        limit_size: int = 0,
+    ):
         self.host = host
         self.port = port
         self.filename = filename
         self.artifact = artifact
+        # Bytes after which to abort the transfer; 0 means unlimited.
+        self.limit_size = limit_size
         self.deferred: defer.Deferred[None] = defer.Deferred()
         self.current_block = 0
         self.last_packet = b""
@@ -187,6 +197,26 @@ class TFTPClient(DatagramProtocol):
 
         # Check if this is the expected block
         if block_num == self.current_block + 1:
+            # An attacker chooses the file, so the server can stream without
+            # end. Stop once the configured limit is exceeded rather than
+            # writing an unbounded artifact to disk.
+            if (
+                self.limit_size > 0
+                and self.bytes_received + len(data) > self.limit_size
+            ):
+                self._log.info(
+                    "TFTP: transfer exceeded download limit of {limit} bytes, aborting",
+                    limit=self.limit_size,
+                )
+                if self.timeout_call is not None and self.timeout_call.active():
+                    self.timeout_call.cancel()
+                self.deferred.errback(
+                    DownloadLimitExceeded(
+                        f"Transfer exceeded download limit of {self.limit_size} bytes"
+                    )
+                )
+                return
+
             self.current_block = block_num
             self.bytes_received += len(data)
 
@@ -361,7 +391,11 @@ class Command_tftp(HoneyPotCommand):
         # Create TFTP client. host_ip is the numeric address resolved in
         # start(); the UDP transport requires it (a hostname would be rejected).
         self.tftp_client = TFTPClient(
-            self.host_ip, self.port, self.file_to_get, self.artifactFile
+            self.host_ip,
+            self.port,
+            self.file_to_get,
+            self.artifactFile,
+            limit_size=self.limit_size,
         )
 
         # Listen on a random UDP port, bound to the configured outbound source
