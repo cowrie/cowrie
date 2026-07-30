@@ -143,7 +143,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Before this, all data is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        string = line.decode("utf8")
+        # A typed line is attacker input and need not be valid UTF-8.
+        string = line.decode("utf8", errors="replace")
 
         self.events.dispatch("cowrie.command.input", "CMD: %(input)s", input=string)
 
@@ -282,10 +283,10 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Before this, execcmd is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        try:
-            self.execcmd = execcmd.decode("utf8")
-        except UnicodeDecodeError:
-            self._log.failure("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
+        # The exec command is attacker input and need not be valid UTF-8.
+        # Every caller reads execcmd right after construction, so it must
+        # always be set.
+        self.execcmd = execcmd.decode("utf8", errors="replace")
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 
