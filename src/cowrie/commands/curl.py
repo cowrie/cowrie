@@ -274,7 +274,9 @@ class Command_curl(HoneyPotCommand):
                 self.exit(23)
                 return
 
-        self.url = url.encode("ascii")
+        # The URL is attacker input and can contain non-ASCII characters;
+        # encoding it as ASCII raised UnicodeEncodeError.
+        self.url = url.encode("utf8")
 
         parsed = parse.urlparse(url)
         scheme = parsed.scheme
@@ -372,11 +374,17 @@ class Command_curl(HoneyPotCommand):
         if self.head_request:
             reason = responses.get(response.code, "")
             self.write(f"HTTP/1.1 {response.code} {reason}\n")
+            # Header bytes come from an attacker-directed server and need
+            # not be valid UTF-8.
             for key, values in response.headers.getAllRawHeaders():
-                decoded_key = key.decode() if isinstance(key, bytes) else key
+                decoded_key = (
+                    key.decode(errors="replace") if isinstance(key, bytes) else key
+                )
                 for value in values:
                     decoded_value = (
-                        value.decode() if isinstance(value, bytes) else value
+                        value.decode(errors="replace")
+                        if isinstance(value, bytes)
+                        else value
                     )
                     self.write(f"{decoded_key}: {decoded_value}\n")
             self.exit()

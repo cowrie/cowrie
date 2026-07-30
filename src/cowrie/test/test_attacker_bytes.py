@@ -12,11 +12,14 @@ import unittest
 from unittest.mock import MagicMock
 
 from twisted.conch.ssh.common import NS
+from twisted.web.http_headers import Headers
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
+from cowrie.commands.curl import Command_curl
+from cowrie.commands.wget import Command_wget
 from cowrie.llm import avatar as llm_avatar
 from cowrie.llm import session as llm_session
 from cowrie.llm import telnet as llm_telnet
@@ -95,6 +98,62 @@ class ShellPipelineTests(unittest.TestCase):
 
     def test_non_utf8_bytes_in_command_substitution(self) -> None:
         self.proto.lineReceived(b"echo $(echo -e '\\xff')\n")
+        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+
+
+class HttpResponseMetadataTests(unittest.TestCase):
+    """Response metadata comes from an attacker-directed server; non-UTF-8
+    bytes in it must not crash download handling."""
+
+    PROMPT = b"root@unitTest:~# "
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_wget_non_utf8_content_type_and_phrase(self) -> None:
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.protocol = self.proto
+        begun: list = []
+        cmd._begin_download = (  # type: ignore[method-assign]
+            lambda *args: begun.append(args) or False
+        )
+        response = MagicMock()
+        response.headers = Headers({b"content-type": [b"text\xff/html"]})
+        response.code = 200
+        response.phrase = b"O\xffK"
+        response.length = 10
+
+        cmd.success(response)
+
+        self.assertEqual(begun[0][1], "text�/html")
+        self.assertIn("O�K", begun[0][2])
+
+    def test_curl_head_non_utf8_headers(self) -> None:
+        cmd = Command_curl.__new__(Command_curl)
+        cmd.protocol = self.proto
+        writes: list[str] = []
+        cmd.write = writes.append  # type: ignore[assignment]
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.head_request = True
+        response = MagicMock()
+        response.length = 0
+        response.code = 200
+        response.headers = Headers({b"X-Evil": [b"v\xffal"]})
+
+        cmd.success(response)
+
+        self.assertIn("v�al", "".join(writes))
+
+    def test_curl_non_ascii_url(self) -> None:
+        """A non-ASCII URL typed by the attacker must not crash curl
+        (url.encode('ascii') raised UnicodeEncodeError)."""
+        self.proto.lineReceived("curl http://192.168.1.1/päth\n".encode())
         self.assertTrue(self.tr.value().endswith(self.PROMPT))
 
 
