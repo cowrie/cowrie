@@ -501,8 +501,12 @@ class Command_wget(HoneyPotCommand):
         """
         successful treq get
         """
+        # Response metadata comes from an attacker-directed server and need
+        # not be valid UTF-8.
         if response.headers.hasHeader(b"content-type"):
-            contenttype = response.headers.getRawHeaders(b"content-type")[0].decode()
+            contenttype = response.headers.getRawHeaders(b"content-type")[0].decode(
+                errors="replace"
+            )
         else:
             contenttype = "text/whatever"
 
@@ -512,7 +516,7 @@ class Command_wget(HoneyPotCommand):
         if code is not None:
             if phrase:
                 if isinstance(phrase, bytes):
-                    phrase = phrase.decode()
+                    phrase = phrase.decode(errors="replace")
                 status_line = f"{code} {phrase}"
             else:
                 status_line = str(code)

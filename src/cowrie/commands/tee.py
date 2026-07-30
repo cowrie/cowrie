@@ -91,7 +91,8 @@ class Command_tee(HoneyPotCommand):
         This is the tee output, if no file supplied
         """
         if inb:
-            inp = inb.decode("utf-8")
+            # Piped input is attacker bytes and need not be valid UTF-8.
+            inp = inb.decode("utf-8", errors="replace")
         else:
             return
 

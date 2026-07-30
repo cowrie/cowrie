@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import ipaddress
+from hashlib import md5
 from typing import TYPE_CHECKING, BinaryIO
 
 from twisted.application import internet
@@ -32,6 +33,40 @@ def escape_nonprintable(data: bytes) -> str:
         else:
             out.append(f"\\x{b:02x}")
     return "".join(out)
+
+
+def hassh_client(
+    kexAlgs: list[bytes],
+    encCS: list[bytes],
+    macCS: list[bytes],
+    compCS: list[bytes],
+) -> tuple[str, str]:
+    """Return the hassh algorithm string and fingerprint for a client's
+    KEXINIT name-lists.
+
+    hassh identifies an SSH client by the algorithms it offers.
+    https://github.com/salesforce/hassh
+
+    MD5 is the digest the hassh specification defines, so the fingerprint is
+    only comparable to other tools' hassh values when computed this way; it is
+    an identifier, not a security control.
+
+    backslashreplace, not escape_nonprintable: for every byte sequence that
+    decodes as valid UTF-8 (all real clients) this is identical to a plain
+    decode, so the hassh fingerprint is unchanged; it only avoids crashing on
+    a malformed name-list that is not valid UTF-8.
+    """
+
+    def name_list(algs: list[bytes]) -> str:
+        return ",".join(alg.decode("utf-8", "backslashreplace") for alg in algs)
+
+    algorithms = (
+        f"{name_list(kexAlgs)};{name_list(encCS)};"
+        f"{name_list(macCS)};{name_list(compCS)}"
+    )
+    encoded = algorithms.encode("utf-8")
+    digest = md5(encoded, usedforsecurity=False)  # NOSONAR - hassh format
+    return algorithms, digest.hexdigest()
 
 
 def durationHuman(duration: float) -> str:
