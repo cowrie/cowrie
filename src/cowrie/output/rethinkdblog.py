@@ -39,7 +39,8 @@ class Output(cowrie.core.output.Output):
             pass
 
     def stop(self):
-        self.connection.close()
+        if hasattr(self, "connection"):
+            self.connection.close()
 
     def write(self, event):
         for i in list(event):
