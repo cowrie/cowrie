@@ -21,7 +21,8 @@ class Command_finger(HoneyPotCommand):
         user_data = []
         # Get all user data and convert to string
         all_users_byte = self.fs.file_contents("/etc/passwd")
-        all_users = all_users_byte.decode("utf-8")
+        # An attacker can overwrite /etc/passwd with arbitrary bytes.
+        all_users = all_users_byte.decode("utf-8", errors="replace")
         # Convert all new lines to : character
         all_users = all_users.replace("\n", ":")
         # Convert into list by splitting string

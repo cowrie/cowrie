@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh.common import NS
+from twisted.conch.ssh.transport import SSHServerTransport
 from twisted.web.http_headers import Headers
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -43,11 +44,11 @@ class SessionSetupTests(unittest.TestCase):
     right after the honeypot has accepted the login."""
 
     def test_ssh_username(self) -> None:
-        user = shell_avatar.CowrieUser(b"admin\xff", FakeServer())
+        user = shell_avatar.CowrieUser(b"admin\xff", FakeServer())  # type: ignore[arg-type]
         self.assertEqual(user.username, "admin�")
 
     def test_llm_ssh_username(self) -> None:
-        user = llm_avatar.CowrieUser(b"admin\xff", FakeServer())
+        user = llm_avatar.CowrieUser(b"admin\xff", FakeServer())  # type: ignore[arg-type]
         self.assertEqual(user.username, "admin�")
 
     def test_llm_telnet_username(self) -> None:
@@ -106,6 +107,31 @@ class ShellPipelineTests(unittest.TestCase):
         self.proto.lineReceived(b"echo $(echo -e '\\xff')\n")
         self.assertTrue(self.tr.value().endswith(self.PROMPT))
 
+    def test_history_with_non_utf8_command(self) -> None:
+        """A typed line need not be valid UTF-8; history must still list the
+        commands rather than silently producing nothing."""
+        self.proto.historyLines = [b"ls", b"cat /tmp/\xff", b"id"]
+        self.tr.clear()
+
+        self.proto.lineReceived(b"history\n")
+
+        out = self.tr.value()
+        self.assertIn(b"ls", out)
+        self.assertIn(b"id", out)
+
+    def test_finger_with_non_utf8_passwd(self) -> None:
+        """An attacker can overwrite /etc/passwd with binary content; finger
+        reads it and must not crash the session."""
+        self.proto.fs.mkfile("/etc/passwd", 0, 0, 100, 0o644)
+        with patch.object(
+            self.proto.fs,
+            "file_contents",
+            return_value=b"root:x:0:0:r\xffot:/root:/bin/sh\n",
+        ):
+            self.proto.lineReceived(b"finger\n")
+
+        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+
 
 class HttpResponseMetadataTests(unittest.TestCase):
     """Response metadata comes from an attacker-directed server; non-UTF-8
@@ -126,9 +152,12 @@ class HttpResponseMetadataTests(unittest.TestCase):
         cmd = Command_wget.__new__(Command_wget)
         cmd.protocol = self.proto
         begun: list = []
-        cmd._begin_download = (  # type: ignore[method-assign]
-            lambda *args: begun.append(args) or False
-        )
+
+        def record(*args: object) -> bool:
+            begun.append(args)
+            return False
+
+        cmd._begin_download = record  # type: ignore[assignment]
         response = MagicMock()
         response.headers = Headers({b"content-type": [b"text\xff/html"]})
         response.code = 200
@@ -175,7 +204,7 @@ class ProxyModeTests(unittest.TestCase):
         )
         capture_events(t)
         with patch.object(
-            proxy_transport.transport.SSHServerTransport,
+            SSHServerTransport,
             "ssh_KEXINIT",
             lambda s, p: None,
         ):
