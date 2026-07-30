@@ -127,5 +127,39 @@ class ResponseSizeCapTests(unittest.TestCase):
         d.callback.assert_called_once_with((200, b'{"ok": true}'))
 
 
+class AnthropicDetectionTests(unittest.TestCase):
+    def _client(self, host: str) -> llm_module.LLMClient:
+        def fake_get(section: str, option: str, **kwargs: object) -> str:
+            return host if option == "host" else ""
+
+        with (
+            patch.object(llm_module.CowrieConfig, "get", fake_get),
+            patch.object(llm_module.CowrieConfig, "getint", return_value=500),
+            patch.object(llm_module.CowrieConfig, "getfloat", return_value=0.5),
+            patch.object(llm_module.CowrieConfig, "getboolean", return_value=False),
+        ):
+            return llm_module.LLMClient()
+
+    def test_real_anthropic_host(self) -> None:
+        self.assertTrue(self._client("https://api.anthropic.com").is_anthropic)
+
+    def test_unrelated_host_containing_the_name(self) -> None:
+        """A gateway domain that merely contains the text must not be sent
+        Anthropic-shaped requests."""
+        self.assertFalse(
+            self._client("https://anthropic.com.gateway.example/v1").is_anthropic
+        )
+
+    def test_openai_host(self) -> None:
+        self.assertFalse(self._client("https://api.openai.com").is_anthropic)
+
+    def test_anthropic_request_includes_temperature(self) -> None:
+        """The operator's temperature setting must apply to Anthropic too."""
+        client = self._client("https://api.anthropic.com")
+        body = client._format_request_body(["system", "User: id"])
+
+        self.assertEqual(body["temperature"], 0.5)
+
+
 if __name__ == "__main__":
     unittest.main()

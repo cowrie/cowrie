@@ -164,7 +164,13 @@ class LLMClient:
             )
         else:
             self.agent = Agent(reactor, pool=self._conn_pool)
-        self.is_anthropic = "anthropic.com" in self.host
+        # Match the API host itself, not any URL that merely contains the
+        # name (a gateway domain like anthropic.com.example is not Anthropic
+        # and must not be sent Anthropic-shaped requests).
+        hostname = urllib.parse.urlparse(self.host).hostname or ""
+        self.is_anthropic = hostname == "anthropic.com" or hostname.endswith(
+            ".anthropic.com"
+        )
 
         if not self.api_key:
             self._log.warn("WARNING: No LLM API key configured in [llm] section")
@@ -208,6 +214,7 @@ class LLMClient:
                 "system": system_prompt,
                 "messages": messages or [{"role": "user", "content": ""}],
                 "max_tokens": self.max_tokens,
+                "temperature": self.temperature,
             }
 
         # OpenAI-compatible format
