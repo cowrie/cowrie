@@ -5,7 +5,7 @@
 How to send Cowrie output to Graylog
 ####################################
 
-This guide describes how to configure send cowrie outputs to graylog via syslog and http gelf input.
+This guide describes how to send Cowrie output to Graylog, either via syslog or via a GELF HTTP input.
 
 Prerequisites
 *************
@@ -64,7 +64,7 @@ Then click **Launch.**
 
 Note:
 
-- Do not remove **/gelf** from the end of URL block, expect of case when your proxing this address behind nginx;
+- Do not remove ``/gelf`` from the end of the URL, unless you are proxying this address behind nginx.
 
 Parsing Cowrie JSON
 ===================

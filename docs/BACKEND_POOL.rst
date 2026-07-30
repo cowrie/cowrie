@@ -62,12 +62,12 @@ These are:
 
 * **pool_max_vms**: the number of VMs to be kept running in the pool
 
-* **pool_vm_unused_timeout**: how much time (seconds) a used VM is kept running (so that
-  an attacker that reconnects is served the same VM.
+* **pool_vm_unused_timeout**: how much time (seconds) a used VM is kept running, so that
+  an attacker that reconnects is served the same VM
 
-* **apool_share_guests**: what to do if no "pristine" VMs are available (i.e., all have
-  been connected to); if set to true we serve a random one from the used, if false we
-  throw an exception.
+* **pool_share_guests**: what to do if no "pristine" VMs are available (i.e., all have
+  been connected to); if set to true we serve a random used VM, if false we
+  refuse the connection.
 
 
 Backend Pool configuration
@@ -107,7 +107,7 @@ Snapshots
 =========
 
 VMs running in the pool are based on a base image that is kept unchanged. When booting,
-each VM creates a snaphost that keeps track of differences between the base image and
+each VM creates a snapshot that keeps track of differences between the base image and
 snapshot. If you want to analyse snapshots and see any changes made in the VMs, set
 ``save_snapshots`` to true. If set to true be mindful of space concerns, each new
 VM will take at least ~20MB in storage.
@@ -167,7 +167,7 @@ from a different machine (i.e., running the backend pool remotely), then an exte
 IP (as defined in ``nat_public_ip``) is needed for the proxy to connect to.
 
 For this purpose, we provide a simple form of NAT that, for each VM request, and if enabled,
-starts a TCP proxy to forward data from a publicly-acessible IP to the internal libvirt interface.
+starts a TCP proxy to forward data from a publicly accessible IP to the internal libvirt interface.
 
 Creating VM images
 ******************
@@ -181,8 +181,8 @@ To create a disk image issue
 
     sudo qemu-img create -f qcow2 image-name.qcow2 8G
 
-(the qcow2 format is needed to ensure create snapshots, thus providing isolation between
-each VM instance; you can specify the size you want for the disk)
+(the qcow2 format is needed so snapshots can be created, providing isolation between
+VM instances; you can specify the size you want for the disk)
 
 Then you'll have to install an OS into it
 
@@ -263,10 +263,10 @@ of the form
     </rule>
 
 Each rule specifies a type of traffic (TCP, UDP...) and direction, whether to accept or drop
-that traffic, and the destiantion of traffic. The default filter provided allows inbound SSH
-and Telnet connections (without which the VM would be unusable, outbound ICMP traffic (to allow
-pinging) and outbound DNS querying. All other traffic is dropped as per the last rule, thus
-forbidding any download or tunnelling.
+that traffic, and the destination of the traffic. The default filter allows inbound SSH
+and Telnet connections (without which the VM would be unusable), outbound ICMP traffic (to allow
+pinging), and outbound DNS queries. All other traffic is dropped by the last rule, thus
+forbidding any download or tunneling.
 
 **VERY IMPORTANT NOTE:** some attacks consist of downloading malicious software or accessing
 illegal content through insecure machines (such as your honeypot). Our provided filter restricts

@@ -42,7 +42,7 @@ the ``[backend_pool]`` section, which we detail in the
 
 The backend pool can be run in the same machine as Cowrie, or on a remote one (e.g. Cowrie on a
 Raspberry Pi, and the pool in a larger machine). In the former case, set ``pool`` to ``local``;
-in the later, set ``pool`` to ``remote`` and specify its host and port, matching with the
+in the latter, set ``pool`` to ``remote`` and specify its host and port, matching with the
 ``listen_endpoints`` of the ``[backend_pool]`` section. Further configurations sent by the client
 are explained in
 `Backend Pool's own documentation <https://docs.cowrie.org/en/latest/BACKEND_POOL.html>`_.
@@ -64,7 +64,7 @@ Due to the different implementations of Telnet, there is not a single reliable w
 the authentication phase of the protocol as in SSH. Therefore, we rely on regex expressions
 to detect authentication prompts, allowing us to identify the credentials supplied by the
 attacker and check if they are accepted by ``userdb``. If they are, we send the ``backend_user``
-and ``backend_pass`` to the backend (spoofing  the authentication); if not, we send ``backend_pass``
+and ``backend_pass`` to the backend (spoofing the authentication); if not, we send ``backend_pass``
 appended with the word ``fake`` to force a login failed prompt (and fail authentication overall).
 
 If you don't want to spoof authentication, set ``telnet_spoof_authentication`` to false. In this

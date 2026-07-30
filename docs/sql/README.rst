@@ -90,17 +90,17 @@ Example expected output::
     ...
     2017-11-27T22:19:58-0600 [-] Ready to accept SSH connections
 
-## Confirm that events are logged to the MySQL Database
+Confirm That Events are Logged to the MySQL Database
+=====================================================
 
-Wait for a new login attempt to occur. Use tail like before to quickly check if any activity has
-been recorded in the cowrie.log file.
+Wait for a new login attempt to occur. Use ``tail`` like before to quickly check if any activity has
+been recorded in the ``cowrie.log`` file.
 
 Once a login event has occurred, log back into the MySQL database and verify that the event was recorded::
 
     $ mysql -u cowrie -p
     USE cowrie;
     SELECT * FROM auth;
-    ``
 
 Example output::
 

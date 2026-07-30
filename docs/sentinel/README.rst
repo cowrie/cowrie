@@ -5,9 +5,9 @@
 How to send Cowrie output to Azure Sentinel
 ===========================================
 
-Open your Sentinel worksapce and navigate to `Data connectors` >
+Open your Sentinel workspace and navigate to `Data connectors` >
 `Syslog` > `Open connector page`. Expand `Install agent on a non-Azure
-Linux Machine`, the select `Download & install agent for non-Azure
+Linux Machine`, then select `Download & install agent for non-Azure
 Linux machines`. Select the Linux tab and either copy the shell
 script that is presented, or take note of your Workspace ID and
 Primary Key and install the agent on your host by hand::
@@ -22,7 +22,7 @@ your workspace advanced settings configuration`. Select `Data` >
 then add a new custom log source: When prompted, upload the ``cowrie.json``
 file you downloaded.
 
-The default delimeter is correct (newline).  Specify
+The default delimiter is correct (newline).  Specify
 ``/opt/cowrie/var/log/cowrie/cowrie.json`` as the log collection path.
 
 Name the custom log ``cowrie_JSON``. Sentinel will automatically

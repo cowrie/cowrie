@@ -12,7 +12,7 @@ Do I need to copy all the content of cowrie.cfg.dist to cowrie.cfg?
 No, Cowrie merges your local settings in ``cowrie.cfg`` and
 the default settings will automatically be read from ``cowrie.cfg.dist``
 
-Why certain commands aren't implemented?
+Why aren't certain commands implemented?
 ****************************************
 
 Implementing all possible UNIX commands in Python is not worth the

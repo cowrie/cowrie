@@ -3,7 +3,7 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-How to Send Cowrie output to a Prometheus
+How to Send Cowrie Output to Prometheus
 =============================================
 
 This guide will show you how to stand up a complete monitoring stack in Docker:
@@ -23,19 +23,18 @@ All containers will join a user-defined Docker network so they can find one anot
     docker network create cowrie-net
 
 
-2. Run Prometheus
-==================
+2. Prepare the Prometheus volume and configuration
+===================================================
 
-Create a volume for Prometheus’s TSDB
+Create a volume for Prometheus's TSDB
 
 .. code-block:: bash
 
     docker volume create prometheus-data
 
 
-For configuration file you can
-
-Copy the example config into `/etc/prometheus` on your host
+For the configuration file, copy the example config into ``/etc/prometheus``
+on your host
 
 .. code-block:: bash
 
@@ -43,7 +42,8 @@ Copy the example config into `/etc/prometheus` on your host
     sudo cp ./docs/prometheus/prometheus.yaml /etc/prometheus/prometheus.yaml
 
 
-Or from ~/cowrie call docker run with updated path
+Or bind-mount it straight from the source tree by replacing the config
+volume in the ``docker run`` command below with
 
 .. code-block:: bash
 
@@ -66,7 +66,7 @@ Or from ~/cowrie call docker run with updated path
 Verify it’s running at http://localhost:9090/targets
 
 
-3. Run Cowrie with Prometheus metrics
+4. Run Cowrie with Prometheus metrics
 ======================================
 
 .. code-block:: bash
@@ -79,9 +79,7 @@ Verify it’s running at http://localhost:9090/targets
       -e COWRIE_OUTPUT_PROMETHEUS_ENABLED=yes \
       cowrie/cowrie:latest
 
----
-
-4. Run node-exporter (host metrics)
+5. Run node-exporter (host metrics)
 ======================================
 
 .. code-block:: bash
@@ -95,9 +93,7 @@ Verify it’s running at http://localhost:9090/targets
       quay.io/prometheus/node-exporter:latest \
       --path.rootfs /host
 
----
-
-5. Run cAdvisor (container metrics)
+6. Run cAdvisor (container metrics)
 ======================================
 
 .. code-block:: bash
