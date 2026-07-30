@@ -38,7 +38,10 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
         # to be populated by HoneyPotTelnetAuthProtocol after auth
         self.transportId = None
         self.windowSize = [40, 80]
-        self.username = username.decode()
+        # The username is raw attacker input from the login prompt and need
+        # not be valid UTF-8; decode it the same way the login flow already
+        # decodes attacker-supplied credentials.
+        self.username = username.decode("utf-8", errors="replace")
         self.server = server
 
         try:
