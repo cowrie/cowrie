@@ -27,6 +27,12 @@ class CowrieSSHConnection(connection.SSHConnection):
 
     def ssh_CHANNEL_REQUEST(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_REQUEST for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return None
         requestType, rest = common.getNS(packet[4:])
         wantReply = ord(rest[0:1])
         channel = self.channels[localChannel]
