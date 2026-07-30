@@ -456,6 +456,35 @@ log_raw = false
 # conversational output and asks for raw command output only.
 #system_prompt_exec = You are simulating a Linux server. Respond with ONLY the raw output of the command, no commentary.
 
+# Rate limiting for commands sent to the LLM API, per client IP.
+#
+# Every command in LLM mode is a real, metered call to a paid provider,
+# unlike the shell backend's free local simulation, so this bounds how fast
+# one attacker or scanner can run up API cost. Commands over the limit are
+# answered with an empty response instead of calling the API.
+#
+# rate_limit_enabled: enable/disable the rate limiter (default: true)
+# rate_limit_requests: max commands per client IP per window (default: 20)
+# rate_limit_window: window length in seconds (default: 60)
+# rate_limit_max_hosts: max client IPs tracked simultaneously (default: 1000)
+#rate_limit_enabled = true
+#rate_limit_requests = 20
+#rate_limit_window = 60
+#rate_limit_max_hosts = 1000
+
+# Maximum length, in characters, of a single command line before it is added
+# to the LLM prompt and the running command history. Longer lines are
+# truncated.
+# (default: 4096)
+#max_command_length = 4096
+
+# Maximum size, in bytes, of a single LLM API response body. A slow or
+# misbehaving endpoint could otherwise keep streaming and grow the buffer
+# without bound while holding the request open. Responses past the cap are
+# truncated and the connection is closed.
+# (default: 1048576)
+#max_response_size = 1048576
+
 
 # ============================================================================
 # Shell Options
