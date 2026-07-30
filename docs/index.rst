@@ -31,7 +31,6 @@ Welcome to Cowrie's documentation!
    docker/README.rst
    elk/README.rst
    graylog/README.rst
-   kippo-graph/README.rst
    prometheus/README.rst
    sentinel/README.rst
    splunk/README.rst
