@@ -576,6 +576,14 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 #ftpget_rate_limit_window = 60
 #ftpget_rate_limit_max_hosts = 1000
 
+# Maximum number of files one scp upload session will save. Every uploaded
+# file costs a real temp-file write, a sha256 hash and a rename on the host
+# filesystem, so a session uploading many tiny files can otherwise force a
+# disproportionate amount of real disk I/O. Files beyond the limit are
+# ignored.
+# (default: 20)
+#scp_max_files_per_session = 20
+
 
 # ============================================================================
 # SSH Specific Options

@@ -27,6 +27,12 @@ class Command_scp(HoneyPotCommand):
     download_path_uniq = CowrieConfig.get(
         "honeypot", "download_path_uniq", fallback=download_path
     )
+    # Every uploaded file costs a real temp-file write, a sha256 hash and a
+    # rename on the host filesystem, so cap how many files one upload session
+    # can save regardless of how small each file is.
+    max_files_per_session: int = CowrieConfig.getint(
+        "shell", "scp_max_files_per_session", fallback=20
+    )
 
     out_dir: str = ""
 
@@ -229,8 +235,17 @@ class Command_scp(HoneyPotCommand):
             # as content only. The raw stdin log still holds the framing (header,
             # body and trailing ACK), so remove it to avoid saving it again as a
             # download.
+            filecount = 0
             while data:
+                if filecount >= self.max_files_per_session:
+                    self._log.info(
+                        "scp: session reached scp_max_files_per_session "
+                        "({max_files}), ignoring the remaining files",
+                        max_files=self.max_files_per_session,
+                    )
+                    break
                 data = self.parse_scp_data(data)
+                filecount += 1
 
             terminal.stdinlogOpen = False
             os.remove(terminal.stdinlogFile)
