@@ -430,5 +430,24 @@ class TestLoginLineEndings(unittest.TestCase):
         session.dataReceived.assert_called_once_with(b"x")
 
 
+class TestNegotiationLogging(unittest.TestCase):
+    """Option negotiation logging must keep distinct options distinct."""
+
+    def test_empty_option_does_not_collide_with_binary(self) -> None:
+        """An empty option must not share a dedup key with BINARY (option
+        byte 0): logging one previously suppressed the other."""
+        transport = CowrieTelnetTransport()
+        transport._logged_options = set()
+        dispatched = capture_events(transport)
+
+        transport._log_negotiation("DO", bytes([0]))  # real BINARY
+        transport._log_negotiation("DO", b"")  # empty option
+
+        logged = [e for e in dispatched if e["eventid"] == "cowrie.telnet.option"]
+        self.assertEqual(len(logged), 2)
+        self.assertEqual(logged[0]["option_name"], "BINARY")
+        self.assertNotEqual(logged[1]["option_byte"], logged[0]["option_byte"])
+
+
 if __name__ == "__main__":
     unittest.main()
