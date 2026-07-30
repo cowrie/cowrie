@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import struct
 import tempfile
+import time
 import unittest
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
@@ -38,7 +39,6 @@ from cowrie.test.fake_transport import FakeTransport
 if TYPE_CHECKING:
     from twisted.internet.address import IPv4Address
     from twisted.internet.interfaces import (
-        IListeningPort,
         IReactorTime,
         IReactorUDP,
     )
@@ -54,6 +54,23 @@ os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
+
+
+def pump(predicate: Any, timeout: float = 5.0) -> bool:
+    """Run the reactor until ``predicate()`` is true, or ``timeout`` elapses.
+
+    These tests do real UDP I/O, so they need the reactor to turn. The suite
+    runs under plain unittest (see CLAUDE.md), which ignores a returned
+    Deferred: a test that schedules its assertions with callLater and returns
+    a Deferred never runs them at all. Driving the reactor here keeps the
+    assertions in the test body where they execute.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        _reactor.iterate(0.01)
+    return bool(predicate())
 
 
 class MockTFTPServer(DatagramProtocol):
@@ -131,172 +148,173 @@ class ShellTftpCommandTests(unittest.TestCase):
             + PROMPT,
         )
 
-    def test_tftp_insufficient_args(self) -> defer.Deferred[None]:
+    def test_tftp_insufficient_args(self) -> None:
         """Test tftp with only hostname shows usage"""
-        d: defer.Deferred[None] = defer.Deferred()
+        self.proto.lineReceived(b"tftp hostname.com\n")
+        pump(lambda: b"usage: tftp" in self.tr.value())
+        self.assertIn(b"usage: tftp", self.tr.value())
 
-        def do_test():
-            self.proto.lineReceived(b"tftp hostname.com\n")
-
-            def check():
-                output = self.tr.value()
-                self.assertIn(b"usage: tftp", output)
-                d.callback(None)
-
-            reactor.callLater(0.1, check)
-
-        reactor.callLater(0, do_test)
-        return d
-
-    def test_tftp_invalid_directory(self) -> defer.Deferred[None]:
+    def test_tftp_invalid_directory(self) -> None:
         """Test tftp with invalid local directory"""
-        d: defer.Deferred[None] = defer.Deferred()
-
-        def do_test():
-            self.proto.lineReceived(b"tftp -c get /nonexistent/file.txt host.com\n")
-
-            def check():
-                output = self.tr.value()
-                self.assertIn(b"No such file or directory", output)
-                d.callback(None)
-
-            reactor.callLater(0.1, check)
-
-        reactor.callLater(0, do_test)
-        return d
+        with patch.object(
+            tftp_module, "communication_allowed", lambda _address: defer.succeed(True)
+        ):
+            self.proto.lineReceived(b"tftp -c get /nonexistent/file.txt 8.8.8.8\n")
+            pump(lambda: b"No such file or directory" in self.tr.value())
+        self.assertIn(b"No such file or directory", self.tr.value())
 
 
 class ShellTftpAsyncTests(unittest.TestCase):
-    """Async tests for TFTP with mock server"""
+    """Async tests for TFTP with mock server.
 
-    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-    tr = FakeTransport("", "31337")
-    tftp_port: int
-    tftp_server: IListeningPort | None = None
+    The mock server listens on loopback, which the outbound blocklist refuses,
+    so these tests permit loopback for the duration. Without that the command
+    exits at the address check and every assertion below passes without a
+    single byte being transferred.
+    """
+
     test_content = b"Test file from TFTP server\n"
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.proto.makeConnection(cls.tr)
-        capture_events(cls.proto)
-
-        # Setup mock TFTP server
-        server_protocol = MockTFTPServer(cls.test_content)
-        server = reactor.listenUDP(
-            0, server_protocol, interface="127.0.0.1", maxPacketSize=8192
-        )
-        cls.tftp_server = server
-        cls.tftp_port = cast("IPv4Address", server.getHost()).port
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.proto.connectionLost()
-        if cls.tftp_server:
-            cls.tftp_server.stopListening()
-
     def setUp(self) -> None:
+        # Per-test protocol and server: these tests turn the reactor, so a
+        # shared protocol would let one test's in-flight transfer land in
+        # another test's output and events.
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
         self.tr.clear()
+        self.events = capture_events(self.proto)
+
+        self.tftp_port = self.serve(self.test_content)
+
         # The limiter is a module-level singleton; keep tests isolated.
         tftp_rate_limiter.reset()
+        allow_loopback = patch.object(
+            tftp_module, "communication_allowed", lambda _address: defer.succeed(True)
+        )
+        allow_loopback.start()
+        self.addCleanup(allow_loopback.stop)
 
-    def test_successful_download(self) -> defer.Deferred[None]:
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def serve(self, content: bytes) -> int:
+        """Start a mock TFTP server on loopback and return its port."""
+        server = reactor.listenUDP(
+            0, MockTFTPServer(content), interface="127.0.0.1", maxPacketSize=8192
+        )
+        self.addCleanup(server.stopListening)
+        return cast("IPv4Address", server.getHost()).port
+
+    def downloaded(self) -> list[dict[str, Any]]:
+        return [
+            e for e in self.events if e["eventid"] == "cowrie.session.file_download"
+        ]
+
+    def failed(self) -> list[dict[str, Any]]:
+        return [
+            e
+            for e in self.events
+            if e["eventid"] == "cowrie.session.file_download.failed"
+        ]
+
+    def test_successful_download(self) -> None:
         """Test successful TFTP download"""
         cmd = f"tftp -c get /tmp/tftp_test.txt 127.0.0.1:{self.tftp_port}\n"
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.downloaded()), "no file_download event dispatched"
+        )
+        output = self.tr.value()
+        self.assertIn(PROMPT, output)
+        self.assertNotIn(b"tftp: TFTP Error", output)
+        # The file really arrived, with the content the server served.
+        with open(self.downloaded()[0]["outfile"], "rb") as f:
+            self.assertEqual(f.read(), self.test_content)
 
-        def check():
-            output = self.tr.value()
-            # Should complete and show prompt
-            self.assertIn(PROMPT, output)
-            # Should not show error
-            self.assertNotIn(b"tftp: TFTP Error", output)
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
-
-    def test_download_with_r_flag(self) -> defer.Deferred[None]:
+    def test_download_with_r_flag(self) -> None:
         """Test TFTP download with -r flag"""
         cmd = f"tftp -r /tmp/tftp_test2.txt -g 127.0.0.1:{self.tftp_port}\n"
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.downloaded()), "no file_download event dispatched"
+        )
+        self.assertNotIn(b"tftp: TFTP Error", self.tr.value())
 
-        def check():
-            output = self.tr.value()
-            self.assertIn(PROMPT, output)
-            self.assertNotIn(b"tftp: TFTP Error", output)
-            d.callback(None)
+    def test_unreachable_host_reports_timeout(self) -> None:
+        """An unreachable target fails the transfer instead of hanging."""
+        # Shorten the retransmission schedule so the failure lands promptly.
+        with (
+            patch.object(tftp_module, "TFTP_TIMEOUT", 0.05),
+            patch.object(tftp_module, "TFTP_MAX_RETRIES", 2),
+        ):
+            # 192.0.2.1 is TEST-NET-1: routers drop it, nothing answers.
+            self.proto.lineReceived(b"tftp -c get /tmp/test.txt 192.0.2.1\n")
+            self.assertTrue(
+                pump(lambda: self.failed()), "unreachable transfer never failed"
+            )
 
-        reactor.callLater(1.0, check)
-        return d
+        self.assertIn("timed out", self.failed()[0]["error"].lower())
+        self.assertEqual(self.downloaded(), [])
+        self.assertIn(PROMPT, self.tr.value())
 
-    def test_connection_refused(self) -> defer.Deferred[None]:
-        """Test TFTP with unreachable host"""
-        # Use non-routable IP
-        cmd = b"tftp -c get /tmp/test.txt 192.0.2.1\n"
-        self.proto.lineReceived(cmd)
+    def test_non_blocking_behavior(self) -> None:
+        """A transfer must not wedge the reactor or the shell.
 
-        d: defer.Deferred[None] = defer.Deferred()
+        The download runs on the reactor rather than blocking it, so other
+        scheduled work still fires while it is in flight, and input queued
+        behind the command runs once it finishes.
+        """
+        ticked: list[bool] = []
+        reactor.callLater(0, lambda: ticked.append(True))
 
-        def check():
-            output = self.tr.value()
-            # Should show error or timeout
-            self.assertIn(PROMPT, output)
-            d.callback(None)
-
-        # Give it time to timeout
-        reactor.callLater(6.0, check)
-        return d
-
-    def test_non_blocking_behavior(self) -> defer.Deferred[None]:
-        """Test that TFTP download doesn't block the reactor"""
-        # Start TFTP download
         cmd = f"tftp -c get /tmp/nonblock.txt 127.0.0.1:{self.tftp_port}\n"
         self.proto.lineReceived(cmd.encode())
-
-        # Immediately try another command
+        # Queued behind the running command.
         self.proto.lineReceived(b"echo test\n")
 
-        d: defer.Deferred[None] = defer.Deferred()
-
-        def check():
-            output = self.tr.value()
-            # Should see echo output, proving shell wasn't blocked
-            self.assertIn(b"test", output)
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
-
-    def test_large_file_download(self) -> defer.Deferred[None]:
-        """Test TFTP download of file larger than one block"""
-        # Create a larger test file (2 blocks)
-        large_content = b"X" * (TFTP_BLOCK_SIZE * 2 + 100)
-
-        # Create new server with large content
-        server_protocol = MockTFTPServer(large_content)
-        large_server = reactor.listenUDP(
-            0, server_protocol, interface="127.0.0.1", maxPacketSize=8192
+        self.assertTrue(pump(lambda: self.downloaded()), "transfer never completed")
+        self.assertEqual(ticked, [True], "reactor did not run during the transfer")
+        self.assertTrue(
+            pump(lambda: b"test" in self.tr.value()),
+            "queued command never ran after the transfer",
         )
-        large_port = cast("IPv4Address", large_server.getHost()).port
+
+    def test_large_file_download(self) -> None:
+        """Test TFTP download of file larger than one block"""
+        # Two full blocks plus a short final one
+        large_content = b"X" * (TFTP_BLOCK_SIZE * 2 + 100)
+        large_port = self.serve(large_content)
 
         cmd = f"tftp -c get /tmp/large.txt 127.0.0.1:{large_port}\n"
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.downloaded()), "no file_download event dispatched"
+        )
+        self.assertNotIn(b"tftp: TFTP Error", self.tr.value())
+        # All three blocks were reassembled, not just the first.
+        with open(self.downloaded()[0]["outfile"], "rb") as f:
+            self.assertEqual(f.read(), large_content)
 
-        def check():
-            output = self.tr.value()
-            self.assertIn(PROMPT, output)
-            self.assertNotIn(b"tftp: TFTP Error", output)
-            large_server.stopListening()
-            d.callback(None)
+    def test_download_over_limit_is_refused(self) -> None:
+        """A transfer past download_limit_size must abort, end to end."""
+        limited_port = self.serve(b"Y" * (TFTP_BLOCK_SIZE * 3))
 
-        reactor.callLater(1.5, check)
-        return d
+        orig_limit = Command_tftp.limit_size
+        Command_tftp.limit_size = TFTP_BLOCK_SIZE  # one block
+        self.addCleanup(setattr, Command_tftp, "limit_size", orig_limit)
+
+        cmd = f"tftp -c get /tmp/limited.txt 127.0.0.1:{limited_port}\n"
+        self.proto.lineReceived(cmd.encode())
+
+        self.assertTrue(
+            pump(lambda: self.failed()), "transfer over the limit was not refused"
+        )
+        self.assertIn("limit", self.failed()[0]["error"].lower())
+        self.assertEqual(self.downloaded(), [])
 
 
 class TFTPArtifactCloseTests(unittest.TestCase):
