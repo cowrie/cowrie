@@ -27,6 +27,12 @@ class Command_scp(HoneyPotCommand):
     download_path_uniq = CowrieConfig.get(
         "honeypot", "download_path_uniq", fallback=download_path
     )
+    # Every uploaded file costs a real temp-file write, a sha256 hash and a
+    # rename on the host filesystem, so cap how many files one upload session
+    # can save regardless of how small each file is.
+    max_files_per_session: int = CowrieConfig.getint(
+        "shell", "scp_max_files_per_session", fallback=20
+    )
 
     out_dir: str = ""
 
@@ -142,17 +148,33 @@ class Command_scp(HoneyPotCommand):
                 r = re.search(rb"C(0[\d]{3}) ([\d]+) ([^\s]+)", header)
 
                 if r and r.group(1) and r.group(2) and r.group(3):
-                    dend = pos + int(r.group(2))
+                    # Both fields are attacker-controlled: the filesize can
+                    # exceed int()'s digit limit (~4300, the CVE-2020-10735
+                    # mitigation) and the permissions regex admits non-octal
+                    # digits. Treat either conversion failing as a malformed
+                    # header rather than raising out of eofReceived().
+                    try:
+                        filesize = int(r.group(2))
+                        fileperm = int(r.group(1), 8)
+                    except ValueError:
+                        return b""
+
+                    dend = pos + filesize
 
                     if dend > len(data):
                         dend = len(data)
 
                     d = data[pos:dend]
 
+                    # The filename is attacker-controlled and need not be
+                    # valid UTF-8; still capture the upload under a
+                    # best-effort name.
+                    scpname = r.group(3).decode(errors="replace")
+
                     if self.out_dir:
-                        fname = posixpath.join(self.out_dir, r.group(3).decode())
+                        fname = posixpath.join(self.out_dir, scpname)
                     else:
-                        fname = r.group(3).decode()
+                        fname = scpname
 
                     outfile = self.fs.resolve_path(fname, self.protocol.cwd)
 
@@ -161,8 +183,8 @@ class Command_scp(HoneyPotCommand):
                             outfile,
                             self.current_user["uid"],
                             self.current_user["gid"],
-                            int(r.group(2)),
-                            int(r.group(1), 8),
+                            filesize,
+                            fileperm,
                         )
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.
@@ -173,7 +195,23 @@ class Command_scp(HoneyPotCommand):
                         self.errorWrite(f"-scp: {outfile}: Permission denied\n")
                         return b""
 
-                    self.save_file(d, outfile)
+                    try:
+                        self.save_file(d, outfile)
+                    except OSError as e:
+                        # A real filesystem failure (disk full, missing or
+                        # unwritable download_path) while writing the temp
+                        # file or renaming it into place. Log it and stop the
+                        # upload cleanly instead of raising out of
+                        # eofReceived() and leaving the temp file behind.
+                        self._log.error(
+                            "scp: error saving upload {fname}: {error!r}",
+                            fname=fname,
+                            error=e,
+                        )
+                        safeoutfile = getattr(self, "safeoutfile", None)
+                        if safeoutfile and os.path.exists(safeoutfile):
+                            os.remove(safeoutfile)
+                        return b""
 
                     data = data[dend + 1 :]  # cut saved data + \x00
             else:
@@ -197,8 +235,17 @@ class Command_scp(HoneyPotCommand):
             # as content only. The raw stdin log still holds the framing (header,
             # body and trailing ACK), so remove it to avoid saving it again as a
             # download.
+            filecount = 0
             while data:
+                if filecount >= self.max_files_per_session:
+                    self._log.info(
+                        "scp: session reached scp_max_files_per_session "
+                        "({max_files}), ignoring the remaining files",
+                        max_files=self.max_files_per_session,
+                    )
+                    break
                 data = self.parse_scp_data(data)
+                filecount += 1
 
             terminal.stdinlogOpen = False
             os.remove(terminal.stdinlogFile)
