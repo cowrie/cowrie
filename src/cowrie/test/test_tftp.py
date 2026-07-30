@@ -8,6 +8,7 @@ import os
 import struct
 import tempfile
 import unittest
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import patch
 
@@ -446,7 +447,9 @@ class TFTPHostPortParseTests(unittest.TestCase):
         self.assertEqual(self.parse("host.example.com"), ("host.example.com", 69))
 
     def test_host_with_port(self) -> None:
-        self.assertEqual(self.parse("host.example.com:1069"), ("host.example.com", 1069))
+        self.assertEqual(
+            self.parse("host.example.com:1069"), ("host.example.com", 1069)
+        )
 
     def test_ipv4_with_port(self) -> None:
         self.assertEqual(self.parse("192.0.2.1:1069"), ("192.0.2.1", 1069))
@@ -510,6 +513,103 @@ class TFTPTargetHandlingTests(unittest.TestCase):
         output = self.tr.value()
         self.assertIn(b"bad port", output)
         self.assertIn(PROMPT, output)
+
+
+class TFTPResolutionPinningTests(unittest.TestCase):
+    """The address validated must be the address contacted.
+
+    The command used to validate one resolution of the target and then resolve
+    it again independently for the UDP transport, so a DNS answer that changed
+    between the two lookups let a private address through (issue #40394).
+    """
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+        capture_events(self.proto)
+        tftp_rate_limiter.reset()
+        self.addCleanup(tftp_rate_limiter.reset)
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def _reactor_resolving_to(self, address: str) -> Any:
+        """The tftp module's reactor, with resolution pinned to one answer."""
+        return SimpleNamespace(
+            resolve=lambda _host: defer.succeed(address),
+            listenUDP=reactor.listenUDP,
+            callLater=reactor.callLater,
+        )
+
+    def test_validates_the_address_it_will_contact(self) -> None:
+        validated: list[str] = []
+
+        def fake_allowed(address: str) -> defer.Deferred[bool]:
+            validated.append(address)
+            return defer.succeed(False)  # stop before any transfer
+
+        with (
+            patch.object(
+                tftp_module, "reactor", self._reactor_resolving_to("192.0.2.7")
+            ),
+            patch.object(tftp_module, "communication_allowed", fake_allowed),
+        ):
+            self.proto.lineReceived(b"tftp -c get /tmp/pin.txt host.example.com\n")
+
+        self.assertEqual(
+            validated,
+            ["192.0.2.7"],
+            "the resolved address must be what gets validated, not the hostname",
+        )
+
+    def test_address_resolving_to_private_is_refused(self) -> None:
+        # The rebinding case: the hostname would pass validation, but it
+        # resolves to loopback. The transfer must never start.
+        started: list[bool] = []
+
+        def fake_download(_self: Any) -> defer.Deferred[None]:
+            started.append(True)
+            return defer.succeed(None)
+
+        def only_blocks_the_private_ip(address: str) -> defer.Deferred[bool]:
+            """Stands in for a DNS answer that differs between lookups: the
+            hostname validates, the address it resolves to does not."""
+            return defer.succeed(address != "127.0.0.1")
+
+        with (
+            patch.object(
+                tftp_module, "reactor", self._reactor_resolving_to("127.0.0.1")
+            ),
+            patch.object(
+                tftp_module, "communication_allowed", only_blocks_the_private_ip
+            ),
+            patch.object(
+                tftp_module.Command_tftp, "tftp_download_async", fake_download
+            ),
+        ):
+            self.proto.lineReceived(b"tftp -c get /tmp/pin.txt rebind.example.com\n")
+
+        self.assertEqual(started, [], "contacted an address that resolves to loopback")
+
+    def test_public_address_still_downloads(self) -> None:
+        started: list[bool] = []
+
+        def fake_download(_self: Any) -> defer.Deferred[None]:
+            started.append(True)
+            return defer.succeed(None)
+
+        # 8.8.8.8 is globally routable, so the real blocklist permits it.
+        with (
+            patch.object(tftp_module, "reactor", self._reactor_resolving_to("8.8.8.8")),
+            patch.object(
+                tftp_module.Command_tftp, "tftp_download_async", fake_download
+            ),
+        ):
+            self.proto.lineReceived(b"tftp -c get /tmp/pin.txt host.example.com\n")
+
+        self.assertEqual(started, [True])
 
 
 class TFTPRateLimitTests(unittest.TestCase):

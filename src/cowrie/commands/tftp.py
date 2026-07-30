@@ -18,6 +18,7 @@ from cowrie.core.config import CowrieConfig
 from cowrie.core.network import (
     DownloadLimitExceeded,
     communication_allowed,
+    is_ip_address,
     is_valid_port,
     outbound_bind_address,
 )
@@ -366,20 +367,34 @@ class Command_tftp(HoneyPotCommand):
             self.exit(1)
             return
 
-        # Check if communication is allowed
-        allowed = yield communication_allowed(self.hostname)
-        if not allowed:
-            self.exit(1)
-            return
-
-        # Resolve the hostname to a numeric IP before any UDP I/O: Twisted's UDP
+        # Resolve the target to a numeric IP before any UDP I/O: Twisted's UDP
         # transport rejects hostnames and raises InvalidAddressError. Done before
         # the artifact is created so a resolution failure leaves nothing behind.
-        try:
-            self.host_ip = yield reactor.resolve(self.hostname)
-        except Exception:
-            self._log.info("TFTP: could not resolve host {host}", host=self.hostname)
-            self.write(f"tftp: {self.hostname}: Name or service not known\n")
+        # A target that is already numeric (including an IPv6 literal, which the
+        # IPv4-only default resolver cannot look up) is used as given.
+        if is_ip_address(self.hostname) is not None:
+            self.host_ip = self.hostname
+        else:
+            try:
+                self.host_ip = yield reactor.resolve(self.hostname)
+            except Exception:
+                self._log.info(
+                    "TFTP: could not resolve host {host}", host=self.hostname
+                )
+                self.write(f"tftp: {self.hostname}: Name or service not known\n")
+                self.exit(1)
+                return
+
+        # Validate the address that will actually be contacted. Resolving the
+        # hostname a second time here would let a DNS answer that changes
+        # between lookups (rebinding) point the transfer at a private or
+        # metadata address after a public one passed the check.
+        allowed = yield communication_allowed(self.host_ip)
+        if not allowed:
+            self._log.info(
+                "TFTP: attempt to access blocked network address {ip}",
+                ip=self.host_ip,
+            )
             self.exit(1)
             return
 
