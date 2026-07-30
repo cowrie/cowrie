@@ -358,7 +358,7 @@ The VirusTotal integration is part of Cowrie and is licensed under the same BSD 
 Support
 -------
 
-* **Documentation**: https://cowrie.readthedocs.io/
+* **Documentation**: https://docs.cowrie.org/
 * **Issues**: https://github.com/cowrie/cowrie/issues
 * **Discussions**: https://github.com/cowrie/cowrie/discussions
 * **VirusTotal Support**: https://support.virustotal.com/
