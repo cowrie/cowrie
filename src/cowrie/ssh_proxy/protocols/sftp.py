@@ -227,7 +227,9 @@ class SFTP(base_protocol.BaseProtocol):
                     # TODO: should use artifact functions
                     shasum = hashlib.sha256(self.theFile).hexdigest()
                     outfile = os.path.join(self.downloadPath, shasum)
-                    fname = self.command.decode().split(" ")[-1]
+                    # The command line is client bytes and need not be valid
+                    # UTF-8.
+                    fname = self.command.decode(errors="replace").split(" ")[-1]
                     duplicate = os.path.exists(outfile)
 
                     if not duplicate:

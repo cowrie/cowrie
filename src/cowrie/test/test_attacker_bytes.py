@@ -8,9 +8,12 @@
 from __future__ import annotations
 
 import os
+import shutil
+import tempfile
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+from twisted.conch.ssh import filetransfer
 from twisted.conch.ssh.common import NS
 from twisted.web.http_headers import Headers
 
@@ -27,6 +30,9 @@ from cowrie.shell import avatar as shell_avatar
 from cowrie.shell import session as shell_session
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.ssh import session as ssh_session
+from cowrie.ssh_proxy import server_transport as proxy_transport
+from cowrie.ssh_proxy.protocols import base_protocol
+from cowrie.ssh_proxy.protocols import sftp as proxy_sftp
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -155,6 +161,66 @@ class HttpResponseMetadataTests(unittest.TestCase):
         (url.encode('ascii') raised UnicodeEncodeError)."""
         self.proto.lineReceived("curl http://192.168.1.1/päth\n".encode())
         self.assertTrue(self.tr.value().endswith(self.PROMPT))
+
+
+class ProxyModeTests(unittest.TestCase):
+    """In proxy mode the client's raw protocol bytes reach these handlers
+    directly; non-UTF-8 bytes in them must not crash the connection."""
+
+    def test_kexinit_non_utf8_algorithm_name(self) -> None:
+        """The hassh fingerprint decodes the client's algorithm lists; the
+        shell backend already tolerates invalid UTF-8 there."""
+        t = proxy_transport.FrontendSSHTransport.__new__(
+            proxy_transport.FrontendSSHTransport
+        )
+        capture_events(t)
+        with patch.object(
+            proxy_transport.transport.SSHServerTransport,
+            "ssh_KEXINIT",
+            lambda s, p: None,
+        ):
+            t.ssh_KEXINIT(
+                b"\x00" * 16
+                + b"".join(
+                    NS(field)
+                    for field in (
+                        b"curve25519-sha256\xff",  # kexAlgs
+                        b"ssh-rsa",  # keyAlgs
+                        b"aes128-ctr\xff",  # encCS
+                        b"aes128-ctr",  # encSC
+                        b"hmac-sha2-256\xff",  # macCS
+                        b"hmac-sha2-256",  # macSC
+                        b"none\xff",  # compCS
+                        b"none",  # compSC
+                        b"",  # langCS
+                        b"",  # langSC
+                    )
+                )
+                + b"\x00\x00\x00\x00\x00"
+            )
+
+    def test_sftp_upload_non_utf8_command(self) -> None:
+        """The sftp command line is client bytes; deriving the uploaded
+        filename from it must not raise UnicodeDecodeError."""
+        sftp = proxy_sftp.SFTP.__new__(proxy_sftp.SFTP)
+        sftp.events = None
+        sftp.downloadPath = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, sftp.downloadPath, True)
+        sftp.command = b"put /tmp/ev\xffil"
+        sftp.path = b"/tmp/ev\xffil"
+        sftp.theFile = b"uploaded-content"
+        sftp.handle = b"h"
+        # An FXP_CLOSE packet for that handle: type, request id, handle.
+        sftp.parentPacket = base_protocol.BaseProtocol()
+        sftp.parentPacket.data = (
+            bytes([filetransfer.FXP_CLOSE]) + b"\x00\x00\x00\x01" + NS(b"h")
+        )
+        sftp.parentPacket.packetSize = len(sftp.parentPacket.data)
+
+        sftp.handle_packet("[CLIENT]")
+
+        saved = os.listdir(sftp.downloadPath)
+        self.assertEqual(len(saved), 1)
 
 
 if __name__ == "__main__":
