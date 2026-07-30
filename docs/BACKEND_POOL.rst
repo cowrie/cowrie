@@ -16,10 +16,9 @@ insecure machines (such as your honeypot). Therefore, we limit any access to the
 Internet via a network filter, which you can configure as you see fit.
 
 The VMs in the backend pool, and all infrastructure (snapshots, networking and filtering)
-are backed-up by Qemu/libvirt. We provide two example VM images (for Ubuntu Server 18.04
-and OpenWRT 18.06.4) whose configurations are already set and ready to be deployed.
-Further below in this guide we'll discuss how to create your own images and customize
-libvirt's XML configuration files.
+are backed by Qemu/libvirt. The default configuration ships example settings for an
+Ubuntu Server image and an OpenWRT image. Further below in this guide we'll discuss
+how to create your own images and customize libvirt's XML configuration files.
 
 First of all, install the needed dependencies for the pool, as explained in
 `the installation steps <https://docs.cowrie.org/en/latest/INSTALL.html>`_.
@@ -75,10 +74,10 @@ Backend Pool configuration
 
 In this section we'll discuss the ``[backend_pool]`` section of the configuration file.
 
-The backend pool can be run in the same machine as the rest of Cowrie, or in a separate
-one. In the former case, you'd be running Cowrie with
+The backend pool can run on the same machine as the rest of Cowrie, or on a separate
+one. To run everything on one machine, configure Cowrie with
 
-.. code-block:: python
+.. code-block:: ini
 
     [backend_pool]
     pool_only = false
@@ -87,9 +86,9 @@ one. In the former case, you'd be running Cowrie with
     backend = pool
     pool = local
 
-If you want to deploy the backend pool in a different machine, then you'll need to
-invert the configuration: the pool machine has ``pool_only = true`` (SSH and Telnet
-are disabled), and the proxy machine has ``pool = remote``.
+To run the backend pool on a different machine, invert the configuration: the
+pool machine has ``pool_only = true`` (SSH and Telnet are disabled), and the
+proxy machine has ``pool = remote``.
 
 **Note:** The communication protocol used between the proxy and the backend pool
 is unencrypted. Although no sensitive data should be passed, we recommend you to

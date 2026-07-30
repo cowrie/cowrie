@@ -17,10 +17,11 @@ In the remainder of this guide we will refer to the ``[proxy]`` section of the c
 Choosing a Backend
 ******************
 
-Cowrie supports a simple backend (i.e., a real machine or virtual machines provided by you),
-but you can use Cowrie's backend pool, which provides a set of VMs, handling their boot
-and cleanup, also ensuring that different attackers (different IPs) each see a "fresh" environment,
-while connections from the same IP get the same VM.
+Cowrie supports two kinds of backend. A *simple* backend is a real or virtual
+machine that you provide yourself. Alternatively, Cowrie's *backend pool*
+manages a set of VMs for you: it boots and cleans them up, gives each attacker
+(by IP) a fresh environment, and serves repeated connections from the same IP
+with the same VM.
 
 **VERY IMPORTANT NOTE:** some attacks consist of downloading malicious software or accessing
 illegal content through insecure machines (such as your honeypot). If you are using your **own backend**,
@@ -40,9 +41,10 @@ backend pool, configure the variables starting with ``pool\_``. You'll also need
 the ``[backend_pool]`` section, which we detail in the
 `Backend Pool's own documentation <https://docs.cowrie.org/en/latest/BACKEND_POOL.html>`_.
 
-The backend pool can be run in the same machine as Cowrie, or on a remote one (e.g. Cowrie on a
-Raspberry Pi, and the pool in a larger machine). In the former case, set ``pool`` to ``local``;
-in the latter, set ``pool`` to ``remote`` and specify its host and port, matching with the
+The backend pool can run on the same machine as Cowrie, or on a remote one
+(e.g. Cowrie on a Raspberry Pi, and the pool on a larger machine). When the pool
+runs on the same machine, set ``pool`` to ``local``. When it runs remotely, set
+``pool`` to ``remote`` and specify its host and port, matching the
 ``listen_endpoints`` of the ``[backend_pool]`` section. Further configurations sent by the client
 are explained in
 `Backend Pool's own documentation <https://docs.cowrie.org/en/latest/BACKEND_POOL.html>`_.
@@ -50,8 +52,8 @@ are explained in
 Authentication
 ==============
 
-Regardless of the used type of backend, Cowrie will need credentials to access the machine.
-These can be of any account on it, as long as it supports password authentication.
+Whichever backend type you use, Cowrie needs credentials to access the machine.
+Any account on it works, as long as it supports password authentication.
 
 Note that these are totally independent of the credentials attackers can use (as set in
 ``userdb``). ``userdb`` credentials are the ones attackers may use to connect to Cowrie, while
@@ -61,7 +63,7 @@ Telnet prompt detection
 =======================
 
 Due to the different implementations of Telnet, there is not a single reliable way of catching
-the authentication phase of the protocol as in SSH. Therefore, we rely on regex expressions
+the authentication phase of the protocol as in SSH. Therefore, we rely on regular expressions
 to detect authentication prompts, allowing us to identify the credentials supplied by the
 attacker and check if they are accepted by ``userdb``. If they are, we send the ``backend_user``
 and ``backend_pass`` to the backend (spoofing the authentication); if not, we send ``backend_pass``
@@ -81,5 +83,5 @@ comparing the auth details with the ``userdb``.
 Analyzing traffic
 =================
 
-Analyzing raw traffic can be interesting when setting up Cowrie, in particular to set-up
+Analyzing raw traffic can be interesting when setting up Cowrie, in particular to set up
 Telnet prompt detection. For this, you can set ``log_raw`` to true.
