@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
+from cowrie.llm import llm as llm_module
 from cowrie.llm import protocol as llm_protocol
 
 
@@ -86,6 +87,44 @@ class SystemContextTests(unittest.TestCase):
         context = proto._build_system_context()
 
         self.assertIn("not instructions", context.lower())
+
+
+class SharedClientTests(unittest.TestCase):
+    def test_client_is_shared_between_sessions(self) -> None:
+        """Each LLMClient owns an HTTP connection pool, so building one per
+        session gives a busy honeypot one pool per session."""
+        llm_module.reset_shared_client()
+        self.addCleanup(llm_module.reset_shared_client)
+
+        first = llm_module.get_shared_client()
+        second = llm_module.get_shared_client()
+
+        self.assertIs(first, second)
+
+
+class ResponseSizeCapTests(unittest.TestCase):
+    def test_oversized_response_is_rejected(self) -> None:
+        """A misbehaving endpoint that keeps streaming must not grow the
+        buffer without bound."""
+        d = MagicMock()
+        receiver = llm_module.SimpleResponseReceiver(200, d, max_size=16)
+        transport = MagicMock()
+        receiver.makeConnection(transport)
+
+        receiver.dataReceived(b"x" * 32)
+
+        self.assertLessEqual(len(receiver.buf), 16)
+        transport.stopProducing.assert_called_once()
+
+    def test_normal_response_is_unaffected(self) -> None:
+        d = MagicMock()
+        receiver = llm_module.SimpleResponseReceiver(200, d, max_size=1024)
+        receiver.makeConnection(MagicMock())
+
+        receiver.dataReceived(b'{"ok": true}')
+        receiver.connectionLost()
+
+        d.callback.assert_called_once_with((200, b'{"ok": true}'))
 
 
 if __name__ == "__main__":

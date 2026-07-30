@@ -18,7 +18,7 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import failure
 
 from cowrie.core.config import CowrieConfig
-from cowrie.llm.llm import LLMClient
+from cowrie.llm.llm import get_shared_client
 
 if TYPE_CHECKING:
     from cowrie.core.events import EventLog
@@ -237,7 +237,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         # Initialize LLM client if needed
         if not hasattr(self, "llm_client"):
-            self.llm_client = LLMClient()
+            self.llm_client = get_shared_client()
             self.command_history = []
 
         # Add the command to our history
@@ -338,7 +338,7 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Process an exec command with the LLM and return the result.
         Used when commands are passed directly to SSH (e.g., ssh user@host 'command')
         """
-        self.llm_client = LLMClient()
+        self.llm_client = get_shared_client()
         self.command_history = []
 
         # Construct the prompt
@@ -391,7 +391,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
         HoneyPotBaseProtocol.connectionMade(self)
         recvline.HistoricRecvLine.connectionMade(self)
 
-        self.llm_client = LLMClient()
+        self.llm_client = get_shared_client()
         self.command_history = []
 
         # Show welcome banner
