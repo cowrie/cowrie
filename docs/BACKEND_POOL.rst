@@ -18,7 +18,7 @@ Internet via a network filter, which you can configure as you see fit.
 The VMs in the backend pool, and all infrastructure (snapshots, networking and filtering)
 are backed-up by Qemu/libvirt. We provide two example VM images (for Ubuntu Server 18.04
 and OpenWRT 18.06.4) whose configurations are already set and ready to be deployed.
-Further below in this guide we'll discuss how to create your own images and customise
+Further below in this guide we'll discuss how to create your own images and customize
 libvirt's XML configuration files.
 
 First of all, install the needed dependencies for the pool, as explained in
@@ -42,10 +42,10 @@ its path. The default configuration ships separate example config blocks for an
 Ubuntu image and an OpenWRT image (OpenWRT needs both a disk and a kernel
 image); enable the block that matches your image and comment out the other.
 
-Backend Pool initialisation
+Backend Pool initialization
 ***************************
 
-Depending on the machine that will be running the backend pool, initialisation times for VMs can vary greatly.
+Depending on the machine that will be running the backend pool, initialization times for VMs can vary greatly.
 If the pool is correctly configured, you will get the `PoolServerFactory starting on 6415` message on your log.
 
 After a while, VMs will start to boot and, when ready to be used, a message of the form
@@ -108,7 +108,7 @@ Snapshots
 
 VMs running in the pool are based on a base image that is kept unchanged. When booting,
 each VM creates a snapshot that keeps track of differences between the base image and
-snapshot. If you want to analyse snapshots and see any changes made in the VMs, set
+snapshot. If you want to analyze snapshots and see any changes made in the VMs, set
 ``save_snapshots`` to true. If set to true be mindful of space concerns, each new
 VM will take at least ~20MB in storage.
 
@@ -219,10 +219,10 @@ Steps used in Ubuntu, can be useful in other distros
     printf "pts/0\npts/1\npts/2\npts/3\npts/4\npts/5\npts/6\npts/7\npts/8\npts/9" >> /etc/securetty
     service xinetd start
 
-Customising XML configs
+Customizing XML configs
 =======================
 
-If you want, you can customise libvirt's XML configurations.
+If you want, you can customize libvirt's XML configurations.
 
 The main configuration for a guest is located in ``default_guest.xml``. This defines the virtual
 CPU, available memory, and devices available on the guest. Most of these configurations are

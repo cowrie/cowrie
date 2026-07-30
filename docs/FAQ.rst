@@ -47,7 +47,7 @@ Rename the user in the filesystem tree too::
 
 (For a custom copy of the pickle, copy it out first, set
 ``[shell] filesystem`` to point at it, and edit there — see
-INSTALL.rst's "Customising the honeypot" section.)
+INSTALL.rst's "Customizing the honeypot" section.)
 
 And then restart Cowrie::
 

@@ -3,11 +3,11 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-Analysing snapshots and downloaded content
+Analyzing snapshots and downloaded content
 ##########################################
 
-One interesting aspect of Cowrie is the capability to analyse any downloaded malware and
-content into the honeypot. The snapshot mechanism can be leveraged to analyse any download
+One interesting aspect of Cowrie is the capability to analyze any downloaded malware and
+content into the honeypot. The snapshot mechanism can be leveraged to analyze any download
 and any change performed against the base image, to determine which files have been changed.
 
 This guide shows how that can be achieved by leveraging using the ``libguestfs-tools`` package.

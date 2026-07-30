@@ -18,7 +18,7 @@ Cowrie Configuration for Datadog output module
 **********************************************
 
 * Modify ``cowrie.cfg`` to enable the ``[output_datadog]`` section.
-* Add an API Key. You may generate one for your organisation from `here <https://app.datadoghq.com/organization-settings/api-keys>`_.
+* Add an API Key. You may generate one for your organization from `here <https://app.datadoghq.com/organization-settings/api-keys>`_.
 * Optionally customize ``ddsource``, ``ddtags`` and ``service``. Otherwise, defaults are respectively ``cowrie``, ``env:prod`` and ``honeypot``.
 
 Datadog Configuration

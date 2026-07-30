@@ -78,8 +78,8 @@ the first time authentication is tried (thus assuming the client's username as t
 they'll use to login into the system). Cowrie tries to capture this username and use it when
 comparing the auth details with the ``userdb``.
 
-Analysing traffic
+Analyzing traffic
 =================
 
-Analysing raw traffic can be interesting when setting up Cowrie, in particular to set-up
+Analyzing raw traffic can be interesting when setting up Cowrie, in particular to set-up
 Telnet prompt detection. For this, you can set ``log_raw`` to true.
