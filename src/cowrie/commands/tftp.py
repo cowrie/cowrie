@@ -15,7 +15,11 @@ from twisted.logger import Logger
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed, outbound_bind_address
+from cowrie.core.network import (
+    communication_allowed,
+    is_valid_port,
+    outbound_bind_address,
+)
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.customparser import CustomParser, ExitException, OptionNotFound
 
@@ -50,6 +54,38 @@ MODE_NETASCII = b"netascii"
 TFTP_BLOCK_SIZE = 512
 TFTP_TIMEOUT = 5  # seconds
 TFTP_MAX_RETRIES = 3
+
+
+def parse_host_port(target: str, default_port: int) -> tuple[str, int] | None:
+    """Split a tftp target into (host, port).
+
+    Accepts host, host:port, bare IPv6 (two or more colons), [IPv6], and
+    [IPv6]:port. Returns None when the host is empty or the port invalid.
+    """
+    host = target
+    port_str: str | None = None
+
+    if target.startswith("["):
+        bracket_end = target.find("]")
+        if bracket_end == -1:
+            return None
+        host = target[1:bracket_end]
+        rest = target[bracket_end + 1 :]
+        if rest:
+            if not rest.startswith(":"):
+                return None
+            port_str = rest[1:]
+    elif target.count(":") == 1:
+        host, port_str = target.split(":")
+    # Two or more colons without brackets: a bare IPv6 address, no port.
+
+    if not host:
+        return None
+    if port_str is None:
+        return (host, default_port)
+    if not is_valid_port(port_str):
+        return None
+    return (host, int(port_str))
 
 
 class TFTPClient(DatagramProtocol):
@@ -272,11 +308,13 @@ class Command_tftp(HoneyPotCommand):
             self.exit(1)
             return
 
-        # Parse port from hostname if provided
-        if self.hostname.find(":") != -1:
-            host, port_str = self.hostname.split(":")
-            self.hostname = host
-            self.port = int(port_str)
+        # Parse port from the target, handling IPv6 literals
+        parsed = parse_host_port(self.hostname, self.port)
+        if parsed is None:
+            self.write(f"tftp: bad port spec '{self.hostname}'\n")
+            self.exit(1)
+            return
+        self.hostname, self.port = parsed
 
         # Check if communication is allowed
         allowed = yield communication_allowed(self.hostname)

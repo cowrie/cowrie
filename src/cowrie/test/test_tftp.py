@@ -425,6 +425,83 @@ class TFTPHostnameResolutionTests(unittest.TestCase):
         self.assertEqual(self._bound_host(cmd), "0.0.0.0")
 
 
+class TFTPHostPortParseTests(unittest.TestCase):
+    """The target argument accepts host, host:port, bare IPv6, and
+    [IPv6]:port forms; any IPv6 literal used to crash the two-way split."""
+
+    def parse(self, target: str) -> tuple[str, int] | None:
+        from cowrie.commands.tftp import parse_host_port
+
+        return parse_host_port(target, 69)
+
+    def test_plain_host(self) -> None:
+        self.assertEqual(self.parse("host.example.com"), ("host.example.com", 69))
+
+    def test_host_with_port(self) -> None:
+        self.assertEqual(self.parse("host.example.com:1069"), ("host.example.com", 1069))
+
+    def test_ipv4_with_port(self) -> None:
+        self.assertEqual(self.parse("192.0.2.1:1069"), ("192.0.2.1", 1069))
+
+    def test_bare_ipv6_loopback(self) -> None:
+        self.assertEqual(self.parse("::1"), ("::1", 69))
+
+    def test_bare_ipv6(self) -> None:
+        self.assertEqual(self.parse("2001:db8::1"), ("2001:db8::1", 69))
+
+    def test_bracketed_ipv6_with_port(self) -> None:
+        self.assertEqual(self.parse("[2001:db8::1]:1069"), ("2001:db8::1", 1069))
+
+    def test_bracketed_ipv6_without_port(self) -> None:
+        self.assertEqual(self.parse("[2001:db8::1]"), ("2001:db8::1", 69))
+
+    def test_non_numeric_port_rejected(self) -> None:
+        self.assertIsNone(self.parse("host.example.com:abc"))
+
+    def test_out_of_range_port_rejected(self) -> None:
+        self.assertIsNone(self.parse("host.example.com:99999"))
+
+    def test_zero_port_rejected(self) -> None:
+        self.assertIsNone(self.parse("host.example.com:0"))
+
+    def test_bracketed_bad_port_rejected(self) -> None:
+        self.assertIsNone(self.parse("[2001:db8::1]:abc"))
+
+    def test_empty_host_rejected(self) -> None:
+        self.assertIsNone(self.parse(":69"))
+
+
+class TFTPTargetHandlingTests(unittest.TestCase):
+    """Shell-level target handling: IPv6 must not crash the command."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+        capture_events(self.proto)
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_ipv6_target_does_not_crash(self) -> None:
+        # ::1 is an IP literal: no DNS is involved, the blocklist check runs
+        # synchronously, and the command must come back to a prompt instead of
+        # dying in host:port parsing with ValueError.
+        self.proto.lineReceived(b"tftp -c get /tmp/tftp_v6.txt ::1\n")
+        self.assertIn(PROMPT, self.tr.value())
+
+    def test_bracketed_ipv6_target_does_not_crash(self) -> None:
+        self.proto.lineReceived(b"tftp -c get /tmp/tftp_v6.txt [::1]:1069\n")
+        self.assertIn(PROMPT, self.tr.value())
+
+    def test_invalid_port_reports_error(self) -> None:
+        self.proto.lineReceived(b"tftp -c get /tmp/tftp_bad.txt host.example.com:abc\n")
+        output = self.tr.value()
+        self.assertIn(b"bad port", output)
+        self.assertIn(PROMPT, output)
+
+
 class TFTPProtocolTests(unittest.TestCase):
     """Tests for TFTP protocol implementation"""
 
