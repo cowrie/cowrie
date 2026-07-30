@@ -22,9 +22,11 @@ from cowrie.llm import session as llm_session
 from cowrie.llm import telnet as llm_telnet
 from cowrie.shell import avatar as shell_avatar
 from cowrie.shell import session as shell_session
+from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.ssh import session as ssh_session
 from cowrie.test.eventcapture import capture_events
-from cowrie.test.fake_server import FakeServer
+from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.fake_transport import FakeTransport
 
 
 class SessionSetupTests(unittest.TestCase):
@@ -66,6 +68,34 @@ class SessionSetupTests(unittest.TestCase):
 
         self.assertEqual(rc, 0)
         self.assertEqual(sess.session.environ, {"LA�NG": "C�"})
+
+
+class ShellPipelineTests(unittest.TestCase):
+    """The attacker can produce arbitrary bytes inside the shell (echo -e
+    escapes); piping or substituting them must not crash the session."""
+
+    PROMPT = b"root@unitTest:~# "
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_non_utf8_bytes_piped_to_awk(self) -> None:
+        self.proto.lineReceived(b"echo -e '\\xff' | awk '{ print $0 }'\n")
+        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+
+    def test_non_utf8_bytes_piped_to_tee(self) -> None:
+        self.proto.lineReceived(b"echo -e '\\xff' | tee /tmp/out\n")
+        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+
+    def test_non_utf8_bytes_in_command_substitution(self) -> None:
+        self.proto.lineReceived(b"echo $(echo -e '\\xff')\n")
+        self.assertTrue(self.tr.value().endswith(self.PROMPT))
 
 
 if __name__ == "__main__":

@@ -107,7 +107,8 @@ class Command_awk(HoneyPotCommand):
         This is the awk output.
         """
         if inb:
-            inp = inb.decode("utf-8")
+            # Piped input is attacker bytes and need not be valid UTF-8.
+            inp = inb.decode("utf-8", errors="replace")
         else:
             return
 

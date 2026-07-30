@@ -266,7 +266,8 @@ class HoneyPotShell:
         self.cmdpending.append(command)
         self.runCommand()
         pp = self.protocol.pp
-        return pp.redirected_data.decode() if pp is not None else ""
+        # The captured output is attacker bytes and need not be valid UTF-8.
+        return pp.redirected_data.decode(errors="replace") if pp is not None else ""
 
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
