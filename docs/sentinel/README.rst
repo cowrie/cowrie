@@ -38,5 +38,5 @@ then save this off as a function with the name, alias and category
 of `Cowrie`.
 
 Once events are being ingested and parsed by Azure Sentinel,
-``linux_workbook.json`` can be imported to define a custom workbook to
+``cowrie_workbook.json`` can be imported to define a custom workbook to
 interact with Cowrie data.

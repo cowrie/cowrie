@@ -345,7 +345,7 @@ To contribute improvements to the VirusTotal integration:
 2. Create a feature branch
 3. Make your changes to ``src/cowrie/output/virustotal.py``
 4. Add tests to ``src/cowrie/test/test_virustotal.py``
-5. Run the test suite: ``python -m pytest src/cowrie/test/test_virustotal.py -v``
+5. Run the test suite: ``PYTHONPATH=src python -m unittest cowrie.test.test_virustotal``
 6. Run type checking: ``mypy src/cowrie/output/virustotal.py``
 7. Run linting: ``ruff check src/cowrie/output/virustotal.py``
 8. Submit a pull request

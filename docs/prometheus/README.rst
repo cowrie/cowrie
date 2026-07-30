@@ -71,7 +71,7 @@ Verify it’s running at http://localhost:9090/targets
 
 .. code-block:: bash
 
-    docker run
+    docker run -d \
       --name cowrie \
       --network cowrie-net \
       -p 2222:2222 \
