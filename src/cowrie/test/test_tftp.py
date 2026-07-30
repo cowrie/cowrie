@@ -9,12 +9,14 @@ import struct
 import tempfile
 import unittest
 from typing import TYPE_CHECKING, Any, cast
+from unittest.mock import patch
 
 from twisted.internet import defer
 from twisted.internet import reactor as _reactor
 from twisted.internet.protocol import DatagramProtocol
 from twisted.python.failure import Failure
 
+from cowrie.commands import tftp as tftp_module
 from cowrie.commands.tftp import (
     OPCODE_ACK,
     OPCODE_DATA,
@@ -22,9 +24,11 @@ from cowrie.commands.tftp import (
     OPCODE_RRQ,
     TFTP_BLOCK_SIZE,
     Command_tftp,
+    tftp_rate_limiter,
 )
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -111,6 +115,8 @@ class ShellTftpCommandTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
         self.tr.clear()
         capture_events(self.proto)
+        # The limiter is a module-level singleton; keep tests isolated.
+        tftp_rate_limiter.reset()
 
     def tearDown(self) -> None:
         self.proto.connectionLost()
@@ -189,6 +195,8 @@ class ShellTftpAsyncTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tr.clear()
+        # The limiter is a module-level singleton; keep tests isolated.
+        tftp_rate_limiter.reset()
 
     def test_successful_download(self) -> defer.Deferred[None]:
         """Test successful TFTP download"""
@@ -480,6 +488,8 @@ class TFTPTargetHandlingTests(unittest.TestCase):
         self.proto.makeConnection(self.tr)
         self.tr.clear()
         capture_events(self.proto)
+        # The limiter is a module-level singleton; keep tests isolated.
+        tftp_rate_limiter.reset()
 
     def tearDown(self) -> None:
         self.proto.connectionLost()
@@ -500,6 +510,46 @@ class TFTPTargetHandlingTests(unittest.TestCase):
         output = self.tr.value()
         self.assertIn(b"bad port", output)
         self.assertIn(PROMPT, output)
+
+
+class TFTPRateLimitTests(unittest.TestCase):
+    """tftp must bound how many outbound transfers a session can trigger,
+    the way wget, curl and ftpget do (issue #40394)."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+        capture_events(self.proto)
+        tftp_rate_limiter.reset()
+        self.addCleanup(tftp_rate_limiter.reset)
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_transfers_over_limit_are_refused(self) -> None:
+        limiter = RateLimiter(max_requests=2, window_seconds=60)
+        with patch.object(tftp_module, "tftp_rate_limiter", limiter):
+            # 192.0.2.0/24 is TEST-NET-1: globally routable per the blocklist,
+            # so the limiter is what stops the third attempt, and no packet
+            # reaches a real host.
+            for _ in range(3):
+                self.proto.lineReceived(b"tftp -c get /tmp/rl.txt 192.0.2.1\n")
+
+        self.assertEqual(limiter.check("192.0.2.1"), False)
+        self.assertIn(b"timed out", self.tr.value())
+
+    def test_limit_is_per_host(self) -> None:
+        limiter = RateLimiter(max_requests=1, window_seconds=60)
+        with patch.object(tftp_module, "tftp_rate_limiter", limiter):
+            self.proto.lineReceived(b"tftp -c get /tmp/rl1.txt 192.0.2.1\n")
+            self.proto.lineReceived(b"tftp -c get /tmp/rl2.txt 192.0.2.2\n")
+
+        # Each host consumed its own single allowance.
+        self.assertFalse(limiter.check("192.0.2.1"))
+        self.assertFalse(limiter.check("192.0.2.2"))
+        self.assertNotIn(b"timed out", self.tr.value())
 
 
 class TFTPDownloadLimitTests(unittest.TestCase):

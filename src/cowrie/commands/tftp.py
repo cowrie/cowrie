@@ -21,6 +21,7 @@ from cowrie.core.network import (
     is_valid_port,
     outbound_bind_address,
 )
+from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.customparser import CustomParser, ExitException, OptionNotFound
 
@@ -29,6 +30,15 @@ if TYPE_CHECKING:
     from twisted.python.failure import Failure
 
 commands = {}
+
+# Bound how many outbound TFTP transfers per destination a session can trigger,
+# so the honeypot cannot be used to flood a victim host.
+tftp_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean("shell", "tftp_rate_limit_enabled", fallback=True),
+    max_requests=CowrieConfig.getint("shell", "tftp_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint("shell", "tftp_rate_limit_window", fallback=60),
+    max_keys=CowrieConfig.getint("shell", "tftp_rate_limit_max_hosts", fallback=1000),
+)
 
 # TFTP Opcodes (RFC 1350)
 OPCODE_RRQ = 1  # Read request
@@ -345,6 +355,16 @@ class Command_tftp(HoneyPotCommand):
             self.exit(1)
             return
         self.hostname, self.port = parsed
+
+        # Check rate limit before any outbound traffic
+        if not tftp_rate_limiter.check(self.hostname):
+            self._log.info(
+                "tftp: rate limit exceeded for host: {host}. Simulating transfer timeout",
+                host=self.hostname,
+            )
+            self.write("tftp: Transfer timed out\n")
+            self.exit(1)
+            return
 
         # Check if communication is allowed
         allowed = yield communication_allowed(self.hostname)
