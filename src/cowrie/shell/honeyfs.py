@@ -28,7 +28,8 @@ T_DIR = 1
 T_FILE = 2
 
 # Cap on how many T_LINK hops we follow before declaring a loop.
-_MAX_SYMLINK_DEPTH = 16
+# Shared with cowrie.shell.fs, which resolves the same links.
+MAX_SYMLINK_DEPTH = 16
 
 
 def _find(
@@ -40,7 +41,7 @@ def _find(
     fixed depth, treating link targets as absolute paths from the tree
     root. Returns None for missing paths, broken links, or symlink loops.
     """
-    if _depth > _MAX_SYMLINK_DEPTH:
+    if _depth > MAX_SYMLINK_DEPTH:
         return None
 
     parts = [p for p in virtual_path.split("/") if p]

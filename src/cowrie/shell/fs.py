@@ -254,10 +254,18 @@ class HoneyPotFilesystem:
         ):
             f[A_REALFILE] = realfile
 
-    def getfile(self, path: str, follow_symlinks: bool = True) -> Node | None:
+    def getfile(
+        self, path: str, follow_symlinks: bool = True, _depth: int = 0
+    ) -> Node | None:
         """
         This returns the Cowrie file system object for a path
+
+        Following a T_LINK recurses, so the hop count is capped the same way
+        honeyfs._find caps it: a symlink loop resolves to a broken link
+        instead of exhausting the stack.
         """
+        if _depth > honeyfs.MAX_SYMLINK_DEPTH:
+            return None
         if path == "/":
             return self.fs
         pieces: list[str] = [piece for piece in path.strip("/").split("/") if piece]
@@ -281,13 +289,16 @@ class HoneyPotFilesystem:
                         if x[A_TARGET][0] == "/":
                             # Absolute link
                             fileobj = self.getfile(
-                                x[A_TARGET], follow_symlinks=follow_symlinks
+                                x[A_TARGET],
+                                follow_symlinks=follow_symlinks,
+                                _depth=_depth + 1,
                             )
                         else:
                             # Relative link
                             fileobj = self.getfile(
                                 "/".join((cwd, x[A_TARGET])),
                                 follow_symlinks=follow_symlinks,
+                                _depth=_depth + 1,
                             )
                         if not fileobj:
                             # Broken link
