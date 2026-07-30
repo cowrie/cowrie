@@ -80,9 +80,8 @@ class SessionSetupTests(unittest.TestCase):
         self.assertEqual(sess.session.environ, {"LA�NG": "C�"})
 
 
-class ShellPipelineTests(unittest.TestCase):
-    """The attacker can produce arbitrary bytes inside the shell (echo -e
-    escapes); piping or substituting them must not crash the session."""
+class ShellSessionTestCase(unittest.TestCase):
+    """A live interactive shell session to run attacker input through."""
 
     PROMPT = b"root@unitTest:~# "
 
@@ -95,17 +94,27 @@ class ShellPipelineTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.proto.connectionLost()
 
+    def assertSessionAlive(self) -> None:
+        """The shell returned to its prompt, so the command did not raise out
+        of the session."""
+        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+
+
+class ShellPipelineTests(ShellSessionTestCase):
+    """The attacker can produce arbitrary bytes inside the shell (echo -e
+    escapes); piping or substituting them must not crash the session."""
+
     def test_non_utf8_bytes_piped_to_awk(self) -> None:
         self.proto.lineReceived(b"echo -e '\\xff' | awk '{ print $0 }'\n")
-        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+        self.assertSessionAlive()
 
     def test_non_utf8_bytes_piped_to_tee(self) -> None:
         self.proto.lineReceived(b"echo -e '\\xff' | tee /tmp/out\n")
-        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+        self.assertSessionAlive()
 
     def test_non_utf8_bytes_in_command_substitution(self) -> None:
         self.proto.lineReceived(b"echo $(echo -e '\\xff')\n")
-        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+        self.assertSessionAlive()
 
     def test_history_with_non_utf8_command(self) -> None:
         """A typed line need not be valid UTF-8; history must still list the
@@ -130,23 +139,12 @@ class ShellPipelineTests(unittest.TestCase):
         ):
             self.proto.lineReceived(b"finger\n")
 
-        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+        self.assertSessionAlive()
 
 
-class HttpResponseMetadataTests(unittest.TestCase):
+class HttpResponseMetadataTests(ShellSessionTestCase):
     """Response metadata comes from an attacker-directed server; non-UTF-8
     bytes in it must not crash download handling."""
-
-    PROMPT = b"root@unitTest:~# "
-
-    def setUp(self) -> None:
-        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-        self.tr = FakeTransport("", "31337")
-        self.proto.makeConnection(self.tr)
-        self.tr.clear()
-
-    def tearDown(self) -> None:
-        self.proto.connectionLost()
 
     def test_wget_non_utf8_content_type_and_phrase(self) -> None:
         cmd = Command_wget.__new__(Command_wget)
@@ -189,7 +187,7 @@ class HttpResponseMetadataTests(unittest.TestCase):
         """A non-ASCII URL typed by the attacker must not crash curl
         (url.encode('ascii') raised UnicodeEncodeError)."""
         self.proto.lineReceived("curl http://192.168.1.1/päth\n".encode())
-        self.assertTrue(self.tr.value().endswith(self.PROMPT))
+        self.assertSessionAlive()
 
 
 class ProxyModeTests(unittest.TestCase):
