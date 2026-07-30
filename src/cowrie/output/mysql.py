@@ -89,26 +89,23 @@ class Output(cowrie.core.output.Output):
         # except (MySQLdb.Error, MySQLdb._exceptions.Error) as e:
         except Exception as e:
             self._log.info(
-                "output_mysql: Error {errno}: {errmsg}",
-                errno=e.args[0],
-                errmsg=e.args[1],
+                "output_mysql: Error connecting to database: {error!r}", error=e
             )
 
     def stop(self):
-        self.db.close()
+        if hasattr(self, "db"):
+            self.db.close()
 
     def sqlerror(self, error):
         """
         1146, "Table '...' doesn't exist"
         1406, "Data too long for column '...' at row ..."
         """
-        if error.value.args[0] in (1146, 1406):
-            self._log.info("output_mysql: MySQL Error: {args!r}", args=error.value.args)
+        self._log.info("output_mysql: MySQL Error: {args!r}", args=error.value.args)
+        if error.value.args and error.value.args[0] in (1146, 1406):
             self._log.info(
                 "output_mysql: MySQL schema maybe misconfigured, doublecheck database!"
             )
-        else:
-            self._log.info("output_mysql: MySQL Error: {args!r}", args=error.value.args)
 
     def simpleQuery(self, sql, args):
         """
@@ -217,7 +214,7 @@ class Output(cowrie.core.output.Output):
             self.simpleQuery(
                 "INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) "
                 "VALUES (%s, FROM_UNIXTIME(%s), %s, %s, %s)",
-                (event["session"], event["time"], event.get("url", ""), "NULL", "NULL"),
+                (event["session"], event["time"], event.get("url", ""), None, None),
             )
 
         elif event["eventid"] == "cowrie.session.file_upload":
