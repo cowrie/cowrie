@@ -33,17 +33,14 @@ Add your cowrie user to the ``libvirt`` group to ensure you have permission to r
 
     sudo usermod -aG libvirt "COWRIE_USER_HERE"
 
-Provided images
-***************
+Guest images
+************
 
-To allow for a simple setup, we provide two VM images to use with the backend pool: Ubuntu 18.04
-and OpenWRT. You can download them below, and then edit ``cowrie.cfg``'s ``guest_image_path`` to match the path of the images.
-In the case of OpenWRT you will need two different files. Note that a separate set of configs is provided
-for each image in the default configuration. Choose the one you want to use and comment the other as needed.
-
-* `Ubuntu 18.04 <https://drive.google.com/open?id=1ZNE57lzaGWR427XxynqUVJ_2anTKmFmh>`_.
-* `OpenWRT disk image <https://drive.google.com/open?id=1oBAJc3FX82AkrIwv_GV0uO5R0SMl_i9Q>`_.
-* `OpenWRT kernel image <https://drive.google.com/open?id=17-UARwAd0aNB4Ogc4GvO2GsUSOSg0aaD>`_.
+The pool needs a base VM image to boot guests from. Build one as described in
+`Creating VM images`_ below, then set ``guest_image_path`` in ``cowrie.cfg`` to
+its path. The default configuration ships separate example config blocks for an
+Ubuntu image and an OpenWRT image (OpenWRT needs both a disk and a kernel
+image); enable the block that matches your image and comment out the other.
 
 Backend Pool initialisation
 ***************************
