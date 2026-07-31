@@ -145,9 +145,8 @@ class Command_exit(HoneyPotCommand):
                 code = 2
         # The code is the dying shell's final status: whoever launched the
         # shell (sh -c, su -c, a substitution) reads it from last_exit_code.
-        shell.last_exit_code = code
         self.exit_code = code
-        self.protocol.cmdstack.remove(shell)
+        shell.exit_shell(code)
         # start() follows with exit(); with the shell gone that either resumes
         # the command that launched it (nested shell) or, on an empty cmdstack
         # (top-level shell), ends the session with this exit_code.

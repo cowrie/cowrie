@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+from twisted.internet.defer import Deferred
 from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
@@ -26,7 +27,6 @@ from cowrie.shell.bashparse import (
     BashParser,
     BraceGroup,
     CaseClause,
-    Command,
     ForClause,
     FunctionDef,
     IfClause,
@@ -116,6 +116,13 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
+        # Capture-subshell state (redirect=True): every statement's captured
+        # stdout accumulates here -- one pipe buffer for the whole subshell,
+        # like the pipe bash wires a $(...) child to. capture_done fires with
+        # the buffer when this shell leaves the cmdstack (its queue drained,
+        # or an inner `exit` ended it): the subshell's pipe seeing EOF.
+        self.captured: bytes = b""
+        self.capture_done: Deferred[bytes] | None = None
         # Exit status of the most recent command in this shell, for $? and the
         # && / || short-circuit logic.
         self.last_exit_code: int = 0
@@ -147,43 +154,71 @@ class HoneyPotShell:
         """Run ``source`` as a command substitution and return its captured
         stdout with trailing newlines stripped.
 
-        The inner source runs in a single capture subshell with the same
-        sequencing as a top-level line: a same-line assignment is visible to
-        later statements, ``$?`` carries across them, and ``&&`` / ``||``
-        short-circuit. A nested ``(...)`` group recurses. Output is captured
-        instead of reaching the terminal.
+        The inner source runs in a capture subshell with the same sequencing
+        as a top-level line: a same-line assignment is visible to later
+        statements, ``$?`` carries across them, and ``&&`` / ``||``
+        short-circuit. Output is captured instead of reaching the terminal.
+        A substitution whose commands have not all finished when this returns
+        (an async command such as wget) yields the empty string.
+        """
+        captured: bytes = b""
+
+        def grab(data: bytes) -> None:
+            nonlocal captured
+            captured = data
+
+        self.capture(source).addCallback(grab)
+        # The captured output is attacker bytes and need not be valid UTF-8.
+        return captured.decode(errors="replace").rstrip("\n")
+
+    def capture(self, source: str) -> Deferred[bytes]:
+        """Run ``source`` in a capture subshell and return a Deferred that
+        fires with its accumulated stdout once the subshell finishes.
+
+        The subshell runs its statements through the normal cmdpending /
+        _advance machinery, so a command that pauses on a Deferred (wget)
+        keeps the subshell alive until it completes -- the returned Deferred
+        is the parent's blocking read on the substitution pipe. When every
+        statement completes synchronously the Deferred has already fired by
+        the time this returns.
         """
         shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
+        done: Deferred[bytes] = Deferred()
+        shell.capture_done = done
         self.protocol.cmdstack.append(shell)
-        try:
-            return shell._capture_statements(self.bashparser.parse(source)).rstrip("\n")
-        finally:
-            # Remove the capture shell by identity: an `exit` inside the
-            # substitution already removed it (ending the subshell), and a
-            # blind pop() would remove the real shell instead, leaving the
-            # cmdstack empty and crashing the next command's instantiation.
-            if shell in self.protocol.cmdstack:
-                self.protocol.cmdstack.remove(shell)
+        shell._queue_statements(self.bashparser.parse(source))
+        shell._advance()
+        return done
 
-    def _capture_statements(self, statements: list[Statement]) -> str:
-        """Run statements in this capture shell, concatenating their stdout and
-        honoring &&/|| short-circuit between them (a subshell's gate covers the
-        whole group)."""
-        output = ""
-        for statement in statements:
-            if self not in self.protocol.cmdstack:
-                # An `exit` in the substitution ended this subshell; the
-                # remaining statements never run, as in bash.
-                break
-            if not isinstance(statement, (Command, Subshell)):
-                continue  # ignore a syntax error inside a substitution
-            if self._short_circuit(statement.op):
-                continue
-            if isinstance(statement, Subshell):
-                output += self._capture_statements(statement.statements)
-            else:
-                output += self._capture_command(statement)
-        return output
+    def _harvest_capture(self) -> None:
+        """Fold the finished statement's captured stdout into this capture
+        subshell's buffer and clear ``protocol.pp`` so a statement that builds
+        no pipe (a bare assignment, or a command-not-found) reads as empty
+        output rather than re-reading the previous statement's capture."""
+        if not self.redirect:
+            return
+        pp = self.protocol.pp
+        if pp is not None:
+            self.captured += pp.redirected_data
+            self.protocol.pp = None
+
+    def _complete_capture(self) -> None:
+        """Fire ``capture_done`` with the accumulated output: the subshell is
+        gone and the parent's read on the substitution pipe sees EOF."""
+        if self.capture_done is None:
+            return
+        self._harvest_capture()
+        done, self.capture_done = self.capture_done, None
+        done.callback(self.captured)
+
+    def exit_shell(self, code: int) -> None:
+        """End this shell from the ``exit`` builtin: record the final status
+        for whoever launched it, leave the cmdstack, and complete a capture
+        subshell's substitution."""
+        self.last_exit_code = code
+        if self in self.protocol.cmdstack:
+            self.protocol.cmdstack.remove(self)
+        self._complete_capture()
 
     def lineReceived(self, line: str) -> None:
         """Parse a command line with the Lark grammar and run the result."""
@@ -253,22 +288,6 @@ class HoneyPotShell:
             )
         self.last_exit_code = 2  # bash uses 2 for a syntax error
 
-    def _capture_command(self, command: Command) -> str:
-        """Run one command in this capture shell and return its captured stdout.
-
-        The command's words are expanded against the capture shell's live
-        environment, so it sees inherited and same-substitution variables.
-        ``protocol.pp`` is cleared first so a statement that builds no pipe
-        (a bare assignment, or a command-not-found) reads as empty output
-        rather than re-reading the previous statement's capture.
-        """
-        self.protocol.pp = None
-        self.cmdpending.append(command)
-        self.runCommand()
-        pp = self.protocol.pp
-        # The captured output is attacker bytes and need not be valid UTF-8.
-        return pp.redirected_data.decode(errors="replace") if pp is not None else ""
-
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
 
@@ -278,15 +297,22 @@ class HoneyPotShell:
         nested non-interactive shell that runs a script or ``-c`` commands
         (sh/bash/su) removes itself from the cmdstack and resumes the command
         that launched it -- this is what hands control back once the script's
-        async commands (wget/curl) have all finished. A command-substitution /
-        redirect capture shell is left alone: its creator pops it in a finally
-        when capture returns.
+        async commands (wget/curl) have all finished. A command-substitution
+        capture subshell removes itself and completes its substitution.
         """
         if self.interactive:
             self.showPrompt()
         elif self.reads_stdin:
             # Idle, not done: the channel will deliver more lines or EOF.
             pass
+        elif self.redirect:
+            # Capture subshell: its program has run to completion, so the
+            # substitution's pipe sees EOF. The suspended evaluation that
+            # created it carries on from the capture_done callback, so no
+            # resume() of the shell below is needed here.
+            if self in self.protocol.cmdstack:
+                self.protocol.cmdstack.remove(self)
+            self._complete_capture()
         elif len(self.protocol.cmdstack) == 1:
             # Top-level non-interactive shell (an exec session): end the process
             # with the last command's status so the SSH channel reports a real
@@ -294,13 +320,12 @@ class HoneyPotShell:
             self.protocol.terminal.transport.processEnded(
                 process_status(self.last_exit_code)
             )
-        elif not self.redirect and self.protocol.cmdstack[-1] is self:
+        elif self.protocol.cmdstack[-1] is self:
             # Nested script / `-c` shell whose queue is drained: unwind it and
             # let the launching command carry on. Done here rather than with an
             # unconditional pop() at the call site because an async command
             # (wget/curl) leaves this shell mid-stack until it later resumes and
-            # drains us. A redirect/command-substitution capture shell is
-            # excluded -- it is popped by its own creator in a finally.
+            # drains us.
             self.protocol.cmdstack.remove(self)
             if self.protocol.cmdstack:
                 self.protocol.cmdstack[-1].resume()
@@ -543,6 +568,11 @@ class HoneyPotShell:
         # drop b's output.
         if self.protocol.pp is not None and self.protocol.pp.next_command is not None:
             return
+
+        # A capture subshell folds the statement that just finished into its
+        # output buffer before touching the next one; loop bodies and spliced
+        # groups pass through here too, so every statement is collected.
+        self._harvest_capture()
 
         # A pending break / continue: drop the rest of the current loop body up
         # to the innermost loop continuation, which consumes the signal.
@@ -832,6 +862,12 @@ class HoneyPotShell:
         self.last_exit_code = code
         if self in self.protocol.cmdstack:
             self.protocol.cmdstack.remove(self)
+        if self.capture_done is not None:
+            # A capture subshell's substitution carries on from the
+            # capture_done callback; resuming the shell below as well would
+            # drive it twice.
+            self._complete_capture()
+            return
         if self.protocol.cmdstack:
             self.protocol.cmdstack[-1].resume()
         else:
