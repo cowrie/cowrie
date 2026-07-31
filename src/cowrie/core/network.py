@@ -183,9 +183,15 @@ def resolve_cname(
 
 
 @inlineCallbacks
-def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
+def resolve_allowed(address: str) -> Generator[Deferred, None, str | None]:
     """
-    Return True if communication to this address is allowed, False if blocked (for both IPs and DNS names).
+    Resolve an IP or DNS name once, validate the resolved IP against the
+    blocklist, and return that exact IP (or None if unresolvable or blocked).
+
+    Callers making outbound connections must connect to the returned IP, not
+    the original hostname: re-resolving the hostname at connect time lets a
+    malicious DNS server answer the validation lookup with a public IP and
+    the connection lookup with a private/internal one (DNS rebinding).
     """
     # First, check if it's already a valid IP address (either IPv4 or IPv6)
     ip = is_ip_address(address)
@@ -199,7 +205,7 @@ def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
 
         # If no IP was resolved, it's not allowed
         if result is None:
-            return False
+            return None
         else:
             resolved_ip = result  # type: ignore
 
@@ -207,12 +213,21 @@ def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
     try:
         ip = ipaddress.ip_address(resolved_ip)
     except ValueError:
-        return False  # If the resolved IP is not a valid IP address, return False
+        return None  # If the resolved IP is not a valid IP address
 
     if _is_blocked(ip):
-        return False  # Blocked IP found
+        return None  # Blocked IP found
 
-    return True  # Communication is allowed
+    return resolved_ip
+
+
+@inlineCallbacks
+def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
+    """
+    Return True if communication to this address is allowed, False if blocked (for both IPs and DNS names).
+    """
+    resolved = yield resolve_allowed(address)
+    return resolved is not None
 
 
 class DownloadLimitExceeded(Exception):
