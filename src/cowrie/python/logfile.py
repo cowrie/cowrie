@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from twisted.logger import (
     FilteringLogObserver,
+    ILogObserver,
     InvalidLogLevelError,
     Logger,
     LogLevel,
@@ -20,6 +21,7 @@ from twisted.logger import (
 )
 from twisted.python import context, logfile
 from twisted.python.log import ILogContext
+from zope.interface import directlyProvides
 
 from cowrie.core.config import CowrieConfig
 
@@ -140,6 +142,10 @@ def _observer(outFile: Any) -> Callable[[dict], None]:
                 event = {**event, "log_system": system}
         filtered(event)
 
+    # twistd's AppLogger only accepts the observer natively when it
+    # declares ILogObserver; otherwise it warns and wraps it in a
+    # legacy adapter.
+    directlyProvides(annotated, ILogObserver)
     return annotated
 
 
