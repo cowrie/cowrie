@@ -35,7 +35,7 @@ class Command_ls(HoneyPotCommand):
             return group
 
     def call(self) -> None:
-        path = self.protocol.cwd
+        path = self.cwd
         paths = []
         self.showHidden = False
         self.showDirectories = False
@@ -65,7 +65,7 @@ class Command_ls(HoneyPotCommand):
                 self.showDirectories = True
 
         for arg in args:
-            paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
+            paths.append(self.protocol.fs.resolve_path(arg, self.cwd))
 
         if not paths:
             func(path)

@@ -65,7 +65,7 @@ class Command_unzip(HoneyPotCommand):
 
         filename = self.args[0]
 
-        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        path = self.fs.resolve_path(filename, self.cwd)
         if not path:
             self.write(
                 f"unzip:  cannot find or open {filename}, {filename}.zip or {filename}.ZIP.\n"
@@ -110,7 +110,7 @@ class Command_unzip(HoneyPotCommand):
             return
         self.write(f"Archive:  {filename}\n")
         for f in t:
-            dest = self.fs.resolve_path(f.filename.strip("/"), self.protocol.cwd)
+            dest = self.fs.resolve_path(f.filename.strip("/"), self.cwd)
             self.write(f"  inflating: {f.filename}\n")
             if not len(dest):
                 continue

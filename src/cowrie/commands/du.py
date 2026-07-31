@@ -81,7 +81,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
     def call(self) -> None:
         self.showHidden = False
         self.showDirectories = False
-        path = self.protocol.cwd
+        path = self.cwd
         args = self.args
         if args:
             if "-sh" == args[0]:

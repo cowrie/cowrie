@@ -27,7 +27,7 @@ class Command_find(HoneyPotCommand):
         self.name_pattern = None
         self.type_filter = None
 
-        self.start_path = self.protocol.cwd
+        self.start_path = self.cwd
 
         idx = 0
         while idx < len(self.args):
@@ -68,8 +68,8 @@ class Command_find(HoneyPotCommand):
                     self.exit()
                     return
 
-            elif not arg.startswith("-") and self.start_path == self.protocol.cwd:
-                self.start_path = self.fs.resolve_path(arg, self.protocol.cwd)
+            elif not arg.startswith("-") and self.start_path == self.cwd:
+                self.start_path = self.fs.resolve_path(arg, self.cwd)
 
             else:
                 self.errorWrite(f"find: unknown argument '{arg}'\n")

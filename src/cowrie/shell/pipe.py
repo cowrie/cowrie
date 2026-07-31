@@ -46,11 +46,16 @@ class PipeProtocol:
         next_command: Any,
         redirect: bool = False,
         redirections: list[dict[str, Any]] | None = None,
+        *,
+        cwd: str,
     ) -> None:
         self.cmd = cmd
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
         self.next_command = next_command
+        # Working directory redirection targets resolve against: the cwd of
+        # the shell that built this pipeline, at the moment it was built.
+        self.cwd = cwd
         # True once an upstream command has been wired to write to this
         # command's stdin via a pipe; used to decide whether stdin should be
         # closed (EOF) when no terminal will ever feed it.
@@ -162,7 +167,7 @@ class PipeProtocol:
     def _prepare_stdin(self, target: str) -> None:
         """Load stdin from a redirected file path into input_data."""
         try:
-            path = self.protocol.fs.resolve_path(target, self.protocol.cwd)
+            path = self.protocol.fs.resolve_path(target, self.cwd)
             data = self.protocol.fs.file_contents(path)
         except fs.FileNotFound:
             self._emit_redirection_error(
@@ -177,7 +182,7 @@ class PipeProtocol:
 
     def _prepare_output_file(self, target: str, append: bool) -> dict[str, Any] | None:
         """Resolve and ready an output file, returning metadata for writing."""
-        outfile = self.protocol.fs.resolve_path(target, self.protocol.cwd)
+        outfile = self.protocol.fs.resolve_path(target, self.cwd)
         p = self.protocol.fs.getfile(outfile)
         if outfile == "/dev/null":
             return {

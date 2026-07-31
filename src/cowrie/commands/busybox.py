@@ -77,7 +77,7 @@ class Command_busybox(HoneyPotCommand):
         line = " ".join(self.args)
         cmd = self.args[0]
         cmdclass = self.protocol.getCommand(
-            cmd, self.environ.get("PATH", "").split(":")
+            cmd, self.environ.get("PATH", "").split(":"), self.cwd
         )
         if cmdclass:
             # log found command
@@ -98,6 +98,7 @@ class Command_busybox(HoneyPotCommand):
                 None,
                 redirect=self.protocol.pp.redirect,
                 redirections=self.protocol.pp.redirections,
+                cwd=self.cwd,
             )
 
             # insert the command as we do when chaining commands with pipes

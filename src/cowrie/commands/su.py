@@ -177,16 +177,17 @@ class Command_su(HoneyPotCommand):
         self, effective_user: dict[str, Any], login_shell: bool, preserve_env: bool
     ) -> None:
         """Start an interactive shell as the target user."""
-        # For login shell, change cwd BEFORE creating shell (since shell shows prompt)
-        if login_shell:
-            if self.protocol.fs.exists(effective_user["home"]):
-                self.protocol.cwd = effective_user["home"]
-            else:
-                self.protocol.cwd = "/"
-
         shell = HoneyPotShell(
             self.protocol, interactive=True, effective_user=effective_user
         )
+
+        # A login shell (`su -`) starts in the target user's home; a plain su
+        # keeps the inherited working directory.
+        if login_shell:
+            if self.protocol.fs.exists(effective_user["home"]):
+                shell.cwd = effective_user["home"]
+            else:
+                shell.cwd = "/"
 
         if login_shell:
             # Login shell: reset environment to target user's defaults

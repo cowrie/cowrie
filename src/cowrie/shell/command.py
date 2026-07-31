@@ -71,6 +71,16 @@ class HoneyPotCommand:
         self.exit_code: int = 0
         self.environ = self.protocol.cmdstack[-1].environ
         self.exported = self.protocol.cmdstack[-1].exported
+        # The shell this command runs in (the nearest shell on the cmdstack at
+        # spawn -- wrapper commands like busybox may sit in between). cwd is
+        # snapshot at spawn, as a spawned process inherits its parent's; the
+        # cd builtin mutates the shell's, not its own.
+        self.shell = next(
+            item
+            for item in reversed(self.protocol.cmdstack)
+            if hasattr(item, "queue_line")
+        )
+        self.cwd: str = self.shell.cwd
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
         # used to store STDIN data passed via PIPE
@@ -108,7 +118,7 @@ class HoneyPotCommand:
     def check_arguments(self, application, args):
         files = []
         for arg in args:
-            path = self.fs.resolve_path(arg, self.protocol.cwd)
+            path = self.fs.resolve_path(arg, self.cwd)
             if self.fs.isdir(path):
                 self.errorWrite(
                     f"{application}: error reading `{arg}': Is a directory\n"

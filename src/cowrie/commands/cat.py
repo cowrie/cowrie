@@ -53,7 +53,7 @@ class Command_cat(HoneyPotCommand):
                     self.output(self.input_data)
                     continue
 
-                pname = self.fs.resolve_path(arg, self.protocol.cwd)
+                pname = self.fs.resolve_path(arg, self.cwd)
 
                 if self.fs.isdir(pname):
                     self.errorWrite(f"cat: {arg}: Is a directory\n")

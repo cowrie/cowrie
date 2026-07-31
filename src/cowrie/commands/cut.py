@@ -71,7 +71,7 @@ class Command_cut(HoneyPotCommand):
             self.exit()
         elif args:
             for arg in args:
-                pname = self.fs.resolve_path(arg, self.protocol.cwd)
+                pname = self.fs.resolve_path(arg, self.cwd)
                 try:
                     contents = self.fs.file_contents(pname)
                     self._process(contents)

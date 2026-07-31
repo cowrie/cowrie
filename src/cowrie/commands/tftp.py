@@ -399,7 +399,7 @@ class Command_tftp(HoneyPotCommand):
             return
 
         # Resolve local file path
-        self.fakeoutfile = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
+        self.fakeoutfile = self.fs.resolve_path(self.file_to_get, self.cwd)
         path = self.fakeoutfile.rsplit("/", 1)[0] if "/" in self.fakeoutfile else "/"
 
         if not self.fs.exists(path) or not self.fs.isdir(path):
