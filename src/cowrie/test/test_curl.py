@@ -15,6 +15,7 @@ from unittest import mock
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
+from twisted.web.http_headers import Headers
 
 from cowrie.commands.curl import Command_curl
 from cowrie.core.artifact import Artifact
@@ -207,3 +208,59 @@ class CurlOutboundBindTests(unittest.TestCase):
     def test_default_bind_is_wildcard(self) -> None:
         agent = self._capture_agent(head_request=False, verb="get")
         self.assertEqual(agent._endpointFactory._bindAddress, ("0.0.0.0", 0))
+
+
+class CurlStdoutOutputTests(unittest.TestCase):
+    """curl -o - must stream the fetched body to stdout, like real curl."""
+
+    PROMPT = b"root@unitTest:~# "
+    BODY = b"fetched-body-bytes\n"
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+        self.events = capture_events(self.proto)
+
+        self.tmpdir = tempfile.mkdtemp()
+        self._orig_artifact_dir = Artifact.artifactDir
+        Artifact.artifactDir = self.tmpdir
+
+    def tearDown(self) -> None:
+        Artifact.artifactDir = self._orig_artifact_dir
+        self.proto.connectionLost()
+        for name in os.listdir(self.tmpdir):
+            os.remove(os.path.join(self.tmpdir, name))
+        os.rmdir(self.tmpdir)
+
+    def _serve(self, line: bytes) -> None:
+        """Run a curl line with treq stubbed to deliver BODY for any URL."""
+        headers = Headers({b"content-type": [b"text/html"]})
+        response = mock.Mock(length=len(self.BODY), code=200, phrase=b"OK")
+        response.headers = headers
+
+        def fake_get(url: str, agent: Any = None, **kwargs: Any) -> Any:
+            return defer.succeed(response)
+
+        def fake_collect(resp: Any, collector: Any) -> Any:
+            collector(self.BODY)
+            return defer.succeed(None)
+
+        with (
+            mock.patch("cowrie.commands.curl.treq.get", fake_get),
+            mock.patch("cowrie.commands.curl.treq.collect", fake_collect),
+        ):
+            self.proto.lineReceived(line)
+
+    def test_dash_output_streams_body_to_stdout(self) -> None:
+        self._serve(b"curl -s -o - http://8.8.8.8/page\n")
+        self.assertEqual(self.tr.value(), self.BODY + self.PROMPT)
+
+    def test_dash_output_creates_no_honeyfs_file(self) -> None:
+        self._serve(b"curl -s -o - http://8.8.8.8/page\n")
+        self.assertFalse(self.proto.fs.exists("/root/-"))
+
+    def test_substitution_captures_dash_output_body(self) -> None:
+        self._serve(b"echo got:$(curl -s -o - http://8.8.8.8/page)\n")
+        self.assertEqual(self.tr.value(), b"got:fetched-body-bytes\n" + self.PROMPT)
