@@ -83,3 +83,60 @@ class AsyncSubstitutionTests(unittest.TestCase):
     def test_sync_substitution_still_inline(self) -> None:
         self.proto.lineReceived(b"echo $(echo inner)\n")
         self.assertEqual(self.tr.value(), b"inner\n" + PROMPT)
+
+    def test_exit_inside_substitution(self) -> None:
+        self.proto.lineReceived(b"echo a$(exit)b\n")
+        self.assertEqual(self.tr.value(), b"ab\n" + PROMPT)
+
+    def test_exit_stops_substitution_statements(self) -> None:
+        self.proto.lineReceived(b"echo $(echo x; exit; echo y)\n")
+        self.assertEqual(self.tr.value(), b"x\n" + PROMPT)
+
+    def test_nested_async_substitution(self) -> None:
+        self.proto.lineReceived(b"echo $(echo $(fakeasync))\n")
+        self.assertEqual(self.tr.value(), b"")
+        self.finish_one()
+        self.assertEqual(self.tr.value(), b"async-output\n" + PROMPT)
+
+    def test_conditional_after_async_inside_substitution(self) -> None:
+        self.proto.lineReceived(b"echo $(fakeasync && echo ok)\n")
+        self.finish_one()
+        self.assertEqual(self.tr.value(), b"async-output\nok\n" + PROMPT)
+
+    def test_failed_async_skips_and_arm(self) -> None:
+        self.proto.lineReceived(b"echo $(fakeasync && echo ok)\n")
+        self.finish_one(code=1)
+        self.assertEqual(self.tr.value(), b"async-output\n" + PROMPT)
+
+    def test_loop_inside_substitution(self) -> None:
+        self.proto.lineReceived(b"echo $(for i in a b; do echo $i; done)\n")
+        self.assertEqual(self.tr.value(), b"a\nb\n" + PROMPT)
+
+    def test_line_typed_during_substitution_runs_after(self) -> None:
+        # The typed line is stdin data buffered for the next reader, never a
+        # command inside the subshell: "later" must reach the terminal, not
+        # the capture buffer (x would swallow it).
+        self.proto.lineReceived(b"x=$(fakeasync)\n")
+        self.proto.lineReceived(b"echo later\n")
+        self.assertEqual(self.tr.value(), b"")
+        self.finish_one()
+        self.assertEqual(self.tr.value(), b"later\n" + PROMPT)
+
+    def test_async_substitution_status_reaches_assignment(self) -> None:
+        self.proto.lineReceived(b"x=$(fakeasync)\n")
+        self.finish_one(code=3)
+        self.tr.clear()
+        self.proto.lineReceived(b"echo $?\n")
+        self.assertEqual(self.tr.value(), b"3\n" + PROMPT)
+
+    def test_sync_substitution_status_reaches_assignment(self) -> None:
+        self.proto.lineReceived(b"x=$(exit 5)\n")
+        self.tr.clear()
+        self.proto.lineReceived(b"echo $?\n")
+        self.assertEqual(self.tr.value(), b"5\n" + PROMPT)
+
+    def test_command_status_wins_over_substitution(self) -> None:
+        self.proto.lineReceived(b"echo $(exit 5)\n")
+        self.tr.clear()
+        self.proto.lineReceived(b"echo $?\n")
+        self.assertEqual(self.tr.value(), b"0\n" + PROMPT)
