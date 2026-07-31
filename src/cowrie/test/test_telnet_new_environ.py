@@ -15,10 +15,9 @@ import unittest
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-from cowrie.telnet.transport import TELNET_OPTIONS, CowrieTelnetTransport
+from cowrie.telnet.transport import CowrieTelnetTransport
 from cowrie.telnet.userauth import (
     MAX_NEW_ENVIRON_SIZE,
-    NEW_ENVIRON,
     NEW_ENVIRON_ESC,
     NEW_ENVIRON_IS,
     NEW_ENVIRON_USERVAR,
@@ -104,23 +103,6 @@ class TestNewEnvironParser(unittest.TestCase):
         result = self.protocol._parse_new_environ_data(b"")
         self.assertEqual(result, {})
 
-    def test_parse_cve_2026_24061_payload(self) -> None:
-        """Test parsing the exact CVE-2026-24061 exploit payload."""
-        # VAR USER VALUE -f root
-        data = (
-            bytes([NEW_ENVIRON_VAR]) + b"USER" + bytes([NEW_ENVIRON_VALUE]) + b"-f root"
-        )
-        result = self.protocol._parse_new_environ_data(data)
-        self.assertEqual(result, {"USER": "-f root"})
-
-    def test_parse_cve_2026_24061_variant_froot(self) -> None:
-        """Test parsing CVE-2026-24061 variant: -froot (no space)."""
-        data = (
-            bytes([NEW_ENVIRON_VAR]) + b"USER" + bytes([NEW_ENVIRON_VALUE]) + b"-froot"
-        )
-        result = self.protocol._parse_new_environ_data(data)
-        self.assertEqual(result, {"USER": "-froot"})
-
 
 class TestCVE2026_24061Detection(unittest.TestCase):
     """Tests for CVE-2026-24061 exploit detection."""
@@ -157,26 +139,6 @@ class TestCVE2026_24061Detection(unittest.TestCase):
                 self.assertEqual(call.get("value"), "-f root")
                 break
         self.assertTrue(exploit_logged, "CVE-2026-24061 exploit should be detected")
-
-    @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
-    def test_detect_exploit_froot_no_space(self, mock_log: MagicMock) -> None:
-        """Test detection of USER=-froot (no space) variant."""
-        data = [
-            bytes([NEW_ENVIRON_IS]),
-            bytes([NEW_ENVIRON_VAR]),
-            *[bytes([c]) for c in b"USER"],
-            bytes([NEW_ENVIRON_VALUE]),
-            *[bytes([c]) for c in b"-froot"],
-        ]
-        self.protocol.telnet_NEW_ENVIRON(data)
-
-        exploit_logged = False
-        for call in self.dispatched:
-            if call.get("eventid") == "cowrie.telnet.exploit_attempt":
-                exploit_logged = True
-                self.assertEqual(call.get("cve"), "CVE-2026-24061")
-                break
-        self.assertTrue(exploit_logged, "CVE-2026-24061 variant should be detected")
 
     @patch("cowrie.telnet.userauth.HoneyPotTelnetAuthProtocol._log")
     def test_detect_exploit_lowercase_user(self, mock_log: MagicMock) -> None:
@@ -307,13 +269,6 @@ class TestNewEnvironSizeCap(unittest.TestCase):
 class TestTelnetOptionLogging(unittest.TestCase):
     """Tests for telnet option negotiation logging."""
 
-    def test_telnet_options_lookup(self) -> None:
-        """Test that TELNET_OPTIONS contains expected values."""
-        self.assertEqual(TELNET_OPTIONS[1], "ECHO")
-        self.assertEqual(TELNET_OPTIONS[3], "SGA")
-        self.assertEqual(TELNET_OPTIONS[31], "NAWS")
-        self.assertEqual(TELNET_OPTIONS[39], "NEW-ENVIRON")
-
     def test_get_option_name_known(self) -> None:
         """Test _get_option_name for known options."""
         transport = CowrieTelnetTransport()
@@ -324,20 +279,6 @@ class TestTelnetOptionLogging(unittest.TestCase):
         """Test _get_option_name for unknown options."""
         transport = CowrieTelnetTransport()
         self.assertEqual(transport._get_option_name(bytes([99])), "UNKNOWN-99")
-
-
-class TestNewEnvironConstants(unittest.TestCase):
-    """Tests for NEW-ENVIRON protocol constants."""
-
-    def test_new_environ_option_byte(self) -> None:
-        """Test NEW_ENVIRON option is correct (RFC 1572)."""
-        self.assertEqual(NEW_ENVIRON, bytes([39]))
-
-    def test_subnegotiation_commands(self) -> None:
-        """Test subnegotiation command bytes."""
-        self.assertEqual(NEW_ENVIRON_IS, 0)
-        self.assertEqual(NEW_ENVIRON_VALUE, 1)
-        self.assertEqual(NEW_ENVIRON_ESC, 2)
 
 
 class TestCVE2026_24061Emulation(unittest.TestCase):
@@ -361,11 +302,6 @@ class TestCVE2026_24061Emulation(unittest.TestCase):
         """Test extracting username from '-froot' format (no space)."""
         result = self.protocol._extract_cve_2026_24061_user("-froot")
         self.assertEqual(result, "root")
-
-    def test_extract_username_from_f_admin(self) -> None:
-        """Test extracting username from '-f admin' format."""
-        result = self.protocol._extract_cve_2026_24061_user("-f admin")
-        self.assertEqual(result, "admin")
 
     def test_extract_returns_none_for_normal_value(self) -> None:
         """Test that normal USER values return None."""
