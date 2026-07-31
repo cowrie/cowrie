@@ -128,11 +128,15 @@ class Command_sudo(HoneyPotCommand):
 
             if cmdclass:
                 command = PipeProtocol(
-                    self.protocol, cmdclass, parsed_arguments[1:], None, None,
+                    self.protocol,
+                    cmdclass,
+                    parsed_arguments[1:],
+                    None,
+                    None,
                     cwd=self.cwd,
                     user=self.user,
                 )
-                self.protocol.pp.insert_command(command)
+                self.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....
                 if self.input_data:
                     self.writeBytes(self.input_data)
