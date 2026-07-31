@@ -5,27 +5,33 @@
 from __future__ import annotations
 
 import os
+import socket
 import tempfile
 import unittest
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from unittest import mock
 
-from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
+from twisted.cred.checkers import (
+    AllowAnonymousAccess,
+    InMemoryUsernamePasswordDatabaseDontUse,
+)
 from twisted.cred.portal import Portal
 from twisted.internet import defer
 from twisted.internet import reactor as _reactor
 from twisted.protocols.ftp import FTPFactory, FTPRealm
 
+from cowrie.commands import ftpget as ftpget_module
 from cowrie.commands.ftpget import FTPFileReceiver, ftpget_rate_limiter
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
+from cowrie.test.reactorpump import pump
 
 if TYPE_CHECKING:
     from twisted.internet.address import IPv4Address
     from twisted.internet.interfaces import (
-        IListeningPort,
         IReactorTCP,
         IReactorTime,
     )
@@ -45,26 +51,29 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
+def closed_loopback_port() -> int:
+    """Return a loopback port with nothing listening on it."""
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return cast("tuple[str, int]", probe.getsockname())[1]
+
+
 class ShellFtpGetCommandTests(unittest.TestCase):
     """Tests for cowrie/commands/ftpget.py."""
 
-    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-    tr = FakeTransport("", "31337")
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.proto.makeConnection(cls.tr)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.proto.connectionLost()
-
     def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
         self.tr.clear()
+        capture_events(self.proto)
         # The limiter is a module-level singleton; keep tests isolated.
         ftpget_rate_limiter.reset()
 
-    def test_help_command(self) -> defer.Deferred[None]:
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_help_command(self) -> None:
         usage = (
             b"BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.\n"
             b"\n"
@@ -78,74 +87,34 @@ class ShellFtpGetCommandTests(unittest.TestCase):
             b"    -p PASS     Password\n"
             b"    -P NUM      Port\n\n"
         )
-        d: defer.Deferred[None] = defer.Deferred()
+        self.proto.lineReceived(b"ftpget\n")
+        self.assertEqual(self.tr.value(), usage + PROMPT)
 
-        def do_test():
-            self.proto.lineReceived(b"ftpget\n")
+    def test_insufficient_args(self) -> None:
+        """ftpget with only one argument shows help"""
+        self.proto.lineReceived(b"ftpget host.com\n")
+        self.assertIn(b"Usage: ftpget", self.tr.value())
 
-            def check():
-                self.assertEqual(self.tr.value(), usage + PROMPT)
-                d.callback(None)
+    def test_invalid_directory(self) -> None:
+        """ftpget with an invalid local directory reports the open failure"""
+        self.proto.lineReceived(
+            b"ftpget host.com /nonexistent/dir/file.txt remote.txt\n"
+        )
+        self.assertIn(b"No such file or directory", self.tr.value())
 
-            reactor.callLater(0.1, check)
-
-        reactor.callLater(0, do_test)
-        return d
-
-    def test_insufficient_args(self) -> defer.Deferred[None]:
-        """Test ftpget with only one argument shows help"""
-        d: defer.Deferred[None] = defer.Deferred()
-
-        def do_test():
-            self.proto.lineReceived(b"ftpget host.com\n")
-
-            def check():
-                output = self.tr.value()
-                self.assertIn(b"Usage: ftpget", output)
-                d.callback(None)
-
-            reactor.callLater(0.1, check)
-
-        reactor.callLater(0, do_test)
-        return d
-
-    def test_connection_refused(self) -> defer.Deferred[None]:
-        """Test ftpget with invalid host shows connection error"""
-        d: defer.Deferred[None] = defer.Deferred()
-
-        def do_test():
-            # Use a non-routable IP to guarantee connection failure
-            self.proto.lineReceived(b"ftpget 192.0.2.1 /tmp/test.txt remote.txt\n")
-
-            def check():
-                output = self.tr.value()
-                # Should see an error message
-                self.assertIn(b"ftpget:", output)
-                d.callback(None)
-
-            reactor.callLater(0.5, check)
-
-        reactor.callLater(0, do_test)
-        return d
-
-    def test_invalid_directory(self) -> defer.Deferred[None]:
-        """Test ftpget with invalid local directory"""
-        d: defer.Deferred[None] = defer.Deferred()
-
-        def do_test():
+    def test_connection_refused(self) -> None:
+        """ftpget reports a connection error when nothing listens on the port"""
+        port = closed_loopback_port()
+        with mock.patch.object(
+            ftpget_module, "communication_allowed", lambda _address: defer.succeed(True)
+        ):
             self.proto.lineReceived(
-                b"ftpget host.com /nonexistent/dir/file.txt remote.txt\n"
+                f"ftpget -P {port} 127.0.0.1 /tmp/test.txt remote.txt\n".encode()
             )
-
-            def check():
-                output = self.tr.value()
-                self.assertIn(b"No such file or directory", output)
-                d.callback(None)
-
-            reactor.callLater(0.1, check)
-
-        reactor.callLater(0, do_test)
-        return d
+            self.assertTrue(
+                pump(lambda: b"ftpget:" in self.tr.value()), "no error output"
+            )
+        self.assertIn(b"ftpget: Connection failed", self.tr.value())
 
 
 class FTPFileReceiverSizeLimitTests(unittest.TestCase):
@@ -178,133 +147,131 @@ class FTPFileReceiverSizeLimitTests(unittest.TestCase):
 
 
 class ShellFtpGetAsyncTests(unittest.TestCase):
-    """Async tests for ftpget with mock FTP server"""
+    """Tests for ftpget against a local FTP server.
 
-    proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
-    tr = FakeTransport("", "31337")
-    ftp_port: int
-    ftp_server: IListeningPort | None = None
-    tmpdir: tempfile.TemporaryDirectory
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.proto.makeConnection(cls.tr)
-
-        # Create temp directory for FTP files
-        cls.tmpdir = tempfile.TemporaryDirectory()
-
-        # Create a test file
-        test_file = os.path.join(cls.tmpdir.name, "test.txt")
-        with open(test_file, "w") as f:
-            f.write("Test file content\n")
-
-        # Setup FTP server
-        portal = Portal(FTPRealm(cls.tmpdir.name))
-        checker = InMemoryUsernamePasswordDatabaseDontUse()
-        checker.addUser(b"testuser", b"testpass")
-        checker.addUser(b"anonymous", b"")
-        portal.registerChecker(checker)
-
-        factory = FTPFactory(portal)
-        server = reactor.listenTCP(0, factory, interface="127.0.0.1")
-        cls.ftp_server = server
-        cls.ftp_port = cast("IPv4Address", server.getHost()).port
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.proto.connectionLost()
-        if cls.ftp_server:
-            cls.ftp_server.stopListening()
-        cls.tmpdir.cleanup()
+    The server listens on loopback, which the outbound blocklist refuses, so
+    these tests permit loopback for the duration. Without that the command
+    exits at the address check and no FTP traffic ever flows.
+    """
 
     def setUp(self) -> None:
+        # Per-test protocol and server: these tests turn the reactor, so a
+        # shared protocol would let one test's in-flight transfer land in
+        # another test's output and events.
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
         self.tr.clear()
+        self.events = capture_events(self.proto)
+
+        # Serve test.txt to both the anonymous root and testuser's home.
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+        os.mkdir(os.path.join(self.tmpdir.name, "testuser"))
+        for path in ("test.txt", os.path.join("testuser", "test.txt")):
+            with open(os.path.join(self.tmpdir.name, path), "w") as f:
+                f.write("Test file content\n")
+
+        portal = Portal(
+            FTPRealm(anonymousRoot=self.tmpdir.name, userHome=self.tmpdir.name)
+        )
+        portal.registerChecker(AllowAnonymousAccess())
+        checker = InMemoryUsernamePasswordDatabaseDontUse()
+        checker.addUser("testuser", "testpass")
+        portal.registerChecker(checker)
+        server = reactor.listenTCP(0, FTPFactory(portal), interface="127.0.0.1")
+        self.addCleanup(server.stopListening)
+        self.ftp_port = cast("IPv4Address", server.getHost()).port
+
         # The limiter is a module-level singleton; keep tests isolated.
         ftpget_rate_limiter.reset()
+        allow_loopback = mock.patch.object(
+            ftpget_module, "communication_allowed", lambda _address: defer.succeed(True)
+        )
+        allow_loopback.start()
+        self.addCleanup(allow_loopback.stop)
 
-    def test_successful_download_anonymous(self) -> defer.Deferred[None]:
-        """Test successful FTP download with anonymous login"""
-        cmd = f"ftpget 127.0.0.1 -P {self.ftp_port} /tmp/downloaded.txt test.txt\n"
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def downloaded(self) -> list[dict[str, Any]]:
+        return [
+            e for e in self.events if e["eventid"] == "cowrie.session.file_download"
+        ]
+
+    def failed(self) -> list[dict[str, Any]]:
+        return [
+            e
+            for e in self.events
+            if e["eventid"] == "cowrie.session.file_download.failed"
+        ]
+
+    def test_successful_download_anonymous(self) -> None:
+        """ftpget without credentials downloads via anonymous login"""
+        cmd = f"ftpget -P {self.ftp_port} 127.0.0.1 /tmp/downloaded.txt test.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.downloaded()), "no file_download event dispatched"
+        )
+        self.assertEqual(
+            self.downloaded()[0]["url"], f"ftp://127.0.0.1:{self.ftp_port}/test.txt"
+        )
+        output = self.tr.value()
+        self.assertNotIn(b"ftpget:", output)
+        self.assertTrue(output.endswith(PROMPT))
 
-        def check():
-            output = self.tr.value()
-            # Should complete without error and show prompt
-            self.assertIn(PROMPT, output)
-            # Should not show error messages
-            self.assertNotIn(b"ftpget: ", output)
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
-
-    def test_successful_download_with_auth(self) -> defer.Deferred[None]:
-        """Test successful FTP download with username/password"""
-        cmd = f"ftpget -u testuser -p testpass 127.0.0.1 -P {self.ftp_port} /tmp/downloaded2.txt test.txt\n"
+    def test_successful_download_with_auth(self) -> None:
+        """ftpget -u/-p downloads via a username/password login"""
+        cmd = (
+            f"ftpget -u testuser -p testpass -P {self.ftp_port} "
+            "127.0.0.1 /tmp/downloaded2.txt test.txt\n"
+        )
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.downloaded()), "no file_download event dispatched"
+        )
+        self.assertEqual(
+            self.downloaded()[0]["url"],
+            f"ftp://testuser:testpass@127.0.0.1:{self.ftp_port}/test.txt",
+        )
+        self.assertNotIn(b"ftpget:", self.tr.value())
 
-        def check():
-            output = self.tr.value()
-            self.assertIn(PROMPT, output)
-            self.assertNotIn(b"error", output.lower())
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
-
-    def test_verbose_output(self) -> defer.Deferred[None]:
-        """Test ftpget -v shows FTP commands"""
-        cmd = f"ftpget -v 127.0.0.1 -P {self.ftp_port} /tmp/downloaded3.txt test.txt\n"
+    def test_verbose_output(self) -> None:
+        """ftpget -v prints the FTP conversation"""
+        cmd = f"ftpget -v -P {self.ftp_port} 127.0.0.1 /tmp/downloaded3.txt test.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.downloaded()), "no file_download event dispatched"
+        )
+        output = self.tr.value()
+        self.assertIn(b"Connecting to 127.0.0.1", output)
+        self.assertIn(b"ftpget: cmd RETR test.txt", output)
 
-        def check():
-            output = self.tr.value()
-            # Verbose mode should show FTP commands
-            self.assertIn(b"Connecting", output)
-            self.assertIn(b"ftpget: cmd", output)
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
-
-    def test_file_not_found(self) -> defer.Deferred[None]:
-        """Test FTP download of non-existent file"""
-        cmd = f"ftpget 127.0.0.1 -P {self.ftp_port} /tmp/notfound.txt nonexistent.txt\n"
+    def test_file_not_found(self) -> None:
+        """A missing remote file dispatches a failed-download event"""
+        cmd = f"ftpget -P {self.ftp_port} 127.0.0.1 /tmp/notfound.txt nonexistent.txt\n"
         self.proto.lineReceived(cmd.encode())
 
-        d: defer.Deferred[None] = defer.Deferred()
+        self.assertTrue(
+            pump(lambda: self.failed()), "no file_download.failed event dispatched"
+        )
+        self.assertIn(b"ftpget: FTP error", self.tr.value())
 
-        def check():
-            output = self.tr.value()
-            # Should show error for file not found
-            self.assertIn(b"ftpget:", output)
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
-
-    def test_non_blocking_behavior(self) -> defer.Deferred[None]:
-        """Test that FTP download doesn't block the reactor"""
-        # Start FTP download
-        cmd = f"ftpget 127.0.0.1 -P {self.ftp_port} /tmp/nonblock.txt test.txt\n"
+    def test_non_blocking_behavior(self) -> None:
+        """A line typed during the transfer runs after ftpget completes"""
+        cmd = f"ftpget -P {self.ftp_port} 127.0.0.1 /tmp/nonblock.txt test.txt\n"
         self.proto.lineReceived(cmd.encode())
+        self.proto.lineReceived(b"echo queued_after_download\n")
 
-        # Immediately try another command
-        self.proto.lineReceived(b"echo test\n")
+        self.assertTrue(
+            pump(lambda: b"queued_after_download\n" in self.tr.value()),
+            "queued command did not run",
+        )
+        self.assertEqual(len(self.downloaded()), 1)
 
-        d: defer.Deferred[None] = defer.Deferred()
 
-        def check():
-            output = self.tr.value()
-            # Should see echo output, proving shell wasn't blocked
-            self.assertIn(b"test", output)
-            d.callback(None)
-
-        reactor.callLater(1.0, check)
-        return d
+if __name__ == "__main__":
+    unittest.main()
