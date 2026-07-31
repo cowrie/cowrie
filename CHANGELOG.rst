@@ -59,6 +59,9 @@ Release 3.0.0
 * Bundled ``cowrie.cfg.dist`` has ``contents_path``, ``filesystem``,
   and ``processes`` commented out (each documents how to override).
 * ``data_path`` removed from cfg.dist.
+* The ``crashreporter`` output plugin is removed, along with its
+  ``[output_crashreporter]`` config section. It reported Python
+  exceptions to api.cowrie.org and was disabled by default.
 * New ``[honeypot] log_level`` option sets the diagnostic verbosity of
   ``cowrie.log`` -- and of stdout in foreground/Docker mode -- (default
   ``info``), with per-subsystem overrides via ``log_level_<namespace>``

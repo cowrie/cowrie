@@ -1242,12 +1242,6 @@ enabled = false
 bot_token = 123456789:AbCDEfGhiJkLmnOpQRstUVWxYZ
 chat_id = 987654321
 
-# The crashreporter sends data on Python exceptions to api.cowrie.org
-# To disable set `enabled = false` in cowrie.cfg
-[output_crashreporter]
-enabled = false
-debug = false
-
 # Reports login attempts to AbuseIPDB. A short guide is in the original
 # pull request on GitHub: https://github.com/cowrie/cowrie/pull/1346
 [output_abuseipdb]
