@@ -64,6 +64,12 @@ SPDX-FileCopyrightText = "2021-2026 Michel Oosterhof <michel@oosterhof.net>"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
+path = "flake.lock"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Michel Oosterhof <michel@oosterhof.net>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
 path = ".pyre_configuration"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2021-2026 Michel Oosterhof <michel@oosterhof.net>"
