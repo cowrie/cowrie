@@ -12,7 +12,11 @@ from twisted.names import dns
 from twisted.names import error as names_error
 from twisted.python import log
 
-from cowrie.core.network import communication_allowed, resolve_cname
+from cowrie.core.network import (
+    communication_allowed,
+    resolve_allowed,
+    resolve_cname,
+)
 
 # The communication_allowed function and other dependencies would already be imported here
 
@@ -217,6 +221,49 @@ class TestResolveCnameChain(unittest.TestCase):
             "b.example.com": [_cname("a.example.com")],
         }
         self.assertIsNone(self._resolve(records, "a.example.com"))
+
+
+class TestResolveAllowed(unittest.TestCase):
+    """resolve_allowed must resolve a target once, validate that exact IP,
+    and hand the pinned IP back to the caller, so the address that was
+    validated is the same one the caller connects to (no DNS-rebinding
+    window between validation and connect)."""
+
+    def _resolve(
+        self, records: dict[str, list[dns.RRHeader]], name: str
+    ) -> str | None:
+        with mock.patch(
+            "cowrie.core.network.client.lookupAddress",
+            side_effect=_fake_lookup(records),
+        ):
+            results: list[str | None] = []
+            resolve_allowed(name).addBoth(results.append)
+        self.assertEqual(len(results), 1)
+        return results[0]
+
+    def test_public_ip_passes_through(self) -> None:
+        self.assertEqual(self._resolve({}, "8.8.8.8"), "8.8.8.8")
+
+    def test_blocked_ip_returns_none(self) -> None:
+        self.assertIsNone(self._resolve({}, "10.1.1.1"))
+
+    def test_hostname_resolves_to_pinned_ip(self) -> None:
+        records = {"dl.example.com": [_a("8.8.4.4")]}
+        self.assertEqual(self._resolve(records, "dl.example.com"), "8.8.4.4")
+
+    def test_hostname_resolving_to_blocked_ip_returns_none(self) -> None:
+        records = {"rebind.example.com": [_a("127.0.0.1")]}
+        self.assertIsNone(self._resolve(records, "rebind.example.com"))
+
+    def test_unresolvable_hostname_returns_none(self) -> None:
+        self.assertIsNone(self._resolve({}, "nonexistent.example.com"))
+
+    def test_cname_chain_resolves_to_pinned_ip(self) -> None:
+        records = {
+            "cdn.example.com": [_cname("origin.example.org")],
+            "origin.example.org": [_a("8.8.8.8")],
+        }
+        self.assertEqual(self._resolve(records, "cdn.example.com"), "8.8.8.8")
 
 
 class TestResolveCnameLogging(unittest.TestCase):
