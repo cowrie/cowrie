@@ -29,5 +29,5 @@ def pump(predicate: Callable[[], object], timeout: float = 5.0) -> bool:
     while time.monotonic() < deadline:
         if predicate():
             return True
-        _reactor.iterate(0.01)  # type: ignore[attr-defined]
+        _reactor.iterate(0.01)
     return bool(predicate())

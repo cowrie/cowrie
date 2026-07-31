@@ -4,13 +4,16 @@
 
 import unittest
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest import mock
 
 from twisted.internet.defer import Deferred, fail, succeed
 from twisted.names import dns
 from twisted.names import error as names_error
 from twisted.python import log
+
+if TYPE_CHECKING:
+    from twisted.python.failure import Failure
 
 from cowrie.core.network import (
     communication_allowed,
@@ -29,11 +32,13 @@ class TestCommunicationAllowed(unittest.TestCase):
             "cowrie.core.network.client.lookupAddress",
             side_effect=_fake_lookup({}),
         ):
-            results: list[bool] = []
+            results: list[bool | Failure] = []
             communication_allowed(address).addBoth(results.append)
         self.assertEqual(len(results), 1)
-        self.assertIsInstance(results[0], bool)
-        return results[0]
+        value = results[0]
+        self.assertIsInstance(value, bool)
+        assert isinstance(value, bool)
+        return value
 
     def test_public_addresses_allowed(self) -> None:
         for address in (

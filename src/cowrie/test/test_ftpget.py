@@ -177,7 +177,9 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         )
         portal.registerChecker(AllowAnonymousAccess())
         checker = InMemoryUsernamePasswordDatabaseDontUse()
-        checker.addUser("testuser", "testpass")
+        # The stub wants bytes, but twisted's FTP server logs users in with
+        # str credentials, and the checker compares them by equality.
+        checker.addUser("testuser", "testpass")  # type: ignore[arg-type]
         portal.registerChecker(checker)
         server = reactor.listenTCP(0, FTPFactory(portal), interface="127.0.0.1")
         self.addCleanup(server.stopListening)
