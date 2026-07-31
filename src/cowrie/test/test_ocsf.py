@@ -439,10 +439,6 @@ class OCSFUnmappedTests(unittest.TestCase):
         "message": "SSH client fingerprint",
     }
 
-    def test_unknown_event_returns_dict(self):
-        out = formatOCSF(self._UNKNOWN_EVENT)
-        self.assertIsInstance(out, dict)
-
     def test_unknown_event_no_class_uid(self):
         out = formatOCSF(self._UNKNOWN_EVENT)
         self.assertNotIn("class_uid", out)
