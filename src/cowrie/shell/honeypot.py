@@ -17,7 +17,9 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from twisted.internet.defer import Deferred
+    from twisted.python.failure import Failure
+
+from twisted.internet.defer import Deferred, succeed
 from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
@@ -150,26 +152,23 @@ class HoneyPotShell:
         """Return $? -- the last command's exit status as a string."""
         return str(self.last_exit_code)
 
-    def command_substitution(self, source: str) -> str:
-        """Run ``source`` as a command substitution and return its captured
-        stdout with trailing newlines stripped.
+    def command_substitution(self, source: str) -> Deferred[str]:
+        """Run ``source`` as a command substitution: the returned Deferred
+        fires with its captured stdout, trailing newlines stripped, once the
+        subshell finishes -- the evaluator awaits it, as bash blocks on the
+        substitution pipe.
 
         The inner source runs in a capture subshell with the same sequencing
         as a top-level line: a same-line assignment is visible to later
         statements, ``$?`` carries across them, and ``&&`` / ``||``
         short-circuit. Output is captured instead of reaching the terminal.
-        A substitution whose commands have not all finished when this returns
-        (an async command such as wget) yields the empty string.
         """
-        captured: bytes = b""
 
-        def grab(data: bytes) -> None:
-            nonlocal captured
-            captured = data
+        def decode(data: bytes) -> str:
+            # The captured output is attacker bytes and need not be valid UTF-8.
+            return data.decode(errors="replace").rstrip("\n")
 
-        self.capture(source).addCallback(grab)
-        # The captured output is attacker bytes and need not be valid UTF-8.
-        return captured.decode(errors="replace").rstrip("\n")
+        return self.capture(source).addCallback(decode)
 
     def capture(self, source: str) -> Deferred[bytes]:
         """Run ``source`` in a capture subshell and return a Deferred that
@@ -330,6 +329,14 @@ class HoneyPotShell:
             if self.protocol.cmdstack:
                 self.protocol.cmdstack[-1].resume()
 
+    def _statement_failed(self, failure: Failure) -> None:
+        """An error escaped a statement's expansion or setup: log it, give the
+        statement bash's generic failure status, and carry on with the queue --
+        a shell that stops responding would fingerprint the honeypot."""
+        self._log.failure("shell statement failed", failure=failure)
+        self.last_exit_code = 1
+        self._advance()
+
     def _short_circuit(self, op: str | None) -> bool:
         """Whether a statement joined by ``op`` should be skipped given the last
         command's exit status: ``&&`` after a failure, ``||`` after a success.
@@ -396,7 +403,15 @@ class HoneyPotShell:
 
     def _run_for(self, node: ForClause) -> None:
         """``for VAR in WORDS; do BODY; done`` over the expanded word list."""
-        values = self.bashparser.evaluate(node.items) if node.items else []
+        if node.items:
+            d = Deferred.fromCoroutine(self.bashparser.evaluate(node.items))
+        else:
+            d = succeed([])
+        d.addCallback(self._run_for_expanded, node)
+        d.addErrback(self._statement_failed)
+
+    def _run_for_expanded(self, values: list[str], node: ForClause) -> None:
+        """Loop over the expanded ``in`` list, one body pass per word."""
         values = values[:MAX_FOR_ITEMS]
         if not values:
             # A loop over an empty list runs the body zero times and succeeds.
@@ -482,7 +497,16 @@ class HoneyPotShell:
 
     def _run_case(self, node: CaseClause) -> None:
         """``case WORD in PATTERN) BODY ;; ... esac`` -- first match wins."""
-        word = " ".join(self.bashparser.evaluate(node.word)) if node.word else ""
+        if node.word:
+            d = Deferred.fromCoroutine(self.bashparser.evaluate(node.word))
+        else:
+            d = succeed([])
+        d.addCallback(self._run_case_expanded, node)
+        d.addErrback(self._statement_failed)
+
+    def _run_case_expanded(self, tokens: list[str], node: CaseClause) -> None:
+        """Match the expanded case word against each pattern arm."""
+        word = " ".join(tokens)
         for patterns, body in node.items:
             for pattern in patterns:
                 if fnmatch.fnmatchcase(word, self._strip_quotes(pattern)):
@@ -560,8 +584,6 @@ class HoneyPotShell:
         return True, replaces
 
     def runCommand(self):
-        pp = None
-
         # Mid-pipeline: an earlier stage just finished but a downstream command
         # has not run yet. Let the pipe machinery drive the rest before touching
         # the next statement -- otherwise `a | b; c` would run c before b and
@@ -649,8 +671,20 @@ class HoneyPotShell:
             return
 
         # Expand the statement's words against the *current* environment, just
-        # before it runs, so a same-line `x=hi; echo $x` sees the value.
-        cmdAndArgs = self.bashparser.evaluate(command)
+        # before it runs, so a same-line `x=hi; echo $x` sees the value. A
+        # command substitution in a word suspends the expansion until its
+        # subshell finishes; the statement then runs from the callback. With
+        # only synchronous substitutions the Deferred has already fired and
+        # the statement runs before this returns.
+        d = Deferred.fromCoroutine(self.bashparser.evaluate(command))
+        d.addCallback(self._run_expanded)
+        d.addErrback(self._statement_failed)
+
+    def _run_expanded(self, cmdAndArgs: list[str]) -> None:
+        """Run one expanded simple command / pipeline: split off leading
+        assignments, resolve each stage to a command class, wire the pipe and
+        redirections, and start it."""
+        pp = None
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
