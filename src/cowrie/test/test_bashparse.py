@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import unittest
 
+from twisted.internet.defer import Deferred, ensureDeferred, succeed
+
 from cowrie.shell.bashparse import (
     BashParser,
     BraceGroup,
@@ -37,10 +39,19 @@ class FakeContext:
     def get_status(self) -> str:
         return self.status
 
-    def command_substitution(self, source: str) -> str:
+    def command_substitution(self, source: str) -> Deferred[str]:
         self.substitutions.append(source)
         # Echo back a marker so tests can assert the captured source text.
-        return f"<{source.strip()}>"
+        return succeed(f"<{source.strip()}>")
+
+
+def evaluate_now(parser: BashParser, statement: Command) -> list[str]:
+    """Drive the evaluator coroutine; every await here resolves synchronously,
+    so the result is available before this returns."""
+    results: list[list[str]] = []
+    ensureDeferred(parser.evaluate(statement)).addCallback(results.append)
+    assert results, "evaluation suspended unexpectedly"
+    return results[0]
 
 
 class BashParseTokenTests(unittest.TestCase):
@@ -53,7 +64,7 @@ class BashParseTokenTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return self.parser.evaluate(statement)
+        return evaluate_now(self.parser, statement)
 
     def test_simple_words(self) -> None:
         self.assertEqual(self._tokens("echo hello world"), ["echo", "hello", "world"])
@@ -93,7 +104,7 @@ class BashParseVariableTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return self.parser.evaluate(statement)
+        return evaluate_now(self.parser, statement)
 
     def test_bare_variable_expands(self) -> None:
         self.assertEqual(self._tokens("echo $LOGNAME"), ["echo", "root"])
@@ -143,7 +154,7 @@ class BashParseRedirectionTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return self.parser.evaluate(statement)
+        return evaluate_now(self.parser, statement)
 
     def test_stdout_redirect(self) -> None:
         self.assertEqual(self._tokens("echo a > f"), ["echo", "a", ">", "f"])
@@ -189,7 +200,7 @@ class BashParseStatementTests(unittest.TestCase):
 
     def _eval(self, statement: object) -> list[str]:
         assert isinstance(statement, Command)
-        return self.parser.evaluate(statement)
+        return evaluate_now(self.parser, statement)
 
     def test_semicolon_splits(self) -> None:
         statements = self.parser.parse("echo a; echo b")
@@ -289,7 +300,7 @@ class BashParseCommentTests(unittest.TestCase):
     def _tokens(self, line: str) -> list[str]:
         statement = self.parser.parse(line)[0]
         assert isinstance(statement, Command)
-        return self.parser.evaluate(statement)
+        return evaluate_now(self.parser, statement)
 
     def test_trailing_comment_dropped(self) -> None:
         self.assertEqual(self._tokens("echo foo #comment"), ["echo", "foo"])
@@ -318,7 +329,7 @@ class BashParseCompoundTests(unittest.TestCase):
 
     def _eval(self, command: object) -> list[str]:
         assert isinstance(command, Command)
-        return self.parser.evaluate(command)
+        return evaluate_now(self.parser, command)
 
     def test_for_clause(self) -> None:
         node = self._one("for i in a b c; do echo $i; done")

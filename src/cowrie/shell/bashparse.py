@@ -64,7 +64,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
 
 from lark import Lark, Token, Tree
 from lark.exceptions import LarkError
@@ -187,8 +190,9 @@ class ShellContext(Protocol):
         """Return ``$?`` -- the last command's exit status, as a string."""
         ...
 
-    def command_substitution(self, source: str) -> str:
-        """Execute ``source`` and return its captured stdout (newlines stripped)."""
+    def command_substitution(self, source: str) -> Awaitable[str]:
+        """Execute ``source``; the awaitable completes with its captured stdout
+        (trailing newlines stripped) once every command in it has finished."""
         ...
 
 
@@ -777,24 +781,27 @@ class BashParser:
 
     # -- word evaluation ----------------------------------------------------
 
-    def evaluate(self, command: Command) -> list[str]:
+    async def evaluate(self, command: Command) -> list[str]:
         """Expand a command's words against the live context, now.
 
         Operator strings pass through; each word tree is evaluated against the
         current shell (variables, command substitution), and a word that
-        resolves to nothing (an unquoted unset reference) is dropped.
+        resolves to nothing (an unquoted unset reference) is dropped. A
+        command substitution suspends the expansion until its subshell
+        finishes, as bash blocks on the substitution pipe; substitutions
+        therefore run left to right, each to completion before the next.
         """
         tokens: list[str] = []
         for item in command.items:
             if isinstance(item, str):
                 tokens.append(item)
                 continue
-            value = self._eval_word(command.line, item)
+            value = await self._eval_word(command.line, item)
             if value is not None:
                 tokens.append(value)
         return tokens
 
-    def _eval_word(self, line: str, word: Tree) -> str | None:
+    async def _eval_word(self, line: str, word: Tree) -> str | None:
         """Evaluate a word to its final string, or None if it should be dropped.
 
         A word is dropped when it is exactly an unquoted reference to an unset
@@ -819,10 +826,10 @@ class BashParser:
 
         parts: list[str] = []
         for atom in atoms:
-            parts.append(self._eval_atom(line, atom))
+            parts.append(await self._eval_atom(line, atom))
         return "".join(parts)
 
-    def _eval_atom(self, line: str, atom: Tree | Token) -> str:
+    async def _eval_atom(self, line: str, atom: Tree | Token) -> str:
         if isinstance(atom, Token):
             if atom.type == "ESC":
                 # Unquoted backslash escape: the backslash is removed.
@@ -832,16 +839,20 @@ class BashParser:
         if atom.data == "sq":
             return self._leaf_value(atom)[1:-1]  # strip surrounding quotes
         if atom.data == "dq":
-            return self._eval_dquoted(line, atom)
+            return await self._eval_dquoted(line, atom)
         if atom.data == "dollar_var" or atom.data == "dollar_brace":
             return self._expand_embedded(atom)
         if atom.data == "cmdsub":
-            return self.context.command_substitution(self._group_source(line, atom))
+            return await self.context.command_substitution(
+                self._group_source(line, atom)
+            )
         if atom.data == "backtick":
-            return self.context.command_substitution(self._backtick_source(line, atom))
+            return await self.context.command_substitution(
+                self._backtick_source(line, atom)
+            )
         return ""
 
-    def _eval_dquoted(self, line: str, dq: Tree) -> str:
+    async def _eval_dquoted(self, line: str, dq: Tree) -> str:
         parts: list[str] = []
         for part in dq.children:
             if isinstance(part, Token):
@@ -854,11 +865,15 @@ class BashParser:
                 parts.append(self._expand_embedded(part))
             elif part.data == "cmdsub":
                 parts.append(
-                    self.context.command_substitution(self._group_source(line, part))
+                    await self.context.command_substitution(
+                        self._group_source(line, part)
+                    )
                 )
             elif part.data == "backtick":
                 parts.append(
-                    self.context.command_substitution(self._backtick_source(line, part))
+                    await self.context.command_substitution(
+                        self._backtick_source(line, part)
+                    )
                 )
         return "".join(parts)
 

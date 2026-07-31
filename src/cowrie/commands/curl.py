@@ -256,7 +256,8 @@ class Command_curl(HoneyPotCommand):
 
         for opt in optlist:
             if opt[0] == "-o":
-                self.outfile = opt[1]
+                # `-o -` writes the body to stdout, same as no -o at all.
+                self.outfile = opt[1] if opt[1] != "-" else None
             if opt[0] == "-O":
                 self.outfile = urldata.path.split("/")[-1]
                 if not len(self.outfile.strip()) or not urldata.path.count("/"):
