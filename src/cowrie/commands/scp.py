@@ -123,7 +123,7 @@ class Command_scp(HoneyPotCommand):
             f = self.fs.getfile(fname)
             if f:
                 self.fs.update_realfile(f, hash_path)
-                self.fs.chown(fname, self.current_user["uid"], self.current_user["gid"])
+                self.fs.chown(fname, self.user["uid"], self.user["gid"])
 
     def parse_scp_data(self, data: bytes) -> bytes:
         # scp data format:
@@ -174,8 +174,8 @@ class Command_scp(HoneyPotCommand):
                     try:
                         self.fs.mkfile(
                             outfile,
-                            self.current_user["uid"],
-                            self.current_user["gid"],
+                            self.user["uid"],
+                            self.user["gid"],
                             filesize,
                             fileperm,
                         )

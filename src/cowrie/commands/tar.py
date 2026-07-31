@@ -27,8 +27,8 @@ class Command_tar(HoneyPotCommand):
             if p and not self.fs.exists(p):
                 self.fs.mkdir(
                     p,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
                     f.mode,
                     f.mtime,
@@ -83,8 +83,8 @@ class Command_tar(HoneyPotCommand):
             if f.isdir():
                 self.fs.mkdir(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
                     f.mode,
                     f.mtime,
@@ -93,8 +93,8 @@ class Command_tar(HoneyPotCommand):
                 self.mkfullpath(posixpath.dirname(dest), f)
                 self.fs.mkfile(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     f.size,
                     f.mode,
                     f.mtime,

@@ -103,7 +103,7 @@ class Command_ssh(HoneyPotCommand):
             )
 
         self.host = host
-        self.user = user
+        self.remote_user = user
 
         self.write(
             f"The authenticity of host '{self.host} ({self.ip})' \
@@ -121,7 +121,7 @@ class Command_ssh(HoneyPotCommand):
             f"Warning: Permanently added '{self.host}' (RSA) to the \
             list of known hosts.\n"
         )
-        self.write(f"{self.user}@{self.host}'s password: ")
+        self.write(f"{self.remote_user}@{self.host}'s password: ")
         self.protocol.password_input = True
 
     def wait(self, line: str) -> None:

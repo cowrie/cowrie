@@ -206,7 +206,7 @@ gcc version {version} (Debian {version}-5)"""
 
         # Create file for the protocol
         self.fs.mkfile(
-            outfile, self.protocol.user.uid, self.protocol.user.gid, len(data), 33188
+            outfile, self.user["uid"], self.user["gid"], len(data), 33188
         )
         self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
 

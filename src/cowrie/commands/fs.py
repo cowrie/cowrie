@@ -298,7 +298,7 @@ class Command_cd(HoneyPotCommand):
 
     def call(self) -> None:
         if not self.args or self.args[0] == "~":
-            pname = self.protocol.user.avatar.home
+            pname = self.user["home"]
         else:
             pname = self.args[0]
         newpath = ""
@@ -583,7 +583,7 @@ class Command_mkdir(HoneyPotCommand):
                 return
             try:
                 self.fs.mkdir(
-                    pname, self.protocol.user.uid, self.protocol.user.gid, 4096, 16877
+                    pname, self.user["uid"], self.user["gid"], 4096, 16877
                 )
             except fs.FileNotFound:
                 self.errorWrite(
@@ -673,7 +673,7 @@ class Command_touch(HoneyPotCommand):
                 return
 
             self.fs.mkfile(
-                pname, self.protocol.user.uid, self.protocol.user.gid, 0, 33188
+                pname, self.user["uid"], self.user["gid"], 0, 33188
             )
 
 

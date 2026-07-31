@@ -71,6 +71,7 @@ class TempFileNamingTests(unittest.TestCase):
             input_data=None,
             next_command=None,
             cwd="/root",
+            user={"uid": 0, "gid": 0, "username": "root", "home": "/root"},
         )
         safeoutfile = pipe._create_redirect_target("out.txt")
         assert safeoutfile is not None
@@ -90,6 +91,7 @@ class TempFileNamingTests(unittest.TestCase):
         cmd = Command_gcc.__new__(Command_gcc)
         cmd.fs = _StubFilesystem()
         cmd.cwd = "/root"
+        cmd.user = {"uid": 0, "gid": 0, "username": "root", "home": "/root"}
         cmd.protocol = SimpleNamespace(
             user=SimpleNamespace(uid=0, gid=0),
             commands={},

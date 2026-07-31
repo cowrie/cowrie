@@ -332,7 +332,7 @@ Download a file via FTP
         self.fs.update_realfile(
             self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
         )
-        self.fs.chown(self.fakeoutfile, self.protocol.user.uid, self.protocol.user.gid)
+        self.fs.chown(self.fakeoutfile, self.user["uid"], self.user["gid"])
 
         self.exit()
 

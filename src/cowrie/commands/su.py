@@ -114,7 +114,7 @@ class Command_su(HoneyPotCommand):
         }
 
         # Root doesn't need to enter a password (check effective uid, not session uid)
-        if self.current_user["uid"] == 0:
+        if self.user["uid"] == 0:
             self.switch_user()
         else:
             # Prompt for password (hidden input)
@@ -152,10 +152,11 @@ class Command_su(HoneyPotCommand):
         self, command: str, effective_user: dict[str, Any], preserve_env: bool
     ) -> None:
         """Execute a single command as the target user."""
-        # Create a non-interactive shell to run the command
-        shell = HoneyPotShell(
-            self.protocol, interactive=False, effective_user=effective_user
-        )
+        # Create a non-interactive shell running as the target user. The
+        # identity must be set before the command line runs so the commands
+        # it spawns snapshot the switched credentials.
+        shell = HoneyPotShell(self.protocol, interactive=False)
+        shell.user = dict(effective_user)
 
         # Update environment for the target user
         if not preserve_env:
@@ -177,9 +178,8 @@ class Command_su(HoneyPotCommand):
         self, effective_user: dict[str, Any], login_shell: bool, preserve_env: bool
     ) -> None:
         """Start an interactive shell as the target user."""
-        shell = HoneyPotShell(
-            self.protocol, interactive=True, effective_user=effective_user
-        )
+        shell = HoneyPotShell(self.protocol, interactive=True)
+        shell.user = dict(effective_user)
 
         # A login shell (`su -`) starts in the target user's home; a plain su
         # keeps the inherited working directory.

@@ -27,8 +27,8 @@ class Command_unzip(HoneyPotCommand):
             if not self.fs.exists(directory):
                 self.fs.mkdir(
                     directory,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
                     33188,
                 )
@@ -117,8 +117,8 @@ class Command_unzip(HoneyPotCommand):
             if f.is_dir():
                 self.fs.mkdir(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
                     33188,
                 )
@@ -126,8 +126,8 @@ class Command_unzip(HoneyPotCommand):
                 self.mkfullpath(posixpath.dirname(dest))
                 self.fs.mkfile(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     f.file_size,
                     33188,
                 )

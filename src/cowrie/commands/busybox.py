@@ -99,6 +99,7 @@ class Command_busybox(HoneyPotCommand):
                 redirect=self.protocol.pp.redirect,
                 redirections=self.protocol.pp.redirections,
                 cwd=self.cwd,
+                user=self.user,
             )
 
             # insert the command as we do when chaining commands with pipes

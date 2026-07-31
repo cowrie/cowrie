@@ -634,8 +634,8 @@ class Command_wget(HoneyPotCommand):
         if self.outfile and self.outfile != "-" and self.protocol.user:
             self.fs.mkfile(
                 self.outfile,
-                self.current_user["uid"],
-                self.current_user["gid"],
+                self.user["uid"],
+                self.user["gid"],
                 self.currentlength,
                 33188,
             )
