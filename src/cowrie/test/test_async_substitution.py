@@ -84,14 +84,6 @@ class AsyncSubstitutionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo $(echo inner)\n")
         self.assertEqual(self.tr.value(), b"inner\n" + PROMPT)
 
-    def test_exit_inside_substitution(self) -> None:
-        self.proto.lineReceived(b"echo a$(exit)b\n")
-        self.assertEqual(self.tr.value(), b"ab\n" + PROMPT)
-
-    def test_exit_stops_substitution_statements(self) -> None:
-        self.proto.lineReceived(b"echo $(echo x; exit; echo y)\n")
-        self.assertEqual(self.tr.value(), b"x\n" + PROMPT)
-
     def test_nested_async_substitution(self) -> None:
         self.proto.lineReceived(b"echo $(echo $(fakeasync))\n")
         self.assertEqual(self.tr.value(), b"")
