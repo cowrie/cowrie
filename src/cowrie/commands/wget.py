@@ -590,7 +590,7 @@ class Command_wget(HoneyPotCommand):
         self.proglen = len(s)
         self.lastupdate = time.time()
 
-        if not self.outfile:
+        if not self.outfile or self.outfile == "-":
             self.writeBytes(data)
 
     def collectioncomplete(self, data: None) -> None:
@@ -631,7 +631,7 @@ class Command_wget(HoneyPotCommand):
             )
 
         # Update the honeyfs to point to artifact file if output is to file
-        if self.outfile and self.protocol.user:
+        if self.outfile and self.outfile != "-" and self.protocol.user:
             self.fs.mkfile(
                 self.outfile,
                 self.current_user["uid"],

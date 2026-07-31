@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
+from twisted.web.http_headers import Headers
 
 from cowrie.commands.wget import Command_wget
 from cowrie.core.artifact import Artifact
@@ -238,3 +239,60 @@ class WgetOutboundBindTests(unittest.TestCase):
             cmd.ftpDownload(urldata)
 
         self.assertEqual(captured["bindAddress"], ("127.0.0.1", 0))
+
+
+class WgetStdoutOutputTests(unittest.TestCase):
+    """wget -O- must stream the fetched body to stdout, like real wget."""
+
+    PROMPT = b"root@unitTest:~# "
+    BODY = b"fetched-body-bytes\n"
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+        self.events = capture_events(self.proto)
+
+        self.tmpdir = tempfile.mkdtemp()
+        self._orig_artifact_dir = Artifact.artifactDir
+        Artifact.artifactDir = self.tmpdir
+
+    def tearDown(self) -> None:
+        Artifact.artifactDir = self._orig_artifact_dir
+        self.proto.connectionLost()
+        for name in os.listdir(self.tmpdir):
+            os.remove(os.path.join(self.tmpdir, name))
+        os.rmdir(self.tmpdir)
+
+    def _serve(self, line: bytes) -> None:
+        """Run a wget line with treq stubbed to deliver BODY for any URL."""
+        headers = Headers({b"content-type": [b"text/html"]})
+        response = mock.Mock(length=len(self.BODY), code=200, phrase=b"OK")
+        response.headers = headers
+
+        def fake_get(url: str, agent: Any = None, **kwargs: Any) -> Any:
+            return defer.succeed(response)
+
+        def fake_collect(resp: Any, collector: Any) -> Any:
+            collector(self.BODY)
+            return defer.succeed(None)
+
+        with (
+            mock.patch("cowrie.commands.wget.treq.get", fake_get),
+            mock.patch("cowrie.commands.wget.treq.collect", fake_collect),
+        ):
+            self.proto.lineReceived(line)
+
+    def test_dash_outfile_streams_body_to_stdout(self) -> None:
+        self._serve(b"wget -qO- http://8.8.8.8/page\n")
+        self.assertEqual(self.tr.value(), self.BODY + self.PROMPT)
+
+    def test_dash_outfile_creates_no_honeyfs_file(self) -> None:
+        self._serve(b"wget -qO- http://8.8.8.8/page\n")
+        self.assertFalse(self.proto.fs.exists("/root/-"))
+        self.assertFalse(self.proto.fs.exists("-"))
+
+    def test_substitution_captures_dash_outfile_body(self) -> None:
+        self._serve(b"echo got:$(wget -qO- http://8.8.8.8/page)\n")
+        self.assertEqual(self.tr.value(), b"got:fetched-body-bytes\n" + self.PROMPT)
