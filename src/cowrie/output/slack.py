@@ -26,6 +26,7 @@ class Output(cowrie.core.output.Output):
         self.name = "slack output engine"
         self.slack_channel = CowrieConfig.get("output_slack", "channel")
         self.slack_token = CowrieConfig.get("output_slack", "token")
+        self.sc = WebClient(self.slack_token)
         self.simplified = CowrieConfig.getboolean(
             "output_slack", "simplified", fallback=False
         )
@@ -175,8 +176,6 @@ class Output(cowrie.core.output.Output):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
                 del event[i]
-
-        self.sc = WebClient(self.slack_token)
 
         # Check for verbose events to skip in case of not verbose mode
         verbose_events = (

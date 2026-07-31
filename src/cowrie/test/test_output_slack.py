@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# ABOUTME: The slack output plugin must react to the event ids Cowrie really
-# ABOUTME: emits: dotted file_download.failed and cowrie.log.open.
+# ABOUTME: The slack output plugin must build its WebClient once at start()
+# ABOUTME: and react to the event ids Cowrie really emits.
 
 from __future__ import annotations
 
@@ -39,9 +39,40 @@ def _make(simplified: bool = True, verbose: bool = True) -> Any:
 def _post(out: Any, event: dict[str, Any]) -> list[str]:
     """Run one event through write() and return the texts posted to Slack."""
     client = Mock()
-    with patch.object(slack_output, "WebClient", return_value=client):
-        out.write(event)
+    out.sc = client
+    out.write(event)
     return [c.kwargs["text"] for c in client.chat_postMessage.call_args_list]
+
+
+def _started(config: Mock) -> Any:
+    """Construct the plugin and run start() once against the given config."""
+    with patch.object(slack_output.Output, "start", lambda self: None):
+        out = slack_output.Output()
+    with patch.object(slack_output, "CowrieConfig", config):
+        out.start()
+    return out
+
+
+def _config(**booleans: bool) -> Mock:
+    """A config mock returning fixed strings and the given boolean options."""
+    config = Mock()
+    config.get.return_value = "dummy"
+    config.getboolean.side_effect = lambda section, option, fallback=False: (
+        booleans.get(option, fallback)
+    )
+    return config
+
+
+class OutputSlackTests(unittest.TestCase):
+    def test_webclient_built_once_and_reused_across_writes(self) -> None:
+        """start() builds the WebClient; write() must reuse it, not rebuild."""
+        client = Mock()
+        with patch.object(slack_output, "WebClient", return_value=client) as webclient:
+            out = _started(_config())
+            out.write({"eventid": "cowrie.login.success"})
+            out.write({"eventid": "cowrie.login.failed"})
+        self.assertEqual(webclient.call_count, 1)
+        self.assertEqual(client.chat_postMessage.call_count, 2)
 
 
 class SlackEventIdTests(unittest.TestCase):
