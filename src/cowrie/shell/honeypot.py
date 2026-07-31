@@ -121,10 +121,15 @@ class HoneyPotShell:
         # Capture-subshell state (redirect=True): every statement's captured
         # stdout accumulates here -- one pipe buffer for the whole subshell,
         # like the pipe bash wires a $(...) child to. capture_done fires with
-        # the buffer when this shell leaves the cmdstack (its queue drained,
-        # or an inner `exit` ended it): the subshell's pipe seeing EOF.
+        # the finished subshell (buffer and final status) when it leaves the
+        # cmdstack -- its queue drained, or an inner `exit` ended it: the
+        # subshell's pipe seeing EOF.
         self.captured: bytes = b""
-        self.capture_done: Deferred[bytes] | None = None
+        self.capture_done: Deferred[HoneyPotShell] | None = None
+        # Final status of the most recent command substitution expanded for
+        # the current statement: bash makes it the statement's own status
+        # when the statement is only assignments.
+        self._subst_status: int | None = None
         # Exit status of the most recent command in this shell, for $? and the
         # && / || short-circuit logic.
         self.last_exit_code: int = 0
@@ -164,15 +169,21 @@ class HoneyPotShell:
         short-circuit. Output is captured instead of reaching the terminal.
         """
 
-        def decode(data: bytes) -> str:
+        def finished(subshell: HoneyPotShell) -> str:
+            # The subshell's status becomes $? for the rest of the expansion
+            # and, via _subst_status, for a statement of only assignments
+            # (`x=$(false)` leaves $? = 1).
+            self.last_exit_code = subshell.last_exit_code
+            self._subst_status = subshell.last_exit_code
             # The captured output is attacker bytes and need not be valid UTF-8.
-            return data.decode(errors="replace").rstrip("\n")
+            return subshell.captured.decode(errors="replace").rstrip("\n")
 
-        return self.capture(source).addCallback(decode)
+        return self.capture(source).addCallback(finished)
 
-    def capture(self, source: str) -> Deferred[bytes]:
+    def capture(self, source: str) -> Deferred[HoneyPotShell]:
         """Run ``source`` in a capture subshell and return a Deferred that
-        fires with its accumulated stdout once the subshell finishes.
+        fires with the finished subshell -- its accumulated stdout in
+        ``captured`` and its final status in ``last_exit_code``.
 
         The subshell runs its statements through the normal cmdpending /
         _advance machinery, so a command that pauses on a Deferred (wget)
@@ -182,7 +193,7 @@ class HoneyPotShell:
         the time this returns.
         """
         shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
-        done: Deferred[bytes] = Deferred()
+        done: Deferred[HoneyPotShell] = Deferred()
         shell.capture_done = done
         self.protocol.cmdstack.append(shell)
         shell._queue_statements(self.bashparser.parse(source))
@@ -202,13 +213,13 @@ class HoneyPotShell:
             self.protocol.pp = None
 
     def _complete_capture(self) -> None:
-        """Fire ``capture_done`` with the accumulated output: the subshell is
-        gone and the parent's read on the substitution pipe sees EOF."""
+        """Fire ``capture_done`` with this finished subshell: it is gone and
+        the parent's read on the substitution pipe sees EOF."""
         if self.capture_done is None:
             return
         self._harvest_capture()
         done, self.capture_done = self.capture_done, None
-        done.callback(self.captured)
+        done.callback(self)
 
     def exit_shell(self, code: int) -> None:
         """End this shell from the ``exit`` builtin: record the final status
@@ -676,6 +687,7 @@ class HoneyPotShell:
         # subshell finishes; the statement then runs from the callback. With
         # only synchronous substitutions the Deferred has already fired and
         # the statement runs before this returns.
+        self._subst_status = None
         d = Deferred.fromCoroutine(self.bashparser.evaluate(command))
         d.addCallback(self._run_expanded)
         d.addErrback(self._statement_failed)
@@ -704,10 +716,14 @@ class HoneyPotShell:
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
             # variables for the rest of the session. They are shell variables,
-            # not exported, so self.exported is left untouched. A bare
-            # assignment succeeds, so $? is 0.
+            # not exported, so self.exported is left untouched. Its status is
+            # that of the last command substitution its words ran, as in bash
+            # (`x=$(false)` leaves $? = 1); with no substitution a bare
+            # assignment succeeds.
             self.environ = environ
-            self.last_exit_code = 0
+            self.last_exit_code = (
+                self._subst_status if self._subst_status is not None else 0
+            )
             self._advance()
             return
 
