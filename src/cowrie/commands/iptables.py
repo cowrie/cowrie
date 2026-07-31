@@ -54,7 +54,7 @@ class Command_iptables(HoneyPotCommand):
     current_table: dict[str, list[Any]]
 
     def user_is_root(self) -> bool:
-        return self.current_user["uid"] == 0
+        return bool(self.user["uid"] == 0)
 
     def start(self) -> None:
         """

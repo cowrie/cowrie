@@ -87,7 +87,6 @@ class HoneyPotShell:
         protocol: Any,
         interactive: bool = True,
         redirect: bool = False,
-        effective_user: dict[str, Any] | None = None,
         reads_stdin: bool = False,
     ) -> None:
         self.protocol = protocol
@@ -96,27 +95,34 @@ class HoneyPotShell:
         # The shell's commands arrive over a live stdin (an SSH exec channel
         # running `bash`): a drained queue means idle, not done, until EOF.
         self.reads_stdin: bool = reads_stdin
-        self.effective_user = effective_user  # For su: {uid, gid, username, home}
         # Parsed-but-not-yet-evaluated statements; each is expanded against the
         # live environment only when it is about to run (see runCommand). A
         # subshell stays a single unit here so its &&/|| gate covers the whole
         # group; runCommand splices its statements in only when it runs.
         self.cmdpending: list[Statement | _Continuation] = []
         # A nested shell (e.g. a command substitution) inherits the live
-        # environment and working directory of whichever shell or command is
-        # currently running, as a forked shell process inherits its parent's;
-        # the very first shell of a session falls back to the login
-        # environment (all of which is exported) and the user's home. cwd is
-        # this shell's own from here on: a cd inside a substitution or nested
-        # script shell never changes the parent's.
+        # environment, working directory and user identity of whichever shell
+        # or command is currently running, as a forked shell process inherits
+        # its parent's; the very first shell of a session falls back to the
+        # login environment (all of which is exported), the login user, and
+        # that user's home. cwd and user are this shell's own from here on: a
+        # cd or su inside a substitution or nested script shell never changes
+        # the parent's.
         if protocol.cmdstack:
             parent = protocol.cmdstack[-1]
             self.environ: dict[str, str] = copy.copy(parent.environ)
             self.exported: set[str] = copy.copy(parent.exported)
             self.cwd: str = parent.cwd
+            self.user: dict[str, Any] = dict(parent.user)
         else:
             self.environ = copy.copy(protocol.environ)
             self.exported = set(protocol.environ.keys())
+            self.user = {
+                "uid": protocol.user.uid,
+                "gid": protocol.user.gid,
+                "username": protocol.user.username,
+                "home": protocol.user.avatar.home,
+            }
             if protocol.fs.exists(protocol.user.avatar.home):
                 self.cwd = protocol.user.avatar.home
             else:
@@ -773,6 +779,7 @@ class HoneyPotShell:
                     self.redirect,
                     first_ops,
                     cwd=self.cwd,
+                    user=self.user,
                 )
                 for real_path, virtual_path in pp.redirect_real_files:
                     self.protocol.terminal.redirFiles.add((real_path, virtual_path))
@@ -820,6 +827,7 @@ class HoneyPotShell:
                         self.redirect,
                         cmd.get("redirects", []),
                         cwd=self.cwd,
+                        user=self.user,
                     )
                     pp = lastpp
                 else:
@@ -832,6 +840,7 @@ class HoneyPotShell:
                         self.redirect,
                         cmd.get("redirects", []),
                         cwd=self.cwd,
+                        user=self.user,
                     )
                     lastpp = pp
             else:
@@ -859,6 +868,7 @@ class HoneyPotShell:
                         self.redirect,
                         redirects,
                         cwd=self.cwd,
+                        user=self.user,
                     )
                     temp_pp.errReceived(message)
                     for real_path, virtual_path in temp_pp.redirect_real_files:
@@ -947,15 +957,9 @@ class HoneyPotShell:
             prompt = CowrieConfig.get("honeypot", "prompt")
             prompt += " "
         else:
-            # Use effective_user if set (from su), otherwise use session user
-            if self.effective_user:
-                username = self.effective_user["username"]
-                uid = self.effective_user["uid"]
-                home = self.effective_user["home"]
-            else:
-                username = self.protocol.user.username
-                uid = self.protocol.user.uid
-                home = self.protocol.user.avatar.home
+            username = self.user["username"]
+            uid = self.user["uid"]
+            home = self.user["home"]
 
             cwd = self.cwd
             homelen = len(home)

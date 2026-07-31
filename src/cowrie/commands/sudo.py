@@ -130,6 +130,7 @@ class Command_sudo(HoneyPotCommand):
                 command = PipeProtocol(
                     self.protocol, cmdclass, parsed_arguments[1:], None, None,
                     cwd=self.cwd,
+                    user=self.user,
                 )
                 self.protocol.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....

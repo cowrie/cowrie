@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import unittest
 
+from cowrie.shell import fs
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -243,3 +244,35 @@ class SuEnvironmentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SuFileOwnershipTests(unittest.TestCase):
+    """Files created while su'd must be owned by the effective user, the way
+    a forked process carries the switched credentials."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_touch_under_su_owned_by_target_user(self) -> None:
+        self.proto.lineReceived(b"su -c 'touch /tmp/philfile' phil\n")
+        entry = self.proto.fs.getfile("/tmp/philfile")
+        self.assertEqual(entry[fs.A_UID], 1000)
+        self.assertEqual(entry[fs.A_GID], 1000)
+
+    def test_mkdir_under_su_owned_by_target_user(self) -> None:
+        self.proto.lineReceived(b"su -c 'mkdir /tmp/phildir' phil\n")
+        entry = self.proto.fs.getfile("/tmp/phildir")
+        self.assertEqual(entry[fs.A_UID], 1000)
+        self.assertEqual(entry[fs.A_GID], 1000)
+
+    def test_touch_as_root_owned_by_root(self) -> None:
+        self.proto.lineReceived(b"touch /tmp/rootfile\n")
+        entry = self.proto.fs.getfile("/tmp/rootfile")
+        self.assertEqual(entry[fs.A_UID], 0)
+        self.assertEqual(entry[fs.A_GID], 0)

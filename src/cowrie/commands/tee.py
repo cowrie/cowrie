@@ -70,7 +70,7 @@ class Command_tee(HoneyPotCommand):
 
             try:
                 self.fs.mkfile(
-                    pname, self.current_user["uid"], self.current_user["gid"], 0, 0o644
+                    pname, self.user["uid"], self.user["gid"], 0, 0o644
                 )
             except FileNotFound:
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")

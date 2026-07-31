@@ -48,14 +48,17 @@ class PipeProtocol:
         redirections: list[dict[str, Any]] | None = None,
         *,
         cwd: str,
+        user: dict[str, Any],
     ) -> None:
         self.cmd = cmd
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
         self.next_command = next_command
-        # Working directory redirection targets resolve against: the cwd of
-        # the shell that built this pipeline, at the moment it was built.
+        # Working directory and user identity of the shell that built this
+        # pipeline, at the moment it was built: redirection targets resolve
+        # against the cwd, and the files they create are owned by the user.
         self.cwd = cwd
+        self.user = user
         # True once an upstream command has been wired to write to this
         # command's stdin via a pipe; used to decide whether stdin should be
         # closed (EOF) when no terminal will ever feed it.
@@ -232,8 +235,8 @@ class PipeProtocol:
         try:
             self.protocol.fs.mkfile(
                 outfile,
-                self.protocol.user.uid,
-                self.protocol.user.gid,
+                self.user["uid"],
+                self.user["gid"],
                 0,
                 stat.S_IFREG | perm,
             )
