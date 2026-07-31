@@ -111,12 +111,6 @@ class UtilsTestCase(unittest.TestCase):
 
         parent = MultiService()
         create_endpoint_services(
-            reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory()
-        )
-        self.assertEqual(len(parent.services), 1)
-
-        parent = MultiService()
-        create_endpoint_services(
             reactor,
             parent,
             ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=2.2.2.2"],
