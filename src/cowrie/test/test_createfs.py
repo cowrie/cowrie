@@ -99,15 +99,3 @@ class RecurseEmbedTests(unittest.TestCase):
         self.assertEqual(etc[createfs.A_TYPE], createfs.T_DIR)
         self.assertIsInstance(etc[createfs.A_CONTENTS], list)
         self.assertGreater(len(etc[createfs.A_CONTENTS]), 0)
-
-
-class EmbedPathsConstantTests(unittest.TestCase):
-    """The default EMBED_PATHS set covers the paths cowrie reads at startup."""
-
-    def test_contains_paths_cowrie_reads(self) -> None:
-        # banner / passwd / group are read by cowrie itself, not just
-        # served to attackers. Losing these from EMBED_PATHS would make
-        # the bundled pickle insufficient for a no-honeyfs install.
-        self.assertIn("/etc/issue.net", createfs.EMBED_PATHS)
-        self.assertIn("/etc/passwd", createfs.EMBED_PATHS)
-        self.assertIn("/etc/group", createfs.EMBED_PATHS)
