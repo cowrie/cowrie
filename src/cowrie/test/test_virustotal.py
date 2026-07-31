@@ -12,15 +12,7 @@ from unittest.mock import Mock
 
 from twisted.internet import defer
 
-from cowrie.output.virustotal import Output, StringProducer
-
-
-class MockResponse:
-    """Mock HTTP response for testing"""
-
-    def __init__(self, code: int, data: bytes):
-        self.code = code
-        self.data = data
+from cowrie.output.virustotal import Output
 
 
 class VirusTotalOutputTests(unittest.TestCase):
@@ -41,30 +33,8 @@ class VirusTotalOutputTests(unittest.TestCase):
         self.output.commenttext = "Test comment"
         self.output.url_cache = {}
 
-    def test_string_producer_interface(self) -> None:
-        """Test StringProducer implements required interface methods"""
-        body = b"test data"
-        producer = StringProducer(body)
-
-        self.assertEqual(producer.body, body)
-        self.assertEqual(producer.length, len(body))
-
-        # Test all interface methods exist
-        self.assertTrue(hasattr(producer, "startProducing"))
-        self.assertTrue(hasattr(producer, "pauseProducing"))
-        self.assertTrue(hasattr(producer, "resumeProducing"))
-        self.assertTrue(hasattr(producer, "stopProducing"))
-
     def test_scanfile_new_file_not_found(self) -> None:
         """Test file scanning when file is not found in VirusTotal database"""
-        # Mock response for file not found
-        MockResponse(
-            200,
-            json.dumps(
-                {"error": {"code": "NotFoundError", "message": "File not found"}}
-            ).encode(),
-        )
-
         # Mock agent request
         deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
@@ -98,67 +68,11 @@ class VirusTotalOutputTests(unittest.TestCase):
         self.assertIn(b"X-Apikey", headers._rawHeaders)
         self.assertEqual(headers._rawHeaders[b"X-Apikey"], [b"test-api-key"])
 
-    def test_scanfile_existing_file_found(self) -> None:
-        """Test file scanning when file exists in VirusTotal database"""
-        # Mock response for existing file
-        MockResponse(
-            200,
-            json.dumps(
-                {
-                    "data": {
-                        "id": "abc123",
-                        "attributes": {
-                            "last_analysis_results": {
-                                "Avast": {
-                                    "category": "malicious",
-                                    "result": "Trojan.Test",
-                                },
-                                "Kaspersky": {"category": "clean", "result": "Clean"},
-                            },
-                            "last_analysis_stats": {
-                                "malicious": 1,
-                                "clean": 1,
-                                "suspicious": 0,
-                                "undetected": 0,
-                            },
-                            "last_analysis_date": "2025-01-10T10:00:00Z",
-                        },
-                    }
-                }
-            ).encode(),
-        )
-
-        # Mock agent request
-        deferred: defer.Deferred = defer.Deferred()
-        self.output.agent.request.return_value = deferred
-
-        # Test event
-        event = {"session": "test-session", "shasum": "abc123"}
-
-        # Call scanfile
-        self.output.scanfile(event)
-
-        # Verify request was made correctly
-        self.output.agent.request.assert_called_once()
-        call_args = self.output.agent.request.call_args
-        self.assertEqual(call_args[0][0], b"GET")
-        self.assertEqual(
-            call_args[0][1], b"https://www.virustotal.com/api/v3/files/abc123"
-        )
-
     def test_scanurl_base64_encoding(self) -> None:
         """Test URL scanning with base64 encoding"""
         test_url = "http://example.com/malicious.exe"
         expected_url_id = (
             base64.urlsafe_b64encode(test_url.encode()).decode().rstrip("=")
-        )
-
-        # Mock response for URL not found
-        MockResponse(
-            200,
-            json.dumps(
-                {"error": {"code": "NotFoundError", "message": "URL not found"}}
-            ).encode(),
         )
 
         # Mock agent request
@@ -190,14 +104,6 @@ class VirusTotalOutputTests(unittest.TestCase):
             tmp_path = tmp.name
 
         try:
-            # Mock response for successful upload
-            MockResponse(
-                200,
-                json.dumps(
-                    {"data": {"id": "uploaded-file-id", "type": "analysis"}}
-                ).encode(),
-            )
-
             # Mock agent request
             deferred: defer.Deferred = defer.Deferred()
             self.output.agent.request.return_value = deferred
@@ -263,11 +169,6 @@ class VirusTotalOutputTests(unittest.TestCase):
 
     def test_postcomment_v3_format(self) -> None:
         """Test comment posting using v3 API format"""
-        # Mock response for successful comment
-        MockResponse(
-            200, json.dumps({"data": {"id": "comment-id", "type": "comment"}}).encode()
-        )
-
         # Mock agent request
         deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
@@ -294,11 +195,6 @@ class VirusTotalOutputTests(unittest.TestCase):
 
     def test_postcomment_url_v3_format(self) -> None:
         """Test URL comment posting using v3 API format"""
-        # Mock response for successful URL comment
-        MockResponse(
-            200, json.dumps({"data": {"id": "comment-id", "type": "comment"}}).encode()
-        )
-
         # Mock agent request
         deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
@@ -325,9 +221,6 @@ class VirusTotalOutputTests(unittest.TestCase):
 
     def test_submiturl_v3_format(self) -> None:
         """Test URL submission using v3 API format"""
-        # Mock response for successful URL submission
-        MockResponse(200, b"")
-
         # Mock agent request
         deferred: defer.Deferred = defer.Deferred()
         self.output.agent.request.return_value = deferred
