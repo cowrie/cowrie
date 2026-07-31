@@ -51,6 +51,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.environ = avatar.environ
         self.hostname: str = self.user.server.hostname
         self.fs = self.user.server.fs
+        # The pipeline being handed to the command now starting, which the
+        # command keeps as its own (HoneyPotCommand.pp). It stays set to the
+        # most recently started command's pipeline afterwards, which is what
+        # the running shell reads to tell mid-pipeline from statement end and
+        # to collect a substitution's captured output. Only ever one at a time:
+        # commands run strictly in sequence.
         self.pp = None
         self.logintime: float
         self.realClientIP: str
@@ -285,14 +291,25 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cmdstack.append(obj)
         obj.start()
 
-        if self.pp:
-            # Advancing to the next pipeline stage: flatten the callback so a
-            # long pipeline does not recurse (see call_command).
-            self._advancing_pipe = True
-            try:
-                self.pp.outConnectionLost()
-            finally:
-                self._advancing_pipe = False
+        if obj.exited:
+            # The command finished as it started, so its stdout is closed and
+            # the next pipeline stage can run. Flatten the callback so a long
+            # pipeline does not recurse (see call_command). This uses the
+            # protocol's current pipe rather than the command's own: a wrapper
+            # like busybox dispatches an applet during start(), and it is that
+            # applet's stdout which just closed.
+            if self.pp:
+                self._advancing_pipe = True
+                try:
+                    self.pp.outConnectionLost()
+                finally:
+                    self._advancing_pipe = False
+        else:
+            # Still running -- an async download, or parked reading stdin. The
+            # next stage must wait for this one's output rather than start on
+            # an empty pipe, so the command advances the pipeline itself when
+            # it finally exits.
+            obj.advance_pipe_on_exit = True
 
         # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
         # waiting for stdin but nothing will ever write to it, signal EOF so it

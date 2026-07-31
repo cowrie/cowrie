@@ -391,11 +391,23 @@ class HoneyPotShell:
                 self._advance_pending = False
                 if self.cmdpending:
                     self.runCommand()
+                elif self._busy():
+                    # The queue is drained but something this shell started is
+                    # still running (an async download, or a pipeline stage
+                    # waiting on one). The statement is not over: whatever is
+                    # above resumes this shell when it finishes.
+                    return
                 else:
                     self._finish()
                 running = self._advance_pending
         finally:
             self._advancing = False
+
+    def _busy(self) -> bool:
+        """Whether something this shell started is still on the cmdstack above
+        it -- a command that has not exited, or a shell it launched."""
+        stack = self.protocol.cmdstack
+        return bool(stack) and self in stack and stack[-1] is not self
 
     # -- flow control -------------------------------------------------------
     #
