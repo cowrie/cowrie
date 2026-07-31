@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import errno
 import os
+import tempfile
 import unittest
 from types import SimpleNamespace
 
@@ -18,7 +19,7 @@ from cowrie.shell import fs
 from cowrie.shell.filetransfer import SFTPServerForCowrieUser
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 

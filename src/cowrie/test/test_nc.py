@@ -11,6 +11,7 @@ network traffic is generated and every assertion runs synchronously.
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -30,7 +31,7 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 from cowrie.commands.nc import Command_nc, NcClientFactory, nc_rate_limiter

@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 reactor = cast("_Reactor", _reactor)
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "

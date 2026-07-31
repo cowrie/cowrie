@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 import types
 import unittest
 from typing import Any
@@ -18,7 +19,7 @@ from twisted.internet import defer
 from twisted.python.failure import Failure
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 try:
