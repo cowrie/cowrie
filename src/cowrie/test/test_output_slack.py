@@ -74,6 +74,42 @@ class OutputSlackTests(unittest.TestCase):
         self.assertEqual(webclient.call_count, 1)
         self.assertEqual(client.chat_postMessage.call_count, 2)
 
+    def _posted_message(self, **booleans: bool) -> str:
+        client = Mock()
+        with patch.object(slack_output, "WebClient", return_value=client):
+            out = _started(_config(**booleans))
+            out.write({"eventid": "cowrie.login.success", "session": "abc"})
+        message: str = client.chat_postMessage.call_args.kwargs["text"]
+        return message
+
+    def test_timestamp_true_prefixes_simplified_message(self) -> None:
+        """timestamp=true (the default) must include a timestamp."""
+        message = self._posted_message(simplified=True, timestamp=True)
+        self.assertRegex(message, r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[")
+
+    def test_timestamp_false_hides_it_in_simplified_message(self) -> None:
+        message = self._posted_message(simplified=True, timestamp=False)
+        self.assertTrue(message.startswith("["))
+
+    def test_default_config_does_not_warn(self) -> None:
+        """The 'timestamp=false is ignored' warning must not fire on defaults."""
+        log = Mock()
+        with (
+            patch.object(slack_output, "WebClient"),
+            patch.object(slack_output.Output, "_log", log),
+        ):
+            _started(_config())
+        log.warn.assert_not_called()
+
+    def test_timestamp_false_without_simplified_warns(self) -> None:
+        log = Mock()
+        with (
+            patch.object(slack_output, "WebClient"),
+            patch.object(slack_output.Output, "_log", log),
+        ):
+            _started(_config(timestamp=False))
+        log.warn.assert_called_once()
+
 
 class SlackEventIdTests(unittest.TestCase):
     def test_download_failed_uses_dotted_eventid(self) -> None:

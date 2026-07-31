@@ -30,7 +30,7 @@ class Output(cowrie.core.output.Output):
         self.simplified = CowrieConfig.getboolean(
             "output_slack", "simplified", fallback=False
         )
-        self.show_timestamp = not CowrieConfig.getboolean(
+        self.show_timestamp = CowrieConfig.getboolean(
             "output_slack", "timestamp", fallback=True
         )
         self.verbose = CowrieConfig.getboolean("output_slack", "verbose", fallback=True)
