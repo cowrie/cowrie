@@ -120,7 +120,7 @@ class Command_gcc(HoneyPotCommand):
         # Check for *.c or *.cpp files
         for value in args:
             if ".c" in value.lower():
-                sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
+                sourcefile = self.fs.resolve_path(value, self.cwd)
 
                 if self.fs.exists(sourcefile):
                     input_files = input_files + 1
@@ -202,7 +202,7 @@ gcc version {version} (Debian {version}-5)"""
             f.write(data)
 
         # Output file
-        outfile = self.fs.resolve_path(outfile, self.protocol.cwd)
+        outfile = self.fs.resolve_path(outfile, self.cwd)
 
         # Create file for the protocol
         self.fs.mkfile(

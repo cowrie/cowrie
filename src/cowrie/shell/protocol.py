@@ -61,10 +61,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.sessionno: int
         self.factory = None
 
-        if self.fs.exists(self.user.avatar.home):
-            self.cwd = self.user.avatar.home
-        else:
-            self.cwd = "/"
         self.data = None
         self.password_input = False
         self.cmdstack = []
@@ -189,18 +185,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         return True if cmd in self.commands else False
 
-    def getCommand(self, cmd, paths):
+    def getCommand(self, cmd, paths, cwd):
         if not cmd.strip():
             return None
         path = None
         if cmd in self.commands:
             return self.commands[cmd]
         if cmd[0] in (".", "/"):
-            path = self.fs.resolve_path(cmd, self.cwd)
+            path = self.fs.resolve_path(cmd, cwd)
             if not self.fs.exists(path):
                 return None
         else:
-            for i in [f"{self.fs.resolve_path(x, self.cwd)}/{cmd}" for x in paths if x]:
+            for i in [f"{self.fs.resolve_path(x, cwd)}/{cmd}" for x in paths if x]:
                 if self.fs.exists(i):
                     path = i
                     break

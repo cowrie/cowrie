@@ -266,7 +266,7 @@ class Command_curl(HoneyPotCommand):
                     return
 
         if self.outfile:
-            self.outfile = self.fs.resolve_path(self.outfile, self.protocol.cwd)
+            self.outfile = self.fs.resolve_path(self.outfile, self.cwd)
             path = posixpath.dirname(self.outfile) if self.outfile else ""
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(

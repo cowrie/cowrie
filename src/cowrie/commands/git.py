@@ -22,7 +22,7 @@ class Command_git(HoneyPotCommand):
             self.display_usage()
             return
 
-        path = self.protocol.cwd
+        path = self.cwd
         subcommand = self.args[0]
 
         if subcommand == "--version":

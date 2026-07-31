@@ -220,7 +220,7 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
         self.proto.lineReceived(f"cd {path:s}".encode())
         self.assertEqual(self.tr.value(), PROMPT.replace(b"~", path.encode()))
-        self.assertEqual(self.proto.cwd, path)
+        self.assertEqual(self.proto.cmdstack[0].cwd, path)
 
     def test_cd_error_output(self) -> None:
         self.proto.lineReceived(f"cd {NONEXISTEN_FILE:s}".encode())
@@ -342,7 +342,9 @@ class ShellFileCommandsTests(unittest.TestCase):
 
     def test_pwd_output(self) -> None:
         self.proto.lineReceived(b"pwd\n")
-        self.assertEqual(self.tr.value(), self.proto.cwd.encode() + b"\n" + PROMPT)
+        self.assertEqual(
+            self.tr.value(), self.proto.cmdstack[0].cwd.encode() + b"\n" + PROMPT
+        )
 
     def test_touch_output(self) -> None:
         path = "/tmp/test.txt"

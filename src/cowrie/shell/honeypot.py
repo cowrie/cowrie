@@ -103,16 +103,24 @@ class HoneyPotShell:
         # group; runCommand splices its statements in only when it runs.
         self.cmdpending: list[Statement | _Continuation] = []
         # A nested shell (e.g. a command substitution) inherits the live
-        # environment of whichever shell is currently running; the very first
-        # shell of a session falls back to the login environment, all of which
-        # is exported.
+        # environment and working directory of whichever shell or command is
+        # currently running, as a forked shell process inherits its parent's;
+        # the very first shell of a session falls back to the login
+        # environment (all of which is exported) and the user's home. cwd is
+        # this shell's own from here on: a cd inside a substitution or nested
+        # script shell never changes the parent's.
         if protocol.cmdstack:
             parent = protocol.cmdstack[-1]
             self.environ: dict[str, str] = copy.copy(parent.environ)
             self.exported: set[str] = copy.copy(parent.exported)
+            self.cwd: str = parent.cwd
         else:
             self.environ = copy.copy(protocol.environ)
             self.exported = set(protocol.environ.keys())
+            if protocol.fs.exists(protocol.user.avatar.home):
+                self.cwd = protocol.user.avatar.home
+            else:
+                self.cwd = "/"
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
@@ -254,10 +262,9 @@ class HoneyPotShell:
 
         A subshell is queued as one unit so its join operator (e.g. the || in
         `x || (a; b)`) gates the whole group; runCommand splices the inner
-        statements in only when the group actually runs. Cowrie does not
-        emulate a subshell's isolated environment (``cwd`` and friends live on
-        the protocol, not the shell), so the inner statements then run in the
-        parent shell.
+        statements in only when the group actually runs. Cowrie does not give
+        a ``(...)`` group its own isolated shell, so the inner statements run
+        in the parent shell and their ``cd`` / variable effects persist.
 
         Returns False to stop queueing after a syntax error: commands already
         queued before the error still run, as in bash.
@@ -765,6 +772,7 @@ class HoneyPotShell:
                     None,
                     self.redirect,
                     first_ops,
+                    cwd=self.cwd,
                 )
                 for real_path, virtual_path in pp.redirect_real_files:
                     self.protocol.terminal.redirFiles.add((real_path, virtual_path))
@@ -795,7 +803,7 @@ class HoneyPotShell:
         cmdclass = None
         for index, cmd in reversed(list(enumerate(cmd_array))):
             cmdclass = self.protocol.getCommand(
-                cmd["command"], environ.get("PATH", "").split(":")
+                cmd["command"], environ.get("PATH", "").split(":"), self.cwd
             )
             if cmdclass:
                 self._log.info(
@@ -811,6 +819,7 @@ class HoneyPotShell:
                         None,
                         self.redirect,
                         cmd.get("redirects", []),
+                        cwd=self.cwd,
                     )
                     pp = lastpp
                 else:
@@ -822,6 +831,7 @@ class HoneyPotShell:
                         lastpp,
                         self.redirect,
                         cmd.get("redirects", []),
+                        cwd=self.cwd,
                     )
                     lastpp = pp
             else:
@@ -848,6 +858,7 @@ class HoneyPotShell:
                         None,
                         self.redirect,
                         redirects,
+                        cwd=self.cwd,
                     )
                     temp_pp.errReceived(message)
                     for real_path, virtual_path in temp_pp.redirect_real_files:
@@ -881,7 +892,7 @@ class HoneyPotShell:
         directory" (ENOENT). Anything else yields "command not found".
         """
         if cmd[:1] in (".", "/"):
-            path = self.protocol.fs.resolve_path(cmd, self.protocol.cwd)
+            path = self.protocol.fs.resolve_path(cmd, self.cwd)
             if self.protocol.fs.isdir(path):
                 return f"-bash: {cmd}: Is a directory\n"
             if not self.protocol.fs.exists(path):
@@ -946,7 +957,7 @@ class HoneyPotShell:
                 uid = self.protocol.user.uid
                 home = self.protocol.user.avatar.home
 
-            cwd = self.protocol.cwd
+            cwd = self.cwd
             homelen = len(home)
             if cwd == home:
                 cwd = "~"
@@ -1000,12 +1011,12 @@ class HoneyPotShell:
             basedir += "/"
 
         if not basedir:
-            tmppath = self.protocol.cwd
+            tmppath = self.cwd
         else:
             tmppath = basedir
 
         try:
-            r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
+            r = self.protocol.fs.resolve_path(tmppath, self.cwd)
         except Exception:
             return
 

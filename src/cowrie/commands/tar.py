@@ -49,7 +49,7 @@ class Command_tar(HoneyPotCommand):
         if "v" in self.args[0]:
             verbose = True
 
-        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        path = self.fs.resolve_path(filename, self.cwd)
         if not path or not self.protocol.fs.exists(path):
             self.errorWrite(
                 f"tar: {filename}: Cannot open: No such file or directory\n"
@@ -75,7 +75,7 @@ class Command_tar(HoneyPotCommand):
             return
 
         for f in t:
-            dest = self.fs.resolve_path(f.name.strip("/"), self.protocol.cwd)
+            dest = self.fs.resolve_path(f.name.strip("/"), self.cwd)
             if verbose:
                 self.write(f"{f.name}\n")
             if not extract or not len(dest):

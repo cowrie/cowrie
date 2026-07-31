@@ -94,7 +94,7 @@ class Command_sudo(HoneyPotCommand):
         parsed_arguments = []
         for count in range(0, len(self.args)):
             class_found = self.protocol.getCommand(
-                self.args[count], self.environ.get("PATH", "").split(":")
+                self.args[count], self.environ.get("PATH", "").split(":"), self.cwd
             )
             if class_found:
                 start_value = count
@@ -123,12 +123,13 @@ class Command_sudo(HoneyPotCommand):
         if len(parsed_arguments) > 0:
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(
-                cmd, self.environ.get("PATH", "").split(":")
+                cmd, self.environ.get("PATH", "").split(":"), self.cwd
             )
 
             if cmdclass:
                 command = PipeProtocol(
-                    self.protocol, cmdclass, parsed_arguments[1:], None, None
+                    self.protocol, cmdclass, parsed_arguments[1:], None, None,
+                    cwd=self.cwd,
                 )
                 self.protocol.pp.insert_command(command)
                 # this needs to go here so it doesn't write it out....

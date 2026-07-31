@@ -163,7 +163,7 @@ Download a file via FTP
             self.exit(1)
             return
 
-        fakeoutfile = self.fs.resolve_path(self.local_file, self.protocol.cwd)
+        fakeoutfile = self.fs.resolve_path(self.local_file, self.cwd)
         path = posixpath.dirname(fakeoutfile)
         if not path or not self.fs.exists(path) or not self.fs.isdir(path):
             self.errorWrite(

@@ -47,7 +47,7 @@ class Command_dd(HoneyPotCommand):
             block = 512
             if "if" in self.ddargs:
                 iname = self.ddargs["if"]
-                pname = self.fs.resolve_path(iname, self.protocol.cwd)
+                pname = self.fs.resolve_path(iname, self.cwd)
                 if self.fs.isdir(pname):
                     self.errorWrite(f"dd: {iname}: Is a directory\n")
                     bSuccess = False

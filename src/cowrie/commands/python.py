@@ -105,7 +105,7 @@ class Command_python(HoneyPotCommand):
                 return
 
         for value in args:
-            sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
+            sourcefile = self.fs.resolve_path(value, self.cwd)
 
             if self.fs.exists(sourcefile) or value == "-":
                 self.exit()

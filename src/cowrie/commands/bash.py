@@ -48,7 +48,7 @@ class Command_sh(HoneyPotCommand):
     def execute_script_file(self, filename: str) -> None:
         # bash refuses to run a binary file and reports it the same way for a
         # missing one; the script contents otherwise go straight to the parser.
-        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        path = self.fs.resolve_path(filename, self.cwd)
         run_script_file(
             self,
             path,

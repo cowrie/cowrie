@@ -66,7 +66,7 @@ class Command_awk(HoneyPotCommand):
                     self.output(self.input_data)
                     continue
 
-                pname = self.fs.resolve_path(arg, self.protocol.cwd)
+                pname = self.fs.resolve_path(arg, self.cwd)
 
                 if self.fs.isdir(pname):
                     self.errorWrite(f"awk: {arg}: Is a directory\n")

@@ -96,7 +96,7 @@ class Command_perl(HoneyPotCommand):
                 return
 
         for value in args:
-            sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
+            sourcefile = self.fs.resolve_path(value, self.cwd)
 
             if self.fs.exists(sourcefile):
                 self.exit()

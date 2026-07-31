@@ -108,7 +108,7 @@ Try 'base64 --help' for more information.
                 self.exit()
                 return
 
-            pname = self.fs.resolve_path(args[0], self.protocol.cwd)
+            pname = self.fs.resolve_path(args[0], self.cwd)
             if not self.fs.isdir(pname):
                 try:
                     self.dojob(self.fs.file_contents(pname))

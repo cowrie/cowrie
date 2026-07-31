@@ -303,7 +303,7 @@ class Command_cd(HoneyPotCommand):
             pname = self.args[0]
         newpath = ""
         try:
-            newpath = self.fs.resolve_path(pname, self.protocol.cwd)
+            newpath = self.fs.resolve_path(pname, self.cwd)
             inode = self.fs.getfile(newpath)
         except Exception:
             inode = None
@@ -316,7 +316,9 @@ class Command_cd(HoneyPotCommand):
         if inode[fs.A_TYPE] != fs.T_DIR:
             self.errorWrite(f"bash: cd: {pname}: Not a directory\n")
             return
-        self.protocol.cwd = newpath
+        # cd is a builtin: it changes the running shell's directory, not this
+        # command process's own.
+        self.shell.cwd = newpath
 
 
 commands["cd"] = Command_cd
@@ -402,7 +404,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                 return
 
         for f in args:
-            pname = self.fs.resolve_path(f, self.protocol.cwd)
+            pname = self.fs.resolve_path(f, self.cwd)
             node = self.fs.getfile(pname, follow_symlinks=False)
             if node is None:
                 if not force:
@@ -448,7 +450,7 @@ class Command_cp(HoneyPotCommand):
                 recursive = True
 
         def resolv(pname: str) -> str:
-            rsv: str = self.fs.resolve_path(pname, self.protocol.cwd)
+            rsv: str = self.fs.resolve_path(pname, self.cwd)
             return rsv
 
         if len(args) < 2:
@@ -520,7 +522,7 @@ class Command_mv(HoneyPotCommand):
             return
 
         def resolv(pname: str) -> str:
-            rsv: str = self.fs.resolve_path(pname, self.protocol.cwd)
+            rsv: str = self.fs.resolve_path(pname, self.cwd)
             return rsv
 
         if len(args) < 2:
@@ -575,7 +577,7 @@ class Command_mkdir(HoneyPotCommand):
 
     def call(self) -> None:
         for f in self.args:
-            pname = self.fs.resolve_path(f, self.protocol.cwd)
+            pname = self.fs.resolve_path(f, self.cwd)
             if self.fs.exists(pname):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
                 return
@@ -601,7 +603,7 @@ class Command_rmdir(HoneyPotCommand):
 
     def call(self) -> None:
         for f in self.args:
-            pname = self.fs.resolve_path(f, self.protocol.cwd)
+            pname = self.fs.resolve_path(f, self.cwd)
             try:
                 if len(self.fs.get_path(pname)):
                     self.errorWrite(
@@ -638,7 +640,7 @@ class Command_pwd(HoneyPotCommand):
     """
 
     def call(self) -> None:
-        self.write(self.protocol.cwd + "\n")
+        self.write(self.cwd + "\n")
 
 
 commands["/bin/pwd"] = Command_pwd
@@ -656,7 +658,7 @@ class Command_touch(HoneyPotCommand):
             self.errorWrite("Try `touch --help' for more information.\n")
             return
         for f in self.args:
-            pname = self.fs.resolve_path(f, self.protocol.cwd)
+            pname = self.fs.resolve_path(f, self.cwd)
             if not self.fs.exists(posixpath.dirname(pname)):
                 self.errorWrite(
                     f"touch: cannot touch `{pname}`: No such file or directory\n"

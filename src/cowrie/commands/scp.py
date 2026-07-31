@@ -59,7 +59,7 @@ class Command_scp(HoneyPotCommand):
                 break
 
         if self.out_dir:
-            outdir = self.fs.resolve_path(self.out_dir, self.protocol.cwd)
+            outdir = self.fs.resolve_path(self.out_dir, self.cwd)
 
             if not self.fs.exists(outdir):
                 self.errorWrite(f"-scp: {self.out_dir}: No such file or directory\n")
@@ -169,7 +169,7 @@ class Command_scp(HoneyPotCommand):
                     else:
                         fname = scpname
 
-                    outfile = self.fs.resolve_path(fname, self.protocol.cwd)
+                    outfile = self.fs.resolve_path(fname, self.cwd)
 
                     try:
                         self.fs.mkfile(
