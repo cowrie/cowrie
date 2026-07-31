@@ -47,6 +47,10 @@ class HoneyPotCommand:
     # it holds even for instances created without __init__ (tests).
     pp: Any = None
 
+    # True when this command was still running once start() returned, so it
+    # owes the next pipeline stage the EOF on its stdout when it exits.
+    advance_pipe_on_exit: bool = False
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
@@ -158,6 +162,20 @@ class HoneyPotCommand:
 
         if len(self.protocol.cmdstack):
             self.protocol.cmdstack.remove(self)
+
+        if (
+            self.advance_pipe_on_exit
+            and self.pp is not None
+            and self.pp.next_command is not None
+        ):
+            # An upstream pipeline stage that outlived its own start() (an
+            # async download, or a command parked on stdin). Its stdout only
+            # closes now, so hand control to the next stage rather than back
+            # to the shell: the stage that ends the pipeline resumes the
+            # shell, and its status is the pipeline's, as in bash.
+            self.advance_pipe_on_exit = False
+            self.pp.outConnectionLost()
+            return
 
         if len(self.protocol.cmdstack):
             # Hand the exit status to the shell that ran us, for $? and the
