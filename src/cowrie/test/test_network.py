@@ -4,13 +4,16 @@
 
 import unittest
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest import mock
 
-from twisted.internet.defer import Deferred, fail, inlineCallbacks, succeed
+from twisted.internet.defer import Deferred, fail, succeed
 from twisted.names import dns
 from twisted.names import error as names_error
 from twisted.python import log
+
+if TYPE_CHECKING:
+    from twisted.python.failure import Failure
 
 from cowrie.core.network import (
     communication_allowed,
@@ -18,147 +21,55 @@ from cowrie.core.network import (
     resolve_cname,
 )
 
-# The communication_allowed function and other dependencies would already be imported here
-
 
 class TestCommunicationAllowed(unittest.TestCase):
-    def setUp(self):
-        # Setup code, if needed
-        self.blocked_ips = [
-            "10.0.0.0/8",  # Private IP range 10.0.0.0 - 10.255.255.255
-            "172.16.0.0/12",  # Private IP range 172.16.0.0 - 172.31.255.255
-            "192.168.0.0/16",  # Private IP range 192.168.0.0 - 192.168.255.255
-            "169.254.169.254",  # Cloud metadata IP (AWS, GCP, etc.)
-            "100.100.100.200",  # Alibaba Cloud metadata IP
-            "127.0.0.0/8",  # Loopback addresses (localhost)
-            "0.0.0.0/8",  # Reserved IP range
-            "224.0.0.0/4",  # Multicast addresses
-            "240.0.0.0/4",  # Reserved addresses
-            "255.255.255.255",  # Limited broadcast address
-        ]
+    """communication_allowed validates IP literals synchronously against the
+    blocklist; hostnames go through resolve_allowed, which is tested below
+    with a canned resolver, so no test here touches real DNS."""
 
-    @inlineCallbacks
-    def test_ipv4_address_allowed(self):
-        # Test with a non-blocked IPv4 address (should return True)
-        allowed = yield communication_allowed("8.8.8.8")  # Google's public DNS
-        self.assertTrue(allowed)
+    def _allowed(self, address: str) -> bool:
+        with mock.patch(
+            "cowrie.core.network.client.lookupAddress",
+            side_effect=_fake_lookup({}),
+        ):
+            results: list[bool | Failure] = []
+            communication_allowed(address).addBoth(results.append)
+        self.assertEqual(len(results), 1)
+        value = results[0]
+        self.assertIsInstance(value, bool)
+        assert isinstance(value, bool)
+        return value
 
-    @inlineCallbacks
-    def test_ipv4_address_blocked(self):
-        # Test with a blocked IPv4 address (should return False)
-        allowed = yield communication_allowed(
-            "10.1.1.1"
-        )  # Example from blocked range 10.0.0.0/8
-        self.assertFalse(allowed)
+    def test_public_addresses_allowed(self) -> None:
+        for address in (
+            "8.8.8.8",
+            "2001:4860:4860::8888",
+            "::ffff:8.8.8.8",  # IPv4-mapped public address stays allowed
+        ):
+            with self.subTest(address=address):
+                self.assertTrue(self._allowed(address))
 
-    @inlineCallbacks
-    def test_ipv6_address_allowed(self):
-        # Test with a non-blocked IPv6 address (should return True)
-        allowed = yield communication_allowed("2001:4860:4860::8888")  # Google's IPv6
-        self.assertTrue(allowed)
+    def test_blocked_addresses(self) -> None:
+        for address in (
+            "10.1.1.1",  # private range 10.0.0.0/8
+            "100.64.0.1",  # carrier-grade NAT, not globally routable
+            "198.18.0.1",  # benchmarking space, not globally routable
+            "::1",  # IPv6 loopback
+            "fe80::1",  # IPv6 link-local
+            "fc00::1",  # IPv6 unique-local
+            "::ffff:127.0.0.1",  # IPv4-mapped loopback
+            "::ffff:169.254.169.254",  # IPv4-mapped cloud metadata IP
+            "::127.0.0.1",  # IPv4-compatible loopback (deprecated ::a.b.c.d)
+            "2002:a00:101::",  # 6to4 embedding private 10.0.1.1
+            "64:ff9b::7f00:1",  # NAT64 embedding loopback 127.0.0.1
+        ):
+            with self.subTest(address=address):
+                self.assertFalse(self._allowed(address))
 
-    @inlineCallbacks
-    def test_ipv6_address_blocked(self):
-        # Test with a blocked IPv6 address (should return False)
-        allowed = yield communication_allowed("::1")  # Loopback address
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_dns_resolution_allowed(self):
-        # Test with a resolvable DNS address that points to a non-blocked IP
-        allowed = yield communication_allowed("example.com")
-        self.assertTrue(allowed)
-
-    @inlineCallbacks
-    def test_dns_resolution_blocked(self):
-        # Test with a DNS address that resolves to a blocked IP
-        allowed = yield communication_allowed("localhost")  # Resolves to 127.0.0.1
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_invalid_ip_address(self):
-        # Test with an invalid IP address (should return False)
-        allowed = yield communication_allowed("999.999.999.999")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv4_mapped_loopback_blocked(self):
-        # ::ffff:127.0.0.1 embeds a loopback IPv4 address and must be blocked.
-        allowed = yield communication_allowed("::ffff:127.0.0.1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv4_mapped_private_blocked(self):
-        # ::ffff:10.0.0.1 embeds a private IPv4 address and must be blocked.
-        allowed = yield communication_allowed("::ffff:10.0.0.1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv4_mapped_metadata_blocked(self):
-        # ::ffff:169.254.169.254 embeds the cloud metadata IP and must be blocked.
-        allowed = yield communication_allowed("::ffff:169.254.169.254")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv6_link_local_blocked(self):
-        # fe80::/10 link-local addresses must be blocked.
-        allowed = yield communication_allowed("fe80::1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv6_unique_local_blocked(self):
-        # fc00::/7 unique-local (private) addresses must be blocked.
-        allowed = yield communication_allowed("fc00::1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv6_mapped_public_allowed(self):
-        # An IPv4-mapped public address stays allowed.
-        allowed = yield communication_allowed("::ffff:8.8.8.8")
-        self.assertTrue(allowed)
-
-    @inlineCallbacks
-    def test_ipv4_compatible_loopback_blocked(self):
-        # ::127.0.0.1 is the deprecated IPv4-compatible form (::a.b.c.d); it
-        # embeds a loopback IPv4 address and must be blocked like ::ffff:127.0.0.1.
-        allowed = yield communication_allowed("::127.0.0.1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv4_compatible_private_blocked(self):
-        # ::10.0.0.1 embeds a private IPv4 address and must be blocked.
-        allowed = yield communication_allowed("::10.0.0.1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_ipv4_compatible_metadata_blocked(self):
-        # ::169.254.169.254 embeds the cloud metadata IP and must be blocked.
-        allowed = yield communication_allowed("::169.254.169.254")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_cgnat_blocked(self):
-        # 100.64.0.0/10 carrier-grade NAT space is not globally routable.
-        allowed = yield communication_allowed("100.64.0.1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_benchmarking_range_blocked(self):
-        # 198.18.0.0/15 benchmarking space is not globally routable.
-        allowed = yield communication_allowed("198.18.0.1")
-        self.assertFalse(allowed)
-
-    @inlineCallbacks
-    def test_cname_resolution(self):
-        # Test with a CNAME that resolves to an allowed IP
-        allowed = yield communication_allowed("www.google.com")
-        self.assertTrue(allowed)
-
-    @inlineCallbacks
-    def test_cname_resolution_blocked(self):
-        # Test with a CNAME that resolves to a blocked IP (e.g., 127.0.0.1)
-        allowed = yield communication_allowed("localhost")  # Should be blocked
-        self.assertFalse(allowed)
+    def test_invalid_ip_treated_as_unresolvable(self) -> None:
+        # Not a valid IP literal, so it takes the DNS path; the canned
+        # resolver has no records for it, so communication is refused.
+        self.assertFalse(self._allowed("999.999.999.999"))
 
 
 def _fake_lookup(

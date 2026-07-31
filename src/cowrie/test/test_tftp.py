@@ -7,7 +7,6 @@ from __future__ import annotations
 import os
 import struct
 import tempfile
-import time
 import unittest
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
@@ -35,6 +34,7 @@ from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
+from cowrie.test.reactorpump import pump
 
 if TYPE_CHECKING:
     from twisted.internet.address import IPv4Address
@@ -54,23 +54,6 @@ os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
-
-
-def pump(predicate: Any, timeout: float = 5.0) -> bool:
-    """Run the reactor until ``predicate()`` is true, or ``timeout`` elapses.
-
-    These tests do real UDP I/O, so they need the reactor to turn. The suite
-    runs under plain unittest (see CLAUDE.md), which ignores a returned
-    Deferred: a test that schedules its assertions with callLater and returns
-    a Deferred never runs them at all. Driving the reactor here keeps the
-    assertions in the test body where they execute.
-    """
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        _reactor.iterate(0.01)
-    return bool(predicate())
 
 
 class MockTFTPServer(DatagramProtocol):
@@ -781,63 +764,3 @@ class _FakeUDPTransport:
 
     def write(self, data: bytes, addr: Any = None) -> None:
         self.written.append((data, addr))
-
-
-class TFTPProtocolTests(unittest.TestCase):
-    """Tests for TFTP protocol implementation"""
-
-    def test_rrq_packet_format(self) -> None:
-        """Test that RRQ packets are correctly formatted"""
-        from cowrie.commands.tftp import MODE_OCTET, OPCODE_RRQ
-
-        filename = "test.txt"
-        packet = struct.pack("!H", OPCODE_RRQ)
-        packet += filename.encode() + b"\x00"
-        packet += MODE_OCTET + b"\x00"
-
-        # Verify packet structure
-        opcode = struct.unpack("!H", packet[:2])[0]
-        self.assertEqual(opcode, OPCODE_RRQ)
-        self.assertIn(b"test.txt", packet)
-        self.assertIn(b"octet", packet)
-
-    def test_ack_packet_format(self) -> None:
-        """Test that ACK packets are correctly formatted"""
-        block_num = 5
-        packet = struct.pack("!HH", OPCODE_ACK, block_num)
-
-        # Verify packet structure
-        opcode, block = struct.unpack("!HH", packet)
-        self.assertEqual(opcode, OPCODE_ACK)
-        self.assertEqual(block, 5)
-
-    def test_data_packet_parsing(self) -> None:
-        """Test parsing of DATA packets"""
-        block_num = 3
-        data = b"Hello, TFTP!"
-        packet = struct.pack("!HH", OPCODE_DATA, block_num) + data
-
-        # Parse packet
-        opcode = struct.unpack("!H", packet[:2])[0]
-        block = struct.unpack("!H", packet[2:4])[0]
-        content = packet[4:]
-
-        self.assertEqual(opcode, OPCODE_DATA)
-        self.assertEqual(block, 3)
-        self.assertEqual(content, b"Hello, TFTP!")
-
-    def test_error_packet_parsing(self) -> None:
-        """Test parsing of ERROR packets"""
-        error_code = 1
-        error_msg = "File not found"
-        packet = struct.pack("!HH", OPCODE_ERROR, error_code)
-        packet += error_msg.encode() + b"\x00"
-
-        # Parse packet
-        opcode = struct.unpack("!H", packet[:2])[0]
-        code = struct.unpack("!H", packet[2:4])[0]
-        msg = packet[4:].rstrip(b"\x00").decode()
-
-        self.assertEqual(opcode, OPCODE_ERROR)
-        self.assertEqual(code, 1)
-        self.assertEqual(msg, "File not found")

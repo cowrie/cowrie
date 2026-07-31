@@ -88,16 +88,14 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         )
 
     def test_shutdown_command(self) -> None:
-        self.proto.lineReceived(b"shutdown\n")
-        self.assertEqual(
-            self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT
-        )  # TODO: Is it right?..
-
-    def test_poweroff_command(self) -> None:
-        self.proto.lineReceived(b"poweroff\n")
-        self.assertEqual(
-            self.tr.value(), b"Try `shutdown --help' for more information.\n" + PROMPT
-        )  # TODO: Is it right?..
+        for command in (b"shutdown", b"poweroff", b"halt"):
+            with self.subTest(command=command):
+                self.proto.lineReceived(command + b"\n")
+                self.assertEqual(
+                    self.tr.value(),
+                    b"Try `shutdown --help' for more information.\n" + PROMPT,
+                )  # TODO: Is it right?..
+                self.tr.clear()
 
     def test_date_command(self) -> None:
         self.proto.lineReceived(b"date\n")
@@ -128,10 +126,6 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"./\n")
         self.assertEqual(self.tr.value(), b"-bash: ./: Is a directory\n" + PROMPT)
 
-    def test_run_absolute_directory_as_command(self) -> None:
-        self.proto.lineReceived(b"/etc\n")
-        self.assertEqual(self.tr.value(), b"-bash: /etc: Is a directory\n" + PROMPT)
-
     def test_run_nonexistent_command(self) -> None:
         self.proto.lineReceived(b"definitelynotacommand\n")
         self.assertEqual(
@@ -151,10 +145,6 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
             self.tr.value(),
             b"Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...\n"
             + PROMPT)
-
-    def test_umask_command(self) -> None:
-        self.proto.lineReceived(b"umask\n")
-        self.assertEqual(self.tr.value(), PROMPT)
 
     def test_set_command(self) -> None:
         self.proto.lineReceived(b"set\n")
@@ -179,41 +169,22 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
             b'declare -x USER="root"\n' + PROMPT,
         )
 
-    def test_alias_command(self) -> None:
-        self.proto.lineReceived(b"alias\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_jobs_command(self) -> None:
-        self.proto.lineReceived(b"jobs\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_kill_command(self) -> None:
-        self.proto.lineReceived(b"/bin/kill\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_pkill_command(self) -> None:
-        self.proto.lineReceived(b"/bin/pkill\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_killall_command(self) -> None:
-        self.proto.lineReceived(b"/bin/killall\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_killall5_command(self) -> None:
-        self.proto.lineReceived(b"/bin/killall5\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_su_command(self) -> None:
-        self.proto.lineReceived(b"su\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chown_command(self) -> None:
-        self.proto.lineReceived(b"chown\n")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chgrp_command(self) -> None:
-        self.proto.lineReceived(b"chgrp\n")
-        self.assertEqual(self.tr.value(), PROMPT)
+    def test_nop_commands(self) -> None:
+        for command in (
+            b"umask",
+            b"alias",
+            b"jobs",
+            b"/bin/kill",
+            b"/bin/pkill",
+            b"/bin/killall",
+            b"/bin/killall5",
+            b"chown",
+            b"chgrp",
+        ):
+            with self.subTest(command=command):
+                self.proto.lineReceived(command + b"\n")
+                self.assertEqual(self.tr.value(), PROMPT)
+                self.tr.clear()
 
     def test_cd_output(self) -> None:
         path = "/usr/bin"

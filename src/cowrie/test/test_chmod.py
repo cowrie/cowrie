@@ -89,33 +89,19 @@ class ShellChmodCommandTests(unittest.TestCase):
         )
 
     def test_chmod_command_008(self) -> None:
-        self.proto.lineReceived(b"chmod +x .bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_009(self) -> None:
-        self.proto.lineReceived(b"chmod -R +x .bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_010(self) -> None:
-        self.proto.lineReceived(b"chmod +x /root/.bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_011(self) -> None:
-        self.proto.lineReceived(b"chmod +x ~/.bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_012(self) -> None:
-        self.proto.lineReceived(b"chmod a+x .bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_013(self) -> None:
-        self.proto.lineReceived(b"chmod ug+x .bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_014(self) -> None:
-        self.proto.lineReceived(b"chmod 777 .bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
-
-    def test_chmod_command_015(self) -> None:
-        self.proto.lineReceived(b"chmod 0755 .bashrc")
-        self.assertEqual(self.tr.value(), PROMPT)
+        # Valid symbolic and numeric modes on an existing file succeed
+        # silently, whatever the mode spelling or target path form.
+        for command in (
+            b"chmod +x .bashrc",
+            b"chmod -R +x .bashrc",
+            b"chmod +x /root/.bashrc",
+            b"chmod +x ~/.bashrc",
+            b"chmod a+x .bashrc",
+            b"chmod ug+x .bashrc",
+            b"chmod 777 .bashrc",
+            b"chmod 0755 .bashrc",
+        ):
+            with self.subTest(command=command):
+                self.proto.lineReceived(command)
+                self.assertEqual(self.tr.value(), PROMPT)
+                self.tr.clear()

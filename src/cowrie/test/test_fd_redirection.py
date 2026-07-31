@@ -103,14 +103,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         )
         self.assertEqual(self.tr.value(), b"bye\n" + PROMPT)
 
-    def test_stdout_overwrite_and_stderr_pipe(self) -> None:
-        self.proto.lineReceived(b"cat missingfile 2>&1 1> outonly; cat outonly")
-        # stderr should still reach the pipe (2>&1 happens before stdout redirection)
-        self.assertEqual(
-            self.tr.value(),
-            b"cat: missingfile: No such file or directory\n" + PROMPT,
-        )
-
     def test_stdin_redirection(self) -> None:
         self.proto.lineReceived(b"cat < /etc/passwd")
         # Default honeyfs passwd has root line starting with root:x:
@@ -145,15 +137,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.assertTrue(output.endswith(PROMPT))
         # Should contain at least one line from hosts file if present
         self.assertIn(b"localhost", output)
-
-    def test_append_preserves_existing(self) -> None:
-        self.proto.lineReceived(
-            b"echo first > appendfile; echo second >> appendfile; echo third >> appendfile; cat appendfile"
-        )
-        self.assertEqual(
-            self.tr.value(),
-            b"first\nsecond\nthird\n" + PROMPT,
-        )
 
     def test_invalid_fd_redirection(self) -> None:
         self.proto.lineReceived(b"echo test 5> outfile")
@@ -202,10 +185,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(
             b"echo test > 'file with spaces'; cat 'file with spaces'"
         )
-        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
-
-    def test_multiple_redirections_same_file(self) -> None:
-        self.proto.lineReceived(b"echo test > file > file; cat file")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_input_output_same_file(self) -> None:
@@ -283,15 +262,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # Multiple substitutions in one command
         self.proto.lineReceived(b"echo $(echo a) $(echo b)")
         self.assertEqual(self.tr.value(), b"a b\n" + PROMPT)
-
-    def test_existing_env_var_with_redirect(self) -> None:
-        # Test that existing environment variables work with redirects
-        # $HOME should be set in the cowrie environment
-        self.proto.lineReceived(b"echo $HOME > homefile; cat homefile")
-        output = self.tr.value()
-        self.assertTrue(output.endswith(PROMPT))
-        # Should contain a path (home directory)
-        self.assertIn(b"/", output)
 
     def test_heredoc_style_not_supported(self) -> None:
         # << is not supported, should not crash

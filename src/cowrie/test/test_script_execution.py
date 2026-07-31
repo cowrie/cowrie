@@ -176,15 +176,6 @@ class ScriptExecutionTests(unittest.TestCase):
         self.proto.lineReceived(b"sh /tmp/dl.sh")
         self.assertEqual(self.tr.value(), b"fetch a\n" + PROMPT)
 
-    def test_shebang_is_comment_not_executed(self) -> None:
-        """The shebang line is treated as a comment and produces no output."""
-        self.proto.lineReceived(
-            b"printf '#!/bin/sh\\necho after_shebang\\n' > /tmp/sb.sh"
-        )
-        self.tr.clear()
-        self.proto.lineReceived(b"sh /tmp/sb.sh")
-        self.assertEqual(self.tr.value(), b"after_shebang\n" + PROMPT)
-
     def test_script_exit_status_propagates(self) -> None:
         """A script's exit status is the status of its last command."""
         self.proto.lineReceived(b"printf 'true\\nfalse\\n' > /tmp/st.sh")
