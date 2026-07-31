@@ -43,6 +43,10 @@ class HoneyPotCommand:
     # created without __init__ (tests).
     exited: bool = False
 
+    # This command's stdio wiring, set at spawn (see __init__). Class-level so
+    # it holds even for instances created without __init__ (tests).
+    pp: Any = None
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
@@ -67,17 +71,21 @@ class HoneyPotCommand:
         self.data: bytes = b""  # output data
         # used to store STDIN data passed via PIPE
         self.input_data: bytes | None = None
+        # This command's own stdio: the fd table, its redirections and the
+        # link to the next pipeline stage, handed over at spawn. Held per
+        # command because a command that finishes late (an async download)
+        # must still write to and clean up the fds it was started with, not
+        # whichever pipeline is running by the time it ends.
         pp: Any = getattr(self.protocol, "pp", None)
+        self.pp: Any = pp
         self.writefn: Callable[[bytes], None]
         self.errorWritefn: Callable[[bytes], None]
         if pp and hasattr(pp, "write_stdout") and hasattr(pp, "write_stderr"):
             self.writefn = cast("Callable[[bytes], None]", pp.write_stdout)
             self.errorWritefn = cast("Callable[[bytes], None]", pp.write_stderr)
         else:
-            self.writefn = cast("Callable[[bytes], None]", self.protocol.pp.outReceived)
-            self.errorWritefn = cast(
-                "Callable[[bytes], None]", self.protocol.pp.errReceived
-            )
+            self.writefn = cast("Callable[[bytes], None]", pp.outReceived)
+            self.errorWritefn = cast("Callable[[bytes], None]", pp.errReceived)
 
     def write(self, data: str) -> None:
         """
@@ -136,13 +144,16 @@ class HoneyPotCommand:
         self.exited = True
         if code is not None:
             self.exit_code = code
+        # Register this command's own redirection backing files for hashing at
+        # session close. Read from self.pp, not the protocol's current pipe: a
+        # command that finishes after a later one started would otherwise
+        # register that command's files and orphan its own.
         if (
             self.protocol
             and self.protocol.terminal
-            and hasattr(self.protocol, "pp")
-            and getattr(self.protocol.pp, "redirect_real_files", None)
+            and getattr(self.pp, "redirect_real_files", None)
         ):
-            for real_path, virtual_path in self.protocol.pp.redirect_real_files:
+            for real_path, virtual_path in self.pp.redirect_real_files:
                 self.protocol.terminal.redirFiles.add((real_path, virtual_path))
 
         if len(self.protocol.cmdstack):

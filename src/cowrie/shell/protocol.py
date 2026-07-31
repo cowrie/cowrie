@@ -51,6 +51,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.environ = avatar.environ
         self.hostname: str = self.user.server.hostname
         self.fs = self.user.server.fs
+        # The pipeline being handed to the command now starting, which the
+        # command keeps as its own (HoneyPotCommand.pp). It stays set to the
+        # most recently started command's pipeline afterwards, which is what
+        # the running shell reads to tell mid-pipeline from statement end and
+        # to collect a substitution's captured output. Only ever one at a time:
+        # commands run strictly in sequence.
         self.pp = None
         self.logintime: float
         self.realClientIP: str

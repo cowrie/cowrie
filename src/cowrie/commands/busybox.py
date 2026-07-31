@@ -93,20 +93,20 @@ class Command_busybox(HoneyPotCommand):
             pp = PipeProtocol(
                 self.protocol,
                 cmdclass,
-                self.protocol.pp.cmdargs[1:],
+                self.pp.cmdargs[1:],
                 self.input_data,
                 None,
-                redirect=self.protocol.pp.redirect,
-                redirections=self.protocol.pp.redirections,
+                redirect=self.pp.redirect,
+                redirections=self.pp.redirections,
                 cwd=self.cwd,
                 user=self.user,
             )
 
             # insert the command as we do when chaining commands with pipes
-            self.protocol.pp.insert_command(pp)
+            self.pp.insert_command(pp)
 
             # invoke inserted command
-            self.protocol.pp.outConnectionLost()
+            self.pp.outConnectionLost()
 
             # Place this here so it doesn't write out only if last statement
             if self.input_data:

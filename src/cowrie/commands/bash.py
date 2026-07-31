@@ -87,7 +87,7 @@ class Command_sh(HoneyPotCommand):
             isinstance(self.protocol, HoneyPotExecProtocol)
             and len(self.protocol.cmdstack) == 2
             and self.input_data is None
-            and not getattr(self.protocol.pp, "stdin_from_pipe", False)
+            and not getattr(self.pp, "stdin_from_pipe", False)
         )
 
     def interactive_shell(self) -> None:
