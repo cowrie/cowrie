@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import tempfile
 import unittest
 from typing import Any
 from unittest.mock import Mock, patch
@@ -17,7 +18,7 @@ from twisted.enterprise import adbapi
 from twisted.internet import defer
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 from cowrie.output import sqlite as sqlite_output

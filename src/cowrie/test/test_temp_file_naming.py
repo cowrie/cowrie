@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 from types import SimpleNamespace
 
@@ -18,7 +19,7 @@ from cowrie.shell import fs
 from cowrie.shell.pipe import PipeProtocol
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 
@@ -102,7 +103,7 @@ class TempFileNamingTests(unittest.TestCase):
 
     def test_scp_dropped_file(self) -> None:
         cmd = Command_scp.__new__(Command_scp)
-        cmd.download_path = "/tmp"
+        cmd.download_path = tempfile.gettempdir()
         cmd.drop_tmp_file(b"contents")
         self.assertPrefixUuidName(cmd.safeoutfile, "scp")
         with open(cmd.safeoutfile, "rb") as f:
@@ -110,7 +111,7 @@ class TempFileNamingTests(unittest.TestCase):
 
     def test_helper_builds_download_dir_paths(self) -> None:
         path = temp_download_path("stdin")
-        self.assertEqual(os.path.dirname(path), "/tmp")
+        self.assertEqual(os.path.dirname(path), tempfile.gettempdir())
         self.assertRegex(os.path.basename(path), r"^stdin_[0-9a-f]{32}$")
         self.assertNotEqual(path, temp_download_path("stdin"))
 
