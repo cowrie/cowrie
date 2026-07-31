@@ -48,12 +48,16 @@ class ShellLsCommandTests(unittest.TestCase):
 
     def test_ls_command_003(self) -> None:
         self.proto.lineReceived(b"ls -l /\n")
-        self.assertIsNotNone(
-            self.tr.value(),
-        )
+        output = self.tr.value()
+        self.assertIn(b"drwxr-xr-x 1 root root 4096 ", output)
+        self.assertIn(b"lrwxrwxrwx 1 root root    7 ", output)
+        self.assertIn(b" bin -> usr/bin\n", output)
+        self.assertTrue(output.endswith(PROMPT))
 
     def test_ls_command_004(self) -> None:
         self.proto.lineReceived(b"ls -lh /\n")
-        self.assertIsNotNone(
-            self.tr.value(),
-        )
+        output = self.tr.value()
+        # -h prints human-readable sizes (4096 -> 4.0K)
+        self.assertIn(b"drwxr-xr-x 1 root root 4.0K ", output)
+        self.assertNotIn(b" 4096 ", output)
+        self.assertTrue(output.endswith(PROMPT))
