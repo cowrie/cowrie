@@ -182,8 +182,11 @@ class HoneyPotCommand:
         # Queue on the innermost shell, the next stdin reader once this
         # command exits: an outer shell only resumes after the shells above
         # it unwind, so a line queued there would wait on the whole stack.
+        # A capture subshell ($(...)) is skipped: its program is fixed source
+        # text, and typed input is stdin data for the next real reader, never
+        # a command to run -- and capture -- inside the substitution.
         for item in reversed(self.protocol.cmdstack):
-            if hasattr(item, "queue_line"):
+            if hasattr(item, "queue_line") and not getattr(item, "redirect", False):
                 item.queue_line(line)
                 return
 
