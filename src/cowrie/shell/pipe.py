@@ -7,14 +7,12 @@
 
 from __future__ import annotations
 
-import os
-import re
 import stat
-import time
 from typing import TYPE_CHECKING, Any
 
 from twisted.logger import Logger
 
+from cowrie.core.artifact import temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
@@ -221,15 +219,10 @@ class PipeProtocol:
 
     def _create_redirect_target(self, outfile: str) -> str | None:
         """Create a new backing file for a redirected output target."""
-        tmp_fname = "{}-{}-{}-redir_{}".format(
-            time.strftime("%Y%m%d-%H%M%S"),
-            self.protocol.getProtoTransport().transportId,
-            self.protocol.terminal.transport.session.id,
-            re.sub("[^A-Za-z0-9]", "_", outfile),
-        )
-        safeoutfile = os.path.join(
-            CowrieConfig.get("honeypot", "download_path"), tmp_fname
-        )
+        # The backing file is renamed to its sha256 once the session ends
+        # and session attribution travels with the event, so the name only
+        # needs to be unique (#40351).
+        safeoutfile = temp_download_path("redir")
         perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
         try:
             self.protocol.fs.mkfile(

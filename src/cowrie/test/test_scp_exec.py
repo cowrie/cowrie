@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from twisted.internet.protocol import connectionDone
 
@@ -22,6 +23,8 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_scp_exec_")
+# Temp backing files land wherever config points when they are created.
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = _DOWNLOAD_DIR
 
 # Class-level download paths are read from config at import time, so another
 # test module importing these classes first can pin them elsewhere. Force them
@@ -214,13 +217,14 @@ class ScpExecHardeningTests(unittest.TestCase):
     def test_unwritable_download_path_does_not_crash(self) -> None:
         """A real filesystem error while saving the upload (download_path
         missing) must be handled, not raise OSError out of the EOF handler."""
-        orig = scp.Command_scp.download_path
-        scp.Command_scp.download_path = os.path.join(_DOWNLOAD_DIR, "missing", "dir")
-        self.addCleanup(setattr, scp.Command_scp, "download_path", orig)
+        missing = os.path.join(_DOWNLOAD_DIR, "missing", "dir")
 
         framed = b"C0644 1 f\n" + b"x\x00"
 
-        saved, events = run_exec_scp_push(framed)
+        with mock.patch.object(
+            scp, "temp_download_path", lambda prefix: os.path.join(missing, prefix)
+        ):
+            saved, events = run_exec_scp_push(framed)
 
         self.assertEqual(saved, [])
         self.assertNotIn(

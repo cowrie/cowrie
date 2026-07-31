@@ -12,7 +12,6 @@ import errno
 import hashlib
 import os
 import posixpath
-import re
 import stat
 import sys
 import time
@@ -21,6 +20,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from twisted.logger import Logger
 
+from cowrie.core.artifact import temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
 from cowrie.shell import honeyfs
@@ -481,11 +481,7 @@ class HoneyPotFilesystem:
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
             hostmode: int = mode & ~(111)
-            hostfile: str = "{}/{}_sftp_{}".format(
-                CowrieConfig.get("honeypot", "download_path"),
-                time.strftime("%Y%m%d-%H%M%S"),
-                re.sub("[^A-Za-z0-9]", "_", filename),
-            )
+            hostfile: str = temp_download_path("sftp")
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(hostfile, openFlags, hostmode)
             self.update_realfile(self.getfile(filename), hostfile)

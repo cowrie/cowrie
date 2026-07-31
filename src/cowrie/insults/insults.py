@@ -16,6 +16,7 @@ from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
 from cowrie.core import ttylog
+from cowrie.core.artifact import temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
 
@@ -83,7 +84,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.ttylogOpen = True
             self.ttylogSize = 0
 
-        self.stdinlogFile = f"{self.downloadPath}/{time.strftime('%Y%m%d-%H%M%S')}-{transportId}-{channelId}-stdin.log"
+        self.stdinlogFile = temp_download_path("stdin")
 
         if self.type == "e":
             self.stdinlogOpen = True
