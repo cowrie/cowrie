@@ -7,7 +7,6 @@ from __future__ import annotations
 import os
 import struct
 import tempfile
-import time
 import unittest
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
@@ -35,6 +34,7 @@ from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
+from cowrie.test.reactorpump import pump
 
 if TYPE_CHECKING:
     from twisted.internet.address import IPv4Address
@@ -54,23 +54,6 @@ os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
-
-
-def pump(predicate: Any, timeout: float = 5.0) -> bool:
-    """Run the reactor until ``predicate()`` is true, or ``timeout`` elapses.
-
-    These tests do real UDP I/O, so they need the reactor to turn. The suite
-    runs under plain unittest (see CLAUDE.md), which ignores a returned
-    Deferred: a test that schedules its assertions with callLater and returns
-    a Deferred never runs them at all. Driving the reactor here keeps the
-    assertions in the test body where they execute.
-    """
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        _reactor.iterate(0.01)
-    return bool(predicate())
 
 
 class MockTFTPServer(DatagramProtocol):
