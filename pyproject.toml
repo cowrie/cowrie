@@ -81,7 +81,7 @@ dev = [
 "pathspec==1.1.1",
 "pip-audit==2.10.1",
 "pipdeptree==4.0.0",
-"pre-commit==4.6.0",
+"pre-commit==4.6.1",
 "pylint==4.0.6",
 "pyre-check==0.9.25",
 "pyright==1.1.411",
