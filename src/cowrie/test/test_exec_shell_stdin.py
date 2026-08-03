@@ -161,11 +161,18 @@ class ExecShellStdinTests(unittest.TestCase):
         self.assertEqual(bytes(out), b"kept\n" + PROMPT)
 
     def test_overlong_line_is_capped(self) -> None:
+        # The stdin buffer caps at STDIN_LINE_MAX so an endless unterminated
+        # stream cannot grow memory without bound; the capped line still
+        # exceeds max_input_size, so the shell refuses to parse it and the
+        # session stays usable.
         cap = protocol.HoneyPotExecProtocol.STDIN_LINE_MAX
         lsp, out, ended = self.drive(b"bash")
         lsp.dataReceived(b"echo " + b"A" * cap + b"\n")
         self.assertEqual(ended, {})
-        self.assertEqual(bytes(out), b"A" * (cap - len(b"echo ")) + b"\n")
+        self.assertIn(b"syntax error", bytes(out))
+        out.clear()
+        lsp.dataReceived(b"echo ok\n")
+        self.assertEqual(bytes(out), b"ok\n")
 
 
 if __name__ == "__main__":

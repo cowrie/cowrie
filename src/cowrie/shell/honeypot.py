@@ -36,6 +36,7 @@ from cowrie.shell.bashparse import (
     Subshell,
     SyntaxError_,
     WhileClause,
+    max_input_size,
 )
 from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
@@ -249,6 +250,9 @@ class HoneyPotShell:
         self.protocol.events.dispatch(
             "cowrie.command.input", "CMD: %(input)s", input=line
         )
+        if self._reject_oversized(line):
+            self._advance()
+            return
         self._queue_statements(self.bashparser.parse(line))
         self._advance()
 
@@ -261,7 +265,19 @@ class HoneyPotShell:
         self.protocol.events.dispatch(
             "cowrie.command.input", "CMD: %(input)s", input=line
         )
+        if self._reject_oversized(line):
+            return
         self._queue_statements(self.bashparser.parse(line))
+
+    def _reject_oversized(self, line: str) -> bool:
+        """Refuse a line longer than max_input_size before it reaches the
+        parser, reporting it like a syntax error. The input is still
+        dispatched as a cowrie.command.input event: what the attacker sent
+        is worth logging even when it is not worth parsing."""
+        if len(line) <= max_input_size():
+            return False
+        self._report_syntax_error(SyntaxError_(token=""))
+        return True
 
     def _queue_statements(self, statements: list[Statement]) -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
