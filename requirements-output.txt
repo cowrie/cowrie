@@ -56,7 +56,7 @@ redis==8.0.1
 pika==1.4.1
 
 # prometheus
-prometheus_client==0.25.0
+prometheus_client==0.26.0
 
 # kafka
 aiokafka==0.14.0
