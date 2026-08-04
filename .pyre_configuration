@@ -1,0 +1,17 @@
+{
+  "source_directories": [
+    "src"
+  ],
+  "search_path": [
+    {"site-package": "cryptography"},
+    {"site-package": "incremental"},
+    {"site-package": "tftpy"},
+    {"site-package": "twisted"},
+    {"site-package": "treq"},
+    {"site-package": "zope"}
+  ],
+  "exclude": [
+    ".*/src/cowrie/output/.*"
+  ],
+  "workers": 4
+}

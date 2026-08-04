@@ -1,0 +1,137 @@
+.. SPDX-FileCopyrightText: 2014 Upi Tamminen <desaster@gmail.com>
+.. SPDX-FileCopyrightText: 2014-2025 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
+Cowrie
+######
+
+What is Cowrie
+*****************************************
+
+Cowrie is a medium to high interaction SSH and Telnet honeypot
+designed to log brute force attacks and the shell interaction
+performed by the attacker. In medium interaction mode (shell) it
+emulates a UNIX system in Python, in high interaction mode (proxy)
+it functions as an SSH and telnet proxy to observe attacker behavior
+on another system. In LLM mode, it uses large language models to
+generate dynamic responses to attacker commands.
+
+`Cowrie <http://github.com/cowrie/cowrie/>`_ is maintained by Michel Oosterhof.
+
+Documentation
+****************************************
+
+The Documentation can be found `here <https://docs.cowrie.org/en/latest/index.html>`_.
+
+Slack
+*****************************************
+
+You can join the Cowrie community at the following `Slack workspace <https://www.cowrie.org/slack/>`_.
+
+Features
+*****************************************
+
+* Choose to run as an emulated shell (default):
+   * Fake filesystem with the ability to add/remove files. A full fake filesystem resembling a Debian 5.0 installation is included
+   * Possibility of adding fake file contents so the attacker can `cat` files such as `/etc/passwd`. Only minimal file contents are included
+   * Cowrie saves files downloaded with wget/curl or uploaded with SFTP and scp for later inspection
+
+* Or proxy SSH and telnet to another system
+   * Run as a pure telnet and ssh proxy with monitoring
+   * Or let Cowrie manage a pool of QEMU emulated servers to provide the systems to login to
+
+* Or use an LLM backend (experimental):
+   * Use large language models (e.g., OpenAI GPT) to dynamically generate realistic shell responses
+   * Handles any command without predefined responses
+   * Maintains conversation context for consistent sessions
+
+For both settings:
+
+* Session logs are stored in a `User Mode Linux <http://user-mode-linux.sourceforge.net/>`_ compatible format for easy replay with the `playlog` utility.
+* SFTP and SCP support for file upload
+* Support for SSH exec commands
+* Logging of direct-tcp connection attempts (ssh proxying)
+* Forward SMTP connections to SMTP Honeypot (e.g. `mailoney <https://github.com/awhitehatter/mailoney>`_)
+* JSON logging for easy processing in log management solutions
+
+Installation
+*****************************************
+
+There are three ways to install Cowrie: ``pip``, Docker, and a ``git`` checkout.
+For your first honeypot, ``pip`` and Docker are the easiest paths.
+Use a ``git`` checkout for development or advanced scenarios where you want to
+modify Cowrie itself. Full instructions for all three are in
+`the installation guide <https://docs.cowrie.org/en/latest/INSTALL.html>`_.
+
+Docker
+*****************************************
+
+`Docker images <https://hub.docker.com/repository/docker/cowrie/cowrie>`_ are available on Docker Hub.
+
+* To get started quickly and give Cowrie a try, run::
+
+    $ docker run -p 2222:2222 cowrie/cowrie:latest
+    $ ssh -p 2222 root@localhost
+
+* To just make it locally, run::
+
+    $ make docker-build
+
+PyPI
+*****************************************
+
+`Cowrie is available on PyPI <https://pypi.org/project/cowrie>`_. To install it
+into a virtual environment and start it::
+
+    $ mkdir my-honeypot && cd my-honeypot
+    $ python3 -m venv cowrie-env
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ pip install cowrie
+    (cowrie-env) $ cowrie init
+    (cowrie-env) $ cowrie start
+
+``cowrie init`` writes the configuration file ``etc/cowrie.cfg`` in the current
+directory; logs and downloads land under ``var/``.
+
+Requirements
+*****************************************
+
+Software required to run locally:
+
+* Python 3.10+
+* python-virtualenv
+
+Files of interest:
+*****************************************
+
+* `etc/cowrie.cfg` - Cowrie's configuration file (operator-owned). Created by ``cowrie init``.
+* `src/cowrie/data/etc/cowrie.cfg.dist <https://github.com/cowrie/cowrie/blob/main/src/cowrie/data/etc/cowrie.cfg.dist>`_ - bundled defaults, edit your ``etc/cowrie.cfg`` instead
+* `etc/userdb.txt` - credentials to access the honeypot
+* `src/cowrie/data/fs.pickle` - fake filesystem; carries both metadata (path, uid, gid, size, mode) and the embedded contents (``A_CONTENTS`` bytes) for the small files attackers commonly cat. Edit via ``fsctl``; rebuild via ``make build-fs-pickle``.
+* `src/cowrie/data/txtcmds/` - output for simple fake commands
+* `var/log/cowrie/cowrie.json` - audit output in JSON format
+* `var/log/cowrie/cowrie.log` - log/debug output
+* `var/lib/cowrie/tty/` - session logs, replayable with the `playlog` utility.
+* `var/lib/cowrie/downloads/` - files transferred from the attacker to the honeypot are stored here
+
+Commands
+******************************************
+* `cowrie` - start, stop and restart Cowrie
+* `fsctl` - modify the fake filesystem
+* `createfs` - create your own fake filesystem
+* `playlog` - utility to replay session logs
+* `asciinema` - turn Cowrie logs into asciinema files
+
+Contributors
+***************
+
+Many people have contributed to Cowrie over the years. Special thanks to:
+
+* Upi Tamminen (desaster) for all his work developing Kippo on which Cowrie was based
+* Dave Germiquet (davegermiquet) for TFTP support, unit tests, new process handling
+* Olivier Bilodeau (obilodeau) for Telnet support
+* Ivan Korolev (fe7ch) for many improvements over the years.
+* Florian Pelgrim (craneworks) for his work on code cleanup and Docker.
+* Guilherme Borges (sgtpepperpt) for SSH and telnet proxy (GSoC 2019)
+* And many many others.

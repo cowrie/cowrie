@@ -1,0 +1,112 @@
+# SPDX-FileCopyrightText: 2017 Jc2k <john.carr@unrouted.co.uk>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""
+Send downloaded/uplaoded files to S3 (or compatible)
+"""
+
+from __future__ import annotations
+
+from configparser import NoOptionError
+from typing import Any
+
+from botocore.exceptions import ClientError
+from botocore.session import get_session
+from twisted.internet import defer, threads
+from twisted.logger import Logger
+
+import cowrie.core.output
+from cowrie.core.config import CowrieConfig
+
+
+class Output(cowrie.core.output.Output):
+    """
+    s3 output
+    """
+
+    _log = Logger()
+
+    def start(self) -> None:
+        self.bucket = CowrieConfig.get("output_s3", "bucket")
+        self.seen: set[str] = set()
+        self.session = get_session()
+
+        try:
+            if CowrieConfig.get("output_s3", "access_key_id") and CowrieConfig.get(
+                "output_s3", "secret_access_key"
+            ):
+                self.session.set_credentials(
+                    CowrieConfig.get("output_s3", "access_key_id"),
+                    CowrieConfig.get("output_s3", "secret_access_key"),
+                )
+        except NoOptionError:
+            self._log.info(
+                "No AWS credentials found in config - using botocore global settings."
+            )
+
+        self.client = self.session.create_client(
+            "s3",
+            region_name=CowrieConfig.get("output_s3", "region"),
+            endpoint_url=CowrieConfig.get("output_s3", "endpoint", fallback=None),
+            verify=CowrieConfig.getboolean("output_s3", "verify", fallback=True),
+        )
+
+    def stop(self) -> None:
+        pass
+
+    def write(self, event: dict[str, Any]) -> None:
+        if event["eventid"] == "cowrie.session.file_download":
+            self.upload(event["shasum"], event["outfile"])
+
+        elif event["eventid"] == "cowrie.session.file_upload":
+            self.upload(event["shasum"], event["outfile"])
+
+    @defer.inlineCallbacks
+    def _object_exists_remote(self, shasum):
+        try:
+            yield threads.deferToThread(
+                self.client.head_object,
+                Bucket=self.bucket,
+                Key=shasum,
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                defer.returnValue(False)
+            raise
+
+        defer.returnValue(True)
+
+    @defer.inlineCallbacks
+    def upload(self, shasum, filename):
+        if shasum in self.seen:
+            self._log.info(
+                "Already uploaded file with sha {shasum} to S3", shasum=shasum
+            )
+            return
+
+        exists = yield self._object_exists_remote(shasum)
+        if exists:
+            self._log.info(
+                "Somebody else already uploaded file with sha {shasum} to S3",
+                shasum=shasum,
+            )
+            self.seen.add(shasum)
+            return
+
+        self._log.info(
+            "Uploading file with sha {shasum} ({filename}) to S3",
+            shasum=shasum,
+            filename=filename,
+        )
+        with open(filename, "rb") as fp:
+            yield threads.deferToThread(
+                self.client.put_object,
+                Bucket=self.bucket,
+                Key=shasum,
+                Body=fp.read(),
+                ContentType="application/octet-stream",
+            )
+
+        self.seen.add(shasum)

@@ -1,0 +1,89 @@
+# SPDX-FileCopyrightText: 2015-2023 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""
+This module contains connection code to work around issues with the
+Granados SSH client library.
+"""
+
+from __future__ import annotations
+
+import struct
+
+from twisted.conch.ssh import common, connection
+from twisted.internet import defer
+from twisted.logger import Logger
+from twisted.python import log
+
+
+class CowrieSSHConnection(connection.SSHConnection):
+    """
+    Subclass this for a workaround for the Granados SSH library.
+    Channel request for openshell needs to return success immediatly
+    """
+
+    _log = Logger()
+
+    def ssh_CHANNEL_REQUEST(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_REQUEST for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return None
+        requestType, rest = common.getNS(packet[4:])
+        wantReply = ord(rest[0:1])
+        channel = self.channels[localChannel]
+
+        if requestType == b"shell":
+            wantReply = 0
+            self.transport.sendPacket(
+                connection.MSG_CHANNEL_SUCCESS,
+                struct.pack(">L", self.localToRemoteChannel[localChannel]),
+            )
+
+        d = defer.maybeDeferred(
+            log.callWithLogger, channel, channel.requestReceived, requestType, rest[1:]
+        )
+        if wantReply:
+            d.addCallback(self._cbChannelRequest, localChannel)
+            d.addErrback(self._ebChannelRequest, localChannel)
+        return d
+
+    # Some clients (observed: libssh2) send CHANNEL_EOF / CHANNEL_CLOSE /
+    # CHANNEL_WINDOW_ADJUST for a channel whose close handshake already
+    # completed, often alongside the final DISCONNECT. Twisted's handlers look
+    # the channel up unguarded and raise KeyError to the reactor; ignore the
+    # stale message instead.
+
+    def ssh_CHANNEL_EOF(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_EOF for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return
+        connection.SSHConnection.ssh_CHANNEL_EOF(self, packet)
+
+    def ssh_CHANNEL_CLOSE(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_CLOSE for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return
+        connection.SSHConnection.ssh_CHANNEL_CLOSE(self, packet)
+
+    def ssh_CHANNEL_WINDOW_ADJUST(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_WINDOW_ADJUST for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return
+        connection.SSHConnection.ssh_CHANNEL_WINDOW_ADJUST(self, packet)

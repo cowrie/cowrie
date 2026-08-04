@@ -1,0 +1,258 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2015, 2016 GoSecure Inc.
+# SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+"""
+Telnet Transport and Authentication for the Honeypot
+
+@author: Olivier Bilodeau <obilodeau@gosecure.ca>
+"""
+
+from __future__ import annotations
+
+import time
+import uuid
+from typing import TYPE_CHECKING
+
+from twisted.conch.telnet import TelnetTransport
+from twisted.internet import reactor
+from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.logger import Logger
+from twisted.protocols.policies import TimeoutMixin
+
+from cowrie.core.config import CowrieConfig
+from cowrie.core.events import EventLog, transport_events
+from cowrie.telnet_proxy import client_transport
+from cowrie.telnet_proxy.handler import TelnetHandler
+
+if TYPE_CHECKING:
+    from twisted.python import failure
+
+
+# object is added for Python 2.7 compatibility (#1198) - as is super with args
+class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
+    _log = Logger()
+
+    # The session's event emitter, bound in connectionMade when the running
+    # application provides a dispatcher.
+    events: EventLog | None = None
+
+    def __init__(self):
+        super().__init__()
+
+        self.peer_ip = None
+        self.peer_port = 0
+        self.local_ip = None
+        self.local_port = 0
+
+        self.startTime = None
+        self.sessionno: str = ""
+
+        self.pool_interface = None
+        self.client = None
+        self.frontendAuthenticated = False
+        self.delayedPacketsToBackend = []
+
+        # this indicates whether the client effectively connected to the backend
+        # if they did we recycle the VM, else the VM can be considered "clean"
+        self.client_used_backend = False
+
+        # only used when simple proxy (no pool) set
+        self.backend_ip = None
+        self.backend_port = None
+        self.backend_local_ip = None
+        self.backend_local_port = None
+
+        self.telnetHandler = TelnetHandler(self)
+
+    def connectionMade(self):
+        self.transportId = uuid.uuid4().hex[:12]
+        self.sessionno = f"T{self.transport.sessionno}"
+
+        self.peer_ip = self.transport.getPeer().host
+        self.peer_port = self.transport.getPeer().port + 1
+        self.local_ip = self.transport.getHost().host
+        self.local_port = self.transport.getHost().port
+
+        self.events = transport_events(
+            self.factory,
+            self.transport,
+            session=self.transportId,
+            protocol="telnet",
+        )
+
+        TelnetTransport.connectionMade(self)
+
+        # if we have a pool connect to it and later request a backend, else just connect to a simple backend
+        # when pool is set we can just test self.pool_interface to the same effect of getting the config
+        proxy_backend = CowrieConfig.get("proxy", "backend", fallback="simple")
+
+        if proxy_backend == "pool":
+            # request a backend
+            d = self.factory.pool_handler.request_interface()
+            d.addCallback(self.pool_connection_success)
+            d.addErrback(self.pool_connection_error)
+        else:
+            # simply a proxy, no pool
+            backend_ip = CowrieConfig.get("proxy", "backend_telnet_host")
+            backend_port = CowrieConfig.getint("proxy", "backend_telnet_port")
+            self.connect_to_backend(backend_ip, backend_port)
+
+    def pool_connection_error(self, reason):
+        self._log.info(
+            "Connection to backend pool refused: {reason}. Disconnecting frontend...",
+            reason=reason.value,
+        )
+        self.transport.loseConnection()
+
+    def pool_connection_success(self, pool_interface):
+        self._log.info("Connected to backend pool")
+
+        self.pool_interface = pool_interface
+        self.pool_interface.set_parent(self)
+
+        # now request a backend
+        self.pool_interface.send_vm_request(self.peer_ip)
+
+    def received_pool_data(self, operation, status, *data):
+        if operation == b"r":
+            honey_ip = data[0]
+            snapshot = data[1]
+            telnet_port = data[3]
+
+            self._log.info(
+                "Got backend data from pool: {honey_ip}:{telnet_port}",
+                honey_ip=honey_ip.decode(),
+                telnet_port=telnet_port,
+            )
+            self._log.info("Snapshot file: {snapshot}", snapshot=snapshot.decode())
+
+            self.connect_to_backend(honey_ip, telnet_port)
+
+    def backend_connection_error(self, reason: failure.Failure) -> None:
+        if self.events:
+            self.events.dispatch(
+                "cowrie.proxy.backend_connect_error",
+                "Connection to honeypot backend %(backend_ip)s:%(backend_port)s refused: %(error)s",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                error=reason.getErrorMessage(),
+            )
+        if self.transport:
+            self.transport.loseConnection()
+
+    def backend_connection_success(self, backendTransport):
+        backend_host = backendTransport.transport.getHost()
+        backend_peer = backendTransport.transport.getPeer()
+
+        # Cache connecting IP and port for connectionLost logging
+        self.backend_local_ip = backend_host.host
+        self.backend_local_port = backend_host.port
+
+        if self.events:
+            self.events.dispatch(
+                "cowrie.proxy.backend_connected",
+                "Connected to honeypot backend %(backend_ip)s:%(backend_port)s from %(local_ip)s:%(local_port)s",
+                backend_ip=backend_peer.host,
+                backend_port=backend_peer.port,
+                local_ip=backend_host.host,
+                local_port=backend_host.port,
+            )
+
+        self.startTime = time.time()
+        self.setTimeout(
+            CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
+        )
+
+    def connect_to_backend(self, ip, port):
+        # remember target so we can log consistently on success/failure
+        self.backend_ip = ip.decode() if isinstance(ip, bytes) else ip
+        self.backend_port = port
+
+        # connection to the backend starts here
+        client_factory = client_transport.BackendTelnetFactory()
+        client_factory.server = self
+
+        point = TCP4ClientEndpoint(reactor, ip, port, timeout=20)
+        d = point.connect(client_factory)
+        d.addCallback(self.backend_connection_success)
+        d.addErrback(self.backend_connection_error)
+
+    def dataReceived(self, data: bytes) -> None:
+        self.telnetHandler.addPacket("frontend", data)
+
+    def write(self, data):
+        self.transport.write(data)
+
+    def timeoutConnection(self):
+        """
+        Make sure all sessions time out eventually.
+        Timeout is reset when authentication succeeds.
+        """
+        self._log.info("Timeout reached in FrontendTelnetTransport")
+
+        # close transports on both sides
+        if self.transport:
+            self.transport.loseConnection()
+
+        if self.client and self.client.transport:
+            self.client.transport.loseConnection()
+
+        # signal that we're closing to the handler
+        self.telnetHandler.close()
+
+    def connectionLost(self, reason):
+        """
+        Fires on pre-authentication disconnects
+        """
+        if self.backend_ip and self.backend_local_ip and self.events:
+            self.events.dispatch(
+                "cowrie.proxy.backend_disconnected",
+                "Disconnected from honeypot backend %(backend_ip)s:%(backend_port)s (local %(local_ip)s:%(local_port)s)",
+                backend_ip=self.backend_ip,
+                backend_port=self.backend_port,
+                local_ip=self.backend_local_ip,
+                local_port=self.backend_local_port,
+            )
+
+        self.setTimeout(None)
+        TelnetTransport.connectionLost(self, reason)
+
+        # close transport on backend
+        if self.client and self.client.transport:
+            self.client.transport.loseConnection()
+
+        # signal that we're closing to the handler
+        self.telnetHandler.close()
+
+        if self.pool_interface:
+            # free VM from pool (VM was used if auth was performed successfully)
+            self.pool_interface.send_vm_free(self.telnetHandler.authDone)
+
+            # close transport connection to pool
+            self.pool_interface.transport.loseConnection()
+
+        if self.startTime is not None:  # startTime is not set when auth fails
+            duration_ms = round((time.time() - self.startTime) * 1000)
+            if self.events is not None:
+                self.events.session_closed(duration_ms)
+        if self.events is not None:
+            self.events.close()
+
+    def packet_buffer(self, payload):
+        """
+        We have to wait until we have a connection to the backend ready. Meanwhile, we hold packets from client
+        to server in here.
+        """
+        if not self.client.backendConnected:
+            # wait till backend connects to send packets to them
+            self._log.info(
+                "Connection to backend not ready, buffering packet from frontend"
+            )
+            self.delayedPacketsToBackend.append(payload)
+        else:
+            if len(self.delayedPacketsToBackend) > 0:
+                self.delayedPacketsToBackend.append(payload)
+            else:
+                self.client.transport.write(payload)

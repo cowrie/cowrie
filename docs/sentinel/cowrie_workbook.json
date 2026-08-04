@@ -1,0 +1,345 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1e71dd48-a0e4-44df-bd9e-1d40e8fd5691",
+            "version": "KqlParameterItem/1.0",
+            "name": "time_span",
+            "label": "Timespan",
+            "type": 4,
+            "description": "Selects time range of the drilldown",
+            "isRequired": true,
+            "value": {
+              "durationMs": 14400000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ]
+            }
+          },
+          {
+            "id": "02df1a75-51f3-45be-8dd3-516727f68631",
+            "version": "KqlParameterItem/1.0",
+            "name": "sensor_values",
+            "label": "Sensors",
+            "type": 2,
+            "description": "Selects the sensors to target during drilldown",
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "Cowrie\r\n| where isnotempty(Session)\r\n| summarize by tostring(Sensor)",
+            "value": [],
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "timeContext": {
+              "durationMs": 0
+            },
+            "timeContextFromParameter": "time_span",
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 2"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "# Summary\r\n---"
+      },
+      "name": "text - 30"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID == \"cowrie.login.failed\"\r\n| summarize count() by tostring(SourceIp)",
+        "size": 1,
+        "showAnalytics": true,
+        "title": "Failed Logons",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "customWidth": "33",
+      "name": "query - 2"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID == \"cowrie.login.success\"\r\n| summarize count() by tostring(SourceIp)",
+        "size": 1,
+        "showAnalytics": true,
+        "title": "Successful Logons",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "customWidth": "33",
+      "name": "query - 2 - Copy"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID == \"cowrie.command.input\"\r\n| summarize count() by tostring(SourceIp)",
+        "size": 1,
+        "showAnalytics": true,
+        "title": "Commands Executed",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "customWidth": "33",
+      "name": "query - 4"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "# Authentication Summary\r\n---"
+      },
+      "name": "text - 5"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID in (\"cowrie.login.failed\", \"cowrie.login.success\")\r\n| summarize count() by tostring(Username)\r\n| sort by count_ desc\r\n| limit 10",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Top Usernames",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "customWidth": "50",
+      "name": "query - 6"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID in (\"cowrie.login.failed\", \"cowrie.login.success\")\r\n| summarize count() by tostring(Password)\r\n| sort by count_ desc\r\n| limit 10",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Top Passwords",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "customWidth": "50",
+      "name": "query - 7"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "# Client Summary\r\n---"
+      },
+      "name": "text - 8"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID == \"cowrie.client.version\"\r\n| summarize count() by tostring(Version)\r\n| sort by count_ desc\r\n| limit 10",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Top Client Versions",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "customWidth": "50",
+      "name": "query - 9"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID == \"cowrie.client.kex\"\r\n| summarize count() by tostring(HasshFingerprint)\r\n| sort by count_ desc\r\n| limit 10",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Top HASSH Fingerprints",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "customWidth": "50",
+      "name": "query - 10"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "# Client Activity\r\n---"
+      },
+      "name": "text - 11"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "33aa3f30-2397-4df0-b428-a083ba1d8c33",
+            "version": "KqlParameterItem/1.0",
+            "name": "source_values",
+            "label": "Source IPs",
+            "type": 2,
+            "description": "Selects the source IPs to target during drilldown",
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "Cowrie\r\n| where Sensor in ({sensor_values})\r\n| where EventID == \"cowrie.login.success\"\r\n| summarize by tostring(SourceIp)",
+            "value": [],
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "timeContext": {
+              "durationMs": 14400000
+            },
+            "timeContextFromParameter": "time_span",
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 12"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values}) and SourceIp in ({source_values})\r\n| where EventID in (\"cowrie.login.failed\", \"cowrie.login.success\")\r\n| extend Success = EventID == \"cowrie.login.success\"\r\n| project TimeGenerated, SourceIp, Username, Password, Success, Session",
+        "size": 0,
+        "showAnalytics": true,
+        "title": "Authentication Attempts",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "customWidth": "50",
+      "name": "query - 14"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Cowrie\r\n| where Sensor in ({sensor_values}) and SourceIp in ({source_values})\r\n| where EventID == \"cowrie.command.input\"\r\n| project TimeGenerated, SourceIp, Input, Session",
+        "size": 0,
+        "title": "Commands",
+        "timeContext": {
+          "durationMs": 14400000
+        },
+        "timeContextFromParameter": "time_span",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "customWidth": "50",
+      "name": "query - 13"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/20ac5bf8-4fbf-4114-b0a6-0c42bde53a42/resourcegroups/chris-research-rg/providers/microsoft.operationalinsights/workspaces/chris-research-ws"
+  ],
+  "fromTemplateId": "sentinel-UserWorkbook",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

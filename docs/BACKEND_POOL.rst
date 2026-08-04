@@ -1,0 +1,283 @@
+.. SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+.. SPDX-FileCopyrightText: 2020-2024 Michel Oosterhof <michel@oosterhof.net>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
+Backend Pool
+############
+
+The Backend Pool manages a set of dynamic backend virtual machines to be used by
+Cowrie's proxy. The pool keeps a set of VMs running at all times, ensuring different
+attackers each see a "pristine" VM, while repeated connections from the same IP are
+served with the same VM, thus ensuring a consistent view to the attacker. Furthermore,
+VMs in the pool have their networking capabilities restricted by default: some attacks
+consist of downloading malicious software or accessing illegal content through
+insecure machines (such as your honeypot). Therefore, we limit any access to the
+Internet via a network filter, which you can configure as you see fit.
+
+The VMs in the backend pool, and all infrastructure (snapshots, networking and filtering)
+are backed by Qemu/libvirt. The default configuration ships example settings for an
+Ubuntu Server image and an OpenWRT image. Further below in this guide we'll discuss
+how to create your own images and customize libvirt's XML configuration files.
+
+First of all, install the needed dependencies for the pool, as explained in
+`the installation steps <https://docs.cowrie.org/en/latest/INSTALL.html>`_.
+
+Authorization
+*************
+
+Add your cowrie user to the ``libvirt`` group to ensure you have permission to run the VMs on the backend server
+
+.. code-block:: bash
+
+    sudo usermod -aG libvirt "COWRIE_USER_HERE"
+
+Guest images
+************
+
+The pool needs a base VM image to boot guests from. Build one as described in
+`Creating VM images`_ below, then set ``guest_image_path`` in ``cowrie.cfg`` to
+its path. The default configuration ships separate example config blocks for an
+Ubuntu image and an OpenWRT image (OpenWRT needs both a disk and a kernel
+image); enable the block that matches your image and comment out the other.
+
+Backend Pool initialization
+***************************
+
+Depending on the machine that will be running the backend pool, initialization times for VMs can vary greatly.
+If the pool is correctly configured, you will get the `PoolServerFactory starting on 6415` message on your log.
+
+After a while, VMs will start to boot and, when ready to be used, a message of the form
+`Guest 0 ready for connections @ 192.168.150.68! (boot 17s)` will appear for each VM. Before VMs are ready, SSH
+and Telnet connections from attackers will be dropped by Cowrie.
+
+Proxy configurations
+********************
+
+When the proxy starts, and regardless whether the backend pool runs on the same machine
+as the proxy or not, some configurations are sent by the proxy to the pool during runtime.
+
+These are:
+
+* **pool_max_vms**: the number of VMs to be kept running in the pool
+
+* **pool_vm_unused_timeout**: how much time (seconds) a used VM is kept running, so that
+  an attacker that reconnects is served the same VM
+
+* **pool_share_guests**: what to do if no "pristine" VMs are available (i.e., all have
+  been connected to); if set to true we serve a random used VM, if false we
+  refuse the connection.
+
+
+Backend Pool configuration
+**************************
+
+In this section we'll discuss the ``[backend_pool]`` section of the configuration file.
+
+The backend pool can run on the same machine as the rest of Cowrie, or on a separate
+one. To run everything on one machine, configure Cowrie with
+
+.. code-block:: ini
+
+    [backend_pool]
+    pool_only = false
+
+    [proxy]
+    backend = pool
+    pool = local
+
+To run the backend pool on a different machine, invert the configuration: the
+pool machine has ``pool_only = true`` (SSH and Telnet are disabled), and the
+proxy machine has ``pool = remote``.
+
+**Note:** The communication protocol used between the proxy and the backend pool
+is unencrypted. Although no sensitive data should be passed, we recommend you to
+only use private or local interfaces for listening when setting up ``listen_endpoints``.
+
+Recycling VMs
+=============
+
+Currently, handling of virtual machines by the pool is not perfect. Sometimes,
+VMs reach an inconsistent state or become unreliable. To counter that, and ensure
+fresh VMs are ready constantly, we use the ``recycle_period`` to periodically
+terminate running instances, and boot new ones.
+
+Snapshots
+=========
+
+VMs running in the pool are based on a base image that is kept unchanged. When booting,
+each VM creates a snapshot that keeps track of differences between the base image and
+snapshot. If you want to analyze snapshots and see any changes made in the VMs, set
+``save_snapshots`` to true. If set to true be mindful of space concerns, each new
+VM will take at least ~20MB in storage.
+
+XML configs (advanced)
+======================
+
+The default libvirt XML templates (``default_guest.xml``,
+``default_filter.xml``, ``default_network.xml``, plus the architecture-
+specific ``aarch64_guest.xml``, ``wrt_arm_guest.xml``, ``wrt_x86_guest.xml``)
+ship inside the cowrie package at ``src/cowrie/data/pool_configs/``.
+If you are using one of the default images, you most likely do not need
+to change them.
+
+To override one or more of these templates without touching the bundled
+copies, set ``[backend_pool] config_files_path`` in ``cowrie.cfg`` to a
+directory of your choice and drop the files you want to replace into
+it. Cowrie reads each XML by basename:
+
+  1. ``<config_files_path>/<basename>.xml`` if the file exists; else
+  2. the bundled ``src/cowrie/data/pool_configs/<basename>.xml``.
+
+Only the files you actually override need to exist in your directory;
+anything missing falls through to the bundled copy. Leave
+``config_files_path`` unset to use the bundled templates for all of them.
+
+Guest configurations
+====================
+
+A set of guest (VM) parameters can be defined as we explain below:
+
+* **guest_config**: the XML configuration for the guest (default_guest.xml works for x86 machines,
+  and wrt_arm_guest.xml for ARM-based OpenWRT)
+
+* **guest_privkey**: currently unused
+
+* **guest_tag**: an identifiable name for snapshots and logging
+
+* **guest_ssh_port / guest_telnet_port**: which ports are listening for these on the VM
+  (no relation with the ports Cowrie's listening to)
+
+* **guest_image_path**: the base image upon which all VMs are created from
+
+* **guest_hypervisor**: the hypervisor used; if you have an older machine or the emulated
+  architecture is different from the host one, then use software-based "QEMU"; however,
+  if you are able to, use "KVM", it's **much** faster.
+
+* **guest_memory**: memory assigned to the guest; choose a value considering the number
+  of guests you'll have running in total (``pool_max_vms``)
+
+
+NATing
+======
+
+VMs are assigned an IP in a local network defined by libvirt. If you need to access the VMs
+from a different machine (i.e., running the backend pool remotely), then an external-facing
+IP (as defined in ``nat_public_ip``) is needed for the proxy to connect to.
+
+For this purpose, we provide a simple form of NAT that, for each VM request, and if enabled,
+starts a TCP proxy to forward data from a publicly accessible IP to the internal libvirt interface.
+
+Creating VM images
+******************
+
+Creating a new type of VM involves three steps: creating a base image, installing the OS,
+and tweaking configs.
+
+To create a disk image issue
+
+.. code-block:: bash
+
+    sudo qemu-img create -f qcow2 image-name.qcow2 8G
+
+(the qcow2 format is needed so snapshots can be created, providing isolation between
+VM instances; you can specify the size you want for the disk)
+
+Then you'll have to install an OS into it
+
+.. code-block:: bash
+
+    virt-install --name temp-domain --memory 1024 --disk image-name.qcow2 --cdrom os-install-cd.iso --boot cdrom
+
+(to use virt-install you need to install the virtinst package)
+
+After install check that the VM has network connectivity. If you set the pool to use the
+created image and SSH does not come up, log into the VM via libvirt (e.g., using virt-manager)
+and try the following (might change depending on system)
+
+.. code-block:: bash
+
+    # run all as root
+    ip link show
+    ip link set enp1s0 up
+    dhclient
+
+In Ubuntu dhclient can be set to run with netplan, for example, to be run on startup.
+
+Set up Telnet
+=============
+
+Steps used in Ubuntu, can be useful in other distros
+
+.. code-block:: bash
+
+    # run all as root
+    apt-get -y install telnetd xinetd
+    touch /etc/xinetd.d/telnet
+    printf "service telnet\n{\ndisable = no\nflags = REUSE\nsocket_type = stream\nwait = no\nuser = root\nserver = /usr/sbin/in.telnetd\nlog_on_failure += USERID\n}" > /etc/xinetd.d/telnet
+    printf "pts/0\npts/1\npts/2\npts/3\npts/4\npts/5\npts/6\npts/7\npts/8\npts/9" >> /etc/securetty
+    service xinetd start
+
+Customizing XML configs
+=======================
+
+If you want, you can customize libvirt's XML configurations.
+
+The main configuration for a guest is located in ``default_guest.xml``. This defines the virtual
+CPU, available memory, and devices available on the guest. Most of these configurations are
+set by Cowrie using the guest configurations; you'll see them in the XML as templates
+("{guest_name}"). The main blocks of XML regard the disk and network interface devices.
+
+You can include these blocks as-is in your custom configuration to allow Cowrie to manage your
+custom guests automatically.
+
+.. code-block:: xml
+
+    <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='{disk_image}'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+    </disk>
+
+.. code-block:: xml
+
+    <interface type='network'>
+        <start mode='onboot'/>
+        <mac address='{mac_address}'/>
+        <source network='{network_name}'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+        <filterref filter='cowrie-default-filter'/>
+    </interface>
+
+The other important configuration file is ``default_filter.xml``, which handles how networking
+is restricted in the guest VM (aka to the attackers). This file is composed by a set of rules
+of the form
+
+.. code-block:: xml
+
+    <rule action='accept' direction='in'>
+        <tcp dstportstart='22'/>
+    </rule>
+
+Each rule specifies a type of traffic (TCP, UDP...) and direction, whether to accept or drop
+that traffic, and the destination of the traffic. The default filter allows inbound SSH
+and Telnet connections (without which the VM would be unusable), outbound ICMP traffic (to allow
+pinging), and outbound DNS queries. All other traffic is dropped by the last rule, thus
+forbidding any download or tunneling.
+
+**VERY IMPORTANT NOTE:** some attacks consist of downloading malicious software or accessing
+illegal content through insecure machines (such as your honeypot). Our provided filter restricts
+networking and does its best to ensure total isolation, to the best of Qemu/libvirt (and our
+own) capabilities. **Be very careful to protect your network and devices while allowing any
+more traffic!**
+
+References
+**********
+
+* `libvirt guest XML syntax <https://libvirt.org/formatdomain.html>`_
+
+* `libvirt network filter XML syntax <https://libvirt.org/formatnwfilter.html>`_
+
+* `Create a OpenWRT image <https://gist.github.com/extremecoders-re/f2c4433d66c1d0864a157242b6d83f67>`_

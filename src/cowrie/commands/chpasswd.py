@@ -1,0 +1,102 @@
+# SPDX-FileCopyrightText: 2019 NunoNovais <nuno@novais.me>
+# SPDX-FileCopyrightText: 2019 Nuno Novais <nuno@noais.me>
+# SPDX-FileCopyrightText: 2020-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""
+This module contains the chpasswd command
+"""
+
+from __future__ import annotations
+
+import getopt
+
+from cowrie.shell.command import HoneyPotCommand
+
+commands = {}
+
+
+class Command_chpasswd(HoneyPotCommand):
+    def help(self) -> None:
+        output = (
+            "Usage: chpasswd [options]",
+            "",
+            "Options:",
+            "  -c, --crypt-method METHOD     the crypt method (one of NONE DES MD5 SHA256 SHA512)",
+            "  -e, --encrypted               supplied passwords are encrypted",
+            "  -h, --help                    display this help message and exit",
+            "  -m, --md5                     encrypt the clear text password using",
+            "                                the MD5 algorithm",
+            "  -R, --root CHROOT_DIR         directory to chroot into",
+            "  -s, --sha-rounds              number of SHA rounds for the SHA*",
+            "                                crypt algorithms",
+        )
+        for line in output:
+            self.write(line + "\n")
+
+    def chpasswd_application(self, contents: bytes) -> None:
+        c = 1
+        try:
+            for line in contents.split(b"\n"):
+                if len(line):
+                    if b":" not in line:
+                        self.write(f"chpasswd: line {c}: invalid format\n")
+                    else:
+                        _u, p = line.split(b":", 1)
+                        if not len(p):
+                            self.write(f"chpasswd: line {c}: missing new password\n")
+                        else:
+                            username = _u.decode(errors="ignore")
+                            self.protocol.events.dispatch(
+                                "cowrie.command.chpasswd",
+                                "Password change attempt for %(username)s",
+                                realm="chpasswd",
+                                username=username,
+                            )
+                c += 1
+        except Exception:
+            self.write(f"chpasswd: line {c}: missing new password\n")
+
+    def start(self) -> None:
+        try:
+            opts, _args = getopt.getopt(
+                self.args,
+                "c:ehmr:s:",
+                ["crypt-method", "encrypted", "help", "md5", "root", "sha-rounds"],
+            )
+        except getopt.GetoptError:
+            self.help()
+            self.exit()
+            return
+
+        for o, a in opts:
+            if o in "-h":
+                self.help()
+                self.exit()
+                return
+            elif o in "-c":
+                if a not in ["NONE", "DES", "MD5", "SHA256", "SHA512"]:
+                    self.errorWrite(f"chpasswd: unsupported crypt method: {a}\n")
+                    self.help()
+                    self.exit()
+
+        if self.input_data:
+            self.chpasswd_application(self.input_data)
+            self.exit()
+
+    def lineReceived(self, line: str) -> None:
+        self.protocol.events.dispatch(
+            "cowrie.command.input",
+            "INPUT (%(realm)s): %(input)s",
+            realm="chpasswd",
+            input=line,
+        )
+        self.chpasswd_application(line.encode())
+
+    def eofReceived(self) -> None:
+        self.exit()
+
+
+commands["/usr/sbin/chpasswd"] = Command_chpasswd
+commands["chpasswd"] = Command_chpasswd

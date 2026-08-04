@@ -1,0 +1,104 @@
+# SPDX-FileCopyrightText: 2018 Dave Germiquet <davegermiquet@trulycanadian.net>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+import json
+import string
+from random import choice
+
+from twisted.application import service
+from twisted.logger import Logger
+from twisted.words.protocols.jabber import jid
+from twisted.words.protocols.jabber.jid import JID
+from wokkel import muc
+from wokkel.client import XMPPClient
+from wokkel.xmppim import AvailablePresence
+
+import cowrie.core.output
+from cowrie.core.config import CowrieConfig
+
+
+class XMPPLoggerProtocol(muc.MUCClient):  # type: ignore
+    _log = Logger()
+
+    def __init__(self, rooms, server, nick):
+        muc.MUCClient.__init__(self)
+        self.server = rooms.host
+        self.jrooms = rooms
+        self._roomOccupantMap = {}
+        self._log.info("{user}", user=rooms.user)
+        self._log.info("{host}", host=rooms.host)
+        self.nick = nick
+        self.last = {}
+        self.activity = None
+
+    def connectionInitialized(self):
+        """
+        The bot has connected to the xmpp server, now try to join the room.
+        """
+        self.join(self.jrooms, self.nick)
+
+    def joinedRoom(self, room):
+        self._log.info("Joined room {room}", room=room.name)
+
+    def connectionMade(self):
+        self._log.info("Connected!")
+
+        # send initial presence
+        self.send(AvailablePresence())
+
+    def connectionLost(self, reason):
+        self._log.info("Disconnected!")
+
+    def onMessage(self, msg):
+        pass
+
+    def receivedGroupChat(self, room, user, body):
+        pass
+
+    def receivedHistory(self, room, user, body, dely, frm=None):
+        pass
+
+
+class Output(cowrie.core.output.Output):
+    """
+    xmpp output
+    """
+
+    def start(self):
+        server = CowrieConfig.get("output_xmpp", "server")
+        user = CowrieConfig.get("output_xmpp", "user")
+        password = CowrieConfig.get("output_xmpp", "password")
+        muc = CowrieConfig.get("output_xmpp", "muc")
+        resource = "".join([choice(string.ascii_letters) for _ in range(8)])
+        jidstr = user + "/" + resource
+        application = service.Application("honeypot")
+        self.run(application, jidstr, password, JID(None, [muc, server, None]), server)
+
+    def run(self, application, jidstr, password, muc, server):
+        self.xmppclient = XMPPClient(JID(jidstr), password)
+        if CowrieConfig.getboolean("output_xmpp", "debug", fallback=False):
+            self.xmppclient.logTraffic = True
+        (user, _host, resource) = jid.parse(jidstr)
+        self.muc = XMPPLoggerProtocol(muc, server, user + "-" + resource)
+        self.muc.setHandlerParent(self.xmppclient)
+        self.xmppclient.setServiceParent(application)
+        self.anonymous = True
+        self.xmppclient.startService()
+
+    def write(self, event):
+        for i in list(event):
+            # Remove twisted 15 legacy keys
+            if i.startswith("log_"):
+                del event[i]
+            elif i == "time":
+                del event[i]
+        msgJson = json.dumps(event, indent=5)
+
+        self.muc.groupChat(self.muc.jrooms, msgJson)
+
+    def stop(self):
+        self.xmppclient.stopService()

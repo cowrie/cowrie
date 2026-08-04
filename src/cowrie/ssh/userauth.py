@@ -1,0 +1,245 @@
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+
+from __future__ import annotations
+
+import struct
+from typing import Any
+
+from twisted.conch import error
+from twisted.conch.interfaces import IConchUser
+from twisted.conch.ssh import userauth
+from twisted.conch.ssh.common import NS, getNS
+from twisted.conch.ssh.transport import DISCONNECT_PROTOCOL_ERROR
+from twisted.internet import defer
+from twisted.logger import Logger
+from twisted.python.failure import Failure
+
+from cowrie.core import credentials
+from cowrie.core.config import CowrieConfig
+from cowrie.shell.honeyfs import read_honeyfs_bytes
+
+
+class EventsAttachingPortal:
+    """Attaches a session's EventLog to credentials before delegating to the
+    real portal, for the credential objects Twisted builds internally
+    (public key auth) that cannot carry the emitter from construction."""
+
+    def __init__(self, portal: Any, events: Any) -> None:
+        self.portal = portal
+        self.events = events
+
+    def login(self, credentials: Any, mind: Any, *interfaces: Any) -> Any:
+        credentials.events = self.events
+        return self.portal.login(credentials, mind, *interfaces)
+
+
+class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
+    """
+    This contains modifications to the authentication system to do:
+    * Login banners (like /etc/issue.net)
+    * Anonymous authentication
+    * Keyboard-interactive authentication (PAM)
+    * IP based authentication
+    """
+
+    _log = Logger()
+    bannerSent: bool = False
+    user: bytes
+    _pamDeferred: defer.Deferred | None
+
+    def serviceStarted(self) -> None:
+        self.interfaceToMethod[credentials.IUsername] = b"none"
+        self.interfaceToMethod[credentials.IUsernamePasswordIP] = b"password"
+        keyboard: bool = CowrieConfig.getboolean(
+            "ssh", "auth_keyboard_interactive_enabled", fallback=False
+        )
+
+        if keyboard is True:
+            self.interfaceToMethod[credentials.IPluggableAuthenticationModulesIP] = (
+                b"keyboard-interactive"
+            )
+        self._pamDeferred: defer.Deferred | None = None
+        userauth.SSHUserAuthServer.serviceStarted(self)
+
+    def sendBanner(self):
+        """
+        This is the pre-login banner. The post-login banner is the MOTD file
+        Display contents of <honeyfs>/etc/issue.net
+        """
+        if self.bannerSent:
+            return
+        self.bannerSent = True
+
+        try:
+            banner = read_honeyfs_bytes("etc/issue.net").decode(
+                "utf-8", errors="replace"
+            )
+        except FileNotFoundError:
+            self._log.failure("ERROR: Failed to load /etc/issue.net")
+            return
+
+        if not banner or not banner.strip():
+            return
+
+        self.transport.sendPacket(userauth.MSG_USERAUTH_BANNER, NS(banner) + NS(b"en"))
+
+    def ssh_USERAUTH_REQUEST(self, packet: bytes) -> Any:
+        """
+        This is overriden to send the login banner.
+        """
+        self.sendBanner()
+        return userauth.SSHUserAuthServer.ssh_USERAUTH_REQUEST(self, packet)
+
+    # def auth_publickey(self, packet):
+    #     """
+    #     We subclass to intercept non-dsa/rsa keys,
+    #     or Conch will crash on ecdsa..
+    #     UPDATE: conch no longer crashes. comment this out
+    #     """
+    #     algName, blob, rest = getNS(packet[1:], 2)
+    #     if algName not in (b'ssh-rsa', b'ssh-dsa'):
+    #         log.msg("Attempted public key authentication\
+    #                           with {} algorithm".format(algName))
+    #         return defer.fail(error.ConchError("Incorrect signature"))
+    #     return userauth.SSHUserAuthServer.auth_publickey(self, packet)
+
+    def auth_publickey(self, packet: bytes) -> Any:
+        """
+        Overridden to attach the session's EventLog to the credential that
+        the base implementation constructs, so the public-key checker can
+        dispatch attributed events.
+        """
+        original = self.portal
+        self.portal = EventsAttachingPortal(
+            original,
+            self.transport.events,  # type: ignore[union-attr]
+        )
+        try:
+            return userauth.SSHUserAuthServer.auth_publickey(self, packet)
+        finally:
+            self.portal = original
+
+    def auth_none(self, _packet: bytes) -> Any:
+        """
+        Allow every login
+        """
+        srcIp: str = self.transport.transport.getPeer().host  # type: ignore
+        c = credentials.Username(self.user, events=self.transport.events)  # type: ignore[union-attr]
+        return self.portal.login(c, srcIp, IConchUser)
+
+    def auth_password(self, packet: bytes) -> Any:
+        """
+        Overridden to pass src_ip to credentials.UsernamePasswordIP
+        """
+        password = getNS(packet[1:])[0]
+        if password == b"\x00":
+            return None  # sshamble
+        srcIp = self.transport.transport.getPeer().host  # type: ignore
+        c = credentials.UsernamePasswordIP(
+            self.user,
+            password,
+            srcIp,
+            events=self.transport.events,  # type: ignore[union-attr]
+        )
+        return self.portal.login(c, srcIp, IConchUser).addErrback(self._ebPassword)
+
+    def auth_keyboard_interactive(self, _packet: bytes) -> Any:
+        """
+        Keyboard interactive authentication.  No payload.  We create a
+        PluggableAuthenticationModules credential and authenticate with our
+        portal.
+
+        Overridden to pass src_ip to
+          credentials.PluggableAuthenticationModulesIP
+        """
+        if self._pamDeferred is not None:
+            self.transport.sendDisconnect(  # type: ignore
+                DISCONNECT_PROTOCOL_ERROR,
+                "only one keyboard interactive attempt at a time",
+            )
+            return defer.fail(error.IgnoreAuthentication())
+        src_ip = self.transport.transport.getPeer().host  # type: ignore
+        c = credentials.PluggableAuthenticationModulesIP(
+            self.user,
+            self._pamConv,
+            src_ip,
+            events=self.transport.events,  # type: ignore[union-attr]
+        )
+        return self.portal.login(c, src_ip, IConchUser).addErrback(self._ebPassword)
+
+    def _pamConv(self, items: list[tuple[Any, int]]) -> defer.Deferred:
+        """
+        Convert a list of PAM authentication questions into a
+        MSG_USERAUTH_INFO_REQUEST.  Returns a Deferred that will be called
+        back when the user has responses to the questions.
+
+        @param items: a list of 2-tuples (message, kind).  We only care about
+            kinds 1 (password) and 2 (text).
+        @type items: C{list}
+        @rtype: L{defer.Deferred}
+        """
+        resp = []
+        for message, kind in items:
+            if kind == 1:  # Password
+                resp.append((message, 0))
+            elif kind == 2:  # Text
+                resp.append((message, 1))
+            elif kind in (3, 4):
+                return defer.fail(error.ConchError("cannot handle PAM 3 or 4 messages"))
+            else:
+                return defer.fail(error.ConchError(f"bad PAM auth kind {kind}"))
+        packet = NS(b"") + NS(b"") + NS(b"")
+        packet += struct.pack(">L", len(resp))
+        for prompt, echo in resp:
+            packet += NS(prompt)
+            packet += bytes((echo,))
+        self.transport.sendPacket(userauth.MSG_USERAUTH_INFO_REQUEST, packet)  # type: ignore
+        self._pamDeferred = defer.Deferred()
+        return self._pamDeferred
+
+    def ssh_USERAUTH_INFO_RESPONSE(self, packet: bytes) -> None:
+        """
+        The user has responded with answers to PAMs authentication questions.
+        Parse the packet into a PAM response and callback self._pamDeferred.
+        Payload::
+            uint32 numer of responses
+            string response 1
+            ...
+            string response n
+        """
+        if self._pamDeferred is None:
+            # A client can send this at any point during userauth. With no
+            # INFO_REQUEST outstanding it is either unsolicited or a repeat of
+            # a response already consumed, so refuse it the way the other
+            # sequence violations here do.
+            self.transport.sendDisconnect(  # type: ignore
+                DISCONNECT_PROTOCOL_ERROR,
+                "unexpected keyboard interactive response",
+            )
+            return
+
+        d: defer.Deferred = self._pamDeferred
+        self._pamDeferred = None
+        resp: list
+
+        try:
+            resp = []
+            numResps = struct.unpack(">L", packet[:4])[0]
+            packet = packet[4:]
+            while len(resp) < numResps:
+                response, packet = getNS(packet)
+                resp.append((response, 0))
+            if packet:
+                self._log.info(
+                    "PAM Response: {extra:d} extra bytes: {packet!r}",
+                    extra=len(packet),
+                    packet=packet,
+                )
+        except Exception as e:
+            d.errback(Failure(e))
+        else:
+            d.callback(resp)

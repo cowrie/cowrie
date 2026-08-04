@@ -1,0 +1,157 @@
+# SPDX-FileCopyrightText: 2010 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""
+cat command
+
+"""
+
+from __future__ import annotations
+
+import getopt
+import os
+
+from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.fs import FileNotFound
+
+commands = {}
+
+
+class Command_cat(HoneyPotCommand):
+    """
+    cat command
+    """
+
+    number = False
+    linenumber = 1
+
+    def start(self) -> None:
+        try:
+            optlist, args = getopt.gnu_getopt(
+                self.args, "AbeEnstTuv", ["help", "number", "version"]
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(
+                f"cat: invalid option -- '{err.opt}'\nTry 'cat --help' for more information.\n"
+            )
+            self.exit()
+            return
+
+        for o, _a in optlist:
+            if o in ("--help"):
+                self.help()
+                self.exit()
+                return
+            elif o in ("-n", "--number"):
+                self.number = True
+
+        if len(args) > 0:
+            for arg in args:
+                if arg == "-":
+                    self.output(self.input_data)
+                    continue
+
+                pname = self.fs.resolve_path(arg, self.cwd)
+
+                if self.fs.isdir(pname):
+                    self.errorWrite(f"cat: {arg}: Is a directory\n")
+                    continue
+
+                try:
+                    contents = self.fs.file_contents(pname)
+                    self.output(contents)
+                except FileNotFound:
+                    self.errorWrite(f"cat: {arg}: No such file or directory\n")
+            self.exit()
+        elif self.input_data is not None:
+            self.output(self.input_data)
+            self.exit()
+
+    def output(self, inb: bytes | None) -> None:
+        """
+        This is the cat output, with optional line numbering
+        """
+        if inb is None:
+            return
+
+        lines = inb.split(b"\n")
+        if lines[-1] == b"":
+            lines.pop()
+        for line in lines:
+            if self.number:
+                self.write(f"{self.linenumber:>6}  ")
+                self.linenumber = self.linenumber + 1
+            self.writeBytes(line + b"\n")
+
+    def lineReceived(self, line: str) -> None:
+        """
+        This function logs standard input from the user send to cat
+        """
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
+            realm="cat",
+            input=line,
+        )
+
+        self.output(line.encode("utf-8"))
+
+    def eofReceived(self) -> None:
+        """
+        ctrl-d is end-of-file, time to terminate
+        """
+        terminal = self.protocol.terminal
+        if (
+            self.input_data is None
+            and getattr(terminal, "stdinlogOpen", False)
+            and getattr(terminal, "stdinlogFile", "")
+            and os.path.exists(terminal.stdinlogFile)
+        ):
+            # Live exec-channel stdin (e.g. `cat > file`): the bytes were
+            # streamed to the stdin log rather than buffered as input_data, so
+            # start() left us parked for EOF. Emit them now, verbatim unless
+            # line numbering was requested, so a redirect target is not left
+            # empty.
+            with open(terminal.stdinlogFile, "rb") as f:
+                data = f.read()
+            if self.number:
+                self.output(data)
+            else:
+                self.writeBytes(data)
+        self.exit()
+
+    def help(self) -> None:
+        self.write(
+            """Usage: cat [OPTION]... [FILE]...
+Concatenate FILE(s) to standard output.
+
+With no FILE, or when FILE is -, read standard input.
+
+    -A, --show-all           equivalent to -vET
+    -b, --number-nonblank    number nonempty output lines, overrides -n
+    -e                       equivalent to -vE
+    -E, --show-ends          display $ at end of each line
+    -n, --number             number all output lines
+    -s, --squeeze-blank      suppress repeated empty output lines
+    -t                       equivalent to -vT
+    -T, --show-tabs          display TAB characters as ^I
+    -u                       (ignored)
+    -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
+        --help     display this help and exit
+        --version  output version information and exit
+
+Examples:
+    cat f - g  Output f's contents, then standard input, then g's contents.
+    cat        Copy standard input to standard output.
+
+GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+Full documentation at: <http://www.gnu.org/software/coreutils/cat>
+or available locally via: info '(coreutils) cat invocation'
+"""
+        )
+
+
+commands["/bin/cat"] = Command_cat
+commands["cat"] = Command_cat

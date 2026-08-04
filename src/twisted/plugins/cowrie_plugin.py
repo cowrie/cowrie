@@ -1,0 +1,273 @@
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+import os
+import sys
+from importlib import import_module
+from typing import ClassVar
+
+from twisted._version import __version__ as __twisted_version__
+from twisted.application import service
+from twisted.application.service import IServiceMaker
+from twisted.cred import portal
+from twisted.internet import reactor
+from twisted.logger import ILogObserver, Logger, globalLogPublisher
+from twisted.plugin import IPlugin
+from twisted.python import usage
+from zope.interface import implementer, provider
+
+import cowrie.llm.realm
+import cowrie.shell.realm
+import cowrie.ssh.factory
+import cowrie.telnet.factory
+from backend_pool.pool_server import PoolServerFactory
+from cowrie import __version__ as __cowrie_version__
+from cowrie.core import checkers, uuid
+from cowrie.core.config import CowrieConfig
+from cowrie.core.events import ConsoleRenderer, EventDispatcher
+from cowrie.core.output import Output
+from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
+from cowrie.pool_interface.handler import PoolHandler
+
+# Explicit namespace: this module lives under twisted.plugins, but its
+# lines are Cowrie startup diagnostics and must answer to the operator's
+# log_level_cowrie configuration like every other cowrie.* namespace.
+_log = Logger(namespace="cowrie.plugin")
+
+
+class Options(usage.Options):
+    """
+    This defines commandline options and flags
+    """
+
+    # The '-c' parameters is currently ignored
+    optParameters: ClassVar[list[str]] = []
+    optFlags: ClassVar[list[list[str]]] = [["help", "h", "Display this help and exit."]]
+
+
+@provider(ILogObserver)
+def importFailureObserver(event: dict) -> None:
+    # Legacy log.err events carry "failure"; twisted.logger failures
+    # carry "log_failure". Critical so the hint still reaches stderr
+    # before logging starts.
+    error = event.get("failure", event.get("log_failure"))
+    if error is not None and error.type is ImportError:
+        _log.critical(
+            "ERROR: {error}. Please run `pip install -U -r requirements.txt` "
+            "from Cowrie's install directory and virtualenv to install "
+            "the new dependency",
+            error=str(error.value),
+        )
+
+
+globalLogPublisher.addObserver(importFailureObserver)
+
+
+@implementer(IServiceMaker, IPlugin)
+class CowrieServiceMaker:
+    tapname: ClassVar[str] = "cowrie"
+    description: ClassVar[str] = "She sells sea shells by the sea shore."
+    options = Options
+    output_plugins: list[Output]
+    topService: service.Service
+
+    def __init__(self) -> None:
+        self.pool_handler = None
+
+        self.output_plugins = []
+
+        # ssh is enabled by default
+        self.enableSSH: bool = CowrieConfig.getboolean("ssh", "enabled", fallback=True)
+
+        # telnet is disabled by default
+        self.enableTelnet: bool = CowrieConfig.getboolean(
+            "telnet", "enabled", fallback=False
+        )
+
+        # pool is disabled by default, but need to check this setting in case user only wants to run the pool
+        self.pool_only: bool = CowrieConfig.getboolean(
+            "backend_pool", "pool_only", fallback=False
+        )
+
+        self.uuid = uuid.get_uuid()
+        CowrieConfig.set("honeypot", "uuid", str(self.uuid))
+
+    def makeService(self, options: dict) -> service.Service:
+        """
+        Construct a TCPServer from a factory defined in Cowrie.
+        """
+
+        if options["help"] is True:
+            print(  # noqa: T201
+                """Usage: twistd [options] cowrie [-h]
+Options:
+  -h, --help             print this help message.
+
+Makes a Cowrie SSH/Telnet honeypot.
+"""
+            )
+            sys.exit(1)
+
+        if os.name == "posix" and os.getuid() == 0:
+            print("ERROR: You must not run cowrie as root!")  # noqa: T201
+            sys.exit(1)
+
+        tz: str = CowrieConfig.get("honeypot", "timezone", fallback="UTC")
+        # `system` means use the system time zone
+        if tz != "system":
+            os.environ["TZ"] = tz
+
+        _log.info(
+            "Python Version {version}", version=str(sys.version).replace(chr(10), "")
+        )
+        _log.info(
+            "Twisted Version {major}.{minor}.{micro}",
+            major=__twisted_version__.major,
+            minor=__twisted_version__.minor,
+            micro=__twisted_version__.micro,
+        )
+        _log.info("Cowrie Version {version}", version=__cowrie_version__.__version__)
+        _log.info("Sensor UUID: {uuid}", uuid=self.uuid)
+
+        # check configurations
+        if not self.enableTelnet and not self.enableSSH and not self.pool_only:
+            print(  # noqa: T201
+                "ERROR: You must at least enable SSH or Telnet, or run the backend pool"
+            )
+            sys.exit(1)
+
+        # The event pipeline: session EventLogs deliver through this
+        # dispatcher to the output plugins and the console renderer
+        # (see docs/EVENT_PIPELINE.rst). It exists before the plugins so
+        # events they dispatch from start() are delivered; the plugin
+        # sinks join the fan-out once loading is complete.
+        renderer = ConsoleRenderer()
+        self.dispatcher = EventDispatcher([renderer])
+        self.dispatcher.registerShutdown(reactor)
+        Output.dispatcher = self.dispatcher
+
+        # Load output modules
+        self.output_plugins = []
+        for x in CowrieConfig.sections():
+            if not x.startswith("output_"):
+                continue
+            if CowrieConfig.getboolean(x, "enabled", fallback=False) is False:
+                continue
+            engine: str = x.split("_")[1]
+            try:
+                output = import_module(f"cowrie.output.{engine}").Output()
+                self.output_plugins.append(output)
+                _log.info("Loaded output engine: {engine}", engine=engine)
+            except ImportError:
+                _log.failure(
+                    "Failed to load output engine: {engine} due to ImportError",
+                    engine=engine,
+                )
+                _log.info(
+                    "Please install the dependencies for {engine} listed in requirements-output.txt",
+                    engine=engine,
+                )
+            except Exception:
+                _log.failure("Failed to load output engine: {engine}", engine=engine)
+
+        self.dispatcher.sinks = [*self.output_plugins, renderer]
+
+        self.topService = service.MultiService()
+        application = service.Application("cowrie")
+        self.topService.setServiceParent(application)
+
+        # initialise VM pool handling - only if proxy AND pool set to enabled, and pool is to be deployed here
+        # or also enabled if pool_only is true
+        backend_type: str = CowrieConfig.get("honeypot", "backend", fallback="shell")
+        proxy_backend: str = CowrieConfig.get("proxy", "backend", fallback="simple")
+
+        if (backend_type == "proxy" and proxy_backend == "pool") or self.pool_only:
+            # in this case we need to set some kind of pool connection
+
+            local_pool: bool = (
+                CowrieConfig.get("proxy", "pool", fallback="local") == "local"
+            )
+            pool_host: str = CowrieConfig.get(
+                "proxy", "pool_host", fallback="127.0.0.1"
+            )
+            pool_port: int = CowrieConfig.getint("proxy", "pool_port", fallback=6415)
+
+            if local_pool or self.pool_only:
+                # start a pool locally
+                f = PoolServerFactory()
+                f.tac = self  # type: ignore
+
+                listen_endpoints = get_endpoints_from_section(
+                    CowrieConfig, "backend_pool", 6415
+                )
+                create_endpoint_services(reactor, self.topService, listen_endpoints, f)
+
+                pool_host = "127.0.0.1"  # force use of local interface
+
+            # either way (local or remote) we set up a client to the pool
+            # unless this instance has no SSH and Telnet (pool only)
+            if (self.enableTelnet or self.enableSSH) and not self.pool_only:
+                self.pool_handler = PoolHandler(pool_host, pool_port, self)  # type: ignore
+
+        else:
+            # we initialise the services directly
+            self.pool_ready()
+
+        return self.topService
+
+    def pool_ready(self) -> None:
+        backend: str = CowrieConfig.get("honeypot", "backend", fallback="shell")
+
+        # this method is never called if self.pool_only is False,
+        # since we do not start the pool handler that would call it
+        if self.enableSSH:
+            factory = cowrie.ssh.factory.CowrieSSHFactory(backend, self.pool_handler)
+            factory.tac = self  # type: ignore
+
+            if backend in ("shell", "proxy"):
+                factory.portal = portal.Portal(cowrie.shell.realm.HoneyPotRealm())
+            elif backend == "llm":
+                factory.portal = portal.Portal(cowrie.llm.realm.HoneyPotRealm())
+            else:
+                raise ValueError(backend)
+
+            factory.portal.registerChecker(checkers.HoneypotPublicKeyChecker())
+            factory.portal.registerChecker(checkers.HoneypotPasswordChecker())
+
+            if CowrieConfig.getboolean("ssh", "auth_none_enabled", fallback=False):
+                factory.portal.registerChecker(checkers.HoneypotNoneChecker())
+
+            if CowrieConfig.has_section("ssh"):
+                listen_endpoints = get_endpoints_from_section(CowrieConfig, "ssh", 2222)
+            else:
+                listen_endpoints = get_endpoints_from_section(
+                    CowrieConfig, "honeypot", 2222
+                )
+
+            create_endpoint_services(
+                reactor, self.topService, listen_endpoints, factory
+            )
+
+        if self.enableTelnet:
+            f = cowrie.telnet.factory.HoneyPotTelnetFactory(backend, self.pool_handler)
+            f.tac = self
+            if backend in ("shell", "proxy"):
+                f.portal = portal.Portal(cowrie.shell.realm.HoneyPotRealm())
+            elif backend == "llm":
+                f.portal = portal.Portal(cowrie.llm.realm.HoneyPotRealm())
+            else:
+                raise ValueError(backend)
+
+            f.portal.registerChecker(checkers.HoneypotPasswordChecker())
+
+            listen_endpoints = get_endpoints_from_section(CowrieConfig, "telnet", 2223)
+            create_endpoint_services(reactor, self.topService, listen_endpoints, f)
+
+
+# Now construct an object which *provides* the relevant interfaces
+# The name of this variable is irrelevant, as long as there is *some*
+# name bound to a provider of IPlugin and IServiceMaker.
+serviceMaker = CowrieServiceMaker()

@@ -1,0 +1,62 @@
+# SPDX-FileCopyrightText: 2017 lelonek1 <lelonek1@umbc.edu>
+# SPDX-FileCopyrightText: 2018-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# Include base requirements
+-r requirements.txt
+
+# csirtg. Disabled because csirtgsdk is incompatible with Python 3.12+
+# csirtgsdk==1.1.5
+# geoip2
+
+# elasticsearch
+elasticsearch==9.4.1
+
+# hpfeeds
+hpfeeds==3.1.0
+
+# mysql
+mysql-connector-python==9.7.0
+
+# mongodb
+pymongo==4.17.0
+
+# postgresql
+psycopg2-binary==2.9.12
+
+# rethinkdblog
+rethinkdb==2.4.10.post1
+
+# s3
+# Disabled 2024-12-23 because too large
+# botocore==1.35.76
+
+# slack
+slackclient==2.9.4
+
+# influxdb
+influxdb==5.3.2
+
+# dblog_xmpp
+# Disabled 2024-12-23 because unmaintained upstream dependency: https://github.com/cowrie/cowrie/issues/1639
+# wokkel==18.0.0
+
+# misp
+pymisp==2.5.34.1
+
+# redis
+redis==8.0.1
+
+# Oracle Cloud
+# Disabled 2024-10-31 because downgrades our cryptography package to vulnerable version
+# oci==2.129.2
+
+# rabbitmq
+pika==1.4.1
+
+# prometheus
+prometheus_client==0.26.0
+
+# kafka
+aiokafka==0.14.0

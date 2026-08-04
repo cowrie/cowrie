@@ -1,0 +1,119 @@
+# SPDX-FileCopyrightText: 2016-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+import configparser
+import unittest
+from io import StringIO
+
+from twisted.application.service import MultiService
+from twisted.internet import protocol, reactor
+
+from cowrie.core.utils import (
+    create_endpoint_services,
+    durationHuman,
+    escape_nonprintable,
+    get_endpoints_from_section,
+)
+
+
+def get_config(config_string: str) -> configparser.ConfigParser:
+    """Create ConfigParser from a config_string."""
+    cfg = configparser.ConfigParser()
+    cfg.read_file(StringIO(config_string))
+    return cfg
+
+
+class UtilsTestCase(unittest.TestCase):
+    """Tests for cowrie/core/utils.py."""
+
+    def test_durationHuman(self) -> None:
+        minute = durationHuman(60)
+        self.assertEqual(minute, "01:00")
+
+        hour = durationHuman(3600)
+        self.assertEqual(hour, "01:00:00")
+
+        something = durationHuman(364020)
+        self.assertEqual(something, "4.0 days 05:07:00")
+
+    def test_get_endpoints_from_section(self) -> None:
+        cfg = get_config("[ssh]\nlisten_addr = 1.1.1.1\n")
+        self.assertEqual(
+            ["tcp:2223:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2223)
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 1.1.1.1\n")
+        self.assertEqual(
+            ["tcp:2224:interface=1.1.1.1"], get_endpoints_from_section(cfg, "ssh", 2224)
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 1.1.1.1 2.2.2.2\n")
+        self.assertEqual(
+            ["tcp:2223:interface=1.1.1.1", "tcp:2223:interface=2.2.2.2"],
+            get_endpoints_from_section(cfg, "ssh", 2223),
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 1.1.1.1 2.2.2.2\nlisten_port = 23\n")
+        self.assertEqual(
+            ["tcp:23:interface=1.1.1.1", "tcp:23:interface=2.2.2.2"],
+            get_endpoints_from_section(cfg, "ssh", 2223),
+        )
+
+        cfg = get_config(
+            "[ssh]\n"
+            "listen_endpoints = tcp:23:interface=1.1.1.1 tcp:2323:interface=1.1.1.1\n"
+        )
+        self.assertEqual(
+            ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=1.1.1.1"],
+            get_endpoints_from_section(cfg, "ssh", 2223),
+        )
+
+    def test_get_endpoints_from_section_ipv6(self) -> None:
+        cfg = get_config("[ssh]\nlisten_addr = ::\n")
+        self.assertEqual(
+            [r"tcp6:2222:interface=\:\:"], get_endpoints_from_section(cfg, "ssh", 2222)
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 2001:db8::1\n")
+        self.assertEqual(
+            [r"tcp6:2222:interface=2001\:db8\:\:1"],
+            get_endpoints_from_section(cfg, "ssh", 2222),
+        )
+
+        cfg = get_config("[ssh]\nlisten_addr = 0.0.0.0 ::\n")
+        self.assertEqual(
+            [r"tcp:2222:interface=0.0.0.0", r"tcp6:2222:interface=\:\:"],
+            get_endpoints_from_section(cfg, "ssh", 2222),
+        )
+
+    def test_escape_nonprintable(self) -> None:
+        # Printable ASCII passes through unchanged.
+        self.assertEqual(
+            escape_nonprintable(b"SSH-2.0-OpenSSH_9.6"), "SSH-2.0-OpenSSH_9.6"
+        )
+        # Control characters are escaped, not emitted raw (log injection guard).
+        self.assertEqual(escape_nonprintable(b"a\r\n\x1b[2Jb"), "a\\x0d\\x0a\\x1b[2Jb")
+        # Invalid-UTF8 / high bytes are escaped.
+        self.assertEqual(escape_nonprintable(b"/*\xe0Cookie"), "/*\\xe0Cookie")
+        # The backslash itself is escaped so the output is unambiguous.
+        self.assertEqual(escape_nonprintable(b"a\\xff"), "a\\\\xff")
+        self.assertEqual(escape_nonprintable(b""), "")
+
+    def test_create_endpoint_services(self) -> None:
+        parent = MultiService()
+        create_endpoint_services(
+            reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory()
+        )
+        self.assertEqual(len(parent.services), 1)
+
+        parent = MultiService()
+        create_endpoint_services(
+            reactor,
+            parent,
+            ["tcp:23:interface=1.1.1.1", "tcp:2323:interface=2.2.2.2"],
+            protocol.Factory(),
+        )
+        self.assertEqual(len(parent.services), 2)

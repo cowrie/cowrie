@@ -1,0 +1,600 @@
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+import socket
+import time
+from importlib import import_module
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar
+
+from twisted.conch import recvline
+from twisted.conch.insults import insults
+from twisted.internet.protocol import connectionDone
+from twisted.logger import Logger
+from twisted.protocols.policies import TimeoutMixin
+
+import cowrie.commands
+from cowrie.core.config import CowrieConfig
+from cowrie.core.resources import read_data_bytes
+from cowrie.shell import command, honeypot
+
+if TYPE_CHECKING:
+    from twisted.python import failure
+
+    from cowrie.core.events import EventLog
+
+
+class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
+    """
+    Base protocol for interactive and non-interactive use
+    """
+
+    _log = Logger()
+
+    # The session's event emitter, set from the transport in connectionMade.
+    events: EventLog
+
+    commands: ClassVar[dict] = {}
+    for c in cowrie.commands.command_modules:
+        try:
+            module = import_module(f"cowrie.commands.{c}")
+            commands.update(module.commands)
+        except ImportError:
+            _log.failure("Failed to import command {cmd}", cmd=c)
+
+    def __init__(self, avatar):
+        self.user = avatar
+        self.environ = avatar.environ
+        self.hostname: str = self.user.server.hostname
+        self.fs = self.user.server.fs
+        # The pipeline being handed to the command now starting, which the
+        # command keeps as its own (HoneyPotCommand.pp). It stays set to the
+        # most recently started command's pipeline afterwards, which is what
+        # the running shell reads to tell mid-pipeline from statement end and
+        # to collect a substitution's captured output. Only ever one at a time:
+        # commands run strictly in sequence.
+        self.pp = None
+        self.logintime: float
+        self.realClientIP: str
+        self.realClientPort: int
+        self.kippoIP: str
+        self.kippoIPv6: str = ""
+        self.clientIP: str
+        self.sessionno: int
+        self.factory = None
+
+        self.data = None
+        self.password_input = False
+        self.cmdstack = []
+        # Trampoline state for call_command. A pipeline stage starts the next
+        # one from its PipeProtocol.outConnectionLost(); that re-entrant call is
+        # queued (see _advancing_pipe) and drained by a flat loop, so a long
+        # pipeline runs without recursing one Python frame per stage (#40352).
+        self._advancing_pipe: bool = False
+        self._call_queue: list = []
+
+    def getProtoTransport(self):
+        """
+        Due to protocol nesting differences, we need provide how we grab
+        the proper transport to access underlying SSH information. Meant to be
+        overridden for other protocols.
+        """
+        return self.terminal.transport.session.conn.transport
+
+    def connectionMade(self) -> None:
+        pt = self.getProtoTransport()
+
+        self.factory = pt.factory
+        # The session's event emitter, owned by the transport. Kept across
+        # connectionLost so a command's deferred callback that outlives the
+        # session (a download completing after disconnect) can still emit an
+        # attributed, late-flagged event.
+        self.events = pt.events
+        self.sessionno = pt.transport.sessionno
+        self.realClientIP = pt.transport.getPeer().host
+        self.realClientPort = pt.transport.getPeer().port
+        self.logintime = time.time()
+
+        self.events.dispatch("cowrie.session.params", "", arch=self.user.server.arch)
+
+        idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
+        self.setTimeout(idle_timeout)
+
+        # Source IP of client in user visible reports (can be fake or real)
+        self.clientIP = CowrieConfig.get(
+            "honeypot", "fake_addr", fallback=self.realClientIP
+        )
+
+        # Source IP of server in user visible reports (can be fake or real)
+        if CowrieConfig.has_option("honeypot", "internet_facing_ip"):
+            self.kippoIP = CowrieConfig.get("honeypot", "internet_facing_ip")
+        else:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.connect(("8.8.8.8", 80))
+                    self.kippoIP = s.getsockname()[0]
+            except Exception:
+                self.kippoIP = "192.168.0.1"
+
+        # IPv6 GUA of server in user visible reports (can be fake or real)
+        if CowrieConfig.has_option("honeypot", "internet_facing_ipv6"):
+            self.kippoIPv6 = CowrieConfig.get("honeypot", "internet_facing_ipv6")
+        else:
+            try:
+                with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
+                    s.connect(
+                        ("2001:4860:4860::8888", 80)
+                    )  # NOSONAR - probe target to detect host GUA, not a secret
+                    addr = s.getsockname()[0]
+                    # Only use GUA, not link-local
+                    self.kippoIPv6 = addr if not addr.lower().startswith("fe80") else ""
+            except Exception:
+                self.kippoIPv6 = ""
+
+    def timeoutConnection(self) -> None:
+        """
+        this logs out when connection times out
+        """
+        ret = command.process_status(1)
+        self.terminal.transport.processEnded(ret)
+
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        """
+        Called when the connection is shut down.
+        Clear any circular references here, and any external references to
+        this Protocol. The connection has been closed.
+        """
+        self.setTimeout(None)
+        insults.TerminalProtocol.connectionLost(self, reason)
+        self.terminal = None  # (this should be done by super above)
+        self.cmdstack = []
+        self.fs = None
+        self.pp = None
+        self.user = None
+        self.environ = None
+
+    def txtcmd(self, txt: bytes) -> object:
+        class Command_txtcmd(command.HoneyPotCommand):
+            def call(self):
+                self.writeBytes(txt)
+
+        return Command_txtcmd
+
+    def scriptcmd(self, path: str) -> object:
+        """Return a command class that executes a shell script from the virtual filesystem."""
+        from cowrie.shell.script import run_script_file
+
+        class Command_scriptcmd(command.HoneyPotCommand):
+            def call(self):
+                # Running ./file or /path/file: the kernel rejects a binary with
+                # ENOEXEC ("cannot execute binary file"); a shell script is run
+                # through the parser (the shebang is parsed as a comment).
+                run_script_file(
+                    self,
+                    path,
+                    not_found_message=f"-bash: {path}: No such file or directory\n",
+                    binary_message=(
+                        f"-bash: {path}: cannot execute binary file: "
+                        "Exec format error\n"
+                    ),
+                )
+
+        return Command_scriptcmd
+
+    def isCommand(self, cmd):
+        """
+        Check if cmd (the argument of a command) is a command, too.
+        """
+        return True if cmd in self.commands else False
+
+    def getCommand(self, cmd, paths, cwd):
+        if not cmd.strip():
+            return None
+        path = None
+        if cmd in self.commands:
+            return self.commands[cmd]
+        if cmd[0] in (".", "/"):
+            path = self.fs.resolve_path(cmd, cwd)
+            if not self.fs.exists(path):
+                return None
+        else:
+            for i in [f"{self.fs.resolve_path(x, cwd)}/{cmd}" for x in paths if x]:
+                if self.fs.exists(i):
+                    path = i
+                    break
+
+        if path is None:
+            return None
+
+        relpath = path.lstrip("/")
+        txtcmds_path = CowrieConfig.get("honeypot", "txtcmds_path", fallback="")
+        if txtcmds_path:
+            operator_path = Path(txtcmds_path) / relpath
+            if operator_path.is_file():
+                return self.txtcmd(operator_path.read_bytes())
+
+        try:
+            binary_data = read_data_bytes("txtcmds", *relpath.split("/"))
+            return self.txtcmd(binary_data)
+        except FileNotFoundError:
+            # No txtcmd file at this path -- including when the command resolves
+            # to a directory (e.g. `/` -> empty relpath -> the txtcmds directory
+            # itself), which read_data_bytes reports as FileNotFoundError on
+            # every platform. Fall through so the caller reports "Is a
+            # directory" instead of crashing the session.
+            pass
+
+        if path in self.commands:
+            return self.commands[path]
+
+        if self.fs.isfile(path):
+            return self.scriptcmd(path)
+
+        self._log.info("Can't find command {cmd}", cmd=cmd)
+        return None
+
+    def lineReceived(self, line: bytes) -> None:
+        """
+        IMPORTANT
+        Before this, all data is 'bytes'. Here it converts to 'string' and
+        commands work with string rather than bytes.
+
+        Invalid UTF-8 (binary piped or pasted into the shell) becomes
+        replacement characters: the line must not raise out of the protocol
+        and kill the session.
+        """
+        string = line.decode("utf8", errors="replace")
+
+        if self.cmdstack:
+            self.cmdstack[-1].lineReceived(string)
+        else:
+            self._log.info("discarding input {input}", input=string)
+            stat = command.process_status(0)
+            self.terminal.transport.processEnded(stat)
+
+    def call_command(self, pp, cmd, *args):
+        """
+        Run a command, then drain any pipeline stages it queued.
+
+        A pipeline stage starts the next one from its
+        ``PipeProtocol.outConnectionLost()``, which calls back here. A naive
+        recursive design grows the Python stack by one frame per stage, so a
+        long ``a | b | c | ...`` line overflows it (issue #40352). Only that
+        pipeline advancement is flattened (``_advancing_pipe``): the next stage
+        is queued and run by this flat loop instead of recursed into. A command
+        that runs another synchronously during ``start()`` (``su -c``,
+        ``sh -c``, a nested shell) is not pipeline advancement and still
+        executes inline, draining its own pipeline before returning.
+        """
+        if self._advancing_pipe:
+            self._call_queue.append((pp, cmd, args))
+            return
+
+        # Drain only the stages this call queues. A command run synchronously
+        # here (su -c, sh -c, a nested shell) may itself reach call_command and
+        # drive its own pipeline; scoping to `base` keeps that nested drive from
+        # consuming a stage the enclosing pipeline has already queued.
+        base = len(self._call_queue)
+        self._run_command(pp, cmd, *args)
+        while len(self._call_queue) > base:
+            next_pp, next_cmd, next_args = self._call_queue.pop(base)
+            self._run_command(next_pp, next_cmd, *next_args)
+
+    def _run_command(self, pp, cmd, *args):
+        self.pp = pp
+        obj = cmd(self, *args)
+        obj.set_input_data(pp.input_data)
+        self.cmdstack.append(obj)
+        obj.start()
+
+        if obj.exited:
+            # The command finished as it started, so its stdout is closed and
+            # the next pipeline stage can run. Flatten the callback so a long
+            # pipeline does not recurse (see call_command). This uses the
+            # protocol's current pipe rather than the command's own: a wrapper
+            # like busybox dispatches an applet during start(), and it is that
+            # applet's stdout which just closed.
+            if self.pp:
+                self._advancing_pipe = True
+                try:
+                    self.pp.outConnectionLost()
+                finally:
+                    self._advancing_pipe = False
+        else:
+            # Still running -- an async download, or parked reading stdin. The
+            # next stage must wait for this one's output rather than start on
+            # an empty pipe, so the command advances the pipeline itself when
+            # it finally exits.
+            obj.advance_pipe_on_exit = True
+
+        # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
+        # waiting for stdin but nothing will ever write to it, signal EOF so it
+        # terminates instead of leaking on the cmdstack. Stdin is left open when
+        # a live source will deliver its own EOF later: an interactive terminal,
+        # or the SSH exec channel feeding the top-level command (e.g. `scp -t`,
+        # whose pushed bytes arrive after the command has started). A piped
+        # command reads buffered output, so it gets EOF here.
+        if self.cmdstack and self.cmdstack[-1] is obj:
+            parent = self.cmdstack[-2] if len(self.cmdstack) >= 2 else None
+            live_stdin = (
+                not getattr(pp, "stdin_from_pipe", False)
+                and parent is not None
+                and (
+                    getattr(parent, "interactive", False)
+                    or (
+                        isinstance(self, HoneyPotExecProtocol)
+                        and parent is self.cmdstack[0]
+                    )
+                )
+            )
+            if not live_stdin:
+                obj.eofReceived()
+
+    def uptime(self):
+        """
+        Uptime
+        """
+        pt = self.getProtoTransport()
+        r = time.time() - pt.factory.starttime
+        return r
+
+    def eofReceived(self) -> None:
+        """
+        EOF on stdin, from a terminal CTRL-D or a closed SSH channel. Deliver it
+        to the command currently reading stdin; with no command running the
+        shell handles it (logout). If the cmdstack is gone, end the session.
+        """
+        if self.cmdstack:
+            self.cmdstack[-1].eofReceived()
+        else:
+            ret = command.process_status(0)
+            self.terminal.transport.processEnded(ret)
+
+
+class HoneyPotExecProtocol(HoneyPotBaseProtocol):
+    _log = Logger()
+
+    # input_data is static buffer for stdin received from remote client
+    input_data = b""
+
+    # Longest accepted stdin line in line mode, bash's per-argument limit
+    # (MAX_ARG_STRLEN). Bytes beyond it are dropped so an endless
+    # unterminated stream cannot grow memory without bound.
+    STDIN_LINE_MAX = 131072
+
+    def __init__(self, avatar, execcmd):
+        """
+        IMPORTANT
+        Before this, execcmd is 'bytes'. Here it converts to 'string' and
+        commands work with string rather than bytes.
+        """
+        try:
+            self.execcmd = execcmd.decode("utf8")
+        except UnicodeDecodeError:
+            self._log.error("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
+
+        # When the exec'd command is a shell reading commands from the channel
+        # (`ssh host bash`), stdin is delivered to the cmdstack line by line
+        # instead of being buffered raw in input_data.
+        self.stdin_line_mode: bool = False
+        self._stdin_line = bytearray()
+        self._stdin_last_cr: bool = False
+
+        HoneyPotBaseProtocol.__init__(self, avatar)
+
+    def connectionMade(self) -> None:
+        HoneyPotBaseProtocol.connectionMade(self)
+        self.setTimeout(60)
+        self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
+        # The parser treats newlines as statement separators, so a multi-line
+        # exec payload (including loops/conditionals) is run as written.
+        self.cmdstack[0].lineReceived(self.execcmd)
+
+    def keystrokeReceived(self, keyID, modifier):
+        if not self.stdin_line_mode:
+            self.input_data += keyID
+            return
+        if not isinstance(keyID, bytes):
+            # A function key parsed from an escape sequence has no place in a
+            # line-based stdin stream.
+            return
+        last_cr = self._stdin_last_cr
+        self._stdin_last_cr = keyID == b"\r"
+        if keyID == b"\n" and last_cr:
+            # The \n of a \r\n pair; the \r already dispatched the line.
+            return
+        # Control bytes are handled as a tty would, which is only strictly
+        # right when the client requested a pty; in a plain pipe they are
+        # rare enough that the difference does not matter.
+        if keyID in (b"\r", b"\n"):
+            self._dispatch_stdin_line()
+        elif keyID == b"\x04" and not self._stdin_line:
+            # CTRL-D on an empty line is EOF for the shell reading stdin.
+            HoneyPotBaseProtocol.eofReceived(self)
+        elif keyID in (b"\x08", b"\x7f"):
+            # Backspace / delete: drop the last byte of the pending line.
+            del self._stdin_line[-1:]
+        elif keyID == b"\x03":
+            # CTRL-C: discard the pending line.
+            self._stdin_line.clear()
+        elif len(self._stdin_line) < self.STDIN_LINE_MAX:
+            self._stdin_line += keyID
+
+    def _dispatch_stdin_line(self) -> None:
+        """Run the accumulated stdin line through the command stack."""
+        line = bytes(self._stdin_line)
+        self._stdin_line.clear()
+        self.lineReceived(line)
+
+    def setInsertMode(self) -> None:
+        """Insert-mode toggle requested when an interactive shell resumes; an
+        exec channel has no recvline editor, so there is no mode to switch."""
+
+    def eofReceived(self) -> None:
+        if self.stdin_line_mode:
+            if self._stdin_line:
+                # A final line without a terminator still runs, as bash does
+                # when its stdin ends without a newline.
+                self._dispatch_stdin_line()
+            if not any(getattr(item, "reads_stdin", False) for item in self.cmdstack):
+                # The stdin-reading shell already exited (e.g. `exit`) and
+                # ended the process; nothing is left to deliver EOF to.
+                return
+        HoneyPotBaseProtocol.eofReceived(self)
+
+
+class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
+    def __init__(self, avatar):
+        recvline.HistoricRecvLine.__init__(self)
+        HoneyPotBaseProtocol.__init__(self, avatar)
+
+    def connectionMade(self) -> None:
+        self.displayMOTD()
+
+        HoneyPotBaseProtocol.connectionMade(self)
+        recvline.HistoricRecvLine.connectionMade(self)
+
+        self.cmdstack = [honeypot.HoneyPotShell(self)]
+        # Show the first prompt now that the interactive shell is on the stack.
+        self.cmdstack[0].showPrompt()
+
+        self.keyHandlers.update(
+            {
+                b"\x00": self.handle_NUL,  # NUL (NVT line ending, keepalive padding)
+                b"\x01": self.handle_HOME,  # CTRL-A
+                b"\x02": self.handle_LEFT,  # CTRL-B
+                b"\x03": self.handle_CTRL_C,  # CTRL-C
+                b"\x04": self.handle_CTRL_D,  # CTRL-D
+                b"\x05": self.handle_END,  # CTRL-E
+                b"\x06": self.handle_RIGHT,  # CTRL-F
+                b"\x08": self.handle_BACKSPACE,  # CTRL-H
+                b"\x09": self.handle_TAB,
+                b"\x0b": self.handle_CTRL_K,  # CTRL-K
+                b"\x0c": self.handle_CTRL_L,  # CTRL-L
+                b"\x0e": self.handle_DOWN,  # CTRL-N
+                b"\x10": self.handle_UP,  # CTRL-P
+                b"\x15": self.handle_CTRL_U,  # CTRL-U
+                b"\x16": self.handle_CTRL_V,  # CTRL-V
+                b"\x1b": self.handle_ESC,  # ESC
+            }
+        )
+
+    def displayMOTD(self) -> None:
+        try:
+            self.terminal.write(self.fs.file_contents("/etc/motd"))
+        except Exception:
+            pass
+
+    def timeoutConnection(self) -> None:
+        """
+        this logs out when connection times out
+        """
+        assert self.terminal is not None
+        self.terminal.write(b"timed out waiting for input: auto-logout\n")
+        HoneyPotBaseProtocol.timeoutConnection(self)
+
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        HoneyPotBaseProtocol.connectionLost(self, reason)
+        recvline.HistoricRecvLine.connectionLost(self, reason)
+        self.keyHandlers = {}
+
+    def initializeScreen(self) -> None:
+        """
+        Overriding super to prevent terminal.reset()
+        """
+        self.setInsertMode()
+
+    def call_command(self, pp, cmd, *args):
+        self.pp = pp
+        self.setTypeoverMode()
+        HoneyPotBaseProtocol.call_command(self, pp, cmd, *args)
+
+    def characterReceived(self, ch, moreCharactersComing):
+        """
+        Easier way to implement password input?
+        """
+        self.resetTimeout()  # Reset the idle timeout
+        if self.mode == "insert":
+            self.lineBuffer.insert(self.lineBufferIndex, ch)
+        else:
+            self.lineBuffer[self.lineBufferIndex : self.lineBufferIndex + 1] = [ch]
+        self.lineBufferIndex += 1
+        if not self.password_input:
+            assert self.terminal is not None
+            self.terminal.write(ch)
+
+    def handle_RETURN(self) -> None:
+        if len(self.cmdstack) == 1:
+            if self.lineBuffer:
+                self.historyLines.append(b"".join(self.lineBuffer))
+            self.historyPosition = len(self.historyLines)
+        recvline.RecvLine.handle_RETURN(self)
+
+    def handle_NUL(self) -> None:
+        """
+        Ignore NUL bytes. They are routine NVT traffic: telnet clients send
+        CR NUL as the line ending per RFC 854, and some clients send stray NUL
+        bytes as keepalive padding.
+        """
+
+    def handle_CTRL_C(self) -> None:
+        if self.cmdstack:
+            self.cmdstack[-1].handle_CTRL_C()
+
+    def handle_CTRL_D(self) -> None:
+        # CTRL-D at the terminal signals end-of-file on stdin.
+        self.eofReceived()
+
+    def handle_TAB(self) -> None:
+        if self.cmdstack:
+            self.cmdstack[-1].handle_TAB()
+
+    def handle_CTRL_K(self) -> None:
+        assert self.terminal is not None
+        self.terminal.eraseToLineEnd()
+        self.lineBuffer = self.lineBuffer[0 : self.lineBufferIndex]
+
+    def handle_CTRL_L(self) -> None:
+        """
+        Handle a 'form feed' byte - generally used to request a screen
+        refresh/redraw.
+        """
+        assert self.terminal is not None
+        self.terminal.eraseDisplay()
+        self.terminal.cursorHome()
+        self.drawInputLine()
+
+    def handle_CTRL_U(self) -> None:
+        assert self.terminal is not None
+        for _ in range(self.lineBufferIndex):
+            self.terminal.cursorBackward()
+            self.terminal.deleteCharacter()
+        self.lineBuffer = self.lineBuffer[self.lineBufferIndex :]
+        self.lineBufferIndex = 0
+
+    def handle_CTRL_V(self) -> None:
+        pass
+
+    def handle_ESC(self) -> None:
+        pass
+
+
+class HoneyPotInteractiveTelnetProtocol(HoneyPotInteractiveProtocol):
+    """
+    Specialized HoneyPotInteractiveProtocol that provides Telnet specific
+    overrides.
+    """
+
+    def __init__(self, avatar):
+        HoneyPotInteractiveProtocol.__init__(self, avatar)
+
+    def getProtoTransport(self):
+        """
+        Due to protocol nesting differences, we need to override how we grab
+        the proper transport to access underlying Telnet information.
+        """
+        return self.terminal.transport.session.transport

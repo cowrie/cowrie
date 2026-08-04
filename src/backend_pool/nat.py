@@ -1,0 +1,168 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+from threading import Lock
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from twisted.internet.interfaces import IAddress
+    from twisted.python import failure
+from twisted.internet import protocol, reactor
+from twisted.internet.address import IPv4Address, IPv6Address
+from twisted.internet.protocol import connectionDone
+
+
+class ClientProtocol(protocol.Protocol):
+    server_protocol: ServerProtocol
+
+    def dataReceived(self, data: bytes) -> None:
+        assert self.server_protocol.transport is not None
+        self.server_protocol.transport.write(data)
+
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        assert self.server_protocol.transport is not None
+        self.server_protocol.transport.loseConnection()
+
+
+class ClientFactory(protocol.ClientFactory[ClientProtocol]):
+    def __init__(self, server_protocol: ServerProtocol) -> None:
+        self.server_protocol = server_protocol
+
+    def buildProtocol(self, addr: IAddress | None) -> ClientProtocol:
+        client_protocol = ClientProtocol()
+        client_protocol.server_protocol = self.server_protocol
+        self.server_protocol.client_protocol = client_protocol
+        return client_protocol
+
+
+class ServerProtocol(protocol.Protocol):
+    def __init__(self, dst_ip: str, dst_port: int):
+        self.dst_ip: str = dst_ip
+        self.dst_port: int = dst_port
+        self.client_protocol: ClientProtocol | None = None
+        self.buffer: list[bytes] = []
+
+    def connectionMade(self):
+        reactor.connectTCP(self.dst_ip, self.dst_port, ClientFactory(self))
+
+    def dataReceived(self, data: bytes) -> None:
+        self.buffer.append(data)
+        self.sendData()
+
+    def sendData(self) -> None:
+        if not self.client_protocol:
+            reactor.callLater(0.5, self.sendData)
+            return
+
+        assert (
+            self.client_protocol is not None
+            and self.client_protocol.transport is not None
+        )
+        for packet in self.buffer:
+            self.client_protocol.transport.write(packet)
+        self.buffer = []
+
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        assert (
+            self.client_protocol is not None
+            and self.client_protocol.transport is not None
+        )
+        self.client_protocol.transport.loseConnection()
+
+
+class ServerFactory(protocol.Factory[ServerProtocol]):
+    def __init__(self, dst_ip: str, dst_port: int) -> None:
+        self.dst_ip: str = dst_ip
+        self.dst_port: int = dst_port
+
+    def buildProtocol(self, addr: IAddress | None) -> ServerProtocol:
+        return ServerProtocol(self.dst_ip, self.dst_port)
+
+
+class NATService:
+    """
+    This service provides a NAT-like service when the backend pool
+    is located in a remote machine.  Guests are bound to a local
+    IP (e.g., 192.168.150.0/24), and so not accessible from a remote
+    Cowrie.  This class provides TCP proxies that associate accessible
+    IPs in the backend pool's machine to the internal IPs used by
+    guests, like a NAT.
+    """
+
+    def __init__(self):
+        self.bindings: dict[int, Any] = {}
+        self.lock = (
+            Lock()
+        )  # we need to be thread-safe just in case, this is accessed from multiple clients
+
+    def request_binding(
+        self, guest_id: int, dst_ip: str, ssh_port: int, telnet_port: int
+    ) -> tuple[int, int]:
+        with self.lock:
+            # see if binding is already created
+            if guest_id in self.bindings:
+                # increase connected
+                self.bindings[guest_id][0] += 1
+
+                # edge case: one of the port listeners were closed/is closed, meaning the _realPortNumer is None
+                # see: https://github.com/twisted/twisted/blob/d1da93654b14ba6870ce77ce77daf584451c2e8f/src/twisted/internet/tcp.py#L1484
+                # causing errors when doing struct.pack
+                port1 = self.bindings[guest_id][1]._realPortNumber
+                port2 = self.bindings[guest_id][2]._realPortNumber
+
+                if (port1 is not None) and (port2 is not None):
+                    return (
+                        port1,
+                        port2,
+                    )
+                else:
+                    # stop existing listeners
+                    if port1 is not None:
+                        self.bindings[guest_id][1].stopListening()
+                    if port2 is not None:
+                        self.bindings[guest_id][2].stopListening()
+
+                    del self.bindings[guest_id]
+
+                    # let it recreate the bindings on the next step
+
+            nat_ssh = reactor.listenTCP(
+                0,
+                ServerFactory(dst_ip, ssh_port),  # type: ignore[arg-type]
+                interface="0.0.0.0",
+            )
+            nat_telnet = reactor.listenTCP(
+                0,
+                ServerFactory(dst_ip, telnet_port),  # type: ignore[arg-type]
+                interface="0.0.0.0",
+            )
+            self.bindings[guest_id] = [1, nat_ssh, nat_telnet]
+
+            ssh_addr = nat_ssh.getHost()
+            telnet_addr = nat_telnet.getHost()
+            assert isinstance(ssh_addr, (IPv4Address, IPv6Address))
+            assert isinstance(telnet_addr, (IPv4Address, IPv6Address))
+            return ssh_addr.port, telnet_addr.port
+
+    def free_binding(self, guest_id: int) -> None:
+        with self.lock:
+            self.bindings[guest_id][0] -= 1
+
+            # stop listening if no one is connected
+            if self.bindings[guest_id][0] <= 0:
+                self.bindings[guest_id][1].stopListening()
+                self.bindings[guest_id][2].stopListening()
+                del self.bindings[guest_id]
+
+    def free_all(self):
+        with self.lock:
+            for guest_id in self.bindings:
+                self.bindings[guest_id][1].stopListening()
+                self.bindings[guest_id][2].stopListening()
+
+            # delete all bindings
+            self.bindings = {}

@@ -1,0 +1,287 @@
+# SPDX-FileCopyrightText: 2009-2014 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2015-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+import hashlib
+import os
+import time
+from typing import TYPE_CHECKING, Any
+
+from twisted.conch.insults import insults
+from twisted.internet.protocol import connectionDone
+from twisted.logger import Logger
+from twisted.python.compat import iterbytes
+
+from cowrie.core import ttylog
+from cowrie.core.artifact import temp_download_path
+from cowrie.core.config import CowrieConfig
+from cowrie.shell import protocol
+
+if TYPE_CHECKING:
+    from twisted.python import failure
+
+    from cowrie.core.events import EventLog
+
+
+class LoggingServerProtocol(insults.ServerProtocol):
+    """
+    Wrapper for ServerProtocol that implements TTY logging
+    """
+
+    _log = Logger()
+
+    ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path", fallback=".")
+    downloadPath: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
+    ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=False)
+    bytesReceivedLimit: int = CowrieConfig.getint(
+        "honeypot", "download_limit_size", fallback=0
+    )
+
+    def __init__(self, protocolFactory=None, *a, **kw):
+        self.type: str
+        self.ttylogFile: str
+        self.ttylogSize: int = 0
+        self.bytesSent: int = 0
+        self.bytesReceived: int = 0
+        self.redirFiles: set[list[str]] = set()
+        self.redirlogOpen: bool = False  # it will be set at core/protocol.py
+        self.stdinlogOpen: bool = False
+        self.ttylogOpen: bool = False
+        self.terminalProtocol: Any
+        self.transport: Any
+        self.startTime: float
+        self.stdinlogFile: str
+
+        insults.ServerProtocol.__init__(self, protocolFactory, *a, **kw)
+
+        if protocolFactory is protocol.HoneyPotExecProtocol:
+            self.type = "e"  # Execcmd
+        else:
+            self.type = "i"  # Interactive
+
+    def getSessionId(self) -> tuple[str, str]:
+        transportId = self.transport.session.conn.transport.transportId
+        channelId = self.transport.session.id
+        return (transportId, channelId)
+
+    def getEventLog(self) -> EventLog:
+        events: EventLog = self.transport.session.conn.transport.events
+        return events
+
+    def connectionMade(self) -> None:
+        transportId, channelId = self.getSessionId()
+        # The session's event emitter, owned by the transport. Kept across
+        # connectionLost so the artifacts finalized there arrive attributed.
+        self.events = self.getEventLog()
+        self.startTime = time.time()
+
+        if self.ttylogEnabled:
+            self.ttylogFile = f"{self.ttylogPath}/{time.strftime('%Y%m%d-%H%M%S')}-{transportId}-{channelId}{self.type}.log"
+            ttylog.ttylog_open(self.ttylogFile, self.startTime)
+            self.ttylogOpen = True
+            self.ttylogSize = 0
+
+        self.stdinlogFile = temp_download_path("stdin")
+
+        if self.type == "e":
+            self.stdinlogOpen = True
+            # log the command into ttylog
+            if self.ttylogEnabled:
+                (_sess, cmd) = self.protocolArgs
+                ttylog.ttylog_write(
+                    self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd
+                )
+        else:
+            self.stdinlogOpen = False
+
+        insults.ServerProtocol.connectionMade(self)
+
+        if self.type == "e":
+            self.terminalProtocol.execcmd.encode("utf8")
+
+    def write(self, data: bytes) -> None:
+        self.bytesSent += len(data)
+        if self.ttylogEnabled and self.ttylogOpen:
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
+            )
+            self.ttylogSize += len(data)
+
+        if self.type == "e":
+            # Exec channel: no PTY was allocated, so write raw bytes without
+            # the \n -> \r\n translation that insults.ServerProtocol.write()
+            # performs (which is only appropriate for PTY sessions).
+            self.transport.write(data)
+        else:
+            insults.ServerProtocol.write(self, data)
+
+    def dataReceived(self, data: bytes) -> None:
+        """
+        Input received from user
+        """
+        if self.terminalProtocol is None:
+            # connectionLost() has already run and Twisted's ServerProtocol has
+            # cleared terminalProtocol. A final data packet delivered in the same
+            # reactor iteration is discarded rather than crashing in
+            # ServerProtocol.dataReceived with 'NoneType' has no attribute
+            # 'keystrokeReceived'.
+            return
+
+        self.bytesReceived += len(data)
+        if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
+            self._log.info("Data upload limit reached")
+            self.eofReceived()
+            return
+
+        if self.stdinlogOpen:
+            # Exec channels never reach characterReceived(), so their idle
+            # timeout is otherwise a hard cap on the whole session. Reset it on
+            # every inbound packet so a slow upload is not killed mid-transfer.
+            self.terminalProtocol.resetTimeout()
+            with open(self.stdinlogFile, "ab") as f:
+                f.write(data)
+        elif self.ttylogEnabled and self.ttylogOpen:
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data
+            )
+
+        # Feed the parent one byte at a time so terminalProtocol can be
+        # re-checked between bytes. ServerProtocol.dataReceived loops over the
+        # buffer calling terminalProtocol.keystrokeReceived() per byte without
+        # re-checking; a keystroke handler can synchronously tear the session
+        # down (in-process session channels close without a reactor round-trip),
+        # clearing terminalProtocol mid-buffer, and the next byte would then
+        # dereference None. Its parser state lives on self, so splitting the
+        # call is behaviour-identical.
+        for ch in iterbytes(data):
+            if self.terminalProtocol is None:
+                break
+            insults.ServerProtocol.dataReceived(self, ch)
+
+    def eofReceived(self) -> None:
+        """
+        Receive channel close and pass on to terminal
+        """
+        if self.terminalProtocol:
+            self.terminalProtocol.eofReceived()
+
+    def loseConnection(self) -> None:
+        """
+        Override super to remove the terminal reset on logout
+        """
+        self.transport.loseConnection()
+
+    def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
+        """
+        Finalize the session: hash and store any captured stdin, redirected
+        files, and the TTY log, then drop references to the terminal.
+        """
+        if self.stdinlogOpen:
+            try:
+                if os.path.exists(self.stdinlogFile):
+                    with open(self.stdinlogFile, "rb") as f:
+                        shasum = hashlib.sha256(f.read()).hexdigest()
+                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    if os.path.exists(shasumfile):
+                        os.remove(self.stdinlogFile)
+                        duplicate = True
+                    else:
+                        os.rename(self.stdinlogFile, shasumfile)
+                        duplicate = False
+
+                    self.events.dispatch(
+                        "cowrie.session.file_download",
+                        "Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
+                        duplicate=duplicate,
+                        outfile=shasumfile,
+                        shasum=shasum,
+                        destfile="",
+                    )
+            except OSError as e:
+                self._log.error("Failed to save stdin contents: {error}", error=e)
+            finally:
+                self.stdinlogOpen = False
+
+        if self.redirFiles:
+            for rp in self.redirFiles:
+                rf = rp[0]
+
+                if rp[1]:
+                    url = rp[1]
+                else:
+                    url = rf[rf.find("redir_") + len("redir_") :]
+
+                try:
+                    if not os.path.exists(rf):
+                        continue
+
+                    if os.path.getsize(rf) == 0:
+                        os.remove(rf)
+                        continue
+
+                    with open(rf, "rb") as f:
+                        shasum = hashlib.sha256(f.read()).hexdigest()
+                    shasumfile = os.path.join(self.downloadPath, shasum)
+                    if os.path.exists(shasumfile):
+                        os.remove(rf)
+                        duplicate = True
+                    else:
+                        os.rename(rf, shasumfile)
+                        duplicate = False
+                    self.events.dispatch(
+                        "cowrie.session.file_download",
+                        "Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
+                        duplicate=duplicate,
+                        outfile=shasumfile,
+                        shasum=shasum,
+                        destfile=url,
+                    )
+                except OSError:
+                    pass
+            self.redirFiles.clear()
+
+        if self.ttylogEnabled and self.ttylogOpen:
+            ttylog.ttylog_close(self.ttylogFile, time.time())
+            self.ttylogOpen = False
+            shasum = ttylog.ttylog_inputhash(self.ttylogFile)
+            shasumfile = os.path.join(self.ttylogPath, shasum)
+
+            if os.path.exists(shasumfile):
+                duplicate = True
+                os.remove(self.ttylogFile)
+            else:
+                duplicate = False
+                os.rename(self.ttylogFile, shasumfile)
+                umask = os.umask(0)
+                os.umask(umask)
+                os.chmod(shasumfile, 0o666 & ~umask)
+
+            self.events.dispatch(
+                "cowrie.log.closed",
+                "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+                ttylog=shasumfile,
+                size=self.ttylogSize,
+                shasum=shasum,
+                duplicate=duplicate,
+                duration_ms=round((time.time() - self.startTime) * 1000),
+            )
+
+        insults.ServerProtocol.connectionLost(self, reason)
+
+
+class LoggingTelnetServerProtocol(LoggingServerProtocol):
+    """
+    Wrap LoggingServerProtocol with single method to fetch session id for Telnet
+    """
+
+    def getSessionId(self) -> tuple[str, str]:
+        transportId = self.transport.session.transportId
+        sn = self.transport.session.transport.transport.sessionno
+        return (transportId, sn)
+
+    def getEventLog(self) -> EventLog:
+        events: EventLog = self.transport.session.transport.events
+        return events

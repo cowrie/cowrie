@@ -1,0 +1,107 @@
+# SPDX-FileCopyrightText: 2009-2011 Upi Tamminen <desaster@gmail.com>
+# SPDX-FileCopyrightText: 2014-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import annotations
+
+import posixpath
+import tarfile
+
+from twisted.logger import Logger
+
+from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.fs import A_REALFILE
+
+commands = {}
+
+
+class Command_tar(HoneyPotCommand):
+    _log = Logger()
+
+    def mkfullpath(self, path: str, f: tarfile.TarInfo) -> None:
+        components, d = path.split("/"), []
+        while len(components):
+            d.append(components.pop(0))
+            p = "/".join(d)
+            if p and not self.fs.exists(p):
+                self.fs.mkdir(
+                    p,
+                    self.user["uid"],
+                    self.user["gid"],
+                    4096,
+                    f.mode,
+                    f.mtime,
+                )
+
+    def call(self) -> None:
+        if len(self.args) < 2:
+            self.errorWrite("tar: You must specify one of the `-Acdtrux' options\n")
+            self.errorWrite("Try `tar --help' or `tar --usage' for more information.\n")
+            return
+
+        filename = self.args[1]
+
+        extract = False
+        if "x" in self.args[0]:
+            extract = True
+        verbose = False
+        if "v" in self.args[0]:
+            verbose = True
+
+        path = self.fs.resolve_path(filename, self.cwd)
+        if not path or not self.protocol.fs.exists(path):
+            self.errorWrite(
+                f"tar: {filename}: Cannot open: No such file or directory\n"
+            )
+            self.errorWrite("tar: Error is not recoverable: exiting now\n")
+            self.errorWrite("tar: Child returned status 2\n")
+            self.errorWrite("tar: Error exit delayed from previous errors\n")
+            return
+
+        hpf = self.fs.getfile(path)
+        if not hpf[A_REALFILE]:
+            self.errorWrite("tar: this does not look like a tar archive\n")
+            self.errorWrite("tar: skipping to next header\n")
+            self.errorWrite("tar: error exit delayed from previous errors\n")
+            return
+
+        try:
+            t = tarfile.open(hpf[A_REALFILE])
+        except Exception:
+            self.errorWrite("tar: this does not look like a tar archive\n")
+            self.errorWrite("tar: skipping to next header\n")
+            self.errorWrite("tar: error exit delayed from previous errors\n")
+            return
+
+        for f in t:
+            dest = self.fs.resolve_path(f.name.strip("/"), self.cwd)
+            if verbose:
+                self.write(f"{f.name}\n")
+            if not extract or not len(dest):
+                continue
+            if f.isdir():
+                self.fs.mkdir(
+                    dest,
+                    self.user["uid"],
+                    self.user["gid"],
+                    4096,
+                    f.mode,
+                    f.mtime,
+                )
+            elif f.isfile():
+                self.mkfullpath(posixpath.dirname(dest), f)
+                self.fs.mkfile(
+                    dest,
+                    self.user["uid"],
+                    self.user["gid"],
+                    f.size,
+                    f.mode,
+                    f.mtime,
+                )
+            else:
+                self._log.info("tar: skipping [{name}]", name=f.name)
+
+
+commands["/bin/tar"] = Command_tar
+commands["tar"] = Command_tar

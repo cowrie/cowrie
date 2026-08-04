@@ -1,0 +1,99 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+from __future__ import annotations
+
+import os
+import sys
+from configparser import NoOptionError
+from typing import Any
+
+from twisted.logger import Logger
+
+import backend_pool.libvirt.snapshot_handler
+import backend_pool.util
+from cowrie.core.config import CowrieConfig
+
+_log = Logger()
+
+
+class QemuGuestError(Exception):
+    pass
+
+
+def create_guest(
+    connection: Any, mac_address: str, guest_unique_id: str
+) -> tuple[Any, str]:
+    # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+    import libvirt
+
+    # get guest configurations
+    guest_xml = backend_pool.util.read_pool_config(
+        CowrieConfig.get("backend_pool", "guest_config", fallback="default_guest.xml")
+    )
+
+    version_tag: str = CowrieConfig.get("backend_pool", "guest_tag", fallback="guest")
+    base_image: str = CowrieConfig.get("backend_pool", "guest_image_path")
+    hypervisor: str = CowrieConfig.get(
+        "backend_pool", "guest_hypervisor", fallback="qemu"
+    )
+    memory: int = CowrieConfig.getint("backend_pool", "guest_memory", fallback=128)
+    qemu_machine: str = CowrieConfig.get(
+        "backend_pool", "guest_qemu_machine", fallback="pc-q35-3.1"
+    )
+
+    # check if base image exists
+    if not os.path.isfile(base_image):
+        _log.error(
+            "Base image provided was not found: {base_image}", base_image=base_image
+        )
+        os._exit(1)
+
+    # only in some cases, like wrt
+    kernel_image: str = CowrieConfig.get(
+        "backend_pool", "guest_kernel_image", fallback=""
+    )
+
+    # get a directory to save snapshots, even if temporary
+    try:
+        # guest configuration, to be read by qemu, needs an absolute path
+        snapshot_path: str = backend_pool.util.to_absolute_path(
+            CowrieConfig.get("backend_pool", "snapshot_path")
+        )
+    except NoOptionError:
+        snapshot_path = os.getcwd()
+
+    # create a disk snapshot to be used by the guest
+    disk_img: str = os.path.join(
+        snapshot_path, f"snapshot-{version_tag}-{guest_unique_id}.qcow2"
+    )
+
+    if not backend_pool.libvirt.snapshot_handler.create_disk_snapshot(
+        base_image, disk_img
+    ):
+        _log.error("There was a problem creating the disk snapshot.")
+        raise QemuGuestError()
+
+    guest_config = guest_xml.format(
+        guest_name="cowrie-" + version_tag + "_" + guest_unique_id,
+        disk_image=disk_img,
+        base_image=base_image,
+        kernel_image=kernel_image,
+        hypervisor=hypervisor,
+        memory=memory,
+        qemu_machine=qemu_machine,
+        mac_address=mac_address,
+        network_name="cowrie",
+    )
+
+    try:
+        dom = connection.createXML(guest_config, 0)
+        if dom is None:
+            _log.error("Failed to create a domain from an XML definition.")
+            sys.exit(1)
+    except libvirt.libvirtError:
+        _log.failure("Error booting guest")
+        raise
+    _log.info("Guest {name} has booted", name=dom.name())
+    return dom, disk_img

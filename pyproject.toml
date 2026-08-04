@@ -1,0 +1,343 @@
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cowrie"
+dynamic = ["version"]
+description="Cowrie SSH/Telnet Honeypot."
+license="BSD-3-Clause"
+license-files = [ "LICENSE.rst" ]
+authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
+maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
+keywords=["ssh", "telnet", "honeypot"]
+requires-python = ">=3.10, <4"
+readme="README.rst"
+classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: No Input/Output (Daemon)",
+        "Framework :: Twisted",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: POSIX",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Topic :: Security"
+]
+
+dependencies = [
+        "attrs==26.1.0",
+        "bcrypt==5.0.0",
+        "cryptography==49.0.0",
+        "hyperlink==21.0.0",
+        "idna==3.18",
+        "lark==1.3.1",
+        "packaging==26.2",
+        "pyasn1_modules==0.4.2",
+        "service_identity==26.1.0",
+        "treq==26.7.0",
+        "twisted[conch]==26.4.0",
+]
+
+[project.urls]
+homepage = "https://www.cowrie.org/"
+documentation = "https://docs.cowrie.org/"
+repository = "https://github.com/cowrie/cowrie"
+changelog = "https://github.com/cowrie/cowrie/blob/main/CHANGELOG.rst"
+issues = "https://github.com/cowrie/cowrie/issues"
+
+[project.scripts]
+cowrie = "cowrie.scripts.cowrie:run"
+fsctl = "cowrie.scripts.fsctl:run"
+asciinema = "cowrie.scripts.asciinema:run"
+createfs = "cowrie.scripts.createfs:run"
+dumpfs = "cowrie.scripts.dumpfs:run"
+playlog = "cowrie.scripts.playlog:run"
+
+[project.optional-dependencies]
+csirtg = ["csirtgsdk==1.1.5"]
+elasticsearch = ["pyes"]
+mysql = ["mysqlclient"]
+mongodb = ["pymongo"]
+pool = ["libvirt-python==12.5.0"]
+rethinkdblog = ["rethinkdb"]
+s3 = ["botocore"]
+slack = ["slackclient"]
+influxdb = ["influxdb"]
+kafka = ["aiokafka"]
+dev = [
+"build==1.5.0",
+"coverage==7.15.2",
+"mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
+"mypy-zope==1.0.16; platform_python_implementation=='CPython'",
+"mypy==2.3.0; platform_python_implementation=='CPython'",
+"pathspec==1.1.1",
+"pip-audit==2.10.1",
+"pipdeptree==4.0.0",
+"pre-commit==4.6.1",
+"pylint==4.0.6",
+"pyre-check==0.9.25",
+"pyright==1.1.411",
+"pytype==2024.10.11; platform_python_implementation=='CPython'",
+"pyupgrade==3.21.2",
+"pyyaml==6.0.3",
+"readthedocs-sphinx-search==0.3.2",
+"ruff==0.16.0",
+"setuptools==83.0.0",
+"sphinx-copybutton==0.5.2",
+"sphinx_rtd_theme==3.1.0",
+"sphinxcontrib-googleanalytics==0.5",
+"tox==4.58.0",
+"types-redis==4.6.0.20241004",
+"yamllint==1.38.0",
+]
+
+
+[tool.isort]
+profile = "black"
+known_zope = "zope"
+known_twisted = "twisted"
+known_first_party = ["cowrie","backend_pool"]
+sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOLDER"]
+
+
+[tool.mypy]
+namespace_packages = true
+plugins = [ "mypy_zope:plugin" ]
+disable_error_code = [ "annotation-unchecked" ]
+exclude = [ "src/cowrie/vendor/" ]
+
+ignore_missing_imports      = true
+warn_unused_configs         = true
+no_implicit_optional        = true
+show_column_numbers         = true
+show_error_codes            = true
+strict_optional             = true
+warn_no_return              = true
+warn_redundant_casts        = true
+warn_return_any             = true
+warn_unreachable            = true
+disallow_incomplete_defs    = true
+disallow_any_unimported     = true
+strict_equality             = true
+disallow_untyped_decorators = true
+disallow_subclassing_any    = true
+warn_unused_ignores         = true
+local_partial_types         = true
+no_implicit_reexport        = true
+
+# Getting these passing should be easy
+# strict_concatenate          = true
+
+# These are too strict for us at the moment
+
+check_untyped_defs          = false
+disallow_untyped_defs       = false
+disallow_any_decorated      = false
+disallow_any_explicit       = false
+disallow_any_expr           = false
+disallow_any_generics       = false
+disallow_untyped_calls      = false
+
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = ["R0801", "R0901", "R0902", "R0903", "R0904", "R0912", "R0913", "R0914", "R0915", "C0103", "C0114", "C0115", "C0116", "C0301", "W0201"]
+ignored-classes = ["twisted.internet.reactor"]
+ignore-paths = ["src/cowrie/vendor"]
+
+
+[tool.pyright]
+include = ["src"]
+exclude = ["src/cowrie/vendor"]
+typeCheckingMode = "strict"
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportCallIssue = "information"
+reportGeneralTypeIssues = "information"
+reportIncompatibleMethodOverride = "information"
+reportIncompatibleVariableOverride = "none"
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
+reportOperatorIssue = "information"
+reportOptionalCall = "information"
+reportOptionalMemberAccess = "none"
+reportOptionalOperand = "information"
+reportPossiblyUnboundVariable = "information"
+reportUnsupportedDunderAll = "information"
+
+# Twisted/zope base classes are untyped (mypy uses the mypy-zope plugin;
+# pyright has no equivalent), so in strict mode every attribute access on a
+# Twisted subclass resolves to "Unknown". That noise (~89% of all findings)
+# buries the checks that are actually useful on the pure-Python parts of the
+# codebase, so silence the Unknown/untyped-decorator/missing-annotation
+# families and keep the rest of strict mode.
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportUnknownLambdaType = "none"
+reportMissingParameterType = "none"
+reportMissingTypeArgument = "none"
+reportUntypedClassDecorator = "none"
+reportUntypedFunctionDecorator = "none"
+
+# Tests legitimately exercise protected methods of the code under test.
+[[tool.pyright.executionEnvironments]]
+root = "src/cowrie/test"
+reportPrivateUsage = "none"
+
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+exclude = ["src/cowrie/vendor/**"]
+
+[[tool.ty.overrides]]
+include = ["src/cowrie/output/**", "src/backend_pool/**"]
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
+
+[tool.ruff]
+line-length = 88
+
+# Enable Pyflakes `E` and `F` codes by default.
+lint.select = ["A", "B", "E", "F", "I", "UP", "YTT", "B", "T20", "Q", "RUF", "TC", "TRY", "PYI", "FAST"]
+lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001"]
+
+exclude = [ "src/cowrie/_version.py", "src/cowrie/vendor/" ]
+
+# Assume Python 3.10.
+target-version = "py310"
+
+# Ignore `T201` (print) in all scripts
+[tool.ruff.lint.per-file-ignores]
+"src/cowrie/scripts/*" = ["T201"]
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/cowrie/_version.py"
+
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,py315t,pypy311
+    deps = -r{toxinidir}/requirements.txt
+    skip_missing_interpreters = True
+
+    [gh-actions]
+    python =
+        3.10: py310
+        3.11: py311
+        3.12: py312
+        3.13: py313
+        3.14: py314
+        3.14t: py314t
+        3.15: py315
+        3.15t: py315t
+        pypy-3.11: pypy311
+
+    [testenv]
+    setenv =
+        PYTHONPATH = {toxinidir}/src
+        PIP_QUIET = 1
+    deps = coverage
+
+    commands =
+        coverage run -m unittest discover src --verbose
+
+    # bcrypt 5.0.0 has no free-threaded 3.15 wheel and its vendored pyo3 0.26
+    # refuses to build past 3.14; git main builds with pyo3 0.29, which
+    # supports 3.15, and still reports version 5.0.0 so it satisfies the
+    # requirements pin. deps install before the package, so the pin resolves
+    # against this build. Remove once the next bcrypt release ships.
+    [testenv:py315t]
+    deps =
+        coverage
+        bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40
+
+    [testenv:pypi]
+    extras =
+        dev
+    allowlist_externals =
+        twine
+    commands =
+        python -m build
+        twine check dist/*
+        # - twine upload --verbose --repository testpypi dist/*\n
+        # python -m pip install -i https://test.pypi.org/simple/ cowrie
+
+    [testenv:lint]
+    extras =
+        dev
+    allowlist_externals =
+        yamllint
+    commands =
+        ruff check {toxinidir}/src
+        - yamllint {toxinidir}
+        - pyright
+        - pylint {toxinidir}/src
+    basepython = python3.10
+
+    [testenv:docs]
+    setenv =
+        PYTHONPATH = {toxinidir}/src
+    changedir = docs
+    extras =
+        dev
+    commands =
+        sphinx-build -W -b html -d {envtmpdir}/doctrees . {envtmpdir}/html
+    basepython = python3.10
+
+    [testenv:typing]
+    description = run static type checkers
+    extras =
+        dev
+    commands =
+        mypy                                       \
+            --cache-dir="{toxworkdir}/mypy_cache"  \
+            --config-file="{toxinidir}/pyproject.toml" \
+            {tty:--pretty:}                        \
+            {posargs:src}
+        - mypyc \
+            --cache-dir="{toxworkdir}/mypyc_cache"  \
+            --config-file="{toxinidir}/pyproject.toml" \
+            {tty:--pretty:}                        \
+            {posargs:src}
+        - pyre --noninteractive analyze
+        - pyright {posargs:src}
+    basepython = python3.10
+
+    [testenv:audit]
+    description = run dependency security audit
+    extras =
+        dev
+    commands =
+        pip-audit -r {toxinidir}/requirements.txt
+
+    [testenv:coverage-report]
+    deps = coverage
+    skip_install = true
+    commands =
+        coverage combine
+        coverage report
+
+    [coverage:run]
+    relative_files = True
+    source = src/
+    branch = True
+"""

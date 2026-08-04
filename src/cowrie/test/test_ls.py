@@ -1,0 +1,64 @@
+# SPDX-FileCopyrightText: 2024 Ritvik Dayal <ritvik@doxel.ai>
+# SPDX-FileCopyrightText: 2024 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+from __future__ import annotations
+
+import os
+import tempfile
+import unittest
+
+from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.fake_transport import FakeTransport
+
+os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
+os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
+
+PROMPT = b"root@unitTest:~# "
+
+
+class ShellLsCommandTests(unittest.TestCase):
+    """Test for cowrie/commands/ls.py."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_ls_command_001(self) -> None:
+        self.proto.lineReceived(b"ls NonExisting\n")
+        self.assertEqual(
+            self.tr.value(),
+            b"ls: cannot access /root/NonExisting: No such file or directory\n"
+            + PROMPT,
+        )
+
+    def test_ls_command_002(self) -> None:
+        self.proto.lineReceived(b"ls /\n")
+        self.assertEqual(
+            self.tr.value(),
+            b"bin   boot  dev   etc   home  lib   lib64 media mnt   opt   proc  root  run   \nsbin  srv   sys   tmp   usr   var   \n"
+            + PROMPT,
+        )
+
+    def test_ls_command_003(self) -> None:
+        self.proto.lineReceived(b"ls -l /\n")
+        output = self.tr.value()
+        self.assertIn(b"drwxr-xr-x 1 root root 4096 ", output)
+        self.assertIn(b"lrwxrwxrwx 1 root root    7 ", output)
+        self.assertIn(b" bin -> usr/bin\n", output)
+        self.assertTrue(output.endswith(PROMPT))
+
+    def test_ls_command_004(self) -> None:
+        self.proto.lineReceived(b"ls -lh /\n")
+        output = self.tr.value()
+        # -h prints human-readable sizes (4096 -> 4.0K)
+        self.assertIn(b"drwxr-xr-x 1 root root 4.0K ", output)
+        self.assertNotIn(b" 4096 ", output)
+        self.assertTrue(output.endswith(PROMPT))

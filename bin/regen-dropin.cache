@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+# This is run by packaging tools to update `dropin.cache` to keep track of Twisted's plugin cache
+from twisted.plugin import IPlugin, getPlugins
+list(getPlugins(IPlugin))

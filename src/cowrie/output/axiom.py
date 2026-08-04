@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2024-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# Simple Telegram Bot logger
+
+import json
+
+import treq
+from twisted.internet import defer
+from twisted.logger import Logger
+from twisted.web import http_headers
+
+import cowrie.core.output
+from cowrie.core.config import CowrieConfig
+
+AXIOM_URL = "https://api.axiom.co/v1"
+
+
+class Output(cowrie.core.output.Output):
+    """
+    axiom.co output
+    """
+
+    _log = Logger()
+
+    def start(self) -> None:
+        self.api_token = CowrieConfig.get("output_axiom", "api_token")
+        self.dataset = CowrieConfig.get("output_axiom", "dataset")
+        self.headers = http_headers.Headers(
+            {
+                b"Content-Type": [b"application/json"],
+                b"Authorization": [f"Bearer {self.api_token}".encode()],
+            }
+        )
+        self.url = f"{AXIOM_URL}/datasets/{self.dataset}/ingest"
+
+    def stop(self) -> None:
+        pass
+
+    @defer.inlineCallbacks
+    def write(self, event):
+        event["_time"] = event.pop("timestamp")
+        for i in list(event):
+            # Remove twisted 15 legacy keys
+            if i.startswith("log_") or i == "time" or i == "system":
+                del event[i]
+
+        try:
+            msg = json.dumps(event, separators=(",", ":")).encode()
+        except TypeError:
+            self._log.error("jsonlog: Can't serialize: '{event!r}'", event=event)
+            return
+
+        try:
+            resp = yield treq.post(
+                self.url,
+                data=b"[" + msg + b"]",
+                headers=self.headers,
+                allow_redirects=False,
+            )
+
+            if resp.code != 200:
+                error = yield resp.text()
+                self._log.error(
+                    "jsonlog: Can't submit to Axiom: '{error!r}'", error=error
+                )
+        except Exception as e:
+            # A timed-out or reset request surfaces here (treq raises
+            # ResponseNeverReceived, ...); log it rather than leave it as an
+            # unhandled Deferred error.
+            self._log.info("axiom: request to Axiom failed: {error}", error=repr(e))

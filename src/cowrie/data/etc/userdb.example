@@ -1,0 +1,22 @@
+# Example userdb.txt 
+# This file may be copied to etc/userdb.txt.
+# If etc/userdb.txt is not present, built-in defaults will be used.
+#
+# ':' separated fields, file is processed line for line
+# processing will stop on first match
+# 
+# Field #1 contains the username
+# Field #2 is currently unused
+# Field #3 contains the password 
+# '*' for any username or password
+# '!' at the start of a password will not grant this password access
+# '/' can be used to write a regular expression 
+#
+root:x:!root
+root:x:!123456
+root:x:!/honeypot/i
+root:x:*
+tomcat:x:*
+oracle:x:*
+*:x:somepassword
+*:x:*

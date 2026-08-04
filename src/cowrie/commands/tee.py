@@ -1,0 +1,161 @@
+# SPDX-FileCopyrightText: 2020 Matej Dujava <mdujava@kocurkovo.cz>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+"""
+tee command
+
+"""
+
+from __future__ import annotations
+
+import getopt
+import posixpath
+
+from twisted.logger import Logger
+
+from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.fs import FileNotFound
+
+commands = {}
+
+
+class Command_tee(HoneyPotCommand):
+    """
+    tee command
+    """
+
+    _log = Logger()
+
+    append = False
+    teeFiles: list[str]
+    writtenBytes = 0
+    ignoreInterupts = False
+
+    def start(self) -> None:
+        try:
+            optlist, args = getopt.gnu_getopt(
+                self.args, "aip", ["help", "append", "version"]
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(
+                f"tee: invalid option -- '{err.opt}'\nTry 'tee --help' for more information.\n"
+            )
+            self.exit()
+            return
+
+        self.teeFiles = []
+
+        for o, _a in optlist:
+            if o in ("--help"):
+                self.help()
+                self.exit()
+                return
+            elif o in ("-a", "--append"):
+                self.append = True
+            elif o in ("-a", "--ignore-interrupts"):
+                self.ignoreInterupts = True
+
+        for arg in args:
+            pname = self.fs.resolve_path(arg, self.cwd)
+            if self.fs.isdir(pname):
+                self.errorWrite(f"tee: {arg}: Is a directory\n")
+                continue
+
+            folder_path = posixpath.dirname(pname)
+            fname = self.fs.resolve_path(folder_path, self.cwd)
+            if not self.fs.isdir(fname):
+                self.errorWrite(f"tee: {arg}: No such file or directory\n")
+                continue
+
+            try:
+                self.fs.mkfile(
+                    pname, self.user["uid"], self.user["gid"], 0, 0o644
+                )
+            except FileNotFound:
+                self.errorWrite(f"tee: {arg}: No such file or directory\n")
+            else:
+                self.teeFiles.append(pname)
+
+        if self.input_data:
+            self.output(self.input_data)
+            self.exit()
+
+    def write_to_file(self, data: bytes) -> None:
+        self.writtenBytes += len(data)
+        for outf in self.teeFiles:
+            self.fs.update_size(outf, self.writtenBytes)
+
+    def output(self, inb: bytes | None) -> None:
+        """
+        This is the tee output, if no file supplied
+        """
+        if inb:
+            # Piped input is attacker bytes and need not be valid UTF-8.
+            inp = inb.decode("utf-8", errors="replace")
+        else:
+            return
+
+        lines = inp.split("\n")
+        if lines[-1] == "":
+            lines.pop()
+        for line in lines:
+            self.write(line + "\n")
+            self.write_to_file(line.encode("utf-8") + b"\n")
+
+    def lineReceived(self, line: str) -> None:
+        """
+        This function logs standard input from the user send to tee
+        """
+        self.protocol.events.dispatch(
+            "cowrie.session.input",
+            "INPUT (%(realm)s): %(input)s",
+            realm="tee",
+            input=line,
+        )
+
+        self.output(line.encode("utf-8"))
+
+    def handle_CTRL_C(self) -> None:
+        if not self.ignoreInterupts:
+            self._log.info("Received CTRL-C, exiting..")
+            self.write("^C\n")
+            self.exit()
+
+    def eofReceived(self) -> None:
+        """
+        ctrl-d is end-of-file, time to terminate
+        """
+        self.exit()
+
+    def help(self) -> None:
+        self.write(
+            """Usage: tee [OPTION]... [FILE]...
+Copy standard input to each FILE, and also to standard output.
+
+  -a, --append              append to the given FILEs, do not overwrite
+  -i, --ignore-interrupts   ignore interrupt signals
+  -p                        diagnose errors writing to non pipes
+      --output-error[=MODE]   set behavior on write error.  See MODE below
+      --help     display this help and exit
+      --version  output version information and exit
+
+MODE determines behavior with write errors on the outputs:
+  'warn'         diagnose errors writing to any output
+  'warn-nopipe'  diagnose errors writing to any output not a pipe
+  'exit'         exit on error writing to any output
+  'exit-nopipe'  exit on error writing to any output not a pipe
+The default MODE for the -p option is 'warn-nopipe'.
+The default operation when --output-error is not specified, is to
+exit immediately on error writing to a pipe, and diagnose errors
+writing to non pipe outputs.
+
+GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
+Full documentation <https://www.gnu.org/software/coreutils/tee>
+or available locally via: info '(coreutils) tee invocation'
+"""
+        )
+
+
+commands["/bin/tee"] = Command_tee
+commands["tee"] = Command_tee

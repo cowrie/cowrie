@@ -1,0 +1,16 @@
+.direnv
+.tox
+.git
+.github
+.eggs
+.mypy_cache
+.pyre
+.pytype
+.ruff_cache
+__pycache__
+*.egg-info
+*.pyc
+dist
+build
+docs
+_trial_temp

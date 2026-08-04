@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: 2019 Guilherme Borges <guilhermerosasborges@gmail.com>
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+from __future__ import annotations
+
+import sys
+from typing import Any
+
+from twisted.logger import Logger
+
+import backend_pool.util
+from cowrie.core.config import CowrieConfig
+
+_log = Logger()
+
+
+def create_filter(connection: Any) -> Any:
+    # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+    import libvirt
+
+    filter_xml = backend_pool.util.read_pool_config(
+        CowrieConfig.get(
+            "backend_pool", "nw_filter_config", fallback="default_filter.xml"
+        )
+    )
+
+    try:
+        return connection.nwfilterDefineXML(filter_xml)
+    except libvirt.libvirtError:
+        _log.failure("Filter already exists")
+        return connection.nwfilterLookupByName("cowrie-default-filter")
+
+
+def create_network(connection: Any, network_table: dict[str, str]) -> Any:
+    # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
+    import libvirt
+
+    # TODO support more interfaces and therefore more IP space to allow > 253 guests
+    network_xml = backend_pool.util.read_pool_config(
+        CowrieConfig.get(
+            "backend_pool", "network_config", fallback="default_network.xml"
+        )
+    )
+
+    template_host: str = "<host mac='{mac_address}' name='{name}' ip='{ip_address}'/>\n"
+    hosts: str = ""
+
+    # generate a host entry for every possible guest in this network (253 entries)
+    it = iter(network_table)
+    for guest_id in range(0, 253):
+        vm_name = "vm" + str(guest_id)
+
+        key = next(it)
+        hosts += template_host.format(
+            name=vm_name, mac_address=key, ip_address=network_table[key]
+        )
+
+    network_config = network_xml.format(
+        network_name="cowrie",
+        iface_name="virbr2",
+        default_gateway="192.168.150.1",
+        dhcp_range_start="192.168.150.2",
+        dhcp_range_end="192.168.150.254",
+        hosts=hosts,
+    )
+
+    # create a transient virtual network
+    try:
+        net = connection.networkCreateXML(network_config)
+        if net is None:
+            _log.error("Failed to define a virtual network")
+            sys.exit(1)
+
+        # set the network active
+        # not needed since apparently transient networks are created as active; uncomment if persistent
+        # net.create()
+
+    except libvirt.libvirtError:
+        _log.failure("Network already exists")
+        return connection.networkLookupByName("cowrie")
+
+    return net

@@ -1,0 +1,374 @@
+# SPDX-FileCopyrightText: 2016 Claud Xiao
+# SPDX-FileCopyrightText: 2017-2025 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# Author: Claud Xiao
+
+from __future__ import annotations
+
+import getopt
+import os
+import posixpath
+from typing import TYPE_CHECKING
+
+from twisted.internet import defer, reactor
+from twisted.internet.defer import inlineCallbacks
+from twisted.internet.protocol import ClientCreator, Protocol
+from twisted.protocols.ftp import CommandFailed, FTPClient
+
+from cowrie.core.artifact import Artifact
+from cowrie.core.config import CowrieConfig
+from cowrie.core.network import communication_allowed, outbound_bind_address
+from cowrie.core.rate_limiter import RateLimiter
+from cowrie.shell.command import HoneyPotCommand
+
+if TYPE_CHECKING:
+    from twisted.python.failure import Failure
+
+commands = {}
+
+# Per-host limiter on outbound FTP connections, matching wget/curl.
+ftpget_rate_limiter = RateLimiter(
+    enabled=CowrieConfig.getboolean(
+        "shell", "ftpget_rate_limit_enabled", fallback=True
+    ),
+    max_requests=CowrieConfig.getint("shell", "ftpget_rate_limit_requests", fallback=5),
+    window_seconds=CowrieConfig.getint(
+        "shell", "ftpget_rate_limit_window", fallback=60
+    ),
+    max_keys=CowrieConfig.getint("shell", "ftpget_rate_limit_max_hosts", fallback=1000),
+)
+
+
+class FTPFileReceiver(Protocol):
+    """
+    Protocol to receive FTP file data
+    """
+
+    def __init__(self, artifact: Artifact, limit_size: int = 0) -> None:
+        self.artifact = artifact
+        self.bytes_received = 0
+        self.limit_size = limit_size
+        self.limit_exceeded = False
+
+    def dataReceived(self, data: bytes) -> None:
+        if self.limit_exceeded:
+            # Already over the limit; drop late chunks and stop writing to disk.
+            return
+        self.artifact.write(data)
+        self.bytes_received += len(data)
+        if self.limit_size > 0 and self.bytes_received > self.limit_size:
+            # A misbehaving server must not be able to write unbounded data;
+            # stop writing and close the data connection to abort the transfer.
+            self.limit_exceeded = True
+            if self.transport is not None:
+                self.transport.loseConnection()
+
+    def connectionLost(self, reason: Failure | None = None) -> None:
+        # Transfer complete
+        pass
+
+
+class Command_ftpget(HoneyPotCommand):
+    """
+    ftpget command
+    """
+
+    download_path = CowrieConfig.get("honeypot", "download_path", fallback=".")
+    limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    verbose: bool
+    host: str
+    port: int
+    username: str
+    password: str
+    remote_path: str
+    remote_dir: str
+    remote_file: str
+    artifactFile: Artifact
+    ftp_client: FTPClient | None
+    receiver: FTPFileReceiver | None = None
+
+    def help(self) -> None:
+        self.errorWrite(
+            """BusyBox v1.20.2 (2016-06-22 15:12:53 EDT) multi-call binary.
+
+Usage: ftpget [OPTIONS] HOST [LOCAL_FILE] REMOTE_FILE
+
+Download a file via FTP
+
+    -c Continue previous transfer
+    -v Verbose
+    -u USER     Username
+    -p PASS     Password
+    -P NUM      Port\n\n"""
+        )
+
+    @inlineCallbacks
+    def start(self):
+        try:
+            optlist, args = getopt.getopt(self.args, "cvu:p:P:")
+        except getopt.GetoptError:
+            self.help()
+            self.exit(1)
+            return
+
+        if len(args) < 2:
+            self.help()
+            self.exit(1)
+            return
+
+        self.verbose = False
+        self.username = ""
+        self.password = ""
+        self.port = 21
+        self.host = ""
+        self.local_file = ""
+        self.remote_path = ""
+
+        for opt in optlist:
+            if opt[0] == "-v":
+                self.verbose = True
+            elif opt[0] == "-u":
+                self.username = opt[1]
+            elif opt[0] == "-p":
+                self.password = opt[1]
+            elif opt[0] == "-P":
+                try:
+                    self.port = int(opt[1])
+                except ValueError:
+                    pass
+
+        if len(args) == 2:
+            self.host, self.remote_path = args
+        elif len(args) >= 3:
+            self.host, self.local_file, self.remote_path = args[:3]
+
+        self.remote_dir = posixpath.dirname(self.remote_path)
+        self.remote_file = posixpath.basename(self.remote_path)
+        if not self.local_file:
+            self.local_file = self.remote_file
+
+        # Rate-limit outbound FTP connections per host (matching wget/curl).
+        if not ftpget_rate_limiter.check(self.host):
+            self._log.info(
+                "ftpget: rate limit exceeded for host: {host}. "
+                "Simulating connection timeout",
+                host=self.host,
+            )
+            self.errorWrite(
+                f"ftpget: can't connect to remote host ({self.host}): "
+                "Connection timed out\n"
+            )
+            self.exit(1)
+            return
+
+        fakeoutfile = self.fs.resolve_path(self.local_file, self.cwd)
+        path = posixpath.dirname(fakeoutfile)
+        if not path or not self.fs.exists(path) or not self.fs.isdir(path):
+            self.errorWrite(
+                f"ftpget: can't open '{self.local_file}': No such file or directory"
+            )
+            self.exit(1)
+            return
+
+        allowed = yield communication_allowed(self.host)
+        if not allowed:
+            self.exit(1)
+            return
+
+        self.url_log = "ftp://"
+        if self.username:
+            self.url_log = f"{self.url_log}{self.username}"
+            if self.password:
+                self.url_log = f"{self.url_log}:{self.password}"
+            self.url_log = f"{self.url_log}@"
+        self.url_log = f"{self.url_log}{self.host}"
+        if self.port != 21:
+            self.url_log = f"{self.url_log}:{self.port}"
+        self.url_log = f"{self.url_log}/{self.remote_path}"
+
+        self.artifactFile = Artifact(self.local_file)
+        self.ftp_client = None
+        self.fakeoutfile = fakeoutfile
+
+        # Start async download
+        d = self.ftp_download_async()
+        if d:
+            d.addCallback(self._download_success)
+            d.addErrback(self._download_error)
+        else:
+            self.artifactFile.close()
+            self.exit(1)
+
+    def ftp_download_async(self) -> defer.Deferred[None] | None:
+        """
+        Async FTP download using Twisted FTPClient
+        """
+        # Create FTP client
+        username = self.username or "anonymous"
+        password = self.password or "busybox@"
+
+        creator = ClientCreator(reactor, FTPClient, username, password, passive=True)
+
+        # Connect
+        if self.verbose:
+            self.write(f"Connecting to {self.host}\n")
+
+        d = creator.connectTCP(
+            self.host,
+            self.port,
+            timeout=30,
+            bindAddress=(outbound_bind_address(), 0),
+        )
+        d.addCallback(self._ftp_connected)
+        return d  # type: ignore[no-any-return]
+
+    def _ftp_connected(self, client: FTPClient) -> defer.Deferred[None]:
+        """
+        Called when FTP connection established
+        """
+        self.ftp_client = client
+
+        if self.verbose:
+            self.write("ftpget: cmd (null) (null)\n")
+            username = self.username or "anonymous"
+            password = self.password or "busybox@"
+            self.write(f"ftpget: cmd USER {username}\n")
+            self.write(f"ftpget: cmd PASS {password}\n")
+
+        # Change to remote directory if needed
+        d: defer.Deferred[None]
+        if self.remote_dir:
+            d = client.cwd(self.remote_dir)
+        else:
+            d = defer.succeed(None)
+
+        d.addCallback(lambda _: self._start_retrieval())
+        return d
+
+    def _start_retrieval(self) -> defer.Deferred[None]:
+        """
+        Start file retrieval
+        """
+        if self.verbose:
+            self.write("ftpget: cmd TYPE I (null)\n")
+            self.write("ftpget: cmd PASV (null)\n")
+            self.write(f"ftpget: cmd SIZE {self.remote_path}\n")
+            self.write(f"ftpget: cmd RETR {self.remote_path}\n")
+
+        # Create receiver protocol
+        receiver = FTPFileReceiver(self.artifactFile, self.limit_size)
+        self.receiver = receiver
+
+        # Retrieve file
+        if self.ftp_client:
+            d: defer.Deferred[None] = self.ftp_client.retrieveFile(
+                self.remote_file, receiver
+            )
+            d.addCallback(lambda _: self._quit_ftp())
+            return d
+        else:
+            return defer.fail(Exception("FTP client not connected"))
+
+    def _quit_ftp(self) -> defer.Deferred[None]:
+        """
+        Quit FTP connection
+        """
+        if self.verbose:
+            self.write("ftpget: cmd (null) (null)\n")
+            self.write("ftpget: cmd QUIT (null)\n")
+
+        d: defer.Deferred[None]
+        if self.ftp_client:
+            d = self.ftp_client.quit()
+            return d
+        else:
+            return defer.succeed(None)
+
+    def _log_size_limit_exceeded(self) -> None:
+        """
+        Log that the download was aborted for exceeding download_limit_size.
+        """
+        size = self.receiver.bytes_received if self.receiver else 0
+        self._log.info(
+            "Not saving URL ({url}) (size: {size}) exceeds file size limit ({limit})",
+            url=self.url_log,
+            size=size,
+            limit=self.limit_size,
+        )
+        self.errorWrite("ftpget: file exceeds download size limit\n")
+
+    def _download_success(self, result: None) -> None:
+        """
+        Called when download completes successfully
+        """
+        self.artifactFile.close()
+
+        if self.receiver is not None and self.receiver.limit_exceeded:
+            self._log_size_limit_exceeded()
+            self.exit()
+            return
+
+        # log to cowrie.log
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download",
+            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
+            url=self.url_log,
+            outfile=self.artifactFile.shasumFilename,
+            shasum=self.artifactFile.shasum,
+            destfile=self.local_file,
+            duplicate=self.artifactFile.duplicate,
+        )
+
+        # Update the honeyfs to point to downloaded file
+        self.fs.mkfile(
+            self.fakeoutfile,
+            0,
+            0,
+            os.path.getsize(self.artifactFile.shasumFilename),
+            33188,
+        )
+        self.fs.update_realfile(
+            self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
+        )
+        self.fs.chown(self.fakeoutfile, self.user["uid"], self.user["gid"])
+
+        self.exit()
+
+    def _download_error(self, failure: Failure) -> None:
+        """
+        Called when download fails
+        """
+        self.artifactFile.close()
+
+        # Aborting the transfer at the size limit surfaces here as a connection
+        # error; report it as the limit hit, not a spurious network failure.
+        if self.receiver is not None and self.receiver.limit_exceeded:
+            self._log_size_limit_exceeded()
+            self.exit()
+            return
+
+        self.exit_code = 1
+        error_msg = "Connection error"
+
+        if failure.check(CommandFailed):
+            # FTP command failed (auth, file not found, etc)
+            error_msg = f"FTP error: {failure.value.args[0]}"
+        else:
+            # Network/connection error
+            error_msg = f"Connection failed: {failure.getErrorMessage()}"
+
+        self.protocol.events.dispatch(
+            "cowrie.session.file_download.failed",
+            "Attempt to download file(s) from URL (%(url)s) failed: %(error)s",
+            url=self.url_log,
+            error=error_msg,
+        )
+
+        self.errorWrite(f"ftpget: {error_msg}\n")
+        self.exit()
+
+
+commands["/usr/bin/ftpget"] = Command_ftpget
+commands["ftpget"] = Command_ftpget

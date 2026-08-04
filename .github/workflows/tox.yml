@@ -1,0 +1,154 @@
+# SPDX-FileCopyrightText: 2021-2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+---
+name: Tox
+permissions:
+  contents: read
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+  workflow_call:
+
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Tox'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e lint
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e docs
+
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+      - run: tox -e typing
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
+        experimental: [false]
+        prerelease: [false]
+        include:
+          - python-version: "3.15"
+            experimental: true
+            prerelease: true
+          - python-version: "3.15t"
+            experimental: true
+            prerelease: true
+          - python-version: "pypy-3.11"
+            experimental: true
+            prerelease: false
+    continue-on-error: ${{ matrix.experimental }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: ${{ matrix.prerelease }}
+          cache: pip
+
+      # bcrypt 5.0.0 has no free-threaded 3.15 wheel and its vendored pyo3
+      # 0.26 refuses to build past 3.14; git main builds with pyo3 0.29,
+      # which supports 3.15, and still reports version 5.0.0 so it
+      # satisfies the requirements pin. Remove once the next bcrypt
+      # release ships.
+      - name: Install bcrypt from git for free-threaded 3.15
+        if: matrix.python-version == '3.15t'
+        run: python -m pip -q install "bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40"
+
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install tox tox-gh-actions coverage
+
+      - name: Generate version file
+        run: python -m setuptools_scm --force-write-version-files
+
+      - name: Test with tox
+        run: tox
+
+      - name: Coverage report
+        run: coverage report
+
+      - name: Upload coverage
+        if: ${{ !matrix.experimental }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: .coverage
+          include-hidden-files: true
+          retention-days: 1
