@@ -55,7 +55,8 @@ RUN python3 -m venv cowrie-env && \
     pip install -q --no-cache-dir --upgrade pip setuptools wheel && \
     pip install -q --no-cache-dir --upgrade cffi && \
     pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
-    pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
+    pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
+    pip uninstall -q -y pip setuptools wheel
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
