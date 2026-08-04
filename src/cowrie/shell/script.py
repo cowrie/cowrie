@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from cowrie.shell.bashparse import max_input_size
 from cowrie.shell.fs import FileNotFound
 
 if TYPE_CHECKING:
@@ -109,7 +110,11 @@ def run_script_file(
         command.errorWrite(not_found_message)
         return
 
-    if is_executable_binary(contents):
+    # A file past the input cap is refused like a binary: parsing it would be
+    # superlinearly expensive (see max_input_size), and a legitimate shell
+    # script that large does not occur as a honeypot payload -- oversized
+    # "scripts" are binaries or web pages fetched from a dead payload URL.
+    if len(contents) > max_input_size() or is_executable_binary(contents):
         command.errorWrite(binary_message)
         return
 

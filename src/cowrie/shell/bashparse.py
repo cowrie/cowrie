@@ -72,6 +72,8 @@ if TYPE_CHECKING:
 from lark import Lark, Token, Tree
 from lark.exceptions import LarkError
 
+from cowrie.core.config import CowrieConfig
+
 # Grammar for the supported bash subset. Whitespace is significant as a word
 # separator, so it is matched explicitly rather than ignored: adjacent atoms
 # with no whitespace between them form a single word ("a"$x'b' -> one word).
@@ -177,6 +179,15 @@ _parser = Lark(
     lexer="dynamic",
     propagate_positions=True,
 )
+
+
+def max_input_size() -> int:
+    """Maximum size of shell input fed to the parser in one call
+    ([shell] max_input_size). The Earley parse cost grows superlinearly with
+    input size, so unbounded attacker-controlled input (e.g. an HTML error
+    page downloaded in place of a payload and run with ``sh x``) could block
+    the reactor for hours and exhaust memory."""
+    return CowrieConfig.getint("shell", "max_input_size", fallback=16384)
 
 
 class ShellContext(Protocol):
@@ -471,9 +482,7 @@ class BashParser:
 
         return statements
 
-    def _parse_statement(
-        self, line: str, cursor: _Cursor, op: str | None
-    ) -> Statement:
+    def _parse_statement(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
         node = cursor.peek()
 
         # A subshell at command position runs in sequence; anything piped after
@@ -648,7 +657,9 @@ class BashParser:
         error = self._expect(cursor, "esac")
         if error is not None:
             return error
-        return CaseClause(word=Command(items=list(word_trees), line=line), items=items, op=op)
+        return CaseClause(
+            word=Command(items=list(word_trees), line=line), items=items, op=op
+        )
 
     def _parse_case_patterns(
         self, line: str, cursor: _Cursor

@@ -630,6 +630,15 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 # (default: 20)
 #scp_max_files_per_session = 20
 
+# Maximum size (in bytes) of shell input parsed in one go: a command line, a
+# script file run with sh/bash/./file, or input piped into a shell. Parse cost
+# grows superlinearly with input size, so without a cap a large downloaded
+# file run as a script (for example an HTML error page fetched from a dead
+# payload URL) can hang the process. Longer input is refused: a script file
+# with "cannot execute binary file", a command line with a syntax error.
+# (default: 16384)
+#max_input_size = 16384
+
 
 # ============================================================================
 # SSH Specific Options
