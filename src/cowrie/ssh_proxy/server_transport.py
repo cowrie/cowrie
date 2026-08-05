@@ -234,7 +234,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                     "Remote SSH version: %(version)s",
                     version=escape_nonprintable(self.otherVersionString),
                 )
-            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
+            m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 self._log.info(
                     "Bad protocol version identification: {version!r}",
