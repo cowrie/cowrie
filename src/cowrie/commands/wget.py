@@ -18,29 +18,28 @@ from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.logger import Logger
 from twisted.protocols.ftp import CommandFailed, FTPClient
 from twisted.python import failure
-from twisted.web.client import Agent
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.download import (
+    BlockedAddress,
+    capture_download,
+    fetch,
+    outbound_rate_limiter,
+    report_download_failure,
+)
 from cowrie.core.network import (
     DownloadLimitExceeded,
     abort_body,
     communication_allowed,
     outbound_bind_address,
 )
-from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
-# Initialize rate limiter
-wget_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("shell", "wget_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("shell", "wget_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("shell", "wget_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("shell", "wget_rate_limit_max_hosts", fallback=1000),
-)
+wget_rate_limiter = outbound_rate_limiter("wget")
 
 
 def tdiff(seconds: int) -> str:
@@ -325,13 +324,7 @@ class Command_wget(HoneyPotCommand):
             "User-Agent": [f"Wget/{self.wget_version} (linux-gnu)"]
         }
 
-        # Bind the outbound connection to the configured source address so the
-        # download does not leak the honeypot's real interface IP.
-        agent = Agent(reactor, bindAddress=(outbound_bind_address(), 0))
-        deferred = treq.get(
-            url=url, agent=agent, allow_redirects=True, headers=headers, timeout=10
-        )
-        return deferred
+        return fetch(reactor, url, headers=headers, timeout=10)
 
     def ftpDownload(self, urldata: parse.ParseResult) -> Any:
         """
@@ -630,26 +623,12 @@ class Command_wget(HoneyPotCommand):
                 )
             )
 
-        # Update the honeyfs to point to artifact file if output is to file
-        if self.outfile and self.outfile != "-" and self.protocol.user:
-            self.fs.mkfile(
-                self.outfile,
-                self.user["uid"],
-                self.user["gid"],
-                self.currentlength,
-                33188,
-            )
-            self.fs.update_realfile(
-                self.fs.getfile(self.outfile), self.artifact.shasumFilename
-            )
-
-        self.protocol.events.dispatch(
-            "cowrie.session.file_download",
-            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
-            url=self.url.decode(),
-            outfile=self.artifact.shasumFilename,
-            shasum=self.artifact.shasum,
-            duplicate=self.artifact.duplicate,
+        capture_download(
+            self,
+            self.artifact,
+            self.url.decode(),
+            outfile=None if self.outfile == "-" else self.outfile,
+            size=self.currentlength,
         )
         self.exit()
 
@@ -662,16 +641,15 @@ class Command_wget(HoneyPotCommand):
             # late failure of that transfer is not this command's outcome.
             return
         self.exit_code = 1
-        # Close the artifact so a failed download leaves no orphaned temp file.
-        # Artifact.close() removes the empty temp file backing the download.
-        if getattr(self, "artifact", None) is not None:
-            self.artifact.close()
+        report_download_failure(self, self.url.decode())
 
-        self.protocol.events.dispatch(
-            "cowrie.session.file_download.failed",
-            "Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url.decode(),
-        )
+        if response.check(BlockedAddress) is not None:
+            # A redirect reached a host the honeypot must not contact.
+            self.errorWrite(
+                f"wget: unable to resolve host address ‘{response.value.host}’\n"
+            )
+            self.exit()
+            return
 
         if response.check(error.DNSLookupError) is not None:
             self.errorWrite(
