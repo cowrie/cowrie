@@ -22,7 +22,13 @@ from twisted.internet import reactor as _reactor
 from twisted.protocols.ftp import FTPFactory, FTPRealm
 
 from cowrie.commands import ftpget as ftpget_module
-from cowrie.commands.ftpget import FTPFileReceiver, ftpget_rate_limiter
+from cowrie.commands.ftpget import (
+    Command_ftpget,
+    FTPFileReceiver,
+    ftpget_rate_limiter,
+)
+from cowrie.core.artifact import Artifact
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -35,8 +41,6 @@ if TYPE_CHECKING:
         IReactorTCP,
         IReactorTime,
     )
-
-    from cowrie.core.artifact import Artifact
 
     class _Reactor(IReactorTime, IReactorTCP):
         pass
@@ -106,7 +110,9 @@ class ShellFtpGetCommandTests(unittest.TestCase):
         """ftpget reports a connection error when nothing listens on the port"""
         port = closed_loopback_port()
         with mock.patch.object(
-            ftpget_module, "communication_allowed", lambda _address: defer.succeed(True)
+            ftpget_module,
+            "resolve_allowed",
+            lambda address: defer.succeed(address),
         ):
             self.proto.lineReceived(
                 f"ftpget -P {port} 127.0.0.1 /tmp/test.txt remote.txt\n".encode()
@@ -115,6 +121,64 @@ class ShellFtpGetCommandTests(unittest.TestCase):
                 pump(lambda: b"ftpget:" in self.tr.value()), "no error output"
             )
         self.assertIn(b"ftpget: Connection failed", self.tr.value())
+
+
+class FtpGetPinnedAddressTests(unittest.TestCase):
+    """The transfer connects to the address that was validated."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+        capture_events(self.proto)
+        ftpget_rate_limiter.reset()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_connects_to_the_resolved_address(self) -> None:
+        # Resolving the hostname a second time at connect time lets a
+        # malicious DNS server answer the check and the connection
+        # differently.
+        captured: dict[str, Any] = {}
+
+        class FakeCreator:
+            def __init__(self, *a: Any, **k: Any) -> None:
+                pass
+
+            def connectTCP(self, host: str, port: int, **kwargs: Any) -> Any:
+                captured["host"] = host
+                return defer.Deferred()
+
+        with (
+            mock.patch.object(
+                ftpget_module,
+                "resolve_allowed",
+                lambda _address: defer.succeed("198.51.100.7"),
+            ),
+            mock.patch.object(ftpget_module, "ClientCreator", FakeCreator),
+        ):
+            self.proto.lineReceived(b"ftpget host.invalid /tmp/f.txt remote.txt\n")
+
+        self.assertEqual(captured.get("host"), "198.51.100.7")
+
+
+class FtpGetArtifactCleanupTests(unittest.TestCase):
+    """An interrupted transfer must not leave its temp file behind."""
+
+    def test_ctrl_c_removes_the_empty_artifact(self) -> None:
+        cmd = Command_ftpget.__new__(Command_ftpget)
+        cmd.artifactFile = Artifact("ftpget-test")
+        temp_name = cmd.artifactFile.fp.name
+        self.assertTrue(os.path.exists(temp_name))
+
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd.exit()
+
+        self.assertFalse(
+            os.path.exists(temp_name), "aborted transfer left its temp file behind"
+        )
 
 
 class FTPFileReceiverSizeLimitTests(unittest.TestCase):
@@ -188,7 +252,9 @@ class ShellFtpGetAsyncTests(unittest.TestCase):
         # The limiter is a module-level singleton; keep tests isolated.
         ftpget_rate_limiter.reset()
         allow_loopback = mock.patch.object(
-            ftpget_module, "communication_allowed", lambda _address: defer.succeed(True)
+            ftpget_module,
+            "resolve_allowed",
+            lambda address: defer.succeed(address),
         )
         allow_loopback.start()
         self.addCleanup(allow_loopback.stop)

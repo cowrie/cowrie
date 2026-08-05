@@ -15,6 +15,7 @@ from unittest import mock
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
+from twisted.web.client import URI
 from twisted.web.http_headers import Headers
 
 from cowrie.commands.curl import Command_curl
@@ -180,7 +181,8 @@ class CurlOutboundBindTests(unittest.TestCase):
     def tearDown(self) -> None:
         CowrieConfig.remove_option("honeypot", "out_addr")
 
-    def _capture_agent(self, head_request: bool, verb: str) -> Any:
+    def _capture_bind_address(self, head_request: bool, verb: str) -> Any:
+        """Return the source address the connection curl builds would bind to."""
         cmd = Command_curl.__new__(Command_curl)
         cmd.head_request = head_request
 
@@ -188,26 +190,40 @@ class CurlOutboundBindTests(unittest.TestCase):
 
         def fake_verb(url: str, agent: Any = None, **kwargs: Any) -> Any:
             captured["agent"] = agent
-            return defer.succeed(None)
+            return defer.succeed(mock.Mock(code=200, headers=Headers()))
 
-        with mock.patch(f"cowrie.commands.curl.treq.{verb}", fake_verb):
+        with (
+            mock.patch(f"cowrie.core.download.treq.{verb}", fake_verb),
+            mock.patch(
+                "cowrie.core.download.resolve_allowed",
+                lambda _host: defer.succeed("198.51.100.1"),
+            ),
+        ):
             cmd.treqDownload("http://198.51.100.1/x")
 
-        return captured["agent"]
+        endpoint = captured["agent"]._endpointFactory.endpointForURI(
+            URI.fromBytes(b"http://198.51.100.1/x")
+        )
+        return endpoint._bindAddress
 
     def test_get_binds_agent_to_out_addr(self) -> None:
         CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
-        agent = self._capture_agent(head_request=False, verb="get")
-        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+        self.assertEqual(
+            self._capture_bind_address(head_request=False, verb="get"),
+            ("127.0.0.1", 0),
+        )
 
     def test_head_binds_agent_to_out_addr(self) -> None:
         CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
-        agent = self._capture_agent(head_request=True, verb="head")
-        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+        self.assertEqual(
+            self._capture_bind_address(head_request=True, verb="head"),
+            ("127.0.0.1", 0),
+        )
 
     def test_default_bind_is_wildcard(self) -> None:
-        agent = self._capture_agent(head_request=False, verb="get")
-        self.assertEqual(agent._endpointFactory._bindAddress, ("0.0.0.0", 0))
+        self.assertEqual(
+            self._capture_bind_address(head_request=False, verb="get"), ("0.0.0.0", 0)
+        )
 
 
 class CurlStdoutOutputTests(unittest.TestCase):

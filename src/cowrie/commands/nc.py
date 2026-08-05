@@ -16,12 +16,12 @@ from twisted.internet.protocol import ClientFactory, Protocol, connectionDone
 from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
+from cowrie.core.download import outbound_rate_limiter
 from cowrie.core.network import (
     is_valid_port,
     outbound_bind_address,
     resolve_allowed,
 )
-from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
 if TYPE_CHECKING:
@@ -32,13 +32,7 @@ long = int
 
 commands = {}
 
-# Initialize rate limiter
-nc_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("shell", "nc_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("shell", "nc_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("shell", "nc_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("shell", "nc_rate_limit_max_hosts", fallback=1000),
-)
+nc_rate_limiter = outbound_rate_limiter("nc")
 
 
 def makeMask(n: int) -> int:

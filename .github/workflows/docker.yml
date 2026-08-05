@@ -20,13 +20,6 @@ on:  # yamllint disable-line rule:truthy
 
   # Run manually
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
-      tags:
-        description: 'Build and publish Docker image'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
