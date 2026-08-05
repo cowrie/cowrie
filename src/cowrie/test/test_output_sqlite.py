@@ -77,7 +77,9 @@ class OutputSqliteEventCoverageTests(unittest.TestCase):
         out.db.runQuery.return_value = defer.succeed(None)
         out.db.runOperation.return_value = defer.succeed(None)
         out.write(event)
-        return out.db.runQuery.call_args_list + out.db.runOperation.call_args_list
+        calls: list[Any] = list(out.db.runQuery.call_args_list)
+        calls += list(out.db.runOperation.call_args_list)
+        return calls
 
     def test_file_upload_is_stored(self) -> None:
         # An SFTP upload is a captured payload; dropping it loses the record
