@@ -288,7 +288,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                 self._blockedByKeyExchange.append((messageType, payload))
                 return
 
-        payload = chr(messageType).encode() + payload
+        payload = bytes((messageType,)) + payload
         if self.outgoingCompression:
             payload = self.outgoingCompression.compress(
                 payload
