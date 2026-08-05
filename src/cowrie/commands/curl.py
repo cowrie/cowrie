@@ -15,28 +15,26 @@ from twisted.internet import error, reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from twisted.python import failure
-from twisted.web.client import Agent
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.download import (
+    BlockedAddress,
+    capture_download,
+    fetch,
+    outbound_rate_limiter,
+    report_download_failure,
+)
 from cowrie.core.network import (
     DownloadLimitExceeded,
     abort_body,
     communication_allowed,
-    outbound_bind_address,
 )
-from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
 
-# Initialize rate limiter
-curl_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("shell", "curl_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("shell", "curl_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("shell", "curl_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("shell", "curl_rate_limit_max_hosts", fallback=1000),
-)
+curl_rate_limiter = outbound_rate_limiter("curl")
 
 CURL_HELP = """Usage: curl [options...] <url>
 Options: (H) means HTTP/HTTPS only, (F) means FTP only
@@ -337,18 +335,16 @@ class Command_curl(HoneyPotCommand):
         """
         headers = {"User-Agent": ["curl/7.38.0"]}
 
-        # Bind the outbound connection to the configured source address so the
-        # download does not leak the honeypot's real interface IP.
-        agent = Agent(reactor, bindAddress=(outbound_bind_address(), 0))
-        if self.head_request:
-            deferred = treq.head(
-                url=url, agent=agent, allow_redirects=False, headers=headers, timeout=10
-            )
-        else:
-            deferred = treq.get(
-                url=url, agent=agent, allow_redirects=False, headers=headers, timeout=10
-            )
-        return deferred
+        # curl reports a redirect rather than following it unless -L is given,
+        # which cowrie does not implement, so stop at the first response.
+        return fetch(
+            reactor,
+            url,
+            method="head" if self.head_request else "get",
+            headers=headers,
+            timeout=10,
+            max_redirects=0,
+        )
 
     def handle_CTRL_C(self) -> None:
         self.write("^C\n")
@@ -463,26 +459,12 @@ class Command_curl(HoneyPotCommand):
         if self.outfile and not self.silent:
             self.write("\n")
 
-        # Update the honeyfs to point to artifact file if output is to file
-        if self.outfile and self.protocol.user:
-            self.fs.mkfile(
-                self.outfile,
-                self.user["uid"],
-                self.user["gid"],
-                self.currentlength,
-                33188,
-            )
-            self.fs.update_realfile(
-                self.fs.getfile(self.outfile), self.artifact.shasumFilename
-            )
-
-        self.protocol.events.dispatch(
-            "cowrie.session.file_download",
-            "Downloaded URL (%(url)s) with SHA-256 %(shasum)s to %(outfile)s",
-            url=self.url.decode(),
-            outfile=self.artifact.shasumFilename,
-            shasum=self.artifact.shasum,
-            duplicate=self.artifact.duplicate,
+        capture_download(
+            self,
+            self.artifact,
+            self.url.decode(),
+            outfile=self.outfile,
+            size=self.currentlength,
         )
         self.exit()
 
@@ -495,16 +477,14 @@ class Command_curl(HoneyPotCommand):
             # late failure of that transfer is not this command's outcome.
             return
         self.exit_code = 1
-        # Close the artifact so a failed download leaves no orphaned temp file.
-        # Artifact.close() removes the empty temp file backing the download.
-        if getattr(self, "artifact", None) is not None:
-            self.artifact.close()
+        report_download_failure(self, self.url.decode())
 
-        self.protocol.events.dispatch(
-            "cowrie.session.file_download.failed",
-            "Attempt to download file(s) from URL (%(url)s) failed",
-            url=self.url.decode(),
-        )
+        if response.check(BlockedAddress) is not None:
+            self.errorWrite(
+                f"curl: (6) Could not resolve host: {response.value.host}\n"
+            )
+            self.exit()
+            return
 
         if response.check(error.DNSLookupError) is not None:
             self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")

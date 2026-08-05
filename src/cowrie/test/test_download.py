@@ -174,6 +174,21 @@ class TestFetch(unittest.TestCase):
             ["http://example.invalid/first", "http://example.invalid/second"],
         )
 
+    def test_redirect_is_returned_when_not_following(self) -> None:
+        # curl reports a redirect rather than following it, so the response
+        # must come back instead of being treated as an over-long chain.
+        self.responses = [FakeResponse(302, "http://elsewhere.invalid/x")]
+
+        collected: list[Any] = []
+        failure: list[Any] = []
+        download.fetch(
+            reactor, "http://example.invalid/x", max_redirects=0
+        ).addCallbacks(collected.append, failure.append)
+
+        self.assertFalse(failure)
+        self.assertEqual(collected[0].code, 302)
+        self.assertEqual(self.validated, ["example.invalid"])
+
     def test_redirect_loop_gives_up(self) -> None:
         self.responses = [FakeResponse(302, "http://example.invalid/x")] * 10
 

@@ -117,9 +117,11 @@ def fetch(
 
     Redirects are followed here rather than by the agent so each new location
     is checked against the blocklist; an agent following them itself would
-    reach whatever the redirect names.
+    reach whatever the redirect names. With ``max_redirects`` at 0 the
+    redirect response is returned as-is, for callers that report redirects
+    instead of following them.
     """
-    for _ in range(max_redirects + 1):
+    for hop in range(max_redirects + 1):
         host = urlparse(url).hostname or ""
         address = yield resolve_allowed(host)
         if address is None:
@@ -134,12 +136,12 @@ def fetch(
         )
 
         location = response.headers.getRawHeaders("location")
-        if response.code not in _REDIRECT_CODES or not location:
+        if not max_redirects or response.code not in _REDIRECT_CODES or not location:
             return response
+        if hop == max_redirects:
+            raise TooManyRedirects
 
         url = urljoin(url, location[0])
-
-    raise TooManyRedirects
 
 
 def capture_download(
